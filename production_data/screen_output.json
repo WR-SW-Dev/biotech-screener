@@ -14055,7 +14055,7 @@
         "with_designations": 44
       },
       "provenance": {
-        "content_hash": "c79dec7e5d36bdba",
+        "content_hash": "09a84dced3d2ead1",
         "module": "fda_designation_engine",
         "module_version": "1.0.0",
         "pit_cutoff": "2026-01-26"
@@ -14112,8 +14112,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "ACAD",
@@ -14167,10 +14167,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "68.0",
+          "designation_score": "67.2",
           "designation_types": [
-            "RMAT",
-            "ODD"
+            "ODD",
+            "RMAT"
           ],
           "pos_multiplier": "1.29000",
           "ticker": "ADPT",
@@ -14182,8 +14182,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "AGIO",
@@ -14201,11 +14201,11 @@
         {
           "adjusted_pos": null,
           "designation_count": 3,
-          "designation_score": "72.0",
+          "designation_score": "72.8",
           "designation_types": [
+            "RMAT",
             "ODD",
-            "FT",
-            "RMAT"
+            "FT"
           ],
           "pos_multiplier": "1.320000",
           "ticker": "ALLO",
@@ -14226,8 +14226,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "ALNY",
@@ -14257,8 +14257,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "AMGN",
@@ -14507,10 +14507,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.31000",
           "ticker": "AXSM",
@@ -14585,8 +14585,8 @@
           "designation_score": "76.2",
           "designation_types": [
             "ODD",
-            "BTD",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "BEAM",
@@ -14607,8 +14607,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "BIIB",
@@ -14842,9 +14842,9 @@
           "designation_score": "81.0",
           "designation_types": [
             "ODD",
-            "BTD",
             "FT",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "CRSP",
@@ -14916,10 +14916,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.31000",
           "ticker": "DAWN",
@@ -14985,8 +14985,8 @@
           "designation_score": "76.2",
           "designation_types": [
             "ODD",
-            "BTD",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "EDIT",
@@ -15070,8 +15070,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "EXEL",
@@ -15089,10 +15089,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "68.0",
+          "designation_score": "67.2",
           "designation_types": [
-            "RMAT",
-            "ODD"
+            "ODD",
+            "RMAT"
           ],
           "pos_multiplier": "1.29000",
           "ticker": "FATE",
@@ -15335,10 +15335,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "68.0",
+          "designation_score": "67.2",
           "designation_types": [
-            "RMAT",
-            "ODD"
+            "ODD",
+            "RMAT"
           ],
           "pos_multiplier": "1.29000",
           "ticker": "IMCR",
@@ -15365,10 +15365,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.31000",
           "ticker": "IMVT",
@@ -15410,8 +15410,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "INSM",
@@ -15701,10 +15701,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.31000",
           "ticker": "MDGL",
@@ -15788,8 +15788,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "MRNA",
@@ -16073,10 +16073,10 @@
         {
           "adjusted_pos": null,
           "designation_count": 2,
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.31000",
           "ticker": "PCVX",
@@ -16250,8 +16250,8 @@
           "designation_score": "76.2",
           "designation_types": [
             "ODD",
-            "BTD",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "RARE",
@@ -16263,9 +16263,9 @@
           "designation_score": "81.0",
           "designation_types": [
             "ODD",
-            "BTD",
             "FT",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "RCKT",
@@ -16508,12 +16508,12 @@
         {
           "adjusted_pos": null,
           "designation_count": 4,
-          "designation_score": "81.0",
+          "designation_score": "81.8",
           "designation_types": [
+            "RMAT",
             "ODD",
-            "BTD",
             "FT",
-            "RMAT"
+            "BTD"
           ],
           "pos_multiplier": "1.395000",
           "ticker": "SRPT",
@@ -16642,8 +16642,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "pos_multiplier": "1.370000",
           "ticker": "TGTX",
@@ -16951,7 +16951,7 @@
       },
       "hy_credit_spread_bps": "268.00",
       "provenance": {
-        "collected_at": "2026-01-26T21:54:09.296921",
+        "collected_at": "2026-01-27T07:43:28.246394",
         "sources": {
           "fund_flows": {
             "as_of_date": "2026-01-26",
@@ -30462,7 +30462,7 @@
       "provenance": {
         "benchmarks_source": "BIO Clinical Development Success Rates and Contributing Factors 2011-2020",
         "benchmarks_version": "2011-2020",
-        "content_hash": "e1590c5ccb29e1ea",
+        "content_hash": "6bfeaeaa9f807f26",
         "module": "pos_engine",
         "module_version": "1.2.0",
         "pit_cutoff": "2026-01-26"
@@ -30525,25 +30525,25 @@
         {
           "confidence_components": {
             "data_quality": "PARTIAL",
-            "final_confidence": "0.70",
-            "indication": "oncology",
-            "indication_modifier": "-0.05",
+            "final_confidence": "0.75",
+            "indication": "metabolic",
+            "indication_modifier": "0.00",
             "quality_modifier": "0.00",
-            "raw_confidence": "0.70",
+            "raw_confidence": "0.75",
             "stage": "phase_3",
             "stage_base": "0.75"
           },
-          "confidence_reason": "stage_adjusted_phase_3_oncology",
+          "confidence_reason": "stage_adjusted_phase_3_metabolic",
           "data_quality_state": "PARTIAL",
           "flags": [],
-          "indication_normalized": "oncology",
-          "loa_probability": "0.439",
-          "loa_provenance": "BIO_phase_3_oncology",
+          "indication_normalized": "metabolic",
+          "loa_probability": "0.598",
+          "loa_provenance": "BIO_phase_3_metabolic",
           "missing_fields": [
             "competitive_intensity"
           ],
-          "pos_confidence": "0.70",
-          "pos_score": "43.37",
+          "pos_confidence": "0.75",
+          "pos_score": "59.08",
           "stage_normalized": "phase_3",
           "stage_score": "65",
           "stage_was_defaulted": false,
@@ -30805,25 +30805,25 @@
         {
           "confidence_components": {
             "data_quality": "PARTIAL",
-            "final_confidence": "0.92",
-            "indication": "gastroenterology",
-            "indication_modifier": "0.00",
+            "final_confidence": "0.87",
+            "indication": "oncology",
+            "indication_modifier": "-0.05",
             "quality_modifier": "0.00",
-            "raw_confidence": "0.92",
+            "raw_confidence": "0.87",
             "stage": "commercial",
             "stage_base": "0.92"
           },
-          "confidence_reason": "stage_adjusted_commercial_gastroenterology",
+          "confidence_reason": "stage_adjusted_commercial_oncology",
           "data_quality_state": "PARTIAL",
           "flags": [],
-          "indication_normalized": "gastroenterology",
-          "loa_probability": "0.88",
-          "loa_provenance": "commercial_pipeline_limited_ind_gastroenterology_diversity_bonus",
+          "indication_normalized": "oncology",
+          "loa_probability": "0.89",
+          "loa_provenance": "commercial_pipeline_limited_ind_oncology_diversity_bonus",
           "missing_fields": [
             "competitive_intensity"
           ],
-          "pos_confidence": "0.92",
-          "pos_score": "86.94",
+          "pos_confidence": "0.87",
+          "pos_score": "87.93",
           "stage_normalized": "commercial",
           "stage_score": "90",
           "stage_was_defaulted": false,
@@ -34634,25 +34634,25 @@
         {
           "confidence_components": {
             "data_quality": "PARTIAL",
-            "final_confidence": "0.73",
-            "indication": "respiratory",
-            "indication_modifier": "-0.02",
+            "final_confidence": "0.78",
+            "indication": "infectious_disease",
+            "indication_modifier": "0.03",
             "quality_modifier": "0.00",
-            "raw_confidence": "0.73",
+            "raw_confidence": "0.78",
             "stage": "phase_3",
             "stage_base": "0.75"
           },
-          "confidence_reason": "stage_adjusted_phase_3_respiratory",
+          "confidence_reason": "stage_adjusted_phase_3_infectious_disease",
           "data_quality_state": "PARTIAL",
           "flags": [],
-          "indication_normalized": "respiratory",
-          "loa_probability": "0.567",
-          "loa_provenance": "BIO_phase_3_respiratory",
+          "indication_normalized": "infectious_disease",
+          "loa_probability": "0.769",
+          "loa_provenance": "BIO_phase_3_infectious_disease",
           "missing_fields": [
             "competitive_intensity"
           ],
-          "pos_confidence": "0.73",
-          "pos_score": "56.02",
+          "pos_confidence": "0.78",
+          "pos_score": "75.98",
           "stage_normalized": "phase_3",
           "stage_score": "65",
           "stage_was_defaulted": false,
@@ -36174,24 +36174,24 @@
           "confidence_components": {
             "data_quality": "PARTIAL",
             "final_confidence": "0.95",
-            "indication": "ophthalmology",
+            "indication": "infectious_disease",
             "indication_modifier": "0.03",
             "quality_modifier": "0.00",
             "raw_confidence": "0.95",
             "stage": "commercial",
             "stage_base": "0.92"
           },
-          "confidence_reason": "stage_adjusted_commercial_ophthalmology",
+          "confidence_reason": "stage_adjusted_commercial_infectious_disease",
           "data_quality_state": "PARTIAL",
           "flags": [],
-          "indication_normalized": "ophthalmology",
-          "loa_probability": "0.95",
-          "loa_provenance": "commercial_pipeline_moderate_ind_ophthalmology_diversity_bonus",
+          "indication_normalized": "infectious_disease",
+          "loa_probability": "0.92",
+          "loa_provenance": "commercial_pipeline_moderate_ind_infectious_disease_diversity_bonus",
           "missing_fields": [
             "competitive_intensity"
           ],
           "pos_confidence": "0.95",
-          "pos_score": "93.86",
+          "pos_score": "90.90",
           "stage_normalized": "commercial",
           "stage_score": "90",
           "stage_was_defaulted": false,
@@ -36536,25 +36536,25 @@
         {
           "confidence_components": {
             "data_quality": "PARTIAL",
-            "final_confidence": "0.92",
-            "indication": "metabolic",
-            "indication_modifier": "0.00",
+            "final_confidence": "0.87",
+            "indication": "oncology",
+            "indication_modifier": "-0.05",
             "quality_modifier": "0.00",
-            "raw_confidence": "0.92",
+            "raw_confidence": "0.87",
             "stage": "commercial",
             "stage_base": "0.92"
           },
-          "confidence_reason": "stage_adjusted_commercial_metabolic",
+          "confidence_reason": "stage_adjusted_commercial_oncology",
           "data_quality_state": "PARTIAL",
           "flags": [],
-          "indication_normalized": "metabolic",
-          "loa_probability": "0.93",
-          "loa_provenance": "commercial_pipeline_moderate_ind_metabolic_diversity_bonus",
+          "indication_normalized": "oncology",
+          "loa_probability": "0.94",
+          "loa_provenance": "commercial_pipeline_moderate_ind_oncology_diversity_bonus",
           "missing_fields": [
             "competitive_intensity"
           ],
-          "pos_confidence": "0.92",
-          "pos_score": "91.88",
+          "pos_confidence": "0.87",
+          "pos_score": "92.87",
           "stage_normalized": "commercial",
           "stage_score": "90",
           "stage_was_defaulted": false,
@@ -113678,8 +113678,8 @@
         "std": "16.29341308478786752292633386"
       },
       "pos": {
-        "mean": "32.97390625",
-        "std": "40.12644999783448246101150904"
+        "mean": "33.06244791666666666666666667",
+        "std": "40.18904250211580569153576597"
       }
     },
     "health_errors": [],
@@ -114818,8 +114818,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -115437,10 +115437,10 @@
           "valuation": "0.0513"
         },
         "fda_designation_signal": {
-          "designation_score": "68.0",
+          "designation_score": "67.2",
           "designation_types": [
-            "RMAT",
-            "ODD"
+            "ODD",
+            "RMAT"
           ],
           "has_designations": true,
           "pos_multiplier": "1.29000",
@@ -116324,314 +116324,12 @@
         "coinvest_usable": false,
         "competitive_intensity_signal": {
           "competitive_position": "me_too",
-          "competitor_count": 1904,
-          "crowding_level": "uncrowded",
-          "has_approved_competition": true,
-          "intensity_score": "75.0"
-        },
-        "composite_rank": 10,
-        "composite_score": "68.63",
-        "confidence_catalyst": "0.4810",
-        "confidence_clinical": "0.9810",
-        "confidence_financial": "0.9810",
-        "confidence_overall": "0.85980",
-        "confidence_pos": "0.7",
-        "determinism_hash": "ac932fd9d5f0b6d4",
-        "effective_weights": {
-          "catalyst": "0.1327",
-          "clinical": "0.2884",
-          "financial": "0.2662",
-          "momentum": "0.0786",
-          "pos": "0.1333",
-          "short_interest": "0.0504",
-          "valuation": "0.0504"
-        },
-        "fda_designation_signal": {
-          "designation_score": "50",
-          "designation_types": [],
-          "has_designations": false,
-          "pos_multiplier": "1.0",
-          "timeline_acceleration_months": 0
-        },
-        "flags": [
-          "burn_discipline_bonus",
-          "clinical_financial_synergy",
-          "momentum_window_60d",
-          "phase_momentum_boost_capped_commercial",
-          "pos_score_applied",
-          "short_interest_applied",
-          "strong_negative_momentum"
-        ],
-        "interaction_terms": {
-          "flags": [
-            "clinical_financial_synergy",
-            "burn_discipline_bonus",
-            "phase_momentum_boost_capped_commercial"
-          ],
-          "total_adjustment": "2.28"
-        },
-        "market_cap_bucket": "small",
-        "momentum_signal": {
-          "alpha_60d": "-0.2398",
-          "confidence": "0.9500",
-          "data_completeness": "1.0",
-          "data_status": "applied",
-          "momentum_score": "15.83",
-          "source": "prices",
-          "window_used": 60
-        },
-        "monotonic_caps_applied": [],
-        "normalization_method": "cohort_winsorized",
-        "partnership_signal": {
-          "partnership_count": 0,
-          "partnership_score": "50",
-          "partnership_strength": "unknown",
-          "top_partners": [],
-          "top_tier_partners": 0,
-          "total_deal_value_mm": "0"
-        },
-        "pipeline_diversity_signal": {
-          "diversity_score": "88.0",
-          "platform_validated": true,
-          "program_count": 15,
-          "risk_profile": "broad_portfolio"
-        },
-        "position_weight": "0.0242",
-        "rankable": true,
-        "schema_version": "v3.0",
-        "score_breakdown": {
-          "base_weights": {
-            "catalyst": "0.16",
-            "clinical": "0.26",
-            "financial": "0.24",
-            "momentum": "0.09",
-            "pos": "0.14",
-            "short_interest": "0.06",
-            "valuation": "0.05"
-          },
-          "cohort_info": {
-            "cohort_key": "late"
-          },
-          "components": [
-            {
-              "confidence": "0.9810",
-              "contribution": "26.37",
-              "decay_factor": null,
-              "name": "clinical",
-              "normalized": "91.4500",
-              "notes": [],
-              "raw": "74.69",
-              "weight_base": "0.26",
-              "weight_effective": "0.2884"
-            },
-            {
-              "confidence": "0.9810",
-              "contribution": "21.09",
-              "decay_factor": null,
-              "name": "financial",
-              "normalized": "79.2285",
-              "notes": [],
-              "raw": "85.70285271340387",
-              "weight_base": "0.24",
-              "weight_effective": "0.2662"
-            },
-            {
-              "confidence": "0.4810",
-              "contribution": "4.10",
-              "decay_factor": "0.5",
-              "name": "catalyst",
-              "normalized": "30.93",
-              "notes": [
-                "decay_factor_0.5"
-              ],
-              "raw": "50.00",
-              "weight_base": "0.16",
-              "weight_effective": "0.1327"
-            },
-            {
-              "confidence": "0.9500",
-              "contribution": "1.24",
-              "decay_factor": null,
-              "name": "momentum",
-              "normalized": "15.83",
-              "notes": [],
-              "raw": "-0.2398",
-              "weight_base": "0.09",
-              "weight_effective": "0.0786"
-            },
-            {
-              "confidence": "0.8000",
-              "contribution": "3.19",
-              "decay_factor": null,
-              "name": "valuation",
-              "normalized": "63.28",
-              "notes": [],
-              "raw": "68.79",
-              "weight_base": "0.05",
-              "weight_effective": "0.0504"
-            },
-            {
-              "confidence": "0.5",
-              "contribution": "2.82",
-              "decay_factor": null,
-              "name": "short_interest",
-              "normalized": "56.00",
-              "notes": [],
-              "raw": "56.00",
-              "weight_base": "0.06",
-              "weight_effective": "0.0504"
-            },
-            {
-              "confidence": "0.7",
-              "contribution": "5.25",
-              "decay_factor": null,
-              "name": "pos",
-              "normalized": "39.42",
-              "notes": [],
-              "raw": "93.86",
-              "weight_base": "0.14",
-              "weight_effective": "0.1333"
-            }
-          ],
-          "effective_weights": {
-            "catalyst": "0.1327",
-            "clinical": "0.2884",
-            "financial": "0.2662",
-            "momentum": "0.0786",
-            "pos": "0.1333",
-            "short_interest": "0.0504",
-            "valuation": "0.0504"
-          },
-          "enhancements": {
-            "catalyst_decay": {
-              "factor": "0.5",
-              "in_optimal_window": false
-            },
-            "momentum": {
-              "alpha_60d": "-0.2398",
-              "confidence": "0.9500",
-              "score": "15.83"
-            },
-            "smart_money": {
-              "overlap_count": 0,
-              "score": "50.00"
-            },
-            "valuation": {
-              "confidence": "0.8000",
-              "peer_count": 64,
-              "score": "63.28"
-            },
-            "volatility": {
-              "bucket": "normal",
-              "score_factor": "1.0000",
-              "weight_factor": "1.0000"
-            }
-          },
-          "final": {
-            "composite_score": "68.63",
-            "delta_bonus": "0.00",
-            "post_cap_score": "68.63",
-            "post_severity_score": "68.63",
-            "post_uncertainty_score": "68.63",
-            "post_vol_score": "68.63",
-            "pre_penalty_score": "68.63"
-          },
-          "hybrid_aggregation": {
-            "alpha": "0.85",
-            "min_critical": "79.23",
-            "weighted_sum": "64.08"
-          },
-          "interaction_terms": {
-            "catalyst_volatility_dampening": "0.00",
-            "clinical_financial_synergy": "0.88",
-            "flags": [
-              "clinical_financial_synergy",
-              "burn_discipline_bonus",
-              "phase_momentum_boost_capped_commercial"
-            ],
-            "stage_financial_interaction": "0.00",
-            "total_adjustment": "2.28"
-          },
-          "mode": "enhanced",
-          "normalization_method": "cohort_winsorized",
-          "penalties_and_gates": {
-            "monotonic_caps_applied": [],
-            "severity_gate": "NONE",
-            "severity_multiplier": "1.0",
-            "uncertainty_penalty_pct": "0.00"
-          },
-          "regime_adjustments": {
-            "regime": "SECTOR_ROTATION"
-          },
-          "version": "v3.0"
-        },
-        "severity": "none",
-        "short_interest_signal": {
-          "applied": true,
-          "confidence": "0.5",
-          "crowding_risk": "MEDIUM",
-          "score": "56.00",
-          "signal_direction": "NEUTRAL",
-          "squeeze_potential": "LOW",
-          "trend_direction": "UNKNOWN"
-        },
-        "smart_money_signal": {
-          "change_adjustment": "0.00",
-          "confidence": "0.2",
-          "holders_decreasing": [],
-          "holders_increasing": [],
-          "overlap_bonus": "0.00",
-          "overlap_count": 0,
-          "score": "50.00",
-          "tier1_holders": [],
-          "tier_breakdown": {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0
-          },
-          "weighted_overlap": "0.00"
-        },
-        "stage_bucket": "late",
-        "ticker": "OPK",
-        "uncertainty_penalty": "0.0",
-        "valuation_signal": {
-          "confidence": "0.8000",
-          "peer_count": 64,
-          "score": "63.28"
-        },
-        "volatility_adjustment": {
-          "annualized_vol_pct": "39.48",
-          "score_factor": "1.0000",
-          "vol_bucket": "normal",
-          "weight_factor": "1.0000"
-        }
-      },
-      {
-        "catalyst_decay": {
-          "days_to_catalyst": null,
-          "factor": "0.5",
-          "in_optimal_window": false
-        },
-        "catalyst_effective": {
-          "blend_mode": "window_only",
-          "catalyst_proximity_blended": false,
-          "catalyst_proximity_score": "0",
-          "catalyst_score_effective": "50.00",
-          "catalyst_score_window": "50.00"
-        },
-        "cohort_key": "late",
-        "coinvest_holders": [],
-        "coinvest_overlap_count": 0,
-        "coinvest_usable": false,
-        "competitive_intensity_signal": {
-          "competitive_position": "me_too",
           "competitor_count": 11334,
           "crowding_level": "highly_crowded",
           "has_approved_competition": true,
           "intensity_score": "100.0"
         },
-        "composite_rank": 11,
+        "composite_rank": 10,
         "composite_score": "68.40",
         "confidence_catalyst": "0.4883",
         "confidence_clinical": "0.9883",
@@ -116936,7 +116634,7 @@
           "has_approved_competition": true,
           "intensity_score": "90.0"
         },
-        "composite_rank": 12,
+        "composite_rank": 11,
         "composite_score": "67.90",
         "confidence_catalyst": "0.3500",
         "confidence_clinical": "0.8500",
@@ -117247,7 +116945,7 @@
           "has_approved_competition": true,
           "intensity_score": "75.0"
         },
-        "composite_rank": 13,
+        "composite_rank": 12,
         "composite_score": "67.77",
         "confidence_catalyst": "0.4446",
         "confidence_clinical": "0.9446",
@@ -117524,6 +117222,308 @@
         "volatility_adjustment": {
           "annualized_vol_pct": "57.68",
           "score_factor": "0.9770",
+          "vol_bucket": "normal",
+          "weight_factor": "1.0000"
+        }
+      },
+      {
+        "catalyst_decay": {
+          "days_to_catalyst": null,
+          "factor": "0.5",
+          "in_optimal_window": false
+        },
+        "catalyst_effective": {
+          "blend_mode": "window_only",
+          "catalyst_proximity_blended": false,
+          "catalyst_proximity_score": "0",
+          "catalyst_score_effective": "50.00",
+          "catalyst_score_window": "50.00"
+        },
+        "cohort_key": "late",
+        "coinvest_holders": [],
+        "coinvest_overlap_count": 0,
+        "coinvest_usable": false,
+        "competitive_intensity_signal": {
+          "competitive_position": "me_too",
+          "competitor_count": 1904,
+          "crowding_level": "uncrowded",
+          "has_approved_competition": true,
+          "intensity_score": "75.0"
+        },
+        "composite_rank": 13,
+        "composite_score": "67.63",
+        "confidence_catalyst": "0.4810",
+        "confidence_clinical": "0.9810",
+        "confidence_financial": "0.9810",
+        "confidence_overall": "0.85980",
+        "confidence_pos": "0.7",
+        "determinism_hash": "51d223c4cb5be125",
+        "effective_weights": {
+          "catalyst": "0.1327",
+          "clinical": "0.2884",
+          "financial": "0.2662",
+          "momentum": "0.0786",
+          "pos": "0.1333",
+          "short_interest": "0.0504",
+          "valuation": "0.0504"
+        },
+        "fda_designation_signal": {
+          "designation_score": "50",
+          "designation_types": [],
+          "has_designations": false,
+          "pos_multiplier": "1.0",
+          "timeline_acceleration_months": 0
+        },
+        "flags": [
+          "burn_discipline_bonus",
+          "clinical_financial_synergy",
+          "momentum_window_60d",
+          "phase_momentum_boost_capped_commercial",
+          "pos_score_applied",
+          "short_interest_applied",
+          "strong_negative_momentum"
+        ],
+        "interaction_terms": {
+          "flags": [
+            "clinical_financial_synergy",
+            "burn_discipline_bonus",
+            "phase_momentum_boost_capped_commercial"
+          ],
+          "total_adjustment": "2.28"
+        },
+        "market_cap_bucket": "small",
+        "momentum_signal": {
+          "alpha_60d": "-0.2398",
+          "confidence": "0.9500",
+          "data_completeness": "1.0",
+          "data_status": "applied",
+          "momentum_score": "15.83",
+          "source": "prices",
+          "window_used": 60
+        },
+        "monotonic_caps_applied": [],
+        "normalization_method": "cohort_winsorized",
+        "partnership_signal": {
+          "partnership_count": 0,
+          "partnership_score": "50",
+          "partnership_strength": "unknown",
+          "top_partners": [],
+          "top_tier_partners": 0,
+          "total_deal_value_mm": "0"
+        },
+        "pipeline_diversity_signal": {
+          "diversity_score": "88.0",
+          "platform_validated": true,
+          "program_count": 15,
+          "risk_profile": "broad_portfolio"
+        },
+        "position_weight": "0.0242",
+        "rankable": true,
+        "schema_version": "v3.0",
+        "score_breakdown": {
+          "base_weights": {
+            "catalyst": "0.16",
+            "clinical": "0.26",
+            "financial": "0.24",
+            "momentum": "0.09",
+            "pos": "0.14",
+            "short_interest": "0.06",
+            "valuation": "0.05"
+          },
+          "cohort_info": {
+            "cohort_key": "late"
+          },
+          "components": [
+            {
+              "confidence": "0.9810",
+              "contribution": "26.37",
+              "decay_factor": null,
+              "name": "clinical",
+              "normalized": "91.4500",
+              "notes": [],
+              "raw": "74.69",
+              "weight_base": "0.26",
+              "weight_effective": "0.2884"
+            },
+            {
+              "confidence": "0.9810",
+              "contribution": "21.09",
+              "decay_factor": null,
+              "name": "financial",
+              "normalized": "79.2285",
+              "notes": [],
+              "raw": "85.70285271340387",
+              "weight_base": "0.24",
+              "weight_effective": "0.2662"
+            },
+            {
+              "confidence": "0.4810",
+              "contribution": "4.10",
+              "decay_factor": "0.5",
+              "name": "catalyst",
+              "normalized": "30.93",
+              "notes": [
+                "decay_factor_0.5"
+              ],
+              "raw": "50.00",
+              "weight_base": "0.16",
+              "weight_effective": "0.1327"
+            },
+            {
+              "confidence": "0.9500",
+              "contribution": "1.24",
+              "decay_factor": null,
+              "name": "momentum",
+              "normalized": "15.83",
+              "notes": [],
+              "raw": "-0.2398",
+              "weight_base": "0.09",
+              "weight_effective": "0.0786"
+            },
+            {
+              "confidence": "0.8000",
+              "contribution": "3.19",
+              "decay_factor": null,
+              "name": "valuation",
+              "normalized": "63.28",
+              "notes": [],
+              "raw": "68.79",
+              "weight_base": "0.05",
+              "weight_effective": "0.0504"
+            },
+            {
+              "confidence": "0.5",
+              "contribution": "2.82",
+              "decay_factor": null,
+              "name": "short_interest",
+              "normalized": "56.00",
+              "notes": [],
+              "raw": "56.00",
+              "weight_base": "0.06",
+              "weight_effective": "0.0504"
+            },
+            {
+              "confidence": "0.7",
+              "contribution": "4.08",
+              "decay_factor": null,
+              "name": "pos",
+              "normalized": "30.60",
+              "notes": [],
+              "raw": "90.90",
+              "weight_base": "0.14",
+              "weight_effective": "0.1333"
+            }
+          ],
+          "effective_weights": {
+            "catalyst": "0.1327",
+            "clinical": "0.2884",
+            "financial": "0.2662",
+            "momentum": "0.0786",
+            "pos": "0.1333",
+            "short_interest": "0.0504",
+            "valuation": "0.0504"
+          },
+          "enhancements": {
+            "catalyst_decay": {
+              "factor": "0.5",
+              "in_optimal_window": false
+            },
+            "momentum": {
+              "alpha_60d": "-0.2398",
+              "confidence": "0.9500",
+              "score": "15.83"
+            },
+            "smart_money": {
+              "overlap_count": 0,
+              "score": "50.00"
+            },
+            "valuation": {
+              "confidence": "0.8000",
+              "peer_count": 64,
+              "score": "63.28"
+            },
+            "volatility": {
+              "bucket": "normal",
+              "score_factor": "1.0000",
+              "weight_factor": "1.0000"
+            }
+          },
+          "final": {
+            "composite_score": "67.63",
+            "delta_bonus": "0.00",
+            "post_cap_score": "67.63",
+            "post_severity_score": "67.63",
+            "post_uncertainty_score": "67.63",
+            "post_vol_score": "67.63",
+            "pre_penalty_score": "67.63"
+          },
+          "hybrid_aggregation": {
+            "alpha": "0.85",
+            "min_critical": "79.23",
+            "weighted_sum": "62.90"
+          },
+          "interaction_terms": {
+            "catalyst_volatility_dampening": "0.00",
+            "clinical_financial_synergy": "0.88",
+            "flags": [
+              "clinical_financial_synergy",
+              "burn_discipline_bonus",
+              "phase_momentum_boost_capped_commercial"
+            ],
+            "stage_financial_interaction": "0.00",
+            "total_adjustment": "2.28"
+          },
+          "mode": "enhanced",
+          "normalization_method": "cohort_winsorized",
+          "penalties_and_gates": {
+            "monotonic_caps_applied": [],
+            "severity_gate": "NONE",
+            "severity_multiplier": "1.0",
+            "uncertainty_penalty_pct": "0.00"
+          },
+          "regime_adjustments": {
+            "regime": "SECTOR_ROTATION"
+          },
+          "version": "v3.0"
+        },
+        "severity": "none",
+        "short_interest_signal": {
+          "applied": true,
+          "confidence": "0.5",
+          "crowding_risk": "MEDIUM",
+          "score": "56.00",
+          "signal_direction": "NEUTRAL",
+          "squeeze_potential": "LOW",
+          "trend_direction": "UNKNOWN"
+        },
+        "smart_money_signal": {
+          "change_adjustment": "0.00",
+          "confidence": "0.2",
+          "holders_decreasing": [],
+          "holders_increasing": [],
+          "overlap_bonus": "0.00",
+          "overlap_count": 0,
+          "score": "50.00",
+          "tier1_holders": [],
+          "tier_breakdown": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0
+          },
+          "weighted_overlap": "0.00"
+        },
+        "stage_bucket": "late",
+        "ticker": "OPK",
+        "uncertainty_penalty": "0.0",
+        "valuation_signal": {
+          "confidence": "0.8000",
+          "peer_count": 64,
+          "score": "63.28"
+        },
+        "volatility_adjustment": {
+          "annualized_vol_pct": "39.48",
+          "score_factor": "1.0000",
           "vol_bucket": "normal",
           "weight_factor": "1.0000"
         }
@@ -119710,8 +119710,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -120629,10 +120629,10 @@
           "valuation": "0.0519"
         },
         "fda_designation_signal": {
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.31000",
@@ -122751,13 +122751,13 @@
           "intensity_score": "90.0"
         },
         "composite_rank": 31,
-        "composite_score": "52.43",
+        "composite_score": "52.65",
         "confidence_catalyst": "0.3500",
         "confidence_clinical": "0.8500",
         "confidence_financial": "0.8500",
         "confidence_overall": "0.75500",
         "confidence_pos": "0.7",
-        "determinism_hash": "5daec05b65fd6e90",
+        "determinism_hash": "2643dde6b7b496be",
         "effective_weights": {
           "catalyst": "0.0000",
           "clinical": "0.3243",
@@ -122904,10 +122904,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "5.19",
+              "contribution": "5.48",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "32.36",
+              "normalized": "34.13",
               "notes": [],
               "raw": "92.87",
               "weight_base": "0.14",
@@ -122949,18 +122949,18 @@
             }
           },
           "final": {
-            "composite_score": "52.43",
+            "composite_score": "52.65",
             "delta_bonus": "0.00",
-            "post_cap_score": "59.07",
-            "post_severity_score": "59.07",
-            "post_uncertainty_score": "59.07",
-            "post_vol_score": "52.43",
-            "pre_penalty_score": "59.07"
+            "post_cap_score": "59.32",
+            "post_severity_score": "59.32",
+            "post_uncertainty_score": "59.32",
+            "post_vol_score": "52.65",
+            "pre_penalty_score": "59.32"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "35.01",
-            "weighted_sum": "63.32"
+            "weighted_sum": "63.61"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "2.33",
@@ -123051,13 +123051,13 @@
           "intensity_score": "100.0"
         },
         "composite_rank": 32,
-        "composite_score": "52.42",
+        "composite_score": "52.58",
         "confidence_catalyst": "0.3500",
         "confidence_clinical": "0.8500",
         "confidence_financial": "0.8500",
         "confidence_overall": "0.75500",
         "confidence_pos": "0.7",
-        "determinism_hash": "ccb39b6f2ee7975a",
+        "determinism_hash": "aa3ff2d374da3f62",
         "effective_weights": {
           "catalyst": "0.0000",
           "clinical": "0.3243",
@@ -123209,10 +123209,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "5.19",
+              "contribution": "5.48",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "32.36",
+              "normalized": "34.13",
               "notes": [],
               "raw": "92.87",
               "weight_base": "0.14",
@@ -123254,18 +123254,18 @@
             }
           },
           "final": {
-            "composite_score": "52.42",
+            "composite_score": "52.58",
             "delta_bonus": "0.00",
-            "post_cap_score": "74.88",
-            "post_severity_score": "74.88",
-            "post_uncertainty_score": "74.88",
-            "post_vol_score": "52.42",
-            "pre_penalty_score": "74.88"
+            "post_cap_score": "75.12",
+            "post_severity_score": "75.12",
+            "post_uncertainty_score": "75.12",
+            "post_vol_score": "52.58",
+            "pre_penalty_score": "75.12"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "85.00",
-            "weighted_sum": "71.92"
+            "weighted_sum": "72.20"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "2.34",
@@ -125210,8 +125210,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -126869,13 +126869,13 @@
           "intensity_score": "100.0"
         },
         "composite_rank": 45,
-        "composite_score": "47.37",
+        "composite_score": "47.47",
         "confidence_catalyst": "0.4745",
         "confidence_clinical": "0.9745",
         "confidence_financial": "0.9745",
         "confidence_overall": "0.84960",
         "confidence_pos": "0.7",
-        "determinism_hash": "f3a560a55fac1547",
+        "determinism_hash": "53b8223fea581863",
         "effective_weights": {
           "catalyst": "0.1322",
           "clinical": "0.2878",
@@ -126937,8 +126937,8 @@
         "sanity_check": {
           "driving_factor": "financial",
           "fallback_triggered": false,
-          "rank_divergence": 30,
-          "v2_rank": 74
+          "rank_divergence": 29,
+          "v2_rank": 73
         },
         "schema_version": "v3.0",
         "score_breakdown": {
@@ -127025,10 +127025,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "5.26",
+              "contribution": "5.38",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "39.42",
+              "normalized": "40.30",
               "notes": [],
               "raw": "93.86",
               "weight_base": "0.14",
@@ -127070,18 +127070,18 @@
             }
           },
           "final": {
-            "composite_score": "47.37",
+            "composite_score": "47.47",
             "delta_bonus": "0.00",
-            "post_cap_score": "47.37",
-            "post_severity_score": "47.37",
-            "post_uncertainty_score": "47.37",
-            "post_vol_score": "47.37",
-            "pre_penalty_score": "47.37"
+            "post_cap_score": "47.47",
+            "post_severity_score": "47.47",
+            "post_uncertainty_score": "47.47",
+            "post_vol_score": "47.47",
+            "pre_penalty_score": "47.47"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "36.77",
-            "weighted_sum": "51.01"
+            "weighted_sum": "51.13"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "0.00",
@@ -128373,7 +128373,7 @@
         "confidence_financial": "0.8500",
         "confidence_overall": "0.75000",
         "confidence_pos": "0.7",
-        "determinism_hash": "384105c01c378c43",
+        "determinism_hash": "7bb18e48ac395586",
         "effective_weights": {
           "catalyst": "0.0000",
           "clinical": "0.3251",
@@ -128528,7 +128528,7 @@
               "contribution": "6.00",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "39.42",
+              "normalized": "40.30",
               "notes": [
                 "delta_capped"
               ],
@@ -132297,7 +132297,7 @@
         "confidence_financial": "0.8500",
         "confidence_overall": "0.75500",
         "confidence_pos": "0.7",
-        "determinism_hash": "52141902200fcc79",
+        "determinism_hash": "18b39de5cf82c840",
         "effective_weights": {
           "catalyst": "0.0000",
           "clinical": "0.3243",
@@ -132456,7 +132456,7 @@
               "contribution": "6.00",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "39.42",
+              "normalized": "40.30",
               "notes": [
                 "delta_capped"
               ],
@@ -136216,13 +136216,13 @@
           "intensity_score": "100.0"
         },
         "composite_rank": 76,
-        "composite_score": "40.50",
+        "composite_score": "40.57",
         "confidence_catalyst": "0.5500",
         "confidence_clinical": "0.8500",
         "confidence_financial": "0.8500",
         "confidence_overall": "0.79000",
         "confidence_pos": "0.7",
-        "determinism_hash": "0fa7baadb5a25cb8",
+        "determinism_hash": "ef15f649fc8de49a",
         "effective_weights": {
           "catalyst": "0.1435",
           "clinical": "0.2784",
@@ -136381,10 +136381,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "5.43",
+              "contribution": "5.55",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "39.42",
+              "normalized": "40.30",
               "notes": [],
               "raw": "93.86",
               "weight_base": "0.14",
@@ -136426,18 +136426,18 @@
             }
           },
           "final": {
-            "composite_score": "40.50",
+            "composite_score": "40.57",
             "delta_bonus": "0.00",
-            "post_cap_score": "57.85",
-            "post_severity_score": "57.85",
-            "post_uncertainty_score": "57.85",
-            "post_vol_score": "40.50",
-            "pre_penalty_score": "57.85"
+            "post_cap_score": "57.95",
+            "post_severity_score": "57.95",
+            "post_uncertainty_score": "57.95",
+            "post_vol_score": "40.57",
+            "pre_penalty_score": "57.95"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "53.53",
-            "weighted_sum": "58.61"
+            "weighted_sum": "58.73"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "0.03",
@@ -139565,8 +139565,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -141076,8 +141076,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -143475,10 +143475,10 @@
           "valuation": "0.0417"
         },
         "fda_designation_signal": {
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.31000",
@@ -148778,6 +148778,303 @@
           "catalyst_score_effective": "50.00",
           "catalyst_score_window": "50.00"
         },
+        "cohort_key": "late",
+        "coinvest_holders": [],
+        "coinvest_overlap_count": 0,
+        "coinvest_usable": false,
+        "competitive_intensity_signal": {
+          "competitive_position": "fast_follower",
+          "competitor_count": 5,
+          "crowding_level": "uncrowded",
+          "has_approved_competition": true,
+          "intensity_score": "35.0"
+        },
+        "composite_rank": 118,
+        "composite_score": "32.00",
+        "confidence_catalyst": "0.4235",
+        "confidence_clinical": "0.9235",
+        "confidence_financial": "0.9235",
+        "confidence_overall": "0.80880",
+        "confidence_pos": "0.7",
+        "determinism_hash": "29691bccaf91376a",
+        "effective_weights": {
+          "catalyst": "0.1305",
+          "clinical": "0.2867",
+          "financial": "0.2647",
+          "momentum": "0.0784",
+          "pos": "0.1365",
+          "short_interest": "0.0516",
+          "valuation": "0.0516"
+        },
+        "fda_designation_signal": {
+          "designation_score": "50",
+          "designation_types": [],
+          "has_designations": false,
+          "pos_multiplier": "1.0",
+          "timeline_acceleration_months": 0
+        },
+        "flags": [
+          "high_short_crowding",
+          "momentum_window_60d",
+          "overvalued_vs_peers",
+          "pos_score_applied",
+          "short_interest_applied"
+        ],
+        "interaction_terms": {
+          "flags": [],
+          "total_adjustment": "0.00"
+        },
+        "market_cap_bucket": "mid",
+        "momentum_signal": {
+          "alpha_60d": "-0.0032",
+          "confidence": "0.9000",
+          "data_completeness": "1.0",
+          "data_status": "applied",
+          "momentum_score": "49.56",
+          "source": "prices",
+          "window_used": 60
+        },
+        "monotonic_caps_applied": [],
+        "normalization_method": "cohort_winsorized",
+        "partnership_signal": {
+          "partnership_count": 0,
+          "partnership_score": "50",
+          "partnership_strength": "unknown",
+          "top_partners": [],
+          "top_tier_partners": 0,
+          "total_deal_value_mm": "0"
+        },
+        "pipeline_diversity_signal": {
+          "diversity_score": "72.0",
+          "platform_validated": true,
+          "program_count": 5,
+          "risk_profile": "diversified"
+        },
+        "position_flags": [
+          "NOT_IN_TOP_N"
+        ],
+        "position_weight": "0.0000",
+        "rankable": false,
+        "schema_version": "v3.0",
+        "score_breakdown": {
+          "base_weights": {
+            "catalyst": "0.16",
+            "clinical": "0.26",
+            "financial": "0.24",
+            "momentum": "0.09",
+            "pos": "0.14",
+            "short_interest": "0.06",
+            "valuation": "0.05"
+          },
+          "cohort_info": {
+            "cohort_key": "late"
+          },
+          "components": [
+            {
+              "confidence": "0.9235",
+              "contribution": "6.24",
+              "decay_factor": null,
+              "name": "clinical",
+              "normalized": "21.7800",
+              "notes": [],
+              "raw": "68.75",
+              "weight_base": "0.26",
+              "weight_effective": "0.2867"
+            },
+            {
+              "confidence": "0.9235",
+              "contribution": "13.83",
+              "decay_factor": null,
+              "name": "financial",
+              "normalized": "52.2410",
+              "notes": [],
+              "raw": "73.31965777408416",
+              "weight_base": "0.24",
+              "weight_effective": "0.2647"
+            },
+            {
+              "confidence": "0.4235",
+              "contribution": "3.98",
+              "decay_factor": "0.5",
+              "name": "catalyst",
+              "normalized": "30.46",
+              "notes": [
+                "decay_factor_0.5"
+              ],
+              "raw": "50.00",
+              "weight_base": "0.16",
+              "weight_effective": "0.1305"
+            },
+            {
+              "confidence": "0.9000",
+              "contribution": "3.89",
+              "decay_factor": null,
+              "name": "momentum",
+              "normalized": "49.56",
+              "notes": [],
+              "raw": "-0.0032",
+              "weight_base": "0.09",
+              "weight_effective": "0.0784"
+            },
+            {
+              "confidence": "0.8000",
+              "contribution": "0.93",
+              "decay_factor": null,
+              "name": "valuation",
+              "normalized": "17.97",
+              "notes": [],
+              "raw": "535.76",
+              "weight_base": "0.05",
+              "weight_effective": "0.0516"
+            },
+            {
+              "confidence": "0.5",
+              "contribution": "2.94",
+              "decay_factor": null,
+              "name": "short_interest",
+              "normalized": "57.00",
+              "notes": [
+                "high_crowding"
+              ],
+              "raw": "57.00",
+              "weight_base": "0.06",
+              "weight_effective": "0.0516"
+            },
+            {
+              "confidence": "0.7",
+              "contribution": "4.18",
+              "decay_factor": null,
+              "name": "pos",
+              "normalized": "30.60",
+              "notes": [],
+              "raw": "90.90",
+              "weight_base": "0.14",
+              "weight_effective": "0.1365"
+            }
+          ],
+          "effective_weights": {
+            "catalyst": "0.1305",
+            "clinical": "0.2867",
+            "financial": "0.2647",
+            "momentum": "0.0784",
+            "pos": "0.1365",
+            "short_interest": "0.0516",
+            "valuation": "0.0516"
+          },
+          "enhancements": {
+            "catalyst_decay": {
+              "factor": "0.5",
+              "in_optimal_window": false
+            },
+            "momentum": {
+              "alpha_60d": "-0.0032",
+              "confidence": "0.9000",
+              "score": "49.56"
+            },
+            "smart_money": {
+              "overlap_count": 0,
+              "score": "50.00"
+            },
+            "valuation": {
+              "confidence": "0.8000",
+              "peer_count": 64,
+              "score": "17.97"
+            },
+            "volatility": {
+              "bucket": "normal",
+              "score_factor": "0.9453",
+              "weight_factor": "1.0000"
+            }
+          },
+          "final": {
+            "composite_score": "32.00",
+            "delta_bonus": "0.00",
+            "post_cap_score": "33.85",
+            "post_severity_score": "33.85",
+            "post_uncertainty_score": "33.85",
+            "post_vol_score": "32.00",
+            "pre_penalty_score": "33.85"
+          },
+          "hybrid_aggregation": {
+            "alpha": "0.85",
+            "min_critical": "21.78",
+            "weighted_sum": "35.98"
+          },
+          "interaction_terms": {
+            "catalyst_volatility_dampening": "0.00",
+            "clinical_financial_synergy": "0.00",
+            "flags": [],
+            "stage_financial_interaction": "0.00",
+            "total_adjustment": "0.00"
+          },
+          "mode": "enhanced",
+          "normalization_method": "cohort_winsorized",
+          "penalties_and_gates": {
+            "monotonic_caps_applied": [],
+            "severity_gate": "NONE",
+            "severity_multiplier": "1.0",
+            "uncertainty_penalty_pct": "0.00"
+          },
+          "regime_adjustments": {
+            "regime": "SECTOR_ROTATION"
+          },
+          "version": "v3.0"
+        },
+        "severity": "none",
+        "short_interest_signal": {
+          "applied": true,
+          "confidence": "0.5",
+          "crowding_risk": "HIGH",
+          "score": "57.00",
+          "signal_direction": "NEUTRAL",
+          "squeeze_potential": "LOW",
+          "trend_direction": "UNKNOWN"
+        },
+        "smart_money_signal": {
+          "change_adjustment": "0.00",
+          "confidence": "0.2",
+          "holders_decreasing": [],
+          "holders_increasing": [],
+          "overlap_bonus": "0.00",
+          "overlap_count": 0,
+          "score": "50.00",
+          "tier1_holders": [],
+          "tier_breakdown": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0
+          },
+          "weighted_overlap": "0.00"
+        },
+        "stage_bucket": "late",
+        "ticker": "TVTX",
+        "uncertainty_penalty": "0.0",
+        "valuation_signal": {
+          "confidence": "0.8000",
+          "peer_count": 64,
+          "score": "17.97"
+        },
+        "volatility_adjustment": {
+          "annualized_vol_pct": "68.25",
+          "score_factor": "0.9453",
+          "vol_bucket": "normal",
+          "weight_factor": "1.0000"
+        }
+      },
+      {
+        "catalyst_decay": {
+          "days_to_catalyst": null,
+          "factor": "0.5",
+          "in_optimal_window": false
+        },
+        "catalyst_effective": {
+          "blend_mode": "window_only",
+          "catalyst_proximity_blended": false,
+          "catalyst_proximity_score": "0",
+          "catalyst_score_effective": "50.00",
+          "catalyst_score_window": "50.00"
+        },
         "cohort_key": "early",
         "coinvest_holders": [],
         "coinvest_overlap_count": 0,
@@ -148789,7 +149086,7 @@
           "has_approved_competition": false,
           "intensity_score": "50"
         },
-        "composite_rank": 118,
+        "composite_rank": 119,
         "composite_score": "31.98",
         "confidence_catalyst": "0.3500",
         "confidence_clinical": "0.5500",
@@ -148864,7 +149161,7 @@
         "sanity_check": {
           "driving_factor": "momentum",
           "fallback_triggered": false,
-          "rank_divergence": 56,
+          "rank_divergence": 57,
           "v2_rank": 61
         },
         "schema_version": "v3.0",
@@ -149074,303 +149371,6 @@
           "score_factor": "0.7000",
           "vol_bucket": "high",
           "weight_factor": "0.7500"
-        }
-      },
-      {
-        "catalyst_decay": {
-          "days_to_catalyst": null,
-          "factor": "0.5",
-          "in_optimal_window": false
-        },
-        "catalyst_effective": {
-          "blend_mode": "window_only",
-          "catalyst_proximity_blended": false,
-          "catalyst_proximity_score": "0",
-          "catalyst_score_effective": "50.00",
-          "catalyst_score_window": "50.00"
-        },
-        "cohort_key": "late",
-        "coinvest_holders": [],
-        "coinvest_overlap_count": 0,
-        "coinvest_usable": false,
-        "competitive_intensity_signal": {
-          "competitive_position": "fast_follower",
-          "competitor_count": 5,
-          "crowding_level": "uncrowded",
-          "has_approved_competition": true,
-          "intensity_score": "35.0"
-        },
-        "composite_rank": 119,
-        "composite_score": "31.90",
-        "confidence_catalyst": "0.4235",
-        "confidence_clinical": "0.9235",
-        "confidence_financial": "0.9235",
-        "confidence_overall": "0.80880",
-        "confidence_pos": "0.7",
-        "determinism_hash": "2d4da3b1a4065f21",
-        "effective_weights": {
-          "catalyst": "0.1305",
-          "clinical": "0.2867",
-          "financial": "0.2647",
-          "momentum": "0.0784",
-          "pos": "0.1365",
-          "short_interest": "0.0516",
-          "valuation": "0.0516"
-        },
-        "fda_designation_signal": {
-          "designation_score": "50",
-          "designation_types": [],
-          "has_designations": false,
-          "pos_multiplier": "1.0",
-          "timeline_acceleration_months": 0
-        },
-        "flags": [
-          "high_short_crowding",
-          "momentum_window_60d",
-          "overvalued_vs_peers",
-          "pos_score_applied",
-          "short_interest_applied"
-        ],
-        "interaction_terms": {
-          "flags": [],
-          "total_adjustment": "0.00"
-        },
-        "market_cap_bucket": "mid",
-        "momentum_signal": {
-          "alpha_60d": "-0.0032",
-          "confidence": "0.9000",
-          "data_completeness": "1.0",
-          "data_status": "applied",
-          "momentum_score": "49.56",
-          "source": "prices",
-          "window_used": 60
-        },
-        "monotonic_caps_applied": [],
-        "normalization_method": "cohort_winsorized",
-        "partnership_signal": {
-          "partnership_count": 0,
-          "partnership_score": "50",
-          "partnership_strength": "unknown",
-          "top_partners": [],
-          "top_tier_partners": 0,
-          "total_deal_value_mm": "0"
-        },
-        "pipeline_diversity_signal": {
-          "diversity_score": "72.0",
-          "platform_validated": true,
-          "program_count": 5,
-          "risk_profile": "diversified"
-        },
-        "position_flags": [
-          "NOT_IN_TOP_N"
-        ],
-        "position_weight": "0.0000",
-        "rankable": false,
-        "schema_version": "v3.0",
-        "score_breakdown": {
-          "base_weights": {
-            "catalyst": "0.16",
-            "clinical": "0.26",
-            "financial": "0.24",
-            "momentum": "0.09",
-            "pos": "0.14",
-            "short_interest": "0.06",
-            "valuation": "0.05"
-          },
-          "cohort_info": {
-            "cohort_key": "late"
-          },
-          "components": [
-            {
-              "confidence": "0.9235",
-              "contribution": "6.24",
-              "decay_factor": null,
-              "name": "clinical",
-              "normalized": "21.7800",
-              "notes": [],
-              "raw": "68.75",
-              "weight_base": "0.26",
-              "weight_effective": "0.2867"
-            },
-            {
-              "confidence": "0.9235",
-              "contribution": "13.83",
-              "decay_factor": null,
-              "name": "financial",
-              "normalized": "52.2410",
-              "notes": [],
-              "raw": "73.31965777408416",
-              "weight_base": "0.24",
-              "weight_effective": "0.2647"
-            },
-            {
-              "confidence": "0.4235",
-              "contribution": "3.98",
-              "decay_factor": "0.5",
-              "name": "catalyst",
-              "normalized": "30.46",
-              "notes": [
-                "decay_factor_0.5"
-              ],
-              "raw": "50.00",
-              "weight_base": "0.16",
-              "weight_effective": "0.1305"
-            },
-            {
-              "confidence": "0.9000",
-              "contribution": "3.89",
-              "decay_factor": null,
-              "name": "momentum",
-              "normalized": "49.56",
-              "notes": [],
-              "raw": "-0.0032",
-              "weight_base": "0.09",
-              "weight_effective": "0.0784"
-            },
-            {
-              "confidence": "0.8000",
-              "contribution": "0.93",
-              "decay_factor": null,
-              "name": "valuation",
-              "normalized": "17.97",
-              "notes": [],
-              "raw": "535.76",
-              "weight_base": "0.05",
-              "weight_effective": "0.0516"
-            },
-            {
-              "confidence": "0.5",
-              "contribution": "2.94",
-              "decay_factor": null,
-              "name": "short_interest",
-              "normalized": "57.00",
-              "notes": [
-                "high_crowding"
-              ],
-              "raw": "57.00",
-              "weight_base": "0.06",
-              "weight_effective": "0.0516"
-            },
-            {
-              "confidence": "0.7",
-              "contribution": "4.06",
-              "decay_factor": null,
-              "name": "pos",
-              "normalized": "29.72",
-              "notes": [],
-              "raw": "90.90",
-              "weight_base": "0.14",
-              "weight_effective": "0.1365"
-            }
-          ],
-          "effective_weights": {
-            "catalyst": "0.1305",
-            "clinical": "0.2867",
-            "financial": "0.2647",
-            "momentum": "0.0784",
-            "pos": "0.1365",
-            "short_interest": "0.0516",
-            "valuation": "0.0516"
-          },
-          "enhancements": {
-            "catalyst_decay": {
-              "factor": "0.5",
-              "in_optimal_window": false
-            },
-            "momentum": {
-              "alpha_60d": "-0.0032",
-              "confidence": "0.9000",
-              "score": "49.56"
-            },
-            "smart_money": {
-              "overlap_count": 0,
-              "score": "50.00"
-            },
-            "valuation": {
-              "confidence": "0.8000",
-              "peer_count": 64,
-              "score": "17.97"
-            },
-            "volatility": {
-              "bucket": "normal",
-              "score_factor": "0.9453",
-              "weight_factor": "1.0000"
-            }
-          },
-          "final": {
-            "composite_score": "31.90",
-            "delta_bonus": "0.00",
-            "post_cap_score": "33.75",
-            "post_severity_score": "33.75",
-            "post_uncertainty_score": "33.75",
-            "post_vol_score": "31.90",
-            "pre_penalty_score": "33.75"
-          },
-          "hybrid_aggregation": {
-            "alpha": "0.85",
-            "min_critical": "21.78",
-            "weighted_sum": "35.86"
-          },
-          "interaction_terms": {
-            "catalyst_volatility_dampening": "0.00",
-            "clinical_financial_synergy": "0.00",
-            "flags": [],
-            "stage_financial_interaction": "0.00",
-            "total_adjustment": "0.00"
-          },
-          "mode": "enhanced",
-          "normalization_method": "cohort_winsorized",
-          "penalties_and_gates": {
-            "monotonic_caps_applied": [],
-            "severity_gate": "NONE",
-            "severity_multiplier": "1.0",
-            "uncertainty_penalty_pct": "0.00"
-          },
-          "regime_adjustments": {
-            "regime": "SECTOR_ROTATION"
-          },
-          "version": "v3.0"
-        },
-        "severity": "none",
-        "short_interest_signal": {
-          "applied": true,
-          "confidence": "0.5",
-          "crowding_risk": "HIGH",
-          "score": "57.00",
-          "signal_direction": "NEUTRAL",
-          "squeeze_potential": "LOW",
-          "trend_direction": "UNKNOWN"
-        },
-        "smart_money_signal": {
-          "change_adjustment": "0.00",
-          "confidence": "0.2",
-          "holders_decreasing": [],
-          "holders_increasing": [],
-          "overlap_bonus": "0.00",
-          "overlap_count": 0,
-          "score": "50.00",
-          "tier1_holders": [],
-          "tier_breakdown": {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0
-          },
-          "weighted_overlap": "0.00"
-        },
-        "stage_bucket": "late",
-        "ticker": "TVTX",
-        "uncertainty_penalty": "0.0",
-        "valuation_signal": {
-          "confidence": "0.8000",
-          "peer_count": 64,
-          "score": "17.97"
-        },
-        "volatility_adjustment": {
-          "annualized_vol_pct": "68.25",
-          "score_factor": "0.9453",
-          "vol_bucket": "normal",
-          "weight_factor": "1.0000"
         }
       },
       {
@@ -150291,6 +150291,301 @@
           "catalyst_score_effective": "50.00",
           "catalyst_score_window": "50.00"
         },
+        "cohort_key": "late",
+        "coinvest_holders": [],
+        "coinvest_overlap_count": 0,
+        "coinvest_usable": false,
+        "competitive_intensity_signal": {
+          "competitive_position": "me_too",
+          "competitor_count": 2893,
+          "crowding_level": "uncrowded",
+          "has_approved_competition": true,
+          "intensity_score": "75.0"
+        },
+        "composite_rank": 123,
+        "composite_score": "30.58",
+        "confidence_catalyst": "0.4356",
+        "confidence_clinical": "0.9356",
+        "confidence_financial": "0.9356",
+        "confidence_overall": "0.81848",
+        "confidence_pos": "0.7",
+        "determinism_hash": "bc80dc035b4aca12",
+        "effective_weights": {
+          "catalyst": "0.1311",
+          "clinical": "0.2872",
+          "financial": "0.2651",
+          "momentum": "0.0780",
+          "pos": "0.1359",
+          "short_interest": "0.0514",
+          "valuation": "0.0513"
+        },
+        "fda_designation_signal": {
+          "designation_score": "50",
+          "designation_types": [],
+          "has_designations": false,
+          "pos_multiplier": "1.0",
+          "timeline_acceleration_months": 0
+        },
+        "flags": [
+          "momentum_window_60d",
+          "pos_score_applied",
+          "sev1_penalty_applied",
+          "short_interest_applied",
+          "si_bullish_signal"
+        ],
+        "interaction_terms": {
+          "flags": [],
+          "total_adjustment": "0.00"
+        },
+        "market_cap_bucket": "small",
+        "momentum_signal": {
+          "alpha_60d": "0.0512",
+          "confidence": "0.9000",
+          "data_completeness": "1.0",
+          "data_status": "applied",
+          "momentum_score": "56.92",
+          "source": "prices",
+          "window_used": 60
+        },
+        "monotonic_caps_applied": [],
+        "normalization_method": "cohort_winsorized",
+        "partnership_signal": {
+          "partnership_count": 0,
+          "partnership_score": "50",
+          "partnership_strength": "unknown",
+          "top_partners": [],
+          "top_tier_partners": 0,
+          "total_deal_value_mm": "0"
+        },
+        "pipeline_diversity_signal": {
+          "diversity_score": "82.0",
+          "platform_validated": true,
+          "program_count": 12,
+          "risk_profile": "broad_portfolio"
+        },
+        "position_flags": [
+          "NOT_IN_TOP_N"
+        ],
+        "position_weight": "0.0000",
+        "rankable": false,
+        "schema_version": "v3.0",
+        "score_breakdown": {
+          "base_weights": {
+            "catalyst": "0.16",
+            "clinical": "0.26",
+            "financial": "0.24",
+            "momentum": "0.09",
+            "pos": "0.14",
+            "short_interest": "0.06",
+            "valuation": "0.05"
+          },
+          "cohort_info": {
+            "cohort_key": "late"
+          },
+          "components": [
+            {
+              "confidence": "0.9356",
+              "contribution": "4.38",
+              "decay_factor": null,
+              "name": "clinical",
+              "normalized": "15.2460",
+              "notes": [],
+              "raw": "68.75",
+              "weight_base": "0.26",
+              "weight_effective": "0.2872"
+            },
+            {
+              "confidence": "0.9356",
+              "contribution": "17.82",
+              "decay_factor": null,
+              "name": "financial",
+              "normalized": "67.2350",
+              "notes": [],
+              "raw": "78.51885758381144",
+              "weight_base": "0.24",
+              "weight_effective": "0.2651"
+            },
+            {
+              "confidence": "0.4356",
+              "contribution": "3.99",
+              "decay_factor": "0.5",
+              "name": "catalyst",
+              "normalized": "30.46",
+              "notes": [
+                "decay_factor_0.5"
+              ],
+              "raw": "50.00",
+              "weight_base": "0.16",
+              "weight_effective": "0.1311"
+            },
+            {
+              "confidence": "0.9000",
+              "contribution": "4.44",
+              "decay_factor": null,
+              "name": "momentum",
+              "normalized": "56.92",
+              "notes": [],
+              "raw": "0.0512",
+              "weight_base": "0.09",
+              "weight_effective": "0.0780"
+            },
+            {
+              "confidence": "0.8000",
+              "contribution": "3.41",
+              "decay_factor": null,
+              "name": "valuation",
+              "normalized": "66.41",
+              "notes": [],
+              "raw": "62.80",
+              "weight_base": "0.05",
+              "weight_effective": "0.0513"
+            },
+            {
+              "confidence": "0.5",
+              "contribution": "3.24",
+              "decay_factor": null,
+              "name": "short_interest",
+              "normalized": "63.00",
+              "notes": [],
+              "raw": "63.00",
+              "weight_base": "0.06",
+              "weight_effective": "0.0514"
+            },
+            {
+              "confidence": "0.7",
+              "contribution": "1.52",
+              "decay_factor": null,
+              "name": "pos",
+              "normalized": "11.20",
+              "notes": [],
+              "raw": "75.98",
+              "weight_base": "0.14",
+              "weight_effective": "0.1359"
+            }
+          ],
+          "effective_weights": {
+            "catalyst": "0.1311",
+            "clinical": "0.2872",
+            "financial": "0.2651",
+            "momentum": "0.0780",
+            "pos": "0.1359",
+            "short_interest": "0.0514",
+            "valuation": "0.0513"
+          },
+          "enhancements": {
+            "catalyst_decay": {
+              "factor": "0.5",
+              "in_optimal_window": false
+            },
+            "momentum": {
+              "alpha_60d": "0.0512",
+              "confidence": "0.9000",
+              "score": "56.92"
+            },
+            "smart_money": {
+              "overlap_count": 0,
+              "score": "50.00"
+            },
+            "valuation": {
+              "confidence": "0.8000",
+              "peer_count": 64,
+              "score": "66.41"
+            },
+            "volatility": {
+              "bucket": "normal",
+              "score_factor": "0.9634",
+              "weight_factor": "1.0000"
+            }
+          },
+          "final": {
+            "composite_score": "30.58",
+            "delta_bonus": "0.00",
+            "post_cap_score": "31.74",
+            "post_severity_score": "31.74",
+            "post_uncertainty_score": "35.27",
+            "post_vol_score": "30.58",
+            "pre_penalty_score": "35.27"
+          },
+          "hybrid_aggregation": {
+            "alpha": "0.85",
+            "min_critical": "15.25",
+            "weighted_sum": "38.80"
+          },
+          "interaction_terms": {
+            "catalyst_volatility_dampening": "0.00",
+            "clinical_financial_synergy": "0.00",
+            "flags": [],
+            "stage_financial_interaction": "0.00",
+            "total_adjustment": "0.00"
+          },
+          "mode": "enhanced",
+          "normalization_method": "cohort_winsorized",
+          "penalties_and_gates": {
+            "monotonic_caps_applied": [],
+            "severity_gate": "SEV1_10PCT",
+            "severity_multiplier": "0.90",
+            "uncertainty_penalty_pct": "0.00"
+          },
+          "regime_adjustments": {
+            "regime": "SECTOR_ROTATION"
+          },
+          "version": "v3.0"
+        },
+        "severity": "sev1",
+        "short_interest_signal": {
+          "applied": true,
+          "confidence": "0.5",
+          "crowding_risk": "LOW",
+          "score": "63.00",
+          "signal_direction": "BULLISH",
+          "squeeze_potential": "LOW",
+          "trend_direction": "UNKNOWN"
+        },
+        "smart_money_signal": {
+          "change_adjustment": "0.00",
+          "confidence": "0.2",
+          "holders_decreasing": [],
+          "holders_increasing": [],
+          "overlap_bonus": "0.00",
+          "overlap_count": 0,
+          "score": "50.00",
+          "tier1_holders": [],
+          "tier_breakdown": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0
+          },
+          "weighted_overlap": "0.00"
+        },
+        "stage_bucket": "late",
+        "ticker": "KALV",
+        "uncertainty_penalty": "0.0",
+        "valuation_signal": {
+          "confidence": "0.8000",
+          "peer_count": 64,
+          "score": "66.41"
+        },
+        "volatility_adjustment": {
+          "annualized_vol_pct": "62.20",
+          "score_factor": "0.9634",
+          "vol_bucket": "normal",
+          "weight_factor": "1.0000"
+        }
+      },
+      {
+        "catalyst_decay": {
+          "days_to_catalyst": null,
+          "factor": "0.5",
+          "in_optimal_window": false
+        },
+        "catalyst_effective": {
+          "blend_mode": "window_only",
+          "catalyst_proximity_blended": false,
+          "catalyst_proximity_score": "0",
+          "catalyst_score_effective": "50.00",
+          "catalyst_score_window": "50.00"
+        },
         "cohort_key": "early",
         "coinvest_holders": [],
         "coinvest_overlap_count": 0,
@@ -150302,7 +150597,7 @@
           "has_approved_competition": false,
           "intensity_score": "50"
         },
-        "composite_rank": 123,
+        "composite_rank": 124,
         "composite_score": "30.16",
         "confidence_catalyst": "0.3500",
         "confidence_clinical": "0.5500",
@@ -150580,301 +150875,6 @@
       },
       {
         "catalyst_decay": {
-          "days_to_catalyst": null,
-          "factor": "0.5",
-          "in_optimal_window": false
-        },
-        "catalyst_effective": {
-          "blend_mode": "window_only",
-          "catalyst_proximity_blended": false,
-          "catalyst_proximity_score": "0",
-          "catalyst_score_effective": "50.00",
-          "catalyst_score_window": "50.00"
-        },
-        "cohort_key": "late",
-        "coinvest_holders": [],
-        "coinvest_overlap_count": 0,
-        "coinvest_usable": false,
-        "competitive_intensity_signal": {
-          "competitive_position": "me_too",
-          "competitor_count": 2893,
-          "crowding_level": "uncrowded",
-          "has_approved_competition": true,
-          "intensity_score": "75.0"
-        },
-        "composite_rank": 124,
-        "composite_score": "30.14",
-        "confidence_catalyst": "0.4356",
-        "confidence_clinical": "0.9356",
-        "confidence_financial": "0.9356",
-        "confidence_overall": "0.81848",
-        "confidence_pos": "0.7",
-        "determinism_hash": "f2bacd5b6292fd75",
-        "effective_weights": {
-          "catalyst": "0.1311",
-          "clinical": "0.2872",
-          "financial": "0.2651",
-          "momentum": "0.0780",
-          "pos": "0.1359",
-          "short_interest": "0.0514",
-          "valuation": "0.0513"
-        },
-        "fda_designation_signal": {
-          "designation_score": "50",
-          "designation_types": [],
-          "has_designations": false,
-          "pos_multiplier": "1.0",
-          "timeline_acceleration_months": 0
-        },
-        "flags": [
-          "momentum_window_60d",
-          "pos_score_applied",
-          "sev1_penalty_applied",
-          "short_interest_applied",
-          "si_bullish_signal"
-        ],
-        "interaction_terms": {
-          "flags": [],
-          "total_adjustment": "0.00"
-        },
-        "market_cap_bucket": "small",
-        "momentum_signal": {
-          "alpha_60d": "0.0512",
-          "confidence": "0.9000",
-          "data_completeness": "1.0",
-          "data_status": "applied",
-          "momentum_score": "56.92",
-          "source": "prices",
-          "window_used": 60
-        },
-        "monotonic_caps_applied": [],
-        "normalization_method": "cohort_winsorized",
-        "partnership_signal": {
-          "partnership_count": 0,
-          "partnership_score": "50",
-          "partnership_strength": "unknown",
-          "top_partners": [],
-          "top_tier_partners": 0,
-          "total_deal_value_mm": "0"
-        },
-        "pipeline_diversity_signal": {
-          "diversity_score": "82.0",
-          "platform_validated": true,
-          "program_count": 12,
-          "risk_profile": "broad_portfolio"
-        },
-        "position_flags": [
-          "NOT_IN_TOP_N"
-        ],
-        "position_weight": "0.0000",
-        "rankable": false,
-        "schema_version": "v3.0",
-        "score_breakdown": {
-          "base_weights": {
-            "catalyst": "0.16",
-            "clinical": "0.26",
-            "financial": "0.24",
-            "momentum": "0.09",
-            "pos": "0.14",
-            "short_interest": "0.06",
-            "valuation": "0.05"
-          },
-          "cohort_info": {
-            "cohort_key": "late"
-          },
-          "components": [
-            {
-              "confidence": "0.9356",
-              "contribution": "4.38",
-              "decay_factor": null,
-              "name": "clinical",
-              "normalized": "15.2460",
-              "notes": [],
-              "raw": "68.75",
-              "weight_base": "0.26",
-              "weight_effective": "0.2872"
-            },
-            {
-              "confidence": "0.9356",
-              "contribution": "17.82",
-              "decay_factor": null,
-              "name": "financial",
-              "normalized": "67.2350",
-              "notes": [],
-              "raw": "78.51885758381144",
-              "weight_base": "0.24",
-              "weight_effective": "0.2651"
-            },
-            {
-              "confidence": "0.4356",
-              "contribution": "3.99",
-              "decay_factor": "0.5",
-              "name": "catalyst",
-              "normalized": "30.46",
-              "notes": [
-                "decay_factor_0.5"
-              ],
-              "raw": "50.00",
-              "weight_base": "0.16",
-              "weight_effective": "0.1311"
-            },
-            {
-              "confidence": "0.9000",
-              "contribution": "4.44",
-              "decay_factor": null,
-              "name": "momentum",
-              "normalized": "56.92",
-              "notes": [],
-              "raw": "0.0512",
-              "weight_base": "0.09",
-              "weight_effective": "0.0780"
-            },
-            {
-              "confidence": "0.8000",
-              "contribution": "3.41",
-              "decay_factor": null,
-              "name": "valuation",
-              "normalized": "66.41",
-              "notes": [],
-              "raw": "62.80",
-              "weight_base": "0.05",
-              "weight_effective": "0.0513"
-            },
-            {
-              "confidence": "0.5",
-              "contribution": "3.24",
-              "decay_factor": null,
-              "name": "short_interest",
-              "normalized": "63.00",
-              "notes": [],
-              "raw": "63.00",
-              "weight_base": "0.06",
-              "weight_effective": "0.0514"
-            },
-            {
-              "confidence": "0.7",
-              "contribution": "0.92",
-              "decay_factor": null,
-              "name": "pos",
-              "normalized": "6.79",
-              "notes": [],
-              "raw": "56.02",
-              "weight_base": "0.14",
-              "weight_effective": "0.1359"
-            }
-          ],
-          "effective_weights": {
-            "catalyst": "0.1311",
-            "clinical": "0.2872",
-            "financial": "0.2651",
-            "momentum": "0.0780",
-            "pos": "0.1359",
-            "short_interest": "0.0514",
-            "valuation": "0.0513"
-          },
-          "enhancements": {
-            "catalyst_decay": {
-              "factor": "0.5",
-              "in_optimal_window": false
-            },
-            "momentum": {
-              "alpha_60d": "0.0512",
-              "confidence": "0.9000",
-              "score": "56.92"
-            },
-            "smart_money": {
-              "overlap_count": 0,
-              "score": "50.00"
-            },
-            "valuation": {
-              "confidence": "0.8000",
-              "peer_count": 64,
-              "score": "66.41"
-            },
-            "volatility": {
-              "bucket": "normal",
-              "score_factor": "0.9634",
-              "weight_factor": "1.0000"
-            }
-          },
-          "final": {
-            "composite_score": "30.14",
-            "delta_bonus": "0.00",
-            "post_cap_score": "31.28",
-            "post_severity_score": "31.28",
-            "post_uncertainty_score": "34.76",
-            "post_vol_score": "30.14",
-            "pre_penalty_score": "34.76"
-          },
-          "hybrid_aggregation": {
-            "alpha": "0.85",
-            "min_critical": "15.25",
-            "weighted_sum": "38.20"
-          },
-          "interaction_terms": {
-            "catalyst_volatility_dampening": "0.00",
-            "clinical_financial_synergy": "0.00",
-            "flags": [],
-            "stage_financial_interaction": "0.00",
-            "total_adjustment": "0.00"
-          },
-          "mode": "enhanced",
-          "normalization_method": "cohort_winsorized",
-          "penalties_and_gates": {
-            "monotonic_caps_applied": [],
-            "severity_gate": "SEV1_10PCT",
-            "severity_multiplier": "0.90",
-            "uncertainty_penalty_pct": "0.00"
-          },
-          "regime_adjustments": {
-            "regime": "SECTOR_ROTATION"
-          },
-          "version": "v3.0"
-        },
-        "severity": "sev1",
-        "short_interest_signal": {
-          "applied": true,
-          "confidence": "0.5",
-          "crowding_risk": "LOW",
-          "score": "63.00",
-          "signal_direction": "BULLISH",
-          "squeeze_potential": "LOW",
-          "trend_direction": "UNKNOWN"
-        },
-        "smart_money_signal": {
-          "change_adjustment": "0.00",
-          "confidence": "0.2",
-          "holders_decreasing": [],
-          "holders_increasing": [],
-          "overlap_bonus": "0.00",
-          "overlap_count": 0,
-          "score": "50.00",
-          "tier1_holders": [],
-          "tier_breakdown": {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0
-          },
-          "weighted_overlap": "0.00"
-        },
-        "stage_bucket": "late",
-        "ticker": "KALV",
-        "uncertainty_penalty": "0.0",
-        "valuation_signal": {
-          "confidence": "0.8000",
-          "peer_count": 64,
-          "score": "66.41"
-        },
-        "volatility_adjustment": {
-          "annualized_vol_pct": "62.20",
-          "score_factor": "0.9634",
-          "vol_bucket": "normal",
-          "weight_factor": "1.0000"
-        }
-      },
-      {
-        "catalyst_decay": {
           "days_to_catalyst": 9,
           "factor": "0.2837",
           "in_optimal_window": true
@@ -150918,8 +150918,8 @@
           "designation_score": "73.8",
           "designation_types": [
             "ODD",
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.370000",
@@ -151200,13 +151200,13 @@
           "intensity_score": "75.0"
         },
         "composite_rank": 126,
-        "composite_score": "28.74",
+        "composite_score": "28.64",
         "confidence_catalyst": "0.4159",
         "confidence_clinical": "0.9159",
         "confidence_financial": "0.9159",
         "confidence_overall": "0.80772",
         "confidence_pos": "0.7",
-        "determinism_hash": "a6451cbe9665ed37",
+        "determinism_hash": "ce49057a06355f86",
         "effective_weights": {
           "catalyst": "0.1300",
           "clinical": "0.2858",
@@ -151360,10 +151360,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "0.93",
+              "contribution": "0.81",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "6.79",
+              "normalized": "5.91",
               "notes": [],
               "raw": "56.02",
               "weight_base": "0.14",
@@ -151405,18 +151405,18 @@
             }
           },
           "final": {
-            "composite_score": "28.74",
+            "composite_score": "28.64",
             "delta_bonus": "0.00",
-            "post_cap_score": "30.77",
-            "post_severity_score": "30.77",
-            "post_uncertainty_score": "30.77",
-            "post_vol_score": "28.74",
-            "pre_penalty_score": "30.77"
+            "post_cap_score": "30.67",
+            "post_severity_score": "30.67",
+            "post_uncertainty_score": "30.67",
+            "post_vol_score": "28.64",
+            "pre_penalty_score": "30.67"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "0.00",
-            "weighted_sum": "35.14"
+            "weighted_sum": "35.02"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "0.00",
@@ -153756,13 +153756,13 @@
           "intensity_score": "10.0"
         },
         "composite_rank": 135,
-        "composite_score": "25.37",
+        "composite_score": "25.26",
         "confidence_catalyst": "0.4658",
         "confidence_clinical": "0.8658",
         "confidence_financial": "0.9658",
         "confidence_overall": "0.81264",
         "confidence_pos": "0.7",
-        "determinism_hash": "f71bba1e57d4a867",
+        "determinism_hash": "efec45741b811f32",
         "effective_weights": {
           "catalyst": "0.1343",
           "clinical": "0.2778",
@@ -153824,8 +153824,8 @@
         "sanity_check": {
           "driving_factor": "momentum",
           "fallback_triggered": false,
-          "rank_divergence": 77,
-          "v2_rank": 56
+          "rank_divergence": 76,
+          "v2_rank": 57
         },
         "schema_version": "v3.0",
         "score_breakdown": {
@@ -153912,10 +153912,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "1.65",
+              "contribution": "1.53",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "12.08",
+              "normalized": "11.20",
               "notes": [],
               "raw": "75.98",
               "weight_base": "0.14",
@@ -153957,18 +153957,18 @@
             }
           },
           "final": {
-            "composite_score": "25.37",
+            "composite_score": "25.26",
             "delta_bonus": "0.00",
-            "post_cap_score": "25.37",
-            "post_severity_score": "25.37",
-            "post_uncertainty_score": "25.37",
-            "post_vol_score": "25.37",
-            "pre_penalty_score": "25.37"
+            "post_cap_score": "25.26",
+            "post_severity_score": "25.26",
+            "post_uncertainty_score": "25.26",
+            "post_vol_score": "25.26",
+            "pre_penalty_score": "25.26"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "0.00",
-            "weighted_sum": "29.84"
+            "weighted_sum": "29.72"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "0.00",
@@ -155141,13 +155141,13 @@
           "intensity_score": "75.0"
         },
         "composite_rank": 140,
-        "composite_score": "21.75",
+        "composite_score": "21.65",
         "confidence_catalyst": "0.4166",
         "confidence_clinical": "0.9166",
         "confidence_financial": "0.9166",
         "confidence_overall": "0.80328",
         "confidence_pos": "0.7",
-        "determinism_hash": "6378e5545b13a975",
+        "determinism_hash": "e0474ee544fd6216",
         "effective_weights": {
           "catalyst": "0.1303",
           "clinical": "0.2865",
@@ -155299,10 +155299,10 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "0.93",
+              "contribution": "0.81",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "6.79",
+              "normalized": "5.91",
               "notes": [],
               "raw": "56.02",
               "weight_base": "0.14",
@@ -155344,18 +155344,18 @@
             }
           },
           "final": {
-            "composite_score": "21.75",
+            "composite_score": "21.65",
             "delta_bonus": "0.00",
-            "post_cap_score": "23.26",
-            "post_severity_score": "23.26",
-            "post_uncertainty_score": "23.26",
-            "post_vol_score": "21.75",
-            "pre_penalty_score": "23.26"
+            "post_cap_score": "23.15",
+            "post_severity_score": "23.15",
+            "post_uncertainty_score": "23.15",
+            "post_vol_score": "21.65",
+            "pre_penalty_score": "23.15"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "4.14",
-            "weighted_sum": "25.22"
+            "weighted_sum": "25.10"
           },
           "interaction_terms": {
             "catalyst_volatility_dampening": "0.00",
@@ -156653,12 +156653,12 @@
         "coinvest_overlap_count": 0,
         "coinvest_usable": false,
         "composite_rank": 145,
-        "composite_score": "19.91",
+        "composite_score": "19.78",
         "confidence_catalyst": "0.3",
         "confidence_clinical": "0.9",
         "confidence_financial": "1.0",
         "confidence_pos": "0.7",
-        "determinism_hash": "bf77e2b9125ca6a9",
+        "determinism_hash": "783795c173442acb",
         "effective_weights": {
           "catalyst": "0.0465",
           "clinical": "0.3486",
@@ -156737,9 +156737,9 @@
             },
             {
               "confidence": "0.7",
-              "contribution": "1.76",
+              "contribution": "1.46",
               "name": "pos",
-              "normalized": "10.32",
+              "normalized": "8.55",
               "notes": [],
               "raw": "66.39",
               "weight_base": "0.20",
@@ -156753,16 +156753,16 @@
             "pos": "0.1704"
           },
           "final": {
-            "composite_score": "19.91",
-            "post_bonus_score": "19.91",
-            "post_cap_score": "19.91",
-            "post_penalty_score": "19.91",
-            "pre_penalty_score": "39.81"
+            "composite_score": "19.78",
+            "post_bonus_score": "19.78",
+            "post_cap_score": "19.78",
+            "post_penalty_score": "19.78",
+            "pre_penalty_score": "39.56"
           },
           "hybrid_aggregation": {
             "alpha": "0.85",
             "min_critical": "39.32",
-            "weighted_sum": "39.90"
+            "weighted_sum": "39.60"
           },
           "mode": "enhanced",
           "normalization_method": "cohort_winsorized",
@@ -160846,8 +160846,8 @@
           "designation_score": "76.2",
           "designation_types": [
             "ODD",
-            "BTD",
-            "RMAT"
+            "RMAT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.395000",
@@ -163601,10 +163601,10 @@
           "valuation": "0.0419"
         },
         "fda_designation_signal": {
-          "designation_score": "69.8",
+          "designation_score": "67.0",
           "designation_types": [
-            "BTD",
-            "FT"
+            "FT",
+            "BTD"
           ],
           "has_designations": true,
           "pos_multiplier": "1.31000",
@@ -165121,7 +165121,7 @@
         "confidence_financial": "0.8500",
         "confidence_overall": "0.75500",
         "confidence_pos": "0.7",
-        "determinism_hash": "d757956ec25f99e7",
+        "determinism_hash": "203a704677662803",
         "effective_weights": {
           "catalyst": "0.0000",
           "clinical": "0.3243",
@@ -165277,7 +165277,7 @@
               "contribution": "6.00",
               "decay_factor": null,
               "name": "pos",
-              "normalized": "39.42",
+              "normalized": "40.30",
               "notes": [
                 "delta_capped"
               ],
@@ -165745,10 +165745,10 @@
           "valuation": "0.0427"
         },
         "fda_designation_signal": {
-          "designation_score": "68.0",
+          "designation_score": "67.2",
           "designation_types": [
-            "RMAT",
-            "ODD"
+            "ODD",
+            "RMAT"
           ],
           "has_designations": true,
           "pos_multiplier": "1.29000",
@@ -171307,7 +171307,7 @@
       "production_market_caps.json": "303de21c05bf2d9c",
       "quarterly_burn_history.json": "d9278df762e11e6e",
       "screen_2026-01-26.json": "9d3980df1567ea07",
-      "screen_output.json": "37de5760ea26eca3",
+      "screen_output.json": "7c81f40c06455d47",
       "screen_results.json": "ecf0e55cbccab837",
       "screening_results_2026-01-08.json": "fb01adc44e4f979b",
       "screening_results_2026-01-25.json": "df93550a922697a8",
