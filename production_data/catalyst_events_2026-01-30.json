@@ -1,16 +1,16 @@
 {
   "run_metadata": {
-    "as_of_date": "2026-01-20",
-    "events_detected": 0,
+    "as_of_date": "2026-01-30",
+    "events_detected": 5,
     "module_version": "3A.2.0",
-    "prior_snapshot_date": "2026-01-15",
+    "prior_snapshot_date": "2026-01-29",
     "severe_negatives": 0,
     "tickers_analyzed": 346
   },
   "summaries": [
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e992e506631a3d44",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "82ff5f953c7c5d89",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -21,8 +21,8 @@
       "ticker": "AARD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6376cd7df887ee5a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ac6ff4747aa1c4c7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -33,20 +33,57 @@
       "ticker": "ABCL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "794c72533fa786ab",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "571258bfc34b9971",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
-      "events": [],
+      "events": [
+        {
+          "actual_date": null,
+          "confidence": 0.3,
+          "confidence_reason": "Trial record updated 3 days ago (2025-12-17 \u2192 2026-01-27) but no specific status/date change detected. May indicate administrative update, protocol amendment, or enrollment activity.",
+          "direction": "NEUTRAL",
+          "disclosed_at": "2026-01-27",
+          "event_rule_id": "M3_DIFF_CT_ACTIVITY_PROXY",
+          "event_type": "CT_ACTIVITY_PROXY",
+          "fields_changed": {
+            "lastUpdatePosted": [
+              "2025-12-17",
+              "2026-01-27"
+            ]
+          },
+          "impact": 2,
+          "nct_id": "NCT02716246",
+          "source": "CTGOV"
+        },
+        {
+          "actual_date": null,
+          "confidence": 0.3,
+          "confidence_reason": "Trial record updated 3 days ago (2023-07-25 \u2192 2026-01-27) but no specific status/date change detected. May indicate administrative update, protocol amendment, or enrollment activity.",
+          "direction": "NEUTRAL",
+          "disclosed_at": "2026-01-27",
+          "event_rule_id": "M3_DIFF_CT_ACTIVITY_PROXY",
+          "event_type": "CT_ACTIVITY_PROXY",
+          "fields_changed": {
+            "lastUpdatePosted": [
+              "2023-07-25",
+              "2026-01-27"
+            ]
+          },
+          "impact": 2,
+          "nct_id": "NCT04088734",
+          "source": "CTGOV"
+        }
+      ],
       "nearest_negative_days": null,
       "nearest_positive_days": null,
       "severe_negative_flag": false,
       "ticker": "ABEO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f8ae551b0c1b049a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "efeacdf7954a1bd5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -57,8 +94,8 @@
       "ticker": "ABOS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "56e57287f4cd3417",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5d9e910cb3ca8441",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -69,8 +106,8 @@
       "ticker": "ABSI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5af053f6a84ca574",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9a55d33e8d41e666",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -81,8 +118,8 @@
       "ticker": "ABUS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "86bdc7eff059e409",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8e6b92090378f1bb",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -93,8 +130,8 @@
       "ticker": "ABVX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4aadd46e5cb377c6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "217ef955fbcfbbd6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -105,8 +142,8 @@
       "ticker": "ACAD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f5cebf825cded2a8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "647f669bed84e578",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -117,8 +154,8 @@
       "ticker": "ACIU"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "737d150933a722c7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f152dcaf03c5595b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -129,8 +166,8 @@
       "ticker": "ACLX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "45b483d1b35beb62",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "701413379c943072",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -141,8 +178,8 @@
       "ticker": "ACRS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "584ca4ad657e166e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d016e592165d89b5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -153,8 +190,8 @@
       "ticker": "ACRV"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7a66a42b11eae22f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2f80b41eaf3c804d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -165,8 +202,8 @@
       "ticker": "ADCT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c1f80842289e22fe",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b272b4d691c57447",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -177,8 +214,8 @@
       "ticker": "ADMA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9836e9615c5ccfcf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cb3f004fc6ab272e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -189,8 +226,8 @@
       "ticker": "ADPT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fd84c08506395df8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c1ad31cb5e8e6961",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -201,8 +238,8 @@
       "ticker": "AGIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "65ed1ec81099bbc1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "782c1ccfff0a6207",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -213,8 +250,8 @@
       "ticker": "AKTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7160a28aa9dd4799",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dae6db8dd1d3f842",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -225,8 +262,8 @@
       "ticker": "ALDX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d0c3bb6fc15f6102",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8cbd8f63cd4a0c80",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -237,8 +274,8 @@
       "ticker": "ALGS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d26bd0605ac92800",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "eafa8e11584071a1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -249,8 +286,8 @@
       "ticker": "ALKS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f399ac16a69e71b1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0e207b579dc27737",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -261,8 +298,8 @@
       "ticker": "ALLO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c2baa5c05179445e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6ca39df2b3d108f9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -273,8 +310,8 @@
       "ticker": "ALMS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "377ca00aad01b033",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5cf92f411a0ee84c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -285,8 +322,8 @@
       "ticker": "ALNY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "bc22ccebc71b2dc0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1e69f24b516196bf",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -297,8 +334,8 @@
       "ticker": "ALT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ee3a914cb9647114",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f4d5e08ed2f1c70f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -309,8 +346,8 @@
       "ticker": "ALVO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "120d1933558b5f29",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "33179f1ff0610c1a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -321,8 +358,8 @@
       "ticker": "AMGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2600da177028a030",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "38436ca52a3ae150",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -333,8 +370,8 @@
       "ticker": "AMLX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a9c34855988ce4f2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f09fc101e8bd243b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -345,8 +382,8 @@
       "ticker": "AMPH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f4048c8f8736ba1e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "08b8779c802bb593",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -357,8 +394,8 @@
       "ticker": "AMRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5e0814bc3976339e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "fe7bb17e2a4fab39",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -369,8 +406,8 @@
       "ticker": "ANAB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "079cf17374470d35",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5532379ab98e0bd9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -381,8 +418,8 @@
       "ticker": "ANIP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "866a75e92a309892",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "edd7923c88701edb",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -393,8 +430,8 @@
       "ticker": "ANNX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9345ff7e879c5322",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "974b8a10f05f8a44",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -405,8 +442,8 @@
       "ticker": "ANRO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ae899e1ae4839650",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0dee0722023bbe10",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -417,8 +454,8 @@
       "ticker": "APGE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "39fa1804fcd5113a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "939d708ceb672844",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -429,8 +466,8 @@
       "ticker": "APLS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f941871dff3b78a1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cc519ce80f641e94",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -441,8 +478,8 @@
       "ticker": "AQST"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4a1929c528a56ce7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "458a5e8c7a25a8c7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -453,8 +490,8 @@
       "ticker": "ARCT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4b7ec72290ff8fe1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3f858a626fc90d67",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -465,8 +502,8 @@
       "ticker": "ARDX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d71281d2cd8fff68",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "465f144ea675b6a5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -477,8 +514,8 @@
       "ticker": "ARGX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e94f8d895f67e0e5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "12538a69be714d8e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -489,8 +526,8 @@
       "ticker": "ARQT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0b48c532e5636632",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cdad6c11d2128d29",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -501,8 +538,8 @@
       "ticker": "ARTV"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1ef936d0751ff8ad",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "99b4b1e45ce0ea52",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -513,8 +550,8 @@
       "ticker": "ARVN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f4dd1a511adda770",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6fadad04d5bfca03",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -525,20 +562,75 @@
       "ticker": "ARWR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "efd9a76fd797b00e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0d1269f1fd8a0fdd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
-      "events": [],
+      "events": [
+        {
+          "actual_date": null,
+          "confidence": 0.3,
+          "confidence_reason": "Trial record updated 3 days ago (2021-02-17 \u2192 2026-01-27) but no specific status/date change detected. May indicate administrative update, protocol amendment, or enrollment activity.",
+          "direction": "NEUTRAL",
+          "disclosed_at": "2026-01-27",
+          "event_rule_id": "M3_DIFF_CT_ACTIVITY_PROXY",
+          "event_type": "CT_ACTIVITY_PROXY",
+          "fields_changed": {
+            "lastUpdatePosted": [
+              "2021-02-17",
+              "2026-01-27"
+            ]
+          },
+          "impact": 2,
+          "nct_id": "NCT03576066",
+          "source": "CTGOV"
+        },
+        {
+          "actual_date": null,
+          "confidence": 0.3,
+          "confidence_reason": "Trial record updated 3 days ago (2021-01-28 \u2192 2026-01-27) but no specific status/date change detected. May indicate administrative update, protocol amendment, or enrollment activity.",
+          "direction": "NEUTRAL",
+          "disclosed_at": "2026-01-27",
+          "event_rule_id": "M3_DIFF_CT_ACTIVITY_PROXY",
+          "event_type": "CT_ACTIVITY_PROXY",
+          "fields_changed": {
+            "lastUpdatePosted": [
+              "2021-01-28",
+              "2026-01-27"
+            ]
+          },
+          "impact": 2,
+          "nct_id": "NCT03577171",
+          "source": "CTGOV"
+        },
+        {
+          "actual_date": null,
+          "confidence": 0.3,
+          "confidence_reason": "Trial record updated 3 days ago (2022-10-20 \u2192 2026-01-27) but no specific status/date change detected. May indicate administrative update, protocol amendment, or enrollment activity.",
+          "direction": "NEUTRAL",
+          "disclosed_at": "2026-01-27",
+          "event_rule_id": "M3_DIFF_CT_ACTIVITY_PROXY",
+          "event_type": "CT_ACTIVITY_PROXY",
+          "fields_changed": {
+            "lastUpdatePosted": [
+              "2022-10-20",
+              "2026-01-27"
+            ]
+          },
+          "impact": 2,
+          "nct_id": "NCT04454567",
+          "source": "CTGOV"
+        }
+      ],
       "nearest_negative_days": null,
       "nearest_positive_days": null,
       "severe_negative_flag": false,
       "ticker": "ASMB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3b5d6cb71f40d641",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "556afb351adc34ff",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -549,8 +641,8 @@
       "ticker": "ASND"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d24ef8655c8d6d6c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a1e909ae3855e080",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -561,8 +653,8 @@
       "ticker": "ATAI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "77a56219bf887ca6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4d8f23a83a4ba043",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -573,8 +665,8 @@
       "ticker": "ATXS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6bfbc00ff72134e3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0f971bdcf49dd9b7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -585,8 +677,8 @@
       "ticker": "AUPH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b88196733a3836e9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a9e724a7434fb8bc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -597,8 +689,8 @@
       "ticker": "AURA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d8ee3fa25c127bb9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5fbe0d8c485bca3e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -609,8 +701,8 @@
       "ticker": "AUTL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a6109f95560eff6a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "79cc38f455a4e290",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -621,8 +713,8 @@
       "ticker": "AVBP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4d12d99f5d48dd63",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "96fc7682984af70b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -633,8 +725,8 @@
       "ticker": "AVIR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c6ba2582d1ffbf2f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d29b9cf2ef942a73",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -645,8 +737,8 @@
       "ticker": "AVTR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c1871c79970a3b61",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "50fd94b3c2eb820f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -657,8 +749,8 @@
       "ticker": "AVXL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "086d2a1251d79272",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5831561a084f8437",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -669,8 +761,8 @@
       "ticker": "AXSM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "391eca6e792e1190",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bd9eb05d19c5de4f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -681,8 +773,8 @@
       "ticker": "AZN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "96f4b144fce1b8bd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "023c50941263538d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -693,8 +785,8 @@
       "ticker": "BBIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "68e82720c49a26fc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "764d3b2c7835c0f1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -705,8 +797,8 @@
       "ticker": "BBOT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6b7236e9b2f96938",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9cd35f5093cd26ff",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -717,8 +809,8 @@
       "ticker": "BCAX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "38221f44f6e69321",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "65040ebf398c9d27",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -729,8 +821,8 @@
       "ticker": "BCRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0739d3ab0fa351ce",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a58b0b4be635b492",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -741,8 +833,8 @@
       "ticker": "BCYC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "dfa574dae24ef03d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e73371ce73067f55",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -753,8 +845,8 @@
       "ticker": "BDTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2d07439d304879c5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7fe650c613133aff",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -765,8 +857,8 @@
       "ticker": "BEAM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "dfaf3046341dc046",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1c626ebf67c39834",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -777,8 +869,8 @@
       "ticker": "BHVN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fededb65be2d47a7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "33f40359d67e12e8",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -789,8 +881,8 @@
       "ticker": "BIIB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c1500d989021b7db",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "80206dff68c0b7b3",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -801,8 +893,8 @@
       "ticker": "BIOA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "148493e0a8f3fa7c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9f0d9e0865a1bd81",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -813,8 +905,8 @@
       "ticker": "BLTE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cbd9111dfa75d9cc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "18b716c456820028",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -825,8 +917,8 @@
       "ticker": "BMEA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "333c4b0d12d25ae2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "87b9d340b0dc2aa8",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -837,8 +929,8 @@
       "ticker": "BMRN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "21f5edd660b7c38d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c9d85783b48b1c16",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -849,8 +941,8 @@
       "ticker": "BNTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a28e75a00aec0891",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "37b44785395ddf38",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -861,8 +953,8 @@
       "ticker": "BRKR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c8956f8361871187",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "507f37c461c7e15e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -873,8 +965,8 @@
       "ticker": "CABA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "704a91f3a6cc1df4",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "477b53a8ab942285",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -885,8 +977,8 @@
       "ticker": "CADL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "30db37cd8f3e51fd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dbda9cf71512e320",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -897,8 +989,8 @@
       "ticker": "CAI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1663c80e0d5bebc0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "19e575b2cf0e3938",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -909,8 +1001,8 @@
       "ticker": "CATX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ca7e4ab309dfb174",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4eafd6e8de5eec00",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -921,8 +1013,8 @@
       "ticker": "CCCC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "dce2c4e2d1b5e285",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "61d594b105bef63b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -933,8 +1025,8 @@
       "ticker": "CDNA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a2fe8ecf3f453c6d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1c0fd30e965fc224",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -945,8 +1037,8 @@
       "ticker": "CDXS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "97fc1c7e405f94df",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "94417cd0983d86fe",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -957,8 +1049,8 @@
       "ticker": "CELC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "adf587afe3af9770",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c0867d25b51c8fb6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -969,8 +1061,8 @@
       "ticker": "CERS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "102b7028eb82b1cd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9cc19b34ef3572c4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -981,8 +1073,8 @@
       "ticker": "CGEM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3dc540a2db1d6d48",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "44f4d3329dcf8b03",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -993,8 +1085,8 @@
       "ticker": "CGON"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4446300074df601f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f71c5d905cc8cf4b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1005,8 +1097,8 @@
       "ticker": "CHRS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a81531069db87bf4",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a668b38680f0cab9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1017,8 +1109,8 @@
       "ticker": "CLDX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e1e76882e159dfe3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6918f054e84662e5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1029,8 +1121,8 @@
       "ticker": "CLLS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cb5ea55f868af8b7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8dd99aa88079912f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1041,8 +1133,8 @@
       "ticker": "CLYM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "990855c675fd60a7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0c14e4dae3c9e36d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1053,8 +1145,8 @@
       "ticker": "CMPS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "851899c5c53f6a84",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d770b7477d7bcf9e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1065,8 +1157,8 @@
       "ticker": "CNTA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4713773efeb6ae89",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "aaf3e3dd51ef1577",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1077,8 +1169,8 @@
       "ticker": "COGT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "88e19779f7a8b188",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8d3c269a8a58b65d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1089,8 +1181,8 @@
       "ticker": "COLL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "636584ebdb93ec99",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e8b8366cdc3ef035",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1101,8 +1193,8 @@
       "ticker": "CRBU"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "21af2f45d8bb194d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6bbfcdb9a4cbfdef",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1113,8 +1205,8 @@
       "ticker": "CRL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8faaa7e642f1db76",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f3ade9461c5d6d77",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1125,8 +1217,8 @@
       "ticker": "CRMD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9a8df031bcbf4f0c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "56bfa5fbb5d68d2a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1137,8 +1229,8 @@
       "ticker": "CRNX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1fa8de6a7e7c579a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cba75e608eb72db7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1149,8 +1241,8 @@
       "ticker": "CRSP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4243b5600b0b89c9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "10dd7bf3506aaddd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1161,8 +1253,8 @@
       "ticker": "CRVS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0bb8dfb836233bdc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "21c1b3f11628178d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1173,8 +1265,8 @@
       "ticker": "CSTL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "254fb28338d01d0e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b7d8b339197fc050",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1185,8 +1277,8 @@
       "ticker": "CTKB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2611f9a4bf75cbaf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f9c5e0c5af696464",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1197,8 +1289,8 @@
       "ticker": "CTMX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f23be6c8fd65deb7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "15d05b0a2eec190d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1209,8 +1301,8 @@
       "ticker": "CTNM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ab088b716e7d37cb",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2048ebb307664dba",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1221,8 +1313,8 @@
       "ticker": "CVAC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "91b461b26a79930f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3cf3f4e9e29dae7d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1233,8 +1325,8 @@
       "ticker": "CYTK"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8d84ffa3d27f86e5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5140dc320baaac57",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1245,8 +1337,8 @@
       "ticker": "DAWN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6ad1179229d7aee6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "60e4c6df49482b85",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1257,8 +1349,8 @@
       "ticker": "DNA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "62b521670a897264",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8f1521fa06aebc0c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1269,8 +1361,8 @@
       "ticker": "DNLI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "91522f5e9575785c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3afbcc841e83e8f4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1281,8 +1373,8 @@
       "ticker": "DNTH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "eb3e60466646021d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "abcfdbfbaf0e3579",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1293,8 +1385,8 @@
       "ticker": "DRMA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9413ab8dac5d5e83",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "29393de28d2ee47a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1305,8 +1397,8 @@
       "ticker": "DRUG"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3f0b2de95643ba9f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9c313e437679a0c4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1317,8 +1409,8 @@
       "ticker": "DSGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8e0ccb4d4d42f77c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "90c35e7f0ea3b35a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1329,8 +1421,8 @@
       "ticker": "DVAX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "245d9eb8d4726e35",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d58e56b22c0be63c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1341,8 +1433,8 @@
       "ticker": "DYN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "14908cd9df838dcb",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "83936b37eb3daabc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1353,8 +1445,8 @@
       "ticker": "EBS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d10f4d3255e8bec3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bdb9483fcb5e6c39",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1365,8 +1457,8 @@
       "ticker": "EDIT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4b24fdf0d03ac1a5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "79565d279e8500dd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1377,8 +1469,8 @@
       "ticker": "ELDN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fa98e6813dced0aa",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "888f06ca3f38e35a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1389,8 +1481,8 @@
       "ticker": "ELVN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "55bc735ae8636e43",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b595fb46d0477124",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1401,8 +1493,8 @@
       "ticker": "ENGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ae7283d2ea57e74b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5913f0f77ba59411",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1413,8 +1505,8 @@
       "ticker": "ENTA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b4fc83aa5f450d3e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9eb8aafba91b053d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1425,8 +1517,8 @@
       "ticker": "EOLS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "45e737a32bc888f5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "14a78896598968bc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1437,8 +1529,8 @@
       "ticker": "EPRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7c0b9a77abab6f1e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d6fdb6f7fbc4af69",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1449,8 +1541,8 @@
       "ticker": "ERAS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7b46af991c36fb18",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "fed678b09497fc0c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1461,8 +1553,8 @@
       "ticker": "ESPR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a7b1b85149409dde",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b3f5fd51f322ce4f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1473,8 +1565,8 @@
       "ticker": "ETON"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "977405d95d7d6d07",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ad99d00b917a17e9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1485,8 +1577,8 @@
       "ticker": "EWTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cfcd5db9b224894a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "311e700c573fd769",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1497,8 +1589,8 @@
       "ticker": "EXEL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "77141f978cc64d4d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "710857e08ac37bb9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1509,8 +1601,8 @@
       "ticker": "EYPT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b88bb2e50a966cac",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8e1e26417a80a8f5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1521,8 +1613,8 @@
       "ticker": "FATE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "838b20a8381dbd20",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b7622ddd2dce0e81",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1533,8 +1625,8 @@
       "ticker": "FDMT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "277174f372ff7e1c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bcb73005590edebc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1545,8 +1637,8 @@
       "ticker": "FGEN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "76524866b27e3e27",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0af874db7ee2a33f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1557,8 +1649,8 @@
       "ticker": "FHTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1f88d1c32139af6a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "866dfd48aaca0e4a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1569,8 +1661,8 @@
       "ticker": "FLGT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8f536323b32febbc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c2338f4861882760",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1581,8 +1673,8 @@
       "ticker": "FOLD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b54bdb664b858868",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ef7556e59c239506",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1593,8 +1685,8 @@
       "ticker": "FTRE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8893929d007a047e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "26c64c37ba04c99c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1605,8 +1697,8 @@
       "ticker": "FULC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "75e099da13aff608",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ad41699672ef5c29",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1617,8 +1709,8 @@
       "ticker": "GBIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b968d4d484d03fbe",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1d6f70ad6e25ac8b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1629,8 +1721,8 @@
       "ticker": "GERN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8adcd6af65a82dcb",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4b78332a479374ef",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1641,8 +1733,8 @@
       "ticker": "GH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "617e088ac32ab0d9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1bf918793f90352a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1653,8 +1745,8 @@
       "ticker": "GHRS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8dd9c872b265856e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4d33cc26d2dfd120",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1665,8 +1757,8 @@
       "ticker": "GILD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "80de3d21a5a55160",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2e528210732f3852",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1677,8 +1769,8 @@
       "ticker": "GLPG"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c7e2dad1867a4fba",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3df0b6b653b38559",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1689,8 +1781,8 @@
       "ticker": "GLUE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7e5e8e9c2b6376d0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b29ccf65983e47e2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1701,8 +1793,8 @@
       "ticker": "GMAB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3f4c8495c2d39f97",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "95e35d4d9ed006a4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1713,8 +1805,8 @@
       "ticker": "GOSS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "64a066effd724d12",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "247826fefb8679f1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1725,8 +1817,8 @@
       "ticker": "GPCR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a9413f8b5699cc20",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "db4810e0a331681c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1737,8 +1829,8 @@
       "ticker": "GRAL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a346a28f27bd747a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5739839fa01c436b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1749,8 +1841,8 @@
       "ticker": "GRFS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6d1981fa477ddc6a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "daf73ca22f1cae90",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1761,8 +1853,8 @@
       "ticker": "HALO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "181c3d3af0cc4433",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ac3807ddd6531740",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1773,8 +1865,8 @@
       "ticker": "HOWL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "64d00002ac607d18",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2fea58cf3ed84789",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1785,8 +1877,8 @@
       "ticker": "HRMY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5c96364bc9328eaa",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d16bb1487ea46a2c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1797,8 +1889,8 @@
       "ticker": "HROW"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f2221bceb4829a8a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9f4abd9bf780e537",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1809,8 +1901,8 @@
       "ticker": "HRTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f830351f7de279bf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6f89e867aa5537b1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1821,8 +1913,8 @@
       "ticker": "HUMA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "515c8070ad7a6fd5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b71c5b0da3c432af",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1833,8 +1925,8 @@
       "ticker": "IBRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a6b7d3b3dcd53152",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f4c71c5bf5f60d30",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1845,8 +1937,8 @@
       "ticker": "IDYA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "947bd68562c0625c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9b11502582a145ec",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1857,8 +1949,8 @@
       "ticker": "IKT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "09ffea3a3b245df9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bf101fbe4b36fca3",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1869,8 +1961,8 @@
       "ticker": "ILMN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "33dd56c6b38f0b0b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8c04bf435522406a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1881,8 +1973,8 @@
       "ticker": "IMCR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6f50581085b27cbc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d6745aea9c688ef2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1893,8 +1985,8 @@
       "ticker": "IMMP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a5e7af1a2e35458e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "69132281640a5c13",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1905,8 +1997,8 @@
       "ticker": "IMRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ad270676c17bec9e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ae2ecf4b9ebaa38f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1917,8 +2009,8 @@
       "ticker": "IMTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "78f35bfef0eb8435",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9efbe590dff87baf",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1929,8 +2021,8 @@
       "ticker": "IMVT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "613c48c8acadc164",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5a18cc2591e8c15b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1941,8 +2033,8 @@
       "ticker": "INBX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "207dcae2f8e92433",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "701fbccb9f68ee21",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1953,8 +2045,8 @@
       "ticker": "INCY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c12f3581f391fcfd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "02b2c8f2f6802190",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1965,8 +2057,8 @@
       "ticker": "INDV"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "72796fff7d9d34c6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "554c045a02d42449",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1977,8 +2069,8 @@
       "ticker": "INSM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3f1b4f9f8d3e41dc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c5e5a86bad75aa0b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -1989,8 +2081,8 @@
       "ticker": "INVA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "41db7a57c864a2eb",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8be195857a6888a0",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2001,8 +2093,8 @@
       "ticker": "IONS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ae761f510a7d10bf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "34492d4321c1e5b8",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2013,8 +2105,8 @@
       "ticker": "IOVA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "109ef6d5e68a49dd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "903f709e39abfc72",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2025,8 +2117,8 @@
       "ticker": "IRON"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c8b8dbb417595e26",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "447087b80c6711d3",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2037,8 +2129,8 @@
       "ticker": "IRWD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "56f1af96c6c2d3fd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "58971b5ff013d1dc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2049,8 +2141,8 @@
       "ticker": "IVVD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "59b5508f9b98e37a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "712c23ccd596c3dc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2061,8 +2153,8 @@
       "ticker": "JANX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "8b3dfb2babff1185",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "30cc99fc7680a00e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2073,8 +2165,8 @@
       "ticker": "JAZZ"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "061ca448960b1916",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f2a75f43181b4ee6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2085,8 +2177,8 @@
       "ticker": "JBIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a40a5304ac2026c2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cff5d86247a6b4ed",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2097,8 +2189,8 @@
       "ticker": "KALA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "94fad355915939b0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b762b2e032f7480e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2109,8 +2201,8 @@
       "ticker": "KALV"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "22c8aeeaf77accda",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f3fc84ee2195e185",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2121,8 +2213,8 @@
       "ticker": "KMDA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "65c53ca4fa516511",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c1edd9ae84bc2840",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2133,8 +2225,8 @@
       "ticker": "KNSA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "55087f0f39064d29",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8a7f228a54289bb3",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2145,8 +2237,8 @@
       "ticker": "KOD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f3b6f9bba4bf9000",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "29b4f70b9987e214",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2157,8 +2249,8 @@
       "ticker": "KROS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2aa4e18f3691a033",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6de05a508473d221",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2169,8 +2261,8 @@
       "ticker": "KRYS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "13d658bc559d8503",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7742fbec93451ccd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2181,8 +2273,8 @@
       "ticker": "KURA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b54f0b9486c93972",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "92e1697bf2633a76",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2193,8 +2285,8 @@
       "ticker": "KYMR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "40f89990d735fab7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d5114f828737bcca",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2205,8 +2297,8 @@
       "ticker": "KYTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a373af795b362328",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "10e05589aa5a2844",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2217,8 +2309,8 @@
       "ticker": "LAB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fd304862fc251693",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3e8ae22cbb8b53da",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2229,8 +2321,8 @@
       "ticker": "LBRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "dc026ac607f3ee21",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "151bd06eb08473d8",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2241,8 +2333,8 @@
       "ticker": "LCTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fc48d8dea29df258",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4db65d0d87c7a031",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2253,8 +2345,8 @@
       "ticker": "LEGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "18ed951f5063281a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f3b16a6a928502d2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2265,8 +2357,8 @@
       "ticker": "LENZ"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5bd7227efcc7867a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "addc3d100292246c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2277,8 +2369,8 @@
       "ticker": "LFCR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cf84ccd129681bf1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "51da0d829bf29a1c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2289,8 +2381,8 @@
       "ticker": "LGND"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "98e863792f49f8f0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "79f8b293c8d157f9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2301,8 +2393,8 @@
       "ticker": "LQDA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a6635ce21a6480b6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "70f785b2c1b4df0b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2313,8 +2405,8 @@
       "ticker": "LRMR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3bd601cdf3ef2f3c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bd67eb9a08174f76",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2325,8 +2417,8 @@
       "ticker": "LXEO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "51c3cb6f19a26e7b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b17164e07d4f1aae",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2337,8 +2429,8 @@
       "ticker": "LYEL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "be646e8126555548",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5a7055b54dc1e1b2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2349,8 +2441,8 @@
       "ticker": "LYRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b13cdc8826f36644",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d7f2beecbe5da03f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2361,8 +2453,8 @@
       "ticker": "MAZE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a4f60702f363a006",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b8a657ee84c9e58c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2373,8 +2465,8 @@
       "ticker": "MBX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b8655b6d50fdf84e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "21e55248b6130ffa",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2385,8 +2477,8 @@
       "ticker": "MCRB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "645178563da78616",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "151e9627127ab303",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2397,8 +2489,8 @@
       "ticker": "MDGL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5bf4f13a944f45c3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "da2280c61d550ef4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2409,8 +2501,8 @@
       "ticker": "MEDP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c52fe34421d8ab7f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e754607ad36af2c6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2421,8 +2513,8 @@
       "ticker": "MENS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "868394dbcc324239",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8a2a1accedadd660",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2433,8 +2525,8 @@
       "ticker": "MESO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1eac031914b7b15f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5d5cfd37614106db",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2445,8 +2537,8 @@
       "ticker": "MGTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "157dcd66ee76e82c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ba92e467958c6063",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2457,8 +2549,8 @@
       "ticker": "MIRM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c8554378860b3165",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2fe423b1b8224f59",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2469,8 +2561,8 @@
       "ticker": "MLTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9c1913d8ca8ad96f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "917ad33985554273",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2481,8 +2573,8 @@
       "ticker": "MLYS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "19e369dc4a19ac15",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c4ddba75f843897b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2493,8 +2585,8 @@
       "ticker": "MNKD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2e511eb80f171b67",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e1e0c0d4bf195e91",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2505,8 +2597,8 @@
       "ticker": "MNMD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9e5ba8cef202c0ef",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c8f97d6aab3ba3cc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2517,8 +2609,8 @@
       "ticker": "MRNA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "113fcba5413c2af2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "697afcf3b530ad6c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2529,8 +2621,8 @@
       "ticker": "MRSN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ded2fabf0568027a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6c04d46e1e32f7ed",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2541,8 +2633,8 @@
       "ticker": "MRVI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "755e25b55fecb3d5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a015206490d18d9a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2553,8 +2645,8 @@
       "ticker": "MYGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5cfe87650d186648",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "21d80bea302f9af5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2565,8 +2657,8 @@
       "ticker": "NAMS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0d6be8a69838c482",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a930fbe3ed6ef1c4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2577,8 +2669,8 @@
       "ticker": "NAUT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d6f69a2732c9d5fc",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8aa8b4acb25a66f6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2589,8 +2681,8 @@
       "ticker": "NBIX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6873ab90caee9d81",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dc44378372d1fb1a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2601,8 +2693,8 @@
       "ticker": "NBP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "34b87d6884ee574a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "93dc078d016861cd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2613,8 +2705,8 @@
       "ticker": "NGNE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ee999f8c191d29e0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "24c53a8b51a29bbc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2625,8 +2717,8 @@
       "ticker": "NKTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ea86fedb8b3feaa6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9a626d9f9ac6911e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2637,8 +2729,8 @@
       "ticker": "NMRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3eb71afceeb64660",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8e22cb8c88d992b6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2649,8 +2741,8 @@
       "ticker": "NRIX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "5b134aa47d84da82",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4ebadb0bc3659b8f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2661,8 +2753,8 @@
       "ticker": "NTLA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "aadac4b3ac2657d3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0633825c64ec951e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2673,8 +2765,8 @@
       "ticker": "NTRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c9e2694a8b028ab7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b5d04416e866a54d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2685,8 +2777,8 @@
       "ticker": "NUVB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4f139a5b0d3830ca",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "342a2ae791198622",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2697,8 +2789,8 @@
       "ticker": "NUVL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "724f9a2886daafe7",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3b784f41696d6b07",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2709,8 +2801,8 @@
       "ticker": "NVAX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "06116bbec57bac87",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a8ab9dc00bbcb1d5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2721,8 +2813,8 @@
       "ticker": "NVCR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "bb753f7bc48dfca0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3cedfbc06974c2a7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2733,8 +2825,8 @@
       "ticker": "OABI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "34538bf837823a9a",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2fe5ee7a135050e1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2745,8 +2837,8 @@
       "ticker": "OBIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "28b283c565bb7973",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2db9c2685fbe2cbf",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2757,8 +2849,8 @@
       "ticker": "OCGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ea522ecb15bf9e7b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1dcb5baa9e4c475b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2769,8 +2861,8 @@
       "ticker": "OCS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f21cbf8a89a1847d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c520583e351b1445",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2781,8 +2873,8 @@
       "ticker": "OCUL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4657eebcb0be6268",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "45a898145a178574",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2793,8 +2885,8 @@
       "ticker": "OLMA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6cf4cd7e4f05f1c8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1dd703f895dfe9ed",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2805,8 +2897,8 @@
       "ticker": "OMER"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "709b9325a6509bf2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e560d89904de38c2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2817,8 +2909,8 @@
       "ticker": "ONC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f56dfb4c01837bd6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ab034a8074e486e4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2829,8 +2921,8 @@
       "ticker": "OPCH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1cff198a74cbb084",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "467b127f5809675e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2841,8 +2933,8 @@
       "ticker": "OPK"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7222dc075aff5427",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d69e7264e63058a2",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2853,8 +2945,8 @@
       "ticker": "ORIC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cc86f674ec770d78",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "247d1033cced47ed",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2865,8 +2957,8 @@
       "ticker": "ORKA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "12a35e5a8e16da54",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e2aa6b56ec7f6793",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2877,8 +2969,8 @@
       "ticker": "PACB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f805b87a0c8e2c3f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9a89e8c97c933633",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2889,8 +2981,8 @@
       "ticker": "PAHC"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "00ec717ce9b5d8a9",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8c119b67e2414f50",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2901,8 +2993,8 @@
       "ticker": "PBYI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7f7e8c5033ea3931",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "eaf5fc2f0dd0fad4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2913,8 +3005,8 @@
       "ticker": "PCRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "fa5f755ceb597c10",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8194c43dc5aa1e21",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2925,8 +3017,8 @@
       "ticker": "PCVX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "baca0b85cd09f298",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dc83aea6252bcdc9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2937,8 +3029,8 @@
       "ticker": "PEPG"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "de8baaeccf8ddb46",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f7ef89456286194e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2949,8 +3041,8 @@
       "ticker": "PGEN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e513311d9bcc4a1c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8442abc76de74f51",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2961,8 +3053,8 @@
       "ticker": "PHAT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ced9b4b9e09f762c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f62d30fe76fd4119",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2973,8 +3065,8 @@
       "ticker": "PHVS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9fb5dd2e101cb377",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "745cc5d1772a40fd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2985,8 +3077,8 @@
       "ticker": "PRAX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6f2a7a0b6d8c4bd5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b628aa83744d8972",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -2997,8 +3089,8 @@
       "ticker": "PRLD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c4bdd536bbf92620",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c2e62bfa806c4ad9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3009,8 +3101,8 @@
       "ticker": "PRME"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "74ba4909d4b3966c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7f5c3da231a9c62d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3021,8 +3113,8 @@
       "ticker": "PRQR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0d5dedab9b440c90",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a83cfa8058c14159",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3033,8 +3125,8 @@
       "ticker": "PRTA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ab7a20728cc12d4c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1248f7e740c61914",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3045,8 +3137,8 @@
       "ticker": "PRVA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "07c784bba1bdde16",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "52d7dffab1e04b30",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3057,8 +3149,8 @@
       "ticker": "PSNL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6f181ad713c5c449",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1f21054bd67480b4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3069,8 +3161,8 @@
       "ticker": "PTCT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1b9251dce2be428e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6b56433341ce9b99",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3081,8 +3173,8 @@
       "ticker": "PTGX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2235867da8881dc5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b5072d9869839e27",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3093,8 +3185,8 @@
       "ticker": "PVLA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d578f1c332377021",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6db5733efc35be97",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3105,8 +3197,8 @@
       "ticker": "PYXS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "aeb03e0dc8c628a8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c5cb3d58c6db08f7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3117,8 +3209,8 @@
       "ticker": "QSI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "92b493d2d5786d0b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c794e2c16004b65c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3129,8 +3221,8 @@
       "ticker": "QTRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e53428ac4c6014b2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c06934a6399e3091",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3141,8 +3233,8 @@
       "ticker": "QURE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a7a043c66ceee267",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "27bc57eda91afe66",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3153,8 +3245,8 @@
       "ticker": "RANI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f8012fc0ed6cd537",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "250830d1ed42357c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3165,8 +3257,8 @@
       "ticker": "RAPP"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0199b5231368a639",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "978f5bff57eed6fc",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3177,8 +3269,8 @@
       "ticker": "RAPT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ee8ff3a27663437d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "41f671a990fcb288",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3189,8 +3281,8 @@
       "ticker": "RARE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cf9f2d12c75f3d35",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "85d815d903cb054d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3201,8 +3293,8 @@
       "ticker": "RCKT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4e7b6218aab26c31",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b703e4666aada7c4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3213,8 +3305,8 @@
       "ticker": "RCUS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "08f49e7288f68c3b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c74381878767da67",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3225,8 +3317,8 @@
       "ticker": "REGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a21c5b625698138e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "56ef6db4326d9623",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3237,8 +3329,8 @@
       "ticker": "REPL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1cc2ad3016511602",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "096e25ba0115537e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3249,8 +3341,8 @@
       "ticker": "RGEN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "40d9f5149d6df696",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cec4faee92d86563",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3261,8 +3353,8 @@
       "ticker": "RGNX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "46ebb497e6685a92",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1f95a099a7418887",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3273,8 +3365,8 @@
       "ticker": "RIGL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "98db644130b00fe2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "12a8a730c3373b47",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3285,8 +3377,8 @@
       "ticker": "RLAY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "32aa5d8a4734be96",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3e5f02f9fab93942",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3297,8 +3389,8 @@
       "ticker": "RNA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b686283ba7ca2c49",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "10841fce74254569",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3309,8 +3401,8 @@
       "ticker": "ROIV"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e81ec23f045972a2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6e0402265c55cff8",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3321,8 +3413,8 @@
       "ticker": "RPRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ba14e74d66b4b3ec",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "555d8b2ee2a912f5",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3333,8 +3425,8 @@
       "ticker": "RVMD"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "287c93c5592ed7a6",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "05fa0087f614778d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3345,8 +3437,8 @@
       "ticker": "RXRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b5c4ce589b295318",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "91cd3375bd3959c3",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3357,8 +3449,8 @@
       "ticker": "RYTM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "05c2572d582c46b4",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "35c0913567e0ae9e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3369,8 +3461,8 @@
       "ticker": "SABS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "264135f67042fe36",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bfeda6c41a47850b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3381,8 +3473,8 @@
       "ticker": "SANA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6459e860838d7796",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8c23bc5874954731",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3393,8 +3485,8 @@
       "ticker": "SEPN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9652cebe5d01edbf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7d6e8ed4b9f39e6d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3405,8 +3497,8 @@
       "ticker": "SERA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "32df6c01dcd665cd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f8beef12c45f9299",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3417,8 +3509,8 @@
       "ticker": "SGMO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7d493e17c5550271",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1a09df78cd4a1dfa",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3429,8 +3521,8 @@
       "ticker": "SGMT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7f30bc2cb809b914",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a7642c7b6f9e3a07",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3441,8 +3533,8 @@
       "ticker": "SIGA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3887e2c636d221bd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "29d4edc52316889a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3453,8 +3545,8 @@
       "ticker": "SION"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "84a087c0e7ea5bbf",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "646e16e85d77794d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3465,8 +3557,8 @@
       "ticker": "SKYE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "269722319e20824f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "16ce2d9641a9c86a",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3477,8 +3569,8 @@
       "ticker": "SLDB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "32b21c99b21fe135",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e2578ae58e19a129",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3489,8 +3581,8 @@
       "ticker": "SLN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1dbacbf8aab52c2f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e872a6e08e665002",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3501,8 +3593,8 @@
       "ticker": "SMMT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4dffdba4648cae1f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "71d307ffeea7b6e1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3513,8 +3605,8 @@
       "ticker": "SNDX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "17a9c3be328e3d24",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "5eafd23da499bd7f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3525,8 +3617,8 @@
       "ticker": "SNY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "cd63a1c258a4963d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d04c80e3cd6d8393",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3537,8 +3629,8 @@
       "ticker": "SPRY"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6deb141e80de3658",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f7a00a4f85c01393",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3549,8 +3641,8 @@
       "ticker": "SRPT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ce74633841d4402b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7bcd0081a92110c9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3561,8 +3653,8 @@
       "ticker": "SRRK"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7230c062e5b38733",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "60f34ce9ccd59e88",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3573,8 +3665,8 @@
       "ticker": "STOK"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "4f4976216ae981c5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b4ed39b7c5e93df0",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3585,8 +3677,8 @@
       "ticker": "STRO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2c9feee777d7b441",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6c76ef6d250caa3b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3597,8 +3689,8 @@
       "ticker": "STVN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "77412d7fe675fb17",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bef481a280735e32",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3609,8 +3701,8 @@
       "ticker": "SUPN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1a967c702d03cfa4",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "0082246eaf129ee9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3621,8 +3713,8 @@
       "ticker": "SVRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "2962dcc7eb453e2f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "c91349ec88f64e14",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3633,8 +3725,8 @@
       "ticker": "SYRE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "123866bbfe73327c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "8c973415a8348471",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3645,8 +3737,8 @@
       "ticker": "TARA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ae5b12796096d86f",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e11baa679c6d6ed6",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3657,8 +3749,8 @@
       "ticker": "TARS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9096d3dc892136db",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1c9c77543cf8eb0d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3669,8 +3761,8 @@
       "ticker": "TBPH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "96edf9cf6124976b",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "85824b62bc7bb69c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3681,8 +3773,8 @@
       "ticker": "TCRX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ceed2ae8270dcf8e",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dc95c6636b9cabb4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3693,8 +3785,8 @@
       "ticker": "TECH"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "711b58ad8cfd8e5c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4c63f2c730a8f36c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3705,8 +3797,8 @@
       "ticker": "TECX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "50f0ae3ebba445cd",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b89c2c091515a383",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3717,8 +3809,8 @@
       "ticker": "TEM"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f7d8b2711a6c5e0c",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "836bd78ef7021d8c",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3729,8 +3821,8 @@
       "ticker": "TENX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ce55f059a83f2074",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ec0cf9e914a5dfd9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3741,8 +3833,8 @@
       "ticker": "TERN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9ec05eca2580c902",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "2ebd8af36b3e0b2e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3753,8 +3845,8 @@
       "ticker": "TGTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "d18e3972e75ed400",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "3ebfa4f8ec4aed39",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3765,8 +3857,8 @@
       "ticker": "TKNO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "37f6b77734d72217",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d71eb96fdd424eeb",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3777,8 +3869,8 @@
       "ticker": "TNGX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3403d50180cad447",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "08a0d98258dd09e1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3789,8 +3881,8 @@
       "ticker": "TNYA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f22bf54a0a885ab8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "ec1bde0a3e4a0d2f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3801,8 +3893,8 @@
       "ticker": "TRDA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "42a13844aa5f7928",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "b11970289762d8df",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3813,8 +3905,8 @@
       "ticker": "TRVI"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "84b9c750fb686dea",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "471ea74aa31b54ba",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3825,8 +3917,8 @@
       "ticker": "TSHA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "f66b4bdfc52139c2",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a424701de026dbb7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3837,8 +3929,8 @@
       "ticker": "TVTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "dc61f31e46b7e0d3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "6722fe5aee0e1a8d",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3849,8 +3941,8 @@
       "ticker": "TWST"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "16969cea651a6c29",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e0c8eda119a041ec",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3861,8 +3953,8 @@
       "ticker": "TXG"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "3f72353c06aff2ea",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "121a8cb7213ba3e4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3873,8 +3965,8 @@
       "ticker": "TYRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "69e8dcd66a6ff028",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "a6ff20513184a5e7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3885,8 +3977,8 @@
       "ticker": "UPB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9ed1f5cb0574b821",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "67482445e1d1b19e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3897,8 +3989,8 @@
       "ticker": "URGN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "70e6c2f9e24419f8",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "523bdafc00acf008",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3909,8 +4001,8 @@
       "ticker": "UTHR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a845338260b9886d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9669b8b8963b00b7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3921,8 +4013,8 @@
       "ticker": "VCEL"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "10a8de48fbd73621",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "e820542aefabc601",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3933,8 +4025,8 @@
       "ticker": "VCYT"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "15e065705018eb02",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "7bc5804d7b7e715e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3945,8 +4037,8 @@
       "ticker": "VERA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "0905ddf16fcd20c4",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "4ae6671b125a6a50",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3957,8 +4049,8 @@
       "ticker": "VIR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "9e8443cadacdf054",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "cfd2be10e0868170",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3969,8 +4061,8 @@
       "ticker": "VKTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a0024a7a992a3452",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "d19869e40ca32f42",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3981,8 +4073,8 @@
       "ticker": "VNDA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "7d7547aebe3233b5",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "16ed4bd70a8074dd",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -3993,8 +4085,8 @@
       "ticker": "VOR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ccf9b34820a3ac77",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f5d1ec91f99cd60b",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4005,8 +4097,8 @@
       "ticker": "VRDN"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a1ff63898ee8043d",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bfe07c502fb694e7",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4017,8 +4109,8 @@
       "ticker": "VRTX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "e5741468e7ad2a78",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1cb67e93591edcbf",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4029,8 +4121,8 @@
       "ticker": "VTRS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ec258424324b85ec",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "f46b432245281c4e",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4041,8 +4133,8 @@
       "ticker": "VTYX"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "b81b7642c67ecab1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "78663639a1fdc844",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4053,8 +4145,8 @@
       "ticker": "VYGR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "6fcfe9e120df65f1",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "db70ad5ee2c07814",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4065,8 +4157,8 @@
       "ticker": "WVE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "c05748d712f53060",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "07e0391633f54b13",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4077,8 +4169,8 @@
       "ticker": "XENE"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "052a7184677a0207",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "9144bd4355177ba9",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4089,8 +4181,8 @@
       "ticker": "XERS"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "ace43a58e0e88467",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1dedb9136be23715",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4101,8 +4193,8 @@
       "ticker": "XNCR"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "53fff3fadbae0600",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "bda0348c51bf10b4",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4113,8 +4205,8 @@
       "ticker": "ZBIO"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "da054783ec118fa3",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "dba735f9cbff9f0f",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4125,8 +4217,8 @@
       "ticker": "ZLAB"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "398668f886499868",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "1674d61a51da2fe1",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4137,8 +4229,8 @@
       "ticker": "ZVRA"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "1f7951d17b4202a0",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "575baafb0af2b2b0",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
@@ -4149,8 +4241,8 @@
       "ticker": "ZYME"
     },
     {
-      "as_of_date": "2026-01-20",
-      "audit_hash": "a4f2cfd688924922",
+      "as_of_date": "2026-01-30",
+      "audit_hash": "48b81f8152da3e73",
       "catalyst_score_neg": 0.0,
       "catalyst_score_net": 0.0,
       "catalyst_score_pos": 0.0,
