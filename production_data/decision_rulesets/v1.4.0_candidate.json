@@ -5,7 +5,7 @@
   "catalyst_logistic_midpoint_days": 150,
   "catalyst_logistic_scale_days": 30.0,
   "catalyst_mid_days": 180,
-  "catalyst_near_days": 90,
+  "catalyst_near_days": 120,
   "catalyst_priority_default": 9,
   "catalyst_priority_map": [
     [
@@ -104,7 +104,7 @@
       3
     ]
   ],
-  "catalyst_priority_mode": "off",
+  "catalyst_priority_mode": "tiebreaker",
   "catalyst_priority_rank_bonuses": [
     [
       1,
@@ -163,18 +163,18 @@
     ]
   ],
   "cost_haircut_floor_mult": 0.55,
-  "cost_impact_cap_bps": 200.0,
+  "cost_impact_cap_bps": 1000.0,
   "dd_rel_margin_rescue_threshold": -0.05,
   "drawdown_flag_threshold": -0.35,
   "drawdown_gate": -0.4,
   "drawdown_gate_mode": "hard",
   "drawdown_gate_require_both": true,
   "drawdown_hard_floor": -0.75,
-  "drawdown_rel_xbi_gate": -0.2,
+  "drawdown_rel_xbi_gate": -0.25,
   "drawdown_size_penalty": -1,
   "enable_catalyst_priority": false,
   "enable_catalyst_tilt": false,
-  "enable_cost_haircut": false,
+  "enable_cost_haircut": true,
   "enable_dd_rel_margin_rescue": false,
   "enable_mom_state_tilt": false,
   "mom_state_tilt_mults": [
