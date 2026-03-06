@@ -52,7 +52,7 @@ def fetch_prices_yfinance(ticker: str, start_date: str, end_date: str) -> List[D
         return []
     try:
         t = yf.Ticker(ticker)
-        df = t.history(start=start_date, end=end_date, interval="1d")
+        df = t.history(start=start_date, end=end_date, interval="1d", auto_adjust=True)
         if df.empty:
             return []
         rows = []

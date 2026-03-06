@@ -89,14 +89,12 @@ class TestFREDCollector:
             collector = FREDCollector()
             assert collector.api_key == "env_key"
 
-    def test_initialization_uses_default_key(self):
-        """Should use default API key when none provided."""
+    def test_initialization_warns_when_no_key(self):
+        """Should warn when no API key is available."""
         with patch.dict(os.environ, {}, clear=True):
-            # Remove FRED_API_KEY if present
             os.environ.pop("FRED_API_KEY", None)
             collector = FREDCollector(api_key=None)
-            # Should fall back to default key
-            assert collector.api_key == FREDCollector.DEFAULT_API_KEY
+            assert collector.api_key is None
 
     def test_series_ids_defined(self):
         """Should have all required series IDs."""

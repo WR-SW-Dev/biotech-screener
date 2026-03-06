@@ -184,33 +184,30 @@ for i, ticker in enumerate(all_tickers, 1):
     print(f"[{i}/{len(all_tickers)}] {ticker:8s} (ETA: {eta})...", end='', flush=True)
     
     try:
-        # Download with progress disabled (auto_adjust=False for backward compatibility)
+        # Download with auto_adjust=True so Close is split+dividend adjusted.
+        # This matches morningstar_data_provider.py and ensures price_history.csv
+        # stores split-adjusted prices consistently.
         df = yf.download(
             ticker,
             start=fetch_start.strftime('%Y-%m-%d'),
             end=fetch_end.strftime('%Y-%m-%d'),
             progress=False,
-            auto_adjust=False
+            auto_adjust=True
         )
-        
+
         if df.empty:
             print(" ❌ No data")
             failed_tickers.append(ticker)
             continue
-        
-        # Extract adjusted close prices
-        # Handle both single-ticker and multi-ticker dataframes
+
+        # With auto_adjust=True, Close is already split-adjusted.
         for date, row in df.iterrows():
             try:
-                # Try to get Adj Close
-                if 'Adj Close' in df.columns:
-                    close_price = float(row['Adj Close'])
-                elif ('Adj Close', ticker) in df.columns:
-                    close_price = float(row[('Adj Close', ticker)])
-                elif 'Close' in df.columns:
+                if 'Close' in df.columns:
                     close_price = float(row['Close'])
+                elif ('Close', ticker) in df.columns:
+                    close_price = float(row[('Close', ticker)])
                 else:
-                    # Fallback: use the first numeric column
                     close_price = float(row.iloc[-1])
                 
                 price_data.append({

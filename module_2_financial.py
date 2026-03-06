@@ -1143,10 +1143,13 @@ def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         fin_rec = {'ticker': ticker}
 
         # Cash: cash_mm (millions) -> Cash (dollars)
+        # Fallback chain: cash_mm → Cash → CashAndSecurities (aggregate from EDGAR)
         if 'cash_mm' in rec:
             fin_rec['Cash'] = rec['cash_mm'] * 1e6
-        elif 'Cash' in rec:
+        elif 'Cash' in rec and rec['Cash'] is not None:
             fin_rec['Cash'] = rec['Cash']
+        elif 'CashAndSecurities' in rec and rec['CashAndSecurities'] is not None:
+            fin_rec['Cash'] = rec['CashAndSecurities']
 
         # Burn rate: burn_rate_mm -> NetIncome (negative)
         if 'burn_rate_mm' in rec:

@@ -16,8 +16,10 @@ from datetime import date, datetime, timedelta
 from typing import Dict, Optional
 import argparse
 
-# Maximum age in days for financial data to be considered valid
-MAX_DATA_AGE_DAYS = 365
+# Maximum age in days for financial data to be considered valid.
+# 540 days (18 months) to cover annual-only filers (e.g. 20-F foreign
+# private issuers) whose latest data can be 15+ months old at collection.
+MAX_DATA_AGE_DAYS = 540
 
 
 def is_data_fresh(date_str: str, max_age_days: int = MAX_DATA_AGE_DAYS) -> bool:
@@ -81,8 +83,10 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
         
         if response.status_code == 200:
             data = response.json()
-            facts = data.get('facts', {}).get('us-gaap', {})
-            
+            all_facts = data.get('facts', {})
+            facts = all_facts.get('us-gaap', {})
+            ifrs_facts = all_facts.get('ifrs-full', {})
+
             # Key metrics to extract (single XBRL tag -> friendly name)
             metrics = {
                 'Assets': 'Assets',
@@ -91,15 +95,34 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                 'LiabilitiesCurrent': 'CurrentLiabilities',
                 'StockholdersEquity': 'ShareholdersEquity',
                 'CashAndCashEquivalentsAtCarryingValue': 'Cash',
+                'CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents': 'CashRestricted',
+                'CashEquivalentsAtCarryingValue': 'CashEquivalentsOnly',
                 'MarketableSecuritiesCurrent': 'MarketableSecurities',
                 'ShortTermInvestments': 'ShortTermInvestments',
                 'AvailableForSaleSecuritiesCurrent': 'AvailableForSaleSecurities',
+                'AvailableForSaleSecuritiesDebtSecuritiesCurrent': 'AvailableForSaleDebtCurrent',
                 'CostOfRevenue': 'COGS',
                 'ResearchAndDevelopmentExpense': 'R&D',
                 'NetIncomeLoss': 'NetIncome',
                 'LongTermDebt': 'LongTermDebt',
                 'LongTermDebtCurrent': 'LongTermDebtCurrent',
                 'ConvertibleNotesPayable': 'ConvertibleDebt',
+            }
+
+            # IFRS equivalents: ifrs-full tag -> same friendly name
+            ifrs_metrics = {
+                'Assets': 'Assets',
+                'CurrentAssets': 'CurrentAssets',
+                'Liabilities': 'Liabilities',
+                'CurrentLiabilities': 'CurrentLiabilities',
+                'Equity': 'ShareholdersEquity',
+                'CashAndCashEquivalents': 'Cash',
+                'NoncurrentFinancialAssets': 'MarketableSecurities',
+                'CostOfSales': 'COGS',
+                'ResearchAndDevelopmentExpense': 'R&D',
+                'ProfitLoss': 'NetIncome',
+                'NoncurrentPortionOfNoncurrentBorrowings': 'LongTermDebt',
+                'CurrentPortionOfNoncurrentBorrowings': 'LongTermDebtCurrent',
             }
 
             # Metrics with fallback tags (try in order, use first found)
@@ -124,6 +147,24 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                     'InterestExpense',  # Standard
                     'InterestAndDebtExpense',  # Alternative
                     'InterestExpenseDebt',  # Specific to debt
+                ],
+            }
+
+            # IFRS fallback tags for multi-tag metrics
+            ifrs_metrics_with_fallback = {
+                'Revenue': [
+                    'Revenue',  # IFRS standard
+                    'RevenueFromContractsWithCustomers',
+                ],
+                'CFO': [
+                    'CashFlowsFromUsedInOperatingActivities',
+                ],
+                'OperatingExpenses': [
+                    'AdministrativeExpense',
+                ],
+                'InterestExpense': [
+                    'InterestExpenseOnBorrowings',
+                    'FinanceCosts',
                 ],
             }
 
@@ -165,6 +206,52 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                 if best_val is not None:
                     financial_data[friendly_name] = best_val
                     financial_data[f"{friendly_name}_date"] = best_date
+
+            # --- IFRS fallback for foreign filers (AZN, SNY, ARGX, BNTX, etc.) ---
+            # If us-gaap yielded very few fields, try ifrs-full tags for missing metrics.
+            if ifrs_facts:
+                # Simple IFRS metrics — only fill gaps (don't overwrite US-GAAP)
+                for ifrs_key, friendly_name in ifrs_metrics.items():
+                    if friendly_name not in financial_data and ifrs_key in ifrs_facts:
+                        units = ifrs_facts[ifrs_key].get('units', {})
+                        for currency in ('USD', 'EUR', 'GBP', 'DKK', 'CHF', 'AUD', 'CAD', 'SEK', 'NOK', 'JPY', 'KRW', 'CNY', 'ILS'):
+                            if currency in units:
+                                values = units[currency]
+                                recent = sorted(values, key=lambda x: x.get('end', ''), reverse=True)
+                                for entry in recent:
+                                    entry_date = entry.get('end')
+                                    if is_data_fresh(entry_date):
+                                        financial_data[friendly_name] = entry.get('val')
+                                        financial_data[f"{friendly_name}_date"] = entry_date
+                                        if currency != 'USD':
+                                            financial_data[f"{friendly_name}_currency"] = currency
+                                        break
+                                if friendly_name in financial_data:
+                                    break
+
+                # IFRS multi-tag fallbacks — only fill gaps
+                for friendly_name, tag_list in ifrs_metrics_with_fallback.items():
+                    if friendly_name in financial_data:
+                        continue
+                    best_val, best_date = None, None
+                    for ifrs_key in tag_list:
+                        if ifrs_key in ifrs_facts:
+                            units = ifrs_facts[ifrs_key].get('units', {})
+                            for currency in ('USD', 'EUR', 'GBP', 'DKK', 'CHF', 'AUD', 'CAD', 'SEK', 'NOK', 'JPY', 'KRW', 'CNY', 'ILS'):
+                                if currency in units:
+                                    values = units[currency]
+                                    recent = sorted(values, key=lambda x: x.get('end', ''), reverse=True)
+                                    for entry in recent:
+                                        val, dt = entry.get('val'), entry.get('end')
+                                        if is_data_fresh(dt):
+                                            if best_date is None or (dt and dt > best_date):
+                                                best_val, best_date = val, dt
+                                            break
+                                    if best_val is not None:
+                                        break
+                    if best_val is not None:
+                        financial_data[friendly_name] = best_val
+                        financial_data[f"{friendly_name}_date"] = best_date
             
             # Aggregate TotalDebt from components if not already present
             if financial_data.get('LongTermDebt') or financial_data.get('LongTermDebtCurrent') or financial_data.get('ConvertibleDebt'):
@@ -185,17 +272,33 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                     financial_data['TotalDebt'] = total_debt
                     financial_data['TotalDebt_components'] = debt_components
 
-            # Aggregate CashAndSecurities (Cash + MarketableSecurities + ShortTermInvestments)
+            # Cash fallback: CashAndCashEquivalentsAtCarryingValue → CashRestricted → CashEquivalentsOnly
             cash = financial_data.get('Cash', 0) or 0
+            if cash == 0:
+                cash = financial_data.get('CashRestricted', 0) or 0
+                if cash > 0:
+                    financial_data['Cash'] = cash
+                    financial_data['Cash_date'] = financial_data.get('CashRestricted_date')
+                    financial_data['Cash_source'] = 'CashCashEquivalentsRestricted'
+            if cash == 0:
+                cash = financial_data.get('CashEquivalentsOnly', 0) or 0
+                if cash > 0:
+                    financial_data['Cash'] = cash
+                    financial_data['Cash_date'] = financial_data.get('CashEquivalentsOnly_date')
+                    financial_data['Cash_source'] = 'CashEquivalentsAtCarryingValue'
+
+            # Aggregate CashAndSecurities (Cash + MarketableSecurities + ShortTermInvestments + AvailableForSale)
             mkt_sec = financial_data.get('MarketableSecurities', 0) or 0
             st_inv = financial_data.get('ShortTermInvestments', 0) or 0
             avail = financial_data.get('AvailableForSaleSecurities', 0) or 0
-            total_liquid = cash + mkt_sec + st_inv + avail
+            avail_debt = financial_data.get('AvailableForSaleDebtCurrent', 0) or 0
+            total_liquid = cash + mkt_sec + st_inv + avail + avail_debt
             if total_liquid > 0:
                 financial_data['CashAndSecurities'] = total_liquid
                 # Use most recent date from components
                 dates = [financial_data.get('Cash_date'), financial_data.get('MarketableSecurities_date'),
-                         financial_data.get('ShortTermInvestments_date')]
+                         financial_data.get('ShortTermInvestments_date'),
+                         financial_data.get('AvailableForSaleDebtCurrent_date')]
                 dates = [d for d in dates if d]
                 if dates:
                     financial_data['CashAndSecurities_date'] = max(dates)
@@ -206,6 +309,113 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
         return None
 
     except Exception as e:
+        return None
+
+
+def get_yfinance_fallback(ticker: str) -> Optional[Dict]:
+    """Fallback: fetch financials from yfinance when EDGAR has no data.
+
+    Covers tickers with no CIK (pre-IPO tickers, foreign filers without
+    EDGAR filings, etc.).  Returns a dict matching the EDGAR output schema
+    or None on failure.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        return None
+
+    try:
+        t = yf.Ticker(ticker)
+        bs = t.balance_sheet
+        fs = t.financials  # income statement
+        cf = t.cashflow
+
+        if bs is None or bs.empty:
+            return None
+
+        data: Dict = {"ticker": ticker, "cik": "", "source": "yfinance"}
+
+        def _latest(df, *labels):
+            """Return most recent non-null value for first matching label."""
+            for label in labels:
+                if label in df.index:
+                    row = df.loc[label].dropna()
+                    if not row.empty:
+                        return float(row.iloc[0]), str(row.index[0].date()) if hasattr(row.index[0], 'date') else str(row.index[0])
+            return None, None
+
+        # Balance sheet
+        val, dt = _latest(bs, 'Cash And Cash Equivalents', 'Cash Cash Equivalents And Short Term Investments')
+        if val is not None:
+            data['Cash'] = val
+            data['Cash_date'] = dt
+
+        val, dt = _latest(bs, 'Other Short Term Investments', 'Short Term Investments')
+        if val is not None:
+            data['ShortTermInvestments'] = val
+
+        val, dt = _latest(bs, 'Total Assets')
+        if val is not None:
+            data['Assets'] = val
+            data['Assets_date'] = dt
+
+        val, dt = _latest(bs, 'Current Assets')
+        if val is not None:
+            data['CurrentAssets'] = val
+
+        val, dt = _latest(bs, 'Total Liabilities Net Minority Interest', 'Total Liabilities')
+        if val is not None:
+            data['Liabilities'] = val
+
+        val, dt = _latest(bs, 'Current Liabilities')
+        if val is not None:
+            data['CurrentLiabilities'] = val
+
+        val, dt = _latest(bs, 'Stockholders Equity', 'Total Equity Gross Minority Interest')
+        if val is not None:
+            data['ShareholdersEquity'] = val
+
+        val, dt = _latest(bs, 'Long Term Debt')
+        if val is not None:
+            data['LongTermDebt'] = val
+
+        # Income statement
+        if fs is not None and not fs.empty:
+            val, dt = _latest(fs, 'Net Income', 'Net Income Common Stockholders')
+            if val is not None:
+                data['NetIncome'] = val
+                data['NetIncome_date'] = dt
+
+            val, dt = _latest(fs, 'Total Revenue', 'Operating Revenue')
+            if val is not None:
+                data['Revenue'] = val
+                data['Revenue_date'] = dt
+
+            val, dt = _latest(fs, 'Research And Development')
+            if val is not None:
+                data['R&D'] = val
+
+        # Cash flow
+        if cf is not None and not cf.empty:
+            val, dt = _latest(cf, 'Operating Cash Flow', 'Cash Flow From Continuing Operating Activities')
+            if val is not None:
+                data['CFO'] = val
+                data['CFO_date'] = dt
+
+        # Aggregate CashAndSecurities
+        cash = data.get('Cash', 0) or 0
+        sti = data.get('ShortTermInvestments', 0) or 0
+        if cash + sti > 0:
+            data['CashAndSecurities'] = cash + sti
+            data['CashAndSecurities_date'] = data.get('Cash_date')
+
+        if len(data) <= 3:  # only ticker, cik, source
+            return None
+
+        data['collected_at'] = date.today().isoformat()
+        return data
+
+    except Exception:
         return None
 
 
@@ -257,28 +467,46 @@ def collect_all_financial_data(universe_file: Path, output_file: Path):
         cik = universe_ciks.get(ticker) or get_cik_from_ticker(ticker)
         
         if not cik:
-            stats['no_cik'] += 1
-            print("❌ No CIK")
+            # No EDGAR CIK — try yfinance fallback immediately
+            data = get_yfinance_fallback(ticker)
+            if data and len(data.keys()) > 3:
+                all_data.append(data)
+                stats['successful'] += 1
+                cash = data.get('Cash', 0)
+                cash_str = f"${cash/1e9:.1f}B" if cash and cash > 1e9 else f"${cash/1e6:.0f}M" if cash else "N/A"
+                print(f"✅ (yfinance) Cash: {cash_str:>8s}")
+            else:
+                stats['no_cik'] += 1
+                print("❌ No CIK, yfinance fallback failed")
             time.sleep(0.1)
             continue
-        
-        # Get financial data
+
+        # Get financial data from EDGAR
         data = get_company_facts(cik, ticker)
-        
+
         if data and len(data.keys()) > 3:
             all_data.append(data)
             stats['successful'] += 1
-            
+
             cash = data.get('Cash', 0)
             revenue = data.get('Revenue', 0)
-            
+
             cash_str = f"${cash/1e9:.1f}B" if cash and cash > 1e9 else f"${cash/1e6:.0f}M" if cash else "N/A"
             rev_str = f"${revenue/1e9:.1f}B" if revenue and revenue > 1e9 else f"${revenue/1e6:.0f}M" if revenue else "N/A"
-            
+
             print(f"✅ Cash: {cash_str:>8s}, Rev: {rev_str:>8s}")
         else:
-            stats['no_data'] += 1
-            print("⚠️  No filings")
+            # EDGAR returned nothing — try yfinance fallback
+            data = get_yfinance_fallback(ticker)
+            if data and len(data.keys()) > 3:
+                all_data.append(data)
+                stats['successful'] += 1
+                cash = data.get('Cash', 0)
+                cash_str = f"${cash/1e9:.1f}B" if cash and cash > 1e9 else f"${cash/1e6:.0f}M" if cash else "N/A"
+                print(f"✅ (yfinance) Cash: {cash_str:>8s}")
+            else:
+                stats['no_data'] += 1
+                print("⚠️  No filings (EDGAR + yfinance)")
         
         # SEC rate limit: 10 req/sec
         time.sleep(0.15)
