@@ -1,0 +1,14 @@
+data/
+cache/
+production_data/
+output/
+logs/
+.git/
+.venv/
+__pycache__/
+*.csv
+*.tar.gz
+.env
+*.egg-info/
+.pytest_cache/
+.mypy_cache/

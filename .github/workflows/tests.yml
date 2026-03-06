@@ -18,7 +18,7 @@ jobs:
       - name: Install lint tools
         run: |
           python -m pip install --upgrade pip
-          pip install flake8==7.0.0 black==23.12.1 isort==5.13.2
+          pip install flake8==7.0.0 black==24.3.0 isort==5.13.2
 
       - name: Check formatting (black)
         run: |
@@ -41,6 +41,65 @@ jobs:
             --max-line-length 120 \
             --extend-ignore E501,W503,E203,E266,E402 \
             --count --statistics
+
+  secret-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install detect-secrets
+        run: pip install detect-secrets==1.5.0
+
+      - name: Check for new secrets against baseline
+        run: |
+          # Re-scan source and compare with committed baseline.
+          # Fails if any NEW secrets are found that aren't in the baseline.
+          detect-secrets scan \
+            common/ tools/ scripts/ wake_robin_data_pipeline/ \
+            mcp_server/ adapters/ config/ \
+            decision_engine.py run_screen.py \
+            .env.example docker-compose.yml Dockerfile requirements.txt \
+            --baseline .secrets.baseline \
+          && echo "No new secrets detected."
+
+  dep-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install deps + pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pip-audit
+
+      - name: Audit dependencies for known CVEs
+        run: |
+          pip-audit -r requirements.txt \
+            --desc \
+            --fix --dry-run \
+            --output json \
+            | tee audit-results.json
+          # Fail on high/critical vulnerabilities
+          pip-audit -r requirements.txt --strict
+
+      - name: Upload audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dep-audit-results
+          path: audit-results.json
+          retention-days: 30
 
   pytest:
     runs-on: ubuntu-latest

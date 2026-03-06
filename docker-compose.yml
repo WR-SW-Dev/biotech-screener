@@ -1,0 +1,35 @@
+x-common: &common
+  build: .
+  env_file: .env
+  environment:
+    LOG_FORMAT: json
+    AS_OF_DATE: "${AS_OF_DATE:?Set AS_OF_DATE (YYYY-MM-DD)}"
+  volumes:
+    - ./data:/app/data
+    - ./cache:/app/cache
+    - ./production_data:/app/production_data
+    - ./output:/app/output
+    - ./logs:/app/logs
+
+services:
+  screen:
+    <<: *common
+    command: ["run_screen.py", "--as-of-date", "${AS_OF_DATE}"]
+
+  daily:
+    <<: *common
+    command:
+      - "tools/run_daily_production.py"
+      - "--as-of-date"
+      - "${AS_OF_DATE}"
+      - "--json-logs"
+
+  test:
+    <<: *common
+    command: ["-m", "pytest", "tests/", "-v", "--timeout=120"]
+    volumes:
+      - ./data:/app/data:ro
+      - ./cache:/app/cache:ro
+      - ./production_data:/app/production_data:ro
+    profiles:
+      - test
