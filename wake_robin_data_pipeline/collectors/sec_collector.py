@@ -16,6 +16,17 @@ from datetime import datetime, timedelta
 from typing import Optional
 import hashlib
 
+from common.robustness import create_resilient_session
+
+_session: requests.Session | None = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = create_resilient_session()
+    return _session
+
 logger = logging.getLogger(__name__)
 
 # SEC requires User-Agent header with contact info
@@ -76,11 +87,11 @@ def ticker_to_cik(ticker: str) -> Optional[str]:
         url = "https://www.sec.gov/files/company_tickers.json"
         headers = {'User-Agent': USER_AGENT}
         
-        response = requests.get(url, headers=headers, timeout=15)
+        response = _get_session().get(url, headers=headers, timeout=15)
         response.raise_for_status()
-        
+
         data = response.json()
-        
+
         # Search for ticker (case-insensitive)
         ticker_upper = ticker.upper()
         for entry in data.values():
@@ -237,9 +248,9 @@ def fetch_sec_financials(ticker: str, cik: Optional[str] = None, as_of_date: str
         url = f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json"
         headers = {'User-Agent': USER_AGENT}
         
-        response = requests.get(url, headers=headers, timeout=30)
+        response = _get_session().get(url, headers=headers, timeout=30)
         response.raise_for_status()
-        
+
         facts_data = response.json()
 
         # Detect accounting standard (US-GAAP vs IFRS)

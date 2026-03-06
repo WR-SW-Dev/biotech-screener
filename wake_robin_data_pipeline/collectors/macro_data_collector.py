@@ -85,8 +85,9 @@ class FREDCollector:
         "ig_spread": "BAMLC0A0CM",          # Investment grade OAS
     }
 
-    # Default FRED API key (registered for Wake Robin Capital Management)
-    DEFAULT_API_KEY = "329d666b93ff448cecfab1004f81f670"
+    # FRED API key must be supplied via env var or constructor arg.
+    # Register for free at https://fred.stlouisfed.org/docs/api/api_key.html
+    DEFAULT_API_KEY = None
 
     def __init__(self, api_key: Optional[str] = None, cache_dir: Optional[Path] = None):
         """
@@ -96,7 +97,7 @@ class FREDCollector:
             api_key: FRED API key. If None, uses default key or FRED_API_KEY env var.
             cache_dir: Directory for caching. Defaults to module cache dir.
         """
-        self.api_key = api_key or os.environ.get("FRED_API_KEY") or self.DEFAULT_API_KEY
+        self.api_key = api_key or os.environ.get("FRED_API_KEY")
         if not self.api_key:
             logger.warning("No FRED API key provided. Set FRED_API_KEY environment variable.")
 

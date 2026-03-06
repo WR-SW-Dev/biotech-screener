@@ -30,6 +30,7 @@ from common.logging_config import (
     StructuredFormatter,
     # Setup functions
     setup_logging,
+    setup_structured_logging,
     # Constants
     DEFAULT_LOG_FORMAT,
     DEFAULT_MAX_BYTES,
@@ -491,3 +492,55 @@ class TestConstants:
         assert "password" in SENSITIVE_PATTERNS
         assert "token" in SENSITIVE_PATTERNS
         assert "secret" in SENSITIVE_PATTERNS
+
+
+class TestSetupStructuredLogging:
+    """Tests for setup_structured_logging convenience function."""
+
+    def teardown_method(self):
+        """Reset root logger and run_id after each test."""
+        root = logging.getLogger()
+        root.handlers = []
+        root.setLevel(logging.WARNING)
+        run_id_context.set("")
+
+    def test_returns_logger(self):
+        """Should return a logger instance."""
+        logger = setup_structured_logging()
+        assert isinstance(logger, logging.Logger)
+
+    def test_outputs_json_to_stdout(self, capsys):
+        """Should write JSON to stdout (not stderr)."""
+        set_run_id("json-test")
+        logger = setup_structured_logging()
+        logger.info("hello structured")
+        captured = capsys.readouterr()
+        assert "hello structured" in captured.out
+        parsed = json.loads(captured.out.strip())
+        assert parsed["message"] == "hello structured"
+        assert captured.err == ""
+
+    def test_json_includes_run_id(self, capsys):
+        """JSON output should include run_id field."""
+        set_run_id("rid-123")
+        logger = setup_structured_logging()
+        logger.info("check run_id")
+        parsed = json.loads(capsys.readouterr().out.strip())
+        assert parsed["run_id"] == "rid-123"
+
+    def test_extra_fields_included(self, capsys):
+        """Extra fields should appear in JSON output."""
+        set_run_id("extra-test")
+        logger = setup_structured_logging(extra_fields={"service": "screener"})
+        logger.info("with extras")
+        parsed = json.loads(capsys.readouterr().out.strip())
+        assert parsed["service"] == "screener"
+
+    def test_sanitization_active(self, capsys):
+        """Sensitive data should be redacted."""
+        set_run_id("san-test")
+        logger = setup_structured_logging()
+        logger.info("api_key=supersecret123")
+        parsed = json.loads(capsys.readouterr().out.strip())
+        assert "supersecret123" not in parsed["message"]
+        assert "[REDACTED]" in parsed["message"]

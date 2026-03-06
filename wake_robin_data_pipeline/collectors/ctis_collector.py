@@ -20,10 +20,20 @@ from typing import Dict, List, Optional
 
 import requests
 
+from common.robustness import create_resilient_session
 from wake_robin_data_pipeline.collectors.trials_collector import (
     SPONSOR_ALIASES,
     _clean_company_name,
 )
+
+_session: requests.Session | None = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = create_resilient_session()
+    return _session
 
 logger = logging.getLogger(__name__)
 
@@ -284,7 +294,7 @@ def _search_ctis(
 
     time.sleep(_RATE_LIMIT_SECS)
 
-    resp = requests.post(
+    resp = _get_session().post(
         _CTIS_SEARCH_URL,
         json=body,
         timeout=_REQUEST_TIMEOUT,
@@ -311,7 +321,7 @@ def _fetch_ctis_detail(ct_number: str, raw_dir: Path | None = None) -> dict:
     """
     time.sleep(_RATE_LIMIT_SECS)
 
-    resp = requests.get(
+    resp = _get_session().get(
         f"{_CTIS_DETAIL_URL}/{ct_number}",
         timeout=_REQUEST_TIMEOUT,
         headers={"Accept": "application/json"},

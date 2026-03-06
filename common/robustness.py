@@ -36,6 +36,8 @@ __all__ = [
     "RetryConfig",
     "retry_with_backoff",
     "RetryExhaustedError",
+    # Resilient HTTP
+    "create_resilient_session",
     # Memory guards
     "MemoryGuardConfig",
     "chunk_universe",
@@ -421,6 +423,63 @@ def retry_with_backoff(
 
         return wrapper
     return decorator
+
+
+# ============================================================================
+# RESILIENT HTTP SESSION
+# ============================================================================
+
+def create_resilient_session(
+    max_retries: int = 3,
+    backoff_factor: float = 1.0,
+    status_forcelist: tuple = (429, 500, 502, 503, 504),
+    timeout: float = 30,
+    extra_headers: Optional[Dict[str, str]] = None,
+) -> "requests.Session":
+    """Create a requests.Session with automatic retry on transient failures.
+
+    Args:
+        max_retries: Maximum number of retries per request.
+        backoff_factor: Multiplier for exponential backoff between retries.
+        status_forcelist: HTTP status codes that trigger a retry.
+        timeout: Default timeout in seconds (applied per request).
+        extra_headers: Additional headers to set on the session.
+
+    Returns:
+        A configured ``requests.Session`` with retry adapters mounted.
+    """
+    import requests
+    from urllib3.util.retry import Retry
+    from requests.adapters import HTTPAdapter
+
+    retry = Retry(
+        total=max_retries,
+        backoff_factor=backoff_factor,
+        status_forcelist=status_forcelist,
+        allowed_methods=["GET", "POST", "HEAD", "OPTIONS"],
+        raise_on_status=False,
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+
+    session = requests.Session()
+    session.mount("https://", adapter)
+    session.mount("http://", adapter)
+
+    # Store default timeout so callers can skip passing it each time.
+    # requests.Session doesn't natively support a default timeout,
+    # so we monkey-patch the send method.
+    _original_send = session.send
+
+    def _send_with_timeout(prepared_request, **kwargs):
+        kwargs.setdefault("timeout", timeout)
+        return _original_send(prepared_request, **kwargs)
+
+    session.send = _send_with_timeout  # type: ignore[assignment]
+
+    if extra_headers:
+        session.headers.update(extra_headers)
+
+    return session
 
 
 # ============================================================================

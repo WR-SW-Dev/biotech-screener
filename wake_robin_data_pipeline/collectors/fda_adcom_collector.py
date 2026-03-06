@@ -25,6 +25,8 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
+from common.robustness import create_resilient_session
+
 logger = logging.getLogger(__name__)
 
 # Federal Register API
@@ -39,6 +41,16 @@ USER_AGENT = os.environ.get(
     "FDA_USER_AGENT",
     "Wake Robin Research contact@wakerobincapital.com"
 )
+
+_session = None
+
+
+def _get_session():
+    global _session
+    if _session is None:
+        _session = create_resilient_session(extra_headers={"User-Agent": USER_AGENT})
+    return _session
+
 
 # Default cache directory — matches Module3Config's default path (relative to project root)
 DEFAULT_CACHE_DIR = Path("cache") / "fda"
@@ -235,12 +247,6 @@ def _collect_adcom_from_federal_register(
     Returns:
         List of ADCOM event dicts
     """
-    try:
-        import requests
-    except ImportError:
-        logger.warning("requests library not available")
-        return []
-
     start_date = (as_of_date - timedelta(days=lookback_days)).isoformat()
     end_date = as_of_date.isoformat()
 
@@ -260,7 +266,7 @@ def _collect_adcom_from_federal_register(
 
         try:
             time.sleep(0.2)
-            resp = requests.get(FEDERAL_REGISTER_API, params=params, timeout=30)
+            resp = _get_session().get(FEDERAL_REGISTER_API, params=params, timeout=30)
             if resp.status_code != 200:
                 logger.warning(f"Federal Register API returned {resp.status_code}")
                 break
@@ -384,15 +390,6 @@ def _collect_adcom_from_edgar(
     Returns:
         List of ADCOM event dicts
     """
-    try:
-        import requests
-    except ImportError:
-        logger.warning("requests library not available")
-        return []
-
-    session = requests.Session()
-    session.headers.update({"User-Agent": USER_AGENT})
-
     start_date = (as_of_date - timedelta(days=lookback_days)).isoformat()
     end_date = as_of_date.isoformat()
 
@@ -418,7 +415,7 @@ def _collect_adcom_from_edgar(
             }
 
             time.sleep(0.1)
-            response = session.get(SEC_SEARCH_URL, params=params, timeout=30)
+            response = _get_session().get(SEC_SEARCH_URL, params=params, timeout=30)
 
             if response.status_code != 200:
                 logger.warning(f"EDGAR ADCOM search returned {response.status_code}")
@@ -484,7 +481,7 @@ def _collect_adcom_from_edgar(
 
         try:
             time.sleep(0.1)
-            idx_resp = session.get(f"{base_url}/index.json", timeout=30)
+            idx_resp = _get_session().get(f"{base_url}/index.json", timeout=30)
             if idx_resp.status_code != 200:
                 continue
             items = idx_resp.json().get("directory", {}).get("item", [])
@@ -509,7 +506,7 @@ def _collect_adcom_from_edgar(
             doc_url = f"{base_url}/{filename}"
             try:
                 time.sleep(0.1)
-                doc_resp = session.get(doc_url, timeout=30)
+                doc_resp = _get_session().get(doc_url, timeout=30)
                 if doc_resp.status_code != 200:
                     continue
             except Exception:
@@ -614,12 +611,6 @@ def collect_fda_regulatory_notices(
         except Exception as e:
             logger.warning(f"FDA regulatory cache read error: {e}")
 
-    try:
-        import requests
-    except ImportError:
-        logger.warning("requests library not available")
-        return []
-
     start_date = (as_of_date - timedelta(days=lookback_days)).isoformat()
     end_date = as_of_date.isoformat()
 
@@ -644,7 +635,7 @@ def collect_fda_regulatory_notices(
 
             try:
                 time.sleep(0.2)
-                resp = requests.get(FEDERAL_REGISTER_API, params=params, timeout=30)
+                resp = _get_session().get(FEDERAL_REGISTER_API, params=params, timeout=30)
                 if resp.status_code != 200:
                     logger.warning(f"Federal Register API returned {resp.status_code} for {event_type}")
                     break
@@ -797,10 +788,7 @@ def collect_fda_adcom_events(
     # Build CIK-to-ticker reverse map for fallback matching
     cik_to_ticker: Dict[str, str] = {}
     try:
-        import requests as _req
-        _session = _req.Session()
-        _session.headers.update({"User-Agent": USER_AGENT})
-        ct_resp = _session.get("https://www.sec.gov/files/company_tickers.json", timeout=30)
+        ct_resp = _get_session().get("https://www.sec.gov/files/company_tickers.json", timeout=30)
         if ct_resp.status_code == 200:
             for _k, entry in ct_resp.json().items():
                 t = entry.get("ticker", "").upper()

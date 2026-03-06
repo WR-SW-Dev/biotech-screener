@@ -356,10 +356,45 @@ class LogContext:
         run_id_context.set("")
 
 
+def setup_structured_logging(
+    log_level: int = logging.INFO,
+    extra_fields: Optional[Dict[str, Any]] = None,
+) -> logging.Logger:
+    """Configure root logger with JSON structured output to stdout.
+
+    Convenience wrapper for container / cloud environments where logs
+    should be machine-readable JSON on stdout.
+
+    Args:
+        log_level: Logging level (default INFO).
+        extra_fields: Static fields merged into every JSON log line.
+
+    Returns:
+        Configured root logger.
+    """
+    root_logger = logging.getLogger()
+    root_logger.setLevel(log_level)
+    root_logger.handlers = []
+
+    formatter = StructuredFormatter(
+        include_run_id=True,
+        extra_fields=extra_fields or {},
+    )
+
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(formatter)
+    handler.addFilter(SanitizingFilter())
+    handler.addFilter(RunIdFilter())
+    root_logger.addHandler(handler)
+
+    return root_logger
+
+
 __all__ = [
     # Setup functions
     "setup_logging",
     "setup_timed_rotating_logging",
+    "setup_structured_logging",
     # Run ID management
     "generate_run_id",
     "set_run_id",

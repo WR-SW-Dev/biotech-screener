@@ -22,10 +22,20 @@ from urllib.parse import quote_plus
 
 import requests
 
+from common.robustness import create_resilient_session
 from wake_robin_data_pipeline.collectors.trials_collector import (
     SPONSOR_ALIASES,
     _clean_company_name,
 )
+
+_session: requests.Session | None = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = create_resilient_session()
+    return _session
 
 logger = logging.getLogger(__name__)
 
@@ -189,7 +199,7 @@ def _search_euctr(sponsor_name: str, page: int = 1, raw_dir: Path | None = None)
     params = {"query": sponsor_name, "page": page}
     time.sleep(_RATE_LIMIT_SECS)
 
-    resp = requests.get(_EUCTR_RSS_URL, params=params, timeout=_REQUEST_TIMEOUT)
+    resp = _get_session().get(_EUCTR_RSS_URL, params=params, timeout=_REQUEST_TIMEOUT)
     resp.raise_for_status()
 
     # Cache raw response

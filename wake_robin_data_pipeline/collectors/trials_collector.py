@@ -10,6 +10,17 @@ from datetime import datetime, timedelta
 from typing import Optional, List
 import hashlib
 
+from common.robustness import create_resilient_session
+
+_session: requests.Session | None = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = create_resilient_session()
+    return _session
+
 # Sponsor alias mapping: ticker -> list of CT.gov sponsor name variations
 # Many companies sponsor trials under subsidiary names or different legal entities
 SPONSOR_ALIASES = {
@@ -118,7 +129,7 @@ def _search_single_sponsor(sponsor_name: str, max_results: int = 50) -> List[dic
         'fields': 'NCTId,BriefTitle,OverallStatus,Phase,Condition,StartDate,CompletionDate,EnrollmentCount,LeadSponsorName'
     }
 
-    response = requests.get(url, params=params, timeout=30)
+    response = _get_session().get(url, params=params, timeout=30)
     response.raise_for_status()
 
     data = response.json()

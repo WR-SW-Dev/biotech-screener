@@ -21,10 +21,20 @@ from typing import Dict, List, Optional
 
 import requests
 
+from common.robustness import create_resilient_session
 from wake_robin_data_pipeline.collectors.trials_collector import (
     SPONSOR_ALIASES,
     _clean_company_name,
 )
+
+_session: requests.Session | None = None
+
+
+def _get_session() -> requests.Session:
+    global _session
+    if _session is None:
+        _session = create_resilient_session()
+    return _session
 
 logger = logging.getLogger(__name__)
 
@@ -202,7 +212,7 @@ def _search_isrctn(sponsor_name: str, page: int = 1, raw_dir: Path | None = None
 
     time.sleep(_RATE_LIMIT_SECS)
 
-    resp = requests.get(
+    resp = _get_session().get(
         _ISRCTN_SEARCH_URL,
         params=params,
         timeout=_REQUEST_TIMEOUT,
@@ -241,7 +251,7 @@ def _fetch_isrctn_detail(isrctn_id: str, raw_dir: Path | None = None) -> Optiona
     """
     time.sleep(_RATE_LIMIT_SECS)
 
-    resp = requests.get(
+    resp = _get_session().get(
         f"{_ISRCTN_BASE_URL}/{isrctn_id}",
         timeout=_REQUEST_TIMEOUT,
         allow_redirects=True,
