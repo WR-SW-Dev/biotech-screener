@@ -194,7 +194,7 @@ class TestBasicFunctionality:
 
         assert "ranked_securities" in result
 
-    @pytest.mark.skip(reason="V1 scoring is deprecated and requires legacy schema formats")
+    @pytest.mark.skip(reason="V1 scoring requires legacy fixture schema (pre-v2 field names); code path still exists as fallback but fixtures are v2+")
     def test_basic_scoring_v1(
         self,
         as_of_date,

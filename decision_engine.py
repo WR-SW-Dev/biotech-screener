@@ -1221,7 +1221,6 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "coinvest",
     "institutional",
     "calendar_alpha",
-    "alpha_modifier",
     "alpha_cohort_tb",
     "catalyst_bonus",
 )
@@ -1296,11 +1295,7 @@ def _build_sort_contributions(
         delta = ruleset.calendar_alpha_sort_weight * cv2_eff
         contribs.append(SortContribution("calendar_alpha", cv2_z, ruleset.calendar_alpha_sort_weight, delta))
 
-    # 5. Alpha modifier — REMOVED.  Fields kept in DecisionRuleset for JSON
-    #    backward compat but code path deleted (zero-impact proven, ablation 2026-03-02).
-    #    "alpha_modifier" stays in SORT_CONTRIB_KEYS → column always emits 0.0.
-
-    # 5b. Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker;
+    # 5. Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker;
     #     no 0.1-ceiling ties that plague alpha_raw).  Higher pct → larger delta →
     #     subtracted from effective_comp_rank → sorts earlier.  0 = disabled.
     if ruleset.alpha_cohort_tiebreak_weight > 0.0:
@@ -1419,11 +1414,6 @@ def compute_actionable_sort_key(
     if rs.enable_missingness_sort_penalty:
         missing_count = int(_safe_float(decision_fields.get("missingness_penalty", 0), default=0))
 
-    # DEPRECATED: alpha modifier / tiebreak — kept as structural placeholder in
-    # sort tuples for backward compat.  Both values are always 0.0.
-    _alpha_sig = _safe_float(alpha_raw, default=0.0)
-    _alpha_tie = 0.0  # always 0.0; tuple position preserved for sort-key stability
-
     # --- Build structured contributions and compute total adjustment ---
     # Catalyst bonus is only non-zero in blended mode.
     catalyst_bonus = 0.0
@@ -1433,7 +1423,7 @@ def compute_actionable_sort_key(
 
     contribs = _build_sort_contributions(
         decision_fields, rs,
-        alpha_raw=_alpha_sig,
+        alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
     )
     total_adj = sum(c.delta for c in contribs)
@@ -1454,7 +1444,6 @@ def compute_actionable_sort_key(
             sponsor_neg,    # descending sponsor count
             mom_ord,        # tailwind < neutral < headwind
             cat_mode_ord,   # specific < blended < no_upcoming < missing
-            _alpha_tie,     # alpha tiebreak (0 unless mode=tiebreak)
             ticker,         # alphabetic tiebreak
         )
 
@@ -1470,7 +1459,6 @@ def compute_actionable_sort_key(
             sponsor_neg,          # descending sponsor count
             mom_ord,              # tailwind < neutral < headwind
             cat_priority,         # priority as tiebreaker
-            _alpha_tie,           # alpha tiebreak (0 unless mode=tiebreak)
             ticker,               # alphabetic tiebreak
         )
 
@@ -1485,7 +1473,6 @@ def compute_actionable_sort_key(
         sponsor_neg,        # descending sponsor count (negated)
         mom_ord,            # tailwind < neutral < headwind
         anchor,             # ascending composite rank (or negated pct)
-        _alpha_tie,         # alpha tiebreak (0 unless mode=tiebreak)
         ticker,             # alphabetic tiebreak
     )
 
@@ -1521,7 +1508,7 @@ def compute_sort_contribs(
 
     contribs = _build_sort_contributions(
         decision_fields, rs,
-        alpha_raw=_alpha_sig,
+        alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
     )
 

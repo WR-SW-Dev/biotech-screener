@@ -1840,7 +1840,7 @@ _SORT_CONTRIB_COLS = [
     "de_sort_contrib_coinvest",
     "de_sort_contrib_institutional",
     "de_sort_contrib_calendar_alpha",
-    "de_sort_contrib_alpha_modifier",
+    "de_sort_contrib_alpha_cohort_tb",
     "de_sort_contrib_catalyst_bonus",
 ]
 
@@ -1876,7 +1876,7 @@ class TestSortContribSanityGate:
     def _valid_row(ticker: str, rank: str, total: str = "0.12",
                    clinical: str = "0.10", coinvest: str = "0.0",
                    institutional: str = "0.0", calendar: str = "0.02",
-                   alpha_mod: str = "0.0", catalyst: str = "0.0") -> dict:
+                   alpha_cohort_tb: str = "0.0", catalyst: str = "0.0") -> dict:
         return {
             "ticker": ticker, "eligible": "1", "actionable_rank": rank,
             "tier_dev": "A", "tier_any": "A",
@@ -1885,7 +1885,7 @@ class TestSortContribSanityGate:
             "de_sort_contrib_coinvest": coinvest,
             "de_sort_contrib_institutional": institutional,
             "de_sort_contrib_calendar_alpha": calendar,
-            "de_sort_contrib_alpha_modifier": alpha_mod,
+            "de_sort_contrib_alpha_cohort_tb": alpha_cohort_tb,
             "de_sort_contrib_catalyst_bonus": catalyst,
         }
 

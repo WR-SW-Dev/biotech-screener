@@ -1171,7 +1171,7 @@ SNAPSHOT_COLUMNS = [
     "de_sort_contrib_coinvest",
     "de_sort_contrib_institutional",
     "de_sort_contrib_calendar_alpha",
-    "de_sort_contrib_alpha_modifier",
+    "de_sort_contrib_alpha_cohort_tb",
     "de_sort_contrib_catalyst_bonus",
 ]
 

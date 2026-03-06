@@ -269,6 +269,54 @@ def _get_ticker_last_date(price_csv: Path, ticker: str) -> Optional[str]:
 
 
 # ---------------------------------------------------------------------------
+# Subprocess helpers — timeout + diagnostic capture
+# ---------------------------------------------------------------------------
+
+SUBPROCESS_TIMEOUT_SECONDS = 1200  # 20 minutes; prevents hung modules from burning CI budget
+
+import logging as _logging
+
+_logger = _logging.getLogger(__name__)
+
+
+def _run_subprocess(
+    cmd: List[str],
+    *,
+    label: str = "subprocess",
+    timeout: int = SUBPROCESS_TIMEOUT_SECONDS,
+    cwd: Optional[Path] = None,
+) -> subprocess.CompletedProcess:
+    """Run a subprocess with timeout and diagnostic capture.
+
+    On failure (non-zero exit) or timeout, logs stderr/stdout for diagnosis.
+    On timeout, raises ``subprocess.TimeoutExpired`` after logging context.
+    """
+    effective_cwd = str(cwd) if cwd else str(REPO_ROOT)
+    try:
+        result = subprocess.run(
+            cmd, capture_output=True, text=True,
+            cwd=effective_cwd, timeout=timeout,
+        )
+    except subprocess.TimeoutExpired as exc:
+        _logger.error(
+            "%s timed out after %ds. stdout (last 500 chars): %s | stderr (last 500 chars): %s",
+            label, timeout,
+            (exc.stdout or "")[-500:] if exc.stdout else "<none>",
+            (exc.stderr or "")[-500:] if exc.stderr else "<none>",
+        )
+        print(f"  {label} TIMED OUT after {timeout}s")
+        raise
+
+    if result.returncode != 0:
+        _logger.warning(
+            "%s exited %d. stderr (last 1000 chars): %s",
+            label, result.returncode, (result.stderr or "")[-1000:],
+        )
+
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Step 2: Run screen
 # ---------------------------------------------------------------------------
 
@@ -303,8 +351,7 @@ def run_screen(
     if extra_args:
         cmd.extend(extra_args)
 
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO_ROOT))
-    return result
+    return _run_subprocess(cmd, label="run_screen")
 
 
 # ---------------------------------------------------------------------------
@@ -325,8 +372,7 @@ def run_audit(
         "--as-of-date", as_of_date,
         "--output-dir", str(output_dir),
     ]
-    result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(REPO_ROOT))
-    return result
+    return _run_subprocess(cmd, label="run_audit")
 
 
 # ---------------------------------------------------------------------------
@@ -1672,7 +1718,7 @@ _SORT_CONTRIB_COLUMNS = (
     "de_sort_contrib_coinvest",
     "de_sort_contrib_institutional",
     "de_sort_contrib_calendar_alpha",
-    "de_sort_contrib_alpha_modifier",
+    "de_sort_contrib_alpha_cohort_tb",
     "de_sort_contrib_catalyst_bonus",
 )
 
@@ -2550,6 +2596,26 @@ def build_run_manifest(
     git_block["dirty_post_run"] = git_post_run.get("dirty") if git_post_run else None
     git_block["dirty"] = git_block["dirty_pre_run"]  # backward compat
 
+    # Sanitize gate values for JSON serialization (Path, date, etc.)
+    def _json_safe(obj: Any) -> Any:
+        if isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        if isinstance(obj, Path):
+            return str(obj)
+        if isinstance(obj, (datetime,)):
+            return obj.isoformat()
+        if hasattr(obj, "isoformat"):  # date, time
+            return obj.isoformat()
+        if isinstance(obj, dict):
+            return {k: _json_safe(v) for k, v in obj.items()}
+        if isinstance(obj, (list, tuple)):
+            return [_json_safe(v) for v in obj]
+        return str(obj)
+
+    for g in gate_results:
+        g.value = _json_safe(g.value)
+        g.threshold = _json_safe(g.threshold)
+
     # Validate gate names against allowlist
     for g in gate_results:
         if g.name not in GATE_ALLOWLIST:
@@ -2596,6 +2662,40 @@ def build_run_manifest(
         "audit_exit_code": audit_proc.returncode if audit_proc else None,
         "gate_config": {k: v for k, v in asdict(config).items()},
     }
+
+
+# ---------------------------------------------------------------------------
+# Gate verdict ledger (JSONL time-series)
+# ---------------------------------------------------------------------------
+
+GATE_LEDGER_PATH = REPO_ROOT / "artifacts" / "gate_verdict_ledger.jsonl"
+
+
+def append_gate_verdict(manifest: Dict[str, Any]) -> None:
+    """Append a single-line JSON record to the gate verdict ledger.
+
+    Each row captures the date, overall status, per-gate verdicts, and
+    minimal provenance (ruleset hash, git SHA).  The ledger is the
+    authoritative time-series for SLO / error-budget computation.
+    """
+    gates = manifest.get("gates", [])
+    row = {
+        "as_of_date": manifest.get("effective_as_of_date", manifest.get("as_of_date")),
+        "generated_at": manifest.get("generated_at"),
+        "overall_status": manifest.get("overall_status"),
+        "gates": {
+            g["name"]: g["status"]
+            for g in gates
+        },
+        "n_pass": sum(1 for g in gates if g["status"] == "PASS"),
+        "n_warn": sum(1 for g in gates if g["status"] == "WARN"),
+        "n_fail": sum(1 for g in gates if g["status"] == "FAIL"),
+        "ruleset_hash": (manifest.get("ruleset") or {}).get("ruleset_hash", ""),
+        "git_sha": (manifest.get("git") or {}).get("sha", ""),
+    }
+    GATE_LEDGER_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with open(GATE_LEDGER_PATH, "a") as f:
+        f.write(json.dumps(row, default=str) + "\n")
 
 
 # ---------------------------------------------------------------------------
@@ -2709,14 +2809,14 @@ def run_daily(
     # All three sources are idempotent (short-circuit if cache already exists).
     if not skip_pit_warm and warm_sources:
         print(f"\n[1.5] Warming caches ({warm_sources}) for {as_of_date} ...")
-        _warm_proc = subprocess.run(
+        _warm_proc = _run_subprocess(
             [
                 sys.executable,
                 str(REPO_ROOT / "warm_caches.py"),
                 "--as-of-date", as_of_date,
                 "--sources", warm_sources,
             ],
-            capture_output=True, text=True, cwd=str(REPO_ROOT),
+            label="warm_caches",
         )
         if _warm_proc.returncode == 0:
             print(f"  Cache warm OK")
@@ -2789,14 +2889,14 @@ def run_daily(
     mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
     if mkt_gate.status == "FAIL" and auto_refresh_market_data:
         print(f"  Market data stale — auto-refreshing ...")
-        _mkt_proc = subprocess.run(
+        _mkt_proc = _run_subprocess(
             [
                 sys.executable,
                 str(REPO_ROOT / "collect_market_data.py"),
                 "--universe", str(data_dir / "universe.json"),
                 "--output", str(data_dir / "market_data.json"),
             ],
-            capture_output=True, text=True, cwd=str(REPO_ROOT),
+            label="collect_market_data",
         )
         if _mkt_proc.returncode == 0:
             print(f"  Market data refresh OK — re-checking staleness gate")
@@ -2893,7 +2993,7 @@ def run_daily(
         _staging_rankings = staging_date_dir / "rankings.csv"
         if _staging_rankings.exists():
             print(f"\n[2.5] Creating PIT price anchor for {as_of_date} ...")
-            _anchor_proc = subprocess.run(
+            _anchor_proc = _run_subprocess(
                 [
                     sys.executable,
                     str(REPO_ROOT / "tools" / "warm_price_cache.py"),
@@ -2903,7 +3003,7 @@ def run_daily(
                     "--price-csv", str(price_csv),
                     "--cache-base", str(_price_cache_base),
                 ],
-                capture_output=True, text=True, cwd=str(REPO_ROOT),
+                label="warm_price_cache_anchor",
             )
             if _anchor_proc.returncode == 0:
                 print(f"  PIT price anchor OK")
@@ -3082,6 +3182,13 @@ def run_daily(
         json.dump(manifest, f, indent=2, default=str)
     print(f"  Manifest → {manifest_path}")
 
+    # Append to gate verdict ledger (JSONL time-series for SLO tracking)
+    try:
+        append_gate_verdict(manifest)
+        print(f"  Gate ledger → {GATE_LEDGER_PATH}")
+    except Exception as e:
+        print(f"  [WARN] Could not append gate ledger: {e}")
+
     # --- Promotion decision ---
     overall = manifest["overall_status"]
     if overall == "FAIL":
@@ -3111,7 +3218,7 @@ def run_daily(
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
         if not skip_pit_warm and price_pit_backfill:
             print(f"\n[6] Backfilling PIT price forward returns through {as_of_date} ...")
-            _backfill_proc = subprocess.run(
+            _backfill_proc = _run_subprocess(
                 [
                     sys.executable,
                     str(REPO_ROOT / "tools" / "warm_price_cache.py"),
@@ -3120,7 +3227,7 @@ def run_daily(
                     "--cache-base", str(_price_cache_base),
                     "--through-date", as_of_date,
                 ],
-                capture_output=True, text=True, cwd=str(REPO_ROOT),
+                label="warm_price_cache_backfill",
             )
             if _backfill_proc.returncode == 0:
                 print(f"  PIT price backfill OK")
@@ -3234,7 +3341,16 @@ def main():
         "--no-auto-refresh-market-data", action="store_true",
         help="Do not auto-refresh market_data.json when staleness gate fires; abort instead.",
     )
+    parser.add_argument(
+        "--json-logs", action="store_true",
+        help="Emit JSON-structured logs to stdout (also activated by LOG_FORMAT=json env var).",
+    )
     args = parser.parse_args()
+
+    # -- Logging setup (must be before any logger calls) --
+    if args.json_logs or os.environ.get("LOG_FORMAT", "").lower() == "json":
+        from common.logging_config import setup_structured_logging
+        setup_structured_logging()
 
     config = GateConfig()
     if args.gate_config:
@@ -3244,28 +3360,50 @@ def main():
     if args.drift_thresholds:
         _drift_th = DriftThresholds.from_json(args.drift_thresholds)
 
-    manifest = run_daily(
-        as_of_date=args.as_of_date,
-        data_dir=args.data_dir,
-        price_csv=args.price_history,
-        final_snapshots_dir=args.snapshot_dir,
-        gate_config=config,
-        ruleset_path=args.ruleset,
-        skip_price_refresh=args.skip_price_refresh,
-        skip_audit=args.skip_audit,
-        allow_date_fallback=args.allow_date_fallback,
-        ctgov_cache_dir=args.ctgov_cache_dir,
-        drift_thresholds=_drift_th,
-        skip_drift=args.skip_drift,
-        skip_forward_eval=args.skip_forward_eval,
-        price_cache_dir=args.price_cache_dir,
-        fail_on_bad_cache=args.fail_on_bad_cache,
-        skip_pit_warm=args.skip_pit_warm,
-        warm_sources=args.warm_sources,
-        warm_price_pit=not args.no_warm_price_pit,
-        price_pit_backfill=args.price_pit_backfill,
-        auto_refresh_market_data=not args.no_auto_refresh_market_data,
-    )
+    try:
+        manifest = run_daily(
+            as_of_date=args.as_of_date,
+            data_dir=args.data_dir,
+            price_csv=args.price_history,
+            final_snapshots_dir=args.snapshot_dir,
+            gate_config=config,
+            ruleset_path=args.ruleset,
+            skip_price_refresh=args.skip_price_refresh,
+            skip_audit=args.skip_audit,
+            allow_date_fallback=args.allow_date_fallback,
+            ctgov_cache_dir=args.ctgov_cache_dir,
+            drift_thresholds=_drift_th,
+            skip_drift=args.skip_drift,
+            skip_forward_eval=args.skip_forward_eval,
+            price_cache_dir=args.price_cache_dir,
+            fail_on_bad_cache=args.fail_on_bad_cache,
+            skip_pit_warm=args.skip_pit_warm,
+            warm_sources=args.warm_sources,
+            warm_price_pit=not args.no_warm_price_pit,
+            price_pit_backfill=args.price_pit_backfill,
+            auto_refresh_market_data=not args.no_auto_refresh_market_data,
+        )
+    except Exception as exc:
+        # Ensure a FAIL manifest + ledger entry exist even on unhandled crash
+        import traceback
+        _logger.error("Unhandled exception in run_daily: %s", exc, exc_info=True)
+        print(f"\nFATAL: {exc}")
+        traceback.print_exc()
+        manifest = {
+            "manifest_version": MANIFEST_VERSION,
+            "as_of_date": args.as_of_date,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "overall_status": "FAIL",
+            "gates": [],
+            "crash": {
+                "exception": str(exc),
+                "type": type(exc).__name__,
+            },
+        }
+        try:
+            append_gate_verdict(manifest)
+        except Exception:
+            pass  # best-effort; don't mask the original crash
 
     # Always write manifest to output/ for CI discoverability
     # (snapshot-dir manifest only exists on successful promotion)

@@ -349,7 +349,7 @@ class TestContributionSum:
         )
         # Just verify it produces a valid tuple without error
         assert isinstance(sort_tuple, tuple)
-        assert len(sort_tuple) == 13  # 3 prefix + 10 elements
+        assert len(sort_tuple) == 12  # 3 prefix + 9 elements
 
     def test_sum_matches_effective_opt_neg_off_mode(self):
         """In off mode, effective_opt_neg = opt_neg - total_adj."""
