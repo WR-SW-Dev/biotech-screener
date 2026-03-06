@@ -45,54 +45,72 @@ MANIFEST_VERSION = "1.3.0"
 
 # Canonical gate names — every gate emitted by run_daily() MUST be in this set.
 # Adding a new gate requires updating this allowlist.
-GATE_ALLOWLIST: frozenset[str] = frozenset({
-    "xbi_staleness",
-    "ctgov_cache",
-    "inputs_present",
-    "market_data_schema",
-    "market_data_staleness",
-    "market_data_coverage",
-    "screen",
-    "audit",
-    "missing_reason_fraction",
-    "turnover",
-    "drift_monitoring",
-    "ctgov_pit_dates",
-    "sec_13f_cache",
-    "institutional_summary",
-    "institutional_delta",
-    "pnl_attribution",
-    "price_pit_cache",
-    "forward_eval",
-    "pit_bundle_health",
-    "decision_engine_schema",
-    "sort_contrib_sanity",
-    "portfolio_weights",
-    "eligibility_consistency",
-    "cache_health",
-    "ruleset_health",
-    "exposure_missingness",
-    "risk_concentration",
-})
+GATE_ALLOWLIST: frozenset[str] = frozenset(
+    {
+        "xbi_staleness",
+        "ctgov_cache",
+        "inputs_present",
+        "market_data_schema",
+        "market_data_staleness",
+        "market_data_coverage",
+        "screen",
+        "audit",
+        "missing_reason_fraction",
+        "turnover",
+        "drift_monitoring",
+        "ctgov_pit_dates",
+        "sec_13f_cache",
+        "institutional_summary",
+        "institutional_delta",
+        "pnl_attribution",
+        "price_pit_cache",
+        "forward_eval",
+        "pit_bundle_health",
+        "decision_engine_schema",
+        "sort_contrib_sanity",
+        "portfolio_weights",
+        "eligibility_consistency",
+        "cache_health",
+        "ruleset_health",
+        "exposure_missingness",
+        "risk_concentration",
+    }
+)
 
 # Required fields in each market_data.json record for schema gate
-MARKET_DATA_REQUIRED_FIELDS: frozenset[str] = frozenset({
-    "ticker", "price", "market_cap", "collected_at",
-})
+MARKET_DATA_REQUIRED_FIELDS: frozenset[str] = frozenset(
+    {
+        "ticker",
+        "price",
+        "market_cap",
+        "collected_at",
+    }
+)
 
 # Fields that must be numeric (int/float) or None — schema gate checks type
-MARKET_DATA_NUMERIC_FIELDS: frozenset[str] = frozenset({
-    "price", "market_cap", "avg_volume", "beta",
-    "52w_high", "52w_low", "volatility_90d", "returns_1m", "returns_3m",
-})
+MARKET_DATA_NUMERIC_FIELDS: frozenset[str] = frozenset(
+    {
+        "price",
+        "market_cap",
+        "avg_volume",
+        "beta",
+        "52w_high",
+        "52w_low",
+        "volatility_90d",
+        "returns_1m",
+        "returns_3m",
+    }
+)
 
 # ---------------------------------------------------------------------------
 # Gate thresholds (defaults; overridable via --gate-config)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class GateConfig:
     """Hard gate thresholds for production daily runs."""
+
     xbi_stale_days: int = 3
     """Max trading-day gap between XBI last date and as_of_date before FAIL."""
 
@@ -123,8 +141,8 @@ class GateConfig:
     pnl_attribution_min_coverage_pct: float = 80.0
     """Min PnL attribution price coverage (%) before WARN. Never FAIL."""
 
-    forward_eval_ic_warn_floor: float = 0.00
-    """Mean IC floor for forward-eval gate. Any positive signal passes."""
+    forward_eval_ic_warn_floor: float = 0.02
+    """Mean IC floor for forward-eval gate. WARN if rolling IC drops below."""
 
     forward_eval_lookback_n: int = 10
     """Rolling window size (number of prior snapshot dates) for forward-eval."""
@@ -173,6 +191,7 @@ class GateConfig:
 # Gate result
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class GateResult:
     name: str
@@ -185,6 +204,7 @@ class GateResult:
 @dataclass(frozen=True)
 class DriftThresholds:
     """Versioned thresholds for drift monitoring gate (WARN-only)."""
+
     warn_top20_overlap_pct: float = 70.0
     warn_top60_overlap_pct: float = 80.0
     warn_rank_spearman_rho: float = 0.90
@@ -214,6 +234,7 @@ class DriftThresholds:
 # ---------------------------------------------------------------------------
 # Step 1: Price refresh
 # ---------------------------------------------------------------------------
+
 
 def refresh_prices(
     price_csv: Path,
@@ -294,13 +315,17 @@ def _run_subprocess(
     effective_cwd = str(cwd) if cwd else str(REPO_ROOT)
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True,
-            cwd=effective_cwd, timeout=timeout,
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=effective_cwd,
+            timeout=timeout,
         )
     except subprocess.TimeoutExpired as exc:
         _logger.error(
             "%s timed out after %ds. stdout (last 500 chars): %s | stderr (last 500 chars): %s",
-            label, timeout,
+            label,
+            timeout,
             (exc.stdout or "")[-500:] if exc.stdout else "<none>",
             (exc.stderr or "")[-500:] if exc.stderr else "<none>",
         )
@@ -310,7 +335,9 @@ def _run_subprocess(
     if result.returncode != 0:
         _logger.warning(
             "%s exited %d. stderr (last 1000 chars): %s",
-            label, result.returncode, (result.stderr or "")[-1000:],
+            label,
+            result.returncode,
+            (result.stderr or "")[-1000:],
         )
 
     return result
@@ -319,6 +346,7 @@ def _run_subprocess(
 # ---------------------------------------------------------------------------
 # Step 2: Run screen
 # ---------------------------------------------------------------------------
+
 
 def run_screen(
     as_of_date: str,
@@ -335,13 +363,20 @@ def run_screen(
     output_json = snapshot_dir / as_of_date / "screen_output.json"
     output_json.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        sys.executable, str(REPO_ROOT / "run_screen.py"),
-        "--as-of-date", as_of_date,
-        "--data-dir", str(data_dir),
-        "--output", str(output_json),
-        "--decision-mode", "phase2",
-        "--ranking-mode", "decision",
-        "--snapshot-dir", str(snapshot_dir),
+        sys.executable,
+        str(REPO_ROOT / "run_screen.py"),
+        "--as-of-date",
+        as_of_date,
+        "--data-dir",
+        str(data_dir),
+        "--output",
+        str(output_json),
+        "--decision-mode",
+        "phase2",
+        "--ranking-mode",
+        "decision",
+        "--snapshot-dir",
+        str(snapshot_dir),
         "--strict",
     ]
     if ruleset_path:
@@ -358,6 +393,7 @@ def run_screen(
 # Step 3: Run integrity audit
 # ---------------------------------------------------------------------------
 
+
 def run_audit(
     snapshot_date_dir: Path,
     price_csv: Path,
@@ -366,11 +402,16 @@ def run_audit(
 ) -> subprocess.CompletedProcess:
     """Run tools/data_integrity_audit.py and return its result."""
     cmd = [
-        sys.executable, str(REPO_ROOT / "tools" / "data_integrity_audit.py"),
-        "--snapshot-dir", str(snapshot_date_dir),
-        "--price-history", str(price_csv),
-        "--as-of-date", as_of_date,
-        "--output-dir", str(output_dir),
+        sys.executable,
+        str(REPO_ROOT / "tools" / "data_integrity_audit.py"),
+        "--snapshot-dir",
+        str(snapshot_date_dir),
+        "--price-history",
+        str(price_csv),
+        "--as-of-date",
+        as_of_date,
+        "--output-dir",
+        str(output_dir),
     ]
     return _run_subprocess(cmd, label="run_audit")
 
@@ -378,6 +419,7 @@ def run_audit(
 # ---------------------------------------------------------------------------
 # Step 4: Hard gates
 # ---------------------------------------------------------------------------
+
 
 def check_xbi_staleness(
     price_csv: Path,
@@ -388,32 +430,36 @@ def check_xbi_staleness(
     xbi_last = _get_ticker_last_date(price_csv, "XBI")
     if xbi_last is None:
         return GateResult(
-            name="xbi_staleness", status="FAIL",
+            name="xbi_staleness",
+            status="FAIL",
             detail="XBI not found in price_history.csv",
-            value=None, threshold=threshold_days,
+            value=None,
+            threshold=threshold_days,
         )
 
     # Count trading days gap (approximate: weekdays only)
     from datetime import timedelta
+
     last_dt = datetime.strptime(xbi_last, "%Y-%m-%d")
     as_of_dt = datetime.strptime(as_of_date, "%Y-%m-%d")
     delta = as_of_dt - last_dt
     # Approximate trading days (exclude weekends)
-    trading_days = sum(
-        1 for i in range(1, delta.days + 1)
-        if (last_dt + timedelta(days=i)).weekday() < 5
-    )
+    trading_days = sum(1 for i in range(1, delta.days + 1) if (last_dt + timedelta(days=i)).weekday() < 5)
 
     if trading_days > threshold_days:
         return GateResult(
-            name="xbi_staleness", status="FAIL",
+            name="xbi_staleness",
+            status="FAIL",
             detail=f"XBI last={xbi_last}, as_of={as_of_date}, gap={trading_days} trading days",
-            value=trading_days, threshold=threshold_days,
+            value=trading_days,
+            threshold=threshold_days,
         )
     return GateResult(
-        name="xbi_staleness", status="PASS",
+        name="xbi_staleness",
+        status="PASS",
         detail=f"XBI last={xbi_last}, gap={trading_days} trading days",
-        value=trading_days, threshold=threshold_days,
+        value=trading_days,
+        threshold=threshold_days,
     )
 
 
@@ -425,7 +471,8 @@ def check_missing_reason_fraction(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="missing_reason_fraction", status="FAIL",
+            name="missing_reason_fraction",
+            status="FAIL",
             detail="rankings.csv not found",
         )
 
@@ -448,16 +495,19 @@ def check_missing_reason_fraction(
 
     if total == 0:
         return GateResult(
-            name="missing_reason_fraction", status="FAIL",
+            name="missing_reason_fraction",
+            status="FAIL",
             detail="rankings.csv is empty",
         )
 
     frac = missing_count / total
     status = "FAIL" if frac > max_frac else "PASS"
     return GateResult(
-        name="missing_reason_fraction", status=status,
+        name="missing_reason_fraction",
+        status=status,
         detail=f"{missing_count}/{total} tickers ({frac:.1%}) have missing_reason",
-        value=round(frac, 4), threshold=max_frac,
+        value=round(frac, 4),
+        threshold=max_frac,
     )
 
 
@@ -501,7 +551,8 @@ def check_exposure_missingness(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="exposure_missingness", status="FAIL",
+            name="exposure_missingness",
+            status="FAIL",
             detail="rankings.csv not found",
         )
 
@@ -513,7 +564,8 @@ def check_exposure_missingness(
     n = len(eligible_rows)
     if n == 0:
         return GateResult(
-            name="exposure_missingness", status="FAIL",
+            name="exposure_missingness",
+            status="FAIL",
             detail="No eligible tickers in rankings.csv",
         )
 
@@ -524,7 +576,8 @@ def check_exposure_missingness(
 
     if not check_cols:
         return GateResult(
-            name="exposure_missingness", status="PASS",
+            name="exposure_missingness",
+            status="PASS",
             detail=f"SKIP: no exposure columns in header ({n} eligible, legacy schema)",
             value={"eligible_n": n, "missing_fracs": {}, "skipped": skipped_cols},
             threshold=warn_frac,
@@ -560,20 +613,26 @@ def check_exposure_missingness(
 
     if worst_frac > fail_frac:
         return GateResult(
-            name="exposure_missingness", status="FAIL",
+            name="exposure_missingness",
+            status="FAIL",
             detail=f"Worst: {worst_col} ({worst_frac:.1%} missing > {fail_frac:.0%}). {summary}",
-            value=value_dict, threshold=fail_frac,
+            value=value_dict,
+            threshold=fail_frac,
         )
     if worst_frac > warn_frac:
         return GateResult(
-            name="exposure_missingness", status="WARN",
+            name="exposure_missingness",
+            status="WARN",
             detail=f"Worst: {worst_col} ({worst_frac:.1%} missing > {warn_frac:.0%}). {summary}",
-            value=value_dict, threshold=warn_frac,
+            value=value_dict,
+            threshold=warn_frac,
         )
     return GateResult(
-        name="exposure_missingness", status="PASS",
+        name="exposure_missingness",
+        status="PASS",
         detail=f"All exposures OK ({n} eligible). {summary}",
-        value=value_dict, threshold=warn_frac,
+        value=value_dict,
+        threshold=warn_frac,
     )
 
 
@@ -607,7 +666,8 @@ def check_risk_concentration(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="risk_concentration", status="FAIL",
+            name="risk_concentration",
+            status="FAIL",
             detail="rankings.csv not found",
         )
 
@@ -626,7 +686,8 @@ def check_risk_concentration(
 
     if not topk:
         return GateResult(
-            name="risk_concentration", status="PASS",
+            name="risk_concentration",
+            status="PASS",
             detail="No ranked tickers; skipped",
             value={"catalyst_7d_wt": 0.0, "high_risk_wt": 0.0, "stacked_wt": 0.0},
         )
@@ -706,8 +767,11 @@ def check_risk_concentration(
     threshold = catalyst_7d_fail if status == "FAIL" else catalyst_7d_warn
 
     return GateResult(
-        name="risk_concentration", status=status,
-        detail=detail, value=value_dict, threshold=threshold,
+        name="risk_concentration",
+        status=status,
+        detail=detail,
+        value=value_dict,
+        threshold=threshold,
     )
 
 
@@ -719,26 +783,31 @@ def check_turnover(
     delta_path = snapshot_date_dir / "phase2_run_delta_report.txt"
     if not delta_path.exists():
         return GateResult(
-            name="turnover", status="PASS",
+            name="turnover",
+            status="PASS",
             detail="No delta report (first run or --no-delta); skipped",
         )
 
     text = delta_path.read_text()
     # Parse "Name turnover: XX.X%" from the report
     import re
+
     match = re.search(r"Name turnover:\s+([\d.]+)%", text)
     if not match:
         return GateResult(
-            name="turnover", status="PASS",
+            name="turnover",
+            status="PASS",
             detail="Could not parse turnover from delta report; skipped",
         )
 
     turnover = float(match.group(1))
     status = "FAIL" if turnover > max_pct else "PASS"
     return GateResult(
-        name="turnover", status=status,
+        name="turnover",
+        status=status,
         detail=f"Name turnover={turnover:.1f}%",
-        value=turnover, threshold=max_pct,
+        value=turnover,
+        threshold=max_pct,
     )
 
 
@@ -746,9 +815,11 @@ def check_turnover(
 # Drift monitoring gate (WARN-only)
 # ---------------------------------------------------------------------------
 
+
 def _find_prior_snapshot(snapshot_dir: Path, current_date: str) -> Optional[Path]:
     """Find most recent prior snapshot with valid rankings.csv containing tier_dev."""
     import re
+
     date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
     all_dates = sorted(
         [d.name for d in snapshot_dir.iterdir() if d.is_dir() and date_re.match(d.name)],
@@ -761,7 +832,7 @@ def _find_prior_snapshot(snapshot_dir: Path, current_date: str) -> Optional[Path
         all_dates = [d for d in all_dates if d < current_date]
         idx = -1
 
-    candidates = all_dates[idx + 1:] if idx >= 0 else all_dates
+    candidates = all_dates[idx + 1 :] if idx >= 0 else all_dates
     for candidate in candidates:
         rankings_csv = snapshot_dir / candidate / "rankings.csv"
         if not rankings_csv.exists():
@@ -974,7 +1045,8 @@ def check_drift_monitoring(
     prior = _find_prior_snapshot(snapshot_dir, as_of_date)
     if prior is None:
         return GateResult(
-            name="drift_monitoring", status="PASS",
+            name="drift_monitoring",
+            status="PASS",
             detail="No prior snapshot; drift check skipped",
         )
 
@@ -983,7 +1055,8 @@ def check_drift_monitoring(
 
     if not current_csv.exists():
         return GateResult(
-            name="drift_monitoring", status="PASS",
+            name="drift_monitoring",
+            status="PASS",
             detail="No rankings.csv in current snapshot; drift check skipped",
         )
 
@@ -1048,7 +1121,8 @@ def check_drift_monitoring(
         )
 
     return GateResult(
-        name="drift_monitoring", status=status,
+        name="drift_monitoring",
+        status=status,
         detail=detail,
         value=metrics,
         threshold=asdict(thresholds),
@@ -1058,6 +1132,7 @@ def check_drift_monitoring(
 # ---------------------------------------------------------------------------
 # Ruleset health gate (WARN-only)
 # ---------------------------------------------------------------------------
+
 
 def check_ruleset_health(
     staging_date_dir: Path,
@@ -1069,10 +1144,7 @@ def check_ruleset_health(
 
     Compares today's drift metrics against the active ruleset's promotion baseline.
     """
-    from tools.ruleset_health_monitor import (
-        HealthThresholds,
-        run_health_check,
-    )
+    from tools.ruleset_health_monitor import HealthThresholds, run_health_check
 
     if receipts_dir is None:
         receipts_dir = REPO_ROOT / "artifacts" / "promotions"
@@ -1108,6 +1180,7 @@ def check_ruleset_health(
 # CTGov PIT dates gate (WARN-only)
 # ---------------------------------------------------------------------------
 
+
 def check_ctgov_pit_dates(
     ctgov_cache_dir: Path,
     as_of_date: str,
@@ -1136,7 +1209,8 @@ def check_ctgov_pit_dates(
 
     if cache_file is None:
         return GateResult(
-            name="ctgov_pit_dates", status="WARN",
+            name="ctgov_pit_dates",
+            status="WARN",
             detail=f"No trial_records cache found in {ctgov_cache_dir}",
         )
 
@@ -1145,13 +1219,15 @@ def check_ctgov_pit_dates(
             records = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="ctgov_pit_dates", status="WARN",
+            name="ctgov_pit_dates",
+            status="WARN",
             detail=f"Cannot read {cache_file.name}: {e}",
         )
 
     if not isinstance(records, list) or len(records) == 0:
         return GateResult(
-            name="ctgov_pit_dates", status="WARN",
+            name="ctgov_pit_dates",
+            status="WARN",
             detail=f"Empty or invalid trial records in {cache_file.name}",
         )
 
@@ -1178,13 +1254,9 @@ def check_ctgov_pit_dates(
 
     warn_reasons: List[str] = []
     if cov_first < warn_first_posted_min:
-        warn_reasons.append(
-            f"first_posted coverage {cov_first:.1%} < {warn_first_posted_min:.0%}"
-        )
+        warn_reasons.append(f"first_posted coverage {cov_first:.1%} < {warn_first_posted_min:.0%}")
     if cov_last < warn_last_update_min:
-        warn_reasons.append(
-            f"last_update_posted coverage {cov_last:.1%} < {warn_last_update_min:.0%}"
-        )
+        warn_reasons.append(f"last_update_posted coverage {cov_last:.1%} < {warn_last_update_min:.0%}")
 
     status = "WARN" if warn_reasons else "PASS"
     detail_parts = [
@@ -1197,7 +1269,8 @@ def check_ctgov_pit_dates(
         detail_parts.append("; ".join(warn_reasons))
 
     return GateResult(
-        name="ctgov_pit_dates", status=status,
+        name="ctgov_pit_dates",
+        status=status,
         detail=", ".join(detail_parts),
         value=coverage,
         threshold=thresholds,
@@ -1207,6 +1280,7 @@ def check_ctgov_pit_dates(
 # ---------------------------------------------------------------------------
 # SEC 13F cache gate (WARN-only)
 # ---------------------------------------------------------------------------
+
 
 def check_sec_13f_cache(
     as_of_date: str,
@@ -1222,7 +1296,8 @@ def check_sec_13f_cache(
 
     if not index_path.exists():
         return GateResult(
-            name="sec_13f_cache", status="WARN",
+            name="sec_13f_cache",
+            status="WARN",
             detail=f"No 13F cache index at {index_path}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
@@ -1232,18 +1307,21 @@ def check_sec_13f_cache(
             index = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="sec_13f_cache", status="WARN",
+            name="sec_13f_cache",
+            status="WARN",
             detail=f"Cannot read 13F cache index: {e}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
 
     # Schema validation
     ok, schema_detail = validate_sec_13f_index_schema(
-        index, expected_as_of_date=as_of_date,
+        index,
+        expected_as_of_date=as_of_date,
     )
     if not ok:
         return GateResult(
-            name="sec_13f_cache", status="WARN",
+            name="sec_13f_cache",
+            status="WARN",
             detail=f"schema invalid: {schema_detail}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
@@ -1263,21 +1341,26 @@ def check_sec_13f_cache(
     if coverage < warn_coverage_pct:
         detail_parts.append(f"below {warn_coverage_pct:.0f}% threshold")
         return GateResult(
-            name="sec_13f_cache", status="WARN",
+            name="sec_13f_cache",
+            status="WARN",
             detail=", ".join(detail_parts),
-            value=value, threshold=threshold,
+            value=value,
+            threshold=threshold,
         )
 
     return GateResult(
-        name="sec_13f_cache", status="PASS",
+        name="sec_13f_cache",
+        status="PASS",
         detail=", ".join(detail_parts),
-        value=value, threshold=threshold,
+        value=value,
+        threshold=threshold,
     )
 
 
 # ---------------------------------------------------------------------------
 # Institutional summary gate (WARN-only, post-screen)
 # ---------------------------------------------------------------------------
+
 
 def check_institutional_summary(
     snapshot_date_dir: Path,
@@ -1291,7 +1374,8 @@ def check_institutional_summary(
 
     if not sidecar_path.exists():
         return GateResult(
-            name="institutional_summary", status="WARN",
+            name="institutional_summary",
+            status="WARN",
             detail=f"No institutional_summary.json at {sidecar_path}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
@@ -1301,7 +1385,8 @@ def check_institutional_summary(
             data = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="institutional_summary", status="WARN",
+            name="institutional_summary",
+            status="WARN",
             detail=f"Cannot read institutional_summary.json: {e}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
@@ -1310,7 +1395,8 @@ def check_institutional_summary(
     ok, schema_detail = validate_institutional_summary_schema_v1(data)
     if not ok:
         return GateResult(
-            name="institutional_summary", status="WARN",
+            name="institutional_summary",
+            status="WARN",
             detail=f"schema invalid: {schema_detail}",
             threshold={"warn_coverage_pct": warn_coverage_pct},
         )
@@ -1339,21 +1425,26 @@ def check_institutional_summary(
     if coverage < warn_coverage_pct:
         detail_parts.append(f"below {warn_coverage_pct:.0f}% threshold")
         return GateResult(
-            name="institutional_summary", status="WARN",
+            name="institutional_summary",
+            status="WARN",
             detail=", ".join(detail_parts),
-            value=value, threshold=threshold,
+            value=value,
+            threshold=threshold,
         )
 
     return GateResult(
-        name="institutional_summary", status="PASS",
+        name="institutional_summary",
+        status="PASS",
         detail=", ".join(detail_parts),
-        value=value, threshold=threshold,
+        value=value,
+        threshold=threshold,
     )
 
 
 # ---------------------------------------------------------------------------
 # Institutional delta gate (WARN-only, post-screen)
 # ---------------------------------------------------------------------------
+
 
 def check_institutional_delta(
     snapshot_date_dir: Path,
@@ -1375,20 +1466,24 @@ def check_institutional_delta(
                 delta_data = json.load(f)
         except (json.JSONDecodeError, OSError) as e:
             return GateResult(
-                name="institutional_delta", status="WARN",
+                name="institutional_delta",
+                status="WARN",
                 detail=f"Cannot read institutional_summary_delta.json: {e}",
             )
 
         from institutional_summary import validate_institutional_summary_delta_schema_v1
+
         ok, detail = validate_institutional_summary_delta_schema_v1(delta_data)
         if not ok:
             return GateResult(
-                name="institutional_delta", status="WARN",
+                name="institutional_delta",
+                status="WARN",
                 detail=f"schema invalid: {detail}",
             )
 
         return GateResult(
-            name="institutional_delta", status="PASS",
+            name="institutional_delta",
+            status="PASS",
             detail=(
                 f"institutional_summary_delta.json valid: "
                 f"{delta_data.get('as_of_date', '?')} vs {delta_data.get('prior_date', '?')}, "
@@ -1399,18 +1494,21 @@ def check_institutional_delta(
     # No delta — check if a prior with elite_holder_shares exists
     try:
         from institutional_summary import _find_prior_institutional_summary
+
         prior = _find_prior_institutional_summary(snapshot_dir, current_date)
     except Exception:
         prior = None
 
     if prior is not None:
         return GateResult(
-            name="institutional_delta", status="WARN",
+            name="institutional_delta",
+            status="WARN",
             detail="Delta expected (prior with elite_holder_shares found) but not written",
         )
 
     return GateResult(
-        name="institutional_delta", status="PASS",
+        name="institutional_delta",
+        status="PASS",
         detail="No prior institutional summary with elite_holder_shares — cold-start OK",
     )
 
@@ -1432,13 +1530,14 @@ def check_pnl_attribution(
         from scripts.pnl_attribution import (
             check_pnl_attribution_file,
             compute_attribution,
+            find_prior_date,
             write_attribution_json,
             write_attribution_md,
-            find_prior_date,
         )
     except ImportError as e:
         return GateResult(
-            name="pnl_attribution", status="WARN",
+            name="pnl_attribution",
+            status="WARN",
             detail=f"Cannot import pnl_attribution module: {e}",
         )
 
@@ -1446,14 +1545,16 @@ def check_pnl_attribution(
     prior_date = find_prior_date(snapshot_dir, current_date)
     if prior_date is None:
         return GateResult(
-            name="pnl_attribution", status="PASS",
+            name="pnl_attribution",
+            status="PASS",
             detail="No prior snapshot — cold-start OK",
         )
 
     prior_dir = snapshot_dir / prior_date
     if not prior_dir.exists() or not (prior_dir / "rankings.csv").exists():
         return GateResult(
-            name="pnl_attribution", status="PASS",
+            name="pnl_attribution",
+            status="PASS",
             detail=f"Prior snapshot {prior_date} not usable — cold-start OK",
         )
 
@@ -1468,17 +1569,22 @@ def check_pnl_attribution(
         write_attribution_md(result, snapshot_date_dir / "pnl_attribution.md")
     except Exception as e:
         return GateResult(
-            name="pnl_attribution", status="WARN",
+            name="pnl_attribution",
+            status="WARN",
             detail=f"PnL attribution failed: {e}",
         )
 
     # Validate the written file
     status, detail, value, threshold = check_pnl_attribution_file(
-        snapshot_date_dir, min_coverage_pct=min_coverage_pct,
+        snapshot_date_dir,
+        min_coverage_pct=min_coverage_pct,
     )
     return GateResult(
-        name="pnl_attribution", status=status,
-        detail=detail, value=value, threshold=threshold,
+        name="pnl_attribution",
+        status=status,
+        detail=detail,
+        value=value,
+        threshold=threshold,
     )
 
 
@@ -1492,7 +1598,8 @@ def check_price_pit_cache(
     index_path = cache_dir / "index.json"
     if not index_path.exists():
         return GateResult(
-            name="price_pit_cache", status="WARN",
+            name="price_pit_cache",
+            status="WARN",
             detail=f"No PIT price cache at {cache_dir}",
         )
 
@@ -1501,14 +1608,16 @@ def check_price_pit_cache(
             index = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="price_pit_cache", status="WARN",
+            name="price_pit_cache",
+            status="WARN",
             detail=f"Cannot read PIT price cache index: {e}",
         )
 
     ok, schema_detail = validate_price_pit_index(index, expected_as_of_date=as_of_date)
     if not ok:
         return GateResult(
-            name="price_pit_cache", status="WARN",
+            name="price_pit_cache",
+            status="WARN",
             detail=f"schema invalid: {schema_detail}",
         )
 
@@ -1518,11 +1627,10 @@ def check_price_pit_cache(
     anchor_date = index.get("anchor_date", "?")
 
     return GateResult(
-        name="price_pit_cache", status="PASS",
+        name="price_pit_cache",
+        status="PASS",
         detail=(
-            f"coverage={coverage:.1f}%, "
-            f"{ticker_count - n_missing}/{ticker_count} tickers, "
-            f"anchor={anchor_date}"
+            f"coverage={coverage:.1f}%, " f"{ticker_count - n_missing}/{ticker_count} tickers, " f"anchor={anchor_date}"
         ),
         value={
             "coverage_pct": coverage,
@@ -1544,7 +1652,8 @@ def check_forward_eval(
         from tools.forward_eval_gate import evaluate_rolling_ic
     except ImportError as e:
         return GateResult(
-            name="forward_eval", status="WARN",
+            name="forward_eval",
+            status="WARN",
             detail=f"Cannot import forward_eval_gate: {e}",
         )
 
@@ -1558,8 +1667,11 @@ def check_forward_eval(
     )
 
     return GateResult(
-        name="forward_eval", status=status,
-        detail=detail, value=value, threshold=threshold,
+        name="forward_eval",
+        status=status,
+        detail=detail,
+        value=value,
+        threshold=threshold,
     )
 
 
@@ -1600,12 +1712,14 @@ def check_pit_bundle_health(
 
     if issues:
         return GateResult(
-            name="pit_bundle_health", status="WARN",
+            name="pit_bundle_health",
+            status="WARN",
             detail="; ".join(issues),
         )
 
     return GateResult(
-        name="pit_bundle_health", status="PASS",
+        name="pit_bundle_health",
+        status="PASS",
         detail=f"PIT bundle prerequisites available for {as_of_date}",
     )
 
@@ -1613,6 +1727,7 @@ def check_pit_bundle_health(
 # ---------------------------------------------------------------------------
 # Decision engine schema gate (WARN-only)
 # ---------------------------------------------------------------------------
+
 
 def check_decision_engine_schema(
     snapshot_date_dir: Path,
@@ -1629,7 +1744,8 @@ def check_decision_engine_schema(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="decision_engine_schema", status="WARN",
+            name="decision_engine_schema",
+            status="WARN",
             detail="rankings.csv not found",
         )
 
@@ -1675,19 +1791,13 @@ def check_decision_engine_schema(
                     try:
                         rank_int = int(act_rank)
                         if rank_int != expected_rank:
-                            warn_reasons.append(
-                                f"{ticker}: actionable_rank={rank_int}, expected {expected_rank}"
-                            )
+                            warn_reasons.append(f"{ticker}: actionable_rank={rank_int}, expected {expected_rank}")
                         expected_rank = rank_int + 1
                     except ValueError:
-                        warn_reasons.append(
-                            f"{ticker}: actionable_rank='{act_rank}' not integer"
-                        )
+                        warn_reasons.append(f"{ticker}: actionable_rank='{act_rank}' not integer")
             else:
                 if act_rank and act_rank.lower() not in ("", "nan"):
-                    warn_reasons.append(
-                        f"{ticker}: ineligible but actionable_rank='{act_rank}'"
-                    )
+                    warn_reasons.append(f"{ticker}: ineligible but actionable_rank='{act_rank}'")
 
             # Cap warnings to avoid flood
             if len(warn_reasons) >= 20:
@@ -1696,12 +1806,14 @@ def check_decision_engine_schema(
 
     if not warn_reasons:
         return GateResult(
-            name="decision_engine_schema", status="PASS",
+            name="decision_engine_schema",
+            status="PASS",
             detail=f"{rows_read} rows, all DE columns present and valid",
         )
 
     return GateResult(
-        name="decision_engine_schema", status="WARN",
+        name="decision_engine_schema",
+        status="WARN",
         detail=f"{len(warn_reasons)} issues: {'; '.join(warn_reasons[:5])}",
         value=len(warn_reasons),
     )
@@ -1738,7 +1850,8 @@ def check_sort_contrib_sanity(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="sort_contrib_sanity", status="WARN",
+            name="sort_contrib_sanity",
+            status="WARN",
             detail="rankings.csv not found",
         )
 
@@ -1750,7 +1863,8 @@ def check_sort_contrib_sanity(
         missing_cols = [c for c in _SORT_CONTRIB_COLUMNS if c not in headers]
         if missing_cols:
             return GateResult(
-                name="sort_contrib_sanity", status="WARN",
+                name="sort_contrib_sanity",
+                status="WARN",
                 detail=f"columns missing; likely older snapshot: {missing_cols}",
             )
 
@@ -1826,7 +1940,8 @@ def check_sort_contrib_sanity(
 
     if eligible_n == 0:
         return GateResult(
-            name="sort_contrib_sanity", status="WARN",
+            name="sort_contrib_sanity",
+            status="WARN",
             detail="no eligible rows found",
         )
 
@@ -1845,7 +1960,8 @@ def check_sort_contrib_sanity(
     # (iv) Hard sanity failures → FAIL
     if hard_fail_count > 0:
         return GateResult(
-            name="sort_contrib_sanity", status="FAIL",
+            name="sort_contrib_sanity",
+            status="FAIL",
             detail=(
                 f"{hard_fail_count} row(s) with non-finite or absurd values "
                 f"(>{config.sort_contrib_hard_abs_max}): {hard_fail_tickers}"
@@ -1869,20 +1985,21 @@ def check_sort_contrib_sanity(
     if sum_mismatch_count > 0:
         mismatch_frac = sum_mismatch_count / eligible_n
         warn_reasons.append(
-            f"sum mismatch: {sum_mismatch_count}/{eligible_n} "
-            f"({mismatch_frac:.1%}): {sum_mismatch_tickers}"
+            f"sum mismatch: {sum_mismatch_count}/{eligible_n} " f"({mismatch_frac:.1%}): {sum_mismatch_tickers}"
         )
 
     if warn_reasons:
         return GateResult(
-            name="sort_contrib_sanity", status="WARN",
+            name="sort_contrib_sanity",
+            status="WARN",
             detail="; ".join(warn_reasons),
             value=value_dict,
             threshold=threshold_dict,
         )
 
     return GateResult(
-        name="sort_contrib_sanity", status="PASS",
+        name="sort_contrib_sanity",
+        status="PASS",
         detail=f"{eligible_n} eligible rows, all contribs valid",
         value=value_dict,
         threshold=threshold_dict,
@@ -1892,6 +2009,7 @@ def check_sort_contrib_sanity(
 # ---------------------------------------------------------------------------
 # Portfolio weights gate (WARN-only)
 # ---------------------------------------------------------------------------
+
 
 def check_portfolio_weights(
     snapshot_date_dir: Path,
@@ -1907,7 +2025,8 @@ def check_portfolio_weights(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="portfolio_weights", status="WARN",
+            name="portfolio_weights",
+            status="WARN",
             detail="rankings.csv not found",
         )
 
@@ -1944,33 +2063,30 @@ def check_portfolio_weights(
 
     if eligible_count == 0:
         return GateResult(
-            name="portfolio_weights", status="WARN",
+            name="portfolio_weights",
+            status="WARN",
             detail="No eligible rows found",
         )
 
     if abs(weight_sum - 100.0) > tolerance:
-        warn_reasons.append(
-            f"weight sum={weight_sum:.2f}%, expected ~100% (tolerance={tolerance}pp)"
-        )
+        warn_reasons.append(f"weight sum={weight_sum:.2f}%, expected ~100% (tolerance={tolerance}pp)")
 
     if eligible_no_weight > 0:
-        warn_reasons.append(
-            f"{eligible_no_weight} eligible row(s) missing target_weight_pct"
-        )
+        warn_reasons.append(f"{eligible_no_weight} eligible row(s) missing target_weight_pct")
 
     if ineligible_with_weight > 0:
-        warn_reasons.append(
-            f"{ineligible_with_weight} ineligible row(s) have non-zero target_weight_pct"
-        )
+        warn_reasons.append(f"{ineligible_with_weight} ineligible row(s) have non-zero target_weight_pct")
 
     if not warn_reasons:
         return GateResult(
-            name="portfolio_weights", status="PASS",
+            name="portfolio_weights",
+            status="PASS",
             detail=f"weight sum={weight_sum:.2f}%, {eligible_count} eligible rows",
         )
 
     return GateResult(
-        name="portfolio_weights", status="WARN",
+        name="portfolio_weights",
+        status="WARN",
         detail="; ".join(warn_reasons),
         value=round(weight_sum, 2),
         threshold=tolerance,
@@ -1981,6 +2097,7 @@ def check_portfolio_weights(
 # Eligibility consistency gate (WARN-only)
 # ---------------------------------------------------------------------------
 
+
 def check_eligibility_consistency(
     snapshot_date_dir: Path,
 ) -> GateResult:
@@ -1988,7 +2105,8 @@ def check_eligibility_consistency(
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
         return GateResult(
-            name="eligibility_consistency", status="WARN",
+            name="eligibility_consistency",
+            status="WARN",
             detail="rankings.csv not found",
         )
 
@@ -2005,13 +2123,9 @@ def check_eligibility_consistency(
             reasons_present = reasons not in ("", "nan")
 
             if eligible == "1" and reasons_present:
-                warn_reasons.append(
-                    f"{ticker}: eligible=1 but ineligible_reasons='{reasons}'"
-                )
+                warn_reasons.append(f"{ticker}: eligible=1 but ineligible_reasons='{reasons}'")
             elif eligible != "1" and not reasons_present:
-                warn_reasons.append(
-                    f"{ticker}: eligible={eligible} but ineligible_reasons empty"
-                )
+                warn_reasons.append(f"{ticker}: eligible={eligible} but ineligible_reasons empty")
 
             if len(warn_reasons) >= 20:
                 warn_reasons.append("... (truncated)")
@@ -2019,12 +2133,14 @@ def check_eligibility_consistency(
 
     if not warn_reasons:
         return GateResult(
-            name="eligibility_consistency", status="PASS",
+            name="eligibility_consistency",
+            status="PASS",
             detail=f"{total} rows, all consistent",
         )
 
     return GateResult(
-        name="eligibility_consistency", status="WARN",
+        name="eligibility_consistency",
+        status="WARN",
         detail=f"{len(warn_reasons)} inconsistencies: {'; '.join(warn_reasons[:5])}",
         value=len(warn_reasons),
     )
@@ -2043,7 +2159,8 @@ def check_cache_health(
     health_path = snapshot_date_dir / "cache_health.json"
     if not health_path.exists():
         return GateResult(
-            name="cache_health", status="PASS",
+            name="cache_health",
+            status="PASS",
             detail="cache_health.json not found (skipped)",
         )
     try:
@@ -2051,7 +2168,8 @@ def check_cache_health(
             health = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="cache_health", status="WARN",
+            name="cache_health",
+            status="WARN",
             detail=f"Could not read cache_health.json: {e}",
         )
 
@@ -2070,18 +2188,21 @@ def check_cache_health(
 
     if overall == "bad" and fail_on_bad:
         return GateResult(
-            name="cache_health", status="FAIL",
+            name="cache_health",
+            status="FAIL",
             detail=detail,
             value=overall,
         )
     if overall != "ok":
         return GateResult(
-            name="cache_health", status="WARN",
+            name="cache_health",
+            status="WARN",
             detail=detail,
             value=overall,
         )
     return GateResult(
-        name="cache_health", status="PASS",
+        name="cache_health",
+        status="PASS",
         detail=detail,
         value=overall,
     )
@@ -2136,7 +2257,8 @@ def check_audit_result(
     else:
         status = "FAIL" if config.audit_fail_is_gate_fail else "WARN"
         detail = _format_audit_detail(
-            f"Audit FAIL (exit code {audit_proc.returncode})", summary,
+            f"Audit FAIL (exit code {audit_proc.returncode})",
+            summary,
         )
         return GateResult(name="audit", status=status, detail=detail)
 
@@ -2144,6 +2266,7 @@ def check_audit_result(
 def _parse_cache_date(p: Path) -> Optional["date"]:
     """Extract and parse YYYY-MM-DD from a trial_records_{date}.json filename."""
     from datetime import date
+
     s = p.stem.replace("trial_records_", "")
     try:
         return date.fromisoformat(s)
@@ -2168,7 +2291,8 @@ def check_ctgov_cache(
     if exact.exists():
         return (
             GateResult(
-                name="ctgov_cache", status="PASS",
+                name="ctgov_cache",
+                status="PASS",
                 detail=f"PIT cache found: {exact.name}",
             ),
             as_of_date,
@@ -2187,7 +2311,8 @@ def check_ctgov_cache(
             fallback_date = parsed[-1][0].isoformat()
             return (
                 GateResult(
-                    name="ctgov_cache", status="WARN",
+                    name="ctgov_cache",
+                    status="WARN",
                     detail=(
                         f"PIT cache missing for {as_of_date}; "
                         f"falling back to {fallback_date} (--allow-date-fallback)"
@@ -2199,10 +2324,10 @@ def check_ctgov_cache(
     # No exact match, no fallback allowed (or no prior dates)
     return (
         GateResult(
-            name="ctgov_cache", status="FAIL",
+            name="ctgov_cache",
+            status="FAIL",
             detail=(
-                f"PIT cache missing: {exact.name}. "
-                f"Run: warm_caches.py --as-of-date {as_of_date} --sources ctgov"
+                f"PIT cache missing: {exact.name}. " f"Run: warm_caches.py --as-of-date {as_of_date} --sources ctgov"
             ),
         ),
         as_of_date,
@@ -2226,11 +2351,13 @@ def check_inputs_present(data_dir: Path) -> GateResult:
 
     if missing:
         return GateResult(
-            name="inputs_present", status="FAIL",
+            name="inputs_present",
+            status="FAIL",
             detail=f"missing: {', '.join(missing)}",
         )
     return GateResult(
-        name="inputs_present", status="PASS",
+        name="inputs_present",
+        status="PASS",
         detail=f"All required inputs found in {data_dir.name}/",
     )
 
@@ -2251,7 +2378,8 @@ def check_market_data_staleness(
     if not mkt_path.exists():
         # inputs_present gate handles this — don't double-fail
         return GateResult(
-            name="market_data_staleness", status="PASS",
+            name="market_data_staleness",
+            status="PASS",
             detail="Skipped (file missing; inputs_present gate will catch)",
         )
 
@@ -2260,18 +2388,17 @@ def check_market_data_staleness(
             records = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="market_data_staleness", status="FAIL",
+            name="market_data_staleness",
+            status="FAIL",
             detail=f"Cannot read market_data.json: {e}",
         )
 
     # Find the most common collected_at date
-    collected_dates = [
-        r.get("collected_at") for r in records
-        if isinstance(r, dict) and r.get("collected_at")
-    ]
+    collected_dates = [r.get("collected_at") for r in records if isinstance(r, dict) and r.get("collected_at")]
     if not collected_dates:
         return GateResult(
-            name="market_data_staleness", status="FAIL",
+            name="market_data_staleness",
+            status="FAIL",
             detail="No collected_at field found in market_data.json",
         )
 
@@ -2281,26 +2408,31 @@ def check_market_data_staleness(
         as_of = _date.fromisoformat(as_of_date)
     except ValueError as e:
         return GateResult(
-            name="market_data_staleness", status="FAIL",
+            name="market_data_staleness",
+            status="FAIL",
             detail=f"Bad date format: {e}",
         )
 
     age_days = (as_of - collected).days
     if age_days > max_age_days:
         return GateResult(
-            name="market_data_staleness", status="FAIL",
+            name="market_data_staleness",
+            status="FAIL",
             detail=(
                 f"market_data.json is {age_days}d stale "
                 f"(collected={collected_at}, as_of={as_of_date}, max={max_age_days}d). "
                 f"Run: python collect_market_data.py"
             ),
-            value=age_days, threshold=max_age_days,
+            value=age_days,
+            threshold=max_age_days,
         )
 
     return GateResult(
-        name="market_data_staleness", status="PASS",
+        name="market_data_staleness",
+        status="PASS",
         detail=f"market_data.json collected={collected_at}, age={age_days}d",
-        value=age_days, threshold=max_age_days,
+        value=age_days,
+        threshold=max_age_days,
     )
 
 
@@ -2314,7 +2446,8 @@ def check_market_data_schema(data_dir: Path) -> GateResult:
     mkt_path = data_dir / "market_data.json"
     if not mkt_path.exists():
         return GateResult(
-            name="market_data_schema", status="PASS",
+            name="market_data_schema",
+            status="PASS",
             detail="Skipped (file missing; inputs_present gate will catch)",
         )
 
@@ -2323,19 +2456,22 @@ def check_market_data_schema(data_dir: Path) -> GateResult:
             records = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="market_data_schema", status="FAIL",
+            name="market_data_schema",
+            status="FAIL",
             detail=f"Cannot parse market_data.json: {e}",
         )
 
     if not isinstance(records, list):
         return GateResult(
-            name="market_data_schema", status="FAIL",
+            name="market_data_schema",
+            status="FAIL",
             detail="market_data.json is not a JSON array",
         )
 
     if len(records) == 0:
         return GateResult(
-            name="market_data_schema", status="FAIL",
+            name="market_data_schema",
+            status="FAIL",
             detail="market_data.json is empty",
         )
 
@@ -2357,15 +2493,19 @@ def check_market_data_schema(data_dir: Path) -> GateResult:
     if bad_records:
         sample = "; ".join(bad_records[:3])
         return GateResult(
-            name="market_data_schema", status="FAIL",
+            name="market_data_schema",
+            status="FAIL",
             detail=f"{len(bad_records)} invalid records: {sample}",
-            value=len(bad_records), threshold=0,
+            value=len(bad_records),
+            threshold=0,
         )
 
     return GateResult(
-        name="market_data_schema", status="PASS",
+        name="market_data_schema",
+        status="PASS",
         detail=f"{len(records)} records, all valid",
-        value=0, threshold=0,
+        value=0,
+        threshold=0,
     )
 
 
@@ -2384,12 +2524,14 @@ def check_market_data_coverage(
 
     if not mkt_path.exists():
         return GateResult(
-            name="market_data_coverage", status="PASS",
+            name="market_data_coverage",
+            status="PASS",
             detail="Skipped (file missing; inputs_present gate will catch)",
         )
     if not uni_path.exists():
         return GateResult(
-            name="market_data_coverage", status="FAIL",
+            name="market_data_coverage",
+            status="FAIL",
             detail="universe.json not found",
         )
 
@@ -2400,7 +2542,8 @@ def check_market_data_coverage(
             universe = json.load(f)
     except (json.JSONDecodeError, OSError) as e:
         return GateResult(
-            name="market_data_coverage", status="FAIL",
+            name="market_data_coverage",
+            status="FAIL",
             detail=f"Cannot read files: {e}",
         )
 
@@ -2413,7 +2556,8 @@ def check_market_data_coverage(
 
     if not uni_tickers:
         return GateResult(
-            name="market_data_coverage", status="FAIL",
+            name="market_data_coverage",
+            status="FAIL",
             detail="Universe is empty",
         )
 
@@ -2424,22 +2568,26 @@ def check_market_data_coverage(
     if coverage < min_coverage:
         sample = ", ".join(missing[:5])
         return GateResult(
-            name="market_data_coverage", status="FAIL",
+            name="market_data_coverage",
+            status="FAIL",
             detail=(
                 f"{covered}/{len(uni_tickers)} ({coverage:.1%}) coverage, "
                 f"below {min_coverage:.0%} threshold. "
                 f"Missing: {sample}{'...' if len(missing) > 5 else ''}"
             ),
-            value=round(coverage, 4), threshold=min_coverage,
+            value=round(coverage, 4),
+            threshold=min_coverage,
         )
 
     detail = f"{covered}/{len(uni_tickers)} ({coverage:.1%}) coverage"
     if missing:
         detail += f", {len(missing)} missing: {', '.join(missing[:5])}"
     return GateResult(
-        name="market_data_coverage", status="PASS",
+        name="market_data_coverage",
+        status="PASS",
         detail=detail,
-        value=round(coverage, 4), threshold=min_coverage,
+        value=round(coverage, 4),
+        threshold=min_coverage,
     )
 
 
@@ -2476,14 +2624,13 @@ def _compute_market_data_refresh(
     info["ticker_count"] = len(records)
 
     # collected_at
-    dates = [r.get("collected_at") for r in records
-             if isinstance(r, dict) and r.get("collected_at")]
+    dates = [r.get("collected_at") for r in records if isinstance(r, dict) and r.get("collected_at")]
     if dates:
         info["collected_at"] = max(dates)
         try:
             from datetime import date as _date
-            info["age_days"] = (_date.fromisoformat(as_of_date) -
-                                _date.fromisoformat(info["collected_at"])).days
+
+            info["age_days"] = (_date.fromisoformat(as_of_date) - _date.fromisoformat(info["collected_at"])).days
         except ValueError:
             pass
 
@@ -2498,11 +2645,11 @@ def _compute_market_data_refresh(
                 t = entry.get("ticker") if isinstance(entry, dict) else str(entry)
                 if t and not t.startswith("_"):
                     uni_tickers.add(t)
-            mkt_tickers = {r["ticker"] for r in records
-                           if isinstance(r, dict) and r.get("ticker")}
+            mkt_tickers = {r["ticker"] for r in records if isinstance(r, dict) and r.get("ticker")}
             if uni_tickers:
                 info["coverage_pct"] = round(
-                    len(mkt_tickers & uni_tickers) / len(uni_tickers), 4,
+                    len(mkt_tickers & uni_tickers) / len(uni_tickers),
+                    4,
                 )
         except (json.JSONDecodeError, OSError):
             pass
@@ -2513,6 +2660,7 @@ def _compute_market_data_refresh(
 # ---------------------------------------------------------------------------
 # Step 5: Run manifest
 # ---------------------------------------------------------------------------
+
 
 def build_run_manifest(
     as_of_date: str,
@@ -2619,10 +2767,7 @@ def build_run_manifest(
     # Validate gate names against allowlist
     for g in gate_results:
         if g.name not in GATE_ALLOWLIST:
-            raise ValueError(
-                f"Gate '{g.name}' not in GATE_ALLOWLIST. "
-                f"Add it to the allowlist before using it."
-            )
+            raise ValueError(f"Gate '{g.name}' not in GATE_ALLOWLIST. " f"Add it to the allowlist before using it.")
 
     # Market data refresh provenance
     mkt_refresh: Dict[str, Any] = {}
@@ -2683,10 +2828,7 @@ def append_gate_verdict(manifest: Dict[str, Any]) -> None:
         "as_of_date": manifest.get("effective_as_of_date", manifest.get("as_of_date")),
         "generated_at": manifest.get("generated_at"),
         "overall_status": manifest.get("overall_status"),
-        "gates": {
-            g["name"]: g["status"]
-            for g in gates
-        },
+        "gates": {g["name"]: g["status"] for g in gates},
         "n_pass": sum(1 for g in gates if g["status"] == "PASS"),
         "n_warn": sum(1 for g in gates if g["status"] == "WARN"),
         "n_fail": sum(1 for g in gates if g["status"] == "FAIL"),
@@ -2701,6 +2843,7 @@ def append_gate_verdict(manifest: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 # Step 6: Atomic promotion
 # ---------------------------------------------------------------------------
+
 
 def promote_snapshot(
     staging_date_dir: Path,
@@ -2732,6 +2875,7 @@ def promote_snapshot(
 # ---------------------------------------------------------------------------
 # Main orchestrator
 # ---------------------------------------------------------------------------
+
 
 def run_daily(
     as_of_date: str,
@@ -2779,9 +2923,11 @@ def run_daily(
         print("\n[1/5] Refreshing price_history.csv ...")
         universe_path = data_dir / "universe.json"
         price_stats = refresh_prices(price_csv, as_of_date, universe_path)
-        print(f"  Extended {price_stats.get('n_extended', 0)} tickers, "
-              f"{price_stats.get('n_rows_appended', 0)} rows appended, "
-              f"{price_stats.get('n_failed', 0)} failures")
+        print(
+            f"  Extended {price_stats.get('n_extended', 0)} tickers, "
+            f"{price_stats.get('n_rows_appended', 0)} rows appended, "
+            f"{price_stats.get('n_failed', 0)} failures"
+        )
         if price_stats.get("failed_tickers"):
             print(f"  Failed: {', '.join(price_stats['failed_tickers'][:10])}")
     else:
@@ -2795,9 +2941,12 @@ def run_daily(
     if xbi_gate.status == "FAIL":
         print("\n  FATAL: XBI staleness gate FAIL. Aborting before screen run.")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2813,8 +2962,10 @@ def run_daily(
             [
                 sys.executable,
                 str(REPO_ROOT / "warm_caches.py"),
-                "--as-of-date", as_of_date,
-                "--sources", warm_sources,
+                "--as-of-date",
+                as_of_date,
+                "--sources",
+                warm_sources,
             ],
             label="warm_caches",
         )
@@ -2831,7 +2982,9 @@ def run_daily(
     # --- Gate: ctgov PIT cache availability ---
     _cache_dir = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov")
     ctgov_gate, effective_as_of_date = check_ctgov_cache(
-        as_of_date, _cache_dir, allow_fallback=allow_date_fallback,
+        as_of_date,
+        _cache_dir,
+        allow_fallback=allow_date_fallback,
     )
     gate_results.append(ctgov_gate)
     print(f"  CTGov cache gate: {ctgov_gate.status} — {ctgov_gate.detail}")
@@ -2839,9 +2992,12 @@ def run_daily(
         print("\n  FATAL: CTGov PIT cache not found. Aborting before screen run.")
         print(f"  Hint: run warm_caches.py --as-of-date {as_of_date} --sources ctgov")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2860,9 +3016,12 @@ def run_daily(
         print("\n  FATAL: Required input files missing. Aborting before screen run.")
         print(f"  Hint: publish an inputs bundle or copy market_data.json to {data_dir}/")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2876,9 +3035,12 @@ def run_daily(
     if schema_gate.status == "FAIL":
         print("\n  FATAL: Market data schema invalid. Aborting before screen run.")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2893,8 +3055,10 @@ def run_daily(
             [
                 sys.executable,
                 str(REPO_ROOT / "collect_market_data.py"),
-                "--universe", str(data_dir / "universe.json"),
-                "--output", str(data_dir / "market_data.json"),
+                "--universe",
+                str(data_dir / "universe.json"),
+                "--output",
+                str(data_dir / "market_data.json"),
             ],
             label="collect_market_data",
         )
@@ -2912,9 +3076,12 @@ def run_daily(
         print("\n  FATAL: Market data too stale. Aborting before screen run.")
         print(f"  Hint: python collect_market_data.py --universe {data_dir}/universe.json")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2928,9 +3095,12 @@ def run_daily(
     if cov_gate.status == "FAIL":
         print("\n  FATAL: Market data coverage too low. Aborting before screen run.")
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats,
+            as_of_date,
+            gate_results,
+            price_stats,
             subprocess.CompletedProcess(args=[], returncode=-1),
-            None, config,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2941,7 +3111,10 @@ def run_daily(
     print(f"\n[2/5] Running screen (phase2, ranking_mode=decision) ...")
     staging_dir = Path(tempfile.mkdtemp(prefix=f"phase2_staging_{as_of_date}_"))
     screen_proc = run_screen(
-        as_of_date, data_dir, staging_dir, price_csv,
+        as_of_date,
+        data_dir,
+        staging_dir,
+        price_csv,
         ruleset_path=ruleset_path,
         extra_args=extra_screen_args,
         prior_snapshot_dir=final_snapshots_dir,
@@ -2953,13 +3126,21 @@ def run_daily(
         if screen_proc.stderr:
             for line in screen_proc.stderr.strip().splitlines()[-10:]:
                 print(f"    {line}")
-        gate_results.append(GateResult(
-            name="screen", status="FAIL",
-            detail=f"Screen failed (exit {screen_proc.returncode})",
-            value=screen_proc.returncode,
-        ))
+        gate_results.append(
+            GateResult(
+                name="screen",
+                status="FAIL",
+                detail=f"Screen failed (exit {screen_proc.returncode})",
+                value=screen_proc.returncode,
+            )
+        )
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats, screen_proc, None, config,
+            as_of_date,
+            gate_results,
+            price_stats,
+            screen_proc,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2973,12 +3154,20 @@ def run_daily(
 
     if not staging_date_dir.exists():
         print(f"  ERROR: Expected snapshot at {staging_date_dir} not found")
-        gate_results.append(GateResult(
-            name="screen", status="FAIL",
-            detail=f"Snapshot directory not created by screen: {staging_date_dir}",
-        ))
+        gate_results.append(
+            GateResult(
+                name="screen",
+                status="FAIL",
+                detail=f"Snapshot directory not created by screen: {staging_date_dir}",
+            )
+        )
         manifest = build_run_manifest(
-            as_of_date, gate_results, price_stats, screen_proc, None, config,
+            as_of_date,
+            gate_results,
+            price_stats,
+            screen_proc,
+            None,
+            config,
             requested_as_of_date=requested_as_of_date,
             git_pre_run=git_pre_run,
             data_dir=data_dir,
@@ -2998,10 +3187,14 @@ def run_daily(
                     sys.executable,
                     str(REPO_ROOT / "tools" / "warm_price_cache.py"),
                     "--snapshot",
-                    "--as-of-date", as_of_date,
-                    "--rankings-csv", str(_staging_rankings),
-                    "--price-csv", str(price_csv),
-                    "--cache-base", str(_price_cache_base),
+                    "--as-of-date",
+                    as_of_date,
+                    "--rankings-csv",
+                    str(_staging_rankings),
+                    "--price-csv",
+                    str(price_csv),
+                    "--cache-base",
+                    str(_price_cache_base),
                 ],
                 label="warm_price_cache_anchor",
             )
@@ -3042,7 +3235,10 @@ def run_daily(
     if not skip_drift:
         _drift_th = drift_thresholds or DriftThresholds()
         drift_gate = check_drift_monitoring(
-            staging_date_dir, final_snapshots_dir, as_of_date, _drift_th,
+            staging_date_dir,
+            final_snapshots_dir,
+            as_of_date,
+            _drift_th,
         )
         gate_results.append(drift_gate)
         print(f"  Drift gate: {drift_gate.status} — {drift_gate.detail}")
@@ -3061,7 +3257,8 @@ def run_daily(
 
     # --- Gate: sec_13f_cache (WARN-only) ---
     sec_13f_gate = check_sec_13f_cache(
-        as_of_date, warn_coverage_pct=config.sec_13f_coverage_warn_pct,
+        as_of_date,
+        warn_coverage_pct=config.sec_13f_coverage_warn_pct,
     )
     gate_results.append(sec_13f_gate)
     print(f"  13F cache gate: {sec_13f_gate.status} — {sec_13f_gate.detail}")
@@ -3076,14 +3273,18 @@ def run_daily(
 
     # --- Gate: institutional_delta (WARN-only, post-screen) ---
     inst_delta_gate = check_institutional_delta(
-        staging_date_dir, final_snapshots_dir, as_of_date,
+        staging_date_dir,
+        final_snapshots_dir,
+        as_of_date,
     )
     gate_results.append(inst_delta_gate)
     print(f"  Institutional delta gate: {inst_delta_gate.status} — {inst_delta_gate.detail}")
 
     # --- Gate: pnl_attribution (WARN-only, post-screen) ---
     pnl_gate = check_pnl_attribution(
-        staging_date_dir, final_snapshots_dir, as_of_date,
+        staging_date_dir,
+        final_snapshots_dir,
+        as_of_date,
         price_csv,
         min_coverage_pct=config.pnl_attribution_min_coverage_pct,
     )
@@ -3099,7 +3300,10 @@ def run_daily(
     # --- Gate: forward_eval (WARN-only) ---
     if not skip_forward_eval:
         fwd_gate = check_forward_eval(
-            final_snapshots_dir, _price_cache_base, as_of_date, config,
+            final_snapshots_dir,
+            _price_cache_base,
+            as_of_date,
+            config,
         )
         gate_results.append(fwd_gate)
         print(f"  Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
@@ -3126,7 +3330,8 @@ def run_daily(
 
     # --- Gate: portfolio_weights (WARN-only) ---
     pw_gate = check_portfolio_weights(
-        staging_date_dir, tolerance=config.portfolio_weight_sum_tolerance,
+        staging_date_dir,
+        tolerance=config.portfolio_weight_sum_tolerance,
     )
     gate_results.append(pw_gate)
     print(f"  Portfolio weights gate: {pw_gate.status} — {pw_gate.detail}")
@@ -3138,7 +3343,8 @@ def run_daily(
 
     # --- Gate: cache_health (WARN-only by default; FAIL with --fail-on-bad-cache) ---
     ch_gate = check_cache_health(
-        staging_date_dir, fail_on_bad=fail_on_bad_cache,
+        staging_date_dir,
+        fail_on_bad=fail_on_bad_cache,
     )
     gate_results.append(ch_gate)
     print(f"  Cache health gate: {ch_gate.status} — {ch_gate.detail}")
@@ -3167,8 +3373,12 @@ def run_daily(
     print(f"\n[5/5] Building run manifest ...")
     git_post_run = get_git_info(REPO_ROOT)
     manifest = build_run_manifest(
-        as_of_date, gate_results, price_stats,
-        screen_proc, audit_proc, config,
+        as_of_date,
+        gate_results,
+        price_stats,
+        screen_proc,
+        audit_proc,
+        config,
         snapshot_date_dir=staging_date_dir,
         requested_as_of_date=requested_as_of_date,
         git_pre_run=git_pre_run,
@@ -3213,6 +3423,30 @@ def run_daily(
                     print(f"  [{g.status}] {g.name}: {g.detail}")
         print(f"{'='*70}")
 
+        # --- Step 5b: Full drift report (optional, post-promotion) ---
+        if not skip_drift:
+            _drift_report_script = REPO_ROOT / "scripts" / "run_drift_report.py"
+            if _drift_report_script.exists():
+                _drift_out = final_path / "drift_guardrails"
+                _drift_proc = _run_subprocess(
+                    [
+                        sys.executable,
+                        str(_drift_report_script),
+                        "--snapshot-dir",
+                        str(final_snapshots_dir),
+                        "--output-dir",
+                        str(_drift_out),
+                        "--window-size",
+                        "5",
+                    ],
+                    label="run_drift_report",
+                    timeout=120,
+                )
+                if _drift_proc.returncode == 0:
+                    print(f"  Full drift report → {_drift_out}")
+                else:
+                    print(f"  [WARN] Full drift report failed (exit {_drift_proc.returncode})")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
@@ -3223,9 +3457,12 @@ def run_daily(
                     sys.executable,
                     str(REPO_ROOT / "tools" / "warm_price_cache.py"),
                     "--backfill-all",
-                    "--price-csv", str(price_csv),
-                    "--cache-base", str(_price_cache_base),
-                    "--through-date", as_of_date,
+                    "--price-csv",
+                    str(price_csv),
+                    "--cache-base",
+                    str(_price_cache_base),
+                    "--through-date",
+                    as_of_date,
                 ],
                 label="warm_price_cache_backfill",
             )
@@ -3244,6 +3481,7 @@ def run_daily(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(
         description="Phase-2 Daily Production Runner",
@@ -3256,93 +3494,122 @@ def main():
         ),
     )
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="Snapshot date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--data-dir", type=Path, default=REPO_ROOT / "production_data",
+        "--data-dir",
+        type=Path,
+        default=REPO_ROOT / "production_data",
         help="Path to production_data/ (default: production_data/)",
     )
     parser.add_argument(
-        "--price-history", type=Path, default=REPO_ROOT / "production_data" / "price_history.csv",
+        "--price-history",
+        type=Path,
+        default=REPO_ROOT / "production_data" / "price_history.csv",
         help="Path to price_history.csv (default: production_data/price_history.csv)",
     )
     parser.add_argument(
-        "--snapshot-dir", type=Path, default=REPO_ROOT / "data" / "snapshots",
+        "--snapshot-dir",
+        type=Path,
+        default=REPO_ROOT / "data" / "snapshots",
         help="Final snapshot directory (default: data/snapshots/)",
     )
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help="Path to decision engine ruleset JSON",
     )
     parser.add_argument(
-        "--gate-config", type=Path, default=None,
+        "--gate-config",
+        type=Path,
+        default=None,
         help="Path to gate configuration JSON (overrides defaults)",
     )
     parser.add_argument(
-        "--skip-price-refresh", action="store_true",
+        "--skip-price-refresh",
+        action="store_true",
         help="Skip incremental price refresh (use existing price_history.csv)",
     )
     parser.add_argument(
-        "--skip-audit", action="store_true",
+        "--skip-audit",
+        action="store_true",
         help="Skip data integrity audit step",
     )
     parser.add_argument(
-        "--allow-date-fallback", action="store_true",
+        "--allow-date-fallback",
+        action="store_true",
         help="If ctgov cache missing for --as-of-date, fall back to latest cached date (WARN).",
     )
     parser.add_argument(
-        "--ctgov-cache-dir", type=Path, default=None,
+        "--ctgov-cache-dir",
+        type=Path,
+        default=None,
         help="Path to ctgov cache directory (default: cache/ctgov/)",
     )
     parser.add_argument(
-        "--drift-thresholds", type=Path, default=None,
+        "--drift-thresholds",
+        type=Path,
+        default=None,
         help="Path to drift monitoring thresholds JSON (default: built-in)",
     )
     parser.add_argument(
-        "--skip-drift", action="store_true",
+        "--skip-drift",
+        action="store_true",
         help="Skip drift monitoring gate",
     )
     parser.add_argument(
-        "--skip-forward-eval", action="store_true",
+        "--skip-forward-eval",
+        action="store_true",
         help="Skip forward-return rolling IC gate",
     )
     parser.add_argument(
-        "--price-cache-dir", type=Path, default=None,
+        "--price-cache-dir",
+        type=Path,
+        default=None,
         help="Base dir for PIT price caches (default: data/caches/price_pit/PIT/)",
     )
     parser.add_argument(
-        "--fail-on-bad-cache", action="store_true",
+        "--fail-on-bad-cache",
+        action="store_true",
         help="Exit non-zero if cache health sentinel detects BAD status (SEC 8-K outage or extreme CTGov shift).",
     )
     parser.add_argument(
-        "--skip-pit-warm", action="store_true",
+        "--skip-pit-warm",
+        action="store_true",
         help=(
             "Skip all PIT warm steps (cache warm, price anchor, backfill). "
             "Use when CI handles PIT warming externally."
         ),
     )
     parser.add_argument(
-        "--warm-sources", default="sec_8k,ctgov,sec_13f",
+        "--warm-sources",
+        default="sec_8k,ctgov,sec_13f",
         help=(
             "Comma-separated sources passed to warm_caches.py in step 1.5 "
             "(default: sec_8k,ctgov,sec_13f). Use empty string to skip."
         ),
     )
     parser.add_argument(
-        "--no-warm-price-pit", action="store_true",
+        "--no-warm-price-pit",
+        action="store_true",
         help="Skip PIT price anchor creation in step 2.5.",
     )
     parser.add_argument(
-        "--price-pit-backfill", action="store_true",
+        "--price-pit-backfill",
+        action="store_true",
         help="After promotion, backfill matured forward returns for all PIT price caches.",
     )
     parser.add_argument(
-        "--no-auto-refresh-market-data", action="store_true",
+        "--no-auto-refresh-market-data",
+        action="store_true",
         help="Do not auto-refresh market_data.json when staleness gate fires; abort instead.",
     )
     parser.add_argument(
-        "--json-logs", action="store_true",
+        "--json-logs",
+        action="store_true",
         help="Emit JSON-structured logs to stdout (also activated by LOG_FORMAT=json env var).",
     )
     args = parser.parse_args()
@@ -3350,6 +3617,7 @@ def main():
     # -- Logging setup (must be before any logger calls) --
     if args.json_logs or os.environ.get("LOG_FORMAT", "").lower() == "json":
         from common.logging_config import setup_structured_logging
+
         setup_structured_logging()
 
     config = GateConfig()
@@ -3386,6 +3654,7 @@ def main():
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash
         import traceback
+
         _logger.error("Unhandled exception in run_daily: %s", exc, exc_info=True)
         print(f"\nFATAL: {exc}")
         traceback.print_exc()
