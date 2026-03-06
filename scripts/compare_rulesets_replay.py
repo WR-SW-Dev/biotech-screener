@@ -426,7 +426,8 @@ def main(argv=None) -> int:
 
     # Backfill institutional delta columns (cold-start: 0 when no delta sidecar)
     for col, default in [("inst_delta_z", 0.0), ("inst_delta_net", 0),
-                         ("inst_delta_new", 0), ("inst_delta_exit", 0)]:
+                         ("inst_delta_new", 0), ("inst_delta_exit", 0),
+                         ("inst_delta_nonzero_pct", 0.0)]:
         if col not in rankings.columns:
             rankings[col] = default
             print(f"[INFO] Backfilled {col} with {default} (no delta sidecar)")

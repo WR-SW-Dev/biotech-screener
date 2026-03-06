@@ -91,9 +91,7 @@ def _make_synthetic_snapshot(
         "clinical_excluded": 3,
         "clinical_exempted": 2,
         "archetype_distribution": {"drug_developer": n_tickers},
-        "alpha_modifier_telemetry": {
-            "mode": "within_tier",
-            "weight": 0.05,
+        "alpha_table_telemetry": {
             "table_policy": "if_missing",
             "table_path": "",
             "alpha_table_source": "static",

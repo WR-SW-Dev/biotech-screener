@@ -125,6 +125,10 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
             r["inst_delta_net"] = "0"
             r["inst_delta_new"] = "0"
             r["inst_delta_exit"] = "0"
+            r["inst_delta_nonzero_pct"] = "0"
+    elif "inst_delta_nonzero_pct" not in sample:
+        for r in rows:
+            r["inst_delta_nonzero_pct"] = "0"
 
     # missingness_penalty: default 0
     if "missingness_penalty" not in sample:

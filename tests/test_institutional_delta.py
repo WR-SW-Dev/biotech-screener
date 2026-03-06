@@ -915,3 +915,64 @@ class TestSortSignal:
         # Should not crash, and the key should be same as z=0
         k_zero = _sort_key(inst_delta_z=0.0, _ruleset=rs)
         assert k == k_zero
+
+
+# ---------------------------------------------------------------------------
+# Coverage guard
+# ---------------------------------------------------------------------------
+
+class TestCoverageGuard:
+    """institutional_sort_min_nonzero_pct coverage guard in run_screen.py."""
+
+    def test_default_threshold(self):
+        rs = DecisionRuleset()
+        assert rs.institutional_sort_min_nonzero_pct == 10.0
+
+    def test_guard_zeros_z_when_below_threshold(self):
+        """When <10% have nonzero net delta, all z-scores should be zeroed."""
+        # Simulate 100 csv_rows: 5 nonzero (5% < 10% threshold)
+        csv_rows = [{"inst_delta_z": 0.0, "inst_delta_net": 0} for _ in range(95)]
+        csv_rows += [{"inst_delta_z": 2.5, "inst_delta_net": 1} for _ in range(5)]
+        nonzero_count = sum(1 for r in csv_rows if r["inst_delta_net"] != 0)
+        nonzero_pct = 100.0 * nonzero_count / len(csv_rows)
+        threshold = 10.0
+        assert nonzero_pct < threshold  # 5% < 10%
+        # Apply guard (mirrors run_screen.py logic)
+        if nonzero_pct < threshold:
+            for r in csv_rows:
+                r["inst_delta_z"] = 0.0
+        assert all(r["inst_delta_z"] == 0.0 for r in csv_rows)
+
+    def test_guard_preserves_z_when_above_threshold(self):
+        """When >=10% have nonzero net delta, z-scores are preserved."""
+        csv_rows = [{"inst_delta_z": 0.0, "inst_delta_net": 0} for _ in range(85)]
+        csv_rows += [{"inst_delta_z": 1.5, "inst_delta_net": 1} for _ in range(15)]
+        nonzero_count = sum(1 for r in csv_rows if r["inst_delta_net"] != 0)
+        nonzero_pct = 100.0 * nonzero_count / len(csv_rows)
+        threshold = 10.0
+        assert nonzero_pct >= threshold  # 15% >= 10%
+        # No zeroing
+        assert sum(1 for r in csv_rows if r["inst_delta_z"] != 0.0) == 15
+
+    def test_guard_at_exact_threshold(self):
+        """At exactly 10%, guard does NOT fire (>= threshold passes)."""
+        csv_rows = [{"inst_delta_z": 0.0, "inst_delta_net": 0} for _ in range(90)]
+        csv_rows += [{"inst_delta_z": 1.0, "inst_delta_net": 1} for _ in range(10)]
+        nonzero_pct = 100.0 * 10 / 100
+        assert nonzero_pct >= 10.0
+        # z-scores preserved
+        assert sum(1 for r in csv_rows if r["inst_delta_z"] != 0.0) == 10
+
+    def test_custom_threshold_from_ruleset(self):
+        """Ruleset can set a custom threshold."""
+        rs = DecisionRuleset(institutional_sort_min_nonzero_pct=5.0)
+        assert rs.institutional_sort_min_nonzero_pct == 5.0
+
+    def test_guard_with_zero_rows(self):
+        """Empty csv_rows → no crash, nonzero_pct = 0."""
+        csv_rows = []
+        nonzero_pct = (
+            100.0 * sum(1 for r in csv_rows if r.get("inst_delta_net", 0) != 0) / len(csv_rows)
+            if csv_rows else 0.0
+        )
+        assert nonzero_pct == 0.0

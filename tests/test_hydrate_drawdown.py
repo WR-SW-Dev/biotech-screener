@@ -518,6 +518,32 @@ class TestStaleDrawdownOverwrite:
         assert abs(df["drawdown"] - (-0.10)) < 0.01
         assert abs(df["drawdown_rel_xbi"] - (-0.05)) < 0.01
 
+    def test_string_drawdown_does_not_raise(self):
+        """Regression: drawdown stored as string (from CSV ingestion) must not
+        cause TypeError in drawdown_rel_xbi computation.  Fixed by float(dd)
+        cast at line 1867 of run_screen.py.
+
+        The bug triggers when the ticker has too few bars to recompute (so the
+        pipeline string value persists in defensive_features) but XBI DOES have
+        enough bars, causing `str - float` at the relative-drawdown line.
+        """
+        rec = _make_rec("STRDD")
+        rec["defensive_features"]["drawdown"] = "-0.25"  # string from pipeline
+        # Only 5 bars for ticker (too few to recompute) but 200 for XBI
+        ticker_prices, _ = self._make_prices("STRDD", 5, 100.0, 75.0)
+        xbi_prices, last_date = self._make_prices("XBI", 200, 100.0, 95.0)
+        with tempfile.TemporaryDirectory() as tmp:
+            csv_path = Path(tmp) / "price_history.csv"
+            _write_price_csv(csv_path, ticker_prices + xbi_prices)
+            # Without float(dd) fix this raises:
+            # TypeError: unsupported operand type(s) for -: 'str' and 'float'
+            _hydrate_drawdown({"STRDD": rec}, csv_path, last_date)
+        df = rec["defensive_features"]
+        # Relative drawdown computed correctly via float() cast
+        assert isinstance(df["drawdown_rel_xbi"], float)
+        # Value should be: -0.25 - xbi_dd (xbi drops ~5%)
+        assert df["drawdown_rel_xbi"] < 0
+
     def test_no_csv_data_keeps_pipeline_value(self):
         """When price CSV has no data for ticker, pipeline value is kept."""
         recs = {"NOCSVDATA": _make_rec("NOCSVDATA", drawdown=-0.30)}

@@ -969,7 +969,8 @@ class TestSnapshotInputContract:
         "de_sort_total_adj",
         "de_sort_contrib_clinical", "de_sort_contrib_coinvest",
         "de_sort_contrib_institutional", "de_sort_contrib_calendar_alpha",
-        "de_sort_contrib_alpha_modifier", "de_sort_contrib_catalyst_bonus",
+        "de_sort_contrib_alpha_modifier", "de_sort_contrib_alpha_cohort_tb",
+        "de_sort_contrib_catalyst_bonus",
     })
 
     def test_de_input_columns_present(self):

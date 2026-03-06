@@ -94,6 +94,8 @@ class DecisionRuleset:
     )
 
     # Layer 3 — Momentum state sizing tilt (opt-in, multiplicative on weight)
+    # NOTE: default multipliers are all 1.0 (identity) — enabling this flag
+    # without setting non-trivial multipliers has zero behavioral effect.
     enable_mom_state_tilt: bool = False
     mom_state_tilt_mults: tuple = (
         ("tailwind", 1.0), ("neutral", 1.0), ("headwind", 1.0),
@@ -128,6 +130,7 @@ class DecisionRuleset:
     enable_institutional_sort_signal: bool = False
     institutional_sort_weight: float = 0.3
     institutional_positive_only: bool = True
+    institutional_sort_min_nonzero_pct: float = 10.0  # coverage guard: zero z if <X% nonzero
 
     # Clinical Calendar Alpha v2 sort tilt (opt-in, default OFF)
     # When enabled, blends clinical_score_v2_z into sort anchor,
@@ -192,12 +195,13 @@ class DecisionRuleset:
     catalyst_priority_default: int = 9
     catalyst_priority_unknown: int = 99
 
-    # Alpha modifier — DEPRECATED.  5-way backtest (2020-2026, 347 dates) confirmed
+    # DEPRECATED — Alpha modifier.  5-way backtest (2020-2026, 347 dates) confirmed
     # within_tier at weight=0.05 produces zero measurable change in sort order vs off.
     # tiebreak mode is structurally unreachable (unique alpha_cohort_pct floats prevent
-    # ties at sort tuple position 3).  Keep fields for backward compat; default is "off".
-    alpha_modifier_mode: str = "off"           # "off" | "within_tier" (tiebreak: dead)
-    alpha_modifier_weight: float = 0.00        # deprecated; leave at 0.0
+    # ties at sort tuple position 3).  Fields kept for backward compat only; both
+    # modes are proven inert.  Safe to remove in next major version.
+    alpha_modifier_mode: str = "off"           # DEPRECATED: "off" | "within_tier" (tiebreak: dead)
+    alpha_modifier_weight: float = 0.00        # DEPRECATED: leave at 0.0
 
     # Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker, no
     # ceiling ties unlike alpha_raw).  Blended as a small secondary sort contribution:
@@ -1218,6 +1222,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "institutional",
     "calendar_alpha",
     "alpha_modifier",
+    "alpha_cohort_tb",
     "catalyst_bonus",
 )
 
@@ -1261,7 +1266,10 @@ def _build_sort_contributions(
         delta = ruleset.clinical_sort_weight * cz_eff * stage_mult
         contribs.append(SortContribution("clinical", cz_tier, ruleset.clinical_sort_weight, delta))
 
-    # 2. Coinvest sort tilt
+    # 2. Coinvest sort tilt — RESEARCHED & REJECTED (look-ahead contaminated;
+    #    PIT-correct re-eval harmful at all weights).  Guard: coinvest_score_z
+    #    is never injected by run_screen.py, so the signal silently defaults
+    #    to 0.0 if this branch is ever enabled without wiring injection first.
     if ruleset.enable_coinvest_sort_signal:
         cz = _safe_float(decision_fields.get("coinvest_score_z"), default=0.0)
         if ruleset.coinvest_positive_only:
@@ -1288,11 +1296,9 @@ def _build_sort_contributions(
         delta = ruleset.calendar_alpha_sort_weight * cv2_eff
         contribs.append(SortContribution("calendar_alpha", cv2_z, ruleset.calendar_alpha_sort_weight, delta))
 
-    # 5. Alpha modifier — deprecated; branch kept for backward compat with old rulesets.
-    #    within_tier at weight≤0.05 proven zero-impact (ablation 2026-03-02).
-    if ruleset.alpha_modifier_mode == "within_tier" and ruleset.alpha_modifier_weight > 0.0:
-        delta = ruleset.alpha_modifier_weight * alpha_raw
-        contribs.append(SortContribution("alpha_modifier", alpha_raw, ruleset.alpha_modifier_weight, delta))
+    # 5. Alpha modifier — REMOVED.  Fields kept in DecisionRuleset for JSON
+    #    backward compat but code path deleted (zero-impact proven, ablation 2026-03-02).
+    #    "alpha_modifier" stays in SORT_CONTRIB_KEYS → column always emits 0.0.
 
     # 5b. Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker;
     #     no 0.1-ceiling ties that plague alpha_raw).  Higher pct → larger delta →
@@ -1315,7 +1321,8 @@ def _build_sort_contributions(
 # to 0.0 when absent, so the DE remains self-contained for unit testing.
 _EXTERNAL_SORT_FIELDS: frozenset = frozenset({
     "clinical_score_z_tier",
-    "coinvest_score_z",
+    # "coinvest_score_z" — removed: never injected by run_screen.py; coinvest sort
+    # signal researched & rejected (look-ahead contaminated, PIT-correct harmful).
     "inst_delta_z",
     "stage_bucket",
     "clinical_score_v2_z",
@@ -1412,9 +1419,10 @@ def compute_actionable_sort_key(
     if rs.enable_missingness_sort_penalty:
         missing_count = int(_safe_float(decision_fields.get("missingness_penalty", 0), default=0))
 
-    # Alpha modifier signal (deprecated; tiebreak mode is structurally dead)
+    # DEPRECATED: alpha modifier / tiebreak — kept as structural placeholder in
+    # sort tuples for backward compat.  Both values are always 0.0.
     _alpha_sig = _safe_float(alpha_raw, default=0.0)
-    _alpha_tie = 0.0  # tiebreak mode retired: unique upstream floats prevent ties
+    _alpha_tie = 0.0  # always 0.0; tuple position preserved for sort-key stability
 
     # --- Build structured contributions and compute total adjustment ---
     # Catalyst bonus is only non-zero in blended mode.
@@ -1550,7 +1558,8 @@ def compute_target_weights(
         cm = _safe_float(row.get("cost_mult"), default=1.0)
         tm = _safe_float(row.get("catalyst_tilt_mult"), default=1.0)
         mm = _safe_float(row.get("mom_state_tilt_mult"), default=1.0)
-        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm)
+        csm = _safe_float(row.get("sizing_multiplier_clinical"), default=1.0)
+        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm * csm)
 
     # Floor prevents explosive weights from near-zero floating-point totals.
     # Smallest real weight in production is ~0.15, so 1e-9 is safely below.

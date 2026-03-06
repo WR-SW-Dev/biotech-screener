@@ -3,10 +3,12 @@
 import pytest
 from decision_engine import (
     compute_actionable_sort_key,
+    compute_sort_contribs,
     compute_target_weights,
     resolve_catalyst_priority,
     DecisionRuleset,
     SIZING_WEIGHTS,
+    SORT_CONTRIB_KEYS,
     ACTIONABLE_COLUMNS,
 )
 
@@ -1035,3 +1037,88 @@ def test_nan_in_sort_key_fields_produces_comparable_tuple():
             assert not math.isnan(elem), f"Element {i} is NaN"
     # Must be comparable to itself (deterministic sort)
     assert key <= key
+
+
+# =============================================================================
+# CLINICAL SIZING WIRING
+# =============================================================================
+
+class TestClinicalSizingWeight:
+    """compute_target_weights() applies sizing_multiplier_clinical."""
+
+    def test_clinical_sizing_multiplier_applied(self):
+        """Row with sizing_multiplier_clinical < 1 gets lower weight."""
+        rows = [
+            {"size_band": "L", "ticker": "A", "sizing_multiplier_clinical": "1.0"},
+            {"size_band": "L", "ticker": "B", "sizing_multiplier_clinical": "0.5"},
+        ]
+        compute_target_weights(rows)
+        assert rows[0]["target_weight_pct"] > rows[1]["target_weight_pct"]
+
+    def test_clinical_sizing_multiplier_gt_1(self):
+        """Row with sizing_multiplier_clinical > 1 gets higher weight."""
+        rows = [
+            {"size_band": "M", "ticker": "A", "sizing_multiplier_clinical": "1.5"},
+            {"size_band": "M", "ticker": "B", "sizing_multiplier_clinical": "1.0"},
+        ]
+        compute_target_weights(rows)
+        assert rows[0]["target_weight_pct"] > rows[1]["target_weight_pct"]
+
+    def test_clinical_sizing_missing_defaults_to_1(self):
+        """Missing sizing_multiplier_clinical defaults to 1.0 (no effect)."""
+        rows_with = [
+            {"size_band": "M", "ticker": "A", "sizing_multiplier_clinical": "1.0"},
+            {"size_band": "S", "ticker": "B", "sizing_multiplier_clinical": "1.0"},
+        ]
+        rows_without = [
+            {"size_band": "M", "ticker": "A"},
+            {"size_band": "S", "ticker": "B"},
+        ]
+        compute_target_weights(rows_with)
+        compute_target_weights(rows_without)
+        assert rows_with[0]["target_weight_pct"] == rows_without[0]["target_weight_pct"]
+        assert rows_with[1]["target_weight_pct"] == rows_without[1]["target_weight_pct"]
+
+    def test_clinical_sizing_still_sums_to_100(self):
+        """Weights still sum to 100 with clinical sizing multipliers."""
+        rows = [
+            {"size_band": "L", "ticker": "A", "sizing_multiplier_clinical": "1.2"},
+            {"size_band": "M", "ticker": "B", "sizing_multiplier_clinical": "0.8"},
+            {"size_band": "S", "ticker": "C", "sizing_multiplier_clinical": "1.0"},
+        ]
+        compute_target_weights(rows)
+        total = sum(r["target_weight_pct"] for r in rows)
+        assert abs(total - 100.0) < 0.05
+
+
+# =============================================================================
+# SORT_CONTRIB_KEYS — alpha_cohort_tb presence
+# =============================================================================
+
+class TestSortContribKeys:
+    """SORT_CONTRIB_KEYS includes all contributions from _build_sort_contributions."""
+
+    def test_alpha_cohort_tb_in_keys(self):
+        """alpha_cohort_tb must be in SORT_CONTRIB_KEYS."""
+        assert "alpha_cohort_tb" in SORT_CONTRIB_KEYS
+
+    def test_compute_sort_contribs_returns_all_keys(self):
+        """compute_sort_contribs returns entries for every SORT_CONTRIB_KEYS member."""
+        fields = _make_fields()
+        rs = DecisionRuleset(alpha_cohort_tiebreak_weight=0.05)
+        fields["alpha_cohort_pct"] = 0.75
+        _, cmap = compute_sort_contribs(
+            fields, "drug_developer", ruleset=rs, tiebreaker_pct=0.5,
+        )
+        for k in SORT_CONTRIB_KEYS:
+            assert k in cmap, f"Missing key: {k}"
+
+    def test_alpha_cohort_tb_nonzero_when_enabled(self):
+        """alpha_cohort_tb contribution is nonzero when weight > 0."""
+        fields = _make_fields()
+        fields["alpha_cohort_pct"] = 0.80
+        rs = DecisionRuleset(alpha_cohort_tiebreak_weight=0.10)
+        _, cmap = compute_sort_contribs(
+            fields, "drug_developer", ruleset=rs, tiebreaker_pct=0.5,
+        )
+        assert cmap["alpha_cohort_tb"] > 0.0

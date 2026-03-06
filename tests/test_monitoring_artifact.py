@@ -103,7 +103,7 @@ def _make_snapshot(
         "cache_degraded_run": degraded,
         "cache_refresh_had_rejections": degraded,
         "cache_refresh_rejected_sources": ["sec_8k"] if degraded else [],
-        "alpha_modifier_telemetry": {
+        "alpha_table_telemetry": {
             "alpha_table_source": "preexisting_local",
             "alpha_score_present": 190,
             "alpha_score_missing": 10,

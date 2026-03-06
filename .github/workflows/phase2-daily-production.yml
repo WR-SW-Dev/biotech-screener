@@ -57,6 +57,38 @@ jobs:
           pip install pytest-xdist yfinance
           pip install -e .
 
+      # ── Pre-flight checks ──────────────────────────────────────
+      - name: Pre-flight checks
+        run: |
+          echo "--- Disk space ---"
+          FREE_KB=$(df --output=avail / | tail -1 | tr -d ' ')
+          FREE_GB=$(( FREE_KB / 1048576 ))
+          echo "Free disk: ${FREE_GB} GB"
+          if [ "$FREE_GB" -lt 5 ]; then
+            echo "::error::Less than 5 GB free disk space (${FREE_GB} GB)"
+            exit 1
+          fi
+
+          echo "--- Network connectivity ---"
+          for host in pypi.org api.github.com; do
+            if ! curl -sf --connect-timeout 5 --max-time 10 "https://${host}" -o /dev/null; then
+              echo "::warning::Cannot reach ${host} — external API calls may fail"
+            else
+              echo "  ${host}: OK"
+            fi
+          done
+
+          echo "--- Required files ---"
+          for f in production_data/universe.json requirements.txt pyproject.toml; do
+            if [ ! -f "$f" ]; then
+              echo "::error::Required file missing: $f"
+              exit 1
+            fi
+            echo "  $f: OK"
+          done
+
+          echo "Pre-flight checks passed"
+
       # ── Unit tests (excludes pipeline/integration tests that need production data or caches) ──
       - name: Run unit tests
         run: |
@@ -277,7 +309,7 @@ jobs:
               sys.exit(0)
 
           m = json.load(open(meta))
-          tele = m.get("alpha_modifier_telemetry") or {}
+          tele = m.get("alpha_table_telemetry") or m.get("alpha_modifier_telemetry") or {}
           src = tele.get("alpha_table_source")
           if src != "artifact":
               print(f"::error::Expected alpha_table_source='artifact' because marker exists; got {src!r}")
@@ -369,6 +401,24 @@ jobs:
           REQ_DATE: ${{ steps.date.outputs.as_of_date }}
           FORCE_DEGRADED: ${{ inputs.force_degraded }}
 
+      # ── Snapshot preflight (post-production, non-blocking) ──────
+      - name: Snapshot preflight validation
+        if: always() && steps.runner.outputs.exit_code != '1'
+        run: |
+          DATE="${{ steps.manifest.outputs.effective_date || steps.date.outputs.as_of_date }}"
+          SNAP="data/snapshots/${DATE}"
+          if [ ! -d "$SNAP" ]; then
+            echo "::warning::No snapshot directory for ${DATE} — skipping preflight"
+            exit 0
+          fi
+          python tools/snapshot_preflight.py \
+            --snapshot-root data/snapshots \
+            --date-from "$DATE" --date-to "$DATE" \
+            --strict \
+            --artifact-dir "${SNAP}/preflight" || {
+            echo "::warning::Snapshot preflight reported issues for ${DATE}"
+          }
+
       # ── PIT price cache (post-production, non-blocking) ────────
       - name: Create PIT price cache anchor
         if: always() && steps.runner.outputs.exit_code != '1' && env.DEGRADED != '1'
@@ -441,6 +491,14 @@ jobs:
             --snapshot-dir data/snapshots \
             --out-json "data/snapshots/${DATE}/monitoring.json" \
             --out-md   "data/snapshots/${DATE}/monitoring.md"
+
+      # ── Rollup institutional metrics timeseries ─────────────
+      - name: Rollup institutional metrics
+        if: always() && steps.runner.outputs.exit_code != '1'
+        run: |
+          python3 scripts/rollup_institutional_metrics.py \
+            --snapshot-dir data/snapshots \
+            --output output/institutional_metrics_timeseries.csv || true
 
       # ── Evaluate monitoring gate ─────────────────────────────
       - name: Evaluate monitoring gate
@@ -676,6 +734,95 @@ print('true' if d.get('ruleset_health',{}).get('recommend_rollback') else 'false
             echo "::notice::SLACK_WEBHOOK_URL not configured — skipping notification"
           fi
 
+      # ── Auto-triage: create GitHub Issue on FAIL ─────────────────
+      - name: Create incident issue
+        if: always() && (steps.runner.outputs.exit_code == '1' || steps.health_packet.outputs.rollback_recommended == 'true')
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          DATE="${{ steps.manifest.outputs.effective_date || steps.date.outputs.as_of_date }}"
+          RC="${{ steps.runner.outputs.exit_code }}"
+          ROLLBACK="${{ steps.health_packet.outputs.rollback_recommended }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          if [ "$RC" = "1" ]; then
+            LEVEL="FAIL"
+            LABELS="incident,severity/high"
+          else
+            LEVEL="WARN (rollback recommended)"
+            LABELS="incident,severity/medium"
+          fi
+
+          TITLE="[${LEVEL}] Production run ${DATE}"
+
+          # Build body from manifest gate summary if available
+          GATE_SUMMARY=""
+          MANIFEST="output/run_manifest.json"
+          if [ -f "$MANIFEST" ]; then
+            GATE_SUMMARY=$(python3 -c "
+          import json, sys
+          m = json.load(open(sys.argv[1]))
+          gates = m.get('gate_results', {})
+          lines = []
+          for name, info in sorted(gates.items()):
+              status = info if isinstance(info, str) else info.get('status', str(info))
+              lines.append(f'| {name} | {status} |')
+          if lines:
+              print('| Gate | Status |')
+              print('|------|--------|')
+              print('\n'.join(lines))
+          else:
+              print('_No gate details in manifest._')
+          " "$MANIFEST" 2>/dev/null || echo "_Could not parse manifest._")
+          fi
+
+          BODY="$(cat <<EOF
+          ## Production incident — ${DATE}
+
+          **Level:** ${LEVEL}
+          **Exit code:** ${RC}
+          **Rollback recommended:** ${ROLLBACK:-false}
+          **Run:** ${RUN_URL}
+
+          ### Gate summary
+
+          ${GATE_SUMMARY}
+
+          ### Next steps
+
+          - [ ] Review run logs and artifacts
+          - [ ] Determine root cause
+          - [ ] Rollback if needed: \`python3 tools/promote_ruleset.py --rollback --reason "..."\`
+          - [ ] Close this issue when resolved
+          EOF
+          )"
+
+          # Deduplicate: skip if an open issue with this title already exists
+          EXISTING=$(gh issue list --state open --search "in:title ${TITLE}" --json number --jq 'length')
+          if [ "${EXISTING:-0}" -gt 0 ]; then
+            echo "::notice::Open issue already exists for '${TITLE}' — skipping creation"
+          else
+            gh issue create \
+              --title "${TITLE}" \
+              --body "${BODY}" \
+              --label "${LABELS}" \
+            || echo "::warning::Could not create issue (labels may not exist yet)"
+          fi
+
+      # ── SLO / error-budget report ──────────────────────────────
+      - name: SLO report
+        if: always()
+        continue-on-error: true
+        run: |
+          python3 tools/slo_tracker.py --json | tee artifacts/slo_report.json
+          python3 tools/slo_tracker.py
+          # Annotate workflow if SLO breached
+          MET=$(python3 -c "import json; r=json.load(open('artifacts/slo_report.json')); print(r.get('slo_met',''))")
+          if [ "$MET" = "False" ]; then
+            echo "::warning::SLO BREACHED — see artifacts/slo_report.json"
+          fi
+
       # ── Upload snapshot artifacts ───────────────────────────────
       - name: Upload snapshot
         if: always()
@@ -704,6 +851,8 @@ print('true' if d.get('ruleset_health',{}).get('recommend_rollback') else 'false
           path: |
             output/run_manifest.json
             output/production_daily.log
+            artifacts/gate_verdict_ledger.jsonl
+            artifacts/slo_report.json
           retention-days: 90
           if-no-files-found: warn
 

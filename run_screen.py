@@ -1364,6 +1364,7 @@ SNAPSHOT_COLUMNS = [
     "inst_delta_net",     # raw net_elite_holders_delta
     "inst_delta_new",     # elite_new_count
     "inst_delta_exit",    # elite_exit_count
+    "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
     "has_coinvest_signal",   # True when sponsor_tier1_count is real data
     "has_inst_delta",        # True when institutional delta is available
     "has_catalyst_signal",   # True when catalyst_mode != "missing"
@@ -1512,11 +1513,11 @@ PORTFOLIO_POSITIONS_COLUMNS = [
 # Phase-2 operational defaults
 PHASE2_DEFAULT_RULESET_PATH = (
     Path(__file__).resolve().parent
-    / "production_data" / "decision_rulesets" / "v1.8.3_buffer30_candidate.json"
+    / "production_data" / "decision_rulesets" / "v1.9.0_institutional_sort_candidate.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
-PHASE2_PINNED_RULESET_ID = "82982998"
+PHASE2_PINNED_RULESET_ID = "e966af9d"
 PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
     Path(__file__).resolve().parent
     / "production_data" / "phase2_health_thresholds" / "v1.json"
@@ -1570,6 +1571,74 @@ MANIFEST_VERSION = "v1"
 MIN_BARS_FOR_ESTIMATE = 126  # trading bars (rows), half of 252-bar window; below this drawdown is unreliable
 
 VALID_DRAWDOWN_MISSING_REASONS = frozenset({"", "no_price_series", "series_too_short"})
+
+# ---------------------------------------------------------------------------
+# Price outlier / split-artifact detection
+# ---------------------------------------------------------------------------
+SPLIT_JUMP_THRESHOLD = 3.0    # +300% day-over-day → probable reverse split artifact
+SPLIT_DROP_THRESHOLD = -0.75  # -75% day-over-day → probable forward split artifact
+
+
+def _filter_price_outliers(
+    series: List[tuple],
+    jump_threshold: float = SPLIT_JUMP_THRESHOLD,
+    drop_threshold: float = SPLIT_DROP_THRESHOLD,
+) -> tuple:
+    """Remove unadjusted split artifacts from a sorted (date, close) series.
+
+    When a single-day jump exceeding the thresholds is detected, *all* rows
+    before the discontinuity are dropped — not just the immediate predecessor.
+    This is necessary because yfinance occasionally fails to back-adjust the
+    full history, leaving the entire pre-split regime at the old price level.
+
+    Returns ``(filtered_series, warnings)`` where *filtered_series* keeps
+    only rows from the most recent price regime, and *warnings* is a list of
+    dicts describing each detected split for logging.
+    """
+    if len(series) < 2:
+        return series, []
+    warnings = []
+    # Track the latest split point — we'll truncate everything before it
+    latest_split_idx = -1
+    for i in range(1, len(series)):
+        prev_close = series[i - 1][1]
+        curr_close = series[i][1]
+        if prev_close <= 0:
+            continue
+        pct = (curr_close / prev_close) - 1.0
+        if pct >= jump_threshold or pct <= drop_threshold:
+            warnings.append({
+                "idx": i,
+                "date": series[i][0].isoformat() if hasattr(series[i][0], "isoformat") else str(series[i][0]),
+                "prev_close": prev_close,
+                "curr_close": curr_close,
+                "pct_change": round(pct, 4),
+                "flag": "reverse_split" if pct > 0 else "forward_split",
+            })
+            latest_split_idx = i
+    if latest_split_idx < 0:
+        return series, []
+    # Keep only from the split point onward (the current price regime)
+    filtered = series[latest_split_idx:]
+    return filtered, warnings
+
+
+def _validate_price_splits(
+    prices_by_ticker: Dict[str, List[tuple]],
+    jump_threshold: float = SPLIT_JUMP_THRESHOLD,
+    drop_threshold: float = SPLIT_DROP_THRESHOLD,
+) -> Dict[str, List[dict]]:
+    """Check all tickers in a price dict for split artifacts.
+
+    Returns ``{ticker: [warning_dicts]}`` for tickers with detected outliers.
+    Useful as a pre-flight check before hydration.
+    """
+    all_warnings: Dict[str, List[dict]] = {}
+    for ticker, series in prices_by_ticker.items():
+        _, warnings = _filter_price_outliers(series, jump_threshold, drop_threshold)
+        if warnings:
+            all_warnings[ticker] = warnings
+    return all_warnings
 
 
 def _hydrate_drawdown(
@@ -1735,6 +1804,20 @@ def _hydrate_drawdown(
             continue
 
         series.sort(key=lambda x: x[0])
+
+        # Filter split artifacts before computing drawdown
+        series, split_warns = _filter_price_outliers(series)
+        if split_warns:
+            logger.warning(
+                "_hydrate_drawdown: %s has %d price outlier(s) (split artifacts), "
+                "filtered before drawdown computation: %s",
+                ticker, len(split_warns),
+                "; ".join(f"{w['date']} {w['pct_change']:+.0%}" for w in split_warns),
+            )
+        if len(series) < MIN_BARS_FOR_ESTIMATE:
+            df["drawdown_missing_reason"] = "series_too_short"
+            continue
+
         closes = [p for _, p in series]
         look = closes[-WINDOW:] if len(closes) >= WINDOW else closes
         peak = max(look)
@@ -1782,7 +1865,7 @@ def _hydrate_drawdown(
         df["drawdown_xbi"] = xbi_dd
         dd = df.get("drawdown")
         if dd is not None and xbi_dd is not None:
-            df["drawdown_rel_xbi"] = round(dd - xbi_dd, 6)
+            df["drawdown_rel_xbi"] = round(float(dd) - xbi_dd, 6)
         else:
             df["drawdown_rel_xbi"] = None
 
@@ -1895,6 +1978,19 @@ def _hydrate_beta_rsi(
 
     for tk in prices_by_ticker:
         prices_by_ticker[tk].sort(key=lambda x: x[0])
+
+    # ------------------------------------------------------------------
+    # Filter split artifacts from all price series
+    # ------------------------------------------------------------------
+    split_warnings = _validate_price_splits(prices_by_ticker)
+    for tk, warns in split_warnings.items():
+        logger.warning(
+            "_hydrate_beta_rsi: %s has %d price outlier(s) (split artifacts), "
+            "filtering: %s",
+            tk, len(warns),
+            "; ".join(f"{w['date']} {w['pct_change']:+.0%}" for w in warns),
+        )
+        prices_by_ticker[tk], _ = _filter_price_outliers(prices_by_ticker[tk])
 
     # ------------------------------------------------------------------
     # XBI freshness check
@@ -2835,130 +2931,6 @@ def _resolve_alpha_table_path(
     )
 
 
-def _compute_alpha_modifier_ab(
-    csv_rows: List[Dict[str, Any]],
-    ruleset: Optional[DecisionRuleset],
-    logger: logging.Logger,
-) -> Dict[str, Any]:
-    """Compute A/B diagnostics: modified ordering vs alpha_modifier_mode=off baseline.
-
-    Returns a dict with overlap, churn, and rank shift metrics.
-    Both orderings are computed in memory without rerunning the pipeline.
-    """
-    from copy import deepcopy
-
-    # Current ordering (already applied): extract eligible ticker→rank mapping
-    modified_ranks: Dict[str, int] = {}
-    for r in csv_rows:
-        if r.get("eligible") == "1" and r.get("actionable_rank") not in (None, ""):
-            modified_ranks[r["ticker"]] = int(r["actionable_rank"])
-
-    # Baseline ordering: re-sort with alpha_modifier_mode forced to "off"
-    baseline_rs = None
-    if ruleset:
-        # Build a copy with alpha_modifier_mode="off"
-        from dataclasses import fields as dc_fields
-        rs_kwargs = {}
-        for f in dc_fields(ruleset):
-            rs_kwargs[f.name] = getattr(ruleset, f.name)
-        rs_kwargs["alpha_modifier_mode"] = "off"
-        rs_kwargs["alpha_modifier_weight"] = 0.0
-        baseline_rs = DecisionRuleset(**rs_kwargs)
-
-    baseline_rows = deepcopy(csv_rows)
-    baseline_rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=baseline_rs,
-        tiebreaker_pct=(
-            _safe_float(r.get("alpha_cohort_pct"))
-            if baseline_rs and baseline_rs.sort_anchor == "alpha_cohort"
-            else (_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-        alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
-    ))
-
-    baseline_ranks: Dict[str, int] = {}
-    rank = 0
-    for r in baseline_rows:
-        if r.get("eligible") == "1":
-            rank += 1
-            baseline_ranks[r["ticker"]] = rank
-
-    # Compute metrics
-    all_tickers = set(modified_ranks) & set(baseline_ranks)
-    n_rows = len(all_tickers)
-    n_alpha_nonzero = sum(
-        1 for r in csv_rows
-        if r.get("eligible") == "1" and _safe_float(r.get("alpha_cohort_raw")) != 0.0
-    )
-
-    rank_shifts = []
-    n_changed = 0
-    for tk in all_tickers:
-        shift = abs(modified_ranks[tk] - baseline_ranks[tk])
-        rank_shifts.append(shift)
-        if shift > 0:
-            n_changed += 1
-
-    # Top-60 overlap (Jaccard)
-    mod_top60 = {tk for tk, rk in modified_ranks.items() if rk <= 60}
-    base_top60 = {tk for tk, rk in baseline_ranks.items() if rk <= 60}
-    if mod_top60 or base_top60:
-        top60_overlap = len(mod_top60 & base_top60) / len(mod_top60 | base_top60)
-    else:
-        top60_overlap = 1.0
-
-    # Tier distribution for modified vs baseline top-60
-    from collections import Counter
-    mod_top60_tiers = Counter(
-        r.get("tier_dev", "") for r in csv_rows
-        if r.get("eligible") == "1"
-        and r.get("actionable_rank") not in (None, "")
-        and int(r["actionable_rank"]) <= 60
-    )
-    base_top60_tiers = Counter(
-        r.get("tier_dev", "") for r in baseline_rows
-        if r.get("ticker", "") in base_top60
-    )
-
-    # Alpha coverage across eligible rows
-    n_eligible = sum(1 for r in csv_rows if r.get("eligible") == "1")
-    n_with_alpha = sum(
-        1 for r in csv_rows
-        if r.get("eligible") == "1"
-        and (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0
-    )
-
-    result = {
-        "n_rows": n_rows,
-        "n_alpha_nonzero": n_alpha_nonzero,
-        "alpha_modifier_mode": ruleset.alpha_modifier_mode if ruleset else "off",
-        "alpha_modifier_weight": ruleset.alpha_modifier_weight if ruleset else 0.0,
-        "top60_overlap": round(top60_overlap, 4),
-        "mean_abs_rank_shift": round(sum(rank_shifts) / max(len(rank_shifts), 1), 2),
-        "max_rank_shift": max(rank_shifts) if rank_shifts else 0,
-        "pct_rows_rank_changed": round(n_changed / max(n_rows, 1) * 100, 1),
-        "tier_dist_modified_top60": dict(mod_top60_tiers),
-        "tier_dist_baseline_top60": dict(base_top60_tiers),
-        "alpha_coverage_present": n_with_alpha,
-        "alpha_coverage_missing": n_eligible - n_with_alpha,
-        "alpha_coverage_pct": round(n_with_alpha / max(n_eligible, 1) * 100, 1),
-    }
-    logger.info(
-        "  Alpha modifier A/B: top60_overlap=%.3f mean_shift=%.1f pct_changed=%.1f%%",
-        result["top60_overlap"], result["mean_abs_rank_shift"], result["pct_rows_rank_changed"],
-    )
-    return result
-
-
 def load_cache_refresh_sidecar(path: Path) -> Dict[str, Any]:
     """Load cache_refresh sidecar and extract rejection metadata.
 
@@ -3013,7 +2985,6 @@ def save_validation_snapshot(
     inputs_manifest_mode: str = "off",
     ranking_mode: str = "decision",
     prior_snapshot_dir: Optional[Path] = None,
-    alpha_ab_diagnostics: bool = False,
     ctgov_cache_date: Optional[str] = None,
 ) -> Optional[Path]:
     """
@@ -3710,6 +3681,32 @@ def save_validation_snapshot(
             _dr.setdefault("inst_delta_new", 0)
             _dr.setdefault("inst_delta_exit", 0)
 
+    # --- Institutional delta coverage guard ---
+    # When too few tickers have nonzero net delta, the z-scores are driven by
+    # a handful of names — fragile signal.  Zero out z if coverage < threshold.
+    _inst_nonzero_count = sum(
+        1 for r in csv_rows if r.get("inst_delta_net", 0) != 0
+    )
+    _inst_nonzero_pct = round(
+        100.0 * _inst_nonzero_count / len(csv_rows), 2
+    ) if csv_rows else 0.0
+    for _dr in csv_rows:
+        _dr["inst_delta_nonzero_pct"] = _inst_nonzero_pct
+    _inst_min_pct = (
+        ruleset.institutional_sort_min_nonzero_pct if ruleset else 10.0
+    )
+    if _inst_nonzero_pct < _inst_min_pct:
+        if _inst_nonzero_count > 0:
+            logger.warning(
+                "inst_delta_z coverage guard: only %.1f%% of tickers have "
+                "nonzero net delta (%d/%d) — below %.1f%% threshold; "
+                "zeroing all inst_delta_z values",
+                _inst_nonzero_pct, _inst_nonzero_count, len(csv_rows),
+                _inst_min_pct,
+            )
+        for _dr in csv_rows:
+            _dr["inst_delta_z"] = 0.0
+
     # --- Clinical adjustment telemetry (mirrors DE formula, for monitoring) ---
     _clin_adj_dev = 0
     _clin_adj_comm = 0
@@ -3815,14 +3812,6 @@ def save_validation_snapshot(
         _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
-    # Sort all rows by actionable sort key
-    # Log alpha modifier if enabled
-    if ruleset and ruleset.alpha_modifier_mode != "off":
-        logger.info(
-            "  Alpha modifier enabled: mode=%s weight=%.3f using=alpha_cohort_raw",
-            ruleset.alpha_modifier_mode, ruleset.alpha_modifier_weight,
-        )
-
     csv_rows.sort(key=lambda r: compute_actionable_sort_key(
         decision_fields=r,
         archetype=r.get("archetype", ""),
@@ -3880,19 +3869,7 @@ def save_validation_snapshot(
     # Compute target weights for eligible rows
     compute_target_weights(eligible_rows, ruleset=ruleset)
 
-    # --- Alpha modifier A/B diagnostics (opt-in) ---
-    _alpha_ab_result = None
-    if alpha_ab_diagnostics and ruleset and ruleset.alpha_modifier_mode != "off":
-        _alpha_ab_result = _compute_alpha_modifier_ab(csv_rows, ruleset, logger)
-        # Write to snapshot dir if available
-        if snapshot_dir:
-            _ab_path = snapshot_dir / as_of_date / "alpha_modifier_ab.json"
-            _ab_path.parent.mkdir(parents=True, exist_ok=True)
-            import json as _json_ab
-            with open(_ab_path, "w", encoding="utf-8") as _f:
-                _json_ab.dump(_alpha_ab_result, _f, indent=2)
-                _f.write("\n")
-            logger.info("  Alpha A/B diagnostics: wrote %s", _ab_path)
+    # Alpha modifier A/B diagnostics removed (alpha_modifier deprecated & inert).
 
     # --- Final CSV row ordering ---
     # In decision ranking mode (default): eligible rows first (in DE order),
@@ -4510,9 +4487,7 @@ def save_validation_snapshot(
             "table_path": ruleset.alpha_cohort_table_path if ruleset else None,
             "shrink_k": ruleset.alpha_cohort_shrink_k if ruleset else None,
         } if _run_alpha_cohort else {},
-        "alpha_modifier_telemetry": {
-            "mode": ruleset.alpha_modifier_mode if ruleset else "off",
-            "weight": ruleset.alpha_modifier_weight if ruleset else 0.0,
+        "alpha_table_telemetry": {
             "table_policy": ruleset.alpha_table_rebuild_policy if ruleset else "never",
             "table_path": str(_alpha_table_path_resolved) if _alpha_table_path_resolved else None,
             "alpha_table_source": _alpha_table_source,
@@ -7926,13 +7901,7 @@ Module 3 Catalyst Detection:
              "(required when --inputs-manifest=verify).",
     )
 
-    parser.add_argument(
-        "--alpha-ab-diagnostics",
-        action="store_true",
-        default=False,
-        help="Emit alpha modifier A/B diagnostics (alpha_modifier_ab.json in snapshot dir). "
-             "Compares current ordering against alpha_modifier_mode=off baseline.",
-    )
+    # --alpha-ab-diagnostics removed (alpha_modifier deprecated & inert)
 
     parser.add_argument(
         "--replay-bundle-out",
@@ -8726,7 +8695,6 @@ Module 3 Catalyst Detection:
                 inputs_manifest_mode=args.inputs_manifest,
                 ranking_mode=args.ranking_mode,
                 prior_snapshot_dir=prior_snapshot_dir,
-                alpha_ab_diagnostics=getattr(args, "alpha_ab_diagnostics", False),
                 ctgov_cache_date=_ctgov_cache_date,
             )
             if snap_result:

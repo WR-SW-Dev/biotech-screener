@@ -135,7 +135,7 @@ def _find_ctgov_cache(cache_dir: Path, as_of_date: str) -> Optional[Path]:
 
 def _find_alpha_table(metadata: Dict, project_root: Path) -> Optional[Path]:
     """Resolve the alpha table path from metadata telemetry."""
-    amt = metadata.get("alpha_modifier_telemetry", {})
+    amt = metadata.get("alpha_table_telemetry") or metadata.get("alpha_modifier_telemetry", {})
     table_path_str = amt.get("table_path", "")
     if not table_path_str:
         return None
@@ -291,7 +291,7 @@ def make_replay_bundle(
         })
 
     # Extract key telemetry for manifest
-    amt = metadata.get("alpha_modifier_telemetry", {})
+    amt = metadata.get("alpha_table_telemetry") or metadata.get("alpha_modifier_telemetry", {})
     cache_health_status = metadata.get("cache_health_overall_status", "unknown")
     cache_degraded = metadata.get("cache_degraded_run", False)
     refresh_had_rejections = metadata.get("cache_refresh_had_rejections", False)

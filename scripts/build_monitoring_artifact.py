@@ -200,7 +200,7 @@ def build_monitoring(
     }
 
     # Alpha coverage
-    amt = metadata.get("alpha_modifier_telemetry", {})
+    amt = metadata.get("alpha_table_telemetry") or metadata.get("alpha_modifier_telemetry", {})
     if amt:
         context["alpha_table_source"] = amt.get("alpha_table_source", "")
         context["alpha_score_present"] = amt.get("alpha_score_present", 0)

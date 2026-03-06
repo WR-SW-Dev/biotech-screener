@@ -189,13 +189,12 @@ class TestOutputEquivalence:
 
 class TestCompleteness:
     def test_all_signals_present(self):
+        """All active sort signals produce contributions (alpha_modifier removed)."""
         rs = DecisionRuleset(
             enable_clinical_sort_signal=True,
             enable_coinvest_sort_signal=True,
             enable_institutional_sort_signal=True,
             enable_calendar_alpha_sort=True,
-            alpha_modifier_mode="within_tier",
-            alpha_modifier_weight=0.05,
         )
         fields = {
             "clinical_score_z_tier": 1.0,
@@ -210,7 +209,7 @@ class TestCompleteness:
         names = [c.name for c in contribs]
         assert names == [
             "clinical", "coinvest", "institutional",
-            "calendar_alpha", "alpha_modifier",
+            "calendar_alpha",
         ]
 
     def test_catalyst_bonus_included_when_nonzero(self):
@@ -219,8 +218,6 @@ class TestCompleteness:
             enable_coinvest_sort_signal=True,
             enable_institutional_sort_signal=True,
             enable_calendar_alpha_sort=True,
-            alpha_modifier_mode="within_tier",
-            alpha_modifier_weight=0.05,
         )
         fields = {
             "clinical_score_z_tier": 1.0,
@@ -234,7 +231,7 @@ class TestCompleteness:
         )
         names = [c.name for c in contribs]
         assert "catalyst_bonus" in names
-        assert len(names) == 6  # 5 signals + catalyst_bonus
+        assert len(names) == 5  # 4 signals + catalyst_bonus
 
 
 # =============================================================================
