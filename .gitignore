@@ -98,6 +98,9 @@ production_data/run_log_20*-*.json
 production_data/perf_vs_rank_*.csv
 production_data/perf_vs_rank_*.json
 
+# Research-only rulesets (not promoted, used for A/B evaluation)
+production_data/decision_rulesets/research_*.json
+
 # A/B test artifacts
 checkpoints_ab_*/
 results_*_prefix*.json

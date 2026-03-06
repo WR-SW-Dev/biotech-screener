@@ -10,8 +10,6 @@ from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 # Ensure project root is importable
 PROJECT_ROOT = Path(__file__).parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -43,6 +41,7 @@ def _make_response(text="", status_code=200, json_data=None):
 # ===========================================================================
 # EUCTR Collector
 # ===========================================================================
+
 
 class TestEuctrCollector:
     """Tests for euctr_collector.py."""
@@ -85,10 +84,7 @@ class TestEuctrCollector:
 
     def test_sponsor_matching(self):
         """Sponsor name matches against universe map."""
-        from wake_robin_data_pipeline.collectors.euctr_collector import (
-            _build_universe_map,
-            _match_ticker,
-        )
+        from wake_robin_data_pipeline.collectors.euctr_collector import _build_universe_map, _match_ticker
 
         umap = _build_universe_map(MINI_UNIVERSE)
         assert _match_ticker("ModernaTX, Inc.", umap) == "MRNA"
@@ -111,6 +107,7 @@ class TestEuctrCollector:
 # ===========================================================================
 # CTIS Collector
 # ===========================================================================
+
 
 class TestCtisCollector:
     """Tests for ctis_collector.py."""
@@ -141,9 +138,9 @@ class TestCtisCollector:
         assert detail["ctNumber"] == "2024-511897-64-00"
         assert detail["ctStatus"] == "Authorised"
         # NCT is nested in the detail structure
-        nct = (detail["authorizedApplication"]["authorizedPartI"]
-               ["trialDetails"]["clinicalTrialIdentifiers"]
-               ["secondaryIdentifyingNumbers"]["nctNumber"]["number"])
+        nct = detail["authorizedApplication"]["authorizedPartI"]["trialDetails"]["clinicalTrialIdentifiers"][
+            "secondaryIdentifyingNumbers"
+        ]["nctNumber"]["number"]
         assert nct == "NCT06001234"
 
     def test_date_normalization(self):
@@ -166,23 +163,28 @@ class TestCtisCollector:
 # CTIS Detail Enrichment
 # ===========================================================================
 
+
 class TestCtisDetailStatus:
     """Tests for _extract_detail_status."""
 
     def test_authorised_maps_to_recruiting(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_detail_status
+
         assert _extract_detail_status({"ctStatus": "Authorised"}) == "RECRUITING"
 
     def test_ended_maps_to_terminated(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_detail_status
+
         assert _extract_detail_status({"ctStatus": "Ended"}) == "TERMINATED"
 
     def test_unknown_status(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_detail_status
+
         assert _extract_detail_status({"ctStatus": "SomethingNew"}) == "UNKNOWN"
 
     def test_case_insensitive(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_detail_status
+
         assert _extract_detail_status({"ctStatus": "AUTHORISED"}) == "RECRUITING"
         assert _extract_detail_status({"ctStatus": "ended"}) == "TERMINATED"
         assert _extract_detail_status({"ctStatus": "  Completed  "}) == "COMPLETED"
@@ -193,25 +195,24 @@ class TestCtisNctExtraction:
 
     def test_nct_present(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_nct_id
+
         detail = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
         assert _extract_nct_id(detail) == "NCT06001234"
 
     def test_nct_missing(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_nct_id
+
         assert _extract_nct_id({}) is None
         assert _extract_nct_id({"authorizedApplication": {}}) is None
 
     def test_nct_empty_string(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _extract_nct_id
+
         detail = {
             "authorizedApplication": {
                 "authorizedPartI": {
                     "trialDetails": {
-                        "clinicalTrialIdentifiers": {
-                            "secondaryIdentifyingNumbers": {
-                                "nctNumber": {"number": ""}
-                            }
-                        }
+                        "clinicalTrialIdentifiers": {"secondaryIdentifyingNumbers": {"nctNumber": {"number": ""}}}
                     }
                 }
             }
@@ -225,6 +226,7 @@ class TestCtisEstimatePCD:
     def test_future_end_of_trial(self):
         """Future END_OF_TRIAL dates are preferred."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         detail = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
         pcd = _estimate_primary_completion_date(detail, date(2026, 2, 28))
         # Fixture has END_OF_TRIAL: 2027-09-30, 2027-11-15 — both future
@@ -233,6 +235,7 @@ class TestCtisEstimatePCD:
     def test_past_end_of_trial_fallback(self):
         """When all END_OF_TRIAL dates are past, uses latest."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         detail = {
             "events": {
                 "trialEvents": [
@@ -247,6 +250,7 @@ class TestCtisEstimatePCD:
     def test_global_end_date_fallback(self):
         """trialGlobalEndDate used when no END_OF_TRIAL milestones."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         detail = {
             "events": {"trialEvents": []},
             "trialGlobalEndDate": "15/12/2027",
@@ -257,6 +261,7 @@ class TestCtisEstimatePCD:
     def test_recruitment_plus_duration_fallback(self):
         """END_OF_RECRUITMENT + treatment duration as last resort."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         detail = {
             "events": {
                 "trialEvents": [
@@ -273,12 +278,14 @@ class TestCtisEstimatePCD:
 
     def test_no_data_returns_none(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         assert _estimate_primary_completion_date({}, date(2026, 2, 28)) is None
         assert _estimate_primary_completion_date({"events": {}}, date(2026, 2, 28)) is None
 
     def test_preference_order(self):
         """END_OF_TRIAL is preferred over trialGlobalEndDate."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _estimate_primary_completion_date
+
         detail = {
             "events": {
                 "trialEvents": [
@@ -296,21 +303,25 @@ class TestCtisDurationParsing:
 
     def test_weeks(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _parse_treatment_duration_days
+
         detail = {"periodDetails": [{"description": "Treatment: 12 weeks"}]}
         assert _parse_treatment_duration_days(detail) == 84
 
     def test_months(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _parse_treatment_duration_days
+
         detail = {"periodDetails": [{"description": "Treatment period of 6 months"}]}
         assert _parse_treatment_duration_days(detail) == 180
 
     def test_days(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _parse_treatment_duration_days
+
         detail = {"periodDetails": [{"description": "90 day treatment"}]}
         assert _parse_treatment_duration_days(detail) == 90
 
     def test_unparseable(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _parse_treatment_duration_days
+
         detail = {"periodDetails": [{"description": "See protocol"}]}
         assert _parse_treatment_duration_days(detail) is None
         assert _parse_treatment_duration_days({}) is None
@@ -321,6 +332,7 @@ class TestCtisMilestoneDates:
 
     def test_multi_country(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _collect_milestone_dates
+
         events_block = {
             "trialEvents": [
                 {"notificationType": "END_OF_TRIAL", "date": "2027-09-30"},
@@ -333,6 +345,7 @@ class TestCtisMilestoneDates:
 
     def test_empty(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _collect_milestone_dates
+
         assert _collect_milestone_dates({}, "END_OF_TRIAL") == []
         assert _collect_milestone_dates({"trialEvents": []}, "END_OF_TRIAL") == []
 
@@ -367,6 +380,7 @@ class TestCtisEnrichRecord:
 
     def test_status_update(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _enrich_record_from_detail
+
         rec = self._make_record(status="RECRUITING")
         detail = {"ctStatus": "Ended"}
         _enrich_record_from_detail(rec, detail, date(2026, 2, 28))
@@ -374,6 +388,7 @@ class TestCtisEnrichRecord:
 
     def test_nct_added(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _enrich_record_from_detail
+
         detail = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
         rec = self._make_record(secondary_ids=["2024-001234-56"])
         _enrich_record_from_detail(rec, detail, date(2026, 2, 28))
@@ -382,6 +397,7 @@ class TestCtisEnrichRecord:
 
     def test_pcd_set(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _enrich_record_from_detail
+
         detail = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
         rec = self._make_record()
         _enrich_record_from_detail(rec, detail, date(2026, 2, 28))
@@ -390,6 +406,7 @@ class TestCtisEnrichRecord:
 
     def test_pit_anchor_update(self):
         from wake_robin_data_pipeline.collectors.ctis_collector import _enrich_record_from_detail
+
         rec = self._make_record(last_update_posted="2025-01-15")
         detail = {"publishDate": "2025-03-01"}
         _enrich_record_from_detail(rec, detail, date(2026, 2, 28))
@@ -398,6 +415,7 @@ class TestCtisEnrichRecord:
     def test_pit_anchor_not_downgraded(self):
         """publishDate older than existing last_update_posted is ignored."""
         from wake_robin_data_pipeline.collectors.ctis_collector import _enrich_record_from_detail
+
         rec = self._make_record(last_update_posted="2025-06-01")
         detail = {"publishDate": "2025-03-01"}
         _enrich_record_from_detail(rec, detail, date(2026, 2, 28))
@@ -409,29 +427,29 @@ class TestCtisCollectEnrichIntegration:
 
     def test_only_enriches_missing_enddate(self, tmp_path):
         """Records with primary_completion_date are NOT enriched."""
-        from wake_robin_data_pipeline.collectors.ctis_collector import (
-            collect_ctis_trials, _fetch_ctis_detail,
-        )
+        from wake_robin_data_pipeline.collectors.ctis_collector import collect_ctis_trials
 
         # Record WITH endDate already set
         search_resp = {
-            "data": [{
-                "ctNumber": "2024-000001-00",
-                "ctTitle": "Trial With EndDate",
-                "sponsor": "TestCo",
-                "ctStatus": 8,
-                "decisionDateOverall": "01/01/2024",
-                "lastUpdated": "15/01/2024",
-                "endDateEU": "30/06/2027",
-            }],
+            "data": [
+                {
+                    "ctNumber": "2024-000001-00",
+                    "ctTitle": "Trial With EndDate",
+                    "sponsor": "TestCo",
+                    "ctStatus": 8,
+                    "decisionDateOverall": "01/01/2024",
+                    "lastUpdated": "15/01/2024",
+                    "endDateEU": "30/06/2027",
+                }
+            ],
             "pagination": {"totalPages": 1, "totalElements": 1},
         }
         detail_resp = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
 
-        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis",
-                    return_value=search_resp):
-            with patch("wake_robin_data_pipeline.collectors.ctis_collector._fetch_ctis_detail",
-                        return_value=detail_resp) as mock_detail:
+        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis", return_value=search_resp):
+            with patch(
+                "wake_robin_data_pipeline.collectors.ctis_collector._fetch_ctis_detail", return_value=detail_resp
+            ) as mock_detail:
                 with patch("wake_robin_data_pipeline.collectors.ctis_collector.time.sleep"):
                     records = collect_ctis_trials(
                         universe=[{"ticker": "TEST", "company_name": "TestCo"}],
@@ -449,19 +467,20 @@ class TestCtisCollectEnrichIntegration:
         from wake_robin_data_pipeline.collectors.ctis_collector import collect_ctis_trials
 
         search_resp = {
-            "data": [{
-                "ctNumber": "2024-000002-00",
-                "ctTitle": "Trial No EndDate",
-                "sponsor": "TestCo",
-                "ctStatus": 8,
-                "decisionDateOverall": "01/01/2024",
-                "lastUpdated": "15/01/2024",
-            }],
+            "data": [
+                {
+                    "ctNumber": "2024-000002-00",
+                    "ctTitle": "Trial No EndDate",
+                    "sponsor": "TestCo",
+                    "ctStatus": 8,
+                    "decisionDateOverall": "01/01/2024",
+                    "lastUpdated": "15/01/2024",
+                }
+            ],
             "pagination": {"totalPages": 1, "totalElements": 1},
         }
 
-        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis",
-                    return_value=search_resp):
+        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis", return_value=search_resp):
             with patch("wake_robin_data_pipeline.collectors.ctis_collector._fetch_ctis_detail") as mock_detail:
                 with patch("wake_robin_data_pipeline.collectors.ctis_collector.time.sleep"):
                     records = collect_ctis_trials(
@@ -503,6 +522,7 @@ class TestCtisCollectEnrichIntegration:
         detail_good = json.loads((FIXTURES / "ctis_detail_response.json").read_text())
 
         call_count = 0
+
         def mock_fetch(ct_number, raw_dir=None):
             nonlocal call_count
             call_count += 1
@@ -510,10 +530,8 @@ class TestCtisCollectEnrichIntegration:
                 raise ConnectionError("Network error")
             return detail_good
 
-        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis",
-                    return_value=search_resp):
-            with patch("wake_robin_data_pipeline.collectors.ctis_collector._fetch_ctis_detail",
-                        side_effect=mock_fetch):
+        with patch("wake_robin_data_pipeline.collectors.ctis_collector._search_ctis", return_value=search_resp):
+            with patch("wake_robin_data_pipeline.collectors.ctis_collector._fetch_ctis_detail", side_effect=mock_fetch):
                 with patch("wake_robin_data_pipeline.collectors.ctis_collector.time.sleep"):
                     records = collect_ctis_trials(
                         universe=[{"ticker": "TEST", "company_name": "TestCo"}],
@@ -535,6 +553,7 @@ class TestCtisCollectEnrichIntegration:
 # ISRCTN Collector
 # ===========================================================================
 
+
 class TestIsrctnCollector:
     """Tests for isrctn_collector.py."""
 
@@ -542,13 +561,13 @@ class TestIsrctnCollector:
         """ISRCTN IDs are extracted from search result HTML."""
         from wake_robin_data_pipeline.collectors.isrctn_collector import _parse_search_results
 
-        html = '''
+        html = """
         <div class="results">
           <a href="/ISRCTN13619480">Trial 1</a>
           <a href="/ISRCTN99887766">Trial 2</a>
           <a href="/ISRCTN13619480">Duplicate</a>
         </div>
-        '''
+        """
         ids = _parse_search_results(html)
         assert ids == ["ISRCTN13619480", "ISRCTN99887766"]
 
@@ -601,13 +620,15 @@ class TestIsrctnCollector:
             status_code=200,
         )
 
-        with patch("wake_robin_data_pipeline.collectors.isrctn_collector.requests.get",
-                    return_value=mock_resp) as mock_get:
+        mock_session = MagicMock()
+        mock_session.get.return_value = mock_resp
+
+        with patch("wake_robin_data_pipeline.collectors.isrctn_collector._get_session", return_value=mock_session):
             with patch("wake_robin_data_pipeline.collectors.isrctn_collector.time.sleep"):
                 ids = _search_isrctn("TestSponsor")
 
         # Verify allow_redirects=True was passed
-        call_kwargs = mock_get.call_args[1]
+        call_kwargs = mock_session.get.call_args[1]
         assert call_kwargs["allow_redirects"] is True
         assert ids == ["ISRCTN11111111"]
 
@@ -616,6 +637,7 @@ class TestIsrctnCollector:
 # Trial Registry Merger
 # ===========================================================================
 
+
 class TestTrialRegistryMerger:
     """Tests for trial_registry_merger.py."""
 
@@ -623,27 +645,48 @@ class TestTrialRegistryMerger:
         """Two records sharing an NCT ID are merged into one."""
         from wake_robin_data_pipeline.collectors.trial_registry_merger import merge_trial_registries
 
-        ctgov = [{
-            "registry": "ctgov", "primary_id": "NCT06001234", "secondary_ids": [],
-            "ticker": "MRNA", "phase": "PHASE3", "status": "RECRUITING",
-            "last_update_posted": "2025-01-01", "study_type": "INTERVENTIONAL",
-            "title": "CTgov Title", "sponsor": {"name": "Moderna", "country": "US"},
-            "conditions": ["RSV"], "countries": ["US"],
-            "start_date": "2024-03-15", "primary_completion_date": "2026-06-30",
-            "completion_date": "2026-12-31", "results_posted_date": None,
-            "first_posted": "2024-01-01",
-        }]
-        ctis = [{
-            "registry": "ctis", "primary_id": "2024-511897-64-00",
-            "secondary_ids": ["NCT06001234"],
-            "ticker": "MRNA", "phase": "PHASE3", "status": "RECRUITING",
-            "last_update_posted": "2025-02-01", "study_type": "INTERVENTIONAL",
-            "title": "CTIS Title", "sponsor": {"name": "ModernaTX", "country": ""},
-            "conditions": ["Respiratory Syncytial Virus"], "countries": ["DE", "FR"],
-            "start_date": "2024-04-01", "primary_completion_date": None,
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": "2024-03-15",
-        }]
+        ctgov = [
+            {
+                "registry": "ctgov",
+                "primary_id": "NCT06001234",
+                "secondary_ids": [],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-01-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "CTgov Title",
+                "sponsor": {"name": "Moderna", "country": "US"},
+                "conditions": ["RSV"],
+                "countries": ["US"],
+                "start_date": "2024-03-15",
+                "primary_completion_date": "2026-06-30",
+                "completion_date": "2026-12-31",
+                "results_posted_date": None,
+                "first_posted": "2024-01-01",
+            }
+        ]
+        ctis = [
+            {
+                "registry": "ctis",
+                "primary_id": "2024-511897-64-00",
+                "secondary_ids": ["NCT06001234"],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-02-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "CTIS Title",
+                "sponsor": {"name": "ModernaTX", "country": ""},
+                "conditions": ["Respiratory Syncytial Virus"],
+                "countries": ["DE", "FR"],
+                "start_date": "2024-04-01",
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": "2024-03-15",
+            }
+        ]
 
         result = merge_trial_registries(ctgov, [], ctis, [], date(2026, 12, 31))
 
@@ -658,28 +701,48 @@ class TestTrialRegistryMerger:
         """EUCTR and CTIS records sharing an EudraCT number are merged."""
         from wake_robin_data_pipeline.collectors.trial_registry_merger import merge_trial_registries
 
-        euctr = [{
-            "registry": "euctr", "primary_id": "2024-001234-56",
-            "secondary_ids": [], "ticker": "MRNA", "phase": "PHASE3",
-            "status": "RECRUITING", "last_update_posted": "2025-01-01",
-            "study_type": "INTERVENTIONAL", "title": "EUCTR Title",
-            "sponsor": {"name": "Moderna", "country": ""},
-            "conditions": [], "countries": ["DE"],
-            "start_date": "2024-03-15", "primary_completion_date": None,
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": "2024-03-15",
-        }]
-        ctis = [{
-            "registry": "ctis", "primary_id": "2024-511897-64-00",
-            "secondary_ids": ["2024-001234-56"], "ticker": "MRNA",
-            "phase": "PHASE3", "status": "RECRUITING",
-            "last_update_posted": "2025-02-01", "study_type": "INTERVENTIONAL",
-            "title": "CTIS Title", "sponsor": {"name": "ModernaTX", "country": "US"},
-            "conditions": ["RSV"], "countries": ["FR"],
-            "start_date": "2024-04-01", "primary_completion_date": "2026-06-30",
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": "2024-03-15",
-        }]
+        euctr = [
+            {
+                "registry": "euctr",
+                "primary_id": "2024-001234-56",
+                "secondary_ids": [],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-01-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "EUCTR Title",
+                "sponsor": {"name": "Moderna", "country": ""},
+                "conditions": [],
+                "countries": ["DE"],
+                "start_date": "2024-03-15",
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": "2024-03-15",
+            }
+        ]
+        ctis = [
+            {
+                "registry": "ctis",
+                "primary_id": "2024-511897-64-00",
+                "secondary_ids": ["2024-001234-56"],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-02-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "CTIS Title",
+                "sponsor": {"name": "ModernaTX", "country": "US"},
+                "conditions": ["RSV"],
+                "countries": ["FR"],
+                "start_date": "2024-04-01",
+                "primary_completion_date": "2026-06-30",
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": "2024-03-15",
+            }
+        ]
 
         result = merge_trial_registries([], euctr, ctis, [], date(2026, 12, 31))
 
@@ -691,28 +754,48 @@ class TestTrialRegistryMerger:
         """Records with no shared IDs remain separate."""
         from wake_robin_data_pipeline.collectors.trial_registry_merger import merge_trial_registries
 
-        euctr = [{
-            "registry": "euctr", "primary_id": "2024-001234-56",
-            "secondary_ids": [], "ticker": "MRNA", "phase": "PHASE3",
-            "status": "RECRUITING", "last_update_posted": "2025-01-01",
-            "study_type": "INTERVENTIONAL", "title": "EUCTR Trial",
-            "sponsor": {"name": "Moderna", "country": ""},
-            "conditions": [], "countries": ["DE"],
-            "start_date": None, "primary_completion_date": None,
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": None,
-        }]
-        isrctn = [{
-            "registry": "isrctn", "primary_id": "ISRCTN13619480",
-            "secondary_ids": [], "ticker": "MRNA", "phase": "PHASE2",
-            "status": "RECRUITING", "last_update_posted": "2025-06-01",
-            "study_type": "INTERVENTIONAL", "title": "ISRCTN Trial",
-            "sponsor": {"name": "Moderna", "country": ""},
-            "conditions": [], "countries": ["GB"],
-            "start_date": None, "primary_completion_date": None,
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": None,
-        }]
+        euctr = [
+            {
+                "registry": "euctr",
+                "primary_id": "2024-001234-56",
+                "secondary_ids": [],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-01-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "EUCTR Trial",
+                "sponsor": {"name": "Moderna", "country": ""},
+                "conditions": [],
+                "countries": ["DE"],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": None,
+            }
+        ]
+        isrctn = [
+            {
+                "registry": "isrctn",
+                "primary_id": "ISRCTN13619480",
+                "secondary_ids": [],
+                "ticker": "MRNA",
+                "phase": "PHASE2",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-06-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "ISRCTN Trial",
+                "sponsor": {"name": "Moderna", "country": ""},
+                "conditions": [],
+                "countries": ["GB"],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": None,
+            }
+        ]
 
         result = merge_trial_registries([], euctr, [], isrctn, date(2026, 12, 31))
         assert len(result) == 2
@@ -723,25 +806,41 @@ class TestTrialRegistryMerger:
 
         records = [
             {
-                "registry": "euctr", "primary_id": "2024-AAAA-01",
-                "secondary_ids": [], "ticker": "MRNA",
+                "registry": "euctr",
+                "primary_id": "2024-AAAA-01",
+                "secondary_ids": [],
+                "ticker": "MRNA",
                 "last_update_posted": "2025-01-01",
-                "study_type": "INTERVENTIONAL", "phase": "PHASE2",
-                "status": "RECRUITING", "title": "", "sponsor": {},
-                "conditions": [], "countries": [],
-                "start_date": None, "primary_completion_date": None,
-                "completion_date": None, "results_posted_date": None,
+                "study_type": "INTERVENTIONAL",
+                "phase": "PHASE2",
+                "status": "RECRUITING",
+                "title": "",
+                "sponsor": {},
+                "conditions": [],
+                "countries": [],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
                 "first_posted": None,
             },
             {
-                "registry": "euctr", "primary_id": "2025-BBBB-02",
-                "secondary_ids": [], "ticker": "MRNA",
+                "registry": "euctr",
+                "primary_id": "2025-BBBB-02",
+                "secondary_ids": [],
+                "ticker": "MRNA",
                 "last_update_posted": "2026-06-01",  # future
-                "study_type": "INTERVENTIONAL", "phase": "PHASE3",
-                "status": "RECRUITING", "title": "", "sponsor": {},
-                "conditions": [], "countries": [],
-                "start_date": None, "primary_completion_date": None,
-                "completion_date": None, "results_posted_date": None,
+                "study_type": "INTERVENTIONAL",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "title": "",
+                "sponsor": {},
+                "conditions": [],
+                "countries": [],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
                 "first_posted": None,
             },
         ]
@@ -756,25 +855,41 @@ class TestTrialRegistryMerger:
 
         records = [
             {
-                "registry": "euctr", "primary_id": "2025-ZZZ-01",
-                "secondary_ids": [], "ticker": "VRTX",
+                "registry": "euctr",
+                "primary_id": "2025-ZZZ-01",
+                "secondary_ids": [],
+                "ticker": "VRTX",
                 "last_update_posted": "2025-01-01",
-                "study_type": "INTERVENTIONAL", "phase": "PHASE2",
-                "status": "RECRUITING", "title": "", "sponsor": {},
-                "conditions": [], "countries": [],
-                "start_date": None, "primary_completion_date": None,
-                "completion_date": None, "results_posted_date": None,
+                "study_type": "INTERVENTIONAL",
+                "phase": "PHASE2",
+                "status": "RECRUITING",
+                "title": "",
+                "sponsor": {},
+                "conditions": [],
+                "countries": [],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
                 "first_posted": None,
             },
             {
-                "registry": "isrctn", "primary_id": "ISRCTN00000001",
-                "secondary_ids": [], "ticker": "MRNA",
+                "registry": "isrctn",
+                "primary_id": "ISRCTN00000001",
+                "secondary_ids": [],
+                "ticker": "MRNA",
                 "last_update_posted": "2025-01-01",
-                "study_type": "INTERVENTIONAL", "phase": "PHASE3",
-                "status": "RECRUITING", "title": "", "sponsor": {},
-                "conditions": [], "countries": [],
-                "start_date": None, "primary_completion_date": None,
-                "completion_date": None, "results_posted_date": None,
+                "study_type": "INTERVENTIONAL",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "title": "",
+                "sponsor": {},
+                "conditions": [],
+                "countries": [],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
                 "first_posted": None,
             },
         ]
@@ -788,24 +903,43 @@ class TestTrialRegistryMerger:
 # Normalized Schema Validation
 # ===========================================================================
 
+
 class TestNormalizedSchema:
     """Verify all collectors produce records with required schema fields."""
 
     REQUIRED_FIELDS = {
-        "registry", "primary_id", "secondary_ids", "ticker", "sponsor",
-        "title", "conditions", "phase", "status", "study_type", "countries",
-        "start_date", "primary_completion_date", "completion_date",
-        "results_posted_date", "first_posted", "last_update_posted",
-        "source_url", "fetched_at_utc",
+        "registry",
+        "primary_id",
+        "secondary_ids",
+        "ticker",
+        "sponsor",
+        "title",
+        "conditions",
+        "phase",
+        "status",
+        "study_type",
+        "countries",
+        "start_date",
+        "primary_completion_date",
+        "completion_date",
+        "results_posted_date",
+        "first_posted",
+        "last_update_posted",
+        "source_url",
+        "fetched_at_utc",
     }
 
     def test_euctr_has_required_fields(self):
         from wake_robin_data_pipeline.collectors.euctr_collector import _normalize_euctr_record
 
         raw = {
-            "eudract_number": "2024-001234-56", "title": "Test",
-            "sponsor": "Test", "status": "Ongoing", "phase": "Phase III",
-            "start_date": "2024-01-01", "medical_condition": "Test",
+            "eudract_number": "2024-001234-56",
+            "title": "Test",
+            "sponsor": "Test",
+            "status": "Ongoing",
+            "phase": "Phase III",
+            "start_date": "2024-01-01",
+            "medical_condition": "Test",
             "countries": ["DE"],
         }
         rec = _normalize_euctr_record(raw, "TEST", "2026-01-01T00:00:00Z")
@@ -815,9 +949,12 @@ class TestNormalizedSchema:
         from wake_robin_data_pipeline.collectors.ctis_collector import _normalize_ctis_record
 
         raw = {
-            "ctNumber": "2024-511897-64-00", "ctTitle": "Test",
-            "sponsor": "Test", "trialPhase": "Therapeutic exploratory (Phase II)",
-            "ctStatus": 8, "decisionDateOverall": "01/01/2024",
+            "ctNumber": "2024-511897-64-00",
+            "ctTitle": "Test",
+            "sponsor": "Test",
+            "trialPhase": "Therapeutic exploratory (Phase II)",
+            "ctStatus": 8,
+            "decisionDateOverall": "01/01/2024",
             "lastUpdated": "15/01/2024",
         }
         rec = _normalize_ctis_record(raw, "TEST", "2026-01-01T00:00:00Z")
@@ -827,11 +964,19 @@ class TestNormalizedSchema:
         from wake_robin_data_pipeline.collectors.isrctn_collector import _normalize_isrctn_record
 
         raw = {
-            "isrctn_id": "ISRCTN13619480", "title": "Test",
-            "sponsor": "Test", "status": "recruiting", "phase": "phase i",
-            "conditions": [], "countries": [], "start_date": "",
-            "end_date": "", "date_registered": "", "last_edited": "",
-            "secondary_ids": [], "source_url": "",
+            "isrctn_id": "ISRCTN13619480",
+            "title": "Test",
+            "sponsor": "Test",
+            "status": "recruiting",
+            "phase": "phase i",
+            "conditions": [],
+            "countries": [],
+            "start_date": "",
+            "end_date": "",
+            "date_registered": "",
+            "last_edited": "",
+            "secondary_ids": [],
+            "source_url": "",
         }
         rec = _normalize_isrctn_record(raw, "TEST", "2026-01-01T00:00:00Z")
         assert self.REQUIRED_FIELDS.issubset(rec.keys())
@@ -841,12 +986,13 @@ class TestNormalizedSchema:
 # Phase & Status Normalization
 # ===========================================================================
 
+
 class TestPhaseStatusNormalization:
     """Test phase and status normalization across all collectors."""
 
     def test_phase_normalization(self):
-        from wake_robin_data_pipeline.collectors.euctr_collector import _PHASE_MAP as euctr_phases
         from wake_robin_data_pipeline.collectors.ctis_collector import _PHASE_PATTERNS as ctis_patterns
+        from wake_robin_data_pipeline.collectors.euctr_collector import _PHASE_MAP as euctr_phases
         from wake_robin_data_pipeline.collectors.isrctn_collector import _PHASE_MAP as isrctn_phases
 
         # All maps should produce the same canonical values
@@ -855,8 +1001,9 @@ class TestPhaseStatusNormalization:
         # CTIS uses regex patterns -> phase values
         ctis_values = {phase_val for _, phase_val in ctis_patterns}
         assert ctis_values.issubset(canonical)
-        assert set(isrctn_phases.values()) - {"NA"} == canonical or \
-               set(isrctn_phases.values()).issubset(canonical | {"NA"})
+        assert set(isrctn_phases.values()) - {"NA"} == canonical or set(isrctn_phases.values()).issubset(
+            canonical | {"NA"}
+        )
 
     def test_status_normalization(self):
         from wake_robin_data_pipeline.collectors.euctr_collector import _STATUS_MAP as euctr_status
@@ -870,6 +1017,7 @@ class TestPhaseStatusNormalization:
 # ===========================================================================
 # Warm Caches Integration
 # ===========================================================================
+
 
 class TestWarmCachesIntegration:
     """Test warm_caches dispatch for new trial registries."""
@@ -889,22 +1037,30 @@ class TestWarmCachesIntegration:
 
     def test_warm_merged_trials_reads_sources(self, tmp_path):
         """warm_merged_trials reads per-registry caches."""
-        from wake_robin_data_pipeline.collectors.trial_registry_merger import (
-            merge_trial_registries,
-            write_merged_cache,
-        )
+        from wake_robin_data_pipeline.collectors.trial_registry_merger import write_merged_cache
 
         merged_dir = tmp_path / "merged"
-        records = [{
-            "registry": "euctr", "primary_id": "2024-001234-56",
-            "secondary_ids": [], "ticker": "MRNA", "phase": "PHASE3",
-            "status": "RECRUITING", "last_update_posted": "2025-01-01",
-            "study_type": "INTERVENTIONAL", "title": "Test",
-            "sponsor": {}, "conditions": [], "countries": [],
-            "start_date": None, "primary_completion_date": None,
-            "completion_date": None, "results_posted_date": None,
-            "first_posted": None,
-        }]
+        records = [
+            {
+                "registry": "euctr",
+                "primary_id": "2024-001234-56",
+                "secondary_ids": [],
+                "ticker": "MRNA",
+                "phase": "PHASE3",
+                "status": "RECRUITING",
+                "last_update_posted": "2025-01-01",
+                "study_type": "INTERVENTIONAL",
+                "title": "Test",
+                "sponsor": {},
+                "conditions": [],
+                "countries": [],
+                "start_date": None,
+                "primary_completion_date": None,
+                "completion_date": None,
+                "results_posted_date": None,
+                "first_posted": None,
+            }
+        ]
 
         path = write_merged_cache(records, date(2026, 2, 27), merged_dir)
         assert path.exists()
@@ -940,6 +1096,7 @@ class TestWarmCachesIntegration:
 # Cache-Only Mode
 # ===========================================================================
 
+
 class TestCacheOnly:
     """Test cache_only behavior for all collectors."""
 
@@ -964,8 +1121,8 @@ class TestCacheOnly:
 
     def test_cache_only_empty_when_no_cache(self, tmp_path):
         """cache_only=True with no cache returns empty list for all collectors."""
-        from wake_robin_data_pipeline.collectors.euctr_collector import collect_euctr_trials
         from wake_robin_data_pipeline.collectors.ctis_collector import collect_ctis_trials
+        from wake_robin_data_pipeline.collectors.euctr_collector import collect_euctr_trials
         from wake_robin_data_pipeline.collectors.isrctn_collector import collect_isrctn_trials
 
         as_of = date(2026, 2, 27)

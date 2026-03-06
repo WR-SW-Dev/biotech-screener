@@ -26,8 +26,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -1144,7 +1144,7 @@ def check_ruleset_health(
 
     Compares today's drift metrics against the active ruleset's promotion baseline.
     """
-    from tools.ruleset_health_monitor import HealthThresholds, run_health_check
+    from tools.ruleset_health_monitor import run_health_check
 
     if receipts_dir is None:
         receipts_dir = REPO_ROOT / "artifacts" / "promotions"
@@ -2263,9 +2263,8 @@ def check_audit_result(
         return GateResult(name="audit", status=status, detail=detail)
 
 
-def _parse_cache_date(p: Path) -> Optional["date"]:
+def _parse_cache_date(p: Path) -> Optional[date]:
     """Extract and parse YYYY-MM-DD from a trial_records_{date}.json filename."""
-    from datetime import date
 
     s = p.stem.replace("trial_records_", "")
     try:
@@ -2970,14 +2969,14 @@ def run_daily(
             label="warm_caches",
         )
         if _warm_proc.returncode == 0:
-            print(f"  Cache warm OK")
+            print("  Cache warm OK")
         else:
             print(f"  Cache warm FAILED (exit {_warm_proc.returncode}) — dependent gates may WARN")
             if _warm_proc.stderr:
                 for _line in _warm_proc.stderr.strip().splitlines()[-5:]:
                     print(f"    {_line}")
     elif skip_pit_warm:
-        print(f"\n[1.5] Cache warm skipped (--skip-pit-warm)")
+        print("\n[1.5] Cache warm skipped (--skip-pit-warm)")
 
     # --- Gate: ctgov PIT cache availability ---
     _cache_dir = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov")
@@ -3050,7 +3049,7 @@ def run_daily(
     # --- Gate: market data staleness ---
     mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
     if mkt_gate.status == "FAIL" and auto_refresh_market_data:
-        print(f"  Market data stale — auto-refreshing ...")
+        print("  Market data stale — auto-refreshing ...")
         _mkt_proc = _run_subprocess(
             [
                 sys.executable,
@@ -3063,7 +3062,7 @@ def run_daily(
             label="collect_market_data",
         )
         if _mkt_proc.returncode == 0:
-            print(f"  Market data refresh OK — re-checking staleness gate")
+            print("  Market data refresh OK — re-checking staleness gate")
             mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
         else:
             print(f"  Market data refresh FAILED (exit {_mkt_proc.returncode})")
@@ -3108,7 +3107,7 @@ def run_daily(
         return manifest
 
     # --- Step 2: Run screen into staging dir ---
-    print(f"\n[2/5] Running screen (phase2, ranking_mode=decision) ...")
+    print("\n[2/5] Running screen (phase2, ranking_mode=decision) ...")
     staging_dir = Path(tempfile.mkdtemp(prefix=f"phase2_staging_{as_of_date}_"))
     screen_proc = run_screen(
         as_of_date,
@@ -3148,9 +3147,9 @@ def run_daily(
         return manifest
 
     if screen_proc.returncode == 2:
-        print(f"  Screen completed with WARN (exit 2)")
+        print("  Screen completed with WARN (exit 2)")
     else:
-        print(f"  Screen completed OK")
+        print("  Screen completed OK")
 
     if not staging_date_dir.exists():
         print(f"  ERROR: Expected snapshot at {staging_date_dir} not found")
@@ -3199,29 +3198,29 @@ def run_daily(
                 label="warm_price_cache_anchor",
             )
             if _anchor_proc.returncode == 0:
-                print(f"  PIT price anchor OK")
+                print("  PIT price anchor OK")
             else:
                 print(f"  PIT price anchor FAILED (exit {_anchor_proc.returncode}) — price_pit_cache gate will WARN")
                 if _anchor_proc.stderr:
                     for _line in _anchor_proc.stderr.strip().splitlines()[-5:]:
                         print(f"    {_line}")
         else:
-            print(f"\n[2.5] PIT price anchor skipped — rankings.csv not found in staging")
+            print("\n[2.5] PIT price anchor skipped — rankings.csv not found in staging")
 
     # --- Step 3: Run integrity audit ---
     audit_proc = None
     if not skip_audit:
-        print(f"\n[3/5] Running data integrity audit ...")
+        print("\n[3/5] Running data integrity audit ...")
         audit_output_dir = staging_date_dir / "audit"
         audit_proc = run_audit(staging_date_dir, price_csv, as_of_date, audit_output_dir)
         audit_gate = check_audit_result(audit_proc, config, audit_output_dir)
         gate_results.append(audit_gate)
         print(f"  Audit gate: {audit_gate.status} — {audit_gate.detail}")
     else:
-        print(f"\n[3/5] Audit skipped (--skip-audit)")
+        print("\n[3/5] Audit skipped (--skip-audit)")
 
     # --- Step 4: Hard gates ---
-    print(f"\n[4/5] Evaluating gates ...")
+    print("\n[4/5] Evaluating gates ...")
 
     missing_gate = check_missing_reason_fraction(staging_date_dir, config.missing_reason_max_frac)
     gate_results.append(missing_gate)
@@ -3370,7 +3369,7 @@ def run_daily(
     print(f"  Risk concentration gate: {rc_gate.status} — {rc_gate.detail}")
 
     # --- Step 5: Build manifest ---
-    print(f"\n[5/5] Building run manifest ...")
+    print("\n[5/5] Building run manifest ...")
     git_post_run = get_git_info(REPO_ROOT)
     manifest = build_run_manifest(
         as_of_date,
@@ -3403,7 +3402,7 @@ def run_daily(
     overall = manifest["overall_status"]
     if overall == "FAIL":
         print(f"\n{'='*70}")
-        print(f"RESULT: FAIL — snapshot NOT promoted")
+        print("RESULT: FAIL — snapshot NOT promoted")
         print(f"  Staging dir preserved at: {staging_date_dir}")
         for g in gate_results:
             if g.status == "FAIL":
@@ -3467,7 +3466,7 @@ def run_daily(
                 label="warm_price_cache_backfill",
             )
             if _backfill_proc.returncode == 0:
-                print(f"  PIT price backfill OK")
+                print("  PIT price backfill OK")
             else:
                 print(f"  PIT price backfill FAILED (exit {_backfill_proc.returncode})")
                 if _backfill_proc.stderr:
