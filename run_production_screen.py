@@ -21,7 +21,7 @@ import json
 import shutil
 import subprocess
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -56,9 +56,12 @@ def run_screen(
     cmd = [
         sys.executable,
         str(Path(__file__).parent / "run_screen.py"),
-        "--as-of-date", as_of_date,
-        "--data-dir", str(data_dir),
-        "--output", str(output_path),
+        "--as-of-date",
+        as_of_date,
+        "--data-dir",
+        str(data_dir),
+        "--output",
+        str(output_path),
     ]
 
     if output_dir:
@@ -87,7 +90,7 @@ def save_run_log(
         Path to the saved run log
     """
     run_log = {
-        "run_timestamp": datetime.utcnow().isoformat() + "Z",
+        "run_timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "as_of_date": as_of_date,
         "success": success,
         "outputs": {

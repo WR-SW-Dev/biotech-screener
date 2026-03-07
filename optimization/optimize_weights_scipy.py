@@ -23,13 +23,13 @@ import json
 import os
 import sys
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 import numpy as np
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import differential_evolution, minimize
 from scipy.stats import rankdata, spearmanr
 
 __version__ = "1.0.0"
@@ -39,7 +39,7 @@ __version__ = "1.0.0"
 # =============================================================================
 
 # Component names (must match module_5_composite_v3.py)
-COMPONENT_NAMES = ['clinical', 'financial', 'catalyst', 'pos', 'momentum', 'valuation']
+COMPONENT_NAMES = ["clinical", "financial", "catalyst", "pos", "momentum", "valuation"]
 
 # Default baseline weights (from V3_ENHANCED_WEIGHTS)
 BASELINE_WEIGHTS = np.array([0.28, 0.25, 0.17, 0.15, 0.10, 0.05])
@@ -65,6 +65,7 @@ DEFAULT_SEED = 42
 # DATA LOADING
 # =============================================================================
 
+
 def load_training_data(csv_file: str) -> List[Dict[str, Any]]:
     """
     Load prepared optimization dataset from CSV.
@@ -88,12 +89,21 @@ def load_training_data(csv_file: str) -> List[Dict[str, Any]]:
     data = []
     line_num = 0
 
-    with open(csv_file, 'r', newline='') as f:
+    with open(csv_file, "r", newline="") as f:
         reader = csv.DictReader(f)
 
         # Validate header
-        required_cols = {'date', 'ticker', 'clinical', 'financial', 'catalyst',
-                        'pos', 'momentum', 'valuation', 'fwd_4w'}
+        required_cols = {
+            "date",
+            "ticker",
+            "clinical",
+            "financial",
+            "catalyst",
+            "pos",
+            "momentum",
+            "valuation",
+            "fwd_4w",
+        }
         if not required_cols.issubset(set(reader.fieldnames or [])):
             missing = required_cols - set(reader.fieldnames or [])
             raise ValueError(f"Missing required columns: {missing}")
@@ -101,25 +111,29 @@ def load_training_data(csv_file: str) -> List[Dict[str, Any]]:
         for row in reader:
             line_num += 1
             try:
-                components = np.array([
-                    float(row['clinical']),
-                    float(row['financial']),
-                    float(row['catalyst']),
-                    float(row['pos']),
-                    float(row['momentum']),
-                    float(row['valuation'])
-                ])
+                components = np.array(
+                    [
+                        float(row["clinical"]),
+                        float(row["financial"]),
+                        float(row["catalyst"]),
+                        float(row["pos"]),
+                        float(row["momentum"]),
+                        float(row["valuation"]),
+                    ]
+                )
 
                 # Validate component scores are in [0, 100] range
                 if np.any(components < 0) or np.any(components > 100):
                     print(f"Warning: Line {line_num} has component scores outside [0, 100]")
 
-                data.append({
-                    'date': row['date'],
-                    'ticker': row['ticker'],
-                    'components': components,
-                    'fwd_return': float(row['fwd_4w'])
-                })
+                data.append(
+                    {
+                        "date": row["date"],
+                        "ticker": row["ticker"],
+                        "components": components,
+                        "fwd_return": float(row["fwd_4w"]),
+                    }
+                )
             except (ValueError, KeyError) as e:
                 raise ValueError(f"Invalid data at line {line_num}: {e}")
 
@@ -132,6 +146,7 @@ def load_training_data(csv_file: str) -> List[Dict[str, Any]]:
 # =============================================================================
 # OBJECTIVE FUNCTIONS
 # =============================================================================
+
 
 def spearman_corr_numpy(x: np.ndarray, y: np.ndarray) -> float:
     """
@@ -152,11 +167,7 @@ def spearman_corr_numpy(x: np.ndarray, y: np.ndarray) -> float:
     return np.corrcoef(x_ranks, y_ranks)[0, 1]
 
 
-def objective_function(
-    weights: np.ndarray,
-    data: List[Dict[str, Any]],
-    metric: str = 'sharpe'
-) -> float:
+def objective_function(weights: np.ndarray, data: List[Dict[str, Any]], metric: str = "sharpe") -> float:
     """
     Objective function to minimize (returns negative Sharpe or negative IC).
 
@@ -171,18 +182,16 @@ def objective_function(
     # Group observations by date
     by_date: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
     for obs in data:
-        score = np.dot(obs['components'], weights)
-        by_date[obs['date']].append((score, obs['fwd_return']))
+        score = np.dot(obs["components"], weights)
+        by_date[obs["date"]].append((score, obs["fwd_return"]))
 
-    if metric == 'sharpe':
+    if metric == "sharpe":
         return _compute_negative_sharpe(by_date)
     else:  # IC
         return _compute_negative_ic(by_date)
 
 
-def _compute_negative_sharpe(
-    by_date: Dict[str, List[Tuple[float, float]]]
-) -> float:
+def _compute_negative_sharpe(by_date: Dict[str, List[Tuple[float, float]]]) -> float:
     """Compute negative Sharpe ratio from long-short portfolio returns."""
     returns = []
 
@@ -217,9 +226,7 @@ def _compute_negative_sharpe(
     return -sharpe  # Negative because we minimize
 
 
-def _compute_negative_ic(
-    by_date: Dict[str, List[Tuple[float, float]]]
-) -> float:
+def _compute_negative_ic(by_date: Dict[str, List[Tuple[float, float]]]) -> float:
     """Compute negative Information Coefficient (Spearman correlation)."""
     all_scores = []
     all_returns = []
@@ -244,11 +251,12 @@ def _compute_negative_ic(
 # OPTIMIZATION METHODS
 # =============================================================================
 
+
 def optimize_slsqp(
     data: List[Dict[str, Any]],
     initial_weights: Optional[np.ndarray] = None,
     bounds: Optional[List[Tuple[float, float]]] = None,
-    metric: str = 'sharpe'
+    metric: str = "sharpe",
 ) -> Tuple[np.ndarray, float, Any]:
     """
     Optimize using SLSQP (Sequential Least Squares Programming).
@@ -271,19 +279,16 @@ def optimize_slsqp(
         bounds = DEFAULT_BOUNDS
 
     # Constraint: weights must sum to 1.0
-    constraints = {
-        'type': 'eq',
-        'fun': lambda w: np.sum(w) - 1.0
-    }
+    constraints = {"type": "eq", "fun": lambda w: np.sum(w) - 1.0}
 
     result = minimize(
         objective_function,
         x0=initial_weights,
         args=(data, metric),
-        method='SLSQP',
+        method="SLSQP",
         bounds=bounds,
         constraints=constraints,
-        options={'maxiter': 500, 'ftol': 1e-9, 'disp': False}
+        options={"maxiter": 500, "ftol": 1e-9, "disp": False},
     )
 
     if not result.success:
@@ -298,11 +303,11 @@ def optimize_slsqp(
 def optimize_differential_evolution(
     data: List[Dict[str, Any]],
     bounds: Optional[List[Tuple[float, float]]] = None,
-    metric: str = 'sharpe',
+    metric: str = "sharpe",
     seed: int = DEFAULT_SEED,
     maxiter: int = 1000,
     popsize: int = 15,
-    verbose: bool = False
+    verbose: bool = False,
 ) -> Tuple[np.ndarray, float, Any]:
     """
     Global optimization using Differential Evolution.
@@ -338,7 +343,7 @@ def optimize_differential_evolution(
         penalized_objective,
         bounds=bounds,
         args=(data,),
-        strategy='best1bin',
+        strategy="best1bin",
         maxiter=maxiter,
         popsize=popsize,
         tol=1e-7,
@@ -346,7 +351,7 @@ def optimize_differential_evolution(
         recombination=0.7,
         seed=seed,
         workers=1,  # Single-threaded for determinism
-        disp=verbose
+        disp=verbose,
     )
 
     optimal_weights = result.x
@@ -364,9 +369,9 @@ def multi_start_optimization(
     data: List[Dict[str, Any]],
     n_starts: int = 10,
     bounds: Optional[List[Tuple[float, float]]] = None,
-    metric: str = 'sharpe',
+    metric: str = "sharpe",
     seed: int = DEFAULT_SEED,
-    verbose: bool = True
+    verbose: bool = True,
 ) -> Tuple[np.ndarray, float, List[Dict[str, Any]]]:
     """
     Run SLSQP from multiple random starting points.
@@ -409,16 +414,16 @@ def multi_start_optimization(
         start_weights = start_weights / np.sum(start_weights)
 
         # Optimize from this starting point
-        weights, metric_val, result = optimize_slsqp(
-            data, initial_weights=start_weights, bounds=bounds, metric=metric
-        )
+        weights, metric_val, result = optimize_slsqp(data, initial_weights=start_weights, bounds=bounds, metric=metric)
 
-        all_results.append({
-            'start': start_weights.tolist(),
-            'optimal': weights.tolist(),
-            metric: float(metric_val),
-            'success': result.success
-        })
+        all_results.append(
+            {
+                "start": start_weights.tolist(),
+                "optimal": weights.tolist(),
+                metric: float(metric_val),
+                "success": result.success,
+            }
+        )
 
         if metric_val > best_metric:
             best_metric = metric_val
@@ -431,8 +436,7 @@ def multi_start_optimization(
 
 
 def compare_methods(
-    data: List[Dict[str, Any]],
-    verbose: bool = True
+    data: List[Dict[str, Any]], verbose: bool = True
 ) -> Tuple[np.ndarray, float, Dict[str, Dict[str, Any]]]:
     """
     Compare all optimization methods and return best result.
@@ -453,66 +457,50 @@ def compare_methods(
 
     # Method 1: SLSQP from current weights
     if verbose:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Method 1: SLSQP (single start from baseline)")
-        print("="*60)
+        print("=" * 60)
 
     w1, s1, r1 = optimize_slsqp(data)
-    results['slsqp_single'] = {
-        'weights': w1.tolist(),
-        'sharpe': float(s1),
-        'success': r1.success
-    }
+    results["slsqp_single"] = {"weights": w1.tolist(), "sharpe": float(s1), "success": r1.success}
 
     if verbose:
         print(f"Sharpe: {s1:.4f}")
 
     # Method 2: Multi-start SLSQP
     if verbose:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Method 2: Multi-start SLSQP (10 starts)")
-        print("="*60)
+        print("=" * 60)
 
     w2, s2, r2 = multi_start_optimization(data, n_starts=10, verbose=verbose)
-    results['slsqp_multi'] = {
-        'weights': w2.tolist(),
-        'sharpe': float(s2),
-        'all_starts': r2
-    }
+    results["slsqp_multi"] = {"weights": w2.tolist(), "sharpe": float(s2), "all_starts": r2}
 
     if verbose:
         print(f"Best Sharpe: {s2:.4f}")
 
     # Method 3: Differential Evolution
     if verbose:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("Method 3: Differential Evolution (global optimizer)")
-        print("="*60)
+        print("=" * 60)
 
     w3, s3, r3 = optimize_differential_evolution(data, verbose=verbose)
-    results['diff_evolution'] = {
-        'weights': w3.tolist(),
-        'sharpe': float(s3),
-        'success': r3.success
-    }
+    results["diff_evolution"] = {"weights": w3.tolist(), "sharpe": float(s3), "success": r3.success}
 
     if verbose:
         print(f"Sharpe: {s3:.4f}")
 
     # Select best method
-    method_scores = {
-        'slsqp_single': s1,
-        'slsqp_multi': s2,
-        'diff_evolution': s3
-    }
+    method_scores = {"slsqp_single": s1, "slsqp_multi": s2, "diff_evolution": s3}
     best_method = max(method_scores, key=method_scores.get)
-    best_weights = results[best_method]['weights']
-    best_sharpe = results[best_method]['sharpe']
+    best_weights = results[best_method]["weights"]
+    best_sharpe = results[best_method]["sharpe"]
 
     if verbose:
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("BEST METHOD")
-        print("="*60)
+        print("=" * 60)
         print(f"Winner: {best_method}")
         print(f"Sharpe: {best_sharpe:.4f}")
 
@@ -523,63 +511,50 @@ def compare_methods(
 # OUTPUT FORMATTING
 # =============================================================================
 
+
 def format_weights_output(
     optimal_weights: np.ndarray,
     optimal_sharpe: float,
     baseline_sharpe: float,
-    method: str = 'scipy_comparison',
-    all_results: Optional[Dict] = None
+    method: str = "scipy_comparison",
+    all_results: Optional[Dict] = None,
 ) -> Dict[str, Any]:
     """
     Format optimization results for output/storage.
 
     Returns dictionary suitable for JSON serialization with provenance.
     """
-    weights_dict = {
-        name: float(weight)
-        for name, weight in zip(COMPONENT_NAMES, optimal_weights)
-    }
+    weights_dict = {name: float(weight) for name, weight in zip(COMPONENT_NAMES, optimal_weights)}
 
     improvement_pct = (optimal_sharpe / baseline_sharpe - 1) * 100 if baseline_sharpe > 0 else 0.0
 
     output = {
-        'weights': weights_dict,
-        'sharpe': float(optimal_sharpe),
-        'baseline_sharpe': float(baseline_sharpe),
-        'improvement_pct': float(improvement_pct),
-        'method': method,
-        'version': __version__,
-        'component_names': COMPONENT_NAMES,
-        'bounds': {
-            name: {'min': bounds[0], 'max': bounds[1]}
-            for name, bounds in zip(COMPONENT_NAMES, DEFAULT_BOUNDS)
+        "weights": weights_dict,
+        "sharpe": float(optimal_sharpe),
+        "baseline_sharpe": float(baseline_sharpe),
+        "improvement_pct": float(improvement_pct),
+        "method": method,
+        "version": __version__,
+        "component_names": COMPONENT_NAMES,
+        "bounds": {name: {"min": bounds[0], "max": bounds[1]} for name, bounds in zip(COMPONENT_NAMES, DEFAULT_BOUNDS)},
+        "provenance": {
+            "optimizer_version": __version__,
+            "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "baseline_weights": {name: float(w) for name, w in zip(COMPONENT_NAMES, BASELINE_WEIGHTS)},
         },
-        'provenance': {
-            'optimizer_version': __version__,
-            'timestamp': datetime.utcnow().isoformat() + 'Z',
-            'baseline_weights': {
-                name: float(w) for name, w in zip(COMPONENT_NAMES, BASELINE_WEIGHTS)
-            }
-        }
     }
 
     if all_results:
-        output['all_methods'] = {
-            k: {'sharpe': float(v.get('sharpe', 0))}
-            for k, v in all_results.items()
-        }
+        output["all_methods"] = {k: {"sharpe": float(v.get("sharpe", 0))} for k, v in all_results.items()}
 
     return output
 
 
-def print_weights_comparison(
-    optimal_weights: np.ndarray,
-    baseline_weights: np.ndarray = BASELINE_WEIGHTS
-) -> None:
+def print_weights_comparison(optimal_weights: np.ndarray, baseline_weights: np.ndarray = BASELINE_WEIGHTS) -> None:
     """Print formatted comparison of optimal vs baseline weights."""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("OPTIMAL WEIGHTS")
-    print("="*60)
+    print("=" * 60)
 
     for name, opt, base in zip(COMPONENT_NAMES, optimal_weights, baseline_weights):
         delta = opt - base
@@ -590,10 +565,9 @@ def print_weights_comparison(
 # MAIN ENTRY POINT
 # =============================================================================
 
+
 def run_optimization(
-    training_data_path: str,
-    output_path: Optional[str] = None,
-    verbose: bool = True
+    training_data_path: str, output_path: Optional[str] = None, verbose: bool = True
 ) -> Dict[str, Any]:
     """
     Run complete scipy optimization workflow.
@@ -616,12 +590,12 @@ def run_optimization(
         print(f"Loaded {len(data)} observations")
 
         # Show date range
-        dates = sorted(set(d['date'] for d in data))
+        dates = sorted(set(d["date"] for d in data))
         print(f"Date range: {dates[0]} to {dates[-1]}")
         print(f"Unique dates: {len(dates)}")
 
     # Calculate baseline
-    baseline_sharpe = -objective_function(BASELINE_WEIGHTS, data, 'sharpe')
+    baseline_sharpe = -objective_function(BASELINE_WEIGHTS, data, "sharpe")
 
     if verbose:
         print(f"\nBaseline Sharpe: {baseline_sharpe:.4f}")
@@ -636,11 +610,7 @@ def run_optimization(
 
     # Format output
     output = format_weights_output(
-        optimal_weights,
-        optimal_sharpe,
-        baseline_sharpe,
-        method='scipy_comparison',
-        all_results=all_results
+        optimal_weights, optimal_sharpe, baseline_sharpe, method="scipy_comparison", all_results=all_results
     )
 
     # Save if path provided
@@ -649,7 +619,7 @@ def run_optimization(
         if output_dir:
             os.makedirs(output_dir, exist_ok=True)
 
-        with open(output_path, 'w') as f:
+        with open(output_path, "w") as f:
             json.dump(output, f, indent=2)
 
         if verbose:
@@ -672,12 +642,12 @@ def _resolve_data_path(path: str) -> str:
         return path
 
     # Check if we're in project root and path is inside optimization/
-    optimization_path = os.path.join('optimization', path)
+    optimization_path = os.path.join("optimization", path)
     if os.path.exists(optimization_path):
         return optimization_path
 
     # Check if we're in optimization directory
-    if os.path.basename(os.getcwd()) == 'optimization':
+    if os.path.basename(os.getcwd()) == "optimization":
         return path
 
     # Default: prepend optimization/ for project root
@@ -688,24 +658,14 @@ def main():
     """CLI entry point."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Scipy-based weight optimization for biotech-screener'
+    parser = argparse.ArgumentParser(description="Scipy-based weight optimization for biotech-screener")
+    parser.add_argument(
+        "--training-data", default="optimization_data/training_dataset.csv", help="Path to training CSV file"
     )
     parser.add_argument(
-        '--training-data',
-        default='optimization_data/training_dataset.csv',
-        help='Path to training CSV file'
+        "--output", default="optimization_data/optimal_weights_scipy.json", help="Output path for results JSON"
     )
-    parser.add_argument(
-        '--output',
-        default='optimization_data/optimal_weights_scipy.json',
-        help='Output path for results JSON'
-    )
-    parser.add_argument(
-        '--quiet',
-        action='store_true',
-        help='Suppress progress output'
-    )
+    parser.add_argument("--quiet", action="store_true", help="Suppress progress output")
 
     args = parser.parse_args()
 
@@ -714,15 +674,11 @@ def main():
     output_path = _resolve_data_path(args.output)
 
     try:
-        result = run_optimization(
-            training_data_path=training_path,
-            output_path=output_path,
-            verbose=not args.quiet
-        )
+        result = run_optimization(training_data_path=training_path, output_path=output_path, verbose=not args.quiet)
 
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         print("OPTIMIZATION COMPLETE")
-        print("="*60)
+        print("=" * 60)
 
         return 0
 
@@ -737,5 +693,5 @@ def main():
         raise
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main())

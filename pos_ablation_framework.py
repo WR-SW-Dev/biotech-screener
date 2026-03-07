@@ -17,29 +17,28 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
-from collections import defaultdict
+from typing import Any, Dict, List, Optional, Tuple
 
 from pos_model_v2 import (
-    PosModelV2,
-    PosCalculationResult,
-    ClinicalStage,
-    TherapeuticArea,
-    MechanismClass,
-    FDADesignation,
-    TrialCharacteristic,
-    BaseRateEntry,
-    ModifierDefinition,
-    FixtureProvenance,
-    POS_FLOOR,
-    POS_CEILING,
     DEFAULT_BASE_RATES,
+    POS_CEILING,
+    POS_FLOOR,
+    BaseRateEntry,
+    ClinicalStage,
+    FDADesignation,
+    FixtureProvenance,
+    MechanismClass,
+    ModifierDefinition,
+    PosCalculationResult,
+    PosModelV2,
+    TherapeuticArea,
+    TrialCharacteristic,
 )
-
 
 __version__ = "1.0.0"
 
@@ -48,8 +47,10 @@ __version__ = "1.0.0"
 # ABLATION VARIANTS
 # =============================================================================
 
+
 class LookupMode:
     """Base rate lookup strategies for ablation."""
+
     EXACT_ONLY = "exact_only"
     EXACT_AND_PARTIAL = "exact_and_partial"  # Default behavior
     DEFAULT_ONLY = "default_only"
@@ -57,6 +58,7 @@ class LookupMode:
 
 class ModifierMode:
     """Modifier family combinations for ablation."""
+
     NONE = "none"
     FDA_ONLY = "fda_only"
     TRIAL_ONLY = "trial_only"
@@ -66,6 +68,7 @@ class ModifierMode:
 @dataclass
 class AblationVariant:
     """Definition of a single ablation experiment variant."""
+
     name: str
     lookup_mode: str  # LookupMode
     modifier_mode: str  # ModifierMode
@@ -84,16 +87,13 @@ class AblationVariant:
 STANDARD_VARIANTS: List[AblationVariant] = [
     # Baseline (full model)
     AblationVariant("baseline", LookupMode.EXACT_AND_PARTIAL, ModifierMode.BOTH),
-
     # Lookup mode variants
     AblationVariant("exact_only", LookupMode.EXACT_ONLY, ModifierMode.BOTH),
     AblationVariant("default_only", LookupMode.DEFAULT_ONLY, ModifierMode.BOTH),
-
     # Modifier family variants
     AblationVariant("no_modifiers", LookupMode.EXACT_AND_PARTIAL, ModifierMode.NONE),
     AblationVariant("fda_only", LookupMode.EXACT_AND_PARTIAL, ModifierMode.FDA_ONLY),
     AblationVariant("trial_only", LookupMode.EXACT_AND_PARTIAL, ModifierMode.TRIAL_ONLY),
-
     # Cap sensitivity variants
     AblationVariant("cap_1.5", LookupMode.EXACT_AND_PARTIAL, ModifierMode.BOTH, Decimal("1.50")),
     AblationVariant("cap_2.0", LookupMode.EXACT_AND_PARTIAL, ModifierMode.BOTH, Decimal("2.00")),
@@ -106,9 +106,11 @@ STANDARD_VARIANTS: List[AblationVariant] = [
 # TEST CASES
 # =============================================================================
 
+
 @dataclass
 class AblationTestCase:
     """A single test case for ablation analysis."""
+
     ticker: str
     stage: ClinicalStage
     therapeutic_area: TherapeuticArea
@@ -139,15 +141,12 @@ def generate_comprehensive_test_cases() -> List[AblationTestCase]:
         (ClinicalStage.PHASE_2, TherapeuticArea.ONCOLOGY, MechanismClass.MONOCLONAL_ANTIBODY),
         (ClinicalStage.PHASE_3, TherapeuticArea.ONCOLOGY, MechanismClass.ADC),
         (ClinicalStage.PHASE_2, TherapeuticArea.ONCOLOGY, MechanismClass.CAR_T),
-
         # Rare disease variants
         (ClinicalStage.PHASE_3, TherapeuticArea.RARE_DISEASE, MechanismClass.GENE_THERAPY),
         (ClinicalStage.PHASE_2, TherapeuticArea.RARE_DISEASE, MechanismClass.SMALL_MOLECULE),
-
         # CNS variants (challenging)
         (ClinicalStage.PHASE_3, TherapeuticArea.CNS, MechanismClass.SMALL_MOLECULE),
         (ClinicalStage.PHASE_3, TherapeuticArea.CNS, MechanismClass.MONOCLONAL_ANTIBODY),
-
         # Other TAs
         (ClinicalStage.PHASE_3, TherapeuticArea.CARDIOVASCULAR, MechanismClass.SMALL_MOLECULE),
         (ClinicalStage.PHASE_2, TherapeuticArea.IMMUNOLOGY, MechanismClass.MONOCLONAL_ANTIBODY),
@@ -155,7 +154,6 @@ def generate_comprehensive_test_cases() -> List[AblationTestCase]:
         (ClinicalStage.PHASE_2, TherapeuticArea.METABOLIC, MechanismClass.PEPTIDE),
         (ClinicalStage.PHASE_3, TherapeuticArea.HEMATOLOGY, MechanismClass.SMALL_MOLECULE),
         (ClinicalStage.PHASE_2, TherapeuticArea.OPHTHALMOLOGY, MechanismClass.GENE_THERAPY),
-
         # Edge cases - unknown combos (will use partial/default)
         (ClinicalStage.PHASE_3, TherapeuticArea.DERMATOLOGY, MechanismClass.BIOLOGIC),
         (ClinicalStage.PHASE_2, TherapeuticArea.GI, MechanismClass.RNA_THERAPEUTIC),
@@ -175,25 +173,27 @@ def generate_comprehensive_test_cases() -> List[AblationTestCase]:
         ([FDADesignation.BREAKTHROUGH_THERAPY], [TrialCharacteristic.BIOMARKER_SELECTED]),
         (
             [FDADesignation.BREAKTHROUGH_THERAPY, FDADesignation.ORPHAN_DRUG, FDADesignation.FAST_TRACK],
-            [TrialCharacteristic.BIOMARKER_SELECTED, TrialCharacteristic.FIRST_IN_CLASS]
+            [TrialCharacteristic.BIOMARKER_SELECTED, TrialCharacteristic.FIRST_IN_CLASS],
         ),  # Heavy positive modifiers
         (
             [],
-            [TrialCharacteristic.SURROGATE_ENDPOINT, TrialCharacteristic.ACTIVE_COMPARATOR]
+            [TrialCharacteristic.SURROGATE_ENDPOINT, TrialCharacteristic.ACTIVE_COMPARATOR],
         ),  # Heavy negative modifiers
     ]
 
     for stage, ta, mech in test_combinations:
         for fda_mods, trial_mods in modifier_combos:
             case_id += 1
-            cases.append(AblationTestCase(
-                ticker=f"TEST_{case_id:04d}",
-                stage=stage,
-                therapeutic_area=ta,
-                mechanism_class=mech,
-                fda_designations=list(fda_mods),
-                trial_characteristics=list(trial_mods),
-            ))
+            cases.append(
+                AblationTestCase(
+                    ticker=f"TEST_{case_id:04d}",
+                    stage=stage,
+                    therapeutic_area=ta,
+                    mechanism_class=mech,
+                    fda_designations=list(fda_mods),
+                    trial_characteristics=list(trial_mods),
+                )
+            )
 
     return cases
 
@@ -201,6 +201,7 @@ def generate_comprehensive_test_cases() -> List[AblationTestCase]:
 # =============================================================================
 # ABLATION MODEL WRAPPER
 # =============================================================================
+
 
 class AblationPosModel:
     """
@@ -305,9 +306,11 @@ class AblationPosModel:
 # ABLATION ANALYSIS
 # =============================================================================
 
+
 @dataclass
 class VariantStatistics:
     """Statistics for a single ablation variant."""
+
     variant_name: str
     n_cases: int
     mean_pos: Decimal
@@ -375,7 +378,7 @@ def calculate_statistics(
 
     # Standard deviation
     variance = sum((p - mean_pos) ** 2 for p in pos_values) / n
-    std_pos = variance.sqrt() if hasattr(variance, 'sqrt') else Decimal(str(variance ** Decimal("0.5")))
+    std_pos = variance.sqrt() if hasattr(variance, "sqrt") else Decimal(str(variance ** Decimal("0.5")))
 
     # Min/Max
     min_pos = min(pos_values)
@@ -400,7 +403,11 @@ def calculate_statistics(
         n_cases=n,
         mean_pos=mean_pos.quantize(Decimal("0.0001")),
         median_pos=median_pos.quantize(Decimal("0.0001")),
-        std_pos=std_pos.quantize(Decimal("0.0001")) if isinstance(std_pos, Decimal) else Decimal(str(std_pos)).quantize(Decimal("0.0001")),
+        std_pos=(
+            std_pos.quantize(Decimal("0.0001"))
+            if isinstance(std_pos, Decimal)
+            else Decimal(str(std_pos)).quantize(Decimal("0.0001"))
+        ),
         min_pos=min_pos,
         max_pos=max_pos,
         pct_hitting_floor=Decimal(str(floor_hits * 100 / n)).quantize(Decimal("0.01")),
@@ -414,9 +421,11 @@ def calculate_statistics(
 # ABLATION RUNNER
 # =============================================================================
 
+
 @dataclass
 class AblationReport:
     """Complete ablation analysis report."""
+
     run_id: str
     timestamp: str
     model_version: str
@@ -540,19 +549,21 @@ def run_ablation_analysis(
                 abs_deltas = [abs(d) for d in deltas]
                 mean_abs_delta = sum(abs_deltas) / len(abs_deltas)
 
-                pairwise_deltas.append({
-                    "variant": variant.name,
-                    "vs": "baseline",
-                    "mean_delta": str(mean_delta.quantize(Decimal("0.0001"))),
-                    "mean_abs_delta": str(mean_abs_delta.quantize(Decimal("0.0001"))),
-                    "min_delta": str(min(deltas).quantize(Decimal("0.0001"))),
-                    "max_delta": str(max(deltas).quantize(Decimal("0.0001"))),
-                })
+                pairwise_deltas.append(
+                    {
+                        "variant": variant.name,
+                        "vs": "baseline",
+                        "mean_delta": str(mean_delta.quantize(Decimal("0.0001"))),
+                        "mean_abs_delta": str(mean_abs_delta.quantize(Decimal("0.0001"))),
+                        "min_delta": str(min(deltas).quantize(Decimal("0.0001"))),
+                        "max_delta": str(max(deltas).quantize(Decimal("0.0001"))),
+                    }
+                )
 
     # Build report
     return AblationReport(
         run_id=input_hash[:16],
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S"),
         model_version=base_model.provenance.fixture_version if base_model.provenance else "2.1.0",
         framework_version=__version__,
         fixture_provenance=fixture_prov,
@@ -566,6 +577,7 @@ def run_ablation_analysis(
 # =============================================================================
 # CLI INTERFACE
 # =============================================================================
+
 
 def main():
     """Run ablation analysis and output report."""
@@ -601,13 +613,17 @@ def main():
     print(f"{'Variant':<20} {'Mean PoS':<12} {'Median':<12} {'Floor%':<10} {'Ceiling%':<10}")
     print("-" * 64)
     for stats in report.variant_statistics:
-        print(f"{stats['variant_name']:<20} {stats['mean_pos']:<12} {stats['median_pos']:<12} {stats['pct_hitting_floor']:<10} {stats['pct_hitting_ceiling']:<10}")
+        print(
+            f"{stats['variant_name']:<20} {stats['mean_pos']:<12} {stats['median_pos']:<12} {stats['pct_hitting_floor']:<10} {stats['pct_hitting_ceiling']:<10}"
+        )
 
     print("\n--- Pairwise Deltas (vs Baseline) ---")
     print(f"{'Variant':<20} {'Mean Δ':<12} {'Mean |Δ|':<12} {'Min Δ':<12} {'Max Δ':<12}")
     print("-" * 68)
     for delta in report.pairwise_deltas:
-        print(f"{delta['variant']:<20} {delta['mean_delta']:<12} {delta['mean_abs_delta']:<12} {delta['min_delta']:<12} {delta['max_delta']:<12}")
+        print(
+            f"{delta['variant']:<20} {delta['mean_delta']:<12} {delta['mean_abs_delta']:<12} {delta['min_delta']:<12} {delta['max_delta']:<12}"
+        )
 
     # Write full report to JSON
     output_path = Path("ablation_report.json")

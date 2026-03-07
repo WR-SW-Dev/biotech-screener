@@ -3,12 +3,12 @@
 Clean biotech universe files and remove ineligible securities.
 Implements fail-loud validation to prevent data contamination.
 """
-import json
 import argparse
-from pathlib import Path
-from datetime import datetime
-from typing import Set, List, Dict, TypedDict, Union
+import json
 import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Dict, List, Set, TypedDict, Union
 
 # Type alias for JSON-like data structures from universe files
 JsonValue = Union[str, int, float, bool, None, List["JsonValue"], Dict[str, "JsonValue"]]
@@ -17,13 +17,15 @@ UniverseData = Union[List[Dict[str, JsonValue]], Dict[str, JsonValue]]
 
 class ValidationResult(TypedDict):
     """Result from ticker validation."""
+
     valid: List[str]
     invalid: Dict[str, str]
     stats: Dict[str, Union[int, float]]
 
+
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from validators.ticker_validator import validate_ticker_list, is_valid_ticker
+from validators.ticker_validator import is_valid_ticker, validate_ticker_list
 
 
 def extract_tickers_from_universe(data: UniverseData) -> List[str]:
@@ -36,29 +38,29 @@ def extract_tickers_from_universe(data: UniverseData) -> List[str]:
                 tickers.append(item)
             elif isinstance(item, dict):
                 # Handle {"ticker": "MRNA", ...} format
-                if 'ticker' in item:
-                    tickers.append(item['ticker'])
-                elif 'symbol' in item:
-                    tickers.append(item['symbol'])
+                if "ticker" in item:
+                    tickers.append(item["ticker"])
+                elif "symbol" in item:
+                    tickers.append(item["symbol"])
 
     elif isinstance(data, dict):
         # Handle {"tickers": [...]} format
-        if 'tickers' in data:
-            tickers.extend(extract_tickers_from_universe(data['tickers']))
+        if "tickers" in data:
+            tickers.extend(extract_tickers_from_universe(data["tickers"]))
         # Handle {"active_securities": [...]} format
-        if 'active_securities' in data:
-            tickers.extend(extract_tickers_from_universe(data['active_securities']))
+        if "active_securities" in data:
+            tickers.extend(extract_tickers_from_universe(data["active_securities"]))
         # Handle direct ticker keys
         for key in data:
-            if isinstance(data[key], dict) and 'ticker' in data[key]:
-                tickers.append(data[key]['ticker'])
+            if isinstance(data[key], dict) and "ticker" in data[key]:
+                tickers.append(data[key]["ticker"])
 
     return tickers
 
 
 def load_universe_file(filepath: Path) -> tuple[UniverseData, List[str]]:
     """Load tickers from universe file and return (data, tickers)."""
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         data = json.load(f)
 
     tickers = extract_tickers_from_universe(data)
@@ -77,7 +79,7 @@ def clean_universe_data(data: UniverseData, valid_tickers: Set[str]) -> Universe
                 if item in valid_tickers:
                     cleaned.append(item)
             elif isinstance(item, dict):
-                ticker = item.get('ticker') or item.get('symbol')
+                ticker = item.get("ticker") or item.get("symbol")
                 if ticker and ticker in valid_tickers:
                     cleaned.append(item)
                 elif not ticker:
@@ -88,10 +90,10 @@ def clean_universe_data(data: UniverseData, valid_tickers: Set[str]) -> Universe
     elif isinstance(data, dict):
         cleaned = {}
         for key, value in data.items():
-            if key in ['tickers', 'active_securities']:
+            if key in ["tickers", "active_securities"]:
                 cleaned[key] = clean_universe_data(value, valid_tickers)
-            elif isinstance(value, dict) and 'ticker' in value:
-                if value['ticker'] in valid_tickers:
+            elif isinstance(value, dict) and "ticker" in value:
+                if value["ticker"] in valid_tickers:
                     cleaned[key] = value
             else:
                 cleaned[key] = value
@@ -104,31 +106,31 @@ def save_cleaned_universe(filepath: Path, data: UniverseData, metadata: Dict[str
     """Save cleaned universe with metadata."""
     # Add metadata if it's a dict
     if isinstance(data, dict):
-        data['_cleaning_metadata'] = {
-            'cleaned_at': datetime.utcnow().isoformat() + 'Z',
-            **metadata
+        data["_cleaning_metadata"] = {
+            "cleaned_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            **metadata,
         }
 
     # Atomic write
-    temp_path = filepath.with_suffix('.tmp')
-    with open(temp_path, 'w', encoding='utf-8') as f:
+    temp_path = filepath.with_suffix(".tmp")
+    with open(temp_path, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     temp_path.replace(filepath)
 
 
 def save_audit_log(output_dir: Path, removed_tickers: Dict[str, str], source_file: str) -> Path:
     """Save audit log of removed tickers."""
-    timestamp = datetime.utcnow().strftime('%Y%m%d_%H%M%S')
-    audit_file = output_dir / f'universe_cleaning_audit_{timestamp}.json'
+    timestamp = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S")
+    audit_file = output_dir / f"universe_cleaning_audit_{timestamp}.json"
 
     audit_data = {
-        'timestamp': datetime.utcnow().isoformat() + 'Z',
-        'source_file': source_file,
-        'removed_count': len(removed_tickers),
-        'removed_tickers': removed_tickers
+        "timestamp": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "source_file": source_file,
+        "removed_count": len(removed_tickers),
+        "removed_tickers": removed_tickers,
     }
 
-    with open(audit_file, 'w', encoding='utf-8') as f:
+    with open(audit_file, "w", encoding="utf-8") as f:
         json.dump(audit_data, f, indent=2)
 
     print(f"  📋 Audit log saved: {audit_file.name}")
@@ -144,9 +146,9 @@ def clean_universe_files(check_only: bool = False, verbose: bool = True) -> bool
 
     # Find all universe files
     universe_patterns = [
-        '**/universe*.json',
-        '**/biotech_universe*.json',
-        '**/pilot_universe*.json',
+        "**/universe*.json",
+        "**/biotech_universe*.json",
+        "**/pilot_universe*.json",
     ]
 
     universe_files = []
@@ -157,7 +159,7 @@ def clean_universe_files(check_only: bool = False, verbose: bool = True) -> bool
     universe_files = list(set(universe_files))
 
     # Skip backup files
-    universe_files = [f for f in universe_files if '.backup' not in f.name]
+    universe_files = [f for f in universe_files if ".backup" not in f.name]
 
     print(f"Found {len(universe_files)} universe files to {'check' if check_only else 'clean'}")
     print()
@@ -178,30 +180,31 @@ def clean_universe_files(check_only: bool = False, verbose: bool = True) -> bool
             validation_result = validate_ticker_list(tickers)
 
             # Report results
-            if validation_result['invalid']:
+            if validation_result["invalid"]:
                 all_valid = False
                 print(f"  ❌ Found {len(validation_result['invalid'])} invalid tickers:")
 
                 # Show first few invalid tickers
                 shown = 0
-                for ticker, reason in validation_result['invalid'].items():
+                for ticker, reason in validation_result["invalid"].items():
                     if shown < 5:
                         display_ticker = ticker[:40] + "..." if len(ticker) > 40 else ticker
                         print(f"     - '{display_ticker}': {reason}")
                         shown += 1
-                if len(validation_result['invalid']) > 5:
+                if len(validation_result["invalid"]) > 5:
                     print(f"     ... and {len(validation_result['invalid']) - 5} more")
 
                 if not check_only:
                     # Create backup
-                    backup_path = filepath.with_suffix('.backup.json')
+                    backup_path = filepath.with_suffix(".backup.json")
                     if not backup_path.exists():
                         import shutil
+
                         shutil.copy(filepath, backup_path)
                         print(f"  💾 Backup saved: {backup_path.name}")
 
                     # Clean the data
-                    valid_set = set(validation_result['valid'])
+                    valid_set = set(validation_result["valid"])
                     cleaned_data = clean_universe_data(data, valid_set)
 
                     # Save cleaned version
@@ -209,18 +212,18 @@ def clean_universe_files(check_only: bool = False, verbose: bool = True) -> bool
                         filepath,
                         cleaned_data,
                         {
-                            'original_count': len(tickers),
-                            'removed_count': len(validation_result['invalid']),
-                        }
+                            "original_count": len(tickers),
+                            "removed_count": len(validation_result["invalid"]),
+                        },
                     )
                     print(f"  ✅ Cleaned universe saved: {len(validation_result['valid'])} tickers")
 
                     # Save audit log
-                    audit_dir = project_root / 'audit_logs'
+                    audit_dir = project_root / "audit_logs"
                     audit_dir.mkdir(exist_ok=True)
-                    save_audit_log(audit_dir, validation_result['invalid'], str(rel_path))
+                    save_audit_log(audit_dir, validation_result["invalid"], str(rel_path))
 
-                total_removed.update(validation_result['invalid'])
+                total_removed.update(validation_result["invalid"])
             else:
                 print(f"  ✅ Already clean ({len(tickers)} valid tickers)")
 
@@ -244,29 +247,16 @@ def clean_universe_files(check_only: bool = False, verbose: bool = True) -> bool
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description='Clean biotech universe files and remove ineligible securities.'
-    )
-    parser.add_argument(
-        '--check-only',
-        action='store_true',
-        help='Check validity without modifying files'
-    )
-    parser.add_argument(
-        '-v', '--verbose',
-        action='store_true',
-        help='Verbose output'
-    )
+    parser = argparse.ArgumentParser(description="Clean biotech universe files and remove ineligible securities.")
+    parser.add_argument("--check-only", action="store_true", help="Check validity without modifying files")
+    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     args = parser.parse_args()
 
-    all_valid = clean_universe_files(
-        check_only=args.check_only,
-        verbose=args.verbose
-    )
+    all_valid = clean_universe_files(check_only=args.check_only, verbose=args.verbose)
 
     # Exit with error code if invalid (for pre-commit hooks)
     sys.exit(0 if all_valid else 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

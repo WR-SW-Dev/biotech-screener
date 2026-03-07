@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
 import math
@@ -42,109 +43,93 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime
-import hashlib
+from datetime import date, datetime, timezone
 from decimal import Decimal
+
+# Configure logging with rotation support
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from statistics import median, quantiles
 from typing import Any, Dict, List, Optional
 
-# Configure logging with rotation support
-from logging.handlers import RotatingFileHandler
-
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-# Production hardening utilities
-from common.production_hardening import (
-    # Path security
-    validate_path_within_base,
-    safe_join_path,
-    validate_checkpoint_path,
-    PathTraversalError,
-    SymlinkError,
-    # File operations
-    validate_file_size,
-    safe_read_json,
-    safe_write_json,
-    safe_mkdir,
-    FileSizeError,
-    # Integrity
-    save_with_integrity,
-    verify_integrity,
-    load_with_integrity_check,
-    IntegrityError,
-    compute_content_hash,
-    json_serializer,
-    # Timeouts
-    operation_timeout,
-    OperationTimeoutError,
-    # Logging
-    sanitize_for_logging,
-    # Validation
-    validate_date_format,
-    validate_numeric_bounds,
-    # Resources
-    require_minimum_memory,
-    # Constants
-    MAX_JSON_FILE_SIZE_MB,
-    DEFAULT_MODULE_EXECUTION_TIMEOUT,
-    DEFAULT_PIPELINE_TIMEOUT,
+from archive_snapshot import sha256_file
+from backtest.cost_model import CostSchedule, estimate_trade_cost
+from common.data_integration_contracts import (
+    normalize_financial_field_alias,
+    normalize_ticker_set,
+    safe_numeric_check,
+    validate_financial_records_schema,
+    validate_market_data_schema,
 )
 
 # Common utilities
-from common.date_utils import normalize_date, to_date_string, to_date_object
-from common.integration_contracts import (
-    validate_pipeline_handoff,
-    validate_module_5_output,
-    SchemaValidationError,
+from common.date_utils import normalize_date, to_date_object, to_date_string
+from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
+
+# Production hardening utilities
+from common.production_hardening import (  # Path security; File operations; Integrity; Timeouts; Logging; Validation; Resources; Constants
+    DEFAULT_MODULE_EXECUTION_TIMEOUT,
+    DEFAULT_PIPELINE_TIMEOUT,
+    MAX_JSON_FILE_SIZE_MB,
+    FileSizeError,
+    IntegrityError,
+    OperationTimeoutError,
+    PathTraversalError,
+    SymlinkError,
+    compute_content_hash,
+    json_serializer,
+    load_with_integrity_check,
+    operation_timeout,
+    require_minimum_memory,
+    safe_join_path,
+    safe_mkdir,
+    safe_read_json,
+    safe_write_json,
+    sanitize_for_logging,
+    save_with_integrity,
+    validate_checkpoint_path,
+    validate_date_format,
+    validate_file_size,
+    validate_numeric_bounds,
+    validate_path_within_base,
+    verify_integrity,
 )
-from common.data_integration_contracts import (
-    safe_numeric_check,
-    validate_market_data_schema,
-    validate_financial_records_schema,
-    normalize_ticker_set,
-    normalize_financial_field_alias,
+from decision_engine import ACTIONABLE_COLUMNS, DEFAULT_RULESET, SORT_CONTRIB_KEYS
+from decision_engine import VERSION as DE_VERSION
+from decision_engine import (
+    DecisionRuleset,
+    _safe_float,
+    compute_actionable_sort_key,
+    compute_decision_fields,
+    compute_sort_contribs,
+    compute_target_weights,
+    resolve_catalyst_priority,
 )
+
+# Module 3A specific imports
+from event_detector import SimpleMarketCalendar
 
 # Module imports
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
-from module_3_catalyst import compute_module_3_catalyst, Module3Config
+from module_3_catalyst import Module3Config, compute_module_3_catalyst
 from module_4_clinical_dev import compute_module_4_clinical_dev
 from module_5_composite_with_defensive import compute_module_5_composite_with_defensive
 from module_5_scoring_v3 import summarize_dev_catalyst_guardrail
 
 # Production validation
 from production_validation import validate_screening_output
-from decision_engine import (
-    DecisionRuleset,
-    DEFAULT_RULESET,
-    VERSION as DE_VERSION,
-    compute_decision_fields,
-    compute_actionable_sort_key,
-    compute_sort_contribs,
-    compute_target_weights,
-    resolve_catalyst_priority,
-    ACTIONABLE_COLUMNS,
-    SORT_CONTRIB_KEYS,
-    _safe_float,
-)
-from backtest.cost_model import CostSchedule, estimate_trade_cost
-from archive_snapshot import sha256_file
-
-# Module 3A specific imports
-from event_detector import SimpleMarketCalendar
 
 # Enhancement modules (optional)
 try:
-    from pos_engine import ProbabilityOfSuccessEngine
-    from short_interest_engine import ShortInterestSignalEngine
-    from regime_engine import RegimeDetectionEngine
     from indication_mapper import IndicationMapper
+    from pos_engine import ProbabilityOfSuccessEngine
+    from regime_engine import RegimeDetectionEngine
+    from short_interest_engine import ShortInterestSignalEngine
+
     HAS_ENHANCEMENTS = True
 except ImportError as e:
     HAS_ENHANCEMENTS = False
@@ -153,6 +138,7 @@ except ImportError as e:
 # Macro data collector for enhanced regime detection (optional)
 try:
     from wake_robin_data_pipeline.collectors.macro_data_collector import MacroDataCollector
+
     HAS_MACRO_COLLECTOR = True
 except ImportError as e:
     HAS_MACRO_COLLECTOR = False
@@ -161,6 +147,7 @@ except ImportError as e:
 # Accuracy enhancements adapter (optional)
 try:
     from accuracy_enhancements_adapter import AccuracyEnhancementsAdapter
+
     HAS_ACCURACY_ENHANCEMENTS = True
 except ImportError as e:
     HAS_ACCURACY_ENHANCEMENTS = False
@@ -169,6 +156,7 @@ except ImportError as e:
 # Dilution risk engine (optional)
 try:
     from dilution_risk_engine import DilutionRiskEngine
+
     HAS_DILUTION_RISK = True
 except ImportError as e:
     HAS_DILUTION_RISK = False
@@ -177,6 +165,7 @@ except ImportError as e:
 # Timeline slippage engine (optional)
 try:
     from timeline_slippage_engine import TimelineSlippageEngine
+
     HAS_TIMELINE_SLIPPAGE = True
 except ImportError as e:
     HAS_TIMELINE_SLIPPAGE = False
@@ -185,6 +174,7 @@ except ImportError as e:
 # FDA designation engine (optional)
 try:
     from fda_designation_engine import FDADesignationEngine, generate_sample_designations
+
     HAS_FDA_DESIGNATIONS = True
 except ImportError as e:
     HAS_FDA_DESIGNATIONS = False
@@ -193,6 +183,7 @@ except ImportError as e:
 # Pipeline diversity engine (optional)
 try:
     from pipeline_diversity_engine import PipelineDiversityEngine
+
     HAS_PIPELINE_DIVERSITY = True
 except ImportError as e:
     HAS_PIPELINE_DIVERSITY = False
@@ -201,6 +192,7 @@ except ImportError as e:
 # Competitive intensity engine (optional)
 try:
     from competitive_intensity_engine import CompetitiveIntensityEngine
+
     HAS_COMPETITIVE_INTENSITY = True
 except ImportError as e:
     HAS_COMPETITIVE_INTENSITY = False
@@ -209,6 +201,7 @@ except ImportError as e:
 # Partnership validation engine (optional)
 try:
     from partnership_engine import PartnershipEngine
+
     HAS_PARTNERSHIP_ENGINE = True
 except ImportError as e:
     HAS_PARTNERSHIP_ENGINE = False
@@ -217,6 +210,7 @@ except ImportError as e:
 # Cash burn trajectory engine (optional)
 try:
     from cash_burn_engine import CashBurnEngine
+
     HAS_CASH_BURN_ENGINE = True
 except ImportError as e:
     HAS_CASH_BURN_ENGINE = False
@@ -225,6 +219,7 @@ except ImportError as e:
 # Phase transition momentum engine (optional)
 try:
     from phase_momentum_engine import PhaseTransitionEngine
+
     HAS_PHASE_MOMENTUM_ENGINE = True
 except ImportError as e:
     HAS_PHASE_MOMENTUM_ENGINE = False
@@ -233,6 +228,7 @@ except ImportError as e:
 # Morningstar quantitative signal engine (optional)
 try:
     from morningstar_signal_engine import MorningstarSignalEngine
+
     HAS_MORNINGSTAR = True
 except ImportError as e:
     HAS_MORNINGSTAR = False
@@ -240,14 +236,18 @@ except ImportError as e:
 
 # Optional: Risk gates for audit trail
 try:
-    from risk_gates import get_parameters_snapshot as get_risk_params, compute_parameters_hash as risk_params_hash
+    from risk_gates import compute_parameters_hash as risk_params_hash
+    from risk_gates import get_parameters_snapshot as get_risk_params
+
     HAS_RISK_GATES = True
 except ImportError as e:
     HAS_RISK_GATES = False
     logger.info(f"Risk gates not available: {e}")
 
 try:
-    from liquidity_scoring import get_parameters_snapshot as get_liq_params, compute_parameters_hash as liq_params_hash
+    from liquidity_scoring import compute_parameters_hash as liq_params_hash
+    from liquidity_scoring import get_parameters_snapshot as get_liq_params
+
     HAS_LIQUIDITY_SCORING = True
 except ImportError as e:
     HAS_LIQUIDITY_SCORING = False
@@ -255,7 +255,8 @@ except ImportError as e:
 
 # Ticker validation for fail-loud data quality
 try:
-    from src.validators.ticker_validator import validate_ticker_list, validate_blacklist
+    from src.validators.ticker_validator import validate_blacklist, validate_ticker_list
+
     HAS_TICKER_VALIDATION = True
 except ImportError as e:
     HAS_TICKER_VALIDATION = False
@@ -264,6 +265,7 @@ except ImportError as e:
 # Baker overlay (optional)
 try:
     from baker_overlay import compute_baker_overlay
+
     HAS_BAKER_OVERLAY = True
 except ImportError as e:
     HAS_BAKER_OVERLAY = False
@@ -300,13 +302,15 @@ INDUSTRY_TO_ARCHETYPE = {
 }
 
 # Archetypes exempt from clinical trial gate
-CLINICAL_GATE_EXEMPT_ARCHETYPES = frozenset({
-    "commercial_pharma",
-    "commercial_biotech",
-    "platform_diagnostics",
-    "platform_devices",
-    "platform_services",
-})
+CLINICAL_GATE_EXEMPT_ARCHETYPES = frozenset(
+    {
+        "commercial_pharma",
+        "commercial_biotech",
+        "platform_diagnostics",
+        "platform_devices",
+        "platform_services",
+    }
+)
 
 
 def classify_company_archetype(
@@ -413,22 +417,26 @@ def apply_clinical_activity_filter(
             archetype = archetypes.get(ticker, "drug_developer") if archetypes else "drug_developer"
             if archetype != "drug_developer":
                 # Exempt: non-drug-developer archetype doesn't need clinical trials
-                exemption_details.append({
-                    "ticker": ticker,
-                    "reason": "clinical_gate_exempt",
-                    "archetype": archetype,
-                    "trial_count": trial_count,
-                    "lead_phase": lead_phase,
-                })
+                exemption_details.append(
+                    {
+                        "ticker": ticker,
+                        "reason": "clinical_gate_exempt",
+                        "archetype": archetype,
+                        "trial_count": trial_count,
+                        "lead_phase": lead_phase,
+                    }
+                )
             else:
                 excluded.append(ticker)
-                exclusion_details.append({
-                    "ticker": ticker,
-                    "reason": "clinical_activity_filter",
-                    "details": ", ".join(reasons),
-                    "trial_count": trial_count,
-                    "lead_phase": lead_phase,
-                })
+                exclusion_details.append(
+                    {
+                        "ticker": ticker,
+                        "reason": "clinical_activity_filter",
+                        "details": ", ".join(reasons),
+                        "trial_count": trial_count,
+                        "lead_phase": lead_phase,
+                    }
+                )
 
     return excluded, exclusion_details, exemption_details
 
@@ -446,10 +454,10 @@ def parse_catalyst_window(window_str: str) -> tuple[int, int]:
     Raises:
         ValueError: If format is invalid or values out of range
     """
-    if not window_str or '-' not in window_str:
+    if not window_str or "-" not in window_str:
         raise ValueError(f"Invalid catalyst window format: '{window_str}'. Expected 'START-END' (e.g., '15-45')")
 
-    parts = window_str.split('-')
+    parts = window_str.split("-")
     if len(parts) != 2:
         raise ValueError(f"Invalid catalyst window format: '{window_str}'. Expected 'START-END' (e.g., '15-45')")
 
@@ -574,10 +582,7 @@ def validate_as_of_date_param(as_of_date: str) -> None:
 
 
 def load_json_data(
-    filepath: Path,
-    description: str,
-    max_size_mb: float = MAX_JSON_FILE_SIZE_MB,
-    base_dir: Optional[Path] = None
+    filepath: Path, description: str, max_size_mb: float = MAX_JSON_FILE_SIZE_MB, base_dir: Optional[Path] = None
 ) -> List[Dict[str, Any]]:
     """
     Load JSON data file with validation and security checks.
@@ -618,7 +623,7 @@ def load_json_data(
     # Load with timeout protection for large files
     try:
         with operation_timeout(60, f"Loading {description}"):
-            with open(filepath, 'r', encoding='utf-8') as f:
+            with open(filepath, "r", encoding="utf-8") as f:
                 data = json.load(f)
     except UnicodeDecodeError as e:
         raise ValueError(f"{description} file is not valid UTF-8: {filepath}") from e
@@ -714,18 +719,12 @@ def _load_manager_registry(data_dir: Path = None) -> Dict[str, Dict]:
                 for mgr in registry.get("elite_core", []):
                     cik = mgr.get("cik", "").zfill(10)
                     if cik:
-                        manager_map[cik] = {
-                            "name": mgr.get("name", f"Manager_{cik[-4:]}"),
-                            "tier": 1
-                        }
+                        manager_map[cik] = {"name": mgr.get("name", f"Manager_{cik[-4:]}"), "tier": 1}
                 # Conditional managers are Tier 2
                 for mgr in registry.get("conditional", []):
                     cik = mgr.get("cik", "").zfill(10)
                     if cik:
-                        manager_map[cik] = {
-                            "name": mgr.get("name", f"Manager_{cik[-4:]}"),
-                            "tier": 2
-                        }
+                        manager_map[cik] = {"name": mgr.get("name", f"Manager_{cik[-4:]}"), "tier": 2}
                 return manager_map
             except Exception as e:
                 logger.warning(f"Failed to load manager registry from {registry_path}: {e}")
@@ -985,17 +984,21 @@ def _convert_holdings_to_coinvest(
 
     # Log PIT audit summary
     if skipped_future_filings > 0 or missing_total_value > 0 or filed_at_parse_failures > 0:
-        logger.info(f"  Conviction PIT audit: future_filing_skips={skipped_future_filings}, "
-                    f"missing_total_value={missing_total_value}, filed_at_parse_failures={filed_at_parse_failures}")
+        logger.info(
+            f"  Conviction PIT audit: future_filing_skips={skipped_future_filings}, "
+            f"missing_total_value={missing_total_value}, filed_at_parse_failures={filed_at_parse_failures}"
+        )
 
     # Persist audit counters for run_metadata
     if audit_out is not None:
-        audit_out.update({
-            "as_of_date": as_of_date,
-            "future_filing_skips": int(skipped_future_filings),
-            "missing_total_value": int(missing_total_value),
-            "filed_at_parse_failures": int(filed_at_parse_failures),
-        })
+        audit_out.update(
+            {
+                "as_of_date": as_of_date,
+                "future_filing_skips": int(skipped_future_filings),
+                "missing_total_value": int(missing_total_value),
+                "filed_at_parse_failures": int(filed_at_parse_failures),
+            }
+        )
 
     return coinvest_signals
 
@@ -1095,10 +1098,7 @@ def enrich_volatility_from_morningstar_prices(
 
 
 def compute_momentum_from_price_history(
-    price_history_path: Path,
-    as_of_date: str,
-    market_data_by_ticker: Dict[str, Dict],
-    xbi_ticker: str = "XBI"
+    price_history_path: Path, as_of_date: str, market_data_by_ticker: Dict[str, Dict], xbi_ticker: str = "XBI"
 ) -> int:
     """
     Compute momentum returns from price_history.csv and inject into market_data.
@@ -1132,12 +1132,12 @@ def compute_momentum_from_price_history(
     logger.info(f"Loading price history from {price_history_path}...")
     prices_by_ticker = {}
 
-    with open(price_history_path, 'r', encoding='utf-8') as f:
+    with open(price_history_path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            ticker = row.get('ticker', '').upper()
-            date_str = row.get('date', '')
-            close_str = row.get('close', '')
+            ticker = row.get("ticker", "").upper()
+            date_str = row.get("date", "")
+            close_str = row.get("close", "")
 
             if not ticker or not date_str or not close_str:
                 continue
@@ -1202,7 +1202,9 @@ def compute_momentum_from_price_history(
 
     if xbi_return_60d is not None:
         _fmt = lambda v: f"{v:.2%}" if v is not None else "N/A"
-        logger.info(f"XBI benchmark returns: 20d={_fmt(xbi_return_20d)}, 60d={_fmt(xbi_return_60d)}, 120d={_fmt(xbi_return_120d)}")
+        logger.info(
+            f"XBI benchmark returns: 20d={_fmt(xbi_return_20d)}, 60d={_fmt(xbi_return_60d)}, 120d={_fmt(xbi_return_120d)}"
+        )
     else:
         logger.warning(f"Could not compute XBI benchmark returns - XBI not in price history")
 
@@ -1248,9 +1250,9 @@ def write_json_output(filepath: Path, data: Dict[str, Any], secure: bool = True)
     # Custom encoder for dataclass objects
     class DataclassEncoder(json.JSONEncoder):
         def default(self, obj):
-            if hasattr(obj, 'to_dict'):
+            if hasattr(obj, "to_dict"):
                 return obj.to_dict()
-            if hasattr(obj, '__dataclass_fields__'):
+            if hasattr(obj, "__dataclass_fields__"):
                 return {k: getattr(obj, k) for k in obj.__dataclass_fields__}
             if isinstance(obj, Decimal):
                 return str(obj)
@@ -1263,26 +1265,25 @@ def write_json_output(filepath: Path, data: Dict[str, Any], secure: bool = True)
             return super().default(obj)
 
     # Serialize to string first
-    json_content = json.dumps(
-        data,
-        indent=2,
-        sort_keys=True,  # Deterministic key ordering
-        ensure_ascii=False,
-        cls=DataclassEncoder,
-    ) + '\n'  # Trailing newline for diff-friendliness
+    json_content = (
+        json.dumps(
+            data,
+            indent=2,
+            sort_keys=True,  # Deterministic key ordering
+            ensure_ascii=False,
+            cls=DataclassEncoder,
+        )
+        + "\n"
+    )  # Trailing newline for diff-friendliness
 
     if secure:
         # SECURITY: Write atomically with secure permissions
-        import tempfile
         import os
+        import tempfile
 
-        fd, tmp_path = tempfile.mkstemp(
-            dir=filepath.parent,
-            prefix='.tmp_output_',
-            suffix='.json'
-        )
+        fd, tmp_path = tempfile.mkstemp(dir=filepath.parent, prefix=".tmp_output_", suffix=".json")
         try:
-            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
                 f.write(json_content)
             os.chmod(tmp_path, 0o600)
             Path(tmp_path).replace(filepath)
@@ -1293,7 +1294,7 @@ def write_json_output(filepath: Path, data: Dict[str, Any], secure: bool = True)
                 pass
             raise
     else:
-        with open(filepath, 'w', encoding='utf-8') as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             f.write(json_content)
 
 
@@ -1360,14 +1361,14 @@ SNAPSHOT_COLUMNS = [
     "coinvest_max_position_pct",
     "coinvest_filing_age_days",
     "coinvest_recency_state",
-    "inst_delta_z",       # z of net_elite_holders_delta (cross-sectional, ddof=0)
-    "inst_delta_net",     # raw net_elite_holders_delta
-    "inst_delta_new",     # elite_new_count
-    "inst_delta_exit",    # elite_exit_count
+    "inst_delta_z",  # z of net_elite_holders_delta (cross-sectional, ddof=0)
+    "inst_delta_net",  # raw net_elite_holders_delta
+    "inst_delta_new",  # elite_new_count
+    "inst_delta_exit",  # elite_exit_count
     "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
-    "has_coinvest_signal",   # True when sponsor_tier1_count is real data
-    "has_inst_delta",        # True when institutional delta is available
-    "has_catalyst_signal",   # True when catalyst_mode != "missing"
+    "has_coinvest_signal",  # True when sponsor_tier1_count is real data
+    "has_inst_delta",  # True when institutional delta is available
+    "has_catalyst_signal",  # True when catalyst_mode != "missing"
     "catalyst_strength",
     "catalyst_decay_w",
     "runway_bucket",
@@ -1513,14 +1514,15 @@ PORTFOLIO_POSITIONS_COLUMNS = [
 # Phase-2 operational defaults
 PHASE2_DEFAULT_RULESET_PATH = (
     Path(__file__).resolve().parent
-    / "production_data" / "decision_rulesets" / "v1.9.0_institutional_sort_candidate.json"
+    / "production_data"
+    / "decision_rulesets"
+    / "v1.9.0_institutional_sort_candidate.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
 PHASE2_PINNED_RULESET_ID = "e966af9d"
 PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
-    Path(__file__).resolve().parent
-    / "production_data" / "phase2_health_thresholds" / "v1.json"
+    Path(__file__).resolve().parent / "production_data" / "phase2_health_thresholds" / "v1.json"
 )
 PHASE2_PINNED_THRESHOLDS_ID = "70636854"
 
@@ -1529,12 +1531,15 @@ PHASE2_PINNED_THRESHOLDS_ID = "70636854"
 # INPUT MANIFEST – dependency registry
 # =============================================================================
 
+
 class InputDependency:
     """Describes one input file the pipeline may consume."""
+
     __slots__ = ("key", "path_template", "required", "condition", "resolved_from", "load_site")
 
-    def __init__(self, key: str, path_template: str, required: bool,
-                 condition: str, resolved_from: str, load_site: str):
+    def __init__(
+        self, key: str, path_template: str, required: bool, condition: str, resolved_from: str, load_site: str
+    ):
         self.key = key
         self.path_template = path_template
         self.required = required
@@ -1542,28 +1547,39 @@ class InputDependency:
         self.resolved_from = resolved_from
         self.load_site = load_site
 
+
 DEPENDENCY_REGISTRY: List[InputDependency] = [
     # --- Required core inputs ---
-    InputDependency("universe",           "universe.json",              True,  "",                    "data_dir",  "run_screen.py:4171"),
-    InputDependency("financial_records",  "financial_records.json",     True,  "",                    "data_dir",  "run_screen.py:4185"),
-    InputDependency("trial_records",      "trial_records.json",        True,  "",                    "data_dir",  "run_screen.py:4196"),
-    InputDependency("market_data",        "market_data.json",          True,  "",                    "data_dir",  "run_screen.py:4200"),
+    InputDependency("universe", "universe.json", True, "", "data_dir", "run_screen.py:4171"),
+    InputDependency("financial_records", "financial_records.json", True, "", "data_dir", "run_screen.py:4185"),
+    InputDependency("trial_records", "trial_records.json", True, "", "data_dir", "run_screen.py:4196"),
+    InputDependency("market_data", "market_data.json", True, "", "data_dir", "run_screen.py:4200"),
     # --- Optional data-dir files ---
-    InputDependency("coinvest_signals",   "coinvest_signals.json",     False, "enable_coinvest",     "data_dir",  "run_screen.py:4310"),
-    InputDependency("holdings_detailed",  "holdings_detailed.json",    False, "enable_coinvest",     "data_dir",  "run_screen.py:4320"),
-    InputDependency("price_history",      "price_history.csv",         False, "",                    "data_dir",  "run_screen.py:4250"),
-    InputDependency("morningstar_prices", "morningstar_price_history.json", False, "",               "data_dir",  "run_screen.py:4245"),
-    InputDependency("market_snapshot",    "market_snapshot.json",      False, "enable_enhancements", "data_dir",  "run_screen.py:4350"),
-    InputDependency("short_interest",     "short_interest.json",       False, "enable_enhancements", "data_dir",  "run_screen.py:4360"),
-    InputDependency("fda_designations",   "fda_designations.json",     False, "",                    "data_dir",  "run_screen.py:5110"),
-    InputDependency("partnerships",       "partnerships.json",         False, "",                    "data_dir",  "run_screen.py:5120"),
-    InputDependency("quarterly_burn",     "quarterly_burn_history.json", False, "",                  "data_dir",  "run_screen.py:5143"),
-    InputDependency("pdufa_dates",        "pdufa_dates.json",          False, "",                    "data_dir",  "run_screen.py:5130"),
+    InputDependency(
+        "coinvest_signals", "coinvest_signals.json", False, "enable_coinvest", "data_dir", "run_screen.py:4310"
+    ),
+    InputDependency(
+        "holdings_detailed", "holdings_detailed.json", False, "enable_coinvest", "data_dir", "run_screen.py:4320"
+    ),
+    InputDependency("price_history", "price_history.csv", False, "", "data_dir", "run_screen.py:4250"),
+    InputDependency(
+        "morningstar_prices", "morningstar_price_history.json", False, "", "data_dir", "run_screen.py:4245"
+    ),
+    InputDependency(
+        "market_snapshot", "market_snapshot.json", False, "enable_enhancements", "data_dir", "run_screen.py:4350"
+    ),
+    InputDependency(
+        "short_interest", "short_interest.json", False, "enable_enhancements", "data_dir", "run_screen.py:4360"
+    ),
+    InputDependency("fda_designations", "fda_designations.json", False, "", "data_dir", "run_screen.py:5110"),
+    InputDependency("partnerships", "partnerships.json", False, "", "data_dir", "run_screen.py:5120"),
+    InputDependency("quarterly_burn", "quarterly_burn_history.json", False, "", "data_dir", "run_screen.py:5143"),
+    InputDependency("pdufa_dates", "pdufa_dates.json", False, "", "data_dir", "run_screen.py:5130"),
     # --- Dynamic / cache paths (path_template="" → resolved at runtime) ---
-    InputDependency("ctgov_cache",        "",                          False, "pit_mode",            "cache/ctgov",        "run_screen.py:4209"),
-    InputDependency("sec_8k_cache",       "",                          False, "sec_8k",              "cache/sec",          "run_screen.py:4026"),
-    InputDependency("fda_adcom_cache",    "",                          False, "fda_adcom",           "cache/fda",          "run_screen.py:4030"),
-    InputDependency("decision_ruleset",   "",                          False, "decision_phase2",     "production_data",    "run_screen.py:6544"),
+    InputDependency("ctgov_cache", "", False, "pit_mode", "cache/ctgov", "run_screen.py:4209"),
+    InputDependency("sec_8k_cache", "", False, "sec_8k", "cache/sec", "run_screen.py:4026"),
+    InputDependency("fda_adcom_cache", "", False, "fda_adcom", "cache/fda", "run_screen.py:4030"),
+    InputDependency("decision_ruleset", "", False, "decision_phase2", "production_data", "run_screen.py:6544"),
 ]
 
 MANIFEST_VERSION = "v1"
@@ -1575,7 +1591,7 @@ VALID_DRAWDOWN_MISSING_REASONS = frozenset({"", "no_price_series", "series_too_s
 # ---------------------------------------------------------------------------
 # Price outlier / split-artifact detection
 # ---------------------------------------------------------------------------
-SPLIT_JUMP_THRESHOLD = 3.0    # +300% day-over-day → probable reverse split artifact
+SPLIT_JUMP_THRESHOLD = 3.0  # +300% day-over-day → probable reverse split artifact
 SPLIT_DROP_THRESHOLD = -0.75  # -75% day-over-day → probable forward split artifact
 
 
@@ -1607,14 +1623,16 @@ def _filter_price_outliers(
             continue
         pct = (curr_close / prev_close) - 1.0
         if pct >= jump_threshold or pct <= drop_threshold:
-            warnings.append({
-                "idx": i,
-                "date": series[i][0].isoformat() if hasattr(series[i][0], "isoformat") else str(series[i][0]),
-                "prev_close": prev_close,
-                "curr_close": curr_close,
-                "pct_change": round(pct, 4),
-                "flag": "reverse_split" if pct > 0 else "forward_split",
-            })
+            warnings.append(
+                {
+                    "idx": i,
+                    "date": series[i][0].isoformat() if hasattr(series[i][0], "isoformat") else str(series[i][0]),
+                    "prev_close": prev_close,
+                    "curr_close": curr_close,
+                    "pct_change": round(pct, 4),
+                    "flag": "reverse_split" if pct > 0 else "forward_split",
+                }
+            )
             latest_split_idx = i
     if latest_split_idx < 0:
         return series, []
@@ -1811,7 +1829,8 @@ def _hydrate_drawdown(
             logger.warning(
                 "_hydrate_drawdown: %s has %d price outlier(s) (split artifacts), "
                 "filtered before drawdown computation: %s",
-                ticker, len(split_warns),
+                ticker,
+                len(split_warns),
                 "; ".join(f"{w['date']} {w['pct_change']:+.0%}" for w in split_warns),
             )
         if len(series) < MIN_BARS_FOR_ESTIMATE:
@@ -1871,14 +1890,9 @@ def _hydrate_drawdown(
 
     # --- Defensive check: all reason values must be in the enum ---
     for t, rec in rec_by_ticker.items():
-        reason = (rec.get("defensive_features") or {}).get(
-            "drawdown_missing_reason", ""
-        )
+        reason = (rec.get("defensive_features") or {}).get("drawdown_missing_reason", "")
         if reason not in VALID_DRAWDOWN_MISSING_REASONS:
-            raise ValueError(
-                f"_hydrate_drawdown: ticker {t} has invalid "
-                f"drawdown_missing_reason={reason!r}"
-            )
+            raise ValueError(f"_hydrate_drawdown: ticker {t} has invalid " f"drawdown_missing_reason={reason!r}")
 
     return hydrated
 
@@ -1985,9 +1999,9 @@ def _hydrate_beta_rsi(
     split_warnings = _validate_price_splits(prices_by_ticker)
     for tk, warns in split_warnings.items():
         logger.warning(
-            "_hydrate_beta_rsi: %s has %d price outlier(s) (split artifacts), "
-            "filtering: %s",
-            tk, len(warns),
+            "_hydrate_beta_rsi: %s has %d price outlier(s) (split artifacts), " "filtering: %s",
+            tk,
+            len(warns),
             "; ".join(f"{w['date']} {w['pct_change']:+.0%}" for w in warns),
         )
         prices_by_ticker[tk], _ = _filter_price_outliers(prices_by_ticker[tk])
@@ -2016,7 +2030,10 @@ def _hydrate_beta_rsi(
             logger.warning(
                 "XBI benchmark stale: last_date=%s, as_of=%s, gap=%d trading "
                 "days (threshold=%d). Beta/alpha marked xbi_stale.",
-                xbi_last_date, as_of_date, xbi_gap_days, XBI_STALE_THRESHOLD,
+                xbi_last_date,
+                as_of_date,
+                xbi_gap_days,
+                XBI_STALE_THRESHOLD,
             )
 
     # ------------------------------------------------------------------
@@ -2077,25 +2094,14 @@ def _hydrate_beta_rsi(
 
         # Compute daily returns
         n_rets = len(aligned) - 1
-        t_rets = [
-            (aligned[i][1] / aligned[i - 1][1]) - 1.0
-            for i in range(1, len(aligned))
-        ]
-        x_rets = [
-            (aligned[i][2] / aligned[i - 1][2]) - 1.0
-            for i in range(1, len(aligned))
-        ]
+        t_rets = [(aligned[i][1] / aligned[i - 1][1]) - 1.0 for i in range(1, len(aligned))]
+        x_rets = [(aligned[i][2] / aligned[i - 1][2]) - 1.0 for i in range(1, len(aligned))]
 
         # Beta = cov(t, x) / var(x)
         t_mean = sum(t_rets) / n_rets
         x_mean = sum(x_rets) / n_rets
-        cov_tx = sum(
-            (t_rets[i] - t_mean) * (x_rets[i] - x_mean)
-            for i in range(n_rets)
-        ) / n_rets
-        var_x = sum(
-            (x_rets[i] - x_mean) ** 2 for i in range(n_rets)
-        ) / n_rets
+        cov_tx = sum((t_rets[i] - t_mean) * (x_rets[i] - x_mean) for i in range(n_rets)) / n_rets
+        var_x = sum((x_rets[i] - x_mean) ** 2 for i in range(n_rets)) / n_rets
 
         if var_x == 0:
             dfe["beta_xbi_60d_missing_reason"] = "zero_var_benchmark"
@@ -2111,7 +2117,9 @@ def _hydrate_beta_rsi(
                 if abs(float(old_beta) - new_beta) > 0.5:
                     logger.debug(
                         "Beta overwrite %s: %.4f -> %.4f (delta=%.4f)",
-                        ticker, float(old_beta), new_beta,
+                        ticker,
+                        float(old_beta),
+                        new_beta,
                         abs(float(old_beta) - new_beta),
                     )
             except (ValueError, TypeError):
@@ -2128,22 +2136,18 @@ def _hydrate_beta_rsi(
         new_alpha = round(t_cum - new_beta * x_cum, 6)
 
         # Log large overwrite deltas vs pipeline alpha
-        mom_enh = (
-            (rec_by_ticker[ticker].get("score_breakdown") or {})
-            .get("enhancements", {})
-            .get("momentum") or {}
-        )
+        mom_enh = (rec_by_ticker[ticker].get("score_breakdown") or {}).get("enhancements", {}).get("momentum") or {}
         pipeline_alpha = mom_enh.get("alpha_60d")
         if pipeline_alpha is None:
-            pipeline_alpha = (
-                rec_by_ticker[ticker].get("momentum_signal") or {}
-            ).get("alpha_60d")
+            pipeline_alpha = (rec_by_ticker[ticker].get("momentum_signal") or {}).get("alpha_60d")
         if pipeline_alpha is not None:
             try:
                 if abs(float(pipeline_alpha) - new_alpha) > 0.05:
                     logger.debug(
                         "Alpha overwrite %s: %.6f -> %.6f (delta=%.6f)",
-                        ticker, float(pipeline_alpha), new_alpha,
+                        ticker,
+                        float(pipeline_alpha),
+                        new_alpha,
                         abs(float(pipeline_alpha) - new_alpha),
                     )
             except (ValueError, TypeError):
@@ -2197,7 +2201,10 @@ def _hydrate_beta_rsi(
                 if abs(float(old_rsi) - new_rsi) > 5.0:
                     logger.debug(
                         "RSI overwrite %s: %.2f -> %.2f (delta=%.2f)",
-                        ticker, float(old_rsi), new_rsi, abs(float(old_rsi) - new_rsi),
+                        ticker,
+                        float(old_rsi),
+                        new_rsi,
+                        abs(float(old_rsi) - new_rsi),
                     )
             except (ValueError, TypeError):
                 pass
@@ -2263,17 +2270,29 @@ def _nearest_catalyst_event_type(
 # Clinical alpha z-score helpers
 # ---------------------------------------------------------------------------
 
-_CLINICAL_PHASES = frozenset({
-    "PHASE1", "PHASE2", "PHASE3",
-    "PHASE 1", "PHASE 2", "PHASE 3",
-    "PHASE1/PHASE2", "PHASE 1/PHASE 2",
-    "PHASE2/PHASE3", "PHASE 2/PHASE 3",
-    "EARLY_PHASE1",
-})
+_CLINICAL_PHASES = frozenset(
+    {
+        "PHASE1",
+        "PHASE2",
+        "PHASE3",
+        "PHASE 1",
+        "PHASE 2",
+        "PHASE 3",
+        "PHASE1/PHASE2",
+        "PHASE 1/PHASE 2",
+        "PHASE2/PHASE3",
+        "PHASE 2/PHASE 3",
+        "EARLY_PHASE1",
+    }
+)
 
 _PHASE_NUM = {
-    "approved": 1.0, "phase 3": 0.83, "phase 2/3": 0.67,
-    "phase 2": 0.50, "phase 1/2": 0.33, "phase 1": 0.17,
+    "approved": 1.0,
+    "phase 3": 0.83,
+    "phase 2/3": 0.67,
+    "phase 2": 0.50,
+    "phase 1/2": 0.33,
+    "phase 1": 0.17,
     "preclinical": 0.08,
 }
 
@@ -2392,9 +2411,7 @@ def _compute_clinical_alpha_z(
         clin_score = m4.get("clinical_score")
         quality = float(clin_score) / 100.0 if clin_score is not None else 0.0
 
-        raw = (_CE_WEIGHTS["phase"] * phase_num
-               + _CE_WEIGHTS["proximity"] * proximity
-               + _CE_WEIGHTS["quality"] * quality)
+        raw = _CE_WEIGHTS["phase"] * phase_num + _CE_WEIGHTS["proximity"] * proximity + _CE_WEIGHTS["quality"] * quality
 
         eligible_indices.append(i)
         raw_scores.append(raw)
@@ -2421,7 +2438,7 @@ def _compute_clinical_alpha_z(
     # Z-score
     mean_val = sum(winsorized) / len(winsorized)
     var_val = sum((v - mean_val) ** 2 for v in winsorized) / len(winsorized)
-    std_val = var_val ** 0.5
+    std_val = var_val**0.5
 
     for j, idx in enumerate(eligible_indices):
         if std_val > 0:
@@ -2434,6 +2451,7 @@ def _compute_clinical_alpha_z(
 # ---------------------------------------------------------------------------
 # Far-horizon catalyst hydration
 # ---------------------------------------------------------------------------
+
 
 def _hydrate_far_horizon_catalysts(
     csv_rows: List[dict],
@@ -2523,8 +2541,7 @@ def _find_prior_rankings(snapshot_dir: Path, current_date: str) -> Optional[dict
         return None
 
     all_dates = sorted(
-        [d.name for d in snapshot_dir.iterdir()
-         if d.is_dir() and _DATE_DIR_RE.match(d.name)],
+        [d.name for d in snapshot_dir.iterdir() if d.is_dir() and _DATE_DIR_RE.match(d.name)],
         reverse=True,
     )
     if current_date not in all_dates:
@@ -2532,7 +2549,7 @@ def _find_prior_rankings(snapshot_dir: Path, current_date: str) -> Optional[dict
 
     idx = all_dates.index(current_date)
     # Walk backward (max 10 candidates) looking for a valid prior
-    for candidate in all_dates[idx + 1: idx + 11]:
+    for candidate in all_dates[idx + 1 : idx + 11]:
         rankings_csv = snapshot_dir / candidate / "rankings.csv"
         if not rankings_csv.exists():
             continue
@@ -2579,8 +2596,12 @@ def _classify_coverage_buckets(
     info: Dict[str, dict] = {}
     for tk in all_tickers:
         info[tk] = {
-            "n_trials": 0, "n_interventional": 0, "n_active_interventional": 0,
-            "near_pcds": [], "past_pcds": [], "far_pcds": [],
+            "n_trials": 0,
+            "n_interventional": 0,
+            "n_active_interventional": 0,
+            "near_pcds": [],
+            "past_pcds": [],
+            "far_pcds": [],
         }
 
     for t in trial_records:
@@ -2751,6 +2772,7 @@ def _compute_shadow_metrics(
     top100_overlap: Optional[float] = None
 
     if prior is not None:
+
         def _top_n_tickers(rows, n):
             valid = []
             for r in rows:
@@ -2795,9 +2817,7 @@ def _compute_shadow_metrics(
         sec_8k_events = by_src.get("SEC_8K_FILING", 0)
         ctgov_events = by_src.get("CTGOV_CALENDAR", 0) + by_src.get("CTGOV", 0)
         fda_events = sum(
-            by_src.get(k, 0)
-            for k in ("FDA_CALENDAR", "FDA_ADCOM_CALENDAR",
-                       "FEDERAL_REGISTER", "FDA_PDUFA")
+            by_src.get(k, 0) for k in ("FDA_CALENDAR", "FDA_ADCOM_CALENDAR", "FEDERAL_REGISTER", "FDA_PDUFA")
         )
 
     # ----- SEC 8-K future coverage (from catalyst_source_mix) -----
@@ -2831,10 +2851,7 @@ def _compute_shadow_metrics(
                     pass
 
     # ----- A-tier count (dev-only) -----
-    a_tier_count = sum(
-        1 for r in csv_rows
-        if r.get("archetype") == "drug_developer" and r.get("tier_dev") == "A"
-    )
+    a_tier_count = sum(1 for r in csv_rows if r.get("archetype") == "drug_developer" and r.get("tier_dev") == "A")
 
     metrics = {
         "as_of_date": as_of_date,
@@ -2865,7 +2882,10 @@ def _compute_shadow_metrics(
     # ----- Coverage bucket telemetry (requires trial_records) -----
     if trial_records is not None:
         bucket_metrics = _classify_coverage_buckets(
-            csv_rows, trial_records, as_of_date, max_window,
+            csv_rows,
+            trial_records,
+            as_of_date,
+            max_window,
         )
         metrics.update(bucket_metrics)
 
@@ -2908,10 +2928,8 @@ def _ensure_defaults(csv_rows, defaults=_ALWAYS_NUMERIC_DEFAULTS):
 
 
 # Alpha table resolution — delegated to common.alpha_table
-from common.alpha_table import (
-    check_artifact_marker as _check_artifact_marker,
-    resolve_alpha_table_path as _resolve_alpha_table_path_shared,
-)
+from common.alpha_table import check_artifact_marker as _check_artifact_marker
+from common.alpha_table import resolve_alpha_table_path as _resolve_alpha_table_path_shared
 
 
 def _resolve_alpha_table_path(
@@ -2925,9 +2943,13 @@ def _resolve_alpha_table_path(
     so tests can monkeypatch ``run_screen.__file__``.
     """
     import run_screen as _self_mod
+
     project_root = Path(_self_mod.__file__).resolve().parent
     return _resolve_alpha_table_path_shared(
-        ruleset, as_of_date, project_root, logger,
+        ruleset,
+        as_of_date,
+        project_root,
+        logger,
     )
 
 
@@ -2951,15 +2973,10 @@ def load_cache_refresh_sidecar(path: Path) -> Dict[str, Any]:
         results_list = refresh.get("results", [])
         rejected = [r for r in results_list if not r.get("accepted", True)]
         summary = {
-            r["source"]: {
-                k: r.get(k)
-                for k in ("accepted", "reason", "count", "prior_count", "committed")
-            }
+            r["source"]: {k: r.get(k) for k in ("accepted", "reason", "count", "prior_count", "committed")}
             for r in results_list
         }
-        banner = "; ".join(
-            f"{r['source']}:{r.get('reason', '?')}" for r in rejected
-        )
+        banner = "; ".join(f"{r['source']}:{r.get('reason', '?')}" for r in rejected)
         return {
             "sidecar": path.name,
             "had_rejections": len(rejected) > 0,
@@ -3037,12 +3054,22 @@ def save_validation_snapshot(
     # Some tickers in universe.json have market_data.company_name set to the
     # sector label (e.g. "Healthcare") instead of the real company name.
     # Detect these and substitute from the override table below.
-    _SECTOR_LABELS = frozenset({
-        "Healthcare", "Biotechnology", "Technology", "Financial",
-        "Industrials", "Consumer Defensive", "Consumer Cyclical",
-        "Basic Materials", "Energy", "Communication Services",
-        "Real Estate", "Utilities",
-    })
+    _SECTOR_LABELS = frozenset(
+        {
+            "Healthcare",
+            "Biotechnology",
+            "Technology",
+            "Financial",
+            "Industrials",
+            "Consumer Defensive",
+            "Consumer Cyclical",
+            "Basic Materials",
+            "Energy",
+            "Communication Services",
+            "Real Estate",
+            "Utilities",
+        }
+    )
     _NAME_OVERRIDES: Dict[str, str] = {
         "ABEO": "Abeona Therapeutics Inc.",
         "ABOS": "Acumen Pharmaceuticals, Inc.",
@@ -3138,14 +3165,14 @@ def save_validation_snapshot(
     # Empirical finding: in dev-stage (drug_developer), lower clinical_score →
     # higher forward returns.  clinical_optionality_pct_dev inverts the ranking so
     # higher = more optionality = empirically better forward performance.
-    dev_rows = [(i, r) for i, r in enumerate(csv_rows)
-                if r.get("archetype") == "drug_developer"
-                and r.get("clinical_score") is not None]
+    dev_rows = [
+        (i, r)
+        for i, r in enumerate(csv_rows)
+        if r.get("archetype") == "drug_developer" and r.get("clinical_score") is not None
+    ]
     if dev_rows:
         # Sort dev tickers by clinical_score DESC then ticker ASC (deterministic)
-        dev_sorted = sorted(dev_rows,
-                            key=lambda x: (-float(x[1]["clinical_score"]),
-                                           x[1].get("ticker", "")))
+        dev_sorted = sorted(dev_rows, key=lambda x: (-float(x[1]["clinical_score"]), x[1].get("ticker", "")))
         n_dev = len(dev_sorted)
         for rank_i, (row_idx, _) in enumerate(dev_sorted, start=1):
             # Continuity-corrected percentile: highest clinical_score → highest pct
@@ -3157,8 +3184,7 @@ def save_validation_snapshot(
     # --- Compute clinical_alpha_z (cross-sectional z within dev cohort) ---
     if trial_records:
         _readout_days = _compute_clinical_readout_days(trial_records, as_of_date)
-        _m4_lookup = {s["ticker"]: s for s in
-                      (results.get("module_4_clinical", {}).get("scores") or [])}
+        _m4_lookup = {s["ticker"]: s for s in (results.get("module_4_clinical", {}).get("scores") or [])}
         _compute_clinical_alpha_z(csv_rows, _m4_lookup, _readout_days)
 
     # --- Compute clinical_score_z (PIT-safe, cross-sectional within cohort) ---
@@ -3170,17 +3196,20 @@ def save_validation_snapshot(
     }
     _dev_indices = []  # still needed for tier z-score below
     for _cohort_arch in _CLINICAL_COHORTS:
-        _cohort_idx = [i for i, r in enumerate(csv_rows)
-                       if r.get("archetype") == _cohort_arch
-                       and r.get("clinical_score") is not None
-                       and r.get("clinical_score") != ""]
+        _cohort_idx = [
+            i
+            for i, r in enumerate(csv_rows)
+            if r.get("archetype") == _cohort_arch
+            and r.get("clinical_score") is not None
+            and r.get("clinical_score") != ""
+        ]
         if _cohort_arch == "drug_developer":
             _dev_indices = _cohort_idx
         if _cohort_idx:
             _scores = [float(csv_rows[i]["clinical_score"]) for i in _cohort_idx]
             _mean = sum(_scores) / len(_scores)
             _var = sum((s - _mean) ** 2 for s in _scores) / len(_scores)
-            _std = _var ** 0.5
+            _std = _var**0.5
             for j, idx in enumerate(_cohort_idx):
                 if _std > 0:
                     csv_rows[idx]["clinical_score_z"] = round((_scores[j] - _mean) / _std, 4)
@@ -3193,16 +3222,17 @@ def save_validation_snapshot(
     # --- Clinical Calendar Alpha v2 features ---
     if trial_records:
         from common.clinical_calendar_alpha import (
-            compute_program_features,
-            compute_readout_density,
-            compute_execution_momentum,
+            CalendarAlphaConfig,
+            compose_clinical_score_v2,
+            compute_competitive_intensity,
             compute_design_quality,
             compute_endpoint_strength,
-            compute_competitive_intensity,
-            compose_clinical_score_v2,
-            CalendarAlphaConfig,
+            compute_execution_momentum,
+            compute_program_features,
+            compute_readout_density,
             z_score_dict,
         )
+
         _active_tickers = [r.get("ticker", "") for r in csv_rows if r.get("ticker")]
         _ccav2_program = compute_program_features(trial_records, as_of_date)
         _ccav2_readout = compute_readout_density(trial_records, as_of_date)
@@ -3214,10 +3244,13 @@ def save_validation_snapshot(
         _ctgov_root = Path(__file__).parent / "cache" / "ctgov"
         if _ctgov_root.is_dir():
             import re as _re_mod
+
             _date_files = sorted(
-                [f.stem.replace("trial_records_", "")
-                 for f in _ctgov_root.glob("trial_records_*.json")
-                 if _re_mod.match(r"^trial_records_\d{4}-\d{2}-\d{2}\.json$", f.name)],
+                [
+                    f.stem.replace("trial_records_", "")
+                    for f in _ctgov_root.glob("trial_records_*.json")
+                    if _re_mod.match(r"^trial_records_\d{4}-\d{2}-\d{2}\.json$", f.name)
+                ],
                 reverse=True,
             )
             _prior_date = next((d for d in _date_files if d < as_of_date), None)
@@ -3225,6 +3258,7 @@ def save_validation_snapshot(
                 _prior_path = _ctgov_root / f"trial_records_{_prior_date}.json"
                 try:
                     import json as _json_mod
+
                     with open(_prior_path) as _pf:
                         _prior_trials = _json_mod.load(_pf)
                     logger.info(f"  Calendar Alpha v2: prior trials loaded from {_prior_date}")
@@ -3236,7 +3270,9 @@ def save_validation_snapshot(
         # Competitive intensity (build landscape once, score all tickers)
         try:
             _ccav2_competition = compute_competitive_intensity(
-                trial_records, _active_tickers, as_of_date,
+                trial_records,
+                _active_tickers,
+                as_of_date,
             )
         except Exception as _comp_err:
             logger.warning(f"  Calendar Alpha v2: competitive intensity failed: {_comp_err}")
@@ -3282,7 +3318,9 @@ def save_validation_snapshot(
             cs = float(cs_raw) if cs_raw is not None and cs_raw != "" else None
 
             v2_score, sizing_mult, _tags = compose_clinical_score_v2(
-                cs, merged, _ccav2_config,
+                cs,
+                merged,
+                _ccav2_config,
                 z_readout_curve=_z_rc.get(tk, 0.0),
                 z_readout_density=_z_rd.get(tk, 0.0),
                 z_momentum=_z_mom.get(tk, 0.0),
@@ -3293,7 +3331,9 @@ def save_validation_snapshot(
 
             row["clinical_score_v2"] = v2_score if v2_score is not None else ""
             row["lead_program_phase"] = prog.get("lead_program_phase", "")
-            row["lead_program_readout_days"] = prog.get("lead_program_readout_days") if prog.get("lead_program_readout_days") is not None else ""
+            row["lead_program_readout_days"] = (
+                prog.get("lead_program_readout_days") if prog.get("lead_program_readout_days") is not None else ""
+            )
             row["program_count"] = prog.get("program_count", "")
             row["program_diversification"] = prog.get("program_diversification_score", "")
             row["readout_curve_score"] = rd.get("readout_curve_score", "")
@@ -3316,7 +3356,8 @@ def save_validation_snapshot(
 
     _non_dev_arch = lambda a: a and a != "drug_developer"
     comm_rows = [
-        (i, r) for i, r in enumerate(csv_rows)
+        (i, r)
+        for i, r in enumerate(csv_rows)
         if _non_dev_arch(r.get("archetype", ""))
         and r.get("financial_score") is not None
         and r.get("valuation_score") is not None
@@ -3369,8 +3410,11 @@ def save_validation_snapshot(
     _alpha_schema_mode = alpha_schema_mode
     try:
         from alpha_signal_contract import validate_alpha_inputs
+
         _alpha_input_diag = validate_alpha_inputs(
-            rec_by_ticker, csv_rows, schema_mode=_alpha_schema_mode,
+            rec_by_ticker,
+            csv_rows,
+            schema_mode=_alpha_schema_mode,
         )
     except Exception as _asc_err:
         logger.warning(f"Alpha contract input validation error: {_asc_err}")
@@ -3400,7 +3444,11 @@ def save_validation_snapshot(
         _mkt_cap = _md.get("market_cap")
 
         decision = compute_decision_fields(
-            rec, arch, opt_float, ruleset=ruleset, est_cost_bps=est_cost_bps,
+            rec,
+            arch,
+            opt_float,
+            ruleset=ruleset,
+            est_cost_bps=est_cost_bps,
             commercial_quality_pct=cq_pct_float,
             market_cap=float(_mkt_cap) if _mkt_cap is not None else None,
         )
@@ -3408,21 +3456,22 @@ def save_validation_snapshot(
 
         # Red flag audit trail: persist detection results from rec
         row["fundamental_red_flag"] = "1" if rec.get("fundamental_red_flag") else "0"
-        row["fundamental_red_flag_reasons"] = ",".join(
-            sorted(rec.get("fundamental_red_flag_reasons") or [])
-        )
+        row["fundamental_red_flag_reasons"] = ",".join(sorted(rec.get("fundamental_red_flag_reasons") or []))
         _surv_m = (rec.get("survivability_signal") or {}).get("metrics") or {}
-        row["fundamental_red_flag_inputs"] = json.dumps({
-            "stage_bucket": rec.get("stage_bucket"),
-            "lead_phase": rec.get("lead_phase"),
-            "has_revenue": rec.get("has_revenue"),
-            "tier1_count": (rec.get("coinvest") or {}).get("tier1_count"),
-            "runway_months": _surv_m.get("effective_runway_months"),
-            "burn_ttm": _surv_m.get("burn_ttm"),
-            "cash_total": _surv_m.get("cash_total"),
-            "surv_score": (rec.get("survivability_signal") or {}).get("score"),
-            "dilution_risk": (rec.get("dilution_risk_signal") or {}).get("risk_level"),
-        }, sort_keys=True)
+        row["fundamental_red_flag_inputs"] = json.dumps(
+            {
+                "stage_bucket": rec.get("stage_bucket"),
+                "lead_phase": rec.get("lead_phase"),
+                "has_revenue": rec.get("has_revenue"),
+                "tier1_count": (rec.get("coinvest") or {}).get("tier1_count"),
+                "runway_months": _surv_m.get("effective_runway_months"),
+                "burn_ttm": _surv_m.get("burn_ttm"),
+                "cash_total": _surv_m.get("cash_total"),
+                "surv_score": (rec.get("survivability_signal") or {}).get("score"),
+                "dilution_risk": (rec.get("dilution_risk_signal") or {}).get("risk_level"),
+            },
+            sort_keys=True,
+        )
 
         row["est_cost_bps"] = est_cost_bps if est_cost_bps is not None else ""
         # Signal presence flag for catalyst
@@ -3469,13 +3518,18 @@ def save_validation_snapshot(
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET
         row["cat_priority"] = resolve_catalyst_priority(
-            row["catalyst_event_type"], row["catalyst_source"], rs,
+            row["catalyst_event_type"],
+            row["catalyst_source"],
+            rs,
         )
 
         # --- Explainability: top_3_drivers ---
         _score_cols = [
-            "clinical_score", "catalyst_score", "momentum_score",
-            "financial_score", "smart_money_score",
+            "clinical_score",
+            "catalyst_score",
+            "momentum_score",
+            "financial_score",
+            "smart_money_score",
         ]
         _vals = {}
         for sc in _score_cols:
@@ -3489,9 +3543,7 @@ def save_validation_snapshot(
             _mean = sum(_vals.values()) / len(_vals)
             _devs = [(k, v - _mean) for k, v in _vals.items()]
             _devs.sort(key=lambda x: (-abs(x[1]), x[0]))
-            row["top_3_drivers"] = ";".join(
-                f"{k}:{d:+.1f}" for k, d in _devs[:3]
-            )
+            row["top_3_drivers"] = ";".join(f"{k}:{d:+.1f}" for k, d in _devs[:3])
         else:
             row["top_3_drivers"] = ""
 
@@ -3523,7 +3575,7 @@ def save_validation_snapshot(
         _t_scores = [s for _, s in _pairs]
         _t_mean = sum(_t_scores) / len(_t_scores)
         _t_var = sum((s - _t_mean) ** 2 for s in _t_scores) / len(_t_scores)
-        _t_std = _t_var ** 0.5
+        _t_std = _t_var**0.5
         for idx, s in _pairs:
             if _t_std > 0:
                 csv_rows[idx]["clinical_score_z_tier"] = round((s - _t_mean) / _t_std, 4)
@@ -3553,7 +3605,7 @@ def save_validation_snapshot(
         _t_scores = [s for _, s in _pairs]
         _t_mean = sum(_t_scores) / len(_t_scores)
         _t_var = sum((s - _t_mean) ** 2 for s in _t_scores) / len(_t_scores)
-        _t_std = _t_var ** 0.5
+        _t_std = _t_var**0.5
         for idx, s in _pairs:
             if _t_std > 0:
                 csv_rows[idx]["clinical_score_z_tier"] = round((s - _t_mean) / _t_std, 4)
@@ -3574,7 +3626,7 @@ def save_validation_snapshot(
         _cv2_vals = [v for _, v in _cv2_pairs]
         _cv2_mean = sum(_cv2_vals) / len(_cv2_vals)
         _cv2_var = sum((v - _cv2_mean) ** 2 for v in _cv2_vals) / len(_cv2_vals)
-        _cv2_std = _cv2_var ** 0.5
+        _cv2_std = _cv2_var**0.5
         for _ci, _cv2_v in _cv2_pairs:
             if _cv2_std > 0:
                 csv_rows[_ci]["clinical_score_v2_z"] = round((_cv2_v - _cv2_mean) / _cv2_std, 4)
@@ -3609,7 +3661,7 @@ def save_validation_snapshot(
             if _cz_real:
                 _cz_mean = sum(_cz_real) / len(_cz_real)
                 _cz_var = sum((v - _cz_mean) ** 2 for v in _cz_real) / len(_cz_real)
-                _cz_std = _cz_var ** 0.5
+                _cz_std = _cz_var**0.5
             else:
                 _cz_mean, _cz_std = 0.0, 0.0
             for _ci, _cv, _has in _cz_pairs:
@@ -3629,10 +3681,11 @@ def save_validation_snapshot(
     if decision_mode == "phase2":
         try:
             from institutional_summary import (
+                _find_prior_institutional_summary,
                 build_institutional_summary,
                 compute_institutional_delta,
-                _find_prior_institutional_summary,
             )
+
             _uni_tickers = {r.get("ticker", "") for r in csv_rows if r.get("ticker")}
             inst_summary = build_institutional_summary(as_of_date, _uni_tickers)
             if inst_summary:
@@ -3664,7 +3717,7 @@ def save_validation_snapshot(
         if _id_real:
             _id_mean = sum(_id_real) / len(_id_real)
             _id_var = sum((v - _id_mean) ** 2 for v in _id_real) / len(_id_real)
-            _id_std = _id_var ** 0.5
+            _id_std = _id_var**0.5
         else:
             _id_mean, _id_std = 0.0, 0.0
         for _di, _dv, _has_i in _id_pairs:
@@ -3684,24 +3737,20 @@ def save_validation_snapshot(
     # --- Institutional delta coverage guard ---
     # When too few tickers have nonzero net delta, the z-scores are driven by
     # a handful of names — fragile signal.  Zero out z if coverage < threshold.
-    _inst_nonzero_count = sum(
-        1 for r in csv_rows if r.get("inst_delta_net", 0) != 0
-    )
-    _inst_nonzero_pct = round(
-        100.0 * _inst_nonzero_count / len(csv_rows), 2
-    ) if csv_rows else 0.0
+    _inst_nonzero_count = sum(1 for r in csv_rows if r.get("inst_delta_net", 0) != 0)
+    _inst_nonzero_pct = round(100.0 * _inst_nonzero_count / len(csv_rows), 2) if csv_rows else 0.0
     for _dr in csv_rows:
         _dr["inst_delta_nonzero_pct"] = _inst_nonzero_pct
-    _inst_min_pct = (
-        ruleset.institutional_sort_min_nonzero_pct if ruleset else 10.0
-    )
+    _inst_min_pct = ruleset.institutional_sort_min_nonzero_pct if ruleset else 10.0
     if _inst_nonzero_pct < _inst_min_pct:
         if _inst_nonzero_count > 0:
             logger.warning(
                 "inst_delta_z coverage guard: only %.1f%% of tickers have "
                 "nonzero net delta (%d/%d) — below %.1f%% threshold; "
                 "zeroing all inst_delta_z values",
-                _inst_nonzero_pct, _inst_nonzero_count, len(csv_rows),
+                _inst_nonzero_pct,
+                _inst_nonzero_count,
+                len(csv_rows),
                 _inst_min_pct,
             )
         for _dr in csv_rows:
@@ -3730,15 +3779,16 @@ def save_validation_snapshot(
                     _clin_adj_dev += 1
                 elif _arch in ("commercial_biotech", "commercial_pharma"):
                     _clin_adj_comm += 1
-    logger.info(
-        f"  Clinical sort adjustment: dev={_clin_adj_dev}, comm={_clin_adj_comm}"
-    )
+    logger.info(f"  Clinical sort adjustment: dev={_clin_adj_dev}, comm={_clin_adj_comm}")
 
     # --- Far-horizon catalyst hydration (opt-in, after DE sets catalyst_mode) ---
     _n_far_window = 0
     if trial_records and ruleset and ruleset.far_window_days > 0:
         _n_far_window = _hydrate_far_horizon_catalysts(
-            csv_rows, trial_records, as_of_date, ruleset,
+            csv_rows,
+            trial_records,
+            as_of_date,
+            ruleset,
         )
         if _n_far_window:
             logger.info(f"  Far-horizon catalyst: {_n_far_window} tickers overridden to far_window")
@@ -3750,22 +3800,22 @@ def save_validation_snapshot(
     _alpha_cells_populated = 0
 
     _run_alpha_cohort = ruleset and (
-        ruleset.sort_anchor == "alpha_cohort"
-        or ruleset.composite_engine == "alpha_cohort"
+        ruleset.sort_anchor == "alpha_cohort" or ruleset.composite_engine == "alpha_cohort"
     )
     if _run_alpha_cohort:
-        from module_5_alpha_cohort import load_alpha_cohort_table, attach_alpha_scores
+        from module_5_alpha_cohort import attach_alpha_scores, load_alpha_cohort_table
 
         # Policy-based table resolution (adaptive alpha)
         _alpha_table_path_resolved, _alpha_table_source = _resolve_alpha_table_path(
-            ruleset, as_of_date, logger,
+            ruleset,
+            as_of_date,
+            logger,
         )
         _alpha_table = load_alpha_cohort_table(_alpha_table_path_resolved)
-        _alpha_cells_populated = sum(
-            1 for c in _alpha_table.get("cells", {}).values() if c.get("n", 0) > 0
-        )
+        _alpha_cells_populated = sum(1 for c in _alpha_table.get("cells", {}).values() if c.get("n", 0) > 0)
         attach_alpha_scores(
-            csv_rows, _alpha_table,
+            csv_rows,
+            _alpha_table,
             shrink_k=ruleset.alpha_cohort_shrink_k,
             clip_min=ruleset.alpha_cohort_clip_min,
             clip_max=ruleset.alpha_cohort_clip_max,
@@ -3775,6 +3825,7 @@ def save_validation_snapshot(
     # --- Alpha cohort composite override (opt-in via composite_engine) ---
     if ruleset and ruleset.composite_engine == "alpha_cohort":
         from common.score_to_er import attach_rank_and_z as _rerank
+
         # Overwrite composite_score with alpha_cohort_raw
         for row in csv_rows:
             row["composite_score"] = row.get("alpha_cohort_raw", 0.0)
@@ -3783,8 +3834,7 @@ def save_validation_snapshot(
         # Recompute composite_rank (1 = highest composite_score)
         _idx_sorted = sorted(
             range(len(csv_rows)),
-            key=lambda i: (-float(csv_rows[i].get("composite_score", 0)),
-                           csv_rows[i].get("ticker", "")),
+            key=lambda i: (-float(csv_rows[i].get("composite_score", 0)), csv_rows[i].get("ticker", "")),
         )
         for rank, idx in enumerate(_idx_sorted, start=1):
             csv_rows[idx]["composite_rank"] = rank
@@ -3793,6 +3843,7 @@ def save_validation_snapshot(
     # --- Alpha signal contract: validate DE outputs ---
     try:
         from alpha_signal_contract import validate_alpha_outputs
+
         _alpha_output_diag = validate_alpha_outputs(
             csv_rows,
             schema_mode=_alpha_schema_mode,
@@ -3812,24 +3863,28 @@ def save_validation_snapshot(
         _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
-    csv_rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            _safe_float(r.get("alpha_cohort_pct"))
-            if ruleset and ruleset.sort_anchor == "alpha_cohort"
-            else (_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-        alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
-    ))
+    csv_rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                _safe_float(r.get("alpha_cohort_pct"))
+                if ruleset and ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+            alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
+        )
+    )
 
     # Populate sort contribution diagnostics (same inputs as sort key above)
     for r in csv_rows:
@@ -3840,9 +3895,11 @@ def save_validation_snapshot(
             tiebreaker_pct=(
                 _safe_float(r.get("alpha_cohort_pct"))
                 if ruleset and ruleset.sort_anchor == "alpha_cohort"
-                else (_safe_float(r.get("commercial_quality_pct"))
-                      if r.get("archetype", "").startswith("commercial_")
-                      else _safe_float(r.get("clinical_optionality_pct_dev")))
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
             ),
             alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
             catalyst_event_type=r.get("catalyst_event_type", ""),
@@ -3856,10 +3913,7 @@ def save_validation_snapshot(
     eligible_rows = [r for r in csv_rows if r.get("eligible") == "1"]
     ineligible_rows = [r for r in csv_rows if r.get("eligible") != "1"]
     _n_eligible = len(eligible_rows)
-    _alpha_present = sum(
-        1 for r in eligible_rows
-        if (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0
-    )
+    _alpha_present = sum(1 for r in eligible_rows if (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0)
     for i, row in enumerate(eligible_rows, start=1):
         row["actionable_rank"] = i
     for row in ineligible_rows:
@@ -3885,23 +3939,26 @@ def save_validation_snapshot(
             except (ValueError, TypeError):
                 cr_val = 1e18
             return (cr_val, r.get("ticker", ""))
+
         ineligible_rows.sort(key=_inelig_sort_key)
         csv_rows = eligible_rows + ineligible_rows
     elif decision_mode in ("observe", "phase2"):
         # Legacy composite ordering
-        has_composite = any(
-            r.get("composite_rank") not in (None, "") for r in csv_rows
-        )
+        has_composite = any(r.get("composite_rank") not in (None, "") for r in csv_rows)
         if has_composite:
-            csv_rows.sort(key=lambda r: (
-                int(r["composite_rank"]) if r.get("composite_rank") not in (None, "") else 9999,
-                r.get("ticker", ""),
-            ))
+            csv_rows.sort(
+                key=lambda r: (
+                    int(r["composite_rank"]) if r.get("composite_rank") not in (None, "") else 9999,
+                    r.get("ticker", ""),
+                )
+            )
         else:
-            csv_rows.sort(key=lambda r: (
-                int(r["actionable_rank"]) if r.get("actionable_rank") not in (None, "") else 9999,
-                r.get("ticker", ""),
-            ))
+            csv_rows.sort(
+                key=lambda r: (
+                    int(r["actionable_rank"]) if r.get("actionable_rank") not in (None, "") else 9999,
+                    r.get("ticker", ""),
+                )
+            )
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
@@ -3918,6 +3975,7 @@ def save_validation_snapshot(
     # --- Write eligibility summary sidecar ---
     try:
         from decision_engine_codes import canonicalize_reasons
+
         _elig_counts: Dict[str, int] = {}
         _elig_examples: Dict[str, List[str]] = {}
         _n_eligible = 0
@@ -3942,10 +4000,10 @@ def save_validation_snapshot(
             "n_total": len(csv_rows),
             "n_eligible": _n_eligible,
             "n_ineligible": _n_ineligible,
-            "counts_by_reason": dict(sorted(_elig_counts.items(),
-                                            key=lambda x: (-x[1], x[0]))),
-            "examples_by_reason": dict(sorted(_elig_examples.items(),
-                                              key=lambda x: (-_elig_counts.get(x[0], 0), x[0]))),
+            "counts_by_reason": dict(sorted(_elig_counts.items(), key=lambda x: (-x[1], x[0]))),
+            "examples_by_reason": dict(
+                sorted(_elig_examples.items(), key=lambda x: (-_elig_counts.get(x[0], 0), x[0]))
+            ),
         }
         with open(snap_path / "eligibility_summary.json", "w", encoding="utf-8") as f:
             json.dump(_elig_summary, f, indent=2, sort_keys=False)
@@ -4008,16 +4066,20 @@ def save_validation_snapshot(
         if shadow.get("sec8k_future_alert"):
             try:
                 from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import get_extraction_diagnostics
+
                 diag = get_extraction_diagnostics()
                 logger.warning(
                     "8-K future coverage alert: %s | Stages: %s",
-                    shadow["sec8k_future_alert"], diag["counters"],
+                    shadow["sec8k_future_alert"],
+                    diag["counters"],
                 )
                 for ex in diag["dropped_examples"][:5]:
                     logger.warning(
                         "  Dropped: %s %s → %s | '%s'",
-                        ex["ticker"], ex["event_type"],
-                        ex["drop_reason"], ex["snippet"][:80],
+                        ex["ticker"],
+                        ex["event_type"],
+                        ex["drop_reason"],
+                        ex["snippet"][:80],
                     )
             except ImportError:
                 pass
@@ -4026,20 +4088,15 @@ def save_validation_snapshot(
 
     # --- Write cache health sentinel sidecar ---
     try:
-        from cache_health import compute_cache_health, load_prior_cache_health, _worst
+        from cache_health import _worst, compute_cache_health, load_prior_cache_health
+
         _by_src = (source_mix or {}).get("by_source", {})
         # Use pre-dedup counts for cache health: fuzzy dedup absorbs 8-K events
         # into calendar events, zeroing out their source tag in post-dedup counts.
         _pre_dedup_src = (source_mix or {}).get("pre_dedup_by_source", _by_src)
         _sec8k_count = _pre_dedup_src.get("SEC_8K_FILING", 0)
-        _ctgov_count = (
-            _by_src.get("CTGOV_CALENDAR", 0)
-            + _by_src.get("CTGOV", 0)
-        )
-        _ema_agenda_count = sum(
-            v for k, v in _by_src.items()
-            if k.startswith("EMA_") and k.endswith("_AGENDA")
-        )
+        _ctgov_count = _by_src.get("CTGOV_CALENDAR", 0) + _by_src.get("CTGOV", 0)
+        _ema_agenda_count = sum(v for k, v in _by_src.items() if k.startswith("EMA_") and k.endswith("_AGENDA"))
         _ema_outcomes_count = _by_src.get("EMA_MEETING_HIGHLIGHTS", 0)
         _prior_health = load_prior_cache_health(_prior_dir, as_of_date)
         _prior_sec8k = (_prior_health or {}).get("sec8k", {}).get("count")
@@ -4066,9 +4123,7 @@ def save_validation_snapshot(
         _cache_health["cache_refresh_rejected_sources"] = _cr["rejected_sources"]
         _cache_health["cache_refresh_summary"] = _cr["summary"] or None
         if _cr["had_rejections"]:
-            _cache_health["overall_status"] = _worst(
-                _cache_health["overall_status"], "bad"
-            )
+            _cache_health["overall_status"] = _worst(_cache_health["overall_status"], "bad")
             _cache_health["degraded_run"] = True
 
         with open(snap_path / "cache_health.json", "w", encoding="utf-8") as f:
@@ -4141,6 +4196,7 @@ def save_validation_snapshot(
     if decision_mode == "phase2":
         try:
             from decision_engine import compute_gate_margins
+
             _elig_rs = ruleset or DEFAULT_RULESET
             elig_debug = []
             for row in csv_rows:
@@ -4150,33 +4206,34 @@ def save_validation_snapshot(
                     continue
                 _df = _rec.get("defensive_features") or {}
                 _gm = compute_gate_margins(_rec, ruleset=_elig_rs)
-                elig_debug.append({
-                    "ticker": _t,
-                    "dd_abs": _df.get("drawdown"),
-                    "dd_rel": _df.get("drawdown_rel_xbi"),
-                    "dd_xbi": _df.get("drawdown_xbi"),
-                    "abs_breach": (
-                        _df.get("drawdown") is not None
-                        and _df.get("drawdown") < _elig_rs.drawdown_gate
-                    ),
-                    "rel_breach": (
-                        _df.get("drawdown_rel_xbi") is not None
-                        and _df.get("drawdown_rel_xbi") < _elig_rs.drawdown_rel_xbi_gate
-                    ),
-                    "gate_mode": _elig_rs.drawdown_gate_mode,
-                    "require_both": _elig_rs.drawdown_gate_require_both,
-                    "rescue_enabled": _elig_rs.enable_dd_rel_margin_rescue,
-                    "rescue_threshold": _elig_rs.dd_rel_margin_rescue_threshold,
-                    "dd_combined_passed": next(
-                        (g["passed"] for g in _gm["gates"] if g["gate"] == "deep_drawdown"),
-                        None,
-                    ),
-                    "dd_abs_margin": _gm.get("dd_abs_margin"),
-                    "dd_rel_margin": _gm.get("dd_rel_margin"),
-                    "rescued_by_rel": _gm.get("rescued_by_rel"),
-                    "final_eligible": row.get("eligible"),
-                    "ineligible_reasons": row.get("ineligible_reasons", ""),
-                })
+                elig_debug.append(
+                    {
+                        "ticker": _t,
+                        "dd_abs": _df.get("drawdown"),
+                        "dd_rel": _df.get("drawdown_rel_xbi"),
+                        "dd_xbi": _df.get("drawdown_xbi"),
+                        "abs_breach": (
+                            _df.get("drawdown") is not None and _df.get("drawdown") < _elig_rs.drawdown_gate
+                        ),
+                        "rel_breach": (
+                            _df.get("drawdown_rel_xbi") is not None
+                            and _df.get("drawdown_rel_xbi") < _elig_rs.drawdown_rel_xbi_gate
+                        ),
+                        "gate_mode": _elig_rs.drawdown_gate_mode,
+                        "require_both": _elig_rs.drawdown_gate_require_both,
+                        "rescue_enabled": _elig_rs.enable_dd_rel_margin_rescue,
+                        "rescue_threshold": _elig_rs.dd_rel_margin_rescue_threshold,
+                        "dd_combined_passed": next(
+                            (g["passed"] for g in _gm["gates"] if g["gate"] == "deep_drawdown"),
+                            None,
+                        ),
+                        "dd_abs_margin": _gm.get("dd_abs_margin"),
+                        "dd_rel_margin": _gm.get("dd_rel_margin"),
+                        "rescued_by_rel": _gm.get("rescued_by_rel"),
+                        "final_eligible": row.get("eligible"),
+                        "ineligible_reasons": row.get("ineligible_reasons", ""),
+                    }
+                )
             with open(snap_path / "eligibility_debug.json", "w", encoding="utf-8") as f:
                 json.dump(elig_debug, f, indent=2, default=str)
                 f.write("\n")
@@ -4197,15 +4254,14 @@ def save_validation_snapshot(
         try:
             with open(portfolio_csv_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(
-                    f, fieldnames=PHASE2_PORTFOLIO_COLUMNS, extrasaction="ignore",
+                    f,
+                    fieldnames=PHASE2_PORTFOLIO_COLUMNS,
+                    extrasaction="ignore",
                 )
                 writer.writeheader()
                 for row in portfolio_rows:
                     writer.writerow(row)
-            logger.info(
-                f"Phase-2 research list: {len(portfolio_rows)} securities -> "
-                f"{portfolio_csv_path.name}"
-            )
+            logger.info(f"Phase-2 research list: {len(portfolio_rows)} securities -> " f"{portfolio_csv_path.name}")
         except OSError as e:
             logger.warning(f"Could not write decision_portfolio.csv: {e}")
 
@@ -4218,9 +4274,7 @@ def save_validation_snapshot(
                 "decision_engine_version": DE_VERSION,
                 "ruleset_id": rs.ruleset_id,
                 "ruleset_path": str(
-                    PHASE2_DEFAULT_RULESET_PATH
-                    if PHASE2_DEFAULT_RULESET_PATH.exists()
-                    else "built-in"
+                    PHASE2_DEFAULT_RULESET_PATH if PHASE2_DEFAULT_RULESET_PATH.exists() else "built-in"
                 ),
                 "n_securities": len(portfolio_rows),
                 "n_eligible": n_eligible,
@@ -4257,10 +4311,7 @@ def save_validation_snapshot(
         tier_filter = PHASE2_DEFAULT_TIER_FILTER
         top_k = PHASE2_DEFAULT_TOP_K
 
-        position_rows = [
-            dict(r) for r in eligible_rows
-            if r.get("tier_any") in tier_filter
-        ][:top_k]
+        position_rows = [dict(r) for r in eligible_rows if r.get("tier_any") in tier_filter][:top_k]
 
         # Recompute weights for this subset (normalizes to 100%)
         compute_target_weights(position_rows, ruleset=ruleset)
@@ -4270,26 +4321,28 @@ def save_validation_snapshot(
         try:
             with open(positions_csv_path, "w", newline="", encoding="utf-8") as f:
                 writer = csv.DictWriter(
-                    f, fieldnames=PORTFOLIO_POSITIONS_COLUMNS, extrasaction="ignore",
+                    f,
+                    fieldnames=PORTFOLIO_POSITIONS_COLUMNS,
+                    extrasaction="ignore",
                 )
                 writer.writeheader()
                 for row in position_rows:
                     writer.writerow(row)
-            logger.info(
-                f"Phase-2 positions: {len(position_rows)} securities -> "
-                f"{positions_csv_path.name}"
-            )
+            logger.info(f"Phase-2 positions: {len(position_rows)} securities -> " f"{positions_csv_path.name}")
         except OSError as e:
             logger.warning(f"Could not write portfolio_positions.csv: {e}")
 
         # Write portfolio_positions.json
         positions_json_path = snap_path / "portfolio_positions.json"
         try:
-            total_wt = round(sum(
-                float(r.get("target_weight_pct", 0))
-                for r in position_rows
-                if r.get("target_weight_pct") not in (None, "")
-            ), 2)
+            total_wt = round(
+                sum(
+                    float(r.get("target_weight_pct", 0))
+                    for r in position_rows
+                    if r.get("target_weight_pct") not in (None, "")
+                ),
+                2,
+            )
             positions_payload = {
                 "snapshot_date": as_of_date,
                 "decision_engine_version": DE_VERSION,
@@ -4332,8 +4385,7 @@ def save_validation_snapshot(
     n_dev = len(dev_csv_rows)
     n_specific = cat_modes.get("specific_days", 0)
     if n_dev:
-        logger.info(f"[CATALYST] Dev coverage: {n_specific}/{n_dev} specific_days "
-                    f"({100*n_specific/n_dev:.1f}%)")
+        logger.info(f"[CATALYST] Dev coverage: {n_specific}/{n_dev} specific_days " f"({100*n_specific/n_dev:.1f}%)")
     else:
         logger.info("[CATALYST] No dev rows")
     for mode, cnt in sorted(cat_modes.items(), key=lambda x: -x[1]):
@@ -4344,14 +4396,21 @@ def save_validation_snapshot(
             key=lambda r: float(r.get("catalyst_days") or 9999),
         )
         for r in specific_rows[:10]:
-            logger.info(f"[CATALYST]   {r['ticker']:6s} days={str(r.get('catalyst_days','?')):>4s} "
-                        f"tier={r.get('tier_dev','?')}")
+            logger.info(
+                f"[CATALYST]   {r['ticker']:6s} days={str(r.get('catalyst_days','?')):>4s} "
+                f"tier={r.get('tier_dev','?')}"
+            )
 
     # --- Compute per-component score diagnostics ---
     score_columns = [
-        "composite_score", "momentum_score", "catalyst_score",
-        "smart_money_score", "valuation_score", "clinical_score",
-        "financial_score", "confidence_overall",
+        "composite_score",
+        "momentum_score",
+        "catalyst_score",
+        "smart_money_score",
+        "valuation_score",
+        "clinical_score",
+        "financial_score",
+        "confidence_overall",
     ]
     score_diagnostics = {}
     for col in score_columns:
@@ -4395,9 +4454,7 @@ def save_validation_snapshot(
         nn_unique = len(set(str(round(v, 6)) for v in non_neutral))
         cat_diag["signal_n"] = len(non_neutral)
         cat_diag["signal_unique"] = nn_unique
-        cat_diag["signal_tie_pct"] = (
-            round(1.0 - nn_unique / len(non_neutral), 4) if non_neutral else None
-        )
+        cat_diag["signal_tie_pct"] = round(1.0 - nn_unique / len(non_neutral), 4) if non_neutral else None
 
     # Clinical zero-signal breakdown: tickers with no trials
     clin_diag = score_diagnostics.get("clinical_score", {})
@@ -4408,6 +4465,7 @@ def save_validation_snapshot(
                 clin_raw_vals.append(float(str(cs["raw"])))
     if clin_raw_vals:
         from collections import Counter
+
         raw_counter = Counter(clin_raw_vals)
         floor_val, floor_count = raw_counter.most_common(1)[0]
         if floor_count >= 5:
@@ -4417,9 +4475,7 @@ def save_validation_snapshot(
             nf_unique = len(set(str(round(v, 6)) for v in non_floor))
             clin_diag["signal_n"] = len(non_floor)
             clin_diag["signal_unique"] = nf_unique
-            clin_diag["signal_tie_pct"] = (
-                round(1.0 - nf_unique / len(non_floor), 4) if non_floor else None
-            )
+            clin_diag["signal_tie_pct"] = round(1.0 - nf_unique / len(non_floor), 4) if non_floor else None
 
     # Top offenders: components sorted by tie_pct descending (for quick triage)
     score_diagnostics["_top_tied"] = sorted(
@@ -4449,7 +4505,7 @@ def save_validation_snapshot(
 
     metadata = {
         "as_of_date": as_of_date,
-        "saved_at": datetime.utcnow().isoformat() + "Z",
+        "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
         "version": version,
@@ -4463,12 +4519,16 @@ def save_validation_snapshot(
         "archetype_distribution": dict(sorted(archetype_counts.items())),
         "ranking_diagnostics": ranking_diagnostics,
         "score_diagnostics": score_diagnostics,
-        "dev_optionality_stats": {
-            "n_dev": len(dev_rows),
-            "n_dev_with_clinical": len(dev_rows),
-            "min_clinical": round(min(float(r["clinical_score"]) for _, r in dev_rows), 4) if dev_rows else None,
-            "max_clinical": round(max(float(r["clinical_score"]) for _, r in dev_rows), 4) if dev_rows else None,
-        } if dev_rows else {"n_dev": 0},
+        "dev_optionality_stats": (
+            {
+                "n_dev": len(dev_rows),
+                "n_dev_with_clinical": len(dev_rows),
+                "min_clinical": round(min(float(r["clinical_score"]) for _, r in dev_rows), 4) if dev_rows else None,
+                "max_clinical": round(max(float(r["clinical_score"]) for _, r in dev_rows), 4) if dev_rows else None,
+            }
+            if dev_rows
+            else {"n_dev": 0}
+        ),
         "input_hashes": results.get("run_metadata", {}).get("input_hashes", {}),
         "clinical_sort_telemetry": {
             "n_nonzero_clin_adj_dev": _clin_adj_dev,
@@ -4481,19 +4541,22 @@ def save_validation_snapshot(
             "far_window_days": ruleset.far_window_days if ruleset else None,
             "far_window_decay_mult": ruleset.far_window_decay_mult if ruleset else None,
         },
-        "alpha_cohort_telemetry": {
-            "enabled": _run_alpha_cohort if _run_alpha_cohort else False,
-            "composite_engine": ruleset.composite_engine if ruleset else "legacy",
-            "table_path": ruleset.alpha_cohort_table_path if ruleset else None,
-            "shrink_k": ruleset.alpha_cohort_shrink_k if ruleset else None,
-        } if _run_alpha_cohort else {},
+        "alpha_cohort_telemetry": (
+            {
+                "enabled": _run_alpha_cohort if _run_alpha_cohort else False,
+                "composite_engine": ruleset.composite_engine if ruleset else "legacy",
+                "table_path": ruleset.alpha_cohort_table_path if ruleset else None,
+                "shrink_k": ruleset.alpha_cohort_shrink_k if ruleset else None,
+            }
+            if _run_alpha_cohort
+            else {}
+        ),
         "alpha_table_telemetry": {
             "table_policy": ruleset.alpha_table_rebuild_policy if ruleset else "never",
             "table_path": str(_alpha_table_path_resolved) if _alpha_table_path_resolved else None,
             "alpha_table_source": _alpha_table_source,
             "alpha_table_marker_present": (
-                _check_artifact_marker(Path(_alpha_table_path_resolved))[0]
-                if _alpha_table_path_resolved else False
+                _check_artifact_marker(Path(_alpha_table_path_resolved))[0] if _alpha_table_path_resolved else False
             ),
             "table_build_info": (_alpha_table or {}).get("_build_info"),
             "cells_populated": _alpha_cells_populated,
@@ -4502,17 +4565,20 @@ def save_validation_snapshot(
         },
         "coinvest_coverage": {
             "tickers_with_signal": sum(
-                1 for r in csv_rows
-                if isinstance(r.get("sponsor_tier1_count"), (int, float))
-                and r["sponsor_tier1_count"] > 0
+                1
+                for r in csv_rows
+                if isinstance(r.get("sponsor_tier1_count"), (int, float)) and r["sponsor_tier1_count"] > 0
             ),
             "ticker_count": len(csv_rows),
             "coverage_pct": round(
-                100 * sum(
-                    1 for r in csv_rows
-                    if isinstance(r.get("sponsor_tier1_count"), (int, float))
-                    and r["sponsor_tier1_count"] > 0
-                ) / max(len(csv_rows), 1), 1
+                100
+                * sum(
+                    1
+                    for r in csv_rows
+                    if isinstance(r.get("sponsor_tier1_count"), (int, float)) and r["sponsor_tier1_count"] > 0
+                )
+                / max(len(csv_rows), 1),
+                1,
             ),
         },
         "alpha_contract_telemetry": {
@@ -4523,10 +4589,12 @@ def save_validation_snapshot(
             "mode": inputs_manifest_mode,
             "path": "inputs_manifest.json" if inputs_manifest_mode != "off" else None,
             "all_required_present": (
-                results.get("run_metadata", {}).get("inputs_manifest", {}).get(
-                    "validation", {}
-                ).get("all_required_present")
-                if inputs_manifest_mode != "off" else None
+                results.get("run_metadata", {})
+                .get("inputs_manifest", {})
+                .get("validation", {})
+                .get("all_required_present")
+                if inputs_manifest_mode != "off"
+                else None
             ),
         },
         "cache_health_overall_status": _cache_health_status,
@@ -4571,14 +4639,14 @@ def save_validation_snapshot(
             except OSError as e:
                 logger.warning(f"Could not write inputs_manifest.json: {e}")
 
-    logger.info(f"[SNAPSHOT] Saved validation snapshot: {snap_path} "
-                f"({len(ranked)} tickers, v{version})")
+    logger.info(f"[SNAPSHOT] Saved validation snapshot: {snap_path} " f"({len(ranked)} tickers, v{version})")
     return snap_path
 
 
 # =============================================================================
 # SNAPSHOT COMPARISON
 # =============================================================================
+
 
 def compare_snapshots_detailed(
     state_dir: Path,
@@ -4644,8 +4712,8 @@ def compare_snapshots_detailed(
 
     result["current_sha256"] = hashlib.sha256(current_bytes).hexdigest()
     result["prior_sha256"] = hashlib.sha256(prior_bytes).hexdigest()
-    result["current_line_count"] = current_bytes.count(b'\n')
-    result["prior_line_count"] = prior_bytes.count(b'\n')
+    result["current_line_count"] = current_bytes.count(b"\n")
+    result["prior_line_count"] = prior_bytes.count(b"\n")
 
     # Check if files are identical
     if result["current_sha256"] == result["prior_sha256"]:
@@ -4656,7 +4724,7 @@ def compare_snapshots_detailed(
     # Parse and compare records
     def parse_jsonl(file_path: Path) -> Dict[str, Dict]:
         records = {}
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:
@@ -4922,12 +4990,7 @@ def log_smart_money_debug(
 CHECKPOINT_MODULES = ["module_1", "module_2", "module_3", "module_4", "enhancements", "module_5"]
 
 
-def save_checkpoint(
-    checkpoint_dir: Path,
-    module_name: str,
-    as_of_date: str,
-    data: Dict[str, Any]
-) -> Path:
+def save_checkpoint(checkpoint_dir: Path, module_name: str, as_of_date: str, data: Dict[str, Any]) -> Path:
     """
     Save module checkpoint to disk with integrity metadata.
 
@@ -4947,9 +5010,7 @@ def save_checkpoint(
     try:
         filepath = validate_checkpoint_path(checkpoint_dir, module_name, as_of_date)
     except (PathTraversalError, ValueError) as e:
-        raise PathTraversalError(
-            f"Invalid checkpoint path: module={module_name}, date={as_of_date}: {e}"
-        ) from e
+        raise PathTraversalError(f"Invalid checkpoint path: module={module_name}, date={as_of_date}: {e}") from e
 
     # Create checkpoint directory with secure permissions
     safe_mkdir(checkpoint_dir, mode=0o700)
@@ -4973,10 +5034,7 @@ def save_checkpoint(
 
 
 def load_checkpoint(
-    checkpoint_dir: Path,
-    module_name: str,
-    as_of_date: str,
-    verify_integrity: bool = True
+    checkpoint_dir: Path, module_name: str, as_of_date: str, verify_integrity: bool = True
 ) -> Optional[Dict[str, Any]]:
     """
     Load module checkpoint from disk with integrity verification.
@@ -5016,16 +5074,13 @@ def load_checkpoint(
         logger.warning(f"Checkpoint file too large: {e}")
         return None
 
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, "r", encoding="utf-8") as f:
         checkpoint_data = json.load(f)
 
     # Validate checkpoint version compatibility
     checkpoint_version = checkpoint_data.get("version", "0.0.0")
     if checkpoint_version.split(".")[0] != VERSION.split(".")[0]:
-        logger.warning(
-            f"Checkpoint version mismatch: {checkpoint_version} vs {VERSION}. "
-            "Ignoring checkpoint."
-        )
+        logger.warning(f"Checkpoint version mismatch: {checkpoint_version} vs {VERSION}. " "Ignoring checkpoint.")
         return None
 
     # INTEGRITY: Verify content hash if present
@@ -5037,8 +5092,7 @@ def load_checkpoint(
 
         if computed_hash != stored_hash:
             logger.error(
-                f"Checkpoint integrity check FAILED: {filepath}. "
-                f"Expected {stored_hash}, got {computed_hash}"
+                f"Checkpoint integrity check FAILED: {filepath}. " f"Expected {stored_hash}, got {computed_hash}"
             )
             raise IntegrityError(f"Checkpoint corrupted or tampered: {filepath}")
 
@@ -5071,6 +5125,7 @@ def get_resume_module_index(resume_from: Optional[str]) -> int:
 # =============================================================================
 # DRY-RUN VALIDATION
 # =============================================================================
+
 
 def validate_inputs_dry_run(data_dir: Path, enable_coinvest: bool = False) -> Dict[str, Any]:
     """
@@ -5119,7 +5174,7 @@ def validate_inputs_dry_run(data_dir: Path, enable_coinvest: bool = False) -> Di
 
             # Try to load and count records
             try:
-                with open(filepath, 'r', encoding='utf-8') as f:
+                with open(filepath, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 if isinstance(data, list):
                     results["required_files"][filename]["record_count"] = len(data)
@@ -5154,6 +5209,7 @@ def validate_inputs_dry_run(data_dir: Path, enable_coinvest: bool = False) -> Di
 # =============================================================================
 # INPUT MANIFEST – builders
 # =============================================================================
+
 
 def _count_records(filepath: Path) -> Optional[int]:
     """Return record count for a data file (JSON list/dict length, or CSV row count)."""
@@ -5268,7 +5324,7 @@ def build_inputs_manifest(
     return {
         "manifest_version": MANIFEST_VERSION,
         "as_of_date": as_of_date,
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "data_dir": str(data_dir),
         "dependencies": dependencies,
         "validation": {
@@ -5290,7 +5346,8 @@ def verify_inputs_manifest(manifest: Dict[str, Any]) -> bool:
 
 
 def verify_against_prior_manifest(
-    current: Dict[str, Any], prior: Dict[str, Any],
+    current: Dict[str, Any],
+    prior: Dict[str, Any],
 ) -> List[str]:
     """Compare current manifest against a prior one.
 
@@ -5299,7 +5356,9 @@ def verify_against_prior_manifest(
     """
     errs: List[str] = []
     if prior.get("manifest_version") != current.get("manifest_version"):
-        return [f"manifest_version mismatch (prior={prior.get('manifest_version')} current={current.get('manifest_version')})"]
+        return [
+            f"manifest_version mismatch (prior={prior.get('manifest_version')} current={current.get('manifest_version')})"
+        ]
     if prior.get("as_of_date") != current.get("as_of_date"):
         return [f"as_of_date mismatch (prior={prior.get('as_of_date')} current={current.get('as_of_date')})"]
 
@@ -5319,9 +5378,7 @@ def verify_against_prior_manifest(
         p_sha = p.get("sha256")
         c_sha = c.get("sha256")
         if p_sha and c_sha and p_sha != c_sha:
-            errs.append(
-                f"{key}: sha256 drift (prior={p_sha[:12]}.. current={c_sha[:12]}..)"
-            )
+            errs.append(f"{key}: sha256 drift (prior={p_sha[:12]}.. current={c_sha[:12]}..)")
     return errs
 
 
@@ -5379,6 +5436,7 @@ def create_replay_bundle(
         # 1. Write inputs_manifest.json
         manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
         import io
+
         ti = tarfile.TarInfo(name="inputs_manifest.json")
         ti.size = len(manifest_bytes)
         tar.addfile(ti, io.BytesIO(manifest_bytes))
@@ -5398,19 +5456,21 @@ def create_replay_bundle(
             # For directories, arcname is the dir root; for files, it's the full path.
             arc = relpath if src.is_file() else relpath.rstrip("/")
             tar.add(str(src), arcname=arc)
-            index_entries.append({
-                "key": dep["key"],
-                "relpath": relpath,
-                "sha256": dep.get("sha256"),
-                "required": dep.get("required", False),
-            })
+            index_entries.append(
+                {
+                    "key": dep["key"],
+                    "relpath": relpath,
+                    "sha256": dep.get("sha256"),
+                    "required": dep.get("required", False),
+                }
+            )
 
         # 3. Write bundle_index.json
         bundle_index = {
             "bundle_version": "v1",
             "manifest_version": manifest.get("manifest_version"),
             "as_of_date": manifest.get("as_of_date"),
-            "created_at": datetime.utcnow().isoformat() + "Z",
+            "created_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "files": sorted(index_entries, key=lambda e: e["key"]),
         }
         idx_bytes = json.dumps(bundle_index, indent=2).encode("utf-8")
@@ -5418,8 +5478,7 @@ def create_replay_bundle(
         ti2.size = len(idx_bytes)
         tar.addfile(ti2, io.BytesIO(idx_bytes))
 
-    logger.info(f"[REPLAY BUNDLE] Created: {output_path} "
-                f"({len(index_entries)} files)")
+    logger.info(f"[REPLAY BUNDLE] Created: {output_path} " f"({len(index_entries)} files)")
     return output_path
 
 
@@ -5480,6 +5539,7 @@ def extract_replay_bundle(bundle_path: Path) -> Dict[str, Any]:
 # AUDIT TRAIL
 # =============================================================================
 
+
 def create_audit_record(
     as_of_date: str,
     data_dir: Path,
@@ -5528,14 +5588,14 @@ def append_audit_log(audit_log_path: Path, record: Dict[str, Any]) -> None:
     """
     audit_log_path.parent.mkdir(parents=True, exist_ok=True)
 
-    line = json.dumps(record, sort_keys=True, separators=(',', ':'))
-    with open(audit_log_path, 'a', encoding='utf-8') as f:
-        f.write(line + '\n')
+    line = json.dumps(record, sort_keys=True, separators=(",", ":"))
+    with open(audit_log_path, "a", encoding="utf-8") as f:
+        f.write(line + "\n")
 
 
 def verify_input_freshness(previous_screen: Path, data_dir: Path) -> List[str]:
     """Compare current input hashes against a previous screen run."""
-    with open(previous_screen, 'r') as f:
+    with open(previous_screen, "r") as f:
         prev = json.load(f)
     prev_hashes = prev.get("run_metadata", {}).get("input_hashes", {})
     warnings = []
@@ -5583,10 +5643,14 @@ def _load_module5_weights(path: Path) -> Optional[Dict[str, "Decimal"]]:
     # Map calibrated feature names to Module 5 component names.
     # Calibrator outputs "valuation_normalized" → Module 5 expects "valuation".
     def _priority(name: str) -> int:
-        if name.endswith("_normalized"): return 0
-        if name.endswith("_raw"): return 1
-        if name.endswith("_contribution"): return 2
-        if name.endswith("_confidence"): return 3
+        if name.endswith("_normalized"):
+            return 0
+        if name.endswith("_raw"):
+            return 1
+        if name.endswith("_contribution"):
+            return 2
+        if name.endswith("_confidence"):
+            return 3
         return 4
 
     weights: Dict[str, Decimal] = {}
@@ -5624,6 +5688,7 @@ def _load_module5_weights(path: Path) -> Optional[Dict[str, "Decimal"]]:
 
 # ── Schema v2 bundle loading + regime-conditioned weight selection ────
 
+
 def _parse_feature_weights_to_components(
     feature_weights: Dict[str, Any],
 ) -> Optional[Dict[str, "Decimal"]]:
@@ -5635,10 +5700,14 @@ def _parse_feature_weights_to_components(
     from decimal import Decimal
 
     def _priority(name: str) -> int:
-        if name.endswith("_normalized"): return 0
-        if name.endswith("_raw"): return 1
-        if name.endswith("_contribution"): return 2
-        if name.endswith("_confidence"): return 3
+        if name.endswith("_normalized"):
+            return 0
+        if name.endswith("_raw"):
+            return 1
+        if name.endswith("_contribution"):
+            return 2
+        if name.endswith("_confidence"):
+            return 3
         return 4
 
     weights: Dict[str, Decimal] = {}
@@ -5809,25 +5878,29 @@ def _select_module5_weights(
     regime_w = by_regime.get(regime) if regime else None
 
     if regime_w is None:
-        logger.info(f"  Module 5 weight mode: {mode}, regime={regime} "
-                     f"→ no regime weights available, using global")
+        logger.info(f"  Module 5 weight mode: {mode}, regime={regime} " f"→ no regime weights available, using global")
         return global_w
 
     regime_n = n_weeks.get(regime, 0)
 
     if mode == "regime":
         if regime_n < min_fit_weeks:
-            logger.info(f"  Module 5 weight mode: regime, regime={regime}, "
-                         f"n_weeks={regime_n} < min_fit_weeks={min_fit_weeks} → global fallback")
+            logger.info(
+                f"  Module 5 weight mode: regime, regime={regime}, "
+                f"n_weeks={regime_n} < min_fit_weeks={min_fit_weeks} → global fallback"
+            )
             return global_w
-        logger.info(f"  Module 5 weight mode: regime, regime={regime}, "
-                     f"n_weeks={regime_n} → using pure regime weights")
+        logger.info(
+            f"  Module 5 weight mode: regime, regime={regime}, " f"n_weeks={regime_n} → using pure regime weights"
+        )
         return regime_w
 
     # mode == "blended"
     if regime_n < min_fit_weeks:
-        logger.info(f"  Module 5 weight mode: blended, regime={regime}, "
-                     f"n_weeks={regime_n} < min_fit_weeks={min_fit_weeks} → global fallback")
+        logger.info(
+            f"  Module 5 weight mode: blended, regime={regime}, "
+            f"n_weeks={regime_n} < min_fit_weeks={min_fit_weeks} → global fallback"
+        )
         return global_w
 
     alpha = Decimal(str(regime_n)) / (Decimal(str(regime_n)) + Decimal(str(blend_k)))
@@ -5838,12 +5911,13 @@ def _select_module5_weights(
         r = regime_w.get(comp, Decimal("0"))
         blended[comp] = alpha * r + (Decimal("1") - alpha) * g
 
-    logger.info(f"  Module 5 weight mode: blended, regime={regime}, "
-                 f"n_weeks={regime_n}, alpha={float(alpha):.3f}")
+    logger.info(f"  Module 5 weight mode: blended, regime={regime}, " f"n_weeks={regime_n}, alpha={float(alpha):.3f}")
     for comp in sorted(blended.keys()):
-        logger.info(f"    {comp}: {blended[comp]:.6f} "
-                     f"(global={global_w.get(comp, Decimal('0')):.6f}, "
-                     f"regime={regime_w.get(comp, Decimal('0')):.6f})")
+        logger.info(
+            f"    {comp}: {blended[comp]:.6f} "
+            f"(global={global_w.get(comp, Decimal('0')):.6f}, "
+            f"regime={regime_w.get(comp, Decimal('0')):.6f})"
+        )
 
     return blended
 
@@ -5875,7 +5949,7 @@ def _build_m3_config(
     sec_multi_form_mode: str = "cache_only",
     fda_regulatory_mode: str = "cache_only",
     ctgov_cache_dir=None,
-) -> 'Module3Config':
+) -> "Module3Config":
     """Build Module3Config, optionally overriding SEC 8-K mode."""
     cfg = Module3Config()
     cfg.enable_sec_8k_catalysts = sec_8k_mode
@@ -6015,9 +6089,7 @@ def run_screening_pipeline(
     for json_file in sorted(data_dir.glob("*.json")):
         if json_file.name.startswith("run_log"):
             continue  # Skip run logs - they're outputs, not inputs
-        content_hashes[json_file.name] = hashlib.sha256(
-            json_file.read_bytes()
-        ).hexdigest()[:16]
+        content_hashes[json_file.name] = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
 
     # Create audit record if audit log path provided
     if audit_log_path:
@@ -6038,38 +6110,36 @@ def run_screening_pipeline(
         }
         _manifest_resolved = _resolve_cache_paths(as_of_date, data_dir, ctgov_cache_dir)
         _inputs_manifest = build_inputs_manifest(
-            as_of_date, data_dir, _manifest_conditions, _manifest_resolved,
+            as_of_date,
+            data_dir,
+            _manifest_conditions,
+            _manifest_resolved,
         )
         if inputs_manifest_mode == "verify":
             # First: basic required-file check
             if not verify_inputs_manifest(_inputs_manifest):
                 raise FileNotFoundError(
-                    "Input manifest verify failed: "
-                    + "; ".join(_inputs_manifest["validation"]["errors"])
+                    "Input manifest verify failed: " + "; ".join(_inputs_manifest["validation"]["errors"])
                 )
             # Second: drift check against prior manifest
             if not inputs_manifest_verify_path:
-                raise FileNotFoundError(
-                    "--inputs-manifest verify requires --inputs-manifest-path"
-                )
+                raise FileNotFoundError("--inputs-manifest verify requires --inputs-manifest-path")
             if not inputs_manifest_verify_path.exists():
-                raise FileNotFoundError(
-                    f"Prior inputs_manifest not found: {inputs_manifest_verify_path}"
-                )
+                raise FileNotFoundError(f"Prior inputs_manifest not found: {inputs_manifest_verify_path}")
             with open(inputs_manifest_verify_path, "r", encoding="utf-8") as _mf:
                 _prior_manifest = json.load(_mf)
             drift_errors = verify_against_prior_manifest(_inputs_manifest, _prior_manifest)
             if drift_errors:
                 for de in drift_errors:
                     logger.error(f"[INPUT MANIFEST DRIFT] {de}")
-                raise FileNotFoundError(
-                    "Input manifest drift vs prior: " + "; ".join(drift_errors)
-                )
+                raise FileNotFoundError("Input manifest drift vs prior: " + "; ".join(drift_errors))
             logger.info("[INPUT MANIFEST] Verify passed — no drift vs prior manifest")
-        logger.info(f"[INPUT MANIFEST] Built manifest: "
-                     f"{len(_inputs_manifest['dependencies'])} deps, "
-                     f"{len(_inputs_manifest['validation']['errors'])} errors, "
-                     f"{len(_inputs_manifest['validation']['warnings'])} warnings")
+        logger.info(
+            f"[INPUT MANIFEST] Built manifest: "
+            f"{len(_inputs_manifest['dependencies'])} deps, "
+            f"{len(_inputs_manifest['validation']['errors'])} errors, "
+            f"{len(_inputs_manifest['validation']['warnings'])} warnings"
+        )
 
     # Load input data
     logger.info("[1/7] Loading input data...")
@@ -6082,21 +6152,17 @@ def run_screening_pipeline(
 
     # Extract full universe tickers BEFORE any filtering (for Module 3 stability)
     # This ensures Module 3 always processes the same population regardless of Module 1 filtering
-    full_universe_tickers = frozenset(
-        r.get('ticker') for r in raw_universe if r.get('ticker')
-    )
+    full_universe_tickers = frozenset(r.get("ticker") for r in raw_universe if r.get("ticker"))
     # Compute universe hash for state file namespacing (prevents churn on population changes)
-    universe_hash = hashlib.sha256(
-        json.dumps(sorted(full_universe_tickers)).encode()
-    ).hexdigest()[:8]
+    universe_hash = hashlib.sha256(json.dumps(sorted(full_universe_tickers)).encode()).hexdigest()[:8]
     logger.info(f"  Full universe: {len(full_universe_tickers)} tickers (hash: {universe_hash})")
 
     # Validate tickers in universe (fail-loud on contamination)
     if HAS_TICKER_VALIDATION:
-        universe_tickers_to_validate = [r.get('ticker') for r in raw_universe if r.get('ticker')]
+        universe_tickers_to_validate = [r.get("ticker") for r in raw_universe if r.get("ticker")]
         validation_result = validate_ticker_list(universe_tickers_to_validate)
-        if validation_result['invalid']:
-            invalid_sample = list(validation_result['invalid'].items())[:5]
+        if validation_result["invalid"]:
+            invalid_sample = list(validation_result["invalid"].items())[:5]
             raise ValueError(
                 f"Universe contains {len(validation_result['invalid'])} invalid tickers. "
                 f"Examples: {invalid_sample}. "
@@ -6132,8 +6198,8 @@ def run_screening_pipeline(
     market_data_by_ticker = {}
     if market_records:
         for record in market_records:
-            if isinstance(record, dict) and 'ticker' in record:
-                ticker = record['ticker'].upper()  # Normalize to uppercase for consistent lookups
+            if isinstance(record, dict) and "ticker" in record:
+                ticker = record["ticker"].upper()  # Normalize to uppercase for consistent lookups
                 market_data_by_ticker[ticker] = record
         logger.info(f"  Market data indexed for {len(market_data_by_ticker)} tickers")
 
@@ -6192,7 +6258,7 @@ def run_screening_pipeline(
                 holdings_file = data_dir / "holdings_snapshots.json"
             if holdings_file.exists():
                 logger.info(f"  Loading {holdings_file.name} for smart money signals...")
-                with open(holdings_file, 'r', encoding='utf-8') as f:
+                with open(holdings_file, "r", encoding="utf-8") as f:
                     holdings_payload = json.load(f)
 
                 coinvest_audit = {}
@@ -6202,14 +6268,18 @@ def run_screening_pipeline(
                 # holdings_detailed.json is expected to be a wrapper: {"_schema":..., "tickers": {...}}
                 if holdings_file.name == "holdings_detailed.json":
                     if not (isinstance(holdings_payload, dict) and "tickers" in holdings_payload):
-                        raise RuntimeError("holdings_detailed.json present but wrong shape: expected top-level 'tickers'.")
+                        raise RuntimeError(
+                            "holdings_detailed.json present but wrong shape: expected top-level 'tickers'."
+                        )
                     holdings_schema = holdings_payload.get("_schema", {})
                     holdings_snapshots = holdings_payload["tickers"]
                     _validate_holdings_detailed_payload(holdings_schema, holdings_snapshots)
                     logger.info(f"  Detected nested 'tickers' key - extracting {len(holdings_snapshots)} tickers")
                 # Legacy extractor format: allow nested tickers for non-detailed files (non-fatal)
                 elif isinstance(holdings_snapshots, dict) and "tickers" in holdings_snapshots:
-                    logger.info(f"  Detected nested 'tickers' key - extracting {len(holdings_snapshots['tickers'])} tickers")
+                    logger.info(
+                        f"  Detected nested 'tickers' key - extracting {len(holdings_snapshots['tickers'])} tickers"
+                    )
                     holdings_snapshots = holdings_snapshots["tickers"]
 
                 # Preserve raw holdings for Baker overlay (before coinvest conversion)
@@ -6221,7 +6291,9 @@ def run_screening_pipeline(
                     coinvest_signals = _convert_holdings_to_coinvest(
                         holdings_snapshots, data_dir, as_of_date, audit_out=coinvest_audit
                     )
-                    logger.info(f"  Converted holdings (dict format) to coinvest signals for {len(coinvest_signals)} tickers")
+                    logger.info(
+                        f"  Converted holdings (dict format) to coinvest signals for {len(coinvest_signals)} tickers"
+                    )
                     # Log conviction stats
                     conviction_tickers = sum(1 for v in coinvest_signals.values() if v.get("conviction_overlap", 0) > 0)
                     logger.info(f"  Conviction overlap computed for {conviction_tickers} tickers")
@@ -6264,11 +6336,17 @@ def run_screening_pipeline(
                             "total_value": entry.get("total_value", 0),
                             "total_shares": entry.get("total_shares", 0),
                         }
-                    logger.info(f"  Converted holdings (list format) to coinvest signals for {len(coinvest_signals)} tickers")
+                    logger.info(
+                        f"  Converted holdings (list format) to coinvest signals for {len(coinvest_signals)} tickers"
+                    )
                     tier1_tickers = sum(1 for v in coinvest_signals.values() if v.get("tier1_count", 0) > 0)
-                    logger.info(f"  Tier-1 coverage: {tier1_tickers}/{len(coinvest_signals)} tickers have tier-1 holders")
+                    logger.info(
+                        f"  Tier-1 coverage: {tier1_tickers}/{len(coinvest_signals)} tickers have tier-1 holders"
+                    )
             else:
-                logger.warning(f"  --enable-coinvest specified but neither coinvest_signals.json nor holdings_snapshots.json found")
+                logger.warning(
+                    f"  --enable-coinvest specified but neither coinvest_signals.json nor holdings_snapshots.json found"
+                )
 
     # Enhancement data (optional)
     market_snapshot = None
@@ -6285,7 +6363,7 @@ def run_screening_pipeline(
         snapshot_file = data_dir / "market_snapshot.json"
         if snapshot_file.exists():
             logger.info("  Loading market snapshot for regime detection...")
-            with open(snapshot_file, 'r', encoding='utf-8') as f:
+            with open(snapshot_file, "r", encoding="utf-8") as f:
                 market_snapshot = json.load(f)
         else:
             logger.warning(f"  --enable-enhancements specified but {snapshot_file} not found")
@@ -6306,7 +6384,7 @@ def run_screening_pipeline(
     momentum_file = data_dir / "momentum_results.json"
     if momentum_file.exists():
         logger.info("  Loading 13F institutional momentum data...")
-        with open(momentum_file, 'r', encoding='utf-8') as f:
+        with open(momentum_file, "r", encoding="utf-8") as f:
             institutional_momentum = json.load(f)
         logger.info(f"  Institutional momentum: {len(institutional_momentum.get('rankings', []))} tickers scored")
     else:
@@ -6314,7 +6392,7 @@ def run_screening_pipeline(
         root_momentum_file = Path("momentum_results.json")
         if root_momentum_file.exists():
             logger.info("  Loading 13F institutional momentum data from root...")
-            with open(root_momentum_file, 'r', encoding='utf-8') as f:
+            with open(root_momentum_file, "r", encoding="utf-8") as f:
                 institutional_momentum = json.load(f)
             logger.info(f"  Institutional momentum: {len(institutional_momentum.get('rankings', []))} tickers scored")
 
@@ -6410,9 +6488,10 @@ def run_screening_pipeline(
     # Validate Module 2 output schema
     validate_pipeline_handoff("module_2", "module_5", m2_result)
 
-    diag = m2_result.get('diagnostic_counts', {})
-    logger.info(f"  Scored: {diag.get('scored', len(m2_result.get('scores', [])))}, "
-                f"Missing: {diag.get('missing', 'N/A')}")
+    diag = m2_result.get("diagnostic_counts", {})
+    logger.info(
+        f"  Scored: {diag.get('scored', len(m2_result.get('scores', [])))}, " f"Missing: {diag.get('missing', 'N/A')}"
+    )
 
     # ========================================================================
     # Module 3: Catalyst Detection (NEW: Delta-based event detection)
@@ -6449,19 +6528,19 @@ def run_screening_pipeline(
             logger.info(f"  Prior:   {snapshot_comparison['prior_file']}")
             logger.info(f"  Status:  {snapshot_comparison['comparison_status']}")
 
-            if snapshot_comparison['comparison_status'] in ("OK", "IDENTICAL"):
+            if snapshot_comparison["comparison_status"] in ("OK", "IDENTICAL"):
                 logger.info(f"  Current SHA256: {snapshot_comparison['current_sha256'][:16]}...")
                 logger.info(f"  Prior SHA256:   {snapshot_comparison['prior_sha256'][:16]}...")
                 logger.info(f"  Current lines:  {snapshot_comparison['current_line_count']}")
                 logger.info(f"  Prior lines:    {snapshot_comparison['prior_line_count']}")
 
-                if snapshot_comparison['files_identical']:
+                if snapshot_comparison["files_identical"]:
                     logger.warning("  ⚠️  Files are IDENTICAL (same SHA256)")
                 else:
                     logger.info(f"  Records added:   {snapshot_comparison['records_added']}")
                     logger.info(f"  Records removed: {snapshot_comparison['records_removed']}")
                     logger.info(f"  Field changes:   {snapshot_comparison['field_changes_detected']}")
-                    if snapshot_comparison['top_changed_fields']:
+                    if snapshot_comparison["top_changed_fields"]:
                         logger.info(f"  Top changed fields: {snapshot_comparison['top_changed_fields']}")
             logger.info("  " + "=" * 56)
 
@@ -6473,7 +6552,9 @@ def run_screening_pipeline(
             active_tickers=full_universe_tickers,  # FULL universe, not filtered active_tickers
             as_of_date=as_of_date_obj,  # Date object
             market_calendar=SimpleMarketCalendar(),  # Market calendar for weekends
-            config=_build_m3_config(sec_8k_mode, sec_multi_form_mode, fda_regulatory_mode, ctgov_cache_dir=ctgov_cache_dir),
+            config=_build_m3_config(
+                sec_8k_mode, sec_multi_form_mode, fda_regulatory_mode, ctgov_cache_dir=ctgov_cache_dir
+            ),
             output_dir=output_dir,  # Output directory for catalyst_events_*.json
             pit_mode=pit_mode,
         )
@@ -6488,14 +6569,18 @@ def run_screening_pipeline(
     diag3 = m3_result.get("diagnostic_counts", {})
 
     # Print diagnostics
-    logger.info(f"  Events detected: {diag3.get('events_detected_total', 0)}, "
-                f"Tickers with events: {diag3.get('tickers_with_events', 0)}/{diag3.get('tickers_analyzed', 0)}, "
-                f"Severe negatives: {diag3.get('tickers_with_severe_negative', 0)}")
+    logger.info(
+        f"  Events detected: {diag3.get('events_detected_total', 0)}, "
+        f"Tickers with events: {diag3.get('tickers_with_events', 0)}/{diag3.get('tickers_analyzed', 0)}, "
+        f"Severe negatives: {diag3.get('tickers_with_severe_negative', 0)}"
+    )
 
     # Log PIT violation if detected
     pit_violation = m3_result.get("pit_violation")
     if pit_violation:
-        logger.error(f"  PIT VIOLATION: {pit_violation['source']} dated {pit_violation['source_date']} > as_of_date {pit_violation['as_of_date']}")
+        logger.error(
+            f"  PIT VIOLATION: {pit_violation['source']} dated {pit_violation['source_date']} > as_of_date {pit_violation['as_of_date']}"
+        )
         logger.error(f"  Catalyst mode: {m3_result.get('catalyst_mode', 'unknown')}")
 
     # ========================================================================
@@ -6539,10 +6624,12 @@ def run_screening_pipeline(
     # Validate Module 4 output schema
     validate_pipeline_handoff("module_4", "module_5", m4_result)
 
-    diag = m4_result.get('diagnostic_counts', {})
-    logger.info(f"  Scored: {diag.get('scored', len(m4_result.get('scores', [])))}, "
-                f"Trials evaluated: {diag.get('total_trials', 'N/A')}, "
-                f"PIT filtered: {diag.get('pit_filtered', 'N/A')}")
+    diag = m4_result.get("diagnostic_counts", {})
+    logger.info(
+        f"  Scored: {diag.get('scored', len(m4_result.get('scores', [])))}, "
+        f"Trials evaluated: {diag.get('total_trials', 'N/A')}, "
+        f"PIT filtered: {diag.get('pit_filtered', 'N/A')}"
+    )
 
     # ========================================================================
     # Company Archetype Classification
@@ -6586,9 +6673,11 @@ def run_screening_pipeline(
         clinical_exemptions = exemption_details
 
         if excluded_tickers or exemption_details:
-            logger.info(f"[5.1/7] Clinical activity filter: excluding {len(excluded_tickers)} tickers, "
-                       f"exempting {len(exemption_details)} non-drug-developers "
-                       f"(min_trials={min_trials}, min_phase={min_phase})")
+            logger.info(
+                f"[5.1/7] Clinical activity filter: excluding {len(excluded_tickers)} tickers, "
+                f"exempting {len(exemption_details)} non-drug-developers "
+                f"(min_trials={min_trials}, min_phase={min_phase})"
+            )
 
             # Remove excluded tickers from active_tickers
             active_tickers = [t for t in active_tickers if t not in set(excluded_tickers)]
@@ -6613,7 +6702,9 @@ def run_screening_pipeline(
     enhancement_result = None
 
     # Run enhancement layer if enhancements enabled OR if short interest enabled with data
-    should_run_enhancements = (enable_enhancements and HAS_ENHANCEMENTS) or (enable_short_interest and short_interest_data)
+    should_run_enhancements = (enable_enhancements and HAS_ENHANCEMENTS) or (
+        enable_short_interest and short_interest_data
+    )
 
     if should_run_enhancements:
         if enable_enhancements and HAS_ENHANCEMENTS:
@@ -6667,20 +6758,25 @@ def run_screening_pipeline(
                     regime_result = regime_engine.detect_regime(
                         vix_current=Decimal(str(market_snapshot.get("vix", "20"))),
                         xbi_vs_spy_30d=Decimal(str(market_snapshot.get("xbi_vs_spy_30d", "0"))),
-                        fed_rate_change_3m=Decimal(str(market_snapshot.get("fed_rate_change_3m", "0")))
-                            if market_snapshot.get("fed_rate_change_3m") is not None else None,
+                        fed_rate_change_3m=(
+                            Decimal(str(market_snapshot.get("fed_rate_change_3m", "0")))
+                            if market_snapshot.get("fed_rate_change_3m") is not None
+                            else None
+                        ),
                         as_of_date=as_of_date_obj,
                         data_as_of_date=data_as_of_date,
-                        **macro_params  # Include yield curve, HY spread, fund flows
+                        **macro_params,  # Include yield curve, HY spread, fund flows
                     )
 
                     # Log regime with staleness info if applicable
-                    staleness = regime_result.get('staleness')
-                    indicators = regime_result.get('indicators', {})
-                    if staleness and staleness.get('is_stale'):
+                    staleness = regime_result.get("staleness")
+                    indicators = regime_result.get("indicators", {})
+                    if staleness and staleness.get("is_stale"):
                         logger.warning(f"  Regime: UNKNOWN (data stale: {staleness['age_days']} days old)")
-                    elif staleness and staleness.get('action') == 'HAIRCUT_APPLIED':
-                        logger.info(f"  Regime: {regime_result['regime']} (confidence: {regime_result['confidence']}, {staleness['age_days']}d stale → {staleness['haircut_multiplier']}x haircut)")
+                    elif staleness and staleness.get("action") == "HAIRCUT_APPLIED":
+                        logger.info(
+                            f"  Regime: {regime_result['regime']} (confidence: {regime_result['confidence']}, {staleness['age_days']}d stale → {staleness['haircut_multiplier']}x haircut)"
+                        )
                     else:
                         logger.info(f"  Regime: {regime_result['regime']} (confidence: {regime_result['confidence']})")
 
@@ -6736,9 +6832,7 @@ def run_screening_pipeline(
                 # Use IndicationMapper to auto-detect indications from trial conditions
                 indication_mapper = IndicationMapper()
                 indication_map = indication_mapper.map_universe(
-                    tickers=active_tickers,
-                    trial_records=trial_records,
-                    as_of_date=as_of_date_obj
+                    tickers=active_tickers, trial_records=trial_records, as_of_date=as_of_date_obj
                 )
                 logger.info(f"  Indication mapping: {len(indication_map)} tickers mapped")
 
@@ -6748,21 +6842,25 @@ def run_screening_pipeline(
                     mapped_indication = indication_map.get(ticker.upper(), {}).get("indication")
                     # Fall back to clinical data if mapper returns None
                     final_indication = mapped_indication or stage_info.get("indication")
-                    pos_universe.append({
-                        "ticker": ticker,
-                        "base_stage": stage_info.get("base_stage", "phase_2"),
-                        "indication": final_indication,
-                        "trial_design_quality": stage_info.get("trial_design_quality"),
-                        "pipeline_trial_count": stage_info.get("pipeline_trial_count", 0),
-                        "pipeline_phase_diversity": stage_info.get("pipeline_phase_diversity", 1),
-                    })
+                    pos_universe.append(
+                        {
+                            "ticker": ticker,
+                            "base_stage": stage_info.get("base_stage", "phase_2"),
+                            "indication": final_indication,
+                            "trial_design_quality": stage_info.get("trial_design_quality"),
+                            "pipeline_trial_count": stage_info.get("pipeline_trial_count", 0),
+                            "pipeline_phase_diversity": stage_info.get("pipeline_phase_diversity", 1),
+                        }
+                    )
 
                 pos_result = pos_engine.score_universe(pos_universe, as_of_date_obj)
-                pos_diag = pos_result['diagnostic_counts']
-                conf_dist = pos_diag.get('confidence_distribution', {})
-                logger.info(f"  PoS: mapped={pos_diag['indication_coverage_pct']} | "
-                            f"effective(>=0.40)={pos_diag.get('effective_coverage_pct', 'N/A')} | "
-                            f"conf(H/M/L)={conf_dist.get('high', 0)}/{conf_dist.get('medium', 0)}/{conf_dist.get('low', 0)}")
+                pos_diag = pos_result["diagnostic_counts"]
+                conf_dist = pos_diag.get("confidence_distribution", {})
+                logger.info(
+                    f"  PoS: mapped={pos_diag['indication_coverage_pct']} | "
+                    f"effective(>=0.40)={pos_diag.get('effective_coverage_pct', 'N/A')} | "
+                    f"conf(H/M/L)={conf_dist.get('high', 0)}/{conf_dist.get('medium', 0)}/{conf_dist.get('low', 0)}"
+                )
 
             # Step 3: Calculate short interest signals (if data available)
             si_result = None
@@ -6772,17 +6870,21 @@ def run_screening_pipeline(
                 si_universe = []
                 for ticker in active_tickers:
                     si_info = si_map.get(ticker, {})
-                    si_universe.append({
-                        "ticker": ticker,
-                        "short_interest_pct": si_info.get("short_interest_pct"),
-                        "days_to_cover": si_info.get("days_to_cover"),
-                        "short_interest_change_pct": si_info.get("short_interest_change_pct"),
-                        "institutional_long_pct": si_info.get("institutional_long_pct"),
-                    })
+                    si_universe.append(
+                        {
+                            "ticker": ticker,
+                            "short_interest_pct": si_info.get("short_interest_pct"),
+                            "days_to_cover": si_info.get("days_to_cover"),
+                            "short_interest_change_pct": si_info.get("short_interest_change_pct"),
+                            "institutional_long_pct": si_info.get("institutional_long_pct"),
+                        }
+                    )
 
                 si_result = si_engine.score_universe(si_universe, as_of_date_obj)
-                logger.info(f"  SI scored: {si_result['diagnostic_counts']['total_scored']}, "
-                            f"Coverage: {si_result['diagnostic_counts']['data_coverage_pct']}")
+                logger.info(
+                    f"  SI scored: {si_result['diagnostic_counts']['total_scored']}, "
+                    f"Coverage: {si_result['diagnostic_counts']['data_coverage_pct']}"
+                )
 
             # Step 4: Calculate accuracy enhancements (if available)
             accuracy_result = None
@@ -6825,9 +6927,11 @@ def run_screening_pipeline(
                 )
 
                 accuracy_diag = accuracy_adapter.get_diagnostic_counts()
-                logger.info(f"  Accuracy enhancements: {accuracy_diag['total']} tickers, "
-                           f"staleness={accuracy_diag['staleness_coverage_pct']}%, "
-                           f"regulatory={accuracy_diag['regulatory_coverage_pct']}%")
+                logger.info(
+                    f"  Accuracy enhancements: {accuracy_diag['total']} tickers, "
+                    f"staleness={accuracy_diag['staleness_coverage_pct']}%, "
+                    f"regulatory={accuracy_diag['regulatory_coverage_pct']}%"
+                )
 
                 # Convert to serializable format
                 accuracy_result = {
@@ -6879,22 +6983,34 @@ def run_screening_pipeline(
                         # Fall back to R&D as burn proxy (annualized / 4, negative)
                         quarterly_burn = -Decimal(str(fin_data.get("R&D"))) / Decimal("4")
 
-                    dilution_universe.append({
-                        "ticker": ticker,
-                        "quarterly_cash": Decimal(str(fin_data.get("CashAndSecurities") or fin_data.get("Cash"))) if (fin_data.get("CashAndSecurities") or fin_data.get("Cash")) else None,
-                        "quarterly_burn": quarterly_burn,
-                        "next_catalyst_date": next_catalyst_date,
-                        "market_cap": Decimal(str(mkt_data.get("market_cap"))) if mkt_data.get("market_cap") else None,
-                        "avg_daily_volume_90d": int(mkt_data.get("avg_volume_90d", 0)) if mkt_data.get("avg_volume_90d") else None,
-                    })
+                    dilution_universe.append(
+                        {
+                            "ticker": ticker,
+                            "quarterly_cash": (
+                                Decimal(str(fin_data.get("CashAndSecurities") or fin_data.get("Cash")))
+                                if (fin_data.get("CashAndSecurities") or fin_data.get("Cash"))
+                                else None
+                            ),
+                            "quarterly_burn": quarterly_burn,
+                            "next_catalyst_date": next_catalyst_date,
+                            "market_cap": (
+                                Decimal(str(mkt_data.get("market_cap"))) if mkt_data.get("market_cap") else None
+                            ),
+                            "avg_daily_volume_90d": (
+                                int(mkt_data.get("avg_volume_90d", 0)) if mkt_data.get("avg_volume_90d") else None
+                            ),
+                        }
+                    )
 
                 dilution_risk_result = dilution_engine.score_universe(dilution_universe, as_of_date_obj)
                 diag_dr = dilution_risk_result.get("diagnostic_counts", {})
                 risk_dist = diag_dr.get("risk_distribution", {})
-                logger.info(f"  Dilution risk: {diag_dr.get('total_scored', 0)} scored, "
-                           f"HIGH={risk_dist.get('HIGH_RISK', 0)}, "
-                           f"MED={risk_dist.get('MEDIUM_RISK', 0)}, "
-                           f"LOW={risk_dist.get('LOW_RISK', 0)}")
+                logger.info(
+                    f"  Dilution risk: {diag_dr.get('total_scored', 0)} scored, "
+                    f"HIGH={risk_dist.get('HIGH_RISK', 0)}, "
+                    f"MED={risk_dist.get('MEDIUM_RISK', 0)}, "
+                    f"LOW={risk_dist.get('LOW_RISK', 0)}"
+                )
 
             # Step 6: Calculate timeline slippage scores (if available)
             timeline_slippage_result = None
@@ -6919,11 +7035,13 @@ def run_screening_pipeline(
                             universe=slippage_universe,
                             current_trials_by_ticker=current_trials_by_ticker,
                             prior_trials_by_ticker=None,  # Would need historical snapshots
-                            as_of_date=as_of_date_obj
+                            as_of_date=as_of_date_obj,
                         )
                         diag_ts = timeline_slippage_result.get("diagnostic_counts", {})
-                        logger.info(f"  Timeline slippage: {diag_ts.get('total_scored', 0)} scored, "
-                                   f"repeat_offenders={diag_ts.get('repeat_offenders', 0)}")
+                        logger.info(
+                            f"  Timeline slippage: {diag_ts.get('total_scored', 0)} scored, "
+                            f"repeat_offenders={diag_ts.get('repeat_offenders', 0)}"
+                        )
                     except Exception as e:
                         logger.warning(f"  Timeline slippage scoring failed: {e}")
                         timeline_slippage_result = None
@@ -6953,8 +7071,10 @@ def run_screening_pipeline(
                 fda_designation_result = fda_engine.score_universe(fda_universe, as_of_date_obj)
 
                 diag_fda = fda_designation_result.get("diagnostic_counts", {})
-                logger.info(f"  FDA designations: {diag_fda.get('total_scored', 0)} scored, "
-                           f"with_designations={diag_fda.get('with_designations', 0)}")
+                logger.info(
+                    f"  FDA designations: {diag_fda.get('total_scored', 0)} scored, "
+                    f"with_designations={diag_fda.get('with_designations', 0)}"
+                )
 
             # Step 8: Calculate pipeline diversity scores (if available)
             pipeline_diversity_result = None
@@ -6974,10 +7094,12 @@ def run_screening_pipeline(
                 diversity_universe = []
                 for t in active_tickers:
                     ticker_upper = t.upper()
-                    diversity_universe.append({
-                        "ticker": ticker_upper,
-                        "clinical_data": clinical_data_map.get(ticker_upper, {}),
-                    })
+                    diversity_universe.append(
+                        {
+                            "ticker": ticker_upper,
+                            "clinical_data": clinical_data_map.get(ticker_upper, {}),
+                        }
+                    )
 
                 pipeline_diversity_result = diversity_engine.score_universe(
                     diversity_universe, trial_records, as_of_date_obj
@@ -6985,9 +7107,11 @@ def run_screening_pipeline(
 
                 diag_pd = pipeline_diversity_result.get("diagnostic_counts", {})
                 risk_dist = diag_pd.get("risk_distribution", {})
-                logger.info(f"  Pipeline diversity: {diag_pd.get('total_scored', 0)} scored, "
-                           f"single_asset={risk_dist.get('single_asset', 0)}, "
-                           f"diversified={risk_dist.get('diversified', 0) + risk_dist.get('broad_portfolio', 0)}")
+                logger.info(
+                    f"  Pipeline diversity: {diag_pd.get('total_scored', 0)} scored, "
+                    f"single_asset={risk_dist.get('single_asset', 0)}, "
+                    f"diversified={risk_dist.get('diversified', 0) + risk_dist.get('broad_portfolio', 0)}"
+                )
 
             # Step 9: Calculate competitive intensity scores (if available)
             competitive_intensity_result = None
@@ -7001,11 +7125,13 @@ def run_screening_pipeline(
 
                 diag_ci = competitive_intensity_result.get("diagnostic_counts", {})
                 intensity_dist = diag_ci.get("intensity_distribution", {})
-                logger.info(f"  Competitive intensity: {diag_ci.get('total_scored', 0)} scored, "
-                           f"low={intensity_dist.get('low', 0)}, "
-                           f"moderate={intensity_dist.get('moderate', 0)}, "
-                           f"high={intensity_dist.get('high', 0)}, "
-                           f"intense={intensity_dist.get('intense', 0)}")
+                logger.info(
+                    f"  Competitive intensity: {diag_ci.get('total_scored', 0)} scored, "
+                    f"low={intensity_dist.get('low', 0)}, "
+                    f"moderate={intensity_dist.get('moderate', 0)}, "
+                    f"high={intensity_dist.get('high', 0)}, "
+                    f"intense={intensity_dist.get('intense', 0)}"
+                )
 
             # Step 10: Calculate partnership validation scores (if available)
             partnership_result = None
@@ -7031,13 +7157,17 @@ def run_screening_pipeline(
 
                 diag_ps = partnership_result.get("diagnostic_counts", {})
                 strength_dist = diag_ps.get("strength_distribution", {})
-                logger.info(f"  Partnership validation: {diag_ps.get('total_scored', 0)} scored, "
-                           f"with_partnerships={diag_ps.get('with_partnerships', 0)}, "
-                           f"with_top_tier={diag_ps.get('with_top_tier', 0)}")
-                logger.info(f"    Strength distribution: exceptional={strength_dist.get('exceptional', 0)}, "
-                           f"strong={strength_dist.get('strong', 0)}, "
-                           f"moderate={strength_dist.get('moderate', 0)}, "
-                           f"weak={strength_dist.get('weak', 0)}")
+                logger.info(
+                    f"  Partnership validation: {diag_ps.get('total_scored', 0)} scored, "
+                    f"with_partnerships={diag_ps.get('with_partnerships', 0)}, "
+                    f"with_top_tier={diag_ps.get('with_top_tier', 0)}"
+                )
+                logger.info(
+                    f"    Strength distribution: exceptional={strength_dist.get('exceptional', 0)}, "
+                    f"strong={strength_dist.get('strong', 0)}, "
+                    f"moderate={strength_dist.get('moderate', 0)}, "
+                    f"weak={strength_dist.get('weak', 0)}"
+                )
 
             # Step 11: Calculate cash burn trajectory scores (if available)
             cash_burn_result = None
@@ -7089,15 +7219,19 @@ def run_screening_pipeline(
                 trajectory_dist = diag_cb.get("trajectory_distribution", {})
                 risk_dist = diag_cb.get("risk_distribution", {})
                 logger.info(f"  Cash burn trajectory: {diag_cb.get('total_scored', 0)} scored")
-                logger.info(f"    Trajectory: decel={trajectory_dist.get('decelerating', 0)}, "
-                           f"stable={trajectory_dist.get('stable', 0)}, "
-                           f"accel={trajectory_dist.get('accelerating', 0)}, "
-                           f"justified={trajectory_dist.get('accelerating_justified', 0)}, "
-                           f"unknown={trajectory_dist.get('unknown', 0)}")
-                logger.info(f"    Risk: low={risk_dist.get('low', 0)}, "
-                           f"moderate={risk_dist.get('moderate', 0)}, "
-                           f"high={risk_dist.get('high', 0)}, "
-                           f"critical={risk_dist.get('critical', 0)}")
+                logger.info(
+                    f"    Trajectory: decel={trajectory_dist.get('decelerating', 0)}, "
+                    f"stable={trajectory_dist.get('stable', 0)}, "
+                    f"accel={trajectory_dist.get('accelerating', 0)}, "
+                    f"justified={trajectory_dist.get('accelerating_justified', 0)}, "
+                    f"unknown={trajectory_dist.get('unknown', 0)}"
+                )
+                logger.info(
+                    f"    Risk: low={risk_dist.get('low', 0)}, "
+                    f"moderate={risk_dist.get('moderate', 0)}, "
+                    f"high={risk_dist.get('high', 0)}, "
+                    f"critical={risk_dist.get('critical', 0)}"
+                )
 
             # Step 12: Calculate phase transition momentum scores (if available)
             phase_momentum_result = None
@@ -7121,11 +7255,13 @@ def run_screening_pipeline(
                 diag_pm = phase_momentum_result.get("diagnostic_counts", {})
                 momentum_dist = diag_pm.get("momentum_distribution", {})
                 logger.info(f"  Phase momentum: {diag_pm.get('total_scored', 0)} scored")
-                logger.info(f"    Momentum: strong_pos={momentum_dist.get('strong_positive', 0)}, "
-                           f"pos={momentum_dist.get('positive', 0)}, "
-                           f"neutral={momentum_dist.get('neutral', 0)}, "
-                           f"neg={momentum_dist.get('negative', 0)}, "
-                           f"strong_neg={momentum_dist.get('strong_negative', 0)}")
+                logger.info(
+                    f"    Momentum: strong_pos={momentum_dist.get('strong_positive', 0)}, "
+                    f"pos={momentum_dist.get('positive', 0)}, "
+                    f"neutral={momentum_dist.get('neutral', 0)}, "
+                    f"neg={momentum_dist.get('negative', 0)}, "
+                    f"strong_neg={momentum_dist.get('strong_negative', 0)}"
+                )
 
             # Step 13: Calculate Morningstar quantitative signal scores (if available)
             morningstar_result = None
@@ -7134,12 +7270,12 @@ def run_screening_pipeline(
                 ms_loaded = ms_engine.load_data(Path(data_dir))
                 if ms_loaded > 0:
                     ms_universe = [{"ticker": t.upper()} for t in active_tickers]
-                    morningstar_result = ms_engine.score_universe(
-                        ms_universe, market_data_by_ticker, as_of_date_obj
-                    )
+                    morningstar_result = ms_engine.score_universe(ms_universe, market_data_by_ticker, as_of_date_obj)
                     ms_diag = morningstar_result.get("diagnostic_counts", {})
-                    logger.info(f"  Morningstar signals: {ms_diag.get('total_scored', 0)} scored, "
-                               f"FV coverage: {ms_diag.get('fair_value_coverage_pct', 'N/A')}")
+                    logger.info(
+                        f"  Morningstar signals: {ms_diag.get('total_scored', 0)} scored, "
+                        f"FV coverage: {ms_diag.get('fair_value_coverage_pct', 'N/A')}"
+                    )
 
             # Assemble enhancement result (use empty dicts for None values to avoid downstream .get() errors)
             enhancement_result = {
@@ -7168,13 +7304,19 @@ def run_screening_pipeline(
                     "dilution_risk_engine_version": "1.0.0" if HAS_DILUTION_RISK else None,
                     "timeline_slippage_engine_version": "1.0.0" if HAS_TIMELINE_SLIPPAGE else None,
                     "fda_designation_engine_version": FDADesignationEngine.VERSION if HAS_FDA_DESIGNATIONS else None,
-                    "pipeline_diversity_engine_version": PipelineDiversityEngine.VERSION if HAS_PIPELINE_DIVERSITY else None,
-                    "competitive_intensity_engine_version": CompetitiveIntensityEngine.VERSION if HAS_COMPETITIVE_INTENSITY else None,
+                    "pipeline_diversity_engine_version": (
+                        PipelineDiversityEngine.VERSION if HAS_PIPELINE_DIVERSITY else None
+                    ),
+                    "competitive_intensity_engine_version": (
+                        CompetitiveIntensityEngine.VERSION if HAS_COMPETITIVE_INTENSITY else None
+                    ),
                     "partnership_engine_version": PartnershipEngine.VERSION if HAS_PARTNERSHIP_ENGINE else None,
                     "cash_burn_engine_version": CashBurnEngine.VERSION if HAS_CASH_BURN_ENGINE else None,
-                    "phase_momentum_engine_version": PhaseTransitionEngine.VERSION if HAS_PHASE_MOMENTUM_ENGINE else None,
+                    "phase_momentum_engine_version": (
+                        PhaseTransitionEngine.VERSION if HAS_PHASE_MOMENTUM_ENGINE else None
+                    ),
                     "morningstar_engine_version": MorningstarSignalEngine.VERSION if HAS_MORNINGSTAR else None,
-                }
+                },
             }
 
             if checkpoint_dir:
@@ -7195,24 +7337,23 @@ def run_screening_pipeline(
     if m5_result is None:
         # Apply clinical activity filter exclusions to module results
         # This ensures excluded tickers don't get ranked in Module 5
-        clinical_excluded_set = set(t['ticker'] for t in clinical_exclusions) if clinical_exclusions else set()
+        clinical_excluded_set = set(t["ticker"] for t in clinical_exclusions) if clinical_exclusions else set()
 
         if clinical_excluded_set:
             # Create filtered copies of results (don't modify originals)
             m1_filtered = {
                 **m1_result,
-                "active_securities": [s for s in m1_result.get("active_securities", [])
-                                      if s.get("ticker") not in clinical_excluded_set],
+                "active_securities": [
+                    s for s in m1_result.get("active_securities", []) if s.get("ticker") not in clinical_excluded_set
+                ],
             }
             m2_filtered = {
                 **m2_result,
-                "scores": [s for s in m2_result.get("scores", [])
-                           if s.get("ticker") not in clinical_excluded_set],
+                "scores": [s for s in m2_result.get("scores", []) if s.get("ticker") not in clinical_excluded_set],
             }
             m4_filtered = {
                 **m4_result,
-                "scores": [s for s in m4_result.get("scores", [])
-                           if s.get("ticker") not in clinical_excluded_set],
+                "scores": [s for s in m4_result.get("scores", []) if s.get("ticker") not in clinical_excluded_set],
             }
         else:
             m1_filtered = m1_result
@@ -7228,7 +7369,9 @@ def run_screening_pipeline(
                     (regime_result or {}).get("regime"),
                 )
                 m5_weights = _select_module5_weights(
-                    m5_bundle, current_regime, mode=module5_weights_mode,
+                    m5_bundle,
+                    current_regime,
+                    mode=module5_weights_mode,
                 )
             # else: m5_weights stays None → defaults
 
@@ -7264,39 +7407,45 @@ def run_screening_pipeline(
     # Validate Module 5 output schema
     validate_module_5_output(m5_result)
 
-    diag = m5_result.get('diagnostic_counts', {})
-    logger.info(f"  Rankable: {diag.get('rankable', len(m5_result.get('ranked_securities', [])))}, "
-                f"Excluded: {diag.get('excluded', len(m5_result.get('excluded_securities', [])))}")
+    diag = m5_result.get("diagnostic_counts", {})
+    logger.info(
+        f"  Rankable: {diag.get('rankable', len(m5_result.get('ranked_securities', [])))}, "
+        f"Excluded: {diag.get('excluded', len(m5_result.get('excluded_securities', [])))}"
+    )
 
     # Log pipeline health status
-    run_status = m5_result.get('run_status', 'UNKNOWN')
-    degraded = m5_result.get('degraded_components', [])
-    coverage = m5_result.get('component_coverage', {})
-    gated = m5_result.get('gated_component_counts', {})
+    run_status = m5_result.get("run_status", "UNKNOWN")
+    degraded = m5_result.get("degraded_components", [])
+    coverage = m5_result.get("component_coverage", {})
+    gated = m5_result.get("gated_component_counts", {})
 
-    if run_status == 'FAIL':
+    if run_status == "FAIL":
         logger.error(f"  RUN STATUS: {run_status} - Pipeline health check FAILED")
-        for err in m5_result.get('health_errors', []):
+        for err in m5_result.get("health_errors", []):
             logger.error(f"    {err}")
-    elif run_status == 'DEGRADED':
+    elif run_status == "DEGRADED":
         logger.warning(f"  RUN STATUS: {run_status} - Some components degraded: {degraded}")
-        for warn in m5_result.get('health_warnings', []):
+        for warn in m5_result.get("health_warnings", []):
             logger.warning(f"    {warn}")
     else:
         logger.info(f"  RUN STATUS: {run_status}")
 
     # Log component coverage
-    logger.info(f"  Component coverage: catalyst={coverage.get('catalyst', '?')}, "
-                f"momentum={coverage.get('momentum', '?')}, smart_money={coverage.get('smart_money', '?')}")
+    logger.info(
+        f"  Component coverage: catalyst={coverage.get('catalyst', '?')}, "
+        f"momentum={coverage.get('momentum', '?')}, smart_money={coverage.get('smart_money', '?')}"
+    )
     if gated:
         logger.warning(f"  Confidence-gated components: {gated}")
 
     # Dev-catalyst guardrail activation summary
     _gr_summary = summarize_dev_catalyst_guardrail(m5_result.get("ranked_securities", []))
     if _gr_summary["total_impacted"] > 0:
-        logger.info(f"  Dev-catalyst guardrail: {_gr_summary['total_impacted']}/{_gr_summary['total_evaluated']} "
-                     f"({_gr_summary['pct_impacted']}%) impacted  "
-                     f"[Rule1={_gr_summary['rule1_count']} Rule2={_gr_summary['rule2_count']}]")
+        logger.info(
+            f"  Dev-catalyst guardrail: {_gr_summary['total_impacted']}/{_gr_summary['total_evaluated']} "
+            f"({_gr_summary['pct_impacted']}%) impacted  "
+            f"[Rule1={_gr_summary['rule1_count']} Rule2={_gr_summary['rule2_count']}]"
+        )
         for _gi in _gr_summary["top_5_impacted"]:
             logger.info(f"    #{_gi['rank']:>3d}  {_gi['ticker']:<6s}  {' '.join(_gi['flags'])}")
     else:
@@ -7308,16 +7457,20 @@ def run_screening_pipeline(
     logger.info("[7/7] Defensive overlay & top-N selection...")
 
     # Log v2 risk diagnostics if present
-    risk_v2 = diag.get('risk_v2_summary')
-    if risk_v2 and risk_v2.get('v2_detected'):
+    risk_v2 = diag.get("risk_v2_summary")
+    if risk_v2 and risk_v2.get("v2_detected"):
         logger.info("  V2 risk metrics detected in defensive cache")
-        for metric, counts in risk_v2.get('state_counts', {}).items():
-            logger.info(f"    {metric}: FULL={counts.get('FULL', 0)} PARTIAL={counts.get('PARTIAL', 0)} NONE={counts.get('NONE', 0)}")
-        priors = risk_v2.get('priors_used', {})
-        logger.info(f"    Priors used: vol={priors.get('vol', 0)} dd={priors.get('drawdown', 0)} beta={priors.get('beta', 0)}")
-        lc = risk_v2.get('low_confidence_count', 0)
-        lc_pct = risk_v2.get('low_confidence_pct', 0)
-        if risk_v2.get('low_confidence_warning'):
+        for metric, counts in risk_v2.get("state_counts", {}).items():
+            logger.info(
+                f"    {metric}: FULL={counts.get('FULL', 0)} PARTIAL={counts.get('PARTIAL', 0)} NONE={counts.get('NONE', 0)}"
+            )
+        priors = risk_v2.get("priors_used", {})
+        logger.info(
+            f"    Priors used: vol={priors.get('vol', 0)} dd={priors.get('drawdown', 0)} beta={priors.get('beta', 0)}"
+        )
+        lc = risk_v2.get("low_confidence_count", 0)
+        lc_pct = risk_v2.get("low_confidence_pct", 0)
+        if risk_v2.get("low_confidence_warning"):
             logger.warning(f"    LOW CONFIDENCE WARNING: {lc} tickers ({lc_pct}%) have confidence_risk < 0.65")
         else:
             logger.info(f"    Low confidence: {lc} tickers ({lc_pct}%)")
@@ -7329,7 +7482,7 @@ def run_screening_pipeline(
         if "summaries" in result:
             serialized_summaries = {}
             for ticker, summary in result["summaries"].items():
-                if hasattr(summary, 'to_dict'):
+                if hasattr(summary, "to_dict"):
                     serialized_summaries[ticker] = summary.to_dict()
                 else:
                     serialized_summaries[ticker] = summary
@@ -7365,8 +7518,7 @@ def run_screening_pipeline(
             "holdings_detailed_schema": holdings_schema_data,
             # Conviction horizon overlay audit (Enhancement 12)
             "conviction_horizon_overlay_applied": (
-                m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0)
-                if m5_result else 0
+                m5_result.get("diagnostic_counts", {}).get("conviction_horizon_overlay_applied", 0) if m5_result else 0
             ),
             "inputs_manifest": _inputs_manifest,
         },
@@ -7378,7 +7530,7 @@ def run_screening_pipeline(
         "summary": {
             "total_evaluated": len(raw_universe),
             "active_universe": len(active_tickers),
-            "excluded": len(m1_result.get('excluded_securities', [])),
+            "excluded": len(m1_result.get("excluded_securities", [])),
             "clinical_activity_filter": {
                 "enabled": not no_clinical_filter,
                 "min_trials": min_trials,
@@ -7386,9 +7538,9 @@ def run_screening_pipeline(
                 "excluded_count": len(clinical_exclusions),
                 "exempted_count": len(clinical_exemptions),
             },
-            "final_ranked": len(m5_result.get('ranked_securities', [])),
-            "catalyst_events": diag3.get('events_detected_total', 0),
-            "severe_negatives": diag3.get('tickers_with_severe_negative', 0),
+            "final_ranked": len(m5_result.get("ranked_securities", [])),
+            "catalyst_events": diag3.get("events_detected_total", 0),
+            "severe_negatives": diag3.get("tickers_with_severe_negative", 0),
         },
         "clinical_exclusions": clinical_exclusions,
         "clinical_exemptions": clinical_exemptions,
@@ -7472,7 +7624,7 @@ def compute_data_hash(data_dir: Path) -> str:
     """Compute hash of input data files for seed derivation."""
     h = hashlib.sha256()
     for json_file in sorted(data_dir.glob("*.json")):
-        h.update(json_file.name.encode('utf-8'))
+        h.update(json_file.name.encode("utf-8"))
         h.update(json_file.read_bytes())
     return h.hexdigest()[:16]
 
@@ -7485,18 +7637,18 @@ def add_bootstrap_analysis(
     run_id: str = None,
 ) -> dict:
     """Add bootstrap confidence intervals to results."""
-    from common.random_state import derive_base_seed, DeterministicRNG
+    from common.random_state import DeterministicRNG, derive_base_seed
     from extensions.bootstrap_scoring import compute_bootstrap_ci_decimal
-    
+
     # Derive deterministic seed
     data_hash = compute_data_hash(data_dir)
     if run_id is None:
         run_id = f"screen_{as_of_date}"
     base_seed = derive_base_seed(as_of_date, run_id, data_hash)
-    
+
     # Create RNG
     rng = DeterministicRNG(base_seed, "bootstrap_ci")
-    
+
     # Get composite scores
     ranked = results["module_5_composite"]["ranked_securities"]
     if not ranked:
@@ -7508,16 +7660,15 @@ def add_bootstrap_analysis(
         results["bootstrap_analysis"] = {"error": "no_composite_scores"}
         return results
 
-    scores = [Decimal(s["composite_score"]) for s in ranked
-              if s.get("composite_score") not in (None, "")]
-    
+    scores = [Decimal(s["composite_score"]) for s in ranked if s.get("composite_score") not in (None, "")]
+
     # Compute bootstrap CI
     bootstrap_result = compute_bootstrap_ci_decimal(
         scores=scores,
         rng=rng,
         n_bootstrap=n_bootstrap,
     )
-    
+
     results["bootstrap_analysis"] = bootstrap_result
     return results
 
@@ -7528,20 +7679,20 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
     Writes delta artifacts into the snapshot directory. Warns on operational
     issues but only hard-fails on ruleset mismatch (already caught upstream).
     """
+    from run_phase2_snapshot_delta import DEFAULT_HEALTH_THRESHOLDS
+    from run_phase2_snapshot_delta import PHASE2_PINNED_RULESET_ID as DELTA_PINNED_ID
     from run_phase2_snapshot_delta import (
-        find_snapshots,
-        is_snapshot_degraded,
-        load_snapshot,
+        Phase2HealthThresholds,
         compute_delta,
-        compute_single_snapshot_summary,
         compute_health_gate,
+        compute_single_snapshot_summary,
+        find_snapshots,
+        generate_delta_csv,
+        generate_details_json,
         generate_health_json,
         generate_report,
-        generate_details_json,
-        generate_delta_csv,
-        Phase2HealthThresholds,
-        DEFAULT_HEALTH_THRESHOLDS,
-        PHASE2_PINNED_RULESET_ID as DELTA_PINNED_ID,
+        is_snapshot_degraded,
+        load_snapshot,
     )
 
     logger.info("--- Phase-2 Delta Report ---")
@@ -7552,19 +7703,15 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
         health_thresholds = Phase2HealthThresholds.from_json(str(ht_override))
         logger.info(f"Health thresholds: {Path(ht_override).name} (id={health_thresholds.thresholds_id})")
     elif PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH.exists():
-        health_thresholds = Phase2HealthThresholds.from_json(
-            str(PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH)
-        )
+        health_thresholds = Phase2HealthThresholds.from_json(str(PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH))
         if health_thresholds.thresholds_id != PHASE2_PINNED_THRESHOLDS_ID:
             logger.warning(
-                f"Health thresholds id {health_thresholds.thresholds_id} != "
-                f"pinned {PHASE2_PINNED_THRESHOLDS_ID}"
+                f"Health thresholds id {health_thresholds.thresholds_id} != " f"pinned {PHASE2_PINNED_THRESHOLDS_ID}"
             )
         logger.info(f"Health thresholds: pinned v1 (id={health_thresholds.thresholds_id})")
     else:
         logger.warning(
-            f"Pinned health thresholds not found: {PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH}, "
-            f"using built-in defaults"
+            f"Pinned health thresholds not found: {PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH}, " f"using built-in defaults"
         )
         health_thresholds = DEFAULT_HEALTH_THRESHOLDS
 
@@ -7587,9 +7734,7 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
     # Check if current snapshot is degraded → suppress churn
     _churn_suppressed = is_snapshot_degraded(snap_path)
     if _churn_suppressed:
-        logger.warning(
-            "CACHE DEGRADED — churn comparisons suppressed; baselines not updated"
-        )
+        logger.warning("CACHE DEGRADED — churn comparisons suppressed; baselines not updated")
         prior = None  # force single-snapshot mode
         prior_path = None
 
@@ -7597,9 +7742,7 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
     if prior_path is not None:
         prior = load_snapshot(prior_path)
         if prior is None:
-            logger.warning(
-                f"Delta: prior {prior_path.name} incompatible, running single-snapshot mode"
-            )
+            logger.warning(f"Delta: prior {prior_path.name} incompatible, running single-snapshot mode")
 
     if prior is not None:
         logger.info(f"Delta: {current_date} vs {prior.date}")
@@ -7614,7 +7757,9 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
     if getattr(args, "ruleset", None):
         _explicit_id = current.ruleset_id  # snapshot was built with this ruleset
     health = compute_health_gate(
-        current, prior, result,
+        current,
+        prior,
+        result,
         thresholds=health_thresholds,
         expected_ruleset_id=_explicit_id,
     )
@@ -7642,6 +7787,7 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
         exposure_raw = health.metrics.get("exposure")
         if exposure_raw:
             from run_phase2_snapshot_delta import _EXPOSURE_CHECKS
+
             exposure_sidecar = {"metrics": exposure_raw, "checks": {}}
             for metric_key, warn_key, fail_key, reason in _EXPOSURE_CHECKS:
                 val = exposure_raw.get(metric_key, 0)
@@ -7654,8 +7800,10 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
                 else:
                     chk = "PASS"
                 exposure_sidecar["checks"][reason] = {
-                    "value": val, "warn_threshold": w_th,
-                    "fail_threshold": f_th, "status": chk,
+                    "value": val,
+                    "warn_threshold": w_th,
+                    "fail_threshold": f_th,
+                    "status": chk,
                 }
             exp_path = output_dir / "health_exposure_metrics.json"
             with open(exp_path, "w") as f:
@@ -7679,9 +7827,7 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
     metric_parts.append(f"catalyst={m['catalyst_coverage_pct']}%")
     metric_parts.append(f"A={m['a_count']}")
     reason_tag = f" [{', '.join(health.reasons)}]" if health.reasons else ""
-    logger.info(
-        f"PHASE2 HEALTH: {health.status} ({', '.join(metric_parts)}){reason_tag}"
-    )
+    logger.info(f"PHASE2 HEALTH: {health.status} ({', '.join(metric_parts)}){reason_tag}")
 
     # Print delta headline summary
     is_delta = hasattr(result, "entrants")
@@ -7753,20 +7899,20 @@ Module 3 Catalyst Detection:
   - IMPORTANT: Refresh trial_records.json from CT.gov before each run!
         """,
     )
-    
+
     parser.add_argument(
         "--as-of-date",
         required=True,
         help="Analysis date (YYYY-MM-DD). REQUIRED - no defaults to prevent nondeterminism.",
     )
-    
+
     parser.add_argument(
         "--data-dir",
         type=Path,
         required=True,
         help="Directory containing input data files (universe.json, financial.json, trial_records.json)",
     )
-    
+
     parser.add_argument(
         "--output",
         type=Path,
@@ -7814,7 +7960,7 @@ Module 3 Catalyst Detection:
         type=Path,
         default=None,
         help="Directory for saving validation snapshots (rankings + metadata per run). "
-             "Defaults to data-dir/../data/snapshots. Use --no-snapshot to disable.",
+        "Defaults to data-dir/../data/snapshots. Use --no-snapshot to disable.",
     )
 
     parser.add_argument(
@@ -7822,7 +7968,7 @@ Module 3 Catalyst Detection:
         type=Path,
         default=None,
         help="Directory to search for prior snapshots (for delta/shadow metrics). "
-             "Defaults to --snapshot-dir. Useful when snapshot-dir is a staging dir.",
+        "Defaults to --snapshot-dir. Useful when snapshot-dir is a staging dir.",
     )
 
     parser.add_argument(
@@ -7838,9 +7984,9 @@ Module 3 Catalyst Detection:
         default="phase2",
         choices=["observe", "actionable", "phase2"],
         help="Decision output mode: observe (default, sort by composite_rank), "
-             "actionable (sort by tier-based deterministic ordering with target weights), "
-             "or phase2 (observe + emit filtered decision_portfolio.csv/json with "
-             "A+B tier filter, top-K=20, size-band weights).",
+        "actionable (sort by tier-based deterministic ordering with target weights), "
+        "or phase2 (observe + emit filtered decision_portfolio.csv/json with "
+        "A+B tier filter, top-K=20, size-band weights).",
     )
 
     parser.add_argument(
@@ -7849,15 +7995,14 @@ Module 3 Catalyst Detection:
         default="decision",
         choices=["decision", "composite"],
         help="CSV sort order: 'decision' (default, rows sorted by DE actionable "
-             "sort key) or 'composite' (legacy, re-sort by composite_rank).",
+        "sort key) or 'composite' (legacy, re-sort by composite_rank).",
     )
 
     parser.add_argument(
         "--ruleset",
         type=Path,
         default=None,
-        help="Path to a decision engine ruleset JSON file. "
-             "If omitted, built-in defaults are used.",
+        help="Path to a decision engine ruleset JSON file. " "If omitted, built-in defaults are used.",
     )
 
     parser.add_argument(
@@ -7880,7 +8025,7 @@ Module 3 Catalyst Detection:
         default="warn",
         choices=["warn", "fail"],
         help="Alpha signal contract enforcement: 'warn' (log + continue, default) "
-             "or 'fail' (raise on missing required fields).",
+        "or 'fail' (raise on missing required fields).",
     )
 
     parser.add_argument(
@@ -7890,15 +8035,14 @@ Module 3 Catalyst Detection:
         choices=["off", "write", "verify"],
         dest="inputs_manifest",
         help="Input manifest mode: 'off' (default), 'write' (emit sidecar), "
-             "'verify' (drift-check against prior manifest, fail on hash mismatch).",
+        "'verify' (drift-check against prior manifest, fail on hash mismatch).",
     )
 
     parser.add_argument(
         "--inputs-manifest-path",
         type=Path,
         default=None,
-        help="Path to an existing inputs_manifest.json to verify against "
-             "(required when --inputs-manifest=verify).",
+        help="Path to an existing inputs_manifest.json to verify against " "(required when --inputs-manifest=verify).",
     )
 
     # --alpha-ab-diagnostics removed (alpha_modifier deprecated & inert)
@@ -7907,8 +8051,7 @@ Module 3 Catalyst Detection:
         "--replay-bundle-out",
         type=Path,
         default=None,
-        help="Write a replay_bundle.tgz after the run using the inputs manifest. "
-             "Implies --inputs-manifest=write.",
+        help="Write a replay_bundle.tgz after the run using the inputs manifest. " "Implies --inputs-manifest=write.",
     )
 
     parser.add_argument(
@@ -7922,8 +8065,7 @@ Module 3 Catalyst Detection:
         "--health-thresholds",
         type=Path,
         default=None,
-        help="Path to Phase2HealthThresholds JSON override. "
-             "If omitted, uses pinned production defaults.",
+        help="Path to Phase2HealthThresholds JSON override. " "If omitted, uses pinned production defaults.",
     )
 
     parser.add_argument(
@@ -7931,7 +8073,7 @@ Module 3 Catalyst Detection:
         type=str,
         default="auto",
         help="Prior snapshot for delta report: 'auto' (default, find most recent "
-             "compatible), 'none' (single-snapshot mode), or YYYY-MM-DD.",
+        "compatible), 'none' (single-snapshot mode), or YYYY-MM-DD.",
     )
 
     parser.add_argument(
@@ -7945,7 +8087,7 @@ Module 3 Catalyst Detection:
         action="store_true",
         default=True,
         help="Enable co-invest overlay (requires coinvest_signals.json or holdings_snapshots.json in data-dir). "
-             "Enabled by default.",
+        "Enabled by default.",
     )
 
     parser.add_argument(
@@ -7954,7 +8096,7 @@ Module 3 Catalyst Detection:
         default=True,
         dest="enable_enhancements",
         help="Enable enhancement modules (PoS, Short Interest, Regime Detection). "
-             "Enabled by default. Requires market_snapshot.json for regime detection.",
+        "Enabled by default. Requires market_snapshot.json for regime detection.",
     )
     parser.add_argument(
         "--no-enhancements",
@@ -7968,8 +8110,7 @@ Module 3 Catalyst Detection:
         action="store_true",
         default=True,
         dest="enable_short_interest",
-        help="Enable short interest signals (requires short_interest.json in data-dir). "
-             "Enabled by default.",
+        help="Enable short interest signals (requires short_interest.json in data-dir). " "Enabled by default.",
     )
     parser.add_argument(
         "--no-short-interest",
@@ -8004,7 +8145,7 @@ Module 3 Catalyst Detection:
         type=int,
         default=1,
         help="Minimum number of clinical trials required for ranking (default: 1). "
-             "Tickers with no trials are excluded from final rankings.",
+        "Tickers with no trials are excluded from final rankings.",
     )
     parser.add_argument(
         "--min-phase",
@@ -8012,7 +8153,7 @@ Module 3 Catalyst Detection:
         choices=["preclinical", "phase1", "phase2", "phase3", "approved"],
         default="preclinical",
         help="Minimum lead phase required for ranking (default: preclinical). "
-             "Tickers with earlier-phase pipelines are excluded.",
+        "Tickers with earlier-phase pipelines are excluded.",
     )
     parser.add_argument(
         "--no-clinical-filter",
@@ -8036,7 +8177,7 @@ Module 3 Catalyst Detection:
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
         default="INFO",
         help="Logging verbosity level. DEBUG prints feature coverage tables, gating reasons, "
-             "file paths, and per-component 'applied vs present' diagnostics. (default: INFO)",
+        "file paths, and per-component 'applied vs present' diagnostics. (default: INFO)",
     )
 
     parser.add_argument(
@@ -8045,7 +8186,7 @@ Module 3 Catalyst Detection:
         choices=["none", "summary", "full"],
         default="summary",
         help="Diagnostics output mode. 'summary': one-line coverage + gating counts (current behavior). "
-             "'full': dumps structured diagnostics to JSON sidecar. 'none': minimal output. (default: summary)",
+        "'full': dumps structured diagnostics to JSON sidecar. 'none': minimal output. (default: summary)",
     )
 
     parser.add_argument(
@@ -8053,7 +8194,7 @@ Module 3 Catalyst Detection:
         type=Path,
         default=None,
         help="Path for diagnostics JSON output. Only used when --diagnostics=full. "
-             "(default: <data-dir>/diagnostics_<run_id>.json)",
+        "(default: <data-dir>/diagnostics_<run_id>.json)",
     )
 
     # Catalyst tuning
@@ -8063,7 +8204,7 @@ Module 3 Catalyst Detection:
         default=None,
         metavar="START-END",
         help="Catalyst event window as 'START-END' days (e.g., '15-45'). "
-             "Events within this window are weighted highest. Overrides --catalyst-window-preset if both specified.",
+        "Events within this window are weighted highest. Overrides --catalyst-window-preset if both specified.",
     )
 
     parser.add_argument(
@@ -8080,8 +8221,8 @@ Module 3 Catalyst Detection:
         choices=["step", "linear", "exp"],
         default="step",
         help="Catalyst score decay function outside the window. "
-             "'step': binary on/off (current behavior), 'linear': gradual taper, "
-             "'exp': exponential decay with configurable half-life. (default: step)",
+        "'step': binary on/off (current behavior), 'linear': gradual taper, "
+        "'exp': exponential decay with configurable half-life. (default: step)",
     )
 
     parser.add_argument(
@@ -8097,7 +8238,7 @@ Module 3 Catalyst Detection:
         "--enable-smart-money",
         action="store_true",
         help="Enable smart money signal in composite scoring. When enabled, includes 13F institutional "
-             "momentum in coverage and gating reports even if it contributes zero.",
+        "momentum in coverage and gating reports even if it contributes zero.",
     )
 
     parser.add_argument(
@@ -8106,14 +8247,14 @@ Module 3 Catalyst Detection:
         choices=["13f", "internal", "auto"],
         default="auto",
         help="Smart money data source. '13f': force 13F file paths, 'internal': alternative feed, "
-             "'auto': current behavior (search multiple locations). (default: auto)",
+        "'auto': current behavior (search multiple locations). (default: auto)",
     )
 
     parser.add_argument(
         "--debug-smart-money",
         action="store_true",
         help="Print detailed smart money diagnostics: file paths resolved, rows loaded, "
-             "ticker universe overlap, and gating reason counts.",
+        "ticker universe overlap, and gating reason counts.",
     )
 
     # Scoring mode
@@ -8123,9 +8264,9 @@ Module 3 Catalyst Detection:
         choices=["baker_style", "legacy", "enhanced", "default"],
         default="baker_style",
         help="Scoring mode. 'baker_style' (DEFAULT): fundamental-concentrated mode with thesis-first "
-             "weighting, conviction×timing reinforcement, and thesis gating. "
-             "'legacy': pre-baker mode with PoS but no thesis gating (alias: 'enhanced'). "
-             "'default': auto-select based on data availability.",
+        "weighting, conviction×timing reinforcement, and thesis gating. "
+        "'legacy': pre-baker mode with PoS but no thesis gating (alias: 'enhanced'). "
+        "'default': auto-select based on data availability.",
     )
 
     # SEC 8-K live fetch
@@ -8133,7 +8274,7 @@ Module 3 Catalyst Detection:
         "--sec-8k-live",
         action="store_true",
         help="Run SEC 8-K catalyst collector in live mode (fetches from EDGAR). "
-             "Only allowed when --as-of-date equals today (PIT safety).",
+        "Only allowed when --as-of-date equals today (PIT safety).",
     )
     parser.add_argument(
         "--sec-multi-form-mode",
@@ -8162,7 +8303,7 @@ Module 3 Catalyst Detection:
         "--enable-clustering",
         action="store_true",
         help="Enable correlation/indication clustering. Adds cluster_id and cluster_size "
-             "to output (does not affect ranks/scores).",
+        "to output (does not affect ranks/scores).",
     )
 
     parser.add_argument(
@@ -8171,8 +8312,8 @@ Module 3 Catalyst Detection:
         choices=["indication", "returns", "auto"],
         default="indication",
         help="Clustering method. 'indication': group by therapeutic indication (fast, safe). "
-             "'returns': correlation-based (O(N^2), requires price history). "
-             "'auto': try returns, fallback to indication. (default: indication)",
+        "'returns': correlation-based (O(N^2), requires price history). "
+        "'auto': try returns, fallback to indication. (default: indication)",
     )
 
     parser.add_argument(
@@ -8206,14 +8347,14 @@ Module 3 Catalyst Detection:
         type=str,
         default=None,
         help="Optional PIT defensive features cache file (defensive_features_<AS_OF>.json). "
-             "If provided, fills missing defensive_features only (no recompute).",
+        "If provided, fills missing defensive_features only (no recompute).",
     )
     parser.add_argument(
         "--enable-position-sizing",
         action="store_true",
         default=False,
         help="Enable v2 position sizing using multi-horizon blended risk metrics. "
-             "Requires v2 defensive cache (cache_version 2.0.0).",
+        "Requires v2 defensive cache (cache_version 2.0.0).",
     )
 
     parser.add_argument(
@@ -8222,8 +8363,8 @@ Module 3 Catalyst Detection:
         choices=["strict", "degrade"],
         default="strict",
         help="PIT enforcement mode for trial_records. "
-             "strict (default): fail if data is from the future. "
-             "degrade: fall back to calendar-only catalysts with confidence downgrade.",
+        "strict (default): fail if data is from the future. "
+        "degrade: fall back to calendar-only catalysts with confidence downgrade.",
     )
 
     # Module 5 calibrated weights
@@ -8233,17 +8374,17 @@ Module 3 Catalyst Detection:
         default=None,
         metavar="PATH",
         help="Path to calibrated Module 5 weights JSON (e.g., data/module5_weights_m3.json). "
-             "When provided, overrides default component weights. Allows negative weights. "
-             "If file is missing or invalid, falls back to defaults with a warning.",
+        "When provided, overrides default component weights. Allows negative weights. "
+        "If file is missing or invalid, falls back to defaults with a warning.",
     )
     parser.add_argument(
         "--module5-weights-mode",
         choices=["global", "regime", "blended"],
         default="global",
         help="Weight selection mode: 'global' uses global weights (default, safe), "
-             "'regime' uses pure regime-specific weights with global fallback, "
-             "'blended' uses alpha-blended regime+global weights. "
-             "Requires schema_version=2 bundle JSON for regime/blended modes.",
+        "'regime' uses pure regime-specific weights with global fallback, "
+        "'blended' uses alpha-blended regime+global weights. "
+        "Requires schema_version=2 bundle JSON for regime/blended modes.",
     )
 
     # Snapshot sanity checks
@@ -8251,7 +8392,7 @@ Module 3 Catalyst Detection:
         "--compare-snapshots",
         action="store_true",
         help="Run hash + field-diff summary between current and prior CT.gov snapshots, "
-             "even if diff-events are zero. Outputs file paths, line counts, SHA256, and field changes.",
+        "even if diff-events are zero. Outputs file paths, line counts, SHA256, and field changes.",
     )
 
     parser.add_argument(
@@ -8260,7 +8401,7 @@ Module 3 Catalyst Detection:
         default=None,
         metavar="YYYY-MM-DD",
         help="Override prior snapshot date for comparison (useful on weekends/missed runs). "
-             "Default: day before --as-of-date.",
+        "Default: day before --as-of-date.",
     )
 
     # Input freshness verification
@@ -8270,7 +8411,7 @@ Module 3 Catalyst Detection:
         default=None,
         metavar="PREV_SCREEN.json",
         help="Compare current input file hashes against a previous screen result JSON. "
-             "Emits warnings for any changed or new input files.",
+        "Emits warnings for any changed or new input files.",
     )
 
     # Coverage / ranking controls
@@ -8280,7 +8421,7 @@ Module 3 Catalyst Detection:
         default=None,
         metavar="0..1",
         help="Minimum fraction of components required for a ticker to be rankable. "
-             "E.g., 0.6 means ticker must have >=60%% of components applied.",
+        "E.g., 0.6 means ticker must have >=60%% of components applied.",
     )
 
     parser.add_argument(
@@ -8289,7 +8430,7 @@ Module 3 Catalyst Detection:
         choices=["applied", "present"],
         default="applied",
         help="Coverage counting mode. 'applied': respects confidence gating (recommended), "
-             "'present': counts all present components regardless of gating. (default: applied)",
+        "'present': counts all present components regardless of gating. (default: applied)",
     )
 
     args = parser.parse_args()
@@ -8332,7 +8473,9 @@ Module 3 Catalyst Detection:
             parser.error(str(e))
     else:
         catalyst_window = CATALYST_WINDOW_PRESETS[args.catalyst_window_preset]
-        logger.debug(f"Using catalyst window preset '{args.catalyst_window_preset}': {catalyst_window[0]}-{catalyst_window[1]} days")
+        logger.debug(
+            f"Using catalyst window preset '{args.catalyst_window_preset}': {catalyst_window[0]}-{catalyst_window[1]} days"
+        )
 
     # Log if explicit window overrides preset
     if args.catalyst_window and args.catalyst_window_preset != "standard":
@@ -8357,6 +8500,7 @@ Module 3 Catalyst Detection:
     # Validate --sec-8k-live PIT safety: only allowed when as_of_date == today
     if args.sec_8k_live:
         from datetime import date as _date
+
         if args.as_of_date != _date.today().isoformat():
             parser.error(
                 f"--sec-8k-live is only allowed when --as-of-date equals today "
@@ -8499,10 +8643,10 @@ Module 3 Catalyst Detection:
             cluster_method=args.cluster_method,
             cluster_threshold=args.cluster_threshold,
             # Defensive overlay parameters (OFF by default unless --apply-defensive-multiplier)
-            apply_defensive_multiplier=getattr(args, 'apply_defensive_multiplier', False),
+            apply_defensive_multiplier=getattr(args, "apply_defensive_multiplier", False),
             defensive_config=args.defensive_config,
             defensive_cache=args.defensive_cache,
-            enable_position_sizing=getattr(args, 'enable_position_sizing', False),
+            enable_position_sizing=getattr(args, "enable_position_sizing", False),
             pit_mode=args.pit_mode,
             output_dir=args.output_dir if args.output_dir else args.data_dir,
             sec_8k_mode=("live" if args.sec_8k_live else "cache_only"),
@@ -8536,27 +8680,25 @@ Module 3 Catalyst Detection:
         # Production validation (non-blocking, warnings only)
         try:
             validation_config = {
-                'cash_target': str(getattr(args, 'cash_target', '0.10')),
-                'top_n': getattr(args, 'top_n', None),
+                "cash_target": str(getattr(args, "cash_target", "0.10")),
+                "top_n": getattr(args, "top_n", None),
             }
-            validation_result = validate_screening_output(
-                results,
-                args.as_of_date,
-                validation_config
-            )
-            results['production_validation'] = {
-                'passed': validation_result['passed'],
-                'failure_reasons': validation_result.get('failure_reasons', []),
-                'config': validation_config,
+            validation_result = validate_screening_output(results, args.as_of_date, validation_config)
+            results["production_validation"] = {
+                "passed": validation_result["passed"],
+                "failure_reasons": validation_result.get("failure_reasons", []),
+                "config": validation_config,
             }
-            if not validation_result['passed']:
-                logger.warning(f"[VALIDATION] Some production validation checks failed: {validation_result.get('failure_reasons', [])}")
+            if not validation_result["passed"]:
+                logger.warning(
+                    f"[VALIDATION] Some production validation checks failed: {validation_result.get('failure_reasons', [])}"
+                )
         except Exception as e:
             logger.warning(f"[VALIDATION] Production validation error (non-blocking): {e}")
-            results['production_validation'] = {
-                'passed': None,
-                'failure_reasons': [],
-                'error': str(e),
+            results["production_validation"] = {
+                "passed": None,
+                "failure_reasons": [],
+                "error": str(e),
             }
 
         # Write output
@@ -8588,7 +8730,7 @@ Module 3 Catalyst Detection:
             logger.info(f"Regime confidence:  {summary.get('regime_confidence', 'N/A')}")
             logger.info(f"PoS mapped:         {summary.get('pos_indication_coverage', 'N/A')}")
             logger.info(f"PoS effective:      {summary.get('pos_effective_coverage', 'N/A')}")
-            if args.enable_short_interest or summary.get('short_interest_coverage'):
+            if args.enable_short_interest or summary.get("short_interest_coverage"):
                 logger.info(f"SI coverage:        {summary.get('short_interest_coverage', 'N/A')}")
         if args.checkpoint_dir:
             logger.info(f"Checkpoints:        {args.checkpoint_dir}")
@@ -8604,8 +8746,10 @@ Module 3 Catalyst Detection:
                 logger.error(f"Phase-2 pinned ruleset not found: {PHASE2_DEFAULT_RULESET_PATH}")
                 return 1
             de_ruleset = DecisionRuleset.from_json(str(PHASE2_DEFAULT_RULESET_PATH))
-            logger.info(f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} "
-                        f"from {PHASE2_DEFAULT_RULESET_PATH.name}")
+            logger.info(
+                f"Phase-2 mode: loaded pinned ruleset {de_ruleset.ruleset_id} "
+                f"from {PHASE2_DEFAULT_RULESET_PATH.name}"
+            )
         else:
             de_ruleset = DEFAULT_RULESET
 
@@ -8656,9 +8800,7 @@ Module 3 Catalyst Detection:
                     try:
                         _mkt_records = json.loads(_mkt_path.read_text())
                         _mkt_data_for_snapshot = {
-                            r["ticker"].upper(): r
-                            for r in _mkt_records
-                            if isinstance(r, dict) and "ticker" in r
+                            r["ticker"].upper(): r for r in _mkt_records if isinstance(r, dict) and "ticker" in r
                         }
                     except Exception as e:
                         logger.warning(f"Could not load market_data for cost sizing: {e}")
@@ -8709,10 +8851,7 @@ Module 3 Catalyst Detection:
                         logger.warning("[REPLAY BUNDLE] No inputs_manifest in results — skipping bundle creation")
 
                 # Phase-2 delta report hook
-                if (
-                    args.decision_mode == "phase2"
-                    and not getattr(args, "no_delta", False)
-                ):
+                if args.decision_mode == "phase2" and not getattr(args, "no_delta", False):
                     health = _run_phase2_delta(snap_result, snapshot_dir, args, logger)
                     if health is not None and getattr(args, "strict", False):
                         if health.status == "FAIL":
