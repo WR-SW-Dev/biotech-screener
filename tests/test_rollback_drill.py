@@ -16,22 +16,12 @@ import csv
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-import pytest
+from typing import Dict, List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from rollback_drill import (
-    _build_reasons,
-    _find_lkg,
-    run_drill,
-    render_markdown,
-    render_text,
-    write_drill_artifacts,
-)
-
+from rollback_drill import _build_reasons, _find_lkg, render_markdown, render_text, run_drill, write_drill_artifacts
 
 # ---------------------------------------------------------------------------
 # Fixtures / helpers
@@ -47,20 +37,24 @@ _LKG_FILE = "v1.8.2_clinical_sort_off_candidate.json"
 def _make_manifest(lkg_present: bool = True) -> Dict:
     rulesets = []
     if lkg_present:
-        rulesets.append({
-            "id": _LKG_ID,
-            "status": "retired",
-            "file": _LKG_FILE,
-            "description": "LKG ruleset",
-            "updated_by": "promote_ruleset.py --rollback",
-        })
-    rulesets.append({
-        "id": _ACTIVE_ID,
-        "status": "active",
-        "file": _ACTIVE_FILE,
-        "description": "Active ruleset",
-        "updated_by": "promote_ruleset.py",
-    })
+        rulesets.append(
+            {
+                "id": _LKG_ID,
+                "status": "retired",
+                "file": _LKG_FILE,
+                "description": "LKG ruleset",
+                "updated_by": "promote_ruleset.py --rollback",
+            }
+        )
+    rulesets.append(
+        {
+            "id": _ACTIVE_ID,
+            "status": "active",
+            "file": _ACTIVE_FILE,
+            "description": "Active ruleset",
+            "updated_by": "promote_ruleset.py",
+        }
+    )
     return {"rulesets": rulesets}
 
 
@@ -87,8 +81,6 @@ def _ruleset_dict(ruleset_id: str) -> Dict:
         "catalyst_priority_mode": "off",
         "coinvest_sort_weight": 0.0,
         "coinvest_positive_only": True,
-        "alpha_modifier_mode": "off",
-        "alpha_modifier_weight": 0.0,
         "alpha_cohort_sort_weight": 0.0,
         "enable_calendar_alpha_sort": True,
         "calendar_alpha_sort_weight": 0.3,
@@ -110,35 +102,54 @@ def _write_ruleset(rulesets_dir: Path, filename: str, ruleset_id: str) -> None:
 def _write_rankings_csv(path: Path, n: int = 30) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=["ticker", "optionality_pct", "eligible",
-                                           "alpha_cohort_pct", "alpha_raw",
-                                           "tier_dev", "composite_rank"])
+        w = csv.DictWriter(
+            f,
+            fieldnames=[
+                "ticker",
+                "optionality_pct",
+                "eligible",
+                "alpha_cohort_pct",
+                "alpha_raw",
+                "tier_dev",
+                "composite_rank",
+            ],
+        )
         w.writeheader()
         for i in range(1, n + 1):
-            w.writerow({
-                "ticker": f"T{i:03d}",
-                "optionality_pct": str(round((n - i) / n, 4)),
-                "eligible": "1",
-                "alpha_cohort_pct": str(round((n - i) / n, 4)),
-                "alpha_raw": "0.5",
-                "tier_dev": "A",
-                "composite_rank": str(i),
-            })
+            w.writerow(
+                {
+                    "ticker": f"T{i:03d}",
+                    "optionality_pct": str(round((n - i) / n, 4)),
+                    "eligible": "1",
+                    "alpha_cohort_pct": str(round((n - i) / n, 4)),
+                    "alpha_raw": "0.5",
+                    "tier_dev": "A",
+                    "composite_rank": str(i),
+                }
+            )
 
 
-def _write_ruleset_health(snap_dir: Path, recommend: bool = False,
-                           consecutive: int = 0, status: str = "OK",
-                           warn_reasons: Optional[List[str]] = None) -> None:
+def _write_ruleset_health(
+    snap_dir: Path,
+    recommend: bool = False,
+    consecutive: int = 0,
+    status: str = "OK",
+    warn_reasons: Optional[List[str]] = None,
+) -> None:
     snap_dir.mkdir(parents=True, exist_ok=True)
-    (snap_dir / "ruleset_health.json").write_text(json.dumps({
-        "schema": "ruleset_health.v1",
-        "active_ruleset_id": _ACTIVE_ID,
-        "status": status,
-        "consecutive_warn_days": consecutive,
-        "recommend_rollback": recommend,
-        "detail": "test",
-        "warn_reasons": warn_reasons or [],
-    }))
+    (snap_dir / "ruleset_health.json").write_text(
+        json.dumps(
+            {
+                "schema": "ruleset_health.v1",
+                "active_ruleset_id": _ACTIVE_ID,
+                "status": status,
+                "consecutive_warn_days": consecutive,
+                "recommend_rollback": recommend,
+                "detail": "test",
+                "warn_reasons": warn_reasons or [],
+            }
+        )
+    )
 
 
 def _setup_env(
@@ -167,8 +178,7 @@ def _setup_env(
         snap_dir = snap_root / date
         snap_dir.mkdir(parents=True)
         _write_rankings_csv(snap_dir / "rankings.csv")
-        _write_ruleset_health(snap_dir, recommend=recommend_rollback,
-                               consecutive=consecutive_warns)
+        _write_ruleset_health(snap_dir, recommend=recommend_rollback, consecutive=consecutive_warns)
 
     monkeypatch.setattr(rd, "SNAPSHOTS_ROOT", snap_root)
     monkeypatch.setattr(rd, "MANIFEST_PATH", manifest_path)
@@ -179,6 +189,7 @@ def _setup_env(
 # _find_lkg
 # ---------------------------------------------------------------------------
 
+
 class TestFindLkg:
     def test_finds_last_retired_promoted(self):
         manifest = _make_manifest(lkg_present=True)
@@ -187,16 +198,20 @@ class TestFindLkg:
         assert result["id"] == _LKG_ID
 
     def test_returns_none_when_no_retired_promoted(self):
-        manifest = {"rulesets": [
-            {"id": "abc", "status": "active", "updated_by": "promote_ruleset.py"},
-        ]}
+        manifest = {
+            "rulesets": [
+                {"id": "abc", "status": "active", "updated_by": "promote_ruleset.py"},
+            ]
+        }
         assert _find_lkg(manifest) is None
 
     def test_skips_non_promoted_retired(self):
-        manifest = {"rulesets": [
-            {"id": "xyz", "status": "retired", "updated_by": "manual"},
-            {"id": "abc", "status": "active", "updated_by": "promote_ruleset.py"},
-        ]}
+        manifest = {
+            "rulesets": [
+                {"id": "xyz", "status": "retired", "updated_by": "manual"},
+                {"id": "abc", "status": "active", "updated_by": "promote_ruleset.py"},
+            ]
+        }
         assert _find_lkg(manifest) is None
 
 
@@ -204,10 +219,10 @@ class TestFindLkg:
 # _build_reasons
 # ---------------------------------------------------------------------------
 
+
 class TestBuildReasons:
     def _healthy_rh(self) -> Dict:
-        return {"recommend_rollback": False, "consecutive_warn_days": 0,
-                "warn_reasons": []}
+        return {"recommend_rollback": False, "consecutive_warn_days": 0, "warn_reasons": []}
 
     def test_no_reasons_when_all_healthy(self):
         cross = {"mean_top20_overlap": 98.0, "mean_top60_overlap": 95.0}
@@ -236,8 +251,7 @@ class TestBuildReasons:
         assert reasons == []
 
     def test_warn_reasons_from_rh_propagated(self):
-        rh = {"recommend_rollback": True, "consecutive_warn_days": 3,
-              "warn_reasons": ["top60_overlap 78% < floor"]}
+        rh = {"recommend_rollback": True, "consecutive_warn_days": 3, "warn_reasons": ["top60_overlap 78% < floor"]}
         reasons = _build_reasons(rh, {}, n_evaluated=0)
         assert any("top60_overlap" in r for r in reasons)
 
@@ -246,10 +260,10 @@ class TestBuildReasons:
 # run_drill (integration)
 # ---------------------------------------------------------------------------
 
+
 class TestRunDrill:
     def test_no_rollback_healthy(self, tmp_path, monkeypatch):
-        _setup_env(tmp_path, ["2026-03-01", "2026-03-03", "2026-03-05"],
-                   monkeypatch=monkeypatch)
+        _setup_env(tmp_path, ["2026-03-01", "2026-03-03", "2026-03-05"], monkeypatch=monkeypatch)
         drill = run_drill("2026-03-05", n_snapshots=5)
         assert drill["recommended"] is False
         assert drill["reasons"] == []
@@ -257,17 +271,26 @@ class TestRunDrill:
         assert drill["lkg"]["id"] == _LKG_ID
 
     def test_rollback_from_health_flag(self, tmp_path, monkeypatch):
-        _setup_env(tmp_path, ["2026-03-03", "2026-03-05"],
-                   recommend_rollback=True, consecutive_warns=3,
-                   monkeypatch=monkeypatch)
+        _setup_env(
+            tmp_path,
+            ["2026-03-03", "2026-03-05"],
+            recommend_rollback=True,
+            consecutive_warns=3,
+            monkeypatch=monkeypatch,
+        )
         drill = run_drill("2026-03-05")
         assert drill["recommended"] is True
         assert any("3 consecutive" in r for r in drill["reasons"])
 
     def test_no_lkg_cross_error_but_health_works(self, tmp_path, monkeypatch):
-        _setup_env(tmp_path, ["2026-03-05"],
-                   lkg_present=False, recommend_rollback=True, consecutive_warns=3,
-                   monkeypatch=monkeypatch)
+        _setup_env(
+            tmp_path,
+            ["2026-03-05"],
+            lkg_present=False,
+            recommend_rollback=True,
+            consecutive_warns=3,
+            monkeypatch=monkeypatch,
+        )
         drill = run_drill("2026-03-05")
         assert drill["cross_compare"]["error"] is not None
         assert drill["recommended"] is True  # health flag still fires
@@ -298,6 +321,7 @@ class TestRunDrill:
 # ---------------------------------------------------------------------------
 # render_text
 # ---------------------------------------------------------------------------
+
 
 class TestRenderText:
     def _drill(self, recommended: bool, reasons: Optional[List[str]] = None) -> Dict:
@@ -357,6 +381,7 @@ class TestRenderText:
 # ---------------------------------------------------------------------------
 # render_markdown + write_drill_artifacts
 # ---------------------------------------------------------------------------
+
 
 class TestRenderMarkdown:
     def _drill(self, recommended: bool) -> Dict:
@@ -431,12 +456,25 @@ class TestWriteDrillArtifacts:
             "generated_at": "2026-03-05T12:00:00+00:00",
             "active": {"id": _ACTIVE_ID, "file": _ACTIVE_FILE, "description": ""},
             "lkg": {"id": _LKG_ID, "file": _LKG_FILE, "description": ""},
-            "ruleset_health": {"status": "OK", "consecutive_warn_days": 0,
-                               "recommend_rollback": False, "detail": "", "warn_reasons": []},
-            "cross_compare": {"window": [], "n_snapshots_requested": 5, "n_evaluated": 0,
-                              "n_skipped": 0, "mean_top20_overlap_pct": None,
-                              "mean_top60_overlap_pct": None, "worst_top60_overlap_pct": None,
-                              "mean_spearman": None, "mean_pct_rank_changed": None, "error": None},
+            "ruleset_health": {
+                "status": "OK",
+                "consecutive_warn_days": 0,
+                "recommend_rollback": False,
+                "detail": "",
+                "warn_reasons": [],
+            },
+            "cross_compare": {
+                "window": [],
+                "n_snapshots_requested": 5,
+                "n_evaluated": 0,
+                "n_skipped": 0,
+                "mean_top20_overlap_pct": None,
+                "mean_top60_overlap_pct": None,
+                "worst_top60_overlap_pct": None,
+                "mean_spearman": None,
+                "mean_pct_rank_changed": None,
+                "error": None,
+            },
             "reasons": [],
             "recommended": recommended,
         }

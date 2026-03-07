@@ -26,24 +26,25 @@ import statistics
 import sys
 from collections import Counter
 from copy import deepcopy
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
+from dataclasses import fields as dc_fields
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.ranking_utils import backfill_columns, safe_float as _safe_float
+from common.ranking_utils import backfill_columns
+from common.ranking_utils import safe_float as _safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-
 
 # ---------------------------------------------------------------------------
 # Constants / gate thresholds
 # ---------------------------------------------------------------------------
-GATE_TOP60_OVERLAP_MIN = 0.90        # per-date floor
-GATE_MEAN_TOP60_OVERLAP_MIN = 0.93   # aggregate floor
-GATE_MAX_RANK_SHIFT = 30             # per-date cap
-GATE_TIER_A_REGRESSION_MAX = 2       # max loss of tier-A in modified top60
+GATE_TOP60_OVERLAP_MIN = 0.90  # per-date floor
+GATE_MEAN_TOP60_OVERLAP_MIN = 0.93  # aggregate floor
+GATE_MAX_RANK_SHIFT = 30  # per-date cap
+GATE_TIER_A_REGRESSION_MAX = 2  # max loss of tier-A in modified top60
 
 MIN_COLS_FOR_SCHEMA = 70  # skip snapshots with old schema
 
@@ -52,30 +53,35 @@ MIN_COLS_FOR_SCHEMA = 70  # skip snapshots with old schema
 # Core: rerank and compare
 # ---------------------------------------------------------------------------
 
+
 def _rerank_with_ruleset(
     rows: List[Dict[str, str]],
     ruleset: DecisionRuleset,
 ) -> Dict[str, int]:
     """Sort rows by *ruleset* and return {ticker: rank} for eligible rows."""
     backfill_columns(rows)
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            _safe_float(r.get("alpha_cohort_pct"))
-            if ruleset.sort_anchor == "alpha_cohort"
-            else (_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-        alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                _safe_float(r.get("alpha_cohort_pct"))
+                if ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+            alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
+        )
+    )
     ranks: Dict[str, int] = {}
     rank = 0
     for r in rows:
@@ -86,16 +92,15 @@ def _rerank_with_ruleset(
 
 
 def _build_baseline_ruleset(candidate: DecisionRuleset) -> DecisionRuleset:
-    """Copy *candidate* with alpha_modifier forced off."""
+    """Copy *candidate* as baseline (alpha_modifier fields removed in v1.4.0)."""
     kwargs = {f.name: getattr(candidate, f.name) for f in dc_fields(candidate)}
-    kwargs["alpha_modifier_mode"] = "off"
-    kwargs["alpha_modifier_weight"] = 0.0
     return DecisionRuleset(**kwargs)
 
 
 @dataclass
 class DateABResult:
     """Per-date A/B comparison result."""
+
     date: str
     n_eligible: int
     n_alpha_nonzero: int
@@ -130,9 +135,7 @@ def rerank_and_compare(
 
     # Alpha coverage
     n_alpha_nonzero = sum(
-        1 for r in rows
-        if r.get("eligible") == "1"
-        and (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0
+        1 for r in rows if r.get("eligible") == "1" and (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0
     )
 
     # Rank shifts
@@ -192,9 +195,11 @@ def rerank_and_compare(
 # Aggregate + gate verdict
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PromotionVerdict:
     """Aggregate gate verdict across all dates."""
+
     n_dates: int
     n_flagged: int
     mean_overlap: float
@@ -209,8 +214,13 @@ def compute_verdict(results: List[DateABResult]) -> PromotionVerdict:
     """Aggregate per-date results into a promotion verdict."""
     if not results:
         return PromotionVerdict(
-            n_dates=0, n_flagged=0, mean_overlap=0.0, min_overlap=0.0,
-            max_max_shift=0, mean_pct_changed=0.0, promote=False,
+            n_dates=0,
+            n_flagged=0,
+            mean_overlap=0.0,
+            min_overlap=0.0,
+            max_max_shift=0,
+            mean_pct_changed=0.0,
+            promote=False,
             reasons=["no dates evaluated"],
         )
 
@@ -247,6 +257,7 @@ def compute_verdict(results: List[DateABResult]) -> PromotionVerdict:
 # Output
 # ---------------------------------------------------------------------------
 
+
 def format_checklist(
     results: List[DateABResult],
     verdict: PromotionVerdict,
@@ -257,8 +268,6 @@ def format_checklist(
         "# Alpha Modifier Promotion Checklist",
         "",
         f"Candidate ruleset: {candidate.ruleset_id}",
-        f"  alpha_modifier_mode = {candidate.alpha_modifier_mode}",
-        f"  alpha_modifier_weight = {candidate.alpha_modifier_weight}",
         f"  alpha_train_mode = {candidate.alpha_train_mode}",
         f"  alpha_train_horizon = {candidate.alpha_train_horizon}",
         "",
@@ -281,8 +290,8 @@ def format_checklist(
         "",
         "## Aggregate",
         "",
-        f"| Metric            | Value  | Gate       |",
-        f"|-------------------|--------|------------|",
+        "| Metric            | Value  | Gate       |",
+        "|-------------------|--------|------------|",
         f"| Dates evaluated   | {verdict.n_dates:6d} |            |",
         f"| Mean overlap      | {verdict.mean_overlap:.4f} | >= {GATE_MEAN_TOP60_OVERLAP_MIN:.2f}   |",
         f"| Min overlap       | {verdict.min_overlap:.4f} | >= {GATE_TOP60_OVERLAP_MIN:.2f}   |",
@@ -313,6 +322,7 @@ def write_results_json(
 ) -> None:
     """Write machine-readable results JSON."""
     from dataclasses import asdict
+
     data = {
         "per_date": [asdict(r) for r in results],
         "verdict": asdict(verdict),
@@ -332,6 +342,7 @@ def write_results_json(
 # ---------------------------------------------------------------------------
 # Discovery + main loop
 # ---------------------------------------------------------------------------
+
 
 def discover_eligible_dates(
     snapshot_root: Path,
@@ -393,30 +404,33 @@ def run_promotion_check(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Alpha modifier A/B promotion checklist",
     )
     parser.add_argument(
-        "--candidate", type=Path, required=True,
+        "--candidate",
+        type=Path,
+        required=True,
         help="Path to candidate ruleset JSON",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
     )
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--out-dir", type=Path,
+        "--out-dir",
+        type=Path,
         default=PROJECT_ROOT / "output" / "alpha_modifier_promotion",
     )
     args = parser.parse_args()
 
     candidate = DecisionRuleset.from_json(str(args.candidate))
-    print(f"Candidate: {candidate.ruleset_id}  "
-          f"mode={candidate.alpha_modifier_mode}  "
-          f"weight={candidate.alpha_modifier_weight}")
+    print(f"Candidate: {candidate.ruleset_id}  " f"anchor={candidate.sort_anchor}")
 
     results, verdict = run_promotion_check(
         snapshot_root=args.snapshot_root,

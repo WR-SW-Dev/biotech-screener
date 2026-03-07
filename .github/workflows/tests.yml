@@ -139,7 +139,7 @@ jobs:
             --cov-report=term-missing:skip-covered \
             --cov-report=html:coverage-html \
             --cov-report=xml:coverage.xml \
-            --cov-fail-under=50
+            --cov-fail-under=55
 
       - name: Coverage summary
         if: always()

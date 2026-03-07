@@ -17,19 +17,21 @@ Data sources on each rec:
   - rec["momentum_signal"]     → alpha_60d (fallback)
   - rec["fundamental_red_flag"] / rec["severity"] / rec["confidence_overall"]
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
+from dataclasses import fields as dc_fields
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 from decision_engine_codes import canonicalize_reasons
 
-
 # =============================================================================
 # RULESET CONFIGURATION
 # =============================================================================
+
 
 @dataclass(frozen=True)
 class DecisionRuleset:
@@ -38,11 +40,12 @@ class DecisionRuleset:
     Frozen so instances are hashable and can produce a deterministic ruleset_id.
     All defaults match the original v1.0.0 hardcoded values.
     """
+
     # Layer 0 — Eligibility
     drawdown_gate: float = -0.40
-    drawdown_gate_mode: str = "hard"      # "hard" (v1 behavior) or "soft" (sizing penalty)
-    drawdown_size_penalty: int = -1       # band steps to subtract when soft + breached
-    drawdown_hard_floor: float = -0.75    # hard-exclude even in soft mode if below this
+    drawdown_gate_mode: str = "hard"  # "hard" (v1 behavior) or "soft" (sizing penalty)
+    drawdown_size_penalty: int = -1  # band steps to subtract when soft + breached
+    drawdown_hard_floor: float = -0.75  # hard-exclude even in soft mode if below this
     financials_missing_bypass_market_cap: float = 0.0  # USD raw; 0 = disabled
 
     # Layer 2 — Risk flag thresholds
@@ -63,10 +66,10 @@ class DecisionRuleset:
     # Previously hardcoded inline values
     catalyst_near_days: int = 90
     catalyst_mid_days: int = 180
-    catalyst_time_decay_mode: str = "hard"           # "hard" | "logistic"
-    sparse_signal_mode: str = "legacy"               # "legacy" | "exclude_missing"
-    catalyst_logistic_midpoint_days: int = 150        # sigmoid center
-    catalyst_logistic_scale_days: float = 30.0        # sigmoid steepness
+    catalyst_time_decay_mode: str = "hard"  # "hard" | "logistic"
+    sparse_signal_mode: str = "legacy"  # "legacy" | "exclude_missing"
+    catalyst_logistic_midpoint_days: int = 150  # sigmoid center
+    catalyst_logistic_scale_days: float = 30.0  # sigmoid steepness
     sponsor_confirm_threshold: int = 2
 
     # Regime-aware drawdown gate
@@ -89,16 +92,16 @@ class DecisionRuleset:
 
     # Layer 3 — Catalyst strength sizing tilt (opt-in, multiplicative on weight)
     enable_catalyst_tilt: bool = False
-    catalyst_tilt_mults: tuple = (
-        ("NEAR", 1.10), ("MID", 1.05), ("FAR", 0.95), ("MISSING", 0.90)
-    )
+    catalyst_tilt_mults: tuple = (("NEAR", 1.10), ("MID", 1.05), ("FAR", 0.95), ("MISSING", 0.90))
 
     # Layer 3 — Momentum state sizing tilt (opt-in, multiplicative on weight)
     # NOTE: default multipliers are all 1.0 (identity) — enabling this flag
     # without setting non-trivial multipliers has zero behavioral effect.
     enable_mom_state_tilt: bool = False
     mom_state_tilt_mults: tuple = (
-        ("tailwind", 1.0), ("neutral", 1.0), ("headwind", 1.0),
+        ("tailwind", 1.0),
+        ("neutral", 1.0),
+        ("headwind", 1.0),
     )
 
     # Missingness penalties (opt-in, default off — tracking always on)
@@ -119,9 +122,9 @@ class DecisionRuleset:
     # following the clinical_sort_signal pattern.  Positive-only: only
     # boosts high-conviction names, never penalises zero-coinvest.
     enable_coinvest_sort_signal: bool = False
-    coinvest_sort_weight: float = 0.5          # scale factor (lower than clinical — advisory signal)
-    coinvest_positive_only: bool = True         # only boost, never penalise
-    coinvest_score_mode: str = "tier1_count"   # "tier1_count" (others deferred)
+    coinvest_sort_weight: float = 0.5  # scale factor (lower than clinical — advisory signal)
+    coinvest_positive_only: bool = True  # only boost, never penalise
+    coinvest_score_mode: str = "tier1_count"  # "tier1_count" (others deferred)
 
     # Institutional delta sort tilt (opt-in, default OFF)
     # When enabled, blends net_elite_holders_delta z-score into sort anchor,
@@ -141,11 +144,11 @@ class DecisionRuleset:
     enable_clinical_sizing: bool = False
 
     # Far-horizon catalyst (opt-in, off by default; set far_window_days > 0 to enable)
-    far_window_days: int = 0                          # max PCD horizon for far_window mode (0 = off)
-    far_window_decay_mult: float = 0.15               # catalyst_decay_w for far_window tickers
+    far_window_days: int = 0  # max PCD horizon for far_window mode (0 = off)
+    far_window_decay_mult: float = 0.15  # catalyst_decay_w for far_window tickers
 
     # Sort anchor (default composite_rank = current behavior)
-    sort_anchor: str = "composite_rank"               # "composite_rank" | "optionality_pct" | "alpha_cohort"
+    sort_anchor: str = "composite_rank"  # "composite_rank" | "optionality_pct" | "alpha_cohort"
 
     # Alpha cohort scoring (opt-in via sort_anchor="alpha_cohort")
     alpha_cohort_table_path: str = "production_data/alpha_cohort_tables/v1.json"
@@ -154,18 +157,18 @@ class DecisionRuleset:
     alpha_cohort_clip_max: float = 0.10
 
     # Alpha cohort training configuration (adaptive alpha)
-    alpha_train_mode: str = "trailing-6"      # "expanding" | "trailing-N" | "decay-H"
-    alpha_train_min_train_dates: int = 6      # minimum training dates (>= 2)
-    alpha_train_horizon: int = 84             # forward horizon in trading days (63|84|126)
-    alpha_table_rebuild_policy: str = "never" # "never" | "if_missing" | "daily"
+    alpha_train_mode: str = "trailing-6"  # "expanding" | "trailing-N" | "decay-H"
+    alpha_train_min_train_dates: int = 6  # minimum training dates (>= 2)
+    alpha_train_horizon: int = 84  # forward horizon in trading days (63|84|126)
+    alpha_table_rebuild_policy: str = "never"  # "never" | "if_missing" | "daily"
 
     # Composite engine (default legacy = Module 5 composite scoring)
-    composite_engine: str = "legacy"   # "legacy" | "alpha_cohort"
+    composite_engine: str = "legacy"  # "legacy" | "alpha_cohort"
 
     # Commercial tiering (opt-in, default dev_first = current behavior)
-    tiering_priority_mode: str = "dev_first"          # "dev_first" | "tier_first"
-    tier_a_commercial_floor: float = 0.85             # quality_pct cutoff for commercial A
-    tier_b_commercial_floor: float = 0.60             # quality_pct cutoff for commercial B
+    tiering_priority_mode: str = "dev_first"  # "dev_first" | "tier_first"
+    tier_a_commercial_floor: float = 0.85  # quality_pct cutoff for commercial A
+    tier_b_commercial_floor: float = 0.60  # quality_pct cutoff for commercial B
 
     # Actionable ordering — catalyst source/type priority (opt-in)
     enable_catalyst_priority: bool = False
@@ -195,14 +198,6 @@ class DecisionRuleset:
     catalyst_priority_default: int = 9
     catalyst_priority_unknown: int = 99
 
-    # DEPRECATED — Alpha modifier.  5-way backtest (2020-2026, 347 dates) confirmed
-    # within_tier at weight=0.05 produces zero measurable change in sort order vs off.
-    # tiebreak mode is structurally unreachable (unique alpha_cohort_pct floats prevent
-    # ties at sort tuple position 3).  Fields kept for backward compat only; both
-    # modes are proven inert.  Safe to remove in next major version.
-    alpha_modifier_mode: str = "off"           # DEPRECATED: "off" | "within_tier" (tiebreak: dead)
-    alpha_modifier_weight: float = 0.00        # DEPRECATED: leave at 0.0
-
     # Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker, no
     # ceiling ties unlike alpha_raw).  Blended as a small secondary sort contribution:
     #   delta = alpha_cohort_tiebreak_weight * alpha_cohort_pct
@@ -212,16 +207,16 @@ class DecisionRuleset:
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
-    rebalance_buffer_ranks: int = 0   # 0 = off; range [0, 50]
+    rebalance_buffer_ranks: int = 0  # 0 = off; range [0, 50]
 
     # Actionable ordering — catalyst priority mode (supersedes enable_catalyst_priority)
-    catalyst_priority_mode: str = "off"       # "off" | "tiebreaker" | "blended"
+    catalyst_priority_mode: str = "off"  # "off" | "tiebreaker" | "blended"
     catalyst_priority_rank_bonuses: tuple = (  # blended mode: priority → rank bonus
-        (1, 5.0),     # FDA events: effective_rank -= 5
-        (2, 2.0),     # CTGOV/SEC readout: effective_rank -= 2
-        (3, 0.0),     # corporate/ongoing
-        (9, 0.0),     # no catalyst
-        (99, 0.0),    # unknown
+        (1, 5.0),  # FDA events: effective_rank -= 5
+        (2, 2.0),  # CTGOV/SEC readout: effective_rank -= 2
+        (3, 0.0),  # corporate/ongoing
+        (9, 0.0),  # no catalyst
+        (99, 0.0),  # unknown
     )
 
     def __post_init__(self):
@@ -230,59 +225,42 @@ class DecisionRuleset:
         if buckets:
             for i in range(1, len(buckets)):
                 if buckets[i][0] <= buckets[i - 1][0]:
-                    raise ValueError(
-                        f"cost_haircut_buckets thresholds must be strictly ascending: {buckets}"
-                    )
+                    raise ValueError(f"cost_haircut_buckets thresholds must be strictly ascending: {buckets}")
         # Validate cost_haircut_floor_mult in (0, 1]
         if not (0 < self.cost_haircut_floor_mult <= 1.0):
-            raise ValueError(
-                f"cost_haircut_floor_mult must be in (0, 1], got {self.cost_haircut_floor_mult}"
-            )
+            raise ValueError(f"cost_haircut_floor_mult must be in (0, 1], got {self.cost_haircut_floor_mult}")
         # Validate cost_impact_cap_bps > 0
         if self.cost_impact_cap_bps <= 0:
-            raise ValueError(
-                f"cost_impact_cap_bps must be > 0, got {self.cost_impact_cap_bps}"
-            )
+            raise ValueError(f"cost_impact_cap_bps must be > 0, got {self.cost_impact_cap_bps}")
         # Validate catalyst_tilt_mults: keys must be valid bands, mults > 0
         valid_bands = {"NEAR", "MID", "FAR", "MISSING"}
         for band, mult in self.catalyst_tilt_mults:
             if band not in valid_bands:
                 raise ValueError(
-                    f"catalyst_tilt_mults: unknown band '{band}', "
-                    f"expected one of {sorted(valid_bands)}"
+                    f"catalyst_tilt_mults: unknown band '{band}', " f"expected one of {sorted(valid_bands)}"
                 )
             if mult <= 0:
-                raise ValueError(
-                    f"catalyst_tilt_mults: mult must be > 0, got {mult} for '{band}'"
-                )
+                raise ValueError(f"catalyst_tilt_mults: mult must be > 0, got {mult} for '{band}'")
         # Validate mom_state_tilt_mults: keys must be valid states, mults > 0
         valid_mom_states = {"tailwind", "neutral", "headwind"}
         for state, mult in self.mom_state_tilt_mults:
             if state not in valid_mom_states:
                 raise ValueError(
-                    f"mom_state_tilt_mults: unknown state '{state}', "
-                    f"expected one of {sorted(valid_mom_states)}"
+                    f"mom_state_tilt_mults: unknown state '{state}', " f"expected one of {sorted(valid_mom_states)}"
                 )
             if mult <= 0:
-                raise ValueError(
-                    f"mom_state_tilt_mults: mult must be > 0, got {mult} for '{state}'"
-                )
+                raise ValueError(f"mom_state_tilt_mults: mult must be > 0, got {mult} for '{state}'")
         # Validate catalyst_time_decay_mode
         if self.catalyst_time_decay_mode not in ("hard", "logistic"):
             raise ValueError(
-                f"catalyst_time_decay_mode must be 'hard' or 'logistic', "
-                f"got '{self.catalyst_time_decay_mode}'"
+                f"catalyst_time_decay_mode must be 'hard' or 'logistic', " f"got '{self.catalyst_time_decay_mode}'"
             )
         if self.catalyst_logistic_scale_days <= 0:
-            raise ValueError(
-                f"catalyst_logistic_scale_days must be > 0, "
-                f"got {self.catalyst_logistic_scale_days}"
-            )
+            raise ValueError(f"catalyst_logistic_scale_days must be > 0, " f"got {self.catalyst_logistic_scale_days}")
         # Validate sparse_signal_mode
         if self.sparse_signal_mode not in ("legacy", "exclude_missing"):
             raise ValueError(
-                f"sparse_signal_mode must be 'legacy' or 'exclude_missing', "
-                f"got '{self.sparse_signal_mode}'"
+                f"sparse_signal_mode must be 'legacy' or 'exclude_missing', " f"got '{self.sparse_signal_mode}'"
             )
         # Validate catalyst_priority_mode
         if self.catalyst_priority_mode not in ("off", "tiebreaker", "blended"):
@@ -298,10 +276,7 @@ class DecisionRuleset:
             )
         # Validate composite_engine
         if self.composite_engine not in ("legacy", "alpha_cohort"):
-            raise ValueError(
-                f"composite_engine must be 'legacy' or 'alpha_cohort', "
-                f"got '{self.composite_engine}'"
-            )
+            raise ValueError(f"composite_engine must be 'legacy' or 'alpha_cohort', " f"got '{self.composite_engine}'")
         # Validate alpha_train_mode: expanding | trailing-N | decay-H
         _atm = self.alpha_train_mode.strip().lower()
         _atm_valid = False
@@ -315,88 +290,50 @@ class DecisionRuleset:
                 pass
         if not _atm_valid:
             raise ValueError(
-                f"alpha_train_mode must be 'expanding', 'trailing-N', or 'decay-H', "
-                f"got '{self.alpha_train_mode}'"
+                f"alpha_train_mode must be 'expanding', 'trailing-N', or 'decay-H', " f"got '{self.alpha_train_mode}'"
             )
         # Validate alpha_train_min_train_dates
         if self.alpha_train_min_train_dates < 2:
-            raise ValueError(
-                f"alpha_train_min_train_dates must be >= 2, "
-                f"got {self.alpha_train_min_train_dates}"
-            )
+            raise ValueError(f"alpha_train_min_train_dates must be >= 2, " f"got {self.alpha_train_min_train_dates}")
         # Validate alpha_train_horizon
         if self.alpha_train_horizon not in (63, 84, 126):
-            raise ValueError(
-                f"alpha_train_horizon must be 63, 84, or 126, "
-                f"got {self.alpha_train_horizon}"
-            )
+            raise ValueError(f"alpha_train_horizon must be 63, 84, or 126, " f"got {self.alpha_train_horizon}")
         # Validate alpha_table_rebuild_policy
         if self.alpha_table_rebuild_policy not in ("never", "if_missing", "daily"):
             raise ValueError(
                 f"alpha_table_rebuild_policy must be 'never', 'if_missing', or 'daily', "
                 f"got '{self.alpha_table_rebuild_policy}'"
             )
-        # Validate alpha_modifier_mode
-        # "tiebreak" accepted for backward compat with archived rulesets but is
-        # structurally inert — _alpha_tie is hardcoded to 0.0 in the sort key.
-        if self.alpha_modifier_mode not in ("off", "tiebreak", "within_tier"):
-            raise ValueError(
-                f"alpha_modifier_mode must be 'off', 'tiebreak', or 'within_tier', "
-                f"got '{self.alpha_modifier_mode}'"
-            )
-        # Validate alpha_modifier_weight
-        if not (0.0 <= self.alpha_modifier_weight <= 0.25):
-            raise ValueError(
-                f"alpha_modifier_weight must be in [0.0, 0.25], "
-                f"got {self.alpha_modifier_weight}"
-            )
         # Validate alpha_cohort_tiebreak_weight
         if not (0.0 <= self.alpha_cohort_tiebreak_weight <= 0.50):
             raise ValueError(
-                f"alpha_cohort_tiebreak_weight must be in [0.0, 0.50], "
-                f"got {self.alpha_cohort_tiebreak_weight}"
+                f"alpha_cohort_tiebreak_weight must be in [0.0, 0.50], " f"got {self.alpha_cohort_tiebreak_weight}"
             )
         # Validate rebalance_buffer_ranks
         if not (0 <= self.rebalance_buffer_ranks <= 50):
-            raise ValueError(
-                f"rebalance_buffer_ranks must be in [0, 50], "
-                f"got {self.rebalance_buffer_ranks}"
-            )
+            raise ValueError(f"rebalance_buffer_ranks must be in [0, 50], " f"got {self.rebalance_buffer_ranks}")
         # Validate tiering_priority_mode
         if self.tiering_priority_mode not in ("dev_first", "tier_first"):
             raise ValueError(
-                f"tiering_priority_mode must be 'dev_first' or 'tier_first', "
-                f"got '{self.tiering_priority_mode}'"
+                f"tiering_priority_mode must be 'dev_first' or 'tier_first', " f"got '{self.tiering_priority_mode}'"
             )
         # Validate coinvest_score_mode (only tier1_count implemented)
         if self.coinvest_score_mode not in ("tier1_count",):
-            raise ValueError(
-                f"coinvest_score_mode must be 'tier1_count', "
-                f"got '{self.coinvest_score_mode}'"
-            )
+            raise ValueError(f"coinvest_score_mode must be 'tier1_count', " f"got '{self.coinvest_score_mode}'")
         # Validate drawdown_gate_mode
         if self.drawdown_gate_mode not in ("hard", "soft"):
-            raise ValueError(
-                f"drawdown_gate_mode must be 'hard' or 'soft', "
-                f"got '{self.drawdown_gate_mode}'"
-            )
+            raise ValueError(f"drawdown_gate_mode must be 'hard' or 'soft', " f"got '{self.drawdown_gate_mode}'")
         # Validate dd_rel_margin_rescue_threshold: must be <= 0
         if self.dd_rel_margin_rescue_threshold > 0:
             raise ValueError(
-                f"dd_rel_margin_rescue_threshold must be <= 0, "
-                f"got {self.dd_rel_margin_rescue_threshold}"
+                f"dd_rel_margin_rescue_threshold must be <= 0, " f"got {self.dd_rel_margin_rescue_threshold}"
             )
         # Validate far_window_days: must be >= 0
         if self.far_window_days < 0:
-            raise ValueError(
-                f"far_window_days must be >= 0, got {self.far_window_days}"
-            )
+            raise ValueError(f"far_window_days must be >= 0, got {self.far_window_days}")
         # Validate far_window_decay_mult: must be in (0, 1]
         if not (0.0 < self.far_window_decay_mult <= 1.0):
-            raise ValueError(
-                f"far_window_decay_mult must be in (0, 1], "
-                f"got {self.far_window_decay_mult}"
-            )
+            raise ValueError(f"far_window_decay_mult must be in (0, 1], " f"got {self.far_window_decay_mult}")
 
     @property
     def sizing_weights_dict(self) -> Dict[str, float]:
@@ -453,50 +390,35 @@ class DecisionRuleset:
             d = json.load(fh)
         # Compute stable hash from raw dict BEFORE type conversions.
         # Uses the same compact-separator format as _canonical_json.
-        file_hash = hashlib.sha256(
-            json.dumps(d, sort_keys=True, separators=(",", ":")).encode()
-        ).hexdigest()[:8]
+        file_hash = hashlib.sha256(json.dumps(d, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
         # Convert sizing_weights dict back to tuple-of-tuples
         if "sizing_weights" in d and isinstance(d["sizing_weights"], dict):
-            d["sizing_weights"] = tuple(
-                (k, v) for k, v in sorted(d["sizing_weights"].items())
-            )
+            d["sizing_weights"] = tuple((k, v) for k, v in sorted(d["sizing_weights"].items()))
         # Convert cost_haircut_buckets list-of-lists back to tuple-of-tuples
         if "cost_haircut_buckets" in d and isinstance(d["cost_haircut_buckets"], list):
-            d["cost_haircut_buckets"] = tuple(
-                tuple(pair) for pair in d["cost_haircut_buckets"]
-            )
+            d["cost_haircut_buckets"] = tuple(tuple(pair) for pair in d["cost_haircut_buckets"])
         # Convert catalyst_tilt_mults list-of-lists back to tuple-of-tuples
         if "catalyst_tilt_mults" in d and isinstance(d["catalyst_tilt_mults"], list):
-            d["catalyst_tilt_mults"] = tuple(
-                tuple(pair) for pair in d["catalyst_tilt_mults"]
-            )
+            d["catalyst_tilt_mults"] = tuple(tuple(pair) for pair in d["catalyst_tilt_mults"])
         # Convert mom_state_tilt_mults list-of-lists back to tuple-of-tuples
         if "mom_state_tilt_mults" in d and isinstance(d["mom_state_tilt_mults"], list):
-            d["mom_state_tilt_mults"] = tuple(
-                tuple(pair) for pair in d["mom_state_tilt_mults"]
-            )
+            d["mom_state_tilt_mults"] = tuple(tuple(pair) for pair in d["mom_state_tilt_mults"])
         # Convert catalyst_priority_map list-of-lists back to tuple-of-tuples
         if "catalyst_priority_map" in d and isinstance(d["catalyst_priority_map"], list):
-            d["catalyst_priority_map"] = tuple(
-                tuple(rule) for rule in d["catalyst_priority_map"]
-            )
+            d["catalyst_priority_map"] = tuple(tuple(rule) for rule in d["catalyst_priority_map"])
         # Convert catalyst_priority_rank_bonuses list-of-lists back to tuple-of-tuples
         if "catalyst_priority_rank_bonuses" in d and isinstance(d["catalyst_priority_rank_bonuses"], list):
-            d["catalyst_priority_rank_bonuses"] = tuple(
-                tuple(pair) for pair in d["catalyst_priority_rank_bonuses"]
-            )
+            d["catalyst_priority_rank_bonuses"] = tuple(tuple(pair) for pair in d["catalyst_priority_rank_bonuses"])
         # Convert clinical_stage_mults list-of-lists back to tuple-of-tuples
         if "clinical_stage_mults" in d and isinstance(d["clinical_stage_mults"], list):
-            d["clinical_stage_mults"] = tuple(
-                tuple(pair) for pair in d["clinical_stage_mults"]
-            )
+            d["clinical_stage_mults"] = tuple(tuple(pair) for pair in d["clinical_stage_mults"])
         # Migration: enable_catalyst_priority=True → catalyst_priority_mode="tiebreaker"
         if d.get("enable_catalyst_priority") and "catalyst_priority_mode" not in d:
             d["catalyst_priority_mode"] = "tiebreaker"
         # Filter to known fields for forward compatibility (ignore unknown keys
         # that may have been added by a newer schema version).
         import dataclasses as _dc
+
         _known = {f.name for f in _dc.fields(cls)}
         d = {k: v for k, v in d.items() if k in _known}
         instance = cls(**d)
@@ -522,6 +444,7 @@ SIZING_WEIGHTS = DEFAULT_RULESET.sizing_weights_dict
 # HELPERS
 # =============================================================================
 
+
 def _safe_float(val, default=None):
     """Convert a value to float, handling None/str/Decimal/NaN."""
     if val is None:
@@ -543,6 +466,7 @@ def _logistic_decay(days: float | None, midpoint: float, scale: float) -> float:
     if days is None or days < 0:
         return 0.0
     from math import exp
+
     return 1.0 / (1.0 + exp((days - midpoint) / max(scale, 1e-6)))
 
 
@@ -569,8 +493,10 @@ def _compute_missing_components(decision_fields: dict) -> list:
 # LAYER 0 — ELIGIBILITY
 # =============================================================================
 
+
 def _compute_eligibility(
-    rec: Dict, ruleset: DecisionRuleset,
+    rec: Dict,
+    ruleset: DecisionRuleset,
     market_cap: Optional[float] = None,
 ) -> Tuple[bool, List[str], bool, bool]:
     """Check eligibility gates.
@@ -599,8 +525,7 @@ def _compute_eligibility(
     surv_coverage = surv.get("coverage") or []
     surv_metrics = surv.get("metrics") or {}
     cash_total = surv_metrics.get("cash_total") or 0
-    if ("missing_cash" in surv_coverage and "missing_burn_data" in surv_coverage
-            and cash_total <= 0):
+    if "missing_cash" in surv_coverage and "missing_burn_data" in surv_coverage and cash_total <= 0:
         # Mega-cap bypass: skip financials_missing for very large names
         _bypass = (
             ruleset.financials_missing_bypass_market_cap > 0
@@ -618,6 +543,7 @@ def _compute_eligibility(
         has_red_flag = rec.get("fundamental_red_flag")
         if has_red_flag is None:
             from defensive_overlay_adapter import detect_fundamental_red_flags
+
             has_red_flag, _ = detect_fundamental_red_flags(rec)
         if has_red_flag:
             reasons.append("fundamental_red_flag")
@@ -644,8 +570,7 @@ def _compute_eligibility(
             if abs_breach and rel_breach:
                 # Near-rel-gate rescue: if relative margin is close to the gate,
                 # override the failure (sector-driven drawdown, not idiosyncratic).
-                if (ruleset.enable_dd_rel_margin_rescue
-                        and dd_rel is not None):
+                if ruleset.enable_dd_rel_margin_rescue and dd_rel is not None:
                     rel_margin = dd_rel - ruleset.drawdown_rel_xbi_gate
                     if rel_margin > ruleset.dd_rel_margin_rescue_threshold:
                         dd_rel_margin_rescued = True
@@ -680,6 +605,7 @@ def _compute_eligibility(
 # =============================================================================
 # LAYER 2 — OVERLAYS
 # =============================================================================
+
 
 def _compute_overlays(rec: Dict, ruleset: DecisionRuleset) -> Dict[str, Any]:
     """Extract overlay signals from rec.
@@ -796,8 +722,10 @@ def _compute_overlays(rec: Dict, ruleset: DecisionRuleset) -> Dict[str, Any]:
             out["catalyst_decay_w"] = 1.0
         elif out["catalyst_mode"] == "specific_days" and days_val is not None and days_val >= 0:
             out["catalyst_decay_w"] = round(
-                _logistic_decay(days_val, ruleset.catalyst_logistic_midpoint_days,
-                                ruleset.catalyst_logistic_scale_days), 4
+                _logistic_decay(
+                    days_val, ruleset.catalyst_logistic_midpoint_days, ruleset.catalyst_logistic_scale_days
+                ),
+                4,
             )
         else:
             out["catalyst_decay_w"] = 0.0
@@ -921,7 +849,12 @@ def _compute_size_band(
     if effective_tier == "A" and optionality is not None and optionality >= ruleset.tier_a_optionality_floor:
         idx += 1
         reasons.append("tier_a_dev")
-    elif effective_tier == "A" and optionality is None and commercial_quality_pct is not None and commercial_quality_pct >= ruleset.tier_a_commercial_floor:
+    elif (
+        effective_tier == "A"
+        and optionality is None
+        and commercial_quality_pct is not None
+        and commercial_quality_pct >= ruleset.tier_a_commercial_floor
+    ):
         idx += 1
         reasons.append("tier_a_commercial")
 
@@ -992,6 +925,7 @@ def _compute_size_band(
 # CATALYST STRENGTH RESOLUTION (shared by dev + commercial tier)
 # =============================================================================
 
+
 def _resolve_catalyst_strength(
     catalyst_in_window: str,
     catalyst_days: Any,
@@ -1059,6 +993,7 @@ def _resolve_catalyst_strength(
 # LAYER 4 — DEV TIER
 # =============================================================================
 
+
 def _compute_tier_dev(
     archetype: str,
     eligible: bool,
@@ -1086,7 +1021,10 @@ def _compute_tier_dev(
         return "C", "no_optionality_data"
 
     strength, is_actionable, has_catalyst_data, cat_tag = _resolve_catalyst_strength(
-        catalyst_in_window, catalyst_days, ruleset, catalyst_decay_w,
+        catalyst_in_window,
+        catalyst_days,
+        ruleset,
+        catalyst_decay_w,
     )
 
     if has_catalyst_data:
@@ -1113,6 +1051,7 @@ def _compute_tier_dev(
 # =============================================================================
 # LAYER 4b — COMMERCIAL TIER
 # =============================================================================
+
 
 def _compute_tier_commercial(
     archetype: str,
@@ -1141,7 +1080,10 @@ def _compute_tier_commercial(
         return "C", "no_quality_data"
 
     strength, is_actionable, has_catalyst_data, cat_tag = _resolve_catalyst_strength(
-        catalyst_in_window, catalyst_days, ruleset, catalyst_decay_w,
+        catalyst_in_window,
+        catalyst_days,
+        ruleset,
+        catalyst_decay_w,
     )
 
     if has_catalyst_data:
@@ -1200,8 +1142,8 @@ def resolve_catalyst_priority(
 
     for rule in ruleset.catalyst_priority_map:
         rule_et, rule_src, priority = rule
-        et_match = (rule_et == "*" or rule_et.upper() == et)
-        src_match = (rule_src == "*" or rule_src.upper() == src)
+        et_match = rule_et == "*" or rule_et.upper() == et
+        src_match = rule_src == "*" or rule_src.upper() == src
         if et_match and src_match:
             return int(priority)
 
@@ -1228,10 +1170,11 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
 
 class SortContribution(NamedTuple):
     """One signal's adjustment to the sort anchor."""
-    name: str       # signal identifier ("clinical", "coinvest", etc.)
-    raw: float      # input z-score before clamp
-    weight: float   # effective weight applied
-    delta: float    # final adjustment (subtracted from anchor)
+
+    name: str  # signal identifier ("clinical", "coinvest", etc.)
+    raw: float  # input z-score before clamp
+    weight: float  # effective weight applied
+    delta: float  # final adjustment (subtracted from anchor)
 
 
 def _build_sort_contributions(
@@ -1301,8 +1244,7 @@ def _build_sort_contributions(
     if ruleset.alpha_cohort_tiebreak_weight > 0.0:
         ac_pct = _safe_float(decision_fields.get("alpha_cohort_pct"), default=0.0)
         delta = ruleset.alpha_cohort_tiebreak_weight * ac_pct
-        contribs.append(SortContribution("alpha_cohort_tb", ac_pct,
-                                         ruleset.alpha_cohort_tiebreak_weight, delta))
+        contribs.append(SortContribution("alpha_cohort_tb", ac_pct, ruleset.alpha_cohort_tiebreak_weight, delta))
 
     # 6. Catalyst bonus (non-zero only in blended mode)
     if catalyst_bonus != 0.0:
@@ -1314,15 +1256,17 @@ def _build_sort_contributions(
 # Fields injected by run_screen.py (not computed by the DE itself).
 # compute_actionable_sort_key() reads these from decision_fields and defaults
 # to 0.0 when absent, so the DE remains self-contained for unit testing.
-_EXTERNAL_SORT_FIELDS: frozenset = frozenset({
-    "clinical_score_z_tier",
-    # "coinvest_score_z" — removed: never injected by run_screen.py; coinvest sort
-    # signal researched & rejected (look-ahead contaminated, PIT-correct harmful).
-    "inst_delta_z",
-    "stage_bucket",
-    "clinical_score_v2_z",
-    "alpha_cohort_pct",   # used by alpha_cohort_tiebreak_weight contribution
-})
+_EXTERNAL_SORT_FIELDS: frozenset = frozenset(
+    {
+        "clinical_score_z_tier",
+        # "coinvest_score_z" — removed: never injected by run_screen.py; coinvest sort
+        # signal researched & rejected (look-ahead contaminated, PIT-correct harmful).
+        "inst_delta_z",
+        "stage_bucket",
+        "clinical_score_v2_z",
+        "alpha_cohort_pct",  # used by alpha_cohort_tiebreak_weight contribution
+    }
+)
 
 
 def compute_actionable_sort_key(
@@ -1381,7 +1325,9 @@ def compute_actionable_sort_key(
     # Resolve catalyst priority (needed for tiebreaker + blended modes)
     if mode != "off":
         cat_priority = resolve_catalyst_priority(
-            catalyst_event_type, catalyst_source, rs,
+            catalyst_event_type,
+            catalyst_source,
+            rs,
         )
     else:
         cat_priority = 0  # neutral — no effect on ordering
@@ -1407,7 +1353,7 @@ def compute_actionable_sort_key(
     if rs.sort_anchor in ("optionality_pct", "alpha_cohort"):
         anchor = -(tiebreaker_pct if tiebreaker_pct is not None else 0.0)  # higher pct → more negative → sorts first
     else:
-        anchor = float(comp_rank)           # existing behavior
+        anchor = float(comp_rank)  # existing behavior
 
     # Missingness sort penalty: higher count sorts later (0 when disabled)
     missing_count = 0
@@ -1422,7 +1368,8 @@ def compute_actionable_sort_key(
         catalyst_bonus = bonus_map.get(cat_priority, 0.0)
 
     contribs = _build_sort_contributions(
-        decision_fields, rs,
+        decision_fields,
+        rs,
         alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
     )
@@ -1438,13 +1385,13 @@ def compute_actionable_sort_key(
         return prefix + (
             effective_comp_rank,  # anchor with signal tilts
             missing_count,  # fewer missing components first
-            cat_priority,   # priority breaks comp_rank ties
-            cat_days,       # ascending days
-            opt_neg,        # descending optionality
-            sponsor_neg,    # descending sponsor count
-            mom_ord,        # tailwind < neutral < headwind
-            cat_mode_ord,   # specific < blended < no_upcoming < missing
-            ticker,         # alphabetic tiebreak
+            cat_priority,  # priority breaks comp_rank ties
+            cat_days,  # ascending days
+            opt_neg,  # descending optionality
+            sponsor_neg,  # descending sponsor count
+            mom_ord,  # tailwind < neutral < headwind
+            cat_mode_ord,  # specific < blended < no_upcoming < missing
+            ticker,  # alphabetic tiebreak
         )
 
     if mode == "blended":
@@ -1452,28 +1399,28 @@ def compute_actionable_sort_key(
         effective_comp_rank = anchor - total_adj
         return prefix + (
             effective_comp_rank,  # anchor with bonus + signal tilts
-            missing_count,        # fewer missing components first
-            cat_mode_ord,         # specific < blended < no_upcoming < missing
-            cat_days,             # ascending days
-            opt_neg,              # descending optionality
-            sponsor_neg,          # descending sponsor count
-            mom_ord,              # tailwind < neutral < headwind
-            cat_priority,         # priority as tiebreaker
-            ticker,               # alphabetic tiebreak
+            missing_count,  # fewer missing components first
+            cat_mode_ord,  # specific < blended < no_upcoming < missing
+            cat_days,  # ascending days
+            opt_neg,  # descending optionality
+            sponsor_neg,  # descending sponsor count
+            mom_ord,  # tailwind < neutral < headwind
+            cat_priority,  # priority as tiebreaker
+            ticker,  # alphabetic tiebreak
         )
 
     # mode == "off" (default)
     effective_opt_neg = opt_neg - total_adj  # higher z → more negative → sorts earlier
     return prefix + (
-        cat_priority,       # 0 (neutral) — no effect on ordering
-        cat_mode_ord,       # specific < blended < no_upcoming < missing
-        cat_days,           # ascending days (missing=9999)
-        missing_count,      # fewer missing components first
+        cat_priority,  # 0 (neutral) — no effect on ordering
+        cat_mode_ord,  # specific < blended < no_upcoming < missing
+        cat_days,  # ascending days (missing=9999)
+        missing_count,  # fewer missing components first
         effective_opt_neg,  # optionality with signal tilts (negated)
-        sponsor_neg,        # descending sponsor count (negated)
-        mom_ord,            # tailwind < neutral < headwind
-        anchor,             # ascending composite rank (or negated pct)
-        ticker,             # alphabetic tiebreak
+        sponsor_neg,  # descending sponsor count (negated)
+        mom_ord,  # tailwind < neutral < headwind
+        anchor,  # ascending composite rank (or negated pct)
+        ticker,  # alphabetic tiebreak
     )
 
 
@@ -1495,19 +1442,21 @@ def compute_sort_contribs(
     floating-point tolerance.
     """
     rs = ruleset or DEFAULT_RULESET
-    _alpha_sig = _safe_float(alpha_raw, default=0.0)
 
     mode = rs.catalyst_priority_mode
     catalyst_bonus = 0.0
     if mode == "blended":
         bonus_map = dict(rs.catalyst_priority_rank_bonuses)
         cat_priority = resolve_catalyst_priority(
-            catalyst_event_type, catalyst_source, rs,
+            catalyst_event_type,
+            catalyst_source,
+            rs,
         )
         catalyst_bonus = bonus_map.get(cat_priority, 0.0)
 
     contribs = _build_sort_contributions(
-        decision_fields, rs,
+        decision_fields,
+        rs,
         alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
     )
@@ -1524,6 +1473,7 @@ def compute_sort_contribs(
 # =============================================================================
 # TARGET WEIGHT SIZING
 # =============================================================================
+
 
 def compute_target_weights(
     rows: List[Dict[str, Any]],
@@ -1572,21 +1522,42 @@ ACTIONABLE_COLUMNS = ["actionable_rank", "target_weight_pct"]
 
 # Column names emitted by the decision engine (for SNAPSHOT_COLUMNS)
 DECISION_COLUMNS = [
-    "decision_engine_version", "decision_engine_ruleset_id",
-    "eligible", "ineligible_reasons",
-    "sponsor_tier1_count", "sponsor_overlap_count", "sponsor_net_buying",
-    "coinvest_conviction", "coinvest_tier1_conviction",
-    "coinvest_max_position_pct", "coinvest_filing_age_days",
-    "catalyst_days", "catalyst_in_window", "catalyst_mode", "catalyst_strength", "catalyst_decay_w",
-    "runway_bucket", "mom_state", "risk_flags",
-    "size_band", "size_reasons",
-    "cost_mult", "cost_bucket", "cost_haircut_applied",
-    "catalyst_tilt_mult", "catalyst_tilt_applied",
-    "mom_state_tilt_mult", "mom_state_tilt_applied",
+    "decision_engine_version",
+    "decision_engine_ruleset_id",
+    "eligible",
+    "ineligible_reasons",
+    "sponsor_tier1_count",
+    "sponsor_overlap_count",
+    "sponsor_net_buying",
+    "coinvest_conviction",
+    "coinvest_tier1_conviction",
+    "coinvest_max_position_pct",
+    "coinvest_filing_age_days",
+    "catalyst_days",
+    "catalyst_in_window",
+    "catalyst_mode",
+    "catalyst_strength",
+    "catalyst_decay_w",
+    "runway_bucket",
+    "mom_state",
+    "risk_flags",
+    "size_band",
+    "size_reasons",
+    "cost_mult",
+    "cost_bucket",
+    "cost_haircut_applied",
+    "catalyst_tilt_mult",
+    "catalyst_tilt_applied",
+    "mom_state_tilt_mult",
+    "mom_state_tilt_applied",
     "dd_rel_margin_rescued",
-    "tier_dev", "tier_reason",
-    "tier_commercial", "tier_any", "tier_any_reason",
-    "missing_components", "missingness_penalty",
+    "tier_dev",
+    "tier_reason",
+    "tier_commercial",
+    "tier_any",
+    "tier_any_reason",
+    "missing_components",
+    "missingness_penalty",
 ]
 
 
@@ -1728,6 +1699,7 @@ def compute_decision_fields(
 # GATE MARGIN DIAGNOSTICS (panel-only — NOT in DECISION_COLUMNS)
 # =============================================================================
 
+
 def compute_gate_margins(rec: Dict, ruleset: Optional[DecisionRuleset] = None) -> Dict[str, Any]:
     """Compute per-gate margin diagnostics for a single ticker.
 
@@ -1751,52 +1723,61 @@ def compute_gate_margins(rec: Dict, ruleset: Optional[DecisionRuleset] = None) -
     has_red_flag = rec.get("fundamental_red_flag")
     if has_red_flag is None:
         from defensive_overlay_adapter import detect_fundamental_red_flags
+
         has_red_flag, _ = detect_fundamental_red_flags(rec)
     has_red_flag = bool(has_red_flag)
-    gates.append({
-        "gate": "fundamental_red_flag",
-        "passed": not has_red_flag,
-        "margin": None,
-        "actual": has_red_flag,
-        "threshold": True,
-    })
+    gates.append(
+        {
+            "gate": "fundamental_red_flag",
+            "passed": not has_red_flag,
+            "margin": None,
+            "actual": has_red_flag,
+            "threshold": True,
+        }
+    )
 
     # Gate 2: sev3 (boolean)
     severity = str(rec.get("severity", "")).upper()
     sev3_hit = severity == "SEV3"
-    gates.append({
-        "gate": "sev3",
-        "passed": not sev3_hit,
-        "margin": None,
-        "actual": severity,
-        "threshold": "SEV3",
-    })
+    gates.append(
+        {
+            "gate": "sev3",
+            "passed": not sev3_hit,
+            "margin": None,
+            "actual": severity,
+            "threshold": "SEV3",
+        }
+    )
 
     # Gate 3: deep_drawdown_abs
     dd_abs_margin: Optional[float] = None
     if dd is not None:
         dd_abs_margin = round(dd - rs.drawdown_gate, 6)
     abs_passed = dd is None or dd >= rs.drawdown_gate
-    gates.append({
-        "gate": "deep_drawdown_abs",
-        "passed": abs_passed,
-        "margin": dd_abs_margin,
-        "actual": dd,
-        "threshold": rs.drawdown_gate,
-    })
+    gates.append(
+        {
+            "gate": "deep_drawdown_abs",
+            "passed": abs_passed,
+            "margin": dd_abs_margin,
+            "actual": dd,
+            "threshold": rs.drawdown_gate,
+        }
+    )
 
     # Gate 4: deep_drawdown_rel
     dd_rel_margin: Optional[float] = None
     if dd_rel is not None:
         dd_rel_margin = round(dd_rel - rs.drawdown_rel_xbi_gate, 6)
     rel_passed = dd_rel is None or dd_rel >= rs.drawdown_rel_xbi_gate
-    gates.append({
-        "gate": "deep_drawdown_rel",
-        "passed": rel_passed,
-        "margin": dd_rel_margin,
-        "actual": dd_rel,
-        "threshold": rs.drawdown_rel_xbi_gate,
-    })
+    gates.append(
+        {
+            "gate": "deep_drawdown_rel",
+            "passed": rel_passed,
+            "margin": dd_rel_margin,
+            "actual": dd_rel,
+            "threshold": rs.drawdown_rel_xbi_gate,
+        }
+    )
 
     # Gate 5: deep_drawdown (combined) — mirrors _compute_eligibility logic
     abs_breach = dd is not None and dd < rs.drawdown_gate
@@ -1809,7 +1790,7 @@ def compute_gate_margins(rec: Dict, ruleset: Optional[DecisionRuleset] = None) -
         elif rs.drawdown_gate_require_both:
             if abs_breach and rel_breach:
                 # Mirror the rescue path from _compute_eligibility
-                if (rs.enable_dd_rel_margin_rescue and dd_rel is not None):
+                if rs.enable_dd_rel_margin_rescue and dd_rel is not None:
                     rel_margin = dd_rel - rs.drawdown_rel_xbi_gate
                     dd_combined_passed = rel_margin > rs.dd_rel_margin_rescue_threshold
                 else:
@@ -1825,11 +1806,13 @@ def compute_gate_margins(rec: Dict, ruleset: Optional[DecisionRuleset] = None) -
         dd_combined_passed = not hard_floor_breach
         mode = "soft"
 
-    gates.append({
-        "gate": "deep_drawdown",
-        "passed": dd_combined_passed,
-        "mode": mode,
-    })
+    gates.append(
+        {
+            "gate": "deep_drawdown",
+            "passed": dd_combined_passed,
+            "mode": mode,
+        }
+    )
 
     # Gate 6: adv_fail (boolean from flag scan)
     attn = rec.get("attn_flags") or []
@@ -1841,19 +1824,23 @@ def compute_gate_margins(rec: Dict, ruleset: Optional[DecisionRuleset] = None) -
         if "adv_fail" in fl or "liquidity_fail" in fl:
             adv_fail = True
             break
-    gates.append({
-        "gate": "adv_fail",
-        "passed": not adv_fail,
-        "margin": None,
-        "actual": adv_fail,
-        "threshold": True,
-    })
+    gates.append(
+        {
+            "gate": "adv_fail",
+            "passed": not adv_fail,
+            "margin": None,
+            "actual": adv_fail,
+            "threshold": True,
+        }
+    )
 
     # --- Rescued by relative gate ---
     rescued_by_rel = (
         rs.drawdown_gate_mode == "hard"
-        and dd_abs_margin is not None and dd_abs_margin < 0
-        and dd_rel_margin is not None and dd_rel_margin >= 0
+        and dd_abs_margin is not None
+        and dd_abs_margin < 0
+        and dd_rel_margin is not None
+        and dd_rel_margin >= 0
         and rs.drawdown_gate_require_both
     )
 

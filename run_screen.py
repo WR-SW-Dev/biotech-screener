@@ -63,6 +63,7 @@ from common.data_integration_contracts import (
     safe_numeric_check,
     validate_financial_records_schema,
     validate_market_data_schema,
+    validate_trial_records_schema,
 )
 
 # Common utilities
@@ -6190,6 +6191,24 @@ def run_screening_pipeline(
 
     trial_records = load_json_data(trial_records_path, "Trials")
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
+
+    # --- Ingestion schema validation (advisory, non-blocking) ---
+    for _label, _validator, _data in [
+        ("market_data", validate_market_data_schema, market_records),
+        ("financial_records", validate_financial_records_schema, financial_records),
+        ("trial_records", validate_trial_records_schema, trial_records),
+    ]:
+        try:
+            _ok, _invalid = _validator(_data, strict=False, raise_on_error=False)
+            if not _ok:
+                logger.warning(
+                    f"Schema validation ({_label}): {len(_invalid)} invalid record(s) "
+                    f"— first: {_invalid[0] if _invalid else '?'}"
+                )
+            else:
+                logger.debug(f"Schema validation ({_label}): OK ({len(_data)} records)")
+        except Exception as _exc:
+            logger.warning(f"Schema validation ({_label}): {_exc}")
 
     # Convert market_records list to dict keyed by ticker for Module 5
     # This enables volatility adjustment, momentum signal, and other enhancements

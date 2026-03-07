@@ -1,4 +1,5 @@
 """Tests for scripts/alpha_modifier_promotion_check.py."""
+
 from __future__ import annotations
 
 import csv
@@ -7,16 +8,12 @@ import sys
 from pathlib import Path
 from typing import Dict, List
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from alpha_modifier_promotion_check import (
     GATE_MAX_RANK_SHIFT,
     GATE_MEAN_TOP60_OVERLAP_MIN,
-    GATE_TOP60_OVERLAP_MIN,
-    GATE_TIER_A_REGRESSION_MAX,
     DateABResult,
     PromotionVerdict,
     _build_baseline_ruleset,
@@ -27,18 +24,17 @@ from alpha_modifier_promotion_check import (
     run_promotion_check,
     write_results_json,
 )
-from decision_engine import DecisionRuleset
 
+from decision_engine import DecisionRuleset
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _candidate_ruleset(**overrides) -> DecisionRuleset:
-    """Build a candidate ruleset with alpha modifier on."""
+    """Build a candidate ruleset for promotion testing."""
     defaults = dict(
-        alpha_modifier_mode="tiebreak",
-        alpha_modifier_weight=0.05,
         sort_anchor="alpha_cohort",
         composite_engine="alpha_cohort",
     )
@@ -102,13 +98,13 @@ def _write_snapshot(snap_dir: Path, rows: List[Dict[str, str]]) -> None:
 # _build_baseline_ruleset
 # ---------------------------------------------------------------------------
 
+
 class TestBuildBaseline:
 
     def test_forces_off(self):
         candidate = _candidate_ruleset()
         baseline = _build_baseline_ruleset(candidate)
-        assert baseline.alpha_modifier_mode == "off"
-        assert baseline.alpha_modifier_weight == 0.0
+        assert baseline.sort_anchor == candidate.sort_anchor
 
     def test_preserves_other_fields(self):
         candidate = _candidate_ruleset(catalyst_near_days=120, clinical_sort_weight=1.0)
@@ -120,6 +116,7 @@ class TestBuildBaseline:
 # ---------------------------------------------------------------------------
 # rerank_and_compare
 # ---------------------------------------------------------------------------
+
 
 class TestRerankAndCompare:
 
@@ -140,8 +137,7 @@ class TestRerankAndCompare:
         for i in range(80):
             # Assign different alpha values to create divergence
             alpha = str(round(0.05 * (i % 5 - 2), 2))
-            rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha,
-                             composite_rank=str(i + 1)))
+            rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha, composite_rank=str(i + 1)))
         candidate = _candidate_ruleset()
         baseline = _build_baseline_ruleset(candidate)
         result = rerank_and_compare(rows, candidate, baseline, "2026-02-20")
@@ -174,9 +170,8 @@ class TestRerankAndCompare:
         for i in range(80):
             # Large alpha values to force significant reordering
             alpha = str(round(0.10 * (40 - i) / 40, 4))
-            rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha,
-                             composite_rank=str(i + 1)))
-        candidate = _candidate_ruleset(alpha_modifier_weight=0.25)  # max allowed weight
+            rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha, composite_rank=str(i + 1)))
+        candidate = _candidate_ruleset(alpha_cohort_tiebreak_weight=0.10)
         baseline = _build_baseline_ruleset(candidate)
         result = rerank_and_compare(rows, candidate, baseline, "2026-02-20")
         # High weight + dispersed alpha → may trigger flags
@@ -189,15 +184,24 @@ class TestRerankAndCompare:
 # compute_verdict
 # ---------------------------------------------------------------------------
 
+
 class TestComputeVerdict:
 
     def test_all_pass(self):
         results = [
             DateABResult(
-                date=f"2026-02-{20+i}", n_eligible=200, n_alpha_nonzero=180,
-                top60_overlap=0.95, mean_abs_shift=1.0, max_shift=5,
-                pct_changed=10.0, tier_a_modified=10, tier_a_baseline=10,
-                tier_a_delta=0, tier_b_modified=20, tier_b_baseline=20,
+                date=f"2026-02-{20+i}",
+                n_eligible=200,
+                n_alpha_nonzero=180,
+                top60_overlap=0.95,
+                mean_abs_shift=1.0,
+                max_shift=5,
+                pct_changed=10.0,
+                tier_a_modified=10,
+                tier_a_baseline=10,
+                tier_a_delta=0,
+                tier_b_modified=20,
+                tier_b_baseline=20,
             )
             for i in range(5)
         ]
@@ -209,11 +213,20 @@ class TestComputeVerdict:
     def test_low_overlap_fails(self):
         results = [
             DateABResult(
-                date="2026-02-20", n_eligible=200, n_alpha_nonzero=180,
-                top60_overlap=0.80, mean_abs_shift=5.0, max_shift=10,
-                pct_changed=30.0, tier_a_modified=8, tier_a_baseline=10,
-                tier_a_delta=-2, tier_b_modified=20, tier_b_baseline=20,
-                flagged=True, flag_reasons="overlap=0.800<0.90",
+                date="2026-02-20",
+                n_eligible=200,
+                n_alpha_nonzero=180,
+                top60_overlap=0.80,
+                mean_abs_shift=5.0,
+                max_shift=10,
+                pct_changed=30.0,
+                tier_a_modified=8,
+                tier_a_baseline=10,
+                tier_a_delta=-2,
+                tier_b_modified=20,
+                tier_b_baseline=20,
+                flagged=True,
+                flag_reasons="overlap=0.800<0.90",
             ),
         ]
         v = compute_verdict(results)
@@ -223,11 +236,20 @@ class TestComputeVerdict:
     def test_high_shift_fails(self):
         results = [
             DateABResult(
-                date="2026-02-20", n_eligible=200, n_alpha_nonzero=180,
-                top60_overlap=0.95, mean_abs_shift=5.0, max_shift=35,
-                pct_changed=10.0, tier_a_modified=10, tier_a_baseline=10,
-                tier_a_delta=0, tier_b_modified=20, tier_b_baseline=20,
-                flagged=True, flag_reasons=f"max_shift=35>{GATE_MAX_RANK_SHIFT}",
+                date="2026-02-20",
+                n_eligible=200,
+                n_alpha_nonzero=180,
+                top60_overlap=0.95,
+                mean_abs_shift=5.0,
+                max_shift=35,
+                pct_changed=10.0,
+                tier_a_modified=10,
+                tier_a_baseline=10,
+                tier_a_delta=0,
+                tier_b_modified=20,
+                tier_b_baseline=20,
+                flagged=True,
+                flag_reasons=f"max_shift=35>{GATE_MAX_RANK_SHIFT}",
             ),
         ]
         v = compute_verdict(results)
@@ -244,20 +266,35 @@ class TestComputeVerdict:
 # format_checklist
 # ---------------------------------------------------------------------------
 
+
 class TestFormatChecklist:
 
     def test_promote_banner(self):
         results = [
             DateABResult(
-                date="2026-02-20", n_eligible=200, n_alpha_nonzero=180,
-                top60_overlap=0.95, mean_abs_shift=1.0, max_shift=5,
-                pct_changed=10.0, tier_a_modified=10, tier_a_baseline=10,
-                tier_a_delta=0, tier_b_modified=20, tier_b_baseline=20,
+                date="2026-02-20",
+                n_eligible=200,
+                n_alpha_nonzero=180,
+                top60_overlap=0.95,
+                mean_abs_shift=1.0,
+                max_shift=5,
+                pct_changed=10.0,
+                tier_a_modified=10,
+                tier_a_baseline=10,
+                tier_a_delta=0,
+                tier_b_modified=20,
+                tier_b_baseline=20,
             ),
         ]
         verdict = PromotionVerdict(
-            n_dates=1, n_flagged=0, mean_overlap=0.95, min_overlap=0.95,
-            max_max_shift=5, mean_pct_changed=10.0, promote=True, reasons=[],
+            n_dates=1,
+            n_flagged=0,
+            mean_overlap=0.95,
+            min_overlap=0.95,
+            max_max_shift=5,
+            mean_pct_changed=10.0,
+            promote=True,
+            reasons=[],
         )
         candidate = _candidate_ruleset()
         text = format_checklist(results, verdict, candidate)
@@ -266,8 +303,13 @@ class TestFormatChecklist:
 
     def test_reject_banner(self):
         verdict = PromotionVerdict(
-            n_dates=1, n_flagged=1, mean_overlap=0.85, min_overlap=0.80,
-            max_max_shift=5, mean_pct_changed=30.0, promote=False,
+            n_dates=1,
+            n_flagged=1,
+            mean_overlap=0.85,
+            min_overlap=0.80,
+            max_max_shift=5,
+            mean_pct_changed=30.0,
+            promote=False,
             reasons=["min_overlap=0.800 < 0.90"],
         )
         candidate = _candidate_ruleset()
@@ -278,6 +320,7 @@ class TestFormatChecklist:
 # ---------------------------------------------------------------------------
 # discover_eligible_dates
 # ---------------------------------------------------------------------------
+
 
 class TestDiscoverEligibleDates:
 
@@ -313,6 +356,7 @@ class TestDiscoverEligibleDates:
 # Integration: run_promotion_check with synthetic data
 # ---------------------------------------------------------------------------
 
+
 class TestIntegration:
 
     def test_full_pipeline(self, tmp_path):
@@ -322,8 +366,7 @@ class TestIntegration:
             rows = []
             for i in range(80):
                 alpha = str(round(0.02 * (i % 3 - 1), 3))
-                rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha,
-                                 composite_rank=str(i + 1)))
+                rows.append(_row(f"T{i:02d}", alpha_cohort_raw=alpha, composite_rank=str(i + 1)))
             _write_snapshot(snap_root / d, rows)
 
         candidate = _candidate_ruleset()
@@ -341,15 +384,29 @@ class TestIntegration:
     def test_write_results_json(self, tmp_path):
         results = [
             DateABResult(
-                date="2026-02-20", n_eligible=200, n_alpha_nonzero=180,
-                top60_overlap=0.95, mean_abs_shift=1.0, max_shift=5,
-                pct_changed=10.0, tier_a_modified=10, tier_a_baseline=10,
-                tier_a_delta=0, tier_b_modified=20, tier_b_baseline=20,
+                date="2026-02-20",
+                n_eligible=200,
+                n_alpha_nonzero=180,
+                top60_overlap=0.95,
+                mean_abs_shift=1.0,
+                max_shift=5,
+                pct_changed=10.0,
+                tier_a_modified=10,
+                tier_a_baseline=10,
+                tier_a_delta=0,
+                tier_b_modified=20,
+                tier_b_baseline=20,
             ),
         ]
         verdict = PromotionVerdict(
-            n_dates=1, n_flagged=0, mean_overlap=0.95, min_overlap=0.95,
-            max_max_shift=5, mean_pct_changed=10.0, promote=True, reasons=[],
+            n_dates=1,
+            n_flagged=0,
+            mean_overlap=0.95,
+            min_overlap=0.95,
+            max_max_shift=5,
+            mean_pct_changed=10.0,
+            promote=True,
+            reasons=[],
         )
         out_path = tmp_path / "results.json"
         write_results_json(results, verdict, out_path)

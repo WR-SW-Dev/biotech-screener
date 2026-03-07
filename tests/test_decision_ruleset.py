@@ -1,11 +1,11 @@
 """Tests for DecisionRuleset dataclass — parameterized threshold config."""
+
 import hashlib
 import json
 import os
 import re
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -14,19 +14,19 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from decision_engine import (
-    DecisionRuleset,
     DEFAULT_RULESET,
     RULESET_ID,
     SIZING_WEIGHTS,
     VERSION,
+    DecisionRuleset,
     compute_decision_fields,
     compute_target_weights,
 )
 
-
 # =============================================================================
 # Helper to build minimal recs
 # =============================================================================
+
 
 def _base_rec(**overrides):
     """Build a minimal rec dict with sane defaults."""
@@ -72,6 +72,7 @@ def _base_rec(**overrides):
 # Tests: Defaults and backward compatibility
 # =============================================================================
 
+
 class TestDefaults:
     def test_default_values_match_v1(self):
         """All DEFAULT_RULESET values match the original v1.0.0 hardcodes."""
@@ -95,7 +96,10 @@ class TestDefaults:
     def test_sizing_weights_match_v1(self):
         """Default sizing_weights produce the v1 dict."""
         assert DEFAULT_RULESET.sizing_weights_dict == {
-            "L": 1.0, "M": 0.6, "S": 0.3, "XS": 0.15,
+            "L": 1.0,
+            "M": 0.6,
+            "S": 0.3,
+            "XS": 0.15,
         }
 
     def test_backward_compat_sizing_weights_alias(self):
@@ -114,6 +118,7 @@ class TestDefaults:
 # =============================================================================
 # Tests: Ruleset ID properties
 # =============================================================================
+
 
 class TestRulesetId:
     def test_id_is_8_hex_chars(self):
@@ -141,15 +146,14 @@ class TestRulesetId:
         assert altered.ruleset_id != DEFAULT_RULESET.ruleset_id
 
     def test_id_changes_with_sizing_weights(self):
-        altered = DecisionRuleset(
-            sizing_weights=(("L", 1.0), ("M", 0.5), ("S", 0.3), ("XS", 0.15))
-        )
+        altered = DecisionRuleset(sizing_weights=(("L", 1.0), ("M", 0.5), ("S", 0.3), ("XS", 0.15)))
         assert altered.ruleset_id != DEFAULT_RULESET.ruleset_id
 
 
 # =============================================================================
 # Tests: JSON round-trip
 # =============================================================================
+
 
 class TestJsonRoundTrip:
     def test_to_json_creates_file(self, tmp_path):
@@ -194,6 +198,7 @@ class TestJsonRoundTrip:
 # =============================================================================
 # Tests: Custom ruleset behavior
 # =============================================================================
+
 
 class TestCustomRulesetBehavior:
     def test_looser_drawdown_gate_keeps_borderline_eligible(self):
@@ -244,9 +249,7 @@ class TestCustomRulesetBehavior:
 
     def test_custom_sizing_weights(self):
         """Custom sizing weights flow through to compute_target_weights."""
-        custom = DecisionRuleset(
-            sizing_weights=(("L", 2.0), ("M", 1.0), ("S", 0.5), ("XS", 0.1))
-        )
+        custom = DecisionRuleset(sizing_weights=(("L", 2.0), ("M", 1.0), ("S", 0.5), ("XS", 0.1)))
         rows = [
             {"size_band": "L", "eligible": "1"},
             {"size_band": "M", "eligible": "1"},
@@ -269,6 +272,7 @@ class TestCustomRulesetBehavior:
 # Tests: Frozen immutability
 # =============================================================================
 
+
 class TestFrozenImmutability:
     def test_cannot_mutate(self):
         with pytest.raises(AttributeError):
@@ -279,6 +283,7 @@ class TestFrozenImmutability:
 # CI guardrails: prevent silent ruleset drift
 # =============================================================================
 
+
 class TestRulesetDriftGuardrails:
     """These tests fail loudly when defaults change without an intentional bump.
 
@@ -286,7 +291,7 @@ class TestRulesetDriftGuardrails:
     regenerate production_data/decision_rulesets/v1.json.
     """
 
-    EXPECTED_DEFAULT_RULESET_ID = "d4209bd4"
+    EXPECTED_DEFAULT_RULESET_ID = "46904be6"
 
     def test_default_ruleset_id_pinned(self):
         """DEFAULT_RULESET.ruleset_id must match the committed expected value.
@@ -302,10 +307,7 @@ class TestRulesetDriftGuardrails:
 
     def test_production_json_matches_defaults(self):
         """production_data/decision_rulesets/v1.json must equal DEFAULT_RULESET."""
-        prod_path = (
-            Path(__file__).resolve().parent.parent
-            / "production_data" / "decision_rulesets" / "v1.json"
-        )
+        prod_path = Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "v1.json"
         assert prod_path.exists(), f"Production ruleset JSON not found: {prod_path}"
         loaded = DecisionRuleset.from_json(str(prod_path))
         assert loaded == DEFAULT_RULESET, (
@@ -320,23 +322,24 @@ class TestRulesetDriftGuardrails:
 
     # -- Manifest governance --------------------------------------------------
 
-    MANIFEST_PATH = (
-        Path(__file__).resolve().parent.parent
-        / "production_data" / "decision_rulesets" / "manifest.json"
-    )
+    MANIFEST_PATH = Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "manifest.json"
 
     REQUIRED_ENTRY_KEYS = {
-        "id", "file", "created_at", "engine_version",
-        "description", "status", "requires_replay", "notes",
+        "id",
+        "file",
+        "created_at",
+        "engine_version",
+        "description",
+        "status",
+        "requires_replay",
+        "notes",
     }
 
     VALID_STATUSES = {"active", "candidate", "retired", "rejected"}
 
     def test_manifest_json_valid(self):
         """manifest.json exists, has valid structure, and exactly 1 active ruleset."""
-        assert self.MANIFEST_PATH.exists(), (
-            f"manifest.json not found at {self.MANIFEST_PATH}"
-        )
+        assert self.MANIFEST_PATH.exists(), f"manifest.json not found at {self.MANIFEST_PATH}"
         with open(self.MANIFEST_PATH) as f:
             data = json.load(f)
 
@@ -349,18 +352,12 @@ class TestRulesetDriftGuardrails:
         active_count = 0
         for entry in data["rulesets"]:
             missing = self.REQUIRED_ENTRY_KEYS - set(entry.keys())
-            assert not missing, (
-                f"Entry for {entry.get('file', '?')} missing keys: {missing}"
-            )
-            assert entry["status"] in self.VALID_STATUSES, (
-                f"Invalid status {entry['status']!r} for {entry['file']}"
-            )
+            assert not missing, f"Entry for {entry.get('file', '?')} missing keys: {missing}"
+            assert entry["status"] in self.VALID_STATUSES, f"Invalid status {entry['status']!r} for {entry['file']}"
             if entry["status"] == "active":
                 active_count += 1
 
-        assert active_count == 1, (
-            f"Expected exactly 1 active ruleset, found {active_count}"
-        )
+        assert active_count == 1, f"Expected exactly 1 active ruleset, found {active_count}"
 
     VALID_UPDATED_BY = {
         "bump_ruleset.py",
@@ -369,9 +366,7 @@ class TestRulesetDriftGuardrails:
     }
 
     # Accepts both YYYY-MM-DD and YYYY-MM-DDTHH:MM:SSZ (ISO 8601 UTC)
-    _ISO_DATE_RE = re.compile(
-        r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$"
-    )
+    _ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}Z)?$")
 
     def test_manifest_active_has_provenance(self):
         """Every active/candidate entry must have valid updated_by and updated_at.
@@ -390,18 +385,15 @@ class TestRulesetDriftGuardrails:
 
             # Must have both fields
             assert "updated_by" in entry, (
-                f"Entry {label} status={entry['status']} "
-                f"missing 'updated_by' provenance field"
+                f"Entry {label} status={entry['status']} " f"missing 'updated_by' provenance field"
             )
             assert "updated_at" in entry, (
-                f"Entry {label} status={entry['status']} "
-                f"missing 'updated_at' provenance field"
+                f"Entry {label} status={entry['status']} " f"missing 'updated_at' provenance field"
             )
 
             # updated_by must be a known source
             assert entry["updated_by"] in self.VALID_UPDATED_BY, (
-                f"Entry {label}: updated_by={entry['updated_by']!r} not in "
-                f"allowed set {self.VALID_UPDATED_BY}"
+                f"Entry {label}: updated_by={entry['updated_by']!r} not in " f"allowed set {self.VALID_UPDATED_BY}"
             )
 
             # updated_at must be ISO date or ISO datetime UTC
@@ -419,19 +411,17 @@ class TestRulesetDriftGuardrails:
         rulesets_dir = self.MANIFEST_PATH.parent
         for entry in data["rulesets"]:
             filepath = rulesets_dir / entry["file"]
-            assert filepath.exists(), (
-                f"Manifest references {entry['file']} but file not found"
-            )
+            assert filepath.exists(), f"Manifest references {entry['file']} but file not found"
             loaded = DecisionRuleset.from_json(str(filepath))
             assert loaded.ruleset_id == entry["id"], (
-                f"{entry['file']}: manifest id={entry['id']} != "
-                f"computed id={loaded.ruleset_id}"
+                f"{entry['file']}: manifest id={entry['id']} != " f"computed id={loaded.ruleset_id}"
             )
 
 
 # =============================================================================
 # Tests: Schema-stability (ruleset_id must not change with schema expansion)
 # =============================================================================
+
 
 class TestRulesetIdSchemaStability:
     """Ensure that from_json hashes file content, not expanded dataclass.
@@ -441,10 +431,7 @@ class TestRulesetIdSchemaStability:
     file-content hashes and verify round-trip + stability properties.
     """
 
-    RULESETS_DIR = (
-        Path(__file__).resolve().parent.parent
-        / "production_data" / "decision_rulesets"
-    )
+    RULESETS_DIR = Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets"
 
     # Pinned file-content hashes for key rulesets
     PINNED_FILE_HASHES = {
@@ -491,10 +478,9 @@ class TestRulesetIdSchemaStability:
         fields on write.
         """
         import tempfile
+
         # Full-schema file: generate from DEFAULT_RULESET so all fields present
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", delete=False, mode="w"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp:
             tmp_path = tmp.name
         try:
             DEFAULT_RULESET.to_json(tmp_path)
@@ -513,12 +499,8 @@ class TestRulesetIdSchemaStability:
                     pass
 
         # Older file (may lack new fields): logical equality preserved
-        rs_old = DecisionRuleset.from_json(
-            str(self.RULESETS_DIR / "v1.json")
-        )
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", delete=False, mode="w"
-        ) as tmp:
+        rs_old = DecisionRuleset.from_json(str(self.RULESETS_DIR / "v1.json"))
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp:
             tmp_path = tmp.name
         try:
             rs_old.to_json(tmp_path)
@@ -535,11 +517,10 @@ class TestRulesetIdSchemaStability:
         not the expanded defaults.
         """
         import tempfile
+
         # Write a minimal valid ruleset (only a few fields)
         minimal = {"tier_a_optionality_floor": 0.55, "tier_b_optionality_floor": 0.30}
-        with tempfile.NamedTemporaryFile(
-            suffix=".json", delete=False, mode="w"
-        ) as tmp:
+        with tempfile.NamedTemporaryFile(suffix=".json", delete=False, mode="w") as tmp:
             json.dump(minimal, tmp, sort_keys=True)
             tmp_path = tmp.name
         try:
@@ -560,6 +541,7 @@ class TestRulesetIdSchemaStability:
 # Tests: Soft drawdown mode
 # =============================================================================
 
+
 class TestSoftDrawdownMode:
     """Tests for drawdown_gate_mode='soft' behavior."""
 
@@ -568,46 +550,39 @@ class TestSoftDrawdownMode:
     def test_soft_mode_drawdown_breach_stays_eligible(self):
         """Soft mode + drawdown breach above hard_floor → eligible."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "vol_60d": 0.5,
-                                "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={"drawdown": -0.50, "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
         )
-        result = compute_decision_fields(rec, "drug_developer", 0.75,
-                                         ruleset=self.SOFT_RULESET)
+        result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=self.SOFT_RULESET)
         assert result["eligible"] == "1"
         assert "deep_drawdown" not in result["ineligible_reasons"]
 
     def test_soft_mode_drawdown_breach_reduces_size(self):
         """Soft mode + drawdown breach → size_band one step lower, drawdown_penalty in reasons."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "vol_60d": 0.5,
-                                "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={"drawdown": -0.50, "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
         )
         # Hard mode baseline: ineligible → XS
         hard_result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert hard_result["eligible"] == "0"
 
         # Soft mode: eligible, but drawdown_penalty applied
-        soft_result = compute_decision_fields(rec, "drug_developer", 0.75,
-                                              ruleset=self.SOFT_RULESET)
+        soft_result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=self.SOFT_RULESET)
         assert soft_result["eligible"] == "1"
         assert "drawdown_penalty" in soft_result["size_reasons"]
 
     def test_soft_mode_catastrophic_drawdown_still_ineligible(self):
         """Soft mode + catastrophic drawdown (< hard_floor) → ineligible."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.80, "vol_60d": 0.5,
-                                "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={"drawdown": -0.80, "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
         )
-        result = compute_decision_fields(rec, "drug_developer", 0.75,
-                                         ruleset=self.SOFT_RULESET)
+        result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=self.SOFT_RULESET)
         assert result["eligible"] == "0"
         assert "deep_drawdown" in result["ineligible_reasons"]
 
     def test_hard_mode_drawdown_breach_still_ineligible(self):
         """Hard mode + drawdown breach → ineligible (unchanged v1 behavior)."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "vol_60d": 0.5,
-                                "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={"drawdown": -0.50, "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert result["eligible"] == "0"
@@ -622,14 +597,20 @@ class TestSoftDrawdownMode:
 # Regime-Aware Drawdown Gate (XBI-Relative) — AND logic tests
 # =============================================================================
 
+
 class TestDrawdownAndGate:
     """Tests for the AND gate: FAIL only if BOTH absolute AND relative thresholds breach."""
 
     def test_both_breach_ineligible(self):
         """Both absolute (-0.50 < -0.40) and relative (-0.25 < -0.15) breach → INELIGIBLE."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.25,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.25,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert result["eligible"] == "0"
@@ -638,8 +619,13 @@ class TestDrawdownAndGate:
     def test_only_abs_breach_eligible(self):
         """Absolute breaches (-0.50 < -0.40) but relative does NOT (-0.10 > -0.15) → ELIGIBLE."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.10,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.10,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert result["eligible"] == "1"
@@ -648,8 +634,13 @@ class TestDrawdownAndGate:
     def test_only_rel_breach_eligible(self):
         """Absolute does NOT breach (-0.30 > -0.40) but relative does (-0.25 < -0.15) → ELIGIBLE."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.30, "drawdown_rel_xbi": -0.25,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.30,
+                "drawdown_rel_xbi": -0.25,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert result["eligible"] == "1"
@@ -657,8 +648,7 @@ class TestDrawdownAndGate:
     def test_missing_rel_fallback_ineligible(self):
         """Absolute breaches and relative is None → fallback to absolute-only → INELIGIBLE."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "vol_60d": 0.5,
-                                "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={"drawdown": -0.50, "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert result["eligible"] == "0"
@@ -668,8 +658,13 @@ class TestDrawdownAndGate:
         """Soft mode + both breaches → sizing penalty, not ineligibility (above hard floor)."""
         rs = DecisionRuleset(drawdown_gate_mode="soft")
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.25,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.25,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "1"
@@ -678,8 +673,13 @@ class TestDrawdownAndGate:
     def test_rel_risk_flag(self):
         """Relative drawdown breach → deep_drawdown_rel_xbi in risk_flags."""
         rec = _base_rec(
-            defensive_features={"drawdown": -0.30, "drawdown_rel_xbi": -0.25,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.30,
+                "drawdown_rel_xbi": -0.25,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75)
         assert "deep_drawdown_rel_xbi" in result["risk_flags"]
@@ -688,6 +688,7 @@ class TestDrawdownAndGate:
 # =============================================================================
 # Drawdown near-rel-gate rescue (dd_rel_margin_rescue)
 # =============================================================================
+
 
 class TestDdRelMarginRescue:
     """Tests for the near-rel-gate rescue: override drawdown exclusion when
@@ -707,8 +708,13 @@ class TestDdRelMarginRescue:
         # abs: -0.50 < -0.40 → breach.  rel: -0.23 < -0.20 → breach, margin = -0.03
         rs = self._rs()
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.23,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.23,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "1"
@@ -720,8 +726,13 @@ class TestDdRelMarginRescue:
         # abs: -0.50 < -0.40 → breach.  rel: -0.28 < -0.20 → breach, margin = -0.08
         rs = self._rs()
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.28,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.28,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "0"
@@ -732,8 +743,13 @@ class TestDdRelMarginRescue:
         """Default ruleset has rescue disabled — both breach → INELIGIBLE."""
         rs = DecisionRuleset()  # enable_dd_rel_margin_rescue=False
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.23,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.23,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "0"
@@ -744,8 +760,13 @@ class TestDdRelMarginRescue:
         # rel: -0.2501, gate: -0.20, margin = -0.0501 < threshold -0.05 → NOT rescued
         rs = self._rs()
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.2501,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.2501,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "0"
@@ -755,8 +776,13 @@ class TestDdRelMarginRescue:
         """Rescue disabled when require_both=False (OR mode)."""
         rs = self._rs(drawdown_gate_require_both=False)
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.23,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.23,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         # In OR mode, abs breach alone → ineligible (rescue doesn't apply)
@@ -767,8 +793,13 @@ class TestDdRelMarginRescue:
         """Abs breaches but rel does NOT → already eligible, no rescue needed."""
         rs = self._rs()
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.10,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.10,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "1"
@@ -779,8 +810,13 @@ class TestDdRelMarginRescue:
         rs = self._rs()
         rec = _base_rec(
             severity="SEV3",
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.23,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.23,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
         assert result["eligible"] == "0"
@@ -793,8 +829,13 @@ class TestDdRelMarginRescue:
             catalyst_near_days=90,
         )
         rec = _base_rec(
-            defensive_features={"drawdown": -0.50, "drawdown_rel_xbi": -0.23,
-                                "vol_60d": 0.5, "beta_xbi_60d": 1.0, "rsi_14d": 40},
+            defensive_features={
+                "drawdown": -0.50,
+                "drawdown_rel_xbi": -0.23,
+                "vol_60d": 0.5,
+                "beta_xbi_60d": 1.0,
+                "rsi_14d": 40,
+            },
             catalyst_decay={"days_to_catalyst": 30, "in_optimal_window": True},
         )
         result = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs)
@@ -888,10 +929,12 @@ class TestRulesetIntentGuardrail:
         prev_manifest = None
         for ref in ("origin/main", "HEAD~1"):
             prev_contract = _git_show(
-                ref, "tests/test_decision_engine_contract.py",
+                ref,
+                "tests/test_decision_engine_contract.py",
             )
             prev_manifest = _git_show(
-                ref, "production_data/decision_rulesets/manifest.json",
+                ref,
+                "production_data/decision_rulesets/manifest.json",
             )
             if prev_contract and prev_manifest:
                 break
@@ -936,8 +979,7 @@ class TestRulesetIntentGuardrail:
 
         changelog_path = _ROOT / "RULESET_CHANGELOG.md"
         assert changelog_path.exists(), (
-            f"Fingerprint changed ({prev_fp} -> {cur_fp}) but "
-            f"RULESET_CHANGELOG.md not found"
+            f"Fingerprint changed ({prev_fp} -> {cur_fp}) but " f"RULESET_CHANGELOG.md not found"
         )
         changelog = changelog_path.read_text(encoding="utf-8")
 
@@ -951,6 +993,7 @@ class TestRulesetIntentGuardrail:
 # =============================================================================
 # Tests: Cost param validation
 # =============================================================================
+
 
 class TestCostParamValidation:
     """Tests for cost-aware sizing parameter validation and serialization."""
@@ -1018,6 +1061,7 @@ class TestCostParamValidation:
 # =============================================================================
 # Tests: Catalyst tilt
 # =============================================================================
+
 
 class TestCatalystTilt:
     """Tests for catalyst strength sizing tilt (L3-only, opt-in)."""
@@ -1087,18 +1131,14 @@ class TestCatalystTilt:
         assert loaded == custom
         assert loaded.ruleset_id == custom.ruleset_id
         assert loaded.enable_catalyst_tilt is True
-        assert loaded.catalyst_tilt_mults == (
-            ("NEAR", 1.20), ("MID", 1.10), ("FAR", 0.90), ("MISSING", 0.80)
-        )
+        assert loaded.catalyst_tilt_mults == (("NEAR", 1.20), ("MID", 1.10), ("FAR", 0.90), ("MISSING", 0.80))
 
     def test_tilt_weights_in_portfolio(self):
         """With tilt enabled, NEAR weight > FAR weight in portfolio normalization."""
         rs = DecisionRuleset(enable_catalyst_tilt=True)
         rows = [
-            {"size_band": "L", "eligible": "1", "cost_mult": 1.0,
-             "catalyst_tilt_mult": 1.10},  # NEAR
-            {"size_band": "L", "eligible": "1", "cost_mult": 1.0,
-             "catalyst_tilt_mult": 0.95},  # FAR
+            {"size_band": "L", "eligible": "1", "cost_mult": 1.0, "catalyst_tilt_mult": 1.10},  # NEAR
+            {"size_band": "L", "eligible": "1", "cost_mult": 1.0, "catalyst_tilt_mult": 0.95},  # FAR
         ]
         compute_target_weights(rows, ruleset=rs)
         assert rows[0]["target_weight_pct"] > rows[1]["target_weight_pct"]
@@ -1107,6 +1147,7 @@ class TestCatalystTilt:
 # =============================================================================
 # Tests: Momentum state tilt
 # =============================================================================
+
 
 class TestMomStateTilt:
     """Tests for momentum state sizing tilt (L3-only, opt-in)."""
@@ -1132,7 +1173,9 @@ class TestMomStateTilt:
         rs = DecisionRuleset(
             enable_mom_state_tilt=True,
             mom_state_tilt_mults=(
-                ("tailwind", 1.0), ("neutral", 0.85), ("headwind", 1.0),
+                ("tailwind", 1.0),
+                ("neutral", 0.85),
+                ("headwind", 1.0),
             ),
         )
         # Two otherwise-identical recs differing only in momentum
@@ -1176,7 +1219,9 @@ class TestMomStateTilt:
         custom = DecisionRuleset(
             enable_mom_state_tilt=True,
             mom_state_tilt_mults=(
-                ("tailwind", 1.10), ("neutral", 0.85), ("headwind", 0.90),
+                ("tailwind", 1.10),
+                ("neutral", 0.85),
+                ("headwind", 0.90),
             ),
         )
         path = str(tmp_path / "mom_tilt_custom.json")
@@ -1186,16 +1231,28 @@ class TestMomStateTilt:
         assert loaded.ruleset_id == custom.ruleset_id
         assert loaded.enable_mom_state_tilt is True
         assert loaded.mom_state_tilt_mults == (
-            ("tailwind", 1.10), ("neutral", 0.85), ("headwind", 0.90),
+            ("tailwind", 1.10),
+            ("neutral", 0.85),
+            ("headwind", 0.90),
         )
 
     def test_tilt_weights_in_portfolio(self):
         """With tilt enabled, tailwind weight > neutral weight in portfolio normalization."""
         rows = [
-            {"size_band": "L", "eligible": "1", "cost_mult": 1.0,
-             "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 1.0},
-            {"size_band": "L", "eligible": "1", "cost_mult": 1.0,
-             "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 0.85},
+            {
+                "size_band": "L",
+                "eligible": "1",
+                "cost_mult": 1.0,
+                "catalyst_tilt_mult": 1.0,
+                "mom_state_tilt_mult": 1.0,
+            },
+            {
+                "size_band": "L",
+                "eligible": "1",
+                "cost_mult": 1.0,
+                "catalyst_tilt_mult": 1.0,
+                "mom_state_tilt_mult": 0.85,
+            },
         ]
         compute_target_weights(rows)
         assert rows[0]["target_weight_pct"] > rows[1]["target_weight_pct"]
@@ -1204,6 +1261,7 @@ class TestMomStateTilt:
 # =============================================================================
 # Alpha training mode validation
 # =============================================================================
+
 
 class TestAlphaTrainValidation:
     """Tests for adaptive alpha training field validation."""
@@ -1271,62 +1329,4 @@ class TestAlphaTrainValidation:
         assert loaded.alpha_train_min_train_dates == 4
         assert loaded.alpha_train_horizon == 63
         assert loaded.alpha_table_rebuild_policy == "daily"
-        assert loaded == custom
-
-
-class TestAlphaModifierValidation:
-    """Validate alpha_modifier_mode and alpha_modifier_weight constraints."""
-
-    def test_mode_off_valid(self):
-        rs = DecisionRuleset(alpha_modifier_mode="off")
-        assert rs.alpha_modifier_mode == "off"
-
-    def test_mode_tiebreak_valid(self):
-        rs = DecisionRuleset(alpha_modifier_mode="tiebreak")
-        assert rs.alpha_modifier_mode == "tiebreak"
-
-    def test_mode_within_tier_valid(self):
-        rs = DecisionRuleset(alpha_modifier_mode="within_tier")
-        assert rs.alpha_modifier_mode == "within_tier"
-
-    def test_mode_invalid_rejected(self):
-        with pytest.raises(ValueError, match="alpha_modifier_mode"):
-            DecisionRuleset(alpha_modifier_mode="boost")
-
-    def test_weight_zero_valid(self):
-        rs = DecisionRuleset(alpha_modifier_weight=0.0)
-        assert rs.alpha_modifier_weight == 0.0
-
-    def test_weight_max_valid(self):
-        rs = DecisionRuleset(alpha_modifier_weight=0.25)
-        assert rs.alpha_modifier_weight == 0.25
-
-    def test_weight_mid_valid(self):
-        rs = DecisionRuleset(alpha_modifier_weight=0.10)
-        assert rs.alpha_modifier_weight == 0.10
-
-    def test_weight_negative_rejected(self):
-        with pytest.raises(ValueError, match="alpha_modifier_weight"):
-            DecisionRuleset(alpha_modifier_weight=-0.01)
-
-    def test_weight_above_cap_rejected(self):
-        with pytest.raises(ValueError, match="alpha_modifier_weight"):
-            DecisionRuleset(alpha_modifier_weight=0.26)
-
-    def test_defaults_are_off(self):
-        rs = DecisionRuleset()
-        assert rs.alpha_modifier_mode == "off"
-        assert rs.alpha_modifier_weight == 0.0
-
-    def test_round_trip_alpha_modifier_fields(self, tmp_path):
-        """Alpha modifier fields survive JSON round-trip."""
-        custom = DecisionRuleset(
-            alpha_modifier_mode="within_tier",
-            alpha_modifier_weight=0.15,
-        )
-        path = str(tmp_path / "alpha_mod.json")
-        custom.to_json(path)
-        loaded = DecisionRuleset.from_json(path)
-        assert loaded.alpha_modifier_mode == "within_tier"
-        assert loaded.alpha_modifier_weight == 0.15
         assert loaded == custom

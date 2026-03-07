@@ -4,6 +4,7 @@ Sort Contribution invariant tests.
 Validates the _build_sort_contributions() helper and its integration
 with compute_actionable_sort_key().
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,15 +23,18 @@ from decision_engine import (
     compute_actionable_sort_key,
 )
 
-
 # =============================================================================
 # A) Identity: default ruleset (all signals disabled) → empty, total_adj == 0
 # =============================================================================
 
+
 class TestIdentity:
     def test_default_ruleset_empty_contributions(self):
         contribs = _build_sort_contributions(
-            {}, DEFAULT_RULESET, alpha_raw=0.0, catalyst_bonus=0.0,
+            {},
+            DEFAULT_RULESET,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs == []
         assert sum(c.delta for c in contribs) == 0.0
@@ -45,7 +49,10 @@ class TestIdentity:
             "stage_bucket": "late",
         }
         contribs = _build_sort_contributions(
-            fields, DEFAULT_RULESET, alpha_raw=0.5, catalyst_bonus=0.0,
+            fields,
+            DEFAULT_RULESET,
+            alpha_raw=0.5,
+            catalyst_bonus=0.0,
         )
         assert contribs == []
 
@@ -54,13 +61,17 @@ class TestIdentity:
 # B) Bounded delta: |delta| <= weight * 2.0 for clamped signals
 # =============================================================================
 
+
 class TestBoundedDelta:
     @pytest.mark.parametrize("z", [-5.0, -2.0, -0.5, 0.0, 0.5, 2.0, 5.0])
     def test_clinical_delta_bounded(self, z):
         rs = DecisionRuleset(enable_clinical_sort_signal=True)
         fields = {"clinical_score_z_tier": z, "stage_bucket": "late"}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         c = contribs[0]
@@ -72,7 +83,10 @@ class TestBoundedDelta:
         rs = DecisionRuleset(enable_coinvest_sort_signal=True)
         fields = {"coinvest_score_z": z}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert abs(contribs[0].delta) <= rs.coinvest_sort_weight * 2.0 + 1e-12
@@ -82,7 +96,10 @@ class TestBoundedDelta:
         rs = DecisionRuleset(enable_institutional_sort_signal=True)
         fields = {"inst_delta_z": z}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert abs(contribs[0].delta) <= rs.institutional_sort_weight * 2.0 + 1e-12
@@ -92,7 +109,10 @@ class TestBoundedDelta:
         rs = DecisionRuleset(enable_calendar_alpha_sort=True)
         fields = {"clinical_score_v2_z": z}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert abs(contribs[0].delta) <= rs.calendar_alpha_sort_weight * 2.0 + 1e-12
@@ -102,13 +122,17 @@ class TestBoundedDelta:
 # C) NaN safety: NaN/None/empty inputs → delta == 0.0
 # =============================================================================
 
+
 class TestNaNSafety:
     @pytest.mark.parametrize("bad_val", [None, "", float("nan")])
     def test_clinical_nan_safe(self, bad_val):
         rs = DecisionRuleset(enable_clinical_sort_signal=True)
         fields = {"clinical_score_z_tier": bad_val, "stage_bucket": "late"}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert contribs[0].delta == 0.0
@@ -118,7 +142,10 @@ class TestNaNSafety:
         rs = DecisionRuleset(enable_coinvest_sort_signal=True)
         fields = {"coinvest_score_z": bad_val}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert contribs[0].delta == 0.0
@@ -128,7 +155,10 @@ class TestNaNSafety:
         rs = DecisionRuleset(enable_institutional_sort_signal=True)
         fields = {"inst_delta_z": bad_val}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert contribs[0].delta == 0.0
@@ -138,7 +168,10 @@ class TestNaNSafety:
         rs = DecisionRuleset(enable_calendar_alpha_sort=True)
         fields = {"clinical_score_v2_z": bad_val}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert len(contribs) == 1
         assert contribs[0].delta == 0.0
@@ -150,11 +183,12 @@ class TestNaNSafety:
             enable_coinvest_sort_signal=True,
             enable_institutional_sort_signal=True,
             enable_calendar_alpha_sort=True,
-            alpha_modifier_mode="within_tier",
-            alpha_modifier_weight=0.05,
         )
         contribs = _build_sort_contributions(
-            {}, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            {},
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         for c in contribs:
             assert c.delta == 0.0, f"{c.name} should have delta=0 with missing fields"
@@ -165,6 +199,7 @@ class TestNaNSafety:
 #    (implicitly tested by TestGoldenOutputFingerprint; explicit check here)
 # =============================================================================
 
+
 class TestOutputEquivalence:
     def test_golden_fingerprint_unchanged(self):
         """The refactored code must produce the exact same golden fingerprint.
@@ -173,19 +208,16 @@ class TestOutputEquivalence:
         test_decision_engine_contract.py — duplicated here for self-contained
         verification of the contribution refactor.
         """
-        import hashlib
-        from tests.test_decision_engine_contract import (
-            ALL_GOLDEN,
-            _compute_golden,
-            _compute_golden_output_fingerprint,
-        )
+        from tests.test_decision_engine_contract import _compute_golden_output_fingerprint
+
         actual = _compute_golden_output_fingerprint()
-        assert actual == "da7e8b5fc87f"
+        assert actual == "da7e8b5fc87f"  # pragma: allowlist secret
 
 
 # =============================================================================
 # E) Completeness: all 5 signal names present when all enabled
 # =============================================================================
+
 
 class TestCompleteness:
     def test_all_signals_present(self):
@@ -204,11 +236,16 @@ class TestCompleteness:
             "clinical_score_v2_z": 0.8,
         }
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.1, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.1,
+            catalyst_bonus=0.0,
         )
         names = [c.name for c in contribs]
         assert names == [
-            "clinical", "coinvest", "institutional",
+            "clinical",
+            "coinvest",
+            "institutional",
             "calendar_alpha",
         ]
 
@@ -227,7 +264,10 @@ class TestCompleteness:
             "clinical_score_v2_z": 0.8,
         }
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.1, catalyst_bonus=2.0,
+            fields,
+            rs,
+            alpha_raw=0.1,
+            catalyst_bonus=2.0,
         )
         names = [c.name for c in contribs]
         assert "catalyst_bonus" in names
@@ -238,6 +278,7 @@ class TestCompleteness:
 # F) Positive-only: negative z with positive_only → delta == 0
 # =============================================================================
 
+
 class TestPositiveOnly:
     def test_clinical_negative_z_positive_only(self):
         rs = DecisionRuleset(
@@ -246,7 +287,10 @@ class TestPositiveOnly:
         )
         fields = {"clinical_score_z_tier": -1.5, "stage_bucket": "late"}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs[0].delta == 0.0
 
@@ -257,7 +301,10 @@ class TestPositiveOnly:
         )
         fields = {"coinvest_score_z": -0.8}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs[0].delta == 0.0
 
@@ -268,7 +315,10 @@ class TestPositiveOnly:
         )
         fields = {"inst_delta_z": -2.0}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs[0].delta == 0.0
 
@@ -277,7 +327,10 @@ class TestPositiveOnly:
         rs = DecisionRuleset(enable_calendar_alpha_sort=True)
         fields = {"clinical_score_v2_z": -1.0}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs[0].delta == 0.0
 
@@ -289,7 +342,10 @@ class TestPositiveOnly:
         )
         fields = {"clinical_score_z_tier": -1.5, "stage_bucket": "late"}
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         assert contribs[0].delta < 0.0
 
@@ -297,6 +353,7 @@ class TestPositiveOnly:
 # =============================================================================
 # G) Contribution sum: sum(c.delta) == total_adj used in sort key
 # =============================================================================
+
 
 class TestContributionSum:
     def test_sum_matches_effective_rank_tiebreaker(self):
@@ -316,13 +373,20 @@ class TestContributionSum:
             "clinical_score_v2_z": 0.7,
         }
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         total_adj = sum(c.delta for c in contribs)
 
         sort_tuple = compute_actionable_sort_key(
-            fields, archetype="drug_developer", optionality=0.6,
-            composite_rank=5, ticker="TEST", ruleset=rs,
+            fields,
+            archetype="drug_developer",
+            optionality=0.6,
+            composite_rank=5,
+            ticker="TEST",
+            ruleset=rs,
         )
         # In tiebreaker mode, element at index 3 (after 3 prefix elements) is effective_comp_rank
         anchor = 5.0  # composite_rank
@@ -344,8 +408,12 @@ class TestContributionSum:
             "stage_bucket": "mid",
         }
         sort_tuple = compute_actionable_sort_key(
-            fields, archetype="drug_developer", optionality=0.6,
-            composite_rank=10, ticker="TEST", ruleset=rs,
+            fields,
+            archetype="drug_developer",
+            optionality=0.6,
+            composite_rank=10,
+            ticker="TEST",
+            ruleset=rs,
         )
         # Just verify it produces a valid tuple without error
         assert isinstance(sort_tuple, tuple)
@@ -366,13 +434,20 @@ class TestContributionSum:
             "stage_bucket": "late",
         }
         contribs = _build_sort_contributions(
-            fields, rs, alpha_raw=0.0, catalyst_bonus=0.0,
+            fields,
+            rs,
+            alpha_raw=0.0,
+            catalyst_bonus=0.0,
         )
         total_adj = sum(c.delta for c in contribs)
 
         sort_tuple = compute_actionable_sort_key(
-            fields, archetype="drug_developer", optionality=0.6,
-            composite_rank=5, ticker="TEST", ruleset=rs,
+            fields,
+            archetype="drug_developer",
+            optionality=0.6,
+            composite_rank=5,
+            ticker="TEST",
+            ruleset=rs,
         )
         # In off mode: prefix(3) + cat_priority, cat_mode_ord, cat_days, missing_count, effective_opt_neg, ...
         opt_neg = -0.6
@@ -383,6 +458,7 @@ class TestContributionSum:
 # =============================================================================
 # Structural: SortContribution is a proper NamedTuple
 # =============================================================================
+
 
 class TestSortContributionStructure:
     def test_namedtuple_fields(self):
