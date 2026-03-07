@@ -75,6 +75,7 @@ def portfolio():
     return build_strategy_portfolio(ad, ruleset, TIER_FILTER, TOP_K)
 
 
+@pytest.mark.timeout(60)
 class TestPhase2PortfolioRegression:
 
     def test_position_count(self, portfolio):

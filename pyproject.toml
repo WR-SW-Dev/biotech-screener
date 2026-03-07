@@ -44,8 +44,11 @@ pythonpath = [".", "tests"]
 python_files = "test_*.py"
 python_functions = "test_*"
 addopts = "-n auto --dist worksteal -q"
+timeout = 30
+timeout_method = "thread"
 markers = [
     "slow: marks tests that run the full pipeline or take >5s (deselect with '-m \"not slow\"')",
+    "timeout: override the default per-test timeout (seconds)",
 ]
 filterwarnings = [
     "error::DeprecationWarning",

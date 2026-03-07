@@ -110,6 +110,7 @@ def _check_archives_exist() -> bool:
 
 
 @pytest.mark.slow
+@pytest.mark.timeout(120)
 class TestGoldenICRegression:
 
     @pytest.fixture(autouse=True)

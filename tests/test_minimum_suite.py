@@ -21,13 +21,9 @@ from pathlib import Path
 
 import pytest
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.timeout(120)]
 
-from conftest import (
-    NON_DETERMINISTIC_PATHS,
-    PIPELINE_MAIN_DATE,
-    compute_content_hash,
-)
+from conftest import NON_DETERMINISTIC_PATHS, PIPELINE_MAIN_DATE, compute_content_hash
 
 # Test configuration
 DATA_DIR = Path("production_data")
@@ -226,10 +222,7 @@ class TestEdgeCases:
         data = pipeline_run_main["data"]
 
         # Count SEV3 in Module 2
-        sev3_count = sum(
-            1 for s in data["module_2_financial"]["scores"]
-            if s.get("severity") == "sev3"
-        )
+        sev3_count = sum(1 for s in data["module_2_financial"]["scores"] if s.get("severity") == "sev3")
 
         # Count excluded
         excluded_count = len(data["module_5_composite"]["excluded_securities"])
@@ -250,10 +243,7 @@ class TestEdgeCases:
         data = pipeline_run_main["data"]
 
         m5 = data["module_5_composite"]
-        total_weight = sum(
-            float(sec.get("position_weight", "0"))
-            for sec in m5["ranked_securities"]
-        )
+        total_weight = sum(float(sec.get("position_weight", "0")) for sec in m5["ranked_securities"])
 
         # Position sizing disabled by default -> weights should be 0
         def_config = m5.get("defensive_overlay_config", {})
@@ -299,22 +289,24 @@ class TestValidation:
     def test_doctor_passes(self):
         """Doctor health check passes"""
         import sys
+
         result = subprocess.run(
             [sys.executable, "doctor.py", "--data-dir", str(DATA_DIR)],
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent
+            cwd=Path(__file__).parent.parent,
         )
         assert result.returncode == 0, f"Doctor check failed:\n{result.stdout}\n{result.stderr}"
 
     def test_validate_pipeline_passes(self, pipeline_run_main):
         """Pipeline validation passes on output"""
         import sys
+
         result = subprocess.run(
             [sys.executable, "validate_pipeline.py", "--output", str(pipeline_run_main["output_path"])],
             capture_output=True,
             text=True,
-            cwd=Path(__file__).parent.parent
+            cwd=Path(__file__).parent.parent,
         )
         assert result.returncode == 0, f"Validation failed:\n{result.stdout}\n{result.stderr}"
 

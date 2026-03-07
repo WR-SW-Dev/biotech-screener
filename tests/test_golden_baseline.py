@@ -18,17 +18,13 @@ Usage:
 import json
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, Set
+from typing import Any, Dict
 
 import pytest
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.timeout(120)]
 
-from conftest import (
-    NON_DETERMINISTIC_PATHS,
-    PIPELINE_HISTORICAL_DATE,
-    compute_content_hash,
-)
+from conftest import NON_DETERMINISTIC_PATHS, PIPELINE_HISTORICAL_DATE, compute_content_hash
 
 # Configuration
 GOLDEN_DIR = Path(__file__).parent / "golden"
@@ -86,9 +82,9 @@ class TestGoldenBaseline:
         with open(BASELINE_METADATA_FILE, "w") as f:
             json.dump(metadata, f, indent=2)
 
-        print(f"\nBaseline created:")
+        print("\nBaseline created:")
         print(f"  File: {BASELINE_FILE}")
-        print(f"  As-of date: 2026-01-20")
+        print("  As-of date: 2026-01-20")
         print(f"  Content hash: {metadata['content_hash'][:16]}")
         print(f"  Total evaluated: {metadata['total_evaluated']}")
         print(f"  Final ranked: {metadata['final_ranked']}")
@@ -128,9 +124,7 @@ class TestGoldenBaseline:
             current_val = get_nested_value(current, path)
             baseline_val = get_nested_value(baseline, path)
 
-            assert current_val == baseline_val, (
-                f"Critical field {path} changed: {baseline_val} -> {current_val}"
-            )
+            assert current_val == baseline_val, f"Critical field {path} changed: {baseline_val} -> {current_val}"
 
     @pytest.mark.skipif(not BASELINE_FILE.exists(), reason="No baseline exists")
     def test_determinism_multiple_runs(self, pipeline_run_main, pipeline_run_determinism):
@@ -229,9 +223,7 @@ class TestPITDiscipline:
         m4 = data.get("module_4_clinical", {})
         m4_date = m4.get("as_of_date")
         if m4_date:
-            assert m4_date <= PIPELINE_HISTORICAL_DATE, (
-                f"Module 4 as_of_date {m4_date} > {PIPELINE_HISTORICAL_DATE}"
-            )
+            assert m4_date <= PIPELINE_HISTORICAL_DATE, f"Module 4 as_of_date {m4_date} > {PIPELINE_HISTORICAL_DATE}"
 
 
 class TestEdgeCases:
