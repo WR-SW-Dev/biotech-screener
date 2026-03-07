@@ -1,11 +1,11 @@
 """Tests for Modules 1-5."""
+
 import os
+
 import pytest
-from decimal import Decimal
 
 from module_1_universe import compute_module_1_universe
 from module_2_financial import compute_module_2_financial
-from module_3_catalyst import compute_module_3_catalyst
 from module_4_clinical_dev import compute_module_4_clinical_dev
 from module_5_composite import compute_module_5_composite
 
@@ -29,19 +29,19 @@ class TestModule1Universe:
             {"ticker": "TINY", "company_name": "Tiny Corp", "market_cap_mm": 10},
         ]
         result = compute_module_1_universe(records, "2024-01-01")
-        
+
         active = [s["ticker"] for s in result["active_securities"]]
         excluded = [s["ticker"] for s in result["excluded_securities"]]
-        
+
         assert "AAPL" in active
         assert "TINY" in excluded
-    
+
     def test_shell_exclusion(self):
         records = [
             {"ticker": "SPAC", "company_name": "Blank Check Acquisition Corp", "market_cap_mm": 500},
         ]
         result = compute_module_1_universe(records, "2024-01-01")
-        
+
         assert len(result["active_securities"]) == 0
         assert result["excluded_securities"][0]["reason"] == "excluded_shell"
 
@@ -49,8 +49,14 @@ class TestModule1Universe:
 class TestModule2Financial:
     def test_financial_scoring(self):
         records = [
-            {"ticker": "TEST", "cash_mm": 1000, "debt_mm": 100, "burn_rate_mm": 30,
-             "market_cap_mm": 5000, "source_date": "2023-12-30"},
+            {
+                "ticker": "TEST",
+                "cash_mm": 1000,
+                "debt_mm": 100,
+                "burn_rate_mm": 30,
+                "market_cap_mm": 5000,
+                "source_date": "2023-12-30",
+            },
         ]
         result = compute_module_2_financial(records, ["TEST"], "2024-01-01")
 
@@ -59,14 +65,14 @@ class TestModule2Financial:
         assert score["ticker"] == "TEST"
         assert float(score["financial_normalized"]) > 0
         assert float(score["runway_months"]) > 0
-    
+
     def test_pit_filtering(self):
         records = [
             {"ticker": "OLD", "cash_mm": 100, "source_date": "2023-12-30"},
             {"ticker": "FUTURE", "cash_mm": 200, "source_date": "2024-01-02"},
         ]
         result = compute_module_2_financial(records, ["OLD", "FUTURE"], "2024-01-01")
-        
+
         # FUTURE should be excluded (after PIT cutoff)
         tickers = [s["ticker"] for s in result["scores"]]
         assert "OLD" in tickers
@@ -84,9 +90,8 @@ class TestModule3Catalyst:
         """Test that vNext API works (smoke test)."""
         from datetime import date
         from decimal import Decimal
-        from module_3_schema import (
-            EventType, EventSeverity, ConfidenceLevel, CatalystEventV2
-        )
+
+        from module_3_schema import CatalystEventV2, ConfidenceLevel, EventSeverity, EventType
         from module_3_scoring import calculate_ticker_catalyst_score
 
         # Create sample events
@@ -116,8 +121,8 @@ class TestModule3Catalyst:
     def test_no_catalyst_vnext(self):
         """Test empty events with vNext API."""
         from datetime import date
-        from decimal import Decimal
-        from module_3_scoring import calculate_ticker_catalyst_score, SCORE_DEFAULT
+
+        from module_3_scoring import SCORE_DEFAULT, calculate_ticker_catalyst_score
 
         as_of = date(2024, 1, 31)
         summary = calculate_ticker_catalyst_score("TEST", [], as_of)
@@ -130,26 +135,36 @@ class TestModule3Catalyst:
 class TestModule4ClinicalDev:
     def test_clinical_scoring(self):
         records = [
-            {"ticker": "TEST", "nct_id": "NCT12345", "phase": "phase 3",
-             "status": "completed", "randomized": True, "blinded": "double",
-             "primary_endpoint": "overall survival",
-             "last_update_posted": "2023-12-01"},
+            {
+                "ticker": "TEST",
+                "nct_id": "NCT12345",
+                "phase": "phase 3",
+                "status": "completed",
+                "randomized": True,
+                "blinded": "double",
+                "primary_endpoint": "overall survival",
+                "last_update_posted": "2023-12-01",
+            },
         ]
         result = compute_module_4_clinical_dev(records, ["TEST"], "2024-01-01")
-        
+
         assert len(result["scores"]) == 1
         score = result["scores"][0]
         assert score["lead_phase"] == "phase 3"
         assert float(score["clinical_score"]) > 50  # High score for P3 + good design
-    
+
     def test_early_stage(self):
         records = [
-            {"ticker": "EARLY", "nct_id": "NCT12345", "phase": "phase 1",
-             "primary_endpoint": "safety",
-             "last_update_posted": "2023-12-01"},
+            {
+                "ticker": "EARLY",
+                "nct_id": "NCT12345",
+                "phase": "phase 1",
+                "primary_endpoint": "safety",
+                "last_update_posted": "2023-12-01",
+            },
         ]
         result = compute_module_4_clinical_dev(records, ["EARLY"], "2024-01-01")
-        
+
         score = result["scores"][0]
         assert score["lead_phase"] == "phase 1"
         assert "early_stage" in score["flags"]
@@ -158,9 +173,7 @@ class TestModule4ClinicalDev:
 class TestModule5Composite:
     @pytest.fixture
     def sample_inputs(self):
-        universe = {
-            "active_securities": [{"ticker": "A"}, {"ticker": "B"}]
-        }
+        universe = {"active_securities": [{"ticker": "A"}, {"ticker": "B"}]}
         financial = {
             "scores": [
                 {"ticker": "A", "financial_score": "70", "market_cap_mm": "5000", "severity": "none", "flags": []},
@@ -180,7 +193,7 @@ class TestModule5Composite:
             ]
         }
         return universe, financial, catalyst, clinical
-    
+
     def test_composite_ranking(self, sample_inputs):
         u, f, c, cl = sample_inputs
         # validate_inputs=False for minimal test fixtures
@@ -213,9 +226,7 @@ class TestRegimeWeightNormalization:
     @pytest.fixture
     def sample_inputs_with_regime(self):
         """Sample inputs for regime weight testing."""
-        universe = {
-            "active_securities": [{"ticker": "A"}, {"ticker": "B"}]
-        }
+        universe = {"active_securities": [{"ticker": "A"}, {"ticker": "B"}]}
         financial = {
             "scores": [
                 {"ticker": "A", "financial_score": "70", "market_cap_mm": "5000", "severity": "none", "flags": []},
@@ -239,6 +250,7 @@ class TestRegimeWeightNormalization:
     def test_regime_weights_sum_to_one_bull(self, sample_inputs_with_regime):
         """BULL regime: weights must sum to 1.0 after normalization."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         # BULL regime adjustments (from regime_engine.py)
@@ -256,9 +268,7 @@ class TestRegimeWeightNormalization:
         }
 
         result = compute_module_5_composite(
-            u, f, c, cl, "2024-01-01",
-            enhancement_result=enhancement_result,
-            validate_inputs=False
+            u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
         )
 
         # Weights must sum to 1.0
@@ -276,6 +286,7 @@ class TestRegimeWeightNormalization:
     def test_regime_weights_sum_to_one_bear(self, sample_inputs_with_regime):
         """BEAR regime: weights must sum to 1.0 after normalization."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         # BEAR regime adjustments (from regime_engine.py)
@@ -293,9 +304,7 @@ class TestRegimeWeightNormalization:
         }
 
         result = compute_module_5_composite(
-            u, f, c, cl, "2024-01-01",
-            enhancement_result=enhancement_result,
-            validate_inputs=False
+            u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
         )
 
         weights_used = result.get("weights_used", {})
@@ -305,6 +314,7 @@ class TestRegimeWeightNormalization:
     def test_regime_weights_sum_to_one_volatility_spike(self, sample_inputs_with_regime):
         """VOLATILITY_SPIKE regime: weights must sum to 1.0 after normalization."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         # VOLATILITY_SPIKE regime adjustments
@@ -322,9 +332,7 @@ class TestRegimeWeightNormalization:
         }
 
         result = compute_module_5_composite(
-            u, f, c, cl, "2024-01-01",
-            enhancement_result=enhancement_result,
-            validate_inputs=False
+            u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
         )
 
         weights_used = result.get("weights_used", {})
@@ -334,6 +342,7 @@ class TestRegimeWeightNormalization:
     def test_regime_adjustments_without_pos_data(self, sample_inputs_with_regime):
         """Regime adjustments should apply even without PoS data."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         # Enhancement result with regime but NO PoS scores
@@ -351,9 +360,7 @@ class TestRegimeWeightNormalization:
         }
 
         result = compute_module_5_composite(
-            u, f, c, cl, "2024-01-01",
-            enhancement_result=enhancement_result,
-            validate_inputs=False
+            u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
         )
 
         # Regime weights should still be applied
@@ -364,6 +371,7 @@ class TestRegimeWeightNormalization:
     def test_regime_audit_trail_included(self, sample_inputs_with_regime):
         """Audit trail should include base weights and effective weights."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         enhancement_result = {
@@ -380,9 +388,7 @@ class TestRegimeWeightNormalization:
         }
 
         result = compute_module_5_composite(
-            u, f, c, cl, "2024-01-01",
-            enhancement_result=enhancement_result,
-            validate_inputs=False
+            u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
         )
 
         diag = result.get("enhancement_diagnostics", {})
@@ -402,6 +408,7 @@ class TestRegimeWeightNormalization:
     def test_all_regimes_produce_normalized_weights(self, sample_inputs_with_regime):
         """All regime types must produce weights that sum to 1.0."""
         from decimal import Decimal
+
         u, f, c, cl = sample_inputs_with_regime
 
         # Test all regime types
@@ -442,15 +449,14 @@ class TestRegimeWeightNormalization:
             }
 
             result = compute_module_5_composite(
-                u, f, c, cl, "2024-01-01",
-                enhancement_result=enhancement_result,
-                validate_inputs=False
+                u, f, c, cl, "2024-01-01", enhancement_result=enhancement_result, validate_inputs=False
             )
 
             weights_used = result.get("weights_used", {})
             total = sum(Decimal(v) for v in weights_used.values())
-            assert abs(total - Decimal("1.0")) < Decimal("0.001"), \
-                f"{regime_name}: Weights sum to {total}, expected 1.0"
+            assert abs(total - Decimal("1.0")) < Decimal(
+                "0.001"
+            ), f"{regime_name}: Weights sum to {total}, expected 1.0"
 
 
 class TestIntegration:
@@ -462,7 +468,6 @@ class TestIntegration:
         This test verifies modules 1, 2, 4, 5 integration with mock M3 data.
         """
         from datetime import date
-        from decimal import Decimal
 
         # Universe
         universe_data = [
@@ -473,15 +478,20 @@ class TestIntegration:
 
         # Financial
         financial_data = [
-            {"ticker": "TEST", "cash_mm": 500, "debt_mm": 50, "burn_rate_mm": 15,
-             "market_cap_mm": 5000, "source_date": "2023-12-30"},
+            {
+                "ticker": "TEST",
+                "cash_mm": 500,
+                "debt_mm": 50,
+                "burn_rate_mm": 15,
+                "market_cap_mm": 5000,
+                "source_date": "2023-12-30",
+            },
         ]
         m2 = compute_module_2_financial(financial_data, active, "2024-01-01")
 
         # Mock Catalyst result (since vNext requires file-based inputs)
         # Use the legacy format that Module 5 expects
         from catalyst_summary import TickerCatalystSummary
-        from event_detector import CatalystEvent, EventType as LegacyEventType
 
         mock_summary = TickerCatalystSummary(
             ticker="TEST",
@@ -497,16 +507,22 @@ class TestIntegration:
 
         m3 = {
             "summaries": {"TEST": mock_summary},
-            "summaries_legacy": {"TEST": mock_summary},
             "diagnostic_counts": {"events_detected": 0, "severe_negatives": 0},
             "as_of_date": "2024-01-01",
         }
 
         # Clinical
         trial_data = [
-            {"ticker": "TEST", "nct_id": "NCT123", "phase": "phase 2",
-             "primary_completion_date": "2024-06-01", "status": "recruiting",
-             "randomized": True, "blinded": "double", "primary_endpoint": "response"},
+            {
+                "ticker": "TEST",
+                "nct_id": "NCT123",
+                "phase": "phase 2",
+                "primary_completion_date": "2024-06-01",
+                "status": "recruiting",
+                "randomized": True,
+                "blinded": "double",
+                "primary_endpoint": "response",
+            },
         ]
         m4 = compute_module_4_clinical_dev(trial_data, active, "2024-01-01")
 

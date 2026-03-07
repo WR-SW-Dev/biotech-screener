@@ -11,6 +11,7 @@ Usage:
     python3 tools/send_alert.py --level FAIL --date 2026-03-05 --webhook "$SLACK_WEBHOOK_URL"
     python3 tools/send_alert.py --level WARN --date 2026-03-05  # no webhook → silent exit 0
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,7 +19,7 @@ import json
 import sys
 import urllib.error
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -70,8 +71,7 @@ def _extract_gate_summary(packet: Dict) -> Dict:
 def _extract_action_items(packet: Dict) -> List[str]:
     """Extract action item descriptions from health packet."""
     items = packet.get("action_items", [])
-    return [f"[{i.get('severity','?')}] {i.get('type','?')}: {i.get('detail','')}"
-            for i in items]
+    return [f"[{i.get('severity', '?')}] {i.get('type', '?')}: {i.get('detail', '')}" for i in items]
 
 
 def _extract_live_perf(summary: Dict) -> Optional[str]:
@@ -107,7 +107,9 @@ def build_payload(
     ruleset_id = prov.get("ruleset_id", "unknown")
 
     title = f"{emoji} Biotech Screener {level} — {date_str}"
-    summary_text = f"Ruleset: `{ruleset_id}` | Gates: {gate_summary['pass']}P {gate_summary['warn']}W {gate_summary['fail']}F"
+    summary_text = (
+        f"Ruleset: `{ruleset_id}` | Gates: {gate_summary['pass']}P {gate_summary['warn']}W {gate_summary['fail']}F"
+    )
     if rollback_rec:
         summary_text += " | :rotating_light: ROLLBACK RECOMMENDED"
 
@@ -127,7 +129,7 @@ def build_payload(
         "text": summary_text,
         "fields": fields,
         "footer": "biotech-screener",
-        "ts": int(datetime.utcnow().timestamp()),
+        "ts": int(datetime.now(timezone.utc).timestamp()),
     }
 
     return {"attachments": [attachment]}
@@ -169,7 +171,7 @@ def send_alert(
     payload = build_payload(level, date_str, packet, live_summary)
 
     if dry_run:
-        print(f"[send_alert] DRY RUN — would POST to webhook:")
+        print("[send_alert] DRY RUN — would POST to webhook:")
         print(json.dumps(payload, indent=2))
         return
 
@@ -182,17 +184,11 @@ def send_alert(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Send a health degradation alert to a Slack webhook."
-    )
-    parser.add_argument("--level", required=True, choices=["FAIL", "WARN", "OK"],
-                        help="Alert severity level")
-    parser.add_argument("--date", required=True, metavar="YYYY-MM-DD",
-                        help="Production run date")
-    parser.add_argument("--webhook", default=None, metavar="URL",
-                        help="Slack incoming webhook URL (omit to skip)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Print payload without POSTing")
+    parser = argparse.ArgumentParser(description="Send a health degradation alert to a Slack webhook.")
+    parser.add_argument("--level", required=True, choices=["FAIL", "WARN", "OK"], help="Alert severity level")
+    parser.add_argument("--date", required=True, metavar="YYYY-MM-DD", help="Production run date")
+    parser.add_argument("--webhook", default=None, metavar="URL", help="Slack incoming webhook URL (omit to skip)")
+    parser.add_argument("--dry-run", action="store_true", help="Print payload without POSTing")
     args = parser.parse_args()
 
     send_alert(

@@ -215,8 +215,10 @@ def main():
         print(f"\n  {'Horizon':>8s}  {'IC':>8s}  {'t-stat':>8s}  {'Turnover':>8s}  {'GrossRet':>10s}  {'n':>4s}")
         for h in sorted(bh.keys(), key=int):
             d = bh[h]
+            t_stat = d.get("ic_t_stat")
+            t_str = f"{t_stat:>8.3f}" if t_stat is not None else "     N/A"
             print(
-                f"  {h+'d':>8s}  {d['mean_ic']:>8.4f}  {d['ic_t_stat']:>8.3f}  {d['mean_turnover']:>8.4f}  {d['mean_gross_return']:>10.4f}  {d['n_dates']:>4d}"
+                f"  {h+'d':>8s}  {d['mean_ic']:>8.4f}  {t_str}  {d['mean_turnover']:>8.4f}  {d['mean_gross_return']:>10.4f}  {d['n_dates']:>4d}"
             )
         print(f"\n  Full results: {eval_dir}/summary.json")
     else:

@@ -20,27 +20,12 @@ jobs:
           python -m pip install --upgrade pip
           pip install flake8==7.0.0 black==24.3.0 isort==5.13.2
 
-      - name: Check formatting (black)
-        run: |
-          black --check --diff \
-            common/ decision_engine.py run_screen.py tools/ scripts/ \
-            wake_robin_data_pipeline/ mcp_server/ 2>&1 | head -100
-        continue-on-error: true
+      - name: Install pre-commit
+        run: pip install pre-commit
 
-      - name: Check import order (isort)
+      - name: Run pre-commit on changed files
         run: |
-          isort --check-only --diff \
-            common/ decision_engine.py run_screen.py tools/ scripts/ \
-            wake_robin_data_pipeline/ mcp_server/ 2>&1 | head -100
-        continue-on-error: true
-
-      - name: Lint (flake8)
-        run: |
-          flake8 common/ decision_engine.py run_screen.py tools/ scripts/ \
-            wake_robin_data_pipeline/ mcp_server/ \
-            --max-line-length 120 \
-            --extend-ignore E501,W503,E203,E266,E402 \
-            --count --statistics
+          pre-commit run --all-files --show-diff-on-failure
 
   secret-scan:
     runs-on: ubuntu-latest

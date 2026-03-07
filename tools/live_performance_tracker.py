@@ -17,6 +17,7 @@ Usage:
     python3 tools/live_performance_tracker.py --as-of-date 2026-03-05
     python3 tools/live_performance_tracker.py --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,9 +26,9 @@ import json
 import math
 import statistics
 import sys
-from datetime import datetime, date, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 # Project root on path
@@ -36,12 +37,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.eval_forward_returns import (
-    spearman_ic,
-    top_k_portfolio_return,
-    compute_turnover,
-    net_return,
-)
+from scripts.eval_forward_returns import compute_turnover, net_return, spearman_ic, top_k_portfolio_return
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -52,7 +48,7 @@ PRICE_HISTORY_CSV = PROJECT_ROOT / "price_history.csv"
 OUTPUT_CSV = PROJECT_ROOT / "output" / "live_performance.csv"
 OUTPUT_SUMMARY = PROJECT_ROOT / "output" / "live_performance_summary.json"
 
-HORIZON = 20          # trading days forward (h20)
+HORIZON = 20  # trading days forward (h20)
 TOP_K = 20
 COST_BPS = 30.0
 SCHEMA_VERSION = "live_performance_row.v1"
@@ -82,6 +78,7 @@ ROLLING_13W_N = 65
 # ---------------------------------------------------------------------------
 # Data loading helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_rankings(snapshot_dir: Path) -> List[Dict]:
     """Load rankings.csv from a snapshot directory, sorted by actionable_rank asc."""
@@ -159,6 +156,7 @@ def _find_split_warnings(pit_dir: Path, horizon: int) -> set:
 # Forward return computation
 # ---------------------------------------------------------------------------
 
+
 def _compute_fwd_returns(
     pit_prices: Dict[str, Dict],
     split_tickers: set,
@@ -213,6 +211,7 @@ def _get_xbi_forward_return(
 # Snapshot metadata
 # ---------------------------------------------------------------------------
 
+
 def _load_ruleset_id(snapshot_dir: Path) -> str:
     """Extract ruleset_id from snapshot metadata.json."""
     meta = snapshot_dir / "metadata.json"
@@ -258,6 +257,7 @@ def _load_existing_dates(horizon: int) -> set:
 # Core computation
 # ---------------------------------------------------------------------------
 
+
 def compute_row(
     snap_date: str,
     horizon: int,
@@ -292,11 +292,7 @@ def compute_row(
         return None
 
     # Eligible tickers in rank order
-    tickers_ranked = [
-        r["ticker"].upper()
-        for r in rankings
-        if r.get("eligible", "").strip() == "1"
-    ]
+    tickers_ranked = [r["ticker"].upper() for r in rankings if r.get("eligible", "").strip() == "1"]
 
     # IC: signal = negative actionable_rank (lower rank = better signal)
     signal = []
@@ -370,6 +366,7 @@ def compute_row(
 # Rolling summary
 # ---------------------------------------------------------------------------
 
+
 def _mean_safe(vals: List[float]) -> Optional[float]:
     filtered = [v for v in vals if v is not None and not math.isnan(v)]
     return statistics.mean(filtered) if filtered else None
@@ -397,7 +394,7 @@ def build_summary(rows: List[Dict]) -> Dict:
 
     return {
         "schema_version": "live_performance_summary.v1",
-        "generated_at": datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "total_dates": len(rows_sorted),
         "horizon": HORIZON,
         "first_date": rows_sorted[0]["date"] if rows_sorted else None,
@@ -411,6 +408,7 @@ def build_summary(rows: List[Dict]) -> Dict:
 # ---------------------------------------------------------------------------
 # Write-once CSV helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_all_rows() -> List[Dict]:
     """Load all rows from existing live_performance.csv."""
@@ -437,6 +435,7 @@ def _write_rows(rows: List[Dict]) -> None:
 # Main runner
 # ---------------------------------------------------------------------------
 
+
 def run_tracker(
     *,
     dry_run: bool = False,
@@ -457,10 +456,7 @@ def run_tracker(
 
     # Load existing rows (write-once)
     existing_rows = _load_all_rows()
-    existing_dates = {
-        r["date"] for r in existing_rows
-        if int(r.get("horizon", 0)) == horizon
-    }
+    existing_dates = {r["date"] for r in existing_rows if int(r.get("horizon", 0)) == horizon}
 
     new_dates = [d for d in filled_dates if d not in existing_dates]
     if not new_dates:
@@ -470,14 +466,6 @@ def run_tracker(
 
     # Build ordered list of all known dates for turnover chain
     all_dates_sorted = sorted(set(filled_dates) | existing_dates)
-
-    # Build prev_top_k map from existing rows
-    prev_top_k_map: Dict[str, List[str]] = {}
-    for row in existing_rows:
-        if int(row.get("horizon", 0)) == horizon:
-            # We don't store top_k list in CSV; turnover for new rows will be
-            # computed relative to the immediately prior date's rankings
-            pass
 
     new_rows = []
     prev_top_k: Optional[List[str]] = None
@@ -492,11 +480,9 @@ def run_tracker(
             prior_snap = SNAPSHOTS_ROOT / prior_date
             prior_rankings = _load_rankings(prior_snap)
             if prior_rankings:
-                prev_top_k = [
-                    r["ticker"].upper()
-                    for r in prior_rankings
-                    if r.get("eligible", "").strip() == "1"
-                ][:TOP_K]
+                prev_top_k = [r["ticker"].upper() for r in prior_rankings if r.get("eligible", "").strip() == "1"][
+                    :TOP_K
+                ]
 
     for snap_date in sorted(new_dates):
         row = compute_row(snap_date, horizon, xbi_prices, prev_top_k)
@@ -511,9 +497,11 @@ def run_tracker(
             row["notes"] = "fresh_start"
 
         new_rows.append(row)
-        print(f"[tracker] {snap_date}: gross={row['gross_return']:.4f} "
-              f"net={row['net_return']:.4f} IC={row['ic']} "
-              f"XBI_excess={row['excess_return']} turnover={row['turnover']:.3f}")
+        print(
+            f"[tracker] {snap_date}: gross={row['gross_return']:.4f} "
+            f"net={row['net_return']:.4f} IC={row['ic']} "
+            f"XBI_excess={row['excess_return']} turnover={row['turnover']:.3f}"
+        )
 
     if not dry_run and new_rows:
         all_rows = existing_rows + new_rows
@@ -535,6 +523,7 @@ def run_tracker(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(
