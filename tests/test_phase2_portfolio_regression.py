@@ -8,10 +8,10 @@ deterministic, known-good output for a specific snapshot + ruleset.
 This prevents silent ordering/weight drift from code changes to the
 decision engine, sort key, or sizing logic.
 
-Pinned on: 2026-02-14
+Pinned on: 2026-03-07
 Snapshot:  2025-10-31 archive
-Ruleset:   v1.3.2 (ID: 96f655ee, tiebreaker mode, a_floor=0.60, catalyst_near=120,
-           catalyst_mid=180, drawdown_rel_xbi_gate=-0.25, enable_cost_haircut=True, cap=1000)
+Ruleset:   v1.9.0 (ID: e966af9d, institutional sort candidate, sort_anchor=optionality_pct,
+           a_floor=0.60, calendar_alpha_sort w=0.3, institutional_delta_sort w=0.3)
 Policy:    tier_filter=[A,B], top_k=20
 """
 from __future__ import annotations
@@ -34,24 +34,24 @@ from run_rank_ic_backtest import ARCHIVE_DIR
 # =============================================================================
 
 SNAPSHOT_DATE = "2025-10-31"
-RULESET_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.3.2_candidate.json"
+RULESET_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "v1.9.0_institutional_sort_candidate.json"
 ARCHIVE_PATH = ARCHIVE_DIR / f"{SNAPSHOT_DATE}.tar.gz"
 TIER_FILTER = ["A", "B"]
 TOP_K = 20
 
 # Pinned top-10 tickers in exact actionable order
-# Re-pinned 2026-02-14 for tiebreaker mode (catalyst_priority_mode migration)
+# Pinned 2026-03-07 for v1.9.0 (institutional sort candidate)
 EXPECTED_TOP_10 = [
-    {"ticker": "KALV", "rank": 1, "tier": "A", "band": "L", "weight": 6.37},
-    {"ticker": "VRDN", "rank": 2, "tier": "A", "band": "L", "weight": 6.37},
-    {"ticker": "CNTX", "rank": 3, "tier": "A", "band": "M", "weight": 3.15},
-    {"ticker": "AKRO", "rank": 4, "tier": "A", "band": "L", "weight": 7.49},
-    {"ticker": "PTGX", "rank": 5, "tier": "B", "band": "L", "weight": 7.49},
-    {"ticker": "XENE", "rank": 6, "tier": "B", "band": "M", "weight": 3.82},
-    {"ticker": "TENX", "rank": 7, "tier": "B", "band": "L", "weight": 5.24},
-    {"ticker": "ABEO", "rank": 8, "tier": "B", "band": "S", "weight": 1.57},
-    {"ticker": "PVLA", "rank": 9, "tier": "B", "band": "L", "weight": 6.37},
-    {"ticker": "CLYM", "rank": 10, "tier": "B", "band": "S", "weight": 1.57},
+    {"ticker": "VTYX", "rank": 1, "tier": "B", "band": "S", "weight": 3.48},
+    {"ticker": "VOR", "rank": 2, "tier": "B", "band": "S", "weight": 3.48},
+    {"ticker": "TSHA", "rank": 3, "tier": "B", "band": "M", "weight": 6.97},
+    {"ticker": "SION", "rank": 4, "tier": "B", "band": "S", "weight": 3.48},
+    {"ticker": "LYEL", "rank": 5, "tier": "B", "band": "S", "weight": 2.87},
+    {"ticker": "IVVD", "rank": 6, "tier": "B", "band": "XS", "weight": 1.43},
+    {"ticker": "DNTH", "rank": 7, "tier": "B", "band": "M", "weight": 6.97},
+    {"ticker": "CNTA", "rank": 8, "tier": "B", "band": "M", "weight": 6.97},
+    {"ticker": "NUVL", "rank": 9, "tier": "B", "band": "M", "weight": 6.97},
+    {"ticker": "ACLX", "rank": 10, "tier": "B", "band": "M", "weight": 8.20},
 ]
 
 EXPECTED_N_POSITIONS = 20
@@ -65,10 +65,6 @@ EXPECTED_N_POSITIONS = 20
 @pytest.fixture(scope="module")
 def portfolio():
     """Load archive once and build the pinned portfolio."""
-    pytest.skip(
-        "Pinned to ruleset v1.3.2 (96f655ee) but active ruleset is v1.8.3 (82982998). "
-        "Re-pin expected values after stabilising current ruleset."
-    )
     if not ARCHIVE_PATH.exists():
         pytest.skip(f"Archive not found: {ARCHIVE_PATH}")
     if not RULESET_PATH.exists():
@@ -140,7 +136,7 @@ class TestPhase2PortfolioRegression:
         if not RULESET_PATH.exists():
             pytest.skip(f"Ruleset not found: {RULESET_PATH}")
         ruleset = DecisionRuleset.from_json(str(RULESET_PATH))
-        assert ruleset.ruleset_id == "96f655ee", f"Ruleset ID changed: expected 96f655ee, got {ruleset.ruleset_id}"
+        assert ruleset.ruleset_id == "e966af9d", f"Ruleset ID changed: expected e966af9d, got {ruleset.ruleset_id}"
 
     def test_a_floor_060(self):
         """Phase-2 ruleset should have a_floor=0.60 (from 2D calibration)."""
@@ -155,3 +151,23 @@ class TestPhase2PortfolioRegression:
             pytest.skip(f"Ruleset not found: {RULESET_PATH}")
         ruleset = DecisionRuleset.from_json(str(RULESET_PATH))
         assert ruleset.drawdown_gate_mode == "hard"
+
+
+class TestPhase2PortfolioInvariants:
+    """Invariant tests that survive future ruleset changes."""
+
+    def test_no_duplicate_tickers(self, portfolio):
+        """No ticker should appear more than once."""
+        tickers = [p["ticker"] for p in portfolio]
+        assert len(tickers) == len(set(tickers)), f"Duplicate tickers: {[t for t in tickers if tickers.count(t) > 1]}"
+
+    def test_weights_positive(self, portfolio):
+        """All weights should be strictly positive."""
+        for pos in portfolio:
+            assert pos["weight_pct"] > 0, f"{pos['ticker']} has non-positive weight {pos['weight_pct']}"
+
+    def test_ranks_sequential(self, portfolio):
+        """Actionable ranks should be 1..N with no gaps."""
+        ranks = sorted(p["actionable_rank"] for p in portfolio)
+        expected = list(range(1, len(portfolio) + 1))
+        assert ranks == expected, f"Non-sequential ranks: {ranks}"

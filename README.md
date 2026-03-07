@@ -135,6 +135,11 @@ The decision engine is parameterized by frozen `DecisionRuleset` JSON files in `
 - **Externalized config**: All tuning parameters live in ruleset JSON files, not in code.
 - **Auditable**: Every production run writes provenance metadata (git SHA, gate verdicts, data sources).
 
+## Repository History Note
+
+On 2026-03-07, `git filter-repo` was used to remove large files from history.
+If you have a pre-rewrite clone: `git fetch --all && git reset --hard origin/main`
+
 ## License
 
 MIT

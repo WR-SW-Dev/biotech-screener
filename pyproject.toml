@@ -47,9 +47,22 @@ addopts = "-n auto --dist worksteal -q"
 markers = [
     "slow: marks tests that run the full pipeline or take >5s (deselect with '-m \"not slow\"')",
 ]
+filterwarnings = [
+    "error::DeprecationWarning",
+    "error::FutureWarning",
+    "ignore::DeprecationWarning:pandas",
+    "ignore::FutureWarning:pandas",
+    "ignore::DeprecationWarning:numpy",
+    "ignore::DeprecationWarning:tarfile",
+    "ignore:.*schema version.*not in supported:DeprecationWarning",
+    "ignore:.*is deprecated.*:DeprecationWarning",
+    "ignore:.*summaries_legacy.*deprecated:DeprecationWarning",
+]
 
 [tool.coverage.run]
-source = ["."]
+source = ["common", "tools", "scripts"]
+parallel = true
+concurrency = ["multiprocessing"]
 omit = [
     "tests/*",
     "*_test.py",
