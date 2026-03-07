@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Source directories
 COPY common/ common/
+COPY backtest/ backtest/
 COPY tools/ tools/
 COPY scripts/ scripts/
 COPY wake_robin_data_pipeline/ wake_robin_data_pipeline/
@@ -24,9 +25,8 @@ COPY adapters/ adapters/
 COPY config/ config/
 COPY tests/ tests/
 
-# Top-level entry points and modules
-COPY run_screen.py decision_engine.py archive_snapshot.py __init__.py ./
-COPY production_validation.py decision_engine_codes.py event_detector.py ctgov_adapter.py ./
+# Top-level Python modules (run_screen imports many of these)
+COPY *.py ./
 
 # Package install (needs pyproject.toml + source in place)
 COPY pyproject.toml .
