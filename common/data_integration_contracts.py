@@ -43,18 +43,17 @@ Usage:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, InvalidOperation
-from enum import Enum
-from typing import Any, Callable, Dict, FrozenSet, List, Optional, Set, Tuple, Union
+from datetime import date
+from decimal import Decimal
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from common.date_utils import normalize_date, to_date_object
 from common.pit_enforcement import compute_pit_cutoff, is_pit_admissible
 
 __all__ = [
@@ -100,14 +99,17 @@ logger = logging.getLogger(__name__)
 # EXCEPTIONS
 # =============================================================================
 
+
 class DataIntegrationError(Exception):
     """Base exception for data integration errors."""
+
     pass
 
 
 class SchemaValidationError(DataIntegrationError):
     """Raised when data doesn't match expected schema."""
-    def __init__(self, message: str, field: str = None, record: Any = None):
+
+    def __init__(self, message: str, field: Optional[str] = None, record: Any = None):
         super().__init__(message)
         self.field = field
         self.record = record
@@ -115,12 +117,13 @@ class SchemaValidationError(DataIntegrationError):
 
 class JoinInvariantError(DataIntegrationError):
     """Raised when join key invariants are violated."""
+
     def __init__(
         self,
         message: str,
-        missing_tickers: Set[str] = None,
-        duplicate_tickers: Set[str] = None,
-        case_mismatches: Set[str] = None,
+        missing_tickers: Optional[Set[str]] = None,
+        duplicate_tickers: Optional[Set[str]] = None,
+        case_mismatches: Optional[Set[str]] = None,
     ):
         super().__init__(message)
         self.missing_tickers = missing_tickers or set()
@@ -130,13 +133,15 @@ class JoinInvariantError(DataIntegrationError):
 
 class PITViolationError(DataIntegrationError):
     """Raised when point-in-time safety is violated."""
-    def __init__(self, message: str, future_records: List[Dict] = None):
+
+    def __init__(self, message: str, future_records: Optional[List[Dict]] = None):
         super().__init__(message)
         self.future_records = future_records or []
 
 
 class CoverageGuardrailError(DataIntegrationError):
     """Raised when coverage falls below configured thresholds."""
+
     def __init__(
         self,
         message: str,
@@ -201,42 +206,76 @@ def normalize_financial_field_alias(record: Dict[str, Any]) -> Dict[str, Any]:
 
 # Required fields for market_data.json records
 MARKET_DATA_REQUIRED_FIELDS = frozenset({"ticker"})
-MARKET_DATA_OPTIONAL_FIELDS = frozenset({
-    "price", "market_cap", "volume", "average_30d",
-    "return_60d", "xbi_return_60d", "volatility_252d",
-    "source_date", "as_of_date",
-})
+MARKET_DATA_OPTIONAL_FIELDS = frozenset(
+    {
+        "price",
+        "market_cap",
+        "volume",
+        "average_30d",
+        "return_60d",
+        "xbi_return_60d",
+        "volatility_252d",
+        "source_date",
+        "as_of_date",
+    }
+)
 
 # Required fields for financial_records.json
 FINANCIAL_REQUIRED_FIELDS = frozenset({"ticker"})
-FINANCIAL_OPTIONAL_FIELDS = frozenset({
-    "Cash", "NetIncome", "TotalAssets", "TotalLiabilities",
-    "source_date", "filing_date", "fiscal_period",
-    "quarterly_burn", "runway_months", "market_cap_mm",
-})
+FINANCIAL_OPTIONAL_FIELDS = frozenset(
+    {
+        "Cash",
+        "NetIncome",
+        "TotalAssets",
+        "TotalLiabilities",
+        "source_date",
+        "filing_date",
+        "fiscal_period",
+        "quarterly_burn",
+        "runway_months",
+        "market_cap_mm",
+    }
+)
 
 # Required fields for trial_records.json
 TRIAL_REQUIRED_FIELDS = frozenset({"ticker", "nct_id"})
-TRIAL_OPTIONAL_FIELDS = frozenset({
-    "phase", "status", "conditions", "start_date", "completion_date",
-    "first_posted", "last_update_posted", "source_date",
-    "enrollment", "primary_endpoint", "randomized", "blinded",
-})
+TRIAL_OPTIONAL_FIELDS = frozenset(
+    {
+        "phase",
+        "status",
+        "conditions",
+        "start_date",
+        "completion_date",
+        "first_posted",
+        "last_update_posted",
+        "source_date",
+        "enrollment",
+        "primary_endpoint",
+        "randomized",
+        "blinded",
+    }
+)
 
 # Required fields for holdings_snapshots.json
 HOLDINGS_REQUIRED_FIELDS = frozenset({"ticker"})  # Top-level key
 
 # Required fields for short_interest.json
 SHORT_INTEREST_REQUIRED_FIELDS = frozenset({"ticker"})
-SHORT_INTEREST_OPTIONAL_FIELDS = frozenset({
-    "short_interest", "days_to_cover", "short_pct_float",
-    "source_date", "settlement_date",
-})
+SHORT_INTEREST_OPTIONAL_FIELDS = frozenset(
+    {
+        "short_interest",
+        "days_to_cover",
+        "short_pct_float",
+        "source_date",
+        "settlement_date",
+    }
+)
 
 
 # =============================================================================
 # SCHEMA VALIDATORS
 # =============================================================================
+
 
 def validate_market_data_schema(
     records: List[Dict[str, Any]],
@@ -265,31 +304,37 @@ def validate_market_data_schema(
 
     for i, record in enumerate(records):
         if not isinstance(record, dict):
-            invalid_records.append({
-                "index": i,
-                "record": record,
-                "error": "Record is not a dict",
-            })
+            invalid_records.append(  # type: ignore[unreachable]
+                {
+                    "index": i,
+                    "record": record,
+                    "error": "Record is not a dict",
+                }
+            )
             continue
 
         # Check required fields
         missing_required = MARKET_DATA_REQUIRED_FIELDS - set(record.keys())
         if missing_required:
-            invalid_records.append({
-                "index": i,
-                "ticker": record.get("ticker"),
-                "error": f"Missing required fields: {missing_required}",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "ticker": record.get("ticker"),
+                    "error": f"Missing required fields: {missing_required}",
+                }
+            )
             continue
 
         # Validate ticker is non-empty string
         ticker = record.get("ticker")
         if not isinstance(ticker, str) or not ticker.strip():
-            invalid_records.append({
-                "index": i,
-                "ticker": ticker,
-                "error": "Ticker must be non-empty string",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "ticker": ticker,
+                    "error": "Ticker must be non-empty string",
+                }
+            )
             continue
 
         # Validate numeric fields are actually numeric (or None)
@@ -299,29 +344,37 @@ def validate_market_data_schema(
             if value is not None:
                 if isinstance(value, bool):
                     # Booleans pass isinstance check for int, but are not valid numerics
-                    invalid_records.append({
-                        "index": i,
-                        "ticker": ticker,
-                        "error": f"Field '{field_name}' is boolean, not numeric: {value}",
-                    })
+                    invalid_records.append(
+                        {
+                            "index": i,
+                            "ticker": ticker,
+                            "error": f"Field '{field_name}' is boolean, not numeric: {value}",
+                        }
+                    )
                 elif not isinstance(value, (int, float, Decimal)):
                     try:
                         # Allow string representations of numbers but warn
                         float(str(value))
                         if strict:
-                            invalid_records.append({
+                            invalid_records.append(
+                                {
+                                    "index": i,
+                                    "ticker": ticker,
+                                    "error": f"Field '{field_name}' is string type (strict mode): {value}",
+                                }
+                            )
+                        else:
+                            logger.debug(
+                                f"Field '{field_name}' for {ticker} is string '{value}' - consider converting to numeric"
+                            )
+                    except (ValueError, TypeError):
+                        invalid_records.append(
+                            {
                                 "index": i,
                                 "ticker": ticker,
-                                "error": f"Field '{field_name}' is string type (strict mode): {value}",
-                            })
-                        else:
-                            logger.debug(f"Field '{field_name}' for {ticker} is string '{value}' - consider converting to numeric")
-                    except (ValueError, TypeError):
-                        invalid_records.append({
-                            "index": i,
-                            "ticker": ticker,
-                            "error": f"Field '{field_name}' is not numeric: {value}",
-                        })
+                                "error": f"Field '{field_name}' is not numeric: {value}",
+                            }
+                        )
 
     is_valid = len(invalid_records) == 0
 
@@ -358,29 +411,35 @@ def validate_financial_records_schema(
 
     for i, record in enumerate(records):
         if not isinstance(record, dict):
-            invalid_records.append({
-                "index": i,
-                "error": "Record is not a dict",
-            })
+            invalid_records.append(  # type: ignore[unreachable]
+                {
+                    "index": i,
+                    "error": "Record is not a dict",
+                }
+            )
             continue
 
         # Check required fields
         missing_required = FINANCIAL_REQUIRED_FIELDS - set(record.keys())
         if missing_required:
-            invalid_records.append({
-                "index": i,
-                "ticker": record.get("ticker"),
-                "error": f"Missing required fields: {missing_required}",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "ticker": record.get("ticker"),
+                    "error": f"Missing required fields: {missing_required}",
+                }
+            )
             continue
 
         # Validate ticker
         ticker = record.get("ticker")
         if not isinstance(ticker, str) or not ticker.strip():
-            invalid_records.append({
-                "index": i,
-                "error": "Ticker must be non-empty string",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "error": "Ticker must be non-empty string",
+                }
+            )
 
     is_valid = len(invalid_records) == 0
 
@@ -417,48 +476,58 @@ def validate_trial_records_schema(
 
     for i, record in enumerate(records):
         if not isinstance(record, dict):
-            invalid_records.append({
-                "index": i,
-                "error": "Record is not a dict",
-            })
+            invalid_records.append(  # type: ignore[unreachable]
+                {
+                    "index": i,
+                    "error": "Record is not a dict",
+                }
+            )
             continue
 
         # Check required fields
         missing_required = TRIAL_REQUIRED_FIELDS - set(record.keys())
         if missing_required:
-            invalid_records.append({
-                "index": i,
-                "ticker": record.get("ticker"),
-                "nct_id": record.get("nct_id"),
-                "error": f"Missing required fields: {missing_required}",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "ticker": record.get("ticker"),
+                    "nct_id": record.get("nct_id"),
+                    "error": f"Missing required fields: {missing_required}",
+                }
+            )
             continue
 
         # Validate ticker
         ticker = record.get("ticker")
         if not isinstance(ticker, str) or not ticker.strip():
-            invalid_records.append({
-                "index": i,
-                "error": "Ticker must be non-empty string",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "error": "Ticker must be non-empty string",
+                }
+            )
             continue
 
         # Validate nct_id format (NCT + 8 digits)
         nct_id = record.get("nct_id")
         if strict:
             if not isinstance(nct_id, str):
-                invalid_records.append({
-                    "index": i,
-                    "ticker": ticker,
-                    "error": f"nct_id must be string, got {type(nct_id)}",
-                })
+                invalid_records.append(
+                    {
+                        "index": i,
+                        "ticker": ticker,
+                        "error": f"nct_id must be string, got {type(nct_id)}",
+                    }
+                )
             elif not nct_id.startswith("NCT") or len(nct_id) != 11:
-                invalid_records.append({
-                    "index": i,
-                    "ticker": ticker,
-                    "nct_id": nct_id,
-                    "error": "nct_id must match format NCT + 8 digits",
-                })
+                invalid_records.append(
+                    {
+                        "index": i,
+                        "ticker": ticker,
+                        "nct_id": nct_id,
+                        "error": "nct_id must match format NCT + 8 digits",
+                    }
+                )
 
     is_valid = len(invalid_records) == 0
 
@@ -501,7 +570,7 @@ def validate_holdings_schema(
     errors = []
 
     if not isinstance(data, dict):
-        errors.append(f"Holdings data must be dict, got {type(data)}")
+        errors.append(f"Holdings data must be dict, got {type(data)}")  # type: ignore[unreachable]
         if raise_on_error:
             raise SchemaValidationError("Holdings data must be dict")
         return False, errors
@@ -539,14 +608,14 @@ def validate_holdings_schema(
                         elif deep_validate and "value_kusd" in manager_data:
                             value = manager_data.get("value_kusd")
                             if value is not None and not safe_numeric_check(value):
-                                errors.append(f"Ticker {ticker} holdings.{period}.{manager_id}.value_kusd is not numeric")
+                                errors.append(
+                                    f"Ticker {ticker} holdings.{period}.{manager_id}.value_kusd is not numeric"
+                                )
 
     is_valid = len(errors) == 0
 
     if not is_valid and raise_on_error:
-        raise SchemaValidationError(
-            f"Holdings schema validation failed: {errors[:5]}"
-        )
+        raise SchemaValidationError(f"Holdings schema validation failed: {errors[:5]}")
 
     return is_valid, errors
 
@@ -569,27 +638,29 @@ def validate_short_interest_schema(
 
     for i, record in enumerate(records):
         if not isinstance(record, dict):
-            invalid_records.append({
-                "index": i,
-                "error": "Record is not a dict",
-            })
+            invalid_records.append(  # type: ignore[unreachable]
+                {
+                    "index": i,
+                    "error": "Record is not a dict",
+                }
+            )
             continue
 
         # Check required fields
         missing_required = SHORT_INTEREST_REQUIRED_FIELDS - set(record.keys())
         if missing_required:
-            invalid_records.append({
-                "index": i,
-                "ticker": record.get("ticker"),
-                "error": f"Missing required fields: {missing_required}",
-            })
+            invalid_records.append(
+                {
+                    "index": i,
+                    "ticker": record.get("ticker"),
+                    "error": f"Missing required fields: {missing_required}",
+                }
+            )
 
     is_valid = len(invalid_records) == 0
 
     if not is_valid and raise_on_error:
-        raise SchemaValidationError(
-            f"Short interest schema validation failed: {len(invalid_records)} invalid records"
-        )
+        raise SchemaValidationError(f"Short interest schema validation failed: {len(invalid_records)} invalid records")
 
     return is_valid, invalid_records
 
@@ -597,6 +668,7 @@ def validate_short_interest_schema(
 # =============================================================================
 # JOIN VALIDATION
 # =============================================================================
+
 
 def normalize_ticker_set(
     tickers: Union[Set[str], List[str]],
@@ -667,11 +739,7 @@ def check_ticker_case_consistency(
             ticker_variants[canonical].add(ticker)
 
     # Find tickers with multiple case variants
-    inconsistent = {
-        canonical: variants
-        for canonical, variants in ticker_variants.items()
-        if len(variants) > 1
-    }
+    inconsistent = {canonical: variants for canonical, variants in ticker_variants.items() if len(variants) > 1}
 
     return len(inconsistent) == 0, inconsistent
 
@@ -723,7 +791,9 @@ def validate_join_invariants(
 
     # Calculate coverage - distinguish between None (not provided) and 0.0 (provided but empty)
     # Use `is not None` instead of truthiness to handle empty sets correctly
-    financial_coverage = len(financial_norm & universe_norm) / n_universe * 100 if financial_tickers is not None else None
+    financial_coverage = (
+        len(financial_norm & universe_norm) / n_universe * 100 if financial_tickers is not None else None
+    )
     clinical_coverage = len(clinical_norm & universe_norm) / n_universe * 100 if clinical_tickers is not None else None
     market_coverage = len(market_norm & universe_norm) / n_universe * 100 if market_tickers is not None else None
 
@@ -810,9 +880,11 @@ def validate_join_invariants(
 # PIT VALIDATION
 # =============================================================================
 
+
 @dataclass
 class PITValidationResult:
     """Result of PIT validation for a dataset."""
+
     is_valid: bool
     total_records: int
     pit_compliant: int
@@ -851,7 +923,8 @@ def validate_pit_admissibility(
     Returns:
         PITValidationResult with validation details
     """
-    pit_cutoff = compute_pit_cutoff(as_of_date)
+    as_of_str = as_of_date if isinstance(as_of_date, str) else as_of_date.isoformat()
+    pit_cutoff = compute_pit_cutoff(as_of_str)
     fallback_fields = fallback_fields or ["last_update_posted", "first_posted"]
 
     pit_compliant = 0
@@ -886,13 +959,15 @@ def validate_pit_admissibility(
             pit_compliant += 1
         else:
             pit_violated += 1
-            future_records.append({
-                "ticker": record.get("ticker"),
-                "nct_id": record.get("nct_id"),
-                "date_field": field_used,
-                "date_value": str(date_value),
-                "pit_cutoff": str(pit_cutoff),
-            })
+            future_records.append(
+                {
+                    "ticker": record.get("ticker"),
+                    "nct_id": record.get("nct_id"),
+                    "date_field": field_used,
+                    "date_value": str(date_value),
+                    "pit_cutoff": str(pit_cutoff),
+                }
+            )
 
     # Check validity: both future records and missing dates
     is_valid = pit_violated <= max_future_records
@@ -932,7 +1007,7 @@ def validate_dataset_pit(
     dataset_name: str,
     records: List[Dict[str, Any]],
     as_of_date: Union[str, date],
-    date_field_priority: List[str] = None,
+    date_field_priority: Optional[List[str]] = None,
 ) -> PITValidationResult:
     """
     Validate PIT for a specific dataset type with appropriate date field priority.
@@ -970,9 +1045,11 @@ def validate_dataset_pit(
 # COVERAGE GUARDRAILS
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class CoverageConfig:
     """Configuration for coverage guardrails."""
+
     # Minimum coverage percentages (of universe)
     min_financial_pct: float = 80.0
     min_clinical_pct: float = 50.0
@@ -989,6 +1066,7 @@ class CoverageConfig:
 @dataclass
 class CoverageReport:
     """Report of coverage validation."""
+
     is_valid: bool
     universe_size: int
     component_coverage: Dict[str, float]  # component -> pct
@@ -1091,6 +1169,7 @@ def validate_coverage_guardrails(
 # NUMERIC SAFETY
 # =============================================================================
 
+
 def safe_numeric_check(value: Any) -> bool:
     """
     Safely check if a value is numeric (including zero and negative).
@@ -1175,6 +1254,7 @@ def validate_numeric_field(
 # DETERMINISM VALIDATION
 # =============================================================================
 
+
 def compute_deterministic_hash(
     data: Any,
     include_types: bool = False,
@@ -1195,6 +1275,7 @@ def compute_deterministic_hash(
     Returns:
         SHA256 hash string
     """
+
     def normalize(obj: Any) -> Any:
         if isinstance(obj, dict):
             return {k: normalize(v) for k, v in sorted(obj.items())}

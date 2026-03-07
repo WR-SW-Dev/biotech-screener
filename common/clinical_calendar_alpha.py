@@ -16,6 +16,7 @@ No side effects, no network calls.
 Author: Wake Robin Capital Management
 Version: 2.0.0
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -43,6 +44,7 @@ __all__ = [
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _parse_date(s) -> Optional[date]:
     """Parse YYYY-MM-DD string to date, or None."""
     if not s:
@@ -61,13 +63,21 @@ def _pit_ok(trial: dict, as_of: date) -> bool:
     return pit_date is not None and pit_date < as_of
 
 
-_CLINICAL_PHASES = frozenset({
-    "PHASE1", "PHASE2", "PHASE3",
-    "PHASE 1", "PHASE 2", "PHASE 3",
-    "PHASE1/PHASE2", "PHASE 1/PHASE 2",
-    "PHASE2/PHASE3", "PHASE 2/PHASE 3",
-    "EARLY_PHASE1",
-})
+_CLINICAL_PHASES = frozenset(
+    {
+        "PHASE1",
+        "PHASE2",
+        "PHASE3",
+        "PHASE 1",
+        "PHASE 2",
+        "PHASE 3",
+        "PHASE1/PHASE2",
+        "PHASE 1/PHASE 2",
+        "PHASE2/PHASE3",
+        "PHASE 2/PHASE 3",
+        "EARLY_PHASE1",
+    }
+)
 
 
 def _is_interventional_phase(trial: dict) -> bool:
@@ -79,9 +89,17 @@ def _is_interventional_phase(trial: dict) -> bool:
 
 
 _PHASE_NUM_MAP = {
-    "phase 3": 3.0, "phase3": 3.0, "phase 2/3": 2.5, "phase2/phase3": 2.5,
-    "phase 2": 2.0, "phase2": 2.0, "phase 1/2": 1.5, "phase1/phase2": 1.5,
-    "phase 1": 1.0, "phase1": 1.0, "early_phase1": 0.5,
+    "phase 3": 3.0,
+    "phase3": 3.0,
+    "phase 2/3": 2.5,
+    "phase2/phase3": 2.5,
+    "phase 2": 2.0,
+    "phase2": 2.0,
+    "phase 1/2": 1.5,
+    "phase1/phase2": 1.5,
+    "phase 1": 1.0,
+    "phase1": 1.0,
+    "early_phase1": 0.5,
 }
 
 
@@ -94,9 +112,7 @@ def _phase_num(phase_str: str) -> float:
 # ---------------------------------------------------------------------------
 
 # Tokens to skip when normalizing interventions
-_PLACEBO_PREFIXES = re.compile(
-    r"^(placebo|sham|vehicle|saline|standard\s+of\s+care|no\s+intervention)", re.I
-)
+_PLACEBO_PREFIXES = re.compile(r"^(placebo|sham|vehicle|saline|standard\s+of\s+care|no\s+intervention)", re.I)
 
 _DOSAGE_RE = re.compile(r"\d+\s*m[gl]\b|\d+\s*mg/m[l2]\b|\d+\s*iu\b|\d+\s*mcg\b", re.I)
 _FORMULATION_RE = re.compile(
@@ -104,24 +120,89 @@ _FORMULATION_RE = re.compile(
 )
 
 # Generic intervention tokens that shouldn't be used for clustering
-_INTERVENTION_STOPLIST = frozenset({
-    "antibody", "vaccine", "cell", "therapy", "treatment",
-    "monoclonal", "recombinant", "human", "inhibitor", "agent",
-    "combination", "regimen", "protocol", "standard", "care",
-    "placebo", "control", "comparator", "active",
-})
+_INTERVENTION_STOPLIST = frozenset(
+    {
+        "antibody",
+        "vaccine",
+        "cell",
+        "therapy",
+        "treatment",
+        "monoclonal",
+        "recombinant",
+        "human",
+        "inhibitor",
+        "agent",
+        "combination",
+        "regimen",
+        "protocol",
+        "standard",
+        "care",
+        "placebo",
+        "control",
+        "comparator",
+        "active",
+    }
+)
 
-_TEXT_STOP_TOKENS = frozenset({
-    "study", "phase", "randomized", "double", "blind", "single",
-    "open", "label", "multicenter", "multi", "center", "trial",
-    "clinical", "safety", "efficacy", "dose", "finding", "escalation",
-    "the", "and", "for", "with", "from", "that", "this", "are",
-    "was", "were", "been", "have", "has", "had", "will", "shall",
-    "may", "can", "its", "also", "each", "not", "but", "other",
-    "evaluate", "assess", "determine", "compare", "investigation",
-    "investigational", "subjects", "patients", "participants",
-    "healthy", "volunteers", "adults", "adult",
-})
+_TEXT_STOP_TOKENS = frozenset(
+    {
+        "study",
+        "phase",
+        "randomized",
+        "double",
+        "blind",
+        "single",
+        "open",
+        "label",
+        "multicenter",
+        "multi",
+        "center",
+        "trial",
+        "clinical",
+        "safety",
+        "efficacy",
+        "dose",
+        "finding",
+        "escalation",
+        "the",
+        "and",
+        "for",
+        "with",
+        "from",
+        "that",
+        "this",
+        "are",
+        "was",
+        "were",
+        "been",
+        "have",
+        "has",
+        "had",
+        "will",
+        "shall",
+        "may",
+        "can",
+        "its",
+        "also",
+        "each",
+        "not",
+        "but",
+        "other",
+        "evaluate",
+        "assess",
+        "determine",
+        "compare",
+        "investigation",
+        "investigational",
+        "subjects",
+        "patients",
+        "participants",
+        "healthy",
+        "volunteers",
+        "adults",
+        "adult",
+    }
+)
 
 
 def normalize_intervention(raw: str) -> Optional[str]:
@@ -145,10 +226,7 @@ def _tokenize_text(text: str) -> frozenset:
     if not text:
         return frozenset()
     words = re.split(r"[\s\-/,;:()]+", text.lower())
-    return frozenset(
-        w for w in words
-        if len(w) > 2 and w not in _TEXT_STOP_TOKENS
-    )
+    return frozenset(w for w in words if len(w) > 2 and w not in _TEXT_STOP_TOKENS)
 
 
 def _jaccard(a: frozenset, b: frozenset) -> float:
@@ -193,16 +271,13 @@ def cluster_programs(
         # Fallback to title tokens if no intervention tokens
         if not interv_tokens:
             title = t.get("title", "")
-            interv_tokens = set(
-                tok for tok in _tokenize_text(title)
-                if tok not in _INTERVENTION_STOPLIST
-            )
+            interv_tokens = set(tok for tok in _tokenize_text(title) if tok not in _INTERVENTION_STOPLIST)
 
         # Condition tokens
         conditions = t.get("conditions") or []
         if isinstance(conditions, str):
             conditions = [conditions]
-        cond_tokens = set()
+        cond_tokens: set[str] = set()
         for c in conditions:
             cond_tokens.update(_tokenize_text(c))
 
@@ -226,19 +301,21 @@ def cluster_programs(
 
         phase = _phase_num(str(t.get("phase", "")))
 
-        trial_features.append({
-            "trial": t,
-            "interv_tokens": frozenset(sorted(interv_tokens)[:8]),
-            "cond_tokens": frozenset(cond_tokens),
-            "top_cond": top_cond,
-            "readout_days": readout_days,
-            "phase": phase,
-            "nct_id": t.get("nct_id", ""),
-        })
+        trial_features.append(
+            {
+                "trial": t,
+                "interv_tokens": frozenset(sorted(interv_tokens)[:8]),
+                "cond_tokens": frozenset(cond_tokens),
+                "top_cond": top_cond,
+                "readout_days": readout_days,
+                "phase": phase,
+                "nct_id": t.get("nct_id", ""),
+            }
+        )
 
     # Group into programs using Jaccard overlap ≥ 0.3 on intervention tokens
     # AND matching top condition token
-    programs = []  # list of lists of trial_features
+    programs: list[list[dict]] = []
     for tf in trial_features:
         merged = False
         for prog in programs:
@@ -264,22 +341,26 @@ def cluster_programs(
         key_str = "|".join(sorted(tf["nct_id"] for tf in prog))
         key_hash = hashlib.sha1(key_str.encode()).hexdigest()[:8]
 
-        result.append({
-            "phase_max": max(phases) if phases else 0.0,
-            "upcoming_readout_days": min(readout_days_list) if readout_days_list else None,
-            "trial_count": len(prog),
-            "late_stage_count": late_count,
-            "nct_ids": [tf["nct_id"] for tf in prog],
-            "_key_hash": key_hash,
-        })
+        result.append(
+            {
+                "phase_max": max(phases) if phases else 0.0,
+                "upcoming_readout_days": min(readout_days_list) if readout_days_list else None,
+                "trial_count": len(prog),
+                "late_stage_count": late_count,
+                "nct_ids": [tf["nct_id"] for tf in prog],
+                "_key_hash": key_hash,
+            }
+        )
 
     # Sort: phase_max DESC -> readout_days ASC (None last) -> trial_count DESC -> hash
-    result.sort(key=lambda p: (
-        -p["phase_max"],
-        p["upcoming_readout_days"] if p["upcoming_readout_days"] is not None else 999999,
-        -p["trial_count"],
-        p["_key_hash"],
-    ))
+    result.sort(
+        key=lambda p: (
+            -p["phase_max"],
+            p["upcoming_readout_days"] if p["upcoming_readout_days"] is not None else 999999,
+            -p["trial_count"],
+            p["_key_hash"],
+        )
+    )
     return result
 
 
@@ -341,11 +422,16 @@ def compute_program_features(
 # ---------------------------------------------------------------------------
 
 _READOUT_PHASE_WEIGHTS = {
-    "phase 3": 1.5, "phase3": 1.5,
-    "phase 2/3": 1.25, "phase2/phase3": 1.25,
-    "phase 2": 1.0, "phase2": 1.0,
-    "phase 1/2": 0.5, "phase1/phase2": 0.5,
-    "phase 1": 0.25, "phase1": 0.25,
+    "phase 3": 1.5,
+    "phase3": 1.5,
+    "phase 2/3": 1.25,
+    "phase2/phase3": 1.25,
+    "phase 2": 1.0,
+    "phase2": 1.0,
+    "phase 1/2": 0.5,
+    "phase1/phase2": 0.5,
+    "phase 1": 0.25,
+    "phase1": 0.25,
     "early_phase1": 0.1,
 }
 
@@ -440,10 +526,15 @@ def compute_readout_density(
 # ---------------------------------------------------------------------------
 
 _STATUS_ORDER = {
-    "WITHDRAWN": 0, "TERMINATED": 1, "SUSPENDED": 2,
-    "NOT_YET_RECRUITING": 3, "RECRUITING": 4,
-    "ENROLLING_BY_INVITATION": 5, "ACTIVE_NOT_RECRUITING": 6,
-    "ACTIVE": 6, "COMPLETED": 7,
+    "WITHDRAWN": 0,
+    "TERMINATED": 1,
+    "SUSPENDED": 2,
+    "NOT_YET_RECRUITING": 3,
+    "RECRUITING": 4,
+    "ENROLLING_BY_INVITATION": 5,
+    "ACTIVE_NOT_RECRUITING": 6,
+    "ACTIVE": 6,
+    "COMPLETED": 7,
 }
 
 _REGRESSION_STATUSES = frozenset({"TERMINATED", "WITHDRAWN", "SUSPENDED"})
@@ -655,12 +746,12 @@ def compute_design_quality(
 # TA-based endpoint quality proxy (without outcomesModule data)
 # Higher = harder endpoints more common in that TA
 _TA_ENDPOINT_PROXY: Dict[str, float] = {
-    "oncology": 0.85,      # hard endpoints (OS, PFS) common
-    "cardiovascular": 0.75, # MACE endpoints strong
-    "rare_disease": 0.65,   # functional endpoints
-    "autoimmune": 0.60,     # validated scales (ACR, PASI)
-    "cns": 0.60,            # validated cognitive/functional scales
-    "metabolic": 0.55,      # biomarker + clinical
+    "oncology": 0.85,  # hard endpoints (OS, PFS) common
+    "cardiovascular": 0.75,  # MACE endpoints strong
+    "rare_disease": 0.65,  # functional endpoints
+    "autoimmune": 0.60,  # validated scales (ACR, PASI)
+    "cns": 0.60,  # validated cognitive/functional scales
+    "metabolic": 0.55,  # biomarker + clinical
     "infectious_disease": 0.55,
     "respiratory": 0.50,
     "ophthalmology": 0.55,
@@ -725,6 +816,7 @@ def compute_endpoint_strength(
 # Section 6: Competitive Intensity Wrapper
 # ---------------------------------------------------------------------------
 
+
 def compute_competitive_intensity(
     trial_records: list,
     active_tickers: list,
@@ -758,7 +850,7 @@ def compute_competitive_intensity(
     engine.build_landscape(adapted, as_of)
 
     # Score each ticker
-    raw_results = {}
+    raw_results: Dict[str, Dict[str, Any]] = {}
     for ticker in active_tickers:
         tk = ticker.upper()
         try:
@@ -776,23 +868,24 @@ def compute_competitive_intensity(
             }
 
     # Z-score across universe (ddof=0)
-    scores = [v["competitive_intensity_score"] for v in raw_results.values()]
+    scores: list[float] = [float(v["competitive_intensity_score"]) for v in raw_results.values()]
     if scores:
         mean_val = sum(scores) / len(scores)
         var_val = sum((s - mean_val) ** 2 for s in scores) / len(scores)
-        std_val = var_val ** 0.5
+        std_val = var_val**0.5
     else:
         mean_val = 0.0
         std_val = 0.0
 
     result = {}
     for tk, data in raw_results.items():
+        ci_score = float(data["competitive_intensity_score"])
         if std_val > 0:
-            z = (data["competitive_intensity_score"] - mean_val) / std_val
+            z = (ci_score - mean_val) / std_val
         else:
             z = 0.0
         result[tk] = {
-            "competitive_intensity_score": round(data["competitive_intensity_score"], 4),
+            "competitive_intensity_score": round(ci_score, 4),
             "competitive_intensity_z": round(z, 4),
             "crowding_level": data["crowding_level"],
             "competitor_count": data["competitor_count"],
@@ -805,15 +898,17 @@ def compute_competitive_intensity(
 # Section 7: Score Composition + Sizing
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class CalendarAlphaConfig:
     """Configuration for clinical calendar alpha v2 scoring."""
+
     w_readout_curve: float = 0.15
     w_readout_density: float = 0.10
     w_momentum: float = 0.10
     w_design: float = 0.10
     w_endpoint: float = 0.10
-    w_competition: float = 0.05   # negative: penalizes crowded
+    w_competition: float = 0.05  # negative: penalizes crowded
     max_adjustment: float = 0.35  # cap per-component z contribution
     # Sizing
     enable_sizing: bool = False
@@ -911,6 +1006,7 @@ def compose_clinical_score_v2(
 # Cross-sectional z-score utility
 # ---------------------------------------------------------------------------
 
+
 def z_score_dict(
     values: Dict[str, float],
 ) -> Dict[str, float]:
@@ -924,7 +1020,7 @@ def z_score_dict(
     n = len(vals)
     mean_val = sum(vals) / n
     var_val = sum((v - mean_val) ** 2 for v in vals) / n
-    std_val = var_val ** 0.5
+    std_val = var_val**0.5
 
     if std_val == 0:
         return {k: 0.0 for k in values}

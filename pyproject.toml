@@ -116,6 +116,9 @@ module = [
     "common.run_manifest",
     "common.schema_validation",
     "common.staleness_gates",
+    "common.score_utils",
+    "common.data_integration_contracts",
+    "common.clinical_calendar_alpha",
 ]
 disallow_untyped_defs = false
 warn_unreachable = true
@@ -123,13 +126,10 @@ warn_unreachable = true
 # -- Noisy files: suppress until fixed (tracked in TODO) --------------------
 [[tool.mypy.overrides]]
 module = [
-    "common.score_utils",
     "common.integration_contracts",
     "common.accuracy_improvements",
     "common.robustness",
     "common.run_summary",
-    "common.data_integration_contracts",
-    "common.clinical_calendar_alpha",
     "common.clustering",
     "common.hash_utils",
     "common.logging_config",

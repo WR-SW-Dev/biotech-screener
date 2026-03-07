@@ -10,9 +10,9 @@ ENV PYTHONHASHSEED=0 \
 
 WORKDIR /app
 
-# Layer-cache: install pip deps before copying source
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Layer-cache: install pip deps before copying source (hash-verified)
+COPY requirements.lock .
+RUN pip install --no-cache-dir --require-hashes -r requirements.lock
 
 # Source directories
 COPY common/ common/

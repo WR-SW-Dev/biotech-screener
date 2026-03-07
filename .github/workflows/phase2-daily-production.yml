@@ -93,11 +93,9 @@ jobs:
       - name: Run unit tests
         run: |
           python -m pytest tests/ -q \
+            --override-ini="addopts=" \
             --ignore=tests/integration \
-            --ignore=tests/test_minimum_suite.py \
-            --ignore=tests/test_golden_baseline.py \
-            --ignore=tests/test_run_screen.py \
-            --ignore=tests/test_module_5_defensive.py
+            -m "not slow"
 
       # ── Resolve as_of_date (Detroit-local) ──────────────────────
       - name: Resolve date

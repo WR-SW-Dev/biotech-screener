@@ -29,8 +29,8 @@ Version: 1.0.0
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
-from typing import Any, List, Optional, Dict, Tuple, Union
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 # Default precision for scores
 SCORE_PRECISION = Decimal("0.01")
@@ -48,10 +48,8 @@ EPS = Decimal("0.000001")
 # TYPE CONVERSION
 # ============================================================================
 
-def to_decimal(
-    value: Any,
-    default: Optional[Decimal] = None
-) -> Optional[Decimal]:
+
+def to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """
     Safely convert value to Decimal.
 
@@ -112,6 +110,7 @@ def to_float_safe(value: Any, default: Optional[float] = None) -> Optional[float
 # SCORE CLAMPING
 # ============================================================================
 
+
 def clamp_score(
     score: Union[Decimal, float, int, str, None],
     min_val: Union[Decimal, float, int] = DEFAULT_MIN_SCORE,
@@ -148,6 +147,7 @@ def clamp_score(
 
     dec_min = to_decimal(min_val, Decimal("0"))
     dec_max = to_decimal(max_val, Decimal("100"))
+    assert dec_min is not None and dec_max is not None  # defaults guarantee non-None
 
     # Clamp
     clamped = max(dec_min, min(dec_max, dec_score))
@@ -173,6 +173,7 @@ def clamp_weight(
         Clamped Decimal weight
     """
     dec_weight = to_decimal(weight, Decimal("0"))
+    assert dec_weight is not None  # default guarantees non-None
     clamped = max(min_val, min(max_val, dec_weight))
     return clamped.quantize(WEIGHT_PRECISION, rounding=ROUND_HALF_UP)
 
@@ -199,6 +200,7 @@ def clamp_in_place(
 # ============================================================================
 # SCORE NORMALIZATION
 # ============================================================================
+
 
 def normalize_to_range(
     value: Union[Decimal, float, int, str, None],
@@ -238,6 +240,8 @@ def normalize_to_range(
     dec_in_max = to_decimal(input_max, Decimal("100"))
     dec_out_min = to_decimal(output_min, Decimal("0"))
     dec_out_max = to_decimal(output_max, Decimal("100"))
+    assert dec_in_min is not None and dec_in_max is not None  # defaults guarantee non-None
+    assert dec_out_min is not None and dec_out_max is not None
 
     # Check for zero range
     input_range = dec_in_max - dec_in_min
@@ -274,17 +278,17 @@ def rank_normalize(
         List of rank-normalized scores (None values remain None)
     """
     # Convert to Decimal, tracking original indices
-    dec_values = [(to_decimal(v), i) for i, v in enumerate(values)]
+    dec_values: List[Tuple[Optional[Decimal], int]] = [(to_decimal(v), i) for i, v in enumerate(values)]
 
     # Separate None values
-    valid = [(v, i) for v, i in dec_values if v is not None]
+    valid: List[Tuple[Decimal, int]] = [(v, i) for v, i in dec_values if v is not None]
     n = len(valid)
 
     if n == 0:
         return [None] * len(values)
 
     if n == 1:
-        result = [None] * len(values)
+        result: List[Optional[Decimal]] = [None] * len(values)
         result[valid[0][1]] = (output_min + output_max) / 2
         return result
 
@@ -292,7 +296,7 @@ def rank_normalize(
     valid.sort(key=lambda x: x[0])
 
     # Assign ranks (handle ties with average rank)
-    ranks = [Decimal("0")] * len(values)
+    ranks: List[Decimal] = [Decimal("0")] * len(values)
     i = 0
     while i < n:
         j = i
@@ -312,19 +316,20 @@ def rank_normalize(
         i = j
 
     # Set None values back to None
-    result = []
+    result_list: List[Optional[Decimal]] = []
     for i, (v, _) in enumerate(dec_values):
         if v is None:
-            result.append(None)
+            result_list.append(None)
         else:
-            result.append(ranks[i])
+            result_list.append(ranks[i])
 
-    return result
+    return result_list
 
 
 # ============================================================================
 # SCORE AGGREGATION
 # ============================================================================
+
 
 def weighted_average(
     scores: List[Optional[Decimal]],
@@ -402,10 +407,11 @@ def hybrid_aggregate(
         return None
 
     # Compute min of critical components
-    critical_scores = [
-        scores.get(c) for c in critical_components
-        if scores.get(c) is not None
-    ]
+    critical_scores: List[Decimal] = []
+    for c in critical_components:
+        val = scores.get(c)
+        if val is not None and isinstance(val, Decimal):
+            critical_scores.append(val)
 
     if not critical_scores:
         # No critical scores available, use weighted average only
@@ -421,6 +427,7 @@ def hybrid_aggregate(
 # ============================================================================
 # PENALTY APPLICATION
 # ============================================================================
+
 
 def apply_penalty(
     score: Optional[Decimal],
@@ -444,6 +451,7 @@ def apply_penalty(
         return None
 
     penalty = to_decimal(penalty_pct, Decimal("0"))
+    assert penalty is not None  # default guarantees non-None
     multiplier = Decimal("1") - penalty
     multiplier = max(Decimal("0"), multiplier)  # Can't have negative multiplier
 
@@ -473,6 +481,7 @@ def apply_multiplier(
         return None
 
     mult = to_decimal(multiplier, Decimal("1"))
+    assert mult is not None  # default guarantees non-None
     result = score * mult
     return min(cap, result.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP))
 
@@ -480,6 +489,7 @@ def apply_multiplier(
 # ============================================================================
 # BATCH OPERATIONS
 # ============================================================================
+
 
 def clamp_all_scores(
     records: List[Dict[str, Any]],

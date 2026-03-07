@@ -3,6 +3,9 @@
 # ============================================================================
 # Python version: 3.10+
 # Last updated: 2026-03-05
+#
+# After editing this file, regenerate the lock file:
+#   pip-compile --generate-hashes --output-file=requirements.lock requirements.txt
 # ============================================================================
 
 # ----------------------------------------------------------------------------
