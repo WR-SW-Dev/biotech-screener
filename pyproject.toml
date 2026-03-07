@@ -90,6 +90,68 @@ target-version = ["py310"]
 profile = "black"
 line_length = 120
 
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+explicit_package_bases = true
+warn_unused_configs = true
+# Files checked by default: decision_engine.py + common/
+# CI runs: mypy decision_engine.py common/
+files = ["decision_engine.py", "common/"]
+
+# -- Clean files: enforce strictly ------------------------------------------
+[[tool.mypy.overrides]]
+module = [
+    "decision_engine",
+    "common.alpha_table",
+    "common.constants",
+    "common.data_consistency",
+    "common.data_quality",
+    "common.date_utils",
+    "common.forward_looking_separation",
+    "common.pit_enforcement",
+    "common.provenance",
+    "common.random_state",
+    "common.ranking_utils",
+    "common.run_manifest",
+    "common.schema_validation",
+    "common.staleness_gates",
+]
+disallow_untyped_defs = false
+warn_unreachable = true
+
+# -- Noisy files: suppress until fixed (tracked in TODO) --------------------
+[[tool.mypy.overrides]]
+module = [
+    "common.score_utils",
+    "common.integration_contracts",
+    "common.accuracy_improvements",
+    "common.robustness",
+    "common.run_summary",
+    "common.data_integration_contracts",
+    "common.clinical_calendar_alpha",
+    "common.clustering",
+    "common.hash_utils",
+    "common.logging_config",
+    "common.null_safety",
+    "common.production_hardening",
+    "common.robustness_extended",
+    "common.score_to_er",
+    "common.input_validation",
+    "common.types",
+    # Transitive imports from decision_engine / common
+    "defensive_overlay_adapter",
+    "module_5_alpha_cohort",
+    "decision_engine_codes",
+    "backtest.*",
+    "archive_snapshot",
+    "module_3_schema",
+    "competitive_intensity_engine",
+    "run_rank_ic_backtest",
+    "scripts.*",
+]
+ignore_errors = true
+
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]

@@ -50,19 +50,23 @@ logger = logging.getLogger(__name__)
 # EXCEPTIONS
 # ============================================================================
 
+
 class PipelineValidationError(Exception):
     """Raised when pipeline input validation fails."""
+
     pass
 
 
 class DataQualityError(Exception):
     """Raised when data quality is below acceptable threshold."""
+
     pass
 
 
 # ============================================================================
 # CONFIGURATION
 # ============================================================================
+
 
 @dataclass
 class InputValidationConfig:
@@ -89,6 +93,7 @@ class InputValidationConfig:
 @dataclass
 class TickerValidationResult:
     """Result of ticker validation."""
+
     ticker: str
     valid: bool
     errors: List[str] = field(default_factory=list)
@@ -97,6 +102,7 @@ class TickerValidationResult:
 @dataclass
 class RecordValidationResult:
     """Result of record validation."""
+
     ticker: str
     valid: bool
     errors: List[str] = field(default_factory=list)
@@ -106,6 +112,7 @@ class RecordValidationResult:
 @dataclass
 class ValidationResult:
     """Aggregated validation result."""
+
     passed: bool
     errors: List[str] = field(default_factory=list)
     warnings: List[str] = field(default_factory=list)
@@ -135,7 +142,7 @@ class ValidationResult:
                 lines.append(f"  ... and {len(self.warnings) - 5} more")
 
         if self.stats:
-            lines.append(f"\nStats:")
+            lines.append("\nStats:")
             for k, v in sorted(self.stats.items()):
                 lines.append(f"  {k}: {v}")
 
@@ -146,10 +153,8 @@ class ValidationResult:
 # TICKER VALIDATION
 # ============================================================================
 
-def validate_ticker(
-    ticker: str,
-    config: Optional[InputValidationConfig] = None
-) -> TickerValidationResult:
+
+def validate_ticker(ticker: str, config: Optional[InputValidationConfig] = None) -> TickerValidationResult:
     """
     Validate a single ticker symbol.
 
@@ -171,11 +176,7 @@ def validate_ticker(
 
     # Check non-empty
     if not ticker:
-        return TickerValidationResult(
-            ticker=ticker or "",
-            valid=False,
-            errors=["Ticker is empty or None"]
-        )
+        return TickerValidationResult(ticker=ticker or "", valid=False, errors=["Ticker is empty or None"])
 
     # Normalize
     ticker_upper = str(ticker).strip().upper()
@@ -194,16 +195,11 @@ def validate_ticker(
     if found_reserved:
         errors.append(f"Ticker contains reserved symbols: {found_reserved}")
 
-    return TickerValidationResult(
-        ticker=ticker_upper,
-        valid=len(errors) == 0,
-        errors=errors
-    )
+    return TickerValidationResult(ticker=ticker_upper, valid=len(errors) == 0, errors=errors)
 
 
 def validate_tickers(
-    tickers: Union[Set[str], List[str]],
-    config: Optional[InputValidationConfig] = None
+    tickers: Union[Set[str], List[str]], config: Optional[InputValidationConfig] = None
 ) -> Tuple[Set[str], Dict[str, List[str]]]:
     """
     Validate a collection of tickers.
@@ -216,9 +212,9 @@ def validate_tickers(
         (valid_tickers, invalid_tickers_with_reasons)
     """
     config = config or InputValidationConfig()
-    valid = set()
-    invalid = {}
-    seen = set()
+    valid: set[str] = set()
+    invalid: dict[str, str] = {}
+    seen: set[str] = set()
 
     for ticker in tickers:
         result = validate_ticker(ticker, config)
@@ -244,6 +240,7 @@ def validate_tickers(
 # FINANCIAL RECORD VALIDATION
 # ============================================================================
 
+
 def _to_decimal_safe(value: Any) -> Optional[Decimal]:
     """Safely convert value to Decimal."""
     if value is None:
@@ -262,8 +259,7 @@ def _to_decimal_safe(value: Any) -> Optional[Decimal]:
 
 
 def validate_financial_record(
-    record: Dict[str, Any],
-    config: Optional[InputValidationConfig] = None
+    record: Dict[str, Any], config: Optional[InputValidationConfig] = None
 ) -> RecordValidationResult:
     """
     Validate a single financial record.
@@ -290,11 +286,7 @@ def validate_financial_record(
 
     # Check ticker exists
     if not ticker:
-        return RecordValidationResult(
-            ticker="",
-            valid=False,
-            errors=["Missing ticker field"]
-        )
+        return RecordValidationResult(ticker="", valid=False, errors=["Missing ticker field"])
 
     # Validate cash
     cash = _to_decimal_safe(record.get("Cash") or record.get("cash_mm"))
@@ -318,11 +310,7 @@ def validate_financial_record(
                 errors.append(f"Market cap is negative: {market_cap}")
 
     # Validate burn rate (should be negative or reasonable positive for profitable)
-    burn = _to_decimal_safe(
-        record.get("NetIncome") or
-        record.get("CFO") or
-        record.get("burn_rate_mm")
-    )
+    burn = _to_decimal_safe(record.get("NetIncome") or record.get("CFO") or record.get("burn_rate_mm"))
     if burn is not None:
         # Check if burn magnitude is reasonable (not larger than cash in a single quarter)
         if cash is not None and cash > 0:
@@ -342,21 +330,16 @@ def validate_financial_record(
     if shares is not None and shares <= Decimal("0"):
         errors.append(f"Shares outstanding must be positive: {shares}")
 
-    return RecordValidationResult(
-        ticker=ticker,
-        valid=len(errors) == 0,
-        errors=errors,
-        warnings=warnings
-    )
+    return RecordValidationResult(ticker=ticker, valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 # ============================================================================
 # MARKET DATA VALIDATION
 # ============================================================================
 
+
 def validate_market_record(
-    record: Dict[str, Any],
-    config: Optional[InputValidationConfig] = None
+    record: Dict[str, Any], config: Optional[InputValidationConfig] = None
 ) -> RecordValidationResult:
     """
     Validate a single market data record.
@@ -381,11 +364,7 @@ def validate_market_record(
     ticker = record.get("ticker", "")
 
     if not ticker:
-        return RecordValidationResult(
-            ticker="",
-            valid=False,
-            errors=["Missing ticker field"]
-        )
+        return RecordValidationResult(ticker="", valid=False, errors=["Missing ticker field"])
 
     # Validate price
     price = _to_decimal_safe(record.get("price") or record.get("current"))
@@ -393,11 +372,7 @@ def validate_market_record(
         errors.append(f"Price must be positive: {price}")
 
     # Validate volume
-    volume = _to_decimal_safe(
-        record.get("avg_volume") or
-        record.get("volume_avg_30d") or
-        record.get("volume")
-    )
+    volume = _to_decimal_safe(record.get("avg_volume") or record.get("volume_avg_30d") or record.get("volume"))
     if volume is not None and volume < Decimal("0"):
         errors.append(f"Volume cannot be negative: {volume}")
 
@@ -406,21 +381,16 @@ def validate_market_record(
     if market_cap is not None and market_cap <= Decimal("0"):
         errors.append(f"Market cap must be positive: {market_cap}")
 
-    return RecordValidationResult(
-        ticker=ticker,
-        valid=len(errors) == 0,
-        errors=errors,
-        warnings=warnings
-    )
+    return RecordValidationResult(ticker=ticker, valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 # ============================================================================
 # TRIAL RECORD VALIDATION
 # ============================================================================
 
+
 def validate_trial_record(
-    record: Dict[str, Any],
-    config: Optional[InputValidationConfig] = None
+    record: Dict[str, Any], config: Optional[InputValidationConfig] = None
 ) -> RecordValidationResult:
     """
     Validate a single trial record.
@@ -446,11 +416,7 @@ def validate_trial_record(
     ticker = record.get("ticker", "")
 
     if not ticker:
-        return RecordValidationResult(
-            ticker="",
-            valid=False,
-            errors=["Missing ticker field"]
-        )
+        return RecordValidationResult(ticker="", valid=False, errors=["Missing ticker field"])
 
     # Validate NCT ID format (NCT followed by 8 digits)
     nct_id = record.get("nct_id", "")
@@ -462,11 +428,21 @@ def validate_trial_record(
 
     # Validate phase (should be recognizable)
     phase = record.get("phase", "")
-    known_phases = {
-        "phase 1", "phase 2", "phase 3", "phase 4",
-        "phase 1/2", "phase 2/3", "approved", "preclinical",
-        "phase1", "phase2", "phase3", "phase4",
-        "early phase 1", "not applicable",
+    _known_phases = {  # noqa: F841
+        "phase 1",
+        "phase 2",
+        "phase 3",
+        "phase 4",
+        "phase 1/2",
+        "phase 2/3",
+        "approved",
+        "preclinical",
+        "phase1",
+        "phase2",
+        "phase3",
+        "phase4",
+        "early phase 1",
+        "not applicable",
     }
     if phase:
         phase_lower = str(phase).lower().strip()
@@ -484,21 +460,16 @@ def validate_trial_record(
         except (ValueError, TypeError):
             warnings.append(f"Invalid enrollment value: {enrollment}")
 
-    return RecordValidationResult(
-        ticker=ticker,
-        valid=len(errors) == 0,
-        errors=errors,
-        warnings=warnings
-    )
+    return RecordValidationResult(ticker=ticker, valid=len(errors) == 0, errors=errors, warnings=warnings)
 
 
 # ============================================================================
 # DATE VALIDATION
 # ============================================================================
 
+
 def validate_date(
-    date_input: Union[str, date, None],
-    config: Optional[InputValidationConfig] = None
+    date_input: Union[str, date, None], config: Optional[InputValidationConfig] = None
 ) -> Tuple[bool, Optional[date], List[str]]:
     """
     Validate and parse a date input.
@@ -545,7 +516,7 @@ def validate_date(
     #
     # If future date validation is needed, pass an explicit max_date in config
     # rather than using wall-clock time.
-    if hasattr(config, 'max_date') and config.max_date is not None:
+    if hasattr(config, "max_date") and config.max_date is not None:
         if parsed > config.max_date:
             errors.append(f"Date {parsed} is after maximum allowed: {config.max_date}")
 
@@ -555,6 +526,7 @@ def validate_date(
 # ============================================================================
 # MAIN VALIDATION FUNCTION
 # ============================================================================
+
 
 def validate_pipeline_inputs(
     universe: Union[Set[str], List[str], None] = None,
@@ -626,9 +598,7 @@ def validate_pipeline_inputs(
             result.invalid_tickers = invalid_tickers
 
             if invalid_tickers:
-                result.warnings.append(
-                    f"{len(invalid_tickers)} invalid tickers found"
-                )
+                result.warnings.append(f"{len(invalid_tickers)} invalid tickers found")
 
     # Validate financial data
     if financial_data is not None:
@@ -645,9 +615,7 @@ def validate_pipeline_inputs(
                     result.invalid_financial_records[rec_result.ticker] = rec_result.errors
 
                 if rec_result.warnings:
-                    result.warnings.extend([
-                        f"{rec_result.ticker}: {w}" for w in rec_result.warnings
-                    ])
+                    result.warnings.extend([f"{rec_result.ticker}: {w}" for w in rec_result.warnings])
 
             # Circuit breaker check
             total = result.stats["financial_records_total"]
@@ -682,26 +650,17 @@ def validate_pipeline_inputs(
                 result.invalid_trial_records[rec_result.ticker] = rec_result.errors
 
             if rec_result.warnings:
-                result.warnings.extend([
-                    f"{rec_result.ticker}: {w}" for w in rec_result.warnings
-                ])
+                result.warnings.extend([f"{rec_result.ticker}: {w}" for w in rec_result.warnings])
 
     # Check minimum valid records threshold
-    total_records = (
-        result.stats.get("financial_records_total", 0) +
-        result.stats.get("trial_records_total", 0)
-    )
-    valid_records = (
-        result.stats.get("financial_records_valid", 0) +
-        result.stats.get("trial_records_valid", 0)
-    )
+    total_records = result.stats.get("financial_records_total", 0) + result.stats.get("trial_records_total", 0)
+    valid_records = result.stats.get("financial_records_valid", 0) + result.stats.get("trial_records_valid", 0)
 
     if total_records > 0:
         valid_pct = valid_records / total_records
         if valid_pct < config.min_valid_records_pct:
             result.errors.append(
-                f"Only {valid_pct:.1%} of records are valid "
-                f"(minimum: {config.min_valid_records_pct:.1%})"
+                f"Only {valid_pct:.1%} of records are valid " f"(minimum: {config.min_valid_records_pct:.1%})"
             )
             result.passed = False
 
@@ -719,10 +678,8 @@ def validate_pipeline_inputs(
 # CONVENIENCE FUNCTIONS
 # ============================================================================
 
-def validate_universe_not_empty(
-    universe: Union[Set[str], List[str], None],
-    module_name: str = "Pipeline"
-) -> List[str]:
+
+def validate_universe_not_empty(universe: Union[Set[str], List[str], None], module_name: str = "Pipeline") -> List[str]:
     """
     Check that universe is not empty and return validated list.
 
@@ -730,18 +687,12 @@ def validate_universe_not_empty(
         PipelineValidationError: If universe is empty
     """
     if universe is None or len(universe) == 0:
-        raise PipelineValidationError(
-            f"{module_name}: Cannot process empty universe"
-        )
+        raise PipelineValidationError(f"{module_name}: Cannot process empty universe")
 
     return list(universe) if isinstance(universe, set) else universe
 
 
-def warn_empty_data(
-    data: Optional[List],
-    data_name: str,
-    module_name: str = "Pipeline"
-) -> None:
+def warn_empty_data(data: Optional[List], data_name: str, module_name: str = "Pipeline") -> None:
     """Log warning if data is empty."""
     if data is None or len(data) == 0:
         logger.warning(f"{module_name}: {data_name} is empty")

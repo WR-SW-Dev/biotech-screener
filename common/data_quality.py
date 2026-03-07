@@ -21,9 +21,9 @@ Usage:
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 
 from common.date_utils import normalize_date
 
@@ -36,6 +36,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class QualityGateResult:
     """Result of a quality gate check."""
+
     passed: bool
     gate_name: str
     message: str
@@ -46,6 +47,7 @@ class QualityGateResult:
 @dataclass
 class ValidationResult:
     """Aggregated validation results for a ticker."""
+
     ticker: str
     passed: bool
     gate_results: List[QualityGateResult] = field(default_factory=list)
@@ -68,6 +70,7 @@ class DataQualityConfig:
     Immutable (frozen=True) to prevent accidental modification after initialization.
     This ensures configuration consistency throughout a pipeline run.
     """
+
     # Staleness thresholds (days)
     max_financial_age_days: int = 90
     max_market_data_age_days: int = 7
@@ -199,13 +202,11 @@ class DataQualityGates:
         # Converting via string avoids float representation errors
         vol_decimal = Decimal(str(avg_volume))
         price_decimal = Decimal(str(price))
-        adv_dollars = (vol_decimal * price_decimal).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        adv_dollars = (vol_decimal * price_decimal).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         min_threshold = self.config.min_adv_dollars
         if not isinstance(min_threshold, Decimal):
-            min_threshold = Decimal(str(min_threshold))
+            min_threshold = Decimal(str(min_threshold))  # type: ignore[unreachable]
 
         if adv_dollars < min_threshold:
             return QualityGateResult(
@@ -247,7 +248,7 @@ class DataQualityGates:
         price_decimal = Decimal(str(price))
         min_price = self.config.min_price
         if not isinstance(min_price, Decimal):
-            min_price = Decimal(str(min_price))
+            min_price = Decimal(str(min_price))  # type: ignore[unreachable]
 
         if price_decimal < min_price:
             return QualityGateResult(
@@ -324,18 +325,12 @@ class DataQualityGates:
                 threshold=len(self.config.required_financial_fields),
             )
 
-        present = sum(
-            1 for f in self.config.required_financial_fields
-            if financial_data.get(f) is not None
-        )
+        present = sum(1 for f in self.config.required_financial_fields if financial_data.get(f) is not None)
         required = len(self.config.required_financial_fields)
         coverage = present / required if required > 0 else 0
 
         if coverage < self.config.min_financial_coverage:
-            missing = [
-                f for f in self.config.required_financial_fields
-                if financial_data.get(f) is None
-            ]
+            missing = [f for f in self.config.required_financial_fields if financial_data.get(f) is None]
             return QualityGateResult(
                 passed=False,
                 gate_name="financial_coverage",
@@ -478,8 +473,10 @@ def validate_liquidity(
 # CIRCUIT BREAKER
 # ============================================================================
 
+
 class CircuitBreakerError(Exception):
     """Raised when circuit breaker trips due to excessive failures."""
+
     pass
 
 
@@ -490,6 +487,7 @@ class CircuitBreakerConfig:
 
     Immutable (frozen=True) to prevent accidental modification after initialization.
     """
+
     # Thresholds
     failure_threshold: float = 0.50  # Trip if > 50% of records fail
     warning_threshold: float = 0.20  # Warn if > 20% fail
@@ -502,6 +500,7 @@ class CircuitBreakerConfig:
 @dataclass
 class CircuitBreakerResult:
     """Result of circuit breaker check."""
+
     tripped: bool
     warning: bool
     failure_rate: float
@@ -543,7 +542,7 @@ def check_circuit_breaker(
             failure_rate=0.0,
             total_records=total_records,
             failed_records=failed_records,
-            message=f"Skipped circuit breaker check: only {total_records} records"
+            message=f"Skipped circuit breaker check: only {total_records} records",
         )
 
     # Calculate failure rate
@@ -570,10 +569,7 @@ def check_circuit_breaker(
         )
         logger.warning(message)
     else:
-        message = (
-            f"Circuit breaker OK: {failure_rate:.1%} failure rate "
-            f"({failed_records}/{total_records})"
-        )
+        message = f"Circuit breaker OK: {failure_rate:.1%} failure rate " f"({failed_records}/{total_records})"
 
     return CircuitBreakerResult(
         tripped=tripped,
@@ -581,7 +577,7 @@ def check_circuit_breaker(
         failure_rate=failure_rate,
         total_records=total_records,
         failed_records=failed_records,
-        message=message
+        message=message,
     )
 
 
@@ -611,10 +607,12 @@ def validate_batch_with_circuit_breaker(
         if is_valid:
             valid_records.append(record)
         else:
-            invalid_records.append({
-                "record": record,
-                "errors": errors,
-            })
+            invalid_records.append(
+                {
+                    "record": record,
+                    "errors": errors,
+                }
+            )
 
     # Check circuit breaker
     cb_result = check_circuit_breaker(

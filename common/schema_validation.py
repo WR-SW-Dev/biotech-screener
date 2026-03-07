@@ -10,11 +10,12 @@ Version: 1.0.0
 from dataclasses import dataclass, field
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Union
 
 
 class SchemaType(Enum):
     """Supported schema types."""
+
     STRING = "string"
     NUMBER = "number"
     INTEGER = "integer"
@@ -27,6 +28,7 @@ class SchemaType(Enum):
 @dataclass
 class ValidationError:
     """Single validation error."""
+
     path: str
     message: str
     value: Any = None
@@ -38,6 +40,7 @@ class ValidationError:
 @dataclass
 class ValidationResult:
     """Result of schema validation."""
+
     valid: bool
     errors: List[ValidationError] = field(default_factory=list)
 
@@ -51,6 +54,7 @@ class ValidationResult:
 @dataclass
 class FieldSchema:
     """Schema for a single field."""
+
     type: Union[SchemaType, List[SchemaType]]
     required: bool = False
     nullable: bool = False
@@ -123,45 +127,44 @@ class SchemaValidator:
         errors: List[ValidationError] = []
 
         if not isinstance(data, dict):
-            errors.append(ValidationError(
-                path=path,
-                message=f"Expected object, got {type(data).__name__}",
-                value=data,
-            ))
+            errors.append(
+                ValidationError(
+                    path=path,
+                    message=f"Expected object, got {type(data).__name__}",
+                    value=data,
+                )
+            )
             return ValidationResult(valid=False, errors=errors)
 
         # Check required fields
         for field_name, field_schema in self.schema.items():
             if field_schema.required and field_name not in data:
-                errors.append(ValidationError(
-                    path=f"{path}.{field_name}",
-                    message="Required field missing",
-                ))
+                errors.append(
+                    ValidationError(
+                        path=f"{path}.{field_name}",
+                        message="Required field missing",
+                    )
+                )
 
         # Check each field
         for field_name, value in data.items():
             field_path = f"{path}.{field_name}"
 
             if field_name in self.schema:
-                field_errors = self._validate_field(
-                    value, self.schema[field_name], field_path
-                )
+                field_errors = self._validate_field(value, self.schema[field_name], field_path)
                 errors.extend(field_errors)
             elif not self.allow_additional:
-                errors.append(ValidationError(
-                    path=field_path,
-                    message="Additional property not allowed",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=field_path,
+                        message="Additional property not allowed",
+                        value=value,
+                    )
+                )
 
         return ValidationResult(valid=len(errors) == 0, errors=errors)
 
-    def _validate_field(
-        self,
-        value: Any,
-        schema: FieldSchema,
-        path: str
-    ) -> List[ValidationError]:
+    def _validate_field(self, value: Any, schema: FieldSchema, path: str) -> List[ValidationError]:
         """Validate a single field."""
         errors: List[ValidationError] = []
 
@@ -170,11 +173,13 @@ class SchemaValidator:
             if schema.nullable:
                 return errors
             else:
-                errors.append(ValidationError(
-                    path=path,
-                    message="Field cannot be null",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=path,
+                        message="Field cannot be null",
+                        value=value,
+                    )
+                )
                 return errors
 
         # Type checking
@@ -188,69 +193,82 @@ class SchemaValidator:
 
         if not type_valid:
             type_names = [t.value for t in expected_types]
-            errors.append(ValidationError(
-                path=path,
-                message=f"Expected type {type_names}, got {type(value).__name__}",
-                value=value,
-            ))
+            errors.append(
+                ValidationError(
+                    path=path,
+                    message=f"Expected type {type_names}, got {type(value).__name__}",
+                    value=value,
+                )
+            )
             return errors  # Skip further validation if type is wrong
 
         # Numeric constraints
         if schema.minimum is not None:
             if isinstance(value, (int, float, Decimal)) and value < schema.minimum:
-                errors.append(ValidationError(
-                    path=path,
-                    message=f"Value {value} below minimum {schema.minimum}",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=path,
+                        message=f"Value {value} below minimum {schema.minimum}",
+                        value=value,
+                    )
+                )
 
         if schema.maximum is not None:
             if isinstance(value, (int, float, Decimal)) and value > schema.maximum:
-                errors.append(ValidationError(
-                    path=path,
-                    message=f"Value {value} above maximum {schema.maximum}",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=path,
+                        message=f"Value {value} above maximum {schema.maximum}",
+                        value=value,
+                    )
+                )
 
         # String constraints
         if isinstance(value, str):
             if schema.min_length is not None and len(value) < schema.min_length:
-                errors.append(ValidationError(
-                    path=path,
-                    message=f"String length {len(value)} below minimum {schema.min_length}",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=path,
+                        message=f"String length {len(value)} below minimum {schema.min_length}",
+                        value=value,
+                    )
+                )
 
             if schema.max_length is not None and len(value) > schema.max_length:
-                errors.append(ValidationError(
-                    path=path,
-                    message=f"String length {len(value)} above maximum {schema.max_length}",
-                    value=value,
-                ))
+                errors.append(
+                    ValidationError(
+                        path=path,
+                        message=f"String length {len(value)} above maximum {schema.max_length}",
+                        value=value,
+                    )
+                )
 
             if schema.pattern is not None:
                 import re
+
                 if not re.match(schema.pattern, value):
-                    errors.append(ValidationError(
-                        path=path,
-                        message=f"String does not match pattern {schema.pattern}",
-                        value=value,
-                    ))
+                    errors.append(
+                        ValidationError(
+                            path=path,
+                            message=f"String does not match pattern {schema.pattern}",
+                            value=value,
+                        )
+                    )
 
         # Enum constraint
         if schema.enum is not None and value not in schema.enum:
-            errors.append(ValidationError(
-                path=path,
-                message=f"Value not in allowed values: {schema.enum}",
-                value=value,
-            ))
+            errors.append(
+                ValidationError(
+                    path=path,
+                    message=f"Value not in allowed values: {schema.enum}",
+                    value=value,
+                )
+            )
 
         # Array validation
         if isinstance(value, list) and schema.items is not None:
             for i, item in enumerate(value):
-                item_errors = self._validate_field(
-                    item, schema.items, f"{path}[{i}]"
-                )
+                item_errors = self._validate_field(item, schema.items, f"{path}[{i}]")
                 errors.extend(item_errors)
 
         # Nested object validation
@@ -280,7 +298,7 @@ class SchemaValidator:
             return isinstance(value, dict)
         elif expected == SchemaType.NULL:
             return value is None
-        return False
+        return False  # type: ignore[unreachable]
 
 
 # =============================================================================
@@ -390,10 +408,7 @@ PIPELINE_CONFIG_SCHEMA = {
 }
 
 
-def validate_params(
-    params: Dict[str, Any],
-    schema_name: str = "module5"
-) -> ValidationResult:
+def validate_params(params: Dict[str, Any], schema_name: str = "module5") -> ValidationResult:
     """
     Validate parameters against a predefined schema.
 
@@ -413,10 +428,12 @@ def validate_params(
     if schema_name not in schemas:
         return ValidationResult(
             valid=False,
-            errors=[ValidationError(
-                path="$",
-                message=f"Unknown schema: {schema_name}. Available: {list(schemas.keys())}",
-            )],
+            errors=[
+                ValidationError(
+                    path="$",
+                    message=f"Unknown schema: {schema_name}. Available: {list(schemas.keys())}",
+                )
+            ],
         )
 
     validator = SchemaValidator(schemas[schema_name])
@@ -444,25 +461,29 @@ def validate_weights_sum(
     errors: List[ValidationError] = []
 
     weights = []
-    for field in weight_fields:
-        if field in params and params[field] is not None:
+    for wf in weight_fields:
+        if wf in params and params[wf] is not None:
             try:
-                weights.append(float(params[field]))
+                weights.append(float(params[wf]))
             except (TypeError, ValueError) as e:
-                errors.append(ValidationError(
-                    path=f"$.{field}",
-                    message=f"Cannot convert to number: {e}",
-                    value=params.get(field),
-                ))
+                errors.append(
+                    ValidationError(
+                        path=f"$.{wf}",
+                        message=f"Cannot convert to number: {e}",
+                        value=params.get(wf),
+                    )
+                )
 
     if not errors and weights:
         total = sum(weights)
         if abs(total - expected_sum) > tolerance:
-            errors.append(ValidationError(
-                path="$",
-                message=f"Weights sum to {total:.4f}, expected {expected_sum} (±{tolerance})",
-                value=weights,
-            ))
+            errors.append(
+                ValidationError(
+                    path="$",
+                    message=f"Weights sum to {total:.4f}, expected {expected_sum} (±{tolerance})",
+                    value=weights,
+                )
+            )
 
     return ValidationResult(valid=len(errors) == 0, errors=errors)
 

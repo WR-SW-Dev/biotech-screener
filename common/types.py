@@ -1,16 +1,18 @@
 """
 Shared type definitions for biotech screener.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
 from enum import Enum
+from typing import List, Optional
 
 
 class Severity(Enum):
     """Data quality severity levels."""
+
     NONE = "none"
     SEV1 = "sev1"  # Minor: 10% penalty
     SEV2 = "sev2"  # Soft gate: 50% penalty
@@ -19,6 +21,7 @@ class Severity(Enum):
 
 class StatusGate(Enum):
     """Universe status gates."""
+
     ACTIVE = "active"
     EXCLUDED_SHELL = "excluded_shell"
     EXCLUDED_DELISTED = "excluded_delisted"
@@ -31,6 +34,7 @@ class StatusGate(Enum):
 @dataclass
 class SecurityRecord:
     """Core security record."""
+
     ticker: str
     status: StatusGate = StatusGate.ACTIVE
     market_cap_mm: Optional[Decimal] = None
@@ -38,8 +42,8 @@ class SecurityRecord:
     debt_mm: Optional[Decimal] = None
     runway_months: Optional[Decimal] = None
     severity: Severity = Severity.NONE
-    flags: List[str] = None
-    
+    flags: Optional[List[str]] = None
+
     def __post_init__(self) -> None:
         if self.flags is None:
             self.flags = []
@@ -48,17 +52,19 @@ class SecurityRecord:
 @dataclass
 class CatalystRecord:
     """Catalyst/trial record."""
+
     ticker: str
     nct_id: str
     phase: str
     primary_completion_date: Optional[str] = None
     study_status: Optional[str] = None
     indication: Optional[str] = None
-    
-    
-@dataclass  
+
+
+@dataclass
 class ClinicalScore:
     """Clinical development score."""
+
     ticker: str
     phase_score: Decimal
     design_score: Decimal
@@ -66,8 +72,8 @@ class ClinicalScore:
     endpoint_score: Decimal
     total_score: Decimal
     lead_phase: str
-    flags: List[str] = None
-    
+    flags: Optional[List[str]] = None
+
     def __post_init__(self) -> None:
         if self.flags is None:
             self.flags = []
@@ -76,6 +82,7 @@ class ClinicalScore:
 @dataclass
 class CompositeRecord:
     """Final composite ranking record."""
+
     ticker: str
     composite_score: Decimal
     composite_rank: int
