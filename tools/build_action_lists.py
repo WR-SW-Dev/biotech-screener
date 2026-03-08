@@ -52,7 +52,26 @@ ACTION_LIST_COLUMNS = [
     "alpha_cohort_key",
     "mom_state",
     "industry_group",
+    "size_band",
 ]
+
+# Account-aware sizing: per-name dollar caps by size band.
+# Keys are size_band values; values are max weight pct per name.
+DEFAULT_BAND_CAPS: Dict[str, float] = {
+    "XS": 2.0,
+    "S": 3.0,
+    "M": 5.0,
+    "L": 5.0,
+}
+
+# Columns appended when --account-usd is set
+SIZING_COLUMNS = ["weight_pct_raw", "weight_pct_capped", "target_dollars"]
+
+# Risk-rail columns (always present)
+RAIL_COLUMNS = ["gap_risk", "price_coverage"]
+
+# Gap-risk thresholds for binary_0_30 names
+GAP_RISK_IMMINENT_DAYS = 7  # catalyst within 7 trading days → HIGH gap risk
 
 # Bucket definitions
 BUCKET_NAMES = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
@@ -63,6 +82,8 @@ BUCKET_DISPLAY = {
     "binary_91_180": "Binary 91-180d (pipeline on deck)",
     "less_binary": "Less Binary (carry / no dated event)",
 }
+
+BAND_CAP_FALLBACK = 5.0  # cap for unknown size_band values
 
 # Microcap inversion sleeve: bottom-K of less-binary bucket, XS band only.
 # Opt-in only (--include-microcap-sleeve).  Deliberately exposed to
@@ -182,6 +203,8 @@ def build_action_lists(
         bucket = classify_action_bucket(row)
         # Keep only the action list columns (plus any missing as "")
         slim = {col: row.get(col, "") for col in ACTION_LIST_COLUMNS}
+        # Carry source field for risk rail tagging (not emitted to CSV)
+        slim["de_beta_xbi_60d_source"] = row.get("de_beta_xbi_60d_source", "")
         buckets[bucket].append(slim)
 
     # Sort each bucket deterministically
@@ -241,7 +264,6 @@ def build_microcap_sleeve(
         band = (row.get("size_band") or "").strip()
         if bucket == "less_binary" and band in size_bands:
             slim = {col: row.get(col, "") for col in ACTION_LIST_COLUMNS}
-            slim["size_band"] = band
             sleeve_rows.append(slim)
 
     # Sort by actionable_rank ASC (best to worst), then take bottom-K
@@ -255,6 +277,104 @@ def build_microcap_sleeve(
 
 
 # ---------------------------------------------------------------------------
+# Risk rails
+# ---------------------------------------------------------------------------
+
+
+def apply_risk_rails(
+    buckets: Dict[str, List[Dict[str, str]]],
+) -> None:
+    """Tag each row with gap_risk and price_coverage flags (in-place).
+
+    gap_risk:
+        "HIGH"  — binary_0_30 name with catalyst_days <= 7 (imminent event)
+        "MODERATE" — binary_0_30 name with catalyst_days > 7
+        ""      — all other buckets
+
+    price_coverage:
+        "OK"      — de_beta_xbi_60d_source is non-empty (price history present)
+        "MISSING" — de_beta_xbi_60d_source is empty (no beta/alpha/drawdown)
+    """
+    for bucket_name, rows in buckets.items():
+        for row in rows:
+            # Gap risk (only relevant for binary_0_30)
+            if bucket_name == "binary_0_30":
+                days = _safe_int(row.get("catalyst_days"))
+                if days is not None and days <= GAP_RISK_IMMINENT_DAYS:
+                    row["gap_risk"] = "HIGH"
+                else:
+                    row["gap_risk"] = "MODERATE"
+            else:
+                row["gap_risk"] = ""
+
+            # Price coverage
+            src = (row.get("de_beta_xbi_60d_source") or "").strip()
+            row["price_coverage"] = "OK" if src else "MISSING"
+
+
+# ---------------------------------------------------------------------------
+# Account-aware sizing
+# ---------------------------------------------------------------------------
+
+
+def apply_account_sizing(
+    buckets: Dict[str, List[Dict[str, str]]],
+    account_usd: float,
+    band_caps: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """Add per-name dollar sizing columns to every row in *buckets* (in-place).
+
+    For each row, appends:
+        weight_pct_raw   — the DEM target_weight_pct (unchanged)
+        weight_pct_capped — min(raw, band cap)
+        target_dollars   — account_usd * capped / 100
+
+    Args:
+        buckets: Dict of bucket_name → list of row dicts (mutated in-place).
+        account_usd: Total account value in dollars.
+        band_caps: Per-name max weight by size_band.  Defaults to DEFAULT_BAND_CAPS.
+
+    Returns:
+        Summary dict with keys: total_allocated, residual_cash,
+        per_bucket totals, per_band totals.
+    """
+    if band_caps is None:
+        band_caps = DEFAULT_BAND_CAPS
+
+    per_bucket: Dict[str, float] = {}
+    per_band: Dict[str, float] = {}
+    total_allocated = 0.0
+
+    for bucket_name, rows in buckets.items():
+        bucket_total = 0.0
+        for row in rows:
+            raw = _safe_float(row.get("target_weight_pct", ""))
+            band = (row.get("size_band") or "").strip()
+            cap = band_caps.get(band, BAND_CAP_FALLBACK)
+            capped = min(raw, cap)
+            dollars = account_usd * capped / 100.0
+
+            row["weight_pct_raw"] = f"{raw:.4f}"
+            row["weight_pct_capped"] = f"{capped:.4f}"
+            row["target_dollars"] = f"{dollars:.2f}"
+
+            bucket_total += dollars
+            per_band[band] = per_band.get(band, 0.0) + dollars
+
+        per_bucket[bucket_name] = bucket_total
+        total_allocated += bucket_total
+
+    return {
+        "account_usd": account_usd,
+        "total_allocated": total_allocated,
+        "residual_cash": account_usd - total_allocated,
+        "per_bucket": per_bucket,
+        "per_band": per_band,
+        "band_caps": band_caps,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Write
 # ---------------------------------------------------------------------------
 
@@ -265,32 +385,53 @@ def write_action_lists(
     *,
     as_of_date: str = "",
     microcap_sleeve: Optional[List[Dict[str, str]]] = None,
+    sizing_summary: Optional[Dict[str, Any]] = None,
 ) -> Path:
     """Write per-bucket CSVs and README.md to out_dir.
+
+    Args:
+        buckets: Dict of bucket_name → list of row dicts.
+        out_dir: Output directory path.
+        as_of_date: Snapshot date string for README header.
+        microcap_sleeve: Optional sleeve rows.
+        sizing_summary: If set (from apply_account_sizing), include sizing
+            columns in CSVs and account summary in README.
 
     Returns the out_dir path.
     """
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    has_sizing = sizing_summary is not None
+    # Check if risk rails have been applied (gap_risk key present in rows)
+    sample_rows = next((rows for rows in buckets.values() if rows), [])
+    has_rails = sample_rows and "gap_risk" in sample_rows[0]
+    cols = ACTION_LIST_COLUMNS + (RAIL_COLUMNS if has_rails else []) + (SIZING_COLUMNS if has_sizing else [])
+
     for bucket_name in BUCKET_NAMES:
         rows = buckets.get(bucket_name, [])
         csv_path = out_dir / f"{bucket_name}.csv"
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=ACTION_LIST_COLUMNS)
+            writer = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(rows)
 
     # Microcap inversion sleeve (opt-in)
     if microcap_sleeve is not None:
-        sleeve_cols = ACTION_LIST_COLUMNS + ["size_band"]
+        # Sleeve already has size_band in ACTION_LIST_COLUMNS now
+        sleeve_cols = cols
         csv_path = out_dir / f"{MICROCAP_SLEEVE_NAME}.csv"
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=sleeve_cols)
+            writer = csv.DictWriter(f, fieldnames=sleeve_cols, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(microcap_sleeve)
 
     # README summary
-    readme = _build_readme(buckets, as_of_date, microcap_sleeve=microcap_sleeve)
+    readme = _build_readme(
+        buckets,
+        as_of_date,
+        microcap_sleeve=microcap_sleeve,
+        sizing_summary=sizing_summary,
+    )
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
     return out_dir
@@ -301,6 +442,7 @@ def _build_readme(
     as_of_date: str,
     *,
     microcap_sleeve: Optional[List[Dict[str, str]]] = None,
+    sizing_summary: Optional[Dict[str, Any]] = None,
 ) -> str:
     """Generate a summary README.md for the action lists."""
     lines: List[str] = []
@@ -344,6 +486,63 @@ def _build_readme(
     lines.append(f"- **Binary book**: {binary_count} names, {binary_weight:.1f}% weight")
     lines.append(f"- **Less-binary book**: {lb_count} names, {lb_weight:.1f}% weight")
     lines.append("")
+
+    # Account sizing section (if --account-usd was provided)
+    if sizing_summary:
+        acct = sizing_summary["account_usd"]
+        alloc = sizing_summary["total_allocated"]
+        residual = sizing_summary["residual_cash"]
+        lines.append("## Account Sizing")
+        lines.append("")
+        lines.append(f"- **Account**: ${acct:,.0f}")
+        lines.append(f"- **Total allocated**: ${alloc:,.2f}")
+        lines.append(f"- **Residual cash**: ${residual:,.2f} ({residual / acct * 100:.1f}%)")
+        lines.append("")
+        lines.append("### Band Caps (per-name max)")
+        lines.append("")
+        lines.append("| Band | Cap |")
+        lines.append("|------|-----|")
+        for band, cap in sorted(sizing_summary["band_caps"].items()):
+            lines.append(f"| {band} | {cap:.1f}% |")
+        lines.append("")
+        lines.append("### Per-Bucket Allocation")
+        lines.append("")
+        lines.append("| Bucket | Allocated |")
+        lines.append("|--------|-----------|")
+        for bucket_name in BUCKET_NAMES:
+            bucket_alloc = sizing_summary["per_bucket"].get(bucket_name, 0.0)
+            display = BUCKET_DISPLAY.get(bucket_name, bucket_name)
+            lines.append(f"| {display} | ${bucket_alloc:,.2f} |")
+        lines.append("")
+        lines.append("### Per-Band Allocation")
+        lines.append("")
+        lines.append("| Band | Allocated |")
+        lines.append("|------|-----------|")
+        for band in sorted(sizing_summary["per_band"].keys()):
+            band_alloc = sizing_summary["per_band"][band]
+            lines.append(f"| {band} | ${band_alloc:,.2f} |")
+        lines.append("")
+
+    # Risk rails summary (if applied)
+    all_rows_flat = [r for rows in buckets.values() for r in rows]
+    if all_rows_flat and "gap_risk" in all_rows_flat[0]:
+        high_gap = [r for r in buckets.get("binary_0_30", []) if r.get("gap_risk") == "HIGH"]
+        missing_price = [r for r in all_rows_flat if r.get("price_coverage") == "MISSING"]
+        lines.append("## Risk Rails")
+        lines.append("")
+        if high_gap:
+            tickers = ", ".join(r.get("ticker", "") for r in high_gap)
+            lines.append(
+                f"- **Gap risk HIGH** ({len(high_gap)} names, " f"catalyst <= {GAP_RISK_IMMINENT_DAYS}d): {tickers}"
+            )
+        else:
+            lines.append("- **Gap risk HIGH**: none")
+        if missing_price:
+            tickers = ", ".join(r.get("ticker", "") for r in missing_price)
+            lines.append(f"- **Price coverage MISSING** ({len(missing_price)} names): {tickers}")
+        else:
+            lines.append("- **Price coverage**: all names OK")
+        lines.append("")
 
     # Microcap inversion sleeve (if present)
     if microcap_sleeve:
@@ -435,6 +634,20 @@ def main():
         default=MICROCAP_SLEEVE_DEFAULT_K,
         help=f"Number of names in microcap sleeve (default: {MICROCAP_SLEEVE_DEFAULT_K}).",
     )
+    parser.add_argument(
+        "--account-usd",
+        type=float,
+        default=None,
+        help="Account value in USD.  Enables per-name dollar sizing with band caps.",
+    )
+    parser.add_argument(
+        "--band-caps",
+        default=None,
+        help=(
+            "Per-name max weight by size band, comma-separated KEY=VAL pairs. "
+            "Example: XS=2,S=3,M=5,L=5  (default: XS=2, S=3, M=5, L=5)"
+        ),
+    )
     args = parser.parse_args()
 
     if args.snapshot_dir:
@@ -456,6 +669,9 @@ def main():
 
     buckets = build_action_lists(snap_dir, eligible_only=not args.include_ineligible)
 
+    # Risk rails (always applied)
+    apply_risk_rails(buckets)
+
     sleeve = None
     if args.include_microcap_sleeve:
         sleeve = build_microcap_sleeve(
@@ -464,7 +680,24 @@ def main():
             eligible_only=not args.include_ineligible,
         )
 
-    write_action_lists(buckets, out_dir, as_of_date=snap_dir.name, microcap_sleeve=sleeve)
+    # Account-aware sizing (opt-in)
+    sizing_summary = None
+    if args.account_usd is not None:
+        band_caps = None
+        if args.band_caps:
+            band_caps = {}
+            for pair in args.band_caps.split(","):
+                k, v = pair.strip().split("=")
+                band_caps[k.strip()] = float(v.strip())
+        sizing_summary = apply_account_sizing(buckets, args.account_usd, band_caps)
+
+    write_action_lists(
+        buckets,
+        out_dir,
+        as_of_date=snap_dir.name,
+        microcap_sleeve=sleeve,
+        sizing_summary=sizing_summary,
+    )
 
     total = sum(len(rows) for rows in buckets.values())
     print(f"Action lists → {out_dir}")
@@ -473,6 +706,19 @@ def main():
     print(f"  total: {total}")
     if sleeve is not None:
         print(f"  {MICROCAP_SLEEVE_NAME}: {len(sleeve)} names (opt-in sleeve)")
+    if sizing_summary:
+        print(f"  account: ${sizing_summary['account_usd']:,.0f}")
+        print(f"  allocated: ${sizing_summary['total_allocated']:,.2f}")
+        print(f"  residual cash: ${sizing_summary['residual_cash']:,.2f}")
+
+    # Risk rail summary
+    high_gap = [r for r in buckets.get("binary_0_30", []) if r.get("gap_risk") == "HIGH"]
+    all_rows = [r for rows in buckets.values() for r in rows]
+    missing_price = [r for r in all_rows if r.get("price_coverage") == "MISSING"]
+    if high_gap:
+        print(f"  gap_risk HIGH: {', '.join(r['ticker'] for r in high_gap)}")
+    if missing_price:
+        print(f"  price_coverage MISSING: {', '.join(r['ticker'] for r in missing_price)}")
 
 
 if __name__ == "__main__":

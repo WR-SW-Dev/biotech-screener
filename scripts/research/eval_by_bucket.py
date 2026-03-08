@@ -418,12 +418,18 @@ def main():
     parser.add_argument(
         "--bucket-specific-horizons",
         action="store_true",
-        default=False,
+        default=True,
         help=(
-            "Use bucket-specific horizons aligned to holding period: "
+            "Use bucket-specific horizons aligned to holding period (default). "
             "binary_0_30=20/63d, binary_31_90=63/84d, "
             "binary_91_180=84/126d, less_binary=84/126d."
         ),
+    )
+    parser.add_argument(
+        "--uniform-horizons",
+        action="store_true",
+        default=False,
+        help="Use uniform horizons (from --horizons) for all buckets instead of bucket-specific.",
     )
     parser.add_argument(
         "--include-microcap-sleeve",
@@ -439,6 +445,9 @@ def main():
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
+    # --uniform-horizons overrides --bucket-specific-horizons
+    use_bucket_specific = args.bucket_specific_horizons and not args.uniform_horizons
+
     results = run_bucket_eval(
         snapshot_root=args.snapshot_root,
         price_csv=args.price_csv,
@@ -453,7 +462,7 @@ def main():
         date_manifest=args.date_manifest,
         rebalance_buffer_ranks=args.rebalance_buffer_ranks,
         industry_neutral=args.industry_neutral,
-        bucket_specific_horizons=args.bucket_specific_horizons,
+        bucket_specific_horizons=use_bucket_specific,
         include_microcap_sleeve=args.include_microcap_sleeve,
     )
 
