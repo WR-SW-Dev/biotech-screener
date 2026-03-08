@@ -4520,7 +4520,7 @@ def save_validation_snapshot(
         "ruleset_file": getattr(_rs, "_source_path", None),
         "ruleset_hash": _ruleset_hash,
         "engine_version": DE_VERSION,
-        "git_sha": _git.get("sha"),
+        "git_sha": _git.get("commit_sha"),
         "ticker_count": len(ranked),
         "source_type": "live_pipeline_v3",
         "scoring_model": "module_5_v3_ic_enhanced",
