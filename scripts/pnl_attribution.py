@@ -34,6 +34,7 @@ DEFAULT_COST_BPS = 30
 # Price loader (lightweight)
 # ---------------------------------------------------------------------------
 
+
 def load_price_map(csv_path: Path) -> Dict[str, Dict[str, float]]:
     """Load price_history.csv → {ticker: {date_str: close}}."""
     prices: Dict[str, Dict[str, float]] = {}
@@ -61,6 +62,7 @@ def get_price(prices: Dict[str, Dict[str, float]], ticker: str, dt: str) -> Opti
 # ---------------------------------------------------------------------------
 # Snapshot loaders
 # ---------------------------------------------------------------------------
+
 
 def load_rankings_map(snapshot_dir: Path) -> Dict[str, Dict[str, str]]:
     """Load rankings.csv → {ticker: row_dict}."""
@@ -97,6 +99,7 @@ def load_metadata(snapshot_dir: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 # Portfolio builder
 # ---------------------------------------------------------------------------
+
 
 def build_portfolio(
     snapshot_dir: Path,
@@ -148,6 +151,7 @@ def _safe_int(v: str) -> int:
 # ---------------------------------------------------------------------------
 # PnL attribution core
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class PositionPnL:
@@ -274,20 +278,26 @@ def compute_attribution(
         coinvest = rec.get("coinvest_tag", "") or "none"
         inst_bucket = _bucket_inst_delta(rec.get("inst_delta_z", ""))
 
-        position_pnls.append(PositionPnL(
-            ticker=ticker, weight_d0=w0, weight_d1=w1,
-            price_d0=p0, price_d1=p1,
-            return_pct=_round_opt(ret, 6),
-            pnl_contribution=_round_opt(contrib, 8),
-            action=action, tier=tier,
-            catalyst_bucket=cat_bucket, coinvest_tag=coinvest,
-            inst_delta_bucket=inst_bucket,
-        ))
+        position_pnls.append(
+            PositionPnL(
+                ticker=ticker,
+                weight_d0=w0,
+                weight_d1=w1,
+                price_d0=p0,
+                price_d1=p1,
+                return_pct=_round_opt(ret, 6),
+                pnl_contribution=_round_opt(contrib, 8),
+                action=action,
+                tier=tier,
+                catalyst_bucket=cat_bucket,
+                coinvest_tag=coinvest,
+                inst_delta_bucket=inst_bucket,
+            )
+        )
 
     # Portfolio-level metrics
     coverage = priced_count / max(len(port_d0), 1)
-    gross = sum(p.pnl_contribution for p in position_pnls
-                if p.pnl_contribution is not None)
+    gross = sum(p.pnl_contribution for p in position_pnls if p.pnl_contribution is not None)
 
     # Turnover
     turnover = compute_portfolio_turnover(port_d0, port_d1)
@@ -295,9 +305,12 @@ def compute_attribution(
 
     # Attribution breakdowns
     result = AttributionResult(
-        as_of_date=d1_date, prior_date=d0_date,
-        n_positions_d0=len(port_d0), n_positions_d1=len(port_d1),
-        n_priced=priced_count, coverage_pct=round(coverage, 4),
+        as_of_date=d1_date,
+        prior_date=d0_date,
+        n_positions_d0=len(port_d0),
+        n_positions_d1=len(port_d1),
+        n_priced=priced_count,
+        coverage_pct=round(coverage, 4),
         gross_return=round(gross, 8),
         turnover=round(turnover, 4),
         cost_bps=cost_bps,
@@ -343,9 +356,11 @@ def _group_breakdown(
         result[key] = {
             "count": len(pnls),
             "total_contribution": round(sum(contribs), 8) if contribs else 0.0,
-            "mean_return": round(statistics.mean(
-                [p.return_pct for p in pnls if p.return_pct is not None]
-            ), 6) if any(p.return_pct is not None for p in pnls) else None,
+            "mean_return": (
+                round(statistics.mean([p.return_pct for p in pnls if p.return_pct is not None]), 6)
+                if any(p.return_pct is not None for p in pnls)
+                else None
+            ),
         }
     return result
 
@@ -357,6 +372,7 @@ def _round_opt(v: Optional[float], d: int) -> Optional[float]:
 # ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
+
 
 def write_attribution_json(result: AttributionResult, out_path: Path) -> Path:
     """Write pnl_attribution.json."""
@@ -373,7 +389,11 @@ def write_attribution_md(result: AttributionResult, out_path: Path) -> Path:
         f"- **Date**: {result.as_of_date} (vs {result.prior_date})",
         f"- **Positions**: {result.n_positions_d0} → {result.n_positions_d1}",
         f"- **Coverage**: {result.coverage_pct:.1%}",
-        f"- **Gross Return**: {result.gross_return:.4%}" if result.gross_return is not None else "- **Gross Return**: —",
+        (
+            f"- **Gross Return**: {result.gross_return:.4%}"
+            if result.gross_return is not None
+            else "- **Gross Return**: —"
+        ),
         f"- **Turnover**: {result.turnover:.2%}",
         f"- **Net Return**: {result.net_return:.4%}" if result.net_return is not None else "- **Net Return**: —",
         f"- **Cost**: {result.cost_bps} bps",
@@ -385,12 +405,10 @@ def write_attribution_md(result: AttributionResult, out_path: Path) -> Path:
     ]
     for key, val in result.by_action.items():
         mr = f"{val['mean_return']:.4%}" if val.get("mean_return") is not None else "—"
-        lines.append(
-            f"| {key} | {val['count']} | {val['total_contribution']:.6f} | {mr} |"
-        )
-    lines.extend(["", "## By Tier", "",
-                   "| Tier | Count | Total Contribution |",
-                   "|------|-------|--------------------|"])
+        lines.append(f"| {key} | {val['count']} | {val['total_contribution']:.6f} | {mr} |")
+    lines.extend(
+        ["", "## By Tier", "", "| Tier | Count | Total Contribution |", "|------|-------|--------------------|"]
+    )
     for key, val in result.by_tier.items():
         lines.append(f"| {key or '(none)'} | {val['count']} | {val['total_contribution']:.6f} |")
 
@@ -403,6 +421,7 @@ def write_attribution_md(result: AttributionResult, out_path: Path) -> Path:
 # ---------------------------------------------------------------------------
 # Gate check function (for integration with run_daily_production.py)
 # ---------------------------------------------------------------------------
+
 
 def check_pnl_attribution_file(
     snapshot_dir: Path,
@@ -426,7 +445,12 @@ def check_pnl_attribution_file(
     if schema != SCHEMA_VERSION:
         return "WARN", f"Unexpected schema: {schema}", None, None
 
+    # First-run detection: no prior portfolio → PASS (nothing to attribute)
+    n_d0 = data.get("n_positions_d0", -1)
     coverage = data.get("coverage_pct", 0)
+    if isinstance(n_d0, int) and n_d0 == 0:
+        return "PASS", "First portfolio (no prior positions) — cold-start OK", None, None
+
     if isinstance(coverage, (int, float)) and coverage * 100 < min_coverage_pct:
         return (
             "WARN",
@@ -437,7 +461,7 @@ def check_pnl_attribution_file(
 
     gross = data.get("gross_return")
     detail = (
-        f"PnL OK: {data.get('prior_date','?')}→{data.get('as_of_date','?')}, "
+        f"PnL OK: {data.get('prior_date', '?')}→{data.get('as_of_date', '?')}, "
         f"gross={_fmt_pct_safe(gross)}, turnover={data.get('turnover', '?')}"
     )
     return "PASS", detail, None, None
@@ -453,31 +477,36 @@ def _fmt_pct_safe(v: Any) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="PnL attribution between two snapshot dates",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
     )
-    parser.add_argument("--as-of-date", required=True,
-                        help="Current snapshot date (D1)")
-    parser.add_argument("--prior-date", default=None,
-                        help="Prior snapshot date (D0). Auto-detect if omitted.")
+    parser.add_argument("--as-of-date", required=True, help="Current snapshot date (D1)")
+    parser.add_argument("--prior-date", default=None, help="Prior snapshot date (D0). Auto-detect if omitted.")
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
     )
     parser.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
     parser.add_argument("--use-positions", action="store_true", default=False)
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument(
-        "--out-snapshot-sidecar", action="store_true", default=False,
+        "--out-snapshot-sidecar",
+        action="store_true",
+        default=False,
         help="Write output into the snapshot dir instead of --out-dir",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=None,
+        "--out-dir",
+        type=Path,
+        default=None,
         help="Output directory (default: output/pnl_attribution/)",
     )
     args = parser.parse_args()

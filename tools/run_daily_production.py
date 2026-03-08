@@ -535,14 +535,21 @@ def check_exposure_missingness(
     snapshot_date_dir: Path,
     warn_frac: float,
     fail_frac: float,
+    *,
+    held_tickers: Optional[set] = None,
+    top_k: int = 20,
 ) -> GateResult:
-    """Check per-exposure missingness among eligible tickers.
+    """Check per-exposure missingness among held/top-K tickers.
 
     Schema-aware: columns absent from the CSV header are **skipped** (not
     counted as missing).  This prevents false FAILs on legacy snapshots that
     predate a column's introduction.
 
-    For each column present in the header, computes the fraction of eligible
+    When ``held_tickers`` is provided, the check is scoped to tickers that
+    are either in the held set or in the top-K by actionable_rank.  This
+    avoids false WARNs from universe names that are never traded.
+
+    For each column present in the header, computes the fraction of scoped
     tickers whose value is empty / NaN.  The *worst* column determines the
     gate verdict:
 
@@ -550,8 +557,8 @@ def check_exposure_missingness(
     - WARN if worst fraction > ``warn_frac``
     - PASS otherwise
 
-    ``GateResult.value`` is a dict with ``eligible_n``, ``missing_fracs``,
-    and ``skipped`` (columns not in the header).
+    ``GateResult.value`` is a dict with ``eligible_n``, ``scoped_n``,
+    ``missing_fracs``, and ``skipped`` (columns not in the header).
     """
     rankings_path = snapshot_date_dir / "rankings.csv"
     if not rankings_path.exists():
@@ -566,12 +573,37 @@ def check_exposure_missingness(
         header = set(reader.fieldnames or [])
         eligible_rows = [r for r in reader if r.get("eligible") == "1"]
 
-    n = len(eligible_rows)
-    if n == 0:
+    n_eligible = len(eligible_rows)
+    if n_eligible == 0:
         return GateResult(
             name="exposure_missingness",
             status="FAIL",
             detail="No eligible tickers in rankings.csv",
+        )
+
+    # Scope to held + top-K names (avoids false alarms from untradeable names)
+    if held_tickers is not None:
+        top_k_tickers = set()
+        for r in eligible_rows:
+            ar = (r.get("actionable_rank") or "").strip()
+            try:
+                if int(ar) <= top_k:
+                    top_k_tickers.add(r.get("ticker", "").upper())
+            except (ValueError, TypeError):
+                pass
+        scope_tickers = held_tickers | top_k_tickers
+        scoped_rows = [r for r in eligible_rows if r.get("ticker", "").upper() in scope_tickers]
+    else:
+        scoped_rows = eligible_rows
+
+    n = len(scoped_rows)
+    if n == 0:
+        return GateResult(
+            name="exposure_missingness",
+            status="PASS",
+            detail=f"No held/top-K tickers to check ({n_eligible} eligible total)",
+            value={"eligible_n": n_eligible, "scoped_n": 0, "missing_fracs": {}, "skipped": []},
+            threshold=warn_frac,
         )
 
     # Determine which columns to check (skip absent ones)
@@ -593,9 +625,11 @@ def check_exposure_missingness(
     missing_fracs: dict[str, float] = {}
     per_col: list[str] = []
 
+    scope_label = f"{n} held/top-K" if held_tickers is not None else f"{n} eligible"
+
     for col in check_cols:
         missing = 0
-        for row in eligible_rows:
+        for row in scoped_rows:
             val = (row.get(col) or "").strip()
             if not val or val.lower() in ("nan", "none"):
                 missing += 1
@@ -611,7 +645,8 @@ def check_exposure_missingness(
 
     summary = ", ".join(per_col)
     value_dict = {
-        "eligible_n": n,
+        "eligible_n": n_eligible,
+        "scoped_n": n,
         "missing_fracs": missing_fracs,
         "skipped": skipped_cols,
     }
@@ -635,7 +670,7 @@ def check_exposure_missingness(
     return GateResult(
         name="exposure_missingness",
         status="PASS",
-        detail=f"All exposures OK ({n} eligible). {summary}",
+        detail=f"All exposures OK ({scope_label}). {summary}",
         value=value_dict,
         threshold=warn_frac,
     )
@@ -2329,10 +2364,41 @@ def check_ruleset_governance(
     )
 
 
+def _stale_mismatch_held_context(
+    audit_output_dir: Optional[Path],
+    held_tickers: Optional[set],
+) -> str:
+    """Annotate STALE_MISMATCH with whether affected tickers are held."""
+    if not audit_output_dir or held_tickers is None:
+        return ""
+    diff_csv = audit_output_dir / "price_recompute_diff.csv"
+    if not diff_csv.exists():
+        return ""
+    try:
+        with open(diff_csv, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            fail_tickers = set()
+            for row in reader:
+                for vk in ("dd_verdict", "rsi_verdict", "beta_verdict", "alpha_verdict"):
+                    if row.get(vk) == "FAIL":
+                        fail_tickers.add(row.get("ticker", "").upper())
+                        break
+        if not fail_tickers:
+            return ""
+        held_affected = fail_tickers & held_tickers
+        if held_affected:
+            return f" [{len(held_affected)}/{len(fail_tickers)} stale in held: {','.join(sorted(held_affected)[:5])}]"
+        return f" [0/{len(fail_tickers)} stale in held — none affect portfolio]"
+    except Exception:
+        return ""
+
+
 def check_audit_result(
     audit_proc: subprocess.CompletedProcess,
     config: GateConfig,
     audit_output_dir: Optional[Path] = None,
+    *,
+    held_tickers: Optional[set] = None,
 ) -> GateResult:
     """Translate audit tool exit code into a gate result."""
     summary = _read_invariants_summary(audit_output_dir) if audit_output_dir else None
@@ -2351,7 +2417,8 @@ def check_audit_result(
         return GateResult(name="audit", status=status, detail=detail)
     elif audit_proc.returncode == 3:
         # Stale recompute mismatch — always WARN (not FAIL)
-        detail = _format_audit_detail("STALE_MISMATCH: price recompute diff", summary)
+        held_ctx = _stale_mismatch_held_context(audit_output_dir, held_tickers)
+        detail = _format_audit_detail(f"STALE_MISMATCH: price recompute diff{held_ctx}", summary)
         return GateResult(name="audit", status="WARN", detail=detail)
     else:
         # Unknown exit code → WARN (defensive)
@@ -3331,13 +3398,24 @@ def run_daily(
         else:
             print("\n[2.5] PIT price anchor skipped — rankings.csv not found in staging")
 
+    # --- Load held tickers for scoped gates (audit + exposure) ---
+    _held_tickers: Optional[set] = None
+    try:
+        from tools.live_shadow_portfolio import load_prior_positions
+
+        _prior = load_prior_positions(as_of_date)
+        if _prior:
+            _held_tickers = {p["ticker"] for p in _prior[1]}
+    except Exception:
+        pass  # No prior positions — fall back to all eligible
+
     # --- Step 3: Run integrity audit ---
     audit_proc = None
     if not skip_audit:
         print("\n[3/5] Running data integrity audit ...")
         audit_output_dir = staging_date_dir / "audit"
         audit_proc = run_audit(staging_date_dir, price_csv, as_of_date, audit_output_dir)
-        audit_gate = check_audit_result(audit_proc, config, audit_output_dir)
+        audit_gate = check_audit_result(audit_proc, config, audit_output_dir, held_tickers=_held_tickers)
         gate_results.append(audit_gate)
         print(f"  Audit gate: {audit_gate.status} — {audit_gate.detail}")
     else:
@@ -3477,6 +3555,7 @@ def run_daily(
         staging_date_dir,
         warn_frac=config.exposure_missing_warn_frac,
         fail_frac=config.exposure_missing_fail_frac,
+        held_tickers=_held_tickers,
     )
     gate_results.append(exp_gate)
     print(f"  Exposure missingness gate: {exp_gate.status} — {exp_gate.detail}")
