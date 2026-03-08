@@ -1,7 +1,7 @@
 # Biotech Screener Model Documentation
 
-**Version:** 2.6.0
-**Last Updated:** March 1, 2026
+**Version:** 2.7.0
+**Last Updated:** March 8, 2026
 **System:** Wake Robin Capital Biotech Screening Pipeline
 
 ---
@@ -20,9 +20,12 @@
 10. [Decision Engine (Phase-2)](#decision-engine-phase-2)
 11. [PIT (Point-in-Time) Compliance](#pit-point-in-time-compliance)
 12. [Monitoring & Reporting](#monitoring--reporting)
-13. [Configuration](#configuration)
-14. [Appendix: File Locations](#appendix-file-locations)
-15. [Changelog](#changelog)
+13. [Action Lists & Sizing](#action-lists--sizing)
+14. [Decision Memo](#decision-memo)
+15. [Live Shadow Portfolio](#live-shadow-portfolio)
+16. [Configuration](#configuration)
+17. [Appendix: File Locations](#appendix-file-locations)
+18. [Changelog](#changelog)
 
 ---
 
@@ -67,17 +70,20 @@ python run_screen.py \
 
 ### Recommended IC workflow
 
-1. **Portfolio**: Start with `decision_portfolio.csv` (Decision Engine output: A+B tier, top-K, sized). Under ruleset v1.6.1, `composite_score` is driven by alpha cohort signals (not Module 5 linear combination). This supersedes legacy Module 5 `composite_rank` for all investment decisions.
-2. **Risk gates**: Review `severity`, `risk_flags`, and `tier_reason` before any investment decision.
-3. **Thesis build**: Use catalyst provenance (`catalyst_source`, `catalyst_days`, `catalyst_strength`) + Module 4 (pipeline quality) as the thesis backbone.
-4. **Health check**: Review `phase2_health.json` — FAIL means do not act, WARN means review before acting.
-5. **Implementation**: Apply portfolio constraints (cash target, max weight, sector/cluster caps) on top of Decision Engine weights; document any overrides.
-6. **Monitoring**: Track health gate status, catalyst coverage, and tier distribution each run (see Monitoring & Reporting).
+1. **Decision memo**: Start with `DECISION_MEMO.md` — 1-page summary with provenance, allocation, risk rails, top-10 per bucket, rank delta vs prior, and actionable bullets. JSON sidecar (`DECISION_MEMO.json`) for programmatic consumption.
+2. **Shadow portfolio**: Review `artifacts/live_shadow/weekly_summary.md` — policy vs actual allocation, P&L vs XBI, sleeve attribution, turnover.
+3. **Risk gates**: Review `severity`, `risk_flags`, and `tier_reason` before any investment decision. Check gap-risk HIGH names (catalyst ≤ 7 trading days).
+4. **Thesis build**: Use catalyst provenance (`catalyst_source`, `catalyst_days`, `catalyst_strength`) + Module 4 (pipeline quality) as the thesis backbone.
+5. **Health check**: Review `phase2_health.json` — FAIL means do not act, WARN means review before acting.
+6. **Implementation**: Use `portfolio_policy.json` bucket targets with per-bucket name caps; the shadow portfolio enforces these automatically.
+7. **Monitoring**: Track health gate status, catalyst coverage, and tier distribution each run (see Monitoring & Reporting).
 
 ### What to show the IC each run (one page)
 
+- **Decision memo**: `DECISION_MEMO.md` — provenance, allocation summary, risk rails, top-10 per bucket, rank changes vs prior, actionable bullets.
+- **Shadow portfolio**: `artifacts/live_shadow/weekly_summary.md` — policy vs actual, P&L, excess vs XBI, sleeve attribution.
 - **Health gate**: `phase2_health.json` status (OK/WARN/FAIL) and reasons.
-- **Portfolio**: `decision_portfolio.csv` — top-20 positions with tiers, weights, catalyst proximity.
+- **Risk flags**: gap-risk HIGH names (catalyst ≤ 7d), missing price coverage.
 - **Delta**: `phase2_run_delta_report.txt` — entries/exits, turnover, L1 weight change vs prior run.
 - **Catalyst coverage**: % dev tickers with `specific_days` mode, source mix distribution.
 - **Tier distribution**: A/B/C/D counts and any tier migrations from prior run.
@@ -1153,7 +1159,14 @@ Five-step orchestrator that runs the complete screening pipeline with gates and 
 
 **File:** `tools/data_integrity_audit.py`
 
-Post-screen validation with exit codes: 1=critical, 2=warn, 0=OK.
+Post-screen validation with 4-tier exit codes:
+
+| Exit | Meaning | Gate mapping |
+|------|---------|-------------|
+| 0 | OK (info-only) | PASS |
+| 1 | Critical invariant violation (data model broken) | FAIL |
+| 2 | Structural warning (catalyst/tier inconsistency) | WARN |
+| 3 | Price recompute mismatch (stale but explained) | WARN (hardcoded, never FAIL) |
 
 **Checks:**
 - **Invariant checks**: eligible/ineligible consistency, rank assignment, catalyst field integrity, missing component validation, tier/reason completeness, universe coverage
@@ -1453,6 +1466,185 @@ The flipper return attribution diagnostic is the **empirical validation harness*
 
 ---
 
+## Action Lists & Sizing
+
+**File:** `tools/build_action_lists.py`
+
+Reads a promoted snapshot and produces per-bucket CSV files split by catalyst horizon, plus account-aware sizing and risk rails.
+
+### Bucket Classification
+
+| Bucket | Rule | Display Name |
+|--------|------|-------------|
+| `binary_0_30` | `catalyst_mode ∈ {specific_days, blended_window}` AND `1 ≤ catalyst_days ≤ 30` | Binary 0-30d (event imminent) |
+| `binary_31_90` | Same modes AND `31 ≤ catalyst_days ≤ 90` | Binary 31-90d (setup window) |
+| `binary_91_180` | Same modes AND `91 ≤ catalyst_days ≤ 180` | Binary 91-180d (pipeline on deck) |
+| `less_binary` | Everything else (no_upcoming, missing, far-out >180d) | Less Binary (carry / no dated event) |
+
+Within each bucket: sorted by `actionable_rank` ASC, then ticker ASC (deterministic).
+
+### Account-Aware Sizing
+
+When `--account-usd` is provided, each name gets dollar sizing with band-based per-name caps:
+
+| Size Band | Max Weight |
+|-----------|-----------|
+| XS | 2.0% |
+| S | 3.0% |
+| M | 5.0% |
+| L | 5.0% |
+
+**Overage-safe**: 3-pass algorithm guarantees `sum(target_dollars) ≤ account_usd`. Excess is trimmed from largest positions first (deterministic tie-break by ticker ASC).
+
+Columns added: `weight_pct_raw`, `weight_pct_capped`, `target_dollars`.
+
+### Risk Rails
+
+Always computed for all rows:
+
+| Column | Values | Rule |
+|--------|--------|------|
+| `gap_risk` | `HIGH` | binary_0_30 AND `catalyst_days ≤ 7` |
+| | `MODERATE` | binary_0_30 AND `8 ≤ catalyst_days ≤ 30` |
+| | (empty) | All other buckets |
+| `price_coverage` | `OK` | `de_beta_xbi_60d_source` is present |
+| | `MISSING` | `de_beta_xbi_60d_source` is empty |
+
+### Bucket Targets (Opt-in)
+
+`--bucket-targets` rescales `target_weight_pct` within each bucket to hit target allocations. Example: `--bucket-targets binary_91_180=0.50,binary_31_90=0.25,binary_0_30=0.10,less_binary=0.15`. Unspecified buckets share the remaining allocation proportionally.
+
+### Binary Sleeve Risk Cap (L3 Enforcement)
+
+Three `DecisionRuleset` fields constrain binary-event concentration after L3 normalization:
+
+| Field | Default | Description |
+|-------|---------|-------------|
+| `binary_sleeve_max_weight_pct` | 100.0 (disabled) | Aggregate cap for all binary names |
+| `binary_sleeve_per_name_max_pct` | 100.0 (disabled) | Per-name cap for binary names |
+| `binary_sleeve_days_threshold` | 30 | Catalyst days cutoff for "binary" classification |
+
+Excess weight is redistributed proportionally to non-binary names. Weights are re-normalized to 100% after capping. Binary classification: `catalyst_mode ∈ {specific_days, blended_window}` AND `catalyst_days ≤ threshold`.
+
+**Tests:** 20 in `test_account_sizing.py`, 11 in `test_risk_rails.py`, 18 in `test_binary_sleeve_cap.py`.
+
+---
+
+## Decision Memo
+
+**File:** `tools/build_decision_memo.py`
+
+Generates a 1-page IC-style decision memo from a snapshot, with provenance, allocation, risk rails, action lists, rank delta vs prior, and actionable bullets.
+
+### Output Files
+
+- `DECISION_MEMO.md` — Human-readable markdown
+- `DECISION_MEMO.json` — Structured sidecar (schema `decision_memo.v1`)
+
+### Sections
+
+1. **Provenance**: As-of date, ruleset ID/hash, engine version, git SHA, universe counts, snapshot status, WARN gates
+2. **Allocation Summary**: Account value, total allocated, cash; per-bucket and per-band tables
+3. **Risk Rails**: Gap-risk HIGH names (catalyst ≤ 7d) with $ exposure; missing price coverage names
+4. **Action Lists**: Top 10 per bucket sorted by rank, with catalyst days, tier, momentum, weight, dollars
+5. **Change vs Prior Snapshot**: Top-20 overlap %, biggest rank improvers/decliners, new entries/exits
+6. **What To Do**: 3-6 actionable bullets based on gap risk concentration, missing price, sleeve imbalance, cash
+
+### JSON Sidecar Schema
+
+```json
+{
+  "schema": "decision_memo.v1",
+  "as_of_date": "2026-03-08",
+  "account_usd": 500000,
+  "sizing": { "total_allocated", "residual_cash", "per_bucket", "per_band" },
+  "provenance": { "ruleset_id", "ruleset_hash", "engine_version", "overall_status" },
+  "risk_flags": { "high_gap_risk": ["VERA"], "missing_price": ["RNA"] }
+}
+```
+
+**CLI:**
+```bash
+python3 tools/build_decision_memo.py --as-of-date 2026-03-08 --account-usd 500000
+python3 tools/build_decision_memo.py --as-of-date 2026-03-08 --bucket-targets binary_91_180=0.55
+```
+
+**Tests:** 16 in `test_decision_memo.py`.
+
+---
+
+## Live Shadow Portfolio
+
+**File:** `tools/live_shadow_portfolio.py`
+
+Policy-driven position ledger that closes the loop between "list" → "portfolio" → "realized P&L". Reads a promoted snapshot and portfolio policy, selects top-K names per bucket, applies caps, computes performance vs prior, and writes audit-ready artifacts.
+
+### Portfolio Policy
+
+**File:** `production_data/portfolio_policy.json` (schema `portfolio_policy.v1`)
+
+```json
+{
+  "rebalance_cadence": "weekly",
+  "rebalance_day": "FRIDAY",
+  "account_usd": 500000,
+  "bucket_targets": { "binary_91_180": 0.55, "binary_31_90": 0.25, "binary_0_30": 0.10, "less_binary": 0.10 },
+  "bucket_top_k": { "binary_91_180": 20, "binary_31_90": 15, "binary_0_30": 10, "less_binary": 15 },
+  "bucket_name_caps": { "binary_91_180": 3.0, "binary_31_90": 2.0, "binary_0_30": 1.0, "less_binary": 2.0 },
+  "gap_risk": { "high_days": 7, "high_cap_pct": 0.5 }
+}
+```
+
+### Position Construction
+
+1. Load eligible rankings from snapshot, sorted by `actionable_rank`
+2. Classify into 4 buckets using `classify_action_bucket()`
+3. Select top-K per bucket (from policy)
+4. Equal weight within bucket, capped at per-bucket name cap
+5. Gap-risk HIGH names (catalyst ≤ 7d in binary_0_30) further capped to `gap_risk.high_cap_pct`
+6. Overage trim if total > account (same largest-first algorithm as action lists)
+
+### Output Artifacts
+
+| File | Description |
+|------|-------------|
+| `artifacts/live_shadow/positions/YYYY-MM-DD.json` | PIT positions (schema `live_shadow_positions.v1`) |
+| `artifacts/live_shadow/performance.csv` | Append-only performance log (schema `live_shadow_perf.v1`) |
+| `artifacts/live_shadow/weekly_summary.md` | Human-readable IC summary |
+
+### Performance Metrics
+
+Computed between consecutive position snapshots using `price_history.csv`:
+
+| Metric | Description |
+|--------|-------------|
+| `total_pnl` | Dollar P&L of prior portfolio at current prices |
+| `pnl_pct` | Weighted portfolio return (%) |
+| `xbi_return_pct` | XBI return over same period |
+| `excess_vs_xbi_pct` | Portfolio return minus XBI return |
+| `sleeve_attribution` | Per-bucket P&L, return, and weight |
+| `turnover` | Fraction of prior tickers not in current portfolio |
+| `gap_risk_high_count` | Number of HIGH gap-risk names in current portfolio |
+
+### Weekly Summary
+
+The `weekly_summary.md` shows:
+- **Policy vs Actual**: target allocation vs realized per bucket
+- **Risk Flags**: gap-risk HIGH names, missing price names
+- **Performance vs Prior**: P&L, excess vs XBI, sleeve attribution table
+- **Top 10 Holdings**: by dollar value with bucket, weight, gap-risk flag
+
+**CLI:**
+```bash
+python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08
+python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --account-usd 500000
+python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --policy production_data/portfolio_policy.json
+```
+
+**Tests:** 23 in `test_live_shadow_portfolio.py`.
+
+---
+
 ## Configuration
 
 ### Command-Line Arguments
@@ -1544,6 +1736,10 @@ python run_screen.py \
 | Institutional Summary | `institutional_summary.py` | Per-ticker elite holder summary from 13F |
 | Defensive Overlay | `defensive_overlay_adapter.py` | Red flag detection + score suppression |
 | Financial Data Collector | `collect_financial_data.py` | SEC EDGAR XBRL financial metrics |
+| Action List Builder | `tools/build_action_lists.py` | Per-bucket CSVs with sizing + risk rails |
+| Decision Memo | `tools/build_decision_memo.py` | IC-style 1-page memo + JSON sidecar |
+| Live Shadow Portfolio | `tools/live_shadow_portfolio.py` | Policy-driven position ledger + performance |
+| Portfolio Policy | `production_data/portfolio_policy.json` | Weekly cadence, bucket targets, caps |
 | CSV export | `export_results_csv.py` | JSON to CSV conversion |
 | Production validation | `production_validation.py` | Output validation |
 | Date backfill | `backfill_ctgov_dates.py` | PIT date enhancement |
@@ -1552,6 +1748,7 @@ python run_screen.py \
 
 ## Changelog
 
+- **2026-03-08 v2.7.0**: Action list builder with account-aware sizing (`--account-usd`), band-based per-name caps (XS=2%, S=3%, M=5%, L=5%), overage-safe 3-pass trim algorithm. Risk rails: gap-risk HIGH (catalyst ≤7d) + MODERATE (8-30d), price coverage OK/MISSING. Bucket target tilts (`--bucket-targets`) for allocation rebalancing. Decision memo builder (`tools/build_decision_memo.py`) — 1-page IC output with provenance, allocation summary, risk rails, top-10 per bucket, rank delta vs prior, actionable bullets; JSON sidecar (`decision_memo.v1`). Binary sleeve risk cap in L3 sizing: configurable per-name + aggregate caps on binary-event names with excess redistribution. 4-tier semantic audit exit codes: 0=OK→PASS, 1=critical→FAIL, 2=warn→WARN, 3=stale_mismatch→WARN(hardcoded). Bucket-specific evaluation horizons as default. Live shadow portfolio tracker (`tools/live_shadow_portfolio.py`) — policy-driven position ledger with top-K per bucket, per-bucket name caps, gap-risk caps, P&L vs XBI + sleeve attribution, append-only performance.csv, weekly summary markdown. Portfolio policy file (`production_data/portfolio_policy.json`) — weekly cadence, 55/25/10/10 bucket split, 60 names total. Live run on 2026-03-08: 60 positions, $497,500 allocated, policy-aligned. Tests: 23 shadow portfolio + 16 memo + 20 sizing + 11 rails + 18 binary sleeve + 16 audit exit codes.
 - **2026-03-01 v2.6.0**: First-class rollback in `promote_ruleset.py` — `--rollback --reason` without `--force`, auto-discover LKG via `_find_last_known_good()`, receipt `action` field (`"promote"`/`"rollback"`), changelog skipped for rollbacks. New `tools/ruleset_health_monitor.py` — post-promotion health check comparing daily drift against promotion baseline, JSONL history tracking, consecutive WARN detection with rollback recommendation. `ruleset_health` gate added to daily production (WARN-only, 23 gates total). Eligibility false-positive fix: Gate 0 `financials_missing` now checks `cash_total > 0` — companies with cash via MarketableSecurities (not cash_and_equivalents) no longer misclassified (GILD, ARWR, ILMN, NTRA recovered). Active ruleset updated to v1.6.1 (ID=`0c1129f6`, alpha modifier within_tier w=0.05). Universe: 354 tickers, 297 ranked, 194 eligible, 103 ineligible. ~9370 tests across 281 files.
 - **2026-02-25 v2.5.0**: Acquired ticker cleanup — AKRO (Eli Lilly, Dec 2025), MRUS (Dec 2025), CDTX (Jan 2026), ATXS (Jan 2026), GBIO (Feb 2026) marked `excluded_acquired` in universe.json. Fixed Module 1 `_classify_status()` to recognize `"excluded_acquired"` status. Defensive overlay false-positive fixes: self-sustaining exemption for `single_asset_early_stage` (burn_ttm<=0 + cash>=$500M, e.g. ILMN), debt-driven exemption for `survivability_critical` (cash/burn>=5yr, e.g. FTRE). AKRO CIK and SEC EDGAR financial data added. WSL2 `safe_mkdir` permissions fix. Added daily production workflow and data integrity audit documentation. Updated active ruleset to v1.5.1 (ID=`88d7ae9a`, coinvest OFF). Universe: 354 tickers, 297 ranked, 194 eligible, 9 red flags. ~7900+ tests across 233 files.
 - **2026-02-22 v2.4.2**: Added PIT-safe coinvest features builder (`scripts/build_coinvest_features_from_13f.py`). Standalone script reads ONLY from quarterly PIT 13F caches to produce deterministic per-ticker coinvest features (conviction formula, position changes, tier counts). Eliminates lookahead bias from smart-money factor during historical simulation. Output schema `coinvest_features.v1` with provenance tracking. Live run: 29/29 managers, 277/353 tickers (78.5% coverage). 39 tests.
