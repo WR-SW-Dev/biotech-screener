@@ -1326,6 +1326,7 @@ SNAPSHOT_COLUMNS = [
     "catalyst_days",
     "catalyst_in_window",
     "catalyst_mode",
+    "catalyst_bucket",
     "cat_priority",
     "mom_state",
     "risk_flags",

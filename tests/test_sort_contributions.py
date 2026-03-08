@@ -211,7 +211,7 @@ class TestOutputEquivalence:
         from tests.test_decision_engine_contract import _compute_golden_output_fingerprint
 
         actual = _compute_golden_output_fingerprint()
-        assert actual == "da7e8b5fc87f"  # pragma: allowlist secret
+        assert actual == "5e9d98013c1d"  # pragma: allowlist secret
 
 
 # =============================================================================

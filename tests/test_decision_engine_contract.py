@@ -12,12 +12,13 @@ Test categories:
     5. OVERRIDE EFFECTS — changing a ruleset param actually changes output
     6. FULL PIPELINE — cohort-level sort + weight invariants
 """
+
 from __future__ import annotations
 
 import hashlib
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pytest
 
@@ -25,10 +26,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from decision_engine import (
-    ACTIONABLE_COLUMNS,
     DECISION_COLUMNS,
-    DEFAULT_RULESET,
-    RULESET_ID,
     VERSION,
     DecisionRuleset,
     compute_actionable_sort_key,
@@ -36,10 +34,10 @@ from decision_engine import (
     compute_target_weights,
 )
 
-
 # =============================================================================
 # FIXTURE BUILDER
 # =============================================================================
+
 
 def _rec(
     ticker: str = "TEST",
@@ -105,9 +103,7 @@ def _rec(
 
     # Momentum (via score_breakdown)
     if alpha_60d is not None:
-        rec["score_breakdown"] = {
-            "enhancements": {"momentum": {"alpha_60d": alpha_60d}}
-        }
+        rec["score_breakdown"] = {"enhancements": {"momentum": {"alpha_60d": alpha_60d}}}
     else:
         rec["score_breakdown"] = {}
     rec["momentum_signal"] = {}
@@ -122,8 +118,7 @@ def _rec(
 # Fixture 1: Tier A — high opt + specific catalyst near
 GOLDEN_1 = {
     "ticker": "GLD_TIERA",
-    "rec": _rec("GLD_TIERA", catalyst_days=45, catalyst_in_window=True,
-                alpha_60d=0.08, tier1_count=3),
+    "rec": _rec("GLD_TIERA", catalyst_days=45, catalyst_in_window=True, alpha_60d=0.08, tier1_count=3),
     "archetype": "drug_developer",
     "optionality": 0.75,
     "expected": {
@@ -140,8 +135,7 @@ GOLDEN_1 = {
 # Fixture 2: Tier A — high opt + catalyst mid (90 < 120 ≤ 180)
 GOLDEN_2 = {
     "ticker": "GLD_TIERB_FAR",
-    "rec": _rec("GLD_TIERB_FAR", catalyst_days=120, catalyst_in_window=False,
-                alpha_60d=0.02, tier1_count=1),
+    "rec": _rec("GLD_TIERB_FAR", catalyst_days=120, catalyst_in_window=False, alpha_60d=0.02, tier1_count=1),
     "archetype": "drug_developer",
     "optionality": 0.70,
     "expected": {
@@ -158,8 +152,7 @@ GOLDEN_2 = {
 # Fixture 3: Tier B — blended window + high opt
 GOLDEN_3 = {
     "ticker": "GLD_BLEND",
-    "rec": _rec("GLD_BLEND", catalyst_days=0, catalyst_in_window=True,
-                alpha_60d=0.02, tier1_count=2),
+    "rec": _rec("GLD_BLEND", catalyst_days=0, catalyst_in_window=True, alpha_60d=0.02, tier1_count=2),
     "archetype": "drug_developer",
     "optionality": 0.65,
     "expected": {
@@ -191,8 +184,7 @@ GOLDEN_4 = {
 # Fixture 5: Tier C — low optionality
 GOLDEN_5 = {
     "ticker": "GLD_LOWOPT",
-    "rec": _rec("GLD_LOWOPT", catalyst_days=30, catalyst_in_window=True,
-                alpha_60d=0.02, tier1_count=0),
+    "rec": _rec("GLD_LOWOPT", catalyst_days=30, catalyst_in_window=True, alpha_60d=0.02, tier1_count=0),
     "archetype": "drug_developer",
     "optionality": 0.20,
     "expected": {
@@ -206,9 +198,14 @@ GOLDEN_5 = {
 # Fixture 6: Tier D — ineligible (SEV3)
 GOLDEN_6 = {
     "ticker": "GLD_INEL",
-    "rec": _rec("GLD_INEL", severity="SEV3", fundamental_red_flag=True,
-                fundamental_red_flag_reasons=["cash_runway_lt_6m"],
-                catalyst_days=30, catalyst_in_window=True),
+    "rec": _rec(
+        "GLD_INEL",
+        severity="SEV3",
+        fundamental_red_flag=True,
+        fundamental_red_flag_reasons=["cash_runway_lt_6m"],
+        catalyst_days=30,
+        catalyst_in_window=True,
+    ),
     "archetype": "drug_developer",
     "optionality": 0.80,
     "expected": {
@@ -223,8 +220,7 @@ GOLDEN_6 = {
 # Fixture 7: Tier D — ineligible (deep drawdown)
 GOLDEN_7 = {
     "ticker": "GLD_DD",
-    "rec": _rec("GLD_DD", drawdown=-0.45, catalyst_days=30,
-                catalyst_in_window=True),
+    "rec": _rec("GLD_DD", drawdown=-0.45, catalyst_days=30, catalyst_in_window=True),
     "archetype": "drug_developer",
     "optionality": 0.80,
     "expected": {
@@ -237,8 +233,7 @@ GOLDEN_7 = {
 # Fixture 8: Commercial archetype — blank tier
 GOLDEN_8 = {
     "ticker": "GLD_COMM",
-    "rec": _rec("GLD_COMM", catalyst_days=30, catalyst_in_window=True,
-                alpha_60d=0.06),
+    "rec": _rec("GLD_COMM", catalyst_days=30, catalyst_in_window=True, alpha_60d=0.06),
     "archetype": "commercial_biotech",
     "optionality": 0.80,
     "expected": {
@@ -252,9 +247,17 @@ GOLDEN_8 = {
 # Fixture 9: High risk flags — vol + beta + drawdown flag + overbought + headwind
 GOLDEN_9 = {
     "ticker": "GLD_RISK",
-    "rec": _rec("GLD_RISK", vol_60d=1.50, beta_xbi_60d=2.0,
-                drawdown=-0.38, rsi_14d=75.0, alpha_60d=-0.10,
-                catalyst_days=30, catalyst_in_window=True, tier1_count=0),
+    "rec": _rec(
+        "GLD_RISK",
+        vol_60d=1.50,
+        beta_xbi_60d=2.0,
+        drawdown=-0.38,
+        rsi_14d=75.0,
+        alpha_60d=-0.10,
+        catalyst_days=30,
+        catalyst_in_window=True,
+        tier1_count=0,
+    ),
     "archetype": "drug_developer",
     "optionality": 0.40,
     "expected": {
@@ -277,20 +280,22 @@ GOLDEN_10 = {
     },
 }
 
-ALL_GOLDEN = [GOLDEN_1, GOLDEN_2, GOLDEN_3, GOLDEN_4, GOLDEN_5,
-              GOLDEN_6, GOLDEN_7, GOLDEN_8, GOLDEN_9, GOLDEN_10]
+ALL_GOLDEN = [GOLDEN_1, GOLDEN_2, GOLDEN_3, GOLDEN_4, GOLDEN_5, GOLDEN_6, GOLDEN_7, GOLDEN_8, GOLDEN_9, GOLDEN_10]
 
 
 def _compute_golden(g: dict) -> Dict[str, Any]:
     """Run compute_decision_fields for a golden fixture."""
     return compute_decision_fields(
-        g["rec"], archetype=g["archetype"], optionality_pct_dev=g["optionality"],
+        g["rec"],
+        archetype=g["archetype"],
+        optionality_pct_dev=g["optionality"],
     )
 
 
 # =============================================================================
 # 1. SCHEMA CONTRACT
 # =============================================================================
+
 
 class TestSchemaContract:
     """Every output must contain all DECISION_COLUMNS with correct types."""
@@ -303,9 +308,7 @@ class TestSchemaContract:
     def test_all_decision_columns_present(self, golden_output):
         g, fields = golden_output
         for col in DECISION_COLUMNS:
-            assert col in fields, (
-                f"[{g['ticker']}] Missing column: {col}"
-            )
+            assert col in fields, f"[{g['ticker']}] Missing column: {col}"
 
     def test_version_string(self, golden_output):
         _, fields = golden_output
@@ -314,83 +317,92 @@ class TestSchemaContract:
     def test_ruleset_id_format(self, golden_output):
         _, fields = golden_output
         rid = fields["decision_engine_ruleset_id"]
-        assert isinstance(rid, str) and len(rid) == 8, (
-            f"ruleset_id must be 8-char hex, got: {rid!r}"
-        )
+        assert isinstance(rid, str) and len(rid) == 8, f"ruleset_id must be 8-char hex, got: {rid!r}"
 
     def test_eligible_is_binary_string(self, golden_output):
         _, fields = golden_output
-        assert fields["eligible"] in ("0", "1"), (
-            f"eligible must be '0' or '1', got: {fields['eligible']!r}"
-        )
+        assert fields["eligible"] in ("0", "1"), f"eligible must be '0' or '1', got: {fields['eligible']!r}"
 
     def test_tier_dev_valid(self, golden_output):
         _, fields = golden_output
-        assert fields["tier_dev"] in ("A", "B", "C", "D", ""), (
-            f"tier_dev must be A/B/C/D/'', got: {fields['tier_dev']!r}"
-        )
+        assert fields["tier_dev"] in (
+            "A",
+            "B",
+            "C",
+            "D",
+            "",
+        ), f"tier_dev must be A/B/C/D/'', got: {fields['tier_dev']!r}"
 
     def test_size_band_valid(self, golden_output):
         _, fields = golden_output
-        assert fields["size_band"] in ("L", "M", "S", "XS"), (
-            f"size_band must be L/M/S/XS, got: {fields['size_band']!r}"
-        )
+        assert fields["size_band"] in ("L", "M", "S", "XS"), f"size_band must be L/M/S/XS, got: {fields['size_band']!r}"
 
     def test_catalyst_mode_valid(self, golden_output):
         _, fields = golden_output
         assert fields["catalyst_mode"] in (
-            "specific_days", "blended_window", "far_window", "no_upcoming", "missing"
+            "specific_days",
+            "blended_window",
+            "far_window",
+            "no_upcoming",
+            "missing",
         ), f"catalyst_mode invalid: {fields['catalyst_mode']!r}"
 
     def test_catalyst_strength_valid(self, golden_output):
         _, fields = golden_output
         assert fields["catalyst_strength"] in (
-            "near", "mid", "far", "missing"
+            "near",
+            "mid",
+            "far",
+            "missing",
         ), f"catalyst_strength invalid: {fields['catalyst_strength']!r}"
 
     def test_mom_state_valid(self, golden_output):
         _, fields = golden_output
-        assert fields["mom_state"] in ("tailwind", "neutral", "headwind"), (
-            f"mom_state must be tailwind/neutral/headwind, got: {fields['mom_state']!r}"
-        )
+        assert fields["mom_state"] in (
+            "tailwind",
+            "neutral",
+            "headwind",
+        ), f"mom_state must be tailwind/neutral/headwind, got: {fields['mom_state']!r}"
 
     def test_runway_bucket_valid(self, golden_output):
         _, fields = golden_output
-        assert fields["runway_bucket"] in ("critical", "short", "adequate", ""), (
-            f"runway_bucket invalid: {fields['runway_bucket']!r}"
-        )
+        assert fields["runway_bucket"] in (
+            "critical",
+            "short",
+            "adequate",
+            "",
+        ), f"runway_bucket invalid: {fields['runway_bucket']!r}"
 
     def test_catalyst_days_type(self, golden_output):
         _, fields = golden_output
         cd = fields["catalyst_days"]
-        assert isinstance(cd, (int, str)), (
-            f"catalyst_days must be int or '' (str), got {type(cd).__name__}: {cd!r}"
-        )
+        assert isinstance(cd, (int, str)), f"catalyst_days must be int or '' (str), got {type(cd).__name__}: {cd!r}"
         if isinstance(cd, str):
             assert cd == "", f"catalyst_days str must be '', got: {cd!r}"
 
     def test_catalyst_in_window_type(self, golden_output):
         _, fields = golden_output
         ciw = fields["catalyst_in_window"]
-        assert ciw in ("0", "1", ""), (
-            f"catalyst_in_window must be '0'/'1'/'', got: {ciw!r}"
-        )
+        assert ciw in ("0", "1", ""), f"catalyst_in_window must be '0'/'1'/'', got: {ciw!r}"
 
     def test_sponsor_tier1_count_type(self, golden_output):
         _, fields = golden_output
         val = fields["sponsor_tier1_count"]
-        assert isinstance(val, (int, str)), (
-            f"sponsor_tier1_count must be int or '' (str), got {type(val).__name__}"
-        )
+        assert isinstance(val, (int, str)), f"sponsor_tier1_count must be int or '' (str), got {type(val).__name__}"
 
     def test_risk_flags_format(self, golden_output):
         _, fields = golden_output
         rf = fields["risk_flags"]
         assert isinstance(rf, str), f"risk_flags must be str, got {type(rf).__name__}"
         if rf:
-            valid = {"high_vol", "high_beta", "deep_drawdown",
-                     "overbought_rsi", "low_confidence",
-                     "drawdown_data_missing"}
+            valid = {
+                "high_vol",
+                "high_beta",
+                "deep_drawdown",
+                "overbought_rsi",
+                "low_confidence",
+                "drawdown_data_missing",
+            }
             for flag in rf.split("|"):
                 assert flag in valid, f"Unknown risk flag: {flag!r}"
 
@@ -398,6 +410,7 @@ class TestSchemaContract:
 # =============================================================================
 # 2. INVARIANTS — cohort-level checks on the full fixture set
 # =============================================================================
+
 
 class TestInvariants:
     """Hard asserts on aggregate properties of the decision engine."""
@@ -418,41 +431,35 @@ class TestInvariants:
     def test_size_band_dispersion(self, cohort):
         """Size bands must not all be identical."""
         bands = {f["size_band"] for f in cohort}
-        assert len(bands) >= 2, (
-            f"Only {len(bands)} distinct band(s): {bands}. Sizing logic may be broken."
-        )
+        assert len(bands) >= 2, f"Only {len(bands)} distinct band(s): {bands}. Sizing logic may be broken."
 
     def test_eligible_dispersion(self, cohort):
         """Both eligible and ineligible tickers must appear."""
         eligibles = {f["eligible"] for f in cohort}
-        assert eligibles == {"0", "1"}, (
-            f"Expected both eligible and ineligible, got: {eligibles}"
-        )
+        assert eligibles == {"0", "1"}, f"Expected both eligible and ineligible, got: {eligibles}"
 
     def test_catalyst_mode_dispersion(self, cohort):
         """At least 3 distinct catalyst modes should appear."""
         modes = {f["catalyst_mode"] for f in cohort}
-        assert len(modes) >= 3, (
-            f"Only {len(modes)} catalyst mode(s): {modes}"
-        )
+        assert len(modes) >= 3, f"Only {len(modes)} catalyst mode(s): {modes}"
 
     def test_ineligible_implies_tier_d_for_dev(self, cohort):
         """Every ineligible drug_developer gets tier D."""
         for i, g in enumerate(ALL_GOLDEN):
             fields = cohort[i]
             if fields["eligible"] == "0" and g["archetype"] == "drug_developer":
-                assert fields["tier_dev"] == "D", (
-                    f"[{g['ticker']}] Ineligible dev should be D, got {fields['tier_dev']}"
-                )
+                assert (
+                    fields["tier_dev"] == "D"
+                ), f"[{g['ticker']}] Ineligible dev should be D, got {fields['tier_dev']}"
 
     def test_ineligible_implies_xs_band(self, cohort):
         """Every ineligible ticker gets XS size band."""
         for i, g in enumerate(ALL_GOLDEN):
             fields = cohort[i]
             if fields["eligible"] == "0":
-                assert fields["size_band"] == "XS", (
-                    f"[{g['ticker']}] Ineligible should be XS, got {fields['size_band']}"
-                )
+                assert (
+                    fields["size_band"] == "XS"
+                ), f"[{g['ticker']}] Ineligible should be XS, got {fields['size_band']}"
 
     def test_version_consistent(self, cohort):
         """All outputs carry the same version."""
@@ -469,6 +476,7 @@ class TestInvariants:
 # 3. GOLDEN FIXTURE EXACT-MATCH TESTS
 # =============================================================================
 
+
 class TestGoldenFixtures:
     """Each golden fixture must produce the exact expected key-value pairs."""
 
@@ -481,14 +489,13 @@ class TestGoldenFixtures:
         g, fields = golden_pair
         for key, expected_val in g["expected"].items():
             actual = fields.get(key)
-            assert actual == expected_val, (
-                f"[{g['ticker']}] {key}: expected {expected_val!r}, got {actual!r}"
-            )
+            assert actual == expected_val, f"[{g['ticker']}] {key}: expected {expected_val!r}, got {actual!r}"
 
 
 # =============================================================================
 # 4. CONFIDENCE MONOTONICITY
 # =============================================================================
+
 
 class TestConfidenceMonotonicity:
     """Lower confidence never boosts score / removes risk flags.
@@ -499,11 +506,18 @@ class TestConfidenceMonotonicity:
     """
 
     def _fields_at_confidence(self, conf: float) -> Dict[str, Any]:
-        rec = _rec("CONF_TEST", confidence_overall=conf,
-                   catalyst_days=45, catalyst_in_window=True,
-                   alpha_60d=0.02, tier1_count=1)
+        rec = _rec(
+            "CONF_TEST",
+            confidence_overall=conf,
+            catalyst_days=45,
+            catalyst_in_window=True,
+            alpha_60d=0.02,
+            tier1_count=1,
+        )
         return compute_decision_fields(
-            rec, archetype="drug_developer", optionality_pct_dev=0.65,
+            rec,
+            archetype="drug_developer",
+            optionality_pct_dev=0.65,
         )
 
     def test_low_confidence_adds_flag(self):
@@ -517,9 +531,9 @@ class TestConfidenceMonotonicity:
         """Tier is NOT a hard gate on confidence — same tier at any confidence."""
         high = self._fields_at_confidence(0.80)
         low = self._fields_at_confidence(0.10)
-        assert high["tier_dev"] == low["tier_dev"], (
-            f"Tier changed with confidence: {high['tier_dev']} → {low['tier_dev']}"
-        )
+        assert (
+            high["tier_dev"] == low["tier_dev"]
+        ), f"Tier changed with confidence: {high['tier_dev']} → {low['tier_dev']}"
 
     def test_eligibility_unchanged_by_confidence(self):
         """Confidence alone does not gate eligibility."""
@@ -532,21 +546,23 @@ class TestConfidenceMonotonicity:
         band_order = {"XS": 0, "S": 1, "M": 2, "L": 3}
         high = self._fields_at_confidence(0.80)
         low = self._fields_at_confidence(0.10)
-        assert band_order[low["size_band"]] <= band_order[high["size_band"]], (
-            f"Lower confidence increased band: {high['size_band']} → {low['size_band']}"
-        )
+        assert (
+            band_order[low["size_band"]] <= band_order[high["size_band"]]
+        ), f"Lower confidence increased band: {high['size_band']} → {low['size_band']}"
 
 
 # =============================================================================
 # 5. OVERRIDE / RULESET EFFECT TESTS
 # =============================================================================
 
+
 class TestOverrideEffects:
     """Changing a ruleset parameter must actually change output."""
 
     def _base_rec(self) -> Dict[str, Any]:
-        return _rec("OVERRIDE_TEST", catalyst_days=45, catalyst_in_window=True,
-                    alpha_60d=0.02, tier1_count=1, drawdown=-0.15)
+        return _rec(
+            "OVERRIDE_TEST", catalyst_days=45, catalyst_in_window=True, alpha_60d=0.02, tier1_count=1, drawdown=-0.15
+        )
 
     def test_a_floor_changes_tier(self):
         """Raising a_floor from 0.55 to 0.90 should downgrade tier for 0.65 optionality."""
@@ -558,9 +574,7 @@ class TestOverrideEffects:
         f_high = compute_decision_fields(rec, "drug_developer", 0.65, ruleset=rs_high)
 
         assert f_low["tier_dev"] == "A", f"Expected A with floor=0.55, got {f_low['tier_dev']}"
-        assert f_high["tier_dev"] != "A", (
-            f"Expected non-A with floor=0.90, got {f_high['tier_dev']}"
-        )
+        assert f_high["tier_dev"] != "A", f"Expected non-A with floor=0.90, got {f_high['tier_dev']}"
 
     def test_drawdown_gate_changes_eligibility(self):
         """Tightening drawdown gate from -0.40 to -0.10 should make -0.15 drawdown ineligible."""
@@ -572,14 +586,11 @@ class TestOverrideEffects:
         f_tight = compute_decision_fields(rec, "drug_developer", 0.65, ruleset=rs_tight)
 
         assert f_loose["eligible"] == "1"
-        assert f_tight["eligible"] == "0", (
-            "Tighter drawdown gate should make -0.15 ineligible"
-        )
+        assert f_tight["eligible"] == "0", "Tighter drawdown gate should make -0.15 ineligible"
 
     def test_soft_drawdown_preserves_eligibility(self):
         """Soft drawdown mode: breach stays eligible but band is penalized."""
-        rec = _rec("DD_SOFT", drawdown=-0.50,
-                   catalyst_days=45, catalyst_in_window=True)
+        rec = _rec("DD_SOFT", drawdown=-0.50, catalyst_days=45, catalyst_in_window=True)
 
         rs_hard = DecisionRuleset(drawdown_gate_mode="hard")
         rs_soft = DecisionRuleset(drawdown_gate_mode="soft")
@@ -597,8 +608,9 @@ class TestOverrideEffects:
         When catalyst_mid_days=30, days=45 > 30 → strength=far → NOT actionable → B.
         Must use in_optimal_window=False so only the days path counts.
         """
-        rec = _rec("CAT_DAYS_TEST", catalyst_days=45, catalyst_in_window=False,
-                   alpha_60d=0.02, tier1_count=1, drawdown=-0.15)
+        rec = _rec(
+            "CAT_DAYS_TEST", catalyst_days=45, catalyst_in_window=False, alpha_60d=0.02, tier1_count=1, drawdown=-0.15
+        )
         rs_mid180 = DecisionRuleset(catalyst_near_days=90, catalyst_mid_days=180)
         rs_mid30 = DecisionRuleset(catalyst_near_days=30, catalyst_mid_days=30)
 
@@ -606,14 +618,11 @@ class TestOverrideEffects:
         f_mid30 = compute_decision_fields(rec, "drug_developer", 0.75, ruleset=rs_mid30)
 
         assert f_mid180["tier_dev"] == "A", "days=45 within mid=180 should be tier A"
-        assert f_mid30["tier_dev"] == "B", (
-            f"days=45 outside mid=30 should be tier B (far), got {f_mid30['tier_dev']}"
-        )
+        assert f_mid30["tier_dev"] == "B", f"days=45 outside mid=30 should be tier B (far), got {f_mid30['tier_dev']}"
 
     def test_sponsor_threshold_changes_sizing(self):
         """Raising sponsor_confirm_threshold above tier1_count should change sizing."""
-        rec = _rec("SPON_TEST", catalyst_days=45, catalyst_in_window=True,
-                   tier1_count=2, alpha_60d=0.02)
+        rec = _rec("SPON_TEST", catalyst_days=45, catalyst_in_window=True, tier1_count=2, alpha_60d=0.02)
 
         rs_low = DecisionRuleset(sponsor_confirm_threshold=2)
         rs_high = DecisionRuleset(sponsor_confirm_threshold=10)
@@ -635,6 +644,7 @@ class TestOverrideEffects:
 # 6. FULL PIPELINE — sort + weight invariants on a diverse cohort
 # =============================================================================
 
+
 class TestFullPipeline:
     """Run all 10 golden fixtures through sort + weight assignment."""
 
@@ -651,13 +661,15 @@ class TestFullPipeline:
             rows.append(fields)
 
         # Sort by actionable key
-        rows.sort(key=lambda r: compute_actionable_sort_key(
-            decision_fields=r,
-            archetype=r["archetype"],
-            optionality=r["optionality"],
-            composite_rank=r["composite_rank"],
-            ticker=r["ticker"],
-        ))
+        rows.sort(
+            key=lambda r: compute_actionable_sort_key(
+                decision_fields=r,
+                archetype=r["archetype"],
+                optionality=r["optionality"],
+                composite_rank=r["composite_rank"],
+                ticker=r["ticker"],
+            )
+        )
 
         # Assign actionable ranks
         rank = 0
@@ -682,34 +694,26 @@ class TestFullPipeline:
             if r["eligible"] == "0":
                 saw_ineligible = True
             elif saw_ineligible:
-                pytest.fail(
-                    f"Eligible ticker {r['ticker']} found after ineligible ticker"
-                )
+                pytest.fail(f"Eligible ticker {r['ticker']} found after ineligible ticker")
 
     def test_actionable_ranks_unique(self, pipeline_result):
         """Actionable ranks are unique among eligible tickers."""
         _, eligible = pipeline_result
         ranks = [r["actionable_rank"] for r in eligible]
-        assert len(ranks) == len(set(ranks)), (
-            f"Duplicate actionable ranks: {ranks}"
-        )
+        assert len(ranks) == len(set(ranks)), f"Duplicate actionable ranks: {ranks}"
 
     def test_actionable_ranks_sequential(self, pipeline_result):
         """Actionable ranks are 1-indexed and sequential."""
         _, eligible = pipeline_result
         ranks = [r["actionable_rank"] for r in eligible]
         expected = list(range(1, len(eligible) + 1))
-        assert ranks == expected, (
-            f"Ranks not sequential: {ranks} (expected {expected})"
-        )
+        assert ranks == expected, f"Ranks not sequential: {ranks} (expected {expected})"
 
     def test_weights_sum_to_100(self, pipeline_result):
         """Eligible weights sum to ~100%."""
         _, eligible = pipeline_result
         total = sum(r.get("target_weight_pct", 0) for r in eligible)
-        assert abs(total - 100.0) < 0.1, (
-            f"Weights sum to {total:.2f}%, expected ~100%"
-        )
+        assert abs(total - 100.0) < 0.1, f"Weights sum to {total:.2f}%, expected ~100%"
 
     def test_weight_proportionality(self, pipeline_result):
         """Larger size bands always get >= weight than smaller bands."""
@@ -726,9 +730,9 @@ class TestFullPipeline:
             larger = bands_present[i + 1]
             max_smaller = max(by_band[smaller])
             min_larger = min(by_band[larger])
-            assert max_smaller <= min_larger + 0.01, (
-                f"{smaller} weight ({max_smaller:.2f}) > {larger} weight ({min_larger:.2f})"
-            )
+            assert (
+                max_smaller <= min_larger + 0.01
+            ), f"{smaller} weight ({max_smaller:.2f}) > {larger} weight ({min_larger:.2f})"
 
     def test_dev_sorts_before_commercial(self, pipeline_result):
         """Eligible drug_developer tickers sort before eligible commercial tickers."""
@@ -739,37 +743,34 @@ class TestFullPipeline:
             if r["archetype"] != "drug_developer":
                 saw_commercial = True
             elif saw_commercial:
-                pytest.fail(
-                    f"Dev ticker {r['ticker']} sorted after commercial ticker"
-                )
+                pytest.fail(f"Dev ticker {r['ticker']} sorted after commercial ticker")
 
     def test_tier_a_before_tier_b_in_dev(self, pipeline_result):
         """Within eligible dev tickers, A-tier sorts before B-tier."""
         rows, _ = pipeline_result
-        dev_eligible = [r for r in rows
-                        if r["eligible"] == "1" and r["archetype"] == "drug_developer"]
+        dev_eligible = [r for r in rows if r["eligible"] == "1" and r["archetype"] == "drug_developer"]
         saw_b = False
         for r in dev_eligible:
             if r["tier_dev"] == "B":
                 saw_b = True
             elif r["tier_dev"] == "A" and saw_b:
-                pytest.fail(
-                    f"A-tier {r['ticker']} sorted after B-tier ticker"
-                )
+                pytest.fail(f"A-tier {r['ticker']} sorted after B-tier ticker")
 
     def test_ineligible_have_no_weight(self, pipeline_result):
         """Ineligible tickers should not have target_weight_pct."""
         rows, _ = pipeline_result
         for r in rows:
             if r["eligible"] == "0":
-                assert "target_weight_pct" not in r or r.get("target_weight_pct") in ("", None), (
-                    f"Ineligible {r['ticker']} has weight: {r.get('target_weight_pct')}"
-                )
+                assert "target_weight_pct" not in r or r.get("target_weight_pct") in (
+                    "",
+                    None,
+                ), f"Ineligible {r['ticker']} has weight: {r.get('target_weight_pct')}"
 
 
 # =============================================================================
 # 7. DETERMINISM — same inputs always produce same outputs
 # =============================================================================
+
 
 class TestDeterminism:
     """Decision engine is a pure function: same inputs → same outputs."""
@@ -789,7 +790,11 @@ class TestDeterminism:
             fields = _compute_golden(g)
             idx = ALL_GOLDEN.index(g)
             key = compute_actionable_sort_key(
-                fields, g["archetype"], g["optionality"], idx + 1, g["ticker"],
+                fields,
+                g["archetype"],
+                g["optionality"],
+                idx + 1,
+                g["ticker"],
             )
             keys1.append((g["ticker"], key))
 
@@ -797,7 +802,11 @@ class TestDeterminism:
             fields = _compute_golden(g)
             idx = ALL_GOLDEN.index(g)
             key = compute_actionable_sort_key(
-                fields, g["archetype"], g["optionality"], idx + 1, g["ticker"],
+                fields,
+                g["archetype"],
+                g["optionality"],
+                idx + 1,
+                g["ticker"],
             )
             keys2.append((g["ticker"], key))
 
@@ -807,12 +816,14 @@ class TestDeterminism:
 
     def test_weight_normalization_stable(self):
         """compute_target_weights produces same output on repeated calls."""
+
         def _make_rows():
             return [
                 {"size_band": "L", "ticker": "A"},
                 {"size_band": "M", "ticker": "B"},
                 {"size_band": "S", "ticker": "C"},
             ]
+
         r1 = compute_target_weights(_make_rows())
         r2 = compute_target_weights(_make_rows())
         for a, b in zip(r1, r2):
@@ -822,6 +833,7 @@ class TestDeterminism:
 # =============================================================================
 # 8. DRAWDOWN DATA MISSING — risk flag behaviour
 # =============================================================================
+
 
 class TestDrawdownDataMissing:
     """drawdown_data_missing flag when defensive_features lacks drawdown."""
@@ -860,6 +872,7 @@ class TestDrawdownDataMissing:
 # =============================================================================
 # 9. CATALYST STRENGTH BANDS
 # =============================================================================
+
 
 class TestCatalystStrengthBands:
     """Tests for the catalyst_strength band computation and tier/sizing effects."""
@@ -955,22 +968,38 @@ class TestCatalystStrengthBands:
 # 10. SNAPSHOT INPUT COLUMNS — lock de_* contract surface
 # =============================================================================
 
+
 class TestSnapshotInputContract:
     """Prevent silent addition, removal, or renaming of de_* input columns."""
 
-    EXPECTED_DE_INPUT_COLUMNS = frozenset({
-        "de_catalyst_days", "de_catalyst_in_window", "de_catalyst_mode",
-        "de_alpha_60d", "de_alpha_60d_source", "de_alpha_60d_missing_reason",
-        "de_tier1_count",
-        "de_beta_xbi_60d", "de_beta_xbi_60d_source", "de_beta_xbi_60d_missing_reason",
-        "de_drawdown", "de_drawdown_missing_reason", "de_rsi_14d", "de_vol_60d",
-        "de_drawdown_xbi", "de_drawdown_rel_xbi",
-        # Sort contribution diagnostics (populated at sort time, not by DE)
-        "de_sort_total_adj",
-        "de_sort_contrib_clinical", "de_sort_contrib_coinvest",
-        "de_sort_contrib_institutional", "de_sort_contrib_calendar_alpha",
-        "de_sort_contrib_alpha_cohort_tb", "de_sort_contrib_catalyst_bonus",
-    })
+    EXPECTED_DE_INPUT_COLUMNS = frozenset(
+        {
+            "de_catalyst_days",
+            "de_catalyst_in_window",
+            "de_catalyst_mode",
+            "de_alpha_60d",
+            "de_alpha_60d_source",
+            "de_alpha_60d_missing_reason",
+            "de_tier1_count",
+            "de_beta_xbi_60d",
+            "de_beta_xbi_60d_source",
+            "de_beta_xbi_60d_missing_reason",
+            "de_drawdown",
+            "de_drawdown_missing_reason",
+            "de_rsi_14d",
+            "de_vol_60d",
+            "de_drawdown_xbi",
+            "de_drawdown_rel_xbi",
+            # Sort contribution diagnostics (populated at sort time, not by DE)
+            "de_sort_total_adj",
+            "de_sort_contrib_clinical",
+            "de_sort_contrib_coinvest",
+            "de_sort_contrib_institutional",
+            "de_sort_contrib_calendar_alpha",
+            "de_sort_contrib_alpha_cohort_tb",
+            "de_sort_contrib_catalyst_bonus",
+        }
+    )
 
     def test_de_input_columns_present(self):
         """de_* columns in SNAPSHOT_COLUMNS match the pinned set exactly."""
@@ -988,14 +1017,12 @@ class TestSnapshotInputContract:
         from run_screen import VALID_DRAWDOWN_MISSING_REASONS
 
         rec = _rec("DD_ENUM", drawdown=None)
-        fields = compute_decision_fields(rec, "drug_developer", 0.65)
+        compute_decision_fields(rec, "drug_developer", 0.65)
         # The engine doesn't write drawdown_missing_reason itself (that's
         # _hydrate_drawdown's job), but it propagates the de_drawdown and
         # de_drawdown_missing_reason inputs.  Verify the enum is importable
         # and contains the three documented values.
-        assert VALID_DRAWDOWN_MISSING_REASONS == frozenset(
-            {"", "no_price_series", "series_too_short"}
-        )
+        assert VALID_DRAWDOWN_MISSING_REASONS == frozenset({"", "no_price_series", "series_too_short"})
 
     def test_drawdown_price_symbol_not_persisted(self):
         """de_drawdown_price_symbol must NOT appear in SNAPSHOT_COLUMNS.
@@ -1046,11 +1073,15 @@ def _compute_golden_output_fingerprint() -> str:
         fields["composite_rank"] = i + 1
         rows.append(fields)
 
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r, archetype=r["archetype"],
-        optionality=r["optionality"], composite_rank=r["composite_rank"],
-        ticker=r["ticker"],
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r["archetype"],
+            optionality=r["optionality"],
+            composite_rank=r["composite_rank"],
+            ticker=r["ticker"],
+        )
+    )
 
     rank = 0
     for r in rows:
@@ -1087,7 +1118,7 @@ class TestGoldenOutputFingerprint:
       4. Bump VERSION in decision_engine.py if the change is material
     """
 
-    EXPECTED_FINGERPRINT = "da7e8b5fc87f"
+    EXPECTED_FINGERPRINT = "5e9d98013c1d"  # pragma: allowlist secret
 
     def test_golden_output_fingerprint_pinned(self):
         actual = _compute_golden_output_fingerprint()
@@ -1103,6 +1134,7 @@ class TestGoldenOutputFingerprint:
 # PHASE-2 PINNED RULESET ID SYNC GUARDRAIL
 # =============================================================================
 
+
 class TestPhase2PinnedIdSync:
     """Verify run_screen.py and run_phase2_snapshot_delta.py pin the same ruleset ID.
 
@@ -1111,8 +1143,9 @@ class TestPhase2PinnedIdSync:
     """
 
     def test_pinned_ids_match(self):
-        from run_screen import PHASE2_PINNED_RULESET_ID as screen_id
         from run_phase2_snapshot_delta import PHASE2_PINNED_RULESET_ID as delta_id
+        from run_screen import PHASE2_PINNED_RULESET_ID as screen_id
+
         assert screen_id == delta_id, (
             f"PHASE2_PINNED_RULESET_ID mismatch: "
             f"run_screen={screen_id}, run_phase2_snapshot_delta={delta_id}. "
@@ -1124,16 +1157,15 @@ class TestPhase2PinnedIdSync:
 # WEIGHT NORMALIZATION EDGE CASES
 # =============================================================================
 
+
 class TestWeightNormalizationEdgeCases:
     """Edge cases for compute_target_weights — zero/near-zero/single-row."""
 
     def test_all_zero_multipliers(self):
         """All cost_mult=0 → every weight empty (degenerate case)."""
         rows = [
-            {"size_band": "L", "ticker": "A", "cost_mult": 0.0,
-             "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 1.0},
-            {"size_band": "M", "ticker": "B", "cost_mult": 0.0,
-             "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 1.0},
+            {"size_band": "L", "ticker": "A", "cost_mult": 0.0, "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 1.0},
+            {"size_band": "M", "ticker": "B", "cost_mult": 0.0, "catalyst_tilt_mult": 1.0, "mom_state_tilt_mult": 1.0},
         ]
         result = compute_target_weights(rows)
         for r in result:

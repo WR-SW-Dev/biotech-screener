@@ -620,6 +620,37 @@ def _compute_eligibility(
 
 
 # =============================================================================
+# CATALYST BUCKET
+# =============================================================================
+
+# Bucket thresholds (days)
+BUCKET_BINARY_NOW_MAX = 30
+BUCKET_BUILD_WINDOW_MAX = 90
+BUCKET_LESS_BINARY_MAX = 180
+
+_BUCKET_CORE_MODES = frozenset({"no_upcoming", "missing"})
+
+
+def assign_catalyst_bucket(catalyst_days: Optional[float], catalyst_mode: str) -> str:
+    """Assign a canonical catalyst horizon bucket.
+
+    Returns one of: "binary_now", "build_window", "less_binary", "core".
+    Mirrors action_packet.assign_bucket() but lives in DE for snapshot output.
+    """
+    if catalyst_mode in _BUCKET_CORE_MODES:
+        return "core"
+    if catalyst_days is None:
+        return "core"
+    if catalyst_days <= BUCKET_BINARY_NOW_MAX:
+        return "binary_now"
+    if catalyst_days <= BUCKET_BUILD_WINDOW_MAX:
+        return "build_window"
+    if catalyst_days <= BUCKET_LESS_BINARY_MAX:
+        return "less_binary"
+    return "core"
+
+
+# =============================================================================
 # LAYER 2 — OVERLAYS
 # =============================================================================
 
@@ -711,7 +742,12 @@ def _compute_overlays(rec: Dict, ruleset: DecisionRuleset) -> Dict[str, Any]:
         out["catalyst_in_window"] = ""
 
     # Catalyst mode: explicit label for how catalyst proximity was determined
-    if days_val is not None and days_val > 0:
+    # Far-out relabel: specific_days > 540 → no_upcoming (prevents "dated catalysts"
+    # 3+ years out from contaminating near-term action lists)
+    FAR_OUT_DAYS_THRESHOLD = 540
+    if days_val is not None and days_val > FAR_OUT_DAYS_THRESHOLD:
+        out["catalyst_mode"] = "no_upcoming"
+    elif days_val is not None and days_val > 0:
         out["catalyst_mode"] = "specific_days"
     elif days_val == 0 and bool(in_win):
         out["catalyst_mode"] = "blended_window"
@@ -719,6 +755,9 @@ def _compute_overlays(rec: Dict, ruleset: DecisionRuleset) -> Dict[str, Any]:
         out["catalyst_mode"] = "no_upcoming"
     else:
         out["catalyst_mode"] = "missing"
+
+    # Catalyst bucket: canonical horizon classification for action lists
+    out["catalyst_bucket"] = assign_catalyst_bucket(days_val, out["catalyst_mode"])
 
     # Catalyst strength: near/mid/far/missing (using catalyst_mid_days boundary)
     if out["catalyst_mode"] == "blended_window":
@@ -1644,6 +1683,7 @@ DECISION_COLUMNS = [
     "catalyst_days",
     "catalyst_in_window",
     "catalyst_mode",
+    "catalyst_bucket",
     "catalyst_strength",
     "catalyst_decay_w",
     "runway_bucket",
