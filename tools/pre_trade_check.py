@@ -1,0 +1,386 @@
+#!/usr/bin/env python3
+"""Pre-Trade Check — sanity gate before executing weekly trades.
+
+FAILs (blocks trades) if:
+  1. Snapshot missing provenance fields (ruleset_id, as_of_date)
+  2. Bucket totals deviate from policy by > deviation_max_pct
+  3. Too many missing prices in held/top-K
+  4. Gap-risk HIGH positions exceed cap after execution
+  5. Weekly turnover exceeds max_turnover_pct
+
+Outputs:
+    artifacts/live_shadow/pre_trade/YYYY-MM-DD.json
+    artifacts/live_shadow/pre_trade/YYYY-MM-DD.md
+
+Usage:
+    python3 tools/pre_trade_check.py --as-of-date 2026-03-08
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from dataclasses import dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from tools.build_trade_deltas import POSITIONS_DIR, find_prior_positions, load_positions_json
+from tools.live_shadow_portfolio import BUCKET_DISPLAY, BUCKET_NAMES, SHADOW_ROOT, load_metadata, load_policy
+
+PRE_TRADE_ROOT = SHADOW_ROOT / "pre_trade"
+SNAPSHOTS_ROOT = PROJECT_ROOT / "data" / "snapshots"
+
+SCHEMA_VERSION = "pre_trade_check.v1"
+
+
+@dataclass
+class CheckResult:
+    name: str
+    status: str  # PASS, WARN, FAIL
+    detail: str
+    value: Any = None
+    threshold: Any = None
+
+
+@dataclass
+class PreTradeResult:
+    schema: str = SCHEMA_VERSION
+    as_of_date: str = ""
+    overall: str = "PASS"  # PASS, WARN, FAIL
+    checks: List[Dict[str, Any]] = field(default_factory=list)
+    can_trade: bool = True
+
+
+# ---------------------------------------------------------------------------
+# Individual checks
+# ---------------------------------------------------------------------------
+
+
+def check_provenance(
+    snap_dir: Path,
+) -> CheckResult:
+    """FAIL if snapshot missing ruleset_id or as_of_date in metadata."""
+    metadata = load_metadata(snap_dir)
+    if not metadata:
+        return CheckResult("provenance", "FAIL", f"metadata.json not found in {snap_dir}")
+
+    missing = []
+    if not metadata.get("ruleset_id"):
+        missing.append("ruleset_id")
+    if not metadata.get("as_of_date"):
+        missing.append("as_of_date")
+
+    if missing:
+        return CheckResult("provenance", "FAIL", f"Missing provenance: {', '.join(missing)}")
+    return CheckResult(
+        "provenance",
+        "PASS",
+        f"ruleset={metadata['ruleset_id'][:8]}, date={metadata['as_of_date']}",
+    )
+
+
+def check_bucket_deviation(
+    positions: List[Dict[str, Any]],
+    policy: Dict[str, Any],
+    max_deviation_pct: float = 3.0,
+) -> CheckResult:
+    """FAIL if any bucket's actual allocation deviates from policy by > max_deviation_pct."""
+    account_usd = policy.get("account_usd", 500_000)
+    bucket_targets = policy.get("bucket_targets", {})
+
+    worst_bucket = ""
+    worst_dev = 0.0
+    details = []
+
+    for b in BUCKET_NAMES:
+        target_pct = bucket_targets.get(b, 0.25) * 100
+        actual_usd = sum(p["target_dollars"] for p in positions if p.get("bucket") == b)
+        actual_pct = (actual_usd / account_usd * 100) if account_usd > 0 else 0
+        dev = abs(actual_pct - target_pct)
+        details.append(f"{BUCKET_DISPLAY.get(b, b)}: {actual_pct:.1f}% vs {target_pct:.0f}% (Δ{dev:.1f}pp)")
+        if dev > worst_dev:
+            worst_dev = dev
+            worst_bucket = b
+
+    if worst_dev > max_deviation_pct:
+        return CheckResult(
+            "bucket_deviation",
+            "FAIL",
+            f"{BUCKET_DISPLAY.get(worst_bucket, worst_bucket)} deviates {worst_dev:.1f}pp > {max_deviation_pct}pp. "
+            + "; ".join(details),
+            value=round(worst_dev, 2),
+            threshold=max_deviation_pct,
+        )
+    return CheckResult(
+        "bucket_deviation",
+        "PASS",
+        f"All within {max_deviation_pct}pp. " + "; ".join(details),
+        value=round(worst_dev, 2),
+        threshold=max_deviation_pct,
+    )
+
+
+def check_missing_prices(
+    positions: List[Dict[str, Any]],
+    max_missing: int = 2,
+) -> CheckResult:
+    """FAIL if too many held positions have missing price coverage."""
+    missing = [p["ticker"] for p in positions if p.get("price_coverage") == "MISSING"]
+    if len(missing) > max_missing:
+        return CheckResult(
+            "missing_prices",
+            "FAIL",
+            f"{len(missing)} missing prices > {max_missing}: {', '.join(missing[:10])}",
+            value=len(missing),
+            threshold=max_missing,
+        )
+    if missing:
+        return CheckResult(
+            "missing_prices",
+            "WARN",
+            f"{len(missing)} missing price(s): {', '.join(missing)}",
+            value=len(missing),
+            threshold=max_missing,
+        )
+    return CheckResult("missing_prices", "PASS", "All positions have price coverage")
+
+
+def check_gap_risk_concentration(
+    positions: List[Dict[str, Any]],
+    policy: Dict[str, Any],
+    max_gap_high_pct: float = 10.0,
+) -> CheckResult:
+    """FAIL if gap-risk HIGH positions exceed max % of account after execution."""
+    account_usd = policy.get("account_usd", 500_000)
+    gap_high = [p for p in positions if p.get("gap_risk") == "HIGH"]
+    gap_usd = sum(p["target_dollars"] for p in gap_high)
+    gap_pct = (gap_usd / account_usd * 100) if account_usd > 0 else 0
+
+    if gap_pct > max_gap_high_pct:
+        tickers = ", ".join(p["ticker"] for p in gap_high[:10])
+        return CheckResult(
+            "gap_risk_concentration",
+            "FAIL",
+            f"Gap-risk HIGH = {gap_pct:.1f}% > {max_gap_high_pct}% "
+            f"(${gap_usd:,.0f}, {len(gap_high)} names: {tickers})",
+            value=round(gap_pct, 2),
+            threshold=max_gap_high_pct,
+        )
+    return CheckResult(
+        "gap_risk_concentration",
+        "PASS",
+        f"Gap-risk HIGH = {gap_pct:.1f}% (${gap_usd:,.0f}, {len(gap_high)} names)",
+        value=round(gap_pct, 2),
+        threshold=max_gap_high_pct,
+    )
+
+
+def check_turnover(
+    current_positions: List[Dict[str, Any]],
+    prior_positions: List[Dict[str, Any]],
+    max_turnover_pct: float = 40.0,
+) -> CheckResult:
+    """FAIL if name-level turnover exceeds weekly threshold."""
+    if not prior_positions:
+        return CheckResult("turnover", "PASS", "First snapshot — no turnover to check")
+
+    prior_tickers = {p["ticker"] for p in prior_positions}
+    current_tickers = {p["ticker"] for p in current_positions}
+    overlap = prior_tickers & current_tickers
+    turnover_pct = (1.0 - len(overlap) / len(prior_tickers)) * 100 if prior_tickers else 0
+
+    if turnover_pct > max_turnover_pct:
+        dropped = sorted(prior_tickers - current_tickers)[:10]
+        return CheckResult(
+            "turnover",
+            "FAIL",
+            f"Turnover {turnover_pct:.0f}% > {max_turnover_pct}% "
+            f"({len(prior_tickers - current_tickers)} dropped: {', '.join(dropped)})",
+            value=round(turnover_pct, 1),
+            threshold=max_turnover_pct,
+        )
+    return CheckResult(
+        "turnover",
+        "PASS",
+        f"Turnover {turnover_pct:.0f}% (overlap {len(overlap)}/{len(prior_tickers)})",
+        value=round(turnover_pct, 1),
+        threshold=max_turnover_pct,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Runner
+# ---------------------------------------------------------------------------
+
+
+def run_pre_trade_check(
+    as_of_date: str,
+    *,
+    positions_dir: Path = POSITIONS_DIR,
+    policy_path: Optional[Path] = None,
+    snap_dir: Optional[Path] = None,
+    deviation_max_pct: float = 3.0,
+    max_missing_prices: int = 2,
+    max_gap_high_pct: float = 10.0,
+    max_turnover_pct: float = 40.0,
+) -> PreTradeResult:
+    """Run all pre-trade checks. Returns PreTradeResult."""
+    result = PreTradeResult(as_of_date=as_of_date)
+
+    current_path = positions_dir / f"{as_of_date}.json"
+    if not current_path.is_file():
+        result.overall = "FAIL"
+        result.can_trade = False
+        result.checks.append({"name": "positions", "status": "FAIL", "detail": f"No positions for {as_of_date}"})
+        return result
+
+    _, current_positions = load_positions_json(current_path)
+    policy = load_policy(policy_path)
+
+    # Prior positions for turnover check
+    prior_path = find_prior_positions(as_of_date, positions_dir)
+    prior_positions = load_positions_json(prior_path)[1] if prior_path else []
+
+    # Snapshot dir for provenance
+    if snap_dir is None:
+        snap_dir = SNAPSHOTS_ROOT / as_of_date
+
+    checks = [
+        check_provenance(snap_dir),
+        check_bucket_deviation(current_positions, policy, deviation_max_pct),
+        check_missing_prices(current_positions, max_missing_prices),
+        check_gap_risk_concentration(current_positions, policy, max_gap_high_pct),
+        check_turnover(current_positions, prior_positions, max_turnover_pct),
+    ]
+
+    has_fail = False
+    has_warn = False
+    for c in checks:
+        result.checks.append(
+            {
+                "name": c.name,
+                "status": c.status,
+                "detail": c.detail,
+                "value": c.value,
+                "threshold": c.threshold,
+            }
+        )
+        if c.status == "FAIL":
+            has_fail = True
+        elif c.status == "WARN":
+            has_warn = True
+
+    if has_fail:
+        result.overall = "FAIL"
+        result.can_trade = False
+    elif has_warn:
+        result.overall = "WARN"
+        result.can_trade = True
+    else:
+        result.overall = "PASS"
+        result.can_trade = True
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Output writers
+# ---------------------------------------------------------------------------
+
+
+def write_pre_trade_json(result: PreTradeResult, out_path: Path) -> Path:
+    """Write pre_trade check result as JSON."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    data = {
+        "schema": result.schema,
+        "as_of_date": result.as_of_date,
+        "overall": result.overall,
+        "can_trade": result.can_trade,
+        "checks": result.checks,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    with open(out_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    return out_path
+
+
+def write_pre_trade_md(result: PreTradeResult, out_path: Path) -> Path:
+    """Write pre-trade checklist markdown."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    status_icon = {"PASS": "[PASS]", "WARN": "[WARN]", "FAIL": "[FAIL]"}
+    lines = []
+    lines.append("# Pre-Trade Checklist")
+    lines.append("")
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines.append(f"**Date**: {result.as_of_date}")
+    lines.append(f"**Generated**: {ts}")
+
+    if result.overall == "FAIL":
+        lines.append("")
+        lines.append("**BLOCKED — DO NOT TRADE**")
+    elif result.overall == "WARN":
+        lines.append("")
+        lines.append("**CAUTION — review warnings before trading**")
+    else:
+        lines.append("")
+        lines.append("**CLEAR TO TRADE**")
+    lines.append("")
+
+    lines.append("## Checks")
+    lines.append("")
+    for c in result.checks:
+        icon = status_icon.get(c["status"], "[???]")
+        lines.append(f"- {icon} **{c['name']}**: {c['detail']}")
+    lines.append("")
+
+    text = "\n".join(lines)
+    with open(out_path, "w", encoding="utf-8") as f:
+        f.write(text)
+    return out_path
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Pre-trade sanity check")
+    parser.add_argument("--as-of-date", type=str, required=True)
+    parser.add_argument("--policy", type=str, help="Portfolio policy JSON path")
+    parser.add_argument("--deviation-max-pct", type=float, default=3.0)
+    parser.add_argument("--max-missing-prices", type=int, default=2)
+    parser.add_argument("--max-gap-high-pct", type=float, default=10.0)
+    parser.add_argument("--max-turnover-pct", type=float, default=40.0)
+    args = parser.parse_args()
+
+    policy_path = Path(args.policy) if args.policy else None
+    result = run_pre_trade_check(
+        args.as_of_date,
+        policy_path=policy_path,
+        deviation_max_pct=args.deviation_max_pct,
+        max_missing_prices=args.max_missing_prices,
+        max_gap_high_pct=args.max_gap_high_pct,
+        max_turnover_pct=args.max_turnover_pct,
+    )
+
+    out_dir = PRE_TRADE_ROOT / args.as_of_date
+    write_pre_trade_json(result, out_dir / "pre_trade.json")
+    md_path = write_pre_trade_md(result, out_dir / "pre_trade.md")
+
+    print(f"Pre-trade check: {result.overall}")
+    for c in result.checks:
+        print(f"  [{c['status']}] {c['name']}: {c['detail']}")
+    print(f"\nCan trade: {result.can_trade}")
+    print(f"Report: {md_path}")
+
+    sys.exit(0 if result.can_trade else 1)
+
+
+if __name__ == "__main__":
+    main()

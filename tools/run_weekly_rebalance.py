@@ -129,6 +129,18 @@ def run_weekly_rebalance(
             min_trade_usd=min_trade_usd,
             out_dir=out_dir,
         )
+        # Also generate trade plan artifact (best-effort)
+        try:
+            from tools.build_trade_plan import build_trade_plan
+
+            _plan = build_trade_plan(
+                as_of_date,
+                positions_dir=positions_dir,
+                min_trade_usd=min_trade_usd,
+            )
+            result["trade_plan_path"] = _plan.get("md_path", "")
+        except Exception:
+            pass
         decision = "REBALANCE" if rebalance else "OFF_CYCLE"
         return {
             "decision": decision,

@@ -667,6 +667,34 @@ def write_weekly_summary(
             lines.append(f"- **Binary 91-180 Excess vs XBI: {s91_exc:+.2f}%** (primary sleeve)")
         lines.append("")
 
+        # Trailing Alpha Dashboard (1w / 4w)
+        try:
+            from tools.build_trade_plan import compute_trailing_metrics, load_performance_rows
+
+            _perf_rows = load_performance_rows()
+            if len(_perf_rows) >= 2:
+                t4 = compute_trailing_metrics(_perf_rows, min(4, len(_perf_rows)))
+                lines.append("### Trailing Alpha Dashboard")
+                lines.append("")
+                lines.append("| Bucket | 4w Avg P&L | 4w Hit Rate | 4w Worst |")
+                lines.append("|--------|------------|-------------|----------|")
+                for _b in BUCKET_NAMES:
+                    _label = BUCKET_DISPLAY.get(_b, _b)
+                    if _b == "binary_91_180":
+                        _label = f"**{_label}**"
+                    _t4b = t4.get("buckets", {}).get(_b, {})
+                    _avg = f"${_t4b['avg_pnl']:+,.0f}" if _t4b.get("avg_pnl") is not None else "—"
+                    _hr = f"{_t4b['hit_rate']:.0%}" if _t4b.get("hit_rate") is not None else "—"
+                    _worst = f"${_t4b['worst_week']:+,.0f}" if _t4b.get("worst_week") is not None else "—"
+                    lines.append(f"| {_label} | {_avg} | {_hr} | {_worst} |")
+                lines.append("")
+                _p4 = t4.get("portfolio", {})
+                if _p4.get("excess_vs_xbi") is not None:
+                    lines.append(f"**Trailing avg excess vs XBI**: {_p4['excess_vs_xbi']:+.2f}%")
+                    lines.append("")
+        except Exception:
+            pass  # Trailing metrics are best-effort
+
         # What Drove the Week — top/bottom contributors
         contributors = perf.get("contributors", [])
         if contributors:
