@@ -16,38 +16,38 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Workflow Orchestration
 
-### Plan Node Default
-Always start non-trivial tasks (>3 files, new feature, architectural change) by entering plan mode. Explore the codebase, read relevant files, and produce a concrete implementation plan before writing any code.
+### 1. Plan Node Default
+Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions). If something goes sideways, STOP and re-plan immediately — don't keep pushing. Use plan mode for verification steps, not just building. Write detailed specs upfront to reduce ambiguity.
 
-### Subagent Strategy
-Use Task agents for parallelizable work: independent searches, test runs, file explorations. Do not duplicate work between parent and subagent. Prefer the Explore agent for broad codebase discovery and direct Glob/Grep for targeted lookups.
+### 2. Subagent Strategy
+Use subagents liberally to keep main context window clean. Offload research/exploration/parallel analysis to subagents. For complex problems, throw more compute at it via subagents. One task per subagent for focused execution.
 
-### Self-Improvement Loop
-After completing a task, check whether stable patterns, conventions, or debugging insights emerged that should be saved to memory. Update MEMORY.md or topic files — do not save session-specific or speculative information.
+### 3. Self-Improvement Loop
+After ANY correction from the user: update `tasks/lessons.md` with the pattern. Write rules for yourself that prevent the same mistake. Ruthlessly iterate until mistake rate drops. Review lessons at session start for the relevant project.
 
-### Verification Before Done
-Never mark a task complete without verifying the result. Run tests, re-read modified files, or execute the script to confirm correctness. If verification fails, fix the issue before reporting success.
+### 4. Verification Before Done
+Never mark a task complete without proving it works. Diff behavior between main and your changes when relevant. Ask: "Would a staff engineer approve this?" Run tests, check logs, demonstrate correctness.
 
-### Demand Elegance (Balanced)
-Prefer clean, minimal solutions over clever ones. Refactor only when directly needed by the task. Three similar lines are better than a premature abstraction. But when a pattern repeats across multiple call sites, extract it.
+### 5. Demand Elegance (Balanced)
+For non-trivial changes: pause and ask "is there a more elegant way?" If a fix feels hacky: "Knowing everything I know now, implement the elegant solution." Skip this for simple/obvious fixes — don't over-engineer. Challenge your own work before presenting it.
 
-### Autonomous Bug Fixing
-When a test or script fails, diagnose the root cause rather than retrying blindly. Read error messages carefully, check types, verify assumptions. If blocked after two attempts, surface the issue to the user with context.
+### 6. Autonomous Bug Fixing
+When given a bug report: just fix it. Don't ask for hand-holding. Point at logs/errors/failing tests — then resolve them. Zero context switching required from the user. Go fix failing CI tests without being told how.
 
 ## Task Management
 
-1. **Plan First** — Break the task into steps before writing code. For non-trivial work, use plan mode.
-2. **Verify Plan** — Check that the plan covers edge cases, test strategy, and affected files.
-3. **Track Progress** — Use TaskCreate/TaskUpdate for multi-step work. Mark tasks in_progress before starting, completed only after verification.
-4. **Explain Changes** — When modifying code, state what changed and why in the response text.
-5. **Document Results** — After running scripts or tests, summarize outputs concisely.
-6. **Capture Lessons** — If a debugging session reveals a gotcha or pattern, add it to Common Gotchas or memory.
+1. **Plan First** — Write plan to `tasks/todo.md` with checkable items.
+2. **Verify Plan** — Check in before starting implementation.
+3. **Track Progress** — Mark items complete as you go.
+4. **Explain Changes** — High-level summary at each step.
+5. **Document Results** — Add review section to `tasks/todo.md`.
+6. **Capture Lessons** — Update `tasks/lessons.md` after corrections.
 
 ## Core Principles
 
-- **Simplicity First**: Choose the simplest solution that meets the requirement. Avoid over-engineering, feature flags for hypothetical futures, or backwards-compatibility shims when you can just change the code.
-- **No Laziness**: Do not skip steps, omit error handling at system boundaries, or leave TODO comments for known issues. Finish the work.
-- **Minimal Impact**: Touch only the files and lines required by the task. Do not add docstrings, type annotations, or comments to unchanged code. Do not refactor adjacent code unless asked.
+- **Simplicity First**: Make every change as simple as possible; keep impact minimal. Avoid over-engineering, feature flags for hypothetical futures, or backwards-compatibility shims when you can just change the code.
+- **No Laziness**: Find root causes; no temporary fixes; senior-dev standards. Do not skip steps, omit error handling at system boundaries, or leave TODO comments for known issues.
+- **Minimal Impact**: Touch only what's necessary; avoid introducing bugs. Do not add docstrings, type annotations, or comments to unchanged code. Do not refactor adjacent code unless asked.
 
 ## Quick Start
 
