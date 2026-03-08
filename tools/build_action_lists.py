@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+"""Build Action Lists — per-bucket CSV files from a snapshot's rankings.csv.
+
+Reads a promoted snapshot and produces four CSV files split by catalyst
+horizon bucket, plus a README.md summary.
+
+Output:
+    action_lists/binary_0_30.csv
+    action_lists/binary_31_90.csv
+    action_lists/binary_91_180.csv
+    action_lists/less_binary.csv
+    action_lists/README.md
+
+Classification rules (deterministic):
+    binary  iff catalyst_mode == "specific_days" AND 1 <= catalyst_days <= 180
+    less_binary  otherwise (blended_window, no_upcoming, missing, or far-out)
+
+Within each bucket: sorted by actionable_rank ASC, then ticker ASC.
+
+Usage:
+    python3 tools/build_action_lists.py --snapshot-dir data/snapshots/2026-03-08
+    python3 tools/build_action_lists.py --as-of-date 2026-03-08
+    python3 tools/build_action_lists.py --as-of-date 2026-03-08 --out-dir output/action_lists
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import statistics
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+SNAPSHOTS_ROOT = PROJECT_ROOT / "data" / "snapshots"
+
+# Columns carried into action list CSVs (subset of rankings.csv)
+ACTION_LIST_COLUMNS = [
+    "ticker",
+    "actionable_rank",
+    "eligible",
+    "tier_any",
+    "target_weight_pct",
+    "catalyst_days",
+    "catalyst_mode",
+    "catalyst_bucket",
+    "catalyst_strength",
+    "archetype",
+    "alpha_cohort_key",
+    "mom_state",
+    "industry_group",
+]
+
+# Bucket definitions
+BUCKET_NAMES = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
+
+BUCKET_DISPLAY = {
+    "binary_0_30": "Binary 0-30d (event imminent)",
+    "binary_31_90": "Binary 31-90d (setup window)",
+    "binary_91_180": "Binary 91-180d (pipeline on deck)",
+    "less_binary": "Less Binary (carry / no dated event)",
+}
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    if val is None or val == "":
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _safe_int(val: Any) -> Optional[int]:
+    if val is None or val == "":
+        return None
+    try:
+        return int(float(val))
+    except (ValueError, TypeError):
+        return None
+
+
+def _sort_key(row: Dict[str, str]) -> Tuple[float, str]:
+    """Sort by actionable_rank ASC then ticker ASC (deterministic)."""
+    rank = _safe_float(row.get("actionable_rank", ""), 9999.0)
+    ticker = row.get("ticker", "")
+    return (rank, ticker)
+
+
+def _find_latest_snapshot_date() -> Optional[str]:
+    if not SNAPSHOTS_ROOT.is_dir():
+        return None
+    candidates = []
+    for d in SNAPSHOTS_ROOT.iterdir():
+        name = d.name
+        if len(name) == 10 and name[4] == "-" and name[7] == "-":
+            try:
+                datetime.strptime(name, "%Y-%m-%d")
+                candidates.append(name)
+            except ValueError:
+                pass
+    return max(candidates) if candidates else None
+
+
+# ---------------------------------------------------------------------------
+# Classification
+# ---------------------------------------------------------------------------
+
+
+def classify_action_bucket(row: Dict[str, str]) -> str:
+    """Classify a rankings row into an action list bucket.
+
+    Returns one of: "binary_0_30", "binary_31_90", "binary_91_180", "less_binary".
+
+    Rules:
+        binary iff catalyst_mode == "specific_days" AND 1 <= catalyst_days <= 180
+        Sub-bucket by catalyst_days: 0-30, 31-90, 91-180
+        Everything else → less_binary
+    """
+    mode = (row.get("catalyst_mode") or "").strip()
+    days = _safe_int(row.get("catalyst_days"))
+
+    if mode != "specific_days" or days is None or days < 1 or days > 180:
+        return "less_binary"
+
+    if days <= 30:
+        return "binary_0_30"
+    if days <= 90:
+        return "binary_31_90"
+    return "binary_91_180"
+
+
+# ---------------------------------------------------------------------------
+# Build action lists
+# ---------------------------------------------------------------------------
+
+
+def build_action_lists(
+    snapshot_dir: Path,
+    *,
+    eligible_only: bool = True,
+) -> Dict[str, List[Dict[str, str]]]:
+    """Read rankings.csv and split into action list buckets.
+
+    Args:
+        snapshot_dir: Path to snapshot directory.
+        eligible_only: If True, only include eligible names.
+
+    Returns:
+        Dict mapping bucket name → list of row dicts, sorted deterministically.
+    """
+    csv_path = snapshot_dir / "rankings.csv"
+    if not csv_path.is_file():
+        raise FileNotFoundError(f"rankings.csv not found: {csv_path}")
+
+    with open(csv_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        all_rows = list(reader)
+
+    # Filter
+    if eligible_only:
+        all_rows = [r for r in all_rows if r.get("eligible") == "1"]
+
+    # Classify and sort
+    buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
+    for row in all_rows:
+        bucket = classify_action_bucket(row)
+        # Keep only the action list columns (plus any missing as "")
+        slim = {col: row.get(col, "") for col in ACTION_LIST_COLUMNS}
+        buckets[bucket].append(slim)
+
+    # Sort each bucket deterministically
+    for bucket_rows in buckets.values():
+        bucket_rows.sort(key=_sort_key)
+
+    return buckets
+
+
+# ---------------------------------------------------------------------------
+# Write
+# ---------------------------------------------------------------------------
+
+
+def write_action_lists(
+    buckets: Dict[str, List[Dict[str, str]]],
+    out_dir: Path,
+    *,
+    as_of_date: str = "",
+) -> Path:
+    """Write per-bucket CSVs and README.md to out_dir.
+
+    Returns the out_dir path.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    for bucket_name in BUCKET_NAMES:
+        rows = buckets.get(bucket_name, [])
+        csv_path = out_dir / f"{bucket_name}.csv"
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=ACTION_LIST_COLUMNS)
+            writer.writeheader()
+            writer.writerows(rows)
+
+    # README summary
+    readme = _build_readme(buckets, as_of_date)
+    (out_dir / "README.md").write_text(readme, encoding="utf-8")
+
+    return out_dir
+
+
+def _build_readme(
+    buckets: Dict[str, List[Dict[str, str]]],
+    as_of_date: str,
+) -> str:
+    """Generate a summary README.md for the action lists."""
+    lines: List[str] = []
+    lines.append(f"# Action Lists — {as_of_date}")
+    lines.append("")
+    lines.append(f"Generated: {datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M UTC')}")
+    lines.append("")
+
+    total = sum(len(rows) for rows in buckets.values())
+    lines.append(f"**Total names**: {total}")
+    lines.append("")
+
+    # Summary table
+    lines.append("| Bucket | Count | Total Weight | Median Weight | Top Tickers |")
+    lines.append("|--------|-------|-------------|---------------|-------------|")
+
+    for bucket_name in BUCKET_NAMES:
+        rows = buckets.get(bucket_name, [])
+        count = len(rows)
+        weights = [_safe_float(r.get("target_weight_pct", "")) for r in rows]
+        total_wt = sum(weights)
+        median_wt = statistics.median(weights) if weights else 0.0
+        top_tickers = ", ".join(r.get("ticker", "") for r in rows[:5])
+        display = BUCKET_DISPLAY.get(bucket_name, bucket_name)
+        lines.append(f"| {display} | {count} | {total_wt:.1f}% | {median_wt:.2f}% | {top_tickers} |")
+
+    lines.append("")
+
+    # Binary vs less-binary aggregate
+    binary_count = sum(len(buckets.get(b, [])) for b in ["binary_0_30", "binary_31_90", "binary_91_180"])
+    binary_weight = sum(
+        _safe_float(r.get("target_weight_pct", ""))
+        for b in ["binary_0_30", "binary_31_90", "binary_91_180"]
+        for r in buckets.get(b, [])
+    )
+    lb_count = len(buckets.get("less_binary", []))
+    lb_weight = sum(_safe_float(r.get("target_weight_pct", "")) for r in buckets.get("less_binary", []))
+
+    lines.append("## Book Summary")
+    lines.append("")
+    lines.append(f"- **Binary book**: {binary_count} names, {binary_weight:.1f}% weight")
+    lines.append(f"- **Less-binary book**: {lb_count} names, {lb_weight:.1f}% weight")
+    lines.append("")
+
+    # Classification rules
+    lines.append("## Classification Rules")
+    lines.append("")
+    lines.append("- **Binary**: `catalyst_mode == specific_days` AND `1 <= catalyst_days <= 180`")
+    lines.append("  - **0-30d**: event imminent (highest vol)")
+    lines.append("  - **31-90d**: setup window (position building)")
+    lines.append("  - **91-180d**: pipeline on deck")
+    lines.append("- **Less-binary**: everything else (blended_window, no_upcoming, missing, far-out >540d)")
+    lines.append("- Sort: `actionable_rank` ASC, then `ticker` ASC (deterministic)")
+    lines.append("")
+
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Build per-bucket action list CSVs from a snapshot's rankings.csv.",
+    )
+    parser.add_argument(
+        "--snapshot-dir",
+        type=Path,
+        default=None,
+        help="Path to snapshot directory (e.g. data/snapshots/2026-03-08)",
+    )
+    parser.add_argument(
+        "--as-of-date",
+        default=None,
+        help="Snapshot date (YYYY-MM-DD); discovers snapshot in data/snapshots/",
+    )
+    parser.add_argument(
+        "--out-dir",
+        type=Path,
+        default=None,
+        help="Output directory (default: action_lists/ inside snapshot dir)",
+    )
+    parser.add_argument(
+        "--include-ineligible",
+        action="store_true",
+        default=False,
+        help="Include ineligible names (default: eligible only)",
+    )
+    args = parser.parse_args()
+
+    if args.snapshot_dir:
+        snap_dir = args.snapshot_dir
+    elif args.as_of_date:
+        snap_dir = SNAPSHOTS_ROOT / args.as_of_date
+    else:
+        latest = _find_latest_snapshot_date()
+        if latest is None:
+            print("ERROR: No snapshots found and no --snapshot-dir / --as-of-date given.", file=sys.stderr)
+            sys.exit(1)
+        snap_dir = SNAPSHOTS_ROOT / latest
+
+    if not snap_dir.is_dir():
+        print(f"ERROR: Snapshot directory not found: {snap_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    out_dir = args.out_dir or (snap_dir / "action_lists")
+
+    buckets = build_action_lists(snap_dir, eligible_only=not args.include_ineligible)
+    write_action_lists(buckets, out_dir, as_of_date=snap_dir.name)
+
+    total = sum(len(rows) for rows in buckets.values())
+    print(f"Action lists → {out_dir}")
+    for b in BUCKET_NAMES:
+        print(f"  {b}: {len(buckets[b])} names")
+    print(f"  total: {total}")
+
+
+if __name__ == "__main__":
+    main()

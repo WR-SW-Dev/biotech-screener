@@ -1404,6 +1404,7 @@ SNAPSHOT_COLUMNS = [
     "market_cap_bucket",
     "severity",
     "archetype",
+    "industry_group",
     "returns_source",
     "catalyst_source",
     "catalyst_event_type",
@@ -3050,6 +3051,7 @@ def save_validation_snapshot(
 
     ranked = sorted(ranked, key=lambda x: x.get("composite_rank", 999))
     archetypes = results.get("company_archetypes", {})
+    industry_groups = results.get("industry_groups", {})
     m3_summaries = (results.get("module_3_catalyst") or {}).get("summaries")
 
     # --- Build company name lookup from Module 1 universe ---
@@ -3153,6 +3155,7 @@ def save_validation_snapshot(
             "market_cap_bucket": rec.get("market_cap_bucket"),
             "severity": rec.get("severity"),
             "archetype": archetypes.get(ticker, ""),
+            "industry_group": industry_groups.get(ticker, ""),
             "momentum_score": mom.get("momentum_score"),
             "catalyst_score": _component_score(rec, "catalyst"),
             "smart_money_score": _component_score(rec, "smart_money"),
@@ -6689,6 +6692,33 @@ def run_screening_pipeline(
     logger.info(f"  Company archetypes: {dict(sorted(archetype_counts.items()))}")
 
     # ========================================================================
+    # Morningstar Industry Group Classification
+    # ========================================================================
+    # Load PIT-stamped industry classifications from cache.
+    # Falls back to Yahoo→Morningstar mapping if cache unavailable.
+    from wake_robin_data_pipeline.morningstar_industry_provider import (
+        YAHOO_TO_MSTAR_INDUSTRY_GROUP,
+        load_industry_classifications,
+    )
+
+    industry_groups: Dict[str, str] = load_industry_classifications(as_of_date)
+    if not industry_groups:
+        # Fallback: derive from Yahoo industry in market_data
+        for ticker in active_tickers:
+            md = market_data_by_ticker.get(ticker, {})
+            yahoo_ind = md.get("industry", "")
+            mstar_group = YAHOO_TO_MSTAR_INDUSTRY_GROUP.get(yahoo_ind, "")
+            if mstar_group:
+                industry_groups[ticker] = mstar_group
+        logger.info(
+            "  Industry groups: %d from Yahoo fallback (no Morningstar cache for %s)",
+            len(industry_groups),
+            as_of_date,
+        )
+    else:
+        logger.info("  Industry groups: %d from Morningstar cache", len(industry_groups))
+
+    # ========================================================================
     # Clinical Activity Filter (excludes low-activity tickers from ranking)
     # ========================================================================
     clinical_exclusions = []
@@ -7576,6 +7606,7 @@ def run_screening_pipeline(
         "clinical_exclusions": clinical_exclusions,
         "clinical_exemptions": clinical_exemptions,
         "company_archetypes": company_archetypes,
+        "industry_groups": industry_groups,
     }
 
     # Add enhancement results if enabled

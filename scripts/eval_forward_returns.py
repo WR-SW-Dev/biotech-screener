@@ -898,6 +898,9 @@ class DateResult:
     n_universe_eval: int = 0
     n_missing_anchor: int = 0
     n_missing_forward: int = 0
+    # Industry-neutral diagnostics
+    industry_neutral_ic: Optional[float] = None
+    industry_neutral_n_groups: int = 0
 
 
 @dataclass
@@ -976,6 +979,7 @@ def evaluate(
     preflight: bool = False,
     preflight_strict: bool = False,
     bucket_filter: Optional[List[str]] = None,
+    industry_neutral: bool = False,
 ) -> Tuple[EvalSummary, List[DateResult], List[Dict[str, str]]]:
     """Run the full walk-forward evaluation.
 
@@ -1003,6 +1007,8 @@ def evaluate(
         top_quantile: use top N% instead of top-K (0=use top_k).
         bucket_filter: if provided, only include tickers whose catalyst_bucket
             is in this list (e.g. ["binary_now", "build_window"]).
+        industry_neutral: if True, compute within-industry-group Spearman IC
+            (averaged across groups) alongside the standard IC.
 
     Returns (summary, date_results, skips).
     """
@@ -1045,6 +1051,7 @@ def evaluate(
     horizon_hedged: Dict[int, List[float]] = {h: [] for h in horizons}
     prev_holdings: Dict[int, List[str]] = {h: [] for h in horizons}
     sign_mismatches: Dict[int, int] = {h: 0 for h in horizons}
+    horizon_neutral_ics: Dict[int, List[float]] = {h: [] for h in horizons}
 
     # Component eval accumulators
     COMPONENT_COLS = [
@@ -1167,6 +1174,7 @@ def evaluate(
         drawdown_by_ticker: Dict[str, float] = {}
         archetype_by_ticker: Dict[str, str] = {}
         catalyst_mode_by_ticker: Dict[str, str] = {}
+        industry_group_by_ticker: Dict[str, str] = {}
         if not use_positions:
             for r in rankings:
                 t = r.get("ticker", "")
@@ -1194,6 +1202,10 @@ def evaluate(
                 cm = r.get("catalyst_mode", "")
                 if cm:
                     catalyst_mode_by_ticker[t] = cm
+                # Industry group (for --industry-neutral)
+                ig = r.get("industry_group", "")
+                if ig:
+                    industry_group_by_ticker[t] = ig
 
         # Build component score lookups (for --component-eval)
         comp_by_ticker: Dict[str, Dict[str, float]] = {}
@@ -1300,6 +1312,31 @@ def evaluate(
             return_vals = [fwd_rets[t] for t in signal_tickers]
 
             ic = spearman_ic(signal_vals, return_vals)
+
+            # Industry-neutral IC: within-group Spearman, averaged across groups
+            ind_neutral_ic = None
+            ind_neutral_n_groups = 0
+            if industry_neutral and industry_group_by_ticker:
+                group_ics: List[float] = []
+                # Group signal tickers by industry
+                from collections import defaultdict as _defaultdict
+
+                ig_buckets: Dict[str, List[int]] = _defaultdict(list)
+                for idx_ig, t_ig in enumerate(signal_tickers):
+                    ig_label = industry_group_by_ticker.get(t_ig, "")
+                    if ig_label:
+                        ig_buckets[ig_label].append(idx_ig)
+                for ig_label, idxs in ig_buckets.items():
+                    if len(idxs) < 3:
+                        continue
+                    g_signals = [signal_vals[i] for i in idxs]
+                    g_returns = [return_vals[i] for i in idxs]
+                    g_ic = spearman_ic(g_signals, g_returns)
+                    if g_ic is not None:
+                        group_ics.append(g_ic)
+                if group_ics:
+                    ind_neutral_ic = _round_opt(statistics.mean(group_ics), 4)
+                    ind_neutral_n_groups = len(group_ics)
 
             # Determine effective top-K: use top_quantile if set
             eff_k = top_k
@@ -1609,12 +1646,16 @@ def evaluate(
                 n_universe_eval=n_universe_eval,
                 n_missing_anchor=n_missing_anchor,
                 n_missing_forward=n_missing_forward,
+                industry_neutral_ic=ind_neutral_ic,
+                industry_neutral_n_groups=ind_neutral_n_groups,
             )
             date_results.append(dr)
             date_evaluated = True
 
             if ic is not None:
                 horizon_ics[h].append(ic)
+            if ind_neutral_ic is not None:
+                horizon_neutral_ics[h].append(ind_neutral_ic)
             if gross is not None:
                 horizon_gross[h].append(gross)
             if bottom_gross is not None:
@@ -1740,6 +1781,17 @@ def evaluate(
             ic_std = _safe_std(ics)
             if ic_std and ic_std > 0:
                 bh["ic_t_stat"] = _round_opt(_safe_mean(ics) / (ic_std / math.sqrt(len(ics))), 3)
+
+        # Industry-neutral IC
+        neutral_ics = horizon_neutral_ics[h]
+        if neutral_ics:
+            bh["mean_industry_neutral_ic"] = _round_opt(_safe_mean(neutral_ics), 4)
+            if len(neutral_ics) >= 8:
+                ni_std = _safe_std(neutral_ics)
+                if ni_std and ni_std > 0:
+                    bh["industry_neutral_ic_t_stat"] = _round_opt(
+                        _safe_mean(neutral_ics) / (ni_std / math.sqrt(len(neutral_ics))), 3
+                    )
 
         # Benchmark-relative
         if excess_list:
@@ -2144,6 +2196,22 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
             )
         lines.append("")
 
+    # Industry-neutral IC table (if present)
+    has_neutral = any("mean_industry_neutral_ic" in summary.by_horizon.get(h, {}) for h in summary.horizons)
+    if has_neutral:
+        lines.append("## Industry-Neutral IC")
+        lines.append("")
+        lines.append("| Horizon | Mean IC | Industry-Neutral IC | IN IC t |")
+        lines.append("|---------|---------|---------------------|---------|")
+        for h in summary.horizons:
+            bh = summary.by_horizon.get(h, {})
+            lines.append(
+                f"| {h}d | {_fmt(bh.get('mean_ic'))} "
+                f"| {_fmt(bh.get('mean_industry_neutral_ic'))} "
+                f"| {_fmt(bh.get('industry_neutral_ic_t_stat'))} |"
+            )
+        lines.append("")
+
     # Residual alpha table (if present)
     has_resid = any("residual_alpha" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_resid:
@@ -2280,6 +2348,8 @@ def write_by_date_csv(date_results: List[DateResult], out_dir: Path) -> Path:
         "n_universe_eval",
         "n_missing_anchor",
         "n_missing_forward",
+        "industry_neutral_ic",
+        "industry_neutral_n_groups",
     ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -2497,6 +2567,15 @@ def main() -> None:
             "these buckets are evaluated."
         ),
     )
+    parser.add_argument(
+        "--industry-neutral",
+        action="store_true",
+        default=False,
+        help=(
+            "Compute industry-neutral IC: within-industry-group Spearman IC "
+            "averaged across groups (min 3 tickers per group)."
+        ),
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -2561,6 +2640,8 @@ def main() -> None:
             print(f"  Ruleset: {args.ruleset} (ID: {eval_ruleset.ruleset_id})")
     if args.catalyst_eval_mode != "default":
         print(f"  Catalyst eval mode: {args.catalyst_eval_mode}")
+    if args.industry_neutral:
+        print("  Industry-neutral IC: enabled")
 
     # Parse bucket filter
     eff_bucket_filter: Optional[List[str]] = None
@@ -2600,6 +2681,7 @@ def main() -> None:
         preflight=args.preflight,
         preflight_strict=args.preflight_strict,
         bucket_filter=eff_bucket_filter,
+        industry_neutral=args.industry_neutral,
     )
 
     write_summary_json(summary, args.out_dir)
@@ -2623,6 +2705,8 @@ def main() -> None:
             parts.append(f"L/S={_fmt_pct(bh.get('mean_ls_return'))}")
         if "mean_hedged_return" in bh:
             parts.append(f"Hedged={_fmt_pct(bh.get('mean_hedged_return'))}")
+        if "mean_industry_neutral_ic" in bh:
+            parts.append(f"IN-IC={_fmt(bh.get('mean_industry_neutral_ic'))}")
         print(f"  {h}d: {', '.join(parts)}")
 
     # --- Staleness guardrail ---
