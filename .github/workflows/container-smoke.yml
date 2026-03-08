@@ -1,0 +1,33 @@
+name: container-smoke
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PYTHONHASHSEED: "0"
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Build Docker image
+        run: docker build -t biotech-screener:smoke .
+
+      - name: Run smoke test in container
+        run: |
+          docker run --rm \
+            -e PYTHONHASHSEED=0 \
+            biotech-screener:smoke \
+            -m pytest tests/integration/test_container_smoke.py -v \
+              --override-ini="addopts=" \
+              --tb=short
+
+      - name: Verify image entrypoint
+        run: |
+          docker run --rm biotech-screener:smoke -c "import decision_engine; print(f'DE version: {decision_engine.VERSION}')"
