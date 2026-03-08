@@ -3628,6 +3628,19 @@ def run_daily(
         except Exception as _reb_err:
             print(f"  [WARN] Weekly rebalance check failed: {_reb_err}")
 
+        # --- Step 5h: Portfolio alerts (non-blocking) ---
+        try:
+            from tools.portfolio_alerts import run_portfolio_alerts
+
+            _alert_result = run_portfolio_alerts(as_of_date)
+            _n_alerts = _alert_result["alert_count"]
+            if _n_alerts > 0:
+                print(f"  Portfolio alerts → {_alert_result['alert_path']} ({_n_alerts} alerts)")
+            else:
+                print("  Portfolio alerts → none")
+        except Exception as _alert_err:
+            print(f"  [WARN] Portfolio alerts failed: {_alert_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
