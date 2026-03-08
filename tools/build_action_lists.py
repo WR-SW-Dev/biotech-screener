@@ -64,6 +64,13 @@ BUCKET_DISPLAY = {
     "less_binary": "Less Binary (carry / no dated event)",
 }
 
+# Microcap inversion sleeve: bottom-K of less-binary bucket, XS band only.
+# Opt-in only (--include-microcap-sleeve).  Deliberately exposed to
+# illiquidity/microcap risk — do not use for size-constrained accounts.
+MICROCAP_SLEEVE_NAME = "microcap_inversion"
+MICROCAP_SLEEVE_SIZE_BANDS = {"XS"}  # size_band values included
+MICROCAP_SLEEVE_DEFAULT_K = 20
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -185,6 +192,69 @@ def build_action_lists(
 
 
 # ---------------------------------------------------------------------------
+# Microcap inversion sleeve
+# ---------------------------------------------------------------------------
+
+
+def build_microcap_sleeve(
+    snapshot_dir: Path,
+    *,
+    k: int = MICROCAP_SLEEVE_DEFAULT_K,
+    size_bands: Optional[set] = None,
+    eligible_only: bool = True,
+) -> List[Dict[str, str]]:
+    """Build the microcap inversion sleeve from the less-binary bucket.
+
+    Takes the bottom-K names by actionable_rank from the less-binary bucket,
+    filtered to XS-band (microcap) names.  This is a *contrarian* selection:
+    the model's worst-ranked less-binary names outperform in OOS, but only
+    among microcaps.
+
+    Args:
+        snapshot_dir: Path to snapshot directory.
+        k: Number of names to include (bottom-K by rank).
+        size_bands: Set of size_band values to include (default: {"XS"}).
+        eligible_only: If True, only include eligible names.
+
+    Returns:
+        List of row dicts, sorted by actionable_rank DESC then ticker ASC
+        (worst-ranked first, since this is a contrarian sleeve).
+    """
+    if size_bands is None:
+        size_bands = MICROCAP_SLEEVE_SIZE_BANDS
+
+    csv_path = snapshot_dir / "rankings.csv"
+    if not csv_path.is_file():
+        return []
+
+    with open(csv_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        all_rows = list(reader)
+
+    if eligible_only:
+        all_rows = [r for r in all_rows if r.get("eligible") == "1"]
+
+    # Filter to less-binary bucket + specified size bands
+    sleeve_rows = []
+    for row in all_rows:
+        bucket = classify_action_bucket(row)
+        band = (row.get("size_band") or "").strip()
+        if bucket == "less_binary" and band in size_bands:
+            slim = {col: row.get(col, "") for col in ACTION_LIST_COLUMNS}
+            slim["size_band"] = band
+            sleeve_rows.append(slim)
+
+    # Sort by actionable_rank ASC (best to worst), then take bottom-K
+    sleeve_rows.sort(key=_sort_key)
+    bottom_k = sleeve_rows[-k:] if len(sleeve_rows) > k else sleeve_rows
+
+    # Re-sort bottom-K: worst rank first (contrarian ordering)
+    bottom_k.sort(key=lambda r: (-_safe_float(r.get("actionable_rank", ""), 0.0), r.get("ticker", "")))
+
+    return bottom_k
+
+
+# ---------------------------------------------------------------------------
 # Write
 # ---------------------------------------------------------------------------
 
@@ -194,6 +264,7 @@ def write_action_lists(
     out_dir: Path,
     *,
     as_of_date: str = "",
+    microcap_sleeve: Optional[List[Dict[str, str]]] = None,
 ) -> Path:
     """Write per-bucket CSVs and README.md to out_dir.
 
@@ -209,8 +280,17 @@ def write_action_lists(
             writer.writeheader()
             writer.writerows(rows)
 
+    # Microcap inversion sleeve (opt-in)
+    if microcap_sleeve is not None:
+        sleeve_cols = ACTION_LIST_COLUMNS + ["size_band"]
+        csv_path = out_dir / f"{MICROCAP_SLEEVE_NAME}.csv"
+        with open(csv_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=sleeve_cols)
+            writer.writeheader()
+            writer.writerows(microcap_sleeve)
+
     # README summary
-    readme = _build_readme(buckets, as_of_date)
+    readme = _build_readme(buckets, as_of_date, microcap_sleeve=microcap_sleeve)
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
     return out_dir
@@ -219,6 +299,8 @@ def write_action_lists(
 def _build_readme(
     buckets: Dict[str, List[Dict[str, str]]],
     as_of_date: str,
+    *,
+    microcap_sleeve: Optional[List[Dict[str, str]]] = None,
 ) -> str:
     """Generate a summary README.md for the action lists."""
     lines: List[str] = []
@@ -262,6 +344,35 @@ def _build_readme(
     lines.append(f"- **Binary book**: {binary_count} names, {binary_weight:.1f}% weight")
     lines.append(f"- **Less-binary book**: {lb_count} names, {lb_weight:.1f}% weight")
     lines.append("")
+
+    # Microcap inversion sleeve (if present)
+    if microcap_sleeve:
+        lines.append("## Microcap Inversion Sleeve (opt-in)")
+        lines.append("")
+        lines.append(
+            "**WARNING**: This sleeve is intentionally microcap/illiquidity-exposed. "
+            "Use only when account size permits and you accept concentration risk "
+            "in XS-band names with no dated catalyst."
+        )
+        lines.append("")
+        lines.append(f"- **Names**: {len(microcap_sleeve)}")
+        lines.append("- **Selection**: Bottom-K by actionable_rank (contrarian)")
+        lines.append("- **Universe**: less-binary bucket, XS band only")
+        sleeve_weights = [_safe_float(r.get("target_weight_pct", "")) for r in microcap_sleeve]
+        if sleeve_weights:
+            lines.append(f"- **Median weight (from DEM)**: {statistics.median(sleeve_weights):.2f}%")
+        lines.append("")
+        lines.append("| Rank | Ticker | Tier | Catalyst Mode | Weight |")
+        lines.append("|------|--------|------|---------------|--------|")
+        for r in microcap_sleeve[:20]:
+            lines.append(
+                f"| {r.get('actionable_rank', '')} "
+                f"| {r.get('ticker', '')} "
+                f"| {r.get('tier_any', '')} "
+                f"| {r.get('catalyst_mode', '')} "
+                f"| {_safe_float(r.get('target_weight_pct', '')):.2f}% |"
+            )
+        lines.append("")
 
     # Classification rules
     lines.append("## Classification Rules")
@@ -309,6 +420,21 @@ def main():
         default=False,
         help="Include ineligible names (default: eligible only)",
     )
+    parser.add_argument(
+        "--include-microcap-sleeve",
+        action="store_true",
+        default=False,
+        help=(
+            "Include microcap inversion sleeve: bottom-K of less-binary bucket, "
+            "XS band only. Intentionally illiquidity-exposed (research/opt-in)."
+        ),
+    )
+    parser.add_argument(
+        "--microcap-sleeve-k",
+        type=int,
+        default=MICROCAP_SLEEVE_DEFAULT_K,
+        help=f"Number of names in microcap sleeve (default: {MICROCAP_SLEEVE_DEFAULT_K}).",
+    )
     args = parser.parse_args()
 
     if args.snapshot_dir:
@@ -329,13 +455,24 @@ def main():
     out_dir = args.out_dir or (snap_dir / "action_lists")
 
     buckets = build_action_lists(snap_dir, eligible_only=not args.include_ineligible)
-    write_action_lists(buckets, out_dir, as_of_date=snap_dir.name)
+
+    sleeve = None
+    if args.include_microcap_sleeve:
+        sleeve = build_microcap_sleeve(
+            snap_dir,
+            k=args.microcap_sleeve_k,
+            eligible_only=not args.include_ineligible,
+        )
+
+    write_action_lists(buckets, out_dir, as_of_date=snap_dir.name, microcap_sleeve=sleeve)
 
     total = sum(len(rows) for rows in buckets.values())
     print(f"Action lists → {out_dir}")
     for b in BUCKET_NAMES:
         print(f"  {b}: {len(buckets[b])} names")
     print(f"  total: {total}")
+    if sleeve is not None:
+        print(f"  {MICROCAP_SLEEVE_NAME}: {len(sleeve)} names (opt-in sleeve)")
 
 
 if __name__ == "__main__":

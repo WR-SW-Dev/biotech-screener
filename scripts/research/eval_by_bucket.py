@@ -47,11 +47,17 @@ BUCKET_DISPLAY = {
     "binary_31_90": "Binary 31-90d",
     "binary_91_180": "Binary 91-180d",
     "less_binary": "Less Binary",
+    "microcap_inversion": "Microcap Inversion (XS bottom-K)",
 }
 
 # Aggregate books
 BINARY_BUCKETS = ["binary_0_30", "binary_31_90", "binary_91_180"]
 ALL_BUCKETS = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
+
+# Microcap inversion sleeve: XS-band names from core bucket, bottom-K (contrarian)
+MICROCAP_BUCKET_FILTER = ["core"]
+MICROCAP_SIZE_BANDS = ("XS",)
+MICROCAP_HORIZONS = [84, 126]
 
 SCHEMA = "eval_by_bucket.v1"
 
@@ -96,6 +102,7 @@ def run_bucket_eval(
     rebalance_buffer_ranks: int = 0,
     industry_neutral: bool = False,
     bucket_specific_horizons: bool = False,
+    include_microcap_sleeve: bool = False,
 ) -> Dict[str, Any]:
     """Run evaluate() for each bucket and return combined results.
 
@@ -104,6 +111,8 @@ def run_bucket_eval(
         bucket_specific_horizons: If True, use BUCKET_DEFAULT_HORIZONS per bucket
             instead of the uniform ``horizons`` list.  Each bucket gets its own
             primary + guardrail horizons aligned to how the setup monetizes.
+        include_microcap_sleeve: If True, add a microcap inversion bucket
+            (core/XS, bottom-K) to the results.
 
     Returns a dict with schema, per-bucket summaries, and aggregate metrics.
     """
@@ -188,6 +197,70 @@ def run_bucket_eval(
 
         results["buckets"][bucket_name] = bucket_metrics
 
+    # Microcap inversion sleeve (opt-in)
+    if include_microcap_sleeve:
+        mc_name = "microcap_inversion"
+        mc_out = out_dir / mc_name
+        mc_out.mkdir(parents=True, exist_ok=True)
+        mc_horizons = MICROCAP_HORIZONS
+
+        if bucket_specific_horizons:
+            all_horizons_set.update(mc_horizons)
+            results["horizons"] = sorted(all_horizons_set)
+
+        print(f"\n{'='*60}")
+        print(
+            f"Evaluating sleeve: {BUCKET_DISPLAY[mc_name]} "
+            f"(filter={MICROCAP_BUCKET_FILTER}, size={MICROCAP_SIZE_BANDS}, "
+            f"mode=bottom, horizons={mc_horizons})"
+        )
+        print(f"{'='*60}")
+
+        mc_summary, _, _ = evaluate(
+            snapshot_root=snapshot_root,
+            price_csv=price_csv,
+            horizons=mc_horizons,
+            top_k=top_k,
+            cost_bps=cost_bps,
+            date_from=date_from,
+            date_to=date_to,
+            allowed_dates=allowed_dates,
+            anchor_mode=anchor_mode,
+            benchmark=benchmark,
+            out_dir=mc_out,
+            bucket_filter=MICROCAP_BUCKET_FILTER,
+            rebalance_buffer_ranks=rebalance_buffer_ranks,
+            industry_neutral=industry_neutral,
+            selection_mode="bottom",
+            min_mcap_buckets=MICROCAP_SIZE_BANDS,
+        )
+
+        mc_metrics: Dict[str, Any] = {
+            "display_name": BUCKET_DISPLAY[mc_name],
+            "filter": MICROCAP_BUCKET_FILTER,
+            "size_bands": list(MICROCAP_SIZE_BANDS),
+            "selection_mode": "bottom",
+            "horizons": mc_horizons,
+            "n_evaluated": mc_summary.n_evaluated,
+            "n_dates": mc_summary.n_dates,
+            "by_horizon": {},
+        }
+
+        for h in mc_horizons:
+            bh = mc_summary.by_horizon.get(h, {})
+            mc_metrics["by_horizon"][h] = {
+                "n_dates": bh.get("n_dates", 0),
+                "mean_ic": bh.get("mean_ic"),
+                "ic_t_stat": bh.get("ic_t_stat"),
+                "mean_net_return": bh.get("mean_net_return"),
+                "mean_excess_return": bh.get("mean_excess_return"),
+                "mean_hedged_return": bh.get("mean_hedged_return"),
+                "mean_turnover": bh.get("mean_turnover"),
+                "mean_industry_neutral_ic": bh.get("mean_industry_neutral_ic"),
+            }
+
+        results["buckets"][mc_name] = mc_metrics
+
     return results
 
 
@@ -259,6 +332,30 @@ def write_verdict_md(results: Dict[str, Any], out_dir: Path) -> Path:
                 )
             lines.append("")
 
+    # Microcap inversion sleeve (if present)
+    if "microcap_inversion" in results.get("buckets", {}):
+        mc = results["buckets"]["microcap_inversion"]
+        mc_horizons = mc.get("horizons", [84, 126])
+        lines.append("## Microcap Inversion Sleeve (opt-in)")
+        lines.append("")
+        lines.append("XS-band bottom-K from core bucket (contrarian). " "Intentionally microcap/illiquidity-exposed.")
+        lines.append("")
+        lines.append("| Horizon | N | Mean IC | IC t | Net Return | " "Excess | Hedged | Turnover |")
+        lines.append("|---------|---|---------|------|------------|" "--------|--------|----------|")
+        for h in mc_horizons:
+            bh = mc.get("by_horizon", {}).get(h, {})
+            lines.append(
+                f"| {h}d "
+                f"| {bh.get('n_dates', 0)} "
+                f"| {_fmt(bh.get('mean_ic'))} "
+                f"| {_fmt(bh.get('ic_t_stat'), 2)} "
+                f"| {_fmt_pct(bh.get('mean_net_return'))} "
+                f"| {_fmt_pct(bh.get('mean_excess_return'))} "
+                f"| {_fmt_pct(bh.get('mean_hedged_return'))} "
+                f"| {_fmt(bh.get('mean_turnover'))} |"
+            )
+        lines.append("")
+
     # Binary vs less-binary aggregate (use primary horizons)
     lines.append("## Binary vs Less-Binary Aggregate")
     lines.append("")
@@ -328,6 +425,15 @@ def main():
             "binary_91_180=84/126d, less_binary=84/126d."
         ),
     )
+    parser.add_argument(
+        "--include-microcap-sleeve",
+        action="store_true",
+        default=False,
+        help=(
+            "Include microcap inversion sleeve: core/XS bottom-K (contrarian). "
+            "Deliberately illiquidity-exposed (research/opt-in)."
+        ),
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -348,6 +454,7 @@ def main():
         rebalance_buffer_ranks=args.rebalance_buffer_ranks,
         industry_neutral=args.industry_neutral,
         bucket_specific_horizons=args.bucket_specific_horizons,
+        include_microcap_sleeve=args.include_microcap_sleeve,
     )
 
     # Write combined results
@@ -362,10 +469,14 @@ def main():
     print(f"  VERDICT.md       → {verdict_path}")
 
     # Print summary
-    for b in ALL_BUCKETS:
+    all_bucket_names = ALL_BUCKETS + (["microcap_inversion"] if "microcap_inversion" in results["buckets"] else [])
+    for b in all_bucket_names:
         bm = results["buckets"].get(b, {})
+        if not bm:
+            continue
         eff_h = bm.get("horizons", horizons)
-        print(f"\n  {BUCKET_DISPLAY[b]} (horizons={eff_h}):")
+        display = BUCKET_DISPLAY.get(b, b)
+        print(f"\n  {display} (horizons={eff_h}):")
         for h in eff_h:
             bh = bm.get("by_horizon", {}).get(h, {})
             print(
