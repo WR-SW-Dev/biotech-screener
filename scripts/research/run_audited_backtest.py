@@ -50,8 +50,8 @@ from tools.snapshot_preflight import (
     write_preflight_artifacts,
 )
 
-
 # ── Helpers ─────────────────────────────────────────────────────────
+
 
 def _make_run_id() -> str:
     return datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -93,9 +93,12 @@ def _run_rerank(
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "research" / "rerank_snapshots.py"),
-        "--snapshot-root", str(snapshot_root),
-        "--out-root", str(out_root),
-        "--ruleset", str(ruleset_path),
+        "--snapshot-root",
+        str(snapshot_root),
+        "--out-root",
+        str(out_root),
+        "--ruleset",
+        str(ruleset_path),
     ]
     if date_from:
         cmd += ["--date-from", date_from]
@@ -126,19 +129,28 @@ def _run_eval(
     rebalance_buffer_ranks: int = 0,
     turnover_cap: float = 0.0,
     ruleset_path: Optional[Path] = None,
+    bucket_filter: Optional[List[str]] = None,
 ) -> int:
     """Run eval_forward_returns.py as a subprocess.  Returns exit code."""
     cmd = [
         sys.executable,
         str(PROJECT_ROOT / "scripts" / "eval_forward_returns.py"),
-        "--snapshot-root", str(snapshot_root),
-        "--price-csv", str(price_csv),
-        "--horizons", ",".join(str(h) for h in horizons),
-        "--top-k", str(top_k),
-        "--cost-bps", str(cost_bps),
-        "--anchor-mode", anchor_mode,
-        "--benchmark", benchmark,
-        "--out-dir", str(out_dir),
+        "--snapshot-root",
+        str(snapshot_root),
+        "--price-csv",
+        str(price_csv),
+        "--horizons",
+        ",".join(str(h) for h in horizons),
+        "--top-k",
+        str(top_k),
+        "--cost-bps",
+        str(cost_bps),
+        "--anchor-mode",
+        anchor_mode,
+        "--benchmark",
+        benchmark,
+        "--out-dir",
+        str(out_dir),
     ]
     if ruleset_path:
         cmd += ["--ruleset", str(ruleset_path)]
@@ -156,17 +168,26 @@ def _run_eval(
         cmd += ["--rebalance-buffer-ranks", str(rebalance_buffer_ranks)]
     if turnover_cap > 0:
         cmd += ["--turnover-cap", str(turnover_cap)]
+    if bucket_filter:
+        cmd += ["--bucket-filter", ",".join(bucket_filter)]
     print(f"  eval cmd: {' '.join(cmd)}")
     result = subprocess.run(cmd, cwd=str(PROJECT_ROOT))
     return result.returncode
 
 
+# Book-split bucket definitions
+BINARY_BOOK_BUCKETS = ["binary_now", "build_window"]
+CORE_BOOK_BUCKETS = ["less_binary", "core"]
+BINARY_BOOK_HORIZONS = [5, 20, 84]
+CORE_BOOK_HORIZONS = [84, 126]
+
+
 # ── Verdict ──────────────────────────────────────────────────────────
 
 # Promotion thresholds (pp = percentage points, not fraction)
-_PRIMARY_THRESHOLD_PP: float = 0.20    # 126d net Δ must be ≥ this
+_PRIMARY_THRESHOLD_PP: float = 0.20  # 126d net Δ must be ≥ this
 _GUARDRAIL_THRESHOLD_PP: float = -0.05  # 84d net Δ must be ≥ this
-_MIN_DATES_FOR_VERDICT: int = 50        # fewer → NEEDS_MORE regardless
+_MIN_DATES_FOR_VERDICT: int = 50  # fewer → NEEDS_MORE regardless
 
 
 def _load_eval_summary(eval_dir: Path) -> Optional[Dict[str, Any]]:
@@ -243,14 +264,13 @@ def _compute_verdict(
         guardrail_delta = results.get(str(guardrail_h), {}).get("delta_net_pp") if guardrail_h else None
 
         primary_pass = primary_delta is not None and primary_delta >= primary_threshold_pp
-        guardrail_pass = (guardrail_delta is None  # single-horizon: no guardrail check
-                         or guardrail_delta >= guardrail_threshold_pp)
+        guardrail_pass = (
+            guardrail_delta is None or guardrail_delta >= guardrail_threshold_pp  # single-horizon: no guardrail check
+        )
 
         if primary_pass and guardrail_pass:
             verdict = "PROMOTE"
-            reasons.append(
-                f"{primary_h}d Δ = {primary_delta:+.3f}pp ≥ threshold {primary_threshold_pp:+.2f}pp"
-            )
+            reasons.append(f"{primary_h}d Δ = {primary_delta:+.3f}pp ≥ threshold {primary_threshold_pp:+.2f}pp")
             if guardrail_delta is not None:
                 reasons.append(
                     f"{guardrail_h}d Δ = {guardrail_delta:+.3f}pp ≥ guardrail {guardrail_threshold_pp:+.2f}pp"
@@ -258,9 +278,7 @@ def _compute_verdict(
         else:
             verdict = "ARCHIVE"
             if primary_delta is not None and not primary_pass:
-                reasons.append(
-                    f"{primary_h}d Δ = {primary_delta:+.3f}pp < threshold {primary_threshold_pp:+.2f}pp"
-                )
+                reasons.append(f"{primary_h}d Δ = {primary_delta:+.3f}pp < threshold {primary_threshold_pp:+.2f}pp")
             if guardrail_delta is not None and not guardrail_pass:
                 reasons.append(
                     f"{guardrail_h}d Δ = {guardrail_delta:+.3f}pp < guardrail {guardrail_threshold_pp:+.2f}pp"
@@ -304,17 +322,19 @@ def _write_verdict(
 
     # ── JSON ────────────────────────────────────────────────────────
     full = dict(verdict)
-    full.update({
-        "name": name,
-        "run_id": run_id,
-        "git_sha": git_sha,
-        "candidate_ruleset": candidate_ruleset,
-        "baseline_ruleset": baseline_ruleset,
-        "date_from": date_from,
-        "date_to": date_to,
-        "relaxed": relaxed,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-    })
+    full.update(
+        {
+            "name": name,
+            "run_id": run_id,
+            "git_sha": git_sha,
+            "candidate_ruleset": candidate_ruleset,
+            "baseline_ruleset": baseline_ruleset,
+            "date_from": date_from,
+            "date_to": date_to,
+            "relaxed": relaxed,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+        }
+    )
     json_path = out_dir / "VERDICT.json"
     json_path.write_text(json.dumps(full, indent=2, default=str), encoding="utf-8")
 
@@ -324,8 +344,8 @@ def _write_verdict(
     lines += [
         f"# Research Verdict — {name}",
         "",
-        f"| Field | Value |",
-        f"|-------|-------|",
+        "| Field | Value |",
+        "|-------|-------|",
         f"| Verdict | **{icon} {v}** |",
         f"| Run ID | `{run_id}` |",
         f"| Git SHA | `{git_sha}` |",
@@ -346,20 +366,15 @@ def _write_verdict(
         sign = "+" if val >= 0 else ""
         return f"{sign}{val:.3f}pp"
 
-    primary_label = f"{ph}d _(primary)_" if ph else "—"
-    guardrail_label = f"{gh}d _(guardrail)_" if gh else "—"
-
     lines += [
         "## Results",
         "",
-        f"| Horizon | Net% | Excess% | Hedged% | Turnover% | Δ Net (pp) |",
-        f"|---------|------|---------|---------|-----------|------------|",
+        "| Horizon | Net% | Excess% | Hedged% | Turnover% | Δ Net (pp) |",
+        "|---------|------|---------|---------|-----------|------------|",
     ]
     for h_str, row in sorted(res.items(), key=lambda x: int(x[0])):
         h_int = int(h_str)
-        label = (f"{h_int}d (primary)" if h_int == ph
-                 else f"{h_int}d (guardrail)" if h_int == gh
-                 else f"{h_int}d")
+        label = f"{h_int}d (primary)" if h_int == ph else f"{h_int}d (guardrail)" if h_int == gh else f"{h_int}d"
         delta_str = _fmt_delta(row.get("delta_net_pp"))
         lines.append(
             f"| {label} | {_fmt(row.get('net_pct'), '%')} "
@@ -374,8 +389,8 @@ def _write_verdict(
     lines += [
         "## Thresholds",
         "",
-        f"| | Threshold | Result |",
-        f"|--|-----------|--------|",
+        "| | Threshold | Result |",
+        "|--|-----------|--------|",
     ]
     if ph:
         ph_delta = res.get(str(ph), {}).get("delta_net_pp")
@@ -407,8 +422,7 @@ def _write_verdict(
             "## Next Step",
             "",
             "```bash",
-            f"python3 scripts/promote_ruleset.py <ruleset_id> "
-            f"--reason \"verdict: {name}\"",
+            f"python3 scripts/promote_ruleset.py <ruleset_id> " f'--reason "verdict: {name}"',
             "```",
             "",
         ]
@@ -426,6 +440,7 @@ def _write_verdict(
 
 
 # ── AUDIT.md writer ─────────────────────────────────────────────────
+
 
 def _write_audit_md(
     out_dir: Path,
@@ -451,6 +466,8 @@ def _write_audit_md(
     reranked: bool,
     preflight_dir: Path,
     eval_dir: Path,
+    eval_binary_dir: Optional[Path] = None,
+    eval_core_dir: Optional[Path] = None,
 ) -> Path:
     """Write AUDIT.md summarizing the audited backtest run."""
     lines: List[str] = []
@@ -577,11 +594,54 @@ def _write_audit_md(
                 lines.append(f"- ({count}x) {detail}")
         lines.append("")
 
+    # Book-split results
+    if eval_binary_dir or eval_core_dir:
+        lines.append("## Book-Split Results")
+        lines.append("")
+        for label, book_dir, book_horizons in [
+            ("Binary Book (0-90d catalyst)", eval_binary_dir, [5, 20, 84]),
+            ("Core Book (91d+ / no catalyst)", eval_core_dir, [84, 126]),
+        ]:
+            if book_dir is None:
+                continue
+            book_summary = _load_eval_summary(book_dir)
+            lines.append(f"### {label}")
+            lines.append("")
+            if book_summary is None:
+                lines.append("_Eval summary not available._")
+                lines.append("")
+                continue
+            n_eval = book_summary.get("n_evaluated", 0)
+            lines.append(f"- Dates evaluated: {n_eval}")
+            lines.append("")
+            by_h = book_summary.get("by_horizon", {})
+            if by_h:
+                lines.append("| Horizon | IC | IC t-stat | Net% | Excess% | Turnover% |")
+                lines.append("|---------|-----|----------|------|---------|-----------|")
+                for h in book_horizons:
+                    bh = by_h.get(str(h), {})
+                    ic = bh.get("mean_ic")
+                    ic_t = bh.get("ic_t_stat")
+                    net = bh.get("mean_net_return")
+                    excess = bh.get("mean_excess_return")
+                    turn = bh.get("mean_turnover")
+                    ic_s = f"{ic:.4f}" if ic is not None else "—"
+                    ic_t_s = f"{ic_t:.2f}" if ic_t is not None else "—"
+                    net_s = f"{net * 100:.3f}%" if net is not None else "—"
+                    exc_s = f"{excess * 100:.3f}%" if excess is not None else "—"
+                    turn_s = f"{turn * 100:.1f}%" if turn is not None else "—"
+                    lines.append(f"| {h}d | {ic_s} | {ic_t_s} | {net_s} " f"| {exc_s} | {turn_s} |")
+                lines.append("")
+
     # Output paths
     lines.append("## Output Paths")
     lines.append("")
     lines.append(f"- Preflight artifacts: `{preflight_dir}`")
     lines.append(f"- Eval outputs: `{eval_dir}`")
+    if eval_binary_dir:
+        lines.append(f"- Binary book eval: `{eval_binary_dir}`")
+    if eval_core_dir:
+        lines.append(f"- Core book eval: `{eval_core_dir}`")
     lines.append(f"- This audit: `{out_dir / 'AUDIT.md'}`")
     lines.append("")
 
@@ -591,6 +651,7 @@ def _write_audit_md(
 
 
 # ── Main ────────────────────────────────────────────────────────────
+
 
 def run_audited_backtest(
     *,
@@ -616,12 +677,18 @@ def run_audited_backtest(
     run_id: Optional[str] = None,
     rebalance_buffer_ranks: int = 0,
     turnover_cap: float = 0.0,
+    book_split: bool = False,
 ) -> int:
     """Run an audited backtest.  Returns 0 on success, non-zero on failure.
 
     Defaults to strict preflight (WARN dates excluded).  For archive/OOS data
     where all snapshots carry WARN status, pass relaxed=True to include them.
     Use date_manifest to restrict evaluation to a curated allowed-date set.
+
+    If book_split=True, runs two additional eval passes after the main eval:
+      - Binary book (binary_now + build_window) at horizons 5, 20, 84d
+      - Core book (less_binary + core) at horizons 84, 126d
+    Results appear in eval_binary/ and eval_core/ subdirs of the run dir.
     """
     # --relaxed overrides the strict default
     effective_strict = preflight_strict and not relaxed
@@ -677,7 +744,8 @@ def run_audited_backtest(
         snapshot_root=snapshot_root,
     )
     write_preflight_artifacts(
-        report, preflight_dir,
+        report,
+        preflight_dir,
         run_id=run_id,
         snapshot_root=snapshot_root,
         date_from=eff_date_from,
@@ -686,8 +754,10 @@ def run_audited_backtest(
         strict=effective_strict,
         file_hashes=file_hashes,
     )
-    print(f"  preflight: {report.n_total} snapshots — "
-          f"{report.n_pass} PASS, {report.n_warn} WARN, {report.n_fail} FAIL")
+    print(
+        f"  preflight: {report.n_total} snapshots — "
+        f"{report.n_pass} PASS, {report.n_warn} WARN, {report.n_fail} FAIL"
+    )
     print(f"  artifacts → {preflight_dir}")
     print()
 
@@ -700,8 +770,11 @@ def run_audited_backtest(
         print("Step 2/4: Re-ranking snapshots...")
         rerank_out = run_dir / "reranked"
         rc = _run_rerank(
-            snapshot_root, rerank_out, ruleset_path,
-            date_from=eff_date_from, date_to=eff_date_to,
+            snapshot_root,
+            rerank_out,
+            ruleset_path,
+            date_from=eff_date_from,
+            date_to=eff_date_to,
             preflight=True,
         )
         if rc != 0:
@@ -717,7 +790,9 @@ def run_audited_backtest(
     # ── Step 3: Eval ────────────────────────────────────────────────
     print("Step 3/4: Running forward-return evaluation...")
     rc = _run_eval(
-        eval_snapshot_root, price_csv, eval_dir,
+        eval_snapshot_root,
+        price_csv,
+        eval_dir,
         horizons=horizons,
         top_k=top_k,
         cost_bps=cost_bps,
@@ -737,6 +812,67 @@ def run_audited_backtest(
         return rc
     print(f"  eval → {eval_dir}")
     print()
+
+    # ── Step 3b: Book-split eval (optional) ─────────────────────────
+    eval_binary_dir: Optional[Path] = None
+    eval_core_dir: Optional[Path] = None
+    if book_split:
+        print("Step 3b/5: Running book-split evaluations...")
+
+        # Binary book: binary_now + build_window at 5, 20, 84d
+        eval_binary_dir = run_dir / "eval_binary"
+        print("  [binary book] buckets=binary_now,build_window  horizons=5,20,84")
+        rc_bin = _run_eval(
+            eval_snapshot_root,
+            price_csv,
+            eval_binary_dir,
+            horizons=BINARY_BOOK_HORIZONS,
+            top_k=top_k,
+            cost_bps=cost_bps,
+            date_from=eff_date_from,
+            date_to=eff_date_to,
+            date_manifest=date_manifest,
+            anchor_mode=anchor_mode,
+            benchmark=benchmark,
+            preflight=True,
+            preflight_strict=effective_strict,
+            rebalance_buffer_ranks=rebalance_buffer_ranks,
+            turnover_cap=turnover_cap,
+            ruleset_path=ruleset_path,
+            bucket_filter=BINARY_BOOK_BUCKETS,
+        )
+        if rc_bin != 0:
+            print(f"  WARN: binary book eval exited with code {rc_bin}")
+        else:
+            print(f"  binary book → {eval_binary_dir}")
+
+        # Core book: less_binary + core at 84, 126d
+        eval_core_dir = run_dir / "eval_core"
+        print("  [core book] buckets=less_binary,core  horizons=84,126")
+        rc_core = _run_eval(
+            eval_snapshot_root,
+            price_csv,
+            eval_core_dir,
+            horizons=CORE_BOOK_HORIZONS,
+            top_k=top_k,
+            cost_bps=cost_bps,
+            date_from=eff_date_from,
+            date_to=eff_date_to,
+            date_manifest=date_manifest,
+            anchor_mode=anchor_mode,
+            benchmark=benchmark,
+            preflight=True,
+            preflight_strict=effective_strict,
+            rebalance_buffer_ranks=rebalance_buffer_ranks,
+            turnover_cap=turnover_cap,
+            ruleset_path=ruleset_path,
+            bucket_filter=CORE_BOOK_BUCKETS,
+        )
+        if rc_core != 0:
+            print(f"  WARN: core book eval exited with code {rc_core}")
+        else:
+            print(f"  core book → {eval_core_dir}")
+        print()
 
     # ── Step 4: AUDIT.md ────────────────────────────────────────────
     print("Step 4/5: Writing AUDIT.md...")
@@ -763,6 +899,8 @@ def run_audited_backtest(
         reranked=rerank,
         preflight_dir=preflight_dir,
         eval_dir=eval_dir,
+        eval_binary_dir=eval_binary_dir,
+        eval_core_dir=eval_core_dir,
     )
     print(f"  audit → {audit_path}")
     print()
@@ -775,18 +913,14 @@ def run_audited_backtest(
     if baseline_summary_path:
         if baseline_summary_path.is_file():
             try:
-                baseline_summary = json.loads(
-                    baseline_summary_path.read_text(encoding="utf-8")
-                )
+                baseline_summary = json.loads(baseline_summary_path.read_text(encoding="utf-8"))
             except Exception:
                 print(f"  WARN: could not parse baseline summary {baseline_summary_path}")
         elif baseline_summary_path.is_dir():
             baseline_summary = _load_eval_summary(baseline_summary_path)
 
     if cand_summary:
-        eff_verdict_name = verdict_name or (
-            ruleset_path.stem if ruleset_path else run_id
-        )
+        eff_verdict_name = verdict_name or (ruleset_path.stem if ruleset_path else run_id)
         verdict = _compute_verdict(cand_summary, baseline_summary)
         verdict_path = _write_verdict(
             run_dir,
@@ -815,21 +949,27 @@ def main() -> None:
         allow_abbrev=False,  # prevent --preflight silently matching --preflight-strict
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
     )
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help="Path to DecisionRuleset JSON",
     )
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--date-manifest", type=Path, default=None,
+        "--date-manifest",
+        type=Path,
+        default=None,
         help=(
             "Path to file with one YYYY-MM-DD date per line (strict curated set). "
             "Restricts eval to exactly those dates; derives --date-from/--date-to "
@@ -838,22 +978,29 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--horizons", type=str, default="63",
+        "--horizons",
+        type=str,
+        default="63",
         help="Comma-separated forward-return horizons (default: 63)",
     )
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--cost-bps", type=float, default=30)
     parser.add_argument(
-        "--anchor-mode", default="prev_trading_day",
+        "--anchor-mode",
+        default="prev_trading_day",
         choices=["exact", "prev_trading_day", "next_trading_day"],
     )
     parser.add_argument("--benchmark", default="XBI")
     parser.add_argument(
-        "--rerank", action="store_true", default=False,
+        "--rerank",
+        action="store_true",
+        default=False,
         help="Re-rank snapshots through --ruleset before evaluating",
     )
     parser.add_argument(
-        "--relaxed", action="store_true", default=False,
+        "--relaxed",
+        action="store_true",
+        default=False,
         help=(
             "Allow WARN-status snapshots (non-strict preflight). "
             "Required for archive/OOS data where all snapshots are WARN. "
@@ -861,32 +1008,43 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--check-pit", action="store_true", default=False,
+        "--check-pit",
+        action="store_true",
+        default=False,
         help="Enable PIT price cache checks in preflight",
     )
     parser.add_argument(
-        "--pit-cache-base", type=Path,
+        "--pit-cache-base",
+        type=Path,
         default=PROJECT_ROOT / "data" / "caches" / "price_pit" / "PIT",
     )
     parser.add_argument(
-        "--out-root", type=Path,
+        "--out-root",
+        type=Path,
         default=PROJECT_ROOT / "output" / "audited_backtests",
         help="Output root directory (default: output/audited_backtests)",
     )
     parser.add_argument(
-        "--rebalance-buffer-ranks", type=int, default=0,
+        "--rebalance-buffer-ranks",
+        type=int,
+        default=0,
         help="Buffer zone around top-K for rebalance (0=disabled)",
     )
     parser.add_argument(
-        "--turnover-cap", type=float, default=0.0,
+        "--turnover-cap",
+        type=float,
+        default=0.0,
         help="Max turnover fraction per rebalance (0=unlimited)",
     )
     parser.add_argument(
-        "--run-id", default=None,
+        "--run-id",
+        default=None,
         help="Run identifier (auto-generated if omitted)",
     )
     parser.add_argument(
-        "--baseline-summary", type=Path, default=None,
+        "--baseline-summary",
+        type=Path,
+        default=None,
         help=(
             "Path to baseline eval summary.json (or its parent dir) for delta "
             "computation in VERDICT.md. Without this, verdict is NEEDS_MORE. "
@@ -894,10 +1052,19 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--verdict-name", type=str, default=None,
+        "--verdict-name",
+        type=str,
+        default=None,
+        help=("Human-readable name for VERDICT.md header " "(default: ruleset filename stem or run_id)"),
+    )
+    parser.add_argument(
+        "--book-split",
+        action="store_true",
+        default=False,
         help=(
-            "Human-readable name for VERDICT.md header "
-            "(default: ruleset filename stem or run_id)"
+            "Run separate evaluations for binary book (0-90d catalyst, "
+            "horizons 5/20/84d) and core book (91d+, horizons 84/126d). "
+            "Results appear in eval_binary/ and eval_core/ subdirs."
         ),
     )
     args = parser.parse_args()
@@ -926,6 +1093,7 @@ def main() -> None:
         run_id=args.run_id,
         rebalance_buffer_ranks=args.rebalance_buffer_ranks,
         turnover_cap=args.turnover_cap,
+        book_split=args.book_split,
     )
     sys.exit(rc)
 

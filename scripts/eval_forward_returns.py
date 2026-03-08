@@ -18,8 +18,9 @@ import logging
 import math
 import statistics
 import sys
-from dataclasses import asdict, dataclass, field, replace as dc_replace
-from datetime import date, datetime, timedelta
+from dataclasses import asdict, dataclass, field
+from dataclasses import replace as dc_replace
+from datetime import date, datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -28,7 +29,8 @@ log = logging.getLogger(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.ranking_utils import backfill_columns, safe_float as _ranking_safe_float
+from common.ranking_utils import backfill_columns
+from common.ranking_utils import safe_float as _ranking_safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
 
 # ---------------------------------------------------------------------------
@@ -52,17 +54,20 @@ SIGNAL_FLAG_MAP = {
 # Logistic decay (copied from decision_engine.py:435-440 for eval-time use)
 # ---------------------------------------------------------------------------
 
+
 def _logistic_decay(days: float, midpoint: float = 150.0, scale: float = 30.0) -> float:
     """Continuous proximity weight: 1.0 (imminent) -> 0.0 (distant). Midpoint -> 0.5."""
     if days is None or days < 0:
         return 0.0
     from math import exp
+
     return 1.0 / (1.0 + exp((days - midpoint) / max(scale, 1e-6)))
 
 
 # ---------------------------------------------------------------------------
 # Price loader  (lightweight, no pandas dependency)
 # ---------------------------------------------------------------------------
+
 
 def load_price_series(csv_path: Path) -> Dict[str, Dict[str, float]]:
     """Load price_history.csv -> {ticker: {date_str: close}}."""
@@ -156,6 +161,7 @@ def compute_forward_return(
 # Spearman IC (manual, no scipy)
 # ---------------------------------------------------------------------------
 
+
 def _avg_ranks(values: List[float]) -> List[float]:
     """Average-rank with tie handling (1-based)."""
     n = len(values)
@@ -193,6 +199,7 @@ def spearman_ic(signal: List[float], returns: List[float]) -> Optional[float]:
 # ---------------------------------------------------------------------------
 # Portfolio return + turnover
 # ---------------------------------------------------------------------------
+
 
 def top_k_portfolio_return(
     tickers_ranked: List[str],
@@ -244,6 +251,7 @@ def net_return(gross: float, turnover: float, cost_bps: float) -> float:
 # Long-short decile spread
 # ---------------------------------------------------------------------------
 
+
 def _decile_spread(
     tickers_ranked: List[str],
     fwd_rets: Dict[str, float],
@@ -267,6 +275,7 @@ def _decile_spread(
 # ---------------------------------------------------------------------------
 # Beta-hedged portfolio return
 # ---------------------------------------------------------------------------
+
 
 def _avg_field(
     tickers: List[str],
@@ -314,8 +323,7 @@ def compute_residual_alpha(
     for dr in date_results:
         if dr.horizon != horizon or dr.skipped:
             continue
-        if (dr.gross_return is not None and dr.bottom_k_return is not None
-                and dr.benchmark_return is not None):
+        if dr.gross_return is not None and dr.bottom_k_return is not None and dr.benchmark_return is not None:
             ls = dr.gross_return - dr.bottom_k_return
             pairs.append((dr.benchmark_return, ls))
 
@@ -328,12 +336,10 @@ def compute_residual_alpha(
 
     # Residuals for alpha t-stat
     residuals = [ls_rets[i] - alpha - beta * bm_rets[i] for i in range(len(pairs))]
-    se_resid = math.sqrt(sum(r ** 2 for r in residuals) / max(len(pairs) - 2, 1))
+    se_resid = math.sqrt(sum(r**2 for r in residuals) / max(len(pairs) - 2, 1))
     # Standard error of alpha
-    var_x = sum((bm_rets[i] - statistics.mean(bm_rets)) ** 2
-                for i in range(len(pairs)))
-    se_alpha = se_resid * math.sqrt(1.0 / len(pairs) +
-                                     statistics.mean(bm_rets) ** 2 / max(var_x, 1e-12))
+    var_x = sum((bm_rets[i] - statistics.mean(bm_rets)) ** 2 for i in range(len(pairs)))
+    se_alpha = se_resid * math.sqrt(1.0 / len(pairs) + statistics.mean(bm_rets) ** 2 / max(var_x, 1e-12))
     alpha_t = alpha / se_alpha if se_alpha > 0 else 0.0
 
     return {
@@ -371,6 +377,7 @@ def _beta_hedged_return(
 # Decile curve + monotonicity diagnostics
 # ---------------------------------------------------------------------------
 
+
 def compute_decile_curve(
     tickers_ranked: List[str],
     fwd_rets: Dict[str, float],
@@ -390,15 +397,17 @@ def compute_decile_curve(
     pos = 0
     for d in range(10):
         bucket_size = d_size + (1 if d < remainder else 0)
-        bucket = eligible[pos:pos + bucket_size]
+        bucket = eligible[pos : pos + bucket_size]
         pos += bucket_size
         if bucket:
             mean_ret = statistics.mean(fwd_rets[t] for t in bucket)
-            curve.append({
-                "decile": d + 1,
-                "n": len(bucket),
-                "mean_return": round(mean_ret, 6),
-            })
+            curve.append(
+                {
+                    "decile": d + 1,
+                    "n": len(bucket),
+                    "mean_return": round(mean_ret, 6),
+                }
+            )
     return curve
 
 
@@ -444,6 +453,7 @@ def _write_sign_mismatch(
 # ---------------------------------------------------------------------------
 # Multi-variate OLS
 # ---------------------------------------------------------------------------
+
 
 def _multi_ols(
     x_cols: List[List[float]],
@@ -512,11 +522,15 @@ def compute_residual_alpha_multi(
     for dr in date_results:
         if dr.horizon != horizon or dr.skipped:
             continue
-        if (dr.gross_return is not None and dr.bottom_k_return is not None
-                and dr.benchmark_return is not None
-                and dr.topk_avg_beta is not None and dr.bottomk_avg_beta is not None
-                and dr.topk_avg_drawdown is not None
-                and dr.bottomk_avg_drawdown is not None):
+        if (
+            dr.gross_return is not None
+            and dr.bottom_k_return is not None
+            and dr.benchmark_return is not None
+            and dr.topk_avg_beta is not None
+            and dr.bottomk_avg_beta is not None
+            and dr.topk_avg_drawdown is not None
+            and dr.bottomk_avg_drawdown is not None
+        ):
             ls = dr.gross_return - dr.bottom_k_return
             beta_diff = dr.topk_avg_beta - dr.bottomk_avg_beta
             dd_diff = dr.topk_avg_drawdown - dr.bottomk_avg_drawdown
@@ -535,10 +549,9 @@ def compute_residual_alpha_multi(
 
     n = len(rows)
     p = 4
-    y_pred = [beta[0] + beta[1] * bm[i] + beta[2] * bd[i] + beta[3] * dd[i]
-              for i in range(n)]
+    y_pred = [beta[0] + beta[1] * bm[i] + beta[2] * bd[i] + beta[3] * dd[i] for i in range(n)]
     residuals = [ls[i] - y_pred[i] for i in range(n)]
-    se_resid = math.sqrt(sum(r ** 2 for r in residuals) / max(n - p, 1))
+    se_resid = math.sqrt(sum(r**2 for r in residuals) / max(n - p, 1))
     se_alpha = se_resid / math.sqrt(n) if n > 0 else 0.0
     alpha_t = alpha / se_alpha if se_alpha > 0 else 0.0
 
@@ -556,6 +569,7 @@ def compute_residual_alpha_multi(
 # ---------------------------------------------------------------------------
 # Walk-forward split assignment
 # ---------------------------------------------------------------------------
+
 
 def assign_splits(
     snap_dates: List[str],
@@ -611,6 +625,7 @@ def assign_splits(
 # ---------------------------------------------------------------------------
 # Snapshot discovery + loading
 # ---------------------------------------------------------------------------
+
 
 def discover_snapshot_dates(
     snapshot_root: Path,
@@ -687,6 +702,7 @@ def check_pit_metadata(snapshot_dir: Path, snap_date: str) -> Tuple[bool, str]:
 # Coinvest eval-mode rescoring
 # ---------------------------------------------------------------------------
 
+
 def rescore_rankings(
     rankings: List[Dict[str, str]],
     coinvest_eval_mode: str,
@@ -737,23 +753,27 @@ def rescore_rankings(
     backfill_columns(rankings)
 
     # Sort using production-identical logic (same pattern as rerank_snapshots.py:rerank())
-    rankings.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_ranking_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=rs,
-        tiebreaker_pct=(
-            _ranking_safe_float(r.get("alpha_cohort_pct"))
-            if rs.sort_anchor == "alpha_cohort"
-            else (_ranking_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _ranking_safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-    ))
+    rankings.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_ranking_safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=rs,
+            tiebreaker_pct=(
+                _ranking_safe_float(r.get("alpha_cohort_pct"))
+                if rs.sort_anchor == "alpha_cohort"
+                else (
+                    _ranking_safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _ranking_safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+        )
+    )
 
     # Assign actionable_rank for eligible rows
     rank = 1
@@ -771,6 +791,7 @@ def rescore_rankings(
 # Coinvest signal diagnostics
 # ---------------------------------------------------------------------------
 
+
 def _coinvest_signal_diagnostics(
     rankings: List[Dict[str, str]],
     top_k: int,
@@ -781,8 +802,7 @@ def _coinvest_signal_diagnostics(
         Dict with pct_with_signal, tier1_distribution, n_eligible, and
         the top-K ticker set for Jaccard comparison.
     """
-    eligible = [r for r in rankings
-                if r.get("eligible", "").lower() in ("true", "1")]
+    eligible = [r for r in rankings if r.get("eligible", "").lower() in ("true", "1")]
     n_eligible = len(eligible)
 
     tier1_vals: List[int] = []
@@ -837,6 +857,7 @@ def _coinvest_signal_diagnostics(
 # ---------------------------------------------------------------------------
 # Core evaluation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class DateResult:
@@ -954,6 +975,7 @@ def evaluate(
     ruleset: Optional[DecisionRuleset] = None,
     preflight: bool = False,
     preflight_strict: bool = False,
+    bucket_filter: Optional[List[str]] = None,
 ) -> Tuple[EvalSummary, List[DateResult], List[Dict[str, str]]]:
     """Run the full walk-forward evaluation.
 
@@ -979,18 +1001,21 @@ def evaluate(
         rebalance_buffer_ranks: buffer zone around top-K for rebalance.
         turnover_cap: max turnover fraction per rebalance (0=unlimited).
         top_quantile: use top N% instead of top-K (0=use top_k).
+        bucket_filter: if provided, only include tickers whose catalyst_bucket
+            is in this list (e.g. ["binary_now", "build_window"]).
 
     Returns (summary, date_results, skips).
     """
-    snap_dates = discover_snapshot_dates(
-        snapshot_root, date_from, date_to, allowed_dates=allowed_dates
-    )
+    snap_dates = discover_snapshot_dates(snapshot_root, date_from, date_to, allowed_dates=allowed_dates)
 
     # Assign train/test splits
     split_map = assign_splits(
-        snap_dates, split_mode,
-        train_end=train_end, test_start=test_start,
-        wf_train_months=wf_train_months, wf_test_months=wf_test_months,
+        snap_dates,
+        split_mode,
+        train_end=train_end,
+        test_start=test_start,
+        wf_train_months=wf_train_months,
+        wf_test_months=wf_test_months,
     )
 
     prices = load_price_series(price_csv)
@@ -1023,8 +1048,12 @@ def evaluate(
 
     # Component eval accumulators
     COMPONENT_COLS = [
-        "clinical_score_z_tier", "coinvest_score_z", "catalyst_decay_w",
-        "clinical_alpha_z", "inst_delta_z", "alpha_cohort_raw",
+        "clinical_score_z_tier",
+        "coinvest_score_z",
+        "catalyst_decay_w",
+        "clinical_alpha_z",
+        "inst_delta_z",
+        "alpha_cohort_raw",
         "de_alpha_60d",
     ]
     component_results: List[Dict[str, Any]] = []  # per-date per-horizon per-component
@@ -1045,8 +1074,7 @@ def evaluate(
             ok, reason = check_pit_metadata(snap_dir, snap_date)
             if not ok:
                 for h in horizons:
-                    dr = DateResult(date=snap_date, horizon=h, skipped=True,
-                                    skip_reason=f"PIT: {reason}")
+                    dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason=f"PIT: {reason}")
                     date_results.append(dr)
                 skips.append({"date": snap_date, "reason": f"PIT: {reason}"})
                 continue
@@ -1054,48 +1082,62 @@ def evaluate(
         # Preflight check
         if preflight or preflight_strict:
             from tools.snapshot_preflight import run_preflight as _run_preflight
+
             pf = _run_preflight(snap_dir, snap_date)
-            skip_pf = (pf.status == "FAIL"
-                       or (preflight_strict and pf.status == "WARN"))
+            skip_pf = pf.status == "FAIL" or (preflight_strict and pf.status == "WARN")
             if skip_pf:
-                details = "; ".join(
-                    c.detail for c in pf.checks if c.status != "PASS"
-                )
+                details = "; ".join(c.detail for c in pf.checks if c.status != "PASS")
                 tag = f"preflight_{pf.status}"
                 for h in horizons:
-                    dr = DateResult(date=snap_date, horizon=h, skipped=True,
-                                    skip_reason=f"{tag}: {details}")
+                    dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason=f"{tag}: {details}")
                     date_results.append(dr)
-                skips.append({"date": snap_date,
-                              "reason": f"{tag}: {details}"})
+                skips.append({"date": snap_date, "reason": f"{tag}: {details}"})
                 continue
 
         # Resolve trade_date from anchor_mode
         trade_date = resolve_trade_date(sorted_dates, snap_date, anchor_mode)
         if trade_date is None:
             for h in horizons:
-                dr = DateResult(date=snap_date, horizon=h, skipped=True,
-                                skip_reason="ANCHOR_DATE_NOT_FOUND")
+                dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason="ANCHOR_DATE_NOT_FOUND")
                 date_results.append(dr)
-            skips.append({"date": snap_date,
-                          "reason": f"ANCHOR_DATE_NOT_FOUND (mode={anchor_mode})"})
+            skips.append({"date": snap_date, "reason": f"ANCHOR_DATE_NOT_FOUND (mode={anchor_mode})"})
             continue
 
         # Load rankings or positions
         if use_positions:
             positions = load_positions(snap_dir)
-            tickers_ranked = [r["ticker"] for r in positions
-                              if r.get("ticker")]
+            tickers_ranked = [r["ticker"] for r in positions if r.get("ticker")]
             eligible_set: set = set(tickers_ranked)
         else:
             rankings = load_rankings(snap_dir)
             if not rankings:
                 for h in horizons:
-                    dr = DateResult(date=snap_date, horizon=h, skipped=True,
-                                    skip_reason="EMPTY_RANKINGS")
+                    dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason="EMPTY_RANKINGS")
                     date_results.append(dr)
                 skips.append({"date": snap_date, "reason": "EMPTY_RANKINGS"})
                 continue
+
+            # Bucket filter: restrict to tickers matching catalyst_bucket
+            if bucket_filter is not None:
+                _allowed_buckets = set(bucket_filter)
+                rankings = [r for r in rankings if r.get("catalyst_bucket", "").strip() in _allowed_buckets]
+                if not rankings:
+                    for h in horizons:
+                        dr = DateResult(
+                            date=snap_date,
+                            horizon=h,
+                            skipped=True,
+                            skip_reason="EMPTY_AFTER_BUCKET_FILTER",
+                        )
+                        date_results.append(dr)
+                    skips.append(
+                        {
+                            "date": snap_date,
+                            "reason": f"EMPTY_AFTER_BUCKET_FILTER ({','.join(bucket_filter)})",
+                        }
+                    )
+                    continue
+
             # Coinvest signal diagnostics (before any rescore)
             diag = _coinvest_signal_diagnostics(rankings, top_k)
             coinvest_diag_per_date.append(diag)
@@ -1115,11 +1157,10 @@ def evaluate(
                     return int(r.get("actionable_rank") or 9999)
                 except (ValueError, TypeError):
                     return 9999
+
             rankings.sort(key=_safe_rank)
             tickers_ranked = [r["ticker"] for r in rankings if r.get("ticker")]
-            eligible_set = {r["ticker"] for r in rankings
-                           if r.get("ticker")
-                           and r.get("actionable_rank", "").strip()}
+            eligible_set = {r["ticker"] for r in rankings if r.get("ticker") and r.get("actionable_rank", "").strip()}
 
         # Build per-ticker lookups from rankings for hedged returns + diagnostics
         beta_by_ticker: Dict[str, float] = {}
@@ -1179,9 +1220,7 @@ def evaluate(
                     if days_str and str(days_str).strip():
                         try:
                             days_val = float(days_str)
-                            scores["catalyst_decay_w"] = round(
-                                _logistic_decay(days_val), 4
-                            )
+                            scores["catalyst_decay_w"] = round(_logistic_decay(days_val), 4)
                         except (ValueError, TypeError):
                             pass
                 if scores:
@@ -1227,16 +1266,26 @@ def evaluate(
 
             coverage = n_universe_eval / max(len(tickers_ranked), 1)
             if coverage < min_price_coverage:
-                dr = DateResult(date=snap_date, horizon=h, trade_date=trade_date,
-                                skipped=True, skip_reason="LOW_COVERAGE",
-                                coverage=round(coverage, 4),
-                                n_universe_eval=n_universe_eval,
-                                n_missing_anchor=n_missing_anchor,
-                                n_missing_forward=n_missing_forward)
+                dr = DateResult(
+                    date=snap_date,
+                    horizon=h,
+                    trade_date=trade_date,
+                    skipped=True,
+                    skip_reason="LOW_COVERAGE",
+                    coverage=round(coverage, 4),
+                    n_universe_eval=n_universe_eval,
+                    n_missing_anchor=n_missing_anchor,
+                    n_missing_forward=n_missing_forward,
+                )
                 date_results.append(dr)
-                skips.append({"date": snap_date, "horizon": str(h),
-                              "trade_date": trade_date,
-                              "reason": f"LOW_COVERAGE ({coverage:.1%})"})
+                skips.append(
+                    {
+                        "date": snap_date,
+                        "horizon": str(h),
+                        "trade_date": trade_date,
+                        "reason": f"LOW_COVERAGE ({coverage:.1%})",
+                    }
+                )
                 continue
 
             # In price_available mode, restrict the ranked list to eval universe
@@ -1247,8 +1296,7 @@ def evaluate(
 
             # Signal: negative actionable_rank (lower rank = better = higher signal)
             signal_tickers = [t for t in eval_tickers if t in fwd_rets]
-            signal_vals = [-float(i + 1) for i, t in enumerate(eval_tickers)
-                           if t in fwd_rets]
+            signal_vals = [-float(i + 1) for i, t in enumerate(eval_tickers) if t in fwd_rets]
             return_vals = [fwd_rets[t] for t in signal_tickers]
 
             ic = spearman_ic(signal_vals, return_vals)
@@ -1262,7 +1310,7 @@ def evaluate(
             if rebalance_buffer_ranks > 0 and prev_holdings[h]:
                 # Buffer: keep existing holdings unless they fall out of top_k + buffer
                 prev_set = set(prev_holdings[h])
-                candidate_tickers = eval_tickers[:eff_k + rebalance_buffer_ranks]
+                candidate_tickers = eval_tickers[: eff_k + rebalance_buffer_ranks]
                 # Keep prev holdings that are still in the buffer zone
                 kept = [t for t in prev_holdings[h] if t in set(candidate_tickers)]
                 # Add new tickers from top-K that aren't already held
@@ -1340,22 +1388,15 @@ def evaluate(
                     top_w = [max(p5, min(p95, r)) for r in top_k_rets]
                     bot_w = [max(p5, min(p95, r)) for r in bot_k_rets]
                     if top_w and bot_w:
-                        top_minus_bottom_winsorized = (
-                            sum(top_w) / len(top_w) - sum(bot_w) / len(bot_w)
-                        )
+                        top_minus_bottom_winsorized = sum(top_w) / len(top_w) - sum(bot_w) / len(bot_w)
                 tmb_check = top_minus_bottom_winsorized if top_minus_bottom_winsorized is not None else top_minus_bottom
-                if (ic > 0.02 and tmb_check < -0.005) or \
-                   (ic < -0.02 and tmb_check > 0.005):
+                if (ic > 0.02 and tmb_check < -0.005) or (ic < -0.02 and tmb_check > 0.005):
                     mismatch = True
             if ic is not None and slope is not None:
-                if (ic > 0.02 and slope < -0.02) or \
-                   (ic < -0.02 and slope > 0.02):
+                if (ic > 0.02 and slope < -0.02) or (ic < -0.02 and slope > 0.02):
                     mismatch = True
             if mismatch:
-                msg = (
-                    f"  ::warning::SIGN_MISMATCH {snap_date} h={h}: "
-                    f"IC={ic:.4f}"
-                )
+                msg = f"  ::warning::SIGN_MISMATCH {snap_date} h={h}: " f"IC={ic:.4f}"
                 if top_minus_bottom is not None:
                     msg += f" top-bottom={top_minus_bottom:.4f}"
                 if slope is not None:
@@ -1364,32 +1405,39 @@ def evaluate(
                 # Write mismatch JSON dump
                 if out_dir is not None:
                     top_detail = [
-                        {"ticker": t, "rank": i + 1,
-                         "fwd_return": round(fwd_rets.get(t, float("nan")), 6)}
+                        {"ticker": t, "rank": i + 1, "fwd_return": round(fwd_rets.get(t, float("nan")), 6)}
                         for i, t in enumerate(tickers_ranked[:top_k])
                         if t in fwd_rets
                     ]
                     bottom_detail = [
-                        {"ticker": t, "rank": len(tickers_ranked) - top_k + i + 1,
-                         "fwd_return": round(fwd_rets.get(t, float("nan")), 6)}
+                        {
+                            "ticker": t,
+                            "rank": len(tickers_ranked) - top_k + i + 1,
+                            "fwd_return": round(fwd_rets.get(t, float("nan")), 6),
+                        }
                         for i, t in enumerate(tickers_ranked[-top_k:])
                         if t in fwd_rets
                     ]
-                    _write_sign_mismatch(out_dir, snap_date, h, {
-                        "as_of_date": snap_date,
-                        "trade_date": trade_date,
-                        "horizon": h,
-                        "ic": _round_opt(ic, 4),
-                        "top_k_return": _round_opt(gross, 6),
-                        "bottom_k_return": _round_opt(bottom_gross, 6),
-                        "top_minus_bottom": _round_opt(top_minus_bottom, 6),
-                        "top_minus_bottom_winsorized": _round_opt(top_minus_bottom_winsorized, 6),
-                        "monotonic_slope": _round_opt(slope, 4),
-                        "decile_curve": curve,
-                        "top_tickers": top_detail,
-                        "bottom_tickers": bottom_detail,
-                        "benchmark_return": _round_opt(bm_ret, 6),
-                    })
+                    _write_sign_mismatch(
+                        out_dir,
+                        snap_date,
+                        h,
+                        {
+                            "as_of_date": snap_date,
+                            "trade_date": trade_date,
+                            "horizon": h,
+                            "ic": _round_opt(ic, 4),
+                            "top_k_return": _round_opt(gross, 6),
+                            "bottom_k_return": _round_opt(bottom_gross, 6),
+                            "top_minus_bottom": _round_opt(top_minus_bottom, 6),
+                            "top_minus_bottom_winsorized": _round_opt(top_minus_bottom_winsorized, 6),
+                            "monotonic_slope": _round_opt(slope, 4),
+                            "decile_curve": curve,
+                            "top_tickers": top_detail,
+                            "bottom_tickers": bottom_detail,
+                            "benchmark_return": _round_opt(bm_ret, 6),
+                        },
+                    )
 
             # Long-short decile spread
             ls_ret = None
@@ -1405,9 +1453,7 @@ def evaluate(
             if benchmark_prices and beta_by_ticker and bm_ret is not None:
                 held_with_rets = [t for t in top_k_tickers if t in fwd_rets]
                 if held_with_rets:
-                    hedged_ret = _beta_hedged_return(
-                        held_with_rets, fwd_rets, bm_ret, beta_by_ticker
-                    )
+                    hedged_ret = _beta_hedged_return(held_with_rets, fwd_rets, bm_ret, beta_by_ticker)
 
             # Exposure diagnostics: avg beta/drawdown for top-K vs bottom-K
             topk_beta = _avg_field(top_k_tickers, fwd_rets, beta_by_ticker)
@@ -1443,6 +1489,7 @@ def evaluate(
                         comp_stdev = statistics.stdev(comp_signal)
                         # Count ties: values that appear more than once
                         from collections import Counter as _Counter
+
                         val_counts = _Counter(comp_signal)
                         n_tied = sum(c for c in val_counts.values() if c > 1)
                         comp_pct_ties = n_tied / n_sig
@@ -1459,9 +1506,12 @@ def evaluate(
                     if n_sig >= 10 and not flat_signal:
                         # Sort tickers by component score descending
                         comp_sorted = sorted(
-                            [(t, comp_by_ticker[t][col]) for t in signal_tickers
-                             if t in comp_by_ticker and col in comp_by_ticker[t]],
-                            key=lambda x: -x[1]
+                            [
+                                (t, comp_by_ticker[t][col])
+                                for t in signal_tickers
+                                if t in comp_by_ticker and col in comp_by_ticker[t]
+                            ],
+                            key=lambda x: -x[1],
                         )
                         d_size = max(1, len(comp_sorted) // 10)
                         top_comp = [t for t, _ in comp_sorted[:d_size]]
@@ -1480,7 +1530,7 @@ def evaluate(
                         pos = 0
                         for d_idx in range(10):
                             bucket_sz = comp_d_size + (1 if d_idx < comp_remainder else 0)
-                            bucket_tickers = [t for t, _ in comp_sorted[pos:pos + bucket_sz]]
+                            bucket_tickers = [t for t, _ in comp_sorted[pos : pos + bucket_sz]]
                             pos += bucket_sz
                             bucket_rets = [fwd_rets[t] for t in bucket_tickers if t in fwd_rets]
                             if bucket_rets:
@@ -1490,7 +1540,9 @@ def evaluate(
                             xs = [float(len(decile_means) - i) for i in range(len(decile_means))]
                             comp_mono_slope = spearman_ic(xs, decile_means)
                     _comp_row = {
-                        "date": snap_date, "horizon": h, "component": col,
+                        "date": snap_date,
+                        "horizon": h,
+                        "component": col,
                         "ic": _round_opt(comp_ic, 4),
                         "ls_return": _round_opt(comp_ls, 6),
                         "n_signal": n_sig,
@@ -1507,9 +1559,7 @@ def evaluate(
                         _comp_row[f"d{_di}"] = _round_opt(_dv, 6)
                     # Coinvest staleness diagnostic
                     if col == "coinvest_score_z" and _coinvest_age_vals:
-                        _comp_row["coinvest_staleness_days"] = _round_opt(
-                            statistics.mean(_coinvest_age_vals), 1
-                        )
+                        _comp_row["coinvest_staleness_days"] = _round_opt(statistics.mean(_coinvest_age_vals), 1)
                     component_results.append(_comp_row)
 
             # Coinvest audit: ticker-level view of top-20 for coinvest forensics
@@ -1532,12 +1582,15 @@ def evaluate(
             s_id, s_train, s_test = split_map.get(snap_date, (0, False, False))
 
             dr = DateResult(
-                date=snap_date, horizon=h, trade_date=trade_date,
+                date=snap_date,
+                horizon=h,
+                trade_date=trade_date,
                 ic=_round_opt(ic, 4),
                 gross_return=_round_opt(gross, 6),
                 net_return=_round_opt(net_ret, 6),
                 turnover=round(turn, 4),
-                n_signal=len(signal_tickers), n_held=n_held,
+                n_signal=len(signal_tickers),
+                n_held=n_held,
                 coverage=round(coverage, 4),
                 bottom_k_return=_round_opt(bottom_gross, 6),
                 benchmark_return=_round_opt(bm_ret, 6),
@@ -1550,7 +1603,9 @@ def evaluate(
                 topk_avg_drawdown=_round_opt(topk_dd, 4),
                 bottomk_avg_drawdown=_round_opt(bottomk_dd, 4),
                 monotonic_slope=_round_opt(slope, 4),
-                split_id=s_id, is_train=s_train, is_test=s_test,
+                split_id=s_id,
+                is_train=s_train,
+                is_test=s_test,
                 n_universe_eval=n_universe_eval,
                 n_missing_anchor=n_missing_anchor,
                 n_missing_forward=n_missing_forward,
@@ -1584,8 +1639,11 @@ def evaluate(
 
     # Build summary
     summary = EvalSummary(
-        horizons=horizons, top_k=top_k, cost_bps=cost_bps,
-        n_dates=len(snap_dates), n_evaluated=n_evaluated,
+        horizons=horizons,
+        top_k=top_k,
+        cost_bps=cost_bps,
+        n_dates=len(snap_dates),
+        n_evaluated=n_evaluated,
         n_skipped=len(snap_dates) - n_evaluated,
         use_positions=use_positions,
         anchor_mode=anchor_mode,
@@ -1631,9 +1689,7 @@ def evaluate(
         if coinvest_topk_default_sets and coinvest_topk_rescored_sets:
             n_changed = 0
             overlaps: List[float] = []
-            for default_set, rescored_set in zip(
-                coinvest_topk_default_sets, coinvest_topk_rescored_sets
-            ):
+            for default_set, rescored_set in zip(coinvest_topk_default_sets, coinvest_topk_rescored_sets):
                 if default_set != rescored_set:
                     n_changed += 1
                 union = default_set | rescored_set
@@ -1683,9 +1739,7 @@ def evaluate(
         if len(ics) >= 8:
             ic_std = _safe_std(ics)
             if ic_std and ic_std > 0:
-                bh["ic_t_stat"] = _round_opt(
-                    _safe_mean(ics) / (ic_std / math.sqrt(len(ics))), 3
-                )
+                bh["ic_t_stat"] = _round_opt(_safe_mean(ics) / (ic_std / math.sqrt(len(ics))), 3)
 
         # Benchmark-relative
         if excess_list:
@@ -1700,9 +1754,7 @@ def evaluate(
             if len(ls_list) >= 8:
                 ls_std = _safe_std(ls_list)
                 if ls_std and ls_std > 0:
-                    bh["ls_t_stat"] = _round_opt(
-                        _safe_mean(ls_list) / (ls_std / math.sqrt(len(ls_list))), 3
-                    )
+                    bh["ls_t_stat"] = _round_opt(_safe_mean(ls_list) / (ls_std / math.sqrt(len(ls_list))), 3)
 
         # Beta-hedged
         if hedged_list:
@@ -1729,22 +1781,18 @@ def evaluate(
 
         # Train/test split metrics (if split_mode != none)
         if split_mode != "none":
-            train_dr = [dr for dr in date_results
-                        if dr.horizon == h and not dr.skipped and dr.is_train]
-            test_dr = [dr for dr in date_results
-                       if dr.horizon == h and not dr.skipped and dr.is_test]
+            train_dr = [dr for dr in date_results if dr.horizon == h and not dr.skipped and dr.is_train]
+            test_dr = [dr for dr in date_results if dr.horizon == h and not dr.skipped and dr.is_test]
             train_ics = [dr.ic for dr in train_dr if dr.ic is not None]
             test_ics = [dr.ic for dr in test_dr if dr.ic is not None]
             bh["train_n"] = len(train_ics)
             bh["train_mean_ic"] = _round_opt(_safe_mean(train_ics), 4)
             bh["test_n"] = len(test_ics)
             bh["test_mean_ic"] = _round_opt(_safe_mean(test_ics), 4)
-            test_gross = [dr.gross_return for dr in test_dr
-                          if dr.gross_return is not None]
+            test_gross = [dr.gross_return for dr in test_dr if dr.gross_return is not None]
             bh["test_mean_gross"] = _round_opt(_safe_mean(test_gross), 6)
             bh["test_cumulative_gross"] = _round_opt(_cumulative(test_gross), 6)
-            test_ls = [dr.ls_return for dr in test_dr
-                       if dr.ls_return is not None]
+            test_ls = [dr.ls_return for dr in test_dr if dr.ls_return is not None]
             if test_ls:
                 bh["test_mean_ls"] = _round_opt(_safe_mean(test_ls), 6)
 
@@ -1759,8 +1807,7 @@ def evaluate(
     if price_end_str and max_snap_str:
         try:
             gap_days = (
-                datetime.strptime(price_end_str, "%Y-%m-%d").date()
-                - datetime.strptime(max_snap_str, "%Y-%m-%d").date()
+                datetime.strptime(price_end_str, "%Y-%m-%d").date() - datetime.strptime(max_snap_str, "%Y-%m-%d").date()
             ).days
         except ValueError:
             pass
@@ -1789,11 +1836,22 @@ def _write_component_eval(
     """Write component eval CSV and summary markdown."""
     # by_date CSV
     csv_path = out_dir / "component_eval_by_date.csv"
-    fieldnames = ["date", "horizon", "component", "ic", "ls_return", "n_signal",
-                  "n_with_signal",
-                  "mean_return_top_decile", "mean_return_bottom_decile", "monotonic_slope",
-                  "signal_stdev", "pct_ties", "flat_signal",
-                  "coinvest_staleness_days"] + [f"d{i}" for i in range(1, 11)]
+    fieldnames = [
+        "date",
+        "horizon",
+        "component",
+        "ic",
+        "ls_return",
+        "n_signal",
+        "n_with_signal",
+        "mean_return_top_decile",
+        "mean_return_bottom_decile",
+        "monotonic_slope",
+        "signal_stdev",
+        "pct_ties",
+        "flat_signal",
+        "coinvest_staleness_days",
+    ] + [f"d{i}" for i in range(1, 11)]
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, restval="")
         writer.writeheader()
@@ -1802,6 +1860,7 @@ def _write_component_eval(
 
     # Summary: aggregate per component per horizon
     from collections import defaultdict
+
     agg: Dict[Tuple[int, str], List[Dict[str, Any]]] = defaultdict(list)
     for row in component_results:
         key = (row["horizon"], row["component"])
@@ -1864,16 +1923,13 @@ def _write_component_eval(
     ]
     for h in horizons:
         comps = sorted(set(r["component"] for r in component_results if r["horizon"] == h))
-        has_decile = [
-            comp for comp in comps
-            if any(f"d1" in r for r in agg[(h, comp)])
-        ]
+        has_decile = [comp for comp in comps if any("d1" in r for r in agg[(h, comp)])]
         if not has_decile:
             continue
         dclines.append(f"## Horizon {h}d")
         dclines.append("")
         header = "| Component | D1 (best) | D2 | D3 | D4 | D5 | D6 | D7 | D8 | D9 | D10 (worst) | D1−D10 |"
-        sep    = "|-----------|-----------|----|----|----|----|----|----|----|----|-------------|--------|"
+        sep = "|-----------|-----------|----|----|----|----|----|----|----|----|-------------|--------|"
         dclines += [header, sep]
         for comp in has_decile:
             rows_with = [r for r in agg[(h, comp)] if "d1" in r]
@@ -1899,8 +1955,15 @@ def _write_coinvest_audit(
     """Write coinvest_audit.csv — ticker-level view of top-20 per date."""
     csv_path = out_dir / "coinvest_audit.csv"
     # Build fieldnames: fixed cols + per-horizon fwd return cols
-    base_fields = ["date", "horizon", "actionable_rank", "ticker",
-                   "coinvest_score_z", "clinical_score_z_tier", "alpha_cohort_raw"]
+    base_fields = [
+        "date",
+        "horizon",
+        "actionable_rank",
+        "ticker",
+        "coinvest_score_z",
+        "clinical_score_z_tier",
+        "alpha_cohort_raw",
+    ]
     fwd_fields = [f"fwd_return_{h}d" for h in horizons]
     fieldnames = base_fields + fwd_fields
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
@@ -1933,13 +1996,14 @@ def _cumulative(returns: List[float]) -> Optional[float]:
         return None
     cum = 1.0
     for r in returns:
-        cum *= (1.0 + r)
+        cum *= 1.0 + r
     return cum - 1.0
 
 
 # ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
+
 
 def write_summary_json(summary: EvalSummary, out_dir: Path) -> Path:
     path = out_dir / "summary.json"
@@ -1964,7 +2028,7 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         "",
         "## Execution Convention",
         "",
-        f"Signal computed as of calendar date D (the snapshot `as_of_date`).",
+        "Signal computed as of calendar date D (the snapshot `as_of_date`).",
     ]
     if summary.anchor_mode == "next_trading_day":
         lines.append(
@@ -1973,13 +2037,10 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         )
     elif summary.anchor_mode == "prev_trading_day":
         lines.append(
-            "Trades executed on the **last trading day on/before D** "
-            "(assumes signal known at market close on D)."
+            "Trades executed on the **last trading day on/before D** " "(assumes signal known at market close on D)."
         )
     else:
-        lines.append(
-            "Trades anchored at **exact date D** (requires D to be a trading day)."
-        )
+        lines.append("Trades anchored at **exact date D** (requires D to be a trading day).")
     lines.append("")
 
     # Core table
@@ -2012,14 +2073,8 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
     # Sign consistency check table
     lines.append("## Sign Consistency (Top-K vs Bottom-K)")
     lines.append("")
-    lines.append(
-        "| Horizon | Mean Top-K | Mean Bottom-K | Top-Bottom | Mean IC | "
-        "Consistent | Mismatches |"
-    )
-    lines.append(
-        "|---------|------------|---------------|------------|---------|"
-        "------------|------------|"
-    )
+    lines.append("| Horizon | Mean Top-K | Mean Bottom-K | Top-Bottom | Mean IC | " "Consistent | Mismatches |")
+    lines.append("|---------|------------|---------------|------------|---------|" "------------|------------|")
     for h in summary.horizons:
         bh = summary.by_horizon.get(h, {})
         top_k_ret = bh.get("mean_gross_return")
@@ -2045,9 +2100,7 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
     lines.append("")
 
     # Benchmark table (if present)
-    has_excess = any(
-        "mean_excess_return" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_excess = any("mean_excess_return" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_excess:
         lines.append(f"## Benchmark-Relative ({summary.benchmark})")
         lines.append("")
@@ -2056,15 +2109,12 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         for h in summary.horizons:
             bh = summary.by_horizon.get(h, {})
             lines.append(
-                f"| {h}d | {_fmt_pct(bh.get('mean_excess_return'))} "
-                f"| {_fmt_pct(bh.get('cumulative_excess'))} |"
+                f"| {h}d | {_fmt_pct(bh.get('mean_excess_return'))} " f"| {_fmt_pct(bh.get('cumulative_excess'))} |"
             )
         lines.append("")
 
     # Long-short table (if present)
-    has_ls = any(
-        "mean_ls_return" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_ls = any("mean_ls_return" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_ls:
         lines.append("## Long-Short Decile Spread")
         lines.append("")
@@ -2081,9 +2131,7 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         lines.append("")
 
     # Beta-hedged table (if present)
-    has_hedged = any(
-        "mean_hedged_return" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_hedged = any("mean_hedged_return" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_hedged:
         lines.append("## Beta-Hedged Portfolio")
         lines.append("")
@@ -2092,24 +2140,17 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         for h in summary.horizons:
             bh = summary.by_horizon.get(h, {})
             lines.append(
-                f"| {h}d | {_fmt_pct(bh.get('mean_hedged_return'))} "
-                f"| {_fmt_pct(bh.get('cumulative_hedged'))} |"
+                f"| {h}d | {_fmt_pct(bh.get('mean_hedged_return'))} " f"| {_fmt_pct(bh.get('cumulative_hedged'))} |"
             )
         lines.append("")
 
     # Residual alpha table (if present)
-    has_resid = any(
-        "residual_alpha" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_resid = any("residual_alpha" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_resid:
         lines.append("## Residual Alpha (Top-Bottom regressed on Benchmark)")
         lines.append("")
-        lines.append(
-            "| Horizon | Alpha (ann.) | Beta | R² | Alpha t |"
-        )
-        lines.append(
-            "|---------|-------------|------|-----|---------|"
-        )
+        lines.append("| Horizon | Alpha (ann.) | Beta | R² | Alpha t |")
+        lines.append("|---------|-------------|------|-----|---------|")
         for h in summary.horizons:
             bh = summary.by_horizon.get(h, {})
             alpha = bh.get("residual_alpha")
@@ -2128,18 +2169,12 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         lines.append("")
 
     # Multi-regressor attribution (if present)
-    has_multi = any(
-        "resid_multi_alpha" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_multi = any("resid_multi_alpha" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_multi:
         lines.append("## Attribution (Multi-Regressor)")
         lines.append("")
-        lines.append(
-            "| Horizon | Alpha (ann.) | β(BM) | β(Δbeta) | β(Δdd) | R² | Alpha t |"
-        )
-        lines.append(
-            "|---------|-------------|-------|----------|--------|-----|---------|"
-        )
+        lines.append("| Horizon | Alpha (ann.) | β(BM) | β(Δbeta) | β(Δdd) | R² | Alpha t |")
+        lines.append("|---------|-------------|-------|----------|--------|-----|---------|")
         for h in summary.horizons:
             bh = summary.by_horizon.get(h, {})
             alpha = bh.get("resid_multi_alpha")
@@ -2153,27 +2188,16 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
                 f"| {_fmt(bh.get('resid_multi_alpha_t'))} |"
             )
         lines.append("")
-        lines.append(
-            "> L/S = α + β₁·BenchmarkRet + β₂·(TopBeta−BotBeta) + β₃·(TopDD−BotDD). "
-            "Annualized by × 12."
-        )
+        lines.append("> L/S = α + β₁·BenchmarkRet + β₂·(TopBeta−BotBeta) + β₃·(TopDD−BotDD). " "Annualized by × 12.")
         lines.append("")
 
     # Train/test split metrics (if present)
-    has_split = any(
-        "test_n" in summary.by_horizon.get(h, {}) for h in summary.horizons
-    )
+    has_split = any("test_n" in summary.by_horizon.get(h, {}) for h in summary.horizons)
     if has_split:
         lines.append(f"## Walk-Forward Split ({summary.split_mode})")
         lines.append("")
-        lines.append(
-            "| Horizon | Train N | Train IC | Test N | Test IC | "
-            "Test Gross | Test Cum | Test L/S |"
-        )
-        lines.append(
-            "|---------|---------|----------|--------|---------|"
-            "-----------|----------|----------|"
-        )
+        lines.append("| Horizon | Train N | Train IC | Test N | Test IC | " "Test Gross | Test Cum | Test L/S |")
+        lines.append("|---------|---------|----------|--------|---------|" "-----------|----------|----------|")
         for h in summary.horizons:
             bh = summary.by_horizon.get(h, {})
             lines.append(
@@ -2191,21 +2215,11 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
     lines.append("## Interpretation Notes")
     lines.append("")
     lines.append("### Signal Direction")
-    lines.append(
-        "- **Signal**: `signal = -actionable_rank`. Rank 1 (best) maps to highest signal."
-    )
-    lines.append(
-        "- **IC > 0**: better-ranked tickers tend to have higher forward returns."
-    )
-    lines.append(
-        "- **Top-K**: first K tickers by actionable_rank (rank 1..K)."
-    )
-    lines.append(
-        "- **Bottom-K**: last K tickers by actionable_rank."
-    )
-    lines.append(
-        "- **L/S (decile spread)**: Top 10% return minus Bottom 10% return."
-    )
+    lines.append("- **Signal**: `signal = -actionable_rank`. Rank 1 (best) maps to highest signal.")
+    lines.append("- **IC > 0**: better-ranked tickers tend to have higher forward returns.")
+    lines.append("- **Top-K**: first K tickers by actionable_rank (rank 1..K).")
+    lines.append("- **Bottom-K**: last K tickers by actionable_rank.")
+    lines.append("- **L/S (decile spread)**: Top 10% return minus Bottom 10% return.")
     lines.append("")
     lines.append("### Anchor Convention")
     if summary.anchor_mode == "next_trading_day":
@@ -2237,16 +2251,35 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
 def write_by_date_csv(date_results: List[DateResult], out_dir: Path) -> Path:
     path = out_dir / "by_date.csv"
     fieldnames = [
-        "date", "horizon", "trade_date", "ic", "gross_return", "bottom_k_return",
-        "net_return", "turnover", "n_signal", "n_held", "coverage",
-        "skipped", "skip_reason",
-        "benchmark_return", "excess_return",
-        "ls_return", "ls_net_return", "hedged_return",
-        "topk_avg_beta", "bottomk_avg_beta",
-        "topk_avg_drawdown", "bottomk_avg_drawdown",
+        "date",
+        "horizon",
+        "trade_date",
+        "ic",
+        "gross_return",
+        "bottom_k_return",
+        "net_return",
+        "turnover",
+        "n_signal",
+        "n_held",
+        "coverage",
+        "skipped",
+        "skip_reason",
+        "benchmark_return",
+        "excess_return",
+        "ls_return",
+        "ls_net_return",
+        "hedged_return",
+        "topk_avg_beta",
+        "bottomk_avg_beta",
+        "topk_avg_drawdown",
+        "bottomk_avg_drawdown",
         "monotonic_slope",
-        "split_id", "is_train", "is_test",
-        "n_universe_eval", "n_missing_anchor", "n_missing_forward",
+        "split_id",
+        "is_train",
+        "is_test",
+        "n_universe_eval",
+        "n_missing_anchor",
+        "n_missing_forward",
     ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -2275,38 +2308,48 @@ def _fmt_pct(v: Optional[float]) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Forward-return evaluation across snapshot dates",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
         help="Root dir containing YYYY-MM-DD snapshot dirs",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
         help="Path to price_history.csv",
     )
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--horizons", type=str, default="5,20,63",
+        "--horizons",
+        type=str,
+        default="5,20,63",
         help="Comma-separated forward-return horizons in trading days",
     )
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     parser.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
     parser.add_argument(
-        "--pit-mode", choices=["strict", "lenient"], default="strict",
+        "--pit-mode",
+        choices=["strict", "lenient"],
+        default="strict",
     )
     parser.add_argument(
-        "--out-dir", type=Path,
+        "--out-dir",
+        type=Path,
         default=PROJECT_ROOT / "output" / "forward_eval",
     )
     parser.add_argument("--use-positions", action="store_true", default=False)
     parser.add_argument(
-        "--min-price-coverage", type=float, default=DEFAULT_MIN_PRICE_COVERAGE,
+        "--min-price-coverage",
+        type=float,
+        default=DEFAULT_MIN_PRICE_COVERAGE,
     )
     parser.add_argument(
         "--anchor-mode",
@@ -2320,7 +2363,9 @@ def main() -> None:
         help="Benchmark ticker for excess returns (e.g. XBI, SPY, none)",
     )
     parser.add_argument(
-        "--long-short-deciles", action="store_true", default=False,
+        "--long-short-deciles",
+        action="store_true",
+        default=False,
         help="Compute top-decile minus bottom-decile spread",
     )
     parser.add_argument(
@@ -2330,19 +2375,27 @@ def main() -> None:
         help="Walk-forward split mode: none, fixed, or walk_forward",
     )
     parser.add_argument(
-        "--train-end", type=str, default=None,
+        "--train-end",
+        type=str,
+        default=None,
         help="Last date in training set (fixed split)",
     )
     parser.add_argument(
-        "--test-start", type=str, default=None,
+        "--test-start",
+        type=str,
+        default=None,
         help="First date in test set (fixed split)",
     )
     parser.add_argument(
-        "--wf-train-months", type=int, default=0,
+        "--wf-train-months",
+        type=int,
+        default=0,
         help="Number of initial dates for training (walk_forward)",
     )
     parser.add_argument(
-        "--wf-test-months", type=int, default=0,
+        "--wf-test-months",
+        type=int,
+        default=0,
         help="Dates per test fold (walk_forward)",
     )
     parser.add_argument(
@@ -2352,19 +2405,27 @@ def main() -> None:
         help="Eval universe: current (rankings as-is) or price_available (filter by price)",
     )
     parser.add_argument(
-        "--component-eval", action="store_true", default=False,
+        "--component-eval",
+        action="store_true",
+        default=False,
         help="Compute per-component IC and L/S",
     )
     parser.add_argument(
-        "--rebalance-buffer-ranks", type=int, default=0,
+        "--rebalance-buffer-ranks",
+        type=int,
+        default=0,
         help="Buffer zone around top-K for rebalance (research-only)",
     )
     parser.add_argument(
-        "--turnover-cap", type=float, default=0.0,
+        "--turnover-cap",
+        type=float,
+        default=0.0,
         help="Max turnover fraction per rebalance, 0=unlimited (research-only)",
     )
     parser.add_argument(
-        "--top-quantile", type=float, default=0.0,
+        "--top-quantile",
+        type=float,
+        default=0.0,
         help="Use top N%% instead of top-K, 0=use top_k (research-only)",
     )
     parser.add_argument(
@@ -2380,7 +2441,9 @@ def main() -> None:
         help="Catalyst decay: default (CSV values) or logistic (recompute from catalyst_days)",
     )
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help=(
             "DecisionRuleset JSON. Affects: (1) rebalance_buffer_ranks inheritance, "
             "(2) coinvest rescoring when --coinvest-eval-mode != default. "
@@ -2389,15 +2452,21 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--fail-if-stale", action="store_true", default=False,
+        "--fail-if-stale",
+        action="store_true",
+        default=False,
         help="Exit 2 if forward-return price data is stale",
     )
     parser.add_argument(
-        "--no-warn-if-stale", action="store_true", default=False,
+        "--no-warn-if-stale",
+        action="store_true",
+        default=False,
         help="Suppress staleness warning when price data is short",
     )
     parser.add_argument(
-        "--date-manifest", type=Path, default=None,
+        "--date-manifest",
+        type=Path,
+        default=None,
         help=(
             "Path to a file with one YYYY-MM-DD date per line. "
             "Restricts evaluation to exactly those dates (strict curated set). "
@@ -2407,12 +2476,26 @@ def main() -> None:
         ),
     )
     parser.add_argument(
-        "--preflight", action="store_true", default=False,
+        "--preflight",
+        action="store_true",
+        default=False,
         help="Run snapshot preflight; skip dates that FAIL structural checks",
     )
     parser.add_argument(
-        "--preflight-strict", action="store_true", default=False,
+        "--preflight-strict",
+        action="store_true",
+        default=False,
         help="Run snapshot preflight; skip dates that FAIL or WARN",
+    )
+    parser.add_argument(
+        "--bucket-filter",
+        type=str,
+        default=None,
+        help=(
+            "Comma-separated catalyst_bucket values to include "
+            "(e.g. 'binary_now,build_window'). Only tickers matching "
+            "these buckets are evaluated."
+        ),
     )
     args = parser.parse_args()
 
@@ -2423,12 +2506,9 @@ def main() -> None:
     if args.ruleset:
         eval_ruleset = DecisionRuleset.from_json(str(args.ruleset))
     elif args.coinvest_eval_mode != "default":
-        print("ERROR: --ruleset is required when --coinvest-eval-mode is not 'default'.",
-              file=sys.stderr)
-        print("  The eval script cannot infer which ruleset to use for faithful rescore.",
-              file=sys.stderr)
-        print("  Provide the ruleset JSON that matches the snapshots being evaluated.",
-              file=sys.stderr)
+        print("ERROR: --ruleset is required when --coinvest-eval-mode is not 'default'.", file=sys.stderr)
+        print("  The eval script cannot infer which ruleset to use for faithful rescore.", file=sys.stderr)
+        print("  Provide the ruleset JSON that matches the snapshots being evaluated.", file=sys.stderr)
         sys.exit(1)
 
     # Inherit portfolio mechanics from ruleset when CLI uses defaults
@@ -2450,8 +2530,10 @@ def main() -> None:
             args.date_from = manifest_sorted[0]
         if args.date_to is None:
             args.date_to = manifest_sorted[-1]
-        print(f"  Date manifest: {args.date_manifest} ({len(allowed_dates)} dates, "
-              f"{manifest_sorted[0]} – {manifest_sorted[-1]})")
+        print(
+            f"  Date manifest: {args.date_manifest} ({len(allowed_dates)} dates, "
+            f"{manifest_sorted[0]} – {manifest_sorted[-1]})"
+        )
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
@@ -2465,8 +2547,10 @@ def main() -> None:
     if args.component_eval:
         print("  Component eval: enabled")
     if eff_buffer > 0:
-        print(f"  Rebalance buffer: {eff_buffer} ranks"
-              + (" (from ruleset)" if eff_buffer != args.rebalance_buffer_ranks else ""))
+        print(
+            f"  Rebalance buffer: {eff_buffer} ranks"
+            + (" (from ruleset)" if eff_buffer != args.rebalance_buffer_ranks else "")
+        )
     if args.turnover_cap > 0:
         print(f"  Turnover cap: {args.turnover_cap:.0%}")
     if args.top_quantile > 0:
@@ -2477,6 +2561,12 @@ def main() -> None:
             print(f"  Ruleset: {args.ruleset} (ID: {eval_ruleset.ruleset_id})")
     if args.catalyst_eval_mode != "default":
         print(f"  Catalyst eval mode: {args.catalyst_eval_mode}")
+
+    # Parse bucket filter
+    eff_bucket_filter: Optional[List[str]] = None
+    if args.bucket_filter:
+        eff_bucket_filter = [b.strip() for b in args.bucket_filter.split(",") if b.strip()]
+        print(f"  Bucket filter: {eff_bucket_filter}")
 
     summary, date_results, skips = evaluate(
         snapshot_root=args.snapshot_root,
@@ -2509,6 +2599,7 @@ def main() -> None:
         ruleset=eval_ruleset,
         preflight=args.preflight,
         preflight_strict=args.preflight_strict,
+        bucket_filter=eff_bucket_filter,
     )
 
     write_summary_json(summary, args.out_dir)
@@ -2517,8 +2608,7 @@ def main() -> None:
     write_skips_json(skips, args.out_dir)
 
     print(f"\nResults -> {args.out_dir}")
-    print(f"  {summary.n_evaluated}/{summary.n_dates} dates evaluated, "
-          f"{summary.n_skipped} skipped")
+    print(f"  {summary.n_evaluated}/{summary.n_dates} dates evaluated, " f"{summary.n_skipped} skipped")
     for h in horizons:
         bh = summary.by_horizon.get(h, {})
         parts = [
