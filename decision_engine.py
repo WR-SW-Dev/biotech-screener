@@ -204,6 +204,12 @@ class DecisionRuleset:
     # 0 = disabled (default).  Ablation: w=0.02/0.05/0.10 on 2025 IS.
     alpha_cohort_tiebreak_weight: float = 0.0  # 0.0 = off; range [0.0, 0.50]
 
+    # Binary sleeve risk cap (L3 enforcement, applied after normalization)
+    # Defaults of 100.0 mean no behavioral change without explicit opt-in.
+    binary_sleeve_max_weight_pct: float = 100.0  # aggregate cap (100 = disabled)
+    binary_sleeve_per_name_max_pct: float = 100.0  # per-name cap (100 = disabled)
+    binary_sleeve_days_threshold: int = 30  # catalyst_days cutoff for "binary"
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -334,6 +340,17 @@ class DecisionRuleset:
         # Validate far_window_decay_mult: must be in (0, 1]
         if not (0.0 < self.far_window_decay_mult <= 1.0):
             raise ValueError(f"far_window_decay_mult must be in (0, 1], " f"got {self.far_window_decay_mult}")
+        # Validate binary sleeve caps: must be in (0, 100]
+        if not (0.0 < self.binary_sleeve_max_weight_pct <= 100.0):
+            raise ValueError(
+                f"binary_sleeve_max_weight_pct must be in (0, 100], " f"got {self.binary_sleeve_max_weight_pct}"
+            )
+        if not (0.0 < self.binary_sleeve_per_name_max_pct <= 100.0):
+            raise ValueError(
+                f"binary_sleeve_per_name_max_pct must be in (0, 100], " f"got {self.binary_sleeve_per_name_max_pct}"
+            )
+        if self.binary_sleeve_days_threshold < 0:
+            raise ValueError(f"binary_sleeve_days_threshold must be >= 0, " f"got {self.binary_sleeve_days_threshold}")
 
     @property
     def sizing_weights_dict(self) -> Dict[str, float]:
@@ -1475,6 +1492,94 @@ def compute_sort_contribs(
 # =============================================================================
 
 
+_BINARY_CATALYST_MODES = {"specific_days", "blended_window"}
+
+
+def _is_binary_name(row: Dict[str, Any], days_threshold: int) -> bool:
+    """Return True if row represents a binary-event name (imminent catalyst)."""
+    mode = str(row.get("catalyst_mode", "")).strip().lower()
+    if mode not in _BINARY_CATALYST_MODES:
+        return False
+    days = _safe_float(row.get("catalyst_days"), default=float("inf"))
+    return days <= days_threshold
+
+
+def apply_binary_sleeve_caps(
+    rows: List[Dict[str, Any]],
+    ruleset: DecisionRuleset,
+) -> None:
+    """Enforce per-name and aggregate weight caps on binary-event names.
+
+    Operates in-place on rows that already have ``target_weight_pct``.
+    Excess weight is redistributed proportionally to non-binary names.
+    After capping, weights are re-normalized to sum to 100%.
+
+    No-op when both caps are 100% (the default).
+    """
+    per_cap = ruleset.binary_sleeve_per_name_max_pct
+    agg_cap = ruleset.binary_sleeve_max_weight_pct
+    threshold = ruleset.binary_sleeve_days_threshold
+
+    # Fast path: defaults → nothing to do
+    if per_cap >= 100.0 and agg_cap >= 100.0:
+        return
+
+    # Classify rows
+    binary_idx = []
+    non_binary_idx = []
+    for i, row in enumerate(rows):
+        w = _safe_float(row.get("target_weight_pct"), default=0.0)
+        if w <= 0:
+            continue
+        if _is_binary_name(row, threshold):
+            binary_idx.append(i)
+        else:
+            non_binary_idx.append(i)
+
+    if not binary_idx:
+        return
+
+    # --- Per-name cap ---
+    excess = 0.0
+    for i in binary_idx:
+        w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+        if w > per_cap:
+            excess += w - per_cap
+            rows[i]["target_weight_pct"] = round(per_cap, 2)
+
+    # Redistribute per-name excess to non-binary proportionally
+    if excess > 0 and non_binary_idx:
+        nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
+        if nb_total > 0:
+            for j in non_binary_idx:
+                w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
+                rows[j]["target_weight_pct"] = round(w + excess * (w / nb_total), 2)
+
+    # --- Aggregate cap ---
+    binary_total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in binary_idx)
+    if binary_total > agg_cap:
+        scale = agg_cap / binary_total
+        agg_excess = binary_total - agg_cap
+        for i in binary_idx:
+            w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+            rows[i]["target_weight_pct"] = round(w * scale, 2)
+        # Redistribute aggregate excess to non-binary
+        if non_binary_idx:
+            nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
+            if nb_total > 0:
+                for j in non_binary_idx:
+                    w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
+                    rows[j]["target_weight_pct"] = round(w + agg_excess * (w / nb_total), 2)
+
+    # --- Re-normalize to 100% ---
+    all_idx = binary_idx + non_binary_idx
+    total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in all_idx)
+    if total > 0 and abs(total - 100.0) > 0.01:
+        for i in all_idx:
+            w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+            rows[i]["target_weight_pct"] = round(w / total * 100, 2)
+
+
 def compute_target_weights(
     rows: List[Dict[str, Any]],
     ruleset: Optional[DecisionRuleset] = None,
@@ -1509,6 +1614,9 @@ def compute_target_weights(
 
     for row, rw in zip(rows, raw_weights):
         row["target_weight_pct"] = round(rw / total * 100, 2)
+
+    # Apply binary sleeve caps (no-op when defaults are 100%)
+    apply_binary_sleeve_caps(rows, rs)
 
     return rows
 

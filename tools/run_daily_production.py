@@ -121,12 +121,11 @@ class GateConfig:
     turnover_max_pct: float = 40.0
     """Max name turnover (%) before FAIL."""
 
-    audit_fail_is_gate_fail: bool = False
-    """If data_integrity_audit exits 1, treat as gate WARN (not FAIL).
+    audit_fail_is_gate_fail: bool = True
+    """If data_integrity_audit exits 1 (critical invariant), treat as gate FAIL.
 
-    Changed from True→False: stale-but-present price recompute mismatches
-    (the dominant audit failure mode) are informational, not blocking.
-    Only sort_contrib_sanity hard-sanity failures should block promotion.
+    With 4-tier exit codes, exit 1 means data model broken (critical invariants).
+    Stale price recompute mismatches now exit 3 (always WARN, never FAIL).
     """
 
     audit_warn_is_gate_warn: bool = True
@@ -2341,17 +2340,26 @@ def check_audit_result(
     if audit_proc.returncode == 0:
         detail = _format_audit_detail("Audit OK", summary)
         return GateResult(name="audit", status="PASS", detail=detail)
+    elif audit_proc.returncode == 1:
+        # Critical invariant violation (data model broken)
+        status = "FAIL" if config.audit_fail_is_gate_fail else "WARN"
+        detail = _format_audit_detail("CRITICAL: invariant violation", summary)
+        return GateResult(name="audit", status=status, detail=detail)
     elif audit_proc.returncode == 2:
         status = "WARN" if config.audit_warn_is_gate_warn else "PASS"
         detail = _format_audit_detail("Audit WARN", summary)
         return GateResult(name="audit", status=status, detail=detail)
+    elif audit_proc.returncode == 3:
+        # Stale recompute mismatch — always WARN (not FAIL)
+        detail = _format_audit_detail("STALE_MISMATCH: price recompute diff", summary)
+        return GateResult(name="audit", status="WARN", detail=detail)
     else:
-        status = "FAIL" if config.audit_fail_is_gate_fail else "WARN"
+        # Unknown exit code → WARN (defensive)
         detail = _format_audit_detail(
-            f"Audit FAIL (exit code {audit_proc.returncode})",
+            f"Audit unknown exit code {audit_proc.returncode}",
             summary,
         )
-        return GateResult(name="audit", status=status, detail=detail)
+        return GateResult(name="audit", status="WARN", detail=detail)
 
 
 def _parse_cache_date(p: Path) -> Optional[date]:

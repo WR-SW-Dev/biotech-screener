@@ -14,15 +14,13 @@ Outputs (in output/data_integrity/):
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import math
-import os
 import sys
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
@@ -120,37 +118,34 @@ def check_invariants(df: pd.DataFrame) -> List[Dict[str, str]]:
 
         # 1. eligible=1 → ineligible_reasons empty
         if eligible == "1" and inelig not in ("", "nan"):
-            _add(t, "eligible_reasons_mismatch",
-                 f"eligible=1 but ineligible_reasons='{inelig}'")
+            _add(t, "eligible_reasons_mismatch", f"eligible=1 but ineligible_reasons='{inelig}'")
 
         # 2. eligible≠1 → actionable_rank empty
         if eligible != "1" and act_rank not in ("", "nan"):
-            _add(t, "ineligible_has_rank",
-                 f"eligible={eligible} but actionable_rank={act_rank}")
+            _add(t, "ineligible_has_rank", f"eligible={eligible} but actionable_rank={act_rank}")
 
         # 3. catalyst_in_window=True → catalyst_days present and >=0
         if cat_iw in ("true", "1"):
             if pd.isna(cat_days) or str(cat_days).strip() in ("", "nan"):
-                _add(t, "catalyst_window_no_days",
-                     "catalyst_in_window=True but catalyst_days missing")
+                _add(t, "catalyst_window_no_days", "catalyst_in_window=True but catalyst_days missing")
             elif float(cat_days) < 0:
-                _add(t, "catalyst_window_negative_days",
-                     f"catalyst_in_window=True but catalyst_days={cat_days}")
+                _add(t, "catalyst_window_negative_days", f"catalyst_in_window=True but catalyst_days={cat_days}")
 
         # 4. catalyst_mode=specific_days → catalyst_days integer-like
         if cat_mode == "specific_days":
             if pd.isna(cat_days) or str(cat_days).strip() in ("", "nan"):
-                _add(t, "specific_days_no_days",
-                     "catalyst_mode=specific_days but catalyst_days missing")
+                _add(t, "specific_days_no_days", "catalyst_mode=specific_days but catalyst_days missing")
             else:
                 try:
                     d = float(cat_days)
                     if d != int(d):
-                        _add(t, "specific_days_non_integer",
-                             f"catalyst_mode=specific_days but catalyst_days={cat_days} (non-integer)")
+                        _add(
+                            t,
+                            "specific_days_non_integer",
+                            f"catalyst_mode=specific_days but catalyst_days={cat_days} (non-integer)",
+                        )
                 except (ValueError, TypeError):
-                    _add(t, "specific_days_invalid",
-                         f"catalyst_mode=specific_days but catalyst_days='{cat_days}'")
+                    _add(t, "specific_days_invalid", f"catalyst_mode=specific_days but catalyst_days='{cat_days}'")
 
         # 5. missingness_penalty > 0 → missing_components non-empty
         try:
@@ -158,8 +153,7 @@ def check_invariants(df: pd.DataFrame) -> List[Dict[str, str]]:
         except (ValueError, TypeError):
             mp_val = 0.0
         if mp_val > 0 and mc in ("", "nan"):
-            _add(t, "penalty_no_components",
-                 f"missingness_penalty={mp_val} but missing_components empty")
+            _add(t, "penalty_no_components", f"missingness_penalty={mp_val} but missing_components empty")
 
         # 5b. missing_components values must be in known set
         if mc not in ("", "nan"):
@@ -167,35 +161,34 @@ def check_invariants(df: pd.DataFrame) -> List[Dict[str, str]]:
             for comp in mc.split("|"):
                 comp = comp.strip()
                 if comp and comp not in _KNOWN_MISSING_COMPONENTS:
-                    _add(t, "unknown_missing_component",
-                         f"missing_components contains '{comp}', "
-                         f"expected one of {sorted(_KNOWN_MISSING_COMPONENTS)}")
+                    _add(
+                        t,
+                        "unknown_missing_component",
+                        f"missing_components contains '{comp}', "
+                        f"expected one of {sorted(_KNOWN_MISSING_COMPONENTS)}",
+                    )
 
         # 6. tier_any non-empty → tier_any_reason non-empty
         if tier_any not in ("", "nan") and tier_reason in ("", "nan"):
-            _add(t, "tier_no_reason",
-                 f"tier_any='{tier_any}' but tier_any_reason empty")
+            _add(t, "tier_no_reason", f"tier_any='{tier_any}' but tier_any_reason empty")
 
         # 7. risk_flags contains deep_drawdown → de_drawdown present
         if "deep_drawdown" in risk and "deep_drawdown_rel" not in risk.split("deep_drawdown")[0][-4:]:
             dd = row.get("de_drawdown")
             if pd.isna(dd) or str(dd).strip() in ("", "nan"):
-                _add(t, "deep_dd_no_value",
-                     "risk_flags has deep_drawdown but de_drawdown missing")
+                _add(t, "deep_dd_no_value", "risk_flags has deep_drawdown but de_drawdown missing")
 
         # 8. risk_flags contains overbought_rsi → de_rsi_14d present
         if "overbought_rsi" in risk:
             rsi = row.get("de_rsi_14d")
             if pd.isna(rsi) or str(rsi).strip() in ("", "nan"):
-                _add(t, "rsi_flag_no_value",
-                     "risk_flags has overbought_rsi but de_rsi_14d missing")
+                _add(t, "rsi_flag_no_value", "risk_flags has overbought_rsi but de_rsi_14d missing")
 
         # 9. risk_flags contains high_beta → de_beta_xbi_60d present
         if "high_beta" in risk:
             beta = row.get("de_beta_xbi_60d")
             if pd.isna(beta) or str(beta).strip() in ("", "nan"):
-                _add(t, "beta_flag_no_value",
-                     "risk_flags has high_beta but de_beta_xbi_60d missing")
+                _add(t, "beta_flag_no_value", "risk_flags has high_beta but de_beta_xbi_60d missing")
 
         # --- Sanity range checks ---
         for col, (lo, hi) in SANITY_RANGES.items():
@@ -205,8 +198,7 @@ def check_invariants(df: pd.DataFrame) -> List[Dict[str, str]]:
             try:
                 v = float(val)
                 if v < lo or v > hi:
-                    _add(t, f"range_{col}",
-                         f"{col}={v:.6f} outside [{lo}, {hi}]")
+                    _add(t, f"range_{col}", f"{col}={v:.6f} outside [{lo}, {hi}]")
             except (ValueError, TypeError):
                 pass
 
@@ -237,11 +229,13 @@ def check_universe_coverage(
     rankings_tickers = set(df["ticker"].tolist()) if "ticker" in df.columns else set()
     missing = sorted(uni_tickers - rankings_tickers)
     for t in missing:
-        violations.append({
-            "ticker": t,
-            "rule": "universe_missing",
-            "details": f"ticker '{t}' in universe.json but absent from rankings.csv",
-        })
+        violations.append(
+            {
+                "ticker": t,
+                "rule": "universe_missing",
+                "details": f"ticker '{t}' in universe.json but absent from rankings.csv",
+            }
+        )
     return violations
 
 
@@ -249,7 +243,10 @@ def check_universe_coverage(
 # Part C1 — Price-derived recomputation
 # ---------------------------------------------------------------------------
 def _compute_drawdown_from_prices(
-    prices: pd.DataFrame, ticker: str, as_of: str, window: int = DRAWDOWN_WINDOW,
+    prices: pd.DataFrame,
+    ticker: str,
+    as_of: str,
+    window: int = DRAWDOWN_WINDOW,
 ) -> Optional[float]:
     """Compute drawdown from price history CSV data."""
     sub = prices[(prices["ticker"] == ticker) & (prices["date"] <= as_of)].copy()
@@ -265,7 +262,10 @@ def _compute_drawdown_from_prices(
 
 
 def _compute_rsi_from_prices(
-    prices: pd.DataFrame, ticker: str, as_of: str, period: int = RSI_PERIOD,
+    prices: pd.DataFrame,
+    ticker: str,
+    as_of: str,
+    period: int = RSI_PERIOD,
 ) -> Optional[float]:
     """Compute Wilder-smoothed RSI from price history CSV data."""
     sub = prices[(prices["ticker"] == ticker) & (prices["date"] <= as_of)].copy()
@@ -282,9 +282,9 @@ def _compute_rsi_from_prices(
     # Wilder smoothing
     for d in deltas[period:]:
         g = max(d, 0)
-        l = max(-d, 0)
+        loss = max(-d, 0)
         avg_gain = (avg_gain * (period - 1) + g) / period
-        avg_loss = (avg_loss * (period - 1) + l) / period
+        avg_loss = (avg_loss * (period - 1) + loss) / period
     if avg_loss == 0:
         return 100.0
     rs = avg_gain / avg_loss
@@ -292,7 +292,10 @@ def _compute_rsi_from_prices(
 
 
 def _compute_beta_from_prices(
-    prices: pd.DataFrame, ticker: str, as_of: str, window: int = 60,
+    prices: pd.DataFrame,
+    ticker: str,
+    as_of: str,
+    window: int = 60,
 ) -> Optional[float]:
     """Compute 60-day beta vs XBI from price history.
 
@@ -329,7 +332,10 @@ def _compute_beta_from_prices(
 
 
 def _compute_alpha_from_prices(
-    prices: pd.DataFrame, ticker: str, as_of: str, window: int = 60,
+    prices: pd.DataFrame,
+    ticker: str,
+    as_of: str,
+    window: int = 60,
     beta: Optional[float] = None,
 ) -> Optional[float]:
     """Compute 60-day alpha (excess return vs XBI) from price history.
@@ -379,7 +385,9 @@ def recompute_price_fields(
         stored_dd = _safe_float(row.get("de_drawdown"))
         entry["dd_stored"] = stored_dd
         entry["dd_recomputed"] = recomp_dd
-        entry["dd_diff"] = abs((stored_dd or 0) - (recomp_dd or 0)) if stored_dd is not None and recomp_dd is not None else None
+        entry["dd_diff"] = (
+            abs((stored_dd or 0) - (recomp_dd or 0)) if stored_dd is not None and recomp_dd is not None else None
+        )
         entry["dd_verdict"] = _verdict(stored_dd, recomp_dd, TOLERANCES["drawdown"])
         entry["dd_source"] = "price_csv" if recomp_dd is not None else "no_data"
 
@@ -387,7 +395,9 @@ def recompute_price_fields(
         stored_dd_xbi = _safe_float(row.get("de_drawdown_xbi"))
         entry["dd_xbi_stored"] = stored_dd_xbi
         entry["dd_xbi_recomputed"] = xbi_dd
-        entry["dd_xbi_diff"] = abs((stored_dd_xbi or 0) - (xbi_dd or 0)) if stored_dd_xbi is not None and xbi_dd is not None else None
+        entry["dd_xbi_diff"] = (
+            abs((stored_dd_xbi or 0) - (xbi_dd or 0)) if stored_dd_xbi is not None and xbi_dd is not None else None
+        )
         entry["dd_xbi_verdict"] = _verdict(stored_dd_xbi, xbi_dd, TOLERANCES["drawdown_xbi"])
 
         # Drawdown relative
@@ -395,7 +405,11 @@ def recompute_price_fields(
         recomp_dd_rel = round(recomp_dd - xbi_dd, 6) if recomp_dd is not None and xbi_dd is not None else None
         entry["dd_rel_stored"] = stored_dd_rel
         entry["dd_rel_recomputed"] = recomp_dd_rel
-        entry["dd_rel_diff"] = abs((stored_dd_rel or 0) - (recomp_dd_rel or 0)) if stored_dd_rel is not None and recomp_dd_rel is not None else None
+        entry["dd_rel_diff"] = (
+            abs((stored_dd_rel or 0) - (recomp_dd_rel or 0))
+            if stored_dd_rel is not None and recomp_dd_rel is not None
+            else None
+        )
         entry["dd_rel_verdict"] = _verdict(stored_dd_rel, recomp_dd_rel, TOLERANCES["drawdown_rel_xbi"])
 
         # RSI
@@ -403,7 +417,9 @@ def recompute_price_fields(
         stored_rsi = _safe_float(row.get("de_rsi_14d"))
         entry["rsi_stored"] = stored_rsi
         entry["rsi_recomputed"] = recomp_rsi
-        entry["rsi_diff"] = abs((stored_rsi or 0) - (recomp_rsi or 0)) if stored_rsi is not None and recomp_rsi is not None else None
+        entry["rsi_diff"] = (
+            abs((stored_rsi or 0) - (recomp_rsi or 0)) if stored_rsi is not None and recomp_rsi is not None else None
+        )
         entry["rsi_verdict"] = _verdict(stored_rsi, recomp_rsi, TOLERANCES["rsi_14d"])
 
         # Beta — check missing_reason first (xbi_stale etc. are explained, not FAIL)
@@ -415,7 +431,11 @@ def recompute_price_fields(
         entry["beta_stored"] = stored_beta
         entry["beta_recomputed"] = recomp_beta
         entry["beta_missing_reason"] = beta_missing_reason
-        entry["beta_diff"] = abs((stored_beta or 0) - (recomp_beta or 0)) if stored_beta is not None and recomp_beta is not None else None
+        entry["beta_diff"] = (
+            abs((stored_beta or 0) - (recomp_beta or 0))
+            if stored_beta is not None and recomp_beta is not None
+            else None
+        )
         if beta_missing_reason:
             entry["beta_verdict"] = f"EXPLAINED:{beta_missing_reason}"
         else:
@@ -430,7 +450,11 @@ def recompute_price_fields(
         entry["alpha_stored"] = stored_alpha
         entry["alpha_recomputed"] = recomp_alpha
         entry["alpha_missing_reason"] = alpha_missing_reason
-        entry["alpha_diff"] = abs((stored_alpha or 0) - (recomp_alpha or 0)) if stored_alpha is not None and recomp_alpha is not None else None
+        entry["alpha_diff"] = (
+            abs((stored_alpha or 0) - (recomp_alpha or 0))
+            if stored_alpha is not None and recomp_alpha is not None
+            else None
+        )
         if alpha_missing_reason:
             entry["alpha_verdict"] = f"EXPLAINED:{alpha_missing_reason}"
         else:
@@ -477,12 +501,11 @@ def catalyst_spot_check(
     """Spot-check catalyst_days/mode/in_window for a sample of tickers."""
     results = []
 
-    # Try to load catalyst source mix for cross-reference
+    # Try to load catalyst source mix for cross-reference (loaded for future use)
     csm_path = snapshot_dir / "catalyst_source_mix.json"
-    csm = {}
     if csm_path.exists():
         with open(csm_path) as f:
-            csm = json.load(f)
+            _ = json.load(f)
 
     # Sample across modes and sources
     modes = rankings["catalyst_mode"].unique()
@@ -589,32 +612,44 @@ def classify_root_causes(price_diffs: List[Dict]) -> Dict[str, Any]:
             # EXPLAINED verdicts are tracked but not mixed with FAIL
             if verdict.startswith("EXPLAINED:"):
                 reason = verdict.split(":", 1)[1]
-                causes["explained_missing_reason"].append({
-                    "ticker": ticker, "field": field_prefix,
-                    "reason": reason,
-                })
+                causes["explained_missing_reason"].append(
+                    {
+                        "ticker": ticker,
+                        "field": field_prefix,
+                        "reason": reason,
+                    }
+                )
                 continue
             if verdict != "FAIL":
                 continue
             stored = row.get(f"{field_prefix}_stored")
             recomp = row.get(f"{field_prefix}_recomputed")
-            source = row.get(f"{field_prefix}_source", "")
 
             # Classify
             if stored is not None and recomp is not None:
-                causes["stale_but_present"].append({
-                    "ticker": ticker, "field": field_prefix,
-                    "stored": stored, "recomputed": recomp,
-                    "diff": abs(stored - recomp),
-                })
+                causes["stale_but_present"].append(
+                    {
+                        "ticker": ticker,
+                        "field": field_prefix,
+                        "stored": stored,
+                        "recomputed": recomp,
+                        "diff": abs(stored - recomp),
+                    }
+                )
             elif stored is None and recomp is not None:
-                causes["missing_in_snapshot"].append({
-                    "ticker": ticker, "field": field_prefix,
-                })
+                causes["missing_in_snapshot"].append(
+                    {
+                        "ticker": ticker,
+                        "field": field_prefix,
+                    }
+                )
             elif stored is not None and recomp is None:
-                causes["no_price_data"].append({
-                    "ticker": ticker, "field": field_prefix,
-                })
+                causes["no_price_data"].append(
+                    {
+                        "ticker": ticker,
+                        "field": field_prefix,
+                    }
+                )
     return dict(causes)
 
 
@@ -675,7 +710,9 @@ def write_root_cause_summary(
                 if fld_items and "diff" in fld_items[0]:
                     worst = sorted(fld_items, key=lambda x: -x.get("diff", 0))[:3]
                     for w in worst:
-                        lines.append(f"  - {w['ticker']}: stored={w['stored']:.4f}, recomp={w['recomputed']:.4f}, diff={w['diff']:.4f}")
+                        lines.append(
+                            f"  - {w['ticker']}: stored={w['stored']:.4f}, recomp={w['recomputed']:.4f}, diff={w['diff']:.4f}"
+                        )
             lines.append("")
 
     # --- Invariant violations ---
@@ -724,14 +761,18 @@ def write_root_cause_summary(
     stale_fields = set(i["field"] for i in causes.get("stale_but_present", []))
 
     if stale_count > 0:
-        lines.append(f"### CRITICAL: {stale_count} stale-but-present values found in fields: {', '.join(sorted(stale_fields))}\n")
+        lines.append(
+            f"### CRITICAL: {stale_count} stale-but-present values found in fields: {', '.join(sorted(stale_fields))}\n"
+        )
         if "beta" in stale_fields:
             lines.append("- **`beta_xbi_60d`**: Change `_hydrate_beta_rsi()` to OVERWRITE existing pipeline values")
             lines.append("  (same fix as drawdown: recompute from price_history.csv for all tickers)")
         if "rsi" in stale_fields:
             lines.append("- **`rsi_14d`**: Change `_hydrate_beta_rsi()` to OVERWRITE existing pipeline values")
         if "alpha" in stale_fields:
-            lines.append("- **`alpha_60d`**: Add inline recomputation from price_history.csv in save_validation_snapshot()")
+            lines.append(
+                "- **`alpha_60d`**: Add inline recomputation from price_history.csv in save_validation_snapshot()"
+            )
             lines.append("  Formula: `alpha_60d = return_60d - beta * xbi_return_60d`")
         lines.append("")
 
@@ -786,7 +827,7 @@ def main():
             violations.extend(uni_violations)
             print(f"  Universe coverage: {len(uni_violations)} missing tickers")
         else:
-            print(f"  Universe coverage: all tickers present")
+            print("  Universe coverage: all tickers present")
     else:
         print(f"  Universe coverage: skipped ({universe_path} not found)")
 
@@ -806,7 +847,7 @@ def main():
     # --- Part C1: Price recomputation ---
     price_diffs = []
     if not args.skip_prices:
-        print(f"\n=== Part C1: Price-Derived Recomputation ===")
+        print("\n=== Part C1: Price-Derived Recomputation ===")
         price_path = Path(args.price_history)
         if not price_path.exists():
             print(f"  WARNING: {price_path} not found, skipping price recomputation")
@@ -824,30 +865,41 @@ def main():
                 ok = sum(1 for r in price_diffs if r.get(vk) == "OK")
                 fail = sum(1 for r in price_diffs if r.get(vk) == "FAIL")
                 total = sum(1 for r in price_diffs if r.get(vk) is not None)
-                label = {"dd": "drawdown", "rsi": "rsi_14d", "beta": "beta_60d",
-                         "alpha": "alpha_60d", "dd_xbi": "dd_xbi", "dd_rel": "dd_rel"}.get(field, field)
+                label = {
+                    "dd": "drawdown",
+                    "rsi": "rsi_14d",
+                    "beta": "beta_60d",
+                    "alpha": "alpha_60d",
+                    "dd_xbi": "dd_xbi",
+                    "dd_rel": "dd_rel",
+                }.get(field, field)
                 status = "PASS" if fail == 0 else "FAIL"
                 print(f"  [{status}] {label}: {ok}/{total} OK, {fail} FAIL")
                 if fail > 0:
                     fails = [r for r in price_diffs if r.get(vk) == "FAIL"]
                     for f_row in fails[:5]:
-                        print(f"         {f_row['ticker']}: stored={f_row.get(f'{field}_stored')}, recomp={f_row.get(f'{field}_recomputed')}")
+                        print(
+                            f"         {f_row['ticker']}: stored={f_row.get(f'{field}_stored')}, recomp={f_row.get(f'{field}_recomputed')}"
+                        )
     else:
         print("\n=== Part C1: Skipped (--skip-prices) ===")
 
     # --- Part C2: Catalyst spot-check ---
-    print(f"\n=== Part C2: Catalyst Spot-Check ===")
+    print("\n=== Part C2: Catalyst Spot-Check ===")
     catalyst_diffs = catalyst_spot_check(df, snap_dir)
     cat_path = out_dir / "catalyst_diff_sample.csv"
     pd.DataFrame(catalyst_diffs).to_csv(cat_path, index=False)
-    n_issues = sum(1 for r in catalyst_diffs
-                   if r.get("days_match") == "MISMATCH"
-                   or r.get("mode_consistency") == "FAIL"
-                   or r.get("window_consistency") in ("FAIL", "WARN"))
+    n_issues = sum(
+        1
+        for r in catalyst_diffs
+        if r.get("days_match") == "MISMATCH"
+        or r.get("mode_consistency") == "FAIL"
+        or r.get("window_consistency") in ("FAIL", "WARN")
+    )
     print(f"  Sampled {len(catalyst_diffs)} tickers, {n_issues} issues")
 
     # --- Part D: Root causes ---
-    print(f"\n=== Part D: Root Cause Summary ===")
+    print("\n=== Part D: Root Cause Summary ===")
     causes = classify_root_causes(price_diffs)
     summary_path = out_dir / "root_cause_summary.md"
     write_root_cause_summary(causes, violations, price_diffs, catalyst_diffs, summary_path)
@@ -857,7 +909,9 @@ def main():
 
     # --- Classify violations by severity ---
     by_severity: Dict[str, List[Dict[str, str]]] = {
-        "critical": [], "warn": [], "info": [],
+        "critical": [],
+        "warn": [],
+        "info": [],
     }
     for v in violations:
         sev = _violation_severity(v["rule"])
@@ -878,18 +932,24 @@ def main():
     with open(summary_path_json, "w") as f:
         json.dump(summary, f, indent=2)
 
-    # --- Exit code ---
-    has_price_fails = any(r.get(f"{f}_verdict") == "FAIL"
-                         for r in price_diffs for f in ["dd", "rsi", "beta", "alpha"])
+    # --- Exit code (4-tier semantic) ---
+    #   0 = OK (info-only)
+    #   1 = Critical invariant violation (data model broken) → FAIL
+    #   2 = Structural warning (catalyst/tier inconsistency) → WARN
+    #   3 = Price recompute mismatch (stale but explained)  → WARN
+    has_price_fails = any(r.get(f"{f}_verdict") == "FAIL" for r in price_diffs for f in ["dd", "rsi", "beta", "alpha"])
     has_critical = len(by_severity["critical"]) > 0
     has_warn = len(by_severity["warn"]) > 0
 
-    if has_price_fails or has_critical:
+    if has_critical:
         verdict = "FAIL"
-        exit_code = 1
+        exit_code = 1  # data model broken → hard FAIL
+    elif has_price_fails:
+        verdict = "STALE_MISMATCH"
+        exit_code = 3  # stale recompute mismatch → WARN
     elif has_warn:
         verdict = "WARN"
-        exit_code = 2
+        exit_code = 2  # structural inconsistency → WARN
     else:
         # info-only violations (e.g. range outliers) → OK
         verdict = "OK"

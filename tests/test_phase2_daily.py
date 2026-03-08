@@ -285,22 +285,24 @@ class TestAuditGate:
         result = check_audit_result(proc, GateConfig())
         assert result.status == "WARN"
 
-    def test_audit_fail_default_is_warn(self):
-        """Default audit_fail_is_gate_fail=False: exit 1 → WARN (not FAIL).
-
-        Stale-price recompute mismatches are the dominant audit failure mode
-        and should not block promotion.
-        """
+    def test_audit_critical_default_is_fail(self):
+        """Default audit_fail_is_gate_fail=True: exit 1 (critical) → FAIL."""
         proc = subprocess.CompletedProcess(args=[], returncode=1)
         result = check_audit_result(proc, GateConfig())
+        assert result.status == "FAIL"
+
+    def test_audit_critical_is_warn_when_overridden(self):
+        """With audit_fail_is_gate_fail=False: exit 1 → WARN."""
+        proc = subprocess.CompletedProcess(args=[], returncode=1)
+        config = GateConfig(audit_fail_is_gate_fail=False)
+        result = check_audit_result(proc, config)
         assert result.status == "WARN"
 
-    def test_audit_fail_is_gate_fail_when_configured(self):
-        """With audit_fail_is_gate_fail=True: exit 1 → FAIL."""
-        proc = subprocess.CompletedProcess(args=[], returncode=1)
-        config = GateConfig(audit_fail_is_gate_fail=True)
-        result = check_audit_result(proc, config)
-        assert result.status == "FAIL"
+    def test_audit_stale_mismatch_always_warn(self):
+        """Exit 3 (stale mismatch) → WARN regardless of config."""
+        proc = subprocess.CompletedProcess(args=[], returncode=3)
+        result = check_audit_result(proc, GateConfig())
+        assert result.status == "WARN"
 
     def test_audit_warn_ignored_when_config_off(self):
         proc = subprocess.CompletedProcess(args=[], returncode=2)
@@ -2461,9 +2463,9 @@ class TestPromoteOnWarnPolicy:
         assert staging.exists()
         assert not (final_dir / "2026-03-07").exists()
 
-    def test_audit_fail_default_does_not_block(self):
-        """Default GateConfig: audit exit 1 → WARN (not FAIL) → promotable."""
-        proc = subprocess.CompletedProcess(args=[], returncode=1)
+    def test_audit_stale_mismatch_does_not_block(self):
+        """Exit 3 (stale mismatch) → WARN (not FAIL) → promotable."""
+        proc = subprocess.CompletedProcess(args=[], returncode=3)
         result = check_audit_result(proc, GateConfig())
         assert result.status == "WARN"
         # Build manifest with only this gate
