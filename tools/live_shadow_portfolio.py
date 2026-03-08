@@ -1,0 +1,755 @@
+#!/usr/bin/env python3
+"""Live Shadow Portfolio — point-in-time position ledger + performance tracker.
+
+Reads a promoted snapshot and portfolio policy, then:
+  1. Selects top-K names per bucket respecting policy caps
+  2. Writes a PIT positions artifact (tickers, weights, $, bucket, risk flags)
+  3. Computes performance vs prior positions using price_history.csv
+  4. Appends to an append-only performance.csv
+  5. Generates a weekly summary markdown
+
+Output:
+    artifacts/live_shadow/positions/YYYY-MM-DD.json
+    artifacts/live_shadow/performance.csv           (append-only)
+    artifacts/live_shadow/weekly_summary.md          (overwritten each run)
+
+Usage:
+    python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08
+    python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --policy production_data/portfolio_policy.json
+    python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --account-usd 500000
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import json
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from tools.build_action_lists import classify_action_bucket
+
+SNAPSHOTS_ROOT = PROJECT_ROOT / "data" / "snapshots"
+SHADOW_ROOT = PROJECT_ROOT / "artifacts" / "live_shadow"
+POSITIONS_DIR = SHADOW_ROOT / "positions"
+PERFORMANCE_CSV = SHADOW_ROOT / "performance.csv"
+WEEKLY_SUMMARY = SHADOW_ROOT / "weekly_summary.md"
+DEFAULT_POLICY_PATH = PROJECT_ROOT / "production_data" / "portfolio_policy.json"
+PRICE_HISTORY_PATH = PROJECT_ROOT / "production_data" / "price_history.csv"
+
+SCHEMA_VERSION = "live_shadow_positions.v1"
+PERF_SCHEMA_VERSION = "live_shadow_perf.v1"
+
+# Bucket display names (same as action lists)
+BUCKET_DISPLAY = {
+    "binary_0_30": "Binary 0-30d",
+    "binary_31_90": "Binary 31-90d",
+    "binary_91_180": "Binary 91-180d",
+    "less_binary": "Less Binary",
+}
+
+BUCKET_NAMES = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _safe_float(val: Any, default: float = 0.0) -> float:
+    if val is None or val == "":
+        return default
+    try:
+        return float(val)
+    except (ValueError, TypeError):
+        return default
+
+
+def _sort_key(row: Dict[str, str]) -> Tuple[float, str]:
+    rank = _safe_float(row.get("actionable_rank", ""), 9999.0)
+    return (rank, row.get("ticker", ""))
+
+
+# ---------------------------------------------------------------------------
+# Policy loading
+# ---------------------------------------------------------------------------
+
+
+def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
+    """Load portfolio policy JSON. Returns defaults if file not found."""
+    p = path or DEFAULT_POLICY_PATH
+    if p.is_file():
+        with open(p) as f:
+            return json.load(f)
+    # Sensible defaults
+    return {
+        "schema": "portfolio_policy.v1",
+        "account_usd": 500_000,
+        "bucket_targets": {
+            "binary_91_180": 0.55,
+            "binary_31_90": 0.25,
+            "binary_0_30": 0.10,
+            "less_binary": 0.10,
+        },
+        "bucket_top_k": {
+            "binary_91_180": 20,
+            "binary_31_90": 15,
+            "binary_0_30": 10,
+            "less_binary": 15,
+        },
+        "bucket_name_caps": {
+            "binary_91_180": 3.0,
+            "binary_31_90": 2.0,
+            "binary_0_30": 1.0,
+            "less_binary": 2.0,
+        },
+        "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+        "rebalance_buffer_ranks": 30,
+        "bucket_hysteresis_days": 7,
+    }
+
+
+# ---------------------------------------------------------------------------
+# Snapshot reading
+# ---------------------------------------------------------------------------
+
+
+def load_rankings(snap_dir: Path) -> List[Dict[str, str]]:
+    """Load rankings.csv from snapshot, return eligible rows sorted by rank."""
+    csv_path = snap_dir / "rankings.csv"
+    if not csv_path.is_file():
+        raise FileNotFoundError(f"rankings.csv not found in {snap_dir}")
+    with open(csv_path, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    eligible = [r for r in rows if r.get("eligible") == "1"]
+    eligible.sort(key=_sort_key)
+    return eligible
+
+
+def load_metadata(snap_dir: Path) -> Dict[str, Any]:
+    meta_path = snap_dir / "metadata.json"
+    if meta_path.is_file():
+        with open(meta_path) as f:
+            return json.load(f)
+    return {}
+
+
+# ---------------------------------------------------------------------------
+# Portfolio construction (policy-driven)
+# ---------------------------------------------------------------------------
+
+
+def build_positions(
+    rankings: List[Dict[str, str]],
+    policy: Dict[str, Any],
+    account_usd: Optional[float] = None,
+) -> Dict[str, Any]:
+    """Select top-K per bucket, apply caps, compute $ sizing.
+
+    Returns a dict with:
+        positions: list of position dicts
+        summary: allocation summary
+    """
+    acct = account_usd or policy.get("account_usd", 500_000)
+    bucket_targets = policy.get("bucket_targets", {})
+    bucket_top_k = policy.get("bucket_top_k", {})
+    bucket_name_caps = policy.get("bucket_name_caps", {})
+    gap_cfg = policy.get("gap_risk", {})
+    gap_high_days = gap_cfg.get("high_days", 7)
+    gap_high_cap = gap_cfg.get("high_cap_pct", 0.5)
+
+    # Classify into buckets
+    buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
+    for row in rankings:
+        bucket = classify_action_bucket(row)
+        buckets[bucket].append(row)
+
+    # Select top-K per bucket
+    selected: Dict[str, List[Dict[str, str]]] = {}
+    for bucket_name in BUCKET_NAMES:
+        k = bucket_top_k.get(bucket_name, 20)
+        selected[bucket_name] = buckets[bucket_name][:k]
+
+    # Compute target weight per position
+    positions = []
+    for bucket_name in BUCKET_NAMES:
+        target_frac = bucket_targets.get(bucket_name, 0.25)
+        bucket_cap = bucket_name_caps.get(bucket_name, 5.0)
+        rows = selected[bucket_name]
+        n = len(rows)
+        if n == 0:
+            continue
+
+        # Equal weight within bucket, then cap
+        equal_wt = (target_frac * 100.0) / n
+        for row in rows:
+            wt = min(equal_wt, bucket_cap)
+
+            # Gap-risk cap for binary_0_30
+            cat_days = _safe_float(row.get("catalyst_days", ""), float("inf"))
+            cat_mode = (row.get("catalyst_mode") or "").strip().lower()
+            gap_risk = ""
+            if bucket_name == "binary_0_30":
+                if cat_mode in ("specific_days", "blended_window"):
+                    if cat_days <= gap_high_days:
+                        gap_risk = "HIGH"
+                        wt = min(wt, gap_high_cap)
+                    elif cat_days <= 30:
+                        gap_risk = "MODERATE"
+
+            # Price coverage
+            source = (row.get("de_beta_xbi_60d_source") or "").strip()
+            price_coverage = "OK" if source else "MISSING"
+
+            dollars = round(acct * wt / 100.0, 2)
+
+            positions.append(
+                {
+                    "ticker": row.get("ticker", ""),
+                    "bucket": bucket_name,
+                    "actionable_rank": int(_safe_float(row.get("actionable_rank", ""), 9999)),
+                    "tier": row.get("tier_any", ""),
+                    "size_band": row.get("size_band", ""),
+                    "catalyst_days": row.get("catalyst_days", ""),
+                    "catalyst_mode": row.get("catalyst_mode", ""),
+                    "mom_state": row.get("mom_state", ""),
+                    "weight_pct": round(wt, 4),
+                    "target_dollars": dollars,
+                    "gap_risk": gap_risk,
+                    "price_coverage": price_coverage,
+                }
+            )
+
+    # Trim overage if total > account
+    total = sum(p["target_dollars"] for p in positions)
+    if total > acct and positions:
+        trim_order = sorted(
+            range(len(positions)),
+            key=lambda i: (-positions[i]["target_dollars"], positions[i]["ticker"]),
+        )
+        overage = total - acct
+        for idx in trim_order:
+            if overage <= 0:
+                break
+            reduce = min(positions[idx]["target_dollars"], overage)
+            positions[idx]["target_dollars"] = round(positions[idx]["target_dollars"] - reduce, 2)
+            overage -= reduce
+
+    # Summary
+    total_alloc = sum(p["target_dollars"] for p in positions)
+    per_bucket: Dict[str, Dict[str, Any]] = {}
+    for b in BUCKET_NAMES:
+        b_pos = [p for p in positions if p["bucket"] == b]
+        per_bucket[b] = {
+            "count": len(b_pos),
+            "total_dollars": sum(p["target_dollars"] for p in b_pos),
+            "weight_pct": sum(p["weight_pct"] for p in b_pos),
+        }
+
+    gap_high = [p["ticker"] for p in positions if p["gap_risk"] == "HIGH"]
+    missing_price = [p["ticker"] for p in positions if p["price_coverage"] == "MISSING"]
+
+    summary = {
+        "total_positions": len(positions),
+        "total_allocated": round(total_alloc, 2),
+        "residual_cash": round(acct - total_alloc, 2),
+        "per_bucket": per_bucket,
+        "gap_risk_high": gap_high,
+        "missing_price": missing_price,
+    }
+
+    return {"positions": positions, "summary": summary}
+
+
+# ---------------------------------------------------------------------------
+# Price lookup for performance
+# ---------------------------------------------------------------------------
+
+
+def load_price_map(
+    price_path: Path,
+    date: str,
+) -> Dict[str, float]:
+    """Load closing prices for a specific date from price_history.csv.
+
+    Returns ticker → close price mapping.
+    """
+    prices: Dict[str, float] = {}
+    if not price_path.is_file():
+        return prices
+    with open(price_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("date") == date:
+                close = _safe_float(row.get("close", ""))
+                if close > 0:
+                    prices[row.get("ticker", "")] = close
+    return prices
+
+
+def load_xbi_price(price_path: Path, date: str) -> Optional[float]:
+    """Load XBI closing price for a specific date."""
+    if not price_path.is_file():
+        return None
+    with open(price_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("date") == date and row.get("ticker") == "XBI":
+                close = _safe_float(row.get("close", ""))
+                return close if close > 0 else None
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Performance computation
+# ---------------------------------------------------------------------------
+
+
+def compute_performance(
+    prior_positions: List[Dict[str, Any]],
+    current_positions: List[Dict[str, Any]],
+    prior_date: str,
+    current_date: str,
+    price_path: Path = PRICE_HISTORY_PATH,
+) -> Dict[str, Any]:
+    """Compute realized P&L between two position snapshots.
+
+    Returns dict with total_pnl, pnl_pct, excess_vs_xbi, sleeve attribution,
+    turnover metrics.
+    """
+    prior_prices = load_price_map(price_path, prior_date)
+    current_prices = load_price_map(price_path, current_date)
+    xbi_prior = load_xbi_price(price_path, prior_date)
+    xbi_current = load_xbi_price(price_path, current_date)
+
+    # Weighted return of prior portfolio at current prices
+    total_pnl = 0.0
+    total_weight = 0.0
+    sleeve_pnl: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
+    sleeve_weight: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
+    n_priced = 0
+    n_missing = 0
+
+    for pos in prior_positions:
+        ticker = pos["ticker"]
+        dollars = pos.get("target_dollars", 0.0)
+        bucket = pos.get("bucket", "less_binary")
+        p0 = prior_prices.get(ticker)
+        p1 = current_prices.get(ticker)
+
+        if p0 and p1 and p0 > 0 and dollars > 0:
+            ret = (p1 / p0) - 1.0
+            pnl = dollars * ret
+            total_pnl += pnl
+            total_weight += dollars
+            sleeve_pnl[bucket] = sleeve_pnl.get(bucket, 0.0) + pnl
+            sleeve_weight[bucket] = sleeve_weight.get(bucket, 0.0) + dollars
+            n_priced += 1
+        else:
+            n_missing += 1
+
+    # XBI return
+    xbi_return = None
+    if xbi_prior and xbi_current and xbi_prior > 0:
+        xbi_return = (xbi_current / xbi_prior) - 1.0
+
+    # Portfolio return
+    pnl_pct = (total_pnl / total_weight) if total_weight > 0 else 0.0
+    excess = (pnl_pct - xbi_return) if xbi_return is not None else None
+
+    # Sleeve attribution
+    sleeve_attr = {}
+    for b in BUCKET_NAMES:
+        sw = sleeve_weight[b]
+        sleeve_attr[b] = {
+            "pnl": round(sleeve_pnl[b], 2),
+            "return_pct": round(sleeve_pnl[b] / sw * 100, 4) if sw > 0 else 0.0,
+            "weight": round(sw, 2),
+        }
+
+    # Turnover: fraction of prior tickers NOT in current portfolio
+    prior_tickers = {p["ticker"] for p in prior_positions}
+    current_tickers = {p["ticker"] for p in current_positions}
+    overlap = prior_tickers & current_tickers
+    turnover = 1.0 - (len(overlap) / len(prior_tickers)) if prior_tickers else 0.0
+
+    return {
+        "prior_date": prior_date,
+        "current_date": current_date,
+        "total_pnl": round(total_pnl, 2),
+        "pnl_pct": round(pnl_pct * 100, 4),
+        "xbi_return_pct": round(xbi_return * 100, 4) if xbi_return is not None else None,
+        "excess_vs_xbi_pct": round(excess * 100, 4) if excess is not None else None,
+        "sleeve_attribution": sleeve_attr,
+        "n_priced": n_priced,
+        "n_missing_price": n_missing,
+        "turnover": round(turnover, 4),
+        "n_prior": len(prior_tickers),
+        "n_current": len(current_tickers),
+        "overlap": len(overlap),
+        "gap_risk_high_count": sum(1 for p in current_positions if p.get("gap_risk") == "HIGH"),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Persistence
+# ---------------------------------------------------------------------------
+
+
+def save_positions(
+    as_of_date: str,
+    positions_data: Dict[str, Any],
+    metadata: Dict[str, Any],
+    out_dir: Path = POSITIONS_DIR,
+) -> Path:
+    """Write positions JSON artifact."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"{as_of_date}.json"
+    doc = {
+        "schema": SCHEMA_VERSION,
+        "as_of_date": as_of_date,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "ruleset_id": metadata.get("ruleset_id", ""),
+        "engine_version": metadata.get("version", ""),
+        **positions_data,
+    }
+    with open(path, "w") as f:
+        json.dump(doc, f, indent=2)
+    return path
+
+
+def load_prior_positions(
+    as_of_date: str,
+    positions_dir: Path = POSITIONS_DIR,
+) -> Optional[Tuple[str, List[Dict[str, Any]]]]:
+    """Find and load the most recent positions file before as_of_date.
+
+    Returns (prior_date, positions_list) or None.
+    """
+    if not positions_dir.is_dir():
+        return None
+
+    candidates = []
+    for p in positions_dir.iterdir():
+        if p.suffix == ".json" and p.stem < as_of_date:
+            candidates.append(p)
+    if not candidates:
+        return None
+
+    latest = max(candidates, key=lambda p: p.stem)
+    with open(latest) as f:
+        doc = json.load(f)
+    return (doc.get("as_of_date", latest.stem), doc.get("positions", []))
+
+
+PERF_COLUMNS = [
+    "schema_version",
+    "date",
+    "prior_date",
+    "total_pnl",
+    "pnl_pct",
+    "xbi_return_pct",
+    "excess_vs_xbi_pct",
+    "n_held",
+    "turnover",
+    "gap_risk_high_count",
+    "n_missing_price",
+    "sleeve_binary_0_30_pnl",
+    "sleeve_binary_31_90_pnl",
+    "sleeve_binary_91_180_pnl",
+    "sleeve_less_binary_pnl",
+    "ruleset_id",
+]
+
+
+def append_performance(
+    as_of_date: str,
+    perf: Dict[str, Any],
+    ruleset_id: str = "",
+    perf_csv: Path = PERFORMANCE_CSV,
+) -> None:
+    """Append a row to the append-only performance CSV."""
+    perf_csv.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not perf_csv.is_file()
+
+    sleeve = perf.get("sleeve_attribution", {})
+    row = {
+        "schema_version": PERF_SCHEMA_VERSION,
+        "date": as_of_date,
+        "prior_date": perf.get("prior_date", ""),
+        "total_pnl": perf.get("total_pnl", ""),
+        "pnl_pct": perf.get("pnl_pct", ""),
+        "xbi_return_pct": perf.get("xbi_return_pct", ""),
+        "excess_vs_xbi_pct": perf.get("excess_vs_xbi_pct", ""),
+        "n_held": perf.get("n_prior", ""),
+        "turnover": perf.get("turnover", ""),
+        "gap_risk_high_count": perf.get("gap_risk_high_count", ""),
+        "n_missing_price": perf.get("n_missing_price", ""),
+        "sleeve_binary_0_30_pnl": sleeve.get("binary_0_30", {}).get("pnl", ""),
+        "sleeve_binary_31_90_pnl": sleeve.get("binary_31_90", {}).get("pnl", ""),
+        "sleeve_binary_91_180_pnl": sleeve.get("binary_91_180", {}).get("pnl", ""),
+        "sleeve_less_binary_pnl": sleeve.get("less_binary", {}).get("pnl", ""),
+        "ruleset_id": ruleset_id,
+    }
+
+    with open(perf_csv, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=PERF_COLUMNS)
+        if write_header:
+            writer.writeheader()
+        writer.writerow(row)
+
+
+# ---------------------------------------------------------------------------
+# Weekly summary markdown
+# ---------------------------------------------------------------------------
+
+
+def write_weekly_summary(
+    as_of_date: str,
+    positions_data: Dict[str, Any],
+    perf: Optional[Dict[str, Any]],
+    policy: Dict[str, Any],
+    metadata: Dict[str, Any],
+    out_path: Path = WEEKLY_SUMMARY,
+) -> Path:
+    """Write a human-readable weekly summary markdown."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    positions = positions_data.get("positions", [])
+    summary = positions_data.get("summary", {})
+    per_bucket = summary.get("per_bucket", {})
+
+    lines = []
+    lines.append("# Weekly Shadow Portfolio Summary")
+    lines.append("")
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    lines.append(f"**As-of date**: {as_of_date}")
+    lines.append(f"**Generated**: {ts}")
+    rs_id = metadata.get("ruleset_id", "?")
+    lines.append(f"**Ruleset**: {rs_id}")
+    acct = policy.get("account_usd", 500_000)
+    lines.append(f"**Account**: ${acct:,.0f}")
+    lines.append("")
+
+    # Policy vs Actual
+    lines.append("## Policy vs Actual")
+    lines.append("")
+    lines.append("| Bucket | Policy | Actual | Actual $ | Names |")
+    lines.append("|--------|--------|--------|----------|-------|")
+    bucket_targets = policy.get("bucket_targets", {})
+    for b in BUCKET_NAMES:
+        bdata = per_bucket.get(b, {})
+        target_pct = bucket_targets.get(b, 0) * 100
+        actual_pct = (bdata.get("total_dollars", 0) / acct * 100) if acct > 0 else 0
+        lines.append(
+            f"| {BUCKET_DISPLAY.get(b, b)} | {target_pct:.0f}% "
+            f"| {actual_pct:.1f}% | ${bdata.get('total_dollars', 0):,.0f} "
+            f"| {bdata.get('count', 0)} |"
+        )
+    lines.append("")
+    lines.append(
+        f"**Total allocated**: ${summary.get('total_allocated', 0):,.0f} "
+        f"| **Cash**: ${summary.get('residual_cash', 0):,.0f}"
+    )
+    lines.append("")
+
+    # Risk
+    gap_high = summary.get("gap_risk_high", [])
+    missing = summary.get("missing_price", [])
+    lines.append("## Risk Flags")
+    lines.append("")
+    if gap_high:
+        lines.append(f"**Gap Risk HIGH** ({len(gap_high)} names): {', '.join(gap_high)}")
+    else:
+        lines.append("**Gap Risk HIGH**: none")
+    if missing:
+        lines.append(f"**Missing Price** ({len(missing)} names): {', '.join(missing)}")
+    else:
+        lines.append("**Missing Price**: none")
+    lines.append("")
+
+    # Performance (if available)
+    if perf:
+        lines.append("## Performance vs Prior")
+        lines.append("")
+        lines.append(f"**Period**: {perf.get('prior_date', '?')} → {as_of_date}")
+        pnl = perf.get("total_pnl", 0)
+        pnl_pct = perf.get("pnl_pct", 0)
+        xbi_ret = perf.get("xbi_return_pct")
+        excess = perf.get("excess_vs_xbi_pct")
+        lines.append(f"**Total P&L**: ${pnl:,.2f} ({pnl_pct:+.2f}%)")
+        if xbi_ret is not None:
+            lines.append(f"**XBI return**: {xbi_ret:+.2f}%")
+        if excess is not None:
+            lines.append(f"**Excess vs XBI**: {excess:+.2f}%")
+        lines.append(f"**Turnover**: {perf.get('turnover', 0):.1%}")
+        lines.append("")
+
+        # Sleeve attribution
+        sleeve = perf.get("sleeve_attribution", {})
+        lines.append("### Sleeve Attribution")
+        lines.append("")
+        lines.append("| Bucket | P&L | Return | Weight |")
+        lines.append("|--------|-----|--------|--------|")
+        for b in BUCKET_NAMES:
+            s = sleeve.get(b, {})
+            lines.append(
+                f"| {BUCKET_DISPLAY.get(b, b)} "
+                f"| ${s.get('pnl', 0):,.2f} "
+                f"| {s.get('return_pct', 0):+.2f}% "
+                f"| ${s.get('weight', 0):,.0f} |"
+            )
+        lines.append("")
+    else:
+        lines.append("## Performance vs Prior")
+        lines.append("")
+        lines.append("No prior positions found — first snapshot.")
+        lines.append("")
+
+    # Top holdings
+    lines.append("## Top 10 Holdings")
+    lines.append("")
+    lines.append("| Rank | Ticker | Bucket | Weight | $ | Gap Risk |")
+    lines.append("|------|--------|--------|--------|---|----------|")
+    top10 = sorted(positions, key=lambda p: (-p["target_dollars"], p["ticker"]))[:10]
+    for p in top10:
+        lines.append(
+            f"| {p['actionable_rank']} | {p['ticker']} "
+            f"| {BUCKET_DISPLAY.get(p['bucket'], p['bucket'])} "
+            f"| {p['weight_pct']:.2f}% | ${p['target_dollars']:,.0f} "
+            f"| {p['gap_risk'] or '-'} |"
+        )
+    lines.append("")
+
+    text = "\n".join(lines)
+    with open(out_path, "w") as f:
+        f.write(text)
+    return out_path
+
+
+# ---------------------------------------------------------------------------
+# Main orchestrator
+# ---------------------------------------------------------------------------
+
+
+def run_shadow_portfolio(
+    snap_dir: Path,
+    *,
+    policy_path: Optional[Path] = None,
+    account_usd: Optional[float] = None,
+    price_path: Path = PRICE_HISTORY_PATH,
+    shadow_root: Path = SHADOW_ROOT,
+) -> Dict[str, Any]:
+    """Main entry point: build positions, compute performance, write outputs.
+
+    Returns dict with positions_path, performance, summary.
+    """
+    policy = load_policy(policy_path)
+    if account_usd is not None:
+        policy["account_usd"] = account_usd
+
+    rankings = load_rankings(snap_dir)
+    metadata = load_metadata(snap_dir)
+    as_of_date = metadata.get("as_of_date", snap_dir.name)
+
+    # Build positions
+    positions_data = build_positions(rankings, policy, account_usd)
+
+    # Save positions
+    pos_dir = shadow_root / "positions"
+    pos_path = save_positions(as_of_date, positions_data, metadata, pos_dir)
+
+    # Compute performance vs prior
+    perf = None
+    prior = load_prior_positions(as_of_date, pos_dir)
+    if prior:
+        prior_date, prior_positions = prior
+        perf = compute_performance(
+            prior_positions,
+            positions_data["positions"],
+            prior_date,
+            as_of_date,
+            price_path,
+        )
+        perf_csv = shadow_root / "performance.csv"
+        append_performance(as_of_date, perf, metadata.get("ruleset_id", ""), perf_csv)
+
+    # Weekly summary
+    summary_path = shadow_root / "weekly_summary.md"
+    write_weekly_summary(as_of_date, positions_data, perf, policy, metadata, summary_path)
+
+    return {
+        "positions_path": str(pos_path),
+        "summary": positions_data["summary"],
+        "performance": perf,
+    }
+
+
+# ---------------------------------------------------------------------------
+# CLI
+# ---------------------------------------------------------------------------
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Live shadow portfolio tracker")
+    parser.add_argument("--as-of-date", type=str, help="Snapshot date (YYYY-MM-DD)")
+    parser.add_argument("--snapshot-dir", type=str, help="Snapshot directory path")
+    parser.add_argument("--policy", type=str, help="Portfolio policy JSON path")
+    parser.add_argument("--account-usd", type=float, help="Account value in USD")
+    parser.add_argument("--price-history", type=str, help="Price history CSV path")
+    parser.add_argument("--out-dir", type=str, help="Output directory")
+    args = parser.parse_args()
+
+    if args.snapshot_dir:
+        snap_dir = Path(args.snapshot_dir)
+    elif args.as_of_date:
+        snap_dir = SNAPSHOTS_ROOT / args.as_of_date
+    else:
+        # Find latest snapshot
+        candidates = sorted(
+            (d for d in SNAPSHOTS_ROOT.iterdir() if d.is_dir() and len(d.name) == 10),
+            key=lambda d: d.name,
+        )
+        if not candidates:
+            print("ERROR: No snapshots found", file=sys.stderr)
+            sys.exit(1)
+        snap_dir = candidates[-1]
+
+    if not snap_dir.is_dir():
+        print(f"ERROR: Snapshot directory not found: {snap_dir}", file=sys.stderr)
+        sys.exit(1)
+
+    policy_path = Path(args.policy) if args.policy else None
+    price_path = Path(args.price_history) if args.price_history else PRICE_HISTORY_PATH
+    shadow_root = Path(args.out_dir) if args.out_dir else SHADOW_ROOT
+
+    result = run_shadow_portfolio(
+        snap_dir,
+        policy_path=policy_path,
+        account_usd=args.account_usd,
+        price_path=price_path,
+        shadow_root=shadow_root,
+    )
+
+    summary = result["summary"]
+    print(f"Shadow portfolio: {summary['total_positions']} positions")
+    print(f"Allocated: ${summary['total_allocated']:,.0f}")
+    print(f"Cash: ${summary['residual_cash']:,.0f}")
+
+    if result["performance"]:
+        perf = result["performance"]
+        print(f"\nP&L: ${perf['total_pnl']:,.2f} ({perf['pnl_pct']:+.2f}%)")
+        if perf.get("excess_vs_xbi_pct") is not None:
+            print(f"Excess vs XBI: {perf['excess_vs_xbi_pct']:+.2f}%")
+        print(f"Turnover: {perf['turnover']:.1%}")
+    else:
+        print("\nFirst snapshot — no prior for performance comparison.")
+
+    print(f"\nPositions: {result['positions_path']}")
+
+
+if __name__ == "__main__":
+    main()

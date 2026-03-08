@@ -1,0 +1,32 @@
+{
+  "schema": "portfolio_policy.v1",
+  "description": "Weekly rebalance policy for $500k biotech portfolio (90-180d holding target)",
+  "rebalance_cadence": "weekly",
+  "rebalance_day": "FRIDAY",
+  "execution": "NEXT_OPEN",
+  "account_usd": 500000,
+  "bucket_targets": {
+    "binary_91_180": 0.55,
+    "binary_31_90": 0.25,
+    "binary_0_30": 0.10,
+    "less_binary": 0.10
+  },
+  "bucket_top_k": {
+    "binary_91_180": 20,
+    "binary_31_90": 15,
+    "binary_0_30": 10,
+    "less_binary": 15
+  },
+  "bucket_name_caps": {
+    "binary_91_180": 3.0,
+    "binary_31_90": 2.0,
+    "binary_0_30": 1.0,
+    "less_binary": 2.0
+  },
+  "gap_risk": {
+    "high_days": 7,
+    "high_cap_pct": 0.5
+  },
+  "rebalance_buffer_ranks": 30,
+  "bucket_hysteresis_days": 7
+}
