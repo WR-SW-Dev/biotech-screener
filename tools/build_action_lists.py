@@ -313,6 +313,60 @@ def apply_risk_rails(
 
 
 # ---------------------------------------------------------------------------
+# Bucket target tilts (opt-in)
+# ---------------------------------------------------------------------------
+
+
+def apply_bucket_targets(
+    buckets: Dict[str, List[Dict[str, str]]],
+    bucket_targets: Dict[str, float],
+) -> None:
+    """Rescale target_weight_pct within each bucket to hit target allocations (in-place).
+
+    Args:
+        buckets: Dict of bucket_name → list of row dicts (mutated in-place).
+        bucket_targets: Dict mapping bucket_name → target fraction of total
+            (e.g. {"binary_0_30": 0.10, "binary_91_180": 0.50}).
+            Values should sum to ~1.0.  Missing buckets keep their raw weight,
+            then everything is normalized to sum to 100%.
+    """
+    # Compute current raw weight per bucket
+    bucket_raw_totals: Dict[str, float] = {}
+    for bucket_name, rows in buckets.items():
+        bucket_raw_totals[bucket_name] = sum(_safe_float(r.get("target_weight_pct", "")) for r in rows)
+
+    grand_raw = sum(bucket_raw_totals.values())
+    if grand_raw <= 0:
+        return
+
+    # For buckets with a target: compute scale factor.
+    # For buckets without a target: assign remaining share proportionally.
+    specified_share = sum(bucket_targets.get(b, 0.0) for b in BUCKET_NAMES if b in bucket_targets)
+    unspecified_buckets = [b for b in BUCKET_NAMES if b not in bucket_targets]
+    unspecified_raw = sum(bucket_raw_totals.get(b, 0.0) for b in unspecified_buckets)
+
+    remaining_share = max(0.0, 1.0 - specified_share)
+
+    for bucket_name, rows in buckets.items():
+        raw_total = bucket_raw_totals.get(bucket_name, 0.0)
+        if raw_total <= 0:
+            continue
+
+        if bucket_name in bucket_targets:
+            target_pct = bucket_targets[bucket_name] * 100.0
+        elif unspecified_raw > 0:
+            # Proportional share of the remaining allocation
+            target_pct = (raw_total / unspecified_raw) * remaining_share * 100.0
+        else:
+            target_pct = 0.0
+
+        scale = target_pct / raw_total
+        for row in rows:
+            old_wt = _safe_float(row.get("target_weight_pct", ""))
+            row["target_weight_pct"] = f"{old_wt * scale:.4f}"
+
+
+# ---------------------------------------------------------------------------
 # Account-aware sizing
 # ---------------------------------------------------------------------------
 
@@ -341,28 +395,53 @@ def apply_account_sizing(
     if band_caps is None:
         band_caps = DEFAULT_BAND_CAPS
 
-    per_bucket: Dict[str, float] = {}
-    per_band: Dict[str, float] = {}
-    total_allocated = 0.0
-
+    # Pass 1: compute raw capped dollars for each name
+    all_entries: List[Tuple[str, Dict[str, str], float, float, str]] = []
     for bucket_name, rows in buckets.items():
-        bucket_total = 0.0
         for row in rows:
             raw = _safe_float(row.get("target_weight_pct", ""))
             band = (row.get("size_band") or "").strip()
             cap = band_caps.get(band, BAND_CAP_FALLBACK)
             capped = min(raw, cap)
-            dollars = account_usd * capped / 100.0
-
+            dollars = round(account_usd * capped / 100.0, 2)
             row["weight_pct_raw"] = f"{raw:.4f}"
             row["weight_pct_capped"] = f"{capped:.4f}"
-            row["target_dollars"] = f"{dollars:.2f}"
+            all_entries.append((bucket_name, row, dollars, capped, band))
 
-            bucket_total += dollars
-            per_band[band] = per_band.get(band, 0.0) + dollars
+    # Pass 2: if total exceeds account, trim from largest positions first
+    total = sum(d for _, _, d, _, _ in all_entries)
+    if total > account_usd:
+        # Sort: largest dollar first, tie-break by ticker ASC (deterministic)
+        trim_order = sorted(
+            range(len(all_entries)),
+            key=lambda i: (-all_entries[i][2], all_entries[i][1].get("ticker", "")),
+        )
+        overage = total - account_usd
+        for idx in trim_order:
+            if overage <= 0:
+                break
+            _, row, dollars, _, _ = all_entries[idx]
+            # Reduce this position by up to the overage, min $0
+            reduce = min(dollars, overage)
+            new_dollars = dollars - reduce
+            all_entries[idx] = (
+                all_entries[idx][0],
+                row,
+                new_dollars,
+                all_entries[idx][3],
+                all_entries[idx][4],
+            )
+            overage -= reduce
 
-        per_bucket[bucket_name] = bucket_total
-        total_allocated += bucket_total
+    # Pass 3: stamp target_dollars and compute summaries
+    per_bucket: Dict[str, float] = {}
+    per_band: Dict[str, float] = {}
+    total_allocated = 0.0
+    for bucket_name, row, dollars, _capped, band in all_entries:
+        row["target_dollars"] = f"{dollars:.2f}"
+        per_bucket[bucket_name] = per_bucket.get(bucket_name, 0.0) + dollars
+        per_band[band] = per_band.get(band, 0.0) + dollars
+        total_allocated += dollars
 
     return {
         "account_usd": account_usd,
@@ -648,6 +727,15 @@ def main():
             "Example: XS=2,S=3,M=5,L=5  (default: XS=2, S=3, M=5, L=5)"
         ),
     )
+    parser.add_argument(
+        "--bucket-targets",
+        default=None,
+        help=(
+            "Rescale bucket weights to target fractions (opt-in). "
+            "Comma-separated KEY=VAL pairs, values are fractions summing to ~1.0. "
+            "Example: binary_0_30=0.10,binary_31_90=0.20,binary_91_180=0.50,less_binary=0.20"
+        ),
+    )
     args = parser.parse_args()
 
     if args.snapshot_dir:
@@ -668,6 +756,14 @@ def main():
     out_dir = args.out_dir or (snap_dir / "action_lists")
 
     buckets = build_action_lists(snap_dir, eligible_only=not args.include_ineligible)
+
+    # Bucket target tilts (opt-in, before sizing)
+    if args.bucket_targets:
+        bt = {}
+        for pair in args.bucket_targets.split(","):
+            k, v = pair.strip().split("=")
+            bt[k.strip()] = float(v.strip())
+        apply_bucket_targets(buckets, bt)
 
     # Risk rails (always applied)
     apply_risk_rails(buckets)
