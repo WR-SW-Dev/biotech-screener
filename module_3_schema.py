@@ -17,11 +17,11 @@ Determinism Guarantees:
 
 import hashlib
 import json
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Optional, List, Dict, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # =============================================================================
 # VERSION CONSTANTS
@@ -33,6 +33,7 @@ SCORE_VERSION = "m3score_vnext_20260111"
 # =============================================================================
 # EVENT TYPE TAXONOMY (EXPANDED)
 # =============================================================================
+
 
 class EventType(str, Enum):
     """
@@ -46,6 +47,7 @@ class EventType(str, Enum):
     - Protocol amendments
     - Enrollment changes
     """
+
     # Status changes
     CT_STATUS_SEVERE_NEG = "CT_STATUS_SEVERE_NEG"
     CT_STATUS_DOWNGRADE = "CT_STATUS_DOWNGRADE"
@@ -169,6 +171,7 @@ class EventType(str, Enum):
 
 class EventSeverity(str, Enum):
     """Event severity categories for scoring."""
+
     CRITICAL_POSITIVE = "CRITICAL_POSITIVE"
     POSITIVE = "POSITIVE"
     NEUTRAL = "NEUTRAL"
@@ -178,6 +181,7 @@ class EventSeverity(str, Enum):
 
 class ConfidenceLevel(str, Enum):
     """Confidence levels for events."""
+
     HIGH = "HIGH"
     MED = "MED"
     LOW = "LOW"
@@ -185,6 +189,7 @@ class ConfidenceLevel(str, Enum):
 
 class CatalystWindowBucket(str, Enum):
     """Catalyst window time buckets."""
+
     DAYS_0_30 = "0_30"
     DAYS_31_90 = "31_90"
     DAYS_91_180 = "91_180"
@@ -208,48 +213,39 @@ EVENT_SEVERITY_MAP: Dict[EventType, EventSeverity] = {
     EventType.CT_ENROLLMENT_STARTED: EventSeverity.POSITIVE,
     EventType.CT_ENROLLMENT_RESUMED: EventSeverity.POSITIVE,
     EventType.CT_ARM_ADDED: EventSeverity.NEUTRAL,
-
     # Critical positive - Regulatory events
     EventType.FDA_PDUFA_DATE: EventSeverity.CRITICAL_POSITIVE,
     EventType.FDA_ADCOM: EventSeverity.CRITICAL_POSITIVE,
     EventType.FDA_APPROVAL: EventSeverity.CRITICAL_POSITIVE,
     EventType.FDA_SUBMISSION: EventSeverity.POSITIVE,
     EventType.FDA_DESIGNATION: EventSeverity.POSITIVE,
-
     # Critical positive - Data events
     EventType.DATA_READOUT: EventSeverity.CRITICAL_POSITIVE,
     EventType.DATA_PRESENTATION: EventSeverity.POSITIVE,
     EventType.DATA_PUBLICATION: EventSeverity.POSITIVE,
-
     # Positive - Corporate events
     EventType.EARNINGS_RELEASE: EventSeverity.NEUTRAL,  # Can go either way
     EventType.CONFERENCE_PRESENTATION: EventSeverity.POSITIVE,
     EventType.INVESTOR_DAY: EventSeverity.NEUTRAL,
-
     # Positive - Business development
     EventType.PARTNERSHIP: EventSeverity.POSITIVE,
     EventType.MA_ACTIVITY: EventSeverity.NEUTRAL,  # Can go either way
     EventType.LICENSING_DEAL: EventSeverity.POSITIVE,
-
     # EMA committee events (EU regulatory)
-    EventType.EMA_COMMITTEE_AGENDA: EventSeverity.POSITIVE,            # Scheduled item
+    EventType.EMA_COMMITTEE_AGENDA: EventSeverity.POSITIVE,  # Scheduled item
     EventType.EMA_COMMITTEE_OUTCOME: EventSeverity.CRITICAL_POSITIVE,  # Decision
-
     # Conference calendar events
     EventType.CONFERENCE_LATE_BREAKER: EventSeverity.CRITICAL_POSITIVE,  # Late-breaking presentation
-    EventType.CONFERENCE_ACCEPTED_ABSTRACT: EventSeverity.POSITIVE,      # Accepted abstract PR
-
+    EventType.CONFERENCE_ACCEPTED_ABSTRACT: EventSeverity.POSITIVE,  # Accepted abstract PR
     # Company-announced calendar events (IR + press releases)
-    EventType.IR_EVENT: EventSeverity.POSITIVE,               # IR page event (company calendar)
-    EventType.PRESS_RELEASE_EVENT: EventSeverity.POSITIVE,    # PR future-date announcement
-
+    EventType.IR_EVENT: EventSeverity.POSITIVE,  # IR page event (company calendar)
+    EventType.PRESS_RELEASE_EVENT: EventSeverity.POSITIVE,  # PR future-date announcement
     # Neutral
     EventType.CT_RESULTS_POSTED: EventSeverity.NEUTRAL,
     EventType.CT_PROTOCOL_AMENDMENT: EventSeverity.NEUTRAL,
     EventType.CT_ENDPOINT_CHANGED: EventSeverity.NEUTRAL,
     EventType.CT_ACTIVITY_PROXY: EventSeverity.NEUTRAL,  # Unknown if positive or negative
     EventType.UNKNOWN: EventSeverity.NEUTRAL,
-
     # Negative
     EventType.CT_STATUS_DOWNGRADE: EventSeverity.NEGATIVE,
     EventType.CT_TIMELINE_PUSHOUT: EventSeverity.NEGATIVE,
@@ -258,15 +254,12 @@ EVENT_SEVERITY_MAP: Dict[EventType, EventSeverity] = {
     EventType.FDA_CRL: EventSeverity.SEVERE_NEGATIVE,
     EventType.FDA_RTF: EventSeverity.SEVERE_NEGATIVE,
     EventType.FDA_WARNING_LETTER: EventSeverity.NEGATIVE,
-
     # Severe negative
     EventType.CT_STATUS_SEVERE_NEG: EventSeverity.SEVERE_NEGATIVE,
-
     # Granular terminal statuses
     EventType.CT_TRIAL_TERMINATED: EventSeverity.SEVERE_NEGATIVE,
     EventType.CT_TRIAL_WITHDRAWN: EventSeverity.SEVERE_NEGATIVE,
     EventType.CT_TRIAL_SUSPENDED: EventSeverity.NEGATIVE,  # May resume
-
     # Safety / clinical hold signals
     EventType.CLINICAL_HOLD: EventSeverity.SEVERE_NEGATIVE,
     EventType.SAFETY_SIGNAL: EventSeverity.NEGATIVE,
@@ -310,7 +303,6 @@ EVENT_DEFAULT_CONFIDENCE: Dict[EventType, ConfidenceLevel] = {
     EventType.CT_TRIAL_SUSPENDED: ConfidenceLevel.HIGH,
     EventType.CLINICAL_HOLD: ConfidenceLevel.HIGH,
     EventType.SAFETY_SIGNAL: ConfidenceLevel.MED,
-
     # Regulatory/FDA events - HIGH confidence (official dates)
     EventType.FDA_PDUFA_DATE: ConfidenceLevel.HIGH,
     EventType.FDA_ADCOM: ConfidenceLevel.HIGH,
@@ -320,34 +312,27 @@ EVENT_DEFAULT_CONFIDENCE: Dict[EventType, ConfidenceLevel] = {
     EventType.FDA_DESIGNATION: ConfidenceLevel.HIGH,
     EventType.FDA_RTF: ConfidenceLevel.HIGH,
     EventType.FDA_WARNING_LETTER: ConfidenceLevel.MED,
-
     # Corporate events - MED confidence (dates can shift)
     EventType.EARNINGS_RELEASE: ConfidenceLevel.MED,
     EventType.CONFERENCE_PRESENTATION: ConfidenceLevel.MED,
     EventType.INVESTOR_DAY: ConfidenceLevel.MED,
-
     # Data events - MED confidence (estimates)
     EventType.DATA_READOUT: ConfidenceLevel.MED,
     EventType.DATA_PRESENTATION: ConfidenceLevel.MED,
     EventType.DATA_PUBLICATION: ConfidenceLevel.LOW,
-
     # Business development - LOW confidence (unpredictable)
     EventType.PARTNERSHIP: ConfidenceLevel.LOW,
     EventType.MA_ACTIVITY: ConfidenceLevel.LOW,
     EventType.LICENSING_DEAL: ConfidenceLevel.LOW,
-
     # EMA committee events
-    EventType.EMA_COMMITTEE_AGENDA: ConfidenceLevel.MED,   # Agenda item (scheduled, not decided)
+    EventType.EMA_COMMITTEE_AGENDA: ConfidenceLevel.MED,  # Agenda item (scheduled, not decided)
     EventType.EMA_COMMITTEE_OUTCOME: ConfidenceLevel.HIGH,  # Meeting decision
-
     # Conference calendar events
-    EventType.CONFERENCE_LATE_BREAKER: ConfidenceLevel.HIGH,      # Late-breaking / plenary presentation
+    EventType.CONFERENCE_LATE_BREAKER: ConfidenceLevel.HIGH,  # Late-breaking / plenary presentation
     EventType.CONFERENCE_ACCEPTED_ABSTRACT: ConfidenceLevel.MED,  # Company-disclosed accepted abstract
-
     # Company-announced calendar events (IR + press releases)
-    EventType.IR_EVENT: ConfidenceLevel.MED,              # IR page — dates can shift
-    EventType.PRESS_RELEASE_EVENT: ConfidenceLevel.MED,   # PR — company-announced, may shift
-
+    EventType.IR_EVENT: ConfidenceLevel.MED,  # IR page — dates can shift
+    EventType.PRESS_RELEASE_EVENT: ConfidenceLevel.MED,  # PR — company-announced, may shift
     EventType.UNKNOWN: ConfidenceLevel.LOW,
 }
 
@@ -392,30 +377,27 @@ EVENT_TYPE_WEIGHT: Dict[EventType, Decimal] = {
     # ==========================================================================
     # HIGHEST IMPACT - Binary regulatory events
     # ==========================================================================
-    EventType.FDA_PDUFA_DATE: Decimal("25.0"),      # FDA approval decision
-    EventType.FDA_ADCOM: Decimal("22.0"),           # Advisory committee (precedes PDUFA)
-    EventType.DATA_READOUT: Decimal("22.0"),        # Top-line data readout
-
+    EventType.FDA_PDUFA_DATE: Decimal("25.0"),  # FDA approval decision
+    EventType.FDA_ADCOM: Decimal("22.0"),  # Advisory committee (precedes PDUFA)
+    EventType.DATA_READOUT: Decimal("22.0"),  # Top-line data readout
     # ==========================================================================
     # HIGH IMPACT - Clinical milestones
     # ==========================================================================
     EventType.CT_PRIMARY_COMPLETION: Decimal("20.0"),
     EventType.CT_RESULTS_POSTED: Decimal("18.0"),
-    EventType.FDA_APPROVAL: Decimal("18.0"),        # Already approved (confirmed)
-    EventType.DATA_PRESENTATION: Decimal("16.0"),   # Full data at conference
+    EventType.FDA_APPROVAL: Decimal("18.0"),  # Already approved (confirmed)
+    EventType.DATA_PRESENTATION: Decimal("16.0"),  # Full data at conference
     EventType.CT_STUDY_COMPLETION: Decimal("15.0"),
     EventType.CONFERENCE_PRESENTATION: Decimal("14.0"),  # Major conference
-
     # ==========================================================================
     # MEDIUM IMPACT - Regulatory progress
     # ==========================================================================
-    EventType.FDA_SUBMISSION: Decimal("12.0"),      # NDA/BLA submission
+    EventType.FDA_SUBMISSION: Decimal("12.0"),  # NDA/BLA submission
     EventType.CT_DATE_CONFIRMED_ACTUAL: Decimal("12.0"),
-    EventType.FDA_DESIGNATION: Decimal("10.0"),     # BTD, Fast Track, etc.
+    EventType.FDA_DESIGNATION: Decimal("10.0"),  # BTD, Fast Track, etc.
     EventType.CT_ENROLLMENT_COMPLETE: Decimal("10.0"),
     EventType.PARTNERSHIP: Decimal("10.0"),
     EventType.LICENSING_DEAL: Decimal("10.0"),
-
     # ==========================================================================
     # LOWER IMPACT - Operational events
     # ==========================================================================
@@ -429,9 +411,8 @@ EVENT_TYPE_WEIGHT: Dict[EventType, Decimal] = {
     EventType.CT_ENROLLMENT_RESUMED: Decimal("4.0"),
     EventType.CT_ARM_ADDED: Decimal("3.0"),
     EventType.CT_PROTOCOL_AMENDMENT: Decimal("2.0"),
-    EventType.CT_ACTIVITY_PROXY: Decimal("2.0"),    # Low weight, indicates engagement
+    EventType.CT_ACTIVITY_PROXY: Decimal("2.0"),  # Low weight, indicates engagement
     EventType.CT_ENDPOINT_CHANGED: Decimal("1.0"),
-
     # ==========================================================================
     # NEUTRAL/NEGATIVE - Don't boost upcoming score
     # ==========================================================================
@@ -440,27 +421,23 @@ EVENT_TYPE_WEIGHT: Dict[EventType, Decimal] = {
     EventType.CT_TIMELINE_PUSHOUT: Decimal("0.0"),
     EventType.CT_ARM_REMOVED: Decimal("0.0"),
     EventType.CT_ENROLLMENT_PAUSED: Decimal("0.0"),
-    EventType.FDA_CRL: Decimal("0.0"),              # Complete Response Letter (negative)
-    EventType.FDA_RTF: Decimal("0.0"),               # Refuse to File (negative)
-    EventType.FDA_WARNING_LETTER: Decimal("0.0"),    # Warning Letter (negative)
+    EventType.FDA_CRL: Decimal("0.0"),  # Complete Response Letter (negative)
+    EventType.FDA_RTF: Decimal("0.0"),  # Refuse to File (negative)
+    EventType.FDA_WARNING_LETTER: Decimal("0.0"),  # Warning Letter (negative)
     EventType.CT_TRIAL_TERMINATED: Decimal("0.0"),
     EventType.CT_TRIAL_WITHDRAWN: Decimal("0.0"),
     EventType.CT_TRIAL_SUSPENDED: Decimal("0.0"),
     EventType.CLINICAL_HOLD: Decimal("0.0"),
     EventType.SAFETY_SIGNAL: Decimal("0.0"),
-
     # EMA committee events (EU regulatory — AdCom equivalent)
-    EventType.EMA_COMMITTEE_AGENDA: Decimal("12.0"),   # Scheduled: similar to FDA_SUBMISSION
+    EventType.EMA_COMMITTEE_AGENDA: Decimal("12.0"),  # Scheduled: similar to FDA_SUBMISSION
     EventType.EMA_COMMITTEE_OUTCOME: Decimal("18.0"),  # Decision: similar to FDA_APPROVAL
-
     # Conference calendar events
-    EventType.CONFERENCE_LATE_BREAKER: Decimal("18.0"),        # Late-breaking: high-impact data
-    EventType.CONFERENCE_ACCEPTED_ABSTRACT: Decimal("10.0"),   # Accepted abstract PR
-
+    EventType.CONFERENCE_LATE_BREAKER: Decimal("18.0"),  # Late-breaking: high-impact data
+    EventType.CONFERENCE_ACCEPTED_ABSTRACT: Decimal("10.0"),  # Accepted abstract PR
     # Company-announced calendar events (IR + press releases) — conservative weights
-    EventType.IR_EVENT: Decimal("8.0"),              # IR page events (earnings, investor day, etc.)
+    EventType.IR_EVENT: Decimal("8.0"),  # IR page events (earnings, investor day, etc.)
     EventType.PRESS_RELEASE_EVENT: Decimal("10.0"),  # PR future-date events (data readout, presentation)
-
     EventType.UNKNOWN: Decimal("0.0"),
 }
 
@@ -480,6 +457,7 @@ if _missing_weights:
 # CATALYST EVENT (VERSIONED)
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class CatalystEventV2:
     """
@@ -487,6 +465,7 @@ class CatalystEventV2:
 
     Frozen dataclass ensures immutability for hashing.
     """
+
     ticker: str
     nct_id: str
     event_type: EventType
@@ -498,9 +477,9 @@ class CatalystEventV2:
     source: str
     confidence: ConfidenceLevel
     disclosed_at: str  # ISO date string
-    event_date_end: Optional[str] = None   # ISO date, end of range (None = single date)
-    date_precision: str = "DAY"            # DAY | RANGE | QUARTER | HALF_YEAR
-    tags: tuple = ()                       # immutable tuple for frozen dataclass
+    event_date_end: Optional[str] = None  # ISO date, end of range (None = single date)
+    date_precision: str = "DAY"  # DAY | RANGE | QUARTER | HALF_YEAR
+    tags: tuple = ()  # immutable tuple for frozen dataclass
 
     @property
     def event_id(self) -> str:
@@ -580,6 +559,7 @@ class CatalystEventV2:
 # TICKER CATALYST SUMMARY (VERSIONED)
 # =============================================================================
 
+
 @dataclass
 class TickerCatalystSummaryV2:
     """
@@ -587,6 +567,7 @@ class TickerCatalystSummaryV2:
 
     Includes both override and blended scores for flexibility.
     """
+
     ticker: str
     as_of_date: str  # ISO date string
 
@@ -662,7 +643,9 @@ class TickerCatalystSummaryV2:
                 "score_mode_used": self.score_mode_used,
                 "catalyst_proximity_score": str(self.catalyst_proximity_score),
                 "catalyst_delta_score": str(self.catalyst_delta_score),
-                "catalyst_velocity_4w": str(self.catalyst_velocity_4w) if self.catalyst_velocity_4w is not None else None,
+                "catalyst_velocity_4w": (
+                    str(self.catalyst_velocity_4w) if self.catalyst_velocity_4w is not None else None
+                ),
                 "activity_proxy_score": str(self.activity_proxy_score),
                 "nearest_catalyst_type": self.nearest_catalyst_type,
             },
@@ -767,26 +750,28 @@ class TickerCatalystSummaryV2:
             severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.NEUTRAL)
             confidence = EVENT_DEFAULT_CONFIDENCE.get(event_type, ConfidenceLevel.MED)
 
-            events.append(CatalystEventV2(
-                ticker=ticker,
-                nct_id=le.get("nct_id", ""),
-                event_type=event_type,
-                event_severity=severity,
-                event_date=le.get("actual_date") or le.get("disclosed_at"),
-                field_changed=list(le.get("fields_changed", {}).keys())[0] if le.get("fields_changed") else "",
-                prior_value=None,
-                new_value=None,
-                source=le.get("source", "CTGOV"),
-                confidence=confidence,
-                disclosed_at=le.get("disclosed_at", as_of_date),
-            ))
+            events.append(
+                CatalystEventV2(
+                    ticker=ticker,
+                    nct_id=le.get("nct_id", ""),
+                    event_type=event_type,
+                    event_severity=severity,
+                    event_date=le.get("actual_date") or le.get("disclosed_at"),
+                    field_changed=list(le.get("fields_changed", {}).keys())[0] if le.get("fields_changed") else "",
+                    prior_value=None,
+                    new_value=None,
+                    source=le.get("source", "CTGOV"),
+                    confidence=confidence,
+                    disclosed_at=le.get("disclosed_at", as_of_date),
+                )
+            )
 
         # Sort events
         events.sort(key=lambda e: e.sort_key())
 
         # Compute summary stats
-        events_by_severity = {}
-        events_by_type = {}
+        events_by_severity: Dict[str, int] = {}
+        events_by_type: Dict[str, int] = {}
         for e in events:
             sev = e.event_severity.value
             events_by_severity[sev] = events_by_severity.get(sev, 0) + 1
@@ -817,9 +802,11 @@ class TickerCatalystSummaryV2:
 # DIAGNOSTICS
 # =============================================================================
 
+
 @dataclass
 class DiagnosticCounts:
     """Deterministic diagnostic counters."""
+
     events_detected_total: int = 0
     events_deduped: int = 0
     events_fuzzy_merged: int = 0
@@ -858,6 +845,7 @@ class DiagnosticCounts:
 # =============================================================================
 # UTILITY FUNCTIONS
 # =============================================================================
+
 
 def decimal_to_str(d: Decimal, places: int = 4) -> str:
     """Convert Decimal to string with fixed precision."""
@@ -973,18 +961,26 @@ def canonical_json_dumps(obj: Any) -> str:
 # SCHEMA VALIDATION
 # =============================================================================
 
+
 def validate_event_schema(event_dict: Dict[str, Any]) -> Tuple[bool, List[str]]:
     """Validate event against schema."""
     errors = []
 
     required_fields = [
-        "event_id", "ticker", "nct_id", "event_type", "event_severity",
-        "field_changed", "source", "confidence", "disclosed_at"
+        "event_id",
+        "ticker",
+        "nct_id",
+        "event_type",
+        "event_severity",
+        "field_changed",
+        "source",
+        "confidence",
+        "disclosed_at",
     ]
 
-    for field in required_fields:
-        if field not in event_dict:
-            errors.append(f"Missing required field: {field}")
+    for field_name in required_fields:
+        if field_name not in event_dict:
+            errors.append(f"Missing required field: {field_name}")
 
     # Validate enums
     if "event_type" in event_dict:

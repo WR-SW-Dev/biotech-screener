@@ -38,20 +38,17 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from archive_snapshot import verify_archive
 from backtest.ic_measurement import (
-    IC_EXCELLENT, IC_GOOD, IC_WEAK,
     MIN_OBS_IC,
+    ICCalculationEngine,
+    _classify_ic,
+    add_trading_days,
     calculate_ic,
     calculate_kendall,
     compute_quintile_spread,
-    _classify_ic,
-    _quantize,
-    add_trading_days,
-    ICCalculationEngine,
 )
 from backtest.returns_provider import BaseReturnsProvider, CSVReturnsProvider
-from archive_snapshot import verify_archive
-
 
 # =============================================================================
 # PATHS
@@ -86,6 +83,7 @@ REGIME_LOOKBACK_DAYS = 60
 # =============================================================================
 # REGIME INDICATOR
 # =============================================================================
+
 
 def compute_xbi_regime(csv_provider: CSVReturnsProvider, snapshot_dates: List[str]) -> Dict[str, str]:
     """
@@ -199,6 +197,7 @@ def compute_residual_returns(
 # STRATIFIED IC
 # =============================================================================
 
+
 def compute_stratified_ic(
     rankings: Dict[str, int],
     fwd_returns: Dict[str, float],
@@ -236,6 +235,7 @@ def compute_stratified_ic(
 # =============================================================================
 # PARTIAL CORRELATION & BUCKET SPREAD DIAGNOSTICS
 # =============================================================================
+
 
 def compute_partial_correlation(
     component_scores: Dict[str, Dict[str, float]],
@@ -281,8 +281,7 @@ def compute_partial_correlation(
     x_target = [target_dict[t] for t in common_sorted]
 
     # Build control matrix (standardized)
-    ctrl_std = {name: _standardize([cd[t] for t in common_sorted])
-                for name, cd in zip(control_names, control_dicts)}
+    ctrl_std = {name: _standardize([cd[t] for t in common_sorted]) for name, cd in zip(control_names, control_dicts)}
 
     col_names = ["intercept"] + control_names
     X = [[1.0] + [ctrl_std[name][i] for name in control_names] for i in range(n)]
@@ -292,16 +291,14 @@ def compute_partial_correlation(
     if reg_y is None:
         return None
     beta_y = [reg_y["coefficients"][cn]["coef"] for cn in col_names]
-    resid_y = [y_returns[i] - sum(X[i][j] * beta_y[j] for j in range(len(col_names)))
-               for i in range(n)]
+    resid_y = [y_returns[i] - sum(X[i][j] * beta_y[j] for j in range(len(col_names))) for i in range(n)]
 
     # Residualize target component on controls
     reg_x = _ols(x_target, X, col_names)
     if reg_x is None:
         return None
     beta_x = [reg_x["coefficients"][cn]["coef"] for cn in col_names]
-    resid_x = [x_target[i] - sum(X[i][j] * beta_x[j] for j in range(len(col_names)))
-               for i in range(n)]
+    resid_x = [x_target[i] - sum(X[i][j] * beta_x[j] for j in range(len(col_names))) for i in range(n)]
 
     # Pearson correlation of residuals
     pearson_r = _pairwise_corr(resid_x, resid_y)
@@ -364,11 +361,13 @@ def compute_bucket_spread(
     for level in sorted_levels:
         tickers = buckets[level]
         rets = [fwd_returns[t] for t in tickers]
-        bucket_data.append({
-            "level": level,
-            "n": len(rets),
-            "mean_return": round(mean(rets), 6) if rets else None,
-        })
+        bucket_data.append(
+            {
+                "level": level,
+                "n": len(rets),
+                "mean_return": round(mean(rets), 6) if rets else None,
+            }
+        )
 
     # Monotonicity: count adjacent pairs where higher level has higher return
     mono_up = 0
@@ -404,11 +403,13 @@ def compute_bucket_spread(
             stage_data = []
             for level in sorted_levels:
                 rets = stage_buckets.get(level, [])
-                stage_data.append({
-                    "level": level,
-                    "n": len(rets),
-                    "mean_return": round(mean(rets), 6) if rets else None,
-                })
+                stage_data.append(
+                    {
+                        "level": level,
+                        "n": len(rets),
+                        "mean_return": round(mean(rets), 6) if rets else None,
+                    }
+                )
             top_r = stage_data[-1]["mean_return"]
             bot_r = stage_data[0]["mean_return"]
             result[f"stage_{stage_label}"] = {
@@ -447,8 +448,7 @@ def compute_vif(
     if n < len(feat_names) + 2:
         return {}
 
-    feat_std = {name: _standardize([fd[t] for t in common_sorted])
-                for name, fd in zip(feat_names, feat_dicts)}
+    feat_std = {name: _standardize([fd[t] for t in common_sorted]) for name, fd in zip(feat_names, feat_dicts)}
 
     vifs: Dict[str, float] = {}
     for target in feat_names:
@@ -465,6 +465,7 @@ def compute_vif(
 # =============================================================================
 # CROSS-SECTIONAL OLS (stdlib-only)
 # =============================================================================
+
 
 def _ols(y: List[float], X: List[List[float]], col_names: List[str]) -> Optional[Dict[str, Any]]:
     """
@@ -677,6 +678,7 @@ def run_cross_sectional_regression(
 # POOLED INTERACTION REGRESSION
 # =============================================================================
 
+
 def run_pooled_interaction_regression(
     per_snapshot: List[Dict[str, Any]],
 ) -> Dict[str, Dict[str, Any]]:
@@ -708,8 +710,9 @@ def run_pooled_interaction_regression(
             log_cash_scores = controls.get("log_cash", {})
 
             # Common tickers: must have return + financial + clinical + log_cash
-            common = (set(fwd_rets.keys()) & set(fin_scores.keys())
-                      & set(clin_scores.keys()) & set(log_cash_scores.keys()))
+            common = (
+                set(fwd_rets.keys()) & set(fin_scores.keys()) & set(clin_scores.keys()) & set(log_cash_scores.keys())
+            )
 
             if len(common) < 20:
                 continue
@@ -730,19 +733,21 @@ def run_pooled_interaction_regression(
 
             for i, t in enumerate(common_sorted):
                 is_dev = 1.0 if stage_map.get(t) == "dev" else 0.0
-                rows.append({
-                    "y": ret_raw[i],
-                    "fin": fin_z[i],
-                    "clin": clin_z[i],
-                    "log_cash": cash_z[i],
-                    "dev": is_dev,
-                    "fin_x_dev": fin_z[i] * is_dev,
-                    "clin_x_dev": clin_z[i] * is_dev,
-                    # risk_on main effect is absorbed by snapshot FEs;
-                    # interactions are identified (vary within snapshot)
-                    "fin_x_riskon": fin_z[i] * is_risk_on,
-                    "clin_x_riskon": clin_z[i] * is_risk_on,
-                })
+                rows.append(
+                    {
+                        "y": ret_raw[i],
+                        "fin": fin_z[i],
+                        "clin": clin_z[i],
+                        "log_cash": cash_z[i],
+                        "dev": is_dev,
+                        "fin_x_dev": fin_z[i] * is_dev,
+                        "clin_x_dev": clin_z[i] * is_dev,
+                        # risk_on main effect is absorbed by snapshot FEs;
+                        # interactions are identified (vary within snapshot)
+                        "fin_x_riskon": fin_z[i] * is_risk_on,
+                        "clin_x_riskon": clin_z[i] * is_risk_on,
+                    }
+                )
                 snapshot_ids.append(snap_idx)
 
         if len(rows) < 50:
@@ -751,9 +756,14 @@ def run_pooled_interaction_regression(
         # Build design matrix: intercept + features + snapshot FEs
         # Note: risk_on main effect dropped (collinear with snapshot FEs)
         feature_names = [
-            "fin", "clin", "log_cash",
-            "dev", "fin_x_dev", "clin_x_dev",
-            "fin_x_riskon", "clin_x_riskon",
+            "fin",
+            "clin",
+            "log_cash",
+            "dev",
+            "fin_x_dev",
+            "clin_x_dev",
+            "fin_x_riskon",
+            "clin_x_riskon",
         ]
 
         # Snapshot fixed effects (drop first as reference)
@@ -761,7 +771,6 @@ def run_pooled_interaction_regression(
         snap_fe_names = [f"snap_{s}" for s in unique_snaps[1:]]
 
         col_names = ["intercept"] + feature_names + snap_fe_names
-        n = len(rows)
         y = [r["y"] for r in rows]
         X = []
         for i, r in enumerate(rows):
@@ -779,6 +788,7 @@ def run_pooled_interaction_regression(
 
         # Compute derived effects
         coeffs = reg["coefficients"]
+
         def _coef(name: str) -> float:
             return coeffs.get(name, {}).get("coef", 0.0)
 
@@ -808,6 +818,7 @@ def run_pooled_interaction_regression(
 # =============================================================================
 # MORNINGSTAR RETURNS PROVIDER
 # =============================================================================
+
 
 class MorningstarReturnsProvider(BaseReturnsProvider):
     """Compute forward returns from HS793 total return index."""
@@ -867,19 +878,19 @@ class MorningstarReturnsProvider(BaseReturnsProvider):
         for prices in self._index.values():
             if prices:
                 ticker_max = max(prices.keys())
-                if last is None or ticker_max > last:
+                if last is None or ticker_max > last:  # type: ignore[unreachable]
                     last = ticker_max
         return last
 
-
-# =============================================================================
-# CHAINED RETURNS PROVIDER (HS793 primary + price CSV fallback)
-# =============================================================================
+    # =============================================================================
+    # CHAINED RETURNS PROVIDER (HS793 primary + price CSV fallback)
+    # =============================================================================
 
     # Hard cap: if |return| exceeds this, try CSV fallback instead of Morningstar.
     # 10.0 = 1000% — anything beyond this is almost certainly a data error
     # (split artifact, corporate action, or stale total-return index).
     OUTLIER_RETURN_CAP = 10.0
+
 
 class ChainedReturnsProvider(BaseReturnsProvider):
     """
@@ -911,13 +922,15 @@ class ChainedReturnsProvider(BaseReturnsProvider):
             if abs(float(ret)) > self.OUTLIER_RETURN_CAP:
                 csv_ret = self.fallback.get_forward_total_return(ticker, start_date, end_date)
                 if csv_ret is not None:
-                    self._outlier_overrides.append({
-                        "ticker": tk,
-                        "start": start_date,
-                        "end": end_date,
-                        "morningstar_ret": float(ret),
-                        "csv_ret": float(csv_ret),
-                    })
+                    self._outlier_overrides.append(
+                        {
+                            "ticker": tk,
+                            "start": start_date,
+                            "end": end_date,
+                            "morningstar_ret": float(ret),
+                            "csv_ret": float(csv_ret),
+                        }
+                    )
                     self._source_log[source_key] = "csv_outlier_override"
                     self._fallback_hits[tk] = self._fallback_hits.get(tk, 0) + 1
                     return csv_ret
@@ -937,8 +950,7 @@ class ChainedReturnsProvider(BaseReturnsProvider):
         return self._source_log.get(key, "unknown")
 
     def get_available_tickers(self) -> List[str]:
-        return sorted(set(self.primary.get_available_tickers()) |
-                       set(self.fallback.get_available_tickers()))
+        return sorted(set(self.primary.get_available_tickers()) | set(self.fallback.get_available_tickers()))
 
     def get_last_date(self) -> Optional[date]:
         """Return the latest date with data across both providers."""
@@ -968,13 +980,13 @@ class ChainedReturnsProvider(BaseReturnsProvider):
 # =============================================================================
 
 SnapshotData = Tuple[
-    Dict[str, int],                  # rankings
-    Dict[str, float],                # scores (composite_score)
-    Dict[str, Dict[str, float]],     # component_scores
-    Dict[str, str],                  # stage_map
-    Dict[str, Dict[str, float]],     # extra_controls
-    bool,                            # higher_is_better
-    Dict[str, Dict[str, float]],     # signal_scores: {"score_rank_pct": {...}, "score_z": {...}}
+    Dict[str, int],  # rankings
+    Dict[str, float],  # scores (composite_score)
+    Dict[str, Dict[str, float]],  # component_scores
+    Dict[str, str],  # stage_map
+    Dict[str, Dict[str, float]],  # extra_controls
+    bool,  # higher_is_better
+    Dict[str, Dict[str, float]],  # signal_scores: {"score_rank_pct": {...}, "score_z": {...}}
 ]
 
 
@@ -1001,9 +1013,13 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
     stage_map: Dict[str, str] = {}
     extra_controls: Dict[str, Dict[str, float]] = {"log_cash": {}}
     signal_scores: Dict[str, Dict[str, float]] = {
-        "score_rank_pct": {}, "score_z": {},
-        "clinical_score": {}, "clinical_optionality_pct_dev": {},
-        "eligible": {}, "tier_dev": {}, "size_band": {},
+        "score_rank_pct": {},
+        "score_z": {},
+        "clinical_score": {},
+        "clinical_optionality_pct_dev": {},
+        "eligible": {},
+        "tier_dev": {},
+        "size_band": {},
     }
 
     with open(csv_path, "r", newline="", encoding="utf-8-sig") as f:
@@ -1065,9 +1081,15 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
                         pass
 
             # Extract signal scores (new format only)
-            for sig_field in ("score_rank_pct", "score_z",
-                              "score_rank_pct_attn", "score_z_attn", "composite_score_attn",
-                              "clinical_score", "clinical_optionality_pct_dev"):
+            for sig_field in (
+                "score_rank_pct",
+                "score_z",
+                "score_rank_pct_attn",
+                "score_z_attn",
+                "composite_score_attn",
+                "clinical_score",
+                "clinical_optionality_pct_dev",
+            ):
                 sig_str = row.get(sig_field, "").strip()
                 if sig_str:
                     try:
@@ -1113,6 +1135,7 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
 # ARCHIVE READER
 # =============================================================================
 
+
 def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
     """
     Read rankings.csv from a .tar.gz archive without extracting to disk.
@@ -1125,11 +1148,16 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
     stage_map: Dict[str, str] = {}
     extra_controls: Dict[str, Dict[str, float]] = {"log_cash": {}}
     signal_scores: Dict[str, Dict[str, float]] = {
-        "score_rank_pct": {}, "score_z": {},
-        "score_rank_pct_attn": {}, "score_z_attn": {},
-        "composite_score_attn": {}, "clinical_score": {},
+        "score_rank_pct": {},
+        "score_z": {},
+        "score_rank_pct_attn": {},
+        "score_z_attn": {},
+        "composite_score_attn": {},
+        "clinical_score": {},
         "clinical_optionality_pct_dev": {},
-        "eligible": {}, "tier_dev": {}, "size_band": {},
+        "eligible": {},
+        "tier_dev": {},
+        "size_band": {},
     }
 
     with tarfile.open(tar_path, "r:gz") as tar:
@@ -1143,7 +1171,9 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
         if csv_member is None:
             return {}, {}, {}, {}, {}, False, {}
 
-        f = io.TextIOWrapper(tar.extractfile(csv_member), encoding="utf-8")
+        raw = tar.extractfile(csv_member)
+        assert raw is not None, f"Cannot extract {csv_member.name}"
+        f = io.TextIOWrapper(raw, encoding="utf-8")
         reader = csv.DictReader(f)
         headers = reader.fieldnames or []
 
@@ -1190,9 +1220,15 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
                     except ValueError:
                         pass
 
-            for sig_field in ("score_rank_pct", "score_z",
-                              "score_rank_pct_attn", "score_z_attn", "composite_score_attn",
-                              "clinical_score", "clinical_optionality_pct_dev"):
+            for sig_field in (
+                "score_rank_pct",
+                "score_z",
+                "score_rank_pct_attn",
+                "score_z_attn",
+                "composite_score_attn",
+                "clinical_score",
+                "clinical_optionality_pct_dev",
+            ):
                 sig_str = row.get(sig_field, "").strip()
                 if sig_str:
                     try:
@@ -1232,10 +1268,20 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
 
 # Metadata fields to extract for failure attribution (new-format archives)
 METADATA_FIELDS_NEW = [
-    "confidence_overall", "catalyst_score", "smart_money_score",
-    "archetype", "severity", "market_cap_bucket",
-    "eligible", "tier_dev", "tier_reason", "size_band", "mom_state",
-    "catalyst_mode", "decision_engine_version", "decision_engine_ruleset_id",
+    "confidence_overall",
+    "catalyst_score",
+    "smart_money_score",
+    "archetype",
+    "severity",
+    "market_cap_bucket",
+    "eligible",
+    "tier_dev",
+    "tier_reason",
+    "size_band",
+    "mom_state",
+    "catalyst_mode",
+    "decision_engine_version",
+    "decision_engine_ruleset_id",
 ]
 # Legacy format
 METADATA_FIELDS_LEGACY = ["Momentum_Bucket"]
@@ -1259,7 +1305,9 @@ def extract_ticker_metadata_from_archive(tar_path: Path) -> Dict[str, Dict[str, 
         if csv_member is None:
             return {}
 
-        f = io.TextIOWrapper(tar.extractfile(csv_member), encoding="utf-8")
+        raw2 = tar.extractfile(csv_member)
+        assert raw2 is not None, f"Cannot extract {csv_member.name}"
+        f = io.TextIOWrapper(raw2, encoding="utf-8")
         reader = csv.DictReader(f)
         headers = reader.fieldnames or []
         is_new = "composite_rank" in headers
@@ -1324,10 +1372,7 @@ def build_failure_attribution(
     Returns dict with top_quintile and bottom_quintile lists, each entry
     containing ticker, rank, return, stage, component scores, and metadata.
     """
-    common = sorted(
-        [t for t in ic_rankings if t in fwd_returns],
-        key=lambda t: ic_rankings[t]
-    )
+    common = sorted([t for t in ic_rankings if t in fwd_returns], key=lambda t: ic_rankings[t])
     n = len(common)
     if n < 20:
         return None
@@ -1464,7 +1509,8 @@ def build_miss_signature(
             vals = [
                 ticker_metadata[t][mk]
                 for t in tickers
-                if t in ticker_metadata and mk in ticker_metadata[t]
+                if t in ticker_metadata
+                and mk in ticker_metadata[t]
                 and isinstance(ticker_metadata[t][mk], (int, float))
             ]
             if vals:
@@ -1565,6 +1611,7 @@ def discover_archives(
 # ARCHIVE VERIFICATION
 # =============================================================================
 
+
 def verify_archive_for_backtest(tar_path: Path) -> Dict[str, Any]:
     """
     Verify archive integrity before using it in backtest.
@@ -1590,8 +1637,9 @@ def verify_archive_for_backtest(tar_path: Path) -> Dict[str, Any]:
     # 1. Input file hash verification (reuses archive_snapshot logic)
     try:
         # Suppress stdout from verify_archive (it prints OK/FAIL)
-        import io as _io
         import contextlib
+        import io as _io
+
         buf = _io.StringIO()
         with contextlib.redirect_stdout(buf):
             input_ok = verify_archive(tar_path)
@@ -1627,6 +1675,7 @@ def verify_archive_for_backtest(tar_path: Path) -> Dict[str, Any]:
 # AS-OF FENCE
 # =============================================================================
 
+
 def compute_as_of_fence(
     snapshot_dates: List[str],
     last_return_date: Optional[date],
@@ -1661,13 +1710,15 @@ def compute_as_of_fence(
         needed_end_dt = date.fromisoformat(needed_end)
 
         if needed_end_dt > last_return_date:
-            skipped.append({
-                "snapshot_date": snap_date,
-                "skipped_reason": "insufficient_forward_window",
-                "needed_end_date": needed_end,
-                "last_return_date": last_return_date.isoformat(),
-                "shortfall_calendar_days": (needed_end_dt - last_return_date).days,
-            })
+            skipped.append(
+                {
+                    "snapshot_date": snap_date,
+                    "skipped_reason": "insufficient_forward_window",
+                    "needed_end_date": needed_end,
+                    "last_return_date": last_return_date.isoformat(),
+                    "shortfall_calendar_days": (needed_end_dt - last_return_date).days,
+                }
+            )
         else:
             usable.append(snap_date)
 
@@ -1677,6 +1728,7 @@ def compute_as_of_fence(
 # =============================================================================
 # RANK UNIQUENESS & SIGNAL CONVERSION
 # =============================================================================
+
 
 def assert_rank_unique(
     rankings: Dict[str, int],
@@ -1693,7 +1745,7 @@ def assert_rank_unique(
     vals = list(rankings.values())
     unique_vals = set(vals)
     if len(vals) != len(unique_vals):
-        dup_counts = {}
+        dup_counts: Dict[int, int] = {}
         for v in vals:
             dup_counts[v] = dup_counts.get(v, 0) + 1
         dups = {k: v for k, v in dup_counts.items() if v > 1}
@@ -1715,12 +1767,14 @@ def assert_rank_unique(
         for ticker, _rank in sorted_by_rank:
             pct = rank_pct.get(ticker)
             if pct is not None and prev_pct is not None:
-                if pct > prev_pct:  # higher rank_pct should mean worse rank (lower is better)
+                if pct > prev_pct:  # type: ignore[unreachable]
                     violations += 1
             prev_pct = pct
         if violations > 0:
-            print(f"  WARNING {date_str}: score_rank_pct non-monotonic with composite_rank "
-                  f"({violations} violations out of {len(sorted_by_rank) - 1} pairs)")
+            print(
+                f"  WARNING {date_str}: score_rank_pct non-monotonic with composite_rank "
+                f"({violations} violations out of {len(sorted_by_rank) - 1} pairs)"
+            )
 
     return True
 
@@ -1747,6 +1801,7 @@ def signal_to_rankings(
 # INVESTABLE UNIVERSE FILTERING
 # =============================================================================
 
+
 def filter_to_investable(
     rankings: Dict[str, int],
     scores: Dict[str, float],
@@ -1763,10 +1818,7 @@ def filter_to_investable(
     resulting rankings has a measurable forward return.
     """
     # Sort investable tickers by their original rank (preserves ordering)
-    investable_sorted = sorted(
-        [t for t in rankings if t in investable_tickers],
-        key=lambda t: rankings[t]
-    )
+    investable_sorted = sorted([t for t in rankings if t in investable_tickers], key=lambda t: rankings[t])
 
     # Re-rank: dense 1..N within investable set
     new_rankings = {t: i + 1 for i, t in enumerate(investable_sorted)}
@@ -1792,6 +1844,7 @@ def filter_to_investable(
 # HYGIENE / DIAGNOSTICS
 # =============================================================================
 
+
 def diagnose_missing_returns(
     provider: BaseReturnsProvider,
     rankings: Dict[str, int],
@@ -1811,10 +1864,10 @@ def diagnose_missing_returns(
     as_of_dt = date.fromisoformat(as_of_date)
 
     # Classify why each ticker is missing (check against both sources)
-    no_data_anywhere = []      # not in HS793 or CSV
-    series_starts_after = []   # data exists but starts after snapshot date
-    no_start_price = []        # data exists but no price near start date
-    no_end_price = []          # data exists but no price near end date
+    no_data_anywhere = []  # not in HS793 or CSV
+    series_starts_after = []  # data exists but starts after snapshot date
+    no_start_price = []  # data exists but no price near start date
+    no_end_price = []  # data exists but no price near end date
 
     for t in missing_tickers:
         t_upper = t.upper()
@@ -1866,18 +1919,10 @@ def diagnose_missing_returns(
             "no_end_price": len(no_end_price),
         },
         "missing_tickers": missing_tickers,  # full list, not capped
-        "rank_quintile_miss_pct": {
-            f"Q{i+1}": quintile_pcts[i] for i in range(5)
-        },
-        "rank_quintile_miss_count": {
-            f"Q{i+1}": f"{quintile_missing[i]}/{quintile_total[i]}" for i in range(5)
-        },
+        "rank_quintile_miss_pct": {f"Q{i+1}": quintile_pcts[i] for i in range(5)},
+        "rank_quintile_miss_count": {f"Q{i+1}": f"{quintile_missing[i]}/{quintile_total[i]}" for i in range(5)},
         "missingness_spread_pp": round(miss_spread, 1),
-        "missingness_verdict": (
-            "RANDOM" if miss_spread < 10 else
-            "MILD_BIAS" if miss_spread < 20 else
-            "SYSTEMATIC"
-        ),
+        "missingness_verdict": ("RANDOM" if miss_spread < 10 else "MILD_BIAS" if miss_spread < 20 else "SYSTEMATIC"),
     }
 
 
@@ -1939,10 +1984,11 @@ def print_hygiene_report(
     # Fallback stats
     print()
     fb = fallback_stats
-    print(f"Chained returns: HS793 primary + price_history.csv fallback")
-    print(f"  Fallback used for {fb['n_tickers_used_fallback']} tickers, "
-          f"{fb['total_fallback_lookups']} total lookups")
-    if fb['tickers']:
+    print("Chained returns: HS793 primary + price_history.csv fallback")
+    print(
+        f"  Fallback used for {fb['n_tickers_used_fallback']} tickers, " f"{fb['total_fallback_lookups']} total lookups"
+    )
+    if fb["tickers"]:
         print(f"  Fallback tickers: {', '.join(fb['tickers'][:20])}")
     print()
 
@@ -1973,20 +2019,23 @@ def print_hygiene_report(
             if not r:
                 continue
             reason = r.get("missing_reason", {})
-            print(f"    {hlabel}: {r['n_with_returns']}/{r['n_ranked']} "
-                  f"({r['miss_pct']}% missing)")
-            print(f"      Why: "
-                  f"no_data={reason.get('no_data_anywhere', 0)}, "
-                  f"IPO_after={reason.get('series_starts_after_snapshot', 0)}, "
-                  f"no_start={reason.get('no_start_price', 0)}, "
-                  f"no_end={reason.get('no_end_price', 0)}")
+            print(f"    {hlabel}: {r['n_with_returns']}/{r['n_ranked']} " f"({r['miss_pct']}% missing)")
+            print(
+                f"      Why: "
+                f"no_data={reason.get('no_data_anywhere', 0)}, "
+                f"IPO_after={reason.get('series_starts_after_snapshot', 0)}, "
+                f"no_start={reason.get('no_start_price', 0)}, "
+                f"no_end={reason.get('no_end_price', 0)}"
+            )
             qm = r.get("rank_quintile_miss_pct", {})
             qc = r.get("rank_quintile_miss_count", {})
-            print(f"      Q1={qm.get('Q1', 0):.0f}%({qc.get('Q1', '')}), "
-                  f"Q2={qm.get('Q2', 0):.0f}%({qc.get('Q2', '')}), "
-                  f"Q3={qm.get('Q3', 0):.0f}%({qc.get('Q3', '')}), "
-                  f"Q4={qm.get('Q4', 0):.0f}%({qc.get('Q4', '')}), "
-                  f"Q5={qm.get('Q5', 0):.0f}%({qc.get('Q5', '')})")
+            print(
+                f"      Q1={qm.get('Q1', 0):.0f}%({qc.get('Q1', '')}), "
+                f"Q2={qm.get('Q2', 0):.0f}%({qc.get('Q2', '')}), "
+                f"Q3={qm.get('Q3', 0):.0f}%({qc.get('Q3', '')}), "
+                f"Q4={qm.get('Q4', 0):.0f}%({qc.get('Q4', '')}), "
+                f"Q5={qm.get('Q5', 0):.0f}%({qc.get('Q5', '')})"
+            )
         print()
 
     # Cross-snapshot: always missing (using FULL lists now)
@@ -2000,8 +2049,7 @@ def print_hygiene_report(
         for s in all_missing_sets[1:]:
             always_missing = always_missing & s
         if always_missing:
-            print(f"  Tickers missing in ALL {len(all_missing_sets)} snapshots: "
-                  f"{len(always_missing)} tickers")
+            print(f"  Tickers missing in ALL {len(all_missing_sets)} snapshots: " f"{len(always_missing)} tickers")
             print(f"    {', '.join(sorted(always_missing)[:25])}")
             if len(always_missing) > 25:
                 print(f"    ... and {len(always_missing) - 25} more")
@@ -2009,7 +2057,9 @@ def print_hygiene_report(
 
     # AFTER filtering table
     print("AFTER investable-universe filtering (IC computed on this set):")
-    header = f"{'Date':>12s}  {'Investable':>10s}  {'Dropped':>7s}  {'Miss%20d':>8s}  {'Miss%60d':>8s}  {'Verdict':>10s}"
+    header = (
+        f"{'Date':>12s}  {'Investable':>10s}  {'Dropped':>7s}  {'Miss%20d':>8s}  {'Miss%60d':>8s}  {'Verdict':>10s}"
+    )
     print(f"  {header}")
     print(f"  {'-' * len(header)}")
     for h in hygiene_after:
@@ -2030,6 +2080,7 @@ def print_hygiene_report(
 # =============================================================================
 # MAIN IC COMPUTATION
 # =============================================================================
+
 
 def compute_forward_returns(
     provider: BaseReturnsProvider,
@@ -2090,17 +2141,17 @@ def run_backtest(
     print(f"  Returns data ends: {last_return_date.isoformat() if last_return_date else 'NONE'}")
     print(f"  Max forward horizon: {max_horizon} trading days")
 
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_return_date, max_horizon
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_return_date, max_horizon)
 
     if fence_skipped:
         print(f"  As-of fence: {len(usable_dates)} usable, {len(fence_skipped)} skipped")
         for sk in fence_skipped:
-            print(f"    SKIP {sk['snapshot_date']}: {sk['skipped_reason']} "
-                  f"(need {sk.get('needed_end_date', '?')}, "
-                  f"have {sk.get('last_return_date', '?')}, "
-                  f"shortfall {sk.get('shortfall_calendar_days', '?')}d)")
+            print(
+                f"    SKIP {sk['snapshot_date']}: {sk['skipped_reason']} "
+                f"(need {sk.get('needed_end_date', '?')}, "
+                f"have {sk.get('last_return_date', '?')}, "
+                f"shortfall {sk.get('shortfall_calendar_days', '?')}d)"
+            )
     else:
         print(f"  As-of fence: all {len(usable_dates)} snapshots usable")
     print()
@@ -2123,13 +2174,15 @@ def run_backtest(
             v = verify_archive_for_backtest(tar_path)
             verification_results.append(v)
             if not v["verified"]:
-                verify_skipped.append({
-                    "snapshot_date": snap_date,
-                    "skipped_reason": "archive_integrity_failed",
-                    "error": v.get("error"),
-                    "input_files_ok": v["input_files_ok"],
-                    "rankings_ok": v["rankings_ok"],
-                })
+                verify_skipped.append(
+                    {
+                        "snapshot_date": snap_date,
+                        "skipped_reason": "archive_integrity_failed",
+                        "error": v.get("error"),
+                        "input_files_ok": v["input_files_ok"],
+                        "rankings_ok": v["rankings_ok"],
+                    }
+                )
                 print(f"    FAIL {snap_date}: {v.get('error', 'hash mismatch')}")
             else:
                 print(f"    OK   {snap_date}")
@@ -2152,26 +2205,34 @@ def run_backtest(
         # Load rankings from archive or legacy snapshot dir
         if archives is not None:
             tar_path = archive_by_date[snapshot_date]
-            rankings, scores, component_scores, stage_map, extra_controls, higher_is_better, signal_scores_data = read_rankings_from_archive(tar_path)
+            rankings, scores, component_scores, stage_map, extra_controls, higher_is_better, signal_scores_data = (
+                read_rankings_from_archive(tar_path)
+            )
             archive_path_str = str(tar_path)
         else:
             snap_dir = snap_base / snapshot_date
             if not snap_dir.exists():
-                all_skipped.append({
-                    "snapshot_date": snapshot_date,
-                    "skipped_reason": "directory_not_found",
-                    "path": str(snap_dir),
-                })
+                all_skipped.append(
+                    {
+                        "snapshot_date": snapshot_date,
+                        "skipped_reason": "directory_not_found",
+                        "path": str(snap_dir),
+                    }
+                )
                 print(f"  SKIP {snapshot_date}: directory not found")
                 continue
-            rankings, scores, component_scores, stage_map, extra_controls, higher_is_better, signal_scores_data = load_snapshot_rankings(snap_dir)
+            rankings, scores, component_scores, stage_map, extra_controls, higher_is_better, signal_scores_data = (
+                load_snapshot_rankings(snap_dir)
+            )
             archive_path_str = None
 
         if not rankings:
-            all_skipped.append({
-                "snapshot_date": snapshot_date,
-                "skipped_reason": "no_rankings_loaded",
-            })
+            all_skipped.append(
+                {
+                    "snapshot_date": snapshot_date,
+                    "skipped_reason": "no_rankings_loaded",
+                }
+            )
             print(f"  SKIP {snapshot_date}: no rankings loaded")
             continue
 
@@ -2187,26 +2248,28 @@ def run_backtest(
             if subset == "dev":
                 keep = {t for t in rankings if ticker_metadata.get(t, {}).get("archetype") == "drug_developer"}
             elif subset == "commercial":
-                keep = {t for t in rankings
-                        if str(ticker_metadata.get(t, {}).get("archetype", "")).startswith("commercial_")}
+                keep = {
+                    t
+                    for t in rankings
+                    if str(ticker_metadata.get(t, {}).get("archetype", "")).startswith("commercial_")
+                }
             else:
                 keep = set(rankings.keys())
             if not keep:
-                all_skipped.append({
-                    "snapshot_date": snapshot_date,
-                    "skipped_reason": f"no_tickers_in_subset_{subset}",
-                })
+                all_skipped.append(
+                    {
+                        "snapshot_date": snapshot_date,
+                        "skipped_reason": f"no_tickers_in_subset_{subset}",
+                    }
+                )
                 print(f"  SKIP {snapshot_date}: no tickers in subset '{subset}'")
                 continue
             rankings = {t: r for t, r in rankings.items() if t in keep}
             scores = {t: s for t, s in scores.items() if t in keep}
-            component_scores = {c: {t: v for t, v in tv.items() if t in keep}
-                                for c, tv in component_scores.items()}
+            component_scores = {c: {t: v for t, v in tv.items() if t in keep} for c, tv in component_scores.items()}
             stage_map = {t: s for t, s in stage_map.items() if t in keep}
-            extra_controls = {c: {t: v for t, v in tv.items() if t in keep}
-                              for c, tv in extra_controls.items()}
-            signal_scores_data = {s: {t: v for t, v in tv.items() if t in keep}
-                                  for s, tv in signal_scores_data.items()}
+            extra_controls = {c: {t: v for t, v in tv.items() if t in keep} for c, tv in extra_controls.items()}
+            signal_scores_data = {s: {t: v for t, v in tv.items() if t in keep} for s, tv in signal_scores_data.items()}
             print(f"  Subset '{subset}': {len(rankings)}/{n_before_subset} tickers retained")
 
         # Rank uniqueness check
@@ -2217,9 +2280,7 @@ def run_backtest(
         regime = regimes.get(snapshot_date, "UNKNOWN")
 
         # --- BEFORE filtering hygiene ---
-        hygiene_b = build_hygiene_report(
-            provider, ms_provider, snapshot_date, rankings, scores, component_scores
-        )
+        hygiene_b = build_hygiene_report(provider, ms_provider, snapshot_date, rankings, scores, component_scores)
         hygiene_before.append(hygiene_b)
 
         # --- Determine investable universe ---
@@ -2238,9 +2299,7 @@ def run_backtest(
         n_investable = len(inv_rankings)
 
         # --- AFTER filtering hygiene ---
-        hygiene_a = build_hygiene_report(
-            provider, ms_provider, snapshot_date, inv_rankings, inv_scores, inv_components
-        )
+        hygiene_a = build_hygiene_report(provider, ms_provider, snapshot_date, inv_rankings, inv_scores, inv_components)
         hygiene_a["n_dropped"] = n_original - n_investable
         hygiene_after.append(hygiene_a)
 
@@ -2248,19 +2307,33 @@ def run_backtest(
         inv_tickers = list(inv_rankings.keys())
 
         # Determine which rankings to use for IC: signal field or composite_rank
-        _KNOWN_SIGNALS = ("score_rank_pct", "score_z",
-                          "score_rank_pct_attn", "score_z_attn",
-                          "composite_score_attn", "clinical_score",
-                          "clinical_optionality_pct_dev",
-                          "eligible", "tier_dev", "size_band")
+        _KNOWN_SIGNALS = (
+            "score_rank_pct",
+            "score_z",
+            "score_rank_pct_attn",
+            "score_z_attn",
+            "composite_score_attn",
+            "clinical_score",
+            "clinical_optionality_pct_dev",
+            "eligible",
+            "tier_dev",
+            "size_band",
+        )
         if signal_field in _KNOWN_SIGNALS and signal_scores_data.get(signal_field):
             # Filter signal to investable tickers only
-            inv_signal = {t: signal_scores_data[signal_field][t]
-                          for t in inv_tickers if t in signal_scores_data[signal_field]}
-            sig_higher_is_better = signal_field in ("score_z", "score_z_attn",
-                                                     "composite_score_attn", "clinical_score",
-                                                     "clinical_optionality_pct_dev",
-                                                     "eligible", "tier_dev", "size_band")
+            inv_signal = {
+                t: signal_scores_data[signal_field][t] for t in inv_tickers if t in signal_scores_data[signal_field]
+            }
+            sig_higher_is_better = signal_field in (
+                "score_z",
+                "score_z_attn",
+                "composite_score_attn",
+                "clinical_score",
+                "clinical_optionality_pct_dev",
+                "eligible",
+                "tier_dev",
+                "size_band",
+            )
             if flip_signal:
                 sig_higher_is_better = not sig_higher_is_better
             ic_rankings = signal_to_rankings(inv_signal, higher_is_better=sig_higher_is_better)
@@ -2320,10 +2393,14 @@ def run_backtest(
                 resid_qs = compute_quintile_spread(ic_rankings, resid_returns)
 
                 snapshot_result[f"resid_ic_{horizon_label}"] = float(resid_ic) if resid_ic is not None else None
-                snapshot_result[f"resid_kendall_{horizon_label}"] = float(resid_kendall) if resid_kendall is not None else None
+                snapshot_result[f"resid_kendall_{horizon_label}"] = (
+                    float(resid_kendall) if resid_kendall is not None else None
+                )
                 if resid_qs is not None:
                     snapshot_result[f"resid_quintile_spread_{horizon_label}"] = resid_qs
-                snapshot_result[f"xbi_return_{horizon_label}"] = round(xbi_fwd * 100, 4) if xbi_fwd is not None else None
+                snapshot_result[f"xbi_return_{horizon_label}"] = (
+                    round(xbi_fwd * 100, 4) if xbi_fwd is not None else None
+                )
 
                 # Residual stage-split IC
                 resid_stage_ic = compute_stratified_ic(ic_rankings, resid_returns, inv_stage)
@@ -2331,14 +2408,22 @@ def run_backtest(
 
             # Failure attribution: top/bottom quintile with metadata
             attrib = build_failure_attribution(
-                ic_rankings, fwd_returns, inv_stage, inv_components, ticker_metadata,
+                ic_rankings,
+                fwd_returns,
+                inv_stage,
+                inv_components,
+                ticker_metadata,
             )
             if attrib is not None:
                 snapshot_result[f"_failure_attrib_{horizon_label}"] = attrib
 
             # Miss signature: top-quintile tickers that underperformed
             miss_sig = build_miss_signature(
-                ic_rankings, fwd_returns, inv_stage, inv_components, ticker_metadata,
+                ic_rankings,
+                fwd_returns,
+                inv_stage,
+                inv_components,
+                ticker_metadata,
             )
             if miss_sig is not None:
                 snapshot_result[f"_miss_sig_{horizon_label}"] = miss_sig
@@ -2381,7 +2466,10 @@ def run_backtest(
             partial_corrs: Dict[str, Any] = {}
             for comp_name in inv_components:
                 pc = compute_partial_correlation(
-                    inv_components, inv_controls, fwd_returns, comp_name,
+                    inv_components,
+                    inv_controls,
+                    fwd_returns,
+                    comp_name,
                 )
                 if pc is not None:
                     partial_corrs[comp_name] = pc
@@ -2406,15 +2494,20 @@ def run_backtest(
         for horizon_label, horizon_days in HORIZONS.items():
             fwd_returns = compute_forward_returns(provider, inv_tickers, snapshot_date, horizon_days)
             reg_result = run_cross_sectional_regression(
-                fwd_returns, inv_components, inv_controls, inv_stage,
+                fwd_returns,
+                inv_components,
+                inv_controls,
+                inv_stage,
             )
             if reg_result is not None:
                 snapshot_result[f"regression_{horizon_label}"] = reg_result
 
         per_snapshot.append(snapshot_result)
-        print(f"  {snapshot_date} [{regime:8s}]: IC_20d={snapshot_result['ic_20d']:+.4f}  "
-              f"IC_60d={snapshot_result['ic_60d']:+.4f}  "
-              f"(n={snapshot_result['n_20d']}, dropped={snapshot_result['n_dropped']})")
+        print(
+            f"  {snapshot_date} [{regime:8s}]: IC_20d={snapshot_result['ic_20d']:+.4f}  "
+            f"IC_60d={snapshot_result['ic_60d']:+.4f}  "
+            f"(n={snapshot_result['n_20d']}, dropped={snapshot_result['n_dropped']})"
+        )
 
     # Pooled interaction regression across all snapshots
     pooled_reg = run_pooled_interaction_regression(per_snapshot)
@@ -2443,6 +2536,7 @@ def run_backtest(
 # =============================================================================
 # AGGREGATE STATISTICS
 # =============================================================================
+
 
 def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Compute aggregate statistics from per-snapshot IC results."""
@@ -2479,12 +2573,13 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
 
         # Kendall tau-b aggregate
         kendall_key = f"kendall_{horizon_label}"
-        kendall_values = [s[kendall_key] for s in per_snapshot
-                          if kendall_key in s and s[kendall_key] is not None]
+        kendall_values = [s[kendall_key] for s in per_snapshot if kendall_key in s and s[kendall_key] is not None]
         if kendall_values:
             mean_kendall = mean(kendall_values)
             std_kendall = stdev(kendall_values) if len(kendall_values) > 1 else 0.0
-            t_kendall = mean_kendall / (std_kendall / math.sqrt(len(kendall_values))) if std_kendall > 0 else float("inf")
+            t_kendall = (
+                mean_kendall / (std_kendall / math.sqrt(len(kendall_values))) if std_kendall > 0 else float("inf")
+            )
         else:
             mean_kendall = None
             std_kendall = None
@@ -2492,8 +2587,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
 
         # Quintile spread aggregate
         qs_key = f"quintile_spread_{horizon_label}"
-        qs_spreads = [s[qs_key]["spread_pct"] for s in per_snapshot
-                      if qs_key in s and s[qs_key] is not None]
+        qs_spreads = [s[qs_key]["spread_pct"] for s in per_snapshot if qs_key in s and s[qs_key] is not None]
         if qs_spreads:
             mean_qs = mean(qs_spreads)
             std_qs = stdev(qs_spreads) if len(qs_spreads) > 1 else 0.0
@@ -2512,8 +2606,11 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
         robust_spreads = {}
         for variant in ("median", "trimmed", "winsorized"):
             spread_key = f"spread_{variant}_pct"
-            vals = [s[qs_key][spread_key] for s in per_snapshot
-                    if qs_key in s and s[qs_key] is not None and spread_key in s[qs_key]]
+            vals = [
+                s[qs_key][spread_key]
+                for s in per_snapshot
+                if qs_key in s and s[qs_key] is not None and spread_key in s[qs_key]
+            ]
             if vals:
                 robust_spreads[variant] = {
                     "mean_spread_pct": round(mean(vals), 4),
@@ -2530,23 +2627,26 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
             "mean_kendall": round(mean_kendall, 6) if mean_kendall is not None else None,
             "std_kendall": round(std_kendall, 6) if std_kendall is not None else None,
             "t_stat_kendall": round(t_kendall, 2) if t_kendall is not None else None,
-            "quintile_spread": {
-                "mean_spread_pct": round(mean_qs, 4) if mean_qs is not None else None,
-                "std_spread_pct": round(std_qs, 4) if std_qs is not None else None,
-                "t_stat": round(t_qs, 2) if t_qs is not None else None,
-                "hit_rate": round(qs_hit * 100, 1) if qs_hit is not None else None,
-                "n_periods": len(qs_spreads),
-                "worst_spread_pct": round(min(qs_spreads), 4) if qs_spreads else None,
-                "worst_date": worst_snap["date"] if worst_snap else None,
-                "robust_spreads": robust_spreads if robust_spreads else None,
-            } if qs_spreads else None,
+            "quintile_spread": (
+                {
+                    "mean_spread_pct": round(mean_qs, 4) if mean_qs is not None else None,
+                    "std_spread_pct": round(std_qs, 4) if std_qs is not None else None,
+                    "t_stat": round(t_qs, 2) if t_qs is not None else None,
+                    "hit_rate": round(qs_hit * 100, 1) if qs_hit is not None else None,
+                    "n_periods": len(qs_spreads),
+                    "worst_spread_pct": round(min(qs_spreads), 4) if qs_spreads else None,
+                    "worst_date": worst_snap["date"] if worst_snap else None,
+                    "robust_spreads": robust_spreads if robust_spreads else None,
+                }
+                if qs_spreads
+                else None
+            ),
         }
 
     # --- Residual (XBI-hedged) aggregate stats ---
     for horizon_label in HORIZONS:
         resid_ic_key = f"resid_ic_{horizon_label}"
-        resid_ics = [s[resid_ic_key] for s in per_snapshot
-                     if resid_ic_key in s and s[resid_ic_key] is not None]
+        resid_ics = [s[resid_ic_key] for s in per_snapshot if resid_ic_key in s and s[resid_ic_key] is not None]
         if not resid_ics:
             continue
 
@@ -2556,8 +2656,9 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
         resid_hit = sum(1 for x in resid_ics if x > 0) / len(resid_ics)
 
         resid_kendall_key = f"resid_kendall_{horizon_label}"
-        resid_kendalls = [s[resid_kendall_key] for s in per_snapshot
-                          if resid_kendall_key in s and s[resid_kendall_key] is not None]
+        resid_kendalls = [
+            s[resid_kendall_key] for s in per_snapshot if resid_kendall_key in s and s[resid_kendall_key] is not None
+        ]
         rk_mean = mean(resid_kendalls) if resid_kendalls else None
         rk_t = None
         if resid_kendalls and len(resid_kendalls) > 1:
@@ -2565,8 +2666,9 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
             rk_t = rk_mean / (rk_std / math.sqrt(len(resid_kendalls))) if rk_std > 0 else float("inf")
 
         resid_qs_key = f"resid_quintile_spread_{horizon_label}"
-        resid_qs_vals = [s[resid_qs_key]["spread_pct"] for s in per_snapshot
-                         if resid_qs_key in s and s[resid_qs_key] is not None]
+        resid_qs_vals = [
+            s[resid_qs_key]["spread_pct"] for s in per_snapshot if resid_qs_key in s and s[resid_qs_key] is not None
+        ]
         rqs_mean = mean(resid_qs_vals) if resid_qs_vals else None
         rqs_t = None
         rqs_hit = None
@@ -2579,14 +2681,19 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
                 rqs_t = rqs_mean / (rqs_std / math.sqrt(len(resid_qs_vals))) if rqs_std > 0 else float("inf")
             worst_idx = min(range(len(resid_qs_vals)), key=lambda i: resid_qs_vals[i])
             rqs_worst = resid_qs_vals[worst_idx]
-            rqs_worst_date = [s for s in per_snapshot if resid_qs_key in s and s[resid_qs_key] is not None][worst_idx]["date"]
+            rqs_worst_date = [s for s in per_snapshot if resid_qs_key in s and s[resid_qs_key] is not None][worst_idx][
+                "date"
+            ]
 
         # Robust residual quintile spread variants
         resid_robust_spreads = {}
         for variant in ("median", "trimmed", "winsorized"):
             spread_key = f"spread_{variant}_pct"
-            vals = [s[resid_qs_key][spread_key] for s in per_snapshot
-                    if resid_qs_key in s and s[resid_qs_key] is not None and spread_key in s[resid_qs_key]]
+            vals = [
+                s[resid_qs_key][spread_key]
+                for s in per_snapshot
+                if resid_qs_key in s and s[resid_qs_key] is not None and spread_key in s[resid_qs_key]
+            ]
             if vals:
                 resid_robust_spreads[variant] = {
                     "mean_spread_pct": round(mean(vals), 4),
@@ -2602,15 +2709,19 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
             "n_periods": len(resid_ics),
             "mean_kendall": round(rk_mean, 6) if rk_mean is not None else None,
             "t_stat_kendall": round(rk_t, 2) if rk_t is not None else None,
-            "quintile_spread": {
-                "mean_spread_pct": round(rqs_mean, 4) if rqs_mean is not None else None,
-                "t_stat": round(rqs_t, 2) if rqs_t is not None else None,
-                "hit_rate": round(rqs_hit * 100, 1) if rqs_hit is not None else None,
-                "n_periods": len(resid_qs_vals),
-                "worst_spread_pct": round(rqs_worst, 4) if rqs_worst is not None else None,
-                "worst_date": rqs_worst_date,
-                "robust_spreads": resid_robust_spreads if resid_robust_spreads else None,
-            } if resid_qs_vals else None,
+            "quintile_spread": (
+                {
+                    "mean_spread_pct": round(rqs_mean, 4) if rqs_mean is not None else None,
+                    "t_stat": round(rqs_t, 2) if rqs_t is not None else None,
+                    "hit_rate": round(rqs_hit * 100, 1) if rqs_hit is not None else None,
+                    "n_periods": len(resid_qs_vals),
+                    "worst_spread_pct": round(rqs_worst, 4) if rqs_worst is not None else None,
+                    "worst_date": rqs_worst_date,
+                    "robust_spreads": resid_robust_spreads if resid_robust_spreads else None,
+                }
+                if resid_qs_vals
+                else None
+            ),
         }
 
     # Top/bottom decile spread (60d)
@@ -2621,10 +2732,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
         if not rankings or not returns_60d:
             continue
 
-        common = sorted(
-            [t for t in rankings if t in returns_60d],
-            key=lambda t: rankings[t]
-        )
+        common = sorted([t for t in rankings if t in returns_60d], key=lambda t: rankings[t])
         if len(common) < 20:
             continue
 
@@ -2674,10 +2782,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
     for horizon_label in HORIZONS:
         ic_key = f"ic_{horizon_label}"
         for regime_label in ["RISK_ON", "RISK_OFF"]:
-            regime_ics = [
-                s[ic_key] for s in per_snapshot
-                if s.get("regime") == regime_label and ic_key in s
-            ]
+            regime_ics = [s[ic_key] for s in per_snapshot if s.get("regime") == regime_label and ic_key in s]
             if regime_ics:
                 m = mean(regime_ics)
                 result.setdefault("regime_ic", {})[f"{regime_label}_{horizon_label}"] = {
@@ -2755,12 +2860,16 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
             "top_quintile": {
                 "mean_return_pct": round(mean(top_rets), 4),
                 "stage_mix_total": {"dev": agg_top_dev, "commercial": agg_top_com},
-                "dev_pct": round(agg_top_dev / (agg_top_dev + agg_top_com) * 100, 1) if (agg_top_dev + agg_top_com) > 0 else 0,
+                "dev_pct": (
+                    round(agg_top_dev / (agg_top_dev + agg_top_com) * 100, 1) if (agg_top_dev + agg_top_com) > 0 else 0
+                ),
             },
             "bottom_quintile": {
                 "mean_return_pct": round(mean(bot_rets), 4),
                 "stage_mix_total": {"dev": agg_bot_dev, "commercial": agg_bot_com},
-                "dev_pct": round(agg_bot_dev / (agg_bot_dev + agg_bot_com) * 100, 1) if (agg_bot_dev + agg_bot_com) > 0 else 0,
+                "dev_pct": (
+                    round(agg_bot_dev / (agg_bot_dev + agg_bot_com) * 100, 1) if (agg_bot_dev + agg_bot_com) > 0 else 0
+                ),
             },
         }
 
@@ -2769,10 +2878,12 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
         for s in per_snapshot:
             a = s.get(attrib_key)
             if a is not None:
-                per_snap_attribs.append({
-                    "date": s["date"],
-                    **a,
-                })
+                per_snap_attribs.append(
+                    {
+                        "date": s["date"],
+                        **a,
+                    }
+                )
         result.setdefault("failure_attribution_detail", {})[horizon_label] = per_snap_attribs
 
     # --- Miss signature (top-quintile underperformance analysis) ---
@@ -2805,9 +2916,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
 
         # Worst snapshot by miss rate
         worst_idx = max(range(len(ms_list)), key=lambda i: ms_list[i]["miss_rate_pct"])
-        worst_date = per_snapshot[
-            [i for i, s in enumerate(per_snapshot) if ms_key in s][worst_idx]
-        ]["date"]
+        worst_date = per_snapshot[[i for i, s in enumerate(per_snapshot) if ms_key in s][worst_idx]]["date"]
 
         miss_total = agg_miss_dev + agg_miss_com
         nonmiss_total = agg_nonmiss_dev + agg_nonmiss_com
@@ -2942,7 +3051,8 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
                     "mean_partial_pearson": round(mp, 6),
                     "mean_partial_spearman": round(ms, 6) if ms is not None else None,
                     "hit_rate_positive_pearson": round(
-                        sum(1 for x in pearson_vals if x > 0) / len(pearson_vals) * 100, 1),
+                        sum(1 for x in pearson_vals if x > 0) / len(pearson_vals) * 100, 1
+                    ),
                     "n_periods": len(pearson_vals),
                     "per_period_pearson": [round(x, 4) for x in pearson_vals],
                     "per_period_spearman": [round(x, 4) for x in spearman_vals],
@@ -2984,8 +3094,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
                 ms = mean(spreads_list)
                 bs_agg[comp_name] = {
                     "mean_spread_pct": round(ms, 2),
-                    "hit_rate_positive": round(
-                        sum(1 for x in spreads_list if x > 0) / len(spreads_list) * 100, 1),
+                    "hit_rate_positive": round(sum(1 for x in spreads_list if x > 0) / len(spreads_list) * 100, 1),
                     "mean_monotonicity_up": round(mean(mono_list), 2) if mono_list else None,
                     "n_periods": len(spreads_list),
                     "per_period_spread": [round(x, 2) for x in spreads_list],
@@ -3019,6 +3128,7 @@ def _aggregate(per_snapshot: List[Dict[str, Any]]) -> Dict[str, Any]:
 # =============================================================================
 # FORMATTED OUTPUT
 # =============================================================================
+
 
 def print_report(results: Dict[str, Any]) -> None:
     """Print formatted backtest report to stdout."""
@@ -3056,7 +3166,9 @@ def print_report(results: Dict[str, Any]) -> None:
         resid_bar = f"  {'─' * 9}  {'─' * 9}" if has_resid else ""
 
         print(f"Per-Snapshot ({horizon_label} forward):")
-        print(f"  {'Date':>12s}  {'Spearman':>9s}  {'Kendall':>9s}  {'Q spread':>9s}{resid_hdr}  {'n':>5s}  {'drop':>5s}  {'Quality'}")
+        print(
+            f"  {'Date':>12s}  {'Spearman':>9s}  {'Kendall':>9s}  {'Q spread':>9s}{resid_hdr}  {'n':>5s}  {'drop':>5s}  {'Quality'}"
+        )
         print(f"  {'─' * 12}  {'─' * 9}  {'─' * 9}  {'─' * 9}{resid_bar}  {'─' * 5}  {'─' * 5}  {'─' * 12}")
         for snap in results.get("per_snapshot", []):
             ic = snap.get(f"ic_{horizon_label}", 0)
@@ -3078,7 +3190,9 @@ def print_report(results: Dict[str, Any]) -> None:
                 rqs_str = f"{rqs_spread:+.2f}%" if rqs_spread is not None else "     n/a"
                 resid_cols = f"  {ric_str:>9s}  {rqs_str:>9s}"
 
-            print(f"  {snap['date']:>12s}  {ic:+9.4f}  {k_str:>9s}  {qs_str:>9s}{resid_cols}  {n:>5d}  {dropped:>5d}  {quality}")
+            print(
+                f"  {snap['date']:>12s}  {ic:+9.4f}  {k_str:>9s}  {qs_str:>9s}{resid_cols}  {n:>5d}  {dropped:>5d}  {quality}"
+            )
         print()
 
     # Aggregate
@@ -3118,7 +3232,7 @@ def print_report(results: Dict[str, Any]) -> None:
                         vdata = rb.get(vkey)
                         if vdata:
                             parts.append(f"QS({vname})={vdata['mean_spread_pct']:+.2f}%")
-                    print(f"  {'':>{len(f'Q spread ({horizon_label})')}}  {  '  '.join(parts)}")
+                    print(f"  {'':>{len(f'Q spread ({horizon_label})')}}  {'  '.join(parts)}")
 
         # Residual aggregate
         ragg = results.get(f"residual_aggregate_{horizon_label}")
@@ -3180,9 +3294,11 @@ def print_report(results: Dict[str, Any]) -> None:
             data = regime_ic[key]
             regime_label, horizon = key.rsplit("_", 1)
             per = ", ".join(f"{x:+.4f}" for x in data.get("per_period", []))
-            print(f"  {regime_label:10s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
-                  f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
-                  f"(n={data['n_periods']})  [{per}]")
+            print(
+                f"  {regime_label:10s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
+                f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
+                f"(n={data['n_periods']})  [{per}]"
+            )
         print()
 
     # Stage-stratified IC
@@ -3193,9 +3309,11 @@ def print_report(results: Dict[str, Any]) -> None:
             data = stage_ic[key]
             stage_label, horizon = key.rsplit("_", 1)
             per = ", ".join(f"{x:+.4f}" for x in data.get("per_period", []))
-            print(f"  {stage_label:12s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
-                  f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
-                  f"(n={data['n_periods']}, ~{data['avg_n_per_period']}/period)  [{per}]")
+            print(
+                f"  {stage_label:12s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
+                f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
+                f"(n={data['n_periods']}, ~{data['avg_n_per_period']}/period)  [{per}]"
+            )
         print()
 
     # Residual stage-stratified IC
@@ -3206,9 +3324,11 @@ def print_report(results: Dict[str, Any]) -> None:
             data = resid_stage_ic[key]
             stage_label, horizon = key.rsplit("_", 1)
             per = ", ".join(f"{x:+.4f}" for x in data.get("per_period", []))
-            print(f"  {stage_label:12s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
-                  f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
-                  f"(n={data['n_periods']}, ~{data['avg_n_per_period']}/period)  [{per}]")
+            print(
+                f"  {stage_label:12s} {horizon:>3s}: mean={data['mean_ic']:+.4f}  "
+                f"hit={data['hit_rate']:.0f}%  {data['quality']}  "
+                f"(n={data['n_periods']}, ~{data['avg_n_per_period']}/period)  [{per}]"
+            )
         print()
 
     # Failure attribution summary
@@ -3218,10 +3338,12 @@ def print_report(results: Dict[str, Any]) -> None:
         for horizon_label, data in sorted(fa.items()):
             top = data["top_quintile"]
             bot = data["bottom_quintile"]
-            print(f"  {horizon_label}:  top Q1 mean={top['mean_return_pct']:+.2f}%  "
-                  f"(dev {top['dev_pct']:.0f}%)   "
-                  f"bottom Q5 mean={bot['mean_return_pct']:+.2f}%  "
-                  f"(dev {bot['dev_pct']:.0f}%)")
+            print(
+                f"  {horizon_label}:  top Q1 mean={top['mean_return_pct']:+.2f}%  "
+                f"(dev {top['dev_pct']:.0f}%)   "
+                f"bottom Q5 mean={bot['mean_return_pct']:+.2f}%  "
+                f"(dev {bot['dev_pct']:.0f}%)"
+            )
         print()
 
         # Per-snapshot detail for 20d (the most actionable)
@@ -3231,9 +3353,11 @@ def print_report(results: Dict[str, Any]) -> None:
             for snap_attrib in fa_detail:
                 snap_date = snap_attrib["date"]
                 bot = snap_attrib["bottom_quintile"]
-                print(f"  --- {snap_date} (Q5 mean={bot['mean_return_pct']:+.2f}%, "
-                      f"dev={bot['stage_mix'].get('dev', 0)}, "
-                      f"com={bot['stage_mix'].get('commercial', 0)}) ---")
+                print(
+                    f"  --- {snap_date} (Q5 mean={bot['mean_return_pct']:+.2f}%, "
+                    f"dev={bot['stage_mix'].get('dev', 0)}, "
+                    f"com={bot['stage_mix'].get('commercial', 0)}) ---"
+                )
                 for t in bot["tickers"][:5]:
                     meta_parts = []
                     for mk in ["catalyst_score", "smart_money_score", "confidence_overall"]:
@@ -3241,8 +3365,10 @@ def print_report(results: Dict[str, Any]) -> None:
                             short = mk.replace("_score", "").replace("_overall", "")
                             meta_parts.append(f"{short}={t[mk]:.2f}")
                     meta_str = "  " + ", ".join(meta_parts) if meta_parts else ""
-                    print(f"    {t['ticker']:6s}  rank={t['rank']:>3d}  "
-                          f"ret={t['return_pct']:+7.2f}%  {t['stage']:>4s}{meta_str}")
+                    print(
+                        f"    {t['ticker']:6s}  rank={t['rank']:>3d}  "
+                        f"ret={t['return_pct']:+7.2f}%  {t['stage']:>4s}{meta_str}"
+                    )
             print()
 
     # Miss signature summary
@@ -3254,13 +3380,17 @@ def print_report(results: Dict[str, Any]) -> None:
             nmr = data["non_miss_return_mean_pct"]
             mr_str = f"{mr:+.2f}%" if mr is not None else "n/a"
             nmr_str = f"{nmr:+.2f}%" if nmr is not None else "n/a"
-            print(f"  {horizon_label}:  miss_rate={data['mean_miss_rate_pct']:.0f}%  "
-                  f"severe={data['mean_severe_rate_pct']:.0f}%  "
-                  f"miss_ret={mr_str}  non_miss_ret={nmr_str}  "
-                  f"(worst: {data['worst_miss_rate_pct']:.0f}% on {data['worst_miss_date']})")
+            print(
+                f"  {horizon_label}:  miss_rate={data['mean_miss_rate_pct']:.0f}%  "
+                f"severe={data['mean_severe_rate_pct']:.0f}%  "
+                f"miss_ret={mr_str}  non_miss_ret={nmr_str}  "
+                f"(worst: {data['worst_miss_rate_pct']:.0f}% on {data['worst_miss_date']})"
+            )
             # Stage comparison
-            print(f"       misses: {data['miss_stage_dev_pct']:.0f}% dev   "
-                  f"non-misses: {data['non_miss_stage_dev_pct']:.0f}% dev")
+            print(
+                f"       misses: {data['miss_stage_dev_pct']:.0f}% dev   "
+                f"non-misses: {data['non_miss_stage_dev_pct']:.0f}% dev"
+            )
             # Score deltas (miss - non-miss; positive = misses scored higher)
             deltas = data.get("score_delta", {})
             if deltas:
@@ -3282,8 +3412,10 @@ def print_report(results: Dict[str, Any]) -> None:
                 mr_pct = snap["miss_rate_pct"]
                 dev = snap["miss_stage_mix"].get("dev", 0)
                 com = snap["miss_stage_mix"].get("commercial", 0)
-                print(f"  --- {snap_date} (misses={n_m}/{snap['n_top']}, "
-                      f"rate={mr_pct:.0f}%, severe={n_s}, dev={dev}, com={com}) ---")
+                print(
+                    f"  --- {snap_date} (misses={n_m}/{snap['n_top']}, "
+                    f"rate={mr_pct:.0f}%, severe={n_s}, dev={dev}, com={com}) ---"
+                )
                 for t in snap["miss_tickers"][:5]:
                     sev_tag = " [SEVERE]" if t.get("severe") else ""
                     meta_parts = []
@@ -3292,9 +3424,11 @@ def print_report(results: Dict[str, Any]) -> None:
                             short = mk.replace("_score", "").replace("_overall", "")
                             meta_parts.append(f"{short}={t[mk]:.2f}")
                     meta_str = "  " + ", ".join(meta_parts) if meta_parts else ""
-                    print(f"    {t['ticker']:6s}  rank={t['rank']:>3d}  "
-                          f"ret={t['return_pct']:+7.2f}%  {t['stage']:>4s}"
-                          f"{meta_str}{sev_tag}")
+                    print(
+                        f"    {t['ticker']:6s}  rank={t['rank']:>3d}  "
+                        f"ret={t['return_pct']:+7.2f}%  {t['stage']:>4s}"
+                        f"{meta_str}{sev_tag}"
+                    )
             print()
 
     # Cross-sectional regression
@@ -3309,8 +3443,10 @@ def print_report(results: Dict[str, Any]) -> None:
         # Feature coefficients table
         feats = reg.get("features", {})
         if feats:
-            print(f"  {'Feature':20s}  {'MeanCoef':>10s}  {'StdCoef':>10s}  {'MeanTstat':>10s}  "
-                  f"{'Hit%+':>6s}  {'N':>3s}  {'RISK_ON':>10s}  {'RISK_OFF':>10s}")
+            print(
+                f"  {'Feature':20s}  {'MeanCoef':>10s}  {'StdCoef':>10s}  {'MeanTstat':>10s}  "
+                f"{'Hit%+':>6s}  {'N':>3s}  {'RISK_ON':>10s}  {'RISK_OFF':>10s}"
+            )
             print(f"  {'-' * 95}")
             for feat_name, fd in feats.items():
                 risk_on = fd.get("mean_coef_RISK_ON")
@@ -3325,8 +3461,7 @@ def print_report(results: Dict[str, Any]) -> None:
             print()
 
             # Per-period detail
-            print(f"  Per-period coefficients:")
-            dates = [s["date"] for s in results.get("per_snapshot", [])]
+            print("  Per-period coefficients:")
             for feat_name, fd in feats.items():
                 coefs_str = ", ".join(f"{c:+.4f}" for c in fd.get("per_period_coef", []))
                 print(f"    {feat_name:20s}: [{coefs_str}]")
@@ -3337,10 +3472,9 @@ def print_report(results: Dict[str, Any]) -> None:
         if corrs:
             feat_list = sorted(corrs.keys())
             # Only print if there are cross-correlations above 0.3
-            notable = [(a, b, corrs[a][b]) for a in feat_list for b in feat_list
-                       if a < b and abs(corrs[a][b]) > 0.2]
+            notable = [(a, b, corrs[a][b]) for a in feat_list for b in feat_list if a < b and abs(corrs[a][b]) > 0.2]
             if notable:
-                print(f"  Notable feature correlations (|r| > 0.2):")
+                print("  Notable feature correlations (|r| > 0.2):")
                 for a, b, r in sorted(notable, key=lambda x: -abs(x[2])):
                     print(f"    {a} <-> {b}: {r:+.3f}")
                 print()
@@ -3350,8 +3484,7 @@ def print_report(results: Dict[str, Any]) -> None:
             stage_data = reg.get(f"stage_{stage_label}")
             if stage_data:
                 items = ", ".join(
-                    f"{fn}={sd['mean_coef']:+.4f}(n={sd['n_periods']})"
-                    for fn, sd in sorted(stage_data.items())
+                    f"{fn}={sd['mean_coef']:+.4f}(n={sd['n_periods']})" for fn, sd in sorted(stage_data.items())
                 )
                 print(f"  {stage_label:12s} subset: {items}")
         if reg.get("stage_dev") or reg.get("stage_commercial"):
@@ -3370,10 +3503,12 @@ def print_report(results: Dict[str, Any]) -> None:
             ro_str = f"  RISK_ON={ro:+.4f}" if ro is not None else ""
             rf_str = f"  RISK_OFF={rf:+.4f}" if rf is not None else ""
             pear = ", ".join(f"{x:+.4f}" for x in pd_data.get("per_period_pearson", []))
-            print(f"  {label:20s}: pearson={pd_data['mean_partial_pearson']:+.4f}  "
-                  f"spearman={pd_data['mean_partial_spearman']:+.4f}  "
-                  f"hit+={pd_data['hit_rate_positive_pearson']:.0f}%"
-                  f"{ro_str}{rf_str}")
+            print(
+                f"  {label:20s}: pearson={pd_data['mean_partial_pearson']:+.4f}  "
+                f"spearman={pd_data['mean_partial_spearman']:+.4f}  "
+                f"hit+={pd_data['hit_rate_positive_pearson']:.0f}%"
+                f"{ro_str}{rf_str}"
+            )
             print(f"    per-period pearson: [{pear}]")
         print()
 
@@ -3395,8 +3530,10 @@ def print_report(results: Dict[str, Any]) -> None:
                 stage_str += f"  dev={dev_sp:+.1f}%"
             if com_sp is not None:
                 stage_str += f"  comm={com_sp:+.1f}%"
-            print(f"  {label:20s}: mean={bd['mean_spread_pct']:+.1f}%  "
-                  f"hit+={bd['hit_rate_positive']:.0f}%{mono_str}{stage_str}")
+            print(
+                f"  {label:20s}: mean={bd['mean_spread_pct']:+.1f}%  "
+                f"hit+={bd['hit_rate_positive']:.0f}%{mono_str}{stage_str}"
+            )
             print(f"    per-period: [{per}]")
         print()
 
@@ -3417,10 +3554,12 @@ def print_report(results: Dict[str, Any]) -> None:
     if snapshots and any("regression_20d" in s for s in snapshots):
         print("DIAGNOSTIC: Per-Snapshot IC vs OLS Coef vs Partial Corr (side-by-side)")
         print("-" * 130)
-        print(f"  {'Date':>12s} {'Regime':>8s} | {'IC_20d':>7s} {'IC_60d':>7s} | "
-              f"{'Fin_IC':>7s} {'Cln_IC':>7s} | "
-              f"{'OLS_f20':>8s} {'OLS_c20':>8s} {'OLS_f60':>8s} {'OLS_c60':>8s} | "
-              f"{'PC_f20':>7s} {'PC_c20':>7s} {'PC_f60':>7s} {'PC_c60':>7s}")
+        print(
+            f"  {'Date':>12s} {'Regime':>8s} | {'IC_20d':>7s} {'IC_60d':>7s} | "
+            f"{'Fin_IC':>7s} {'Cln_IC':>7s} | "
+            f"{'OLS_f20':>8s} {'OLS_c20':>8s} {'OLS_f60':>8s} {'OLS_c60':>8s} | "
+            f"{'PC_f20':>7s} {'PC_c20':>7s} {'PC_f60':>7s} {'PC_c60':>7s}"
+        )
         print(f"  {'-' * 126}")
 
         def _fmt(v: Optional[float], w: int = 7) -> str:
@@ -3470,10 +3609,17 @@ def print_report(results: Dict[str, Any]) -> None:
             print()
             print(f"  {'Variable':20s}  {'Coef':>10s}  {'SE':>10s}  {'t-stat':>8s}")
             print(f"  {'-' * 52}")
-            for var_name in ["fin", "clin", "log_cash", "dev",
-                             "fin_x_dev", "clin_x_dev",
-                             "fin_x_riskon", "clin_x_riskon",
-                             "intercept"]:
+            for var_name in [
+                "fin",
+                "clin",
+                "log_cash",
+                "dev",
+                "fin_x_dev",
+                "clin_x_dev",
+                "fin_x_riskon",
+                "clin_x_riskon",
+                "intercept",
+            ]:
                 cd = reg.get("coefficients", {}).get(var_name)
                 if cd:
                     sig = "*" if abs(cd["t_stat"]) > 1.96 else " "
@@ -3483,7 +3629,7 @@ def print_report(results: Dict[str, Any]) -> None:
             # Derived effects: 2x2 table
             derived = reg.get("derived_effects", {})
             if derived:
-                print(f"  Derived marginal effects (fin/clin by stage × regime):")
+                print("  Derived marginal effects (fin/clin by stage × regime):")
                 print(f"  {'':20s}  {'RISK_OFF':>12s}  {'RISK_ON':>12s}")
                 print(f"  {'-' * 48}")
                 for comp in ["fin", "clin"]:
@@ -3504,6 +3650,7 @@ def print_report(results: Dict[str, Any]) -> None:
 # =============================================================================
 # GROUP-BY EVALUATION
 # =============================================================================
+
 
 def _winsorize(vals: List[float], pct: float = 0.05) -> List[float]:
     """Winsorize a list at the given percentile on both tails."""
@@ -3537,9 +3684,7 @@ def run_group_evaluation(
     snapshot_dates = [d for d, _ in archives]
     archive_by_date = {d: p for d, p in archives}
 
-    usable_dates, fence_skipped = compute_as_of_fence(
-        snapshot_dates, last_return_date, max_horizon
-    )
+    usable_dates, fence_skipped = compute_as_of_fence(snapshot_dates, last_return_date, max_horizon)
 
     print(f"  Returns data ends: {last_return_date.isoformat() if last_return_date else 'NONE'}")
     print(f"  Usable snapshots: {len(usable_dates)} (skipped {len(fence_skipped)})")
@@ -3559,8 +3704,9 @@ def run_group_evaluation(
                 print(f"  SKIP {snapshot_date}: archive verification failed")
                 continue
 
-        rankings, scores, component_scores, stage_map, extra_controls, \
-            higher_is_better, signal_scores_data = read_rankings_from_archive(tar_path)
+        rankings, scores, component_scores, stage_map, extra_controls, higher_is_better, signal_scores_data = (
+            read_rankings_from_archive(tar_path)
+        )
         if not rankings:
             print(f"  SKIP {snapshot_date}: no rankings")
             continue
@@ -3572,8 +3718,9 @@ def run_group_evaluation(
         if subset == "dev":
             tickers = {t for t in tickers if ticker_metadata.get(t, {}).get("archetype") == "drug_developer"}
         elif subset == "commercial":
-            tickers = {t for t in tickers
-                       if str(ticker_metadata.get(t, {}).get("archetype", "")).startswith("commercial_")}
+            tickers = {
+                t for t in tickers if str(ticker_metadata.get(t, {}).get("archetype", "")).startswith("commercial_")
+            }
         if not tickers:
             print(f"  SKIP {snapshot_date}: no tickers in subset")
             continue
@@ -3591,8 +3738,10 @@ def run_group_evaluation(
 
         n_groups = len(groups)
         n_tickers = sum(len(v) for v in groups.values())
-        print(f"  {snapshot_date}: {n_tickers} tickers, {n_groups} groups "
-              f"({', '.join(f'{k}={len(v)}' for k, v in sorted(groups.items()))})")
+        print(
+            f"  {snapshot_date}: {n_tickers} tickers, {n_groups} groups "
+            f"({', '.join(f'{k}={len(v)}' for k, v in sorted(groups.items()))})"
+        )
 
         for horizon_label, horizon_days in HORIZONS.items():
             fwd_returns = compute_forward_returns(provider, list(tickers), snapshot_date, horizon_days)
@@ -3625,8 +3774,10 @@ def run_group_evaluation(
 
     for horizon_label in HORIZONS:
         print(f"\n  Horizon: {horizon_label}")
-        header = (f"  {'Group':>12s} | {'N':>5s} | {'Mean%':>8s} | {'Median%':>8s} "
-                  f"| {'Winsor%':>8s} | {'Hit%':>6s} | {'Resid%':>8s} | {'ResHit%':>7s}")
+        header = (
+            f"  {'Group':>12s} | {'N':>5s} | {'Mean%':>8s} | {'Median%':>8s} "
+            f"| {'Winsor%':>8s} | {'Hit%':>6s} | {'Resid%':>8s} | {'ResHit%':>7s}"
+        )
         print(header)
         print(f"  {'-' * 12}-+-{'-' * 5}-+-{'-' * 8}-+-{'-' * 8}-+-{'-' * 8}-+-{'-' * 6}-+-{'-' * 8}-+-{'-' * 7}")
 
@@ -3645,8 +3796,10 @@ def run_group_evaluation(
             resid_mean = mean(resid_rets) * 100 if resid_rets else 0
             resid_hit = sum(1 for r in resid_rets if r > 0) / len(resid_rets) * 100 if resid_rets else 0
 
-            print(f"  {gval:>12s} | {n:5d} | {mean_r:+8.2f} | {median_r:+8.2f} "
-                  f"| {winsor_r:+8.2f} | {hit_pct:5.1f}% | {resid_mean:+8.2f} | {resid_hit:6.1f}%")
+            print(
+                f"  {gval:>12s} | {n:5d} | {mean_r:+8.2f} | {median_r:+8.2f} "
+                f"| {winsor_r:+8.2f} | {hit_pct:5.1f}% | {resid_mean:+8.2f} | {resid_hit:6.1f}%"
+            )
 
             horizon_groups[gval] = {
                 "n": n,
@@ -3670,56 +3823,99 @@ def run_group_evaluation(
 # MAIN
 # =============================================================================
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Rank-IC backtest from archives or legacy snapshots")
     # Archive mode (default)
-    parser.add_argument("--archive-dir", type=Path, default=ARCHIVE_DIR,
-                        help=f"Archive directory (default: {ARCHIVE_DIR})")
-    parser.add_argument("--archive", type=Path, default=None,
-                        help="Single archive tarball to use")
-    parser.add_argument("--start", type=str, default=None,
-                        help="Start date filter for archives (YYYY-MM-DD, inclusive)")
-    parser.add_argument("--end", type=str, default=None,
-                        help="End date filter for archives (YYYY-MM-DD, inclusive)")
-    parser.add_argument("--max-archives", type=int, default=None,
-                        help="Maximum number of archives to use")
-    parser.add_argument("--signal", type=str, default="score_rank_pct",
-                        choices=["score_rank_pct", "score_z", "composite_score",
-                                 "score_rank_pct_attn", "score_z_attn", "composite_score_attn",
-                                 "clinical_score", "clinical_optionality_pct_dev",
-                                 "eligible", "tier_dev", "size_band"],
-                        help="Signal field for IC computation (default: score_rank_pct)")
-    parser.add_argument("--compare-signals", type=str, default=None,
-                        help="Comma pair of signals for A/B comparison, e.g. "
-                             "\"score_rank_pct,score_rank_pct_attn\"")
-    parser.add_argument("--allow-rank-ties", action="store_true",
-                        help="Allow duplicate composite_rank values instead of failing")
-    parser.add_argument("--subset", type=str, default="all",
-                        choices=["all", "dev", "commercial"],
-                        help="Universe subset: 'dev' = early/mid/late stage, "
-                             "'commercial' = commercial stage (default: all)")
-    parser.add_argument("--flip-signal", action="store_true",
-                        help="Invert signal direction (lower-is-better). "
-                             "Use to test if a signal is directionally reversed.")
-    parser.add_argument("--group-by", type=str, default=None,
-                        choices=["tier_dev", "size_band", "mom_state", "eligible",
-                                 "tier_reason", "catalyst_mode", "archetype", "severity"],
-                        help="Evaluate forward returns grouped by a decision column")
+    parser.add_argument(
+        "--archive-dir", type=Path, default=ARCHIVE_DIR, help=f"Archive directory (default: {ARCHIVE_DIR})"
+    )
+    parser.add_argument("--archive", type=Path, default=None, help="Single archive tarball to use")
+    parser.add_argument(
+        "--start", type=str, default=None, help="Start date filter for archives (YYYY-MM-DD, inclusive)"
+    )
+    parser.add_argument("--end", type=str, default=None, help="End date filter for archives (YYYY-MM-DD, inclusive)")
+    parser.add_argument("--max-archives", type=int, default=None, help="Maximum number of archives to use")
+    parser.add_argument(
+        "--signal",
+        type=str,
+        default="score_rank_pct",
+        choices=[
+            "score_rank_pct",
+            "score_z",
+            "composite_score",
+            "score_rank_pct_attn",
+            "score_z_attn",
+            "composite_score_attn",
+            "clinical_score",
+            "clinical_optionality_pct_dev",
+            "eligible",
+            "tier_dev",
+            "size_band",
+        ],
+        help="Signal field for IC computation (default: score_rank_pct)",
+    )
+    parser.add_argument(
+        "--compare-signals",
+        type=str,
+        default=None,
+        help="Comma pair of signals for A/B comparison, e.g. " '"score_rank_pct,score_rank_pct_attn"',
+    )
+    parser.add_argument(
+        "--allow-rank-ties", action="store_true", help="Allow duplicate composite_rank values instead of failing"
+    )
+    parser.add_argument(
+        "--subset",
+        type=str,
+        default="all",
+        choices=["all", "dev", "commercial"],
+        help="Universe subset: 'dev' = early/mid/late stage, " "'commercial' = commercial stage (default: all)",
+    )
+    parser.add_argument(
+        "--flip-signal",
+        action="store_true",
+        help="Invert signal direction (lower-is-better). " "Use to test if a signal is directionally reversed.",
+    )
+    parser.add_argument(
+        "--group-by",
+        type=str,
+        default=None,
+        choices=[
+            "tier_dev",
+            "size_band",
+            "mom_state",
+            "eligible",
+            "tier_reason",
+            "catalyst_mode",
+            "archetype",
+            "severity",
+        ],
+        help="Evaluate forward returns grouped by a decision column",
+    )
     # Archive verification
-    parser.add_argument("--verify-archives", action="store_true", default=True,
-                        dest="verify_archives",
-                        help="Verify archive integrity before reading (default: on)")
-    parser.add_argument("--no-verify-archives", action="store_false",
-                        dest="verify_archives",
-                        help="Skip archive integrity verification")
+    parser.add_argument(
+        "--verify-archives",
+        action="store_true",
+        default=True,
+        dest="verify_archives",
+        help="Verify archive integrity before reading (default: on)",
+    )
+    parser.add_argument(
+        "--no-verify-archives", action="store_false", dest="verify_archives", help="Skip archive integrity verification"
+    )
     # Legacy mode
-    parser.add_argument("--use-live-snapshots", action="store_true",
-                        help="Use legacy snapshot directories instead of archives")
-    parser.add_argument("--snapshot-dir", type=Path, default=SNAPSHOT_DIR,
-                        help=f"Snapshot directory for legacy mode (default: {SNAPSHOT_DIR})")
-    parser.add_argument("--output", type=Path, default=OUTPUT_JSON,
-                        help=f"Output JSON path (default: {OUTPUT_JSON})")
+    parser.add_argument(
+        "--use-live-snapshots", action="store_true", help="Use legacy snapshot directories instead of archives"
+    )
+    parser.add_argument(
+        "--snapshot-dir",
+        type=Path,
+        default=SNAPSHOT_DIR,
+        help=f"Snapshot directory for legacy mode (default: {SNAPSHOT_DIR})",
+    )
+    parser.add_argument("--output", type=Path, default=OUTPUT_JSON, help=f"Output JSON path (default: {OUTPUT_JSON})")
     args = parser.parse_args()
     output_json = args.output
 
@@ -3740,7 +3936,7 @@ def main() -> None:
     source_label = "snapshots"
 
     if args.use_live_snapshots:
-        print(f"Computing rank-IC across quarterly snapshots (legacy mode)...")
+        print("Computing rank-IC across quarterly snapshots (legacy mode)...")
         print(f"  Snapshot dir: {args.snapshot_dir}")
     elif args.archive:
         # Single archive mode
@@ -3759,12 +3955,12 @@ def main() -> None:
         if not args.archive_dir.exists():
             print(f"ERROR: Archive directory not found: {args.archive_dir}")
             sys.exit(1)
-        archives_list = discover_archives(
-            args.archive_dir, start=args.start, end=args.end, max_n=args.max_archives
-        )
+        archives_list = discover_archives(args.archive_dir, start=args.start, end=args.end, max_n=args.max_archives)
         if not archives_list:
-            print(f"ERROR: No archives found in {args.archive_dir}"
-                  + (f" (start={args.start}, end={args.end})" if args.start or args.end else ""))
+            print(
+                f"ERROR: No archives found in {args.archive_dir}"
+                + (f" (start={args.start}, end={args.end})" if args.start or args.end else "")
+            )
             sys.exit(1)
         source_label = "archives"
         print(f"Computing rank-IC from {len(archives_list)} archives in {args.archive_dir}")
@@ -3773,12 +3969,12 @@ def main() -> None:
         print(f"  Archives: {archives_list[0][0]} to {archives_list[-1][0]}")
 
     signal_field = args.signal
-    signal_defaulted = (signal_field == "score_rank_pct" and "--signal" not in sys.argv)
+    signal_defaulted = signal_field == "score_rank_pct" and "--signal" not in sys.argv
     print(f"  Signal field: {signal_field}" + (" (default)" if signal_defaulted else ""))
     if args.subset != "all":
         print(f"  Subset filter: {args.subset}")
     if args.flip_signal:
-        print(f"  Signal FLIPPED (lower-is-better)")
+        print("  Signal FLIPPED (lower-is-better)")
     print()
 
     # ------------------------------------------------------------------
@@ -3791,7 +3987,9 @@ def main() -> None:
         print(f"=== Group-by evaluation: {args.group_by} ===")
         print()
         group_results = run_group_evaluation(
-            provider, ms_provider, csv_provider,
+            provider,
+            ms_provider,
+            csv_provider,
             archives=archives_list,
             group_col=args.group_by,
             subset=args.subset,
@@ -3817,7 +4015,9 @@ def main() -> None:
         print()
 
         results_a, hyg_before_a, hyg_after_a = run_backtest(
-            provider, ms_provider, csv_provider,
+            provider,
+            ms_provider,
+            csv_provider,
             snapshot_dir=args.snapshot_dir if args.use_live_snapshots else None,
             archives=archives_list,
             signal_field=signal_a,
@@ -3827,7 +4027,9 @@ def main() -> None:
             flip_signal=args.flip_signal,
         )
         results_b, hyg_before_b, hyg_after_b = run_backtest(
-            provider, ms_provider, csv_provider,
+            provider,
+            ms_provider,
+            csv_provider,
             snapshot_dir=args.snapshot_dir if args.use_live_snapshots else None,
             archives=archives_list,
             signal_field=signal_b,
@@ -3877,8 +4079,7 @@ def main() -> None:
         print("=" * 72)
 
         # Save combined results
-        combined = {"signal_a": signal_a, "signal_b": signal_b,
-                    "results_a": results_a, "results_b": results_b}
+        combined = {"signal_a": signal_a, "signal_b": signal_b, "results_a": results_a, "results_b": results_b}
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         output_json.parent.mkdir(parents=True, exist_ok=True)
         with open(output_json, "w") as f:
@@ -3887,7 +4088,9 @@ def main() -> None:
         return
 
     results, hygiene_before, hygiene_after = run_backtest(
-        provider, ms_provider, csv_provider,
+        provider,
+        ms_provider,
+        csv_provider,
         snapshot_dir=args.snapshot_dir if args.use_live_snapshots else None,
         archives=archives_list,
         signal_field=signal_field,

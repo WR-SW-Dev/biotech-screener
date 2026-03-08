@@ -22,7 +22,7 @@ import sys
 import tarfile
 from collections import defaultdict
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # ---------------------------------------------------------------------------
 # Project imports
@@ -50,14 +50,16 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 _STAGES = ("early", "mid", "late")
 _HORIZONS = (
-    "near_0_30", "near_31_90", "near_91_180",
-    "near_181_270", "far_271_540", "none",
+    "near_0_30",
+    "near_31_90",
+    "near_91_180",
+    "near_181_270",
+    "far_271_540",
+    "none",
 )
 _SIGNS = ("pos", "nonpos")
 
-ALL_KEYS = [
-    f"{s}|{h}|{sg}" for s in _STAGES for h in _HORIZONS for sg in _SIGNS
-]
+ALL_KEYS = [f"{s}|{h}|{sg}" for s in _STAGES for h in _HORIZONS for sg in _SIGNS]
 assert len(ALL_KEYS) == 36
 
 # Archetypes treated as drug developers for z-score grouping
@@ -73,7 +75,9 @@ def load_rankings_dicts(tar_path: Path) -> List[Dict[str, str]]:
     with tarfile.open(tar_path, "r:gz") as tar:
         for member in tar.getmembers():
             if member.name.endswith("/rankings.csv"):
-                f = io.TextIOWrapper(tar.extractfile(member), encoding="utf-8")
+                raw = tar.extractfile(member)
+                assert raw is not None, f"Cannot extract {member.name}"
+                f = io.TextIOWrapper(raw, encoding="utf-8")
                 return list(csv.DictReader(f))
     return []
 
@@ -166,7 +170,10 @@ def build_table(
         n_missing = len(tickers) - n_with_ret
         log.info(
             "  %s: %d tickers, %d with fwd returns, %d missing",
-            date_str, len(tickers), n_with_ret, n_missing,
+            date_str,
+            len(tickers),
+            n_with_ret,
+            n_missing,
         )
 
         if n_with_ret < 5:
@@ -213,7 +220,9 @@ def build_table(
     if ns:
         log.info(
             "Observations per populated cell: min=%d, median=%.0f, max=%d",
-            min(ns), statistics.median(ns), max(ns),
+            min(ns),
+            statistics.median(ns),
+            max(ns),
         )
 
     # Top / bottom cells
@@ -223,11 +232,15 @@ def build_table(
         best = ranked[-1]
         log.info(
             "Most negative cell: %s  mean=%.4f  n=%d",
-            worst[0], worst[1]["mean_excess_ret_6m"], worst[1]["n"],
+            worst[0],
+            worst[1]["mean_excess_ret_6m"],
+            worst[1]["n"],
         )
         log.info(
             "Most positive cell: %s  mean=%.4f  n=%d",
-            best[0], best[1]["mean_excess_ret_6m"], best[1]["n"],
+            best[0],
+            best[1]["mean_excess_ret_6m"],
+            best[1]["n"],
         )
 
     table = {
@@ -243,11 +256,10 @@ def build_table(
 # CLI
 # ---------------------------------------------------------------------------
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Build alpha cohort lookup table from historical archives."
-    )
+    parser = argparse.ArgumentParser(description="Build alpha cohort lookup table from historical archives.")
     parser.add_argument(
-        "--output", type=Path,
+        "--output",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "alpha_cohort_tables" / "v1.json",
         help="Output JSON path",
     )
@@ -256,7 +268,8 @@ def main() -> None:
     parser.add_argument("--end", type=str, default=None, help="Latest archive date (YYYY-MM-DD)")
     parser.add_argument("--dry-run", action="store_true", help="Print stats without writing")
     parser.add_argument(
-        "--log-level", default="INFO",
+        "--log-level",
+        default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
     args = parser.parse_args()
@@ -320,7 +333,8 @@ def main() -> None:
     if stats["n_tickers_used_fallback"]:
         log.info(
             "CSV fallback used for %d tickers (%d lookups)",
-            stats["n_tickers_used_fallback"], stats["total_fallback_lookups"],
+            stats["n_tickers_used_fallback"],
+            stats["total_fallback_lookups"],
         )
     overrides = provider.get_outlier_overrides()
     if overrides:
@@ -328,8 +342,11 @@ def main() -> None:
         for ov in overrides[:5]:
             log.warning(
                 "  %s %s→%s: morningstar=%.2f, csv=%.2f",
-                ov["ticker"], ov["start"], ov["end"],
-                ov["morningstar_ret"], ov["csv_ret"],
+                ov["ticker"],
+                ov["start"],
+                ov["end"],
+                ov["morningstar_ret"],
+                ov["csv_ret"],
             )
 
 

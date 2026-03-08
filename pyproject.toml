@@ -99,47 +99,11 @@ warn_unused_configs = true
 # CI runs: mypy decision_engine.py common/
 files = ["decision_engine.py", "common/"]
 
-# -- Clean files: enforce strictly ------------------------------------------
+# -- Enforced modules: strict type checking ------------------------------------
 [[tool.mypy.overrides]]
 module = [
     "decision_engine",
-    "common.alpha_table",
-    "common.constants",
-    "common.data_consistency",
-    "common.data_quality",
-    "common.date_utils",
-    "common.forward_looking_separation",
-    "common.pit_enforcement",
-    "common.provenance",
-    "common.random_state",
-    "common.ranking_utils",
-    "common.run_manifest",
-    "common.schema_validation",
-    "common.staleness_gates",
-    "common.score_utils",
-    "common.data_integration_contracts",
-    "common.clinical_calendar_alpha",
-]
-disallow_untyped_defs = false
-warn_unreachable = true
-
-# -- Noisy files: suppress until fixed (tracked in TODO) --------------------
-[[tool.mypy.overrides]]
-module = [
-    "common.integration_contracts",
-    "common.accuracy_improvements",
-    "common.robustness",
-    "common.run_summary",
-    "common.clustering",
-    "common.hash_utils",
-    "common.logging_config",
-    "common.null_safety",
-    "common.production_hardening",
-    "common.robustness_extended",
-    "common.score_to_er",
-    "common.input_validation",
-    "common.types",
-    # Transitive imports from decision_engine / common
+    "common.*",
     "defensive_overlay_adapter",
     "module_5_alpha_cohort",
     "decision_engine_codes",
@@ -149,6 +113,20 @@ module = [
     "competitive_intensity_engine",
     "run_rank_ic_backtest",
     "scripts.*",
+]
+disallow_untyped_defs = false
+warn_unreachable = true
+
+# -- Noisy modules: suppress until refactored (7 files, 63 errors) -----------
+[[tool.mypy.overrides]]
+module = [
+    "common.integration_contracts",
+    "common.robustness",
+    "common.run_summary",
+    "common.accuracy_improvements",
+    "common.production_hardening",
+    "common.input_validation",
+    "defensive_overlay_adapter",
 ]
 ignore_errors = true
 
