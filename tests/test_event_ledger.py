@@ -12,28 +12,27 @@ Tests cover:
 """
 
 import json
-import pytest
 from datetime import date
-from pathlib import Path
-from unittest.mock import patch
+
+import pytest
 
 from event_ledger import (
-    LedgerEntry,
     LedgerConfig,
+    LedgerEntry,
+    _load_ctgov_events,
+    _load_pdufa_events,
+    _load_sec_8k_events,
     build_event_ledger,
     compute_event_id,
-    query_nearest_catalyst,
     leakage_audit,
+    query_nearest_catalyst,
     write_ledger_jsonl,
-    _load_ctgov_events,
-    _load_sec_8k_events,
-    _load_pdufa_events,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def tmp_cache(tmp_path):
@@ -69,6 +68,7 @@ def _make_config(tmp_cache):
 # =============================================================================
 # TestLedgerBuilder
 # =============================================================================
+
 
 class TestLedgerBuilder:
     """Tests for building ledger from cache sources."""
@@ -124,7 +124,10 @@ class TestLedgerBuilder:
         pit_path.write_text(json.dumps(records))
 
         entries = _load_ctgov_events(
-            date(2026, 2, 17), tmp_cache["ctgov"], strict=False, data_dir=tmp_cache["data"],
+            date(2026, 2, 17),
+            tmp_cache["ctgov"],
+            strict=False,
+            data_dir=tmp_cache["data"],
         )
 
         # Should produce both PCD and CD entries
@@ -141,8 +144,8 @@ class TestLedgerBuilder:
         assert pcd.event_date == "2026-09-01"
         assert pcd.confidence == "HIGH"
 
-    def test_pdufa_missing_disclosed_at(self, tmp_cache):
-        """PDUFA entry without curated_disclosed_at -> confidence=LOW, tagged."""
+    def test_pdufa_confirmed_missing_disclosed_at(self, tmp_cache):
+        """PDUFA confirmed company guidance without curated_disclosed_at -> MED."""
         pdufa = [
             {
                 "ticker": "ACAD",
@@ -162,9 +165,30 @@ class TestLedgerBuilder:
 
         assert len(entries) == 1
         e = entries[0]
-        assert e.confidence == "LOW"
+        assert e.confidence == "MED"
         assert "missing_disclosed_at" in e.tags
         assert e.source == "PDUFA_MANUAL"
+
+    def test_pdufa_unconfirmed_stays_low(self, tmp_cache):
+        """PDUFA without confirmed confidence -> stays LOW."""
+        pdufa = [
+            {
+                "ticker": "FAKE",
+                "drug_name": "TestDrug",
+                "indication": "Test",
+                "pdufa_date": "2026-06-01",
+                "submission_type": "NDA",
+                "source": "rumor",
+                "curated_disclosed_at": None,
+            }
+        ]
+        pdufa_path = tmp_cache["data"] / "pdufa_dates.json"
+        pdufa_path.write_text(json.dumps(pdufa))
+
+        entries = _load_pdufa_events(tmp_cache["data"])
+
+        assert len(entries) == 1
+        assert entries[0].confidence == "LOW"
 
     def test_pit_filter_excludes_future(self, tmp_cache):
         """Entry with disclosed_at > as_of_date excluded from ledger output."""
@@ -198,11 +222,16 @@ class TestLedgerBuilder:
     def test_deterministic_event_id(self):
         """Same inputs -> same event_id; different value -> different event_id."""
         base_args = dict(
-            source="SEC_8K", source_uid="ACAD_DATA_READOUT_2026-02-10",
-            ticker="ACAD", event_type="DATA_READOUT",
-            field_changed="event_date", value="2026-06-15",
-            event_date="2026-06-15", event_date_end=None,
-            disclosed_at="2026-02-10", extractor_version="abc123",
+            source="SEC_8K",
+            source_uid="ACAD_DATA_READOUT_2026-02-10",
+            ticker="ACAD",
+            event_type="DATA_READOUT",
+            field_changed="event_date",
+            value="2026-06-15",
+            event_date="2026-06-15",
+            event_date_end=None,
+            disclosed_at="2026-02-10",
+            extractor_version="abc123",
         )
 
         id1 = compute_event_id(**base_args)
@@ -219,24 +248,47 @@ class TestLedgerBuilder:
 # TestQueryNearestCatalyst
 # =============================================================================
 
+
 class TestQueryNearestCatalyst:
     """Tests for window-aware nearest catalyst query."""
 
-    def _make_entry(self, ticker, event_date, event_date_end=None,
-                    date_precision="DAY", confidence="HIGH",
-                    disclosed_at="2026-01-01", event_type="DATA_READOUT"):
+    def _make_entry(
+        self,
+        ticker,
+        event_date,
+        event_date_end=None,
+        date_precision="DAY",
+        confidence="HIGH",
+        disclosed_at="2026-01-01",
+        event_type="DATA_READOUT",
+    ):
         eid = compute_event_id(
-            "TEST", f"{ticker}_test", ticker, event_type,
-            "event_date", event_date or "", event_date, event_date_end,
-            disclosed_at, "test",
+            "TEST",
+            f"{ticker}_test",
+            ticker,
+            event_type,
+            "event_date",
+            event_date or "",
+            event_date,
+            event_date_end,
+            disclosed_at,
+            "test",
         )
         return LedgerEntry(
-            event_id=eid, ticker=ticker, event_type=event_type,
-            event_date=event_date, event_date_end=event_date_end,
-            date_precision=date_precision, disclosed_at=disclosed_at,
-            source="TEST", source_uid=f"{ticker}_test", confidence=confidence,
-            extractor_version="test", event_name="test event",
-            field_changed="event_date", value=event_date or "",
+            event_id=eid,
+            ticker=ticker,
+            event_type=event_type,
+            event_date=event_date,
+            event_date_end=event_date_end,
+            date_precision=date_precision,
+            disclosed_at=disclosed_at,
+            source="TEST",
+            source_uid=f"{ticker}_test",
+            confidence=confidence,
+            extractor_version="test",
+            event_name="test event",
+            field_changed="event_date",
+            value=event_date or "",
         )
 
     def test_day_precision_nearest(self):
@@ -256,7 +308,9 @@ class TestQueryNearestCatalyst:
         as_of = date(2026, 5, 15)
         # Q2 event: start=Apr 1, end=Jun 30
         e = self._make_entry(
-            "MRNA", "2026-04-01", event_date_end="2026-06-30",
+            "MRNA",
+            "2026-04-01",
+            event_date_end="2026-06-30",
             date_precision="QUARTER",
         )
 
@@ -270,7 +324,9 @@ class TestQueryNearestCatalyst:
         """Filing in July referencing Q2 (event_date_end=Jun 30): excluded."""
         as_of = date(2026, 7, 15)
         e = self._make_entry(
-            "MRNA", "2026-04-01", event_date_end="2026-06-30",
+            "MRNA",
+            "2026-04-01",
+            event_date_end="2026-06-30",
             date_precision="QUARTER",
         )
 
@@ -296,24 +352,39 @@ class TestQueryNearestCatalyst:
 # TestLeakageAudit
 # =============================================================================
 
+
 class TestLeakageAudit:
     """Tests for PIT leakage audit reporting."""
 
-    def _make_entry(self, ticker, disclosed_at, event_date="2026-06-01",
-                    source="TEST", confidence="HIGH", tags=()):
+    def _make_entry(self, ticker, disclosed_at, event_date="2026-06-01", source="TEST", confidence="HIGH", tags=()):
         eid = compute_event_id(
-            source, f"{ticker}_test", ticker, "DATA_READOUT",
-            "event_date", event_date, event_date, None,
-            disclosed_at, "test",
+            source,
+            f"{ticker}_test",
+            ticker,
+            "DATA_READOUT",
+            "event_date",
+            event_date,
+            event_date,
+            None,
+            disclosed_at,
+            "test",
         )
         return LedgerEntry(
-            event_id=eid, ticker=ticker, event_type="DATA_READOUT",
-            event_date=event_date, event_date_end=None,
-            date_precision="DAY", disclosed_at=disclosed_at,
-            source=source, source_uid=f"{ticker}_test",
-            confidence=confidence, extractor_version="test",
-            event_name="test", field_changed="event_date",
-            value=event_date, tags=tags,
+            event_id=eid,
+            ticker=ticker,
+            event_type="DATA_READOUT",
+            event_date=event_date,
+            event_date_end=None,
+            date_precision="DAY",
+            disclosed_at=disclosed_at,
+            source=source,
+            source_uid=f"{ticker}_test",
+            confidence=confidence,
+            extractor_version="test",
+            event_name="test",
+            field_changed="event_date",
+            value=event_date,
+            tags=tags,
         )
 
     def test_audit_counts(self):
@@ -337,7 +408,8 @@ class TestLeakageAudit:
         """PDUFA with null disclosed_at counted in n_pdufa_missing_disclosed_at."""
         as_of = date(2026, 3, 1)
         e = self._make_entry(
-            "ACAD", "2026-02-15",
+            "ACAD",
+            "2026-02-15",
             source="PDUFA_MANUAL",
             tags=("missing_disclosed_at",),
         )
@@ -367,6 +439,7 @@ class TestLeakageAudit:
 # =============================================================================
 # TestStrictCtgovMode
 # =============================================================================
+
 
 class TestStrictCtgovMode:
     """Tests for CTGov strict vs degrade modes."""
@@ -425,23 +498,39 @@ class TestStrictCtgovMode:
 # TestWriteLedger
 # =============================================================================
 
+
 class TestWriteLedger:
     """Tests for JSONL ledger output."""
 
     def test_write_and_read_round_trip(self, tmp_path):
         """write_ledger_jsonl produces valid JSONL that can be parsed back."""
         eid = compute_event_id(
-            "TEST", "uid", "ACAD", "DATA_READOUT",
-            "event_date", "2026-06-01", "2026-06-01", None,
-            "2026-02-01", "v1",
+            "TEST",
+            "uid",
+            "ACAD",
+            "DATA_READOUT",
+            "event_date",
+            "2026-06-01",
+            "2026-06-01",
+            None,
+            "2026-02-01",
+            "v1",
         )
         entry = LedgerEntry(
-            event_id=eid, ticker="ACAD", event_type="DATA_READOUT",
-            event_date="2026-06-01", event_date_end=None,
-            date_precision="DAY", disclosed_at="2026-02-01",
-            source="TEST", source_uid="uid", confidence="HIGH",
-            extractor_version="v1", event_name="test",
-            field_changed="event_date", value="2026-06-01",
+            event_id=eid,
+            ticker="ACAD",
+            event_type="DATA_READOUT",
+            event_date="2026-06-01",
+            event_date_end=None,
+            date_precision="DAY",
+            disclosed_at="2026-02-01",
+            source="TEST",
+            source_uid="uid",
+            confidence="HIGH",
+            extractor_version="v1",
+            event_name="test",
+            field_changed="event_date",
+            value="2026-06-01",
         )
 
         out_path = tmp_path / "ledger" / "test.jsonl"

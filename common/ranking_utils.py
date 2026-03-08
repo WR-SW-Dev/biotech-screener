@@ -7,6 +7,7 @@ a DecisionRuleset.
 Extracted from scripts/research/rerank_snapshots.py to avoid eval
 depending on a "research" module.
 """
+
 from __future__ import annotations
 
 import statistics
@@ -54,7 +55,7 @@ def _z_score_by_group(
         mu = statistics.mean(raw)
         # Population std (ddof=0)
         var = sum((x - mu) ** 2 for x in raw) / len(raw)
-        std = var ** 0.5
+        std = var**0.5
 
         for i in indices:
             v = safe_float(rows[i].get(value_col))
@@ -84,6 +85,7 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
 
     # clinical_score_z: z-score of clinical_score by archetype cohort
     if "clinical_score_z" not in sample:
+
         def _cohort(r: Dict[str, str]) -> str:
             a = r.get("archetype", "")
             if a.startswith("drug_developer"):
@@ -176,3 +178,14 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
     if "de_vol_60d" not in sample:
         for r in rows:
             r["de_vol_60d"] = ""
+
+    # catalyst_family: derive from catalyst_event_type if available
+    if "catalyst_family" not in sample:
+        try:
+            from event_ledger import classify_catalyst_family
+
+            for r in rows:
+                r["catalyst_family"] = classify_catalyst_family(r.get("catalyst_event_type", ""))
+        except ImportError:
+            for r in rows:
+                r["catalyst_family"] = ""

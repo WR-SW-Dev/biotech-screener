@@ -10,7 +10,7 @@ nearest-catalyst queries.
 PIT Safety:
 - Every entry requires disclosed_at (when the market could first know)
 - Entries with disclosed_at > as_of_date are excluded
-- PDUFA entries without curated_disclosed_at are tagged LOW confidence
+- PDUFA entries: confirmed guidance → MED confidence; unconfirmed → LOW
 
 Usage:
     from event_ledger import build_event_ledger, query_nearest_catalyst, LedgerConfig
@@ -22,7 +22,7 @@ import hashlib
 import json
 import logging
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -45,6 +45,7 @@ def _normalize_iso_date(raw: str) -> str:
         s = s + "-01"
     return s
 
+
 # Project root (where this script lives)
 _PROJECT_ROOT = Path(__file__).parent
 
@@ -53,23 +54,25 @@ _PROJECT_ROOT = Path(__file__).parent
 # LEDGER ENTRY
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class LedgerEntry:
     """Single normalized catalyst event with PIT anchor."""
+
     event_id: str
     ticker: str
     event_type: str
-    event_date: Optional[str]       # ISO date (required for DAY precision)
-    event_date_end: Optional[str]   # ISO date (for windowed: QUARTER, HALF_YEAR)
-    date_precision: str             # DAY, WEEK, MONTH, QUARTER, HALF_YEAR, YEAR, UNKNOWN
-    disclosed_at: str               # PIT anchor (required)
-    source: str                     # CTGOV, SEC_8K, SEC_MULTI, FDA_ADCOM, FDA_FEDREG, PDUFA_MANUAL
-    source_uid: str                 # nct_id, accession, meeting_id, etc.
-    confidence: str                 # HIGH, MED, LOW
+    event_date: Optional[str]  # ISO date (required for DAY precision)
+    event_date_end: Optional[str]  # ISO date (for windowed: QUARTER, HALF_YEAR)
+    date_precision: str  # DAY, WEEK, MONTH, QUARTER, HALF_YEAR, YEAR, UNKNOWN
+    disclosed_at: str  # PIT anchor (required)
+    source: str  # CTGOV, SEC_8K, SEC_MULTI, FDA_ADCOM, FDA_FEDREG, PDUFA_MANUAL
+    source_uid: str  # nct_id, accession, meeting_id, etc.
+    confidence: str  # HIGH, MED, LOW
     extractor_version: str
     event_name: str
     field_changed: str
-    value: str                      # raw value (the date/window as extracted)
+    value: str  # raw value (the date/window as extracted)
     tags: Tuple[str, ...] = ()
 
     def to_dict(self) -> Dict:
@@ -92,6 +95,67 @@ class LedgerEntry:
         }
 
 
+# =============================================================================
+# CATALYST FAMILY CLASSIFICATION
+# =============================================================================
+
+# Maps event_type → family.  Families group event types by how information
+# gets priced: regulatory events have hard deadlines (PDUFA, AdCom, CHMP);
+# clinical events have softer dates (PCD, study completion); safety events
+# are negative shocks.  The mapping is used for bucketed research verdicts
+# and the binary quality score.
+
+CATALYST_FAMILY_MAP: Dict[str, str] = {
+    # Regulatory (hard-dated FDA/EMA decisions)
+    "PDUFA": "REGULATORY",
+    "FDA_PDUFA_DATE": "REGULATORY",
+    "FDA_ADCOM": "REGULATORY",
+    "FDA_APPROVAL": "REGULATORY",
+    "FDA_SUBMISSION": "REGULATORY",
+    "FDA_DESIGNATION": "REGULATORY",
+    "FDA_CRL": "REGULATORY",
+    "FDA_RTF": "REGULATORY",
+    "FDA_DECISION": "REGULATORY",
+    "EMA_AGENDA": "REGULATORY",
+    "EMA_OUTCOME": "REGULATORY",
+    "EMA_COMMITTEE_AGENDA": "REGULATORY",
+    "EMA_COMMITTEE_OUTCOME": "REGULATORY",
+    # Clinical (trial readout / completion dates)
+    "CLINICAL_PCD": "CLINICAL",
+    "CLINICAL_CD": "CLINICAL",
+    "CT_PRIMARY_COMPLETION": "CLINICAL",
+    "CT_STUDY_COMPLETION": "CLINICAL",
+    "CT_RESULTS_POSTED": "CLINICAL",
+    "CT_DATE_CONFIRMED_ACTUAL": "CLINICAL",
+    "DATA_READOUT": "CLINICAL",
+    "DATA_PRESENTATION": "CLINICAL",
+    "DATA_PUBLICATION": "CLINICAL",
+    # Safety / negative shocks
+    "CLINICAL_HOLD": "SAFETY",
+    "SAFETY_SIGNAL": "SAFETY",
+    "FDA_WARNING_LETTER": "SAFETY",
+    "CT_TRIAL_TERMINATED": "SAFETY",
+    "CT_TRIAL_WITHDRAWN": "SAFETY",
+    "CT_TRIAL_SUSPENDED": "SAFETY",
+    # Trial activity (informational, not event-driven)
+    "CT_STATUS_UPGRADE": "CLINICAL",
+    "CT_STATUS_DOWNGRADE": "SAFETY",
+    "CT_STATUS_SEVERE_NEG": "SAFETY",
+    "CT_TIMELINE_PULLIN": "CLINICAL",
+    "CT_TIMELINE_PUSHOUT": "CLINICAL",
+    "CT_ACTIVITY_PROXY": "CLINICAL",
+}
+
+
+def classify_catalyst_family(event_type: str) -> str:
+    """Classify an event_type into a catalyst family.
+
+    Returns one of: REGULATORY, CLINICAL, SAFETY, or empty string for
+    unknown/unmapped event types (e.g. corporate events, earnings).
+    """
+    return CATALYST_FAMILY_MAP.get(event_type, "")
+
+
 def compute_event_id(
     source: str,
     source_uid: str,
@@ -105,11 +169,20 @@ def compute_event_id(
     extractor_version: str,
 ) -> str:
     """Deterministic event ID from canonical fields (SHA-1, 16 hex chars)."""
-    parts = "|".join([
-        source, source_uid, ticker, event_type, field_changed,
-        value, event_date or "", event_date_end or "",
-        disclosed_at, extractor_version,
-    ])
+    parts = "|".join(
+        [
+            source,
+            source_uid,
+            ticker,
+            event_type,
+            field_changed,
+            value,
+            event_date or "",
+            event_date_end or "",
+            disclosed_at,
+            extractor_version,
+        ]
+    )
     return hashlib.sha1(parts.encode("utf-8")).hexdigest()[:16]
 
 
@@ -117,9 +190,11 @@ def compute_event_id(
 # CONFIGURATION
 # =============================================================================
 
+
 @dataclass
 class LedgerConfig:
     """Paths and flags for building the event ledger."""
+
     ctgov_cache_dir: Optional[Path] = None
     sec_cache_dir: Optional[Path] = None
     fda_cache_dir: Optional[Path] = None
@@ -154,6 +229,7 @@ class LedgerConfig:
 # SOURCE LOADERS
 # =============================================================================
 
+
 def _load_ctgov_events(
     as_of_date: date,
     ctgov_cache_dir: Path,
@@ -177,7 +253,8 @@ def _load_ctgov_events(
             return []
         logger.warning(
             "CTGov PIT cache missing for %s, falling back to unfiltered %s",
-            as_of_date, fallback,
+            as_of_date,
+            fallback,
         )
         records = json.loads(fallback.read_text())
         cutoff = as_of_date.isoformat()
@@ -203,37 +280,69 @@ def _load_ctgov_events(
         pcd = _normalize_iso_date(rec.get("primary_completion_date") or "")
         if pcd:
             eid = compute_event_id(
-                "CTGOV", nct_id, ticker, "CLINICAL_PCD",
-                "primary_completion_date", pcd, pcd, None,
-                disclosed_at, "ctgov_pit",
+                "CTGOV",
+                nct_id,
+                ticker,
+                "CLINICAL_PCD",
+                "primary_completion_date",
+                pcd,
+                pcd,
+                None,
+                disclosed_at,
+                "ctgov_pit",
             )
-            entries.append(LedgerEntry(
-                event_id=eid, ticker=ticker, event_type="CLINICAL_PCD",
-                event_date=pcd, event_date_end=None,
-                date_precision="DAY", disclosed_at=disclosed_at,
-                source="CTGOV", source_uid=nct_id, confidence="HIGH",
-                extractor_version="ctgov_pit",
-                event_name=f"{nct_id} PCD {pcd}",
-                field_changed="primary_completion_date", value=pcd,
-            ))
+            entries.append(
+                LedgerEntry(
+                    event_id=eid,
+                    ticker=ticker,
+                    event_type="CLINICAL_PCD",
+                    event_date=pcd,
+                    event_date_end=None,
+                    date_precision="DAY",
+                    disclosed_at=disclosed_at,
+                    source="CTGOV",
+                    source_uid=nct_id,
+                    confidence="HIGH",
+                    extractor_version="ctgov_pit",
+                    event_name=f"{nct_id} PCD {pcd}",
+                    field_changed="primary_completion_date",
+                    value=pcd,
+                )
+            )
 
         # Completion date fallback
         cd = _normalize_iso_date(rec.get("completion_date") or "")
         if cd and cd != pcd:
             eid = compute_event_id(
-                "CTGOV", nct_id, ticker, "CLINICAL_CD",
-                "completion_date", cd, cd, None,
-                disclosed_at, "ctgov_pit",
+                "CTGOV",
+                nct_id,
+                ticker,
+                "CLINICAL_CD",
+                "completion_date",
+                cd,
+                cd,
+                None,
+                disclosed_at,
+                "ctgov_pit",
             )
-            entries.append(LedgerEntry(
-                event_id=eid, ticker=ticker, event_type="CLINICAL_CD",
-                event_date=cd, event_date_end=None,
-                date_precision="DAY", disclosed_at=disclosed_at,
-                source="CTGOV", source_uid=nct_id, confidence="HIGH",
-                extractor_version="ctgov_pit",
-                event_name=f"{nct_id} CD {cd}",
-                field_changed="completion_date", value=cd,
-            ))
+            entries.append(
+                LedgerEntry(
+                    event_id=eid,
+                    ticker=ticker,
+                    event_type="CLINICAL_CD",
+                    event_date=cd,
+                    event_date_end=None,
+                    date_precision="DAY",
+                    disclosed_at=disclosed_at,
+                    source="CTGOV",
+                    source_uid=nct_id,
+                    confidence="HIGH",
+                    extractor_version="ctgov_pit",
+                    event_name=f"{nct_id} CD {cd}",
+                    field_changed="completion_date",
+                    value=cd,
+                )
+            )
 
     return entries
 
@@ -290,39 +399,71 @@ def _load_merged_trial_events(
         pcd = _normalize_iso_date(rec.get("primary_completion_date") or "")
         if pcd:
             eid = compute_event_id(
-                source, primary_id, ticker, "CLINICAL_PCD",
-                "primary_completion_date", pcd, pcd, None,
-                disclosed_at, f"{registry}_pit",
+                source,
+                primary_id,
+                ticker,
+                "CLINICAL_PCD",
+                "primary_completion_date",
+                pcd,
+                pcd,
+                None,
+                disclosed_at,
+                f"{registry}_pit",
             )
-            entries.append(LedgerEntry(
-                event_id=eid, ticker=ticker, event_type="CLINICAL_PCD",
-                event_date=pcd, event_date_end=None,
-                date_precision="DAY", disclosed_at=disclosed_at,
-                source=source, source_uid=primary_id, confidence="MED",
-                extractor_version=f"{registry}_pit",
-                event_name=f"{primary_id} PCD {pcd}",
-                field_changed="primary_completion_date", value=pcd,
-                tags=(f"registry:{registry}",),
-            ))
+            entries.append(
+                LedgerEntry(
+                    event_id=eid,
+                    ticker=ticker,
+                    event_type="CLINICAL_PCD",
+                    event_date=pcd,
+                    event_date_end=None,
+                    date_precision="DAY",
+                    disclosed_at=disclosed_at,
+                    source=source,
+                    source_uid=primary_id,
+                    confidence="MED",
+                    extractor_version=f"{registry}_pit",
+                    event_name=f"{primary_id} PCD {pcd}",
+                    field_changed="primary_completion_date",
+                    value=pcd,
+                    tags=(f"registry:{registry}",),
+                )
+            )
 
         # Completion date fallback
         cd = _normalize_iso_date(rec.get("completion_date") or "")
         if cd and cd != pcd:
             eid = compute_event_id(
-                source, primary_id, ticker, "CLINICAL_CD",
-                "completion_date", cd, cd, None,
-                disclosed_at, f"{registry}_pit",
+                source,
+                primary_id,
+                ticker,
+                "CLINICAL_CD",
+                "completion_date",
+                cd,
+                cd,
+                None,
+                disclosed_at,
+                f"{registry}_pit",
             )
-            entries.append(LedgerEntry(
-                event_id=eid, ticker=ticker, event_type="CLINICAL_CD",
-                event_date=cd, event_date_end=None,
-                date_precision="DAY", disclosed_at=disclosed_at,
-                source=source, source_uid=primary_id, confidence="MED",
-                extractor_version=f"{registry}_pit",
-                event_name=f"{primary_id} CD {cd}",
-                field_changed="completion_date", value=cd,
-                tags=(f"registry:{registry}",),
-            ))
+            entries.append(
+                LedgerEntry(
+                    event_id=eid,
+                    ticker=ticker,
+                    event_type="CLINICAL_CD",
+                    event_date=cd,
+                    event_date_end=None,
+                    date_precision="DAY",
+                    disclosed_at=disclosed_at,
+                    source=source,
+                    source_uid=primary_id,
+                    confidence="MED",
+                    extractor_version=f"{registry}_pit",
+                    event_name=f"{primary_id} CD {cd}",
+                    field_changed="completion_date",
+                    value=cd,
+                    tags=(f"registry:{registry}",),
+                )
+            )
 
     return entries
 
@@ -336,6 +477,7 @@ def _load_sec_8k_events(
 
     # Try versioned cache path first, then plain
     import glob as glob_mod
+
     pattern = str(sec_cache_dir / f"8k_catalysts_{as_of_date.isoformat()}_*.json")
     matches = sorted(glob_mod.glob(pattern))
     if matches:
@@ -375,19 +517,36 @@ def _load_sec_8k_events(
 
         source_uid = f"{ticker}_{event_type}_{disclosed_at}"
         eid = compute_event_id(
-            "SEC_8K", source_uid, ticker, event_type,
-            "event_date", event_date or "", event_date, event_date_end,
-            disclosed_at, ext_version,
+            "SEC_8K",
+            source_uid,
+            ticker,
+            event_type,
+            "event_date",
+            event_date or "",
+            event_date,
+            event_date_end,
+            disclosed_at,
+            ext_version,
         )
-        entries.append(LedgerEntry(
-            event_id=eid, ticker=ticker, event_type=event_type,
-            event_date=event_date, event_date_end=event_date_end,
-            date_precision=date_precision, disclosed_at=disclosed_at,
-            source="SEC_8K", source_uid=source_uid, confidence=confidence,
-            extractor_version=ext_version,
-            event_name=event_name, field_changed="event_date",
-            value=event_date or "", tags=tags,
-        ))
+        entries.append(
+            LedgerEntry(
+                event_id=eid,
+                ticker=ticker,
+                event_type=event_type,
+                event_date=event_date,
+                event_date_end=event_date_end,
+                date_precision=date_precision,
+                disclosed_at=disclosed_at,
+                source="SEC_8K",
+                source_uid=source_uid,
+                confidence=confidence,
+                extractor_version=ext_version,
+                event_name=event_name,
+                field_changed="event_date",
+                value=event_date or "",
+                tags=tags,
+            )
+        )
 
     return entries
 
@@ -400,6 +559,7 @@ def _load_sec_multi_form_events(
     entries: List[LedgerEntry] = []
 
     import glob as glob_mod
+
     pattern = str(sec_cache_dir / f"sec_filings_{as_of_date.isoformat()}_*.json")
     matches = sorted(glob_mod.glob(pattern))
     if matches:
@@ -438,19 +598,36 @@ def _load_sec_multi_form_events(
 
         source_uid = f"{ticker}_{event_type}_{disclosed_at}"
         eid = compute_event_id(
-            "SEC_MULTI", source_uid, ticker, event_type,
-            "event_date", event_date or "", event_date, event_date_end,
-            disclosed_at, ext_version,
+            "SEC_MULTI",
+            source_uid,
+            ticker,
+            event_type,
+            "event_date",
+            event_date or "",
+            event_date,
+            event_date_end,
+            disclosed_at,
+            ext_version,
         )
-        entries.append(LedgerEntry(
-            event_id=eid, ticker=ticker, event_type=event_type,
-            event_date=event_date, event_date_end=event_date_end,
-            date_precision=date_precision, disclosed_at=disclosed_at,
-            source="SEC_MULTI", source_uid=source_uid, confidence=confidence,
-            extractor_version=ext_version,
-            event_name=event_name, field_changed="event_date",
-            value=event_date or "", tags=tags,
-        ))
+        entries.append(
+            LedgerEntry(
+                event_id=eid,
+                ticker=ticker,
+                event_type=event_type,
+                event_date=event_date,
+                event_date_end=event_date_end,
+                date_precision=date_precision,
+                disclosed_at=disclosed_at,
+                source="SEC_MULTI",
+                source_uid=source_uid,
+                confidence=confidence,
+                extractor_version=ext_version,
+                event_name=event_name,
+                field_changed="event_date",
+                value=event_date or "",
+                tags=tags,
+            )
+        )
 
     return entries
 
@@ -484,19 +661,36 @@ def _load_fda_adcom_events(
 
         source_uid = f"{ticker}_{event_date}"
         eid = compute_event_id(
-            "FDA_ADCOM", source_uid, ticker, "FDA_ADCOM",
-            "event_date", event_date, event_date, None,
-            disclosed_at, "fda_adcom",
+            "FDA_ADCOM",
+            source_uid,
+            ticker,
+            "FDA_ADCOM",
+            "event_date",
+            event_date,
+            event_date,
+            None,
+            disclosed_at,
+            "fda_adcom",
         )
-        entries.append(LedgerEntry(
-            event_id=eid, ticker=ticker, event_type="FDA_ADCOM",
-            event_date=event_date, event_date_end=None,
-            date_precision="DAY", disclosed_at=disclosed_at,
-            source="FDA_ADCOM", source_uid=source_uid, confidence="HIGH",
-            extractor_version="fda_adcom",
-            event_name=event_name, field_changed="event_date",
-            value=event_date, tags=tags,
-        ))
+        entries.append(
+            LedgerEntry(
+                event_id=eid,
+                ticker=ticker,
+                event_type="FDA_ADCOM",
+                event_date=event_date,
+                event_date_end=None,
+                date_precision="DAY",
+                disclosed_at=disclosed_at,
+                source="FDA_ADCOM",
+                source_uid=source_uid,
+                confidence="HIGH",
+                extractor_version="fda_adcom",
+                event_name=event_name,
+                field_changed="event_date",
+                value=event_date,
+                tags=tags,
+            )
+        )
 
     return entries
 
@@ -531,19 +725,36 @@ def _load_fda_regulatory_events(
 
         source_uid = f"{ticker}_{event_type}_{event_date}"
         eid = compute_event_id(
-            "FDA_FEDREG", source_uid, ticker, event_type,
-            "event_date", event_date, event_date, None,
-            disclosed_at, "fda_fedreg",
+            "FDA_FEDREG",
+            source_uid,
+            ticker,
+            event_type,
+            "event_date",
+            event_date,
+            event_date,
+            None,
+            disclosed_at,
+            "fda_fedreg",
         )
-        entries.append(LedgerEntry(
-            event_id=eid, ticker=ticker, event_type=event_type,
-            event_date=event_date, event_date_end=None,
-            date_precision="DAY", disclosed_at=disclosed_at,
-            source="FDA_FEDREG", source_uid=source_uid, confidence="HIGH",
-            extractor_version="fda_fedreg",
-            event_name=event_name, field_changed="event_date",
-            value=event_date, tags=tags,
-        ))
+        entries.append(
+            LedgerEntry(
+                event_id=eid,
+                ticker=ticker,
+                event_type=event_type,
+                event_date=event_date,
+                event_date_end=None,
+                date_precision="DAY",
+                disclosed_at=disclosed_at,
+                source="FDA_FEDREG",
+                source_uid=source_uid,
+                confidence="HIGH",
+                extractor_version="fda_fedreg",
+                event_name=event_name,
+                field_changed="event_date",
+                value=event_date,
+                tags=tags,
+            )
+        )
 
     return entries
 
@@ -586,20 +797,36 @@ def _load_ema_events(
             event_id_str = ev.get("id", "")
             source_uid = event_id_str or f"{ticker}_{event_date}"
             eid = compute_event_id(
-                source_tag, source_uid, ticker, source_tag,
-                "event_date", event_date, event_date, None,
-                disclosed_at, "ema_committee",
+                source_tag,
+                source_uid,
+                ticker,
+                source_tag,
+                "event_date",
+                event_date,
+                event_date,
+                None,
+                disclosed_at,
+                "ema_committee",
             )
-            entries.append(LedgerEntry(
-                event_id=eid, ticker=ticker, event_type=source_tag,
-                event_date=event_date, event_date_end=None,
-                date_precision="DAY", disclosed_at=disclosed_at,
-                source=source_tag, source_uid=source_uid,
-                confidence=confidence,
-                extractor_version="ema_committee",
-                event_name=event_name, field_changed="event_date",
-                value=event_date, tags=tuple(ev.get("tags", [])),
-            ))
+            entries.append(
+                LedgerEntry(
+                    event_id=eid,
+                    ticker=ticker,
+                    event_type=source_tag,
+                    event_date=event_date,
+                    event_date_end=None,
+                    date_precision="DAY",
+                    disclosed_at=disclosed_at,
+                    source=source_tag,
+                    source_uid=source_uid,
+                    confidence=confidence,
+                    extractor_version="ema_committee",
+                    event_name=event_name,
+                    field_changed="event_date",
+                    value=event_date,
+                    tags=tuple(ev.get("tags", [])),
+                )
+            )
 
     return entries
 
@@ -628,32 +855,57 @@ def _load_pdufa_events(data_dir: Path) -> List[LedgerEntry]:
             continue
 
         curated_disclosed_at = rec.get("curated_disclosed_at")
+        rec_confidence = rec.get("confidence", "")
         if curated_disclosed_at:
             disclosed_at = curated_disclosed_at
             confidence = "HIGH"
             tags: Tuple[str, ...] = ()
-        else:
-            # No curated disclosure date — conservative: LOW confidence + tagged
+        elif rec_confidence == "confirmed":
+            # Confirmed company guidance without curated disclosure date.
+            # PDUFA dates are publicly announced via SEC filings / press
+            # releases — MED is appropriate (known event, imprecise PIT anchor).
             disclosed_at = pdufa_date  # fallback to PDUFA date itself
+            confidence = "MED"
+            tags = ("missing_disclosed_at",)
+        else:
+            # Unconfirmed / speculative — keep LOW to prevent leakage
+            disclosed_at = pdufa_date
             confidence = "LOW"
             tags = ("missing_disclosed_at",)
 
         source_uid = f"{ticker}_pdufa"
         event_name = f"PDUFA: {drug_name} ({indication})"
         eid = compute_event_id(
-            "PDUFA_MANUAL", source_uid, ticker, "PDUFA",
-            "pdufa_date", pdufa_date, pdufa_date, None,
-            disclosed_at, "manual",
+            "PDUFA_MANUAL",
+            source_uid,
+            ticker,
+            "PDUFA",
+            "pdufa_date",
+            pdufa_date,
+            pdufa_date,
+            None,
+            disclosed_at,
+            "manual",
         )
-        entries.append(LedgerEntry(
-            event_id=eid, ticker=ticker, event_type="PDUFA",
-            event_date=pdufa_date, event_date_end=None,
-            date_precision="DAY", disclosed_at=disclosed_at,
-            source="PDUFA_MANUAL", source_uid=source_uid,
-            confidence=confidence, extractor_version="manual",
-            event_name=event_name, field_changed="pdufa_date",
-            value=pdufa_date, tags=tags,
-        ))
+        entries.append(
+            LedgerEntry(
+                event_id=eid,
+                ticker=ticker,
+                event_type="PDUFA",
+                event_date=pdufa_date,
+                event_date_end=None,
+                date_precision="DAY",
+                disclosed_at=disclosed_at,
+                source="PDUFA_MANUAL",
+                source_uid=source_uid,
+                confidence=confidence,
+                extractor_version="manual",
+                event_name=event_name,
+                field_changed="pdufa_date",
+                value=pdufa_date,
+                tags=tags,
+            )
+        )
 
     return entries
 
@@ -661,6 +913,7 @@ def _load_pdufa_events(data_dir: Path) -> List[LedgerEntry]:
 # =============================================================================
 # BUILD LEDGER
 # =============================================================================
+
 
 def build_event_ledger(
     as_of_date: date,
@@ -696,7 +949,9 @@ def build_event_ledger(
     if config.merged_trials_cache_dir is not None:
         try:
             merged_entries = _load_merged_trial_events(
-                as_of_date, config.merged_trials_cache_dir, ctgov_nct_ids,
+                as_of_date,
+                config.merged_trials_cache_dir,
+                ctgov_nct_ids,
             )
             all_entries.extend(merged_entries)
             logger.info("Ledger: %d merged trial entries loaded (non-CTgov)", len(merged_entries))
@@ -767,6 +1022,7 @@ def build_event_ledger(
 # QUERY: NEAREST CATALYST
 # =============================================================================
 
+
 def query_nearest_catalyst(
     ledger: List[LedgerEntry],
     ticker: str,
@@ -826,6 +1082,7 @@ def query_nearest_catalyst(
 # LEAKAGE AUDIT
 # =============================================================================
 
+
 def leakage_audit(
     ledger: List[LedgerEntry],
     as_of_date: date,
@@ -843,10 +1100,7 @@ def leakage_audit(
 
     # Counts from the filtered ledger
     n_low_confidence = sum(1 for e in ledger if e.confidence == "LOW")
-    n_pdufa_missing = sum(
-        1 for e in ledger
-        if e.source == "PDUFA_MANUAL" and "missing_disclosed_at" in e.tags
-    )
+    n_pdufa_missing = sum(1 for e in ledger if e.source == "PDUFA_MANUAL" and "missing_disclosed_at" in e.tags)
 
     # Stale window: event_date_end (or event_date) < as_of_date
     n_stale_window = 0
@@ -879,6 +1133,7 @@ def leakage_audit(
 # =============================================================================
 # WRITE LEDGER
 # =============================================================================
+
 
 def write_ledger_jsonl(ledger: List[LedgerEntry], path: Path) -> None:
     """Write ledger entries as newline-delimited JSON."""

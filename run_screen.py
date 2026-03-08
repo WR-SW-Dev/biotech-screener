@@ -112,6 +112,7 @@ from decision_engine import (
 
 # Module 3A specific imports
 from event_detector import SimpleMarketCalendar
+from event_ledger import classify_catalyst_family
 
 # Module imports
 from module_1_universe import compute_module_1_universe
@@ -1408,6 +1409,7 @@ SNAPSHOT_COLUMNS = [
     "returns_source",
     "catalyst_source",
     "catalyst_event_type",
+    "catalyst_family",
     "missing_components",
     "missingness_penalty",
     "confidence_overall",
@@ -3519,6 +3521,7 @@ def save_validation_snapshot(
         # Catalyst source provenance: extract from Module 3 nearest event
         row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker)
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker)
+        row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
 
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET
