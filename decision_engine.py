@@ -210,6 +210,11 @@ class DecisionRuleset:
     binary_sleeve_per_name_max_pct: float = 100.0  # per-name cap (100 = disabled)
     binary_sleeve_days_threshold: int = 30  # catalyst_days cutoff for "binary"
 
+    # Bucket hysteresis: prevent churn at 30/90/180 day boundaries.
+    # When enabled, a ticker stays in its previous bucket until catalyst_days
+    # crosses the exit threshold (boundary + 7 days).  Default OFF.
+    enable_bucket_hysteresis: bool = False
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -628,6 +633,11 @@ BUCKET_BINARY_NOW_MAX = 30
 BUCKET_BUILD_WINDOW_MAX = 90
 BUCKET_LESS_BINARY_MAX = 180
 
+# Hysteresis buffer: once in a bucket, don't exit until crossing
+# threshold + buffer.  Prevents calendar-driven churn at boundaries.
+# Only active when enable_bucket_hysteresis=True in ruleset.
+BUCKET_HYSTERESIS_BUFFER = 7  # days
+
 _BUCKET_CORE_MODES = frozenset({"no_upcoming", "missing"})
 
 
@@ -648,6 +658,61 @@ def assign_catalyst_bucket(catalyst_days: Optional[float], catalyst_mode: str) -
     if catalyst_days <= BUCKET_LESS_BINARY_MAX:
         return "less_binary"
     return "core"
+
+
+def assign_catalyst_bucket_with_hysteresis(
+    catalyst_days: Optional[float],
+    catalyst_mode: str,
+    prev_bucket: Optional[str] = None,
+    buffer: int = BUCKET_HYSTERESIS_BUFFER,
+) -> str:
+    """Assign bucket with hysteresis to prevent boundary churn.
+
+    When ``prev_bucket`` is provided, the ticker only exits its current
+    bucket once catalyst_days crosses the boundary + buffer.  This keeps
+    the action lists stable when catalyst_days drifts by ±1-2 days.
+
+    Entry thresholds (same as assign_catalyst_bucket):
+        binary_now:    days <= 30
+        build_window:  days <= 90
+        less_binary:   days <= 180
+
+    Exit thresholds (entry + buffer):
+        binary_now  → build_window:  days >= 30 + buffer (37)
+        build_window → less_binary:  days >= 90 + buffer (97)
+        less_binary → core:          days >= 180 + buffer (187)
+
+    Returns one of: "binary_now", "build_window", "less_binary", "core".
+    """
+    # Without previous state, fall through to standard assignment
+    if prev_bucket is None:
+        return assign_catalyst_bucket(catalyst_days, catalyst_mode)
+
+    if catalyst_mode in _BUCKET_CORE_MODES:
+        return "core"
+    if catalyst_days is None:
+        return "core"
+
+    # Apply hysteresis: stay in prev bucket unless past exit threshold
+    if prev_bucket == "binary_now":
+        if catalyst_days <= BUCKET_BINARY_NOW_MAX + buffer:
+            return "binary_now"
+    elif prev_bucket == "build_window":
+        # Can re-enter binary_now (days decreased) or exit to less_binary
+        if catalyst_days <= BUCKET_BINARY_NOW_MAX:
+            return "binary_now"
+        if catalyst_days <= BUCKET_BUILD_WINDOW_MAX + buffer:
+            return "build_window"
+    elif prev_bucket == "less_binary":
+        if catalyst_days <= BUCKET_BINARY_NOW_MAX:
+            return "binary_now"
+        if catalyst_days <= BUCKET_BUILD_WINDOW_MAX:
+            return "build_window"
+        if catalyst_days <= BUCKET_LESS_BINARY_MAX + buffer:
+            return "less_binary"
+
+    # Standard assignment for new entries or when past exit threshold
+    return assign_catalyst_bucket(catalyst_days, catalyst_mode)
 
 
 # =============================================================================

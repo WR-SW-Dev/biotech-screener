@@ -55,6 +55,18 @@ ALL_BUCKETS = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
 
 SCHEMA = "eval_by_bucket.v1"
 
+# Bucket-specific horizon defaults: primary + guardrail per bucket.
+# binary_0_30: highest vol, event imminent → short horizons
+# binary_31_90: setup window → 63d primary, 84d guardrail
+# binary_91_180: pipeline on deck → 126d primary, 84d guardrail
+# less_binary: carry/quality → 126d primary, 84d guardrail
+BUCKET_DEFAULT_HORIZONS: Dict[str, List[int]] = {
+    "binary_0_30": [20, 63],
+    "binary_31_90": [63, 84],
+    "binary_91_180": [84, 126],
+    "less_binary": [84, 126],
+}
+
 
 def _fmt(v: Optional[float], decimals: int = 4) -> str:
     if v is None:
@@ -83,8 +95,15 @@ def run_bucket_eval(
     date_manifest: Optional[Path] = None,
     rebalance_buffer_ranks: int = 0,
     industry_neutral: bool = False,
+    bucket_specific_horizons: bool = False,
 ) -> Dict[str, Any]:
     """Run evaluate() for each bucket and return combined results.
+
+    Args:
+        horizons: Default horizons used when bucket_specific_horizons is False.
+        bucket_specific_horizons: If True, use BUCKET_DEFAULT_HORIZONS per bucket
+            instead of the uniform ``horizons`` list.  Each bucket gets its own
+            primary + guardrail horizons aligned to how the setup monetizes.
 
     Returns a dict with schema, per-bucket summaries, and aggregate metrics.
     """
@@ -96,12 +115,19 @@ def run_bucket_eval(
         raw = date_manifest.read_text().splitlines()
         allowed_dates = {d.strip() for d in raw if d.strip()}
 
+    # Collect all horizons that will appear across any bucket
+    all_horizons_set: set = set(horizons)
+    if bucket_specific_horizons:
+        for bh_list in BUCKET_DEFAULT_HORIZONS.values():
+            all_horizons_set.update(bh_list)
+
     results: Dict[str, Any] = {
         "schema": SCHEMA,
-        "horizons": horizons,
+        "horizons": sorted(all_horizons_set),
         "top_k": top_k,
         "cost_bps": cost_bps,
         "benchmark": benchmark,
+        "bucket_specific_horizons": bucket_specific_horizons,
         "buckets": {},
     }
 
@@ -109,14 +135,20 @@ def run_bucket_eval(
         bucket_filter = BUCKET_FILTER_MAP[bucket_name]
         bucket_out = out_dir / bucket_name
 
+        # Choose horizons for this bucket
+        if bucket_specific_horizons:
+            eff_horizons = BUCKET_DEFAULT_HORIZONS.get(bucket_name, horizons)
+        else:
+            eff_horizons = horizons
+
         print(f"\n{'='*60}")
-        print(f"Evaluating bucket: {BUCKET_DISPLAY[bucket_name]} (filter={bucket_filter})")
+        print(f"Evaluating bucket: {BUCKET_DISPLAY[bucket_name]} " f"(filter={bucket_filter}, horizons={eff_horizons})")
         print(f"{'='*60}")
 
         summary, date_results, skips = evaluate(
             snapshot_root=snapshot_root,
             price_csv=price_csv,
-            horizons=horizons,
+            horizons=eff_horizons,
             top_k=top_k,
             cost_bps=cost_bps,
             date_from=date_from,
@@ -134,12 +166,13 @@ def run_bucket_eval(
         bucket_metrics: Dict[str, Any] = {
             "display_name": BUCKET_DISPLAY[bucket_name],
             "filter": bucket_filter,
+            "horizons": eff_horizons,
             "n_evaluated": summary.n_evaluated,
             "n_dates": summary.n_dates,
             "by_horizon": {},
         }
 
-        for h in horizons:
+        for h in eff_horizons:
             bh = summary.by_horizon.get(h, {})
             bucket_metrics["by_horizon"][h] = {
                 "n_dates": bh.get("n_dates", 0),
@@ -159,41 +192,78 @@ def run_bucket_eval(
 
 def write_verdict_md(results: Dict[str, Any], out_dir: Path) -> Path:
     """Write VERDICT.md comparing bucket-level metrics."""
+    import statistics as _stats
+
+    bucket_specific = results.get("bucket_specific_horizons", False)
+
     lines: List[str] = []
     lines.append("# Bucketed Evaluation Verdict")
     lines.append("")
-    lines.append(f"**Horizons**: {results['horizons']}")
     lines.append(f"**Top-K**: {results['top_k']}")
     lines.append(f"**Cost**: {results['cost_bps']} bps")
     lines.append(f"**Benchmark**: {results['benchmark']}")
+    if bucket_specific:
+        lines.append("**Horizon mode**: bucket-specific (aligned to holding period)")
+    else:
+        lines.append(f"**Horizons**: {results['horizons']}")
     lines.append("")
 
-    for h in results["horizons"]:
-        lines.append(f"## {h}-Day Horizon")
-        lines.append("")
-        lines.append("| Bucket | N | Mean IC | IC t | Net Return | " "Excess | Hedged | Turnover |")
-        lines.append("|--------|---|---------|------|------------|" "--------|--------|----------|")
-
+    if bucket_specific:
+        # Per-bucket table with its own horizons
         for bucket_name in ALL_BUCKETS:
             bm = results["buckets"].get(bucket_name, {})
-            bh = bm.get("by_horizon", {}).get(h, {})
             display = BUCKET_DISPLAY.get(bucket_name, bucket_name)
-            lines.append(
-                f"| {display} "
-                f"| {bh.get('n_dates', 0)} "
-                f"| {_fmt(bh.get('mean_ic'))} "
-                f"| {_fmt(bh.get('ic_t_stat'), 2)} "
-                f"| {_fmt_pct(bh.get('mean_net_return'))} "
-                f"| {_fmt_pct(bh.get('mean_excess_return'))} "
-                f"| {_fmt_pct(bh.get('mean_hedged_return'))} "
-                f"| {_fmt(bh.get('mean_turnover'))} |"
-            )
-        lines.append("")
+            bh_horizons = bm.get("horizons", results["horizons"])
 
-    # Binary vs less-binary aggregate comparison
+            lines.append(f"## {display}")
+            lines.append("")
+            lines.append(f"Horizons: {bh_horizons}")
+            lines.append("")
+            lines.append("| Horizon | N | Mean IC | IC t | Net Return | " "Excess | Hedged | Turnover |")
+            lines.append("|---------|---|---------|------|------------|" "--------|--------|----------|")
+            for h in bh_horizons:
+                bh = bm.get("by_horizon", {}).get(h, {})
+                lines.append(
+                    f"| {h}d "
+                    f"| {bh.get('n_dates', 0)} "
+                    f"| {_fmt(bh.get('mean_ic'))} "
+                    f"| {_fmt(bh.get('ic_t_stat'), 2)} "
+                    f"| {_fmt_pct(bh.get('mean_net_return'))} "
+                    f"| {_fmt_pct(bh.get('mean_excess_return'))} "
+                    f"| {_fmt_pct(bh.get('mean_hedged_return'))} "
+                    f"| {_fmt(bh.get('mean_turnover'))} |"
+                )
+            lines.append("")
+    else:
+        # Uniform horizons: cross-bucket comparison table per horizon
+        for h in results["horizons"]:
+            lines.append(f"## {h}-Day Horizon")
+            lines.append("")
+            lines.append("| Bucket | N | Mean IC | IC t | Net Return | " "Excess | Hedged | Turnover |")
+            lines.append("|--------|---|---------|------|------------|" "--------|--------|----------|")
+
+            for bucket_name in ALL_BUCKETS:
+                bm = results["buckets"].get(bucket_name, {})
+                bh = bm.get("by_horizon", {}).get(h, {})
+                display = BUCKET_DISPLAY.get(bucket_name, bucket_name)
+                lines.append(
+                    f"| {display} "
+                    f"| {bh.get('n_dates', 0)} "
+                    f"| {_fmt(bh.get('mean_ic'))} "
+                    f"| {_fmt(bh.get('ic_t_stat'), 2)} "
+                    f"| {_fmt_pct(bh.get('mean_net_return'))} "
+                    f"| {_fmt_pct(bh.get('mean_excess_return'))} "
+                    f"| {_fmt_pct(bh.get('mean_hedged_return'))} "
+                    f"| {_fmt(bh.get('mean_turnover'))} |"
+                )
+            lines.append("")
+
+    # Binary vs less-binary aggregate (use primary horizons)
     lines.append("## Binary vs Less-Binary Aggregate")
     lines.append("")
-    for h in results["horizons"]:
+    # Use 84d as common guardrail if bucket-specific, else all horizons
+    compare_horizons = [84] if bucket_specific else results["horizons"]
+    for h in compare_horizons:
         binary_ics = []
         binary_nets = []
         lb_metrics = results["buckets"].get("less_binary", {}).get("by_horizon", {}).get(h, {})
@@ -204,8 +274,6 @@ def write_verdict_md(results: Dict[str, Any], out_dir: Path) -> Path:
                 binary_ics.append(bh["mean_ic"])
             if bh.get("mean_net_return") is not None:
                 binary_nets.append(bh["mean_net_return"])
-
-        import statistics as _stats
 
         avg_binary_ic = _stats.mean(binary_ics) if binary_ics else None
         avg_binary_net = _stats.mean(binary_nets) if binary_nets else None
@@ -249,6 +317,16 @@ def main():
     parser.add_argument("--date-manifest", type=Path, default=None)
     parser.add_argument("--rebalance-buffer-ranks", type=int, default=0)
     parser.add_argument("--industry-neutral", action="store_true", default=False)
+    parser.add_argument(
+        "--bucket-specific-horizons",
+        action="store_true",
+        default=False,
+        help=(
+            "Use bucket-specific horizons aligned to holding period: "
+            "binary_0_30=20/63d, binary_31_90=63/84d, "
+            "binary_91_180=84/126d, less_binary=84/126d."
+        ),
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -268,6 +346,7 @@ def main():
         date_manifest=args.date_manifest,
         rebalance_buffer_ranks=args.rebalance_buffer_ranks,
         industry_neutral=args.industry_neutral,
+        bucket_specific_horizons=args.bucket_specific_horizons,
     )
 
     # Write combined results
@@ -282,12 +361,14 @@ def main():
     print(f"  VERDICT.md       → {verdict_path}")
 
     # Print summary
-    for h in horizons:
-        print(f"\n  {h}d:")
-        for b in ALL_BUCKETS:
-            bh = results["buckets"].get(b, {}).get("by_horizon", {}).get(h, {})
+    for b in ALL_BUCKETS:
+        bm = results["buckets"].get(b, {})
+        eff_h = bm.get("horizons", horizons)
+        print(f"\n  {BUCKET_DISPLAY[b]} (horizons={eff_h}):")
+        for h in eff_h:
+            bh = bm.get("by_horizon", {}).get(h, {})
             print(
-                f"    {BUCKET_DISPLAY[b]:25s} "
+                f"    {h:>4d}d  "
                 f"IC={_fmt(bh.get('mean_ic'))}, "
                 f"Net={_fmt_pct(bh.get('mean_net_return'))}, "
                 f"Turn={_fmt(bh.get('mean_turnover'))}"

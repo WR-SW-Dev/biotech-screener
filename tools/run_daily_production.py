@@ -3582,6 +3582,28 @@ def run_daily(
         except Exception as _ap_err:
             print(f"  [WARN] Action packet generation failed: {_ap_err}")
 
+        # --- Step 5d: Action lists — per-bucket CSVs (non-blocking) ---
+        try:
+            from tools.build_action_lists import build_action_lists, write_action_lists
+
+            _al_buckets = build_action_lists(final_path)
+            _al_out = final_path / "action_lists"
+            write_action_lists(_al_buckets, _al_out, as_of_date=as_of_date)
+            _al_total = sum(len(v) for v in _al_buckets.values())
+            print(f"  Action lists → {_al_out} ({_al_total} names)")
+        except Exception as _al_err:
+            print(f"  [WARN] Action list generation failed: {_al_err}")
+
+        # --- Step 5e: Export action lists to output/ (non-blocking) ---
+        try:
+            from tools.export_action_lists import export_action_lists
+
+            _exp_out = REPO_ROOT / "output" / "action_lists"
+            export_action_lists(final_path, _exp_out, as_of_date)
+            print(f"  Exported action lists → {_exp_out}")
+        except Exception as _exp_err:
+            print(f"  [WARN] Action list export failed: {_exp_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.

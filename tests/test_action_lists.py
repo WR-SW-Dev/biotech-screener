@@ -554,3 +554,148 @@ class TestBucketEvalSchema:
         assert "Binary 0-30d" in text
         assert "Less Binary" in text
         assert "Binary vs Less-Binary Aggregate" in text
+
+    def test_bucket_default_horizons_defined(self):
+        from eval_by_bucket import ALL_BUCKETS, BUCKET_DEFAULT_HORIZONS
+
+        for b in ALL_BUCKETS:
+            assert b in BUCKET_DEFAULT_HORIZONS, f"Missing default horizons for {b}"
+            assert len(BUCKET_DEFAULT_HORIZONS[b]) >= 2, f"Need primary+guardrail for {b}"
+
+    def test_verdict_md_bucket_specific(self, tmp_path):
+        from eval_by_bucket import write_verdict_md
+
+        results = {
+            "schema": "eval_by_bucket.v1",
+            "horizons": [20, 63, 84, 126],
+            "top_k": 20,
+            "cost_bps": 30.0,
+            "benchmark": "XBI",
+            "bucket_specific_horizons": True,
+            "buckets": {
+                "binary_0_30": {
+                    "display_name": "Binary 0-30d",
+                    "horizons": [20, 63],
+                    "by_horizon": {
+                        20: {"n_dates": 5, "mean_ic": 0.03},
+                        63: {"n_dates": 5, "mean_ic": 0.04},
+                    },
+                },
+                "binary_31_90": {
+                    "display_name": "Binary 31-90d",
+                    "horizons": [63, 84],
+                    "by_horizon": {
+                        63: {"n_dates": 5, "mean_ic": 0.05},
+                        84: {"n_dates": 5, "mean_ic": 0.06},
+                    },
+                },
+                "binary_91_180": {
+                    "display_name": "Binary 91-180d",
+                    "horizons": [84, 126],
+                    "by_horizon": {
+                        84: {"n_dates": 5, "mean_ic": 0.07},
+                        126: {"n_dates": 5, "mean_ic": 0.08},
+                    },
+                },
+                "less_binary": {
+                    "display_name": "Less Binary",
+                    "horizons": [84, 126],
+                    "by_horizon": {
+                        84: {"n_dates": 5, "mean_ic": 0.10},
+                        126: {"n_dates": 5, "mean_ic": 0.12},
+                    },
+                },
+            },
+        }
+        path = write_verdict_md(results, tmp_path)
+        text = path.read_text()
+        assert "bucket-specific" in text
+        # Each bucket gets its own section (not per-horizon cross-bucket)
+        assert "## Binary 0-30d" in text
+        assert "## Less Binary" in text
+        assert "20d" in text  # binary_0_30 uses 20d horizon
+
+
+# ---------------------------------------------------------------------------
+# G) Bucket hysteresis
+# ---------------------------------------------------------------------------
+
+
+class TestBucketHysteresis:
+
+    def test_no_prev_bucket_standard_assignment(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        assert assign_catalyst_bucket_with_hysteresis(25, "specific_days") == "binary_now"
+        assert assign_catalyst_bucket_with_hysteresis(60, "specific_days") == "build_window"
+        assert assign_catalyst_bucket_with_hysteresis(120, "specific_days") == "less_binary"
+
+    def test_stays_in_binary_now_within_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # At 33 days, normally would be build_window (31-90)
+        # But with hysteresis from binary_now, stays until 37
+        result = assign_catalyst_bucket_with_hysteresis(33, "specific_days", prev_bucket="binary_now")
+        assert result == "binary_now"
+
+    def test_exits_binary_now_past_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # At 38 days, past the exit threshold (30+7=37)
+        result = assign_catalyst_bucket_with_hysteresis(38, "specific_days", prev_bucket="binary_now")
+        assert result == "build_window"
+
+    def test_stays_in_build_window_within_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # At 93 days, normally would be less_binary (91-180)
+        # But with hysteresis from build_window, stays until 97
+        result = assign_catalyst_bucket_with_hysteresis(93, "specific_days", prev_bucket="build_window")
+        assert result == "build_window"
+
+    def test_exits_build_window_past_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        result = assign_catalyst_bucket_with_hysteresis(98, "specific_days", prev_bucket="build_window")
+        assert result == "less_binary"
+
+    def test_stays_in_less_binary_within_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # At 183 days, normally would be core (>180)
+        # But with hysteresis, stays until 187
+        result = assign_catalyst_bucket_with_hysteresis(183, "specific_days", prev_bucket="less_binary")
+        assert result == "less_binary"
+
+    def test_exits_less_binary_past_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        result = assign_catalyst_bucket_with_hysteresis(188, "specific_days", prev_bucket="less_binary")
+        assert result == "core"
+
+    def test_can_reenter_lower_bucket(self):
+        """If days decrease (new closer event), should enter lower bucket."""
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # Was in build_window, now days=20 → should enter binary_now
+        result = assign_catalyst_bucket_with_hysteresis(20, "specific_days", prev_bucket="build_window")
+        assert result == "binary_now"
+
+    def test_core_modes_always_core(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        result = assign_catalyst_bucket_with_hysteresis(25, "no_upcoming", prev_bucket="binary_now")
+        assert result == "core"
+
+    def test_custom_buffer(self):
+        from decision_engine import assign_catalyst_bucket_with_hysteresis
+
+        # With buffer=10, exit threshold is 30+10=40
+        result = assign_catalyst_bucket_with_hysteresis(38, "specific_days", prev_bucket="binary_now", buffer=10)
+        assert result == "binary_now"  # 38 < 40, stays
+
+    def test_ruleset_flag_exists(self):
+        from decision_engine import DecisionRuleset
+
+        rs = DecisionRuleset()
+        assert rs.enable_bucket_hysteresis is False
