@@ -507,7 +507,20 @@ pytest tests/test_decision_engine.py tests/test_phase2_health_gate.py -x
 
 ## Recent Changes
 
-### v2.6.0 (March 2026 - Current)
+### v2.7.0 (March 2026 - Current)
+
+- **Action List Builder** (`tools/build_action_lists.py`): Account-aware sizing (`--account-usd`), band-based per-name caps (XS=2%, S=3%, M=5%, L=5%), overage-safe 3-pass trim. Risk rails: gap-risk HIGH/MODERATE + price coverage OK/MISSING. Bucket target tilts (`--bucket-targets`).
+- **Decision Memo** (`tools/build_decision_memo.py`): 1-page IC output with provenance, allocation, risk rails, top-10 per bucket, rank delta vs prior, actionable bullets. JSON sidecar (`decision_memo.v1`).
+- **Live Shadow Portfolio** (`tools/live_shadow_portfolio.py`): Policy-driven position ledger (top-K per bucket, per-bucket name caps, gap-risk caps). PIT positions JSON, append-only performance.csv, weekly summary markdown with P&L vs XBI + sleeve attribution.
+- **Weekly Trade Packet** (`tools/build_trade_deltas.py` + `tools/run_weekly_rebalance.py`): Delta computation (prior vs current positions), trades.csv with reason codes, trade summary markdown, rebalance-day detection, off-cycle exception triggers (new gap-risk HIGH, hard gate FAIL).
+- **Portfolio Policy** (`production_data/portfolio_policy.json`): Weekly cadence, 55/25/10/10 bucket split, per-bucket top-K and name caps, gap-risk cap at 0.5%.
+- **Binary Sleeve Risk Cap**: L3 enforcement with configurable per-name + aggregate caps (`binary_sleeve_max_weight_pct`, `binary_sleeve_per_name_max_pct`). Excess redistributed to non-binary names.
+- **4-Tier Audit Exit Codes**: 0=OK→PASS, 1=critical→FAIL, 2=warn→WARN, 3=stale_mismatch→WARN (hardcoded, never FAIL).
+- **Daily Runner Wiring** (Steps 5f-5g): Post-promotion runs shadow portfolio + weekly trade packet automatically.
+- **Active Ruleset**: v1.9.0 (ID=`e966af9d`) — institutional sort (w=0.3), calendar alpha v2 (w=0.3), optionality anchor
+- **Tests**: 27 trade deltas + 23 shadow portfolio + 16 decision memo + 20 sizing + 11 risk rails + 18 binary sleeve + 16 audit exit codes
+
+### v2.6.0 (March 2026)
 
 - **First-Class Rollback** (`scripts/promote_ruleset.py`): `--rollback --reason` without `--force`, auto-discover LKG via `_find_last_known_good()`, receipt `action` field (`"promote"`/`"rollback"`), changelog validation skipped for rollbacks. 10 new tests in `test_promote_ruleset_rollback.py`.
 - **Post-Promotion Health Monitor** (`tools/ruleset_health_monitor.py`): Compares daily drift metrics against promotion baseline. `HealthThresholds` dataclass with configurable overlap delta, rank shift factor, consecutive WARN threshold. JSONL append-only history. `ruleset_health` gate in daily production (WARN-only).

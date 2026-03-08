@@ -3604,6 +3604,30 @@ def run_daily(
         except Exception as _exp_err:
             print(f"  [WARN] Action list export failed: {_exp_err}")
 
+        # --- Step 5f: Live shadow portfolio (non-blocking) ---
+        try:
+            from tools.live_shadow_portfolio import run_shadow_portfolio
+
+            _shadow_result = run_shadow_portfolio(final_path)
+            _shadow_n = _shadow_result["summary"]["total_positions"]
+            print(f"  Shadow portfolio → {_shadow_result['positions_path']} ({_shadow_n} names)")
+        except Exception as _sp_err:
+            print(f"  [WARN] Shadow portfolio generation failed: {_sp_err}")
+
+        # --- Step 5g: Weekly trade packet (rebalance day only, non-blocking) ---
+        try:
+            from tools.run_weekly_rebalance import run_weekly_rebalance
+
+            _reb_result = run_weekly_rebalance(as_of_date)
+            _reb_decision = _reb_result["decision"]
+            _reb_n = _reb_result.get("n_trades", 0)
+            if _reb_decision in ("REBALANCE", "OFF_CYCLE"):
+                print(f"  Trade packet → {_reb_result.get('csv_path', '?')} ({_reb_n} trades)")
+            else:
+                print(f"  Trade packet → skipped ({_reb_decision})")
+        except Exception as _reb_err:
+            print(f"  [WARN] Weekly rebalance check failed: {_reb_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
