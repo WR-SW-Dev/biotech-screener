@@ -147,7 +147,8 @@ def _fetch_classification(sec_id: str, headers: Dict[str, str]) -> Optional[Dict
 
 
 def _cache_path(cache_dir: Path, as_of: date) -> Path:
-    return cache_dir / f"{as_of.isoformat()}.json"
+    date_str = as_of.isoformat() if isinstance(as_of, date) else str(as_of)
+    return cache_dir / f"{date_str}.json"
 
 
 def load_industry_cache(
@@ -167,7 +168,8 @@ def load_industry_cache(
         if data.get("schema") != SCHEMA_VERSION:
             logger.warning("Schema mismatch in %s", path)
             return None
-        if data.get("as_of_date") != as_of.isoformat():
+        expected_date = as_of.isoformat() if isinstance(as_of, date) else str(as_of)
+        if data.get("as_of_date") != expected_date:
             logger.warning("Date mismatch in %s", path)
             return None
         return data

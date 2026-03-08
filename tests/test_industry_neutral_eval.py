@@ -95,6 +95,28 @@ class TestMorningstarIndustryCacheIO:
         result = load_industry_cache(date(2026, 3, 1), tmp_path)
         assert result is None
 
+    def test_load_cache_with_string_date(self, tmp_path):
+        """Regression: run_screen.py passes as_of_date as str, not date."""
+        from datetime import date
+
+        from wake_robin_data_pipeline.morningstar_industry_provider import (
+            _write_cache,
+            load_industry_cache,
+            load_industry_classifications,
+        )
+
+        as_of = date(2026, 3, 8)
+        _write_cache(tmp_path, as_of, {"VRTX": "Biotechnology"})
+
+        # Load with string — must not crash
+        loaded = load_industry_cache("2026-03-08", tmp_path)
+        assert loaded is not None
+        assert loaded["classifications"]["VRTX"] == "Biotechnology"
+
+        # Also via load_industry_classifications
+        result = load_industry_classifications("2026-03-08", tmp_path)
+        assert result["VRTX"] == "Biotechnology"
+
 
 # ---------------------------------------------------------------------------
 # B) Yahoo → Morningstar fallback mapping
