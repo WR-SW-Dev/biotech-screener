@@ -310,8 +310,10 @@ class TestPerformance:
             [
                 {"date": "2026-03-01", "ticker": "A", "close": "100"},
                 {"date": "2026-03-01", "ticker": "B", "close": "50"},
+                {"date": "2026-03-01", "ticker": "XBI", "close": "100"},
                 {"date": "2026-03-08", "ticker": "A", "close": "120"},
                 {"date": "2026-03-08", "ticker": "B", "close": "45"},
+                {"date": "2026-03-08", "ticker": "XBI", "close": "102"},
             ],
         )
         prior = [
@@ -322,6 +324,43 @@ class TestPerformance:
         sleeve = perf["sleeve_attribution"]
         assert sleeve["binary_91_180"]["pnl"] == 1000.0  # A: +20%
         assert sleeve["binary_0_30"]["pnl"] == -500.0  # B: -10%
+        # Excess vs XBI fields present when XBI is priced
+        assert "excess_vs_xbi_pct" in sleeve["binary_91_180"]
+        assert "excess_pnl" in sleeve["binary_91_180"]
+        # A: 20% return, XBI: 2% → excess ~18%
+        assert abs(sleeve["binary_91_180"]["excess_vs_xbi_pct"] - 18.0) < 0.1
+        # B: -10% return, XBI: 2% → excess ~-12%
+        assert abs(sleeve["binary_0_30"]["excess_vs_xbi_pct"] - (-12.0)) < 0.1
+
+    def test_contributors_emitted(self, tmp_path):
+        price_path = tmp_path / "prices.csv"
+        _write_price_history(
+            price_path,
+            [
+                {"date": "2026-03-01", "ticker": "A", "close": "100"},
+                {"date": "2026-03-01", "ticker": "B", "close": "50"},
+                {"date": "2026-03-01", "ticker": "XBI", "close": "100"},
+                {"date": "2026-03-08", "ticker": "A", "close": "120"},
+                {"date": "2026-03-08", "ticker": "B", "close": "45"},
+                {"date": "2026-03-08", "ticker": "XBI", "close": "102"},
+            ],
+        )
+        prior = [
+            {"ticker": "A", "target_dollars": 5000, "bucket": "binary_91_180"},
+            {"ticker": "B", "target_dollars": 5000, "bucket": "binary_0_30"},
+        ]
+        perf = compute_performance(prior, prior, "2026-03-01", "2026-03-08", price_path)
+        contribs = perf["contributors"]
+        assert len(contribs) == 2
+        # Sorted by pnl descending — A (+$1000) first
+        assert contribs[0]["ticker"] == "A"
+        assert contribs[0]["pnl"] == 1000.0
+        assert contribs[1]["ticker"] == "B"
+        assert contribs[1]["pnl"] == -500.0
+        # Excess fields present
+        assert "excess_vs_xbi_pct" in contribs[0]
+        assert "excess_pnl" in contribs[0]
+        assert "bucket" in contribs[0]
 
     def test_missing_prices_counted(self, tmp_path):
         price_path = tmp_path / "prices.csv"
@@ -477,11 +516,64 @@ class TestWeeklySummary:
             "excess_vs_xbi_pct": 2.0,
             "turnover": 0.15,
             "sleeve_attribution": {
-                "binary_0_30": {"pnl": 100, "return_pct": 1.0, "weight": 10000},
-                "binary_31_90": {"pnl": 200, "return_pct": 1.5, "weight": 15000},
-                "binary_91_180": {"pnl": 1000, "return_pct": 3.5, "weight": 50000},
-                "less_binary": {"pnl": 200, "return_pct": 2.0, "weight": 10000},
+                "binary_0_30": {
+                    "pnl": 100,
+                    "return_pct": 1.0,
+                    "weight": 10000,
+                    "excess_vs_xbi_pct": 0.0,
+                    "excess_pnl": 0,
+                },
+                "binary_31_90": {
+                    "pnl": 200,
+                    "return_pct": 1.5,
+                    "weight": 15000,
+                    "excess_vs_xbi_pct": 0.5,
+                    "excess_pnl": 50,
+                },
+                "binary_91_180": {
+                    "pnl": 1000,
+                    "return_pct": 3.5,
+                    "weight": 50000,
+                    "excess_vs_xbi_pct": 2.5,
+                    "excess_pnl": 750,
+                },
+                "less_binary": {
+                    "pnl": 200,
+                    "return_pct": 2.0,
+                    "weight": 10000,
+                    "excess_vs_xbi_pct": 1.0,
+                    "excess_pnl": 100,
+                },
             },
+            "contributors": [
+                {
+                    "ticker": "TOP1",
+                    "bucket": "binary_91_180",
+                    "dollars": 25000,
+                    "return_pct": 5.0,
+                    "pnl": 1250.0,
+                    "excess_vs_xbi_pct": 4.0,
+                    "excess_pnl": 1000,
+                },
+                {
+                    "ticker": "TOP2",
+                    "bucket": "binary_31_90",
+                    "dollars": 15000,
+                    "return_pct": 2.0,
+                    "pnl": 300.0,
+                    "excess_vs_xbi_pct": 1.0,
+                    "excess_pnl": 150,
+                },
+                {
+                    "ticker": "BOT1",
+                    "bucket": "binary_0_30",
+                    "dollars": 10000,
+                    "return_pct": -1.0,
+                    "pnl": -100.0,
+                    "excess_vs_xbi_pct": -2.0,
+                    "excess_pnl": -200,
+                },
+            ],
         }
         out_path = tmp_path / "summary.md"
         write_weekly_summary("2026-03-08", pos_data, perf, POLICY, {"ruleset_id": "test"}, out_path)
@@ -490,6 +582,11 @@ class TestWeeklySummary:
         assert "$1,500.00" in text
         assert "Excess vs XBI" in text
         assert "Sleeve Attribution" in text
+        assert "Excess %" in text
+        assert "What Drove the Week" in text
+        assert "TOP1" in text
+        assert "Rollup" in text
+        assert "Binary (all)" in text
 
 
 # ---------------------------------------------------------------------------

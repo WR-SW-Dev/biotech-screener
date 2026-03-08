@@ -326,11 +326,17 @@ def compute_performance(
     xbi_prior = load_xbi_price(price_path, prior_date)
     xbi_current = load_xbi_price(price_path, current_date)
 
+    # XBI return (compute early — needed for contributors)
+    xbi_return = None
+    if xbi_prior and xbi_current and xbi_prior > 0:
+        xbi_return = (xbi_current / xbi_prior) - 1.0
+
     # Weighted return of prior portfolio at current prices
     total_pnl = 0.0
     total_weight = 0.0
     sleeve_pnl: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
     sleeve_weight: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
+    contributors: List[Dict[str, Any]] = []
     n_priced = 0
     n_missing = 0
 
@@ -349,33 +355,49 @@ def compute_performance(
             sleeve_pnl[bucket] = sleeve_pnl.get(bucket, 0.0) + pnl
             sleeve_weight[bucket] = sleeve_weight.get(bucket, 0.0) + dollars
             n_priced += 1
+
+            contrib: Dict[str, Any] = {
+                "ticker": ticker,
+                "bucket": bucket,
+                "dollars": dollars,
+                "return_pct": round(ret * 100, 4),
+                "pnl": round(pnl, 2),
+            }
+            if xbi_return is not None:
+                contrib["excess_vs_xbi_pct"] = round((ret - xbi_return) * 100, 4)
+                contrib["excess_pnl"] = round(dollars * (ret - xbi_return), 2)
+            contributors.append(contrib)
         else:
             n_missing += 1
-
-    # XBI return
-    xbi_return = None
-    if xbi_prior and xbi_current and xbi_prior > 0:
-        xbi_return = (xbi_current / xbi_prior) - 1.0
 
     # Portfolio return
     pnl_pct = (total_pnl / total_weight) if total_weight > 0 else 0.0
     excess = (pnl_pct - xbi_return) if xbi_return is not None else None
 
-    # Sleeve attribution
+    # Sleeve attribution (with excess vs XBI)
+    xbi_return_pct_val = round(xbi_return * 100, 4) if xbi_return is not None else None
     sleeve_attr = {}
     for b in BUCKET_NAMES:
         sw = sleeve_weight[b]
-        sleeve_attr[b] = {
+        ret_pct = round(sleeve_pnl[b] / sw * 100, 4) if sw > 0 else 0.0
+        entry: Dict[str, Any] = {
             "pnl": round(sleeve_pnl[b], 2),
-            "return_pct": round(sleeve_pnl[b] / sw * 100, 4) if sw > 0 else 0.0,
+            "return_pct": ret_pct,
             "weight": round(sw, 2),
         }
+        if xbi_return is not None:
+            entry["excess_vs_xbi_pct"] = round(ret_pct - xbi_return_pct_val, 4)
+            entry["excess_pnl"] = round(sleeve_pnl[b] - sw * xbi_return, 2)
+        sleeve_attr[b] = entry
 
     # Turnover: fraction of prior tickers NOT in current portfolio
     prior_tickers = {p["ticker"] for p in prior_positions}
     current_tickers = {p["ticker"] for p in current_positions}
     overlap = prior_tickers & current_tickers
     turnover = 1.0 - (len(overlap) / len(prior_tickers)) if prior_tickers else 0.0
+
+    # Sort contributors by $ P&L descending for easy access
+    contributors.sort(key=lambda c: -c["pnl"])
 
     return {
         "prior_date": prior_date,
@@ -385,6 +407,7 @@ def compute_performance(
         "xbi_return_pct": round(xbi_return * 100, 4) if xbi_return is not None else None,
         "excess_vs_xbi_pct": round(excess * 100, 4) if excess is not None else None,
         "sleeve_attribution": sleeve_attr,
+        "contributors": contributors,
         "n_priced": n_priced,
         "n_missing_price": n_missing,
         "turnover": round(turnover, 4),
@@ -588,21 +611,116 @@ def write_weekly_summary(
         lines.append(f"**Turnover**: {perf.get('turnover', 0):.1%}")
         lines.append("")
 
-        # Sleeve attribution
+        # Sleeve attribution (expanded with excess vs XBI)
         sleeve = perf.get("sleeve_attribution", {})
+        xbi_pct = perf.get("xbi_return_pct")
+        has_xbi = xbi_pct is not None
         lines.append("### Sleeve Attribution")
         lines.append("")
-        lines.append("| Bucket | P&L | Return | Weight |")
-        lines.append("|--------|-----|--------|--------|")
+        if has_xbi:
+            lines.append("| Bucket | Weight $ | P&L $ | Return % | XBI % | Excess % | Excess $ |")
+            lines.append("|--------|----------|-------|----------|-------|----------|----------|")
+        else:
+            lines.append("| Bucket | Weight $ | P&L $ | Return % |")
+            lines.append("|--------|----------|-------|----------|")
         for b in BUCKET_NAMES:
             s = sleeve.get(b, {})
-            lines.append(
-                f"| {BUCKET_DISPLAY.get(b, b)} "
-                f"| ${s.get('pnl', 0):,.2f} "
-                f"| {s.get('return_pct', 0):+.2f}% "
-                f"| ${s.get('weight', 0):,.0f} |"
-            )
+            ret_pct = s.get("return_pct", 0)
+            label = BUCKET_DISPLAY.get(b, b)
+            if b == "binary_91_180":
+                label = f"**{label}**"
+            if has_xbi:
+                exc_pct = s.get("excess_vs_xbi_pct", ret_pct - xbi_pct)
+                exc_pnl = s.get("excess_pnl", 0)
+                lines.append(
+                    f"| {label} "
+                    f"| ${s.get('weight', 0):,.0f} "
+                    f"| ${s.get('pnl', 0):,.2f} "
+                    f"| {ret_pct:+.2f}% "
+                    f"| {xbi_pct:+.2f}% "
+                    f"| {exc_pct:+.2f}% "
+                    f"| ${exc_pnl:,.2f} |"
+                )
+            else:
+                lines.append(
+                    f"| {label} " f"| ${s.get('weight', 0):,.0f} " f"| ${s.get('pnl', 0):,.2f} " f"| {ret_pct:+.2f}% |"
+                )
         lines.append("")
+
+        # Binary vs Less-binary rollup
+        binary_buckets = ["binary_0_30", "binary_31_90", "binary_91_180"]
+        bin_pnl = sum(sleeve.get(b, {}).get("pnl", 0) for b in binary_buckets)
+        bin_wt = sum(sleeve.get(b, {}).get("weight", 0) for b in binary_buckets)
+        bin_ret = (bin_pnl / bin_wt * 100) if bin_wt > 0 else 0.0
+        lb = sleeve.get("less_binary", {})
+        lb_pnl = lb.get("pnl", 0)
+        lb_wt = lb.get("weight", 0)
+        lb_ret = (lb_pnl / lb_wt * 100) if lb_wt > 0 else 0.0
+
+        lines.append("### Rollup")
+        lines.append("")
+        lines.append(f"- **Binary (all)**: ${bin_pnl:,.2f} P&L ({bin_ret:+.2f}%) on ${bin_wt:,.0f}")
+        lines.append(f"- **Less-binary**: ${lb_pnl:,.2f} P&L ({lb_ret:+.2f}%) on ${lb_wt:,.0f}")
+        if has_xbi:
+            s91 = sleeve.get("binary_91_180", {})
+            s91_exc = s91.get("excess_vs_xbi_pct", 0)
+            lines.append(f"- **Binary 91-180 Excess vs XBI: {s91_exc:+.2f}%** (primary sleeve)")
+        lines.append("")
+
+        # What Drove the Week — top/bottom contributors
+        contributors = perf.get("contributors", [])
+        if contributors:
+            lines.append("### What Drove the Week")
+            lines.append("")
+            has_excess = "excess_pnl" in contributors[0]
+            if has_excess:
+                hdr = "| Ticker | Bucket | Prior $ | Return % | P&L $ | Excess $ |"
+                sep = "|--------|--------|---------|----------|-------|----------|"
+            else:
+                hdr = "| Ticker | Bucket | Prior $ | Return % | P&L $ |"
+                sep = "|--------|--------|---------|----------|-------|"
+
+            top5 = contributors[:5]
+            bot5 = list(reversed(contributors[-5:])) if len(contributors) > 5 else []
+            # Deduplicate if overlap
+            top_tickers = {c["ticker"] for c in top5}
+            bot5 = [c for c in bot5 if c["ticker"] not in top_tickers]
+
+            def _contrib_row(c: dict) -> str:
+                row = (
+                    f"| {c['ticker']} "
+                    f"| {BUCKET_DISPLAY.get(c['bucket'], c['bucket'])} "
+                    f"| ${c['dollars']:,.0f} "
+                    f"| {c['return_pct']:+.2f}% "
+                    f"| ${c['pnl']:,.2f} "
+                )
+                if has_excess:
+                    row += f"| ${c.get('excess_pnl', 0):,.2f} |"
+                else:
+                    row += "|"
+                return row
+
+            lines.append("**Top 5 contributors**")
+            lines.append("")
+            lines.append(hdr)
+            lines.append(sep)
+            for c in top5:
+                lines.append(_contrib_row(c))
+            lines.append("")
+
+            if bot5:
+                lines.append("**Bottom 5 contributors**")
+                lines.append("")
+                lines.append(hdr)
+                lines.append(sep)
+                for c in bot5:
+                    lines.append(_contrib_row(c))
+                lines.append("")
+        else:
+            lines.append("### What Drove the Week")
+            lines.append("")
+            lines.append("No priced prior positions to attribute.")
+            lines.append("")
     else:
         lines.append("## Performance vs Prior")
         lines.append("")
