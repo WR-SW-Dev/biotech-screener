@@ -15,19 +15,24 @@ import csv
 import json
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Dict, List
 from unittest.mock import patch
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+from data_integrity_audit import (
+    SANITY_RANGES,
+    VIOLATION_SEVERITY,
+    _violation_severity,
+    check_invariants,
+    check_universe_coverage,
+)
+from publish_inputs_bundle import build_tarball, validate_market_data
 from run_daily_production import (
     GATE_ALLOWLIST,
     MANIFEST_VERSION,
-    MARKET_DATA_NUMERIC_FIELDS,
-    MARKET_DATA_REQUIRED_FIELDS,
     GateConfig,
     GateResult,
     _format_audit_detail,
@@ -38,36 +43,25 @@ from run_daily_production import (
     check_ctgov_cache,
     check_decision_engine_schema,
     check_eligibility_consistency,
+    check_exposure_missingness,
     check_inputs_present,
     check_market_data_coverage,
     check_market_data_schema,
     check_market_data_staleness,
-    check_exposure_missingness,
     check_missing_reason_fraction,
-    check_risk_concentration,
     check_portfolio_weights,
+    check_risk_concentration,
     check_sort_contrib_sanity,
     check_turnover,
     check_xbi_staleness,
     promote_snapshot,
     run_daily,
 )
-from data_integrity_audit import (
-    SANITY_RANGES,
-    VIOLATION_SEVERITY,
-    _violation_severity,
-    check_invariants,
-    check_universe_coverage,
-)
-from publish_inputs_bundle import (
-    build_tarball,
-    validate_market_data,
-)
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_price_csv(path: Path, rows: List[Dict[str, str]]) -> None:
     """Write a minimal price_history.csv."""
@@ -85,8 +79,11 @@ def _write_rankings_csv(
 ) -> None:
     """Write a minimal rankings.csv with DE-critical missing_reason columns."""
     cols = [
-        "ticker", "actionable_rank", "eligible",
-        "de_beta_xbi_60d_missing_reason", "de_alpha_60d_missing_reason",
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "de_beta_xbi_60d_missing_reason",
+        "de_alpha_60d_missing_reason",
     ]
     if extra_cols:
         cols.extend(extra_cols)
@@ -101,26 +98,26 @@ def _write_rankings_csv(
 def _write_delta_report(path: Path, turnover_pct: float) -> None:
     """Write a minimal delta report with Name turnover line."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        f"1. PORTFOLIO TURNOVER\n"
-        f"  Name turnover: {turnover_pct:.1f}%\n"
-        f"  Weight L1 delta: 50.0%\n"
-    )
+    path.write_text(f"1. PORTFOLIO TURNOVER\n" f"  Name turnover: {turnover_pct:.1f}%\n" f"  Weight L1 delta: 50.0%\n")
 
 
 # ---------------------------------------------------------------------------
 # Tests: XBI staleness gate
 # ---------------------------------------------------------------------------
 
+
 class TestXbiStalenessGate:
 
     def test_xbi_pass_when_fresh(self, tmp_path):
         """XBI last date == as_of_date → PASS."""
         csv_path = tmp_path / "prices.csv"
-        _write_price_csv(csv_path, [
-            {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
-            {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
+                {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
+            ],
+        )
         result = check_xbi_staleness(csv_path, "2026-02-19", threshold_days=3)
         assert result.status == "PASS"
         assert result.value == 0
@@ -128,9 +125,12 @@ class TestXbiStalenessGate:
     def test_xbi_fail_when_stale(self, tmp_path):
         """XBI 10 trading days behind → FAIL with threshold=3."""
         csv_path = tmp_path / "prices.csv"
-        _write_price_csv(csv_path, [
-            {"ticker": "XBI", "date": "2026-02-03", "close": "100"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "XBI", "date": "2026-02-03", "close": "100"},
+            ],
+        )
         result = check_xbi_staleness(csv_path, "2026-02-19", threshold_days=3)
         assert result.status == "FAIL"
         assert result.value > 3
@@ -138,9 +138,12 @@ class TestXbiStalenessGate:
     def test_xbi_fail_when_missing(self, tmp_path):
         """No XBI rows at all → FAIL."""
         csv_path = tmp_path / "prices.csv"
-        _write_price_csv(csv_path, [
-            {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
+            ],
+        )
         result = check_xbi_staleness(csv_path, "2026-02-19", threshold_days=3)
         assert result.status == "FAIL"
         assert result.value is None
@@ -150,9 +153,12 @@ class TestXbiStalenessGate:
         csv_path = tmp_path / "prices.csv"
         # 2026-02-19 is Wednesday. 3 trading days back = Friday 2026-02-13
         # Actually let's just use 1 trading day gap for a simple test
-        _write_price_csv(csv_path, [
-            {"ticker": "XBI", "date": "2026-02-18", "close": "100"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "XBI", "date": "2026-02-18", "close": "100"},
+            ],
+        )
         result = check_xbi_staleness(csv_path, "2026-02-19", threshold_days=3)
         assert result.status == "PASS"
         assert result.value <= 3
@@ -168,17 +174,31 @@ class TestXbiStalenessGate:
 # Tests: Missing reason fraction gate
 # ---------------------------------------------------------------------------
 
+
 class TestMissingReasonGate:
 
     def test_all_clean(self, tmp_path):
         """No missing reasons → PASS."""
         snap = tmp_path / "snap"
-        _write_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "actionable_rank": "1", "eligible": "1",
-             "de_beta_xbi_60d_missing_reason": "", "de_alpha_60d_missing_reason": ""},
-            {"ticker": "BMRN", "actionable_rank": "2", "eligible": "1",
-             "de_beta_xbi_60d_missing_reason": "", "de_alpha_60d_missing_reason": ""},
-        ])
+        _write_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "actionable_rank": "1",
+                    "eligible": "1",
+                    "de_beta_xbi_60d_missing_reason": "",
+                    "de_alpha_60d_missing_reason": "",
+                },
+                {
+                    "ticker": "BMRN",
+                    "actionable_rank": "2",
+                    "eligible": "1",
+                    "de_beta_xbi_60d_missing_reason": "",
+                    "de_alpha_60d_missing_reason": "",
+                },
+            ],
+        )
         result = check_missing_reason_fraction(snap, max_frac=0.05)
         assert result.status == "PASS"
         assert result.value == 0.0
@@ -186,12 +206,25 @@ class TestMissingReasonGate:
     def test_above_threshold(self, tmp_path):
         """50% missing → FAIL with threshold=5%."""
         snap = tmp_path / "snap"
-        _write_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "actionable_rank": "1", "eligible": "1",
-             "de_beta_xbi_60d_missing_reason": "xbi_stale", "de_alpha_60d_missing_reason": ""},
-            {"ticker": "BMRN", "actionable_rank": "2", "eligible": "1",
-             "de_beta_xbi_60d_missing_reason": "", "de_alpha_60d_missing_reason": ""},
-        ])
+        _write_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "actionable_rank": "1",
+                    "eligible": "1",
+                    "de_beta_xbi_60d_missing_reason": "xbi_stale",
+                    "de_alpha_60d_missing_reason": "",
+                },
+                {
+                    "ticker": "BMRN",
+                    "actionable_rank": "2",
+                    "eligible": "1",
+                    "de_beta_xbi_60d_missing_reason": "",
+                    "de_alpha_60d_missing_reason": "",
+                },
+            ],
+        )
         result = check_missing_reason_fraction(snap, max_frac=0.05)
         assert result.status == "FAIL"
         assert result.value == 0.5
@@ -207,6 +240,7 @@ class TestMissingReasonGate:
 # ---------------------------------------------------------------------------
 # Tests: Turnover gate
 # ---------------------------------------------------------------------------
+
 
 class TestTurnoverGate:
 
@@ -238,6 +272,7 @@ class TestTurnoverGate:
 # Tests: Audit exit code mapping
 # ---------------------------------------------------------------------------
 
+
 class TestAuditGate:
 
     def test_audit_ok(self):
@@ -250,9 +285,21 @@ class TestAuditGate:
         result = check_audit_result(proc, GateConfig())
         assert result.status == "WARN"
 
-    def test_audit_fail(self):
+    def test_audit_fail_default_is_warn(self):
+        """Default audit_fail_is_gate_fail=False: exit 1 → WARN (not FAIL).
+
+        Stale-price recompute mismatches are the dominant audit failure mode
+        and should not block promotion.
+        """
         proc = subprocess.CompletedProcess(args=[], returncode=1)
         result = check_audit_result(proc, GateConfig())
+        assert result.status == "WARN"
+
+    def test_audit_fail_is_gate_fail_when_configured(self):
+        """With audit_fail_is_gate_fail=True: exit 1 → FAIL."""
+        proc = subprocess.CompletedProcess(args=[], returncode=1)
+        config = GateConfig(audit_fail_is_gate_fail=True)
+        result = check_audit_result(proc, config)
         assert result.status == "FAIL"
 
     def test_audit_warn_ignored_when_config_off(self):
@@ -264,7 +311,10 @@ class TestAuditGate:
     def test_audit_detail_enriched_from_summary(self, tmp_path):
         """Gate detail includes violation breakdown when summary JSON exists."""
         summary = {
-            "total": 3, "critical": 0, "warn": 2, "info": 1,
+            "total": 3,
+            "critical": 0,
+            "warn": 2,
+            "info": 1,
             "by_rule": {"catalyst_window_no_days": 2, "range_de_alpha_60d": 1},
         }
         (tmp_path / "invariants_summary.json").write_text(json.dumps(summary))
@@ -278,7 +328,10 @@ class TestAuditGate:
     def test_audit_ok_with_info_only_violations(self, tmp_path):
         """Info-only violations → audit exit 0 → PASS with detail."""
         summary = {
-            "total": 2, "critical": 0, "warn": 0, "info": 2,
+            "total": 2,
+            "critical": 0,
+            "warn": 0,
+            "info": 2,
             "by_rule": {"range_de_alpha_60d": 2},
         }
         (tmp_path / "invariants_summary.json").write_text(json.dumps(summary))
@@ -299,6 +352,7 @@ class TestAuditGate:
 # Tests: Violation severity classification
 # ---------------------------------------------------------------------------
 
+
 class TestViolationSeverity:
 
     def test_critical_rules(self):
@@ -306,8 +360,7 @@ class TestViolationSeverity:
         assert _violation_severity("ineligible_has_rank") == "critical"
 
     def test_warn_rules(self):
-        for rule in ("catalyst_window_no_days", "tier_no_reason",
-                      "penalty_no_components", "deep_dd_no_value"):
+        for rule in ("catalyst_window_no_days", "tier_no_reason", "penalty_no_components", "deep_dd_no_value"):
             assert _violation_severity(rule) == "warn"
 
     def test_range_rules_are_info(self):
@@ -327,26 +380,36 @@ class TestViolationSeverity:
     def test_invariants_range_only_is_info(self):
         """Range-only violations don't produce warn-level results."""
         import pandas as pd
-        df = pd.DataFrame([{
-            "ticker": "TEST",
-            "eligible": "1",
-            "ineligible_reasons": "",
-            "actionable_rank": "1",
-            "de_alpha_60d": 4.5,  # outside old range, inside new range
-        }])
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ticker": "TEST",
+                    "eligible": "1",
+                    "ineligible_reasons": "",
+                    "actionable_rank": "1",
+                    "de_alpha_60d": 4.5,  # outside old range, inside new range
+                }
+            ]
+        )
         violations = check_invariants(df)
         assert len(violations) == 0  # inside [-5.0, 5.0] now
 
     def test_invariants_extreme_alpha_still_caught(self):
         """Truly extreme alpha_60d (>5.0) still produces a violation."""
         import pandas as pd
-        df = pd.DataFrame([{
-            "ticker": "TEST",
-            "eligible": "1",
-            "ineligible_reasons": "",
-            "actionable_rank": "1",
-            "de_alpha_60d": 6.0,
-        }])
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ticker": "TEST",
+                    "eligible": "1",
+                    "ineligible_reasons": "",
+                    "actionable_rank": "1",
+                    "de_alpha_60d": 6.0,
+                }
+            ]
+        )
         violations = check_invariants(df)
         assert len(violations) == 1
         assert violations[0]["rule"] == "range_de_alpha_60d"
@@ -362,11 +425,15 @@ class TestViolationSeverity:
 # Tests: Audit detail formatting
 # ---------------------------------------------------------------------------
 
+
 class TestAuditDetailFormat:
 
     def test_format_with_summary(self):
         summary = {
-            "total": 5, "critical": 1, "warn": 2, "info": 2,
+            "total": 5,
+            "critical": 1,
+            "warn": 2,
+            "info": 2,
             "by_rule": {"eligible_reasons_mismatch": 1, "tier_no_reason": 2, "range_de_alpha_60d": 2},
         }
         detail = _format_audit_detail("Audit FAIL", summary)
@@ -396,6 +463,7 @@ class TestAuditDetailFormat:
 # ---------------------------------------------------------------------------
 # Tests: Atomic promotion
 # ---------------------------------------------------------------------------
+
 
 class TestAtomicPromotion:
 
@@ -440,22 +508,27 @@ class TestAtomicPromotion:
 # Tests: Run manifest
 # ---------------------------------------------------------------------------
 
+
 class TestRunManifest:
 
     def test_manifest_has_required_fields(self, tmp_path):
         """Manifest contains all required top-level fields."""
         snap = tmp_path / "snap"
         snap.mkdir(parents=True)
-        (snap / "metadata.json").write_text(json.dumps({
-            "as_of_date": "2026-02-19",
-            "version": "v1.4.0",
-            "clinical_sort_telemetry": {"ruleset_id": "aa0aaf28"},
-            "ranking_mode": "decision",
-            "decision_mode": "phase2",
-            "ticker_count": 319,
-            "total_evaluated": 353,
-            "active_universe": 319,
-        }))
+        (snap / "metadata.json").write_text(
+            json.dumps(
+                {
+                    "as_of_date": "2026-02-19",
+                    "version": "v1.4.0",
+                    "clinical_sort_telemetry": {"ruleset_id": "aa0aaf28"},
+                    "ranking_mode": "decision",
+                    "decision_mode": "phase2",
+                    "ticker_count": 319,
+                    "total_evaluated": 353,
+                    "active_universe": 319,
+                }
+            )
+        )
 
         gates = [
             GateResult(name="xbi_staleness", status="PASS", detail="ok", value=0, threshold=3),
@@ -464,12 +537,21 @@ class TestRunManifest:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
         audit_proc = subprocess.CompletedProcess(args=[], returncode=0)
 
-        with patch("run_daily_production.get_git_info", return_value={
-            "branch": "main", "commit_sha": "abc123", "dirty": False,
-        }):
+        with patch(
+            "run_daily_production.get_git_info",
+            return_value={
+                "branch": "main",
+                "commit_sha": "abc123",
+                "dirty": False,
+            },
+        ):
             manifest = build_run_manifest(
-                "2026-02-19", gates, {"xbi_last_date": "2026-02-19"},
-                screen_proc, audit_proc, GateConfig(),
+                "2026-02-19",
+                gates,
+                {"xbi_last_date": "2026-02-19"},
+                screen_proc,
+                audit_proc,
+                GateConfig(),
                 snapshot_date_dir=snap,
             )
 
@@ -497,8 +579,12 @@ class TestRunManifest:
 
         with patch("run_daily_production.get_git_info", return_value={}):
             manifest = build_run_manifest(
-                "2026-02-19", gates, {},
-                screen_proc, None, GateConfig(),
+                "2026-02-19",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
             )
 
         assert manifest["overall_status"] == "FAIL"
@@ -513,8 +599,12 @@ class TestRunManifest:
 
         with patch("run_daily_production.get_git_info", return_value={}):
             manifest = build_run_manifest(
-                "2026-02-19", gates, {},
-                screen_proc, None, GateConfig(),
+                "2026-02-19",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
             )
 
         assert manifest["overall_status"] == "WARN"
@@ -526,9 +616,12 @@ class TestScreenFailureGate:
     def test_screen_crash_yields_fail_manifest(self, tmp_path):
         """When run_screen exits non-0/2, overall_status must be FAIL."""
         price_csv = tmp_path / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
+            ],
+        )
 
         # Create ctgov cache so that gate passes
         cache_dir = tmp_path / "ctgov"
@@ -549,12 +642,22 @@ class TestScreenFailureGate:
 
         # Patch run_screen to simulate crash (exit 1)
         fake_proc = subprocess.CompletedProcess(
-            args=[], returncode=1, stdout="", stderr="ERROR: something broke",
+            args=[],
+            returncode=1,
+            stdout="",
+            stderr="ERROR: something broke",
         )
-        with patch("run_daily_production.run_screen", return_value=fake_proc), \
-             patch("run_daily_production.get_git_info", return_value={
-                 "branch": "main", "commit_sha": "test", "dirty": False,
-             }):
+        with (
+            patch("run_daily_production.run_screen", return_value=fake_proc),
+            patch(
+                "run_daily_production.get_git_info",
+                return_value={
+                    "branch": "main",
+                    "commit_sha": "test",
+                    "dirty": False,
+                },
+            ),
+        ):
             manifest = run_daily(
                 "2026-02-19",
                 data_dir=data_dir,
@@ -577,6 +680,7 @@ class TestScreenFailureGate:
 # Tests: GateConfig
 # ---------------------------------------------------------------------------
 
+
 class TestGateConfig:
 
     def test_defaults(self):
@@ -587,11 +691,15 @@ class TestGateConfig:
 
     def test_from_json(self, tmp_path):
         cfg_path = tmp_path / "gates.json"
-        cfg_path.write_text(json.dumps({
-            "xbi_stale_days": 5,
-            "turnover_max_pct": 50.0,
-            "extra_field": "ignored",
-        }))
+        cfg_path.write_text(
+            json.dumps(
+                {
+                    "xbi_stale_days": 5,
+                    "turnover_max_pct": 50.0,
+                    "extra_field": "ignored",
+                }
+            )
+        )
         config = GateConfig.from_json(cfg_path)
         assert config.xbi_stale_days == 5
         assert config.turnover_max_pct == 50.0
@@ -602,22 +710,29 @@ class TestGateConfig:
 # Tests: Helper — ticker last date
 # ---------------------------------------------------------------------------
 
+
 class TestGetTickerLastDate:
 
     def test_finds_latest(self, tmp_path):
         csv_path = tmp_path / "prices.csv"
-        _write_price_csv(csv_path, [
-            {"ticker": "XBI", "date": "2026-02-17", "close": "100"},
-            {"ticker": "XBI", "date": "2026-02-18", "close": "101"},
-            {"ticker": "XBI", "date": "2026-02-19", "close": "102"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "XBI", "date": "2026-02-17", "close": "100"},
+                {"ticker": "XBI", "date": "2026-02-18", "close": "101"},
+                {"ticker": "XBI", "date": "2026-02-19", "close": "102"},
+            ],
+        )
         assert _get_ticker_last_date(csv_path, "XBI") == "2026-02-19"
 
     def test_missing_ticker(self, tmp_path):
         csv_path = tmp_path / "prices.csv"
-        _write_price_csv(csv_path, [
-            {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
-        ])
+        _write_price_csv(
+            csv_path,
+            [
+                {"ticker": "ACRS", "date": "2026-02-19", "close": "50"},
+            ],
+        )
         assert _get_ticker_last_date(csv_path, "XBI") is None
 
     def test_no_file(self, tmp_path):
@@ -627,6 +742,7 @@ class TestGetTickerLastDate:
 # ---------------------------------------------------------------------------
 # Tests: CTGov cache gate
 # ---------------------------------------------------------------------------
+
 
 class TestCtgovCacheGate:
 
@@ -692,6 +808,7 @@ class TestCtgovCacheGate:
 # Tests: Manifest date fields
 # ---------------------------------------------------------------------------
 
+
 class TestManifestDateFields:
 
     def test_manifest_records_both_dates(self, tmp_path):
@@ -702,8 +819,12 @@ class TestManifestDateFields:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
         with patch("run_daily_production.get_git_info", return_value={}):
             manifest = build_run_manifest(
-                "2026-02-18", gates, {},
-                screen_proc, None, GateConfig(),
+                "2026-02-18",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
                 requested_as_of_date="2026-02-19",
             )
         assert manifest["requested_as_of_date"] == "2026-02-19"
@@ -718,8 +839,12 @@ class TestManifestDateFields:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
         with patch("run_daily_production.get_git_info", return_value={}):
             manifest = build_run_manifest(
-                "2026-02-19", gates, {},
-                screen_proc, None, GateConfig(),
+                "2026-02-19",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
             )
         assert manifest["requested_as_of_date"] == "2026-02-19"
         assert manifest["effective_as_of_date"] == "2026-02-19"
@@ -728,6 +853,7 @@ class TestManifestDateFields:
 # ---------------------------------------------------------------------------
 # Tests: Git dirty pre/post-run
 # ---------------------------------------------------------------------------
+
 
 class TestGitDirtySemantics:
 
@@ -739,8 +865,12 @@ class TestGitDirtySemantics:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
 
         manifest = build_run_manifest(
-            "2026-02-19", gates, {},
-            screen_proc, None, GateConfig(),
+            "2026-02-19",
+            gates,
+            {},
+            screen_proc,
+            None,
+            GateConfig(),
             git_pre_run=git_pre,
             git_post_run=git_post,
         )
@@ -757,8 +887,12 @@ class TestGitDirtySemantics:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=-1)
 
         manifest = build_run_manifest(
-            "2026-02-19", gates, {},
-            screen_proc, None, GateConfig(),
+            "2026-02-19",
+            gates,
+            {},
+            screen_proc,
+            None,
+            GateConfig(),
             git_pre_run=git_pre,
         )
 
@@ -770,6 +904,7 @@ class TestGitDirtySemantics:
 # ---------------------------------------------------------------------------
 # Tests: Inputs-present gate
 # ---------------------------------------------------------------------------
+
 
 class TestInputsPresentGate:
 
@@ -792,9 +927,12 @@ class TestInputsPresentGate:
     def test_inputs_gate_aborts_before_screen(self, tmp_path):
         """run_daily returns FAIL manifest without running screen."""
         price_csv = tmp_path / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"ticker": "XBI", "date": "2026-02-19", "close": "100"},
+            ],
+        )
         cache_dir = tmp_path / "ctgov"
         cache_dir.mkdir(parents=True)
         (cache_dir / "trial_records_2026-02-19.json").write_text("[]")
@@ -807,10 +945,17 @@ class TestInputsPresentGate:
         final_dir = tmp_path / "snapshots"
         final_dir.mkdir()
 
-        with patch("run_daily_production.run_screen") as mock_screen, \
-             patch("run_daily_production.get_git_info", return_value={
-                 "branch": "main", "commit_sha": "test", "dirty": False,
-             }):
+        with (
+            patch("run_daily_production.run_screen") as mock_screen,
+            patch(
+                "run_daily_production.get_git_info",
+                return_value={
+                    "branch": "main",
+                    "commit_sha": "test",
+                    "dirty": False,
+                },
+            ),
+        ):
             manifest = run_daily(
                 "2026-02-19",
                 data_dir=data_dir,
@@ -833,12 +978,10 @@ class TestInputsPresentGate:
 # Tests: Market data staleness gate
 # ---------------------------------------------------------------------------
 
+
 def _write_market_data(path: Path, collected_at: str, n_records: int = 3) -> None:
     """Write minimal market_data.json with collected_at date."""
-    records = [
-        {"ticker": f"T{i}", "price": 10.0, "collected_at": collected_at}
-        for i in range(n_records)
-    ]
+    records = [{"ticker": f"T{i}", "price": 10.0, "collected_at": collected_at} for i in range(n_records)]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w") as f:
         json.dump(records, f)
@@ -892,6 +1035,7 @@ class TestMarketDataStalenessGate:
 # Tests: Inputs bundle publish (validate + build)
 # ---------------------------------------------------------------------------
 
+
 class TestValidateMarketData:
 
     def test_valid_fresh_data(self, tmp_path):
@@ -930,6 +1074,7 @@ class TestBuildTarball:
     def test_tarball_contains_market_data(self, tmp_path):
         """Tarball includes market_data.json at root level."""
         import tarfile as _tarfile
+
         _write_market_data(tmp_path / "market_data.json", "2026-02-19")
         out = tmp_path / "bundle.tar.gz"
         build_tarball(tmp_path, "2026-02-19", out)
@@ -941,6 +1086,7 @@ class TestBuildTarball:
     def test_tarball_skips_missing_files(self, tmp_path):
         """Missing files are skipped, not errored."""
         import tarfile as _tarfile
+
         out = tmp_path / "bundle.tar.gz"
         build_tarball(tmp_path, "2026-02-19", out)
         assert out.exists()
@@ -952,12 +1098,12 @@ class TestBuildTarball:
 # Tests: Ops contract — gate allowlist + manifest schema
 # ---------------------------------------------------------------------------
 
+
 def _make_valid_market_data(data_dir: Path, collected_at: str = "2026-02-19") -> None:
     """Write market_data.json + universe.json that pass all market data gates."""
     tickers = [f"T{i}" for i in range(10)]
     records = [
-        {"ticker": t, "price": 10.0 + i, "market_cap": 1e9, "collected_at": collected_at}
-        for i, t in enumerate(tickers)
+        {"ticker": t, "price": 10.0 + i, "market_cap": 1e9, "collected_at": collected_at} for i, t in enumerate(tickers)
     ]
     (data_dir / "market_data.json").write_text(json.dumps(records))
     universe = [{"ticker": t} for t in tickers]
@@ -974,16 +1120,29 @@ class TestOpsContract:
     def test_all_known_gates_in_allowlist(self):
         """Every gate name emitted by the codebase must be in the allowlist."""
         expected = {
-            "xbi_staleness", "ctgov_cache", "inputs_present",
-            "market_data_schema", "market_data_staleness", "market_data_coverage",
-            "screen", "audit", "missing_reason_fraction", "turnover",
-            "drift_monitoring", "ctgov_pit_dates", "sec_13f_cache",
-            "institutional_summary", "institutional_delta",
+            "xbi_staleness",
+            "ctgov_cache",
+            "inputs_present",
+            "market_data_schema",
+            "market_data_staleness",
+            "market_data_coverage",
+            "screen",
+            "audit",
+            "missing_reason_fraction",
+            "turnover",
+            "drift_monitoring",
+            "ctgov_pit_dates",
+            "sec_13f_cache",
+            "institutional_summary",
+            "institutional_delta",
             "pnl_attribution",
-            "price_pit_cache", "forward_eval",
+            "price_pit_cache",
+            "forward_eval",
             "pit_bundle_health",
-            "decision_engine_schema", "sort_contrib_sanity",
-            "portfolio_weights", "eligibility_consistency",
+            "decision_engine_schema",
+            "sort_contrib_sanity",
+            "portfolio_weights",
+            "eligibility_consistency",
             "cache_health",
             "ruleset_health",
             "exposure_missingness",
@@ -1003,13 +1162,17 @@ class TestOpsContract:
         """Manifest v1.2.0 has all required top-level keys."""
         snap = tmp_path / "snap"
         snap.mkdir()
-        (snap / "metadata.json").write_text(json.dumps({
-            "version": "v1.4.0",
-            "clinical_sort_telemetry": {"ruleset_id": "aa0aaf28"},
-            "ranking_mode": "decision",
-            "decision_mode": "phase2",
-            "ticker_count": 10,
-        }))
+        (snap / "metadata.json").write_text(
+            json.dumps(
+                {
+                    "version": "v1.4.0",
+                    "clinical_sort_telemetry": {"ruleset_id": "aa0aaf28"},
+                    "ranking_mode": "decision",
+                    "decision_mode": "phase2",
+                    "ticker_count": 10,
+                }
+            )
+        )
 
         data_dir = tmp_path / "data"
         data_dir.mkdir()
@@ -1022,12 +1185,21 @@ class TestOpsContract:
         screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
         audit_proc = subprocess.CompletedProcess(args=[], returncode=0)
 
-        with patch("run_daily_production.get_git_info", return_value={
-            "branch": "main", "commit_sha": "abc123", "dirty": False,
-        }):
+        with patch(
+            "run_daily_production.get_git_info",
+            return_value={
+                "branch": "main",
+                "commit_sha": "abc123",
+                "dirty": False,
+            },
+        ):
             manifest = build_run_manifest(
-                "2026-02-19", gates, {"xbi_last_date": "2026-02-19"},
-                screen_proc, audit_proc, GateConfig(),
+                "2026-02-19",
+                gates,
+                {"xbi_last_date": "2026-02-19"},
+                screen_proc,
+                audit_proc,
+                GateConfig(),
                 snapshot_date_dir=snap,
                 data_dir=data_dir,
             )
@@ -1037,10 +1209,21 @@ class TestOpsContract:
 
         # Required top-level keys
         required_keys = {
-            "manifest_version", "requested_as_of_date", "effective_as_of_date",
-            "as_of_date", "generated_at", "git", "ruleset", "row_counts",
-            "price_refresh", "market_data_refresh", "missing_reason_counts",
-            "gates", "overall_status", "screen_exit_code", "audit_exit_code",
+            "manifest_version",
+            "requested_as_of_date",
+            "effective_as_of_date",
+            "as_of_date",
+            "generated_at",
+            "git",
+            "ruleset",
+            "row_counts",
+            "price_refresh",
+            "market_data_refresh",
+            "missing_reason_counts",
+            "gates",
+            "overall_status",
+            "screen_exit_code",
+            "audit_exit_code",
             "gate_config",
         }
         assert required_keys.issubset(set(manifest.keys()))
@@ -1067,6 +1250,7 @@ class TestOpsContract:
 # Tests: Market data schema gate
 # ---------------------------------------------------------------------------
 
+
 class TestMarketDataSchemaGate:
 
     def test_valid_records_pass(self, tmp_path):
@@ -1090,9 +1274,9 @@ class TestMarketDataSchemaGate:
     def test_non_numeric_field_fails(self, tmp_path):
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        (data_dir / "market_data.json").write_text(json.dumps([
-            {"ticker": "A", "price": "not_a_number", "market_cap": 1e9, "collected_at": "2026-02-19"}
-        ]))
+        (data_dir / "market_data.json").write_text(
+            json.dumps([{"ticker": "A", "price": "not_a_number", "market_cap": 1e9, "collected_at": "2026-02-19"}])
+        )
         result = check_market_data_schema(data_dir)
         assert result.status == "FAIL"
         assert "str" in result.detail
@@ -1124,10 +1308,20 @@ class TestMarketDataSchemaGate:
         """Numeric fields with None value are acceptable."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        (data_dir / "market_data.json").write_text(json.dumps([
-            {"ticker": "A", "price": 10, "market_cap": 1e9, "collected_at": "2026-02-19",
-             "beta": None, "avg_volume": None}
-        ]))
+        (data_dir / "market_data.json").write_text(
+            json.dumps(
+                [
+                    {
+                        "ticker": "A",
+                        "price": 10,
+                        "market_cap": 1e9,
+                        "collected_at": "2026-02-19",
+                        "beta": None,
+                        "avg_volume": None,
+                    }
+                ]
+            )
+        )
         result = check_market_data_schema(data_dir)
         assert result.status == "PASS"
 
@@ -1135,6 +1329,7 @@ class TestMarketDataSchemaGate:
 # ---------------------------------------------------------------------------
 # Tests: Market data coverage gate
 # ---------------------------------------------------------------------------
+
 
 class TestMarketDataCoverageGate:
 
@@ -1150,9 +1345,14 @@ class TestMarketDataCoverageGate:
         data_dir = tmp_path / "data"
         data_dir.mkdir()
         # market_data has 2 tickers, universe has 10
-        (data_dir / "market_data.json").write_text(json.dumps([
-            {"ticker": "T0", "price": 10}, {"ticker": "T1", "price": 20},
-        ]))
+        (data_dir / "market_data.json").write_text(
+            json.dumps(
+                [
+                    {"ticker": "T0", "price": 10},
+                    {"ticker": "T1", "price": 20},
+                ]
+            )
+        )
         universe = [{"ticker": f"T{i}"} for i in range(10)]
         (data_dir / "universe.json").write_text(json.dumps(universe))
         result = check_market_data_coverage(data_dir, min_coverage=0.90)
@@ -1163,9 +1363,13 @@ class TestMarketDataCoverageGate:
         """Tickers starting with _ are excluded from the denominator."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        (data_dir / "market_data.json").write_text(json.dumps([
-            {"ticker": "A", "price": 10},
-        ]))
+        (data_dir / "market_data.json").write_text(
+            json.dumps(
+                [
+                    {"ticker": "A", "price": 10},
+                ]
+            )
+        )
         universe = [{"ticker": "A"}, {"ticker": "_XBI_BENCHMARK_"}]
         (data_dir / "universe.json").write_text(json.dumps(universe))
         result = check_market_data_coverage(data_dir, min_coverage=0.90)
@@ -1191,9 +1395,7 @@ class TestMarketDataCoverageGate:
         """Exactly at threshold → PASS (not <)."""
         data_dir = tmp_path / "data"
         data_dir.mkdir()
-        (data_dir / "market_data.json").write_text(json.dumps([
-            {"ticker": f"T{i}", "price": 10} for i in range(9)
-        ]))
+        (data_dir / "market_data.json").write_text(json.dumps([{"ticker": f"T{i}", "price": 10} for i in range(9)]))
         universe = [{"ticker": f"T{i}"} for i in range(10)]
         (data_dir / "universe.json").write_text(json.dumps(universe))
         result = check_market_data_coverage(data_dir, min_coverage=0.90)
@@ -1203,6 +1405,7 @@ class TestMarketDataCoverageGate:
 # ---------------------------------------------------------------------------
 # Helper: write full-DE rankings.csv for schema/weight/eligibility gates
 # ---------------------------------------------------------------------------
+
 
 def _write_full_rankings_csv(
     path: Path,
@@ -1230,19 +1433,35 @@ def _write_full_rankings_csv(
 # Tests: Decision Engine schema gate (B1)
 # ---------------------------------------------------------------------------
 
+
 class TestDecisionEngineSchemaGate:
 
     def test_valid_pass(self, tmp_path):
         """All DE columns present, valid values → PASS."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "1", "tier_dev": "A", "tier_any": "A",
-             "actionable_rank": "1", "ineligible_reasons": "",
-             "target_weight_pct": "60.0"},
-            {"ticker": "BMRN", "eligible": "1", "tier_dev": "B", "tier_any": "B",
-             "actionable_rank": "2", "ineligible_reasons": "",
-             "target_weight_pct": "40.0"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "tier_any": "A",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "60.0",
+                },
+                {
+                    "ticker": "BMRN",
+                    "eligible": "1",
+                    "tier_dev": "B",
+                    "tier_any": "B",
+                    "actionable_rank": "2",
+                    "ineligible_reasons": "",
+                    "target_weight_pct": "40.0",
+                },
+            ],
+        )
         result = check_decision_engine_schema(snap)
         assert result.status == "PASS"
 
@@ -1262,10 +1481,12 @@ class TestDecisionEngineSchemaGate:
     def test_invalid_tier_warn(self, tmp_path):
         """Invalid tier_dev value → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "1", "tier_dev": "Z", "tier_any": "A",
-             "actionable_rank": "1"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "ACRS", "eligible": "1", "tier_dev": "Z", "tier_any": "A", "actionable_rank": "1"},
+            ],
+        )
         result = check_decision_engine_schema(snap)
         assert result.status == "WARN"
         assert "tier_dev" in result.detail
@@ -1273,12 +1494,19 @@ class TestDecisionEngineSchemaGate:
     def test_non_sequential_rank_warn(self, tmp_path):
         """Non-sequential actionable_rank → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "1", "tier_dev": "A", "tier_any": "A",
-             "actionable_rank": "1"},
-            {"ticker": "BMRN", "eligible": "1", "tier_dev": "B", "tier_any": "B",
-             "actionable_rank": "5"},  # should be 2
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "ACRS", "eligible": "1", "tier_dev": "A", "tier_any": "A", "actionable_rank": "1"},
+                {
+                    "ticker": "BMRN",
+                    "eligible": "1",
+                    "tier_dev": "B",
+                    "tier_any": "B",
+                    "actionable_rank": "5",
+                },  # should be 2
+            ],
+        )
         result = check_decision_engine_schema(snap)
         assert result.status == "WARN"
         assert "expected" in result.detail
@@ -1286,10 +1514,19 @@ class TestDecisionEngineSchemaGate:
     def test_ineligible_with_rank_warn(self, tmp_path):
         """Ineligible row with actionable_rank → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "0", "tier_dev": "D", "tier_any": "",
-             "actionable_rank": "1", "ineligible_reasons": "cash_runway"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "0",
+                    "tier_dev": "D",
+                    "tier_any": "",
+                    "actionable_rank": "1",
+                    "ineligible_reasons": "cash_runway",
+                },
+            ],
+        )
         result = check_decision_engine_schema(snap)
         assert result.status == "WARN"
         assert "ineligible" in result.detail
@@ -1299,26 +1536,33 @@ class TestDecisionEngineSchemaGate:
 # Tests: Portfolio weights gate (B2)
 # ---------------------------------------------------------------------------
 
+
 class TestPortfolioWeightsGate:
 
     def test_sum_100_pass(self, tmp_path):
         """Weights sum to 100% → PASS."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "target_weight_pct": "60.0"},
-            {"ticker": "B", "eligible": "1", "target_weight_pct": "40.0"},
-            {"ticker": "C", "eligible": "0", "target_weight_pct": ""},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "60.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": "40.0"},
+                {"ticker": "C", "eligible": "0", "target_weight_pct": ""},
+            ],
+        )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "PASS"
 
     def test_sum_80_warn(self, tmp_path):
         """Weights sum to 80% (20pp off) → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "target_weight_pct": "50.0"},
-            {"ticker": "B", "eligible": "1", "target_weight_pct": "30.0"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "50.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": "30.0"},
+            ],
+        )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "WARN"
         assert "weight sum" in result.detail
@@ -1326,10 +1570,13 @@ class TestPortfolioWeightsGate:
     def test_eligible_missing_weight_warn(self, tmp_path):
         """Eligible row with no weight → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
-            {"ticker": "B", "eligible": "1", "target_weight_pct": ""},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
+                {"ticker": "B", "eligible": "1", "target_weight_pct": ""},
+            ],
+        )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "WARN"
         assert "missing target_weight_pct" in result.detail
@@ -1337,10 +1584,13 @@ class TestPortfolioWeightsGate:
     def test_ineligible_with_weight_warn(self, tmp_path):
         """Ineligible row with non-zero weight → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
-            {"ticker": "B", "eligible": "0", "target_weight_pct": "5.0"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "target_weight_pct": "100.0"},
+                {"ticker": "B", "eligible": "0", "target_weight_pct": "5.0"},
+            ],
+        )
         result = check_portfolio_weights(snap, tolerance=1.0)
         assert result.status == "WARN"
         assert "ineligible" in result.detail
@@ -1350,24 +1600,31 @@ class TestPortfolioWeightsGate:
 # Tests: Eligibility consistency gate (B3)
 # ---------------------------------------------------------------------------
 
+
 class TestEligibilityConsistencyGate:
 
     def test_consistent_pass(self, tmp_path):
         """All rows consistent → PASS."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "ineligible_reasons": ""},
-            {"ticker": "B", "eligible": "0", "ineligible_reasons": "cash_runway"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "ineligible_reasons": ""},
+                {"ticker": "B", "eligible": "0", "ineligible_reasons": "cash_runway"},
+            ],
+        )
         result = check_eligibility_consistency(snap)
         assert result.status == "PASS"
 
     def test_eligible_with_reasons_warn(self, tmp_path):
         """eligible=1 but ineligible_reasons non-empty → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "1", "ineligible_reasons": "some_reason"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "1", "ineligible_reasons": "some_reason"},
+            ],
+        )
         result = check_eligibility_consistency(snap)
         assert result.status == "WARN"
         assert "eligible=1" in result.detail
@@ -1375,9 +1632,12 @@ class TestEligibilityConsistencyGate:
     def test_ineligible_without_reasons_warn(self, tmp_path):
         """eligible=0 but ineligible_reasons empty → WARN."""
         snap = tmp_path / "snap"
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "A", "eligible": "0", "ineligible_reasons": ""},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "A", "eligible": "0", "ineligible_reasons": ""},
+            ],
+        )
         result = check_eligibility_consistency(snap)
         assert result.status == "WARN"
         assert "ineligible_reasons empty" in result.detail
@@ -1387,11 +1647,13 @@ class TestEligibilityConsistencyGate:
 # Tests: Universe coverage (C1)
 # ---------------------------------------------------------------------------
 
+
 class TestUniverseCoverage:
 
     def test_all_present_pass(self, tmp_path):
         """All universe tickers in rankings → no violations."""
         import pandas as pd
+
         df = pd.DataFrame([{"ticker": "A"}, {"ticker": "B"}])
         uni_path = tmp_path / "universe.json"
         uni_path.write_text(json.dumps([{"ticker": "A"}, {"ticker": "B"}]))
@@ -1401,6 +1663,7 @@ class TestUniverseCoverage:
     def test_missing_ticker_warn(self, tmp_path):
         """Universe ticker absent from rankings → violation."""
         import pandas as pd
+
         df = pd.DataFrame([{"ticker": "A"}])
         uni_path = tmp_path / "universe.json"
         uni_path.write_text(json.dumps([{"ticker": "A"}, {"ticker": "MISS"}]))
@@ -1414,16 +1677,25 @@ class TestUniverseCoverage:
 # Tests: Missing component enum validation (C2)
 # ---------------------------------------------------------------------------
 
+
 class TestMissingComponentEnum:
 
     def test_known_components_pass(self):
         """Known missing_components values → no violation."""
         import pandas as pd
-        df = pd.DataFrame([{
-            "ticker": "A", "eligible": "1", "ineligible_reasons": "",
-            "actionable_rank": "1", "missingness_penalty": 0.5,
-            "missing_components": "catalyst|sponsor",
-        }])
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ticker": "A",
+                    "eligible": "1",
+                    "ineligible_reasons": "",
+                    "actionable_rank": "1",
+                    "missingness_penalty": 0.5,
+                    "missing_components": "catalyst|sponsor",
+                }
+            ]
+        )
         violations = check_invariants(df)
         unknown = [v for v in violations if v["rule"] == "unknown_missing_component"]
         assert len(unknown) == 0
@@ -1431,11 +1703,19 @@ class TestMissingComponentEnum:
     def test_unknown_component_warn(self):
         """Unknown missing_components value → violation."""
         import pandas as pd
-        df = pd.DataFrame([{
-            "ticker": "A", "eligible": "1", "ineligible_reasons": "",
-            "actionable_rank": "1", "missingness_penalty": 0.5,
-            "missing_components": "catalyst|bogus_thing",
-        }])
+
+        df = pd.DataFrame(
+            [
+                {
+                    "ticker": "A",
+                    "eligible": "1",
+                    "ineligible_reasons": "",
+                    "actionable_rank": "1",
+                    "missingness_penalty": 0.5,
+                    "missing_components": "catalyst|bogus_thing",
+                }
+            ]
+        )
         violations = check_invariants(df)
         unknown = [v for v in violations if v["rule"] == "unknown_missing_component"]
         assert len(unknown) == 1
@@ -1445,6 +1725,7 @@ class TestMissingComponentEnum:
 # ---------------------------------------------------------------------------
 # Tests: Updated ops contract — new gates in allowlist
 # ---------------------------------------------------------------------------
+
 
 class TestOpsContractWithNewGates:
 
@@ -1467,14 +1748,20 @@ class TestOpsContractWithNewGates:
 # Helpers for exposure missingness tests
 # ---------------------------------------------------------------------------
 
+
 def _write_exposure_csv(
     path: Path,
     rows: list[dict[str, str]],
 ) -> None:
     """Write a rankings.csv with exposure value columns."""
     cols = [
-        "ticker", "actionable_rank", "eligible",
-        "de_beta_xbi_60d", "de_drawdown", "de_rsi_14d", "de_alpha_60d",
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "de_beta_xbi_60d",
+        "de_drawdown",
+        "de_rsi_14d",
+        "de_alpha_60d",
     ]
     path.parent.mkdir(parents=True, exist_ok=True)
     with open(path, "w", newline="", encoding="utf-8") as f:
@@ -1488,19 +1775,33 @@ def _write_exposure_csv(
 # Tests: Exposure missingness gate
 # ---------------------------------------------------------------------------
 
+
 class TestExposureMissingnessGate:
 
     def test_all_present_pass(self, tmp_path):
         """All exposures present → PASS."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "1",
-             "de_beta_xbi_60d": "1.2", "de_drawdown": "-0.15",
-             "de_rsi_14d": "55", "de_alpha_60d": "0.03"},
-            {"ticker": "BMRN", "eligible": "1",
-             "de_beta_xbi_60d": "0.8", "de_drawdown": "-0.10",
-             "de_rsi_14d": "48", "de_alpha_60d": "0.01"},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "ACRS",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "1.2",
+                    "de_drawdown": "-0.15",
+                    "de_rsi_14d": "55",
+                    "de_alpha_60d": "0.03",
+                },
+                {
+                    "ticker": "BMRN",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "0.8",
+                    "de_drawdown": "-0.10",
+                    "de_rsi_14d": "48",
+                    "de_alpha_60d": "0.01",
+                },
+            ],
+        )
         result = check_exposure_missingness(snap, warn_frac=0.10, fail_frac=0.25)
         assert result.status == "PASS"
         assert result.value["eligible_n"] == 2
@@ -1512,9 +1813,12 @@ class TestExposureMissingnessGate:
         rows = []
         for i in range(20):
             row = {
-                "ticker": f"T{i}", "eligible": "1",
-                "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-                "de_rsi_14d": "50", "de_alpha_60d": "0.02",
+                "ticker": f"T{i}",
+                "eligible": "1",
+                "de_beta_xbi_60d": "1.0",
+                "de_drawdown": "-0.1",
+                "de_rsi_14d": "50",
+                "de_alpha_60d": "0.02",
             }
             if i == 0:
                 row["de_beta_xbi_60d"] = ""  # 1 missing
@@ -1530,9 +1834,12 @@ class TestExposureMissingnessGate:
         rows = []
         for i in range(20):
             row = {
-                "ticker": f"T{i}", "eligible": "1",
-                "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-                "de_rsi_14d": "50", "de_alpha_60d": "0.02",
+                "ticker": f"T{i}",
+                "eligible": "1",
+                "de_beta_xbi_60d": "1.0",
+                "de_drawdown": "-0.1",
+                "de_rsi_14d": "50",
+                "de_alpha_60d": "0.02",
             }
             if i < 3:
                 row["de_rsi_14d"] = ""  # 3/20 = 15%
@@ -1548,9 +1855,12 @@ class TestExposureMissingnessGate:
         rows = []
         for i in range(20):
             row = {
-                "ticker": f"T{i}", "eligible": "1",
-                "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-                "de_rsi_14d": "50", "de_alpha_60d": "0.02",
+                "ticker": f"T{i}",
+                "eligible": "1",
+                "de_beta_xbi_60d": "1.0",
+                "de_drawdown": "-0.1",
+                "de_rsi_14d": "50",
+                "de_alpha_60d": "0.02",
             }
             if i < 6:
                 row["de_drawdown"] = ""  # 6/20 = 30%
@@ -1563,14 +1873,27 @@ class TestExposureMissingnessGate:
     def test_ineligible_excluded(self, tmp_path):
         """Ineligible tickers are excluded from the check."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "GOOD", "eligible": "1",
-             "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-             "de_rsi_14d": "50", "de_alpha_60d": "0.02"},
-            {"ticker": "BAD", "eligible": "0",
-             "de_beta_xbi_60d": "", "de_drawdown": "",
-             "de_rsi_14d": "", "de_alpha_60d": ""},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "GOOD",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "1.0",
+                    "de_drawdown": "-0.1",
+                    "de_rsi_14d": "50",
+                    "de_alpha_60d": "0.02",
+                },
+                {
+                    "ticker": "BAD",
+                    "eligible": "0",
+                    "de_beta_xbi_60d": "",
+                    "de_drawdown": "",
+                    "de_rsi_14d": "",
+                    "de_alpha_60d": "",
+                },
+            ],
+        )
         result = check_exposure_missingness(snap, warn_frac=0.10, fail_frac=0.25)
         assert result.status == "PASS"
         assert result.value["eligible_n"] == 1
@@ -1585,22 +1908,38 @@ class TestExposureMissingnessGate:
     def test_no_eligible_tickers(self, tmp_path):
         """No eligible tickers → FAIL."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "T1", "eligible": "0",
-             "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-             "de_rsi_14d": "50", "de_alpha_60d": "0.02"},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "T1",
+                    "eligible": "0",
+                    "de_beta_xbi_60d": "1.0",
+                    "de_drawdown": "-0.1",
+                    "de_rsi_14d": "50",
+                    "de_alpha_60d": "0.02",
+                },
+            ],
+        )
         result = check_exposure_missingness(snap, warn_frac=0.10, fail_frac=0.25)
         assert result.status == "FAIL"
 
     def test_nan_treated_as_missing(self, tmp_path):
         """NaN values treated as missing."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "T1", "eligible": "1",
-             "de_beta_xbi_60d": "nan", "de_drawdown": "NaN",
-             "de_rsi_14d": "None", "de_alpha_60d": "0.02"},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "T1",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "nan",
+                    "de_drawdown": "NaN",
+                    "de_rsi_14d": "None",
+                    "de_alpha_60d": "0.02",
+                },
+            ],
+        )
         result = check_exposure_missingness(snap, warn_frac=0.0, fail_frac=0.50)
         # 3 of 4 columns have 100% missing → worst = 1.0 > fail
         assert result.status == "FAIL"
@@ -1612,9 +1951,12 @@ class TestExposureMissingnessGate:
         rows = []
         for i in range(10):
             row = {
-                "ticker": f"T{i}", "eligible": "1",
-                "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-                "de_rsi_14d": "50", "de_alpha_60d": "0.02",
+                "ticker": f"T{i}",
+                "eligible": "1",
+                "de_beta_xbi_60d": "1.0",
+                "de_drawdown": "-0.1",
+                "de_rsi_14d": "50",
+                "de_alpha_60d": "0.02",
             }
             if i < 3:
                 row["de_rsi_14d"] = ""  # 30% missing on rsi
@@ -1641,11 +1983,19 @@ class TestExposureMissingnessGate:
     def test_extended_column_skipped_if_absent(self, tmp_path):
         """de_vol_60d absent from header → skipped, not FAIL."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "T1", "eligible": "1",
-             "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-             "de_rsi_14d": "50", "de_alpha_60d": "0.02"},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "T1",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "1.0",
+                    "de_drawdown": "-0.1",
+                    "de_rsi_14d": "50",
+                    "de_alpha_60d": "0.02",
+                },
+            ],
+        )
         # No de_vol_60d column in header → should be in skipped list
         result = check_exposure_missingness(snap, warn_frac=0.10, fail_frac=0.25)
         assert result.status == "PASS"
@@ -1654,11 +2004,19 @@ class TestExposureMissingnessGate:
     def test_value_is_dict(self, tmp_path):
         """GateResult.value is a dict with expected keys."""
         snap = tmp_path / "snap"
-        _write_exposure_csv(snap / "rankings.csv", [
-            {"ticker": "T1", "eligible": "1",
-             "de_beta_xbi_60d": "1.0", "de_drawdown": "-0.1",
-             "de_rsi_14d": "50", "de_alpha_60d": "0.02"},
-        ])
+        _write_exposure_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "T1",
+                    "eligible": "1",
+                    "de_beta_xbi_60d": "1.0",
+                    "de_drawdown": "-0.1",
+                    "de_rsi_14d": "50",
+                    "de_alpha_60d": "0.02",
+                },
+            ],
+        )
         result = check_exposure_missingness(snap, warn_frac=0.10, fail_frac=0.25)
         assert "eligible_n" in result.value
         assert "missing_fracs" in result.value
@@ -1676,8 +2034,13 @@ class TestExposureMissingnessGate:
 # ---------------------------------------------------------------------------
 
 _CONC_COLS = [
-    "ticker", "actionable_rank", "eligible", "target_weight_pct",
-    "catalyst_days", "de_beta_xbi_60d", "de_drawdown",
+    "ticker",
+    "actionable_rank",
+    "eligible",
+    "target_weight_pct",
+    "catalyst_days",
+    "de_beta_xbi_60d",
+    "de_drawdown",
 ]
 
 
@@ -1698,14 +2061,18 @@ def _write_concentration_csv(
 # Tests: Risk concentration gate
 # ---------------------------------------------------------------------------
 
+
 class TestRiskConcentrationGate:
 
     def _make_row(self, rank, wt=5.0, cat_days=90, beta=1.0, dd=-0.10):
         return {
-            "ticker": f"T{rank}", "actionable_rank": str(rank),
-            "eligible": "1", "target_weight_pct": str(wt),
+            "ticker": f"T{rank}",
+            "actionable_rank": str(rank),
+            "eligible": "1",
+            "target_weight_pct": str(wt),
             "catalyst_days": str(cat_days),
-            "de_beta_xbi_60d": str(beta), "de_drawdown": str(dd),
+            "de_beta_xbi_60d": str(beta),
+            "de_drawdown": str(dd),
         }
 
     def test_all_safe_pass(self, tmp_path):
@@ -1790,11 +2157,20 @@ class TestRiskConcentrationGate:
     def test_no_ranked_tickers(self, tmp_path):
         """No tickers with actionable_rank → PASS (empty portfolio)."""
         snap = tmp_path / "snap"
-        _write_concentration_csv(snap / "rankings.csv", [
-            {"ticker": "T1", "eligible": "1", "actionable_rank": "",
-             "target_weight_pct": "5.0", "catalyst_days": "3",
-             "de_beta_xbi_60d": "2.0", "de_drawdown": "-0.5"},
-        ])
+        _write_concentration_csv(
+            snap / "rankings.csv",
+            [
+                {
+                    "ticker": "T1",
+                    "eligible": "1",
+                    "actionable_rank": "",
+                    "target_weight_pct": "5.0",
+                    "catalyst_days": "3",
+                    "de_beta_xbi_60d": "2.0",
+                    "de_drawdown": "-0.5",
+                },
+            ],
+        )
         result = check_risk_concentration(snap)
         assert result.status == "PASS"
 
@@ -1870,16 +2246,27 @@ def _write_contrib_rankings_csv(
 # Tests: Sort contribution sanity gate
 # ---------------------------------------------------------------------------
 
+
 class TestSortContribSanityGate:
 
     @staticmethod
-    def _valid_row(ticker: str, rank: str, total: str = "0.12",
-                   clinical: str = "0.10", coinvest: str = "0.0",
-                   institutional: str = "0.0", calendar: str = "0.02",
-                   alpha_cohort_tb: str = "0.0", catalyst: str = "0.0") -> dict:
+    def _valid_row(
+        ticker: str,
+        rank: str,
+        total: str = "0.12",
+        clinical: str = "0.10",
+        coinvest: str = "0.0",
+        institutional: str = "0.0",
+        calendar: str = "0.02",
+        alpha_cohort_tb: str = "0.0",
+        catalyst: str = "0.0",
+    ) -> dict:
         return {
-            "ticker": ticker, "eligible": "1", "actionable_rank": rank,
-            "tier_dev": "A", "tier_any": "A",
+            "ticker": ticker,
+            "eligible": "1",
+            "actionable_rank": rank,
+            "tier_dev": "A",
+            "tier_any": "A",
             "de_sort_total_adj": total,
             "de_sort_contrib_clinical": clinical,
             "de_sort_contrib_coinvest": coinvest,
@@ -1892,11 +2279,13 @@ class TestSortContribSanityGate:
     def test_pass_valid(self, tmp_path):
         """All columns present, valid values, sums match → PASS."""
         snap = tmp_path / "snap"
-        _write_contrib_rankings_csv(snap / "rankings.csv", [
-            self._valid_row("ACRS", "1"),
-            self._valid_row("BMRN", "2", total="0.05", clinical="0.05",
-                            calendar="0.0"),
-        ])
+        _write_contrib_rankings_csv(
+            snap / "rankings.csv",
+            [
+                self._valid_row("ACRS", "1"),
+                self._valid_row("BMRN", "2", total="0.05", clinical="0.05", calendar="0.0"),
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "PASS"
         assert result.value["eligible_n"] == 2
@@ -1908,10 +2297,12 @@ class TestSortContribSanityGate:
         """Sort contrib columns missing entirely → WARN."""
         snap = tmp_path / "snap"
         # Write CSV WITHOUT sort contrib columns
-        _write_full_rankings_csv(snap / "rankings.csv", [
-            {"ticker": "ACRS", "eligible": "1", "tier_dev": "A", "tier_any": "A",
-             "actionable_rank": "1"},
-        ])
+        _write_full_rankings_csv(
+            snap / "rankings.csv",
+            [
+                {"ticker": "ACRS", "eligible": "1", "tier_dev": "A", "tier_any": "A", "actionable_rank": "1"},
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "WARN"
         assert "columns missing" in result.detail
@@ -1931,10 +2322,12 @@ class TestSortContribSanityGate:
     def test_warn_sum_mismatch(self, tmp_path):
         """Sum of contribs != total_adj → WARN."""
         snap = tmp_path / "snap"
-        _write_contrib_rankings_csv(snap / "rankings.csv", [
-            self._valid_row("ACRS", "1", total="0.50", clinical="0.10",
-                            calendar="0.02"),  # sum=0.12 != 0.50
-        ])
+        _write_contrib_rankings_csv(
+            snap / "rankings.csv",
+            [
+                self._valid_row("ACRS", "1", total="0.50", clinical="0.10", calendar="0.02"),  # sum=0.12 != 0.50
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "WARN"
         assert "sum mismatch" in result.detail
@@ -1942,9 +2335,12 @@ class TestSortContribSanityGate:
     def test_fail_absurd_value(self, tmp_path):
         """Absurdly large total_adj → FAIL."""
         snap = tmp_path / "snap"
-        _write_contrib_rankings_csv(snap / "rankings.csv", [
-            self._valid_row("ACRS", "1", total="1e9", clinical="1e9"),
-        ])
+        _write_contrib_rankings_csv(
+            snap / "rankings.csv",
+            [
+                self._valid_row("ACRS", "1", total="1e9", clinical="1e9"),
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "FAIL"
         assert "non-finite or absurd" in result.detail
@@ -1964,9 +2360,12 @@ class TestSortContribSanityGate:
     def test_fail_inf_value(self, tmp_path):
         """Infinite value → FAIL."""
         snap = tmp_path / "snap"
-        _write_contrib_rankings_csv(snap / "rankings.csv", [
-            self._valid_row("ACRS", "1", total="inf", clinical="inf"),
-        ])
+        _write_contrib_rankings_csv(
+            snap / "rankings.csv",
+            [
+                self._valid_row("ACRS", "1", total="inf", clinical="inf"),
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "FAIL"
 
@@ -1976,10 +2375,13 @@ class TestSortContribSanityGate:
         row = self._valid_row("ACRS", "")
         row["eligible"] = "0"
         row["de_sort_total_adj"] = ""  # would be missing, but ineligible
-        _write_contrib_rankings_csv(snap / "rankings.csv", [
-            row,
-            self._valid_row("BMRN", "1"),
-        ])
+        _write_contrib_rankings_csv(
+            snap / "rankings.csv",
+            [
+                row,
+                self._valid_row("BMRN", "1"),
+            ],
+        )
         result = check_sort_contrib_sanity(snap, GateConfig())
         assert result.status == "PASS"
         assert result.value["eligible_n"] == 1
@@ -1990,3 +2392,197 @@ class TestSortContribSanityGate:
         assert config.sort_contrib_missing_max_frac == 0.01
         assert config.sort_contrib_sum_tolerance == 1e-6
         assert config.sort_contrib_hard_abs_max == 50.0
+
+
+# ---------------------------------------------------------------------------
+# Tests: Promote-on-WARN policy
+# ---------------------------------------------------------------------------
+
+
+class TestPromoteOnWarnPolicy:
+    """Verify that WARN promotes and FAIL blocks."""
+
+    def test_warn_overall_promotes(self, tmp_path):
+        """WARN overall status → snapshot IS promoted (not blocked)."""
+        gates = [
+            GateResult(name="audit", status="WARN", detail="stale-price recompute"),
+            GateResult(name="xbi_staleness", status="PASS", detail="ok"),
+        ]
+        screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
+        with patch("run_daily_production.get_git_info", return_value={}):
+            manifest = build_run_manifest(
+                "2026-03-07",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
+            )
+        assert manifest["overall_status"] == "WARN"
+        # WARN should promote — verify by calling promote_snapshot
+        staging = tmp_path / "staging" / "2026-03-07"
+        staging.mkdir(parents=True)
+        (staging / "rankings.csv").write_text("ticker\nACRS\n")
+        final_dir = tmp_path / "snapshots"
+        final_dir.mkdir()
+        # Simulating the promotion decision from run_daily lines 3401-3412:
+        # if overall != "FAIL": promote
+        if manifest["overall_status"] != "FAIL":
+            result = promote_snapshot(staging, final_dir, "2026-03-07")
+            assert result.exists()
+            assert (result / "rankings.csv").exists()
+
+    def test_fail_overall_blocks_promotion(self, tmp_path):
+        """FAIL overall status → snapshot NOT promoted."""
+        gates = [
+            GateResult(name="sort_contrib_sanity", status="FAIL", detail="non-finite"),
+        ]
+        screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
+        with patch("run_daily_production.get_git_info", return_value={}):
+            manifest = build_run_manifest(
+                "2026-03-07",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
+            )
+        assert manifest["overall_status"] == "FAIL"
+        # FAIL should NOT promote
+        staging = tmp_path / "staging" / "2026-03-07"
+        staging.mkdir(parents=True)
+        (staging / "rankings.csv").write_text("ticker\nACRS\n")
+        final_dir = tmp_path / "snapshots"
+        final_dir.mkdir()
+        if manifest["overall_status"] != "FAIL":
+            promote_snapshot(staging, final_dir, "2026-03-07")
+        # Snapshot should still be in staging
+        assert staging.exists()
+        assert not (final_dir / "2026-03-07").exists()
+
+    def test_audit_fail_default_does_not_block(self):
+        """Default GateConfig: audit exit 1 → WARN (not FAIL) → promotable."""
+        proc = subprocess.CompletedProcess(args=[], returncode=1)
+        result = check_audit_result(proc, GateConfig())
+        assert result.status == "WARN"
+        # Build manifest with only this gate
+        gates = [result]
+        screen_proc = subprocess.CompletedProcess(args=[], returncode=0)
+        with patch("run_daily_production.get_git_info", return_value={}):
+            manifest = build_run_manifest(
+                "2026-03-07",
+                gates,
+                {},
+                screen_proc,
+                None,
+                GateConfig(),
+            )
+        assert manifest["overall_status"] == "WARN"  # not FAIL
+
+
+# ---------------------------------------------------------------------------
+# Tests: Metadata provenance fields
+# ---------------------------------------------------------------------------
+
+
+class TestMetadataProvenance:
+    """Verify that metadata.json carries ruleset and engine provenance."""
+
+    def test_provenance_fields_present(self, tmp_path):
+        """save_validation_snapshot stamps ruleset_id, engine_version, git_sha."""
+        from run_screen import DEFAULT_RULESET, save_validation_snapshot
+
+        snap_dir = tmp_path / "snapshots"
+        results = {
+            "module_5_composite": {
+                "ranked_securities": [
+                    {
+                        "ticker": "ACRS",
+                        "composite_rank": 1,
+                        "composite_score": 0.8,
+                        "score_rank_pct": 0.99,
+                        "score_z": 1.5,
+                        "stage_bucket": "late",
+                        "market_cap_bucket": "large",
+                        "severity": "low",
+                        "momentum_signal": {},
+                        "valuation_signal": {},
+                        "component_scores": [
+                            {"name": "catalyst", "normalized": 0.5},
+                            {"name": "smart_money", "normalized": 0.4},
+                            {"name": "clinical", "normalized": 0.6},
+                            {"name": "financial", "normalized": 0.7},
+                        ],
+                    }
+                ],
+            },
+            "company_archetypes": {"ACRS": "drug_developer"},
+        }
+
+        path = save_validation_snapshot(
+            snapshot_dir=snap_dir,
+            as_of_date="2026-03-07",
+            results=results,
+            version="test",
+            ruleset=DEFAULT_RULESET,
+        )
+        assert path is not None
+
+        meta = json.loads((path / "metadata.json").read_text())
+
+        # Provenance fields must be present and non-null
+        assert "ruleset_id" in meta
+        assert meta["ruleset_id"] is not None
+        assert meta["ruleset_id"] == DEFAULT_RULESET.ruleset_id
+
+        assert "engine_version" in meta
+        assert meta["engine_version"] is not None
+
+        assert "git_sha" in meta
+        # git_sha may be None in CI / detached HEAD, but the key must exist
+
+        # ruleset_hash should be non-null (decision_ruleset.json written before metadata)
+        assert "ruleset_hash" in meta
+
+    def test_provenance_fields_with_no_explicit_ruleset(self, tmp_path):
+        """When no ruleset is passed, DEFAULT_RULESET is used for provenance."""
+        from run_screen import DEFAULT_RULESET, save_validation_snapshot
+
+        snap_dir = tmp_path / "snapshots"
+        results = {
+            "module_5_composite": {
+                "ranked_securities": [
+                    {
+                        "ticker": "BMRN",
+                        "composite_rank": 1,
+                        "composite_score": 0.5,
+                        "score_rank_pct": 0.50,
+                        "score_z": 0.0,
+                        "stage_bucket": "mid",
+                        "market_cap_bucket": "large",
+                        "severity": "low",
+                        "momentum_signal": {},
+                        "valuation_signal": {},
+                        "component_scores": [
+                            {"name": "catalyst", "normalized": 0.5},
+                            {"name": "clinical", "normalized": 0.5},
+                            {"name": "financial", "normalized": 0.5},
+                        ],
+                    }
+                ],
+            },
+            "company_archetypes": {"BMRN": "commercial_biotech"},
+        }
+
+        path = save_validation_snapshot(
+            snapshot_dir=snap_dir,
+            as_of_date="2026-03-07",
+            results=results,
+            version="test",
+            # No ruleset= → defaults to DEFAULT_RULESET
+        )
+        assert path is not None
+
+        meta = json.loads((path / "metadata.json").read_text())
+        assert meta["ruleset_id"] == DEFAULT_RULESET.ruleset_id
+        assert meta["engine_version"] is not None

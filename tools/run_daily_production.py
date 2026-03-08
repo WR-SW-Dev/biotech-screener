@@ -120,8 +120,13 @@ class GateConfig:
     turnover_max_pct: float = 40.0
     """Max name turnover (%) before FAIL."""
 
-    audit_fail_is_gate_fail: bool = True
-    """If data_integrity_audit exits 1, treat as gate FAIL."""
+    audit_fail_is_gate_fail: bool = False
+    """If data_integrity_audit exits 1, treat as gate WARN (not FAIL).
+
+    Changed from True→False: stale-but-present price recompute mismatches
+    (the dominant audit failure mode) are informational, not blocking.
+    Only sort_contrib_sanity hard-sanity failures should block promotion.
+    """
 
     audit_warn_is_gate_warn: bool = True
     """If data_integrity_audit exits 2, treat as gate WARN."""

@@ -55,7 +55,7 @@ from typing import Any, Dict, List, Optional
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
-from archive_snapshot import sha256_file
+from archive_snapshot import get_git_info, sha256_file
 from backtest.cost_model import CostSchedule, estimate_trade_cost
 from common.data_integration_contracts import (
     normalize_financial_field_alias,
@@ -4504,12 +4504,23 @@ def save_validation_snapshot(
     for a in archetypes.values():
         archetype_counts[a] = archetype_counts.get(a, 0) + 1
 
+    # --- Provenance fields ---
+    _rs = ruleset or DEFAULT_RULESET
+    _git = get_git_info(Path(__file__).resolve().parent)
+    _ruleset_path = snap_path / "decision_ruleset.json"
+    _ruleset_hash = sha256_file(str(_ruleset_path)) if _ruleset_path.exists() else None
+
     metadata = {
         "as_of_date": as_of_date,
         "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
         "version": version,
+        "ruleset_id": _rs.ruleset_id,
+        "ruleset_file": getattr(_rs, "_source_path", None),
+        "ruleset_hash": _ruleset_hash,
+        "engine_version": DE_VERSION,
+        "git_sha": _git.get("sha"),
         "ticker_count": len(ranked),
         "source_type": "live_pipeline_v3",
         "scoring_model": "module_5_v3_ic_enhanced",
