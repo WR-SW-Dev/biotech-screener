@@ -74,6 +74,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "ruleset_health",
         "exposure_missingness",
         "risk_concentration",
+        "ruleset_governance",
     }
 )
 
@@ -2244,6 +2245,91 @@ def _format_audit_detail(
     return f"{base_msg} [{', '.join(parts)}] ({rule_detail})"
 
 
+def check_ruleset_governance(
+    ruleset_path: Optional[Path],
+    manifest_path: Path,
+    allow_candidate: bool = False,
+) -> GateResult:
+    """Validate that the resolved ruleset has status=='active' in the manifest.
+
+    Returns:
+        GateResult with value="STRICT" or "RELAXED_CANDIDATE" for manifest stamping.
+    """
+    if not manifest_path.is_file():
+        return GateResult(
+            name="ruleset_governance",
+            status="FAIL",
+            detail=f"Manifest not found: {manifest_path}",
+        )
+
+    try:
+        with open(manifest_path) as f:
+            manifest_data = json.load(f)
+    except Exception as e:
+        return GateResult(
+            name="ruleset_governance",
+            status="FAIL",
+            detail=f"Failed to load manifest: {e}",
+        )
+
+    # Resolve ruleset ID
+    if ruleset_path is not None:
+        from decision_engine import DecisionRuleset
+
+        try:
+            rs = DecisionRuleset.from_json(str(ruleset_path))
+            resolved_id = rs.ruleset_id
+        except Exception as e:
+            return GateResult(
+                name="ruleset_governance",
+                status="FAIL",
+                detail=f"Failed to load ruleset: {e}",
+            )
+    else:
+        from run_screen import PHASE2_PINNED_RULESET_ID
+
+        resolved_id = PHASE2_PINNED_RULESET_ID
+
+    # Look up in manifest entries
+    entries = manifest_data.get("rulesets", [])
+    entry = None
+    for e in entries:
+        if e.get("id") == resolved_id:
+            entry = e
+            break
+
+    if entry is None:
+        return GateResult(
+            name="ruleset_governance",
+            status="FAIL",
+            detail=f"Ruleset {resolved_id} not found in manifest",
+        )
+
+    status = entry.get("status", "unknown")
+
+    if status == "active":
+        return GateResult(
+            name="ruleset_governance",
+            status="PASS",
+            detail=f"Ruleset {resolved_id} is active",
+            value="STRICT",
+        )
+
+    if status == "candidate" and allow_candidate:
+        return GateResult(
+            name="ruleset_governance",
+            status="WARN",
+            detail=f"RELAXED_CANDIDATE: {resolved_id}",
+            value="RELAXED_CANDIDATE",
+        )
+
+    return GateResult(
+        name="ruleset_governance",
+        status="FAIL",
+        detail=f"Ruleset {resolved_id} has status={status}, expected active",
+    )
+
+
 def check_audit_result(
     audit_proc: subprocess.CompletedProcess,
     config: GateConfig,
@@ -2904,6 +2990,7 @@ def run_daily(
     warm_price_pit: bool = True,
     price_pit_backfill: bool = False,
     auto_refresh_market_data: bool = True,
+    allow_candidate: bool = False,
 ) -> Dict[str, Any]:
     """Execute the full daily Phase-2 pipeline.
 
@@ -2920,6 +3007,30 @@ def run_daily(
     print(f"{'='*70}")
     print(f"PHASE-2 DAILY RUN — {as_of_date}")
     print(f"{'='*70}")
+
+    # --- Gate: Ruleset governance (pre-flight, before expensive work) ---
+    _manifest_path = REPO_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
+    gov_gate = check_ruleset_governance(ruleset_path, _manifest_path, allow_candidate=allow_candidate)
+    gate_results.append(gov_gate)
+    print(f"  Ruleset governance: {gov_gate.status} — {gov_gate.detail}")
+    if gov_gate.status == "FAIL":
+        print("\n  FATAL: Ruleset governance gate FAIL. Aborting before screen run.")
+        manifest = build_run_manifest(
+            as_of_date,
+            gate_results,
+            {},
+            subprocess.CompletedProcess(args=[], returncode=-1),
+            None,
+            config,
+            requested_as_of_date=requested_as_of_date,
+            git_pre_run=git_pre_run,
+            data_dir=data_dir,
+        )
+        if gov_gate.value:
+            manifest["governance_mode"] = gov_gate.value
+        return manifest
+    # Stamp governance mode for manifest
+    _governance_mode = gov_gate.value or "STRICT"
 
     # --- Step 1: Price refresh ---
     price_stats: Dict[str, Any] = {}
@@ -3390,6 +3501,9 @@ def run_daily(
         data_dir=data_dir,
     )
 
+    # Stamp governance mode
+    manifest["governance_mode"] = _governance_mode
+
     # Write manifest to staging dir
     manifest_path = staging_date_dir / "run_manifest.json"
     with open(manifest_path, "w") as f:
@@ -3450,6 +3564,15 @@ def run_daily(
                     print(f"  Full drift report → {_drift_out}")
                 else:
                     print(f"  [WARN] Full drift report failed (exit {_drift_proc.returncode})")
+
+        # --- Step 5c: Action packet (non-blocking) ---
+        try:
+            from tools.action_packet import write_action_packet
+
+            _action_path = write_action_packet(final_path)
+            print(f"  Action packet → {_action_path.parent}")
+        except Exception as _ap_err:
+            print(f"  [WARN] Action packet generation failed: {_ap_err}")
 
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
@@ -3612,6 +3735,11 @@ def main():
         help="Do not auto-refresh market_data.json when staleness gate fires; abort instead.",
     )
     parser.add_argument(
+        "--allow-candidate",
+        action="store_true",
+        help="Allow candidate rulesets (WARN instead of FAIL in governance gate).",
+    )
+    parser.add_argument(
         "--json-logs",
         action="store_true",
         help="Emit JSON-structured logs to stdout (also activated by LOG_FORMAT=json env var).",
@@ -3654,6 +3782,7 @@ def main():
             warm_price_pit=not args.no_warm_price_pit,
             price_pit_backfill=args.price_pit_backfill,
             auto_refresh_market_data=not args.no_auto_refresh_market_data,
+            allow_candidate=args.allow_candidate,
         )
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash
