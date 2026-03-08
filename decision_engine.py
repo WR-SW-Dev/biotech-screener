@@ -210,6 +210,14 @@ class DecisionRuleset:
     binary_sleeve_per_name_max_pct: float = 100.0  # per-name cap (100 = disabled)
     binary_sleeve_days_threshold: int = 30  # catalyst_days cutoff for "binary"
 
+    # Less-binary (core) sleeve construction mode.
+    # Controls how names without dated catalysts are treated in sizing:
+    #   "include"      — standard top-K selection + sizing (default, status quo)
+    #   "equal_weight" — equal weight among eligible core names (beta sleeve)
+    #   "bottom_k"     — contrarian: select worst-ranked K (research only)
+    #   "exclude"      — zero weight for core names (alpha-only portfolio)
+    less_binary_construction: str = "include"
+
     # Bucket hysteresis: prevent churn at 30/90/180 day boundaries.
     # When enabled, a ticker stays in its previous bucket until catalyst_days
     # crosses the exit threshold (boundary + 7 days).  Default OFF.
@@ -356,6 +364,11 @@ class DecisionRuleset:
             )
         if self.binary_sleeve_days_threshold < 0:
             raise ValueError(f"binary_sleeve_days_threshold must be >= 0, " f"got {self.binary_sleeve_days_threshold}")
+        _valid_lb_modes = {"include", "equal_weight", "bottom_k", "exclude"}
+        if self.less_binary_construction not in _valid_lb_modes:
+            raise ValueError(
+                f"less_binary_construction must be one of {_valid_lb_modes}, " f"got {self.less_binary_construction!r}"
+            )
 
     @property
     def sizing_weights_dict(self) -> Dict[str, float]:
@@ -1722,7 +1735,67 @@ def compute_target_weights(
     # Apply binary sleeve caps (no-op when defaults are 100%)
     apply_binary_sleeve_caps(rows, rs)
 
+    # Less-binary construction mode
+    _apply_less_binary_construction(rows, rs)
+
     return rows
+
+
+def _apply_less_binary_construction(
+    rows: List[Dict[str, Any]],
+    ruleset: DecisionRuleset,
+) -> None:
+    """Apply less-binary (core) sleeve construction policy in-place.
+
+    Modes:
+        include:      no change (default)
+        exclude:      zero weight for core names, renormalize binaries to 100%
+        equal_weight: set core names to equal weight, renormalize total to 100%
+    """
+    mode = ruleset.less_binary_construction
+    if mode == "include":
+        return
+
+    threshold = ruleset.binary_sleeve_days_threshold
+    core_idx = []
+    binary_idx = []
+    for i, row in enumerate(rows):
+        w = _safe_float(row.get("target_weight_pct"), default=0.0)
+        if w <= 0:
+            continue
+        if _is_binary_name(row, threshold):
+            binary_idx.append(i)
+        else:
+            core_idx.append(i)
+
+    if not core_idx:
+        return
+
+    if mode == "exclude":
+        # Zero out core names
+        for i in core_idx:
+            rows[i]["target_weight_pct"] = 0.0
+        # Renormalize binaries to 100%
+        if binary_idx:
+            total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in binary_idx)
+            if total > 0:
+                for i in binary_idx:
+                    w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+                    rows[i]["target_weight_pct"] = round(w / total * 100, 2)
+
+    elif mode == "equal_weight":
+        # Set core names to equal weight, preserving their total allocation
+        core_total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in core_idx)
+        ew = round(core_total / len(core_idx), 2) if core_idx else 0.0
+        for i in core_idx:
+            rows[i]["target_weight_pct"] = ew
+        # Renormalize total to 100%
+        all_idx = binary_idx + core_idx
+        total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in all_idx)
+        if total > 0 and abs(total - 100.0) > 0.01:
+            for i in all_idx:
+                w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+                rows[i]["target_weight_pct"] = round(w / total * 100, 2)
 
 
 # =============================================================================

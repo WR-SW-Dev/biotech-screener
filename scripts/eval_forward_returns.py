@@ -238,6 +238,105 @@ def compute_turnover(prev_set: List[str], curr_set: List[str]) -> float:
     return 0.5 * diff / denom
 
 
+def select_portfolio_tickers(
+    tickers_ranked: List[str],
+    k: int,
+    mode: str = "top",
+) -> List[str]:
+    """Select K tickers from ranked list based on selection mode.
+
+    Args:
+        tickers_ranked: tickers sorted best-to-worst by actionable_rank.
+        k: number of tickers to select.
+        mode: "top" (first K), "bottom" (last K), "mid" (middle K).
+
+    Returns:
+        List of K selected tickers.
+    """
+    n = len(tickers_ranked)
+    if n == 0 or k <= 0:
+        return []
+    k = min(k, n)
+    if mode == "top":
+        return tickers_ranked[:k]
+    elif mode == "bottom":
+        return tickers_ranked[-k:]
+    elif mode == "mid":
+        # Center the selection around the midpoint
+        mid = n // 2
+        start = max(0, mid - k // 2)
+        end = start + k
+        if end > n:
+            end = n
+            start = max(0, end - k)
+        return tickers_ranked[start:end]
+    else:
+        raise ValueError(f"Unknown selection_mode: {mode!r}")
+
+
+def _select_with_buffer(
+    tickers_ranked: List[str],
+    k: int,
+    mode: str,
+    buffer: int,
+    prev_holdings: List[str],
+) -> List[str]:
+    """Select K tickers with rebalance buffer — symmetric across modes.
+
+    For each mode, defines a "core zone" (the K tickers we'd pick without
+    buffer) and a "buffer zone" (core ± buffer ranks).  Prev holdings that
+    remain in the buffer zone are kept; remaining slots filled from core.
+
+    top:    core = [0, k),       buffer zone = [0, k+buffer)
+    bottom: core = [n-k, n),     buffer zone = [n-k-buffer, n)
+    mid:    core = [mid_start, mid_end), buffer zone = [mid_start-buffer, mid_end+buffer)
+    """
+    n = len(tickers_ranked)
+    if n == 0 or k <= 0:
+        return []
+    k = min(k, n)
+
+    # Compute core and buffer zones as index ranges
+    if mode == "top":
+        core_start, core_end = 0, k
+        buf_start = 0
+        buf_end = min(n, k + buffer)
+    elif mode == "bottom":
+        core_start, core_end = n - k, n
+        buf_start = max(0, n - k - buffer)
+        buf_end = n
+    elif mode == "mid":
+        mid = n // 2
+        core_start = max(0, mid - k // 2)
+        core_end = core_start + k
+        if core_end > n:
+            core_end = n
+            core_start = max(0, core_end - k)
+        buf_start = max(0, core_start - buffer)
+        buf_end = min(n, core_end + buffer)
+    else:
+        raise ValueError(f"Unknown selection_mode: {mode!r}")
+
+    # Build index lookup for buffer zone membership
+    buffer_zone = set(tickers_ranked[buf_start:buf_end])
+    core_zone = tickers_ranked[core_start:core_end]
+
+    # Keep prev holdings still in buffer zone
+    kept = [t for t in prev_holdings if t in buffer_zone]
+
+    # Fill remaining slots from core zone (preserving rank order)
+    if len(kept) < k:
+        kept_set = set(kept)
+        for t in core_zone:
+            if t not in kept_set:
+                kept.append(t)
+                kept_set.add(t)
+                if len(kept) >= k:
+                    break
+
+    return kept[:k]
+
+
 def net_return(gross: float, turnover: float, cost_bps: float) -> float:
     """Net return after transaction cost haircut.
 
@@ -917,6 +1016,7 @@ class EvalSummary:
     benchmark: str = "none"
     split_mode: str = "none"
     universe_mode: str = "current"
+    selection_mode: str = "top"
     coinvest_signal_diagnostics: Optional[Dict[str, Any]] = None
     data_freshness: Optional[Dict[str, Any]] = None
 
@@ -980,6 +1080,10 @@ def evaluate(
     preflight_strict: bool = False,
     bucket_filter: Optional[List[str]] = None,
     industry_neutral: bool = False,
+    selection_mode: str = "top",
+    _shuffle_seed: Optional[int] = None,
+    min_mcap_buckets: Optional[Tuple[str, ...]] = None,
+    trade_lag_days: int = 0,
 ) -> Tuple[EvalSummary, List[DateResult], List[Dict[str, str]]]:
     """Run the full walk-forward evaluation.
 
@@ -1007,6 +1111,9 @@ def evaluate(
         top_quantile: use top N% instead of top-K (0=use top_k).
         bucket_filter: if provided, only include tickers whose catalyst_bucket
             is in this list (e.g. ["binary_now", "build_window"]).
+        selection_mode: "top" (default, best-ranked K), "bottom" (worst-ranked K,
+            contrarian), or "mid" (middle K, belly of the distribution).
+            Controls which slice of the ranked list becomes the portfolio.
         industry_neutral: if True, compute within-industry-group Spearman IC
             (averaged across groups) alongside the standard IC.
 
@@ -1110,6 +1217,17 @@ def evaluate(
             skips.append({"date": snap_date, "reason": f"ANCHOR_DATE_NOT_FOUND (mode={anchor_mode})"})
             continue
 
+        # Apply execution lag: shift trade_date forward by N trading days
+        if trade_lag_days > 0:
+            lagged = _trading_days_after(sorted_dates, trade_date, trade_lag_days)
+            if lagged is None:
+                for h in horizons:
+                    dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason="TRADE_LAG_BEYOND_DATA")
+                    date_results.append(dr)
+                skips.append({"date": snap_date, "reason": f"TRADE_LAG_BEYOND_DATA (lag={trade_lag_days})"})
+                continue
+            trade_date = lagged
+
         # Load rankings or positions
         if use_positions:
             positions = load_positions(snap_dir)
@@ -1124,9 +1242,22 @@ def evaluate(
                 skips.append({"date": snap_date, "reason": "EMPTY_RANKINGS"})
                 continue
 
-            # Bucket filter: restrict to tickers matching catalyst_bucket
+            # Bucket filter: restrict to tickers matching catalyst_bucket.
+            # If rankings lack the column, compute it on the fly from
+            # catalyst_mode + catalyst_days using the DE bucket function.
             if bucket_filter is not None:
                 _allowed_buckets = set(bucket_filter)
+                # Backfill catalyst_bucket when absent
+                if rankings and not rankings[0].get("catalyst_bucket"):
+                    from decision_engine import assign_catalyst_bucket as _assign_bucket
+
+                    for _r in rankings:
+                        _cd = _r.get("catalyst_days", "")
+                        try:
+                            _cd_f: Optional[float] = float(_cd) if _cd not in ("", None) else None
+                        except (ValueError, TypeError):
+                            _cd_f = None
+                        _r["catalyst_bucket"] = _assign_bucket(_cd_f, str(_r.get("catalyst_mode", "")))
                 rankings = [r for r in rankings if r.get("catalyst_bucket", "").strip() in _allowed_buckets]
                 if not rankings:
                     for h in horizons:
@@ -1144,6 +1275,27 @@ def evaluate(
                         }
                     )
                     continue
+
+            # Market cap filter (tradeability gate: exclude small bands)
+            if min_mcap_buckets is not None:
+                _allowed_bands = set(min_mcap_buckets)
+                rankings = [r for r in rankings if r.get("size_band", "XS") in _allowed_bands]
+                if not rankings:
+                    for h in horizons:
+                        dr = DateResult(date=snap_date, horizon=h, skipped=True, skip_reason="EMPTY_AFTER_MCAP_FILTER")
+                        date_results.append(dr)
+                    skips.append({"date": snap_date, "reason": "EMPTY_AFTER_MCAP_FILTER"})
+                    continue
+
+            # Placebo shuffle: randomize rank order within bucket (research)
+            if _shuffle_seed is not None:
+                import random as _random
+
+                _rng = _random.Random(_shuffle_seed + hash(snap_date))
+                _rng.shuffle(rankings)
+                # Re-assign actionable_rank after shuffle
+                for _si, _sr in enumerate(rankings):
+                    _sr["actionable_rank"] = _si + 1
 
             # Coinvest signal diagnostics (before any rescore)
             diag = _coinvest_signal_diagnostics(rankings, top_k)
@@ -1167,7 +1319,9 @@ def evaluate(
 
             rankings.sort(key=_safe_rank)
             tickers_ranked = [r["ticker"] for r in rankings if r.get("ticker")]
-            eligible_set = {r["ticker"] for r in rankings if r.get("ticker") and r.get("actionable_rank", "").strip()}
+            eligible_set = {
+                r["ticker"] for r in rankings if r.get("ticker") and str(r.get("actionable_rank", "")).strip()
+            }
 
         # Build per-ticker lookups from rankings for hedged returns + diagnostics
         beta_by_ticker: Dict[str, float] = {}
@@ -1343,24 +1497,20 @@ def evaluate(
             if top_quantile > 0:
                 eff_k = max(1, int(len(eval_tickers) * top_quantile))
 
-            # Top-K portfolio with optional rebalance buffer
+            # Portfolio selection with symmetric rebalance buffer.
+            # Buffer logic: keep prev holdings that remain in the
+            # "target zone + buffer" to reduce churn, then fill remaining
+            # slots from the core target zone.
             if rebalance_buffer_ranks > 0 and prev_holdings[h]:
-                # Buffer: keep existing holdings unless they fall out of top_k + buffer
-                prev_set = set(prev_holdings[h])
-                candidate_tickers = eval_tickers[: eff_k + rebalance_buffer_ranks]
-                # Keep prev holdings that are still in the buffer zone
-                kept = [t for t in prev_holdings[h] if t in set(candidate_tickers)]
-                # Add new tickers from top-K that aren't already held
-                new_slots = eff_k - len(kept)
-                if new_slots > 0:
-                    for t in eval_tickers[:eff_k]:
-                        if t not in set(kept):
-                            kept.append(t)
-                            if len(kept) >= eff_k:
-                                break
-                top_k_tickers = kept[:eff_k]
+                top_k_tickers = _select_with_buffer(
+                    eval_tickers,
+                    eff_k,
+                    selection_mode,
+                    rebalance_buffer_ranks,
+                    prev_holdings[h],
+                )
             else:
-                top_k_tickers = eval_tickers[:eff_k]
+                top_k_tickers = select_portfolio_tickers(eval_tickers, eff_k, selection_mode)
 
             gross, n_held = top_k_portfolio_return(top_k_tickers, fwd_rets, eff_k)
 
@@ -1691,6 +1841,7 @@ def evaluate(
         benchmark=benchmark,
         split_mode=split_mode,
         universe_mode=universe_mode,
+        selection_mode=selection_mode,
     )
 
     # Aggregate coinvest signal diagnostics
@@ -2077,6 +2228,7 @@ def write_summary_md(summary: EvalSummary, out_dir: Path) -> Path:
         f"- **Benchmark**: {summary.benchmark}",
         f"- **Positions mode**: {summary.use_positions}",
         f"- **Universe mode**: {summary.universe_mode}",
+        f"- **Selection mode**: {summary.selection_mode}",
         "",
         "## Execution Convention",
         "",
@@ -2576,6 +2728,23 @@ def main() -> None:
             "averaged across groups (min 3 tickers per group)."
         ),
     )
+    parser.add_argument(
+        "--selection-mode",
+        choices=["top", "bottom", "mid"],
+        default="top",
+        help=(
+            "Portfolio selection mode (research). "
+            "'top': best-ranked K (default). "
+            "'bottom': worst-ranked K (contrarian). "
+            "'mid': middle K (belly of distribution)."
+        ),
+    )
+    parser.add_argument(
+        "--trade-lag-days",
+        type=int,
+        default=0,
+        help="Execution lag: shift trade date forward by N trading days (research).",
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -2642,6 +2811,8 @@ def main() -> None:
         print(f"  Catalyst eval mode: {args.catalyst_eval_mode}")
     if args.industry_neutral:
         print("  Industry-neutral IC: enabled")
+    if args.selection_mode != "top":
+        print(f"  Selection mode: {args.selection_mode}")
 
     # Parse bucket filter
     eff_bucket_filter: Optional[List[str]] = None
@@ -2682,6 +2853,8 @@ def main() -> None:
         preflight_strict=args.preflight_strict,
         bucket_filter=eff_bucket_filter,
         industry_neutral=args.industry_neutral,
+        selection_mode=args.selection_mode,
+        trade_lag_days=args.trade_lag_days,
     )
 
     write_summary_json(summary, args.out_dir)

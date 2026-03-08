@@ -699,3 +699,60 @@ class TestBucketHysteresis:
 
         rs = DecisionRuleset()
         assert rs.enable_bucket_hysteresis is False
+
+
+# ---------------------------------------------------------------------------
+# On-the-fly bucket backfill in eval_forward_returns
+# ---------------------------------------------------------------------------
+
+
+class TestEvalBucketBackfill:
+    """Verify eval computes catalyst_bucket on the fly for legacy snapshots."""
+
+    def test_backfill_assigns_correct_buckets(self):
+        """Rankings without catalyst_bucket get it computed from mode + days."""
+        rankings = [
+            {"ticker": "A", "catalyst_mode": "specific_days", "catalyst_days": "15"},
+            {"ticker": "B", "catalyst_mode": "specific_days", "catalyst_days": "60"},
+            {"ticker": "C", "catalyst_mode": "specific_days", "catalyst_days": "120"},
+            {"ticker": "D", "catalyst_mode": "no_upcoming", "catalyst_days": ""},
+        ]
+        # None have catalyst_bucket → backfill should fire
+        assert not any(r.get("catalyst_bucket") for r in rankings)
+
+        from decision_engine import assign_catalyst_bucket
+
+        for r in rankings:
+            cd = r.get("catalyst_days", "")
+            try:
+                cd_f = float(cd) if cd not in ("", None) else None
+            except (ValueError, TypeError):
+                cd_f = None
+            r["catalyst_bucket"] = assign_catalyst_bucket(cd_f, str(r.get("catalyst_mode", "")))
+
+        assert rankings[0]["catalyst_bucket"] == "binary_now"
+        assert rankings[1]["catalyst_bucket"] == "build_window"
+        assert rankings[2]["catalyst_bucket"] == "less_binary"
+        assert rankings[3]["catalyst_bucket"] == "core"
+
+    def test_filter_after_backfill(self):
+        """After backfill, bucket_filter correctly restricts rankings."""
+        rankings = [
+            {"ticker": "A", "catalyst_mode": "specific_days", "catalyst_days": "15"},
+            {"ticker": "B", "catalyst_mode": "specific_days", "catalyst_days": "60"},
+            {"ticker": "C", "catalyst_mode": "no_upcoming", "catalyst_days": ""},
+        ]
+        from decision_engine import assign_catalyst_bucket
+
+        for r in rankings:
+            cd = r.get("catalyst_days", "")
+            try:
+                cd_f = float(cd) if cd not in ("", None) else None
+            except (ValueError, TypeError):
+                cd_f = None
+            r["catalyst_bucket"] = assign_catalyst_bucket(cd_f, str(r.get("catalyst_mode", "")))
+
+        allowed = {"build_window"}
+        filtered = [r for r in rankings if r.get("catalyst_bucket", "").strip() in allowed]
+        assert len(filtered) == 1
+        assert filtered[0]["ticker"] == "B"

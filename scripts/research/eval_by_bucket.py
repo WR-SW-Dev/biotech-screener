@@ -134,6 +134,7 @@ def run_bucket_eval(
     for bucket_name in ALL_BUCKETS:
         bucket_filter = BUCKET_FILTER_MAP[bucket_name]
         bucket_out = out_dir / bucket_name
+        bucket_out.mkdir(parents=True, exist_ok=True)
 
         # Choose horizons for this bucket
         if bucket_specific_horizons:
