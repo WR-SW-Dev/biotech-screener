@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -105,6 +106,8 @@ def run_weekly_rebalance(
 
     Returns dict with decision, trade packet (if any), exceptions.
     """
+    if "PYTEST_CURRENT_TEST" in os.environ and positions_dir == POSITIONS_DIR:
+        raise AssertionError(f"Tests must pass `positions_dir` explicitly — got production default {POSITIONS_DIR}")
     policy = load_policy(policy_path)
     current_path = positions_dir / f"{as_of_date}.json"
 

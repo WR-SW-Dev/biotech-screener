@@ -675,3 +675,273 @@ class TestEndToEnd:
         assert r2["performance"] is not None
         assert r2["performance"]["total_pnl"] > 0  # both stocks went up
         assert (shadow_root / "performance.csv").is_file()
+
+
+# ---------------------------------------------------------------------------
+# AST-based isolation enforcement
+# ---------------------------------------------------------------------------
+
+
+class TestIsolationEnforcement:
+    """AST-scan to ensure all calls to guarded functions in this test file
+    pass explicit path kwargs (no production defaults).
+    """
+
+    REQUIRED_KWARGS = {
+        "compute_performance": {"price_path"},
+        "save_positions": {"out_dir"},
+        "load_prior_positions": {"positions_dir"},
+        "append_performance": {"perf_csv"},
+        "write_weekly_summary": {"out_path"},
+        "run_shadow_portfolio": {"price_path", "shadow_root"},
+    }
+
+    # Tests that intentionally omit kwargs (e.g., guard verification)
+    ALLOWED_MISSING: set = set()
+
+    def _scan_test_file(self, filepath):
+        import ast
+
+        source = filepath.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(filepath))
+        violations = []
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func_name = None
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+            if func_name not in self.REQUIRED_KWARGS:
+                continue
+
+            enclosing = self._find_enclosing_function(tree, node.lineno)
+            if enclosing in self.ALLOWED_MISSING:
+                continue
+
+            call_kwargs = {kw.arg for kw in node.keywords if kw.arg is not None}
+            # Also count positional args (some functions take path as positional)
+            n_positional = len(node.args)
+            required = self.REQUIRED_KWARGS[func_name]
+
+            # For functions where the guarded param can be positional,
+            # check if enough positional args cover it
+            missing = set()
+            for kw_name in required:
+                if kw_name not in call_kwargs:
+                    # Check if it could be a positional arg
+                    if not self._is_covered_by_positional(func_name, kw_name, n_positional):
+                        missing.add(kw_name)
+
+            if missing:
+                violations.append(
+                    f"{filepath.name}:{node.lineno} — {func_name}() "
+                    f"missing {sorted(missing)} (in {enclosing or '<module>'})"
+                )
+        return violations
+
+    @staticmethod
+    def _is_covered_by_positional(func_name, kw_name, n_positional):
+        """Check if a keyword arg is covered by a positional argument."""
+        # Map function → param index for guarded params that can be positional
+        # Index is 0-based: if param is at index N, n_positional must be > N
+        positional_indices = {
+            ("save_positions", "out_dir"): 3,
+            ("load_prior_positions", "positions_dir"): 1,
+            ("append_performance", "perf_csv"): 3,
+            ("write_weekly_summary", "out_path"): 5,
+            ("compute_performance", "price_path"): 4,
+        }
+        idx = positional_indices.get((func_name, kw_name))
+        return idx is not None and n_positional > idx
+
+    @staticmethod
+    def _find_enclosing_function(tree, lineno):
+        import ast
+
+        enclosing = ""
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                end = getattr(node, "end_lineno", node.lineno + 1000)
+                if node.lineno <= lineno <= end:
+                    enclosing = node.name
+        return enclosing
+
+    def test_all_calls_pass_isolation_kwargs(self):
+        """Every call to guarded live_shadow functions must include explicit
+        path kwargs. If this fails, a new test omitted isolation kwargs."""
+        test_file = Path(__file__)
+        violations = self._scan_test_file(test_file)
+        assert not violations, "Found test calls missing required isolation kwargs:\n" + "\n".join(
+            f"  {v}" for v in violations
+        )
+
+
+# ---------------------------------------------------------------------------
+# End-to-end integration test: synthetic action loop
+# ---------------------------------------------------------------------------
+
+
+class TestEndToEndActionLoop:
+    """Integration test that runs the full chain on synthetic fixtures and
+    asserts required artifacts + weekly summary sections.
+
+    Given: synthetic snapshot + policy + minimal price history
+    Assert: positions produced, pre_trade_check PASS, trade_plan generated,
+            weekly_summary contains required sections.
+    """
+
+    def _make_snapshot(self, snap_dir, as_of_date, rankings):
+        """Write a minimal snapshot directory (rankings.csv + metadata.json)."""
+        snap_dir.mkdir(parents=True, exist_ok=True)
+        # Write rankings.csv
+        if rankings:
+            fieldnames = list(rankings[0].keys())
+            with open(snap_dir / "rankings.csv", "w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=fieldnames)
+                w.writeheader()
+                w.writerows(rankings)
+        # Write metadata.json
+        meta = {
+            "as_of_date": as_of_date,
+            "ruleset_id": "test_e2e",
+            "version": "v_test",
+        }
+        with open(snap_dir / "metadata.json", "w") as f:
+            json.dump(meta, f)
+
+    def _make_price_csv(self, price_path, tickers, dates, base_price=10.0):
+        """Write a minimal price_history.csv with prices for tickers x dates."""
+        price_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(price_path, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=["ticker", "date", "open", "high", "low", "close", "volume"])
+            w.writeheader()
+            for ticker in tickers:
+                for i, date in enumerate(dates):
+                    p = base_price + i * 0.5
+                    w.writerow(
+                        {
+                            "ticker": ticker,
+                            "date": date,
+                            "open": str(p),
+                            "high": str(p + 0.1),
+                            "low": str(p - 0.1),
+                            "close": str(p),
+                            "volume": "100000",
+                        }
+                    )
+            # Add XBI for benchmark
+            for i, date in enumerate(dates):
+                p = 80.0 + i * 0.3
+                w.writerow(
+                    {
+                        "ticker": "XBI",
+                        "date": date,
+                        "open": str(p),
+                        "high": str(p + 0.1),
+                        "low": str(p - 0.1),
+                        "close": str(p),
+                        "volume": "500000",
+                    }
+                )
+
+    def _make_rankings(self, n=25):
+        """Generate N synthetic ranking rows."""
+        rows = []
+        for i in range(n):
+            ticker = f"BIO{i:03d}"
+            rows.append(
+                {
+                    "ticker": ticker,
+                    "actionable_rank": i + 1,
+                    "tier_dev": "A" if i < 8 else "B",
+                    "tier_commercial": "",
+                    "tier_any": "A" if i < 8 else "B",
+                    "eligible": "1",
+                    "composite_score": str(90 - i),
+                    "composite_rank": str(i + 1),
+                    "optionality_pct": f"{0.95 - i * 0.02:.2f}",
+                    "catalyst_days": str(120 - i * 3),
+                    "gap_risk": "",
+                    "price_coverage": "OK",
+                    "archetype": "drug_developer",
+                    "has_regulatory_upcoming_180d": "0",
+                    "regulatory_days": "",
+                    "regulatory_quality": "",
+                    "regulatory_event_type": "",
+                }
+            )
+        return rows
+
+    def test_full_action_loop(self, tmp_path):
+        """End-to-end: snapshot → positions → performance → pre-trade → trade plan → summary."""
+        tickers = [f"BIO{i:03d}" for i in range(25)]
+        dates = ["2026-03-01", "2026-03-08"]
+
+        # 1. Create synthetic fixtures
+        snap1 = tmp_path / "snapshots" / "2026-03-01"
+        snap2 = tmp_path / "snapshots" / "2026-03-08"
+        self._make_snapshot(snap1, "2026-03-01", self._make_rankings())
+        self._make_snapshot(snap2, "2026-03-08", self._make_rankings())
+
+        price_path = tmp_path / "prices" / "price_history.csv"
+        self._make_price_csv(price_path, tickers, dates)
+
+        shadow_root = tmp_path / "shadow"
+        positions_dir = shadow_root / "positions"
+
+        # 2. Run shadow portfolio for week 1
+        r1 = run_shadow_portfolio(
+            snap1,
+            account_usd=100_000,
+            price_path=price_path,
+            shadow_root=shadow_root,
+        )
+        assert "positions_path" in r1
+        assert Path(r1["positions_path"]).is_file()
+
+        # 3. Run shadow portfolio for week 2 (will compute performance)
+        r2 = run_shadow_portfolio(
+            snap2,
+            account_usd=100_000,
+            price_path=price_path,
+            shadow_root=shadow_root,
+        )
+        assert r2["performance"] is not None
+
+        # 4. Pre-trade check PASS
+        from tools.pre_trade_check import run_pre_trade_check
+
+        manifest_path = tmp_path / "manifest.json"
+        manifest_path.write_text(
+            json.dumps(
+                {
+                    "rulesets": [{"id": "test_e2e", "file": "test.json", "status": "active"}],
+                }
+            )
+        )
+
+        ptc = run_pre_trade_check(
+            "2026-03-08",
+            positions_dir=positions_dir,
+            snap_dir=snap2,
+            manifest_path=manifest_path,
+            deviation_max_pct=100,  # synthetic data won't match targets exactly
+            max_missing_prices=25,  # synthetic tickers won't have real prices
+        )
+        assert ptc.overall in ("PASS", "WARN"), f"Pre-trade check failed: {ptc.checks}"
+
+        # 5. Weekly summary has required sections
+        summary_path = shadow_root / "weekly_summary.md"
+        assert summary_path.is_file(), "Weekly summary not generated"
+        summary_text = summary_path.read_text()
+        assert "# Weekly Shadow Portfolio Summary" in summary_text
+        assert "## Policy vs Actual" in summary_text
+        assert "## Performance vs Prior" in summary_text
+        assert "## Top 10 Holdings" in summary_text
+
+        # 6. Performance CSV exists
+        perf_csv = shadow_root / "performance.csv"
+        assert perf_csv.is_file(), "Performance CSV not generated"

@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -43,6 +44,26 @@ PRICE_HISTORY_PATH = PROJECT_ROOT / "production_data" / "price_history.csv"
 
 SCHEMA_VERSION = "live_shadow_positions.v1"
 PERF_SCHEMA_VERSION = "live_shadow_perf.v1"
+
+# Production-path constants for guard checks
+_PRODUCTION_PATHS = {
+    "out_dir": POSITIONS_DIR,
+    "positions_dir": POSITIONS_DIR,
+    "perf_csv": PERFORMANCE_CSV,
+    "out_path": WEEKLY_SUMMARY,
+    "price_path": PRICE_HISTORY_PATH,
+    "shadow_root": SHADOW_ROOT,
+}
+
+
+def _assert_not_production_default(name: str, value: Path, production_default: Path) -> None:
+    """Raise AssertionError if a test uses a production default path.
+
+    Only active when PYTEST_CURRENT_TEST is set; no-op in production.
+    """
+    if "PYTEST_CURRENT_TEST" in os.environ and value == production_default:
+        raise AssertionError(f"Tests must pass `{name}` explicitly — got production default {production_default}")
+
 
 # Bucket display names (same as action lists)
 BUCKET_DISPLAY = {
@@ -819,6 +840,7 @@ def compute_performance(
     Returns dict with total_pnl, pnl_pct, excess_vs_xbi, sleeve attribution,
     turnover metrics.
     """
+    _assert_not_production_default("price_path", price_path, PRICE_HISTORY_PATH)
     prior_prices = load_price_map(price_path, prior_date)
     current_prices = load_price_map(price_path, current_date)
     xbi_prior = load_xbi_price(price_path, prior_date)
@@ -928,6 +950,7 @@ def save_positions(
     out_dir: Path = POSITIONS_DIR,
 ) -> Path:
     """Write positions JSON artifact."""
+    _assert_not_production_default("out_dir", out_dir, POSITIONS_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / f"{as_of_date}.json"
     doc = {
@@ -951,6 +974,7 @@ def load_prior_positions(
 
     Returns (prior_date, positions_list) or None.
     """
+    _assert_not_production_default("positions_dir", positions_dir, POSITIONS_DIR)
     if not positions_dir.is_dir():
         return None
 
@@ -994,6 +1018,7 @@ def append_performance(
     perf_csv: Path = PERFORMANCE_CSV,
 ) -> None:
     """Append a row to the append-only performance CSV."""
+    _assert_not_production_default("perf_csv", perf_csv, PERFORMANCE_CSV)
     perf_csv.parent.mkdir(parents=True, exist_ok=True)
     write_header = not perf_csv.is_file()
 
@@ -1142,6 +1167,7 @@ def write_weekly_summary(
     out_path: Path = WEEKLY_SUMMARY,
 ) -> Path:
     """Write a human-readable weekly summary markdown."""
+    _assert_not_production_default("out_path", out_path, WEEKLY_SUMMARY)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     positions = positions_data.get("positions", [])
     summary = positions_data.get("summary", {})
@@ -1638,6 +1664,8 @@ def run_shadow_portfolio(
 
     Returns dict with positions_path, performance, summary.
     """
+    _assert_not_production_default("price_path", price_path, PRICE_HISTORY_PATH)
+    _assert_not_production_default("shadow_root", shadow_root, SHADOW_ROOT)
     policy = load_policy(policy_path)
     if account_usd is not None:
         policy["account_usd"] = account_usd
