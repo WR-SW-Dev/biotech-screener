@@ -252,3 +252,9 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
         except ImportError:
             for r in rows:
                 r["binary_quality_score"] = "0.0"
+
+    # Event quality features: backfill if missing
+    for col in ("regulatory_quality", "clinical_quality", "has_adcom", "single_asset_risk"):
+        if col not in sample:
+            for r in rows:
+                r[col] = "0"

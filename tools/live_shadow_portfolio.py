@@ -107,6 +107,7 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
             "binary_0_30": 1.0,
             "less_binary": 2.0,
         },
+        "family_overrides": {},
         "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
@@ -158,6 +159,7 @@ def build_positions(
     bucket_targets = policy.get("bucket_targets", {})
     bucket_top_k = policy.get("bucket_top_k", {})
     bucket_name_caps = policy.get("bucket_name_caps", {})
+    family_overrides = policy.get("family_overrides", {})
     gap_cfg = policy.get("gap_risk", {})
     gap_high_days = gap_cfg.get("high_days", 7)
     gap_high_cap = gap_cfg.get("high_cap_pct", 0.5)
@@ -168,17 +170,36 @@ def build_positions(
         bucket = classify_action_bucket(row)
         buckets[bucket].append(row)
 
-    # Select top-K per bucket
+    # Select top-K per bucket, respecting family-level max_k limits
     selected: Dict[str, List[Dict[str, str]]] = {}
     for bucket_name in BUCKET_NAMES:
         k = bucket_top_k.get(bucket_name, 20)
-        selected[bucket_name] = buckets[bucket_name][:k]
+        bucket_rows = buckets[bucket_name][:k]
+        fam_cfg = family_overrides.get(bucket_name, {})
+        if fam_cfg:
+            # Apply per-family max_k: group by family, cap each, reassemble
+            by_family: Dict[str, List[Dict[str, str]]] = {}
+            for row in bucket_rows:
+                fam = (row.get("catalyst_family") or "OTHER").upper()
+                by_family.setdefault(fam, []).append(row)
+            capped: List[Dict[str, str]] = []
+            for fam, fam_rows in by_family.items():
+                fam_k = fam_cfg.get(fam, {}).get("max_k")
+                if fam_k is not None:
+                    fam_rows = fam_rows[:fam_k]
+                capped.extend(fam_rows)
+            # Re-sort by actionable_rank to maintain deterministic order
+            capped.sort(key=lambda r: (_safe_float(r.get("actionable_rank", ""), 9999), r.get("ticker", "")))
+            selected[bucket_name] = capped
+        else:
+            selected[bucket_name] = bucket_rows
 
     # Compute target weight per position
     positions = []
     for bucket_name in BUCKET_NAMES:
         target_frac = bucket_targets.get(bucket_name, 0.25)
         bucket_cap = bucket_name_caps.get(bucket_name, 5.0)
+        fam_cfg = family_overrides.get(bucket_name, {})
         rows = selected[bucket_name]
         n = len(rows)
         if n == 0:
@@ -187,7 +208,11 @@ def build_positions(
         # Equal weight within bucket, then cap
         equal_wt = (target_frac * 100.0) / n
         for row in rows:
-            wt = min(equal_wt, bucket_cap)
+            fam = (row.get("catalyst_family") or "OTHER").upper()
+            # Family-level name cap overrides bucket-level cap
+            fam_cap = fam_cfg.get(fam, {}).get("name_cap_pct")
+            eff_cap = fam_cap if fam_cap is not None else bucket_cap
+            wt = min(equal_wt, eff_cap)
 
             # Gap-risk cap for binary_0_30
             cat_days = _safe_float(row.get("catalyst_days", ""), float("inf"))
@@ -211,6 +236,7 @@ def build_positions(
                 {
                     "ticker": row.get("ticker", ""),
                     "bucket": bucket_name,
+                    "catalyst_family": fam,
                     "actionable_rank": int(_safe_float(row.get("actionable_rank", ""), 9999)),
                     "tier": row.get("tier_any", ""),
                     "size_band": row.get("size_band", ""),
@@ -250,6 +276,21 @@ def build_positions(
             "weight_pct": sum(p["weight_pct"] for p in b_pos),
         }
 
+    # Per-(bucket × family) breakdown
+    per_bucket_family: Dict[str, Dict[str, Any]] = {}
+    for b in BUCKET_NAMES:
+        b_pos = [p for p in positions if p["bucket"] == b]
+        fam_groups: Dict[str, List[Dict[str, Any]]] = {}
+        for p in b_pos:
+            fam = p.get("catalyst_family", "OTHER")
+            fam_groups.setdefault(fam, []).append(p)
+        for fam, fps in fam_groups.items():
+            key = f"{b}__{fam}"
+            per_bucket_family[key] = {
+                "count": len(fps),
+                "total_dollars": sum(fp["target_dollars"] for fp in fps),
+            }
+
     gap_high = [p["ticker"] for p in positions if p["gap_risk"] == "HIGH"]
     missing_price = [p["ticker"] for p in positions if p["price_coverage"] == "MISSING"]
 
@@ -258,6 +299,7 @@ def build_positions(
         "total_allocated": round(total_alloc, 2),
         "residual_cash": round(acct - total_alloc, 2),
         "per_bucket": per_bucket,
+        "per_bucket_family": per_bucket_family,
         "gap_risk_high": gap_high,
         "missing_price": missing_price,
     }
@@ -652,6 +694,18 @@ def write_weekly_summary(
         f"| **Cash**: ${summary.get('residual_cash', 0):,.0f}"
     )
     lines.append("")
+
+    # Family Allocation (bucket × family breakdown)
+    per_bucket_family = summary.get("per_bucket_family", {})
+    if per_bucket_family:
+        lines.append("## Family Allocation")
+        lines.append("")
+        lines.append("| Bucket × Family | Names | $ |")
+        lines.append("|-----------------|-------|---|")
+        for key in sorted(per_bucket_family.keys()):
+            bf = per_bucket_family[key]
+            lines.append(f"| {key} | {bf['count']} | ${bf['total_dollars']:,.0f} |")
+        lines.append("")
 
     # Risk
     gap_high = summary.get("gap_risk_high", [])

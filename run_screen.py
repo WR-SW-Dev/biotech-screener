@@ -69,6 +69,7 @@ from common.data_integration_contracts import (
 
 # Common utilities
 from common.date_utils import normalize_date, to_date_object, to_date_string
+from common.event_quality_features import compute_event_quality_features
 from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
 
 # Production hardening utilities
@@ -1412,6 +1413,10 @@ SNAPSHOT_COLUMNS = [
     "catalyst_event_type",
     "catalyst_family",
     "binary_quality_score",
+    "regulatory_quality",
+    "clinical_quality",
+    "has_adcom",
+    "single_asset_risk",
     "missing_components",
     "missingness_penalty",
     "confidence_overall",
@@ -3525,6 +3530,7 @@ def save_validation_snapshot(
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker)
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         row["binary_quality_score"] = compute_binary_quality_score(row)
+        row.update(compute_event_quality_features(row))
 
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET
