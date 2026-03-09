@@ -111,6 +111,22 @@ Structural improvement in regulatory position sizing. Direct return impact limit
 - 8 additional edge-case tests, min/max quality in summary
 
 ### 2026-03-09 — Test fixes + A/B evaluation (commits cc6adee6, b1fcfe9d)
-- Fix 5 pre-existing test failures (pinned ID drift + test isolation)
+- Fix 5 pre-existing test failures:
+  - `test_default_ruleset_id_pinned`: DEFAULT_RULESET hash drifted (`7e4bc79c` → `c00a4c58`)
+  - `test_all_pass`, `test_pass_allows_trade_plan`: read real production manifest instead of mock
+  - `test_pinned_id_fallback`: hardcoded stale ruleset ID instead of importing dynamically
+  - `test_first_snapshot_all_buys`: `build_trade_packet()` searched production `artifacts/` when `prior_path=None`; added `positions_dir` kwarg for isolation
 - New: `scripts/research/eval_regulatory_policy_ab.py`
-- Full suite green: 11,198 passed
+- Full suite green: 11,198 passed, 0 failed, 3 skipped
+
+### 2026-03-09 — Spec infrastructure (commit aa4180c6)
+- Created `specs/SYSTEM_SPEC.md`, `specs/CHANGE_SPEC_TEMPLATE.md`, this change spec
+- Updated `CLAUDE.md` with three-lane workflow
+
+### A/B Result Summary
+- **Coverage**: 11 PDUFA entries, ~3-4% of eligible names, 50 evaluable dates (>= 3% regulatory coverage)
+- **63d excess delta**: +1.85pp (policy B over baseline A)
+- **84d excess delta**: +1.59pp (policy B over baseline A)
+- **Position count**: 44 avg (B) vs 60 avg (A) — tighter construction
+- **Caveat**: enrichment limited to 11-entry manual PDUFA set; treat as positive lower-bound evidence
+- **Next step**: expand regulatory event sources (event ledger integration), then rerun A/B

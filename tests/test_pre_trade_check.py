@@ -392,3 +392,95 @@ class TestPreTradeBlocksTradePlan:
 
 # Use SCHEMA_VERSION from module
 from tools.pre_trade_check import SCHEMA_VERSION  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Regression: manifest isolation (guards against production manifest leak)
+# ---------------------------------------------------------------------------
+
+
+class TestManifestIsolation:
+    """Regression tests for manifest/fixture isolation.
+
+    These guard against the pattern where tests silently read the real
+    production manifest instead of a test-local mock, causing failures
+    when the active ruleset ID changes.
+    """
+
+    def test_mismatched_manifest_fails_ruleset_check(self, tmp_path):
+        """run_pre_trade_check with wrong manifest_path must FAIL on ruleset."""
+        from tools.pre_trade_check import run_pre_trade_check
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [_pos("AAPL", 5000), _pos("GOOG", 3000)],
+        )
+        snap = tmp_path / "snap"
+        snap.mkdir()
+        (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "deadbeef", "as_of_date": "2026-03-08"}))
+        # Manifest has a DIFFERENT active ID
+        manifest = _write_manifest(tmp_path, active_id="cafebabe")
+
+        result = run_pre_trade_check(
+            "2026-03-08",
+            positions_dir=pos_dir,
+            snap_dir=snap,
+            manifest_path=manifest,
+            deviation_max_pct=100,
+        )
+        assert result.overall == "FAIL"
+        # Should fail specifically on ruleset, not on some other check
+        ruleset_checks = [c for c in result.checks if c["name"] == "ruleset_active"]
+        assert len(ruleset_checks) == 1
+        assert ruleset_checks[0]["status"] == "FAIL"
+
+    def test_matching_manifest_passes_ruleset_check(self, tmp_path):
+        """run_pre_trade_check with matching manifest_path must PASS ruleset."""
+        from tools.pre_trade_check import run_pre_trade_check
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [_pos("AAPL", 5000), _pos("GOOG", 3000)],
+        )
+        snap = tmp_path / "snap"
+        snap.mkdir()
+        (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "test1234", "as_of_date": "2026-03-08"}))
+        manifest = _write_manifest(tmp_path, active_id="test1234")
+
+        result = run_pre_trade_check(
+            "2026-03-08",
+            positions_dir=pos_dir,
+            snap_dir=snap,
+            manifest_path=manifest,
+            deviation_max_pct=100,
+        )
+        ruleset_checks = [c for c in result.checks if c["name"] == "ruleset_active"]
+        assert len(ruleset_checks) == 1
+        assert ruleset_checks[0]["status"] == "PASS"
+
+    def test_governance_uses_dynamic_pinned_id(self, tmp_path):
+        """Pinned ID fallback must use the import, not a hardcoded string."""
+        from run_screen import PHASE2_PINNED_RULESET_ID
+        from tools.run_daily_production import check_ruleset_governance
+
+        manifest = _write_manifest(tmp_path, active_id=PHASE2_PINNED_RULESET_ID)
+        # Write a proper manifest format for governance check
+        manifest.write_text(
+            json.dumps(
+                {
+                    "schema_version": 1,
+                    "rulesets": [
+                        {
+                            "id": PHASE2_PINNED_RULESET_ID,
+                            "file": "active.json",
+                            "status": "active",
+                        }
+                    ],
+                }
+            )
+        )
+        result = check_ruleset_governance(None, manifest)
+        assert result.status == "PASS"
