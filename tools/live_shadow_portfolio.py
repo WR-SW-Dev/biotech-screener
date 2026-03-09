@@ -115,6 +115,7 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
         "regulatory_day_buckets": DEFAULT_REG_DAY_BUCKETS,
         "regulatory_bucket_caps_pct": {},
         "regulatory_bucket_weights": {},
+        "regulatory_resolution_enabled": False,
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
     }
@@ -185,6 +186,22 @@ def _reg_sub_bucket(regulatory_days: str) -> str:
     if days <= 180:
         return "reg_91_180"
     return ""
+
+
+def _is_regulatory_resolved(row: Dict[str, str]) -> bool:
+    """Check if a regulatory catalyst has resolved (event date passed).
+
+    A REGULATORY name is RESOLVED when regulatory_days <= 0, meaning
+    the event date is today or in the past. These names should be demoted
+    to 0% target at the next rebalance.
+    """
+    rd = row.get("regulatory_days", "")
+    if not rd:
+        return False
+    try:
+        return float(rd) <= 0
+    except (ValueError, TypeError):
+        return False
 
 
 def _apply_gap_risk(
@@ -413,13 +430,19 @@ def build_positions(
     ladder_enabled = policy.get("regulatory_ladder_enabled", False)
     ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
     ladder_weights = policy.get("regulatory_bucket_weights", {})
+    resolution_enabled = policy.get("regulatory_resolution_enabled", False)
 
     # Classify into buckets, compute effective family
     buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
+    resolved_rows: List[Dict[str, str]] = []
     for row in rankings:
         bucket = classify_action_bucket(row)
         # Stamp effective_family for downstream use
         row["_effective_family"] = _effective_family(row, family_mode)
+        # Filter resolved regulatory names (event date passed)
+        if resolution_enabled and row["_effective_family"] == "REGULATORY" and _is_regulatory_resolved(row):
+            resolved_rows.append(row)
+            continue
         buckets[bucket].append(row)
 
     # Select top-K per bucket, respecting family-level max_k limits
@@ -618,6 +641,14 @@ def build_positions(
         "per_bucket_family": per_bucket_family,
         "gap_risk_high": gap_high,
         "missing_price": missing_price,
+        "resolved_regulatory": [
+            {
+                "ticker": r.get("ticker", ""),
+                "regulatory_days": r.get("regulatory_days", ""),
+                "regulatory_event_type": r.get("regulatory_event_type", ""),
+            }
+            for r in resolved_rows
+        ],
     }
 
     return {"positions": positions, "summary": summary}
@@ -1418,6 +1449,21 @@ def write_weekly_summary(
         lines.append("")
     else:
         lines.append("No positions with upcoming regulatory catalysts within 180d.")
+        lines.append("")
+
+    # --- Resolved Regulatory ---
+    resolved_reg = summary.get("resolved_regulatory", [])
+    if resolved_reg:
+        lines.append("## Resolved Regulatory (Demoted to 0%)")
+        lines.append("")
+        lines.append(
+            f"**{len(resolved_reg)} name(s)** had regulatory event pass — " f"auto-demoted to 0% target this rebalance."
+        )
+        lines.append("")
+        lines.append("| Ticker | Event | Days |")
+        lines.append("|--------|-------|------|")
+        for r in resolved_reg:
+            lines.append(f"| {r['ticker']} | {r['regulatory_event_type'] or '—'} " f"| {r['regulatory_days'] or '—'} |")
         lines.append("")
 
     # --- Fill Annotation ---

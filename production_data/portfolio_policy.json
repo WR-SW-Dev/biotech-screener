@@ -64,6 +64,7 @@
       "reg_91_180": 0.15
     }
   },
+  "regulatory_resolution_enabled": true,
   "rebalance_buffer_ranks": 30,
   "bucket_hysteresis_days": 7
 }
