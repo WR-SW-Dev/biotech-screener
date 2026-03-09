@@ -108,6 +108,8 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
             "less_binary": 2.0,
         },
         "family_overrides": {},
+        "family_targets": {},
+        "family_filter_mode": "primary",
         "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
@@ -144,12 +146,83 @@ def load_metadata(snap_dir: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _apply_gap_risk(
+    wt: float,
+    row: Dict[str, str],
+    bucket_name: str,
+    gap_high_days: float,
+    gap_high_cap: float,
+) -> Tuple[float, str]:
+    """Apply gap-risk cap for binary_0_30. Returns (capped_wt, gap_risk_label)."""
+    if bucket_name != "binary_0_30":
+        return wt, ""
+    cat_days = _safe_float(row.get("catalyst_days", ""), float("inf"))
+    cat_mode = (row.get("catalyst_mode") or "").strip().lower()
+    if cat_mode in ("specific_days", "blended_window"):
+        if cat_days <= gap_high_days:
+            return min(wt, gap_high_cap), "HIGH"
+        if cat_days <= 30:
+            return wt, "MODERATE"
+    return wt, ""
+
+
+def _make_position(
+    row: Dict[str, str],
+    bucket_name: str,
+    fam: str,
+    wt: float,
+    gap_risk: str,
+    source: str,
+    acct: float,
+    is_secondary_reg: bool,
+) -> Dict[str, Any]:
+    """Build a position dict from a ranking row."""
+    return {
+        "ticker": row.get("ticker", ""),
+        "bucket": bucket_name,
+        "catalyst_family": fam,
+        "effective_family": fam,
+        "actionable_rank": int(_safe_float(row.get("actionable_rank", ""), 9999)),
+        "tier": row.get("tier_any", ""),
+        "size_band": row.get("size_band", ""),
+        "catalyst_days": row.get("catalyst_days", ""),
+        "catalyst_mode": row.get("catalyst_mode", ""),
+        "mom_state": row.get("mom_state", ""),
+        "weight_pct": round(wt, 4),
+        "target_dollars": round(acct * wt / 100.0, 2),
+        "gap_risk": gap_risk,
+        "price_coverage": "OK" if source else "MISSING",
+        "regulatory_days": row.get("regulatory_days", ""),
+        "regulatory_event_type": row.get("regulatory_event_type", ""),
+        "has_regulatory_upcoming_180d": row.get("has_regulatory_upcoming_180d", "0"),
+        "regulatory_quality": row.get("regulatory_quality", "0"),
+        "regulatory_is_secondary": is_secondary_reg,
+    }
+
+
+def _effective_family(row: Dict[str, str], mode: str = "primary") -> str:
+    """Determine effective catalyst family for a row.
+
+    In 'secondary' mode, a ticker with has_regulatory_upcoming_180d=1 is
+    treated as REGULATORY even if its primary (nearest) catalyst is clinical.
+    """
+    if mode == "secondary" and row.get("has_regulatory_upcoming_180d") == "1":
+        return "REGULATORY"
+    return (row.get("catalyst_family") or "OTHER").upper() or "OTHER"
+
+
 def build_positions(
     rankings: List[Dict[str, str]],
     policy: Dict[str, Any],
     account_usd: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Select top-K per bucket, apply caps, compute $ sizing.
+
+    Supports family-targeted allocation via ``family_targets`` in policy:
+    each bucket can specify a dollar-weight split by family (e.g.
+    ``{"REGULATORY": 0.70, "CLINICAL": 0.30}``).  When a family has
+    fewer names than its allocation allows, unused dollars reflow to
+    other families in the same bucket (no cash drag).
 
     Returns a dict with:
         positions: list of position dicts
@@ -160,14 +233,18 @@ def build_positions(
     bucket_top_k = policy.get("bucket_top_k", {})
     bucket_name_caps = policy.get("bucket_name_caps", {})
     family_overrides = policy.get("family_overrides", {})
+    family_targets = policy.get("family_targets", {})
+    family_mode = policy.get("family_filter_mode", "primary")
     gap_cfg = policy.get("gap_risk", {})
     gap_high_days = gap_cfg.get("high_days", 7)
     gap_high_cap = gap_cfg.get("high_cap_pct", 0.5)
 
-    # Classify into buckets
+    # Classify into buckets, compute effective family
     buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
     for row in rankings:
         bucket = classify_action_bucket(row)
+        # Stamp effective_family for downstream use
+        row["_effective_family"] = _effective_family(row, family_mode)
         buckets[bucket].append(row)
 
     # Select top-K per bucket, respecting family-level max_k limits
@@ -177,10 +254,10 @@ def build_positions(
         bucket_rows = buckets[bucket_name][:k]
         fam_cfg = family_overrides.get(bucket_name, {})
         if fam_cfg:
-            # Apply per-family max_k: group by family, cap each, reassemble
+            # Apply per-family max_k: group by effective family, cap each
             by_family: Dict[str, List[Dict[str, str]]] = {}
             for row in bucket_rows:
-                fam = (row.get("catalyst_family") or "OTHER").upper()
+                fam = row["_effective_family"]
                 by_family.setdefault(fam, []).append(row)
             capped: List[Dict[str, str]] = []
             for fam, fam_rows in by_family.items():
@@ -188,8 +265,12 @@ def build_positions(
                 if fam_k is not None:
                     fam_rows = fam_rows[:fam_k]
                 capped.extend(fam_rows)
-            # Re-sort by actionable_rank to maintain deterministic order
-            capped.sort(key=lambda r: (_safe_float(r.get("actionable_rank", ""), 9999), r.get("ticker", "")))
+            capped.sort(
+                key=lambda r: (
+                    _safe_float(r.get("actionable_rank", ""), 9999),
+                    r.get("ticker", ""),
+                )
+            )
             selected[bucket_name] = capped
         else:
             selected[bucket_name] = bucket_rows
@@ -200,58 +281,98 @@ def build_positions(
         target_frac = bucket_targets.get(bucket_name, 0.25)
         bucket_cap = bucket_name_caps.get(bucket_name, 5.0)
         fam_cfg = family_overrides.get(bucket_name, {})
+        fam_tgt = family_targets.get(bucket_name, {})
         rows = selected[bucket_name]
         n = len(rows)
         if n == 0:
             continue
 
-        # Equal weight within bucket, then cap
-        equal_wt = (target_frac * 100.0) / n
-        for row in rows:
-            fam = (row.get("catalyst_family") or "OTHER").upper()
-            # Family-level name cap overrides bucket-level cap
-            fam_cap = fam_cfg.get(fam, {}).get("name_cap_pct")
-            eff_cap = fam_cap if fam_cap is not None else bucket_cap
-            wt = min(equal_wt, eff_cap)
+        if fam_tgt:
+            # --- Family-targeted allocation ---
+            # Group rows by effective family
+            by_family: Dict[str, List[Dict[str, str]]] = {}
+            for row in rows:
+                fam = row["_effective_family"]
+                by_family.setdefault(fam, []).append(row)
 
-            # Gap-risk cap for binary_0_30
-            cat_days = _safe_float(row.get("catalyst_days", ""), float("inf"))
-            cat_mode = (row.get("catalyst_mode") or "").strip().lower()
-            gap_risk = ""
-            if bucket_name == "binary_0_30":
-                if cat_mode in ("specific_days", "blended_window"):
-                    if cat_days <= gap_high_days:
-                        gap_risk = "HIGH"
-                        wt = min(wt, gap_high_cap)
-                    elif cat_days <= 30:
-                        gap_risk = "MODERATE"
+            # Compute per-family budget as fraction of bucket allocation
+            # Reflow: if a targeted family has 0 names, redistribute its
+            # share proportionally to families that have names.
+            active_targets: Dict[str, float] = {}
+            inactive_share = 0.0
+            for fam_name, fam_share in fam_tgt.items():
+                if by_family.get(fam_name):
+                    active_targets[fam_name] = fam_share
+                else:
+                    inactive_share += fam_share
+            # Names in families not listed in targets get the residual
+            unlisted_fams = [f for f in by_family if f not in fam_tgt]
+            residual = 1.0 - sum(fam_tgt.values())
+            if unlisted_fams:
+                for f in unlisted_fams:
+                    active_targets[f] = residual / len(unlisted_fams)
+            # Redistribute inactive share proportionally
+            if inactive_share > 0 and active_targets:
+                total_active = sum(active_targets.values())
+                if total_active > 0:
+                    for f in active_targets:
+                        active_targets[f] += inactive_share * (active_targets[f] / total_active)
 
-            # Price coverage
-            source = (row.get("de_beta_xbi_60d_source") or "").strip()
-            price_coverage = "OK" if source else "MISSING"
+            # Now allocate within each family slice
+            for fam_name, fam_rows in by_family.items():
+                fam_share = active_targets.get(fam_name, 0)
+                if fam_share <= 0 or not fam_rows:
+                    continue
+                fam_frac = target_frac * fam_share
+                fn = len(fam_rows)
+                equal_wt = (fam_frac * 100.0) / fn
+                fam_cap_cfg = fam_cfg.get(fam_name, {})
+                fam_name_cap = fam_cap_cfg.get("name_cap_pct")
+                eff_cap = fam_name_cap if fam_name_cap is not None else bucket_cap
 
-            dollars = round(acct * wt / 100.0, 2)
-
-            positions.append(
-                {
-                    "ticker": row.get("ticker", ""),
-                    "bucket": bucket_name,
-                    "catalyst_family": fam,
-                    "actionable_rank": int(_safe_float(row.get("actionable_rank", ""), 9999)),
-                    "tier": row.get("tier_any", ""),
-                    "size_band": row.get("size_band", ""),
-                    "catalyst_days": row.get("catalyst_days", ""),
-                    "catalyst_mode": row.get("catalyst_mode", ""),
-                    "mom_state": row.get("mom_state", ""),
-                    "weight_pct": round(wt, 4),
-                    "target_dollars": dollars,
-                    "gap_risk": gap_risk,
-                    "price_coverage": price_coverage,
-                    "regulatory_days": row.get("regulatory_days", ""),
-                    "regulatory_event_type": row.get("regulatory_event_type", ""),
-                    "has_regulatory_upcoming_180d": row.get("has_regulatory_upcoming_180d", "0"),
-                }
-            )
+                for row in fam_rows:
+                    wt = min(equal_wt, eff_cap)
+                    wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+                    source = (row.get("de_beta_xbi_60d_source") or "").strip()
+                    is_secondary_reg = (
+                        fam_name == "REGULATORY"
+                        and row.get("has_regulatory_upcoming_180d") == "1"
+                        and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+                    )
+                    positions.append(
+                        _make_position(
+                            row,
+                            bucket_name,
+                            fam_name,
+                            wt,
+                            gap_risk,
+                            source,
+                            acct,
+                            is_secondary_reg,
+                        )
+                    )
+        else:
+            # --- Flat allocation (no family targets) ---
+            equal_wt = (target_frac * 100.0) / n
+            for row in rows:
+                fam = row["_effective_family"]
+                fam_cap = fam_cfg.get(fam, {}).get("name_cap_pct")
+                eff_cap = fam_cap if fam_cap is not None else bucket_cap
+                wt = min(equal_wt, eff_cap)
+                wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+                source = (row.get("de_beta_xbi_60d_source") or "").strip()
+                positions.append(
+                    _make_position(
+                        row,
+                        bucket_name,
+                        fam,
+                        wt,
+                        gap_risk,
+                        source,
+                        acct,
+                        False,
+                    )
+                )
 
     # Trim overage if total > account
     total = sum(p["target_dollars"] for p in positions)
@@ -996,16 +1117,64 @@ def write_weekly_summary(
         f"eligible ({reg_cov['coverage_pct']:.1f}%)"
     )
     lines.append("")
+
+    # Per-bucket regulatory vs clinical breakdown
+    _fam_mode = policy.get("family_filter_mode", "primary")
+    _fam_targets = policy.get("family_targets", {})
+    if _fam_mode == "secondary" or _fam_targets:
+        lines.append("### Regulatory Sleeve by Bucket")
+        lines.append("")
+        lines.append("| Bucket | Reg Names | Reg $ | Clin Names | Clin $ | Reg Target | Reg Actual |")
+        lines.append("|--------|-----------|-------|------------|--------|------------|------------|")
+        for b in BUCKET_NAMES:
+            b_pos = [p for p in positions if p["bucket"] == b]
+            if not b_pos:
+                continue
+            reg_pos = [p for p in b_pos if p.get("effective_family") == "REGULATORY"]
+            clin_pos = [p for p in b_pos if p.get("effective_family") != "REGULATORY"]
+            reg_dollars = sum(p["target_dollars"] for p in reg_pos)
+            clin_dollars = sum(p["target_dollars"] for p in clin_pos)
+            total_dollars = reg_dollars + clin_dollars
+            reg_actual_pct = (reg_dollars / total_dollars * 100) if total_dollars > 0 else 0.0
+            tgt = _fam_targets.get(b, {})
+            reg_target_pct = tgt.get("REGULATORY", 0) * 100 if tgt else 0.0
+            reg_target_str = f"{reg_target_pct:.0f}%" if tgt else "—"
+            lines.append(
+                f"| {BUCKET_DISPLAY.get(b, b)} "
+                f"| {len(reg_pos)} | ${reg_dollars:,.0f} "
+                f"| {len(clin_pos)} | ${clin_dollars:,.0f} "
+                f"| {reg_target_str} | {reg_actual_pct:.1f}% |"
+            )
+        lines.append("")
+
+        # Avg regulatory_days for held regulatory names
+        reg_days_vals = []
+        for p in positions:
+            if p.get("effective_family") == "REGULATORY":
+                rd = p.get("regulatory_days", "")
+                if rd:
+                    try:
+                        reg_days_vals.append(float(rd))
+                    except (ValueError, TypeError):
+                        pass
+        if reg_days_vals:
+            avg_rd = sum(reg_days_vals) / len(reg_days_vals)
+            lines.append(f"**Avg regulatory days (held)**: {avg_rd:.0f}d across {len(reg_days_vals)} names")
+        else:
+            lines.append("**Avg regulatory days (held)**: —")
+        lines.append("")
+
     if reg_cov["top_imminent"]:
         lines.append("**Top imminent regulatory catalysts:**")
         lines.append("")
-        lines.append("| Ticker | Event | Days | Bucket |")
-        lines.append("|--------|-------|------|--------|")
+        lines.append("| Ticker | Event | Days | Bucket | Secondary? |")
+        lines.append("|--------|-------|------|--------|------------|")
         for p in reg_cov["top_imminent"]:
             rd = p.get("regulatory_days", "—")
             ret = p.get("regulatory_event_type", "—")
             bkt = BUCKET_DISPLAY.get(p.get("bucket", ""), p.get("bucket", ""))
-            lines.append(f"| {p['ticker']} | {ret} | {rd} | {bkt} |")
+            is_sec = "yes" if p.get("regulatory_is_secondary") else "no"
+            lines.append(f"| {p['ticker']} | {ret} | {rd} | {bkt} | {is_sec} |")
         lines.append("")
     else:
         lines.append("No positions with upcoming regulatory catalysts within 180d.")
