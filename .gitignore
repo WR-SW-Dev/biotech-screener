@@ -154,6 +154,7 @@ cache/
 data/snapshots/
 data/snapshots_pit/
 data/snapshots_reranked/
+data/snapshots_reranked_*/
 data/snapshots_v3_tiltfix/
 data/grid_search/
 data/diag/
