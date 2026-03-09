@@ -1502,8 +1502,8 @@ def write_weekly_summary(
     if _ladder_enabled and reg_positions_with_sub:
         lines.append("### Regulatory Ladder")
         lines.append("")
-        lines.append("| Sub-bucket | Names | $ | Avg Days | Avg Quality | Cap |")
-        lines.append("|------------|-------|---|----------|-------------|-----|")
+        lines.append("| Sub-bucket | Names | $ | Avg Days | Avg Quality | Min Q | Max Q | Cap |")
+        lines.append("|------------|-------|---|----------|-------------|-------|-------|-----|")
         _ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
         for sb in REG_LADDER_NAMES:
             sb_pos = [p for p in reg_positions_with_sub if p.get("reg_sub_bucket") == sb]
@@ -1523,11 +1523,13 @@ def write_weekly_summary(
                 sb_quals.append(rq)
             avg_d = sum(sb_days) / len(sb_days) if sb_days else 0.0
             avg_q = sum(sb_quals) / len(sb_quals) if sb_quals else 0.0
+            min_q = min(sb_quals) if sb_quals else 0.0
+            max_q = max(sb_quals) if sb_quals else 0.0
             cap_str = f"{_ladder_caps[sb]:.2f}%" if sb in _ladder_caps else "—"
             lines.append(
                 f"| {REG_LADDER_DISPLAY.get(sb, sb)} "
                 f"| {len(sb_pos)} | ${sb_dollars:,.0f} "
-                f"| {avg_d:.0f}d | {avg_q:.2f} | {cap_str} |"
+                f"| {avg_d:.0f}d | {avg_q:.2f} | {min_q:.2f} | {max_q:.2f} | {cap_str} |"
             )
         lines.append("")
 
