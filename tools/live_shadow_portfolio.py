@@ -527,6 +527,80 @@ def append_performance(
 
 
 # ---------------------------------------------------------------------------
+# Enhanced summary helpers
+# ---------------------------------------------------------------------------
+
+
+def _compute_hit_rate_by_bucket(contributors: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Return [{bucket, names, positive, hit_rate}] for non-empty buckets."""
+    from collections import defaultdict
+
+    buckets: Dict[str, List[Dict]] = defaultdict(list)
+    for c in contributors:
+        buckets[c.get("bucket", "")].append(c)
+    result = []
+    for b in BUCKET_NAMES:
+        if b not in buckets:
+            continue
+        items = buckets[b]
+        pos = sum(1 for c in items if c.get("return_pct", 0) > 0)
+        result.append(
+            {
+                "bucket": b,
+                "names": len(items),
+                "positive": pos,
+                "hit_rate": round(pos / len(items) * 100, 2) if items else 0.0,
+            }
+        )
+    return result
+
+
+def _compute_alpha_leaders(
+    contributors: List[Dict[str, Any]], n: int = 5, bucket_filter: str = None
+) -> Tuple[List[Dict], List[Dict]]:
+    """Return (top_n, bottom_n) sorted by excess_pnl."""
+    filtered = contributors
+    if bucket_filter:
+        filtered = [c for c in contributors if c.get("bucket") == bucket_filter]
+    by_excess = sorted(filtered, key=lambda c: c.get("excess_pnl", 0), reverse=True)
+    top = by_excess[:n]
+    bottom = by_excess[-n:] if len(by_excess) > n else by_excess[n:]
+    bottom = sorted(bottom, key=lambda c: c.get("excess_pnl", 0))
+    return top, bottom
+
+
+def _compute_signal_diagnostics(
+    positions: List[Dict[str, Any]], prior_positions: List[Dict[str, Any]]
+) -> Dict[str, Any]:
+    """Return signal diagnostics: catalyst_days avg, bucket movers, gap risk."""
+    cat_days = []
+    gap_high_usd = 0.0
+    total_usd = 0.0
+    for p in positions:
+        cd = p.get("catalyst_days", "")
+        if cd and cd != "":
+            try:
+                cat_days.append(float(cd))
+            except (ValueError, TypeError):
+                pass
+        dollars = _safe_float(p.get("target_dollars", 0))
+        total_usd += dollars
+        if p.get("gap_risk") == "HIGH":
+            gap_high_usd += dollars
+
+    current_tickers = {p.get("ticker") for p in positions}
+    prior_tickers = {p.get("ticker") for p in prior_positions}
+
+    return {
+        "avg_catalyst_days": round(sum(cat_days) / len(cat_days), 1) if cat_days else 0.0,
+        "bucket_movers_in": len(current_tickers - prior_tickers),
+        "bucket_movers_out": len(prior_tickers - current_tickers),
+        "gap_high_weight": round(gap_high_usd / total_usd * 100, 1) if total_usd > 0 else 0.0,
+        "gap_high_usd": round(gap_high_usd, 2),
+    }
+
+
+# ---------------------------------------------------------------------------
 # Weekly summary markdown
 # ---------------------------------------------------------------------------
 
@@ -754,6 +828,95 @@ def write_weekly_summary(
         lines.append("")
         lines.append("No prior positions found — first snapshot.")
         lines.append("")
+
+    # --- Hit Rate by Bucket ---
+    if perf:
+        contributors = perf.get("contributors", [])
+        if contributors:
+            hit_rates = _compute_hit_rate_by_bucket(contributors)
+            if hit_rates:
+                lines.append("## Hit Rate by Bucket")
+                lines.append("")
+                lines.append("| Bucket | Names | Positive | Hit Rate |")
+                lines.append("|--------|-------|----------|----------|")
+                for hr in hit_rates:
+                    lines.append(
+                        f"| {BUCKET_DISPLAY.get(hr['bucket'], hr['bucket'])} "
+                        f"| {hr['names']} | {hr['positive']} | {hr['hit_rate']:.1f}% |"
+                    )
+                lines.append("")
+
+            # --- Alpha Leaders ---
+            has_excess = any("excess_pnl" in c for c in contributors)
+            if has_excess:
+                lines.append("## Alpha Leaders")
+                lines.append("")
+
+                def _alpha_table(items: list, label: str) -> None:
+                    lines.append(f"### {label}")
+                    lines.append("")
+                    lines.append("| Ticker | Bucket | Return | Excess $ |")
+                    lines.append("|--------|--------|--------|----------|")
+                    for c in items:
+                        lines.append(
+                            f"| {c['ticker']} "
+                            f"| {BUCKET_DISPLAY.get(c['bucket'], c['bucket'])} "
+                            f"| {c.get('return_pct', 0):+.2f}% "
+                            f"| ${c.get('excess_pnl', 0):,.2f} |"
+                        )
+                    lines.append("")
+
+                top_all, bot_all = _compute_alpha_leaders(contributors, n=5)
+                _alpha_table(top_all, "Top-5 Alpha (Overall)")
+                if bot_all:
+                    _alpha_table(bot_all, "Bottom-5 Alpha (Overall)")
+
+                # binary_91_180 specific
+                top_b91, bot_b91 = _compute_alpha_leaders(contributors, n=5, bucket_filter="binary_91_180")
+                if top_b91:
+                    _alpha_table(top_b91, "Top-5 Alpha (binary_91_180)")
+                if bot_b91:
+                    _alpha_table(bot_b91, "Bottom-5 Alpha (binary_91_180)")
+
+    # --- Signal Diagnostics ---
+    prior_pos_for_diag: List[Dict[str, Any]] = []
+    if perf:
+        # Try to load prior positions for mover detection
+        try:
+            _prior_result = load_prior_positions(as_of_date)
+            if _prior_result:
+                _, prior_pos_for_diag = _prior_result
+        except Exception:
+            pass
+
+    if positions:
+        diag = _compute_signal_diagnostics(positions, prior_pos_for_diag)
+        lines.append("## Signal Diagnostics")
+        lines.append("")
+        lines.append(f"- Avg catalyst_days (held): {diag['avg_catalyst_days']:.1f}")
+        lines.append(
+            f"- Bucket movers (entered/exited this week): {diag['bucket_movers_in']} entered, {diag['bucket_movers_out']} exited"
+        )
+        lines.append(f"- Gap-risk HIGH weight: {diag['gap_high_weight']:.1f}% (${diag['gap_high_usd']:,.0f})")
+        lines.append("")
+
+    # --- Fill Annotation ---
+    try:
+        _fills_csv = SHADOW_ROOT / "trades" / as_of_date / "fills.csv"
+        if _fills_csv.is_file():
+            from tools.record_fills import compute_execution_quality
+
+            _eq = compute_execution_quality(_fills_csv)
+            n_filled = _eq.get("n_filled", 0)
+            n_total = _eq.get("total", 0)
+            avg_slip = _eq.get("mean_slippage_bps", 0)
+            lines.append(f"**Fills**: {n_filled}/{n_total} filled, avg slippage {avg_slip:.0f}bps")
+            lines.append("")
+        else:
+            lines.append("**Fills**: no fills imported")
+            lines.append("")
+    except Exception:
+        pass
 
     # Top holdings
     lines.append("## Top 10 Holdings")

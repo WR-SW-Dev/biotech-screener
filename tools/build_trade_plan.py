@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import math
 import statistics
 import sys
 from datetime import datetime, timezone
@@ -37,6 +38,20 @@ from tools.build_trade_deltas import (
 from tools.live_shadow_portfolio import BUCKET_NAMES, PERFORMANCE_CSV, SHADOW_ROOT
 
 TRADE_PLAN_ROOT = SHADOW_ROOT / "trade_plan"
+PRICE_HISTORY_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
+
+BROKER_ORDER_COLUMNS = [
+    "symbol",
+    "side",
+    "qty",
+    "order_type",
+    "limit_price",
+    "notional_usd",
+    "original_delta_usd",
+    "bucket",
+    "gap_risk",
+    "notes",
+]
 
 TRADE_PLAN_COLUMNS = [
     "ticker",
@@ -306,6 +321,108 @@ def write_trade_plan_md(
 
 
 # ---------------------------------------------------------------------------
+# Broker-ready orders
+# ---------------------------------------------------------------------------
+
+
+def load_last_close(
+    tickers: List[str],
+    price_csv: Path = PRICE_HISTORY_CSV,
+) -> Dict[str, float]:
+    """Read price_history.csv, return {ticker: last_close}. Skip tickers with no data."""
+    if not price_csv.is_file():
+        return {}
+    wanted = set(tickers)
+    # Track (date, close) per ticker; keep the latest date
+    latest: Dict[str, tuple] = {}
+    with open(price_csv, newline="", encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            t = row.get("ticker", "")
+            if t not in wanted:
+                continue
+            d = row.get("date", "")
+            close_str = row.get("close", "")
+            try:
+                close = float(close_str)
+            except (ValueError, TypeError):
+                continue
+            if close <= 0:
+                continue
+            prev = latest.get(t)
+            if prev is None or d > prev[0]:
+                latest[t] = (d, close)
+    return {t: v[1] for t, v in latest.items()}
+
+
+def compute_broker_orders(trades: List[Dict], prices: Dict[str, float], *, fractional: bool = False) -> List[Dict]:
+    """Convert trade dicts to broker order rows.
+
+    Schema: symbol, side, qty, order_type, limit_price, notional_usd,
+            original_delta_usd, bucket, gap_risk, notes.
+    """
+    orders = []
+    for t in trades:
+        ticker = t.get("ticker", "")
+        action = t.get("action", "BUY")
+        delta_usd = float(t.get("delta_usd", 0))
+        price = prices.get(ticker)
+
+        side = "BUY" if action == "BUY" else "SELL"
+
+        if price is None or price <= 0:
+            orders.append(
+                {
+                    "symbol": ticker,
+                    "side": side,
+                    "qty": 0,
+                    "order_type": "REVIEW",
+                    "limit_price": "",
+                    "notional_usd": 0.0,
+                    "original_delta_usd": round(delta_usd, 2),
+                    "bucket": t.get("bucket", ""),
+                    "gap_risk": t.get("gap_risk", ""),
+                    "notes": "missing_price",
+                }
+            )
+            continue
+
+        abs_delta = abs(delta_usd)
+        if fractional:
+            qty = round(abs_delta / price, 4)
+        else:
+            qty = math.floor(abs_delta / price)
+
+        notional = round(qty * price, 2)
+
+        orders.append(
+            {
+                "symbol": ticker,
+                "side": side,
+                "qty": qty,
+                "order_type": "LIMIT",
+                "limit_price": round(price, 4),
+                "notional_usd": notional,
+                "original_delta_usd": round(delta_usd, 2),
+                "bucket": t.get("bucket", ""),
+                "gap_risk": t.get("gap_risk", ""),
+                "notes": "",
+            }
+        )
+    return orders
+
+
+def write_broker_orders_csv(orders: List[Dict], out_path: Path) -> Path:
+    """Write broker_orders.csv next to trade_plan.csv."""
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.DictWriter(f, fieldnames=BROKER_ORDER_COLUMNS, extrasaction="ignore")
+        writer.writeheader()
+        writer.writerows(orders)
+    return out_path
+
+
+# ---------------------------------------------------------------------------
 # Main entry point
 # ---------------------------------------------------------------------------
 
@@ -318,6 +435,9 @@ def build_trade_plan(
     min_trade_usd: float = DEFAULT_MIN_TRADE_USD,
     out_dir: Optional[Path] = None,
     skip_pre_trade_check: bool = False,
+    broker_orders: bool = False,
+    fractional: bool = False,
+    price_source: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Build the complete weekly trade plan artifact.
 
@@ -392,7 +512,7 @@ def build_trade_plan(
         out_dir / "trade_plan.md",
     )
 
-    return {
+    result = {
         "schema": SCHEMA_VERSION,
         "as_of_date": current_date,
         "prior_date": prior_date,
@@ -409,6 +529,18 @@ def build_trade_plan(
         "trades": trades,
     }
 
+    # Broker orders (opt-in)
+    if broker_orders and trades:
+        tickers = [t["ticker"] for t in trades]
+        pcv = price_source or PRICE_HISTORY_CSV
+        prices = load_last_close(tickers, pcv)
+        orders = compute_broker_orders(trades, prices, fractional=fractional)
+        bo_path = write_broker_orders_csv(orders, out_dir / "broker_orders.csv")
+        result["broker_orders_path"] = str(bo_path)
+        result["broker_orders"] = orders
+
+    return result
+
 
 # ---------------------------------------------------------------------------
 # CLI
@@ -420,13 +552,20 @@ def main() -> None:
     parser.add_argument("--as-of-date", type=str, required=True, help="Snapshot date (YYYY-MM-DD)")
     parser.add_argument("--min-trade", type=float, default=DEFAULT_MIN_TRADE_USD)
     parser.add_argument("--out-dir", type=str, help="Override output directory")
+    parser.add_argument("--broker-orders", action="store_true", default=False, help="Generate broker_orders.csv")
+    parser.add_argument("--fractional", action="store_true", default=False, help="Use fractional shares")
+    parser.add_argument("--price-source", type=str, help="Price CSV path (default: production_data/price_history.csv)")
     args = parser.parse_args()
 
     out_dir = Path(args.out_dir) if args.out_dir else None
+    price_source = Path(args.price_source) if args.price_source else None
     result = build_trade_plan(
         args.as_of_date,
         min_trade_usd=args.min_trade,
         out_dir=out_dir,
+        broker_orders=args.broker_orders,
+        fractional=args.fractional,
+        price_source=price_source,
     )
 
     if "error" in result:
@@ -439,6 +578,8 @@ def main() -> None:
     print(f"  Buy: ${result['total_buy_usd']:,.0f} | Sell: ${result['total_sell_usd']:,.0f}")
     print(f"  CSV: {result['csv_path']}")
     print(f"  MD: {result['md_path']}")
+    if result.get("broker_orders_path"):
+        print(f"  Broker orders: {result['broker_orders_path']}")
 
 
 if __name__ == "__main__":
