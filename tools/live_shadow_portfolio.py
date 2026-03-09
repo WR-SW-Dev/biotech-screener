@@ -111,6 +111,10 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
         "family_targets": {},
         "family_filter_mode": "primary",
         "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+        "regulatory_ladder_enabled": False,
+        "regulatory_day_buckets": DEFAULT_REG_DAY_BUCKETS,
+        "regulatory_bucket_caps_pct": {},
+        "regulatory_bucket_weights": {},
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
     }
@@ -146,6 +150,43 @@ def load_metadata(snap_dir: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+# Regulatory time-ladder sub-buckets
+REG_LADDER_NAMES = ["reg_0_14", "reg_15_45", "reg_46_90", "reg_91_180"]
+
+REG_LADDER_DISPLAY = {
+    "reg_0_14": "Reg 0-14d",
+    "reg_15_45": "Reg 15-45d",
+    "reg_46_90": "Reg 46-90d",
+    "reg_91_180": "Reg 91-180d",
+}
+
+# Default ladder boundaries (upper bounds)
+DEFAULT_REG_DAY_BUCKETS = [14, 45, 90, 180]
+
+
+def _reg_sub_bucket(regulatory_days: str) -> str:
+    """Classify a regulatory position into a ladder sub-bucket.
+
+    Uses regulatory_days (not catalyst_days) to place the name.
+    Returns one of REG_LADDER_NAMES or '' if not classifiable.
+    """
+    try:
+        days = float(regulatory_days)
+    except (ValueError, TypeError):
+        return ""
+    if days <= 0:
+        return ""
+    if days <= 14:
+        return "reg_0_14"
+    if days <= 45:
+        return "reg_15_45"
+    if days <= 90:
+        return "reg_46_90"
+    if days <= 180:
+        return "reg_91_180"
+    return ""
+
+
 def _apply_gap_risk(
     wt: float,
     row: Dict[str, str],
@@ -175,6 +216,7 @@ def _make_position(
     source: str,
     acct: float,
     is_secondary_reg: bool,
+    reg_sub: str = "",
 ) -> Dict[str, Any]:
     """Build a position dict from a ranking row."""
     return {
@@ -197,6 +239,7 @@ def _make_position(
         "has_regulatory_upcoming_180d": row.get("has_regulatory_upcoming_180d", "0"),
         "regulatory_quality": row.get("regulatory_quality", "0"),
         "regulatory_is_secondary": is_secondary_reg,
+        "reg_sub_bucket": reg_sub,
     }
 
 
@@ -209,6 +252,135 @@ def _effective_family(row: Dict[str, str], mode: str = "primary") -> str:
     if mode == "secondary" and row.get("has_regulatory_upcoming_180d") == "1":
         return "REGULATORY"
     return (row.get("catalyst_family") or "OTHER").upper() or "OTHER"
+
+
+def _allocate_regulatory_ladder(
+    reg_rows: List[Dict[str, str]],
+    fam_frac: float,
+    eff_cap: float,
+    bucket_name: str,
+    gap_high_days: float,
+    gap_high_cap: float,
+    acct: float,
+    ladder_caps: Dict[str, float],
+    bucket_ladder_weights: Dict[str, float],
+) -> List[Dict[str, Any]]:
+    """Allocate REGULATORY family budget across time-ladder sub-buckets.
+
+    Each reg row is placed into reg_0_14 / reg_15_45 / reg_46_90 / reg_91_180
+    based on regulatory_days. Budget is split by bucket_ladder_weights (or equal
+    if absent). Unused sub-bucket share reflows in priority order:
+    reg_15_45 → reg_46_90 → reg_91_180 → reg_0_14.
+    """
+    REFLOW_PRIORITY = ["reg_15_45", "reg_46_90", "reg_91_180", "reg_0_14"]
+
+    # Classify rows into sub-buckets
+    by_sub: Dict[str, List[Dict[str, str]]] = {sb: [] for sb in REG_LADDER_NAMES}
+    unclassified: List[Dict[str, str]] = []
+    for row in reg_rows:
+        rd = row.get("regulatory_days", "")
+        sb = _reg_sub_bucket(rd)
+        if sb:
+            by_sub[sb].append(row)
+        else:
+            unclassified.append(row)
+
+    # Compute target weight per sub-bucket
+    if bucket_ladder_weights:
+        sub_targets = {sb: bucket_ladder_weights.get(sb, 0) for sb in REG_LADDER_NAMES}
+    else:
+        # Equal weight across sub-buckets that have names
+        active_subs = [sb for sb in REG_LADDER_NAMES if by_sub[sb]]
+        n_active = len(active_subs)
+        sub_targets = {sb: (1.0 / n_active if sb in active_subs else 0) for sb in REG_LADDER_NAMES}
+
+    # Reflow: move inactive sub-bucket share to active ones in priority order
+    inactive_share = 0.0
+    for sb in REG_LADDER_NAMES:
+        if not by_sub[sb] and sub_targets[sb] > 0:
+            inactive_share += sub_targets[sb]
+            sub_targets[sb] = 0
+
+    if inactive_share > 0:
+        for sb in REFLOW_PRIORITY:
+            if by_sub[sb] and sub_targets[sb] > 0:
+                sub_targets[sb] += inactive_share
+                inactive_share = 0
+                break
+        # If all priority subs are empty, distribute to any active
+        if inactive_share > 0:
+            active_subs = [sb for sb in REG_LADDER_NAMES if by_sub[sb]]
+            if active_subs:
+                per = inactive_share / len(active_subs)
+                for sb in active_subs:
+                    sub_targets[sb] += per
+
+    # Allocate within each sub-bucket
+    result: List[Dict[str, Any]] = []
+    for sb in REG_LADDER_NAMES:
+        sb_rows = by_sub[sb]
+        sb_share = sub_targets.get(sb, 0)
+        if not sb_rows or sb_share <= 0:
+            continue
+        sb_frac = fam_frac * sb_share
+        fn = len(sb_rows)
+        equal_wt = (sb_frac * 100.0) / fn
+        # Apply ladder-specific cap (stricter of ladder cap and family cap)
+        ladder_cap = ladder_caps.get(sb)
+        cap = min(eff_cap, ladder_cap) if ladder_cap is not None else eff_cap
+
+        for row in sb_rows:
+            wt = min(equal_wt, cap)
+            wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+            source = (row.get("de_beta_xbi_60d_source") or "").strip()
+            is_secondary_reg = (
+                row.get("has_regulatory_upcoming_180d") == "1"
+                and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+            )
+            result.append(
+                _make_position(
+                    row,
+                    bucket_name,
+                    "REGULATORY",
+                    wt,
+                    gap_risk,
+                    source,
+                    acct,
+                    is_secondary_reg,
+                    reg_sub=sb,
+                )
+            )
+
+    # Unclassified regulatory names (no regulatory_days): flat allocation from residual
+    if unclassified:
+        # Give them a small share — equal split of any remaining budget
+        total_allocated_pct = sum(p["weight_pct"] for p in result)
+        remaining_pct = max(0, fam_frac * 100.0 - total_allocated_pct)
+        if remaining_pct > 0:
+            fn = len(unclassified)
+            equal_wt = remaining_pct / fn
+            for row in unclassified:
+                wt = min(equal_wt, eff_cap)
+                wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+                source = (row.get("de_beta_xbi_60d_source") or "").strip()
+                is_secondary_reg = (
+                    row.get("has_regulatory_upcoming_180d") == "1"
+                    and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+                )
+                result.append(
+                    _make_position(
+                        row,
+                        bucket_name,
+                        "REGULATORY",
+                        wt,
+                        gap_risk,
+                        source,
+                        acct,
+                        is_secondary_reg,
+                    )
+                )
+
+    return result
 
 
 def build_positions(
@@ -238,6 +410,9 @@ def build_positions(
     gap_cfg = policy.get("gap_risk", {})
     gap_high_days = gap_cfg.get("high_days", 7)
     gap_high_cap = gap_cfg.get("high_cap_pct", 0.5)
+    ladder_enabled = policy.get("regulatory_ladder_enabled", False)
+    ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
+    ladder_weights = policy.get("regulatory_bucket_weights", {})
 
     # Classify into buckets, compute effective family
     buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
@@ -324,33 +499,50 @@ def build_positions(
                 if fam_share <= 0 or not fam_rows:
                     continue
                 fam_frac = target_frac * fam_share
-                fn = len(fam_rows)
-                equal_wt = (fam_frac * 100.0) / fn
                 fam_cap_cfg = fam_cfg.get(fam_name, {})
                 fam_name_cap = fam_cap_cfg.get("name_cap_pct")
                 eff_cap = fam_name_cap if fam_name_cap is not None else bucket_cap
 
-                for row in fam_rows:
-                    wt = min(equal_wt, eff_cap)
-                    wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
-                    source = (row.get("de_beta_xbi_60d_source") or "").strip()
-                    is_secondary_reg = (
-                        fam_name == "REGULATORY"
-                        and row.get("has_regulatory_upcoming_180d") == "1"
-                        and (row.get("catalyst_family") or "").upper() != "REGULATORY"
-                    )
-                    positions.append(
-                        _make_position(
-                            row,
+                # --- Regulatory ladder ---
+                use_ladder = ladder_enabled and fam_name == "REGULATORY"
+                if use_ladder:
+                    positions.extend(
+                        _allocate_regulatory_ladder(
+                            fam_rows,
+                            fam_frac,
+                            eff_cap,
                             bucket_name,
-                            fam_name,
-                            wt,
-                            gap_risk,
-                            source,
+                            gap_high_days,
+                            gap_high_cap,
                             acct,
-                            is_secondary_reg,
+                            ladder_caps,
+                            ladder_weights.get(bucket_name, {}),
                         )
                     )
+                else:
+                    fn = len(fam_rows)
+                    equal_wt = (fam_frac * 100.0) / fn
+                    for row in fam_rows:
+                        wt = min(equal_wt, eff_cap)
+                        wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+                        source = (row.get("de_beta_xbi_60d_source") or "").strip()
+                        is_secondary_reg = (
+                            fam_name == "REGULATORY"
+                            and row.get("has_regulatory_upcoming_180d") == "1"
+                            and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+                        )
+                        positions.append(
+                            _make_position(
+                                row,
+                                bucket_name,
+                                fam_name,
+                                wt,
+                                gap_risk,
+                                source,
+                                acct,
+                                is_secondary_reg,
+                            )
+                        )
         else:
             # --- Flat allocation (no family targets) ---
             equal_wt = (target_frac * 100.0) / n
@@ -1163,6 +1355,54 @@ def write_weekly_summary(
         else:
             lines.append("**Avg regulatory days (held)**: —")
         lines.append("")
+
+    # Regulatory Ladder breakdown (if ladder enabled)
+    _ladder_enabled = policy.get("regulatory_ladder_enabled", False)
+    reg_positions_with_sub = [p for p in positions if p.get("reg_sub_bucket")]
+    if _ladder_enabled and reg_positions_with_sub:
+        lines.append("### Regulatory Ladder")
+        lines.append("")
+        lines.append("| Sub-bucket | Names | $ | Avg Days | Cap |")
+        lines.append("|------------|-------|---|----------|-----|")
+        _ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
+        for sb in REG_LADDER_NAMES:
+            sb_pos = [p for p in reg_positions_with_sub if p.get("reg_sub_bucket") == sb]
+            if not sb_pos:
+                continue
+            sb_dollars = sum(p["target_dollars"] for p in sb_pos)
+            sb_days = []
+            for p in sb_pos:
+                rd = p.get("regulatory_days", "")
+                if rd:
+                    try:
+                        sb_days.append(float(rd))
+                    except (ValueError, TypeError):
+                        pass
+            avg_d = sum(sb_days) / len(sb_days) if sb_days else 0.0
+            cap_str = f"{_ladder_caps[sb]:.2f}%" if sb in _ladder_caps else "—"
+            lines.append(
+                f"| {REG_LADDER_DISPLAY.get(sb, sb)} "
+                f"| {len(sb_pos)} | ${sb_dollars:,.0f} "
+                f"| {avg_d:.0f}d | {cap_str} |"
+            )
+        lines.append("")
+
+        # Top 5 per ladder bucket
+        for sb in REG_LADDER_NAMES:
+            sb_pos = [p for p in reg_positions_with_sub if p.get("reg_sub_bucket") == sb]
+            if not sb_pos:
+                continue
+            sb_pos_sorted = sorted(sb_pos, key=lambda p: p["target_dollars"], reverse=True)[:5]
+            lines.append(f"**{REG_LADDER_DISPLAY.get(sb, sb)} — top {len(sb_pos_sorted)}:**")
+            lines.append("")
+            lines.append("| Ticker | Days | Event | $ | Secondary? |")
+            lines.append("|--------|------|-------|---|------------|")
+            for p in sb_pos_sorted:
+                rd = p.get("regulatory_days", "—")
+                ret = p.get("regulatory_event_type", "—")
+                is_sec = "yes" if p.get("regulatory_is_secondary") else "no"
+                lines.append(f"| {p['ticker']} | {rd} | {ret} | ${p['target_dollars']:,.0f} | {is_sec} |")
+            lines.append("")
 
     if reg_cov["top_imminent"]:
         lines.append("**Top imminent regulatory catalysts:**")

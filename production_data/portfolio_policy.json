@@ -42,6 +42,28 @@
     "high_days": 7,
     "high_cap_pct": 0.5
   },
+  "regulatory_ladder_enabled": true,
+  "regulatory_day_buckets": [14, 45, 90, 180],
+  "regulatory_bucket_caps_pct": {
+    "reg_0_14": 0.35,
+    "reg_15_45": 1.25,
+    "reg_46_90": 1.00,
+    "reg_91_180": 0.75
+  },
+  "regulatory_bucket_weights": {
+    "binary_0_30": {
+      "reg_0_14": 0.30,
+      "reg_15_45": 0.40,
+      "reg_46_90": 0.20,
+      "reg_91_180": 0.10
+    },
+    "binary_31_90": {
+      "reg_0_14": 0.05,
+      "reg_15_45": 0.40,
+      "reg_46_90": 0.40,
+      "reg_91_180": 0.15
+    }
+  },
   "rebalance_buffer_ranks": 30,
   "bucket_hysteresis_days": 7
 }
