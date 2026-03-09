@@ -162,6 +162,23 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
         for r in rows:
             r["catalyst_mode"] = r.get("de_catalyst_mode", "") or ""
 
+    # catalyst_bucket: compute from catalyst_days + catalyst_mode if missing
+    if "catalyst_bucket" not in sample:
+        try:
+            from decision_engine import assign_catalyst_bucket as _assign_bucket
+
+            for r in rows:
+                cd_raw = r.get("catalyst_days", "")
+                try:
+                    cd = float(cd_raw) if cd_raw else None
+                except (ValueError, TypeError):
+                    cd = None
+                cm = str(r.get("catalyst_mode", ""))
+                r["catalyst_bucket"] = _assign_bucket(cd, cm)
+        except ImportError:
+            for r in rows:
+                r["catalyst_bucket"] = ""
+
     # Clinical Calendar Alpha v2 backfill defaults
     if "clinical_score_v2" not in sample:
         for r in rows:

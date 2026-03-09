@@ -223,6 +223,14 @@ class DecisionRuleset:
     # crosses the exit threshold (boundary + 7 days).  Default OFF.
     enable_bucket_hysteresis: bool = False
 
+    # Binary 91-180 tier flattening (opt-in, default OFF)
+    # When enabled, removes tier discrimination from the sort key for names
+    # in the binary_91_180 bucket (catalyst_bucket == "less_binary").
+    # Tier labels are preserved for eligibility and labeling — only the
+    # sort ordering is affected. Lets the anchor (optionality_pct) and
+    # sort contributions dominate directly without tier gating.
+    binary_91_180_flatten_tier_sort: bool = False
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -1447,6 +1455,14 @@ def compute_actionable_sort_key(
     else:
         tier = decision_fields.get("tier_dev", "")
     tier_ord = _TIER_ORDER.get(str(tier), 4)
+
+    # Flatten tier within binary_91_180 bucket when flag is enabled.
+    # This removes tier as a sort discriminator for names in the 91-180
+    # catalyst window, letting the anchor and sort contributions dominate.
+    if rs.binary_91_180_flatten_tier_sort:
+        bucket = decision_fields.get("catalyst_bucket", "")
+        if bucket == "less_binary" and is_eligible == 0:
+            tier_ord = 1  # treat as tier A for sort purposes only
 
     # Build prefix: tier_first puts tier before archetype
     if rs.tiering_priority_mode == "tier_first":
