@@ -118,6 +118,7 @@ def run_bucket_eval(
     bucket_specific_horizons: bool = False,
     include_microcap_sleeve: bool = False,
     include_family_splits: bool = False,
+    family_filter_mode: str = "primary",
 ) -> Dict[str, Any]:
     """Run evaluate() for each bucket and return combined results.
 
@@ -257,6 +258,7 @@ def run_bucket_eval(
                     rebalance_buffer_ranks=rebalance_buffer_ranks,
                     industry_neutral=industry_neutral,
                     family_filter=family_values,
+                    family_filter_mode=family_filter_mode,
                 )
 
                 split_metrics: Dict[str, Any] = {
@@ -556,6 +558,17 @@ def main():
         default=False,
         help="Include regulatory vs clinical sub-splits within binary buckets.",
     )
+    parser.add_argument(
+        "--family-filter-mode",
+        type=str,
+        default="primary",
+        choices=["primary", "secondary"],
+        help=(
+            "How to assign family membership for splits. "
+            "'primary' uses catalyst_family (nearest catalyst). "
+            "'secondary' treats any ticker with has_regulatory_upcoming_180d=1 as REGULATORY."
+        ),
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -581,6 +594,7 @@ def main():
         bucket_specific_horizons=use_bucket_specific,
         include_microcap_sleeve=args.include_microcap_sleeve,
         include_family_splits=args.include_family_splits,
+        family_filter_mode=args.family_filter_mode,
     )
 
     # Write combined results

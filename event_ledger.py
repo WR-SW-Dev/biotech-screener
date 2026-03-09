@@ -147,6 +147,9 @@ CATALYST_FAMILY_MAP: Dict[str, str] = {
 }
 
 
+REGULATORY_EVENT_TYPES: frozenset = frozenset(k for k, v in CATALYST_FAMILY_MAP.items() if v == "REGULATORY")
+
+
 def classify_catalyst_family(event_type: str) -> str:
     """Classify an event_type into a catalyst family.
 

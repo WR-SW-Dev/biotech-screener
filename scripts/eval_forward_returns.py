@@ -1085,6 +1085,7 @@ def evaluate(
     min_mcap_buckets: Optional[Tuple[str, ...]] = None,
     trade_lag_days: int = 0,
     family_filter: Optional[List[str]] = None,
+    family_filter_mode: str = "primary",
 ) -> Tuple[EvalSummary, List[DateResult], List[Dict[str, str]]]:
     """Run the full walk-forward evaluation.
 
@@ -1290,7 +1291,18 @@ def evaluate(
                             _r["catalyst_family"] = _clf(_r.get("catalyst_event_type", ""))
                     except ImportError:
                         pass
-                rankings = [r for r in rankings if r.get("catalyst_family", "").strip() in _allowed_families]
+                if family_filter_mode == "secondary":
+                    # Secondary mode: for REGULATORY, include any ticker with
+                    # has_regulatory_upcoming_180d=1 regardless of primary catalyst_family.
+                    # For other families, fall back to primary catalyst_family.
+                    def _secondary_match(r):
+                        if "REGULATORY" in _allowed_families and r.get("has_regulatory_upcoming_180d") == "1":
+                            return True
+                        return r.get("catalyst_family", "").strip() in _allowed_families
+
+                    rankings = [r for r in rankings if _secondary_match(r)]
+                else:
+                    rankings = [r for r in rankings if r.get("catalyst_family", "").strip() in _allowed_families]
                 if not rankings:
                     for h in horizons:
                         dr = DateResult(

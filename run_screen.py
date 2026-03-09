@@ -50,7 +50,7 @@ from decimal import Decimal
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from statistics import median, quantiles
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -114,7 +114,7 @@ from decision_engine import (
 
 # Module 3A specific imports
 from event_detector import SimpleMarketCalendar
-from event_ledger import classify_catalyst_family
+from event_ledger import REGULATORY_EVENT_TYPES, classify_catalyst_family
 
 # Module imports
 from module_1_universe import compute_module_1_universe
@@ -1417,6 +1417,10 @@ SNAPSHOT_COLUMNS = [
     "clinical_quality",
     "has_adcom",
     "single_asset_risk",
+    # --- Secondary regulatory catalyst (independent of nearest) ---
+    "regulatory_days",
+    "regulatory_event_type",
+    "has_regulatory_upcoming_180d",
     "missing_components",
     "missingness_penalty",
     "confidence_overall",
@@ -2278,6 +2282,95 @@ def _nearest_catalyst_event_type(
     return ""
 
 
+def _load_pdufa_manual(data_dir: Optional[Path] = None) -> List[Dict[str, str]]:
+    """Load PDUFA manual dates from production_data/pdufa_dates.json.
+
+    Returns list of {ticker, pdufa_date, ...} dicts. Empty on missing file.
+    Cached per-call via the snapshot function's pdufa_cache parameter.
+    """
+    candidates = []
+    if data_dir:
+        candidates.append(data_dir / "pdufa_dates.json")
+    candidates.append(Path(__file__).parent / "production_data" / "pdufa_dates.json")
+    for p in candidates:
+        if p.exists():
+            try:
+                return json.loads(p.read_text())
+            except (json.JSONDecodeError, OSError):
+                pass
+    return []
+
+
+def _nearest_regulatory_catalyst(
+    m3_summaries: Optional[Dict[str, Any]],
+    ticker: str,
+    as_of_date_str: str,
+    max_days: int = 180,
+    pdufa_manual: Optional[List[Dict[str, str]]] = None,
+) -> Tuple[str, str]:
+    """Find the nearest REGULATORY event for a ticker from Module 3 events.
+
+    Scans ALL events (not just the overall nearest) for any regulatory
+    event_type within max_days.  Also checks the PDUFA manual file as a
+    fallback — M3 events may lack PDUFA entries because those are loaded
+    via the event ledger's ``query_nearest_catalyst`` path (single nearest)
+    rather than the per-ticker events list.
+
+    Returns (days_str, event_type) or ("", "").
+    """
+    from datetime import date as _date
+
+    best_days: Optional[int] = None
+    best_type = ""
+
+    # 1. Scan M3 events
+    if m3_summaries:
+        summary = m3_summaries.get(ticker.upper()) or m3_summaries.get(ticker)
+        if summary and isinstance(summary, dict):
+            for event in summary.get("events") or []:
+                if not isinstance(event, dict):
+                    continue
+                et = event.get("event_type", "")
+                if et not in REGULATORY_EVENT_TYPES:
+                    continue
+                ed = event.get("event_date", "")
+                if not ed or ed <= as_of_date_str:
+                    continue
+                try:
+                    days = (_date.fromisoformat(ed[:10]) - _date.fromisoformat(as_of_date_str[:10])).days
+                except (ValueError, TypeError):
+                    continue
+                if days < 1 or days > max_days:
+                    continue
+                if best_days is None or days < best_days:
+                    best_days = days
+                    best_type = et
+
+    # 2. Fallback: PDUFA manual file (catches tickers whose PDUFA wasn't
+    #    promoted to M3 events list but IS in the event ledger/manual file)
+    if pdufa_manual:
+        ticker_upper = ticker.upper()
+        for rec in pdufa_manual:
+            if (rec.get("ticker", "")).upper() != ticker_upper:
+                continue
+            pd = rec.get("pdufa_date", "")
+            if not pd or pd <= as_of_date_str:
+                continue
+            try:
+                days = (_date.fromisoformat(pd[:10]) - _date.fromisoformat(as_of_date_str[:10])).days
+            except (ValueError, TypeError):
+                continue
+            if days < 1 or days > max_days:
+                continue
+            if best_days is None or days < best_days:
+                best_days = days
+                best_type = "PDUFA"
+
+    if best_days is not None:
+        return (str(best_days), best_type)
+    return ("", "")
+
+
 # ---------------------------------------------------------------------------
 # Clinical alpha z-score helpers
 # ---------------------------------------------------------------------------
@@ -3063,6 +3156,11 @@ def save_validation_snapshot(
     industry_groups = results.get("industry_groups", {})
     m3_summaries = (results.get("module_3_catalyst") or {}).get("summaries")
 
+    # Load PDUFA manual dates once for secondary regulatory catalyst scan.
+    # This ensures tickers with PDUFA dates in the manual file get flagged
+    # even when M3 events don't include the PDUFA entry.
+    _pdufa_manual = _load_pdufa_manual()
+
     # --- Build company name lookup from Module 1 universe ---
     # Some tickers in universe.json have market_data.company_name set to the
     # sector label (e.g. "Healthcare") instead of the real company name.
@@ -3531,6 +3629,12 @@ def save_validation_snapshot(
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         row["binary_quality_score"] = compute_binary_quality_score(row)
         row.update(compute_event_quality_features(row))
+
+        # Secondary regulatory catalyst (independent of primary nearest)
+        _reg_days, _reg_et = _nearest_regulatory_catalyst(m3_summaries, ticker, as_of_date, pdufa_manual=_pdufa_manual)
+        row["regulatory_days"] = _reg_days
+        row["regulatory_event_type"] = _reg_et
+        row["has_regulatory_upcoming_180d"] = "1" if _reg_days else "0"
 
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET
@@ -4646,6 +4750,17 @@ def save_validation_snapshot(
     # 8-K cache is always keyed by as_of_date in the production pipeline
     _data_sources["sec_8k"] = {"effective_date": as_of_date}
     metadata["data_sources"] = _data_sources
+
+    # PDUFA manual telemetry: coverage metrics for secondary regulatory sleeve
+    _n_pdufa_events = len(_pdufa_manual)
+    _n_pdufa_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
+    _eligible_count = sum(1 for r in csv_rows if r.get("eligible") == "1")
+    metadata["pdufa_manual_coverage"] = {
+        "pdufa_manual_loaded": _n_pdufa_events > 0,
+        "pdufa_manual_n_events": _n_pdufa_events,
+        "pdufa_manual_n_eligible_flagged": _n_pdufa_flagged,
+        "regulatory_secondary_coverage_pct": round(_n_pdufa_flagged / max(_eligible_count, 1) * 100, 1),
+    }
 
     meta_path = snap_path / "metadata.json"
     try:

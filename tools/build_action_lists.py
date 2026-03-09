@@ -55,6 +55,9 @@ ACTION_LIST_COLUMNS = [
     "clinical_quality",
     "has_adcom",
     "single_asset_risk",
+    "regulatory_days",
+    "regulatory_event_type",
+    "has_regulatory_upcoming_180d",
     "archetype",
     "alpha_cohort_key",
     "mom_state",
@@ -495,29 +498,47 @@ def _normalize_family(raw: str) -> str:
     return FAMILY_OTHER
 
 
+def _effective_family(row: Dict[str, str], mode: str = "primary") -> str:
+    """Resolve the effective family for a row given the filter mode.
+
+    primary: use catalyst_family (nearest catalyst).
+    secondary: REGULATORY if has_regulatory_upcoming_180d is set,
+               regardless of primary catalyst. Everything else uses primary.
+    """
+    if mode == "secondary" and row.get("has_regulatory_upcoming_180d") == "1":
+        return FAMILY_REGULATORY
+    return _normalize_family(row.get("catalyst_family", ""))
+
+
 def split_by_family(
     buckets: Dict[str, List[Dict[str, str]]],
+    family_filter_mode: str = "primary",
 ) -> Dict[str, List[Dict[str, str]]]:
     """Split binary buckets by catalyst family.
 
     Returns a dict with keys like "binary_31_90__REGULATORY", "binary_91_180__CLINICAL", etc.
     Less-binary bucket is not split (no dated catalyst → no family).
     Each sub-list preserves the original sort order.
+
+    family_filter_mode:
+        "primary" — use catalyst_family (nearest catalyst, default).
+        "secondary" — REGULATORY if has_regulatory_upcoming_180d is set,
+                       even when the primary catalyst is clinical.
     """
     result: Dict[str, List[Dict[str, str]]] = {}
     for bucket_name in BUCKET_NAMES:
         rows = buckets.get(bucket_name, [])
         if bucket_name == "less_binary":
-            # No family split for less-binary
             continue
         for family in BINARY_FAMILIES:
             key = f"{bucket_name}__{family}"
-            result[key] = [r for r in rows if _normalize_family(r.get("catalyst_family", "")) == family]
+            result[key] = [r for r in rows if _effective_family(r, family_filter_mode) == family]
     return result
 
 
 def get_family_summary(
     buckets: Dict[str, List[Dict[str, str]]],
+    family_filter_mode: str = "primary",
 ) -> Dict[str, Dict[str, int]]:
     """Return {bucket: {family: count}} for binary buckets."""
     summary: Dict[str, Dict[str, int]] = {}
@@ -527,7 +548,7 @@ def get_family_summary(
         rows = buckets.get(bucket_name, [])
         counts: Dict[str, int] = {}
         for r in rows:
-            f = _normalize_family(r.get("catalyst_family", ""))
+            f = _effective_family(r, family_filter_mode)
             counts[f] = counts.get(f, 0) + 1
         summary[bucket_name] = counts
     return summary
@@ -857,6 +878,16 @@ def main():
             "Writes per-family CSVs e.g. binary_31_90_regulatory.csv."
         ),
     )
+    parser.add_argument(
+        "--family-filter-mode",
+        type=str,
+        default="primary",
+        choices=["primary", "secondary"],
+        help=(
+            "How to classify REGULATORY: 'primary' = nearest catalyst only, "
+            "'secondary' = any regulatory event within 180d (default: primary)."
+        ),
+    )
     args = parser.parse_args()
 
     if args.snapshot_dir:
@@ -911,7 +942,7 @@ def main():
     # Family splits (opt-in)
     fam_splits = None
     if args.split_by_family:
-        fam_splits = split_by_family(buckets)
+        fam_splits = split_by_family(buckets, family_filter_mode=args.family_filter_mode)
 
     write_action_lists(
         buckets,

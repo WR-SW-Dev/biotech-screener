@@ -119,6 +119,7 @@ def run_bucketed_verdict(
     cost_bps: float = 30.0,
     out_dir: Optional[Path] = None,
     family_filter: Optional[List[str]] = None,
+    family_filter_mode: str = "primary",
     metric_key: str = "mean_hedged_return",
 ) -> Dict[str, Any]:
     """Run evaluate() with bucket_filter for both arms, compute verdict.
@@ -149,6 +150,7 @@ def run_bucketed_verdict(
     )
     if family_filter:
         eval_kwargs["family_filter"] = family_filter
+        eval_kwargs["family_filter_mode"] = family_filter_mode
 
     # Candidate arm (OOS only)
     cand_summary, _, _ = eval_fn(
@@ -204,6 +206,7 @@ def run_bucketed_verdict(
         "bucket": bucket,
         "bucket_filter": bucket_filter,
         "family_filter": family_filter,
+        "family_filter_mode": family_filter_mode,
         "metric_key": metric_key,
         "verdict": verdict,
         "oos_cutoff": oos_cutoff,
@@ -306,6 +309,17 @@ def main() -> None:
         default="mean_hedged_return",
         help="Return metric for verdict (default: mean_hedged_return)",
     )
+    parser.add_argument(
+        "--family-filter-mode",
+        type=str,
+        default="primary",
+        choices=["primary", "secondary"],
+        help=(
+            "How to assign family membership. "
+            "'primary' uses catalyst_family (nearest catalyst). "
+            "'secondary' treats any ticker with has_regulatory_upcoming_180d=1 as REGULATORY."
+        ),
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -326,6 +340,7 @@ def main() -> None:
         cost_bps=args.cost_bps,
         out_dir=out_dir,
         family_filter=fam_filter,
+        family_filter_mode=args.family_filter_mode,
         metric_key=args.metric_key,
     )
 

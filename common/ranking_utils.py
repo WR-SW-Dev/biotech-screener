@@ -258,3 +258,23 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
         if col not in sample:
             for r in rows:
                 r[col] = "0"
+
+    # Secondary regulatory catalyst columns: backfill if missing.
+    # For historical snapshots without these columns, we derive from
+    # catalyst_event_type when possible (a REGULATORY event_type implies
+    # a regulatory catalyst exists).
+    if "has_regulatory_upcoming_180d" not in sample:
+        try:
+            from event_ledger import REGULATORY_EVENT_TYPES as _REG_TYPES
+        except ImportError:
+            _REG_TYPES = frozenset()
+        for r in rows:
+            et = r.get("catalyst_event_type", "")
+            if et in _REG_TYPES:
+                r["has_regulatory_upcoming_180d"] = "1"
+                r["regulatory_days"] = r.get("catalyst_days", "")
+                r["regulatory_event_type"] = et
+            else:
+                r["has_regulatory_upcoming_180d"] = "0"
+                r["regulatory_days"] = ""
+                r["regulatory_event_type"] = ""

@@ -247,6 +247,9 @@ def build_positions(
                     "target_dollars": dollars,
                     "gap_risk": gap_risk,
                     "price_coverage": price_coverage,
+                    "regulatory_days": row.get("regulatory_days", ""),
+                    "regulatory_event_type": row.get("regulatory_event_type", ""),
+                    "has_regulatory_upcoming_180d": row.get("has_regulatory_upcoming_180d", "0"),
                 }
             )
 
@@ -642,6 +645,36 @@ def _compute_signal_diagnostics(
     }
 
 
+def _compute_regulatory_coverage(
+    positions: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Compute secondary regulatory coverage metrics from positions.
+
+    Returns dict with: n_eligible, n_regulatory, coverage_pct, top_imminent.
+    """
+    eligible = [p for p in positions if p.get("ticker")]
+    reg = [p for p in eligible if p.get("has_regulatory_upcoming_180d") == "1"]
+    n_eligible = len(eligible)
+    n_reg = len(reg)
+
+    # Top 10 by smallest regulatory_days, then ticker for stable sort
+    def _sort_key(p):
+        rd = p.get("regulatory_days", "")
+        try:
+            return (float(rd), p.get("ticker", ""))
+        except (ValueError, TypeError):
+            return (9999, p.get("ticker", ""))
+
+    top_imminent = sorted(reg, key=_sort_key)[:10]
+
+    return {
+        "n_eligible": n_eligible,
+        "n_regulatory": n_reg,
+        "coverage_pct": round(n_reg / n_eligible * 100, 1) if n_eligible > 0 else 0.0,
+        "top_imminent": top_imminent,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Weekly summary markdown
 # ---------------------------------------------------------------------------
@@ -952,6 +985,30 @@ def write_weekly_summary(
             f"- Bucket movers (entered/exited this week): {diag['bucket_movers_in']} entered, {diag['bucket_movers_out']} exited"
         )
         lines.append(f"- Gap-risk HIGH weight: {diag['gap_high_weight']:.1f}% (${diag['gap_high_usd']:,.0f})")
+        lines.append("")
+
+    # --- Secondary Regulatory Coverage ---
+    reg_cov = _compute_regulatory_coverage(positions)
+    lines.append("## Secondary Regulatory Coverage")
+    lines.append("")
+    lines.append(
+        f"**Regulatory names**: {reg_cov['n_regulatory']} / {reg_cov['n_eligible']} "
+        f"eligible ({reg_cov['coverage_pct']:.1f}%)"
+    )
+    lines.append("")
+    if reg_cov["top_imminent"]:
+        lines.append("**Top imminent regulatory catalysts:**")
+        lines.append("")
+        lines.append("| Ticker | Event | Days | Bucket |")
+        lines.append("|--------|-------|------|--------|")
+        for p in reg_cov["top_imminent"]:
+            rd = p.get("regulatory_days", "—")
+            ret = p.get("regulatory_event_type", "—")
+            bkt = BUCKET_DISPLAY.get(p.get("bucket", ""), p.get("bucket", ""))
+            lines.append(f"| {p['ticker']} | {ret} | {rd} | {bkt} |")
+        lines.append("")
+    else:
+        lines.append("No positions with upcoming regulatory catalysts within 180d.")
         lines.append("")
 
     # --- Fill Annotation ---
