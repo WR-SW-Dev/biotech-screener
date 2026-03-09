@@ -36,6 +36,34 @@ Full audited output at `output/ac_tiebreak_sweep/compare.md`.
 
 ---
 
+## [v1.10.0] bebe73f8 — 2026-03-09 — Flatten tier sort within binary_91_180 (promoted)
+
+**Active ruleset change**: `e966af9d` (v1.9.0_institutional_sort) → `bebe73f8` (v1.10.0_flatten_tier_91_180)
+
+**Parameters changed** (vs e966af9d):
+- `binary_91_180_flatten_tier_sort`: `false` (new field) → `true`
+
+**Scope statement**: Only affects sort ordering inside the `binary_91_180` bucket (catalyst_bucket=less_binary, 91-180 days). All other buckets (core, build_window, binary_now) are unchanged.
+
+**What changed**: When the flag is enabled, `tier_ord` is set to 1 (same as Tier A) for all eligible names in the less_binary bucket. This removes tier as a sort discriminator within binary_91_180, allowing high-optionality B/C-tier names to compete with A-tier on anchor merit.
+
+**What didn't change**: Eligibility, tier assignment, sizing, and sort behavior in all other buckets remain identical. The flag has no effect when all less_binary names are already Tier A (which was the case for most of 2020-2024).
+
+**Evidence** (strict audited OOS + IS validation):
+- OOS 2020-2024 (295 dates): Δ84d = -0.05pp, Δ126d = +0.04pp (flat — no tier diversity)
+- IS 2025 (49/39 dates): Δ84d = +2.74pp, Δ126d = +0.22pp (PASS both bars)
+- Full (344/334 dates): Δ84d = -0.11pp, Δ126d = -0.08pp (flat)
+- Verdict: CONDITIONAL PASS — passes IS 2025, flat OOS (data limitation, not signal failure)
+
+**Difference audit** (395 dates, K=20):
+- 116 dates (29.4%) had different top-K composition
+- 212 B-tier names entering, 449 A-tier less_binary names exiting
+- Mechanism: flattened B-tier names with higher optionality displace A-tier names with lower optionality
+
+**Why OOS is flat**: less_binary bucket had ≤4 names and near-zero B/C tier diversity before H2 2025. The flag is structurally inert when all names are already Tier A. Universe growth in H2 2025+ creates the tier diversity needed for the flag to matter.
+
+---
+
 ## [v1.8.3] 82982998 — 2026-03-03 — Portfolio mechanics: rebalance buffer=30
 
 **Active ruleset change**: `4f12a7f8` (v1.8.2_clinical_sort_off_candidate) → `82982998` (v1.8.3_buffer30_candidate)

@@ -23,12 +23,12 @@ from dataclasses import dataclass, field
 from dataclasses import fields as dc_fields
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Guardrail thresholds
 # ---------------------------------------------------------------------------
-PHASE2_PINNED_RULESET_ID = "e966af9d"
+PHASE2_PINNED_RULESET_ID = "bebe73f8"
 PHASE2_A_FLOOR = 0.60  # Phase-2 ruleset a_floor; used by optionality diagnostic
 WARN_NAME_TURNOVER_PCT = 40.0
 WARN_A_COUNT_MIN = 1
@@ -38,6 +38,7 @@ WARN_CATALYST_COVERAGE_MIN = 50.0  # specific_days % among dev-stage
 # Health gate thresholds (externalized, versioned)
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class Phase2HealthThresholds:
     """Immutable, versioned configuration for health gate thresholds.
@@ -45,24 +46,25 @@ class Phase2HealthThresholds:
     Frozen so instances are hashable and produce a deterministic thresholds_id.
     Defaults are calibrated against the 2025 steady-state archive chain.
     """
+
     # FAIL gates — data feed is broken
-    fail_catalyst_coverage_min: float = 20.0   # below this = catalyst feed broken
-    fail_a_count_min: int = 1                  # Phase-2 requires tier separation
+    fail_catalyst_coverage_min: float = 20.0  # below this = catalyst feed broken
+    fail_a_count_min: int = 1  # Phase-2 requires tier separation
     fail_optionality_coverage_min: float = 80.0  # below this = optionality feed broken
 
     # WARN gates — operational concern
-    warn_a_count_low: int = 2                  # too concentrated (calibrated: P50=2, P90=5)
-    warn_turnover_pct: float = 50.0            # name turnover (calibrated: P95=17.4)
-    warn_weight_l1_pct: float = 55.0           # weight turnover (calibrated: P90=50.8, P95=52.7)
-    warn_catalyst_drop_pp: float = 5.0         # coverage drop vs prior (calibrated: max=1.9)
+    warn_a_count_low: int = 2  # too concentrated (calibrated: P50=2, P90=5)
+    warn_turnover_pct: float = 50.0  # name turnover (calibrated: P95=17.4)
+    warn_weight_l1_pct: float = 55.0  # weight turnover (calibrated: P90=50.8, P95=52.7)
+    warn_catalyst_drop_pp: float = 5.0  # coverage drop vs prior (calibrated: max=1.9)
 
     # Coinvest coverage gate (WARN-only, never FAIL)
-    warn_coinvest_coverage_min: float = 70.0   # WARN if < 70% tickers have signal
+    warn_coinvest_coverage_min: float = 70.0  # WARN if < 70% tickers have signal
 
     # Missingness coverage gates (dev-stage component coverage)
-    fail_drawdown_coverage_min: float = 95.0   # below this = risk feed broken
-    warn_drawdown_coverage_min: float = 99.0   # mild degradation
-    warn_sponsor_coverage_min: float = 90.0    # dev-stage sponsorship coverage
+    fail_drawdown_coverage_min: float = 95.0  # below this = risk feed broken
+    warn_drawdown_coverage_min: float = 99.0  # mild degradation
+    warn_sponsor_coverage_min: float = 90.0  # dev-stage sponsorship coverage
     warn_catalyst_comp_coverage_min: float = 85.0  # dev-stage catalyst component coverage
 
     # Exposure guardrails — catalyst timing
@@ -144,6 +146,7 @@ RISK_FLAGS_ALL = [
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class SnapshotData:
     date: str
@@ -193,6 +196,7 @@ class DeltaResult:
 @dataclass
 class SingleResult:
     """Summary for a single snapshot (no prior available)."""
+
     tier_counts: Dict[str, int]
     tier_in_portfolio: Dict[str, int]
     size_band: Dict[str, int]
@@ -205,8 +209,9 @@ class SingleResult:
 @dataclass
 class HealthResult:
     """Deterministic health gate outcome."""
-    status: str                 # "OK" | "WARN" | "FAIL"
-    reasons: List[str]          # e.g. ["high_turnover", "catalyst_drop"]
+
+    status: str  # "OK" | "WARN" | "FAIL"
+    reasons: List[str]  # e.g. ["high_turnover", "catalyst_drop"]
     metrics: Dict[str, object]  # key numbers for logging
 
 
@@ -312,19 +317,18 @@ def _catalyst_coverage(rankings: pd.DataFrame) -> CatalystCoverage:
 
 def _top_catalysts(rankings: pd.DataFrame, n: int = 10) -> List[Dict]:
     """Return nearest N specific_days catalysts among drug_developer rows."""
-    dev = rankings[
-        (rankings["archetype"] == "drug_developer")
-        & (rankings["catalyst_mode"] == "specific_days")
-    ].copy()
+    dev = rankings[(rankings["archetype"] == "drug_developer") & (rankings["catalyst_mode"] == "specific_days")].copy()
     dev["_cat_days_int"] = dev["catalyst_days"].apply(lambda v: _safe_int(v, 99999))
     dev = dev.nsmallest(n, "_cat_days_int")
     result = []
     for _, row in dev.iterrows():
-        result.append({
-            "ticker": row["ticker"],
-            "catalyst_days": _safe_int(row["catalyst_days"]),
-            "tier_dev": str(row.get("tier_dev", "")).strip(),
-        })
+        result.append(
+            {
+                "ticker": row["ticker"],
+                "catalyst_days": _safe_int(row["catalyst_days"]),
+                "tier_dev": str(row.get("tier_dev", "")).strip(),
+            }
+        )
     return result
 
 
@@ -337,14 +341,12 @@ def _reconstruct_portfolio(rankings: pd.DataFrame) -> pd.DataFrame:
     """
     if "tier_any" in rankings.columns:
         eligible = rankings[
-            (rankings["eligible"].astype(str) == "1")
-            & (rankings["tier_any"].isin(RECON_TIER_FILTER))
+            (rankings["eligible"].astype(str) == "1") & (rankings["tier_any"].isin(RECON_TIER_FILTER))
         ].copy()
     else:
         # Legacy fallback for old snapshots
         eligible = rankings[
-            (rankings["archetype"] == "drug_developer")
-            & (rankings["tier_dev"].isin(RECON_TIER_FILTER))
+            (rankings["archetype"] == "drug_developer") & (rankings["tier_dev"].isin(RECON_TIER_FILTER))
         ].copy()
     eligible["_ar"] = eligible["actionable_rank"].apply(lambda v: _safe_int(v, 99999))
     portfolio = eligible.nsmallest(RECON_TOP_K, "_ar").copy()
@@ -355,6 +357,7 @@ def _reconstruct_portfolio(rankings: pd.DataFrame) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Core functions
 # ---------------------------------------------------------------------------
+
 
 def is_snapshot_degraded(snapshot_dir: Path) -> bool:
     """Return True if snapshot has degraded cache health."""
@@ -434,15 +437,13 @@ def load_snapshot(snap_path: Path) -> Optional[SnapshotData]:
     rankings = pd.read_csv(rankings_csv, dtype=str)
     if "tier_dev" not in rankings.columns:
         print(
-            f"WARNING: {snap_path.name}: snapshot schema too old "
-            f"(missing 'tier_dev'). Re-enrich or skip.",
+            f"WARNING: {snap_path.name}: snapshot schema too old " f"(missing 'tier_dev'). Re-enrich or skip.",
             file=sys.stderr,
         )
         return None
     if "actionable_rank" not in rankings.columns:
         print(
-            f"WARNING: {snap_path.name}: snapshot schema too old "
-            f"(missing 'actionable_rank'). Re-enrich or skip.",
+            f"WARNING: {snap_path.name}: snapshot schema too old " f"(missing 'actionable_rank'). Re-enrich or skip.",
             file=sys.stderr,
         )
         return None
@@ -497,9 +498,7 @@ def compute_delta(current: SnapshotData, prior: SnapshotData) -> DeltaResult:
     entrants = sorted(cur_tickers - pri_tickers)
     exits = sorted(pri_tickers - cur_tickers)
     avg_size = (len(cur_tickers) + len(pri_tickers)) / 2
-    name_turnover_pct = (
-        (len(entrants) + len(exits)) / (2 * avg_size) * 100 if avg_size > 0 else 0.0
-    )
+    name_turnover_pct = (len(entrants) + len(exits)) / (2 * avg_size) * 100 if avg_size > 0 else 0.0
 
     # Weight L1 delta
     cur_weights = {}
@@ -509,9 +508,7 @@ def compute_delta(current: SnapshotData, prior: SnapshotData) -> DeltaResult:
     for _, row in prior.portfolio.iterrows():
         pri_weights[row["ticker"]] = _safe_float(row.get("target_weight_pct", 0))
     all_tickers = cur_tickers | pri_tickers
-    weight_l1 = sum(
-        abs(cur_weights.get(t, 0.0) - pri_weights.get(t, 0.0)) for t in all_tickers
-    )
+    weight_l1 = sum(abs(cur_weights.get(t, 0.0) - pri_weights.get(t, 0.0)) for t in all_tickers)
 
     # Tier counts (universe)
     tier_counts_current = _tier_counts(current.rankings)
@@ -536,9 +533,7 @@ def compute_delta(current: SnapshotData, prior: SnapshotData) -> DeltaResult:
     risk_prior = _count_risk_flags(prior.portfolio)
 
     # Guardrail warnings
-    warnings = _compute_warnings(
-        current, prior, name_turnover_pct, tier_counts_current, cat_cov_current
-    )
+    warnings = _compute_warnings(current, prior, name_turnover_pct, tier_counts_current, cat_cov_current)
 
     return DeltaResult(
         entrants=entrants,
@@ -570,25 +565,15 @@ def _compute_warnings(
 ) -> List[str]:
     warnings = []
     if prior and current.ruleset_id != prior.ruleset_id:
-        warnings.append(
-            f"Ruleset changed: {prior.ruleset_id} -> {current.ruleset_id}"
-        )
+        warnings.append(f"Ruleset changed: {prior.ruleset_id} -> {current.ruleset_id}")
     if current.ruleset_id and current.ruleset_id != PHASE2_PINNED_RULESET_ID:
-        warnings.append(
-            f"Ruleset {current.ruleset_id} does not match pinned Phase-2 ID ({PHASE2_PINNED_RULESET_ID})"
-        )
+        warnings.append(f"Ruleset {current.ruleset_id} does not match pinned Phase-2 ID ({PHASE2_PINNED_RULESET_ID})")
     if tier_counts.get("A", 0) < WARN_A_COUNT_MIN:
-        warnings.append(
-            f"A-tier count is {tier_counts.get('A', 0)} (minimum: {WARN_A_COUNT_MIN})"
-        )
+        warnings.append(f"A-tier count is {tier_counts.get('A', 0)} (minimum: {WARN_A_COUNT_MIN})")
     if cat_cov.pct < WARN_CATALYST_COVERAGE_MIN:
-        warnings.append(
-            f"Catalyst specific_days coverage {cat_cov.pct}% < {WARN_CATALYST_COVERAGE_MIN}% threshold"
-        )
+        warnings.append(f"Catalyst specific_days coverage {cat_cov.pct}% < {WARN_CATALYST_COVERAGE_MIN}% threshold")
     if name_turnover_pct > WARN_NAME_TURNOVER_PCT:
-        warnings.append(
-            f"Name turnover {name_turnover_pct}% > {WARN_NAME_TURNOVER_PCT}% threshold"
-        )
+        warnings.append(f"Name turnover {name_turnover_pct}% > {WARN_NAME_TURNOVER_PCT}% threshold")
     return warnings
 
 
@@ -618,6 +603,7 @@ def compute_single_snapshot_summary(snap: SnapshotData) -> SingleResult:
 # Optionality diagnostic
 # ---------------------------------------------------------------------------
 
+
 def _optionality_diagnostic(rankings: pd.DataFrame, a_floor: float) -> dict:
     """Compute optionality coverage and A-candidate stats for dev-stage names."""
     dev = rankings[rankings["archetype"] == "drug_developer"]
@@ -635,11 +621,15 @@ def _optionality_diagnostic(rankings: pd.DataFrame, a_floor: float) -> dict:
     n_with_opt = int(opts.notna().sum())
     coverage_pct = round(n_with_opt / n_dev * 100, 1)
     above_floor = int((opts >= a_floor).sum())
-    quantiles = {} if opts.dropna().empty else {
-        "p50": round(float(opts.quantile(0.5)), 4),
-        "p75": round(float(opts.quantile(0.75)), 4),
-        "p90": round(float(opts.quantile(0.9)), 4),
-    }
+    quantiles = (
+        {}
+        if opts.dropna().empty
+        else {
+            "p50": round(float(opts.quantile(0.5)), 4),
+            "p75": round(float(opts.quantile(0.75)), 4),
+            "p90": round(float(opts.quantile(0.9)), 4),
+        }
+    )
     return {
         "n_dev": n_dev,
         "n_with_optionality": n_with_opt,
@@ -653,6 +643,7 @@ def _optionality_diagnostic(rankings: pd.DataFrame, a_floor: float) -> dict:
 # ---------------------------------------------------------------------------
 # Exposure metrics
 # ---------------------------------------------------------------------------
+
 
 def compute_exposure_metrics(portfolio_df) -> Dict[str, Any]:
     """Compute portfolio-level exposure concentrations.
@@ -766,14 +757,39 @@ def compute_exposure_metrics(portfolio_df) -> Dict[str, Any]:
 
 # Exposure check table: (metric_key, warn_threshold_attr, fail_threshold_attr, reason_tag)
 _EXPOSURE_CHECKS = [
-    ("catalyst_le_7d_weight_pct", "warn_catalyst_le_7d_weight_pct", "fail_catalyst_le_7d_weight_pct", "catalyst_7d_weight_high"),
+    (
+        "catalyst_le_7d_weight_pct",
+        "warn_catalyst_le_7d_weight_pct",
+        "fail_catalyst_le_7d_weight_pct",
+        "catalyst_7d_weight_high",
+    ),
     ("catalyst_le_7d_count", "warn_catalyst_le_7d_count", "fail_catalyst_le_7d_count", "catalyst_7d_count_high"),
     ("high_vol_weight_pct", "warn_high_vol_weight_pct", "fail_high_vol_weight_pct", "high_vol_exposure"),
     ("high_beta_weight_pct", "warn_high_beta_weight_pct", "fail_high_beta_weight_pct", "high_beta_exposure"),
-    ("high_vol_or_beta_weight_pct", "warn_high_vol_or_beta_weight_pct", "fail_high_vol_or_beta_weight_pct", "high_vol_or_beta_exposure"),
-    ("drawdown_rel_xbi_weight_pct", "warn_drawdown_rel_xbi_weight_pct", "fail_drawdown_rel_xbi_weight_pct", "drawdown_rel_xbi_exposure"),
-    ("overbought_rsi_weight_pct", "warn_overbought_rsi_weight_pct", "fail_overbought_rsi_weight_pct", "overbought_rsi_exposure"),
-    ("catalyst_le_7d_and_drawdown_weight_pct", "warn_catalyst_le_7d_and_drawdown_weight_pct", "fail_catalyst_le_7d_and_drawdown_weight_pct", "stacked_catalyst_drawdown"),
+    (
+        "high_vol_or_beta_weight_pct",
+        "warn_high_vol_or_beta_weight_pct",
+        "fail_high_vol_or_beta_weight_pct",
+        "high_vol_or_beta_exposure",
+    ),
+    (
+        "drawdown_rel_xbi_weight_pct",
+        "warn_drawdown_rel_xbi_weight_pct",
+        "fail_drawdown_rel_xbi_weight_pct",
+        "drawdown_rel_xbi_exposure",
+    ),
+    (
+        "overbought_rsi_weight_pct",
+        "warn_overbought_rsi_weight_pct",
+        "fail_overbought_rsi_weight_pct",
+        "overbought_rsi_exposure",
+    ),
+    (
+        "catalyst_le_7d_and_drawdown_weight_pct",
+        "warn_catalyst_le_7d_and_drawdown_weight_pct",
+        "fail_catalyst_le_7d_and_drawdown_weight_pct",
+        "stacked_catalyst_drawdown",
+    ),
     ("headwind_weight_pct", "warn_headwind_weight_pct", "fail_headwind_weight_pct", "headwind_exposure"),
     ("top5_weight_pct", "warn_top5_weight_pct", "fail_top5_weight_pct", "top5_concentration"),
 ]
@@ -782,6 +798,7 @@ _EXPOSURE_CHECKS = [
 # ---------------------------------------------------------------------------
 # Health gate
 # ---------------------------------------------------------------------------
+
 
 def compute_health_gate(
     current: SnapshotData,
@@ -880,17 +897,13 @@ def compute_health_gate(
         n_dev = len(dev_rows)
         if n_dev > 0:
             for comp in ("catalyst", "sponsor", "drawdown"):
-                n_miss = dev_rows["missing_components"].apply(
-                    lambda x, c=comp: pd.notna(x) and c in str(x)
-                ).sum()
+                n_miss = dev_rows["missing_components"].apply(lambda x, c=comp: pd.notna(x) and c in str(x)).sum()
                 metrics[f"coverage_{comp}_pct"] = round(100 * (1 - n_miss / n_dev), 1)
         # Portfolio missing count
         port_tickers = set(current.portfolio["ticker"])
         port_mask = current.rankings["ticker"].isin(port_tickers)
         port_mc = current.rankings.loc[port_mask, "missing_components"]
-        metrics["portfolio_missing_count"] = int(
-            port_mc.apply(lambda x: pd.notna(x) and bool(str(x).strip())).sum()
-        )
+        metrics["portfolio_missing_count"] = int(port_mc.apply(lambda x: pd.notna(x) and bool(str(x).strip())).sum())
 
     # --- Missingness guardrails (guarded by column existence) ---
     if "missing_components" in current.rankings.columns:
@@ -924,9 +937,7 @@ def compute_health_gate(
         _t1 = current.rankings["sponsor_tier1_count"]
         _n_total = len(_t1)
         if _n_total > 0:
-            _n_with = int(_t1.apply(
-                lambda x: pd.notna(x) and str(x).strip() not in ("", "0")
-            ).sum())
+            _n_with = int(_t1.apply(lambda x: pd.notna(x) and str(x).strip() not in ("", "0")).sum())
             _coinvest_cov = 100.0 * _n_with / _n_total
             metrics["coinvest_coverage_pct"] = round(_coinvest_cov, 1)
             if _coinvest_cov < th.warn_coinvest_coverage_min:
@@ -988,6 +999,7 @@ def generate_health_json(
 # ---------------------------------------------------------------------------
 # Report generation
 # ---------------------------------------------------------------------------
+
 
 def generate_report(
     current: SnapshotData,
@@ -1081,9 +1093,7 @@ def generate_report(
             n_p = len(prior.portfolio) if prior else 0
             pct_c = (c / n_c * 100) if n_c else 0
             pct_p = (p / n_p * 100) if n_p else 0
-            lines.append(
-                f"    {tier}: {c} ({pct_c:.0f}%)   Prior: {p} ({pct_p:.0f}%)"
-            )
+            lines.append(f"    {tier}: {c} ({pct_c:.0f}%)   Prior: {p} ({pct_p:.0f}%)")
     else:
         lines.append(f"  {'':12s} {'Current':>8s}")
         for tier in ["A", "B", "C", "D"]:
@@ -1104,9 +1114,7 @@ def generate_report(
         lines.append("OPTIONALITY DIAGNOSTIC")
         lines.append("-" * W)
         lines.append(f"  Dev-stage names:       {od['n_dev']}")
-        lines.append(
-            f"  With optionality data: {od['n_with_optionality']}  ({od['dev_optionality_coverage_pct']}%)"
-        )
+        lines.append(f"  With optionality data: {od['n_with_optionality']}  ({od['dev_optionality_coverage_pct']}%)")
         lines.append(f"  Above a_floor ({od['a_floor']}):   {od['dev_above_a_floor_count']}")
         if od.get("quantiles"):
             q = od["quantiles"]
@@ -1220,9 +1228,7 @@ def _format_guardrails(lines: List[str], current: SnapshotData, result):
     if current.ruleset_id == PHASE2_PINNED_RULESET_ID:
         lines.append(f"  [PASS] Ruleset matches pinned Phase-2 ID ({PHASE2_PINNED_RULESET_ID})")
     elif current.ruleset_id:
-        lines.append(
-            f"  [WARN] Ruleset {current.ruleset_id} != pinned {PHASE2_PINNED_RULESET_ID}"
-        )
+        lines.append(f"  [WARN] Ruleset {current.ruleset_id} != pinned {PHASE2_PINNED_RULESET_ID}")
     else:
         lines.append("  [WARN] No ruleset ID found")
 
@@ -1237,29 +1243,22 @@ def _format_guardrails(lines: List[str], current: SnapshotData, result):
     # Catalyst coverage
     cat_cov = result.catalyst_coverage_current if is_delta else result.catalyst_coverage
     if cat_cov.pct >= WARN_CATALYST_COVERAGE_MIN:
-        lines.append(
-            f"  [PASS] Catalyst specific_days coverage > {WARN_CATALYST_COVERAGE_MIN}% ({cat_cov.pct}%)"
-        )
+        lines.append(f"  [PASS] Catalyst specific_days coverage > {WARN_CATALYST_COVERAGE_MIN}% ({cat_cov.pct}%)")
     else:
-        lines.append(
-            f"  [WARN] Catalyst specific_days coverage {cat_cov.pct}% < {WARN_CATALYST_COVERAGE_MIN}%"
-        )
+        lines.append(f"  [WARN] Catalyst specific_days coverage {cat_cov.pct}% < {WARN_CATALYST_COVERAGE_MIN}%")
 
     # Turnover (only in delta mode)
     if is_delta:
         if result.name_turnover_pct <= WARN_NAME_TURNOVER_PCT:
-            lines.append(
-                f"  [PASS] Name turnover {result.name_turnover_pct}% <= {WARN_NAME_TURNOVER_PCT}%"
-            )
+            lines.append(f"  [PASS] Name turnover {result.name_turnover_pct}% <= {WARN_NAME_TURNOVER_PCT}%")
         else:
-            lines.append(
-                f"  [WARN] Name turnover {result.name_turnover_pct}% > {WARN_NAME_TURNOVER_PCT}%"
-            )
+            lines.append(f"  [WARN] Name turnover {result.name_turnover_pct}% > {WARN_NAME_TURNOVER_PCT}%")
 
 
 # ---------------------------------------------------------------------------
 # JSON details
 # ---------------------------------------------------------------------------
+
 
 def generate_details_json(
     current: SnapshotData,
@@ -1382,6 +1381,7 @@ def _cat_cov_dict(cc: CatalystCoverage) -> dict:
 # Delta CSV
 # ---------------------------------------------------------------------------
 
+
 def generate_delta_csv(
     current: SnapshotData,
     prior: Optional[SnapshotData],
@@ -1420,23 +1420,26 @@ def generate_delta_csv(
             in_pri = ticker in pri_map
             w_c = _safe_float(cur_map[ticker].get("target_weight_pct")) if in_cur else 0.0
             w_p = _safe_float(pri_map[ticker].get("target_weight_pct")) if in_pri else 0.0
-            writer.writerow({
-                "ticker": ticker,
-                "in_current": 1 if in_cur else 0,
-                "in_prior": 1 if in_pri else 0,
-                "weight_current": round(w_c, 2),
-                "weight_prior": round(w_p, 2),
-                "weight_delta": round(w_c - w_p, 2),
-                "tier_current": str(cur_map[ticker].get("tier_dev", "")).strip() if in_cur else "",
-                "tier_prior": str(pri_map[ticker].get("tier_dev", "")).strip() if in_pri else "",
-                "rank_current": _safe_int(cur_map[ticker].get("actionable_rank")) if in_cur else "",
-                "rank_prior": _safe_int(pri_map[ticker].get("actionable_rank")) if in_pri else "",
-            })
+            writer.writerow(
+                {
+                    "ticker": ticker,
+                    "in_current": 1 if in_cur else 0,
+                    "in_prior": 1 if in_pri else 0,
+                    "weight_current": round(w_c, 2),
+                    "weight_prior": round(w_p, 2),
+                    "weight_delta": round(w_c - w_p, 2),
+                    "tier_current": str(cur_map[ticker].get("tier_dev", "")).strip() if in_cur else "",
+                    "tier_prior": str(pri_map[ticker].get("tier_dev", "")).strip() if in_pri else "",
+                    "rank_current": _safe_int(cur_map[ticker].get("actionable_rank")) if in_cur else "",
+                    "rank_prior": _safe_int(pri_map[ticker].get("actionable_rank")) if in_pri else "",
+                }
+            )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -1492,9 +1495,7 @@ def main():
         print(f"Health thresholds: defaults (id={health_thresholds.thresholds_id})")
 
     # Find snapshots
-    current_path, prior_path = find_snapshots(
-        snapshot_dir, args.current, args.prior
-    )
+    current_path, prior_path = find_snapshots(snapshot_dir, args.current, args.prior)
     if current_path is None:
         print("ERROR: No snapshot found.", file=sys.stderr)
         sys.exit(1)
@@ -1528,7 +1529,9 @@ def main():
 
     # Health gate
     health = compute_health_gate(
-        current, prior, result,
+        current,
+        prior,
+        result,
         thresholds=health_thresholds,
         expected_ruleset_id=args.expected_ruleset_id,
     )

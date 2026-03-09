@@ -124,8 +124,8 @@ ruleset.far_window_days          # 0 = off; >0 enables far-horizon PCD catalyst 
 ```
 
 **Pinned IDs:**
-- `PHASE2_PINNED_RULESET_ID` in `run_screen.py` = `"0c1129f6"` (must match delta module)
-- `PHASE2_PINNED_RULESET_ID` in `run_phase2_snapshot_delta.py` = `"0c1129f6"` (must match run_screen)
+- `PHASE2_PINNED_RULESET_ID` in `run_screen.py` = `"bebe73f8"` (must match delta module)
+- `PHASE2_PINNED_RULESET_ID` in `run_phase2_snapshot_delta.py` = `"bebe73f8"` (must match run_screen)
 - Both pins MUST be updated together — `run_screen.py` imports the delta module's pin
 
 ### Ruleset Promotion Pipeline
@@ -517,7 +517,7 @@ pytest tests/test_decision_engine.py tests/test_phase2_health_gate.py -x
 - **Binary Sleeve Risk Cap**: L3 enforcement with configurable per-name + aggregate caps (`binary_sleeve_max_weight_pct`, `binary_sleeve_per_name_max_pct`). Excess redistributed to non-binary names.
 - **4-Tier Audit Exit Codes**: 0=OK→PASS, 1=critical→FAIL, 2=warn→WARN, 3=stale_mismatch→WARN (hardcoded, never FAIL).
 - **Daily Runner Wiring** (Steps 5f-5g): Post-promotion runs shadow portfolio + weekly trade packet automatically.
-- **Active Ruleset**: v1.9.0 (ID=`e966af9d`) — institutional sort (w=0.3), calendar alpha v2 (w=0.3), optionality anchor
+- **Active Ruleset**: v1.10.0 (ID=`bebe73f8`) — flatten tier sort in binary_91_180, institutional sort (w=0.3), calendar alpha v2 (w=0.3), optionality anchor
 - **Tests**: 27 trade deltas + 23 shadow portfolio + 16 decision memo + 20 sizing + 11 risk rails + 18 binary sleeve + 16 audit exit codes
 
 ### v2.6.0 (March 2026)

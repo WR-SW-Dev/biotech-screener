@@ -279,11 +279,23 @@
       "created_at": "2026-03-06",
       "engine_version": "v1.3.0",
       "description": "Institutional delta sort tilt: net_elite_holders_delta z-score blended into sort anchor (w=0.3, pos-only)",
-      "status": "active",
+      "status": "retired",
       "requires_replay": true,
       "notes": "Derived from v1.8.3 (82982998). IS 2026 (28 dates): 5d IC +0.0199 t=+6.96 win=93%, 20d IC +0.0366 t=+13.51 win=100%. Turnover -0.71pp vs baseline. Strongest sort signal since calendar alpha v2.",
       "updated_by": "promote_ruleset.py",
-      "updated_at": "2026-03-06T15:50:49Z"
+      "updated_at": "2026-03-09T15:27:17Z"
+    },
+    {
+      "id": "bebe73f8",
+      "file": "v1.10.0_flatten_tier_91_180_candidate.json",
+      "created_at": "2026-03-09",
+      "engine_version": "v1.3.0",
+      "description": "Flatten tier sort within binary_91_180 bucket (less_binary): tier_ord=1 for all eligible names",
+      "status": "active",
+      "requires_replay": true,
+      "notes": "Derived from v1.9.0 (e966af9d). binary_91_180_flatten_tier_sort=true. IS 2025: +2.74pp 84d, +0.22pp 126d hedged. OOS flat (no tier diversity pre-2025). Only affects sort ordering inside binary_91_180 bucket; other buckets unchanged.",
+      "updated_by": "promote_ruleset.py",
+      "updated_at": "2026-03-09T15:27:17Z"
     }
   ]
 }

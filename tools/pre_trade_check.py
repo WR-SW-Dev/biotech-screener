@@ -33,6 +33,7 @@ from tools.live_shadow_portfolio import BUCKET_DISPLAY, BUCKET_NAMES, SHADOW_ROO
 
 PRE_TRADE_ROOT = SHADOW_ROOT / "pre_trade"
 SNAPSHOTS_ROOT = PROJECT_ROOT / "data" / "snapshots"
+MANIFEST_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
 
 SCHEMA_VERSION = "pre_trade_check.v1"
 
@@ -81,6 +82,61 @@ def check_provenance(
         "PASS",
         f"ruleset={metadata['ruleset_id'][:8]}, date={metadata['as_of_date']}",
     )
+
+
+def _get_manifest_active_id(manifest_path: Path = MANIFEST_PATH) -> Optional[str]:
+    """Read the manifest and return the active ruleset ID, or None."""
+    if not manifest_path.exists():
+        return None
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for entry in data.get("rulesets", []):
+            if entry.get("status") == "active":
+                return entry["id"]
+    except Exception:
+        pass
+    return None
+
+
+def check_ruleset_active(
+    snap_dir: Path,
+    *,
+    relaxed: bool = False,
+    manifest_path: Path = MANIFEST_PATH,
+) -> CheckResult:
+    """FAIL if snapshot ruleset_id does not match manifest active ID.
+
+    When relaxed=True, downgrades mismatch to WARN instead of FAIL.
+    """
+    metadata = load_metadata(snap_dir)
+    if not metadata:
+        return CheckResult("ruleset_active", "FAIL", f"metadata.json not found in {snap_dir}")
+
+    snap_ruleset_id = metadata.get("ruleset_id", "")
+    if not snap_ruleset_id:
+        return CheckResult("ruleset_active", "FAIL", "Snapshot has no ruleset_id in metadata")
+
+    active_id = _get_manifest_active_id(manifest_path)
+    if not active_id:
+        return CheckResult(
+            "ruleset_active",
+            "WARN",
+            "Cannot determine active ruleset from manifest — skipping check",
+        )
+
+    if snap_ruleset_id[:8] == active_id[:8]:
+        return CheckResult(
+            "ruleset_active",
+            "PASS",
+            f"Snapshot ruleset {snap_ruleset_id[:8]} matches active manifest ID",
+        )
+
+    # Mismatch
+    status = "WARN" if relaxed else "FAIL"
+    detail = f"Snapshot ruleset {snap_ruleset_id[:8]} != active {active_id}. " f"Snapshot path: {snap_dir}"
+    if relaxed:
+        detail = f"[RELAXED] {detail}"
+    return CheckResult("ruleset_active", status, detail)
 
 
 def check_bucket_deviation(
@@ -227,6 +283,8 @@ def run_pre_trade_check(
     max_missing_prices: int = 2,
     max_gap_high_pct: float = 10.0,
     max_turnover_pct: float = 40.0,
+    relaxed: bool = False,
+    manifest_path: Path = MANIFEST_PATH,
 ) -> PreTradeResult:
     """Run all pre-trade checks. Returns PreTradeResult."""
     result = PreTradeResult(as_of_date=as_of_date)
@@ -251,6 +309,7 @@ def run_pre_trade_check(
 
     checks = [
         check_provenance(snap_dir),
+        check_ruleset_active(snap_dir, relaxed=relaxed, manifest_path=manifest_path),
         check_bucket_deviation(current_positions, policy, deviation_max_pct),
         check_missing_prices(current_positions, max_missing_prices),
         check_gap_risk_concentration(current_positions, policy, max_gap_high_pct),
@@ -357,6 +416,7 @@ def main() -> None:
     parser.add_argument("--max-missing-prices", type=int, default=2)
     parser.add_argument("--max-gap-high-pct", type=float, default=10.0)
     parser.add_argument("--max-turnover-pct", type=float, default=40.0)
+    parser.add_argument("--relaxed", action="store_true", help="Downgrade ruleset mismatch from FAIL to WARN")
     args = parser.parse_args()
 
     policy_path = Path(args.policy) if args.policy else None
@@ -367,6 +427,7 @@ def main() -> None:
         max_missing_prices=args.max_missing_prices,
         max_gap_high_pct=args.max_gap_high_pct,
         max_turnover_pct=args.max_turnover_pct,
+        relaxed=args.relaxed,
     )
 
     out_dir = PRE_TRADE_ROOT / args.as_of_date
