@@ -179,6 +179,38 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
         for r in rows:
             r["de_vol_60d"] = ""
 
+    # catalyst_event_type: infer from catalyst_source when missing
+    # This lightweight heuristic doesn't need CTgov caches — it uses
+    # catalyst_source (when available) or defaults to CT_PRIMARY_COMPLETION
+    # for drug_developer names with specific_days catalyst signals.
+    _has_event_type = any(r.get("catalyst_event_type") for r in rows[:20])
+    if not _has_event_type:
+        try:
+            from event_ledger import classify_catalyst_family as _clf
+
+            for r in rows:
+                if r.get("catalyst_event_type"):
+                    continue
+                if r.get("catalyst_mode") != "specific_days":
+                    r["catalyst_event_type"] = ""
+                    continue
+                src = r.get("catalyst_source", "")
+                if src in ("PDUFA_MANUAL", "FDA_CALENDAR"):
+                    r["catalyst_event_type"] = "FDA_DECISION"
+                elif src == "FDA_ADCOM_CALENDAR":
+                    r["catalyst_event_type"] = "FDA_ADCOM"
+                elif src in ("SEC_8K_FILING", "SEC_MULTI_FORM"):
+                    r["catalyst_event_type"] = "DATA_READOUT"
+                elif src in ("CTGOV_CALENDAR", "CTGOV_PCD_FAR"):
+                    r["catalyst_event_type"] = "CT_PRIMARY_COMPLETION"
+                else:
+                    # No source info — default to clinical (most common)
+                    r["catalyst_event_type"] = "CT_PRIMARY_COMPLETION"
+                r["catalyst_family"] = _clf(r["catalyst_event_type"])
+        except ImportError:
+            for r in rows:
+                r.setdefault("catalyst_event_type", "")
+
     # catalyst_family: derive from catalyst_event_type if available
     if "catalyst_family" not in sample:
         try:
