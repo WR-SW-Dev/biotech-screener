@@ -132,10 +132,12 @@ class TestRulesetGovernanceGate:
 
     def test_pinned_id_fallback(self, tmp_path):
         """When no ruleset_path given, uses PHASE2_PINNED_RULESET_ID."""
+        from run_screen import PHASE2_PINNED_RULESET_ID
+
         manifest = _write_manifest(
             tmp_path,
             [
-                {"id": "e966af9d", "file": "active.json", "status": "active"},
+                {"id": PHASE2_PINNED_RULESET_ID, "file": "active.json", "status": "active"},
             ],
         )
         result = check_ruleset_governance(None, manifest)

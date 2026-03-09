@@ -42,6 +42,19 @@ def _write_positions(path, as_of_date, positions):
         json.dump(doc, f)
 
 
+def _write_manifest(tmp_path, active_id="abc"):
+    """Write a mock ruleset manifest with the given active ID."""
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {
+                "rulesets": [{"id": active_id, "file": "active.json", "status": "active"}],
+            }
+        )
+    )
+    return manifest_path
+
+
 # ---------------------------------------------------------------------------
 # Provenance
 # ---------------------------------------------------------------------------
@@ -227,12 +240,14 @@ class TestOverallResult:
         snap = tmp_path / "snap"
         snap.mkdir()
         (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "abc", "as_of_date": "2026-03-08"}))
+        manifest = _write_manifest(tmp_path, active_id="abc")
 
         result = run_pre_trade_check(
             "2026-03-08",
             positions_dir=pos_dir,
             snap_dir=snap,
             deviation_max_pct=100,  # won't fail
+            manifest_path=manifest,
         )
         assert result.overall == "PASS"
         assert result.can_trade is True
@@ -361,9 +376,6 @@ class TestPreTradeBlocksTradePlan:
                 _pos("GOOG", 3000),
             ],
         )
-        snap = tmp_path / "snap"
-        snap.mkdir()
-        (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "abc", "as_of_date": "2026-03-08"}))
 
         result = build_trade_plan(
             "2026-03-08",
@@ -371,6 +383,7 @@ class TestPreTradeBlocksTradePlan:
             perf_csv=tmp_path / "perf.csv",
             min_trade_usd=100,
             out_dir=tmp_path / "out",
+            skip_pre_trade_check=True,
         )
         assert "error" not in result
         assert result["n_buys"] >= 0

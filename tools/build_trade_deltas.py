@@ -298,6 +298,7 @@ def build_trade_packet(
     *,
     min_trade_usd: float = DEFAULT_MIN_TRADE_USD,
     out_dir: Optional[Path] = None,
+    positions_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Build a complete trade packet from two position files.
 
@@ -306,7 +307,7 @@ def build_trade_packet(
     current_date, current_positions = load_positions_json(current_path)
 
     if prior_path is None:
-        prior_path = find_prior_positions(current_date)
+        prior_path = find_prior_positions(current_date, positions_dir or POSITIONS_DIR)
 
     if prior_path is None:
         # First snapshot — all positions are new entries

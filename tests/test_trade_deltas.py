@@ -365,6 +365,7 @@ class TestEndToEnd:
         result = build_trade_packet(
             pos_dir / "2026-03-08.json",
             out_dir=out_dir,
+            positions_dir=pos_dir,
         )
         assert result["n_buys"] == 2
         assert result["n_sells"] == 0
