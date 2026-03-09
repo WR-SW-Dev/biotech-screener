@@ -1084,6 +1084,7 @@ def evaluate(
     _shuffle_seed: Optional[int] = None,
     min_mcap_buckets: Optional[Tuple[str, ...]] = None,
     trade_lag_days: int = 0,
+    family_filter: Optional[List[str]] = None,
 ) -> Tuple[EvalSummary, List[DateResult], List[Dict[str, str]]]:
     """Run the full walk-forward evaluation.
 
@@ -1272,6 +1273,37 @@ def evaluate(
                         {
                             "date": snap_date,
                             "reason": f"EMPTY_AFTER_BUCKET_FILTER ({','.join(bucket_filter)})",
+                        }
+                    )
+                    continue
+
+            # Family filter: restrict to tickers matching catalyst_family.
+            # Used by regulatory/clinical sub-split analysis.
+            if family_filter is not None:
+                _allowed_families = set(family_filter)
+                # Backfill catalyst_family when absent
+                if rankings and not rankings[0].get("catalyst_family"):
+                    try:
+                        from event_ledger import classify_catalyst_family as _clf
+
+                        for _r in rankings:
+                            _r["catalyst_family"] = _clf(_r.get("catalyst_event_type", ""))
+                    except ImportError:
+                        pass
+                rankings = [r for r in rankings if r.get("catalyst_family", "").strip() in _allowed_families]
+                if not rankings:
+                    for h in horizons:
+                        dr = DateResult(
+                            date=snap_date,
+                            horizon=h,
+                            skipped=True,
+                            skip_reason="EMPTY_AFTER_FAMILY_FILTER",
+                        )
+                        date_results.append(dr)
+                    skips.append(
+                        {
+                            "date": snap_date,
+                            "reason": f"EMPTY_AFTER_FAMILY_FILTER ({','.join(family_filter)})",
                         }
                     )
                     continue

@@ -103,6 +103,7 @@ def run_bucket_eval(
     industry_neutral: bool = False,
     bucket_specific_horizons: bool = False,
     include_microcap_sleeve: bool = False,
+    include_family_splits: bool = False,
 ) -> Dict[str, Any]:
     """Run evaluate() for each bucket and return combined results.
 
@@ -196,6 +197,74 @@ def run_bucket_eval(
             }
 
         results["buckets"][bucket_name] = bucket_metrics
+
+    # Regulatory vs Clinical sub-splits within binary buckets (opt-in)
+    if include_family_splits:
+        FAMILY_SPLITS = {
+            "REGULATORY": ["REGULATORY"],
+            "CLINICAL": ["CLINICAL"],
+        }
+        results["family_splits"] = {}
+
+        for bucket_name in BINARY_BUCKETS:
+            bucket_filter = BUCKET_FILTER_MAP[bucket_name]
+            if bucket_specific_horizons:
+                eff_horizons = BUCKET_DEFAULT_HORIZONS.get(bucket_name, horizons)
+            else:
+                eff_horizons = horizons
+
+            for family_name, family_values in FAMILY_SPLITS.items():
+                split_key = f"{bucket_name}__{family_name}"
+                split_out = out_dir / "family_splits" / split_key
+                split_out.mkdir(parents=True, exist_ok=True)
+
+                print(f"\n{'='*60}")
+                print(f"Family split: {BUCKET_DISPLAY[bucket_name]} / {family_name} " f"(horizons={eff_horizons})")
+                print(f"{'='*60}")
+
+                summary, _, _ = evaluate(
+                    snapshot_root=snapshot_root,
+                    price_csv=price_csv,
+                    horizons=eff_horizons,
+                    top_k=top_k,
+                    cost_bps=cost_bps,
+                    date_from=date_from,
+                    date_to=date_to,
+                    allowed_dates=allowed_dates,
+                    anchor_mode=anchor_mode,
+                    benchmark=benchmark,
+                    out_dir=split_out,
+                    bucket_filter=bucket_filter,
+                    rebalance_buffer_ranks=rebalance_buffer_ranks,
+                    industry_neutral=industry_neutral,
+                    family_filter=family_values,
+                )
+
+                split_metrics: Dict[str, Any] = {
+                    "display_name": f"{BUCKET_DISPLAY[bucket_name]} / {family_name}",
+                    "bucket": bucket_name,
+                    "family": family_name,
+                    "filter": bucket_filter,
+                    "family_filter": family_values,
+                    "horizons": eff_horizons,
+                    "n_evaluated": summary.n_evaluated,
+                    "n_dates": summary.n_dates,
+                    "by_horizon": {},
+                }
+
+                for h in eff_horizons:
+                    bh = summary.by_horizon.get(h, {})
+                    split_metrics["by_horizon"][h] = {
+                        "n_dates": bh.get("n_dates", 0),
+                        "mean_ic": bh.get("mean_ic"),
+                        "ic_t_stat": bh.get("ic_t_stat"),
+                        "mean_net_return": bh.get("mean_net_return"),
+                        "mean_excess_return": bh.get("mean_excess_return"),
+                        "mean_hedged_return": bh.get("mean_hedged_return"),
+                        "mean_turnover": bh.get("mean_turnover"),
+                    }
+
+                results["family_splits"][split_key] = split_metrics
 
     # Microcap inversion sleeve (opt-in)
     if include_microcap_sleeve:
@@ -386,6 +455,28 @@ def write_verdict_md(results: Dict[str, Any], out_dir: Path) -> Path:
 
     lines.append("")
 
+    # Family splits: regulatory vs clinical within binary buckets
+    if "family_splits" in results and results["family_splits"]:
+        lines.append("## Regulatory vs Clinical Sub-Splits")
+        lines.append("")
+        lines.append("| Bucket | Family | N | Horizon | Mean IC | IC t | " "Hedged | Turnover |")
+        lines.append("|--------|--------|---|---------|---------|------|" "--------|----------|")
+        for split_key in sorted(results["family_splits"].keys()):
+            sm = results["family_splits"][split_key]
+            for h in sm.get("horizons", []):
+                bh = sm.get("by_horizon", {}).get(h, {})
+                lines.append(
+                    f"| {sm.get('bucket', '')} "
+                    f"| {sm.get('family', '')} "
+                    f"| {bh.get('n_dates', 0)} "
+                    f"| {h}d "
+                    f"| {_fmt(bh.get('mean_ic'))} "
+                    f"| {_fmt(bh.get('ic_t_stat'), 2)} "
+                    f"| {_fmt_pct(bh.get('mean_hedged_return'))} "
+                    f"| {_fmt(bh.get('mean_turnover'))} |"
+                )
+        lines.append("")
+
     path = out_dir / "VERDICT.md"
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
@@ -440,6 +531,12 @@ def main():
             "Deliberately illiquidity-exposed (research/opt-in)."
         ),
     )
+    parser.add_argument(
+        "--include-family-splits",
+        action="store_true",
+        default=False,
+        help="Include regulatory vs clinical sub-splits within binary buckets.",
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -464,6 +561,7 @@ def main():
         industry_neutral=args.industry_neutral,
         bucket_specific_horizons=use_bucket_specific,
         include_microcap_sleeve=args.include_microcap_sleeve,
+        include_family_splits=args.include_family_splits,
     )
 
     # Write combined results
