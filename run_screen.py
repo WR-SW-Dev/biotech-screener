@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 from archive_snapshot import get_git_info, sha256_file
 from backtest.cost_model import CostSchedule, estimate_trade_cost
+from common.binary_quality_score import compute_binary_quality_score
 from common.data_integration_contracts import (
     normalize_financial_field_alias,
     normalize_ticker_set,
@@ -1410,6 +1411,7 @@ SNAPSHOT_COLUMNS = [
     "catalyst_source",
     "catalyst_event_type",
     "catalyst_family",
+    "binary_quality_score",
     "missing_components",
     "missingness_penalty",
     "confidence_overall",
@@ -3522,6 +3524,7 @@ def save_validation_snapshot(
         row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker)
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker)
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
+        row["binary_quality_score"] = compute_binary_quality_score(row)
 
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET

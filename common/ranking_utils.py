@@ -189,3 +189,17 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
         except ImportError:
             for r in rows:
                 r["catalyst_family"] = ""
+
+    # binary_quality_score: compute from catalyst fields if missing
+    if "binary_quality_score" not in sample:
+        try:
+            from common.binary_quality_score import compute_binary_quality_score
+
+            for r in rows:
+                if r.get("catalyst_mode") == "specific_days":
+                    r["binary_quality_score"] = str(compute_binary_quality_score(r))
+                else:
+                    r["binary_quality_score"] = "0.0"
+        except ImportError:
+            for r in rows:
+                r["binary_quality_score"] = "0.0"
