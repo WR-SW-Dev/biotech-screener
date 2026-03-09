@@ -73,6 +73,20 @@ BUCKET_DEFAULT_HORIZONS: Dict[str, List[int]] = {
     "less_binary": [84, 126],
 }
 
+# Family-specific horizon overrides: when a (bucket, family) pair has different
+# pricing dynamics than the bucket default.
+# Regulatory events (PDUFA, AdCom) tend to reprice in the 31-90 window.
+# Clinical events (PCD, data readout) carry into 91-180.
+FAMILY_HORIZON_MAP: Dict[str, List[int]] = {
+    # (bucket__family) → horizons
+    "binary_0_30__REGULATORY": [20, 63],  # same as bucket default
+    "binary_0_30__CLINICAL": [20, 63],  # same — too short to differentiate
+    "binary_31_90__REGULATORY": [63, 84],  # regulatory reprices in setup window
+    "binary_31_90__CLINICAL": [84, 126],  # clinical carry extends beyond 90d
+    "binary_91_180__REGULATORY": [63, 84],  # rare regulatory > 90d, use shorter
+    "binary_91_180__CLINICAL": [84, 126],  # clinical on-deck → full carry
+}
+
 
 def _fmt(v: Optional[float], decimals: int = 4) -> str:
     if v is None:
@@ -217,6 +231,11 @@ def run_bucket_eval(
                 split_key = f"{bucket_name}__{family_name}"
                 split_out = out_dir / "family_splits" / split_key
                 split_out.mkdir(parents=True, exist_ok=True)
+
+                # Family-specific horizon override (if available and bucket-specific mode)
+                if bucket_specific_horizons:
+                    eff_horizons = FAMILY_HORIZON_MAP.get(split_key, eff_horizons)
+                    all_horizons_set.update(eff_horizons)
 
                 print(f"\n{'='*60}")
                 print(f"Family split: {BUCKET_DISPLAY[bucket_name]} / {family_name} " f"(horizons={eff_horizons})")

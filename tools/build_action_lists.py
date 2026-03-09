@@ -48,12 +48,20 @@ ACTION_LIST_COLUMNS = [
     "catalyst_mode",
     "catalyst_bucket",
     "catalyst_strength",
+    "catalyst_event_type",
+    "catalyst_family",
     "archetype",
     "alpha_cohort_key",
     "mom_state",
     "industry_group",
     "size_band",
 ]
+
+# Catalyst family names for binary sleeve splits
+FAMILY_REGULATORY = "REGULATORY"
+FAMILY_CLINICAL = "CLINICAL"
+FAMILY_OTHER = "OTHER"
+BINARY_FAMILIES = [FAMILY_REGULATORY, FAMILY_CLINICAL, FAMILY_OTHER]
 
 # Account-aware sizing: per-name dollar caps by size band.
 # Keys are size_band values; values are max weight pct per name.
@@ -205,6 +213,18 @@ def build_action_lists(
         slim = {col: row.get(col, "") for col in ACTION_LIST_COLUMNS}
         # Carry source field for risk rail tagging (not emitted to CSV)
         slim["de_beta_xbi_60d_source"] = row.get("de_beta_xbi_60d_source", "")
+        # Backfill catalyst_family if missing (older snapshots)
+        if not slim.get("catalyst_family"):
+            evt = slim.get("catalyst_event_type", "")
+            if evt:
+                try:
+                    from event_ledger import classify_catalyst_family
+
+                    slim["catalyst_family"] = classify_catalyst_family(evt) or FAMILY_OTHER
+                except ImportError:
+                    slim["catalyst_family"] = FAMILY_OTHER
+            elif bucket != "less_binary":
+                slim["catalyst_family"] = FAMILY_OTHER
         buckets[bucket].append(slim)
 
     # Sort each bucket deterministically
@@ -454,6 +474,61 @@ def apply_account_sizing(
 
 
 # ---------------------------------------------------------------------------
+# Family split
+# ---------------------------------------------------------------------------
+
+
+def _normalize_family(raw: str) -> str:
+    """Normalize catalyst_family to REGULATORY / CLINICAL / OTHER."""
+    f = (raw or "").strip().upper()
+    if f == FAMILY_REGULATORY:
+        return FAMILY_REGULATORY
+    if f == FAMILY_CLINICAL:
+        return FAMILY_CLINICAL
+    if f == "SAFETY":
+        return FAMILY_OTHER  # safety events grouped with OTHER for action lists
+    return FAMILY_OTHER
+
+
+def split_by_family(
+    buckets: Dict[str, List[Dict[str, str]]],
+) -> Dict[str, List[Dict[str, str]]]:
+    """Split binary buckets by catalyst family.
+
+    Returns a dict with keys like "binary_31_90__REGULATORY", "binary_91_180__CLINICAL", etc.
+    Less-binary bucket is not split (no dated catalyst → no family).
+    Each sub-list preserves the original sort order.
+    """
+    result: Dict[str, List[Dict[str, str]]] = {}
+    for bucket_name in BUCKET_NAMES:
+        rows = buckets.get(bucket_name, [])
+        if bucket_name == "less_binary":
+            # No family split for less-binary
+            continue
+        for family in BINARY_FAMILIES:
+            key = f"{bucket_name}__{family}"
+            result[key] = [r for r in rows if _normalize_family(r.get("catalyst_family", "")) == family]
+    return result
+
+
+def get_family_summary(
+    buckets: Dict[str, List[Dict[str, str]]],
+) -> Dict[str, Dict[str, int]]:
+    """Return {bucket: {family: count}} for binary buckets."""
+    summary: Dict[str, Dict[str, int]] = {}
+    for bucket_name in BUCKET_NAMES:
+        if bucket_name == "less_binary":
+            continue
+        rows = buckets.get(bucket_name, [])
+        counts: Dict[str, int] = {}
+        for r in rows:
+            f = _normalize_family(r.get("catalyst_family", ""))
+            counts[f] = counts.get(f, 0) + 1
+        summary[bucket_name] = counts
+    return summary
+
+
+# ---------------------------------------------------------------------------
 # Write
 # ---------------------------------------------------------------------------
 
@@ -465,6 +540,7 @@ def write_action_lists(
     as_of_date: str = "",
     microcap_sleeve: Optional[List[Dict[str, str]]] = None,
     sizing_summary: Optional[Dict[str, Any]] = None,
+    family_splits: Optional[Dict[str, List[Dict[str, str]]]] = None,
 ) -> Path:
     """Write per-bucket CSVs and README.md to out_dir.
 
@@ -475,6 +551,8 @@ def write_action_lists(
         microcap_sleeve: Optional sleeve rows.
         sizing_summary: If set (from apply_account_sizing), include sizing
             columns in CSVs and account summary in README.
+        family_splits: If set (from split_by_family), write per-family CSVs
+            like binary_31_90_regulatory.csv, binary_91_180_clinical.csv, etc.
 
     Returns the out_dir path.
     """
@@ -504,12 +582,26 @@ def write_action_lists(
             writer.writeheader()
             writer.writerows(microcap_sleeve)
 
+    # Per-family CSVs (opt-in)
+    if family_splits:
+        for split_key, split_rows in family_splits.items():
+            if not split_rows:
+                continue
+            # Convert key like "binary_31_90__REGULATORY" → "binary_31_90_regulatory.csv"
+            csv_name = split_key.replace("__", "_").lower() + ".csv"
+            csv_path = out_dir / csv_name
+            with open(csv_path, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
+                writer.writeheader()
+                writer.writerows(split_rows)
+
     # README summary
     readme = _build_readme(
         buckets,
         as_of_date,
         microcap_sleeve=microcap_sleeve,
         sizing_summary=sizing_summary,
+        family_splits=family_splits,
     )
     (out_dir / "README.md").write_text(readme, encoding="utf-8")
 
@@ -522,6 +614,7 @@ def _build_readme(
     *,
     microcap_sleeve: Optional[List[Dict[str, str]]] = None,
     sizing_summary: Optional[Dict[str, Any]] = None,
+    family_splits: Optional[Dict[str, List[Dict[str, str]]]] = None,
 ) -> str:
     """Generate a summary README.md for the action lists."""
     lines: List[str] = []
@@ -565,6 +658,20 @@ def _build_readme(
     lines.append(f"- **Binary book**: {binary_count} names, {binary_weight:.1f}% weight")
     lines.append(f"- **Less-binary book**: {lb_count} names, {lb_weight:.1f}% weight")
     lines.append("")
+
+    # Family breakdown (if split)
+    if family_splits:
+        lines.append("## Family Breakdown (Binary Buckets)")
+        lines.append("")
+        lines.append("| Bucket | Regulatory | Clinical | Other |")
+        lines.append("|--------|-----------|----------|-------|")
+        for b in ["binary_0_30", "binary_31_90", "binary_91_180"]:
+            reg_n = len(family_splits.get(f"{b}__{FAMILY_REGULATORY}", []))
+            clin_n = len(family_splits.get(f"{b}__{FAMILY_CLINICAL}", []))
+            other_n = len(family_splits.get(f"{b}__{FAMILY_OTHER}", []))
+            display = BUCKET_DISPLAY.get(b, b)
+            lines.append(f"| {display} | {reg_n} | {clin_n} | {other_n} |")
+        lines.append("")
 
     # Account sizing section (if --account-usd was provided)
     if sizing_summary:
@@ -736,6 +843,15 @@ def main():
             "Example: binary_0_30=0.10,binary_31_90=0.20,binary_91_180=0.50,less_binary=0.20"
         ),
     )
+    parser.add_argument(
+        "--split-by-family",
+        action="store_true",
+        default=False,
+        help=(
+            "Split binary buckets by catalyst family (REGULATORY/CLINICAL/OTHER). "
+            "Writes per-family CSVs e.g. binary_31_90_regulatory.csv."
+        ),
+    )
     args = parser.parse_args()
 
     if args.snapshot_dir:
@@ -787,12 +903,18 @@ def main():
                 band_caps[k.strip()] = float(v.strip())
         sizing_summary = apply_account_sizing(buckets, args.account_usd, band_caps)
 
+    # Family splits (opt-in)
+    fam_splits = None
+    if args.split_by_family:
+        fam_splits = split_by_family(buckets)
+
     write_action_lists(
         buckets,
         out_dir,
         as_of_date=snap_dir.name,
         microcap_sleeve=sleeve,
         sizing_summary=sizing_summary,
+        family_splits=fam_splits,
     )
 
     total = sum(len(rows) for rows in buckets.values())
@@ -802,6 +924,13 @@ def main():
     print(f"  total: {total}")
     if sleeve is not None:
         print(f"  {MICROCAP_SLEEVE_NAME}: {len(sleeve)} names (opt-in sleeve)")
+
+    # Family split summary
+    if fam_splits:
+        fam_summary = get_family_summary(buckets)
+        for b, counts in fam_summary.items():
+            parts = [f"{f}={n}" for f, n in sorted(counts.items())]
+            print(f"  {b} family: {', '.join(parts)}")
     if sizing_summary:
         print(f"  account: ${sizing_summary['account_usd']:,.0f}")
         print(f"  allocated: ${sizing_summary['total_allocated']:,.2f}")

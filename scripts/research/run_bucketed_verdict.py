@@ -59,12 +59,17 @@ def compute_bucket_verdict(
     base_by_horizon: Dict[str, Dict],
     primary_pp: float = 0.20,
     guardrail_pp: float = -0.05,
+    metric_key: str = "mean_hedged_return",
 ) -> str:
     """Compute verdict from per-horizon metric dicts.
 
-    PROMOTE if 126d delta >= primary_pp AND 84d delta >= guardrail_pp.
-    ARCHIVE if 126d delta < -0.10pp.
+    PROMOTE if primary_h delta >= primary_pp AND guardrail_h delta >= guardrail_pp.
+    ARCHIVE if primary_h delta < -0.10pp.
     NEEDS_MORE otherwise.
+
+    metric_key: which return metric to compare (default: hedged, which is
+    beta-neutral and more robust for A/B than raw net).
+    Falls back to mean_net_return if hedged is None.
     """
     horizons = sorted(int(h) for h in cand_by_horizon.keys())
     if not horizons:
@@ -73,14 +78,21 @@ def compute_bucket_verdict(
     primary_h = str(max(horizons))
     guardrail_h = str(sorted(horizons)[-2]) if len(horizons) >= 2 else None
 
-    c_net = cand_by_horizon.get(primary_h, {}).get("mean_net_return") or 0
-    b_net = base_by_horizon.get(primary_h, {}).get("mean_net_return") or 0
-    primary_delta_pp = (c_net - b_net) * 100
+    def _get_metric(by_h: Dict, h: str) -> float:
+        d = by_h.get(h, {})
+        val = d.get(metric_key)
+        if val is None:
+            val = d.get("mean_net_return")
+        return val or 0
+
+    c_val = _get_metric(cand_by_horizon, primary_h)
+    b_val = _get_metric(base_by_horizon, primary_h)
+    primary_delta_pp = (c_val - b_val) * 100
 
     guardrail_delta_pp = None
     if guardrail_h:
-        gc = cand_by_horizon.get(guardrail_h, {}).get("mean_net_return") or 0
-        gb = base_by_horizon.get(guardrail_h, {}).get("mean_net_return") or 0
+        gc = _get_metric(cand_by_horizon, guardrail_h)
+        gb = _get_metric(base_by_horizon, guardrail_h)
         guardrail_delta_pp = (gc - gb) * 100
 
     primary_pass = primary_delta_pp >= primary_pp
@@ -106,8 +118,17 @@ def run_bucketed_verdict(
     top_k: int = 20,
     cost_bps: float = 30.0,
     out_dir: Optional[Path] = None,
+    family_filter: Optional[List[str]] = None,
+    metric_key: str = "mean_hedged_return",
 ) -> Dict[str, Any]:
-    """Run evaluate() with bucket_filter for both arms, compute verdict."""
+    """Run evaluate() with bucket_filter for both arms, compute verdict.
+
+    Args:
+        family_filter: If set, restrict to specific catalyst families
+            (e.g. ["REGULATORY"] or ["CLINICAL"]).
+        metric_key: Return metric for verdict comparison
+            (default: mean_hedged_return for beta-neutral A/B).
+    """
     if horizons is None:
         horizons = [84, 126]
 
@@ -118,9 +139,7 @@ def run_bucketed_verdict(
     eval_fn = _get_evaluate()
     pcv = price_csv or (PROJECT_ROOT / "production_data" / "price_history.csv")
 
-    # Candidate arm (OOS only)
-    cand_summary, _, _ = eval_fn(
-        snapshot_root=candidate_dir,
+    eval_kwargs: Dict[str, Any] = dict(
         price_csv=pcv,
         horizons=horizons,
         top_k=top_k,
@@ -128,16 +147,19 @@ def run_bucketed_verdict(
         date_from=oos_cutoff,
         bucket_filter=bucket_filter,
     )
+    if family_filter:
+        eval_kwargs["family_filter"] = family_filter
+
+    # Candidate arm (OOS only)
+    cand_summary, _, _ = eval_fn(
+        snapshot_root=candidate_dir,
+        **eval_kwargs,
+    )
 
     # Baseline arm (OOS only)
     base_summary, _, _ = eval_fn(
         snapshot_root=baseline_dir,
-        price_csv=pcv,
-        horizons=horizons,
-        top_k=top_k,
-        cost_bps=cost_bps,
-        date_from=oos_cutoff,
-        bucket_filter=bucket_filter,
+        **eval_kwargs,
     )
 
     cand_metrics = _extract_horizon_metrics(cand_summary, horizons)
@@ -148,6 +170,7 @@ def run_bucketed_verdict(
         base_metrics,
         primary_pp=primary_threshold_pp,
         guardrail_pp=guardrail_threshold_pp,
+        metric_key=metric_key,
     )
 
     # Build evidence table
@@ -177,9 +200,11 @@ def run_bucketed_verdict(
     }.get(verdict, "")
 
     result = {
-        "schema": "bucket_verdict.v1",
+        "schema": "bucket_verdict.v2",
         "bucket": bucket,
         "bucket_filter": bucket_filter,
+        "family_filter": family_filter,
+        "metric_key": metric_key,
         "verdict": verdict,
         "oos_cutoff": oos_cutoff,
         "oos_delta": oos_delta,
@@ -269,10 +294,24 @@ def main() -> None:
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--cost-bps", type=float, default=30.0)
     parser.add_argument("--out-dir", type=Path, default=None, help="Output directory (default: output/ab_verdict)")
+    parser.add_argument(
+        "--family-filter",
+        type=str,
+        default=None,
+        help="Restrict to catalyst family (e.g. REGULATORY, CLINICAL)",
+    )
+    parser.add_argument(
+        "--metric-key",
+        type=str,
+        default="mean_hedged_return",
+        help="Return metric for verdict (default: mean_hedged_return)",
+    )
     args = parser.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
     out_dir = args.out_dir or (PROJECT_ROOT / "output" / "ab_verdict")
+
+    fam_filter = [args.family_filter] if args.family_filter else None
 
     result = run_bucketed_verdict(
         candidate_dir=args.candidate_dir,
@@ -286,6 +325,8 @@ def main() -> None:
         top_k=args.top_k,
         cost_bps=args.cost_bps,
         out_dir=out_dir,
+        family_filter=fam_filter,
+        metric_key=args.metric_key,
     )
 
     print(f"\nBucket: {result['bucket']}")
