@@ -268,6 +268,7 @@ class TestOverallResult:
         snap = tmp_path / "snap"
         snap.mkdir()
         (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "abc", "as_of_date": "2026-03-08"}))
+        manifest = _write_manifest(tmp_path, active_id="abc")
 
         result = run_pre_trade_check(
             "2026-03-08",
@@ -275,6 +276,7 @@ class TestOverallResult:
             snap_dir=snap,
             max_missing_prices=2,
             deviation_max_pct=100,
+            manifest_path=manifest,
         )
         assert result.overall == "FAIL"
         assert result.can_trade is False
@@ -282,7 +284,12 @@ class TestOverallResult:
     def test_no_positions_fails(self, tmp_path):
         from tools.pre_trade_check import run_pre_trade_check
 
-        result = run_pre_trade_check("2026-03-08", positions_dir=tmp_path / "positions")
+        manifest = _write_manifest(tmp_path, active_id="any")
+        result = run_pre_trade_check(
+            "2026-03-08",
+            positions_dir=tmp_path / "positions",
+            manifest_path=manifest,
+        )
         assert result.overall == "FAIL"
         assert result.can_trade is False
 
@@ -348,6 +355,7 @@ class TestPreTradeBlocksTradePlan:
         snap = tmp_path / "snap"
         snap.mkdir()
         (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "abc", "as_of_date": "2026-03-08"}))
+        manifest = _write_manifest(tmp_path, active_id="abc")
 
         result = build_trade_plan(
             "2026-03-08",
@@ -355,6 +363,8 @@ class TestPreTradeBlocksTradePlan:
             perf_csv=tmp_path / "perf.csv",
             min_trade_usd=100,
             out_dir=tmp_path / "out",
+            manifest_path=manifest,
+            snap_dir=snap,
         )
         assert result.get("can_trade") is False
         assert "error" in result
@@ -484,3 +494,139 @@ class TestManifestIsolation:
         )
         result = check_ruleset_governance(None, manifest)
         assert result.status == "PASS"
+
+    def test_pytest_guard_catches_production_default(self, tmp_path):
+        """The test-mode guard must fire when using production defaults."""
+        from tools.pre_trade_check import run_pre_trade_check
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [_pos("AAPL", 5000)],
+        )
+        # Omit manifest_path — should raise AssertionError from guard
+        import pytest as _pytest
+
+        with _pytest.raises(AssertionError, match="manifest_path"):
+            run_pre_trade_check(
+                "2026-03-08",
+                positions_dir=pos_dir,
+                snap_dir=tmp_path / "snap",
+            )
+
+    def test_pytest_guard_catches_snap_dir_default(self, tmp_path):
+        """The test-mode guard must fire when snap_dir falls to production."""
+        from tools.pre_trade_check import run_pre_trade_check
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [_pos("AAPL", 5000)],
+        )
+        manifest = _write_manifest(tmp_path, active_id="abc")
+        import pytest as _pytest
+
+        # snap_dir=None should raise because it would fall to SNAPSHOTS_ROOT
+        with _pytest.raises(AssertionError, match="snap_dir"):
+            run_pre_trade_check(
+                "2026-03-08",
+                positions_dir=pos_dir,
+                manifest_path=manifest,
+            )
+
+
+# ---------------------------------------------------------------------------
+# AST-based meta test: enforce explicit isolation kwargs in all call sites
+# ---------------------------------------------------------------------------
+
+
+class TestIsolationEnforcement:
+    """AST-scan to ensure all calls to run_pre_trade_check() and
+    build_trade_plan() in test files pass isolation kwargs explicitly.
+
+    This catches the "passes by coincidence" pattern at the source level.
+    """
+
+    # Functions that require isolation kwargs, and which kwargs to require
+    REQUIRED_KWARGS = {
+        "run_pre_trade_check": {"manifest_path", "positions_dir"},
+        "build_trade_plan": {"positions_dir"},
+    }
+
+    # Calls that are allowed to omit kwargs (e.g., the guard tests themselves)
+    ALLOWED_MISSING = {
+        # The guard tests intentionally omit kwargs to verify the guard fires
+        "test_pytest_guard_catches_production_default",
+        "test_pytest_guard_catches_snap_dir_default",
+    }
+
+    def _scan_test_file(self, filepath: Path):
+        """Parse a test file and find calls missing required kwargs."""
+        import ast
+
+        source = filepath.read_text(encoding="utf-8")
+        tree = ast.parse(source, filename=str(filepath))
+
+        violations = []
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+
+            # Get the function name from the call
+            func_name = None
+            if isinstance(node.func, ast.Name):
+                func_name = node.func.id
+            elif isinstance(node.func, ast.Attribute):
+                func_name = node.func.attr
+
+            if func_name not in self.REQUIRED_KWARGS:
+                continue
+
+            # Check if this call is inside an allowed test method
+            # Walk up to find the enclosing function
+            enclosing = self._find_enclosing_function(tree, node.lineno)
+            if enclosing in self.ALLOWED_MISSING:
+                continue
+
+            # Check which required kwargs are present
+            call_kwargs = {kw.arg for kw in node.keywords if kw.arg is not None}
+            required = self.REQUIRED_KWARGS[func_name]
+            missing = required - call_kwargs
+
+            if missing:
+                violations.append(
+                    f"{filepath.name}:{node.lineno} — {func_name}() "
+                    f"missing {sorted(missing)} (in {enclosing or '<module>'})"
+                )
+
+        return violations
+
+    @staticmethod
+    def _find_enclosing_function(tree, lineno: int) -> str:
+        """Find the name of the function/method enclosing a given line number."""
+        import ast
+
+        enclosing = ""
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Check if lineno falls within this function
+                end = getattr(node, "end_lineno", node.lineno + 1000)
+                if node.lineno <= lineno <= end:
+                    enclosing = node.name
+        return enclosing
+
+    def test_all_calls_pass_isolation_kwargs(self):
+        """Every call to run_pre_trade_check/build_trade_plan in test files
+        must include explicit isolation kwargs (manifest_path, positions_dir).
+
+        If this test fails, a new test was added that omits isolation kwargs.
+        Fix: pass manifest_path=..., positions_dir=..., snap_dir=... explicitly.
+        """
+        test_file = Path(__file__)
+        violations = self._scan_test_file(test_file)
+        assert not violations, "Found test calls missing required isolation kwargs:\n" + "\n".join(
+            f"  {v}" for v in violations
+        )

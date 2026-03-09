@@ -438,6 +438,8 @@ def build_trade_plan(
     broker_orders: bool = False,
     fractional: bool = False,
     price_source: Optional[Path] = None,
+    manifest_path: Optional[Path] = None,
+    snap_dir: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Build the complete weekly trade plan artifact.
 
@@ -475,12 +477,16 @@ def build_trade_plan(
             _ptc_out = out_dir if out_dir is not None else TRADE_PLAN_ROOT / as_of_date
             _ptc_out.mkdir(parents=True, exist_ok=True)
 
-            ptc = run_pre_trade_check(
-                as_of_date,
+            ptc_kwargs: Dict[str, Any] = dict(
                 positions_dir=positions_dir,
                 deviation_max_pct=100,  # bucket deviation checked separately
                 max_turnover_pct=40.0,
             )
+            if manifest_path is not None:
+                ptc_kwargs["manifest_path"] = manifest_path
+            if snap_dir is not None:
+                ptc_kwargs["snap_dir"] = snap_dir
+            ptc = run_pre_trade_check(as_of_date, **ptc_kwargs)
             write_pre_trade_json(ptc, _ptc_out / "pre_trade.json")
             write_pre_trade_md(ptc, _ptc_out / "pre_trade.md")
 

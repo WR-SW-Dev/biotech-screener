@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -36,6 +37,20 @@ SNAPSHOTS_ROOT = PROJECT_ROOT / "data" / "snapshots"
 MANIFEST_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
 
 SCHEMA_VERSION = "pre_trade_check.v1"
+
+
+def _in_pytest() -> bool:
+    """True when running inside a pytest session."""
+    return "PYTEST_CURRENT_TEST" in os.environ
+
+
+def _assert_not_production_default(name: str, value: Path, production_default: Path) -> None:
+    """Raise AssertionError if a test is using a production default path.
+
+    Only active when PYTEST_CURRENT_TEST is set; no-op in production.
+    """
+    if _in_pytest() and value == production_default:
+        raise AssertionError(f"Tests must pass `{name}` explicitly — got production default {production_default}")
 
 
 @dataclass
@@ -108,6 +123,7 @@ def check_ruleset_active(
 
     When relaxed=True, downgrades mismatch to WARN instead of FAIL.
     """
+    _assert_not_production_default("manifest_path", manifest_path, MANIFEST_PATH)
     metadata = load_metadata(snap_dir)
     if not metadata:
         return CheckResult("ruleset_active", "FAIL", f"metadata.json not found in {snap_dir}")
@@ -287,6 +303,8 @@ def run_pre_trade_check(
     manifest_path: Path = MANIFEST_PATH,
 ) -> PreTradeResult:
     """Run all pre-trade checks. Returns PreTradeResult."""
+    _assert_not_production_default("positions_dir", positions_dir, POSITIONS_DIR)
+    _assert_not_production_default("manifest_path", manifest_path, MANIFEST_PATH)
     result = PreTradeResult(as_of_date=as_of_date)
 
     current_path = positions_dir / f"{as_of_date}.json"
@@ -305,6 +323,10 @@ def run_pre_trade_check(
 
     # Snapshot dir for provenance
     if snap_dir is None:
+        if _in_pytest():
+            raise AssertionError(
+                "Tests must pass `snap_dir` explicitly — would fall through to " f"production default {SNAPSHOTS_ROOT}"
+            )
         snap_dir = SNAPSHOTS_ROOT / as_of_date
 
     checks = [
