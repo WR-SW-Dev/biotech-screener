@@ -1532,7 +1532,7 @@ PHASE2_DEFAULT_RULESET_PATH = (
     Path(__file__).resolve().parent
     / "production_data"
     / "decision_rulesets"
-    / "v1.10.0_flatten_tier_91_180_candidate.json"
+    / "v1.10.1_b91_quality_primary_candidate.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
