@@ -115,6 +115,9 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
         "regulatory_day_buckets": DEFAULT_REG_DAY_BUCKETS,
         "regulatory_bucket_caps_pct": {},
         "regulatory_bucket_weights": {},
+        "regulatory_quality_tilt_enabled": False,
+        "regulatory_quality_clip_lo": 0.30,
+        "regulatory_quality_clip_hi": 1.00,
         "regulatory_resolution_enabled": False,
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
@@ -271,6 +274,112 @@ def _effective_family(row: Dict[str, str], mode: str = "primary") -> str:
     return (row.get("catalyst_family") or "OTHER").upper() or "OTHER"
 
 
+def _quality_weights(
+    rows: List[Dict[str, str]],
+    q_lo: float = 0.30,
+    q_hi: float = 1.00,
+) -> List[float]:
+    """Compute quality-proportional weights for a list of rows.
+
+    Reads ``regulatory_quality`` from each row, clips to [q_lo, q_hi],
+    and returns normalized weights that sum to 1.0.  If all qualities are
+    zero/missing, falls back to equal weight.
+    """
+    raw = []
+    for row in rows:
+        q = _safe_float(row.get("regulatory_quality", ""), 0.0)
+        raw.append(max(q_lo, min(q, q_hi)))
+    total = sum(raw)
+    if total <= 0:
+        n = len(rows)
+        return [1.0 / n] * n
+    return [r / total for r in raw]
+
+
+def _allocate_sub_bucket_quality(
+    sb_rows: List[Dict[str, str]],
+    sb_frac: float,
+    cap: float,
+    bucket_name: str,
+    gap_high_days: float,
+    gap_high_cap: float,
+    acct: float,
+    sb: str,
+    quality_tilt: bool,
+    q_lo: float,
+    q_hi: float,
+) -> List[Dict[str, Any]]:
+    """Allocate within one ladder sub-bucket, optionally quality-weighted.
+
+    When quality_tilt is True, dollars are proportional to clipped
+    regulatory_quality.  Cap-overflow is redistributed to uncapped names
+    in the same sub-bucket (up to 3 reflow passes to converge).
+    """
+    fn = len(sb_rows)
+    if fn == 0:
+        return []
+
+    budget_pct = sb_frac * 100.0
+
+    if quality_tilt:
+        q_weights = _quality_weights(sb_rows, q_lo, q_hi)
+    else:
+        q_weights = [1.0 / fn] * fn
+
+    # Iterative cap-overflow reflow (converges in ≤ fn passes)
+    assigned = [0.0] * fn
+    capped = [False] * fn
+    remaining_budget = budget_pct
+    for _ in range(fn + 1):
+        uncapped_indices = [i for i in range(fn) if not capped[i]]
+        if not uncapped_indices:
+            break
+        uc_total_q = sum(q_weights[i] for i in uncapped_indices)
+        if uc_total_q <= 0:
+            break
+        overflow = 0.0
+        for i in uncapped_indices:
+            share = (q_weights[i] / uc_total_q) * remaining_budget
+            if share > cap:
+                assigned[i] = cap
+                overflow += share - cap
+                capped[i] = True
+            else:
+                assigned[i] = share
+        if overflow <= 0:
+            break
+        # Recalculate remaining budget for uncapped names
+        remaining_budget = sum(assigned[i] for i in range(fn) if not capped[i]) + overflow
+        # Reset uncapped assignments so next pass re-distributes
+        for i in range(fn):
+            if not capped[i]:
+                assigned[i] = 0.0
+
+    result: List[Dict[str, Any]] = []
+    for i, row in enumerate(sb_rows):
+        wt = assigned[i]
+        wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+        source = (row.get("de_beta_xbi_60d_source") or "").strip()
+        is_secondary_reg = (
+            row.get("has_regulatory_upcoming_180d") == "1"
+            and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+        )
+        result.append(
+            _make_position(
+                row,
+                bucket_name,
+                "REGULATORY",
+                wt,
+                gap_risk,
+                source,
+                acct,
+                is_secondary_reg,
+                reg_sub=sb,
+            )
+        )
+    return result
+
+
 def _allocate_regulatory_ladder(
     reg_rows: List[Dict[str, str]],
     fam_frac: float,
@@ -281,6 +390,9 @@ def _allocate_regulatory_ladder(
     acct: float,
     ladder_caps: Dict[str, float],
     bucket_ladder_weights: Dict[str, float],
+    quality_tilt: bool = False,
+    quality_clip_lo: float = 0.30,
+    quality_clip_hi: float = 1.00,
 ) -> List[Dict[str, Any]]:
     """Allocate REGULATORY family budget across time-ladder sub-buckets.
 
@@ -288,6 +400,9 @@ def _allocate_regulatory_ladder(
     based on regulatory_days. Budget is split by bucket_ladder_weights (or equal
     if absent). Unused sub-bucket share reflows in priority order:
     reg_15_45 → reg_46_90 → reg_91_180 → reg_0_14.
+
+    When quality_tilt=True, within-sub-bucket allocation is proportional to
+    regulatory_quality (clipped to [quality_clip_lo, quality_clip_hi]).
     """
     REFLOW_PRIORITY = ["reg_15_45", "reg_46_90", "reg_91_180", "reg_0_14"]
 
@@ -324,7 +439,6 @@ def _allocate_regulatory_ladder(
                 sub_targets[sb] += inactive_share
                 inactive_share = 0
                 break
-        # If all priority subs are empty, distribute to any active
         if inactive_share > 0:
             active_subs = [sb for sb in REG_LADDER_NAMES if by_sub[sb]]
             if active_subs:
@@ -332,7 +446,7 @@ def _allocate_regulatory_ladder(
                 for sb in active_subs:
                     sub_targets[sb] += per
 
-    # Allocate within each sub-bucket
+    # Allocate within each sub-bucket (quality-weighted or equal)
     result: List[Dict[str, Any]] = []
     for sb in REG_LADDER_NAMES:
         sb_rows = by_sub[sb]
@@ -340,37 +454,26 @@ def _allocate_regulatory_ladder(
         if not sb_rows or sb_share <= 0:
             continue
         sb_frac = fam_frac * sb_share
-        fn = len(sb_rows)
-        equal_wt = (sb_frac * 100.0) / fn
-        # Apply ladder-specific cap (stricter of ladder cap and family cap)
         ladder_cap = ladder_caps.get(sb)
         cap = min(eff_cap, ladder_cap) if ladder_cap is not None else eff_cap
-
-        for row in sb_rows:
-            wt = min(equal_wt, cap)
-            wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
-            source = (row.get("de_beta_xbi_60d_source") or "").strip()
-            is_secondary_reg = (
-                row.get("has_regulatory_upcoming_180d") == "1"
-                and (row.get("catalyst_family") or "").upper() != "REGULATORY"
+        result.extend(
+            _allocate_sub_bucket_quality(
+                sb_rows,
+                sb_frac,
+                cap,
+                bucket_name,
+                gap_high_days,
+                gap_high_cap,
+                acct,
+                sb,
+                quality_tilt,
+                quality_clip_lo,
+                quality_clip_hi,
             )
-            result.append(
-                _make_position(
-                    row,
-                    bucket_name,
-                    "REGULATORY",
-                    wt,
-                    gap_risk,
-                    source,
-                    acct,
-                    is_secondary_reg,
-                    reg_sub=sb,
-                )
-            )
+        )
 
     # Unclassified regulatory names (no regulatory_days): flat allocation from residual
     if unclassified:
-        # Give them a small share — equal split of any remaining budget
         total_allocated_pct = sum(p["weight_pct"] for p in result)
         remaining_pct = max(0, fam_frac * 100.0 - total_allocated_pct)
         if remaining_pct > 0:
@@ -430,6 +533,9 @@ def build_positions(
     ladder_enabled = policy.get("regulatory_ladder_enabled", False)
     ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
     ladder_weights = policy.get("regulatory_bucket_weights", {})
+    quality_tilt = policy.get("regulatory_quality_tilt_enabled", False)
+    quality_clip_lo = policy.get("regulatory_quality_clip_lo", 0.30)
+    quality_clip_hi = policy.get("regulatory_quality_clip_hi", 1.00)
     resolution_enabled = policy.get("regulatory_resolution_enabled", False)
 
     # Classify into buckets, compute effective family
@@ -540,6 +646,9 @@ def build_positions(
                             acct,
                             ladder_caps,
                             ladder_weights.get(bucket_name, {}),
+                            quality_tilt=quality_tilt,
+                            quality_clip_lo=quality_clip_lo,
+                            quality_clip_hi=quality_clip_hi,
                         )
                     )
                 else:
@@ -1393,8 +1502,8 @@ def write_weekly_summary(
     if _ladder_enabled and reg_positions_with_sub:
         lines.append("### Regulatory Ladder")
         lines.append("")
-        lines.append("| Sub-bucket | Names | $ | Avg Days | Cap |")
-        lines.append("|------------|-------|---|----------|-----|")
+        lines.append("| Sub-bucket | Names | $ | Avg Days | Avg Quality | Cap |")
+        lines.append("|------------|-------|---|----------|-------------|-----|")
         _ladder_caps = policy.get("regulatory_bucket_caps_pct", {})
         for sb in REG_LADDER_NAMES:
             sb_pos = [p for p in reg_positions_with_sub if p.get("reg_sub_bucket") == sb]
@@ -1402,6 +1511,7 @@ def write_weekly_summary(
                 continue
             sb_dollars = sum(p["target_dollars"] for p in sb_pos)
             sb_days = []
+            sb_quals = []
             for p in sb_pos:
                 rd = p.get("regulatory_days", "")
                 if rd:
@@ -1409,12 +1519,15 @@ def write_weekly_summary(
                         sb_days.append(float(rd))
                     except (ValueError, TypeError):
                         pass
+                rq = _safe_float(p.get("regulatory_quality", ""), 0.0)
+                sb_quals.append(rq)
             avg_d = sum(sb_days) / len(sb_days) if sb_days else 0.0
+            avg_q = sum(sb_quals) / len(sb_quals) if sb_quals else 0.0
             cap_str = f"{_ladder_caps[sb]:.2f}%" if sb in _ladder_caps else "—"
             lines.append(
                 f"| {REG_LADDER_DISPLAY.get(sb, sb)} "
                 f"| {len(sb_pos)} | ${sb_dollars:,.0f} "
-                f"| {avg_d:.0f}d | {cap_str} |"
+                f"| {avg_d:.0f}d | {avg_q:.2f} | {cap_str} |"
             )
         lines.append("")
 
@@ -1426,13 +1539,14 @@ def write_weekly_summary(
             sb_pos_sorted = sorted(sb_pos, key=lambda p: p["target_dollars"], reverse=True)[:5]
             lines.append(f"**{REG_LADDER_DISPLAY.get(sb, sb)} — top {len(sb_pos_sorted)}:**")
             lines.append("")
-            lines.append("| Ticker | Days | Event | $ | Secondary? |")
-            lines.append("|--------|------|-------|---|------------|")
+            lines.append("| Ticker | Days | Event | Quality | $ | Secondary? |")
+            lines.append("|--------|------|-------|---------|---|------------|")
             for p in sb_pos_sorted:
                 rd = p.get("regulatory_days", "—")
                 ret = p.get("regulatory_event_type", "—")
+                rq = _safe_float(p.get("regulatory_quality", ""), 0.0)
                 is_sec = "yes" if p.get("regulatory_is_secondary") else "no"
-                lines.append(f"| {p['ticker']} | {rd} | {ret} | ${p['target_dollars']:,.0f} | {is_sec} |")
+                lines.append(f"| {p['ticker']} | {rd} | {ret} | {rq:.2f} | ${p['target_dollars']:,.0f} | {is_sec} |")
             lines.append("")
 
     if reg_cov["top_imminent"]:

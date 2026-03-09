@@ -64,6 +64,9 @@
       "reg_91_180": 0.15
     }
   },
+  "regulatory_quality_tilt_enabled": true,
+  "regulatory_quality_clip_lo": 0.30,
+  "regulatory_quality_clip_hi": 1.00,
   "regulatory_resolution_enabled": true,
   "rebalance_buffer_ranks": 30,
   "bucket_hysteresis_days": 7
