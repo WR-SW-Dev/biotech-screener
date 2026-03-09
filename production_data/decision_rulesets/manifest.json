@@ -291,11 +291,11 @@
       "created_at": "2026-03-09",
       "engine_version": "v1.3.0",
       "description": "Flatten tier sort within binary_91_180 bucket (less_binary): tier_ord=1 for all eligible names",
-      "status": "retired",
+      "status": "active",
       "requires_replay": true,
       "notes": "Derived from v1.9.0 (e966af9d). binary_91_180_flatten_tier_sort=true. IS 2025: +2.74pp 84d, +0.22pp 126d hedged. OOS flat (no tier diversity pre-2025). Only affects sort ordering inside binary_91_180 bucket; other buckets unchanged.",
-      "updated_by": "promote_ruleset.py",
-      "updated_at": "2026-03-09T21:51:16Z"
+      "updated_by": "promote_ruleset.py --rollback",
+      "updated_at": "2026-03-09T22:43:00Z"
     },
     {
       "id": "ddf59b03",
@@ -303,11 +303,11 @@
       "created_at": "2026-03-09",
       "engine_version": "v1.3.0",
       "description": "binary_91_180 within-bucket quality re-ranking: binary_quality_score as primary sort signal",
-      "status": "active",
+      "status": "retired",
       "requires_replay": true,
       "notes": "Derived from v1.10.0 (bebe73f8). binary_91_180_sort_mode=quality_primary. Full-portfolio OOS: +0.53pp 126d hedged, +0.26pp 84d hedged, turnover unchanged. 143/395 dates with global top-20 boundary crossings.",
-      "updated_by": "promote_ruleset.py",
-      "updated_at": "2026-03-09T21:51:16Z"
+      "updated_by": "promote_ruleset.py --rollback",
+      "updated_at": "2026-03-09T22:43:00Z"
     }
   ]
 }

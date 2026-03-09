@@ -362,6 +362,7 @@ class TestRulesetDriftGuardrails:
     VALID_UPDATED_BY = {
         "bump_ruleset.py",
         "promote_ruleset.py",
+        "promote_ruleset.py --rollback",
         "manual_bootstrap",
     }
 

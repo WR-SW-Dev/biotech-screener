@@ -84,16 +84,16 @@ def _find_last_known_good(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 def _compute_ruleset_id(path: Path) -> str:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return hashlib.sha256(
-        json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()[:8]
+    return hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
 def _git_sha() -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
             cwd=str(PROJECT_ROOT),
         )
         return result.stdout.strip() if result.returncode == 0 else ""
@@ -106,9 +106,7 @@ def _git_sha() -> str:
 # ---------------------------------------------------------------------------
 
 
-def _validate_changelog(
-    ruleset_id: str, changelog_path: Path = CHANGELOG_PATH
-) -> Tuple[bool, str]:
+def _validate_changelog(ruleset_id: str, changelog_path: Path = CHANGELOG_PATH) -> Tuple[bool, str]:
     if not changelog_path.exists():
         return False, "RULESET_CHANGELOG.md not found."
     text = changelog_path.read_text(encoding="utf-8")
@@ -143,10 +141,7 @@ def validate_gate(
     # Check candidate ID matches
     cand_id = data.get("candidate", {}).get("id", "")
     if cand_id != expected_candidate_id:
-        return False, (
-            f"Gate candidate ID '{cand_id}' does not match "
-            f"expected '{expected_candidate_id}'"
-        ), data
+        return False, (f"Gate candidate ID '{cand_id}' does not match " f"expected '{expected_candidate_id}'"), data
 
     # Check verdict
     if verdict not in ("PASS", "WARN", "FAIL"):
@@ -162,7 +157,7 @@ def validate_gate(
 
     # Check evaluated dates
     if n_evaluated < 1:
-        return False, f"Gate evaluated 0 dates (need >= 1)", data
+        return False, "Gate evaluated 0 dates (need >= 1)", data
 
     return True, "Gate PASS", data
 
@@ -181,14 +176,12 @@ def update_pinned_ids(
     """Replace PHASE2_PINNED_RULESET_ID in pinned files. Returns list of updated paths."""
     files = pinned_files or PINNED_FILES
     updated = []
-    pattern = re.compile(
-        r'(PHASE2_PINNED_RULESET_ID\s*=\s*")[^"]*(")'
-    )
+    pattern = re.compile(r'(PHASE2_PINNED_RULESET_ID\s*=\s*")[^"]*(")')
     for fpath in files:
         if not fpath.exists():
             continue
         text = fpath.read_text(encoding="utf-8")
-        new_text, n = pattern.subn(rf'\g<1>{new_id}\g<2>', text)
+        new_text, n = pattern.subn(rf"\g<1>{new_id}\g<2>", text)
         if n > 0 and new_text != text:
             if not dry_run:
                 fpath.write_text(new_text, encoding="utf-8")
@@ -206,11 +199,12 @@ def update_default_path(
     if not fpath.exists():
         return False
     text = fpath.read_text(encoding="utf-8")
-    # Match the filename in the path construction
+    # Match the last / "filename.json" in the PHASE2_DEFAULT_RULESET_PATH block.
+    # The path is split across lines; the filename is on the last / line.
     pattern = re.compile(
-        r'(/ "production_data" / "decision_rulesets" / ")[^"]*(")'
+        r'(/ "decision_rulesets"\s*\n\s*/ ")[^"]*(\.json")',
     )
-    new_text, n = pattern.subn(rf'\g<1>{new_filename}\g<2>', text)
+    new_text, n = pattern.subn(rf"\g<1>{new_filename}\g<2>", text)
     if n > 0 and new_text != text:
         if not dry_run:
             fpath.write_text(new_text, encoding="utf-8")
@@ -294,9 +288,7 @@ def _extract_from_artifact(artifact_path: Path, work_dir: Path) -> Path:
     with zipfile.ZipFile(artifact_path, "r") as zf:
         candidates = [n for n in zf.namelist() if n.endswith("ruleset_eval.json")]
         if not candidates:
-            raise FileNotFoundError(
-                "No ruleset_eval.json found inside artifact zip."
-            )
+            raise FileNotFoundError("No ruleset_eval.json found inside artifact zip.")
         # Pick the shortest path match
         best = min(candidates, key=len)
         zf.extract(best, work_dir)
@@ -321,9 +313,7 @@ def _fetch_from_run(run_id: str, work_dir: Path) -> Path:
 
     candidates = list(work_dir.rglob("ruleset_eval.json"))
     if not candidates:
-        raise FileNotFoundError(
-            f"No ruleset_eval.json found in artifacts from run {run_id}."
-        )
+        raise FileNotFoundError(f"No ruleset_eval.json found in artifacts from run {run_id}.")
     return min(candidates, key=lambda p: len(p.parts))
 
 
@@ -357,9 +347,7 @@ def _resolve_gate_summary(
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Promote a candidate ruleset to active in the manifest."
-    )
+    parser = argparse.ArgumentParser(description="Promote a candidate ruleset to active in the manifest.")
     parser.add_argument(
         "ruleset_id",
         nargs="?",
@@ -367,55 +355,73 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="The 8-char ruleset ID to promote (optional for --rollback with auto-discover).",
     )
     parser.add_argument(
-        "--gate-summary", type=Path,
+        "--gate-summary",
+        type=Path,
         help="Path to ruleset_eval.json from the evaluator (required unless --force).",
     )
     parser.add_argument(
-        "--gate-run-id", default="",
+        "--gate-run-id",
+        default="",
         help="Fetch snapshot artifact from GitHub Actions run and extract ruleset_eval.json.",
     )
     parser.add_argument(
-        "--gate-artifact", type=Path, default=None,
+        "--gate-artifact",
+        type=Path,
+        default=None,
         help="Path to a pre-downloaded artifact zip containing ruleset_eval.json.",
     )
     parser.add_argument(
-        "--gate-run-url", default="",
+        "--gate-run-url",
+        default="",
         help="URL of the CI gate run (stored in receipt).",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would change without writing.",
     )
     parser.add_argument(
-        "--force", action="store_true",
+        "--force",
+        action="store_true",
         help="Bypass gate + changelog validation.",
     )
     parser.add_argument(
-        "--commit", action="store_true",
+        "--commit",
+        action="store_true",
         help="Create a git commit with all touched files.",
     )
     parser.add_argument(
-        "--rollback", action="store_true",
+        "--rollback",
+        action="store_true",
         help="Rollback: promote a retired ruleset back to active.",
     )
     parser.add_argument(
-        "--reason", default="",
+        "--reason",
+        default="",
         help="Reason for rollback (required for --rollback without --gate-summary).",
     )
     parser.add_argument(
-        "--manifest", type=Path, default=MANIFEST_PATH,
+        "--weekly-gate-verdict",
+        type=Path,
+        default=None,
+        help="Path to VERDICT.json from promotion_weekly_gate.py " "(required for promotions unless --force).",
+    )
+    parser.add_argument(
+        "--manifest",
+        type=Path,
+        default=MANIFEST_PATH,
         help=argparse.SUPPRESS,
     )
     parser.add_argument(
-        "--changelog", type=Path, default=CHANGELOG_PATH,
+        "--changelog",
+        type=Path,
+        default=CHANGELOG_PATH,
         help=argparse.SUPPRESS,
     )
     args = parser.parse_args(argv)
 
     # Resolve gate summary from multiple possible sources
-    source_count = sum(
-        bool(x) for x in [args.gate_summary, args.gate_run_id, args.gate_artifact]
-    )
+    source_count = sum(bool(x) for x in [args.gate_summary, args.gate_run_id, args.gate_artifact])
     if source_count > 1:
         print(
             "ERROR: Specify at most one of --gate-summary, --gate-run-id, --gate-artifact.",
@@ -424,9 +430,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         return 1
 
     try:
-        resolved = _resolve_gate_summary(
-            args.gate_summary, args.gate_run_id or None, args.gate_artifact
-        )
+        resolved = _resolve_gate_summary(args.gate_summary, args.gate_run_id or None, args.gate_artifact)
     except (FileNotFoundError, RuntimeError) as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return 1
@@ -482,8 +486,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             for entry in manifest["rulesets"]:
                 if entry["id"] == rid:
                     print(
-                        f"ERROR: Ruleset '{rid}' has status '{entry['status']}', "
-                        f"not 'retired'.",
+                        f"ERROR: Ruleset '{rid}' has status '{entry['status']}', " f"not 'retired'.",
                         file=sys.stderr,
                     )
                     return 1
@@ -496,8 +499,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             for entry in manifest["rulesets"]:
                 if entry["id"] == rid:
                     print(
-                        f"ERROR: Ruleset '{rid}' exists but has status "
-                        f"'{entry['status']}', not 'candidate'.",
+                        f"ERROR: Ruleset '{rid}' exists but has status " f"'{entry['status']}', not 'candidate'.",
                         file=sys.stderr,
                     )
                     return 1
@@ -538,6 +540,39 @@ def main(argv: Optional[List[str]] = None) -> int:
             except Exception:
                 pass
 
+    # --- Weekly live-sim gate (skip for rollbacks) ---
+    if not args.force and not args.rollback:
+        if not args.weekly_gate_verdict:
+            print(
+                "ERROR: --weekly-gate-verdict is required (or use --force to bypass).\n"
+                "  Run: python3 scripts/research/promotion_weekly_gate.py ...\n"
+                "  Then pass the resulting VERDICT.json.",
+                file=sys.stderr,
+            )
+            return 1
+        if not args.weekly_gate_verdict.exists():
+            print(
+                f"ERROR: Weekly gate verdict not found: {args.weekly_gate_verdict}",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            wg = json.loads(args.weekly_gate_verdict.read_text(encoding="utf-8"))
+        except Exception as e:
+            print(f"ERROR: Cannot parse weekly gate verdict: {e}", file=sys.stderr)
+            return 1
+        if wg.get("verdict") != "PASS":
+            failed = [c["name"] for c in wg.get("checks", []) if not c.get("pass")]
+            print(
+                f"ERROR: Weekly live-sim gate FAIL.\n"
+                f"  Failed checks: {', '.join(failed)}\n"
+                f"  See: {args.weekly_gate_verdict}\n"
+                f"  Use --force to bypass.",
+                file=sys.stderr,
+            )
+            return 1
+        print(f"Weekly gate: PASS ({args.weekly_gate_verdict.name})")
+
     # --- Changelog validation (skip for rollbacks) ---
     if not args.force and not args.rollback:
         ok, msg = _validate_changelog(rid, changelog_path)
@@ -553,8 +588,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         computed_id = _compute_ruleset_id(candidate_file)
         if computed_id != rid:
             print(
-                f"ERROR: File {target['file']} computes to ID '{computed_id}', "
-                f"expected '{rid}'.",
+                f"ERROR: File {target['file']} computes to ID '{computed_id}', " f"expected '{rid}'.",
                 file=sys.stderr,
             )
             return 1
@@ -576,7 +610,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"  manifest: {target['file']}: {source_status} -> active")
         if active:
             print(f"  manifest: {active['file']}: active -> retired")
-        print(f"  pin IDs: PHASE2_PINNED_RULESET_ID = \"{rid}\"")
+        print(f'  pin IDs: PHASE2_PINNED_RULESET_ID = "{rid}"')
         print(f"  default path: {target['file']}")
         print(f"  receipt: artifacts/promotions/{receipt_prefix}_*_{rid}.json")
         return 0
@@ -639,11 +673,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         try:
             subprocess.run(
                 ["git", "add"] + files_to_stage,
-                check=True, cwd=str(PROJECT_ROOT),
+                check=True,
+                cwd=str(PROJECT_ROOT),
             )
             subprocess.run(
                 ["git", "commit", "-m", msg],
-                check=True, cwd=str(PROJECT_ROOT),
+                check=True,
+                cwd=str(PROJECT_ROOT),
             )
             print(f"\n  Committed: {msg}")
         except subprocess.CalledProcessError as e:

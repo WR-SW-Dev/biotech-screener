@@ -1,4 +1,5 @@
 """Tests for scripts/promote_ruleset.py — gate requirement + receipt + pin updates."""
+
 from __future__ import annotations
 
 import hashlib
@@ -6,33 +7,27 @@ import json
 import zipfile
 from pathlib import Path
 
-import pytest
-
 from scripts.promote_ruleset import (
     _extract_from_artifact,
     _find_active,
-    _validate_changelog,
+    main,
     update_default_path,
     update_pinned_ids,
     validate_gate,
     write_receipt,
-    main,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 _CANDIDATE_DATA = {"test_param": "value", "version": "candidate"}
-_CANDIDATE_ID = hashlib.sha256(
-    json.dumps(_CANDIDATE_DATA, sort_keys=True, separators=(",", ":")).encode()
-).hexdigest()[:8]
+_CANDIDATE_ID = hashlib.sha256(json.dumps(_CANDIDATE_DATA, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[
+    :8
+]
 
 _ACTIVE_DATA = {"test_param": "old", "version": "active"}
-_ACTIVE_ID = hashlib.sha256(
-    json.dumps(_ACTIVE_DATA, sort_keys=True, separators=(",", ":")).encode()
-).hexdigest()[:8]
+_ACTIVE_ID = hashlib.sha256(json.dumps(_ACTIVE_DATA, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
 def _make_repo(tmp_path: Path) -> dict:
@@ -81,10 +76,12 @@ def _make_repo(tmp_path: Path) -> dict:
     run_screen = tmp_path / "run_screen.py"
     run_screen.write_text(
         f'PHASE2_PINNED_RULESET_ID = "{_ACTIVE_ID}"\n'
-        f'PHASE2_DEFAULT_RULESET_PATH = (\n'
-        f'    Path(__file__).resolve().parent\n'
-        f'    / "production_data" / "decision_rulesets" / "v1_active.json"\n'
-        f')\n',
+        f"PHASE2_DEFAULT_RULESET_PATH = (\n"
+        f"    Path(__file__).resolve().parent\n"
+        f'    / "production_data"\n'
+        f'    / "decision_rulesets"\n'
+        f'    / "v1_active.json"\n'
+        f")\n",
         encoding="utf-8",
     )
 
@@ -134,6 +131,24 @@ def _make_gate_json(
     }
     gate_path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     return gate_path
+
+
+def _make_weekly_gate_json(tmp_path: Path, verdict: str = "PASS") -> Path:
+    """Create a minimal weekly gate VERDICT.json."""
+    path = tmp_path / "weekly_VERDICT.json"
+    data = {
+        "schema": "promotion_weekly_gate.v1",
+        "verdict": verdict,
+        "n_periods": 100,
+        "n_dates": 101,
+        "policy_pass": verdict == "PASS",
+        "global_pass": verdict == "PASS",
+        "checks": [
+            {"name": "policy_cum_hedged", "threshold": ">= +1.00pp", "actual": "+2.00pp", "pass": verdict == "PASS"},
+        ],
+    }
+    path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -200,8 +215,7 @@ class TestPinUpdates:
     def test_update_default_path(self, tmp_path):
         f = tmp_path / "run_screen.py"
         f.write_text(
-            'x = (\n    Path()\n'
-            '    / "production_data" / "decision_rulesets" / "old_file.json"\n)\n'
+            "x = (\n    Path()\n" '    / "production_data"\n' '    / "decision_rulesets"\n' '    / "old_file.json"\n)\n'
         )
         ok = update_default_path("new_file.json", f)
         assert ok
@@ -245,9 +259,11 @@ class TestMain:
     def test_pass_gate_promotes(self, tmp_path, monkeypatch):
         repo = _make_repo(tmp_path)
         gate = _make_gate_json(tmp_path)
+        wg = _make_weekly_gate_json(tmp_path)
 
         # Patch module-level paths
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
         monkeypatch.setattr(mod, "CHANGELOG_PATH", repo["changelog"])
@@ -255,7 +271,19 @@ class TestMain:
         monkeypatch.setattr(mod, "PINNED_FILES", [repo["run_screen"], repo["delta"]])
         monkeypatch.setattr(mod, "PROJECT_ROOT", tmp_path)
 
-        rc = main([_CANDIDATE_ID, "--gate-summary", str(gate), "--manifest", str(repo["manifest"]), "--changelog", str(repo["changelog"])])
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--weekly-gate-verdict",
+                str(wg),
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         # Check manifest
@@ -280,6 +308,7 @@ class TestMain:
         gate = _make_gate_json(tmp_path, verdict="FAIL")
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
@@ -295,6 +324,7 @@ class TestMain:
         gate = _make_gate_json(tmp_path, n_evaluated=0)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
@@ -305,6 +335,7 @@ class TestMain:
         repo = _make_repo(tmp_path)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
         monkeypatch.setattr(mod, "CHANGELOG_PATH", repo["changelog"])
@@ -312,7 +343,9 @@ class TestMain:
         monkeypatch.setattr(mod, "PINNED_FILES", [repo["run_screen"], repo["delta"]])
         monkeypatch.setattr(mod, "PROJECT_ROOT", tmp_path)
 
-        rc = main([_CANDIDATE_ID, "--force", "--manifest", str(repo["manifest"]), "--changelog", str(repo["changelog"])])
+        rc = main(
+            [_CANDIDATE_ID, "--force", "--manifest", str(repo["manifest"]), "--changelog", str(repo["changelog"])]
+        )
         assert rc == 0
 
         m = json.loads(repo["manifest"].read_text())
@@ -322,6 +355,7 @@ class TestMain:
         repo = _make_repo(tmp_path)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
         rc = main([_CANDIDATE_ID, "--manifest", str(repo["manifest"])])
@@ -332,6 +366,7 @@ class TestMain:
         gate = _make_gate_json(tmp_path, candidate_id="wrong123")
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
@@ -341,15 +376,30 @@ class TestMain:
     def test_dry_run_no_writes(self, tmp_path, monkeypatch):
         repo = _make_repo(tmp_path)
         gate = _make_gate_json(tmp_path)
+        wg = _make_weekly_gate_json(tmp_path)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
         monkeypatch.setattr(mod, "CHANGELOG_PATH", repo["changelog"])
         monkeypatch.setattr(mod, "PINNED_FILES", [repo["run_screen"], repo["delta"]])
         monkeypatch.setattr(mod, "PROJECT_ROOT", tmp_path)
 
-        rc = main([_CANDIDATE_ID, "--gate-summary", str(gate), "--dry-run", "--manifest", str(repo["manifest"]), "--changelog", str(repo["changelog"])])
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--weekly-gate-verdict",
+                str(wg),
+                "--dry-run",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         # Manifest unchanged
@@ -387,15 +437,21 @@ class TestGateAutoFetch:
         gate = _make_gate_json(tmp_path)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
-        rc = main([
-            _CANDIDATE_ID,
-            "--gate-summary", str(gate),
-            "--gate-run-id", "12345",
-            "--manifest", str(repo["manifest"]),
-        ])
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--gate-run-id",
+                "12345",
+                "--manifest",
+                str(repo["manifest"]),
+            ]
+        )
         assert rc == 1
 
     def test_missing_artifact_file_error(self, tmp_path, monkeypatch):
@@ -403,12 +459,17 @@ class TestGateAutoFetch:
         repo = _make_repo(tmp_path)
 
         import scripts.promote_ruleset as mod
+
         monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
         monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
 
-        rc = main([
-            _CANDIDATE_ID,
-            "--gate-artifact", str(tmp_path / "nonexistent.zip"),
-            "--manifest", str(repo["manifest"]),
-        ])
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-artifact",
+                str(tmp_path / "nonexistent.zip"),
+                "--manifest",
+                str(repo["manifest"]),
+            ]
+        )
         assert rc == 1
