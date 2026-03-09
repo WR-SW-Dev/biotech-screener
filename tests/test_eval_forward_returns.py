@@ -1,37 +1,35 @@
 """Tests for scripts/eval_forward_returns.py."""
+
 from __future__ import annotations
 
 import csv
 import json
-import math
-import os
+import sys
 import tempfile
 from pathlib import Path
 from typing import Dict, List
 
 import pytest
 
-import sys
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
+from dataclasses import replace as dc_replace
+
+from decision_engine import DecisionRuleset
 from scripts.eval_forward_returns import (
-    DEFAULT_MIN_PRICE_COVERAGE,
     DateResult,
     EvalSummary,
-    SIGNAL_FLAG_MAP,
     _avg_ranks,
+    _beta_hedged_return,
     _coinvest_signal_diagnostics,
     _cumulative,
     _decile_spread,
-    _beta_hedged_return,
     _logistic_decay,
     _monotonic_slope,
     _multi_ols,
     _staleness_status,
-    _trading_days_after,
     assign_splits,
     bottom_k_portfolio_return,
     compute_decile_curve,
@@ -41,7 +39,6 @@ from scripts.eval_forward_returns import (
     compute_turnover,
     discover_snapshot_dates,
     evaluate,
-    load_price_series,
     net_return,
     rescore_rankings,
     resolve_trade_date,
@@ -53,13 +50,10 @@ from scripts.eval_forward_returns import (
     write_summary_md,
 )
 
-from decision_engine import DecisionRuleset
-from dataclasses import replace as dc_replace
-
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def tmp_dir():
@@ -80,18 +74,22 @@ def _write_price_csv(path: Path, rows: List[Dict[str, str]]) -> None:
 def _write_rankings_csv(snap_dir: Path, tickers: List[str]) -> None:
     """Write a minimal rankings.csv with actionable_rank 1..N."""
     snap_dir.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["ticker", "actionable_rank", "eligible", "tier_dev",
-                   "composite_rank", "composite_score", "archetype"]
+    fieldnames = ["ticker", "actionable_rank", "eligible", "tier_dev", "composite_rank", "composite_score", "archetype"]
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for i, t in enumerate(tickers):
-            writer.writerow({
-                "ticker": t, "actionable_rank": str(i + 1),
-                "eligible": "1", "tier_dev": "A",
-                "composite_rank": str(i + 1), "composite_score": "50.0",
-                "archetype": "drug_developer",
-            })
+            writer.writerow(
+                {
+                    "ticker": t,
+                    "actionable_rank": str(i + 1),
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "composite_rank": str(i + 1),
+                    "composite_score": "50.0",
+                    "archetype": "drug_developer",
+                }
+            )
 
 
 def _write_metadata(snap_dir: Path, date_str: str) -> None:
@@ -104,6 +102,7 @@ def _write_metadata(snap_dir: Path, date_str: str) -> None:
 # ---------------------------------------------------------------------------
 # Unit tests: turnover
 # ---------------------------------------------------------------------------
+
 
 class TestTurnover:
     def test_identical_sets(self):
@@ -132,6 +131,7 @@ class TestTurnover:
 # Unit tests: net return
 # ---------------------------------------------------------------------------
 
+
 class TestNetReturn:
     def test_zero_cost(self):
         assert net_return(0.05, 0.3, 0) == 0.05
@@ -152,6 +152,7 @@ class TestNetReturn:
 # ---------------------------------------------------------------------------
 # Unit tests: signal direction (IC)
 # ---------------------------------------------------------------------------
+
 
 class TestSpearmanIC:
     def test_perfect_positive(self):
@@ -180,6 +181,7 @@ class TestSpearmanIC:
 # Unit tests: forward return
 # ---------------------------------------------------------------------------
 
+
 class TestForwardReturn:
     def test_basic(self):
         prices = {"2025-01-01": 100.0, "2025-01-02": 105.0, "2025-01-03": 110.0}
@@ -205,6 +207,7 @@ class TestForwardReturn:
 # Unit tests: top-K portfolio
 # ---------------------------------------------------------------------------
 
+
 class TestTopKPortfolio:
     def test_basic(self):
         tickers = ["A", "B", "C"]
@@ -225,6 +228,7 @@ class TestTopKPortfolio:
 # Unit tests: coverage threshold skip
 # ---------------------------------------------------------------------------
 
+
 class TestCoverageSkip:
     def test_low_coverage_skips(self, tmp_dir):
         # Create snapshot with 10 tickers but only 3 have prices
@@ -234,14 +238,17 @@ class TestCoverageSkip:
         _write_metadata(snap_dir, "2025-06-01")
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-06-01", "ticker": "T0", "close": "100"},
-            {"date": "2025-06-01", "ticker": "T1", "close": "100"},
-            {"date": "2025-06-01", "ticker": "T2", "close": "100"},
-            {"date": "2025-06-06", "ticker": "T0", "close": "110"},
-            {"date": "2025-06-06", "ticker": "T1", "close": "105"},
-            {"date": "2025-06-06", "ticker": "T2", "close": "95"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-06-01", "ticker": "T0", "close": "100"},
+                {"date": "2025-06-01", "ticker": "T1", "close": "100"},
+                {"date": "2025-06-01", "ticker": "T2", "close": "100"},
+                {"date": "2025-06-06", "ticker": "T0", "close": "110"},
+                {"date": "2025-06-06", "ticker": "T1", "close": "105"},
+                {"date": "2025-06-06", "ticker": "T2", "close": "95"},
+            ],
+        )
 
         summary, results, skips = evaluate(
             snapshot_root=tmp_dir / "snapshots",
@@ -258,6 +265,7 @@ class TestCoverageSkip:
 # Unit tests: skip behavior (empty rankings)
 # ---------------------------------------------------------------------------
 
+
 class TestSkipBehavior:
     def test_empty_rankings_skip(self, tmp_dir):
         snap_dir = tmp_dir / "snapshots" / "2025-06-01"
@@ -266,9 +274,12 @@ class TestSkipBehavior:
         # No rankings.csv
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-06-01", "ticker": "A", "close": "100"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-06-01", "ticker": "A", "close": "100"},
+            ],
+        )
 
         summary, results, skips = evaluate(
             snapshot_root=tmp_dir / "snapshots",
@@ -286,9 +297,12 @@ class TestSkipBehavior:
             json.dump({"as_of_date": "2025-05-30"}, f)
 
         price_csv = tmp_dir / "prices.csv"
-        _write_price_csv(price_csv, [
-            {"date": "2025-06-01", "ticker": "A", "close": "100"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-06-01", "ticker": "A", "close": "100"},
+            ],
+        )
 
         summary, results, skips = evaluate(
             snapshot_root=tmp_dir / "snapshots",
@@ -304,6 +318,7 @@ class TestSkipBehavior:
 # Unit tests: cumulative return
 # ---------------------------------------------------------------------------
 
+
 class TestCumulative:
     def test_basic(self):
         # (1+0.10) * (1+0.05) - 1 = 0.155
@@ -316,6 +331,7 @@ class TestCumulative:
 # ---------------------------------------------------------------------------
 # Integration: snapshot discovery
 # ---------------------------------------------------------------------------
+
 
 class TestDiscovery:
     def test_date_filtering(self, tmp_dir):
@@ -330,6 +346,7 @@ class TestDiscovery:
 # ---------------------------------------------------------------------------
 # Integration: full evaluation with outputs
 # ---------------------------------------------------------------------------
+
 
 class TestFullEvaluation:
     def test_end_to_end(self, tmp_dir):
@@ -349,10 +366,13 @@ class TestFullEvaluation:
         base_prices = {"A": 100, "B": 50, "C": 200, "D": 75, "E": 150}
         for i, d in enumerate(dates):
             for t, base in base_prices.items():
-                price_rows.append({
-                    "date": d, "ticker": t,
-                    "close": str(base * (1 + 0.01 * (i + 1))),
-                })
+                price_rows.append(
+                    {
+                        "date": d,
+                        "ticker": t,
+                        "close": str(base * (1 + 0.01 * (i + 1))),
+                    }
+                )
 
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, price_rows)
@@ -394,6 +414,7 @@ class TestFullEvaluation:
 # Unit tests: avg_ranks
 # ---------------------------------------------------------------------------
 
+
 class TestAvgRanks:
     def test_no_ties(self):
         ranks = _avg_ranks([10.0, 30.0, 20.0])
@@ -409,6 +430,7 @@ class TestAvgRanks:
 # ---------------------------------------------------------------------------
 # Unit tests: resolve_trade_date (anchor-mode)
 # ---------------------------------------------------------------------------
+
 
 class TestResolveTradeDate:
     TRADING = ["2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09", "2025-01-10"]
@@ -454,6 +476,7 @@ class TestResolveTradeDate:
 # Unit tests: anchor-mode integration with evaluate()
 # ---------------------------------------------------------------------------
 
+
 class TestAnchorModeEval:
     """Anchor-mode end-to-end in evaluate()."""
 
@@ -465,10 +488,13 @@ class TestAnchorModeEval:
 
         price_csv = tmp_dir / "prices.csv"
         # Only weekday prices
-        _write_price_csv(price_csv, [
-            {"date": "2025-01-03", "ticker": "A", "close": "100"},
-            {"date": "2025-01-06", "ticker": "A", "close": "105"},
-        ])
+        _write_price_csv(
+            price_csv,
+            [
+                {"date": "2025-01-03", "ticker": "A", "close": "100"},
+                {"date": "2025-01-06", "ticker": "A", "close": "105"},
+            ],
+        )
 
         summary, results, skips = evaluate(
             snapshot_root=tmp_dir / "snapshots",
@@ -537,6 +563,7 @@ class TestAnchorModeEval:
 # Unit tests: decile spread
 # ---------------------------------------------------------------------------
 
+
 class TestDecileSpread:
     def test_basic_spread(self):
         """Top decile minus bottom decile of 20 tickers."""
@@ -561,6 +588,7 @@ class TestDecileSpread:
 # ---------------------------------------------------------------------------
 # Unit tests: beta-hedged return
 # ---------------------------------------------------------------------------
+
 
 class TestBetaHedgedReturn:
     def test_basic_hedge(self):
@@ -596,6 +624,7 @@ class TestBetaHedgedReturn:
 # ---------------------------------------------------------------------------
 # Integration: benchmark-relative evaluation
 # ---------------------------------------------------------------------------
+
 
 class TestBenchmarkEval:
     def test_excess_return_computed(self, tmp_dir):
@@ -655,6 +684,7 @@ class TestBenchmarkEval:
 # Integration: long-short decile in evaluate()
 # ---------------------------------------------------------------------------
 
+
 class TestLongShortEval:
     def test_ls_return_present(self, tmp_dir):
         """long_short_deciles=True → ls_return in results."""
@@ -689,21 +719,31 @@ class TestLongShortEval:
 # Integration: summary markdown with new sections
 # ---------------------------------------------------------------------------
 
+
 class TestSummaryMarkdown:
     def test_anchor_mode_in_md(self, tmp_dir):
         """Summary markdown mentions anchor mode."""
         summary = EvalSummary(
-            horizons=[5], anchor_mode="next_trading_day",
-            benchmark="XBI", n_dates=3, n_evaluated=2,
+            horizons=[5],
+            anchor_mode="next_trading_day",
+            benchmark="XBI",
+            n_dates=3,
+            n_evaluated=2,
         )
         summary.by_horizon[5] = {
-            "n_dates": 2, "mean_ic": 0.05, "median_ic": 0.04,
-            "std_ic": 0.03, "mean_gross_return": 0.01,
+            "n_dates": 2,
+            "mean_ic": 0.05,
+            "median_ic": 0.04,
+            "std_ic": 0.03,
+            "mean_gross_return": 0.01,
             "mean_bottom_k_return": -0.01,
-            "mean_net_return": 0.009, "cumulative_gross": 0.02,
-            "cumulative_net": 0.018, "mean_turnover": 0.3,
+            "mean_net_return": 0.009,
+            "cumulative_gross": 0.02,
+            "cumulative_net": 0.018,
+            "mean_turnover": 0.3,
             "sign_mismatches": 0,
-            "mean_excess_return": 0.005, "cumulative_excess": 0.01,
+            "mean_excess_return": 0.005,
+            "cumulative_excess": 0.01,
         }
         out = tmp_dir / "out"
         out.mkdir()
@@ -719,29 +759,38 @@ class TestSummaryMarkdown:
 # Sign consistency + sort bug fix tests
 # ---------------------------------------------------------------------------
 
-def _write_rankings_with_ineligible(snap_dir: Path, ranked: List[str],
-                                     ineligible: List[str]) -> None:
+
+def _write_rankings_with_ineligible(snap_dir: Path, ranked: List[str], ineligible: List[str]) -> None:
     """Write rankings with ranked tickers (rank 1..N) + ineligible (empty rank)."""
     snap_dir.mkdir(parents=True, exist_ok=True)
-    fieldnames = ["ticker", "actionable_rank", "eligible", "tier_dev",
-                   "composite_rank", "composite_score", "archetype"]
+    fieldnames = ["ticker", "actionable_rank", "eligible", "tier_dev", "composite_rank", "composite_score", "archetype"]
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for i, t in enumerate(ranked):
-            writer.writerow({
-                "ticker": t, "actionable_rank": str(i + 1),
-                "eligible": "1", "tier_dev": "A",
-                "composite_rank": str(i + 1), "composite_score": "50.0",
-                "archetype": "drug_developer",
-            })
+            writer.writerow(
+                {
+                    "ticker": t,
+                    "actionable_rank": str(i + 1),
+                    "eligible": "1",
+                    "tier_dev": "A",
+                    "composite_rank": str(i + 1),
+                    "composite_score": "50.0",
+                    "archetype": "drug_developer",
+                }
+            )
         for t in ineligible:
-            writer.writerow({
-                "ticker": t, "actionable_rank": "",
-                "eligible": "0", "tier_dev": "",
-                "composite_rank": "", "composite_score": "",
-                "archetype": "drug_developer",
-            })
+            writer.writerow(
+                {
+                    "ticker": t,
+                    "actionable_rank": "",
+                    "eligible": "0",
+                    "tier_dev": "",
+                    "composite_rank": "",
+                    "composite_score": "",
+                    "archetype": "drug_developer",
+                }
+            )
 
 
 class TestSortBugFix:
@@ -763,16 +812,12 @@ class TestSortBugFix:
         rows = []
         for d in ["2025-01-06", "2025-01-07"]:
             for t in ["GOOD1", "GOOD2", "GOOD3"]:
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 120)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 120)})
             for t in ["MED1", "MED2"]:
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 105)})
-            rows.append({"date": d, "ticker": "LOW1",
-                         "close": str(100 if d == "2025-01-06" else 85)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 105)})
+            rows.append({"date": d, "ticker": "LOW1", "close": str(100 if d == "2025-01-06" else 85)})
             for t in ineligible:
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 50)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 50)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -816,8 +861,7 @@ class TestSignConsistency:
                 else:
                     # Rank 1 → +20%, rank 20 → -18%
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -858,8 +902,7 @@ class TestSignConsistency:
                 else:
                     # INVERTED: rank 1 → worst return, rank 20 → best
                     ret = -0.18 + 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -885,6 +928,7 @@ class TestSignConsistency:
 # ---------------------------------------------------------------------------
 # Unit tests: decile curve + monotonic slope
 # ---------------------------------------------------------------------------
+
 
 class TestDecileCurve:
     def test_basic_curve(self):
@@ -917,10 +961,7 @@ class TestDecileCurve:
 class TestMonotonicSlope:
     def test_positive_slope_monotonic(self):
         """Monotonically decreasing returns → positive slope (signal works)."""
-        curve = [
-            {"decile": d, "n": 10, "mean_return": 0.10 - 0.02 * (d - 1)}
-            for d in range(1, 11)
-        ]
+        curve = [{"decile": d, "n": 10, "mean_return": 0.10 - 0.02 * (d - 1)} for d in range(1, 11)]
         slope = _monotonic_slope(curve)
         assert slope is not None
         # Decile 1 has highest return, signal proxy = 10, so corr is positive
@@ -928,10 +969,7 @@ class TestMonotonicSlope:
 
     def test_negative_slope_inverted(self):
         """Monotonically increasing returns → negative slope (signal inverted)."""
-        curve = [
-            {"decile": d, "n": 10, "mean_return": -0.10 + 0.02 * (d - 1)}
-            for d in range(1, 11)
-        ]
+        curve = [{"decile": d, "n": 10, "mean_return": -0.10 + 0.02 * (d - 1)} for d in range(1, 11)]
         slope = _monotonic_slope(curve)
         assert slope is not None
         assert slope < -0.9
@@ -945,10 +983,12 @@ class TestMonotonicSlope:
 # Unit tests: multi-variate OLS
 # ---------------------------------------------------------------------------
 
+
 class TestMultiOLS:
     def test_single_regressor_matches_simple(self):
         """_multi_ols with 1 regressor should match _simple_ols."""
         from scripts.eval_forward_returns import _simple_ols
+
         x = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
         y = [2.1, 4.0, 5.9, 8.1, 10.0, 12.1]
         alpha_s, beta_s, r2_s = _simple_ols(x, y)
@@ -979,6 +1019,7 @@ class TestMultiOLS:
 # Unit tests: walk-forward splits
 # ---------------------------------------------------------------------------
 
+
 class TestAssignSplits:
     def test_none_mode(self):
         dates = ["2024-01", "2024-02", "2024-03"]
@@ -987,9 +1028,7 @@ class TestAssignSplits:
 
     def test_fixed_split(self):
         dates = ["2024-01", "2024-02", "2024-03", "2024-04", "2024-05"]
-        result = assign_splits(
-            dates, "fixed", train_end="2024-03", test_start="2024-04"
-        )
+        result = assign_splits(dates, "fixed", train_end="2024-03", test_start="2024-04")
         assert result["2024-01"][1] is True  # is_train
         assert result["2024-01"][2] is False  # is_test
         assert result["2024-03"][1] is True
@@ -998,9 +1037,7 @@ class TestAssignSplits:
 
     def test_walk_forward(self):
         dates = [f"2024-{m:02d}" for m in range(1, 11)]  # 10 dates
-        result = assign_splits(
-            dates, "walk_forward", wf_train_months=4, wf_test_months=3
-        )
+        result = assign_splits(dates, "walk_forward", wf_train_months=4, wf_test_months=3)
         # First 4 dates = train
         for d in dates[:4]:
             assert result[d][1] is True  # is_train
@@ -1026,6 +1063,7 @@ class TestAssignSplits:
 # Unit tests: residual alpha regression
 # ---------------------------------------------------------------------------
 
+
 class TestResidualAlpha:
     def test_benchmark_explains_returns(self):
         """When L/S is purely driven by benchmark, residual alpha ≈ 0."""
@@ -1033,11 +1071,15 @@ class TestResidualAlpha:
         for i in range(20):
             bm = 0.01 * (i - 10)
             ls = 0.5 * bm  # L/S = 0.5 * benchmark (no alpha)
-            drs.append(DateResult(
-                date=f"2024-{i+1:02d}-01", horizon=5,
-                gross_return=ls + 0.01, bottom_k_return=0.01,
-                benchmark_return=bm,
-            ))
+            drs.append(
+                DateResult(
+                    date=f"2024-{i+1:02d}-01",
+                    horizon=5,
+                    gross_return=ls + 0.01,
+                    bottom_k_return=0.01,
+                    benchmark_return=bm,
+                )
+            )
         result = compute_residual_alpha(drs, 5)
         assert result["n"] == 20
         assert abs(result["alpha"]) < 0.01
@@ -1047,14 +1089,19 @@ class TestResidualAlpha:
         drs = []
         for i in range(20):
             bm = 0.01 * (i - 10)
-            drs.append(DateResult(
-                date=f"2024-{i+1:02d}-01", horizon=5,
-                gross_return=bm * 0.3 + 0.005,
-                bottom_k_return=0.0,
-                benchmark_return=bm,
-                topk_avg_beta=0.9, bottomk_avg_beta=1.1,
-                topk_avg_drawdown=-0.2, bottomk_avg_drawdown=-0.5,
-            ))
+            drs.append(
+                DateResult(
+                    date=f"2024-{i+1:02d}-01",
+                    horizon=5,
+                    gross_return=bm * 0.3 + 0.005,
+                    bottom_k_return=0.0,
+                    benchmark_return=bm,
+                    topk_avg_beta=0.9,
+                    bottomk_avg_beta=1.1,
+                    topk_avg_drawdown=-0.2,
+                    bottomk_avg_drawdown=-0.5,
+                )
+            )
         result = compute_residual_alpha_multi(drs, 5)
         assert result["n"] == 20
         assert result["alpha"] is not None
@@ -1064,6 +1111,7 @@ class TestResidualAlpha:
 # ---------------------------------------------------------------------------
 # Integration: monotonic slope in evaluate
 # ---------------------------------------------------------------------------
+
 
 class TestMonotonicInEval:
     def test_slope_populated(self, tmp_dir):
@@ -1081,8 +1129,7 @@ class TestMonotonicInEval:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1102,6 +1149,7 @@ class TestMonotonicInEval:
 # ---------------------------------------------------------------------------
 # Integration: sign mismatch JSON dump
 # ---------------------------------------------------------------------------
+
 
 class TestSignMismatchDump:
     def test_mismatch_json_written_deterministic(self, tmp_dir):
@@ -1131,8 +1179,7 @@ class TestSignMismatchDump:
                         # Middle 74: strongly monotonic
                         # rank 3 → +25%, rank 76 → -15% (wide 40% spread)
                         ret = 0.25 - 0.005405 * (i - 3)
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1179,8 +1226,7 @@ class TestSignMismatchDump:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1200,6 +1246,7 @@ class TestSignMismatchDump:
 # ---------------------------------------------------------------------------
 # Integration: walk-forward split in evaluate
 # ---------------------------------------------------------------------------
+
 
 class TestWalkForwardEval:
     def test_split_tags_in_results(self, tmp_dir):
@@ -1268,19 +1315,28 @@ class TestWalkForwardEval:
 # Integration: interpretation notes in summary.md
 # ---------------------------------------------------------------------------
 
+
 class TestInterpretationNotes:
     def test_notes_in_md(self, tmp_dir):
         """Summary markdown includes interpretation notes section."""
         summary = EvalSummary(
-            horizons=[5], anchor_mode="next_trading_day",
-            benchmark="XBI", n_dates=3, n_evaluated=2,
+            horizons=[5],
+            anchor_mode="next_trading_day",
+            benchmark="XBI",
+            n_dates=3,
+            n_evaluated=2,
         )
         summary.by_horizon[5] = {
-            "n_dates": 2, "mean_ic": 0.05, "median_ic": 0.04,
-            "std_ic": 0.03, "mean_gross_return": 0.01,
+            "n_dates": 2,
+            "mean_ic": 0.05,
+            "median_ic": 0.04,
+            "std_ic": 0.03,
+            "mean_gross_return": 0.01,
             "mean_bottom_k_return": -0.01,
-            "mean_net_return": 0.009, "cumulative_gross": 0.02,
-            "cumulative_net": 0.018, "mean_turnover": 0.3,
+            "mean_net_return": 0.009,
+            "cumulative_gross": 0.02,
+            "cumulative_net": 0.018,
+            "mean_turnover": 0.3,
             "sign_mismatches": 0,
         }
         out = tmp_dir / "out"
@@ -1297,24 +1353,42 @@ class TestInterpretationNotes:
 # Part 1: Eval universe diagnostics
 # ---------------------------------------------------------------------------
 
-def _write_rankings_with_components(snap_dir: Path, tickers: List[str],
-                                     component_scores: Dict[str, Dict[str, str]] = None):
+
+def _write_rankings_with_components(
+    snap_dir: Path, tickers: List[str], component_scores: Dict[str, Dict[str, str]] = None
+):
     """Write rankings.csv with component score columns."""
     snap_dir.mkdir(parents=True, exist_ok=True)
-    base_fields = ["ticker", "actionable_rank", "eligible", "tier_dev",
-                    "composite_rank", "composite_score", "archetype"]
-    comp_fields = ["clinical_score_z_tier", "coinvest_score_z", "catalyst_decay_w",
-                   "clinical_alpha_z", "inst_delta_z", "alpha_cohort_raw",
-                   "de_alpha_60d"]
+    base_fields = [
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "tier_dev",
+        "composite_rank",
+        "composite_score",
+        "archetype",
+    ]
+    comp_fields = [
+        "clinical_score_z_tier",
+        "coinvest_score_z",
+        "catalyst_decay_w",
+        "clinical_alpha_z",
+        "inst_delta_z",
+        "alpha_cohort_raw",
+        "de_alpha_60d",
+    ]
     fieldnames = base_fields + comp_fields
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for i, t in enumerate(tickers):
             row = {
-                "ticker": t, "actionable_rank": str(i + 1),
-                "eligible": "1", "tier_dev": "A",
-                "composite_rank": str(i + 1), "composite_score": "50.0",
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "1",
+                "tier_dev": "A",
+                "composite_rank": str(i + 1),
+                "composite_score": "50.0",
                 "archetype": "drug_developer",
             }
             if component_scores and t in component_scores:
@@ -1372,8 +1446,7 @@ class TestEvalUniverse:
                 else:
                     # rank 0 → 20%, rank 19 → -18% (monotonic)
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1406,6 +1479,7 @@ class TestEvalUniverse:
 # Part 3: Component eval
 # ---------------------------------------------------------------------------
 
+
 class TestComponentEval:
     def test_component_eval_outputs(self, tmp_dir):
         """--component-eval produces CSV and MD files."""
@@ -1429,8 +1503,7 @@ class TestComponentEval:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1452,7 +1525,9 @@ class TestComponentEval:
             reader = list(csv.DictReader(f))
         assert len(reader) >= 3  # at least 3 components with data
         assert reader[0]["component"] in [
-            "clinical_score_z_tier", "coinvest_score_z", "catalyst_decay_w",
+            "clinical_score_z_tier",
+            "coinvest_score_z",
+            "catalyst_decay_w",
         ]
 
     def test_component_ic_computed(self, tmp_dir):
@@ -1474,8 +1549,7 @@ class TestComponentEval:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i  # monotonic with rank
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1501,8 +1575,7 @@ class TestComponentEval:
         """Component eval summary MD has expected structure."""
         n = 20
         tickers = [f"T{i:02d}" for i in range(n)]
-        comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)}
-                       for i, t in enumerate(tickers)}
+        comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)} for i, t in enumerate(tickers)}
         snap_dir = tmp_dir / "snapshots" / "2025-01-06"
         _write_rankings_with_components(snap_dir, tickers, comp_scores)
         _write_metadata(snap_dir, "2025-01-06")
@@ -1510,8 +1583,7 @@ class TestComponentEval:
         rows = []
         for d in ["2025-01-06", "2025-01-07"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1543,8 +1615,7 @@ class TestComponentEval:
         rows = []
         for d in ["2025-01-06", "2025-01-07"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1574,6 +1645,7 @@ class TestComponentEval:
 # Part 4: Portfolio construction variants
 # ---------------------------------------------------------------------------
 
+
 class TestPortfolioVariants:
     def _setup_monotonic(self, tmp_dir, n=20):
         """Helper: create monotonic ranking test data."""
@@ -1591,8 +1663,7 @@ class TestPortfolioVariants:
         rows = []
         for d in ["2025-01-06", "2025-01-07", "2025-01-08", "2025-01-09"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         return price_csv
@@ -1612,8 +1683,7 @@ class TestPortfolioVariants:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1687,31 +1757,54 @@ class TestPortfolioVariants:
 # Part A: Enhanced component diagnostics
 # ---------------------------------------------------------------------------
 
-def _write_rankings_full(snap_dir: Path, tickers: List[str],
-                          component_scores: Dict[str, Dict[str, str]] = None,
-                          extra_fields: Dict[str, Dict[str, str]] = None):
+
+def _write_rankings_full(
+    snap_dir: Path,
+    tickers: List[str],
+    component_scores: Dict[str, Dict[str, str]] = None,
+    extra_fields: Dict[str, Dict[str, str]] = None,
+):
     """Write rankings.csv with component + rescore columns."""
     snap_dir.mkdir(parents=True, exist_ok=True)
-    base_fields = ["ticker", "actionable_rank", "eligible", "tier_dev",
-                    "composite_rank", "composite_score", "archetype",
-                    "alpha_cohort_pct", "composite_pct", "stage_bucket",
-                    "coinvest_score_z", "clinical_score_z_tier",
-                    "inst_delta_z", "alpha_cohort_raw",
-                    "catalyst_strength", "clinical_alpha_z"]
+    base_fields = [
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "tier_dev",
+        "composite_rank",
+        "composite_score",
+        "archetype",
+        "alpha_cohort_pct",
+        "composite_pct",
+        "stage_bucket",
+        "coinvest_score_z",
+        "clinical_score_z_tier",
+        "inst_delta_z",
+        "alpha_cohort_raw",
+        "catalyst_strength",
+        "clinical_alpha_z",
+    ]
     fieldnames = list(base_fields)
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for i, t in enumerate(tickers):
             row = {
-                "ticker": t, "actionable_rank": str(i + 1),
-                "eligible": "True", "tier_dev": "A",
-                "composite_rank": str(i + 1), "composite_score": "50.0",
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "True",
+                "tier_dev": "A",
+                "composite_rank": str(i + 1),
+                "composite_score": "50.0",
                 "archetype": "drug_developer",
-                "alpha_cohort_pct": "", "composite_pct": "",
-                "stage_bucket": "", "coinvest_score_z": "",
-                "clinical_score_z_tier": "", "inst_delta_z": "",
-                "alpha_cohort_raw": "", "catalyst_strength": "",
+                "alpha_cohort_pct": "",
+                "composite_pct": "",
+                "stage_bucket": "",
+                "coinvest_score_z": "",
+                "clinical_score_z_tier": "",
+                "inst_delta_z": "",
+                "alpha_cohort_raw": "",
+                "catalyst_strength": "",
                 "clinical_alpha_z": "",
             }
             if component_scores and t in component_scores:
@@ -1728,8 +1821,7 @@ class TestEnhancedComponentDiag:
         """Top/bottom decile fields present in component_eval_by_date.csv."""
         n = 20
         tickers = [f"T{i:02d}" for i in range(n)]
-        comp_scores = {t: {"clinical_score_z_tier": str(1.0 - 0.1 * i)}
-                       for i, t in enumerate(tickers)}
+        comp_scores = {t: {"clinical_score_z_tier": str(1.0 - 0.1 * i)} for i, t in enumerate(tickers)}
         snap_dir = tmp_dir / "snapshots" / "2025-01-06"
         _write_rankings_with_components(snap_dir, tickers, comp_scores)
         _write_metadata(snap_dir, "2025-01-06")
@@ -1741,8 +1833,7 @@ class TestEnhancedComponentDiag:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1768,8 +1859,7 @@ class TestEnhancedComponentDiag:
         n = 20
         tickers = [f"T{i:02d}" for i in range(n)]
         # Clinical score perfectly correlated with rank (monotonic with returns)
-        comp_scores = {t: {"clinical_score_z_tier": str(1.0 - 0.1 * i)}
-                       for i, t in enumerate(tickers)}
+        comp_scores = {t: {"clinical_score_z_tier": str(1.0 - 0.1 * i)} for i, t in enumerate(tickers)}
         snap_dir = tmp_dir / "snapshots" / "2025-01-06"
         _write_rankings_with_components(snap_dir, tickers, comp_scores)
         _write_metadata(snap_dir, "2025-01-06")
@@ -1781,8 +1871,7 @@ class TestEnhancedComponentDiag:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1806,8 +1895,7 @@ class TestEnhancedComponentDiag:
         """MD table has Top-D, Bot-D, Slope, Stdev, %Ties, Flat columns."""
         n = 20
         tickers = [f"T{i:02d}" for i in range(n)]
-        comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)}
-                       for i, t in enumerate(tickers)}
+        comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)} for i, t in enumerate(tickers)}
         snap_dir = tmp_dir / "snapshots" / "2025-01-06"
         _write_rankings_with_components(snap_dir, tickers, comp_scores)
         _write_metadata(snap_dir, "2025-01-06")
@@ -1815,8 +1903,7 @@ class TestEnhancedComponentDiag:
         rows = []
         for d in ["2025-01-06", "2025-01-07"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1841,9 +1928,10 @@ class TestEnhancedComponentDiag:
         """coinvest_audit.csv created with expected columns."""
         n = 20
         tickers = [f"T{i:02d}" for i in range(n)]
-        comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i),
-                           "clinical_score_z_tier": str(0.3)}
-                       for i, t in enumerate(tickers)}
+        comp_scores = {
+            t: {"coinvest_score_z": str(0.5 - 0.05 * i), "clinical_score_z_tier": str(0.3)}
+            for i, t in enumerate(tickers)
+        }
         snap_dir = tmp_dir / "snapshots" / "2025-01-06"
         _write_rankings_with_components(snap_dir, tickers, comp_scores)
         _write_metadata(snap_dir, "2025-01-06")
@@ -1851,8 +1939,7 @@ class TestEnhancedComponentDiag:
         rows = []
         for d in ["2025-01-06", "2025-01-07"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1879,6 +1966,7 @@ class TestEnhancedComponentDiag:
 # ---------------------------------------------------------------------------
 # Part B: Rescore Rankings
 # ---------------------------------------------------------------------------
+
 
 class TestRescoreRankings:
     """Unit tests for rescore_rankings() — faithful rescore via compute_actionable_sort_key()."""
@@ -1978,10 +2066,24 @@ class TestRescoreRankings:
     def test_rescore_missing_columns_safe(self):
         """Empty/missing columns default to 0 (backfill_columns handles this)."""
         rs = self._base_ruleset()
-        r = [{"ticker": "A", "actionable_rank": "1", "eligible": "1",
-              "archetype": "drug_developer", "tier_dev": "A", "composite_rank": "1"},
-             {"ticker": "B", "actionable_rank": "2", "eligible": "1",
-              "archetype": "drug_developer", "tier_dev": "A", "composite_rank": "2"}]
+        r = [
+            {
+                "ticker": "A",
+                "actionable_rank": "1",
+                "eligible": "1",
+                "archetype": "drug_developer",
+                "tier_dev": "A",
+                "composite_rank": "1",
+            },
+            {
+                "ticker": "B",
+                "actionable_rank": "2",
+                "eligible": "1",
+                "archetype": "drug_developer",
+                "tier_dev": "A",
+                "composite_rank": "2",
+            },
+        ]
         result = rescore_rankings(r, "off", rs)
         assert len(result) == 2
         assert all(x["actionable_rank"] != "" for x in result)
@@ -1989,12 +2091,28 @@ class TestRescoreRankings:
     def test_rescore_alpha_cohort_pct_used(self):
         """Uses alpha_cohort_pct when sort_anchor is alpha_cohort."""
         rs = self._base_ruleset(sort_anchor="alpha_cohort")
-        r = [{"ticker": "A", "actionable_rank": "2", "eligible": "1",
-              "alpha_cohort_pct": "0.9", "composite_pct": "0.1",
-              "archetype": "drug_developer", "tier_dev": "A", "composite_rank": "2"},
-             {"ticker": "B", "actionable_rank": "1", "eligible": "1",
-              "alpha_cohort_pct": "0.1", "composite_pct": "0.9",
-              "archetype": "drug_developer", "tier_dev": "A", "composite_rank": "1"}]
+        r = [
+            {
+                "ticker": "A",
+                "actionable_rank": "2",
+                "eligible": "1",
+                "alpha_cohort_pct": "0.9",
+                "composite_pct": "0.1",
+                "archetype": "drug_developer",
+                "tier_dev": "A",
+                "composite_rank": "2",
+            },
+            {
+                "ticker": "B",
+                "actionable_rank": "1",
+                "eligible": "1",
+                "alpha_cohort_pct": "0.1",
+                "composite_pct": "0.9",
+                "archetype": "drug_developer",
+                "tier_dev": "A",
+                "composite_rank": "1",
+            },
+        ]
         rescore_rankings(r, "off", rs)
         ranks = {x["ticker"]: int(x["actionable_rank"]) for x in r}
         # A has higher alpha_cohort_pct (0.9) → anchor=-0.9 → sorts first
@@ -2003,6 +2121,7 @@ class TestRescoreRankings:
     def test_rescore_deterministic(self):
         """Same input → same output."""
         import copy
+
         rs = self._base_ruleset()
         r1 = self._make_rankings()
         r2 = copy.deepcopy(r1)
@@ -2025,6 +2144,7 @@ class TestRescoreRankings:
     def test_rescore_faithful_matches_rerank(self):
         """Faithful rescore produces same ranking as direct rerank() call."""
         import copy
+
         from scripts.research.rerank_snapshots import rerank
 
         rs = self._base_ruleset()
@@ -2040,10 +2160,8 @@ class TestRescoreRankings:
         # Direct rerank with coinvest-off ruleset
         rerank(r_rerank, rs_off)
 
-        order_rescore = [x["ticker"] for x in
-                         sorted(r_rescore, key=lambda x: int(x.get("actionable_rank") or 9999))]
-        order_rerank = [x["ticker"] for x in
-                        sorted(r_rerank, key=lambda x: int(x.get("actionable_rank") or 9999))]
+        order_rescore = [x["ticker"] for x in sorted(r_rescore, key=lambda x: int(x.get("actionable_rank") or 9999))]
+        order_rerank = [x["ticker"] for x in sorted(r_rerank, key=lambda x: int(x.get("actionable_rank") or 9999))]
         assert order_rescore == order_rerank
 
 
@@ -2051,20 +2169,22 @@ class TestRescoreRankings:
 # Part B: Coinvest signal diagnostics
 # ---------------------------------------------------------------------------
 
+
 class TestCoinvestSignalDiagnostics:
     """Unit tests for _coinvest_signal_diagnostics()."""
 
     def test_basic_diagnostics(self):
         """Computes correct percentages and distribution."""
         rankings = [
-            {"ticker": "A", "eligible": "1", "actionable_rank": "1",
-             "sponsor_tier1_count": "3"},
-            {"ticker": "B", "eligible": "1", "actionable_rank": "2",
-             "sponsor_tier1_count": "0"},
-            {"ticker": "C", "eligible": "1", "actionable_rank": "3",
-             "sponsor_tier1_count": "1"},
-            {"ticker": "D", "eligible": "0", "actionable_rank": "",
-             "sponsor_tier1_count": "2"},  # ineligible — excluded
+            {"ticker": "A", "eligible": "1", "actionable_rank": "1", "sponsor_tier1_count": "3"},
+            {"ticker": "B", "eligible": "1", "actionable_rank": "2", "sponsor_tier1_count": "0"},
+            {"ticker": "C", "eligible": "1", "actionable_rank": "3", "sponsor_tier1_count": "1"},
+            {
+                "ticker": "D",
+                "eligible": "0",
+                "actionable_rank": "",
+                "sponsor_tier1_count": "2",
+            },  # ineligible — excluded
         ]
         diag = _coinvest_signal_diagnostics(rankings, top_k=2)
         assert diag["n_eligible"] == 3
@@ -2095,6 +2215,7 @@ class TestCoinvestSignalDiagnostics:
 # ---------------------------------------------------------------------------
 # Part B: Coinvest eval mode integration
 # ---------------------------------------------------------------------------
+
 
 class TestCoinvestEvalMode:
     """Integration tests for coinvest_eval_mode in evaluate()."""
@@ -2139,8 +2260,7 @@ class TestCoinvestEvalMode:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         return price_csv
@@ -2194,6 +2314,7 @@ class TestCoinvestEvalMode:
     def test_cli_coinvest_eval_mode_arg(self):
         """argparse accepts the --coinvest-eval-mode flag."""
         import argparse
+
         parser = argparse.ArgumentParser()
         parser.add_argument(
             "--coinvest-eval-mode",
@@ -2261,6 +2382,7 @@ class TestCoinvestEvalMode:
 # Part C: Compare coinvest modes script
 # ---------------------------------------------------------------------------
 
+
 class TestCompareCoinvestModes:
     """Tests for scripts/research/compare_coinvest_modes.py."""
 
@@ -2272,16 +2394,14 @@ class TestCompareCoinvestModes:
         for snap_idx in range(n_dates):
             snap_date = dates[snap_idx]
             snap_dir = tmp_dir / "snapshots" / snap_date
-            comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)}
-                           for i, t in enumerate(tickers)}
+            comp_scores = {t: {"coinvest_score_z": str(0.5 - 0.05 * i)} for i, t in enumerate(tickers)}
             _write_rankings_with_components(snap_dir, tickers, comp_scores)
             _write_metadata(snap_dir, snap_date)
 
         rows = []
         for d in dates:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t,
-                             "close": str(100 + i + dates.index(d))})
+                rows.append({"date": d, "ticker": t, "close": str(100 + i + dates.index(d))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         return price_csv
@@ -2289,6 +2409,7 @@ class TestCompareCoinvestModes:
     def test_compare_writes_diagnosis_md(self, tmp_dir):
         """Output file created."""
         from scripts.research.compare_coinvest_modes import run_comparison, write_diagnosis
+
         price_csv = self._setup_multi_date(tmp_dir)
         out = tmp_dir / "diagnosis"
         out.mkdir()
@@ -2307,6 +2428,7 @@ class TestCompareCoinvestModes:
     def test_compare_three_modes_run(self, tmp_dir):
         """All 3 modes produce results."""
         from scripts.research.compare_coinvest_modes import run_comparison
+
         price_csv = self._setup_multi_date(tmp_dir)
         out = tmp_dir / "diagnosis"
         out.mkdir()
@@ -2327,6 +2449,7 @@ class TestCompareCoinvestModes:
     def test_diagnosis_contains_recommendation(self, tmp_dir):
         """DISABLE/INVERT/GATE/KEEP keyword present."""
         from scripts.research.compare_coinvest_modes import run_comparison, write_diagnosis
+
         price_csv = self._setup_multi_date(tmp_dir)
         out = tmp_dir / "diagnosis"
         out.mkdir()
@@ -2347,17 +2470,34 @@ class TestCompareCoinvestModes:
 # Helper: rankings with signal flags
 # ---------------------------------------------------------------------------
 
-def _write_rankings_with_signal_flags(snap_dir: Path, tickers: List[str],
-                                       component_scores: Dict[str, Dict[str, str]] = None,
-                                       signal_flags: Dict[str, Dict[str, str]] = None,
-                                       extra_cols: Dict[str, Dict[str, str]] = None):
+
+def _write_rankings_with_signal_flags(
+    snap_dir: Path,
+    tickers: List[str],
+    component_scores: Dict[str, Dict[str, str]] = None,
+    signal_flags: Dict[str, Dict[str, str]] = None,
+    extra_cols: Dict[str, Dict[str, str]] = None,
+):
     """Write rankings.csv with component scores, signal flags, and extra columns."""
     snap_dir.mkdir(parents=True, exist_ok=True)
-    base_fields = ["ticker", "actionable_rank", "eligible", "tier_dev",
-                    "composite_rank", "composite_score", "archetype"]
-    comp_fields = ["clinical_score_z_tier", "coinvest_score_z", "catalyst_decay_w",
-                   "clinical_alpha_z", "inst_delta_z", "alpha_cohort_raw",
-                   "de_alpha_60d"]
+    base_fields = [
+        "ticker",
+        "actionable_rank",
+        "eligible",
+        "tier_dev",
+        "composite_rank",
+        "composite_score",
+        "archetype",
+    ]
+    comp_fields = [
+        "clinical_score_z_tier",
+        "coinvest_score_z",
+        "catalyst_decay_w",
+        "clinical_alpha_z",
+        "inst_delta_z",
+        "alpha_cohort_raw",
+        "de_alpha_60d",
+    ]
     flag_fields = ["has_coinvest_signal", "has_inst_delta", "has_catalyst_signal"]
     extra_fields = ["catalyst_days", "catalyst_mode", "coinvest_filing_age_days"]
     fieldnames = base_fields + comp_fields + flag_fields + extra_fields
@@ -2366,9 +2506,12 @@ def _write_rankings_with_signal_flags(snap_dir: Path, tickers: List[str],
         writer.writeheader()
         for i, t in enumerate(tickers):
             row = {
-                "ticker": t, "actionable_rank": str(i + 1),
-                "eligible": "1", "tier_dev": "A",
-                "composite_rank": str(i + 1), "composite_score": "50.0",
+                "ticker": t,
+                "actionable_rank": str(i + 1),
+                "eligible": "1",
+                "tier_dev": "A",
+                "composite_rank": str(i + 1),
+                "composite_score": "50.0",
                 "archetype": "drug_developer",
             }
             if component_scores and t in component_scores:
@@ -2383,6 +2526,7 @@ def _write_rankings_with_signal_flags(snap_dir: Path, tickers: List[str],
 # ---------------------------------------------------------------------------
 # Tests: Signal flag filtering in component eval (Part 1C + 1D)
 # ---------------------------------------------------------------------------
+
 
 class TestSignalFlagFiltering:
 
@@ -2412,8 +2556,7 @@ class TestSignalFlagFiltering:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2457,8 +2600,7 @@ class TestSignalFlagFiltering:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.01 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2499,8 +2641,7 @@ class TestSignalFlagFiltering:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.01 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2557,10 +2698,15 @@ class TestSignalFlagFiltering:
     def test_signal_flag_map_coverage(self):
         """All SIGNAL_FLAG_MAP columns are in eval COMPONENT_COLS."""
         from scripts.eval_forward_returns import SIGNAL_FLAG_MAP
+
         # The keys of SIGNAL_FLAG_MAP should be columns used in component eval
         component_cols = [
-            "clinical_score_z_tier", "coinvest_score_z", "catalyst_decay_w",
-            "clinical_alpha_z", "inst_delta_z", "alpha_cohort_raw",
+            "clinical_score_z_tier",
+            "coinvest_score_z",
+            "catalyst_decay_w",
+            "clinical_alpha_z",
+            "inst_delta_z",
+            "alpha_cohort_raw",
             "de_alpha_60d",
         ]
         for col in SIGNAL_FLAG_MAP:
@@ -2630,8 +2776,7 @@ class TestSignalFlagFiltering:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.02 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2658,11 +2803,11 @@ class TestSignalFlagFiltering:
 # Tests: Catalyst eval mode (Part 3)
 # ---------------------------------------------------------------------------
 
+
 class TestCatalystEvalMode:
 
     def test_logistic_decay_values(self):
         """Logistic decay matches decision_engine formula."""
-        from math import exp
         # At midpoint (150), should be ~0.5
         assert abs(_logistic_decay(150.0) - 0.5) < 0.01
         # At 0, should be close to 1.0
@@ -2738,8 +2883,7 @@ class TestCatalystEvalMode:
                 else:
                     # Returns monotonically correlated with proximity
                     ret = 0.20 - 0.01 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2765,11 +2909,12 @@ class TestCatalystEvalMode:
 
     def test_cli_catalyst_eval_mode_arg(self):
         """CLI parser accepts --catalyst-eval-mode."""
-        import argparse
-        from scripts.eval_forward_returns import evaluate
         # Just verify the arg is accepted by checking the module's argparse setup
         # We test this by checking the function signature
         import inspect
+
+        from scripts.eval_forward_returns import evaluate
+
         sig = inspect.signature(evaluate)
         assert "catalyst_eval_mode" in sig.parameters
 
@@ -2797,8 +2942,7 @@ class TestCatalystEvalMode:
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.01 * i
-                    rows.append({"date": d, "ticker": t,
-                                 "close": str(100 * (1 + ret))})
+                    rows.append({"date": d, "ticker": t, "close": str(100 * (1 + ret))})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
         out = tmp_dir / "output"
@@ -2822,6 +2966,7 @@ class TestCatalystEvalMode:
 # ---------------------------------------------------------------------------
 # Tests: Coinvest staleness diagnostic (Part 2D)
 # ---------------------------------------------------------------------------
+
 
 class TestCoinvestStaleness:
 
@@ -2950,6 +3095,7 @@ class TestCoinvestStaleness:
 # Unit tests: staleness guardrail
 # ---------------------------------------------------------------------------
 
+
 class TestStalenessStatus:
     def test_stale_returns_true(self):
         summary = EvalSummary()
@@ -3004,6 +3150,7 @@ class TestStalenessStatus:
 # Unit tests: spread-IC sign consistency (bottom-K eligible filter)
 # ---------------------------------------------------------------------------
 
+
 class TestSpreadICSignConsistency:
     """Verify top-bottom spread matches IC sign when signal is monotonic."""
 
@@ -3055,15 +3202,23 @@ class TestSpreadICSignConsistency:
 
         rows = []
         for i in range(1, 11):
-            rows.append({
-                "ticker": f"E{i:02d}", "actionable_rank": str(i),
-                "eligible": "1", "composite_rank": str(i),
-            })
+            rows.append(
+                {
+                    "ticker": f"E{i:02d}",
+                    "actionable_rank": str(i),
+                    "eligible": "1",
+                    "composite_rank": str(i),
+                }
+            )
         for j in range(1, 6):
-            rows.append({
-                "ticker": f"X{j:02d}", "actionable_rank": "",
-                "eligible": "0", "composite_rank": "",
-            })
+            rows.append(
+                {
+                    "ticker": f"X{j:02d}",
+                    "actionable_rank": "",
+                    "eligible": "0",
+                    "composite_rank": "",
+                }
+            )
 
         csv_path = snap_dir / "rankings.csv"
         fieldnames = ["ticker", "actionable_rank", "eligible", "composite_rank"]
@@ -3075,17 +3230,18 @@ class TestSpreadICSignConsistency:
 
         # Build eligible_set the same way evaluate() does
         from scripts.eval_forward_returns import load_rankings
+
         rankings = load_rankings(snap_dir)
+
         def _safe_rank(r):
             try:
                 return int(r.get("actionable_rank") or 9999)
             except (ValueError, TypeError):
                 return 9999
+
         rankings.sort(key=_safe_rank)
         tickers_ranked = [r["ticker"] for r in rankings if r.get("ticker")]
-        eligible_set = {r["ticker"] for r in rankings
-                        if r.get("ticker")
-                        and r.get("actionable_rank", "").strip()}
+        eligible_set = {r["ticker"] for r in rankings if r.get("ticker") and r.get("actionable_rank", "").strip()}
 
         assert len(tickers_ranked) == 15
         assert len(eligible_set) == 10
@@ -3108,5 +3264,102 @@ class TestSpreadICSignConsistency:
         assert bottom_elig is not None
         vals = [fwd_rets[f"E{i:02d}"] for i in range(6, 11)]
         expected = sum(vals) / len(vals)
-        assert abs(bottom_elig - expected) < 1e-6, \
-            f"With filter: bottom should be worst eligible, got {bottom_elig}"
+        assert abs(bottom_elig - expected) < 1e-6, f"With filter: bottom should be worst eligible, got {bottom_elig}"
+
+
+# ---------------------------------------------------------------------------
+# Bucket size vs top-K warning
+# ---------------------------------------------------------------------------
+
+
+class TestBucketSizeWarning:
+    """Warn when bucket_filter produces fewer names than top_k."""
+
+    def test_warns_when_median_n_less_than_k(self, tmp_path):
+        """bucket_filter with median N < top_k should emit a warning."""
+        import warnings as _warnings
+
+        # Create minimal snapshots with small bucket sizes
+        prices_csv = tmp_path / "prices.csv"
+        prices_csv.write_text(
+            "ticker,date,open,high,low,close,volume\n"
+            + "\n".join(
+                f"T{i:02d},{d},10,10,10,{10+i},100"
+                for i in range(1, 6)
+                for d in ["2020-01-01", "2020-06-01", "2021-01-01"]
+            )
+        )
+
+        for snap_date in ["2020-01-03", "2020-01-10"]:
+            snap_dir = tmp_path / "snaps" / snap_date
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            # Only 3 eligible names with catalyst_bucket=less_binary
+            rows = []
+            for i in range(1, 6):
+                bucket = "less_binary" if i <= 3 else "core"
+                rows.append(f"T{i:02d},{i},0.{50+i},1,drug_developer,A,{bucket},specific,90")
+            csv_path = snap_dir / "rankings.csv"
+            csv_path.write_text(
+                "ticker,actionable_rank,clinical_optionality_pct_dev,eligible,"
+                "archetype,tier_dev,catalyst_bucket,catalyst_mode,catalyst_days\n" + "\n".join(rows)
+            )
+            meta = snap_dir / "metadata.json"
+            meta.write_text('{"as_of_date": "' + snap_date + '"}')
+
+        with _warnings.catch_warnings(record=True) as w:
+            _warnings.simplefilter("always")
+            summary, _, _ = evaluate(
+                snapshot_root=tmp_path / "snaps",
+                price_csv=prices_csv,
+                horizons=[5],
+                top_k=20,
+                bucket_filter=["less_binary"],
+                anchor_mode="prev_trading_day",
+            )
+
+        bucket_warnings = [x for x in w if "BUCKET_SIZE_WARNING" in str(x.message)]
+        assert len(bucket_warnings) >= 1, (
+            f"Expected BUCKET_SIZE_WARNING when median N=3 < top_k=20, " f"got warnings: {[str(x.message) for x in w]}"
+        )
+
+    def test_no_warning_when_n_ge_k(self, tmp_path):
+        """No warning when bucket has enough names."""
+        import warnings as _warnings
+
+        prices_csv = tmp_path / "prices.csv"
+        prices_csv.write_text(
+            "ticker,date,open,high,low,close,volume\n"
+            + "\n".join(
+                f"T{i:02d},{d},10,10,10,{10+i},100"
+                for i in range(1, 6)
+                for d in ["2020-01-01", "2020-06-01", "2021-01-01"]
+            )
+        )
+
+        for snap_date in ["2020-01-03", "2020-01-10"]:
+            snap_dir = tmp_path / "snaps" / snap_date
+            snap_dir.mkdir(parents=True, exist_ok=True)
+            rows = []
+            for i in range(1, 6):
+                rows.append(f"T{i:02d},{i},0.{50+i},1,drug_developer,A,less_binary,specific,90")
+            csv_path = snap_dir / "rankings.csv"
+            csv_path.write_text(
+                "ticker,actionable_rank,clinical_optionality_pct_dev,eligible,"
+                "archetype,tier_dev,catalyst_bucket,catalyst_mode,catalyst_days\n" + "\n".join(rows)
+            )
+            meta = snap_dir / "metadata.json"
+            meta.write_text('{"as_of_date": "' + snap_date + '"}')
+
+        with _warnings.catch_warnings(record=True) as w:
+            _warnings.simplefilter("always")
+            summary, _, _ = evaluate(
+                snapshot_root=tmp_path / "snaps",
+                price_csv=prices_csv,
+                horizons=[5],
+                top_k=3,  # K <= N
+                bucket_filter=["less_binary"],
+                anchor_mode="prev_trading_day",
+            )
+
+        bucket_warnings = [x for x in w if "BUCKET_SIZE_WARNING" in str(x.message)]
+        assert len(bucket_warnings) == 0, f"Should not warn when N=5 >= top_k=3, got: {[str(x.message) for x in w]}"

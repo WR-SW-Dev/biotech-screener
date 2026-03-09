@@ -313,6 +313,8 @@ class TestSortContribKeysContract:
         "calendar_alpha",
         "alpha_cohort_tb",
         "catalyst_bonus",
+        "binary_quality",
+        "binary_institutional",
     )
 
     def test_keys_match_expected(self):

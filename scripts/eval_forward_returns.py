@@ -1181,6 +1181,7 @@ def evaluate(
     coinvest_topk_rescored_sets: List[set] = []  # top-K sets after rescore
 
     n_evaluated = 0
+    bucket_sizes: List[int] = []  # track per-date bucket size when bucket_filter active
 
     for snap_date in snap_dates:
         snap_dir = snapshot_root / snap_date
@@ -1261,6 +1262,7 @@ def evaluate(
                             _cd_f = None
                         _r["catalyst_bucket"] = _assign_bucket(_cd_f, str(_r.get("catalyst_mode", "")))
                 rankings = [r for r in rankings if r.get("catalyst_bucket", "").strip() in _allowed_buckets]
+                bucket_sizes.append(len(rankings))
                 if not rankings:
                     for h in horizons:
                         dr = DateResult(
@@ -1871,6 +1873,24 @@ def evaluate(
 
         if date_evaluated:
             n_evaluated += 1
+
+    # Bucket-size vs top-K warning
+    if bucket_filter is not None and bucket_sizes:
+        _bs_sorted = sorted(bucket_sizes)
+        _median_n = _bs_sorted[len(_bs_sorted) // 2]
+        if _median_n < top_k:
+            import warnings
+
+            warnings.warn(
+                f"BUCKET_SIZE_WARNING: bucket_filter={bucket_filter} has median N={_median_n} < top_k={top_k}. "
+                f"Within-bucket reranking may not change top-K selection (all names selected). "
+                f"Use full-portfolio eval (no bucket_filter) for promotion decisions.",
+                stacklevel=2,
+            )
+            print(
+                f"  ::warning::BUCKET_SIZE_WARNING: median bucket N={_median_n} < top_k={top_k}; "
+                f"results may be selection-invariant for within-bucket reranks"
+            )
 
     # Build summary
     summary = EvalSummary(

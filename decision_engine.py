@@ -231,6 +231,16 @@ class DecisionRuleset:
     # sort contributions dominate directly without tier gating.
     binary_91_180_flatten_tier_sort: bool = False
 
+    # Binary 91-180 within-bucket re-ranking (opt-in, default "baseline")
+    # Controls how names inside the less_binary bucket are re-ordered AFTER
+    # the global sort key is computed.  Only affects intra-bucket ordering.
+    #   "baseline":                   no change (current behavior)
+    #   "quality_primary":            binary_quality_score dominates within bucket
+    #   "quality_plus_institutional": binary_quality_score + institutional delta z
+    binary_91_180_sort_mode: str = "baseline"  # "baseline" | "quality_primary" | "quality_plus_institutional"
+    binary_91_180_quality_weight: float = 1.0  # scale for binary_quality_score contribution
+    binary_91_180_institutional_weight: float = 0.3  # scale for inst_delta_z (quality_plus_institutional only)
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -1307,6 +1317,8 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "calendar_alpha",
     "alpha_cohort_tb",
     "catalyst_bonus",
+    "binary_quality",
+    "binary_institutional",
 )
 
 
@@ -1392,6 +1404,26 @@ def _build_sort_contributions(
     if catalyst_bonus != 0.0:
         contribs.append(SortContribution("catalyst_bonus", catalyst_bonus, 1.0, catalyst_bonus))
 
+    # 7. Binary 91-180 within-bucket quality re-ranking
+    # Only activates for less_binary names when sort_mode != "baseline".
+    # binary_quality_score is [0, 1]; we use it directly as the contribution
+    # (higher quality → larger delta → subtracted from anchor → sorts earlier).
+    bucket = str(decision_fields.get("catalyst_bucket", ""))
+    b91_mode = ruleset.binary_91_180_sort_mode
+    if bucket == "less_binary" and b91_mode != "baseline":
+        bqs = _safe_float(decision_fields.get("binary_quality_score"), default=0.0)
+        bqs_w = ruleset.binary_91_180_quality_weight
+        delta = bqs_w * bqs
+        contribs.append(SortContribution("binary_quality", bqs, bqs_w, delta))
+
+        # 8. Binary 91-180 institutional tilt (quality_plus_institutional only)
+        if b91_mode == "quality_plus_institutional":
+            iz = _safe_float(decision_fields.get("inst_delta_z"), default=0.0)
+            iz_eff = min(2.0, max(0.0, iz))  # positive-only
+            bi_w = ruleset.binary_91_180_institutional_weight
+            delta_i = bi_w * iz_eff
+            contribs.append(SortContribution("binary_institutional", iz, bi_w, delta_i))
+
     return contribs
 
 
@@ -1407,6 +1439,8 @@ _EXTERNAL_SORT_FIELDS: frozenset = frozenset(
         "stage_bucket",
         "clinical_score_v2_z",
         "alpha_cohort_pct",  # used by alpha_cohort_tiebreak_weight contribution
+        "binary_quality_score",  # used by binary_91_180_sort_mode contribution
+        "catalyst_bucket",  # used by binary_91_180_sort_mode bucket gate
     }
 )
 

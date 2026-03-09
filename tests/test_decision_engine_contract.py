@@ -998,6 +998,8 @@ class TestSnapshotInputContract:
             "de_sort_contrib_calendar_alpha",
             "de_sort_contrib_alpha_cohort_tb",
             "de_sort_contrib_catalyst_bonus",
+            "de_sort_contrib_binary_quality",
+            "de_sort_contrib_binary_institutional",
         }
     )
 
