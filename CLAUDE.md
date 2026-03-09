@@ -14,25 +14,50 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Decimal-Only Arithmetic**: All financial calculations use `Decimal` (never floats)
 - **Stdlib-Only Core**: Zero external dependencies in scoring modules
 
-## Workflow Orchestration
+## Workflow: Three Lanes
 
-### 1. Plan Node Default
-Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions). If something goes sideways, STOP and re-plan immediately — don't keep pushing. Use plan mode for verification steps, not just building. Write detailed specs upfront to reduce ambiguity.
+This project uses **spec-driven development for intent**, **agentic execution**, and **AI-augmented TDD for correctness**. Changes fall into one of three lanes:
 
-### 2. Subagent Strategy
-Use subagents liberally to keep main context window clean. Offload research/exploration/parallel analysis to subagents. For complex problems, throw more compute at it via subagents. One task per subagent for focused execution.
+### Lane 1: Spec-Driven (high-risk / architectural)
+**Use for**: new signals, ranking logic, PIT rules, backtest methodology, governance changes, portfolio construction, anything affecting promotion/rollback.
 
-### 3. Self-Improvement Loop
-After ANY correction from the user: update `tasks/lessons.md` with the pattern. Write rules for yourself that prevent the same mistake. Ruthlessly iterate until mistake rate drops. Review lessons at session start for the relevant project.
+1. Read `specs/SYSTEM_SPEC.md` for system invariants
+2. Create or update a change spec in `specs/changes/` from `specs/CHANGE_SPEC_TEMPLATE.md`
+3. Write failing tests that encode the spec's invariants
+4. Implement against the spec and tests
+5. Run narrow suite → full suite → commit
+6. Update the change spec's Implementation Log
 
-### 4. Verification Before Done
-Never mark a task complete without proving it works. Diff behavior between main and your changes when relevant. Ask: "Would a staff engineer approve this?" Run tests, check logs, demonstrate correctness.
+**Every production-affecting change must leave behind**: spec diff + test diff + commit + gate/validation evidence.
 
-### 5. Demand Elegance (Balanced)
-For non-trivial changes: pause and ask "is there a more elegant way?" If a fix feels hacky: "Knowing everything I know now, implement the elegant solution." Skip this for simple/obvious fixes — don't over-engineer. Challenge your own work before presenting it.
+### Lane 2: Direct Execution (low-risk / mechanical)
+**Use for**: bug fixes, test repairs, formatting, dependency updates, simple refactors.
 
-### 6. Autonomous Bug Fixing
-When given a bug report: just fix it. Don't ask for hand-holding. Point at logs/errors/failing tests — then resolve them. Zero context switching required from the user. Go fix failing CI tests without being told how.
+No spec required. Fix → test → commit.
+
+### Lane 3: Exploration (research only)
+**Use for**: quick architecture debates, spikes, research summaries, "second opinion" reviews, A/B evaluations.
+
+Output goes to `output/` or `scripts/research/`. No production code modified without moving to Lane 1 or 2.
+
+### Spec Structure
+- **`specs/SYSTEM_SPEC.md`** — stable system invariants, PIT rules, promotion/rollback rules, validation principles. Rarely changes.
+- **`specs/changes/NNN_name.md`** — one short spec per feature/signal/refactor. Created before implementation, updated during and after.
+- **`specs/CHANGE_SPEC_TEMPLATE.md`** — copy this for new change specs.
+
+### Execution Principles
+
+**Plan first**: Enter plan mode for ANY non-trivial task (3+ steps or architectural decisions). If something goes sideways, STOP and re-plan.
+
+**Test-first loop**: Write failing tests → implement → narrow suite → full suite → commit. This is the primary implementation rhythm.
+
+**Subagent strategy**: Use subagents liberally. Offload research/exploration/parallel analysis. One task per subagent.
+
+**Verification before done**: Never mark complete without proving it works. Run tests, check logs, demonstrate correctness.
+
+**Autonomous bug fixing**: When given a bug report, just fix it. Zero context switching required from the user.
+
+**Self-improvement**: After ANY correction, update `tasks/lessons.md` with the pattern.
 
 ## Task Management
 
