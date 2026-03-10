@@ -1197,6 +1197,183 @@ def _compute_regulatory_coverage(
     }
 
 
+def _compute_expected_vs_realized(
+    positions: List[Dict[str, Any]],
+    contributors: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Compute expected vs realized return diagnostics.
+
+    'Expected' proxied by: tier (A > B), catalyst proximity (nearer > farther),
+    momentum state (tailwind > neutral > headwind).
+
+    Returns dict with per-bucket and per-factor breakdowns.
+    """
+    from collections import defaultdict
+
+    # Build contributor lookup by ticker
+    contrib_by_ticker: Dict[str, Dict[str, Any]] = {}
+    for c in contributors:
+        contrib_by_ticker[c.get("ticker", "")] = c
+
+    # Build position lookup by ticker (for factor fields)
+    pos_by_ticker: Dict[str, Dict[str, Any]] = {}
+    for p in positions:
+        pos_by_ticker[p.get("ticker", "")] = p
+
+    # Collect matched records: each has position fields + return_pct from contributor
+    matched: List[Dict[str, Any]] = []
+    for ticker, contrib in contrib_by_ticker.items():
+        pos = pos_by_ticker.get(ticker)
+        if pos is None:
+            continue
+        matched.append(
+            {
+                "ticker": ticker,
+                "bucket": pos.get("bucket", ""),
+                "tier": pos.get("tier", ""),
+                "mom_state": pos.get("mom_state", ""),
+                "catalyst_days": pos.get("catalyst_days", ""),
+                "gap_risk": pos.get("gap_risk", ""),
+                "actionable_rank": pos.get("actionable_rank", 9999),
+                "return_pct": contrib.get("return_pct", 0.0),
+            }
+        )
+
+    def _group_stats(items: List[Dict[str, Any]], key: str) -> Dict[str, Dict[str, Any]]:
+        groups: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+        for item in items:
+            groups[item[key]].append(item)
+        result: Dict[str, Dict[str, Any]] = {}
+        for k, group in groups.items():
+            if not k:
+                continue
+            returns = [g["return_pct"] for g in group]
+            n = len(returns)
+            mean_ret = sum(returns) / n if n else 0.0
+            hit = sum(1 for r in returns if r > 0)
+            result[k] = {
+                "n": n,
+                "mean_return_pct": round(mean_ret, 4),
+                "hit_rate": round(hit / n, 4) if n else 0.0,
+            }
+        return result
+
+    # By bucket
+    by_bucket = _group_stats(matched, "bucket")
+
+    # By tier
+    by_tier = _group_stats(matched, "tier")
+
+    # By momentum
+    by_momentum: Dict[str, Dict[str, Any]] = {}
+    mom_groups: Dict[str, List[float]] = defaultdict(list)
+    for m in matched:
+        state = m.get("mom_state", "")
+        if state:
+            mom_groups[state].append(m["return_pct"])
+    for state, returns in mom_groups.items():
+        n = len(returns)
+        by_momentum[state] = {
+            "n": n,
+            "mean_return_pct": round(sum(returns) / n, 4) if n else 0.0,
+        }
+
+    # By catalyst proximity: near (<=90), mid (91-180), far (>180 or empty)
+    cat_groups: Dict[str, List[float]] = defaultdict(list)
+    for m in matched:
+        cd = m.get("catalyst_days", "")
+        try:
+            cd_val = float(cd)
+            if cd_val <= 90:
+                cat_groups["near"].append(m["return_pct"])
+            elif cd_val <= 180:
+                cat_groups["mid"].append(m["return_pct"])
+            else:
+                cat_groups["far"].append(m["return_pct"])
+        except (ValueError, TypeError):
+            cat_groups["far"].append(m["return_pct"])
+    by_catalyst_proximity: Dict[str, Dict[str, Any]] = {}
+    for band, returns in cat_groups.items():
+        n = len(returns)
+        by_catalyst_proximity[band] = {
+            "n": n,
+            "mean_return_pct": round(sum(returns) / n, 4) if n else 0.0,
+        }
+
+    # By gap risk: HIGH vs other
+    gap_high_returns = [m["return_pct"] for m in matched if m.get("gap_risk") == "HIGH"]
+    gap_other_returns = [m["return_pct"] for m in matched if m.get("gap_risk") != "HIGH"]
+    by_gap_risk: Dict[str, Dict[str, Any]] = {}
+    if gap_high_returns:
+        n_h = len(gap_high_returns)
+        by_gap_risk["HIGH"] = {
+            "n": n_h,
+            "mean_return_pct": round(sum(gap_high_returns) / n_h, 4),
+        }
+    if gap_other_returns:
+        n_o = len(gap_other_returns)
+        by_gap_risk["other"] = {
+            "n": n_o,
+            "mean_return_pct": round(sum(gap_other_returns) / n_o, 4),
+        }
+
+    # Top-5 gap: rank-vs-return surprise
+    if matched:
+        max_rank = max(m["actionable_rank"] for m in matched) or 1
+        # Normalize returns to [0, 1] range for gap computation
+        abs_returns = [abs(m["return_pct"]) for m in matched]
+        max_abs_return = max(abs_returns) if abs_returns else 1.0
+        if max_abs_return == 0:
+            max_abs_return = 1.0
+
+        gap_entries = []
+        for m in matched:
+            expected_signal = 1.0 - (m["actionable_rank"] / max_rank) if max_rank > 0 else 0.0
+            normalized_realized = (m["return_pct"] / max_abs_return + 1.0) / 2.0
+            gap = abs(expected_signal - normalized_realized)
+            gap_entries.append(
+                {
+                    "ticker": m["ticker"],
+                    "bucket": m["bucket"],
+                    "rank": m["actionable_rank"],
+                    "return_pct": round(m["return_pct"], 4),
+                    "gap": round(gap, 4),
+                }
+            )
+        gap_entries.sort(key=lambda g: g["gap"], reverse=True)
+        top5_gap = gap_entries[:5]
+    else:
+        top5_gap = []
+
+    return {
+        "by_bucket": by_bucket,
+        "by_tier": by_tier,
+        "by_momentum": by_momentum,
+        "by_catalyst_proximity": by_catalyst_proximity,
+        "by_gap_risk": by_gap_risk,
+        "top5_gap": top5_gap,
+    }
+
+
+def _write_diagnostics_json(
+    diag: Dict[str, Any],
+    as_of_date: str,
+    out_dir: Path,
+) -> Path:
+    """Write diagnostics JSON sidecar at out_dir/{date}.json."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "schema_version": "expected_vs_realized.v1",
+        "as_of_date": as_of_date,
+        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        **diag,
+    }
+    out_file = out_dir / f"{as_of_date}.json"
+    with open(out_file, "w") as f:
+        json.dump(payload, f, indent=2)
+    return out_file
+
+
 # ---------------------------------------------------------------------------
 # Weekly summary markdown
 # ---------------------------------------------------------------------------
@@ -1509,6 +1686,79 @@ def write_weekly_summary(
         )
         lines.append(f"- Gap-risk HIGH weight: {diag['gap_high_weight']:.1f}% (${diag['gap_high_usd']:,.0f})")
         lines.append("")
+
+    # --- Expected vs Realized ---
+    if perf and contributors:
+        evr = _compute_expected_vs_realized(positions, contributors)
+
+        lines.append("## Expected vs Realized")
+        lines.append("")
+
+        # By Bucket
+        lines.append("### Return by Bucket")
+        lines.append("")
+        lines.append("| Bucket | N | Mean Return | Hit Rate |")
+        lines.append("|--------|---|-------------|----------|")
+        for b in BUCKET_NAMES:
+            bd = evr["by_bucket"].get(b, {})
+            if bd.get("n", 0) > 0:
+                lines.append(
+                    f"| {BUCKET_DISPLAY.get(b, b)} | {bd['n']} "
+                    f"| {bd['mean_return_pct']:+.2f}% | {bd['hit_rate']:.0%} |"
+                )
+        lines.append("")
+
+        # By Tier
+        lines.append("### Return by Tier")
+        lines.append("")
+        lines.append("| Tier | N | Mean Return | Hit Rate |")
+        lines.append("|------|---|-------------|----------|")
+        for tier in ["A", "B", "C", "D"]:
+            td = evr["by_tier"].get(tier, {})
+            if td.get("n", 0) > 0:
+                lines.append(f"| {tier} | {td['n']} " f"| {td['mean_return_pct']:+.2f}% | {td['hit_rate']:.0%} |")
+        lines.append("")
+
+        # By Momentum
+        lines.append("### Return by Momentum")
+        lines.append("")
+        lines.append("| State | N | Mean Return |")
+        lines.append("|-------|---|-------------|")
+        for state in ["tailwind", "neutral", "headwind"]:
+            md = evr["by_momentum"].get(state, {})
+            if md.get("n", 0) > 0:
+                lines.append(f"| {state} | {md['n']} | {md['mean_return_pct']:+.2f}% |")
+        lines.append("")
+
+        # By Catalyst Proximity
+        lines.append("### Return by Catalyst Proximity")
+        lines.append("")
+        lines.append("| Band | N | Mean Return |")
+        lines.append("|------|---|-------------|")
+        for band in ["near", "mid", "far"]:
+            cd = evr["by_catalyst_proximity"].get(band, {})
+            if cd.get("n", 0) > 0:
+                lines.append(f"| {band} | {cd['n']} | {cd['mean_return_pct']:+.2f}% |")
+        lines.append("")
+
+        # Top-5 Biggest Gaps
+        top5 = evr.get("top5_gap", [])
+        if top5:
+            lines.append("### Top-5 Model Surprises (largest rank vs return gap)")
+            lines.append("")
+            lines.append("| Ticker | Bucket | Rank | Return | Gap Score |")
+            lines.append("|--------|--------|------|--------|-----------|")
+            for g in top5:
+                lines.append(
+                    f"| {g['ticker']} "
+                    f"| {BUCKET_DISPLAY.get(g['bucket'], g['bucket'])} "
+                    f"| {g['rank']} | {g['return_pct']:+.2f}% | {g['gap']:.3f} |"
+                )
+            lines.append("")
+
+        # Write diagnostics sidecar
+        _diag_dir = out_path.parent / "diagnostics"
+        _write_diagnostics_json(evr, as_of_date, _diag_dir)
 
     # --- Secondary Regulatory Coverage ---
     reg_cov = _compute_regulatory_coverage(positions)

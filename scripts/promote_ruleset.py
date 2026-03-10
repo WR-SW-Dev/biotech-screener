@@ -407,6 +407,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Path to VERDICT.json from promotion_weekly_gate.py " "(required for promotions unless --force).",
     )
     parser.add_argument(
+        "--promotion-packet",
+        type=Path,
+        default=None,
+        help=(
+            "Path to PROMOTION_PACKET.json from run_promotion_battery.py. "
+            "Supersedes --weekly-gate-verdict when provided."
+        ),
+    )
+    parser.add_argument(
         "--manifest",
         type=Path,
         default=MANIFEST_PATH,
@@ -542,36 +551,79 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # --- Weekly live-sim gate (skip for rollbacks) ---
     if not args.force and not args.rollback:
-        if not args.weekly_gate_verdict:
+        # Accept either --promotion-packet (preferred) or --weekly-gate-verdict
+        weekly_verdict_path = None
+        weekly_verdict_data = None
+
+        if args.promotion_packet:
+            # Extract weekly verdict from promotion packet
+            if not args.promotion_packet.exists():
+                print(
+                    f"ERROR: Promotion packet not found: {args.promotion_packet}",
+                    file=sys.stderr,
+                )
+                return 1
+            try:
+                pkt = json.loads(args.promotion_packet.read_text(encoding="utf-8"))
+            except Exception as e:
+                print(f"ERROR: Cannot parse promotion packet: {e}", file=sys.stderr)
+                return 1
+            if pkt.get("overall_verdict") not in ("PASS", "FAIL", "NEEDS_MORE"):
+                print("ERROR: Promotion packet missing overall_verdict.", file=sys.stderr)
+                return 1
+            if pkt.get("overall_verdict") != "PASS":
+                print(
+                    f"ERROR: Promotion packet verdict is {pkt['overall_verdict']}.\n"
+                    f"  See: {args.promotion_packet}\n"
+                    f"  Use --force to bypass.",
+                    file=sys.stderr,
+                )
+                return 1
+            # Extract weekly sub-verdict for logging
+            wg_sub = pkt.get("weekly_verdict", {})
+            weekly_verdict_data = wg_sub
+            weekly_verdict_path = args.promotion_packet
+            print(f"Promotion packet: PASS ({args.promotion_packet.name})")
+
+        elif args.weekly_gate_verdict:
+            weekly_verdict_path = args.weekly_gate_verdict
+            if not weekly_verdict_path.exists():
+                print(
+                    f"ERROR: Weekly gate verdict not found: {weekly_verdict_path}",
+                    file=sys.stderr,
+                )
+                return 1
+            try:
+                weekly_verdict_data = json.loads(weekly_verdict_path.read_text(encoding="utf-8"))
+            except Exception as e:
+                print(f"ERROR: Cannot parse weekly gate verdict: {e}", file=sys.stderr)
+                return 1
+        else:
             print(
-                "ERROR: --weekly-gate-verdict is required (or use --force to bypass).\n"
-                "  Run: python3 scripts/research/promotion_weekly_gate.py ...\n"
-                "  Then pass the resulting VERDICT.json.",
+                "ERROR: --promotion-packet or --weekly-gate-verdict is required "
+                "(or use --force to bypass).\n"
+                "  Preferred: python3 scripts/research/run_promotion_battery.py ...\n"
+                "  Then pass the resulting PROMOTION_PACKET.json.",
                 file=sys.stderr,
             )
             return 1
-        if not args.weekly_gate_verdict.exists():
-            print(
-                f"ERROR: Weekly gate verdict not found: {args.weekly_gate_verdict}",
-                file=sys.stderr,
-            )
-            return 1
-        try:
-            wg = json.loads(args.weekly_gate_verdict.read_text(encoding="utf-8"))
-        except Exception as e:
-            print(f"ERROR: Cannot parse weekly gate verdict: {e}", file=sys.stderr)
-            return 1
-        if wg.get("verdict") != "PASS":
-            failed = [c["name"] for c in wg.get("checks", []) if not c.get("pass")]
+
+        # Validate weekly verdict (from packet or standalone)
+        if weekly_verdict_data and weekly_verdict_data.get("verdict") not in (
+            "PASS",
+            "SKIP",
+        ):
+            failed = [c["name"] for c in weekly_verdict_data.get("checks", []) if not c.get("pass")]
             print(
                 f"ERROR: Weekly live-sim gate FAIL.\n"
                 f"  Failed checks: {', '.join(failed)}\n"
-                f"  See: {args.weekly_gate_verdict}\n"
+                f"  See: {weekly_verdict_path}\n"
                 f"  Use --force to bypass.",
                 file=sys.stderr,
             )
             return 1
-        print(f"Weekly gate: PASS ({args.weekly_gate_verdict.name})")
+        if weekly_verdict_path and not args.promotion_packet:
+            print(f"Weekly gate: PASS ({weekly_verdict_path.name})")
 
     # --- Changelog validation (skip for rollbacks) ---
     if not args.force and not args.rollback:

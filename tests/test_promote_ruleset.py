@@ -454,6 +454,80 @@ class TestGateAutoFetch:
         )
         assert rc == 1
 
+    def test_promotion_packet_pass(self, tmp_path, monkeypatch):
+        """--promotion-packet with PASS overall_verdict is accepted."""
+        repo = _make_repo(tmp_path)
+        gate = _make_gate_json(tmp_path)
+
+        # Build a promotion packet with PASS verdict
+        packet = {
+            "schema": "promotion_packet.v1",
+            "overall_verdict": "PASS",
+            "weekly_verdict": {
+                "verdict": "PASS",
+                "checks": [{"name": "policy_cum_hedged", "pass": True}],
+            },
+            "bucket_verdicts": {},
+        }
+        pkt_path = tmp_path / "PROMOTION_PACKET.json"
+        pkt_path.write_text(json.dumps(packet), encoding="utf-8")
+
+        import scripts.promote_ruleset as mod
+
+        monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
+        monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
+        monkeypatch.setattr(mod, "CHANGELOG_PATH", repo["changelog"])
+        monkeypatch.setattr(mod, "RECEIPTS_DIR", tmp_path / "receipts")
+        monkeypatch.setattr(mod, "PINNED_FILES", [repo["run_screen"], repo["delta"]])
+        monkeypatch.setattr(mod, "PROJECT_ROOT", tmp_path)
+
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--promotion-packet",
+                str(pkt_path),
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
+        assert rc == 0
+
+    def test_promotion_packet_fail_blocks(self, tmp_path, monkeypatch):
+        """--promotion-packet with FAIL overall_verdict blocks promotion."""
+        repo = _make_repo(tmp_path)
+        gate = _make_gate_json(tmp_path)
+
+        packet = {
+            "schema": "promotion_packet.v1",
+            "overall_verdict": "FAIL",
+            "weekly_verdict": {"verdict": "FAIL", "checks": []},
+            "bucket_verdicts": {},
+        }
+        pkt_path = tmp_path / "PROMOTION_PACKET.json"
+        pkt_path.write_text(json.dumps(packet), encoding="utf-8")
+
+        import scripts.promote_ruleset as mod
+
+        monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
+        monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
+
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--promotion-packet",
+                str(pkt_path),
+                "--manifest",
+                str(repo["manifest"]),
+            ]
+        )
+        assert rc == 1
+
     def test_missing_artifact_file_error(self, tmp_path, monkeypatch):
         """Non-existent zip path errors cleanly."""
         repo = _make_repo(tmp_path)
