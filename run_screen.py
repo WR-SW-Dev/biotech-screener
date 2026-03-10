@@ -4794,13 +4794,19 @@ def save_validation_snapshot(
                 _n_ledger_reg += 1
                 src = entry.source or "unknown"
                 _ledger_source_counts[src] = _ledger_source_counts.get(src, 0) + 1
-    # Manual calendar telemetry
+    # Manual calendar telemetry (with quality selection diagnostics)
     try:
-        from common.regulatory_calendar import get_calendar_telemetry
+        from common.regulatory_calendar import CalendarPolicy, get_calendar_telemetry, select_quality_entries
 
-        _cal_telemetry = get_calendar_telemetry(_pdufa_manual)
+        _cal_used, _cal_diag = select_quality_entries(
+            _pdufa_manual,
+            as_of_date,
+            n_eligible=_eligible_count,
+        )
+        _cal_telemetry = get_calendar_telemetry(_cal_used, selection_diag=_cal_diag)
     except Exception:
         _cal_telemetry = {}
+        _cal_diag = {}
     metadata["regulatory_coverage"] = {
         "manual_calendar_n_records": _n_pdufa_events,
         "manual_calendar_detail": _cal_telemetry,
@@ -4809,6 +4815,13 @@ def save_validation_snapshot(
         "n_eligible_flagged": _n_reg_flagged,
         "regulatory_secondary_coverage_pct": round(_n_reg_flagged / max(_eligible_count, 1) * 100, 1),
         "flagged_event_types": _reg_type_counts,
+        "reg_calendar_entries_raw": _n_pdufa_events,
+        "reg_calendar_entries_pit": _cal_diag.get("input_count", _n_pdufa_events),
+        "reg_calendar_entries_used": _cal_diag.get("output_count", _n_pdufa_events),
+        "reg_calendar_coverage_pct_eligible": _cal_diag.get(
+            "coverage_pct",
+            round(len({r.get("ticker") for r in _pdufa_manual}) / max(_eligible_count, 1) * 100, 1),
+        ),
     }
 
     meta_path = snap_path / "metadata.json"

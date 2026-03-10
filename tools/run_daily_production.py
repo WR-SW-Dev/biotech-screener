@@ -186,8 +186,11 @@ class GateConfig:
     risk_conc_stacked_warn: float = 0.20
     """WARN if > 20% of top-K weight has catalyst <= 7d AND (beta >= 1.5 or drawdown <= -0.30)."""
 
-    regulatory_calendar_min_coverage_pct: float = 0.0
-    """Min regulatory coverage % (eligible flagged / eligible) before WARN. 0 = disabled."""
+    regulatory_calendar_min_coverage_pct: float = 3.0
+    """Min regulatory coverage % of eligible tickers before WARN."""
+
+    regulatory_calendar_max_coverage_pct: float = 12.0
+    """Max regulatory coverage % of eligible tickers before WARN (over-flagging)."""
 
     regulatory_calendar_max_stale_days: int = 180
     """WARN if newest as_of_disclosed_at in manual calendar is older than this many days."""
@@ -2405,11 +2408,11 @@ def check_regulatory_calendar(
     as_of_date: str,
     config: GateConfig,
 ) -> GateResult:
-    """Check regulatory calendar health: load success, coverage, freshness.
+    """Check regulatory calendar health: load success, coverage band, freshness.
 
     WARN-only gate. Fires if:
-      - Manual calendar fails to load
-      - Eligible regulatory coverage < configured minimum
+      - Manual calendar fails to load or entries_used == 0
+      - Eligible regulatory coverage outside [min_pct, max_pct] band
       - Newest as_of_disclosed_at is older than configured threshold
     """
     name = "regulatory_calendar"
@@ -2433,17 +2436,21 @@ def check_regulatory_calendar(
     manual_n = reg_cov.get("manual_calendar_n_records", 0)
     n_flagged = reg_cov.get("n_eligible_flagged", 0)
     coverage_pct = reg_cov.get("regulatory_secondary_coverage_pct", 0.0)
+    entries_used = reg_cov.get("reg_calendar_entries_used", manual_n)
 
     warnings = []
 
     # 2. Calendar load check
-    if manual_n == 0:
+    if entries_used == 0 and manual_n == 0:
         warnings.append("manual calendar empty or failed to load")
 
-    # 3. Coverage floor
+    # 3. Coverage band check [min_pct, max_pct]
     min_cov = config.regulatory_calendar_min_coverage_pct
+    max_cov = config.regulatory_calendar_max_coverage_pct
     if min_cov > 0 and coverage_pct < min_cov:
         warnings.append(f"coverage {coverage_pct:.1f}% < {min_cov:.1f}% floor")
+    if max_cov > 0 and coverage_pct > max_cov:
+        warnings.append(f"coverage {coverage_pct:.1f}% > {max_cov:.1f}% ceiling (over-flagging risk)")
 
     # 4. Freshness check — newest disclosed_at in the calendar
     try:
@@ -2471,10 +2478,13 @@ def check_regulatory_calendar(
         pass  # Freshness is best-effort
 
     if warnings:
-        detail = f"n_manual={manual_n}, flagged={n_flagged}, " f"coverage={coverage_pct:.1f}% | {'; '.join(warnings)}"
+        detail = (
+            f"n_manual={manual_n}, used={entries_used}, flagged={n_flagged}, "
+            f"coverage={coverage_pct:.1f}% | {'; '.join(warnings)}"
+        )
         return GateResult(name=name, status="WARN", detail=detail)
 
-    detail = f"n_manual={manual_n}, flagged={n_flagged}, coverage={coverage_pct:.1f}%"
+    detail = f"n_manual={manual_n}, used={entries_used}, flagged={n_flagged}, coverage={coverage_pct:.1f}%"
     return GateResult(name=name, status="PASS", detail=detail)
 
 

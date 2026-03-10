@@ -607,3 +607,216 @@ pytest tests/test_decision_engine.py tests/test_phase2_health_gate.py -x
 - Enhancements enabled by default
 - Valuation coverage 85% → 100%
 - Clinical trials pagination fix (100 → 1000 limit)
+
+---
+
+## WHO YOU ARE WORKING WITH
+
+You are assisting Darren Schulz, CTO of Wake Robin Capital Management, on a
+production-grade biotech investment screening system. The system processes 322
+securities through 12 specialized AI agents. Scott Brooks and the WR investment
+team are the end consumers of outputs.
+
+## SYSTEM STATE (update this block when state changes)
+- Current version: v4.3.x → transitioning to v6.02
+- Test suite: 5,260 tests, all passing as of last confirmed run
+- Database: Postgres — see DATABASE_URL in environment
+- Universe invariants (NEVER break these):
+  - Elite Core managers: exactly 9 (is_tracked=true, active=true)
+  - Conditional managers: exactly 8 (is_tracked=true, active=false)
+  - Excluded managers: exactly 16 (is_tracked=false)
+- Phase 2 signal queue (ordered): PoS snapshot → trial design quality →
+  financing fixture → competitive landscape
+
+---
+
+## NORTH STAR RULES (non-negotiable)
+
+1. **Backtest systems never directly change production behavior.**
+   They produce evidence and proposals only. Governance review required before
+   any backtest finding becomes a production parameter change.
+
+2. **Temporal integrity is absolute.**
+   Every data point must satisfy: `data_available_timestamp ≤ as_of_date`.
+   No exceptions. Flag any violation immediately, do not silently discard.
+
+3. **Deterministic outputs.**
+   Identical inputs must produce byte-identical outputs. Use SHA256 hashing on
+   all scored outputs. CSV format: `encoding='utf-8', lineterminator='\n',
+   quoting=csv.QUOTE_MINIMAL`.
+
+4. **Never invent facts.**
+   If data is missing, emit `UNKNOWN` or `None` with a logged reason. Never
+   impute, interpolate, or guess clinical/financial data.
+
+5. **Minimum viable governance first.**
+   Build metadata and audit infrastructure before features. A signal with no
+   audit trail does not ship.
+
+---
+
+## DEVELOPMENT WORKFLOW
+
+### Default loop (use this unless told otherwise)
+1. **Read the spec first.** Check `docs/signal_specifications.md` for the signal
+   being worked on. If spec is missing, write it before writing code.
+2. **Write a failing test.** Red → Green → Refactor. Never write implementation
+   before the test exists.
+3. **Run the full test suite** after any non-trivial change:
+   ```bash
+   pytest tests/ -x --tb=short
+   ```
+   Fix all failures before moving on.
+4. **Verify universe invariants** after any DB migration:
+   ```bash
+   bash scripts/verify_universe.sh
+   bash scripts/health_status.sh
+   ```
+5. **Commit with a structured message:**
+   ```
+   [SIGNAL|INFRA|FIX|MIGRATION] short description
+
+   - What changed
+   - Why (link to spec or backtest finding)
+   - Tests added/modified
+   ```
+
+### When implementing a new alpha signal
+Follow this checklist in order — do not skip steps:
+
+- [ ] Signal spec written in `docs/signal_specifications.md` (inputs, outputs,
+      data source, expected lift, failure modes)
+- [ ] LeakageDetector decorator applied to all data fetch functions
+- [ ] Unit tests covering: happy path, missing data graceful degradation,
+      future data rejection
+- [ ] Backtest run in isolation (ablation: Sharpe improvement ≥ 0.1 required)
+- [ ] Signal hash added to BQS worksheet output
+- [ ] `docs/signal_specifications.md` updated with actual vs expected lift
+
+### When modifying existing agents
+- Run `git diff HEAD` and confirm scope is minimal before proceeding
+- "Lift-and-shift first, improve later" — mechanical moves before refactors
+- Golden master: capture output before change, diff after, confirm byte-identical
+  for deterministic paths
+
+---
+
+## DATA SOURCES & INTEGRITY RULES
+
+| Source | Acceptable use | Lag rule |
+|--------|---------------|----------|
+| ClinicalTrials.gov | Phase, status, eligibility criteria | 2-day lag minimum |
+| SEC EDGAR | 10-Q cash/burn, 8-K designations, 13F holdings | Filing date + 1 day |
+| Yahoo Finance / yfinance | Market prices, realized vol | T+0 ok for prices |
+| WhaleWisdom / Dataroma | Institutional ownership | Quarter end + 45 days |
+| Manual curation | M&A targets, graveyard list | Timestamped entry required |
+
+**Do NOT use:**
+- PubMed h-index API (rate-limited, complex)
+- Options flow (requires Bloomberg/CBOE)
+- Commercial M&A databases (not in stack)
+
+**Proxies to use instead:**
+- PI trial count from CT.gov (not h-index)
+- Realized volatility (not implied vol)
+- Manual M&A curation file at `data/ma_curation.csv`
+
+---
+
+## ARCHITECTURE INVARIANTS
+
+```
+institutional_managers table:
+  Elite Core  → is_tracked=true,  active=true  → count MUST = 9
+  Conditional → is_tracked=true,  active=false → count MUST = 8
+  Excluded    → is_tracked=false               → count MUST = 16
+
+Tier hygiene:
+  No tier='COND' among Elite Core
+  No tier='OTHER' with is_tracked=true OR active=true
+```
+
+Any migration that touches `institutional_managers` must:
+1. Add a rollback statement
+2. Re-run `verify_universe.sh` and paste output into commit message
+3. Include `ON_ERROR_STOP=1` in psql calls
+
+---
+
+## OUTPUT FORMATS
+
+### BQS Worksheet columns (do not reorder existing columns)
+```
+Ticker, Company, Indication, Stage,
+Science Score (1-10), Moat Score (1-10), Management Score (1-10),
+Capital Efficiency (1-10), Catalyst Clarity (1-10),
+Total BQS, Pass (>70)?,
+[NEW] biomarker_enriched: bool,
+[NEW] adjusted_pos: float (0-1),
+[NEW] dilution_risk_12mo: float (0-1),
+[NEW] designation_score: float,
+[NEW] alpha_score_composite: float (0-100),
+[NEW] signal_audit_hash: str,
+Notes
+```
+
+### Kill switch flags (emit in IC memos and screening outputs)
+Flag immediately if ANY TWO of:
+1. Runway < 12 months AND no credible financing path
+2. Outlier enrollment / site concentration / protocol changes
+3. Clinical hold, RTF, or CRL on lead program
+4. Major insider sales pre-catalyst or key departures
+5. Commercial launch < 30% consensus for 2 consecutive quarters
+
+Trigger requires: date/time detected, source (filing ID / PR date / NCT),
+action taken + timestamp.
+
+### Composite Alpha Score formula
+```
+Alpha_Score = 0.4×POS_score + 0.3×Catalyst_score + 0.2×Valuation_score + 0.1×Risk_score
+```
+All component scores normalized 0–100 before weighting.
+
+---
+
+## INVESTMENT PHILOSOPHY GUARDRAILS
+These are not coding rules but shape what "correct" looks like:
+
+- **Target**: 20–40% gains, 60%+ hit rate. Singles, not moonshots.
+- **Concentration**: 10–15 positions max, ≤40% in binary catalyst plays.
+- **Regime awareness**: Momentum signals require regime-weighted scoring.
+  Momentum weight = 1.0 in trend-following markets, 0.10 in broad rallies.
+  Use existing breadth metrics as regime detector.
+- **GOSS-proof**: Small-cap alpha-expanded tier companies must not be filtered
+  out by liquidity metrics alone. Rejection tracking is mandatory.
+
+---
+
+## WHAT TO DO WHEN STUCK
+
+1. **Missing data mid-implementation**: emit `UNKNOWN`, log reason, continue.
+   Do not block on data gaps.
+2. **Test is flaky**: investigate root cause before disabling. Flaky tests are
+   bugs, not nuisances.
+3. **Backtest shows unexpected result**: do NOT change production weights.
+   Document finding in `docs/backtest_findings.md` and flag for governance review.
+4. **Ambiguous spec**: stop, write out your interpretation, ask for confirmation
+   before implementing. A 2-minute clarification beats an hour of wrong work.
+5. **Scope creep during a session**: finish the current task, commit, then start
+   the new scope. Never mix concerns in a single commit.
+
+---
+
+## SESSION STARTUP CHECKLIST
+At the start of each Claude Code session, run:
+```bash
+# Confirm environment
+echo $DATABASE_URL | grep -q "postgresql" && echo "DB: OK" || echo "DB: MISSING"
+
+# Confirm tests passing
+pytest tests/ --tb=no -q 2>&1 | tail -3
+
+# Confirm universe invariants
+bash scripts/verify_universe.sh 2>&1 | tail -5
+```
+If any check fails, resolve before writing new code.

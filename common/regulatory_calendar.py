@@ -25,6 +25,8 @@ from __future__ import annotations
 import json
 import logging
 import re
+from dataclasses import dataclass
+from datetime import date as _date
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -71,6 +73,184 @@ _SOURCE_MAP = {
     "SEC_8K": "SEC_8K",
     "PRESS_RELEASE": "PRESS_RELEASE",
 }
+
+# Priority scores for selection (higher = preferred)
+_CONFIDENCE_PRIORITY = {"HIGH": 3, "MED": 2, "LOW": 1}
+_SOURCE_PRIORITY = {
+    "COMPANY_GUIDANCE": 3,
+    "SEC_8K": 3,
+    "SEC_8K_FILING": 3,
+    "FEDERAL_REGISTER": 2,
+    "MANUAL": 2,
+    "PRESS_RELEASE": 2,
+    "ANALYST_ESTIMATE": 1,
+    "CTGOV_ESTIMATE": 1,
+}
+
+
+@dataclass(frozen=True)
+class CalendarPolicy:
+    """Configurable thresholds for calendar quality pruning."""
+
+    max_entries: int = 25
+    """Hard cap on entries after pruning."""
+
+    max_coverage_pct: float = 10.0
+    """Auto-prune lowest priority entries if coverage exceeds this % of eligible."""
+
+    min_coverage_pct: float = 3.0
+    """Below this %, keep all HIGH + best MED (advisory only, no fabrication)."""
+
+    require_disclosed_within_days: int = 90
+    """Drop entries missing as_of_disclosed_at if pdufa_date <= as_of_date + this many days."""
+
+    min_proximity_days: int = 0
+    """Minimum days to event (entries closer than this get deprioritized)."""
+
+    max_proximity_days: int = 210
+    """Maximum days to event considered (entries farther get deprioritized)."""
+
+    preferred_band_lo: int = 15
+    """Lower bound of preferred proximity band (bonus priority)."""
+
+    preferred_band_hi: int = 180
+    """Upper bound of preferred proximity band (bonus priority)."""
+
+
+def _compute_entry_priority(rec: Dict[str, Any], as_of_date: str) -> float:
+    """Compute a priority score for a calendar entry (higher = keep).
+
+    Components:
+    - Confidence: HIGH=3, MED=2, LOW=1
+    - Source: COMPANY_GUIDANCE/SEC_8K=3, FEDREG=2, ANALYST/CTGOV=1
+    - Proximity band bonus: +2 if in 15-180d sweet spot, +1 if 0-14d, +0 if >180d
+    """
+    conf = _CONFIDENCE_PRIORITY.get(rec.get("confidence", "MED"), 1)
+    src = _SOURCE_PRIORITY.get(rec.get("source", "MANUAL"), 1)
+
+    # Proximity bonus
+    proximity_bonus = 0.0
+    pdufa = rec.get("pdufa_date", "")
+    if pdufa and as_of_date:
+        try:
+            days = (_date.fromisoformat(pdufa) - _date.fromisoformat(as_of_date)).days
+            if 15 <= days <= 180:
+                proximity_bonus = 2.0
+            elif 0 <= days <= 14:
+                proximity_bonus = 1.0
+            # >180d or past: 0
+        except ValueError:
+            pass
+
+    # Tiebreaker: prefer sooner events (smaller date = higher priority)
+    # Use small fraction so it only breaks ties
+    date_tiebreak = 0.0
+    if pdufa:
+        try:
+            days = (_date.fromisoformat(pdufa) - _date.fromisoformat(as_of_date)).days
+            # Normalize: 0 days → 0.9, 365 days → 0.0
+            date_tiebreak = max(0.0, (365 - days) / 365.0) * 0.9
+        except ValueError:
+            pass
+
+    return conf + src + proximity_bonus + date_tiebreak
+
+
+def select_quality_entries(
+    records: List[Dict[str, Any]],
+    as_of_date: str,
+    n_eligible: int = 0,
+    policy: Optional[CalendarPolicy] = None,
+) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
+    """Apply quality pruning and priority selection to calendar entries.
+
+    Call AFTER load_and_validate() on PIT-filtered records.
+
+    Parameters
+    ----------
+    records : PIT-filtered, normalized calendar entries
+    as_of_date : YYYY-MM-DD reference date
+    n_eligible : number of eligible tickers in universe (for coverage calc).
+        If 0, coverage-based pruning is skipped.
+    policy : pruning thresholds (defaults to CalendarPolicy())
+
+    Returns
+    -------
+    (selected, diagnostics) — selected entries sorted by priority desc,
+    plus diagnostics dict with pruning counts.
+    """
+    if policy is None:
+        policy = CalendarPolicy()
+
+    diag: Dict[str, Any] = {
+        "input_count": len(records),
+        "pruned_past_dated": 0,
+        "pruned_missing_disclosed": 0,
+        "pruned_max_entries": 0,
+        "pruned_coverage_cap": 0,
+        "output_count": 0,
+    }
+
+    try:
+        ref = _date.fromisoformat(as_of_date)
+    except ValueError:
+        diag["output_count"] = len(records)
+        return list(records), diag
+
+    # 1. Drop past-dated entries (pdufa_date < as_of_date)
+    active: List[Dict[str, Any]] = []
+    for rec in records:
+        pdufa = rec.get("pdufa_date", "")
+        if pdufa and pdufa < as_of_date:
+            diag["pruned_past_dated"] += 1
+            continue
+        active.append(rec)
+
+    # 2. Drop entries missing as_of_disclosed_at if event is within N days
+    threshold_date = str(ref + __import__("datetime").timedelta(days=policy.require_disclosed_within_days))
+    vetted: List[Dict[str, Any]] = []
+    for rec in active:
+        disclosed = rec.get("as_of_disclosed_at", "")
+        pdufa = rec.get("pdufa_date", "")
+        if not disclosed and pdufa and pdufa <= threshold_date:
+            diag["pruned_missing_disclosed"] += 1
+            continue
+        vetted.append(rec)
+
+    # 3. Score and sort by priority (descending)
+    scored = [(rec, _compute_entry_priority(rec, as_of_date)) for rec in vetted]
+    scored.sort(key=lambda x: x[1], reverse=True)
+
+    # 4. Coverage cap: if n_eligible provided and coverage > max_coverage_pct
+    selected = [rec for rec, _ in scored]
+    if n_eligible > 0 and policy.max_coverage_pct > 0:
+        # Count unique tickers
+        max_tickers = int(n_eligible * policy.max_coverage_pct / 100.0)
+        if max_tickers < 1:
+            max_tickers = 1
+        tickers_seen: set = set()
+        coverage_capped: List[Dict[str, Any]] = []
+        for rec in selected:
+            t = rec["ticker"]
+            if t not in tickers_seen:
+                if len(tickers_seen) >= max_tickers:
+                    diag["pruned_coverage_cap"] += 1
+                    continue
+                tickers_seen.add(t)
+            coverage_capped.append(rec)
+        selected = coverage_capped
+
+    # 5. max_entries hard cap
+    if len(selected) > policy.max_entries:
+        diag["pruned_max_entries"] = len(selected) - policy.max_entries
+        selected = selected[: policy.max_entries]
+
+    diag["output_count"] = len(selected)
+    diag["unique_tickers"] = len({r["ticker"] for r in selected})
+    if n_eligible > 0:
+        diag["coverage_pct"] = round(diag["unique_tickers"] / max(n_eligible, 1) * 100, 1)
+
+    return selected, diag
 
 
 def load_regulatory_calendar(
@@ -233,8 +413,17 @@ def load_and_validate(
     return deduped, all_errors
 
 
-def get_calendar_telemetry(records: List[Dict[str, Any]]) -> Dict[str, Any]:
-    """Build telemetry dict for snapshot metadata."""
+def get_calendar_telemetry(
+    records: List[Dict[str, Any]],
+    selection_diag: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    """Build telemetry dict for snapshot metadata.
+
+    Parameters
+    ----------
+    records : the final used calendar entries
+    selection_diag : optional diagnostics from select_quality_entries()
+    """
     type_counts: Dict[str, int] = {}
     conf_counts: Dict[str, int] = {}
     source_counts: Dict[str, int] = {}
@@ -245,10 +434,13 @@ def get_calendar_telemetry(records: List[Dict[str, Any]]) -> Dict[str, Any]:
         conf_counts[conf] = conf_counts.get(conf, 0) + 1
         src = rec.get("source", "MANUAL")
         source_counts[src] = source_counts.get(src, 0) + 1
-    return {
+    result = {
         "manual_calendar_loaded": len(records) > 0,
         "manual_calendar_n_records": len(records),
         "manual_calendar_by_event_type": type_counts,
         "manual_calendar_by_confidence": conf_counts,
         "manual_calendar_by_source": source_counts,
     }
+    if selection_diag:
+        result["quality_selection"] = selection_diag
+    return result
