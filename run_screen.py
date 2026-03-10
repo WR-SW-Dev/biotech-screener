@@ -2282,23 +2282,21 @@ def _nearest_catalyst_event_type(
     return ""
 
 
-def _load_pdufa_manual(data_dir: Optional[Path] = None) -> List[Dict[str, str]]:
-    """Load PDUFA manual dates from production_data/pdufa_dates.json.
+def _load_pdufa_manual(
+    data_dir: Optional[Path] = None,
+    as_of_date: Optional[str] = None,
+) -> List[Dict[str, str]]:
+    """Load PDUFA manual dates via the regulatory calendar loader.
 
-    Returns list of {ticker, pdufa_date, ...} dicts. Empty on missing file.
-    Cached per-call via the snapshot function's pdufa_cache parameter.
+    Returns list of {ticker, pdufa_date, ...} dicts.  Normalizes old schema
+    fields and applies PIT filtering when as_of_date is provided.
     """
-    candidates = []
-    if data_dir:
-        candidates.append(data_dir / "pdufa_dates.json")
-    candidates.append(Path(__file__).parent / "production_data" / "pdufa_dates.json")
-    for p in candidates:
-        if p.exists():
-            try:
-                return json.loads(p.read_text())
-            except (json.JSONDecodeError, OSError):
-                pass
-    return []
+    from common.regulatory_calendar import load_and_validate
+
+    records, errors = load_and_validate(data_dir=data_dir, as_of_date=as_of_date)
+    if errors:
+        logger.warning("regulatory_calendar: %d validation issues: %s", len(errors), errors[:5])
+    return records
 
 
 def _nearest_regulatory_catalyst(
@@ -3164,7 +3162,7 @@ def save_validation_snapshot(
     # Load PDUFA manual dates once for secondary regulatory catalyst scan.
     # This ensures tickers with PDUFA dates in the manual file get flagged
     # even when M3 events don't include the PDUFA entry.
-    _pdufa_manual = _load_pdufa_manual()
+    _pdufa_manual = _load_pdufa_manual(as_of_date=as_of_date)
 
     # Build the event ledger for direct regulatory event scanning.
     # M3's scored events (summaries[ticker].events) only include CTGov/SEC
@@ -4779,7 +4777,7 @@ def save_validation_snapshot(
     _data_sources["sec_8k"] = {"effective_date": as_of_date}
     metadata["data_sources"] = _data_sources
 
-    # Regulatory coverage telemetry (all sources: M3, event ledger, PDUFA manual)
+    # Regulatory coverage telemetry (all sources: M3, event ledger, manual calendar)
     _n_pdufa_events = len(_pdufa_manual)
     _n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
     _eligible_count = sum(1 for r in csv_rows if r.get("eligible") == "1")
@@ -4796,9 +4794,16 @@ def save_validation_snapshot(
                 _n_ledger_reg += 1
                 src = entry.source or "unknown"
                 _ledger_source_counts[src] = _ledger_source_counts.get(src, 0) + 1
+    # Manual calendar telemetry
+    try:
+        from common.regulatory_calendar import get_calendar_telemetry
+
+        _cal_telemetry = get_calendar_telemetry(_pdufa_manual)
+    except Exception:
+        _cal_telemetry = {}
     metadata["regulatory_coverage"] = {
-        "pdufa_manual_loaded": _n_pdufa_events > 0,
-        "pdufa_manual_n_events": _n_pdufa_events,
+        "manual_calendar_n_records": _n_pdufa_events,
+        "manual_calendar_detail": _cal_telemetry,
         "event_ledger_regulatory_entries": _n_ledger_reg,
         "event_ledger_sources": _ledger_source_counts,
         "n_eligible_flagged": _n_reg_flagged,
