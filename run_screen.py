@@ -2307,14 +2307,14 @@ def _nearest_regulatory_catalyst(
     as_of_date_str: str,
     max_days: int = 180,
     pdufa_manual: Optional[List[Dict[str, str]]] = None,
+    event_ledger: Optional[list] = None,
 ) -> Tuple[str, str]:
-    """Find the nearest REGULATORY event for a ticker from Module 3 events.
+    """Find the nearest REGULATORY event for a ticker.
 
-    Scans ALL events (not just the overall nearest) for any regulatory
-    event_type within max_days.  Also checks the PDUFA manual file as a
-    fallback — M3 events may lack PDUFA entries because those are loaded
-    via the event ledger's ``query_nearest_catalyst`` path (single nearest)
-    rather than the per-ticker events list.
+    Scans three sources in order:
+      1. M3 scored events (CTGov/SEC pipeline)
+      2. Event ledger entries (FDA ADCOM, FDA regulatory, EMA, PDUFA, SEC 8-K)
+      3. PDUFA manual file (static fallback)
 
     Returns (days_str, event_type) or ("", "").
     """
@@ -2322,6 +2322,20 @@ def _nearest_regulatory_catalyst(
 
     best_days: Optional[int] = None
     best_type = ""
+
+    def _try_update(event_date_str: str, event_type: str) -> None:
+        nonlocal best_days, best_type
+        if not event_date_str or event_date_str <= as_of_date_str:
+            return
+        try:
+            days = (_date.fromisoformat(event_date_str[:10]) - _date.fromisoformat(as_of_date_str[:10])).days
+        except (ValueError, TypeError):
+            return
+        if days < 1 or days > max_days:
+            return
+        if best_days is None or days < best_days:
+            best_days = days
+            best_type = event_type
 
     # 1. Scan M3 events
     if m3_summaries:
@@ -2333,38 +2347,29 @@ def _nearest_regulatory_catalyst(
                 et = event.get("event_type", "")
                 if et not in REGULATORY_EVENT_TYPES:
                     continue
-                ed = event.get("event_date", "")
-                if not ed or ed <= as_of_date_str:
-                    continue
-                try:
-                    days = (_date.fromisoformat(ed[:10]) - _date.fromisoformat(as_of_date_str[:10])).days
-                except (ValueError, TypeError):
-                    continue
-                if days < 1 or days > max_days:
-                    continue
-                if best_days is None or days < best_days:
-                    best_days = days
-                    best_type = et
+                _try_update(event.get("event_date", ""), et)
 
-    # 2. Fallback: PDUFA manual file (catches tickers whose PDUFA wasn't
-    #    promoted to M3 events list but IS in the event ledger/manual file)
+    # 2. Scan event ledger (FDA ADCOM, FDA regulatory, EMA, PDUFA, etc.)
+    #    This picks up regulatory events that M3's scored pipeline doesn't
+    #    surface because score_catalyst_events only processes CTGov/SEC events.
+    if event_ledger:
+        ticker_upper = ticker.upper()
+        for entry in event_ledger:
+            if entry.ticker.upper() != ticker_upper:
+                continue
+            if entry.event_type not in REGULATORY_EVENT_TYPES:
+                continue
+            if entry.confidence == "LOW":
+                continue
+            _try_update(entry.event_date or "", entry.event_type)
+
+    # 3. Fallback: PDUFA manual file
     if pdufa_manual:
         ticker_upper = ticker.upper()
         for rec in pdufa_manual:
             if (rec.get("ticker", "")).upper() != ticker_upper:
                 continue
-            pd = rec.get("pdufa_date", "")
-            if not pd or pd <= as_of_date_str:
-                continue
-            try:
-                days = (_date.fromisoformat(pd[:10]) - _date.fromisoformat(as_of_date_str[:10])).days
-            except (ValueError, TypeError):
-                continue
-            if days < 1 or days > max_days:
-                continue
-            if best_days is None or days < best_days:
-                best_days = days
-                best_type = "PDUFA"
+            _try_update(rec.get("pdufa_date", ""), "PDUFA")
 
     if best_days is not None:
         return (str(best_days), best_type)
@@ -3161,6 +3166,23 @@ def save_validation_snapshot(
     # even when M3 events don't include the PDUFA entry.
     _pdufa_manual = _load_pdufa_manual()
 
+    # Build the event ledger for direct regulatory event scanning.
+    # M3's scored events (summaries[ticker].events) only include CTGov/SEC
+    # pipeline events — not FDA ADCOM, FDA regulatory, EMA, or PDUFA ledger
+    # entries.  Building the ledger here and scanning it directly picks up
+    # additional regulatory sources (FDA AdCom, EMA committee, etc.).
+    _event_ledger: list = []
+    try:
+        from event_ledger import LedgerConfig, build_event_ledger
+
+        _event_ledger = build_event_ledger(
+            date.fromisoformat(as_of_date),
+            LedgerConfig(),
+        )
+        logger.info("Snapshot: event ledger built with %d entries for regulatory scan", len(_event_ledger))
+    except Exception as exc:
+        logger.warning("Snapshot: event ledger build failed (%s) — regulatory scan uses M3+PDUFA only", exc)
+
     # --- Build company name lookup from Module 1 universe ---
     # Some tickers in universe.json have market_data.company_name set to the
     # sector label (e.g. "Healthcare") instead of the real company name.
@@ -3631,7 +3653,13 @@ def save_validation_snapshot(
         row.update(compute_event_quality_features(row))
 
         # Secondary regulatory catalyst (independent of primary nearest)
-        _reg_days, _reg_et = _nearest_regulatory_catalyst(m3_summaries, ticker, as_of_date, pdufa_manual=_pdufa_manual)
+        _reg_days, _reg_et = _nearest_regulatory_catalyst(
+            m3_summaries,
+            ticker,
+            as_of_date,
+            pdufa_manual=_pdufa_manual,
+            event_ledger=_event_ledger,
+        )
         row["regulatory_days"] = _reg_days
         row["regulatory_event_type"] = _reg_et
         row["has_regulatory_upcoming_180d"] = "1" if _reg_days else "0"
@@ -4751,15 +4779,31 @@ def save_validation_snapshot(
     _data_sources["sec_8k"] = {"effective_date": as_of_date}
     metadata["data_sources"] = _data_sources
 
-    # PDUFA manual telemetry: coverage metrics for secondary regulatory sleeve
+    # Regulatory coverage telemetry (all sources: M3, event ledger, PDUFA manual)
     _n_pdufa_events = len(_pdufa_manual)
-    _n_pdufa_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
+    _n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
     _eligible_count = sum(1 for r in csv_rows if r.get("eligible") == "1")
-    metadata["pdufa_manual_coverage"] = {
+    _reg_type_counts: Dict[str, int] = {}
+    for r in csv_rows:
+        et = r.get("regulatory_event_type", "")
+        if et:
+            _reg_type_counts[et] = _reg_type_counts.get(et, 0) + 1
+    _n_ledger_reg = 0
+    _ledger_source_counts: Dict[str, int] = {}
+    if _event_ledger:
+        for entry in _event_ledger:
+            if entry.event_type in REGULATORY_EVENT_TYPES:
+                _n_ledger_reg += 1
+                src = entry.source or "unknown"
+                _ledger_source_counts[src] = _ledger_source_counts.get(src, 0) + 1
+    metadata["regulatory_coverage"] = {
         "pdufa_manual_loaded": _n_pdufa_events > 0,
         "pdufa_manual_n_events": _n_pdufa_events,
-        "pdufa_manual_n_eligible_flagged": _n_pdufa_flagged,
-        "regulatory_secondary_coverage_pct": round(_n_pdufa_flagged / max(_eligible_count, 1) * 100, 1),
+        "event_ledger_regulatory_entries": _n_ledger_reg,
+        "event_ledger_sources": _ledger_source_counts,
+        "n_eligible_flagged": _n_reg_flagged,
+        "regulatory_secondary_coverage_pct": round(_n_reg_flagged / max(_eligible_count, 1) * 100, 1),
+        "flagged_event_types": _reg_type_counts,
     }
 
     meta_path = snap_path / "metadata.json"

@@ -233,6 +233,27 @@ class LedgerConfig:
 # =============================================================================
 
 
+def _find_latest_cache_file(cache_dir: Path, prefix: str, as_of_date: date) -> Optional[Path]:
+    """Find the most recent cache file with date <= as_of_date.
+
+    Cache files follow the pattern ``{prefix}_{YYYY-MM-DD}.json``.
+    Returns None if no valid file is found.
+    """
+    best_path: Optional[Path] = None
+    best_date = ""
+    as_of_str = as_of_date.isoformat()
+    for p in cache_dir.glob(f"{prefix}_*.json"):
+        # Extract date from filename: prefix_YYYY-MM-DD.json
+        stem = p.stem  # e.g. "adcom_calendar_2026-02-28"
+        date_part = stem[len(prefix) + 1 :]  # e.g. "2026-02-28"
+        if len(date_part) != 10:
+            continue
+        if date_part <= as_of_str and date_part > best_date:
+            best_date = date_part
+            best_path = p
+    return best_path
+
+
 def _load_ctgov_events(
     as_of_date: date,
     ctgov_cache_dir: Path,
@@ -644,6 +665,8 @@ def _load_fda_adcom_events(
     cache_path = fda_cache_dir / f"adcom_calendar_{as_of_date.isoformat()}.json"
 
     if not cache_path.exists():
+        cache_path = _find_latest_cache_file(fda_cache_dir, "adcom_calendar", as_of_date)
+    if cache_path is None or not cache_path.exists():
         return entries
 
     try:
@@ -707,6 +730,8 @@ def _load_fda_regulatory_events(
     cache_path = fda_cache_dir / f"fda_regulatory_{as_of_date.isoformat()}.json"
 
     if not cache_path.exists():
+        cache_path = _find_latest_cache_file(fda_cache_dir, "fda_regulatory", as_of_date)
+    if cache_path is None or not cache_path.exists():
         return entries
 
     try:
@@ -777,6 +802,8 @@ def _load_ema_events(
     for prefix, source_tag, default_conf in cache_files:
         cache_path = ema_cache_dir / f"{prefix}_{as_of_date.isoformat()}.json"
         if not cache_path.exists():
+            cache_path = _find_latest_cache_file(ema_cache_dir, prefix, as_of_date)
+        if cache_path is None or not cache_path.exists():
             continue
 
         try:
