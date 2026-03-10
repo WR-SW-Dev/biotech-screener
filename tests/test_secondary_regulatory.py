@@ -1,11 +1,12 @@
 """Tests for secondary regulatory catalyst feature.
 
 Verifies:
-1. _nearest_regulatory_catalyst() finds REGULATORY events from M3 summaries
-2. Backfill in ranking_utils generates has_regulatory_upcoming_180d from event_type
-3. Secondary family_filter_mode in evaluate() uses has_regulatory_upcoming_180d
-4. _effective_family() in build_action_lists returns REGULATORY in secondary mode
-5. End-to-end: a ticker with primary=CLINICAL but secondary=REGULATORY is included
+1. Backfill in ranking_utils generates has_regulatory_upcoming_180d from event_type
+2. Secondary family_filter_mode in evaluate() uses has_regulatory_upcoming_180d
+3. _effective_family() in build_action_lists returns REGULATORY in secondary mode
+
+Note: _nearest_regulatory_catalyst() tests live in test_regulatory_sources.py
+(covering all 3 sources: M3, event ledger, PDUFA manual).
 """
 
 from __future__ import annotations
@@ -16,156 +17,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
-
-
-# ---------------------------------------------------------------------------
-# Test _nearest_regulatory_catalyst
-# ---------------------------------------------------------------------------
-
-
-class TestNearestRegulatoryCatalyst:
-    """Tests for run_screen._nearest_regulatory_catalyst()."""
-
-    def _import_fn(self):
-        from run_screen import _nearest_regulatory_catalyst
-
-        return _nearest_regulatory_catalyst
-
-    def test_finds_pdufa_event(self):
-        fn = self._import_fn()
-        # M3 summaries: per-ticker dict has "events" at top level
-        m3 = {
-            "ACME": {
-                "events": [
-                    {"event_type": "CT_PRIMARY_COMPLETION", "event_date": "2026-06-01", "source": "CTGOV"},
-                    {"event_type": "PDUFA", "event_date": "2026-05-15", "source": "PDUFA_MANUAL"},
-                ]
-            }
-        }
-        days, et = fn(m3, "ACME", "2026-03-01")
-        assert et == "PDUFA"
-        assert int(days) > 0
-
-    def test_skips_clinical_events(self):
-        fn = self._import_fn()
-        m3 = {
-            "ACME": {
-                "events": [
-                    {"event_type": "DATA_READOUT", "event_date": "2026-06-01", "source": "CTGOV"},
-                    {"event_type": "CT_PRIMARY_COMPLETION", "event_date": "2026-07-01", "source": "CTGOV"},
-                ]
-            }
-        }
-        days, et = fn(m3, "ACME", "2026-03-01")
-        assert days == ""
-        assert et == ""
-
-    def test_respects_180d_window(self):
-        fn = self._import_fn()
-        m3 = {
-            "ACME": {
-                "events": [
-                    {"event_type": "PDUFA", "event_date": "2027-06-01", "source": "PDUFA_MANUAL"},
-                ]
-            }
-        }
-        # More than 180 days out
-        days, et = fn(m3, "ACME", "2026-03-01")
-        assert days == ""
-
-    def test_missing_ticker_returns_empty(self):
-        fn = self._import_fn()
-        days, et = fn({"OTHER": {}}, "ACME", "2026-03-01")
-        assert days == ""
-        assert et == ""
-
-    def test_none_m3_returns_empty(self):
-        fn = self._import_fn()
-        days, et = fn(None, "ACME", "2026-03-01")
-        assert days == ""
-        assert et == ""
-
-    def test_picks_nearest_regulatory(self):
-        """When multiple regulatory events exist, picks the nearest."""
-        fn = self._import_fn()
-        m3 = {
-            "ACME": {
-                "events": [
-                    {"event_type": "FDA_ADCOM", "event_date": "2026-04-01", "source": "FDA_FEDREG"},
-                    {"event_type": "PDUFA", "event_date": "2026-05-15", "source": "PDUFA_MANUAL"},
-                ]
-            }
-        }
-        days, et = fn(m3, "ACME", "2026-03-01")
-        assert et == "FDA_ADCOM"  # nearer
-        assert int(days) == 31
-
-
-# ---------------------------------------------------------------------------
-# Test PDUFA manual fallback
-# ---------------------------------------------------------------------------
-
-
-class TestPdufaManualFallback:
-    """Tests for PDUFA manual file fallback in _nearest_regulatory_catalyst."""
-
-    def _import_fn(self):
-        from run_screen import _nearest_regulatory_catalyst
-
-        return _nearest_regulatory_catalyst
-
-    def test_pdufa_manual_found_when_m3_missing(self):
-        fn = self._import_fn()
-        # M3 has no regulatory events for ACME
-        m3 = {"ACME": {"events": [{"event_type": "DATA_READOUT", "event_date": "2026-06-01"}]}}
-        pdufa = [{"ticker": "ACME", "pdufa_date": "2026-05-15"}]
-        days, et = fn(m3, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert et == "PDUFA"
-        assert int(days) == 75
-
-    def test_pdufa_manual_not_used_when_m3_has_closer(self):
-        fn = self._import_fn()
-        m3 = {"ACME": {"events": [{"event_type": "FDA_ADCOM", "event_date": "2026-04-01"}]}}
-        pdufa = [{"ticker": "ACME", "pdufa_date": "2026-05-15"}]
-        days, et = fn(m3, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert et == "FDA_ADCOM"  # M3 event is closer
-        assert int(days) == 31
-
-    def test_pdufa_manual_used_when_closer_than_m3(self):
-        fn = self._import_fn()
-        m3 = {"ACME": {"events": [{"event_type": "FDA_ADCOM", "event_date": "2026-06-01"}]}}
-        pdufa = [{"ticker": "ACME", "pdufa_date": "2026-04-01"}]
-        days, et = fn(m3, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert et == "PDUFA"  # manual is closer
-        assert int(days) == 31
-
-    def test_pdufa_manual_past_date_ignored(self):
-        fn = self._import_fn()
-        pdufa = [{"ticker": "ACME", "pdufa_date": "2026-02-01"}]  # past
-        days, et = fn(None, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert days == ""
-
-    def test_pdufa_manual_beyond_180d_ignored(self):
-        fn = self._import_fn()
-        pdufa = [{"ticker": "ACME", "pdufa_date": "2027-01-01"}]  # >180d
-        days, et = fn(None, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert days == ""
-
-    def test_pdufa_manual_case_insensitive_ticker(self):
-        fn = self._import_fn()
-        pdufa = [{"ticker": "acme", "pdufa_date": "2026-05-15"}]
-        days, et = fn(None, "ACME", "2026-03-01", pdufa_manual=pdufa)
-        assert et == "PDUFA"
-
-    def test_pdufa_manual_empty_list(self):
-        fn = self._import_fn()
-        days, et = fn(None, "ACME", "2026-03-01", pdufa_manual=[])
-        assert days == ""
-
-    def test_pdufa_manual_none(self):
-        fn = self._import_fn()
-        days, et = fn(None, "ACME", "2026-03-01", pdufa_manual=None)
-        assert days == ""
 
 
 # ---------------------------------------------------------------------------
@@ -264,7 +115,6 @@ class TestSecondaryFamilyFilter:
     def test_secondary_includes_dual_catalyst_ticker(self):
         """A ticker with clinical primary but regulatory secondary should be
         included in REGULATORY filter under secondary mode."""
-        # Build a minimal rankings list
         rankings = [
             {
                 "ticker": "ACME",
@@ -280,7 +130,6 @@ class TestSecondaryFamilyFilter:
             },
         ]
 
-        # Simulate the secondary filter logic from evaluate()
         _allowed_families = {"REGULATORY"}
 
         def _secondary_match(r):
@@ -328,26 +177,3 @@ class TestSecondaryFamilyFilter:
 
         filtered = [r for r in rankings if _secondary_match(r)]
         assert len(filtered) == 2
-
-
-# ---------------------------------------------------------------------------
-# Test REGULATORY_EVENT_TYPES
-# ---------------------------------------------------------------------------
-
-
-class TestRegulatoryEventTypes:
-    def test_contains_pdufa(self):
-        from event_ledger import REGULATORY_EVENT_TYPES
-
-        assert "PDUFA" in REGULATORY_EVENT_TYPES
-
-    def test_does_not_contain_clinical(self):
-        from event_ledger import REGULATORY_EVENT_TYPES
-
-        assert "DATA_READOUT" not in REGULATORY_EVENT_TYPES
-        assert "CT_PRIMARY_COMPLETION" not in REGULATORY_EVENT_TYPES
-
-    def test_is_frozenset(self):
-        from event_ledger import REGULATORY_EVENT_TYPES
-
-        assert isinstance(REGULATORY_EVENT_TYPES, frozenset)
