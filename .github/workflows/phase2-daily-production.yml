@@ -4,7 +4,7 @@ on:
   schedule:
     # Weekdays at 2:00 PM UTC (9–10 AM America/Detroit depending on DST)
     - cron: "0 14 * * 1-5"
-  workflow_dispatch:  # manual dispatch enabled
+  workflow_dispatch:
     inputs:
       as_of_date:
         description: "Screen date (YYYY-MM-DD), defaults to today (Detroit TZ)"
@@ -22,6 +22,23 @@ on:
         default: false
       force_degraded:
         description: "Force degraded mode (testing). Skips PIT price steps regardless of cache_health."
+        required: false
+        type: boolean
+        default: false
+  workflow_call:
+    inputs:
+      as_of_date:
+        required: false
+        type: string
+      allow_date_fallback:
+        required: false
+        type: boolean
+        default: false
+      skip_price_refresh:
+        required: false
+        type: boolean
+        default: false
+      force_degraded:
         required: false
         type: boolean
         default: false

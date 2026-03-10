@@ -1,0 +1,49 @@
+name: phase2-dispatch
+
+on:
+  workflow_dispatch:
+    inputs:
+      as_of_date:
+        description: "Screen date (YYYY-MM-DD), defaults to today (Detroit TZ)"
+        required: false
+        type: string
+      allow_date_fallback:
+        description: "Allow ctgov cache date fallback (WARN instead of FAIL)"
+        required: false
+        type: boolean
+        default: false
+      skip_price_refresh:
+        description: "Skip yfinance price refresh (use existing price_history.csv)"
+        required: false
+        type: boolean
+        default: false
+      force_degraded:
+        description: "Force degraded mode (testing). Skips PIT price steps regardless of cache_health."
+        required: false
+        type: boolean
+        default: false
+
+# Thin dispatch wrapper — delegates to the full daily production workflow.
+# Exists because GitHub's workflow_dispatch metadata cache can go stale on
+# long-lived workflow IDs. This file gets a fresh ID on creation, which
+# forces GitHub to index the trigger immediately.
+#
+# Once the main workflow's "Run workflow" button works reliably from the UI,
+# this file can be deleted.
+
+permissions:
+  contents: read
+
+concurrency:
+  group: phase2-daily-production
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    uses: ./.github/workflows/phase2-daily-production.yml
+    with:
+      as_of_date: ${{ inputs.as_of_date }}
+      allow_date_fallback: ${{ inputs.allow_date_fallback }}
+      skip_price_refresh: ${{ inputs.skip_price_refresh }}
+      force_degraded: ${{ inputs.force_degraded }}
+    secrets: inherit  # pragma: allowlist secret
