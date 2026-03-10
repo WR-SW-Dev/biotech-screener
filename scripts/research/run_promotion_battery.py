@@ -22,7 +22,9 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import subprocess
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -122,6 +124,147 @@ def run_weekly_sim_verdict(
     )
 
 
+MANIFEST_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
+DAILY_PRODUCTION_SCRIPT = PROJECT_ROOT / "tools" / "run_daily_production.py"
+
+SMOKE_REQUIRED_FILES = ("rankings.csv", "metadata.json", "run_manifest.json")
+SMOKE_PROVENANCE_KEYS = ("ruleset_id", "engine_version", "git_sha")
+
+
+def _get_manifest_active_id(manifest_path: Path = MANIFEST_PATH) -> Optional[str]:
+    """Return the active ruleset ID from the manifest, or None."""
+    if not manifest_path.exists():
+        return None
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for entry in manifest.get("rulesets", []):
+        if entry.get("status") == "active":
+            return entry.get("id")
+    return None
+
+
+def check_smoke_snapshot(
+    snapshot_date_dir: Path,
+    expected_ruleset_id: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Validate that a smoke snapshot has required files and correct provenance.
+
+    Returns dict with status, snapshot_ok, provenance_ok, detail.
+    """
+    result: Dict[str, Any] = {
+        "status": "PASS",
+        "snapshot_ok": True,
+        "provenance_ok": True,
+        "detail": "",
+    }
+    # Check required files
+    missing = [f for f in SMOKE_REQUIRED_FILES if not (snapshot_date_dir / f).is_file()]
+    if missing:
+        result["status"] = "FAIL"
+        result["snapshot_ok"] = False
+        result["detail"] = f"Missing snapshot files: {', '.join(missing)}"
+        return result
+
+    # Check provenance in metadata.json
+    try:
+        meta = json.loads((snapshot_date_dir / "metadata.json").read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        result["status"] = "FAIL"
+        result["provenance_ok"] = False
+        result["detail"] = f"metadata.json unreadable: {exc}"
+        return result
+
+    missing_keys = [k for k in SMOKE_PROVENANCE_KEYS if not meta.get(k)]
+    if missing_keys:
+        result["status"] = "FAIL"
+        result["provenance_ok"] = False
+        result["detail"] = f"Missing provenance keys: {', '.join(missing_keys)}"
+        return result
+
+    if expected_ruleset_id and meta.get("ruleset_id") != expected_ruleset_id:
+        result["status"] = "FAIL"
+        result["provenance_ok"] = False
+        result["detail"] = f"ruleset_id mismatch: metadata={meta.get('ruleset_id')}, " f"expected={expected_ruleset_id}"
+        return result
+
+    result["detail"] = f"OK: ruleset_id={meta['ruleset_id']}, engine={meta['engine_version']}"
+    return result
+
+
+def run_post_promotion_smoke(
+    as_of_date: str,
+    *,
+    expected_ruleset_id: Optional[str] = None,
+    timeout_seconds: int = 600,
+) -> Dict[str, Any]:
+    """Run daily production in a temp workspace and verify snapshot provenance.
+
+    Returns a dict suitable for inclusion in the promotion packet.
+    """
+    if expected_ruleset_id is None:
+        expected_ruleset_id = _get_manifest_active_id()
+
+    with tempfile.TemporaryDirectory(prefix="smoke_snap_") as snap_tmp:
+        snap_dir = Path(snap_tmp)
+        cmd = [
+            sys.executable,
+            str(DAILY_PRODUCTION_SCRIPT),
+            "--as-of-date",
+            as_of_date,
+            "--snapshot-dir",
+            str(snap_dir),
+            "--skip-price-refresh",
+        ]
+        try:
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=timeout_seconds,
+                cwd=str(PROJECT_ROOT),
+            )
+        except subprocess.TimeoutExpired:
+            return {
+                "status": "FAIL",
+                "exit_code": -1,
+                "snapshot_ok": False,
+                "provenance_ok": False,
+                "detail": f"Smoke run timed out after {timeout_seconds}s",
+            }
+
+        exit_code = proc.returncode
+        stdout_tail = "\n".join(proc.stdout.splitlines()[-200:]) if proc.stdout else ""
+        stderr_tail = "\n".join(proc.stderr.splitlines()[-50:]) if proc.stderr else ""
+
+        # Exit 0 (PASS) or 2 (WARN) are acceptable
+        if exit_code not in (0, 2):
+            return {
+                "status": "FAIL",
+                "exit_code": exit_code,
+                "snapshot_ok": False,
+                "provenance_ok": False,
+                "detail": f"Daily production exited {exit_code}",
+                "stdout_tail": stdout_tail,
+                "stderr_tail": stderr_tail,
+            }
+
+        # Check snapshot was created
+        snapshot_date_dir = snap_dir / as_of_date
+        snap_check = check_smoke_snapshot(snapshot_date_dir, expected_ruleset_id)
+
+        status = snap_check["status"]
+        if status == "PASS" and exit_code == 2:
+            status = "WARN"
+
+        return {
+            "status": status,
+            "exit_code": exit_code,
+            "snapshot_ok": snap_check["snapshot_ok"],
+            "provenance_ok": snap_check["provenance_ok"],
+            "detail": snap_check["detail"],
+            "stdout_tail": stdout_tail,
+        }
+
+
 def compute_overall_verdict(
     bucket_verdicts: Dict[str, Dict],
     weekly_verdict: Dict[str, Any],
@@ -143,10 +286,11 @@ def build_packet(
     *,
     candidate_id: Optional[str] = None,
     baseline_id: Optional[str] = None,
+    smoke_result: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
     """Build the full promotion packet dict."""
     bv_map = {bk: bv.get("verdict", "ERROR") for bk, bv in bucket_verdicts.items()}
-    return {
+    packet: Dict[str, Any] = {
         "schema": SCHEMA_VERSION,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "overall_verdict": overall,
@@ -162,6 +306,17 @@ def build_packet(
             "weekly": weekly_verdict.get("verdict", "SKIP"),
         },
     }
+    if smoke_result is not None:
+        smoke_status = smoke_result.get("status", "SKIP")
+        packet["post_promotion_smoke"] = {
+            "status": smoke_status,
+            "smoke_ok": smoke_status in ("PASS", "WARN"),
+            "exit_code": smoke_result.get("exit_code"),
+            "snapshot_ok": smoke_result.get("snapshot_ok", False),
+            "provenance_ok": smoke_result.get("provenance_ok", False),
+            "detail": smoke_result.get("detail", ""),
+        }
+    return packet
 
 
 def write_packet_json(packet: Dict[str, Any], out_path: Path) -> Path:
@@ -219,6 +374,23 @@ def write_packet_md(packet: Dict[str, Any], out_path: Path) -> Path:
             result_str = "PASS" if c["pass"] else "FAIL"
             lines.append(f"| {c['name']} | {c['threshold']} | {c['actual']} " f"| {result_str} |")
         lines.append("")
+    # Smoke gate
+    smoke = packet.get("post_promotion_smoke")
+    if smoke:
+        smoke_status = smoke.get("status", "SKIP")
+        lines.extend(
+            [
+                "## Post-Promotion Smoke Gate",
+                "",
+                f"**Status**: **{smoke_status}**",
+                f"- Exit code: {smoke.get('exit_code', '—')}",
+                f"- Snapshot OK: {smoke.get('snapshot_ok', False)}",
+                f"- Provenance OK: {smoke.get('provenance_ok', False)}",
+                f"- Detail: {smoke.get('detail', '—')}",
+                "",
+            ]
+        )
+
     # Audit
     wk_total = wk_pass = 0
     for mk in ("policy", "global"):
@@ -259,6 +431,7 @@ def run_promotion_battery(
     candidate_id: Optional[str] = None,
     baseline_id: Optional[str] = None,
     metric_key: str = "mean_hedged_return",
+    smoke_as_of_date: Optional[str] = None,
 ) -> Dict[str, Any]:
     """Run full promotion battery and return the packet dict."""
     pcv = price_csv or DEFAULT_PRICE_CSV
@@ -284,8 +457,30 @@ def run_promotion_battery(
         global_top_k=global_top_k,
         buffer_ranks=buffer_ranks,
     )
+
+    # Post-promotion smoke gate
+    smoke: Optional[Dict[str, Any]] = None
+    if smoke_as_of_date:
+        print(f"\n[Smoke] Running post-promotion smoke for {smoke_as_of_date} ...")
+        smoke = run_post_promotion_smoke(
+            smoke_as_of_date,
+            expected_ruleset_id=candidate_id,
+        )
+        print(f"  Smoke: {smoke['status']} — {smoke.get('detail', '')}")
+
     overall = compute_overall_verdict(bv, wv)
-    packet = build_packet(bv, wv, overall, candidate_id=candidate_id, baseline_id=baseline_id)
+    # Smoke FAIL downgrades the overall verdict
+    if smoke and smoke.get("status") == "FAIL":
+        overall = "FAIL"
+
+    packet = build_packet(
+        bv,
+        wv,
+        overall,
+        candidate_id=candidate_id,
+        baseline_id=baseline_id,
+        smoke_result=smoke,
+    )
     if out_dir:
         Path(out_dir).mkdir(parents=True, exist_ok=True)
         write_packet_json(packet, Path(out_dir) / "PROMOTION_PACKET.json")
@@ -314,6 +509,12 @@ def main() -> None:
     p.add_argument("--candidate-id", type=str, default=None)
     p.add_argument("--baseline-id", type=str, default=None)
     p.add_argument("--metric-key", type=str, default="mean_hedged_return")
+    p.add_argument(
+        "--smoke-as-of-date",
+        type=str,
+        default=None,
+        help="Run post-promotion smoke gate with this as-of-date (e.g. 2026-03-10)",
+    )
     args = p.parse_args()
 
     horizons = [int(h.strip()) for h in args.horizons.split(",")]
@@ -336,6 +537,7 @@ def main() -> None:
         candidate_id=args.candidate_id,
         baseline_id=args.baseline_id,
         metric_key=args.metric_key,
+        smoke_as_of_date=args.smoke_as_of_date,
     )
     s = packet["summary"]
     print(f"\nOverall verdict: {packet['overall_verdict']}")
