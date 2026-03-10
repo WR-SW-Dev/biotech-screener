@@ -462,6 +462,62 @@ jobs:
             echo "::warning::Live performance tracker failed (non-blocking)"
           }
 
+      # ── Weekly execution packet (rebalance day only) ──────────
+      - name: Weekly execution packet
+        if: always() && steps.runner.outputs.exit_code != '1' && env.DEGRADED != '1'
+        id: weekly_exec
+        continue-on-error: true
+        run: |
+          DATE="${{ steps.manifest.outputs.effective_date || steps.date.outputs.as_of_date }}"
+
+          # Check if today is rebalance day (FRIDAY by default from portfolio_policy.json)
+          IS_REBALANCE=$(python3 -c "
+          from datetime import datetime
+          import json
+          policy = json.load(open('production_data/portfolio_policy.json'))
+          day_map = {'MONDAY':0,'TUESDAY':1,'WEDNESDAY':2,'THURSDAY':3,'FRIDAY':4,'SATURDAY':5,'SUNDAY':6}
+          target = day_map.get(policy.get('rebalance_day','FRIDAY').upper(), 4)
+          dt = datetime.strptime('$DATE', '%Y-%m-%d')
+          print('true' if dt.weekday() == target else 'false')
+          ")
+
+          if [ "$IS_REBALANCE" != "true" ]; then
+            echo "Not rebalance day — skipping weekly execution"
+            echo "executed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Rebalance day detected — running weekly execution pipeline..."
+          set +e
+          python3 tools/run_weekly_execution.py \
+            --as-of-date "$DATE" \
+            --skip-snapshot
+          EXEC_RC=$?
+          set -e
+
+          echo "executed=true" >> "$GITHUB_OUTPUT"
+          echo "exec_exit_code=$EXEC_RC" >> "$GITHUB_OUTPUT"
+
+          # Append execution packet summary to step summary
+          EXEC_MD="artifacts/live_shadow/execution/${DATE}/EXECUTION_PACKET.md"
+          if [ -f "$EXEC_MD" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "---" >> "$GITHUB_STEP_SUMMARY"
+            cat "$EXEC_MD" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          EXEC_JSON="artifacts/live_shadow/execution/${DATE}/EXECUTION_PACKET.json"
+          if [ -f "$EXEC_JSON" ]; then
+            STATUS=$(python3 -c "import json; print(json.load(open('$EXEC_JSON')).get('status','UNKNOWN'))")
+            echo "exec_status=$STATUS" >> "$GITHUB_OUTPUT"
+            if [ "$STATUS" = "BLOCKED" ]; then
+              echo "::warning::Weekly execution BLOCKED — see execution packet for details"
+            elif [ "$STATUS" = "READY" ]; then
+              N_TRADES=$(python3 -c "import json; print(json.load(open('$EXEC_JSON')).get('trade_plan',{}).get('n_trades',0))")
+              echo "Weekly execution READY — ${N_TRADES} trades"
+            fi
+          fi
+
       # ── Build replay bundle ───────────────────────────────────
       - name: Build replay bundle
         if: always() && steps.runner.outputs.exit_code != '1'
@@ -865,6 +921,16 @@ print('true' if d.get('ruleset_health',{}).get('recommend_rollback') else 'false
           retention-days: 180
           if-no-files-found: warn
 
+      - name: Upload execution packet
+        if: always() && steps.weekly_exec.outputs.executed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-packet-${{ steps.manifest.outputs.effective_date || steps.date.outputs.as_of_date }}
+          path: |
+            artifacts/live_shadow/execution/${{ steps.manifest.outputs.effective_date || steps.date.outputs.as_of_date }}/
+          retention-days: 180
+          if-no-files-found: warn
+
       - name: Upload live performance timeseries
         if: always() && steps.runner.outputs.exit_code != '1' && env.DEGRADED != '1'
         uses: actions/upload-artifact@v4
@@ -910,6 +976,11 @@ print('true' if d.get('ruleset_health',{}).get('recommend_rollback') else 'false
           echo "| Exit code | \`$RC\` |" >> "$GITHUB_STEP_SUMMARY"
           if [ -n "${ELIG_VERDICT:-}" ]; then
             echo "| Eligibility gate | \`$ELIG_VERDICT\` |" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          EXEC_EXECUTED="${{ steps.weekly_exec.outputs.executed }}"
+          if [ "$EXEC_EXECUTED" = "true" ]; then
+            EXEC_STATUS="${{ steps.weekly_exec.outputs.exec_status }}"
+            echo "| Weekly execution | \`${EXEC_STATUS:-?}\` |" >> "$GITHUB_STEP_SUMMARY"
           fi
 
           # Parse manifest for summary details + cross-check
