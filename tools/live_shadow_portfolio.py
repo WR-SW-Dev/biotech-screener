@@ -1286,10 +1286,39 @@ def compute_performance(
 
     # Execution quality metrics (only when fills exist)
     exec_quality = None
+    close_prices = load_price_map(price_path, prior_date)
     if fill_data:
-        # Use close prices (before fill override) as reference
-        ref_prices = load_price_map(price_path, prior_date)
-        exec_quality = compute_execution_quality_metrics(fill_data, ref_prices)
+        exec_quality = compute_execution_quality_metrics(fill_data, close_prices)
+
+    # Build entry annotations: {ticker: {source, entry_price, fill_*}}
+    # Index fill data by ticker for quick lookup
+    fill_by_ticker: Dict[str, Dict[str, Any]] = {}
+    for fd in fill_data:
+        t = fd.get("ticker", "")
+        if t and fd.get("status") in ("FILLED", "PARTIAL"):
+            fill_by_ticker[t] = fd
+
+    entry_annotations: Dict[str, Dict[str, Any]] = {}
+    for pos in prior_positions:
+        ticker = pos["ticker"]
+        fd = fill_by_ticker.get(ticker)
+        if fd and fd.get("fill_price", 0) > 0:
+            entry_annotations[ticker] = {
+                "entry_price_source": "FILL",
+                "entry_price": fd["fill_price"],
+                "fill_qty": fd.get("fill_shares"),
+                "fill_vwap": fd["fill_price"],
+                "fill_notional": fd.get("fill_usd"),
+            }
+        else:
+            cp = close_prices.get(ticker)
+            entry_annotations[ticker] = {
+                "entry_price_source": "CLOSE",
+                "entry_price": cp,
+                "fill_qty": None,
+                "fill_vwap": None,
+                "fill_notional": None,
+            }
 
     result = {
         "prior_date": prior_date,
@@ -1310,6 +1339,8 @@ def compute_performance(
     }
     if exec_quality is not None:
         result["execution_quality"] = exec_quality
+    if entry_annotations:
+        result["entry_annotations"] = entry_annotations
     return result
 
 
@@ -1323,10 +1354,24 @@ def save_positions(
     positions_data: Dict[str, Any],
     metadata: Dict[str, Any],
     out_dir: Path = POSITIONS_DIR,
+    entry_annotations: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Path:
-    """Write positions JSON artifact."""
+    """Write positions JSON artifact.
+
+    If entry_annotations is provided (from compute_performance), each position
+    is annotated with entry_price_source, entry_price, fill_qty, fill_vwap,
+    fill_notional for full audit trail.
+    """
     _assert_not_production_default("out_dir", out_dir, POSITIONS_DIR)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Merge entry annotations into positions if provided
+    if entry_annotations:
+        for pos in positions_data.get("positions", []):
+            ann = entry_annotations.get(pos.get("ticker", ""))
+            if ann:
+                pos.update(ann)
+
     path = out_dir / f"{as_of_date}.json"
     doc = {
         "schema": SCHEMA_VERSION,
@@ -2367,13 +2412,11 @@ def run_shadow_portfolio(
     # Build positions
     positions_data = build_positions(rankings, policy, account_usd)
 
-    # Save positions
-    pos_dir = shadow_root / "positions"
-    pos_path = save_positions(as_of_date, positions_data, metadata, pos_dir)
-
-    # Compute performance vs prior
+    # Compute performance vs prior (before saving, so we can annotate positions)
     perf = None
+    pos_dir = shadow_root / "positions"
     prior = load_prior_positions(as_of_date, pos_dir)
+    entry_annotations = None
     if prior:
         prior_date, prior_positions = prior
         perf = compute_performance(
@@ -2383,8 +2426,12 @@ def run_shadow_portfolio(
             as_of_date,
             price_path,
         )
+        entry_annotations = perf.get("entry_annotations")
         perf_csv = shadow_root / "performance.csv"
         append_performance(as_of_date, perf, metadata.get("ruleset_id", ""), perf_csv)
+
+    # Save positions (with entry annotations if available)
+    pos_path = save_positions(as_of_date, positions_data, metadata, pos_dir, entry_annotations=entry_annotations)
 
     # Weekly summary
     summary_path = shadow_root / "weekly_summary.md"

@@ -403,3 +403,128 @@ class TestWeeklySummaryExecQuality:
         """No execution quality → no output."""
         lines = render_execution_quality_md(None)
         assert lines == []
+
+
+# ---------------------------------------------------------------------------
+# 6. Entry annotations in positions JSON
+# ---------------------------------------------------------------------------
+
+
+class TestEntryAnnotationsNoFills:
+    def test_annotations_close_when_no_fills(self, tmp_path):
+        """No fills → entry_price_source='CLOSE', fill_* is None."""
+        price_csv = tmp_path / "prices.csv"
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 11.0),
+            ],
+        )
+
+        prior = _make_positions([("ACME", "binary_91_180")])
+        current = _make_positions([("ACME", "binary_91_180")])
+
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            trades_root=tmp_path / "trades",
+        )
+
+        ann = perf.get("entry_annotations", {})
+        assert "ACME" in ann
+        assert ann["ACME"]["entry_price_source"] == "CLOSE"
+        assert ann["ACME"]["entry_price"] == 10.0
+        assert ann["ACME"]["fill_qty"] is None
+        assert ann["ACME"]["fill_vwap"] is None
+        assert ann["ACME"]["fill_notional"] is None
+
+
+class TestEntryAnnotationsWithFills:
+    def test_annotations_fill_when_fills_exist(self, tmp_path):
+        """Fills present → entry_price_source='FILL', fill_* populated."""
+        price_csv = tmp_path / "prices.csv"
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 11.0),
+            ],
+        )
+
+        fills_dir = tmp_path / "fills" / "2026-03-03"
+        _write_fills_csv(
+            fills_dir / "fills.csv",
+            [_make_fill("ACME", "BUY", 10000, 10.50, 952.38)],
+        )
+
+        prior = _make_positions([("ACME", "binary_91_180")])
+        current = _make_positions([("ACME", "binary_91_180")])
+
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            fills_root=tmp_path / "fills",
+            trades_root=tmp_path / "trades",
+        )
+
+        ann = perf["entry_annotations"]["ACME"]
+        assert ann["entry_price_source"] == "FILL"
+        assert ann["entry_price"] == pytest.approx(10.50, abs=0.01)
+        assert ann["fill_vwap"] == pytest.approx(10.50, abs=0.01)
+        assert ann["fill_qty"] == pytest.approx(952.38, abs=0.01)
+        assert ann["fill_notional"] is not None
+
+
+class TestEntryAnnotationsMixed:
+    def test_mixed_fill_and_close_annotations(self, tmp_path):
+        """One ticker filled, one not → correct per-ticker annotations."""
+        price_csv = tmp_path / "prices.csv"
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 11.0),
+                ("BETA", "2026-03-03", 20.0),
+                ("BETA", "2026-03-10", 22.0),
+            ],
+        )
+
+        fills_dir = tmp_path / "fills" / "2026-03-03"
+        _write_fills_csv(
+            fills_dir / "fills.csv",
+            [
+                _make_fill("ACME", "BUY", 10000, 10.50, 952.38),
+                _make_fill("BETA", "BUY", 10000, 0, 0, status="SKIPPED"),
+            ],
+        )
+
+        prior = _make_positions([("ACME", "binary_91_180"), ("BETA", "binary_31_90")])
+        current = _make_positions([("ACME", "binary_91_180"), ("BETA", "binary_31_90")])
+
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            fills_root=tmp_path / "fills",
+            trades_root=tmp_path / "trades",
+        )
+
+        ann = perf["entry_annotations"]
+
+        # ACME: filled
+        assert ann["ACME"]["entry_price_source"] == "FILL"
+        assert ann["ACME"]["entry_price"] == pytest.approx(10.50, abs=0.01)
+
+        # BETA: skipped fill → falls back to close
+        assert ann["BETA"]["entry_price_source"] == "CLOSE"
+        assert ann["BETA"]["entry_price"] == 20.0
+        assert ann["BETA"]["fill_qty"] is None
