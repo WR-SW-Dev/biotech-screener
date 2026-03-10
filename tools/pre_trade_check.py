@@ -285,6 +285,88 @@ def check_turnover(
 
 
 # ---------------------------------------------------------------------------
+# Alpha health gate
+# ---------------------------------------------------------------------------
+
+
+def check_alpha_health(
+    perf_rows: List[Dict[str, str]],
+    policy: Dict[str, Any],
+) -> CheckResult:
+    """WARN (NO_ADD_RISK) if trailing hedged excess is negative at both
+    portfolio and binary_91_180 level.
+
+    Returns PASS (ADD_OK) on cold start, insufficient history, or when
+    at least one of the two metrics is non-negative.
+    """
+    ah = policy.get("alpha_health", {})
+    if not ah.get("enabled", True):
+        return CheckResult("alpha_health", "PASS", "alpha_health disabled in policy")
+
+    lookback = ah.get("lookback_weeks", 4)
+    min_weeks = ah.get("min_weeks", 3)
+    portfolio_thresh = ah.get("no_add_if_portfolio_hedged_excess_lt", 0.0)
+    b91_thresh = ah.get("no_add_if_b91_hedged_excess_lt", 0.0)
+
+    if len(perf_rows) < min_weeks:
+        return CheckResult(
+            "alpha_health",
+            "PASS",
+            f"insufficient history (cold start): {len(perf_rows)} weeks < min_weeks={min_weeks}",
+            value={"weeks_available": len(perf_rows), "decision": "ADD_OK"},
+        )
+
+    tail = perf_rows[-lookback:]
+    weeks_used = len(tail)
+
+    # Portfolio hedged excess (sum over trailing window)
+    portfolio_excess = _sum_column(tail, "excess_vs_xbi_pct")
+
+    # Per-bucket hedged excess (sum of $ P&L as proxy)
+    bucket_excess = {}
+    for b in ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]:
+        bucket_excess[b] = _sum_column(tail, f"sleeve_{b}_pnl")
+
+    b91_excess = bucket_excess.get("binary_91_180", 0.0)
+
+    # Gate logic: NO_ADD_RISK if BOTH portfolio AND b91 are below threshold
+    no_add = portfolio_excess < portfolio_thresh and b91_excess < b91_thresh
+    decision = "NO_ADD_RISK" if no_add else "ADD_OK"
+
+    detail_parts = [
+        f"portfolio_hedged_excess_4w={portfolio_excess:+.4f}%",
+        f"b91_hedged_excess_4w=${b91_excess:+,.2f}",
+        f"weeks={weeks_used}",
+        f"decision={decision}",
+    ]
+    detail = "; ".join(detail_parts)
+
+    value = {
+        "portfolio_hedged_excess_4w": round(portfolio_excess, 4),
+        "bucket_hedged_excess_4w": {b: round(v, 2) for b, v in bucket_excess.items()},
+        "weeks_used": weeks_used,
+        "decision": decision,
+    }
+
+    status = "WARN" if no_add else "PASS"
+    return CheckResult("alpha_health", status, detail, value=value)
+
+
+def _sum_column(rows: List[Dict[str, str]], col: str) -> float:
+    """Sum a numeric column from perf rows, skipping blanks/NaN."""
+    total = 0.0
+    for r in rows:
+        v = r.get(col, "")
+        if not v or str(v).strip().lower() in ("nan", "none", ""):
+            continue
+        try:
+            total += float(v)
+        except (ValueError, TypeError):
+            continue
+    return total
+
+
+# ---------------------------------------------------------------------------
 # Runner
 # ---------------------------------------------------------------------------
 
@@ -301,6 +383,7 @@ def run_pre_trade_check(
     max_turnover_pct: float = 40.0,
     relaxed: bool = False,
     manifest_path: Path = MANIFEST_PATH,
+    perf_csv: Optional[Path] = None,
 ) -> PreTradeResult:
     """Run all pre-trade checks. Returns PreTradeResult."""
     _assert_not_production_default("positions_dir", positions_dir, POSITIONS_DIR)
@@ -329,6 +412,18 @@ def run_pre_trade_check(
             )
         snap_dir = SNAPSHOTS_ROOT / as_of_date
 
+    # Alpha health gate (uses performance.csv)
+    alpha_health_check = None
+    if policy.get("alpha_health", {}).get("enabled", True):
+        try:
+            from tools.build_trade_plan import load_performance_rows
+
+            _perf_csv = perf_csv if perf_csv is not None else SHADOW_ROOT / "performance.csv"
+            perf_rows = load_performance_rows(_perf_csv)
+            alpha_health_check = check_alpha_health(perf_rows, policy)
+        except Exception:
+            alpha_health_check = None
+
     checks = [
         check_provenance(snap_dir),
         check_ruleset_active(snap_dir, relaxed=relaxed, manifest_path=manifest_path),
@@ -337,6 +432,8 @@ def run_pre_trade_check(
         check_gap_risk_concentration(current_positions, policy, max_gap_high_pct),
         check_turnover(current_positions, prior_positions, max_turnover_pct),
     ]
+    if alpha_health_check is not None:
+        checks.append(alpha_health_check)
 
     has_fail = False
     has_warn = False
@@ -418,6 +515,27 @@ def write_pre_trade_md(result: PreTradeResult, out_path: Path) -> Path:
         icon = status_icon.get(c["status"], "[???]")
         lines.append(f"- {icon} **{c['name']}**: {c['detail']}")
     lines.append("")
+
+    # Alpha Health detail section (if present)
+    ah_check = next((c for c in result.checks if c["name"] == "alpha_health"), None)
+    if ah_check and isinstance(ah_check.get("value"), dict):
+        v = ah_check["value"]
+        lines.append("## Alpha Health (Trailing 4w)")
+        lines.append("")
+        lines.append(f"**Decision**: {v.get('decision', '?')}")
+        lines.append(f"**Weeks used**: {v.get('weeks_used', '?')}")
+        lines.append("")
+        lines.append("| Metric | Value |")
+        lines.append("|--------|-------|")
+        phe = v.get("portfolio_hedged_excess_4w")
+        if phe is not None:
+            lines.append(f"| Portfolio hedged excess | {phe:+.4f}% |")
+        bucket_exc = v.get("bucket_hedged_excess_4w", {})
+        for b in ["binary_91_180", "binary_31_90", "binary_0_30", "less_binary"]:
+            bv = bucket_exc.get(b)
+            if bv is not None:
+                lines.append(f"| {b} hedged excess | ${bv:+,.2f} |")
+        lines.append("")
 
     text = "\n".join(lines)
     with open(out_path, "w", encoding="utf-8") as f:

@@ -73,5 +73,12 @@
   "regulatory_confidence_clip_hi": 1.00,
   "regulatory_resolution_enabled": true,
   "rebalance_buffer_ranks": 30,
-  "bucket_hysteresis_days": 7
+  "bucket_hysteresis_days": 7,
+  "alpha_health": {
+    "enabled": true,
+    "lookback_weeks": 4,
+    "min_weeks": 3,
+    "no_add_if_portfolio_hedged_excess_lt": 0.0,
+    "no_add_if_b91_hedged_excess_lt": 0.0
+  }
 }

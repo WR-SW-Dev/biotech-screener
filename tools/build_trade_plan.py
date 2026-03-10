@@ -64,6 +64,7 @@ TRADE_PLAN_COLUMNS = [
     "catalyst_days",
     "gap_risk",
     "reason",
+    "risk_permission",
 ]
 
 SCHEMA_VERSION = "trade_plan.v1"
@@ -201,12 +202,16 @@ def write_trade_plan_md(
     prior_positions: List[Dict[str, Any]],
     current_positions: List[Dict[str, Any]],
     out_path: Path,
+    risk_permission: str = "ADD_OK",
 ) -> Path:
     """Write trade_plan.md — the actionable weekly artifact."""
     out_path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
 
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    if risk_permission == "NO_ADD_RISK":
+        lines.append("> **NO_ADD_RISK: trailing alpha negative — BUY orders suppressed**")
+        lines.append("")
     lines.append("# Weekly Trade Plan")
     lines.append("")
     lines.append(f"**Rebalance**: {prior_date or '(first)'} → {current_date}")
@@ -470,6 +475,7 @@ def build_trade_plan(
     trailing_4w = compute_trailing_metrics(perf_rows, 4)
 
     # Pre-trade sanity gate — block trade plan on FAIL
+    ptc = None
     if not skip_pre_trade_check:
         try:
             from tools.pre_trade_check import run_pre_trade_check, write_pre_trade_json, write_pre_trade_md
@@ -481,6 +487,7 @@ def build_trade_plan(
                 positions_dir=positions_dir,
                 deviation_max_pct=100,  # bucket deviation checked separately
                 max_turnover_pct=40.0,
+                perf_csv=perf_csv,
             )
             if manifest_path is not None:
                 ptc_kwargs["manifest_path"] = manifest_path
@@ -500,6 +507,27 @@ def build_trade_plan(
         except Exception:
             pass  # Pre-trade check is best-effort; don't block on import/runtime errors
 
+    # Alpha health gate — determine risk permission
+    risk_permission = "ADD_OK"
+    if ptc is not None:
+        try:
+            ah_check = next(
+                (c for c in ptc.checks if c["name"] == "alpha_health"),
+                None,
+            )
+            if ah_check and ah_check.get("status") == "WARN":
+                ah_val = ah_check.get("value", {})
+                if isinstance(ah_val, dict) and ah_val.get("decision") == "NO_ADD_RISK":
+                    risk_permission = "NO_ADD_RISK"
+        except Exception:
+            pass
+
+    # Annotate trades with risk_permission and filter BUYs if NO_ADD_RISK
+    for t in trades:
+        t["risk_permission"] = risk_permission
+    if risk_permission == "NO_ADD_RISK":
+        trades = [t for t in trades if t["action"] != "BUY"]
+
     # Write outputs
     if out_dir is None:
         out_dir = TRADE_PLAN_ROOT / as_of_date
@@ -516,6 +544,7 @@ def build_trade_plan(
         prior_positions,
         current_positions,
         out_dir / "trade_plan.md",
+        risk_permission=risk_permission,
     )
 
     result = {
@@ -533,6 +562,7 @@ def build_trade_plan(
         "csv_path": str(csv_path),
         "md_path": str(md_path),
         "trades": trades,
+        "risk_permission": risk_permission,
     }
 
     # Broker orders (opt-in)
