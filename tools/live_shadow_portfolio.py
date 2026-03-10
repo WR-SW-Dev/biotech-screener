@@ -1163,6 +1163,80 @@ def render_execution_quality_md(
     return lines
 
 
+def render_model_vs_realized_md(
+    mvr: Optional[Dict[str, Any]],
+) -> List[str]:
+    """Render model (close-based) vs realized (fill-based) P&L comparison.
+
+    Shows where alpha comes from: signal selection vs execution quality.
+    Returns lines list (empty if mvr is None).
+    """
+    if not mvr:
+        return []
+
+    lines = []
+    lines.append("## Model vs Realized P&L")
+    lines.append("")
+    lines.append(
+        f"*{mvr['n_fill_overrides']} positions with fill data — "
+        f"theoretical uses close prices, realized uses fill VWAP.*"
+    )
+    lines.append("")
+
+    # Top-line comparison
+    t_pnl = mvr["theoretical_total_pnl"]
+    r_pnl = mvr["realized_total_pnl"]
+    gap_pnl = mvr["execution_gap_pnl"]
+    gap_pct = mvr["execution_gap_pct"]
+    lines.append(f"- **Theoretical P&L** (close): ${t_pnl:,.2f} ({mvr['theoretical_pnl_pct']:+.2f}%)")
+    lines.append(f"- **Realized P&L** (fill): ${r_pnl:,.2f} ({mvr['realized_pnl_pct']:+.2f}%)")
+    label = "better" if gap_pnl >= 0 else "worse"
+    lines.append(f"- **Execution gap**: ${gap_pnl:+,.2f} ({gap_pct:+.2f}%) — fills {label} than close")
+    lines.append("")
+
+    # By bucket
+    by_bucket = mvr.get("by_bucket", {})
+    if by_bucket:
+        lines.append("### By Bucket")
+        lines.append("")
+        lines.append("| Bucket | Theo P&L | Realized P&L | Gap $ | Gap % |")
+        lines.append("|--------|----------|--------------|-------|-------|")
+        for b in BUCKET_NAMES:
+            bd = by_bucket.get(b)
+            if bd and (bd["theoretical_pnl"] != 0 or bd["realized_pnl"] != 0):
+                label = BUCKET_DISPLAY.get(b, b)
+                if b == "binary_91_180":
+                    label = f"**{label}**"
+                lines.append(
+                    f"| {label}"
+                    f" | ${bd['theoretical_pnl']:,.2f}"
+                    f" | ${bd['realized_pnl']:,.2f}"
+                    f" | ${bd['execution_gap_pnl']:+,.2f}"
+                    f" | {bd['execution_gap_pct']:+.2f}% |"
+                )
+        lines.append("")
+
+    # By family
+    by_family = mvr.get("by_family", {})
+    if by_family:
+        lines.append("### By Family")
+        lines.append("")
+        lines.append("| Family | Theo P&L | Realized P&L | Gap $ | Gap % |")
+        lines.append("|--------|----------|--------------|-------|-------|")
+        for fam, fd in sorted(by_family.items()):
+            if fd["theoretical_pnl"] != 0 or fd["realized_pnl"] != 0:
+                lines.append(
+                    f"| {fam}"
+                    f" | ${fd['theoretical_pnl']:,.2f}"
+                    f" | ${fd['realized_pnl']:,.2f}"
+                    f" | ${fd['execution_gap_pnl']:+,.2f}"
+                    f" | {fd['execution_gap_pct']:+.2f}% |"
+                )
+        lines.append("")
+
+    return lines
+
+
 # ---------------------------------------------------------------------------
 # Performance computation
 # ---------------------------------------------------------------------------
@@ -1290,6 +1364,97 @@ def compute_performance(
     if fill_data:
         exec_quality = compute_execution_quality_metrics(fill_data, close_prices)
 
+    # Model vs Realized: when fills exist, compute close-based (theoretical) P&L
+    # alongside the fill-adjusted (realized) P&L already computed above.
+    model_vs_realized = None
+    if fill_prices:
+        theo_total_pnl = 0.0
+        theo_total_weight = 0.0
+        theo_sleeve_pnl: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
+        theo_sleeve_weight: Dict[str, float] = {b: 0.0 for b in BUCKET_NAMES}
+
+        for pos in prior_positions:
+            ticker = pos["ticker"]
+            dollars = pos.get("target_dollars", 0.0)
+            bucket = pos.get("bucket", "less_binary")
+            p0 = close_prices.get(ticker)
+            p1 = current_prices.get(ticker)
+
+            if p0 and p1 and p0 > 0 and dollars > 0:
+                ret = (p1 / p0) - 1.0
+                pnl = dollars * ret
+                theo_total_pnl += pnl
+                theo_total_weight += dollars
+                theo_sleeve_pnl[bucket] = theo_sleeve_pnl.get(bucket, 0.0) + pnl
+                theo_sleeve_weight[bucket] = theo_sleeve_weight.get(bucket, 0.0) + dollars
+
+        theo_pnl_pct = (theo_total_pnl / theo_total_weight * 100) if theo_total_weight > 0 else 0.0
+
+        # Build per-bucket comparison
+        bucket_comparison = {}
+        for b in BUCKET_NAMES:
+            tw = theo_sleeve_weight[b]
+            rw = sleeve_weight[b]
+            t_ret = (theo_sleeve_pnl[b] / tw * 100) if tw > 0 else 0.0
+            r_ret = (sleeve_pnl[b] / rw * 100) if rw > 0 else 0.0
+            bucket_comparison[b] = {
+                "theoretical_pnl": round(theo_sleeve_pnl[b], 2),
+                "realized_pnl": round(sleeve_pnl[b], 2),
+                "theoretical_return_pct": round(t_ret, 4),
+                "realized_return_pct": round(r_ret, 4),
+                "execution_gap_pnl": round(sleeve_pnl[b] - theo_sleeve_pnl[b], 2),
+                "execution_gap_pct": round(r_ret - t_ret, 4),
+            }
+
+        # Build per-family comparison
+        family_theo_pnl: Dict[str, float] = {}
+        family_theo_wt: Dict[str, float] = {}
+        family_real_pnl: Dict[str, float] = {}
+        family_real_wt: Dict[str, float] = {}
+        for pos in prior_positions:
+            ticker = pos["ticker"]
+            dollars = pos.get("target_dollars", 0.0)
+            fam = pos.get("effective_family", "OTHER")
+            p_close = close_prices.get(ticker)
+            p_fill = prior_prices.get(ticker)  # fill-adjusted
+            p1 = current_prices.get(ticker)
+            if p1 and dollars > 0:
+                if p_close and p_close > 0:
+                    family_theo_pnl[fam] = family_theo_pnl.get(fam, 0.0) + dollars * ((p1 / p_close) - 1.0)
+                    family_theo_wt[fam] = family_theo_wt.get(fam, 0.0) + dollars
+                if p_fill and p_fill > 0:
+                    family_real_pnl[fam] = family_real_pnl.get(fam, 0.0) + dollars * ((p1 / p_fill) - 1.0)
+                    family_real_wt[fam] = family_real_wt.get(fam, 0.0) + dollars
+
+        family_comparison = {}
+        for fam in sorted(set(list(family_theo_pnl.keys()) + list(family_real_pnl.keys()))):
+            tw = family_theo_wt.get(fam, 0)
+            rw = family_real_wt.get(fam, 0)
+            t_pnl = family_theo_pnl.get(fam, 0)
+            r_pnl = family_real_pnl.get(fam, 0)
+            t_ret = (t_pnl / tw * 100) if tw > 0 else 0.0
+            r_ret = (r_pnl / rw * 100) if rw > 0 else 0.0
+            family_comparison[fam] = {
+                "theoretical_pnl": round(t_pnl, 2),
+                "realized_pnl": round(r_pnl, 2),
+                "theoretical_return_pct": round(t_ret, 4),
+                "realized_return_pct": round(r_ret, 4),
+                "execution_gap_pnl": round(r_pnl - t_pnl, 2),
+                "execution_gap_pct": round(r_ret - t_ret, 4),
+            }
+
+        model_vs_realized = {
+            "theoretical_total_pnl": round(theo_total_pnl, 2),
+            "realized_total_pnl": round(total_pnl, 2),
+            "theoretical_pnl_pct": round(theo_pnl_pct, 4),
+            "realized_pnl_pct": round(pnl_pct * 100, 4),
+            "execution_gap_pnl": round(total_pnl - theo_total_pnl, 2),
+            "execution_gap_pct": round(pnl_pct * 100 - theo_pnl_pct, 4),
+            "n_fill_overrides": len(fill_prices),
+            "by_bucket": bucket_comparison,
+            "by_family": family_comparison,
+        }
+
     # Build entry annotations: {ticker: {source, entry_price, fill_*}}
     # Index fill data by ticker for quick lookup
     fill_by_ticker: Dict[str, Dict[str, Any]] = {}
@@ -1339,6 +1504,8 @@ def compute_performance(
     }
     if exec_quality is not None:
         result["execution_quality"] = exec_quality
+    if model_vs_realized is not None:
+        result["model_vs_realized"] = model_vs_realized
     if entry_annotations:
         result["entry_annotations"] = entry_annotations
     return result
@@ -1908,6 +2075,11 @@ def write_weekly_summary(
         exec_quality = perf.get("execution_quality")
         if exec_quality:
             lines.extend(render_execution_quality_md(exec_quality))
+
+        # Model vs Realized P&L (only when fills data present)
+        mvr = perf.get("model_vs_realized")
+        if mvr:
+            lines.extend(render_model_vs_realized_md(mvr))
 
         # Trailing Alpha Dashboard (1w / 4w)
         try:

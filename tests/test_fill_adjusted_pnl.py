@@ -16,6 +16,7 @@ from tools.live_shadow_portfolio import (
     compute_execution_quality_metrics,
     compute_performance,
     render_execution_quality_md,
+    render_model_vs_realized_md,
 )
 from tools.record_fills import FILLS_COLUMNS
 
@@ -528,3 +529,228 @@ class TestEntryAnnotationsMixed:
         assert ann["BETA"]["entry_price_source"] == "CLOSE"
         assert ann["BETA"]["entry_price"] == 20.0
         assert ann["BETA"]["fill_qty"] is None
+
+
+# ---------------------------------------------------------------------------
+# 7. Model vs Realized P&L
+# ---------------------------------------------------------------------------
+
+
+class TestModelVsRealizedNoFills:
+    def test_no_fills_no_mvr(self, tmp_path):
+        """No fills → model_vs_realized not present in result."""
+        price_csv = tmp_path / "prices.csv"
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 11.0),
+            ],
+        )
+        prior = _make_positions([("ACME", "binary_91_180")])
+        current = _make_positions([("ACME", "binary_91_180")])
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            trades_root=tmp_path / "trades",
+        )
+        assert "model_vs_realized" not in perf
+
+
+class TestModelVsRealizedWithFills:
+    def test_execution_gap_computed(self, tmp_path):
+        """Fill price differs from close → execution gap is nonzero."""
+        price_csv = tmp_path / "prices.csv"
+        # Close on 03-03 is $10, current is $12 (20% return on close basis)
+        # Fill VWAP is $10.50 → realized return = (12/10.5 - 1) = 14.29%
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 12.0),
+                ("XBI", "2026-03-03", 100.0),
+                ("XBI", "2026-03-10", 101.0),
+            ],
+        )
+        fills_dir = tmp_path / "fills" / "2026-03-03"
+        _write_fills_csv(
+            fills_dir / "fills.csv",
+            [_make_fill("ACME", "BUY", 10000, 10.50, 952.38)],
+        )
+        prior = _make_positions([("ACME", "binary_91_180")])
+        current = _make_positions([("ACME", "binary_91_180")])
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            fills_root=tmp_path / "fills",
+            trades_root=tmp_path / "trades",
+        )
+
+        mvr = perf["model_vs_realized"]
+        assert mvr is not None
+        # Theoretical: 10->12 = $2000 P&L (20% on $10k)
+        assert mvr["theoretical_total_pnl"] == pytest.approx(2000.0, abs=0.01)
+        assert mvr["theoretical_pnl_pct"] == pytest.approx(20.0, abs=0.1)
+        # Realized: 10.50->12 = $1428.57 P&L (14.29% on $10k)
+        assert mvr["realized_total_pnl"] == pytest.approx(1428.57, abs=1.0)
+        # Gap is negative (fills worse than close for buy entry)
+        assert mvr["execution_gap_pnl"] < 0
+        assert mvr["n_fill_overrides"] == 1
+
+    def test_per_bucket_breakdown(self, tmp_path):
+        """Per-bucket comparison computed correctly."""
+        price_csv = tmp_path / "prices.csv"
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 12.0),
+                ("BETA", "2026-03-03", 20.0),
+                ("BETA", "2026-03-10", 22.0),
+            ],
+        )
+        fills_dir = tmp_path / "fills" / "2026-03-03"
+        _write_fills_csv(
+            fills_dir / "fills.csv",
+            [
+                _make_fill("ACME", "BUY", 10000, 10.50, 952.38),
+                _make_fill("BETA", "BUY", 10000, 20.10, 497.51),
+            ],
+        )
+        prior = _make_positions([("ACME", "binary_91_180"), ("BETA", "binary_31_90")])
+        current = _make_positions([("ACME", "binary_91_180"), ("BETA", "binary_31_90")])
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            fills_root=tmp_path / "fills",
+            trades_root=tmp_path / "trades",
+        )
+        mvr = perf["model_vs_realized"]
+        by_bucket = mvr["by_bucket"]
+
+        # binary_91_180 has ACME
+        assert "binary_91_180" in by_bucket
+        b91 = by_bucket["binary_91_180"]
+        assert b91["theoretical_pnl"] == pytest.approx(2000.0, abs=0.01)
+        assert b91["execution_gap_pnl"] != 0
+
+        # binary_31_90 has BETA
+        assert "binary_31_90" in by_bucket
+        b31 = by_bucket["binary_31_90"]
+        assert b31["theoretical_pnl"] == pytest.approx(1000.0, abs=0.01)
+
+    def test_execution_gap_sign_sell(self, tmp_path):
+        """SELL fill at better-than-close should show positive gap."""
+        price_csv = tmp_path / "prices.csv"
+        # Close $10, fill at $10.50 (sold higher than close = better)
+        # Current $8: theo return = (8/10-1) = -20%, real return = (8/10.5-1) = -23.81%
+        # Wait — for SELL, the fill price replaces the *entry* close, so the
+        # cost basis is higher. That means less loss... actually, the sell
+        # fill applies to the exit, not entry.
+        # In our model, fill_prices overrides the ENTRY (prior) price.
+        # For a BUY fill at 10.50, entry is 10.50 instead of 10.0.
+        # Close-based: (8/10-1)*10000 = -$2000
+        # Fill-based: (8/10.50-1)*10000 = -$2380.95
+        # Gap = -$380.95 (worse)
+        _write_price_csv(
+            price_csv,
+            [
+                ("ACME", "2026-03-03", 10.0),
+                ("ACME", "2026-03-10", 8.0),
+            ],
+        )
+        fills_dir = tmp_path / "fills" / "2026-03-03"
+        _write_fills_csv(
+            fills_dir / "fills.csv",
+            [_make_fill("ACME", "BUY", 10000, 10.50, 952.38)],
+        )
+        prior = _make_positions([("ACME", "binary_91_180")])
+        current = _make_positions([("ACME", "binary_91_180")])
+        perf = compute_performance(
+            prior,
+            current,
+            "2026-03-03",
+            "2026-03-10",
+            price_path=price_csv,
+            fills_root=tmp_path / "fills",
+            trades_root=tmp_path / "trades",
+        )
+        mvr = perf["model_vs_realized"]
+        # Higher entry price → worse P&L when price falls
+        assert mvr["execution_gap_pnl"] < 0
+
+
+class TestModelVsRealizedRendering:
+    def test_render_model_vs_realized_md(self):
+        """Rendered markdown has all required sections."""
+        mvr = {
+            "theoretical_total_pnl": 2000.0,
+            "realized_total_pnl": 1500.0,
+            "theoretical_pnl_pct": 4.0,
+            "realized_pnl_pct": 3.0,
+            "execution_gap_pnl": -500.0,
+            "execution_gap_pct": -1.0,
+            "n_fill_overrides": 5,
+            "by_bucket": {
+                "binary_91_180": {
+                    "theoretical_pnl": 1500.0,
+                    "realized_pnl": 1100.0,
+                    "theoretical_return_pct": 5.0,
+                    "realized_return_pct": 3.67,
+                    "execution_gap_pnl": -400.0,
+                    "execution_gap_pct": -1.33,
+                },
+            },
+            "by_family": {
+                "CLINICAL": {
+                    "theoretical_pnl": 1200.0,
+                    "realized_pnl": 900.0,
+                    "theoretical_return_pct": 4.0,
+                    "realized_return_pct": 3.0,
+                    "execution_gap_pnl": -300.0,
+                    "execution_gap_pct": -1.0,
+                },
+            },
+        }
+        lines = render_model_vs_realized_md(mvr)
+        text = "\n".join(lines)
+
+        assert "Model vs Realized" in text
+        assert "Theoretical P&L" in text
+        assert "Realized P&L" in text
+        assert "Execution gap" in text
+        assert "By Bucket" in text
+        assert "By Family" in text
+        assert "5 positions with fill data" in text
+        assert "worse" in text  # gap is negative
+
+    def test_render_empty_when_none(self):
+        """No model_vs_realized → no output."""
+        lines = render_model_vs_realized_md(None)
+        assert lines == []
+
+    def test_render_positive_gap_says_better(self):
+        """Positive execution gap shows 'better' label."""
+        mvr = {
+            "theoretical_total_pnl": 1000.0,
+            "realized_total_pnl": 1200.0,
+            "theoretical_pnl_pct": 2.0,
+            "realized_pnl_pct": 2.4,
+            "execution_gap_pnl": 200.0,
+            "execution_gap_pct": 0.4,
+            "n_fill_overrides": 3,
+            "by_bucket": {},
+            "by_family": {},
+        }
+        lines = render_model_vs_realized_md(mvr)
+        text = "\n".join(lines)
+        assert "better" in text
