@@ -259,6 +259,26 @@ def backfill_columns(rows: List[Dict[str, str]]) -> None:
             for r in rows:
                 r[col] = "0"
 
+    # Clinical 91-180 quality features: compute from existing fields if missing
+    if "clinical_quality_composite" not in sample:
+        try:
+            from common.event_quality_features import compute_clinical_91_180_quality
+
+            for r in rows:
+                cq = compute_clinical_91_180_quality(r)
+                for k, v in cq.items():
+                    r[k] = str(v) if v != "" else ""
+        except ImportError:
+            for col in (
+                "clinical_days_precision",
+                "clinical_date_confidence",
+                "clinical_design_quality",
+                "clinical_program_depth",
+                "clinical_quality_composite",
+            ):
+                for r in rows:
+                    r[col] = ""
+
     # Secondary regulatory catalyst columns: backfill if missing.
     # For historical snapshots without these columns, we derive from
     # catalyst_event_type when possible (a REGULATORY event_type implies

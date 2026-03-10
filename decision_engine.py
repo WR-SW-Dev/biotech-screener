@@ -237,9 +237,12 @@ class DecisionRuleset:
     #   "baseline":                   no change (current behavior)
     #   "quality_primary":            binary_quality_score dominates within bucket
     #   "quality_plus_institutional": binary_quality_score + institutional delta z
-    binary_91_180_sort_mode: str = "baseline"  # "baseline" | "quality_primary" | "quality_plus_institutional"
+    binary_91_180_sort_mode: str = (
+        "baseline"  # "baseline" | "quality_primary" | "quality_plus_institutional" | "clinical_quality"
+    )
     binary_91_180_quality_weight: float = 1.0  # scale for binary_quality_score contribution
     binary_91_180_institutional_weight: float = 0.3  # scale for inst_delta_z (quality_plus_institutional only)
+    binary_91_180_clinical_quality_weight: float = 0.0  # scale for clinical_quality_composite (clinical_quality mode)
 
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
@@ -1319,6 +1322,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "catalyst_bonus",
     "binary_quality",
     "binary_institutional",
+    "clinical_quality_91_180",
 )
 
 
@@ -1424,6 +1428,17 @@ def _build_sort_contributions(
             delta_i = bi_w * iz_eff
             contribs.append(SortContribution("binary_institutional", iz, bi_w, delta_i))
 
+    # 9. Binary 91-180 clinical quality tilt (clinical_quality mode only)
+    # Only applies to CLINICAL family within less_binary bucket.
+    # clinical_quality_composite [0, 1] from event_quality_features.
+    if bucket == "less_binary" and b91_mode == "clinical_quality":
+        family = str(decision_fields.get("catalyst_family", ""))
+        if family == "CLINICAL":
+            cqc = _safe_float(decision_fields.get("clinical_quality_composite"), default=0.0)
+            cq_w = ruleset.binary_91_180_clinical_quality_weight
+            delta_cq = cq_w * cqc
+            contribs.append(SortContribution("clinical_quality_91_180", cqc, cq_w, delta_cq))
+
     return contribs
 
 
@@ -1441,6 +1456,8 @@ _EXTERNAL_SORT_FIELDS: frozenset = frozenset(
         "alpha_cohort_pct",  # used by alpha_cohort_tiebreak_weight contribution
         "binary_quality_score",  # used by binary_91_180_sort_mode contribution
         "catalyst_bucket",  # used by binary_91_180_sort_mode bucket gate
+        "clinical_quality_composite",  # used by clinical_quality sort mode
+        "catalyst_family",  # used by clinical_quality sort mode family gate
     }
 )
 

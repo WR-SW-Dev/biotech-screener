@@ -315,6 +315,7 @@ class TestSortContribKeysContract:
         "catalyst_bonus",
         "binary_quality",
         "binary_institutional",
+        "clinical_quality_91_180",
     )
 
     def test_keys_match_expected(self):

@@ -10,6 +10,13 @@ Columns added:
   has_adcom           — 1 if any ADCOM event contributes to the catalyst, else 0
   single_asset_risk   — 1 if program_count == 1 (binary concentrated), else 0
 
+Clinical 91-180 quality columns (CLINICAL family, informational + optional sort):
+  clinical_days_precision     — DAY|WEEK|MONTH|QUARTER|HALF_YEAR|YEAR|UNKNOWN
+  clinical_date_confidence    — 0–1 confidence proxy from precision + source
+  clinical_design_quality     — 0–1 from trial metadata (randomized/controlled/phase/endpoint)
+  clinical_program_depth      — 0–1 inverse of single-asset risk + program count
+  clinical_quality_composite  — 0–1 weighted combination of the above 4
+
 Usage:
     from common.event_quality_features import compute_event_quality_features
     features = compute_event_quality_features(row)
@@ -127,6 +134,123 @@ def _clinical_quality(
 
 
 # ---------------------------------------------------------------------------
+# Clinical 91-180 quality features
+# ---------------------------------------------------------------------------
+
+PRECISION_LEVELS = ("DAY", "WEEK", "MONTH", "QUARTER", "HALF_YEAR", "YEAR", "UNKNOWN")
+
+# catalyst_mode → precision mapping
+_MODE_PRECISION: Dict[str, str] = {
+    "specific_days": "DAY",
+    "blended_window": "MONTH",
+    "far_window": "QUARTER",
+    "no_upcoming": "UNKNOWN",
+    "missing": "UNKNOWN",
+}
+
+# source → precision override (higher-confidence sources → finer precision)
+_SOURCE_PRECISION: Dict[str, str] = {
+    "SEC_8K_FILING": "DAY",
+    "SEC_MULTI_FORM": "DAY",
+    "PDUFA_MANUAL": "DAY",
+    "FDA_CALENDAR": "DAY",
+    "FDA_ADCOM_CALENDAR": "DAY",
+    "FEDERAL_REGISTER": "DAY",
+    "CTGOV_CALENDAR": "MONTH",
+    "CTGOV_PCD_FAR": "QUARTER",
+    "CORPORATE_CALENDAR": "WEEK",
+}
+
+_PRECISION_CONFIDENCE: Dict[str, float] = {
+    "DAY": 0.95,
+    "WEEK": 0.80,
+    "MONTH": 0.60,
+    "QUARTER": 0.40,
+    "HALF_YEAR": 0.25,
+    "YEAR": 0.15,
+    "UNKNOWN": 0.10,
+}
+
+# source reliability bonus (stacks with precision)
+_SOURCE_CONFIDENCE_BONUS: Dict[str, float] = {
+    "SEC_8K_FILING": 0.05,
+    "SEC_MULTI_FORM": 0.05,
+    "PDUFA_MANUAL": 0.05,
+    "FDA_CALENDAR": 0.05,
+}
+
+
+def compute_clinical_days_precision(catalyst_mode: str, catalyst_source: str) -> str:
+    """Derive date precision from catalyst_mode and source."""
+    # Source override takes priority (e.g., SEC_8K always DAY)
+    src_prec = _SOURCE_PRECISION.get(catalyst_source)
+    mode_prec = _MODE_PRECISION.get(catalyst_mode, "UNKNOWN")
+    if src_prec:
+        # Pick the finer of source vs mode precision
+        src_idx = PRECISION_LEVELS.index(src_prec) if src_prec in PRECISION_LEVELS else 6
+        mode_idx = PRECISION_LEVELS.index(mode_prec) if mode_prec in PRECISION_LEVELS else 6
+        return PRECISION_LEVELS[min(src_idx, mode_idx)]
+    return mode_prec
+
+
+def compute_clinical_date_confidence(precision: str, catalyst_source: str) -> float:
+    """Confidence proxy [0, 1] from precision + source reliability."""
+    base = _PRECISION_CONFIDENCE.get(precision, 0.10)
+    bonus = _SOURCE_CONFIDENCE_BONUS.get(catalyst_source, 0.0)
+    return round(min(1.0, base + bonus), 4)
+
+
+def compute_clinical_design_quality(row: Dict[str, Any]) -> float:
+    """Design quality [0, 1] from trial metadata already on the row.
+
+    Components (reuses existing fields, no new data needed):
+      0.35 * design_quality_score (randomized, blinded, controlled)
+      0.30 * phase score (phase 3 > 2 > 1)
+      0.20 * endpoint_strength_score (TA-based proxy)
+      0.15 * (1 if phase >= 2.5 else 0.5)  — confirmatory vs exploratory proxy
+    """
+    design = _safe_float(row.get("design_quality_score"), 0.3)
+    design = max(0.0, min(1.0, design))
+
+    phase_val = _safe_float(row.get("lead_program_phase"), 0.0)
+    phase = _PHASE_SCORE.get(phase_val, 0.3)
+
+    endpoint = _safe_float(row.get("endpoint_strength_score"), 0.5)
+    endpoint = max(0.0, min(1.0, endpoint))
+
+    confirmatory = 1.0 if phase_val >= 2.5 else 0.5
+
+    return round(0.35 * design + 0.30 * phase + 0.20 * endpoint + 0.15 * confirmatory, 4)
+
+
+def compute_clinical_program_depth(row: Dict[str, Any]) -> float:
+    """Program depth [0, 1] — inverse of single-asset risk + program count."""
+    prog = _safe_float(row.get("program_count"), 1.0)
+    single = _safe_float(row.get("single_asset_risk"), 0.0)
+
+    # Multi-program diversity: more programs → higher depth
+    count_score = min(1.0, prog / 4.0) if prog > 0 else 0.0
+    # Penalty for single-asset risk
+    risk_penalty = 0.3 if single == 1 else 0.0
+
+    return round(max(0.0, count_score - risk_penalty), 4)
+
+
+def compute_clinical_quality_composite(
+    date_confidence: float,
+    design_quality: float,
+    program_depth: float,
+) -> float:
+    """Weighted composite [0, 1] of the 3 clinical quality dimensions.
+
+    Weights: 0.40 date_confidence + 0.40 design_quality + 0.20 program_depth
+    Date confidence gets equal weight to design because precision is the #1
+    predictor of whether the catalyst is real and tradeable.
+    """
+    return round(0.40 * date_confidence + 0.40 * design_quality + 0.20 * program_depth, 4)
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -136,6 +260,15 @@ EVENT_QUALITY_COLUMNS = [
     "clinical_quality",
     "has_adcom",
     "single_asset_risk",
+]
+
+# Additional clinical 91-180 quality columns
+CLINICAL_91_180_QUALITY_COLUMNS = [
+    "clinical_days_precision",
+    "clinical_date_confidence",
+    "clinical_design_quality",
+    "clinical_program_depth",
+    "clinical_quality_composite",
 ]
 
 
@@ -169,4 +302,38 @@ def compute_event_quality_features(row: Dict[str, Any]) -> Dict[str, Any]:
         "clinical_quality": clin_q,
         "has_adcom": has_adcom,
         "single_asset_risk": single_asset,
+    }
+
+
+def compute_clinical_91_180_quality(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Compute clinical 91-180 quality features from a rankings row.
+
+    Only meaningful for CLINICAL family rows. Returns neutral defaults
+    for non-CLINICAL rows.
+    """
+    family = str(row.get("catalyst_family", "") or "")
+    catalyst_mode = str(row.get("catalyst_mode", "") or "")
+    catalyst_source = str(row.get("catalyst_source", "") or "")
+
+    if family != "CLINICAL":
+        return {
+            "clinical_days_precision": "",
+            "clinical_date_confidence": "",
+            "clinical_design_quality": "",
+            "clinical_program_depth": "",
+            "clinical_quality_composite": "",
+        }
+
+    precision = compute_clinical_days_precision(catalyst_mode, catalyst_source)
+    date_conf = compute_clinical_date_confidence(precision, catalyst_source)
+    design_q = compute_clinical_design_quality(row)
+    prog_depth = compute_clinical_program_depth(row)
+    composite = compute_clinical_quality_composite(date_conf, design_q, prog_depth)
+
+    return {
+        "clinical_days_precision": precision,
+        "clinical_date_confidence": round(date_conf, 4),
+        "clinical_design_quality": round(design_q, 4),
+        "clinical_program_depth": round(prog_depth, 4),
+        "clinical_quality_composite": round(composite, 4),
     }

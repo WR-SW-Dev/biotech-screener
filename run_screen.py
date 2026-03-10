@@ -69,7 +69,7 @@ from common.data_integration_contracts import (
 
 # Common utilities
 from common.date_utils import normalize_date, to_date_object, to_date_string
-from common.event_quality_features import compute_event_quality_features
+from common.event_quality_features import compute_clinical_91_180_quality, compute_event_quality_features
 from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
 
 # Production hardening utilities
@@ -1417,6 +1417,12 @@ SNAPSHOT_COLUMNS = [
     "clinical_quality",
     "has_adcom",
     "single_asset_risk",
+    # --- Clinical 91-180 quality features ---
+    "clinical_days_precision",
+    "clinical_date_confidence",
+    "clinical_design_quality",
+    "clinical_program_depth",
+    "clinical_quality_composite",
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
@@ -3650,6 +3656,7 @@ def save_validation_snapshot(
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         row["binary_quality_score"] = compute_binary_quality_score(row)
         row.update(compute_event_quality_features(row))
+        row.update(compute_clinical_91_180_quality(row))
 
         # Secondary regulatory catalyst (independent of primary nearest)
         _reg_days, _reg_et = _nearest_regulatory_catalyst(
