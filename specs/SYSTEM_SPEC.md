@@ -76,7 +76,7 @@ candidate.json → eval (A/B vs baseline) → gate summary → promote → pin I
 ### 3.2 Pinned IDs
 - `PHASE2_PINNED_RULESET_ID` must stay in sync between `run_screen.py` and `run_phase2_snapshot_delta.py`
 - Updated only via `scripts/promote_ruleset.py` (which writes both files atomically)
-- Current active: `bebe73f8` (v1.10.0)
+- Current active: `7177a4ea` (v1.11.0)
 
 ### 3.3 Rollback
 - `--rollback --reason "..."` is the governed path (no `--force` required)

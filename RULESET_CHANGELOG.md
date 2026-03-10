@@ -36,6 +36,30 @@ Full audited output at `output/ac_tiebreak_sweep/compare.md`.
 
 ---
 
+## [v1.11.0] 7177a4ea — 2026-03-10 — Clinical quality sort tilt for binary_91_180 CLINICAL family (promoted)
+
+**Active ruleset change**: `bebe73f8` (v1.10.0_flatten_tier_91_180) → `7177a4ea` (v1.11.0_b91_clinical_quality_w05)
+
+**Parameters changed** (vs bebe73f8):
+- `binary_91_180_sort_mode`: `"baseline"` (new field default) → `"clinical_quality"`
+- `binary_91_180_clinical_quality_weight`: `0.0` (new field default) → `0.5`
+
+**Scope statement**: Only affects sort ordering for CLINICAL-family names inside the `binary_91_180` bucket (catalyst_bucket=less_binary, 91-180 days). REGULATORY-family names and all other buckets are unchanged. The `clinical_quality_composite` signal (built from `clinical_quality_features.py`) is blended into the sort anchor at weight 0.5 for eligible names.
+
+**What changed**: When `binary_91_180_sort_mode="clinical_quality"`, a new `SortContribution("clinical_quality_91_180", cqc, 0.5, delta)` is added for names in `less_binary` bucket with `catalyst_family="CLINICAL"`. Higher `clinical_quality_composite` → lower effective rank → sorts earlier.
+
+**What didn't change**: Eligibility, tier assignment, sizing, REGULATORY-family ordering, and sort behavior in all other buckets remain identical. The `binary_91_180_flatten_tier_sort=true` flag from v1.10.0 is preserved.
+
+**Evidence** (weekly A/B via `eval_b91_clinical_quality_weekly_ab.py`):
+- Cumulative hedged delta: **+2.58pp** (treatment vs baseline)
+- Mean weekly delta: **+0.03pp**
+- Turnover delta: **-0.02pp** (slightly less turnover)
+- Clinical-family names with strong trial profiles promoted; low-composite CLINICAL names demoted
+
+**Difference audit**: Sort contribution `clinical_quality_91_180` only fires for `catalyst_bucket=less_binary` AND `catalyst_family=CLINICAL` names. Weight 0.5 provides moderate tilt without overwhelming the optionality anchor.
+
+---
+
 ## [v1.10.0] bebe73f8 — 2026-03-09 — Flatten tier sort within binary_91_180 (promoted)
 
 **Active ruleset change**: `e966af9d` (v1.9.0_institutional_sort) → `bebe73f8` (v1.10.0_flatten_tier_91_180)

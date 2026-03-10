@@ -291,11 +291,23 @@
       "created_at": "2026-03-09",
       "engine_version": "v1.3.0",
       "description": "Flatten tier sort within binary_91_180 bucket (less_binary): tier_ord=1 for all eligible names",
-      "status": "active",
+      "status": "retired",
       "requires_replay": true,
       "notes": "Derived from v1.9.0 (e966af9d). binary_91_180_flatten_tier_sort=true. IS 2025: +2.74pp 84d, +0.22pp 126d hedged. OOS flat (no tier diversity pre-2025). Only affects sort ordering inside binary_91_180 bucket; other buckets unchanged.",
-      "updated_by": "promote_ruleset.py --rollback",
-      "updated_at": "2026-03-09T22:43:00Z"
+      "updated_by": "promote_ruleset.py",
+      "updated_at": "2026-03-10T00:00:00Z"
+    },
+    {
+      "id": "7177a4ea",
+      "file": "v1.11.0_b91_clinical_quality_w05_candidate.json",
+      "created_at": "2026-03-10",
+      "engine_version": "v1.3.0",
+      "description": "binary_91_180 clinical quality sort tilt: clinical_quality_composite for CLINICAL family (w=0.5)",
+      "status": "active",
+      "requires_replay": true,
+      "notes": "Derived from v1.10.0 (bebe73f8). binary_91_180_sort_mode=clinical_quality, binary_91_180_clinical_quality_weight=0.5. Weekly A/B (eval_b91_clinical_quality_weekly_ab.py): cum hedged delta +2.58pp, mean weekly delta +0.03pp, turnover delta -0.02pp. CLINICAL-family names in less_binary bucket get clinical_quality_composite blended into sort anchor.",
+      "updated_by": "promote_ruleset.py",
+      "updated_at": "2026-03-10T00:00:00Z"
     },
     {
       "id": "ddf59b03",
