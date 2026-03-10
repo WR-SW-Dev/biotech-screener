@@ -25,23 +25,6 @@ on:
         required: false
         type: boolean
         default: false
-  workflow_call:
-    inputs:
-      as_of_date:
-        required: false
-        type: string
-      allow_date_fallback:
-        required: false
-        type: boolean
-        default: false
-      skip_price_refresh:
-        required: false
-        type: boolean
-        default: false
-      force_degraded:
-        required: false
-        type: boolean
-        default: false
 
 permissions:
   contents: read

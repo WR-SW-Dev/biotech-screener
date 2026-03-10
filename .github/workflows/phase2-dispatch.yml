@@ -1,49 +1,97 @@
 name: phase2-dispatch
 
-on:
-  workflow_dispatch:
-    inputs:
-      as_of_date:
-        description: "Screen date (YYYY-MM-DD), defaults to today (Detroit TZ)"
-        required: false
-        type: string
-      allow_date_fallback:
-        description: "Allow ctgov cache date fallback (WARN instead of FAIL)"
-        required: false
-        type: boolean
-        default: false
-      skip_price_refresh:
-        description: "Skip yfinance price refresh (use existing price_history.csv)"
-        required: false
-        type: boolean
-        default: false
-      force_degraded:
-        description: "Force degraded mode (testing). Skips PIT price steps regardless of cache_health."
-        required: false
-        type: boolean
-        default: false
-
-# Thin dispatch wrapper — delegates to the full daily production workflow.
+# Thin dispatch wrapper for testing the weekly execution step.
 # Exists because GitHub's workflow_dispatch metadata cache can go stale on
-# long-lived workflow IDs. This file gets a fresh ID on creation, which
-# forces GitHub to index the trigger immediately.
+# long-lived workflow IDs (phase2-daily-production). This file gets a fresh
+# ID on creation, forcing GitHub to index the trigger immediately.
 #
 # Once the main workflow's "Run workflow" button works reliably from the UI,
 # this file can be deleted.
 
+on:
+  workflow_dispatch:
+    inputs:
+      as_of_date:
+        description: "Screen date (YYYY-MM-DD)"
+        required: true
+        type: string
+
 permissions:
   contents: read
 
-concurrency:
-  group: phase2-daily-production
-  cancel-in-progress: false
-
 jobs:
-  dispatch:
-    uses: ./.github/workflows/phase2-daily-production.yml
-    with:
-      as_of_date: ${{ inputs.as_of_date }}
-      allow_date_fallback: ${{ inputs.allow_date_fallback }}
-      skip_price_refresh: ${{ inputs.skip_price_refresh }}
-      force_degraded: ${{ inputs.force_degraded }}
-    secrets: inherit  # pragma: allowlist secret
+  test-weekly-execution-step:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Check rebalance day
+        id: rebalance
+        run: |
+          DATE="${{ inputs.as_of_date }}"
+          IS_REBALANCE=$(python3 -c "
+          from datetime import datetime
+          import json
+          policy = json.load(open('production_data/portfolio_policy.json'))
+          day_map = {'MONDAY':0,'TUESDAY':1,'WEDNESDAY':2,'THURSDAY':3,'FRIDAY':4,'SATURDAY':5,'SUNDAY':6}
+          target = day_map.get(policy.get('rebalance_day','FRIDAY').upper(), 4)
+          dt = datetime.strptime('$DATE', '%Y-%m-%d')
+          print('true' if dt.weekday() == target else 'false')
+          ")
+          echo "is_rebalance=$IS_REBALANCE" >> "$GITHUB_OUTPUT"
+          echo "Rebalance day: $IS_REBALANCE (date: $DATE)"
+
+      - name: Weekly execution (rebalance only)
+        if: steps.rebalance.outputs.is_rebalance == 'true'
+        id: exec
+        run: |
+          DATE="${{ inputs.as_of_date }}"
+          echo "Running weekly execution for $DATE..."
+          set +e
+          python3 tools/run_weekly_execution.py \
+            --as-of-date "$DATE" \
+            --skip-snapshot
+          EXEC_RC=$?
+          set -e
+          echo "exec_exit_code=$EXEC_RC" >> "$GITHUB_OUTPUT"
+
+          EXEC_JSON="artifacts/live_shadow/execution/${DATE}/EXECUTION_PACKET.json"
+          if [ -f "$EXEC_JSON" ]; then
+            STATUS=$(python3 -c "import json; print(json.load(open('$EXEC_JSON')).get('status','UNKNOWN'))")
+            echo "exec_status=$STATUS" >> "$GITHUB_OUTPUT"
+            echo "Status: $STATUS"
+          fi
+
+          EXEC_MD="artifacts/live_shadow/execution/${DATE}/EXECUTION_PACKET.md"
+          if [ -f "$EXEC_MD" ]; then
+            cat "$EXEC_MD" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Skip message (non-rebalance)
+        if: steps.rebalance.outputs.is_rebalance != 'true'
+        run: |
+          echo "Not rebalance day — weekly execution skipped"
+          echo "## Weekly Execution — Skipped" >> "$GITHUB_STEP_SUMMARY"
+          echo "Date ${{ inputs.as_of_date }} is not a rebalance day." >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload execution packet
+        if: steps.rebalance.outputs.is_rebalance == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: execution-packet-${{ inputs.as_of_date }}
+          path: artifacts/live_shadow/execution/${{ inputs.as_of_date }}/
+          retention-days: 30
+          if-no-files-found: warn
