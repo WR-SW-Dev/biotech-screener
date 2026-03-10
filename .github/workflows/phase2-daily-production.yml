@@ -4,7 +4,7 @@ on:
   schedule:
     # Weekdays at 2:00 PM UTC (9–10 AM America/Detroit depending on DST)
     - cron: "0 14 * * 1-5"
-  workflow_dispatch:
+  workflow_dispatch:  # manual dispatch enabled
     inputs:
       as_of_date:
         description: "Screen date (YYYY-MM-DD), defaults to today (Detroit TZ)"
