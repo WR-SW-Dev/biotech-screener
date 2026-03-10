@@ -1920,6 +1920,47 @@ def write_weekly_summary(
     except Exception:
         pass
 
+    # --- Reg Calendar Health ---
+    try:
+        from common.regulatory_calendar import get_calendar_telemetry, load_and_validate
+
+        _cal_records, _cal_errors = load_and_validate(as_of_date=as_of_date)
+        _cal_tel = get_calendar_telemetry(_cal_records)
+        lines.append("## Reg Calendar Health")
+        lines.append("")
+        _cal_n = _cal_tel.get("manual_calendar_n_records", 0)
+        lines.append(f"**PIT-eligible records**: {_cal_n}")
+        if _cal_tel.get("manual_calendar_by_event_type"):
+            lines.append(f"**By event type**: {_cal_tel['manual_calendar_by_event_type']}")
+        if _cal_tel.get("manual_calendar_by_confidence"):
+            lines.append(f"**By confidence**: {_cal_tel['manual_calendar_by_confidence']}")
+        # Freshness: newest disclosed_at
+        if _cal_records:
+            _newest = max(
+                (r.get("as_of_disclosed_at", "") for r in _cal_records),
+                default="",
+            )
+            if _newest:
+                lines.append(f"**Newest disclosed_at**: {_newest}")
+            # Soonest upcoming
+            _upcoming = []
+            for r in _cal_records:
+                rd = r.get("pdufa_date", "")
+                if rd > as_of_date:
+                    _upcoming.append(r)
+            _upcoming.sort(key=lambda r: r.get("pdufa_date", ""))
+            if _upcoming:
+                lines.append(
+                    f"**Soonest upcoming**: {_upcoming[0]['ticker']} "
+                    f"{_upcoming[0].get('event_type', 'PDUFA')} "
+                    f"on {_upcoming[0]['pdufa_date']}"
+                )
+        if _cal_errors:
+            lines.append(f"**Validation errors**: {len(_cal_errors)}")
+        lines.append("")
+    except Exception:
+        pass  # Calendar health is best-effort
+
     # Top holdings
     lines.append("## Top 10 Holdings")
     lines.append("")

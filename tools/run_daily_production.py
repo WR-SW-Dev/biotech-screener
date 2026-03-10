@@ -75,6 +75,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "exposure_missingness",
         "risk_concentration",
         "ruleset_governance",
+        "regulatory_calendar",
     }
 )
 
@@ -184,6 +185,12 @@ class GateConfig:
 
     risk_conc_stacked_warn: float = 0.20
     """WARN if > 20% of top-K weight has catalyst <= 7d AND (beta >= 1.5 or drawdown <= -0.30)."""
+
+    regulatory_calendar_min_coverage_pct: float = 0.0
+    """Min regulatory coverage % (eligible flagged / eligible) before WARN. 0 = disabled."""
+
+    regulatory_calendar_max_stale_days: int = 180
+    """WARN if newest as_of_disclosed_at in manual calendar is older than this many days."""
 
     @staticmethod
     def from_json(path: Path) -> "GateConfig":
@@ -2393,6 +2400,84 @@ def _stale_mismatch_held_context(
         return ""
 
 
+def check_regulatory_calendar(
+    snapshot_date_dir: Path,
+    as_of_date: str,
+    config: GateConfig,
+) -> GateResult:
+    """Check regulatory calendar health: load success, coverage, freshness.
+
+    WARN-only gate. Fires if:
+      - Manual calendar fails to load
+      - Eligible regulatory coverage < configured minimum
+      - Newest as_of_disclosed_at is older than configured threshold
+    """
+    name = "regulatory_calendar"
+
+    # 1. Check metadata for regulatory coverage
+    meta_path = snapshot_date_dir / "metadata.json"
+    if not meta_path.is_file():
+        return GateResult(
+            name=name,
+            status="WARN",
+            detail="metadata.json not found — cannot check regulatory calendar",
+        )
+
+    try:
+        with open(meta_path) as f:
+            meta = json.load(f)
+    except Exception as e:
+        return GateResult(name=name, status="WARN", detail=f"metadata.json parse error: {e}")
+
+    reg_cov = meta.get("regulatory_coverage", {})
+    manual_n = reg_cov.get("manual_calendar_n_records", 0)
+    n_flagged = reg_cov.get("n_eligible_flagged", 0)
+    coverage_pct = reg_cov.get("regulatory_secondary_coverage_pct", 0.0)
+
+    warnings = []
+
+    # 2. Calendar load check
+    if manual_n == 0:
+        warnings.append("manual calendar empty or failed to load")
+
+    # 3. Coverage floor
+    min_cov = config.regulatory_calendar_min_coverage_pct
+    if min_cov > 0 and coverage_pct < min_cov:
+        warnings.append(f"coverage {coverage_pct:.1f}% < {min_cov:.1f}% floor")
+
+    # 4. Freshness check — newest disclosed_at in the calendar
+    try:
+        from common.regulatory_calendar import load_and_validate
+
+        records, _ = load_and_validate(as_of_date=as_of_date)
+        if records:
+            newest_disclosed = max(
+                (r.get("as_of_disclosed_at", "") for r in records),
+                default="",
+            )
+            if newest_disclosed:
+                try:
+                    newest_dt = date.fromisoformat(newest_disclosed)
+                    as_of_dt = date.fromisoformat(as_of_date)
+                    age_days = (as_of_dt - newest_dt).days
+                    if age_days > config.regulatory_calendar_max_stale_days:
+                        warnings.append(
+                            f"newest disclosed_at={newest_disclosed} "
+                            f"is {age_days}d old (threshold={config.regulatory_calendar_max_stale_days}d)"
+                        )
+                except ValueError:
+                    pass
+    except Exception:
+        pass  # Freshness is best-effort
+
+    if warnings:
+        detail = f"n_manual={manual_n}, flagged={n_flagged}, " f"coverage={coverage_pct:.1f}% | {'; '.join(warnings)}"
+        return GateResult(name=name, status="WARN", detail=detail)
+
+    detail = f"n_manual={manual_n}, flagged={n_flagged}, coverage={coverage_pct:.1f}%"
+    return GateResult(name=name, status="PASS", detail=detail)
+
+
 def check_audit_result(
     audit_proc: subprocess.CompletedProcess,
     config: GateConfig,
@@ -3570,6 +3655,11 @@ def run_daily(
     )
     gate_results.append(rc_gate)
     print(f"  Risk concentration gate: {rc_gate.status} — {rc_gate.detail}")
+
+    # --- Gate: regulatory_calendar (WARN-only) ---
+    reg_cal_gate = check_regulatory_calendar(staging_date_dir, as_of_date, config)
+    gate_results.append(reg_cal_gate)
+    print(f"  Regulatory calendar gate: {reg_cal_gate.status} — {reg_cal_gate.detail}")
 
     # --- Step 5: Build manifest ---
     print("\n[5/5] Building run manifest ...")
