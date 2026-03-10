@@ -912,34 +912,255 @@ def load_xbi_price(price_path: Path, date: str) -> Optional[float]:
 # Fill-price helpers
 # ---------------------------------------------------------------------------
 
+FILLS_ROOT = SHADOW_ROOT / "fills"
 
-def _load_fill_prices(trade_date: str, trades_root: Optional[Path] = None) -> Dict[str, float]:
-    """If fills.csv exists for trade_date, return {ticker: fill_price}.
+
+def _find_fills_csv(
+    trade_date: str,
+    *,
+    fills_root: Optional[Path] = None,
+    trades_root: Optional[Path] = None,
+) -> Optional[Path]:
+    """Locate fills CSV for a date, checking canonical then legacy paths.
+
+    Search order:
+      1. fills_root/{date}/fills.normalized.csv
+      2. fills_root/{date}/fills.csv
+      3. trades_root/{date}/fills.csv  (legacy)
+    """
+    _fills_root = fills_root or FILLS_ROOT
+    _trades_root = trades_root if trades_root is not None else (SHADOW_ROOT / "trades")
+
+    candidates = [
+        _fills_root / trade_date / "fills.normalized.csv",
+        _fills_root / trade_date / "fills.csv",
+        _trades_root / trade_date / "fills.csv",
+    ]
+    for c in candidates:
+        if c.is_file():
+            return c
+    return None
+
+
+def _load_fill_data(
+    trade_date: str,
+    *,
+    fills_root: Optional[Path] = None,
+    trades_root: Optional[Path] = None,
+) -> List[Dict[str, Any]]:
+    """Load full fill records for a trade date.
+
+    Returns list of dicts with keys: ticker, action, target_usd, fill_price,
+    fill_shares, fill_usd, slippage_bps, status, plus optional bucket/family.
+    """
+    fills_csv = _find_fills_csv(trade_date, fills_root=fills_root, trades_root=trades_root)
+    if fills_csv is None:
+        return []
+    result: List[Dict[str, Any]] = []
+    with open(fills_csv, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            entry: Dict[str, Any] = dict(row)
+            # Parse numeric fields
+            for key in ("target_usd", "fill_price", "fill_shares", "fill_usd", "slippage_bps"):
+                val = entry.get(key, "")
+                if val:
+                    try:
+                        entry[key] = float(val)
+                    except (ValueError, TypeError):
+                        entry[key] = 0.0
+                else:
+                    entry[key] = 0.0
+            result.append(entry)
+    return result
+
+
+def _load_fill_prices(
+    trade_date: str,
+    *,
+    fills_root: Optional[Path] = None,
+    trades_root: Optional[Path] = None,
+) -> Dict[str, float]:
+    """If fills exist for trade_date, return {ticker: fill_price (VWAP)}.
 
     Fill prices override the close-price cost basis in performance computation,
     giving a more accurate P&L when real execution data is available.
     """
-    if trades_root is None:
-        trades_root = SHADOW_ROOT / "trades"
-    fills_csv = trades_root / trade_date / "fills.csv"
-    if not fills_csv.is_file():
-        return {}
+    fill_data = _load_fill_data(trade_date, fills_root=fills_root, trades_root=trades_root)
     result: Dict[str, float] = {}
-    with open(fills_csv, newline="", encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            if row.get("status") not in ("FILLED", "PARTIAL"):
-                continue
-            ticker = row.get("ticker", "")
-            price_str = row.get("fill_price", "")
-            if not ticker or not price_str:
-                continue
-            try:
-                price = float(price_str)
-                if price > 0:
-                    result[ticker] = price
-            except (ValueError, TypeError):
-                continue
+    for row in fill_data:
+        if row.get("status") not in ("FILLED", "PARTIAL"):
+            continue
+        ticker = row.get("ticker", "")
+        price = row.get("fill_price", 0.0)
+        if ticker and isinstance(price, (int, float)) and price > 0:
+            result[ticker] = price
     return result
+
+
+def compute_execution_quality_metrics(
+    fill_data: List[Dict[str, Any]],
+    ref_prices: Dict[str, float],
+) -> Dict[str, Any]:
+    """Compute execution quality from fill data + reference close prices.
+
+    For each filled trade, computes slippage vs ref price:
+      - BUY: slippage_bps = (vwap - ref) / ref * 10000  (positive = worse)
+      - SELL: slippage_bps = (ref - vwap) / ref * 10000  (positive = worse)
+
+    Returns dict with per-trade, totals, by_bucket, by_family breakdowns.
+    """
+    per_trade: List[Dict[str, Any]] = []
+    total_filled_notional = 0.0
+    total_intended_notional = 0.0
+    total_slippage_usd = 0.0
+    by_bucket: Dict[str, Dict[str, float]] = {}
+    by_family: Dict[str, Dict[str, float]] = {}
+
+    for row in fill_data:
+        ticker = row.get("ticker", "")
+        side = row.get("action", "BUY")
+        status = row.get("status", "")
+        target_usd = row.get("target_usd", 0.0)
+        if isinstance(target_usd, str):
+            try:
+                target_usd = float(target_usd)
+            except (ValueError, TypeError):
+                target_usd = 0.0
+
+        total_intended_notional += abs(target_usd)
+
+        if status not in ("FILLED", "PARTIAL"):
+            continue
+
+        vwap = row.get("fill_price", 0.0)
+        qty = row.get("fill_shares", 0.0)
+        notional = row.get("fill_usd", 0.0)
+        if isinstance(notional, str):
+            try:
+                notional = float(notional)
+            except (ValueError, TypeError):
+                notional = 0.0
+        if notional <= 0 and vwap > 0 and qty > 0:
+            notional = vwap * qty
+
+        total_filled_notional += notional
+
+        ref = ref_prices.get(ticker, 0.0)
+        if ref > 0 and vwap > 0:
+            if side == "BUY":
+                slip_bps = (vwap - ref) / ref * 10000
+            else:
+                slip_bps = (ref - vwap) / ref * 10000
+            slip_usd = notional * slip_bps / 10000
+        else:
+            slip_bps = 0.0
+            slip_usd = 0.0
+
+        total_slippage_usd += slip_usd
+
+        trade_entry = {
+            "ticker": ticker,
+            "side": side,
+            "qty": qty,
+            "vwap": vwap,
+            "ref_price": ref,
+            "slippage_vs_ref_bps": round(slip_bps, 2),
+            "slippage_usd": round(slip_usd, 2),
+            "notional": round(notional, 2),
+        }
+        per_trade.append(trade_entry)
+
+        # Bucket attribution
+        bucket = row.get("bucket", "other")
+        if bucket not in by_bucket:
+            by_bucket[bucket] = {"slippage_usd": 0.0, "notional": 0.0, "n": 0}
+        by_bucket[bucket]["slippage_usd"] += slip_usd
+        by_bucket[bucket]["notional"] += notional
+        by_bucket[bucket]["n"] += 1
+
+        # Family attribution
+        family = row.get("effective_family", "OTHER")
+        if family not in by_family:
+            by_family[family] = {"slippage_usd": 0.0, "notional": 0.0, "n": 0}
+        by_family[family]["slippage_usd"] += slip_usd
+        by_family[family]["notional"] += notional
+        by_family[family]["n"] += 1
+
+    fill_coverage = (total_filled_notional / total_intended_notional * 100) if total_intended_notional > 0 else 0.0
+    total_slip_bps = (total_slippage_usd / total_filled_notional * 10000) if total_filled_notional > 0 else 0.0
+
+    # Round bucket/family values
+    for d in list(by_bucket.values()) + list(by_family.values()):
+        d["slippage_usd"] = round(d["slippage_usd"], 2)
+        d["notional"] = round(d["notional"], 2)
+        d["slippage_bps"] = round(d["slippage_usd"] / d["notional"] * 10000, 2) if d["notional"] > 0 else 0.0
+
+    return {
+        "fill_coverage_pct": round(fill_coverage, 1),
+        "total_traded_usd": round(total_filled_notional, 2),
+        "total_slippage_usd": round(total_slippage_usd, 2),
+        "total_slippage_bps": round(total_slip_bps, 2),
+        "per_trade": per_trade,
+        "by_bucket": by_bucket,
+        "by_family": by_family,
+    }
+
+
+def render_execution_quality_md(
+    metrics: Optional[Dict[str, Any]],
+) -> List[str]:
+    """Render execution quality section for weekly summary. Returns lines list."""
+    if not metrics:
+        return []
+
+    lines = []
+    lines.append("## Execution Quality")
+    lines.append("")
+    lines.append(
+        f"- **Fill coverage**: {metrics['fill_coverage_pct']:.1f}%"
+        f" | **Total traded**: ${metrics['total_traded_usd']:,.0f}"
+    )
+    lines.append(
+        f"- **Total slippage**: ${metrics['total_slippage_usd']:+,.2f}" f" ({metrics['total_slippage_bps']:+.1f} bps)"
+    )
+    lines.append("")
+
+    # Top 5 worst slippage trades
+    per_trade = metrics.get("per_trade", [])
+    if per_trade:
+        worst = sorted(per_trade, key=lambda t: -abs(t.get("slippage_vs_ref_bps", 0)))[:5]
+        lines.append("### Worst Slippage (top 5)")
+        lines.append("")
+        lines.append("| Ticker | Side | Qty | VWAP | Ref | Slippage bps |")
+        lines.append("|--------|------|-----|------|-----|--------------|")
+        for t in worst:
+            lines.append(
+                f"| {t['ticker']} | {t['side']} | {t['qty']:.0f}"
+                f" | ${t['vwap']:.2f} | ${t['ref_price']:.2f}"
+                f" | {t['slippage_vs_ref_bps']:+.1f} |"
+            )
+        lines.append("")
+
+    # By bucket
+    by_bucket = metrics.get("by_bucket", {})
+    if by_bucket:
+        lines.append("### Slippage by Bucket")
+        lines.append("")
+        lines.append("| Bucket | N | Notional | Slippage $ | Slippage bps |")
+        lines.append("|--------|---|----------|------------|--------------|")
+        for b in BUCKET_NAMES:
+            bd = by_bucket.get(b)
+            if bd:
+                label = BUCKET_DISPLAY.get(b, b)
+                lines.append(
+                    f"| {label} | {bd['n']}"
+                    f" | ${bd['notional']:,.0f}"
+                    f" | ${bd['slippage_usd']:+,.2f}"
+                    f" | {bd['slippage_bps']:+.1f} |"
+                )
+        lines.append("")
+
+    return lines
 
 
 # ---------------------------------------------------------------------------
@@ -954,13 +1175,14 @@ def compute_performance(
     current_date: str,
     price_path: Path = PRICE_HISTORY_PATH,
     trades_root: Optional[Path] = None,
+    fills_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Compute realized P&L between two position snapshots.
 
     Returns dict with total_pnl, pnl_pct, excess_vs_xbi, sleeve attribution,
-    turnover metrics.
+    turnover metrics, and execution_quality (when fills exist).
 
-    If fills.csv exists for prior_date, fill prices override close prices
+    If fills exist for prior_date, fill prices override close prices
     for the entry cost basis.
     """
     _assert_not_production_default("price_path", price_path, PRICE_HISTORY_PATH)
@@ -968,10 +1190,24 @@ def compute_performance(
     current_prices = load_price_map(price_path, current_date)
 
     # Override entry cost basis with fill prices when available
-    fill_prices = _load_fill_prices(prior_date, trades_root=trades_root)
+    fill_prices = _load_fill_prices(prior_date, fills_root=fills_root, trades_root=trades_root)
     if fill_prices:
         for ticker, fp in fill_prices.items():
             prior_prices[ticker] = fp
+
+    # Load full fill data for execution quality metrics
+    fill_data = _load_fill_data(prior_date, fills_root=fills_root, trades_root=trades_root)
+
+    # Annotate fill data with position bucket/family for attribution
+    pos_meta = {p["ticker"]: p for p in prior_positions}
+    for fd in fill_data:
+        ticker = fd.get("ticker", "")
+        pm = pos_meta.get(ticker, {})
+        if "bucket" not in fd or not fd["bucket"]:
+            fd["bucket"] = pm.get("bucket", "other")
+        if "effective_family" not in fd or not fd["effective_family"]:
+            fd["effective_family"] = pm.get("effective_family", "OTHER")
+
     xbi_prior = load_xbi_price(price_path, prior_date)
     xbi_current = load_xbi_price(price_path, current_date)
 
@@ -1048,7 +1284,14 @@ def compute_performance(
     # Sort contributors by $ P&L descending for easy access
     contributors.sort(key=lambda c: -c["pnl"])
 
-    return {
+    # Execution quality metrics (only when fills exist)
+    exec_quality = None
+    if fill_data:
+        # Use close prices (before fill override) as reference
+        ref_prices = load_price_map(price_path, prior_date)
+        exec_quality = compute_execution_quality_metrics(fill_data, ref_prices)
+
+    result = {
         "prior_date": prior_date,
         "current_date": current_date,
         "total_pnl": round(total_pnl, 2),
@@ -1065,6 +1308,9 @@ def compute_performance(
         "overlap": len(overlap),
         "gap_risk_high_count": sum(1 for p in current_positions if p.get("gap_risk") == "HIGH"),
     }
+    if exec_quality is not None:
+        result["execution_quality"] = exec_quality
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -1612,6 +1858,11 @@ def write_weekly_summary(
             s91_exc = s91.get("excess_vs_xbi_pct", 0)
             lines.append(f"- **Binary 91-180 Excess vs XBI: {s91_exc:+.2f}%** (primary sleeve)")
         lines.append("")
+
+        # Execution Quality (only when fills data present)
+        exec_quality = perf.get("execution_quality")
+        if exec_quality:
+            lines.extend(render_execution_quality_md(exec_quality))
 
         # Trailing Alpha Dashboard (1w / 4w)
         try:
