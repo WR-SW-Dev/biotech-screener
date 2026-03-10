@@ -824,6 +824,40 @@ def load_xbi_price(price_path: Path, date: str) -> Optional[float]:
 
 
 # ---------------------------------------------------------------------------
+# Fill-price helpers
+# ---------------------------------------------------------------------------
+
+
+def _load_fill_prices(trade_date: str, trades_root: Optional[Path] = None) -> Dict[str, float]:
+    """If fills.csv exists for trade_date, return {ticker: fill_price}.
+
+    Fill prices override the close-price cost basis in performance computation,
+    giving a more accurate P&L when real execution data is available.
+    """
+    if trades_root is None:
+        trades_root = SHADOW_ROOT / "trades"
+    fills_csv = trades_root / trade_date / "fills.csv"
+    if not fills_csv.is_file():
+        return {}
+    result: Dict[str, float] = {}
+    with open(fills_csv, newline="", encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row.get("status") not in ("FILLED", "PARTIAL"):
+                continue
+            ticker = row.get("ticker", "")
+            price_str = row.get("fill_price", "")
+            if not ticker or not price_str:
+                continue
+            try:
+                price = float(price_str)
+                if price > 0:
+                    result[ticker] = price
+            except (ValueError, TypeError):
+                continue
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Performance computation
 # ---------------------------------------------------------------------------
 
@@ -834,15 +868,25 @@ def compute_performance(
     prior_date: str,
     current_date: str,
     price_path: Path = PRICE_HISTORY_PATH,
+    trades_root: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Compute realized P&L between two position snapshots.
 
     Returns dict with total_pnl, pnl_pct, excess_vs_xbi, sleeve attribution,
     turnover metrics.
+
+    If fills.csv exists for prior_date, fill prices override close prices
+    for the entry cost basis.
     """
     _assert_not_production_default("price_path", price_path, PRICE_HISTORY_PATH)
     prior_prices = load_price_map(price_path, prior_date)
     current_prices = load_price_map(price_path, current_date)
+
+    # Override entry cost basis with fill prices when available
+    fill_prices = _load_fill_prices(prior_date, trades_root=trades_root)
+    if fill_prices:
+        for ticker, fp in fill_prices.items():
+            prior_prices[ticker] = fp
     xbi_prior = load_xbi_price(price_path, prior_date)
     xbi_current = load_xbi_price(price_path, current_date)
 

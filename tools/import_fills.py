@@ -19,7 +19,9 @@ from typing import Dict, List
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.record_fills import FILLS_COLUMNS, TRADES_ROOT, compute_slippage_bps
+from tools.record_fills import FILLS_COLUMNS, compute_slippage_bps
+
+TRADES_ROOT = PROJECT_ROOT / "artifacts" / "live_shadow" / "trades"
 
 BROKER_SCHEMAS: Dict[str, Dict[str, str]] = {
     "ibkr": {
@@ -38,13 +40,7 @@ BROKER_SCHEMAS: Dict[str, Dict[str, str]] = {
     },
 }
 
-# IBKR uses BOT/SLD; normalize to BUY/SELL
-_SIDE_MAP: Dict[str, str] = {
-    "BOT": "BUY",
-    "BUY": "BUY",
-    "SLD": "SELL",
-    "SELL": "SELL",
-}
+IBKR_SIDE_MAP = {"BOT": "BUY", "SLD": "SELL", "BUY": "BUY", "SELL": "SELL"}
 
 
 def detect_broker_format(csv_path: Path) -> str:
@@ -78,7 +74,7 @@ def normalize_broker_csv(csv_path: Path, broker: str = "auto") -> List[Dict]:
     fills: List[Dict] = []
     for row in rows:
         raw_side = (row.get(schema["side"], "") or "").strip().upper()
-        side = _SIDE_MAP.get(raw_side, raw_side)
+        side = IBKR_SIDE_MAP.get(raw_side, raw_side) if broker == "ibkr" else raw_side
         if side not in ("BUY", "SELL"):
             continue
 

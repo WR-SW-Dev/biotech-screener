@@ -2,11 +2,11 @@
 
 Validates:
   1. Hit rate by bucket — correct counts and percentages
-  2. Alpha leaders — top/bottom 5 sorted correctly
-  3. Alpha leaders — bucket filter works
-  4. Signal diagnostics — catalyst_days average, gap-risk weight
-  5. Bucket movers — enter/exit detection
-  6. Integration — output .md has all new headers
+  2. Alpha leaders — top/bottom sorted correctly by excess_pnl
+  3. Alpha leaders — bucket filter restricts results
+  4. Signal diagnostics — catalyst_days average, gap-risk weight/usd
+  5. Bucket movers — enter/exit detection via current vs prior tickers
+  6. Integration — output .md has all new section headers
 """
 
 from __future__ import annotations
@@ -17,181 +17,227 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.live_shadow_portfolio import _compute_alpha_leaders, _compute_hit_rate_by_bucket, _compute_signal_diagnostics
+from tools.live_shadow_portfolio import (  # noqa: E402
+    _compute_alpha_leaders,
+    _compute_hit_rate_by_bucket,
+    _compute_signal_diagnostics,
+    write_weekly_summary,
+)
 
 
-def _make_contributors():
-    return [
-        {
-            "ticker": "AAPL",
-            "bucket": "binary_91_180",
-            "return_pct": 5.0,
-            "pnl": 500,
-            "excess_pnl": 200,
-            "dollars": 10000,
-        },
-        {
-            "ticker": "GOOG",
-            "bucket": "binary_91_180",
-            "return_pct": -2.0,
-            "pnl": -200,
-            "excess_pnl": -400,
-            "dollars": 10000,
-        },
-        {
-            "ticker": "AMGN",
-            "bucket": "binary_91_180",
-            "return_pct": 3.0,
-            "pnl": 300,
-            "excess_pnl": 100,
-            "dollars": 10000,
-        },
-        {"ticker": "BIIB", "bucket": "less_binary", "return_pct": 1.0, "pnl": 50, "excess_pnl": -50, "dollars": 5000},
-        {
-            "ticker": "REGN",
-            "bucket": "less_binary",
-            "return_pct": -4.0,
-            "pnl": -200,
-            "excess_pnl": -300,
-            "dollars": 5000,
-        },
-        {"ticker": "VRTX", "bucket": "binary_31_90", "return_pct": 8.0, "pnl": 400, "excess_pnl": 300, "dollars": 5000},
-        {
-            "ticker": "ALNY",
-            "bucket": "binary_0_30",
-            "return_pct": -10.0,
-            "pnl": -500,
-            "excess_pnl": -600,
-            "dollars": 5000,
-        },
-    ]
+def _contrib(ticker, bucket, return_pct, pnl, dollars, excess_pnl=0.0):
+    return {
+        "ticker": ticker,
+        "bucket": bucket,
+        "return_pct": return_pct,
+        "pnl": pnl,
+        "dollars": dollars,
+        "excess_pnl": excess_pnl,
+    }
+
+
+def _position(ticker, bucket, target_dollars, catalyst_days, gap_risk, weight_pct=5.0):
+    return {
+        "ticker": ticker,
+        "bucket": bucket,
+        "target_dollars": target_dollars,
+        "catalyst_days": catalyst_days,
+        "gap_risk": gap_risk,
+        "weight_pct": weight_pct,
+    }
+
+
+# -------------------------------------------------------------------
+# 1. Hit rate by bucket
+# -------------------------------------------------------------------
 
 
 class TestHitRateByBucket:
-    def test_correct_counts(self):
-        contribs = _make_contributors()
+    def test_hit_rate_by_bucket(self):
+        contribs = [
+            _contrib("AAA", "binary_91_180", 5.0, 500, 10000),
+            _contrib("BBB", "binary_91_180", -2.0, -200, 10000),
+            _contrib("CCC", "binary_91_180", 3.0, 300, 10000),
+            _contrib("DDD", "less_binary", -1.0, -50, 5000),
+            _contrib("EEE", "less_binary", 1.5, 75, 5000),
+        ]
         result = _compute_hit_rate_by_bucket(contribs)
         by_bucket = {r["bucket"]: r for r in result}
-        # binary_91_180: AAPL(+), GOOG(-), AMGN(+) → 2/3
+
         b91 = by_bucket["binary_91_180"]
         assert b91["names"] == 3
         assert b91["positive"] == 2
         assert abs(b91["hit_rate"] - 66.67) < 0.1
 
-    def test_empty_bucket_excluded(self):
-        contribs = [{"ticker": "AAPL", "bucket": "binary_91_180", "return_pct": 5.0, "pnl": 500}]
-        result = _compute_hit_rate_by_bucket(contribs)
-        buckets = [r["bucket"] for r in result]
-        assert "less_binary" not in buckets
+        lb = by_bucket["less_binary"]
+        assert lb["names"] == 2
+        assert lb["positive"] == 1
+        assert abs(lb["hit_rate"] - 50.0) < 0.1
+
+        # Buckets with no contributors should be absent
+        buckets_present = {r["bucket"] for r in result}
+        assert "binary_0_30" not in buckets_present
 
 
-class TestAlphaLeaders:
-    def test_overall(self):
-        contribs = _make_contributors()
+# -------------------------------------------------------------------
+# 2. Alpha leaders — overall
+# -------------------------------------------------------------------
+
+
+class TestAlphaLeadersOverall:
+    def test_alpha_leaders_overall(self):
+        contribs = [
+            _contrib("A", "binary_91_180", 1, 10, 100, excess_pnl=50),
+            _contrib("B", "binary_91_180", 2, 20, 100, excess_pnl=30),
+            _contrib("C", "less_binary", -1, -10, 100, excess_pnl=-20),
+            _contrib("D", "binary_0_30", 3, 30, 100, excess_pnl=80),
+            _contrib("E", "binary_31_90", -2, -5, 100, excess_pnl=-50),
+            _contrib("F", "less_binary", 0.5, 5, 100, excess_pnl=10),
+            _contrib("G", "binary_91_180", -3, -30, 100, excess_pnl=-70),
+        ]
         top, bottom = _compute_alpha_leaders(contribs, n=3)
-        # Top by excess_pnl: VRTX(300), AAPL(200), AMGN(100)
-        assert [c["ticker"] for c in top] == ["VRTX", "AAPL", "AMGN"]
-        # Bottom: ALNY(-600), GOOG(-400), REGN(-300)
-        assert [c["ticker"] for c in bottom] == ["ALNY", "GOOG", "REGN"]
 
-    def test_filtered(self):
-        contribs = _make_contributors()
-        top, bottom = _compute_alpha_leaders(contribs, n=2, bucket_filter="binary_91_180")
-        # Only binary_91_180: AAPL(200), AMGN(100), GOOG(-400)
-        assert len(top) == 2
-        assert top[0]["ticker"] == "AAPL"
-        assert bottom[0]["ticker"] == "GOOG"
+        # Top 3 by excess_pnl descending: D(80), A(50), B(30)
+        assert len(top) == 3
+        assert [c["ticker"] for c in top] == ["D", "A", "B"]
+
+        # Bottom 3 by excess_pnl ascending: G(-70), E(-50), C(-20)
+        assert len(bottom) == 3
+        assert [c["ticker"] for c in bottom] == ["G", "E", "C"]
+
+
+# -------------------------------------------------------------------
+# 3. Alpha leaders — bucket filter
+# -------------------------------------------------------------------
+
+
+class TestAlphaLeadersFiltered:
+    def test_alpha_leaders_filtered(self):
+        contribs = [
+            _contrib("A", "binary_91_180", 1, 10, 100, excess_pnl=200),
+            _contrib("B", "less_binary", 2, 20, 100, excess_pnl=900),
+            _contrib("C", "binary_91_180", -1, -10, 100, excess_pnl=-30),
+            _contrib("D", "binary_0_30", 3, 30, 100, excess_pnl=800),
+            _contrib("E", "binary_91_180", 0.5, 5, 100, excess_pnl=50),
+        ]
+        top, bottom = _compute_alpha_leaders(
+            contribs,
+            n=5,
+            bucket_filter="binary_91_180",
+        )
+        all_tickers = {c["ticker"] for c in top + bottom}
+        # Only binary_91_180 tickers should appear
+        assert all_tickers <= {"A", "C", "E"}
+        assert "B" not in all_tickers
+        assert "D" not in all_tickers
+
+        # Top should be sorted by excess_pnl descending
+        assert top[0]["ticker"] == "A"
+
+
+# -------------------------------------------------------------------
+# 4. Signal diagnostics
+# -------------------------------------------------------------------
 
 
 class TestSignalDiagnostics:
-    def test_catalyst_days_and_gap_risk(self):
+    def test_signal_diagnostics(self):
+        positions = [
+            _position("AAA", "binary_91_180", 10000, "45", "HIGH"),
+            _position("BBB", "binary_91_180", 10000, "90", "LOW"),
+            _position("CCC", "less_binary", 5000, "30", "HIGH"),
+        ]
+        prior = [
+            _position("AAA", "binary_91_180", 10000, "50", "HIGH"),
+            _position("DDD", "binary_0_30", 8000, "10", "LOW"),
+        ]
+        diag = _compute_signal_diagnostics(positions, prior)
+
+        # avg_catalyst_days = (45+90+30)/3 = 55.0
+        assert abs(diag["avg_catalyst_days"] - 55.0) < 0.1
+
+        # gap HIGH: AAA(10000) + CCC(5000) = 15000 out of 25000 total = 60%
+        assert abs(diag["gap_high_weight"] - 60.0) < 0.1
+        assert abs(diag["gap_high_usd"] - 15000.0) < 0.01
+
+
+# -------------------------------------------------------------------
+# 5. Bucket movers
+# -------------------------------------------------------------------
+
+
+class TestBucketMovers:
+    def test_bucket_movers(self):
+        current = [
+            _position("AAA", "binary_91_180", 10000, "45", "LOW"),
+            _position("BBB", "binary_91_180", 10000, "90", "LOW"),
+            _position("CCC", "less_binary", 5000, "30", "LOW"),
+        ]
+        prior = [
+            _position("AAA", "binary_91_180", 10000, "50", "LOW"),
+            _position("DDD", "binary_0_30", 8000, "10", "LOW"),
+            _position("EEE", "binary_31_90", 6000, "20", "LOW"),
+        ]
+        diag = _compute_signal_diagnostics(current, prior)
+
+        # Entered: BBB, CCC (in current but not prior)
+        assert diag["bucket_movers_in"] == 2
+        # Exited: DDD, EEE (in prior but not current)
+        assert diag["bucket_movers_out"] == 2
+
+
+# -------------------------------------------------------------------
+# 6. Integration — weekly summary .md contains new section headers
+# -------------------------------------------------------------------
+
+
+class TestWeeklySummaryContainsNewSections:
+    def test_weekly_summary_contains_new_sections(self, tmp_path):
         positions = [
             {
-                "ticker": "AAPL",
+                "ticker": "AAA",
+                "bucket": "binary_91_180",
+                "actionable_rank": 1,
+                "target_dollars": 15000,
                 "catalyst_days": "90",
-                "gap_risk": "HIGH",
-                "target_dollars": 10000,
-                "bucket": "binary_91_180",
-            },
-            {
-                "ticker": "GOOG",
-                "catalyst_days": "120",
                 "gap_risk": "",
-                "target_dollars": 10000,
-                "bucket": "binary_91_180",
+                "weight_pct": 3.0,
             },
             {
-                "ticker": "BIIB",
+                "ticker": "BBB",
+                "bucket": "less_binary",
+                "actionable_rank": 5,
+                "target_dollars": 10000,
                 "catalyst_days": "",
                 "gap_risk": "HIGH",
-                "target_dollars": 5000,
-                "bucket": "less_binary",
+                "weight_pct": 2.0,
             },
         ]
-        prior = [
-            {"ticker": "AAPL", "bucket": "binary_91_180"},
-            {"ticker": "REGN", "bucket": "less_binary"},
-        ]
-        result = _compute_signal_diagnostics(positions, prior)
-        assert abs(result["avg_catalyst_days"] - 105.0) < 0.1  # (90+120)/2
-        assert result["gap_high_weight"] > 0
-        assert result["gap_high_usd"] == 15000  # 10000+5000
-
-    def test_bucket_movers(self):
-        positions = [
-            {"ticker": "AAPL", "bucket": "binary_91_180"},
-            {"ticker": "NEW1", "bucket": "binary_31_90"},
-        ]
-        prior = [
-            {"ticker": "AAPL", "bucket": "binary_91_180"},
-            {"ticker": "OLD1", "bucket": "less_binary"},
-        ]
-        result = _compute_signal_diagnostics(positions, prior)
-        assert result["bucket_movers_in"] == 1  # NEW1 entered
-        assert result["bucket_movers_out"] == 1  # OLD1 exited
-
-
-class TestWeeklySummaryIntegration:
-    def test_new_sections_present(self, tmp_path):
-        from tools.live_shadow_portfolio import write_weekly_summary
-
         positions_data = {
-            "positions": [
-                {
-                    "ticker": "AAPL",
-                    "bucket": "binary_91_180",
-                    "actionable_rank": 1,
-                    "weight_pct": 3.0,
-                    "target_dollars": 15000,
-                    "gap_risk": "",
-                    "catalyst_days": "90",
-                    "catalyst_mode": "specific_days",
-                },
-                {
-                    "ticker": "GOOG",
-                    "bucket": "less_binary",
-                    "actionable_rank": 5,
-                    "weight_pct": 2.0,
-                    "target_dollars": 10000,
-                    "gap_risk": "HIGH",
-                    "catalyst_days": "",
-                    "catalyst_mode": "",
-                },
-            ],
+            "positions": positions,
             "summary": {
-                "total_positions": 2,
                 "total_allocated": 25000,
                 "residual_cash": 475000,
                 "per_bucket": {
-                    "binary_0_30": {"count": 0, "total_dollars": 0, "weight_pct": 0},
-                    "binary_31_90": {"count": 0, "total_dollars": 0, "weight_pct": 0},
-                    "binary_91_180": {"count": 1, "total_dollars": 15000, "weight_pct": 3.0},
-                    "less_binary": {"count": 1, "total_dollars": 10000, "weight_pct": 2.0},
+                    "binary_91_180": {
+                        "count": 1,
+                        "total_dollars": 15000,
+                        "weight_pct": 3.0,
+                    },
+                    "less_binary": {
+                        "count": 1,
+                        "total_dollars": 10000,
+                        "weight_pct": 2.0,
+                    },
                 },
-                "gap_risk_high": ["GOOG"],
+                "gap_risk_high": ["BBB"],
                 "missing_price": [],
             },
         }
+        contributors = [
+            _contrib("AAA", "binary_91_180", 2.67, 400, 15000, excess_pnl=250),
+            _contrib("BBB", "less_binary", 1.0, 100, 10000, excess_pnl=0),
+        ]
         perf = {
             "prior_date": "2026-03-01",
             "total_pnl": 500,
@@ -217,35 +263,28 @@ class TestWeeklySummaryIntegration:
                     "excess_pnl": 0,
                 },
             },
-            "contributors": [
-                {
-                    "ticker": "AAPL",
-                    "bucket": "binary_91_180",
-                    "dollars": 15000,
-                    "return_pct": 2.67,
-                    "pnl": 400,
-                    "excess_vs_xbi_pct": 1.67,
-                    "excess_pnl": 250,
-                },
-                {
-                    "ticker": "GOOG",
-                    "bucket": "less_binary",
-                    "dollars": 10000,
-                    "return_pct": 1.0,
-                    "pnl": 100,
-                    "excess_vs_xbi_pct": 0.0,
-                    "excess_pnl": 0,
-                },
-            ],
+            "contributors": contributors,
         }
         policy = {
             "account_usd": 500000,
-            "bucket_targets": {"binary_0_30": 0.10, "binary_31_90": 0.25, "binary_91_180": 0.55, "less_binary": 0.10},
+            "bucket_targets": {
+                "binary_0_30": 0.10,
+                "binary_31_90": 0.25,
+                "binary_91_180": 0.55,
+                "less_binary": 0.10,
+            },
         }
-        metadata = {"ruleset_id": "test123"}
+        metadata = {"ruleset_id": "test_rs_001"}
 
         out_path = tmp_path / "weekly_summary.md"
-        write_weekly_summary("2026-03-08", positions_data, perf, policy, metadata, out_path)
+        write_weekly_summary(
+            "2026-03-09",
+            positions_data,
+            perf,
+            policy,
+            metadata,
+            out_path,
+        )
 
         text = out_path.read_text()
         assert "## Hit Rate by Bucket" in text
