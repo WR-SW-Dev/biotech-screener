@@ -60,18 +60,6 @@
     "notes": "Karuna/BMS NDA accepted; PDUFA date past as of 2026-03-01"
   },
   {
-    "ticker": "MRNA",
-    "drug_name": "mRNA-1345",
-    "indication": "RSV Vaccine",
-    "pdufa_date": "2026-05-12",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "MED",
-    "source": "ANALYST_ESTIMATE",
-    "as_of_disclosed_at": "2025-12-01",
-    "notes": "BLA filing announced; PDUFA date is analyst estimate"
-  },
-  {
     "ticker": "NBIX",
     "drug_name": "Elahere",
     "indication": "Ovarian Cancer 2L",
@@ -94,18 +82,6 @@
     "source": "COMPANY_GUIDANCE",
     "as_of_disclosed_at": "2025-12-27",
     "notes": "Regeneron sBLA accepted with PDUFA date"
-  },
-  {
-    "ticker": "RVMD",
-    "drug_name": "RVT-3101",
-    "indication": "Ulcerative Colitis",
-    "pdufa_date": "2026-07-15",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "MED",
-    "source": "ANALYST_ESTIMATE",
-    "as_of_disclosed_at": "2026-01-15",
-    "notes": "BLA filing announced; PDUFA date is analyst estimate"
   },
   {
     "ticker": "SRPT",
@@ -166,30 +142,6 @@
     "source": "COMPANY_GUIDANCE",
     "as_of_disclosed_at": "2025-10-10",
     "notes": "Ionis NDA accepted with PDUFA date"
-  },
-  {
-    "ticker": "BIIB",
-    "drug_name": "BIIB080",
-    "indication": "Alzheimer's Disease",
-    "pdufa_date": "2026-04-03",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "MED",
-    "source": "ANALYST_ESTIMATE",
-    "as_of_disclosed_at": "2026-01-03",
-    "notes": "Biogen BLA rolling submission; PDUFA date is analyst estimate"
-  },
-  {
-    "ticker": "APLS",
-    "drug_name": "Pegcetacoplan",
-    "indication": "Geographic Atrophy (Other Eye)",
-    "pdufa_date": "2026-07-01",
-    "event_type": "PDUFA",
-    "submission_type": "sBLA",
-    "confidence": "MED",
-    "source": "ANALYST_ESTIMATE",
-    "as_of_disclosed_at": "2026-01-01",
-    "notes": "Apellis sBLA for fellow eye; date is analyst estimate"
   },
   {
     "ticker": "ARGX",

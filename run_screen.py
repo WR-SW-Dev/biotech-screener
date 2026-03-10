@@ -1420,6 +1420,7 @@ SNAPSHOT_COLUMNS = [
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
+    "regulatory_confidence",
     "has_regulatory_upcoming_180d",
     "missing_components",
     "missingness_penalty",
@@ -3661,6 +3662,14 @@ def save_validation_snapshot(
         row["regulatory_days"] = _reg_days
         row["regulatory_event_type"] = _reg_et
         row["has_regulatory_upcoming_180d"] = "1" if _reg_days else "0"
+        # Stamp calendar confidence for portfolio construction
+        _rc = "HIGH"  # default; M3/ledger events are inherently high-confidence
+        if _reg_days and _pdufa_manual:
+            for _prec in _pdufa_manual:
+                if (_prec.get("ticker", "")).upper() == ticker.upper():
+                    _rc = (_prec.get("confidence") or "HIGH").upper()
+                    break
+        row["regulatory_confidence"] = _rc if _reg_days else ""
 
         # Catalyst priority (resolve from event_type + source via ruleset policy)
         rs = ruleset or DEFAULT_RULESET

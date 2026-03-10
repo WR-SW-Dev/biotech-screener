@@ -139,6 +139,10 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
         "regulatory_quality_tilt_enabled": False,
         "regulatory_quality_clip_lo": 0.30,
         "regulatory_quality_clip_hi": 1.00,
+        "regulatory_confidence_tilt_enabled": False,
+        "regulatory_confidence_weights": {"HIGH": 1.0, "MED": 0.6, "LOW": 0.3},
+        "regulatory_confidence_clip_lo": 0.30,
+        "regulatory_confidence_clip_hi": 1.00,
         "regulatory_resolution_enabled": False,
         "rebalance_buffer_ranks": 30,
         "bucket_hysteresis_days": 7,
@@ -279,6 +283,7 @@ def _make_position(
         "regulatory_event_type": row.get("regulatory_event_type", ""),
         "has_regulatory_upcoming_180d": row.get("has_regulatory_upcoming_180d", "0"),
         "regulatory_quality": row.get("regulatory_quality", "0"),
+        "regulatory_confidence": row.get("regulatory_confidence", "HIGH"),
         "regulatory_is_secondary": is_secondary_reg,
         "reg_sub_bucket": reg_sub,
     }
@@ -317,6 +322,57 @@ def _quality_weights(
     return [r / total for r in raw]
 
 
+_DEFAULT_CONFIDENCE_WEIGHTS = {"HIGH": 1.0, "MED": 0.6, "LOW": 0.3}
+
+
+def _confidence_factor(
+    row: Dict[str, str],
+    conf_weights: Dict[str, float],
+) -> float:
+    """Map regulatory_confidence → numeric weight multiplier."""
+    conf = (row.get("regulatory_confidence") or "HIGH").upper()
+    return conf_weights.get(conf, conf_weights.get("HIGH", 1.0))
+
+
+def _combined_weights(
+    rows: List[Dict[str, str]],
+    quality_tilt: bool,
+    q_lo: float,
+    q_hi: float,
+    confidence_tilt: bool,
+    conf_weights: Dict[str, float],
+    conf_clip_lo: float,
+    conf_clip_hi: float,
+) -> List[float]:
+    """Compute combined quality+confidence weights for sub-bucket allocation.
+
+    When only quality_tilt: same as _quality_weights.
+    When only confidence_tilt: weight = clip(confidence_factor, clip_lo, clip_hi).
+    When both: weight = clip(quality_clipped * confidence_factor, clip_lo, clip_hi).
+    When neither: equal weight.
+    """
+    fn = len(rows)
+    if fn == 0:
+        return []
+
+    raw = []
+    for row in rows:
+        w = 1.0
+        if quality_tilt:
+            q = _safe_float(row.get("regulatory_quality", ""), 0.0)
+            w = max(q_lo, min(q, q_hi))
+        if confidence_tilt:
+            cf = _confidence_factor(row, conf_weights)
+            w *= cf
+            w = max(conf_clip_lo, min(w, conf_clip_hi))
+        raw.append(w)
+
+    total = sum(raw)
+    if total <= 0:
+        return [1.0 / fn] * fn
+    return [r / total for r in raw]
+
+
 def _allocate_sub_bucket_quality(
     sb_rows: List[Dict[str, str]],
     sb_frac: float,
@@ -329,12 +385,16 @@ def _allocate_sub_bucket_quality(
     quality_tilt: bool,
     q_lo: float,
     q_hi: float,
+    confidence_tilt: bool = False,
+    conf_weights: Optional[Dict[str, float]] = None,
+    conf_clip_lo: float = 0.30,
+    conf_clip_hi: float = 1.00,
 ) -> List[Dict[str, Any]]:
-    """Allocate within one ladder sub-bucket, optionally quality-weighted.
+    """Allocate within one ladder sub-bucket, optionally quality/confidence-weighted.
 
-    When quality_tilt is True, dollars are proportional to clipped
-    regulatory_quality.  Cap-overflow is redistributed to uncapped names
-    in the same sub-bucket (up to 3 reflow passes to converge).
+    When quality_tilt or confidence_tilt is True, dollars are proportional
+    to combined weights.  Cap-overflow is redistributed to uncapped names
+    in the same sub-bucket (up to fn+1 reflow passes to converge).
     """
     fn = len(sb_rows)
     if fn == 0:
@@ -342,8 +402,17 @@ def _allocate_sub_bucket_quality(
 
     budget_pct = sb_frac * 100.0
 
-    if quality_tilt:
-        q_weights = _quality_weights(sb_rows, q_lo, q_hi)
+    if quality_tilt or confidence_tilt:
+        q_weights = _combined_weights(
+            sb_rows,
+            quality_tilt,
+            q_lo,
+            q_hi,
+            confidence_tilt,
+            conf_weights or _DEFAULT_CONFIDENCE_WEIGHTS,
+            conf_clip_lo,
+            conf_clip_hi,
+        )
     else:
         q_weights = [1.0 / fn] * fn
 
@@ -414,6 +483,10 @@ def _allocate_regulatory_ladder(
     quality_tilt: bool = False,
     quality_clip_lo: float = 0.30,
     quality_clip_hi: float = 1.00,
+    confidence_tilt: bool = False,
+    conf_weights: Optional[Dict[str, float]] = None,
+    conf_clip_lo: float = 0.30,
+    conf_clip_hi: float = 1.00,
 ) -> List[Dict[str, Any]]:
     """Allocate REGULATORY family budget across time-ladder sub-buckets.
 
@@ -490,6 +563,10 @@ def _allocate_regulatory_ladder(
                 quality_tilt,
                 quality_clip_lo,
                 quality_clip_hi,
+                confidence_tilt=confidence_tilt,
+                conf_weights=conf_weights,
+                conf_clip_lo=conf_clip_lo,
+                conf_clip_hi=conf_clip_hi,
             )
         )
 
@@ -557,6 +634,10 @@ def build_positions(
     quality_tilt = policy.get("regulatory_quality_tilt_enabled", False)
     quality_clip_lo = policy.get("regulatory_quality_clip_lo", 0.30)
     quality_clip_hi = policy.get("regulatory_quality_clip_hi", 1.00)
+    conf_tilt = policy.get("regulatory_confidence_tilt_enabled", False)
+    conf_weights = policy.get("regulatory_confidence_weights", _DEFAULT_CONFIDENCE_WEIGHTS)
+    conf_clip_lo = policy.get("regulatory_confidence_clip_lo", 0.30)
+    conf_clip_hi = policy.get("regulatory_confidence_clip_hi", 1.00)
     resolution_enabled = policy.get("regulatory_resolution_enabled", False)
 
     # Classify into buckets, compute effective family
@@ -670,6 +751,10 @@ def build_positions(
                             quality_tilt=quality_tilt,
                             quality_clip_lo=quality_clip_lo,
                             quality_clip_hi=quality_clip_hi,
+                            confidence_tilt=conf_tilt,
+                            conf_weights=conf_weights,
+                            conf_clip_lo=conf_clip_lo,
+                            conf_clip_hi=conf_clip_hi,
                         )
                     )
                 else:
@@ -1852,6 +1937,25 @@ def write_weekly_summary(
                 f"| {avg_d:.0f}d | {avg_q:.2f} | {min_q:.2f} | {max_q:.2f} | {cap_str} |"
             )
         lines.append("")
+
+        # Confidence breakdown (if confidence tilt enabled)
+        _conf_tilt_enabled = policy.get("regulatory_confidence_tilt_enabled", False)
+        if _conf_tilt_enabled:
+            _conf_wts = policy.get("regulatory_confidence_weights", _DEFAULT_CONFIDENCE_WEIGHTS)
+            lines.append("### Regulatory Confidence Breakdown")
+            lines.append("")
+            lines.append("| Confidence | Names | $ | Avg Weight |")
+            lines.append("|------------|-------|---|------------|")
+            for conf_level in ["HIGH", "MED", "LOW"]:
+                conf_pos = [
+                    p for p in reg_positions_with_sub if (p.get("regulatory_confidence") or "HIGH") == conf_level
+                ]
+                if not conf_pos:
+                    continue
+                conf_dollars = sum(p["target_dollars"] for p in conf_pos)
+                avg_cw = _conf_wts.get(conf_level, 1.0)
+                lines.append(f"| {conf_level} | {len(conf_pos)} | ${conf_dollars:,.0f} | {avg_cw:.2f} |")
+            lines.append("")
 
         # Top 5 per ladder bucket
         for sb in REG_LADDER_NAMES:

@@ -67,6 +67,10 @@
   "regulatory_quality_tilt_enabled": true,
   "regulatory_quality_clip_lo": 0.30,
   "regulatory_quality_clip_hi": 1.00,
+  "regulatory_confidence_tilt_enabled": false,
+  "regulatory_confidence_weights": {"HIGH": 1.0, "MED": 0.6, "LOW": 0.3},
+  "regulatory_confidence_clip_lo": 0.30,
+  "regulatory_confidence_clip_hi": 1.00,
   "regulatory_resolution_enabled": true,
   "rebalance_buffer_ranks": 30,
   "bucket_hysteresis_days": 7
