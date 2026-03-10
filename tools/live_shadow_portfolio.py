@@ -2609,10 +2609,34 @@ def run_shadow_portfolio(
     summary_path = shadow_root / "weekly_summary.md"
     write_weekly_summary(as_of_date, positions_data, perf, policy, metadata, summary_path)
 
+    # Attribution packet (best-effort — skip if no performance data)
+    attribution_paths = None
+    if perf is not None:
+        try:
+            from tools.build_attribution_packet import build_attribution_packet, write_attribution_packet
+
+            attr_root = shadow_root / "attribution"
+            packet = build_attribution_packet(
+                as_of_date,
+                positions_data["positions"],
+                perf,
+                policy,
+                snap_dir=snap_dir,
+                attribution_root=attr_root,
+            )
+            attr_out = attr_root / as_of_date
+            json_p, md_p = write_attribution_packet(packet, attr_out)
+            attribution_paths = {"json": str(json_p), "md": str(md_p)}
+        except Exception as exc:
+            import logging
+
+            logging.getLogger(__name__).warning("Attribution packet failed: %s", exc)
+
     return {
         "positions_path": str(pos_path),
         "summary": positions_data["summary"],
         "performance": perf,
+        "attribution": attribution_paths,
     }
 
 
