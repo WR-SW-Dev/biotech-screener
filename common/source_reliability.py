@@ -78,10 +78,32 @@ class ReliabilityBucket:
 # ---------------------------------------------------------------------------
 
 
+def _discretize_confidence(raw: str) -> str:
+    """Discretize confidence_overall (continuous float) into bands.
+
+    Bands:  HIGH >= 0.85, MED >= 0.70, LOW < 0.70, UNKNOWN if empty/invalid.
+    This prevents thousands of micro-buckets from float precision.
+    """
+    if not raw or raw == "UNKNOWN":
+        return "UNKNOWN"
+    try:
+        v = float(raw)
+    except (ValueError, TypeError):
+        return raw  # already a string like "HIGH"/"MED"/"LOW"
+    if v >= 0.85:
+        return "HIGH"
+    if v >= 0.70:
+        return "MED"
+    return "LOW"
+
+
 def aggregate_reliability(
     slip_rows: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
-    """Aggregate slip rows by source × confidence × family.
+    """Aggregate slip rows by source × confidence_band × family.
+
+    Confidence is discretized into HIGH/MED/LOW bands to avoid
+    micro-bucketing from continuous confidence_overall floats.
 
     Parameters
     ----------
@@ -97,7 +119,8 @@ def aggregate_reliability(
 
     for row in slip_rows:
         source = row.get("current_source") or row.get("prior_source") or "UNKNOWN"
-        confidence = row.get("current_confidence") or row.get("prior_confidence") or "UNKNOWN"
+        raw_conf = row.get("current_confidence") or row.get("prior_confidence") or "UNKNOWN"
+        confidence = _discretize_confidence(raw_conf)
         family = row.get("family", "OTHER")
 
         key = (source, confidence, family)
