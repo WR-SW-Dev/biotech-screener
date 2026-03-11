@@ -498,9 +498,14 @@ jobs:
           echo "executed=true" >> "$GITHUB_OUTPUT"
           echo "exec_exit_code=$EXEC_RC" >> "$GITHUB_OUTPUT"
 
-          # Append execution packet summary to step summary
+          # Append IC packet (or execution packet fallback) to step summary
+          IC_MD="artifacts/live_shadow/execution/${DATE}/IC_PACKET.md"
           EXEC_MD="artifacts/live_shadow/execution/${DATE}/EXECUTION_PACKET.md"
-          if [ -f "$EXEC_MD" ]; then
+          if [ -f "$IC_MD" ]; then
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "---" >> "$GITHUB_STEP_SUMMARY"
+            cat "$IC_MD" >> "$GITHUB_STEP_SUMMARY"
+          elif [ -f "$EXEC_MD" ]; then
             echo "" >> "$GITHUB_STEP_SUMMARY"
             echo "---" >> "$GITHUB_STEP_SUMMARY"
             cat "$EXEC_MD" >> "$GITHUB_STEP_SUMMARY"

@@ -478,6 +478,38 @@ def run_weekly_execution(
     }
     packet["snapshot"] = snap_result
 
+    # IC Packet (best-effort — skip on failure)
+    try:
+        # Load current positions for IC packet
+        from tools.build_trade_deltas import load_positions_json
+        from tools.ic_packet import build_ic_packet, write_ic_packet
+
+        pos_file = positions_dir / f"{as_of_date}.json"
+        positions = []
+        if pos_file.is_file():
+            _, positions = load_positions_json(pos_file)
+
+        policy = load_policy(policy_path)
+        metadata = load_metadata(snap_dir)
+        perf = pos_result.get("performance")
+
+        out_dir = execution_root / as_of_date
+        ic = build_ic_packet(
+            as_of_date,
+            packet,
+            positions,
+            policy,
+            metadata,
+            perf,
+            out_dir,
+            policy_path=policy_path,
+        )
+        write_ic_packet(out_dir, ic)
+    except Exception as exc:
+        import logging
+
+        logging.getLogger(__name__).warning("IC packet failed: %s", exc)
+
     return packet
 
 
