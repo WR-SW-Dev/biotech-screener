@@ -117,13 +117,18 @@ class CalendarPolicy:
     """Upper bound of preferred proximity band (bonus priority)."""
 
 
-def _compute_entry_priority(rec: Dict[str, Any], as_of_date: str) -> float:
+def _compute_entry_priority(
+    rec: Dict[str, Any],
+    as_of_date: str,
+    reliability_table: Optional[List[Dict[str, Any]]] = None,
+) -> float:
     """Compute a priority score for a calendar entry (higher = keep).
 
     Components:
     - Confidence: HIGH=3, MED=2, LOW=1
     - Source: COMPANY_GUIDANCE/SEC_8K=3, FEDREG=2, ANALYST/CTGOV=1
     - Proximity band bonus: +2 if in 15-180d sweet spot, +1 if 0-14d, +0 if >180d
+    - Reliability penalty: -2 for DEMOTE, -5 for SUPPRESS (from slip history)
     """
     conf = _CONFIDENCE_PRIORITY.get(rec.get("confidence", "MED"), 1)
     src = _SOURCE_PRIORITY.get(rec.get("source", "MANUAL"), 1)
@@ -153,7 +158,23 @@ def _compute_entry_priority(rec: Dict[str, Any], as_of_date: str) -> float:
         except ValueError:
             pass
 
-    return conf + src + proximity_bonus + date_tiebreak
+    # Reliability penalty from empirical slip data
+    reliability_penalty = 0.0
+    if reliability_table:
+        from common.source_reliability import compute_priority_penalty, get_source_action
+
+        action, _reason = get_source_action(
+            reliability_table,
+            rec.get("source", "MANUAL"),
+            rec.get("confidence", "MED"),
+            "REGULATORY",
+        )
+        reliability_penalty = compute_priority_penalty(action)
+        if reliability_penalty > 0:
+            rec["_reliability_action"] = action
+            rec["_reliability_reason"] = _reason
+
+    return conf + src + proximity_bonus + date_tiebreak - reliability_penalty
 
 
 def select_quality_entries(
@@ -161,6 +182,7 @@ def select_quality_entries(
     as_of_date: str,
     n_eligible: int = 0,
     policy: Optional[CalendarPolicy] = None,
+    reliability_table: Optional[List[Dict[str, Any]]] = None,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, Any]]:
     """Apply quality pruning and priority selection to calendar entries.
 
@@ -173,6 +195,8 @@ def select_quality_entries(
     n_eligible : number of eligible tickers in universe (for coverage calc).
         If 0, coverage-based pruning is skipped.
     policy : pruning thresholds (defaults to CalendarPolicy())
+    reliability_table : optional source reliability buckets from slip history.
+        When provided, DEMOTE/SUPPRESS sources receive priority penalties.
 
     Returns
     -------
@@ -218,7 +242,7 @@ def select_quality_entries(
         vetted.append(rec)
 
     # 3. Score and sort by priority (descending)
-    scored = [(rec, _compute_entry_priority(rec, as_of_date)) for rec in vetted]
+    scored = [(rec, _compute_entry_priority(rec, as_of_date, reliability_table)) for rec in vetted]
     scored.sort(key=lambda x: x[1], reverse=True)
 
     # 4. Coverage cap: if n_eligible provided and coverage > max_coverage_pct
@@ -249,6 +273,23 @@ def select_quality_entries(
     diag["unique_tickers"] = len({r["ticker"] for r in selected})
     if n_eligible > 0:
         diag["coverage_pct"] = round(diag["unique_tickers"] / max(n_eligible, 1) * 100, 1)
+
+    # Surface reliability actions applied
+    if reliability_table:
+        reliability_applied = []
+        for rec in selected:
+            action = rec.get("_reliability_action")
+            if action:
+                reliability_applied.append(
+                    {
+                        "ticker": rec["ticker"],
+                        "source": rec.get("source", ""),
+                        "action": action,
+                        "reason": rec.get("_reliability_reason", ""),
+                    }
+                )
+        if reliability_applied:
+            diag["reliability_actions"] = reliability_applied
 
     return selected, diag
 
