@@ -57,6 +57,7 @@ logger = logging.getLogger(__name__)
 
 from archive_snapshot import get_git_info, sha256_file
 from backtest.cost_model import CostSchedule, estimate_trade_cost
+from common.adcom_vote_features import ADCOM_VOTE_COLUMNS, build_adcom_vote_lookup
 from common.binary_quality_score import compute_binary_quality_score
 from common.clinical_corroboration import evaluate_corroboration
 from common.data_integration_contracts import (
@@ -72,6 +73,7 @@ from common.data_integration_contracts import (
 from common.date_utils import normalize_date, to_date_object, to_date_string
 from common.event_quality_features import compute_clinical_91_180_quality, compute_event_quality_features
 from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
+from common.options_diagnostics import OPTIONS_DIAGNOSTIC_COLUMNS, empty_diagnostics
 
 # Production hardening utilities
 from common.production_hardening import (  # Path security; File operations; Integrity; Timeouts; Logging; Validation; Resources; Constants
@@ -1424,6 +1426,10 @@ SNAPSHOT_COLUMNS = [
     "clinical_design_quality",
     "clinical_program_depth",
     "clinical_quality_composite",
+    # --- FDA AdCom voting-pattern pilot (passive, informational) ---
+    *ADCOM_VOTE_COLUMNS,
+    # --- Options-implied vol/skew diagnostics (passive, tastytrade) ---
+    *OPTIONS_DIAGNOSTIC_COLUMNS,
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
@@ -3208,6 +3214,17 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Snapshot: event ledger build failed (%s) — regulatory scan uses M3+PDUFA only", exc)
 
+    # --- FDA AdCom vote features (passive pilot) ---
+    _adcom_vote_lookup: Dict[str, Dict[str, Any]] = {}
+    try:
+        _adcom_cache_path = Path(__file__).resolve().parent / "cache" / "fda" / f"adcom_calendar_{as_of_date}.json"
+        if _adcom_cache_path.exists():
+            _adcom_raw = json.loads(_adcom_cache_path.read_text())
+            _adcom_vote_lookup = build_adcom_vote_lookup(_adcom_raw, as_of_date)
+            logger.info("Snapshot: AdCom vote lookup built for %d tickers", len(_adcom_vote_lookup))
+    except Exception as exc:
+        logger.warning("Snapshot: AdCom vote lookup failed (%s) — columns will be empty", exc)
+
     # --- Build company name lookup from Module 1 universe ---
     # Some tickers in universe.json have market_data.company_name set to the
     # sector label (e.g. "Healthcare") instead of the real company name.
@@ -3682,6 +3699,8 @@ def save_validation_snapshot(
         row["binary_quality_score"] = compute_binary_quality_score(row)
         row.update(compute_event_quality_features(row))
         row.update(compute_clinical_91_180_quality(row))
+        # FDA AdCom vote features (passive pilot)
+        row.update(_adcom_vote_lookup.get(ticker.upper(), {col: "" for col in ADCOM_VOTE_COLUMNS}))
 
         # Secondary regulatory catalyst (independent of primary nearest)
         _reg_days, _reg_et = _nearest_regulatory_catalyst(
@@ -4147,6 +4166,27 @@ def save_validation_snapshot(
                     r.get("ticker", ""),
                 )
             )
+
+    # --- Options diagnostics (passive, tastytrade) ---
+    # Restricted to catalyst-relevant names only to limit API latency.
+    # Non-blocking: degrades gracefully if credentials missing or API unavailable.
+    try:
+        from common.options_diagnostics import fetch_options_diagnostics, select_catalyst_tickers
+
+        _opt_tickers = select_catalyst_tickers(csv_rows)
+        if _opt_tickers:
+            _opt_lookup = fetch_options_diagnostics(_opt_tickers, as_of_date)
+            for row in csv_rows:
+                tk = (row.get("ticker") or "").upper()
+                row.update(_opt_lookup.get(tk, empty_diagnostics()))
+            logger.info("Options diagnostics: %d/%d tickers enriched", len(_opt_lookup), len(_opt_tickers))
+        else:
+            for row in csv_rows:
+                row.update(empty_diagnostics())
+    except Exception as exc:
+        logger.warning("Options diagnostics failed (%s) — columns will be empty", exc)
+        for row in csv_rows:
+            row.update(empty_diagnostics(f"error: {exc}"))
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
