@@ -393,6 +393,60 @@ def _render_packet_md(packet: Dict[str, Any]) -> List[str]:
         lines.append("> Dry run — no trade plan generated.")
         lines.append("")
 
+    # Trade decision
+    td = packet.get("trade_decision")
+    if td:
+        verdict = td.get("verdict", "?")
+        lines.append(f"## Trade Decision: {verdict}")
+        lines.append("")
+        lines.append(f"Checks: {td.get('n_pass', 0)} PASS, {td.get('n_warn', 0)} WARN, {td.get('n_fail', 0)} FAIL")
+        lines.append("")
+
+    # Caps enforcement transparency
+    ce = packet.get("caps_enforcement")
+    if ce:
+        lines.append("## Caps Enforcement")
+        lines.append("")
+        lines.append(f"**caps_applied**: {ce.get('caps_applied', False)}")
+        lines.append("")
+
+        before = ce.get("targets_before", {})
+        after = ce.get("targets_after", {})
+        lines.append("| Metric | Before | After |")
+        lines.append("|--------|--------|-------|")
+        lines.append(f"| Total $ | ${before.get('total_usd', 0):,.0f} | ${after.get('total_usd', 0):,.0f} |")
+        lines.append(f"| Positions | {before.get('n_positions', 0)} | {after.get('n_positions', 0)} |")
+        lines.append(
+            f"| Largest position % | {before.get('largest_position_pct', 0):.2f}%"
+            f" | {after.get('largest_position_pct', 0):.2f}% |"
+        )
+        lines.append(
+            f"| Gap-risk HIGH count | {before.get('gap_risk_high_count', 0)}"
+            f" | {after.get('gap_risk_high_count', 0)} |"
+        )
+        lines.append(
+            f"| Gap-risk HIGH weight % | {before.get('gap_risk_high_weight_pct', 0):.2f}%"
+            f" | {after.get('gap_risk_high_weight_pct', 0):.2f}% |"
+        )
+        lines.append("")
+
+        top_red = ce.get("top_reductions", [])
+        if top_red:
+            lines.append("### Top Reductions")
+            lines.append("")
+            lines.append("| Ticker | Bucket | Before $ | After $ | Delta $ | Reason |")
+            lines.append("|--------|--------|----------|---------|---------|--------|")
+            for r in top_red:
+                lines.append(
+                    f"| {r.get('ticker', '?')}"
+                    f" | {r.get('bucket', '?')}"
+                    f" | ${r.get('before_usd', 0):,.0f}"
+                    f" | ${r.get('after_usd', 0):,.0f}"
+                    f" | ${r.get('delta_usd', 0):+,.0f}"
+                    f" | {r.get('reason', '?')} |"
+                )
+            lines.append("")
+
     return lines
 
 
@@ -414,15 +468,29 @@ def run_weekly_execution(
     data_dir: Optional[Path] = None,
     skip_snapshot: bool = False,
     dry_run: bool = False,
+    trade_decision_policy_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
-    """Full weekly execution: snapshot → positions → pre-trade → trade plan.
+    """Full weekly execution: snapshot → positions → pre-trade → decision → trade plan.
+
+    Flow:
+      1. Ensure snapshot
+      2. Build shadow positions
+      3. Pre-trade check
+      4. Build IC packet + trade decision
+      5. If NO_TRADE → BLOCKED, no trade plan
+      6. If TRADE_WITH_CAPS → apply caps to positions in-memory
+      7. Build trade plan (from potentially capped positions)
 
     Returns execution packet dict with status in {READY, BLOCKED, DRY_RUN}.
     Exit codes: 0 (READY/DRY_RUN), 2 (BLOCKED).
     """
+    import logging
+
     _assert_not_production_default("positions_dir", positions_dir, POSITIONS_DIR)
     _assert_not_production_default("execution_root", execution_root, EXECUTION_ROOT)
     _assert_not_production_default("snap_root", snap_root, SNAPSHOTS_ROOT)
+
+    log = logging.getLogger(__name__)
 
     # Step 1: Ensure snapshot
     snap_result = ensure_snapshot(
@@ -458,81 +526,210 @@ def run_weekly_execution(
         price_path=price_source,
     )
 
-    # Steps 3-5: Pre-trade check → trade plan → broker orders
-    packet = run_execution_pipeline(
+    out_dir = execution_root / as_of_date
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # Step 3: Pre-trade check
+    from tools.pre_trade_check import run_pre_trade_check, write_pre_trade_json, write_pre_trade_md
+
+    _manifest_path = manifest_path or (PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json")
+
+    ptc = run_pre_trade_check(
         as_of_date,
-        snap_dir,
         positions_dir=positions_dir,
-        execution_root=execution_root,
-        policy_path=policy_path,
-        manifest_path=manifest_path,
+        snap_dir=snap_dir,
+        manifest_path=_manifest_path,
         perf_csv=perf_csv,
-        price_source=price_source,
-        dry_run=dry_run,
+        policy_path=policy_path,
     )
 
-    # Attach position info to packet
+    write_pre_trade_json(ptc, out_dir / "pre_trade.json")
+    write_pre_trade_md(ptc, out_dir / "pre_trade.md")
+
+    packet: Dict[str, Any] = {
+        "schema": SCHEMA_VERSION,
+        "as_of_date": as_of_date,
+        "generated_at": ts,
+        "pre_trade": {
+            "overall": ptc.overall,
+            "can_trade": ptc.can_trade,
+            "checks": ptc.checks,
+        },
+    }
+
+    # Attach position + snapshot info early
     packet["positions"] = {
         "n_positions": pos_result.get("n_positions", 0),
         "positions_path": pos_result.get("positions_path", ""),
     }
     packet["snapshot"] = snap_result
 
-    # IC Packet (best-effort — skip on failure)
+    if not ptc.can_trade:
+        packet["status"] = "BLOCKED"
+        packet["reason"] = f"Pre-trade check {ptc.overall}"
+        packet["exit_code"] = 2
+        _write_packet(packet, out_dir)
+        return packet
+
+    if dry_run:
+        packet["status"] = "DRY_RUN"
+        packet["reason"] = "Trade plan not generated (dry run)"
+        packet["exit_code"] = 0
+        _write_packet(packet, out_dir)
+        return packet
+
+    # Step 4: Load positions + build IC packet + trade decision
+    from tools.build_trade_deltas import DEFAULT_MIN_TRADE_USD, load_positions_json
+    from tools.ic_packet import build_ic_packet, write_ic_packet
+    from tools.trade_decision import (
+        VERDICT_NO_TRADE,
+        VERDICT_TRADE_WITH_CAPS,
+        apply_caps_to_positions,
+        build_trade_decision,
+        load_trade_decision_policy,
+        write_trade_decision,
+    )
+
+    pos_file = positions_dir / f"{as_of_date}.json"
+    positions: List[Dict[str, Any]] = []
+    if pos_file.is_file():
+        _, positions = load_positions_json(pos_file)
+
+    policy = load_policy(policy_path)
+    metadata = load_metadata(snap_dir)
+    perf = pos_result.get("performance")
+
+    # Build IC packet with status=READY (pre-trade passed)
+    partial_packet = {**packet, "status": "READY"}
+    ic = build_ic_packet(
+        as_of_date,
+        partial_packet,
+        positions,
+        policy,
+        metadata,
+        perf,
+        out_dir,
+        policy_path=policy_path,
+    )
+    write_ic_packet(out_dir, ic)
+
+    # Trade decision
+    td_policy_file = trade_decision_policy_path or (PROJECT_ROOT / "production_data" / "trade_decision_policy.json")
+    verdict = None
+    td = None
+    caps_summary = None
+
     try:
-        # Load current positions for IC packet
-        from tools.build_trade_deltas import load_positions_json
-        from tools.ic_packet import build_ic_packet, write_ic_packet
+        if td_policy_file.is_file():
+            td_policy = load_trade_decision_policy(td_policy_file)
+            td = build_trade_decision(ic, td_policy)
+            write_trade_decision(out_dir, td)
+            verdict = td.get("verdict")
+    except Exception as td_exc:
+        log.warning("Trade decision failed: %s", td_exc)
 
-        pos_file = positions_dir / f"{as_of_date}.json"
-        positions = []
-        if pos_file.is_file():
-            _, positions = load_positions_json(pos_file)
+    # Step 5: Handle NO_TRADE verdict
+    if verdict == VERDICT_NO_TRADE:
+        packet["status"] = "BLOCKED"
+        packet["reason"] = "Trade decision: NO_TRADE"
+        packet["exit_code"] = 2
+        if td:
+            packet["trade_decision"] = _summarize_trade_decision(td)
+        _write_packet(packet, out_dir)
+        return packet
 
-        policy = load_policy(policy_path)
-        metadata = load_metadata(snap_dir)
-        perf = pos_result.get("performance")
+    # Step 6: Apply caps if TRADE_WITH_CAPS
+    trade_positions: Optional[List[Dict[str, Any]]] = None
+    min_trade_usd = DEFAULT_MIN_TRADE_USD
 
-        out_dir = execution_root / as_of_date
-        ic = build_ic_packet(
-            as_of_date,
-            packet,
-            positions,
-            policy,
-            metadata,
-            perf,
-            out_dir,
-            policy_path=policy_path,
-        )
-        write_ic_packet(out_dir, ic)
-
-        # Trade Decision (best-effort — skip on failure)
+    if verdict == VERDICT_TRADE_WITH_CAPS and td:
+        active_caps = td.get("caps", [])
+        account_usd = policy.get("account_usd", 500_000)
         try:
-            from tools.trade_decision import build_trade_decision, load_trade_decision_policy, write_trade_decision
+            capped_positions, caps_summary = apply_caps_to_positions(positions, active_caps, account_usd)
+            trade_positions = capped_positions
+            bump = caps_summary.get("min_trade_usd_bump", 0)
+            if bump > 0:
+                min_trade_usd = DEFAULT_MIN_TRADE_USD + bump
+            # Write capped positions for audit trail
+            _write_capped_positions(out_dir, as_of_date, capped_positions)
+        except Exception as cap_exc:
+            log.warning("Cap enforcement failed, proceeding uncapped: %s", cap_exc)
 
-            td_policy_file = PROJECT_ROOT / "production_data" / "trade_decision_policy.json"
-            if td_policy_file.is_file():
-                td_policy = load_trade_decision_policy(td_policy_file)
-                td = build_trade_decision(ic, td_policy)
-                write_trade_decision(out_dir, td)
-                packet["trade_decision"] = {
-                    "verdict": td.get("verdict"),
-                    "n_pass": td.get("n_pass"),
-                    "n_warn": td.get("n_warn"),
-                    "n_fail": td.get("n_fail"),
-                    "caps": td.get("caps", []),
-                }
-        except Exception as td_exc:
-            import logging as _log_td
+    # Step 7: Build trade plan
+    from tools.build_trade_plan import build_trade_plan
 
-            _log_td.getLogger(__name__).warning("Trade decision failed: %s", td_exc)
+    plan_result = build_trade_plan(
+        as_of_date,
+        positions_dir=positions_dir,
+        perf_csv=perf_csv,
+        out_dir=out_dir,
+        skip_pre_trade_check=True,
+        broker_orders=True,
+        price_source=price_source,
+        manifest_path=_manifest_path,
+        snap_dir=snap_dir,
+        min_trade_usd=min_trade_usd,
+        current_positions=trade_positions,
+    )
 
-    except Exception as exc:
-        import logging
+    if "error" in plan_result:
+        packet["status"] = "BLOCKED"
+        packet["reason"] = f"Trade plan error: {plan_result['error']}"
+        packet["exit_code"] = 2
+        _write_packet(packet, out_dir)
+        return packet
 
-        logging.getLogger(__name__).warning("IC packet failed: %s", exc)
+    # Step 8: Assemble final packet
+    packet["status"] = "READY"
+    packet["exit_code"] = 0
+    packet["trade_plan"] = {
+        "n_trades": plan_result.get("n_trades", 0),
+        "n_buys": plan_result.get("n_buys", 0),
+        "n_sells": plan_result.get("n_sells", 0),
+        "total_buy_usd": plan_result.get("total_buy_usd", 0),
+        "total_sell_usd": plan_result.get("total_sell_usd", 0),
+        "risk_permission": plan_result.get("risk_permission", "ADD_OK"),
+        "csv_path": plan_result.get("csv_path", ""),
+        "md_path": plan_result.get("md_path", ""),
+        "broker_orders_path": plan_result.get("broker_orders_path", ""),
+    }
 
+    if td:
+        packet["trade_decision"] = _summarize_trade_decision(td)
+
+    if caps_summary:
+        packet["caps_enforcement"] = caps_summary
+
+    _write_packet(packet, out_dir)
     return packet
+
+
+def _summarize_trade_decision(td: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract trade decision summary for the execution packet."""
+    return {
+        "verdict": td.get("verdict"),
+        "n_pass": td.get("n_pass"),
+        "n_warn": td.get("n_warn"),
+        "n_fail": td.get("n_fail"),
+        "caps": td.get("caps", []),
+    }
+
+
+def _write_capped_positions(out_dir: Path, as_of_date: str, positions: List[Dict[str, Any]]) -> Path:
+    """Write capped positions to execution dir for audit trail."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / "positions_capped.json"
+    data = {
+        "schema": "live_shadow_positions_capped.v1",
+        "as_of_date": as_of_date,
+        "positions": positions,
+    }
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, default=str)
+    return path
 
 
 # ---------------------------------------------------------------------------

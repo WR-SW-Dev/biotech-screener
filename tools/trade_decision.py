@@ -615,6 +615,146 @@ def write_trade_decision(
 
 
 # ---------------------------------------------------------------------------
+# Cap enforcement — apply caps to positions
+# ---------------------------------------------------------------------------
+
+
+def apply_caps_to_positions(
+    positions: List[Dict[str, Any]],
+    caps: List[Dict[str, Any]],
+    account_usd: float,
+) -> tuple:
+    """Apply caps to positions in-memory, returning (capped_positions, summary).
+
+    Cap types handled:
+      - gap_risk_cap:   cap affected tickers' target_dollars, then reduce budget
+      - min_trade_bump: returned in summary for caller to use as min_trade_usd
+
+    Returns (capped_positions, caps_summary_dict).
+    Positions are deep-copied; originals are not modified.
+    """
+    import copy
+
+    capped = copy.deepcopy(positions)
+    min_trade_usd_bump = 0
+
+    # Snapshot before-state from originals
+    orig_map = {p["ticker"]: p.get("target_dollars", 0) for p in positions}
+
+    for cap in caps:
+        cap_type = cap.get("type")
+
+        if cap_type == "gap_risk_cap":
+            name_cap_dollars = account_usd * cap.get("name_cap_pct", 100.0) / 100.0
+            budget_reduction_pct = cap.get("budget_reduction_pct", 0)
+            affected = set(cap.get("affected_tickers", []))
+
+            # Cap individual names
+            for p in capped:
+                if p["ticker"] in affected:
+                    p["target_dollars"] = min(p.get("target_dollars", 0), name_cap_dollars)
+
+            # Reduce total budget
+            if budget_reduction_pct > 0:
+                scale = 1.0 - budget_reduction_pct / 100.0
+                for p in capped:
+                    p["target_dollars"] = round(p.get("target_dollars", 0) * scale, 2)
+
+        elif cap_type == "min_trade_bump":
+            min_trade_usd_bump = max(min_trade_usd_bump, cap.get("min_trade_usd_bump", 0))
+
+    # Update weight_pct to stay consistent with target_dollars
+    for p in capped:
+        if account_usd > 0:
+            p["weight_pct"] = round(p.get("target_dollars", 0) / account_usd * 100, 4)
+
+    # Sanity: no negative weights
+    for p in capped:
+        if p.get("target_dollars", 0) < 0:
+            p["target_dollars"] = 0
+            p["weight_pct"] = 0
+
+    # Build per-ticker change list
+    cap_map = {p["ticker"]: p for p in capped}
+    ticker_changes = []
+    for p in positions:
+        ticker = p["ticker"]
+        before = orig_map.get(ticker, 0)
+        after = cap_map.get(ticker, {}).get("target_dollars", 0)
+        delta = after - before
+        if abs(delta) > 0.01:
+            ticker_changes.append(
+                {
+                    "ticker": ticker,
+                    "bucket": p.get("bucket", ""),
+                    "before_usd": round(before, 2),
+                    "after_usd": round(after, 2),
+                    "delta_usd": round(delta, 2),
+                    "reason": _classify_cap_reason(ticker, caps),
+                }
+            )
+
+    # Sort by delta ascending (largest reductions first)
+    ticker_changes.sort(key=lambda x: (x["delta_usd"], x["ticker"]))
+    top_reductions = ticker_changes[:10]
+
+    # Before/after summary
+    before_total = sum(p.get("target_dollars", 0) for p in positions)
+    after_total = sum(p.get("target_dollars", 0) for p in capped)
+
+    def _gap_high_stats(pos_list):
+        gh = [p for p in pos_list if p.get("gap_risk") == "HIGH"]
+        weight = sum(p.get("target_dollars", 0) / account_usd * 100 for p in gh) if account_usd > 0 else 0
+        return len(gh), round(weight, 2)
+
+    gh_count_before, gh_weight_before = _gap_high_stats(positions)
+    gh_count_after, gh_weight_after = _gap_high_stats(capped)
+
+    def _largest_pct(pos_list):
+        if not pos_list or account_usd <= 0:
+            return 0
+        return round(max(p.get("target_dollars", 0) for p in pos_list) / account_usd * 100, 2)
+
+    summary = {
+        "caps_applied": True,
+        "caps_detail": caps,
+        "min_trade_usd_bump": min_trade_usd_bump,
+        "targets_before": {
+            "total_usd": round(before_total, 2),
+            "n_positions": len(positions),
+            "largest_position_pct": _largest_pct(positions),
+            "gap_risk_high_count": gh_count_before,
+            "gap_risk_high_weight_pct": gh_weight_before,
+        },
+        "targets_after": {
+            "total_usd": round(after_total, 2),
+            "n_positions": len(capped),
+            "largest_position_pct": _largest_pct(capped),
+            "gap_risk_high_count": gh_count_after,
+            "gap_risk_high_weight_pct": gh_weight_after,
+        },
+        "top_reductions": top_reductions,
+    }
+
+    return capped, summary
+
+
+def _classify_cap_reason(ticker: str, caps: List[Dict[str, Any]]) -> str:
+    """Determine which cap(s) affected a ticker."""
+    reasons = []
+    for cap in caps:
+        cap_type = cap.get("type", "")
+        if cap_type == "gap_risk_cap":
+            if ticker in cap.get("affected_tickers", []):
+                reasons.append("gap_risk_cap")
+            if cap.get("budget_reduction_pct", 0) > 0:
+                reasons.append("budget_reduction")
+        elif cap_type == "min_trade_bump":
+            pass  # Doesn't affect position sizing
+    return ", ".join(sorted(set(reasons))) if reasons else "budget_reduction"
+
+
+# ---------------------------------------------------------------------------
 # Top-level runner (from IC packet on disk)
 # ---------------------------------------------------------------------------
 

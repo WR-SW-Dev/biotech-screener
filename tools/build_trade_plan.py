@@ -445,16 +445,23 @@ def build_trade_plan(
     price_source: Optional[Path] = None,
     manifest_path: Optional[Path] = None,
     snap_dir: Optional[Path] = None,
+    current_positions: Optional[List[Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Build the complete weekly trade plan artifact.
 
+    Args:
+        current_positions: If provided, use these instead of reading from disk.
+            Useful when caps have been applied in-memory.
+
     Returns dict with trades, paths, trailing metrics, bucket turnover.
     """
-    current_path = positions_dir / f"{as_of_date}.json"
-    if not current_path.is_file():
-        return {"error": f"No positions file for {as_of_date}"}
-
-    current_date, current_positions = load_positions_json(current_path)
+    if current_positions is not None:
+        current_date = as_of_date
+    else:
+        current_path = positions_dir / f"{as_of_date}.json"
+        if not current_path.is_file():
+            return {"error": f"No positions file for {as_of_date}"}
+        current_date, current_positions = load_positions_json(current_path)
 
     prior_path = find_prior_positions(current_date, positions_dir)
     if prior_path:
