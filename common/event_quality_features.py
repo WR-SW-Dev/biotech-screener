@@ -180,8 +180,19 @@ _SOURCE_CONFIDENCE_BONUS: Dict[str, float] = {
 }
 
 
-def compute_clinical_days_precision(catalyst_mode: str, catalyst_source: str) -> str:
-    """Derive date precision from catalyst_mode and source."""
+def compute_clinical_days_precision(
+    catalyst_mode: str,
+    catalyst_source: str,
+    corroborated: bool = True,
+) -> str:
+    """Derive date precision from catalyst_mode and source.
+
+    When ``corroborated`` is False and source is a noisy clinical source,
+    precision is capped at MONTH regardless of the source's native precision.
+    This prevents false exact-date trust from empirically unreliable sources.
+    """
+    from common.clinical_corroboration import DOWNGRADED_PRECISION, should_downgrade_precision
+
     # Source override takes priority (e.g., SEC_8K always DAY)
     src_prec = _SOURCE_PRECISION.get(catalyst_source)
     mode_prec = _MODE_PRECISION.get(catalyst_mode, "UNKNOWN")
@@ -189,8 +200,19 @@ def compute_clinical_days_precision(catalyst_mode: str, catalyst_source: str) ->
         # Pick the finer of source vs mode precision
         src_idx = PRECISION_LEVELS.index(src_prec) if src_prec in PRECISION_LEVELS else 6
         mode_idx = PRECISION_LEVELS.index(mode_prec) if mode_prec in PRECISION_LEVELS else 6
-        return PRECISION_LEVELS[min(src_idx, mode_idx)]
-    return mode_prec
+        precision = PRECISION_LEVELS[min(src_idx, mode_idx)]
+    else:
+        precision = mode_prec
+
+    # Corroboration gate: noisy clinical sources get capped at MONTH
+    if should_downgrade_precision(catalyst_source, "CLINICAL", corroborated):
+        prec_idx = PRECISION_LEVELS.index(precision) if precision in PRECISION_LEVELS else 6
+        down_idx = PRECISION_LEVELS.index(DOWNGRADED_PRECISION) if DOWNGRADED_PRECISION in PRECISION_LEVELS else 6
+        # Only downgrade if current precision is finer than the cap
+        if prec_idx < down_idx:
+            precision = DOWNGRADED_PRECISION
+
+    return precision
 
 
 def compute_clinical_date_confidence(precision: str, catalyst_source: str) -> float:
@@ -324,7 +346,8 @@ def compute_clinical_91_180_quality(row: Dict[str, Any]) -> Dict[str, Any]:
             "clinical_quality_composite": "",
         }
 
-    precision = compute_clinical_days_precision(catalyst_mode, catalyst_source)
+    corroborated = row.get("catalyst_corroborated", "") != "0"
+    precision = compute_clinical_days_precision(catalyst_mode, catalyst_source, corroborated)
     date_conf = compute_clinical_date_confidence(precision, catalyst_source)
     design_q = compute_clinical_design_quality(row)
     prog_depth = compute_clinical_program_depth(row)

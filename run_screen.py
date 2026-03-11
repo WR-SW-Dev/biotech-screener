@@ -58,6 +58,7 @@ logger = logging.getLogger(__name__)
 from archive_snapshot import get_git_info, sha256_file
 from backtest.cost_model import CostSchedule, estimate_trade_cost
 from common.binary_quality_score import compute_binary_quality_score
+from common.clinical_corroboration import evaluate_corroboration
 from common.data_integration_contracts import (
     normalize_financial_field_alias,
     normalize_ticker_set,
@@ -2237,6 +2238,25 @@ def _hydrate_beta_rsi(
     return hydrated
 
 
+def _check_catalyst_corroboration(
+    m3_summaries: Optional[Dict[str, Any]],
+    ticker: str,
+    catalyst_source: str,
+    catalyst_family: str,
+) -> Dict[str, Any]:
+    """Check if the selected clinical catalyst date is corroborated."""
+    if not m3_summaries or catalyst_family != "CLINICAL":
+        return evaluate_corroboration(catalyst_source, "", [], catalyst_family)
+
+    summary = m3_summaries.get(ticker.upper()) or m3_summaries.get(ticker)
+    if not summary or not isinstance(summary, dict):
+        return evaluate_corroboration(catalyst_source, "", [], catalyst_family)
+
+    next_date = (summary.get("integration") or {}).get("next_catalyst_date", "")
+    events = summary.get("events") or []
+    return evaluate_corroboration(catalyst_source, next_date, events, catalyst_family)
+
+
 def _nearest_catalyst_source(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
@@ -3654,6 +3674,11 @@ def save_validation_snapshot(
         row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker)
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker)
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
+        # Corroboration check: noisy clinical sources need independent confirmation
+        _corr = _check_catalyst_corroboration(m3_summaries, ticker, row["catalyst_source"], row["catalyst_family"])
+        row["catalyst_corroborated"] = "1" if _corr["corroborated"] else "0"
+        row["catalyst_trust_status"] = _corr["trust_status"]
+        row["catalyst_trust_reason"] = _corr["trust_reason"]
         row["binary_quality_score"] = compute_binary_quality_score(row)
         row.update(compute_event_quality_features(row))
         row.update(compute_clinical_91_180_quality(row))
