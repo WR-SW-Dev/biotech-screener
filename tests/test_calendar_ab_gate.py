@@ -190,6 +190,14 @@ class TestClassifyCalendarEdits:
         assert result["edit_class"] == "HYGIENE_ONLY"
         assert result["changed_tickers"][0]["is_metadata_only"] is True
 
+    def test_missing_as_of_date_is_conservative(self):
+        """Past-dated removal without as_of_date => SIGNAL_BEARING (safe default)."""
+        baseline = [_cal_entry(ticker="OLD", pdufa_date="2025-01-01")]
+        candidate = []
+        result = classify_calendar_edits(baseline, candidate, as_of_date=None)
+        assert result["edit_class"] == "SIGNAL_BEARING"
+        assert result["changed_tickers"][0]["is_past_dated"] is False
+
 
 # ---------------------------------------------------------------------------
 # 3. apply_hygiene_override

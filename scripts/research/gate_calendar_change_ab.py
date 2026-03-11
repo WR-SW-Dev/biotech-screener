@@ -691,8 +691,10 @@ def run_calendar_ab_gate(
     print(f"Candidate calendar: {len(candidate_cal)} entries")
 
     # Classify edits
-    # Use date_from as proxy for as_of_date if available, else use latest snapshot date
-    as_of = date_from
+    # Default as_of_date to today so past-dated detection works out of the box
+    from datetime import date as _date
+
+    as_of = date_from or _date.today().isoformat()
     edit_info = classify_calendar_edits(baseline_cal, candidate_cal, as_of_date=as_of)
     print(f"Edit class: {edit_info['edit_class']}")
     print(
