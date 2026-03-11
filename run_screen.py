@@ -4200,6 +4200,14 @@ def save_validation_snapshot(
         logger.warning(f"Could not write snapshot CSV: {e}")
         return None
 
+    # --- Write options diagnostics sidecar ---
+    try:
+        from common.options_snapshot import write_options_snapshot
+
+        write_options_snapshot(snap_path, csv_rows, as_of_date)
+    except Exception as exc:
+        logger.warning("Options diagnostics snapshot failed (%s) — skipping sidecar", exc)
+
     # --- Write eligibility summary sidecar ---
     try:
         from decision_engine_codes import canonicalize_reasons
@@ -9192,6 +9200,33 @@ Module 3 Catalyst Detection:
                         if health.status == "WARN":
                             logger.warning("--strict: Phase-2 health WARN, exiting 2")
                             return 2
+
+                # Weekly readiness scorecard (best-effort, never blocks)
+                try:
+                    from tools.weekly_readiness_scorecard import build_scorecard, format_scorecard_md
+
+                    _readiness_dir = Path(getattr(args, "data_dir", ".")).parent / "artifacts" / "readiness"
+                    _sc = build_scorecard(
+                        as_of_date=args.as_of_date,
+                        snapshots_dir=snapshot_dir,
+                        artifacts_dir=Path(getattr(args, "data_dir", ".")).parent / "artifacts" / "live_shadow",
+                        policy_path=Path(getattr(args, "data_dir", ".")) / "portfolio_policy.json",
+                        ruleset_id=getattr(de_ruleset, "id", ""),
+                    )
+                    _readiness_dir.mkdir(parents=True, exist_ok=True)
+                    with open(_readiness_dir / f"scorecard_{args.as_of_date}.json", "w") as _f:
+                        json.dump(_sc, _f, indent=2, default=str)
+                        _f.write("\n")
+                    with open(_readiness_dir / f"scorecard_{args.as_of_date}.md", "w") as _f:
+                        _f.write(format_scorecard_md(_sc))
+                    from tools.weekly_readiness_scorecard import append_history
+
+                    append_history(_readiness_dir / "history.jsonl", _sc)
+                    logger.info(
+                        "[READINESS] %s — %s", _sc["verdict"], _readiness_dir / f"scorecard_{args.as_of_date}.md"
+                    )
+                except Exception as _exc:
+                    logger.debug("Readiness scorecard skipped: %s", _exc)
 
         return 0
 

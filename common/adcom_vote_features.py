@@ -1,14 +1,16 @@
-"""FDA Advisory Committee voting-pattern pilot features.
+"""FDA Advisory Committee voting-pattern features.
 
-Passive, PIT-safe feature that scores tickers with upcoming FDA Advisory
-Committee (AdCom) meetings based on committee-level historical approval
-base rates.
+PIT-safe feature that scores tickers with upcoming FDA Advisory Committee
+(AdCom) meetings using a hierarchical posterior model:
+
+    1. Empirical committee + question_type posterior (if n >= 3)
+    2. Empirical committee posterior (if n >= 3)
+    3. Published committee base rate prior
 
 Policy:
     - Only fires for tickers with a future FDA_ADCOM event in the event ledger
-    - Uses committee-level base rates as the initial signal (published FDA data)
-    - Extensible: when historical per-committee voting outcomes are available,
-      the base rates can be replaced with empirical estimates
+    - Uses Beta-Binomial conjugate posterior when empirical outcomes are available
+    - Falls back to committee-level base rates as prior
     - All output columns are PASSIVE (informational only, no ranking change)
 
 Output columns:
@@ -115,6 +117,7 @@ def compute_adcom_vote_features(
     ticker: str,
     adcom_events: List[Dict[str, Any]],
     as_of_date: str,
+    posterior_table: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> Dict[str, Any]:
     """Compute AdCom vote features for a single ticker.
 
@@ -124,6 +127,10 @@ def compute_adcom_vote_features(
     adcom_events : list of AdCom event dicts from the cache/ledger,
         each with at least {ticker, event_date, committee, disclosed_at}
     as_of_date : current evaluation date (YYYY-MM-DD)
+    posterior_table : optional empirical posterior table from
+        adcom_empirical.build_posterior_table().  When provided, the
+        scoring hierarchy uses empirical posteriors before falling back
+        to committee base rate priors.
 
     Returns
     -------
@@ -184,15 +191,32 @@ def compute_adcom_vote_features(
         return empty
 
     committee = best.get("committee", "")
-    vote_score = score_committee(committee)
+    question_type = best.get("question_type", "")
+    fallback = score_committee(committee)
+
+    # Use empirical posterior if available, else fall back to prior
+    if posterior_table:
+        from common.adcom_empirical import score_empirical
+
+        vote_score, vote_n, basis = score_empirical(
+            committee,
+            question_type,
+            posterior_table,
+            fallback,
+        )
+    else:
+        vote_score = fallback
+        vote_n = 0
+        basis = "committee_prior"
+
     signal = classify_signal(vote_score)
 
     return {
         "adcom_vote_score": round(vote_score, 4),
         "adcom_vote_signal": signal,
-        "adcom_vote_n": 0,  # 0 = prior only, no empirical observations
+        "adcom_vote_n": vote_n,
         "adcom_vote_recency_days": best_days,
-        "adcom_vote_basis": "committee_prior",
+        "adcom_vote_basis": basis,
     }
 
 

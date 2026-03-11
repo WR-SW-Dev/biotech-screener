@@ -660,14 +660,44 @@ def build_positions(
         bucket_rows = buckets[bucket_name][:k]
         fam_cfg = family_overrides.get(bucket_name, {})
         if fam_cfg:
-            # Apply per-family max_k: group by effective family, cap each
+            # Apply per-family max_k: group by effective family, cap each.
+            # Reflow: when a configured family has 0 names, its max_k slots
+            # are redistributed proportionally to families that have names.
             by_family: Dict[str, List[Dict[str, str]]] = {}
             for row in bucket_rows:
                 fam = row["_effective_family"]
                 by_family.setdefault(fam, []).append(row)
+
+            # Compute effective max_k per family with reflow from empty families
+            effective_k: Dict[str, int] = {}
+            unused_k = 0
+            active_families: List[str] = []
+            for fam, cfg in fam_cfg.items():
+                fam_k = cfg.get("max_k")
+                if fam_k is None:
+                    continue
+                if by_family.get(fam):
+                    effective_k[fam] = fam_k
+                    active_families.append(fam)
+                else:
+                    unused_k += fam_k
+            # Distribute unused_k across active configured families (round-robin)
+            if unused_k > 0 and active_families:
+                per_fam = unused_k // len(active_families)
+                remainder = unused_k % len(active_families)
+                for i, fam in enumerate(active_families):
+                    effective_k[fam] += per_fam + (1 if i < remainder else 0)
+            # Respect overall bucket top_k
+            total_eff = sum(effective_k.values())
+            if total_eff > k:
+                # Scale back proportionally
+                scale = k / total_eff
+                for fam in effective_k:
+                    effective_k[fam] = max(1, int(effective_k[fam] * scale))
+
             capped: List[Dict[str, str]] = []
             for fam, fam_rows in by_family.items():
-                fam_k = fam_cfg.get(fam, {}).get("max_k")
+                fam_k = effective_k.get(fam)
                 if fam_k is not None:
                     fam_rows = fam_rows[:fam_k]
                 capped.extend(fam_rows)

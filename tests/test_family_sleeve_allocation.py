@@ -412,3 +412,102 @@ class TestWeeklySummaryRegulatorySleeve:
         positions = [self._make_pos("CLIN1")]
         md = self._render(positions, tmp_path)
         assert "## Secondary Regulatory Coverage" in md
+
+
+# ---------------------------------------------------------------------------
+# Max_k reflow: when one family is empty, its max_k slots go to others
+# ---------------------------------------------------------------------------
+
+
+class TestMaxKReflow:
+    """Test that family max_k reflows when a configured family has 0 names."""
+
+    def _make_row(self, ticker, rank, family="CLINICAL", cat_days="100"):
+        return _make_ranking(
+            ticker=ticker,
+            rank=rank,
+            catalyst_family=family,
+            catalyst_days=cat_days,
+            has_regulatory="1" if family == "REGULATORY" else "0",
+            regulatory_days=cat_days if family == "REGULATORY" else "",
+        )
+
+    def _policy(self, max_k_reg=8, max_k_clin=12, top_k=20):
+        return {
+            "account_usd": 100_000,
+            "bucket_targets": {
+                "binary_91_180": 1.0,
+                "binary_31_90": 0.0,
+                "binary_0_30": 0.0,
+                "less_binary": 0.0,
+            },
+            "bucket_top_k": {"binary_91_180": top_k},
+            "bucket_name_caps": {"binary_91_180": 50.0},
+            "family_overrides": {
+                "binary_91_180": {
+                    "REGULATORY": {"max_k": max_k_reg, "name_cap_pct": 50.0},
+                    "CLINICAL": {"max_k": max_k_clin, "name_cap_pct": 50.0},
+                },
+            },
+            "family_targets": {},
+            "family_filter_mode": "secondary",
+            "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+            "rebalance_buffer_ranks": 30,
+            "bucket_hysteresis_days": 7,
+        }
+
+    def test_both_families_present_no_reflow(self):
+        """When both families have names, max_k caps each family independently."""
+        # 20 CLIN names at ranks 1-20, 20 REG at ranks 21-40 → top_k=40
+        rankings = [
+            *[self._make_row(f"C{i}", i, "CLINICAL") for i in range(1, 21)],
+            *[self._make_row(f"R{i}", i + 20, "REGULATORY") for i in range(1, 21)],
+        ]
+        result = build_positions(rankings, self._policy(max_k_reg=8, max_k_clin=12, top_k=40))
+        positions = result["positions"]
+        fams = {}
+        for p in positions:
+            fams.setdefault(p["effective_family"], 0)
+            fams[p["effective_family"]] += 1
+        assert fams.get("REGULATORY", 0) == 8
+        assert fams.get("CLINICAL", 0) == 12
+
+    def test_zero_regulatory_reflows_to_clinical(self):
+        """When REGULATORY has 0 names, CLINICAL gets REGULATORY's max_k slots."""
+        rankings = [self._make_row(f"C{i}", i, "CLINICAL") for i in range(1, 25)]
+        # max_k_reg=8, max_k_clin=12 → with reflow, CLINICAL gets 20 (=12+8)
+        result = build_positions(rankings, self._policy(max_k_reg=8, max_k_clin=12, top_k=20))
+        positions = result["positions"]
+        assert len(positions) == 20  # full top_k
+
+    def test_zero_clinical_reflows_to_regulatory(self):
+        """When CLINICAL has 0 names, REGULATORY gets CLINICAL's max_k slots."""
+        rankings = [self._make_row(f"R{i}", i, "REGULATORY") for i in range(1, 25)]
+        result = build_positions(rankings, self._policy(max_k_reg=8, max_k_clin=12, top_k=20))
+        positions = result["positions"]
+        assert len(positions) == 20
+
+    def test_reflow_respects_top_k(self):
+        """Reflowed max_k should not exceed bucket top_k."""
+        rankings = [self._make_row(f"C{i}", i, "CLINICAL") for i in range(1, 30)]
+        # max_k_reg=15, max_k_clin=15 → 30 total but top_k=20
+        result = build_positions(rankings, self._policy(max_k_reg=15, max_k_clin=15, top_k=20))
+        positions = result["positions"]
+        assert len(positions) <= 20
+
+    def test_partial_reflow(self):
+        """When one family has fewer names than max_k, excess slots DON'T reflow
+        (reflow only happens when family has 0 names)."""
+        rankings = [
+            *[self._make_row(f"R{i}", i, "REGULATORY") for i in range(1, 4)],  # 3 REG
+            *[self._make_row(f"C{i}", i + 10, "CLINICAL") for i in range(1, 20)],  # 19 CLIN
+        ]
+        result = build_positions(rankings, self._policy(max_k_reg=8, max_k_clin=12))
+        positions = result["positions"]
+        fams = {}
+        for p in positions:
+            fams.setdefault(p["effective_family"], 0)
+            fams[p["effective_family"]] += 1
+        # REG has 3 (< max_k=8), CLIN capped at 12 — no reflow because REG is present
+        assert fams.get("REGULATORY", 0) == 3
+        assert fams.get("CLINICAL", 0) == 12

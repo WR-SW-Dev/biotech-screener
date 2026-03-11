@@ -1,0 +1,34 @@
+{
+  "schema": "adcom_outcomes.v2",
+  "description": "Historical FDA Advisory Committee drug-related vote outcomes. Every record MUST have source-backed provenance (source_url, publication_date, source_doc_type). Records without provenance are rejected by the validator and excluded from empirical scoring.",
+  "provenance_policy": "No record may power empirical_* basis scoring without a verifiable source_url pointing to an FDA meeting document, Federal Register notice, or published press coverage with an explicit publication_date.",
+  "required_fields": [
+    "meeting_date",
+    "committee",
+    "question_type",
+    "vote_yes",
+    "vote_no",
+    "source_url",
+    "publication_date",
+    "source_doc_type"
+  ],
+  "optional_fields": [
+    "drug_name",
+    "sponsor",
+    "ticker",
+    "indication",
+    "vote_abstain",
+    "vote_favorable",
+    "fda_outcome",
+    "fda_aligned_with_vote",
+    "notes"
+  ],
+  "source_doc_types": [
+    "fda_meeting_minutes",
+    "federal_register_notice",
+    "fda_briefing_document",
+    "press_release",
+    "published_article"
+  ],
+  "records": []
+}
