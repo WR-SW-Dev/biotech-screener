@@ -3,7 +3,7 @@
 
 Compares baseline (current production calendar) vs candidate (proposed edit)
 using weekly-rebalanced live-sim. Emits AB_RECEIPT.md/.json with pass/fail
-verdict. Exit code: 0 = PASS, 2 = FAIL or WARN.
+verdict. Exit code: 0 = PASS, 1 = FAIL, 2 = WARN.
 
 Pass bars (same as eval_calendar_expansion_ab):
   - Cumulative hedged delta >= +0.20pp
@@ -332,8 +332,10 @@ def main():
 
     if verdict == "PASS":
         sys.exit(0)
-    else:
+    elif verdict == "WARN":
         sys.exit(2)
+    else:
+        sys.exit(1)
 
 
 if __name__ == "__main__":

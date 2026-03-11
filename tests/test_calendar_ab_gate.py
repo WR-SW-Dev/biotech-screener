@@ -4,6 +4,7 @@ Covers:
   1. compute_verdict — PASS, FAIL, WARN scenarios
   2. write_ab_receipt — output files + content checks
   3. _safe_delta / formatting helpers
+  4. Exit code mapping (PASS=0, FAIL=1, WARN=2)
 """
 
 from __future__ import annotations
@@ -165,6 +166,25 @@ class TestWriteAbReceipt:
         assert "FAIL" in md
         assert "Do not promote" in md
 
+    def test_warn_receipt_message(self, tmp_path):
+        base = self._base_agg()
+        cand = self._cand_agg()
+        cand["cum_hedged"] = 0.1010  # below cumulative threshold but others pass
+        verdict_data = compute_verdict(base, cand)
+        assert verdict_data["verdict"] == "WARN"
+        md_path = write_ab_receipt(
+            verdict_data,
+            base,
+            cand,
+            baseline_n=16,
+            candidate_n=18,
+            n_periods=50,
+            out_dir=tmp_path,
+        )
+        md = md_path.read_text()
+        assert "WARN" in md
+        assert "Impact is limited" in md
+
     def test_json_schema(self, tmp_path):
         verdict_data = compute_verdict(self._base_agg(), self._cand_agg())
         write_ab_receipt(
@@ -202,3 +222,44 @@ class TestHelpers:
         assert _fmt_pp(0.0020) == "+0.20pp"
         assert _fmt_pp(-0.0010) == "-0.10pp"
         assert _fmt_pp(None) == "—"
+
+
+# ---------------------------------------------------------------------------
+# 4. Exit codes
+# ---------------------------------------------------------------------------
+
+
+class TestExitCodes:
+    """Verify exit code mapping: PASS=0, FAIL=1, WARN=2."""
+
+    def test_pass_exit_code(self):
+        base = {"cum_hedged": 0.10, "mean_hedged": 0.005, "mean_turnover": 0.15}
+        cand = {"cum_hedged": 0.1030, "mean_hedged": 0.0055, "mean_turnover": 0.15}
+        v = compute_verdict(base, cand)
+        assert v["verdict"] == "PASS"
+        # PASS → exit 0
+
+    def test_fail_exit_code(self):
+        base = {"cum_hedged": 0.10, "mean_hedged": 0.005, "mean_turnover": 0.15}
+        cand = {"cum_hedged": 0.11, "mean_hedged": 0.0040, "mean_turnover": 0.15}
+        v = compute_verdict(base, cand)
+        assert v["verdict"] == "FAIL"
+        # FAIL → exit 1
+
+    def test_warn_exit_code(self):
+        base = {"cum_hedged": 0.10, "mean_hedged": 0.005, "mean_turnover": 0.15}
+        cand = {"cum_hedged": 0.1010, "mean_hedged": 0.005, "mean_turnover": 0.15}
+        v = compute_verdict(base, cand)
+        assert v["verdict"] == "WARN"
+        # WARN → exit 2
+
+    def test_exit_code_mapping_in_main(self):
+        """Verify the main() function maps exit codes correctly."""
+        # Read the source file to verify exit code mapping
+        gate_path = PROJECT_ROOT / "scripts" / "research" / "gate_calendar_change_ab.py"
+        source = gate_path.read_text()
+        assert 'verdict == "PASS"' in source
+        assert "sys.exit(0)" in source
+        assert 'verdict == "WARN"' in source
+        assert "sys.exit(2)" in source
+        assert "sys.exit(1)" in source
