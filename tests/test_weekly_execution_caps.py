@@ -12,7 +12,13 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from tools.run_weekly_execution import run_weekly_execution
-from tools.trade_decision import VERDICT_NO_TRADE, VERDICT_TRADE, VERDICT_TRADE_WITH_CAPS, apply_caps_to_positions
+from tools.trade_decision import (
+    VERDICT_NO_TRADE,
+    VERDICT_TRADE,
+    VERDICT_TRADE_WITH_CAPS,
+    apply_caps_to_positions,
+    build_global_name_cap,
+)
 
 # ---------------------------------------------------------------------------
 # Shared fixtures (same pattern as test_weekly_execution.py)
@@ -544,7 +550,11 @@ class TestNoTradeBlocksOrders:
 
 class TestTradeUnchanged:
     def test_trade_produces_ready_with_plan(self, tmp_path):
-        """TRADE verdict → READY packet with trade plan, no caps_enforcement."""
+        """TRADE verdict → READY packet with trade plan.
+
+        Global name cap may still apply (it's universal), so caps_enforcement
+        may be present.  The key check is verdict=TRADE and status=READY.
+        """
         env = _setup_full_env(tmp_path, prior_as_of=None)
         positions = _make_positions()
 
@@ -554,8 +564,6 @@ class TestTradeUnchanged:
         assert packet.get("trade_decision", {}).get("verdict") == VERDICT_TRADE
         assert "trade_plan" in packet
         assert packet["trade_plan"]["n_trades"] >= 0
-        # No caps enforcement for clean TRADE
-        assert "caps_enforcement" not in packet
 
     def test_trade_plan_files_exist(self, tmp_path):
         """TRADE produces expected files."""
@@ -682,3 +690,408 @@ class TestMinTradeBump:
         if td.get("verdict") == VERDICT_TRADE_WITH_CAPS:
             ce = packet.get("caps_enforcement", {})
             assert ce.get("caps_applied") is True
+
+
+# ---------------------------------------------------------------------------
+# TestGlobalNameCap — universal single-name cap + reflow
+# ---------------------------------------------------------------------------
+
+
+class TestGlobalNameCap:
+    """Tests for global_name_cap cap type and build_global_name_cap helper."""
+
+    def test_global_cap_caps_all_names(self):
+        """Global cap applies to ALL names, not just gap-risk."""
+        positions = [
+            {"ticker": "A", "bucket": "binary_91_180", "target_dollars": 20000, "weight_pct": 4.0, "gap_risk": ""},
+            {"ticker": "B", "bucket": "binary_91_180", "target_dollars": 18000, "weight_pct": 3.6, "gap_risk": ""},
+            {"ticker": "C", "bucket": "binary_31_90", "target_dollars": 5000, "weight_pct": 1.0, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.035,
+                "base_cap_pct": 0.035,
+                "shock_applied": False,
+                "triggered_by": "global_name_cap",
+            }
+        ]
+        account = 500_000
+        cap_dollars = account * 0.035  # 17,500
+
+        capped, summary = apply_caps_to_positions(positions, caps, account)
+
+        # A was 20k (> 17.5k cap) → capped
+        assert capped[0]["target_dollars"] <= cap_dollars + 0.01
+        # B was 18k (> 17.5k cap) → capped
+        assert capped[1]["target_dollars"] <= cap_dollars + 0.01
+        # C was 5k (< 17.5k cap) → gets reflow, increases
+        assert capped[2]["target_dollars"] > 5000
+        # None are gap-risk — proves universal application
+        assert all(p["gap_risk"] == "" for p in capped)
+
+    def test_reflow_conserves_total(self):
+        """Overflow from capped names is redistributed; total $ preserved."""
+        positions = [
+            {"ticker": "A", "bucket": "b", "target_dollars": 25000, "weight_pct": 5.0, "gap_risk": ""},
+            {"ticker": "B", "bucket": "b", "target_dollars": 20000, "weight_pct": 4.0, "gap_risk": ""},
+            {"ticker": "C", "bucket": "b", "target_dollars": 10000, "weight_pct": 2.0, "gap_risk": ""},
+            {"ticker": "D", "bucket": "b", "target_dollars": 5000, "weight_pct": 1.0, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.035,
+                "base_cap_pct": 0.035,
+                "shock_applied": False,
+                "triggered_by": "global_name_cap",
+            }
+        ]
+        before_total = sum(p["target_dollars"] for p in positions)  # 60,000
+
+        capped, summary = apply_caps_to_positions(positions, caps, 500_000)
+
+        after_total = sum(p["target_dollars"] for p in capped)
+        # Total should be conserved (within floating-point tolerance)
+        assert abs(after_total - before_total) < 1.0, f"Total changed: {before_total} → {after_total}"
+
+    def test_no_position_exceeds_cap_after_reflow(self):
+        """After reflow iterations, no position exceeds the cap."""
+        # Create a scenario where reflow could push names over cap
+        positions = [
+            {"ticker": f"T{i}", "bucket": "b", "target_dollars": 20000, "weight_pct": 4.0, "gap_risk": ""}
+            for i in range(5)
+        ] + [
+            {"ticker": "SMALL", "bucket": "b", "target_dollars": 1000, "weight_pct": 0.2, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.035,
+                "base_cap_pct": 0.035,
+                "shock_applied": False,
+                "triggered_by": "global_name_cap",
+            }
+        ]
+        cap_dollars = 500_000 * 0.035  # 17,500
+
+        capped, _ = apply_caps_to_positions(positions, caps, 500_000)
+
+        for p in capped:
+            assert (
+                p["target_dollars"] <= cap_dollars + 0.01
+            ), f"{p['ticker']} at ${p['target_dollars']:.2f} exceeds cap ${cap_dollars:.2f}"
+
+    def test_determinism(self):
+        """Global cap + reflow is deterministic."""
+        positions = [
+            {"ticker": "A", "bucket": "b", "target_dollars": 25000, "weight_pct": 5.0, "gap_risk": ""},
+            {"ticker": "B", "bucket": "b", "target_dollars": 15000, "weight_pct": 3.0, "gap_risk": ""},
+            {"ticker": "C", "bucket": "b", "target_dollars": 5000, "weight_pct": 1.0, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.035,
+                "base_cap_pct": 0.035,
+                "shock_applied": False,
+                "triggered_by": "global_name_cap",
+            }
+        ]
+
+        c1, s1 = apply_caps_to_positions(positions, caps, 500_000)
+        c2, s2 = apply_caps_to_positions(positions, caps, 500_000)
+
+        assert c1 == c2
+        assert s1 == s2
+
+    def test_global_cap_summary_includes_params(self):
+        """Summary includes global_cap_params with cap level and shock status."""
+        positions = [
+            {"ticker": "A", "bucket": "b", "target_dollars": 25000, "weight_pct": 5.0, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.028,
+                "base_cap_pct": 0.035,
+                "shock_applied": True,
+                "triggered_by": "global_name_cap",
+            }
+        ]
+
+        _, summary = apply_caps_to_positions(positions, caps, 500_000)
+
+        assert "global_cap_params" in summary
+        gcp = summary["global_cap_params"]
+        assert gcp["name_cap_pct"] == 0.028
+        assert gcp["base_cap_pct"] == 0.035
+        assert gcp["shock_applied"] is True
+
+    def test_combined_gap_risk_and_global_cap(self):
+        """Gap-risk cap + global cap both apply; total still conserved."""
+        positions = [
+            {"ticker": "GAP", "bucket": "binary_0_30", "target_dollars": 25000, "weight_pct": 5.0, "gap_risk": "HIGH"},
+            {"ticker": "BIG", "bucket": "binary_91_180", "target_dollars": 22000, "weight_pct": 4.4, "gap_risk": ""},
+            {"ticker": "SAFE", "bucket": "binary_91_180", "target_dollars": 8000, "weight_pct": 1.6, "gap_risk": ""},
+        ]
+        caps = [
+            {
+                "type": "gap_risk_cap",
+                "name_cap_pct": 0.25,
+                "budget_reduction_pct": 0,
+                "affected_tickers": ["GAP"],
+                "triggered_by": "gap_risk_high_count",
+            },
+            {
+                "type": "global_name_cap",
+                "name_cap_pct": 0.035,
+                "base_cap_pct": 0.035,
+                "shock_applied": False,
+                "triggered_by": "global_name_cap",
+            },
+        ]
+        account = 500_000
+        cap_dollars = account * 0.035  # 17,500
+        before_total = sum(p["target_dollars"] for p in positions)
+
+        capped, summary = apply_caps_to_positions(positions, caps, account)
+
+        # GAP was first reduced by gap_risk, but reflow may push it up;
+        # the key constraint is that no name exceeds the global cap
+        for p in capped:
+            assert (
+                p["target_dollars"] <= cap_dollars + 0.01
+            ), f"{p['ticker']} at ${p['target_dollars']:.2f} exceeds global cap ${cap_dollars:.2f}"
+        # Total is reduced because gap_risk_cap destroyed budget (no reflow for that cap type)
+        after_total = sum(p["target_dollars"] for p in capped)
+        assert after_total < before_total
+        # Verify reductions reported
+        assert len(summary["top_reductions"]) >= 1
+
+
+# ---------------------------------------------------------------------------
+# TestBuildGlobalNameCap — helper function
+# ---------------------------------------------------------------------------
+
+
+class TestBuildGlobalNameCap:
+    def test_disabled_returns_none(self):
+        policy = {"global_name_cap": {"enabled": False, "cap_pct": 0.035}}
+        assert build_global_name_cap(policy) is None
+
+    def test_missing_config_returns_none(self):
+        policy = {}
+        assert build_global_name_cap(policy) is None
+
+    def test_enabled_returns_cap_dict(self):
+        policy = {"global_name_cap": {"enabled": True, "cap_pct": 0.035}}
+        cap = build_global_name_cap(policy)
+        assert cap is not None
+        assert cap["type"] == "global_name_cap"
+        assert cap["name_cap_pct"] == 0.035
+        assert cap["shock_applied"] is False
+
+    def test_shock_not_triggered_without_conditions(self):
+        policy = {
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {
+                "enabled": True,
+                "xbi_weekly_ret_floor": -0.05,
+                "dd_change_floor_pp": -5.0,
+                "multiplier": 0.8,
+            },
+        }
+        # XBI down but not enough
+        cap = build_global_name_cap(policy, xbi_weekly_ret=-0.03, xbi_dd_change_pp=-3.0)
+        assert cap["name_cap_pct"] == 0.035
+        assert cap["shock_applied"] is False
+
+    def test_shock_triggered_tightens_cap(self):
+        policy = {
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {
+                "enabled": True,
+                "xbi_weekly_ret_floor": -0.05,
+                "dd_change_floor_pp": -5.0,
+                "multiplier": 0.8,
+            },
+        }
+        cap = build_global_name_cap(policy, xbi_weekly_ret=-0.06, xbi_dd_change_pp=-7.0)
+        assert cap["shock_applied"] is True
+        assert abs(cap["name_cap_pct"] - 0.035 * 0.8) < 1e-6
+
+    def test_shock_requires_both_conditions(self):
+        """Shock needs BOTH XBI return <= floor AND dd_change <= floor."""
+        policy = {
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {
+                "enabled": True,
+                "xbi_weekly_ret_floor": -0.05,
+                "dd_change_floor_pp": -5.0,
+                "multiplier": 0.8,
+            },
+        }
+        # XBI bad but drawdown stable
+        cap = build_global_name_cap(policy, xbi_weekly_ret=-0.06, xbi_dd_change_pp=-2.0)
+        assert cap["shock_applied"] is False
+
+        # Drawdown deepening but XBI return mild
+        cap = build_global_name_cap(policy, xbi_weekly_ret=-0.02, xbi_dd_change_pp=-7.0)
+        assert cap["shock_applied"] is False
+
+    def test_shock_disabled_ignores_conditions(self):
+        policy = {
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {"enabled": False, "multiplier": 0.8},
+        }
+        cap = build_global_name_cap(policy, xbi_weekly_ret=-0.10, xbi_dd_change_pp=-10.0)
+        assert cap["name_cap_pct"] == 0.035
+        assert cap["shock_applied"] is False
+
+    def test_shock_with_none_xbi_data(self):
+        """Missing XBI data → shock not applied."""
+        policy = {
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {
+                "enabled": True,
+                "xbi_weekly_ret_floor": -0.05,
+                "dd_change_floor_pp": -5.0,
+                "multiplier": 0.8,
+            },
+        }
+        cap = build_global_name_cap(policy, xbi_weekly_ret=None, xbi_dd_change_pp=None)
+        assert cap["shock_applied"] is False
+
+
+# ---------------------------------------------------------------------------
+# TestGlobalCapIntegration — end-to-end with run_weekly_execution
+# ---------------------------------------------------------------------------
+
+
+class TestGlobalCapIntegration:
+    def test_global_cap_fires_on_trade(self, tmp_path):
+        """Global cap applies even when trade decision is TRADE (no other caps)."""
+        env = _setup_full_env(tmp_path, prior_as_of=None)
+        # Positions with one oversized name (5% > 3.5% cap)
+        positions = _make_positions()
+        # Inflate first position to 5% = $25,000
+        positions[0]["target_dollars"] = 25000
+        positions[0]["weight_pct"] = 5.0
+
+        # Write portfolio policy with global cap enabled
+        policy_path = tmp_path / "portfolio_policy.json"
+        policy = {
+            "schema": "portfolio_policy.v3",
+            "rebalance_cadence": "weekly",
+            "rebalance_day": "FRIDAY",
+            "execution": "NEXT_OPEN",
+            "account_usd": 500000,
+            "family_filter_mode": "secondary",
+            "bucket_targets": {"binary_91_180": 0.55, "binary_31_90": 0.25, "binary_0_30": 0.10, "less_binary": 0.10},
+            "bucket_top_k": {"binary_91_180": 20, "binary_31_90": 15, "binary_0_30": 10, "less_binary": 15},
+            "bucket_name_caps": {"binary_91_180": 3.0, "binary_31_90": 2.0, "binary_0_30": 1.0, "less_binary": 2.0},
+            "family_overrides": {},
+            "family_targets": {},
+            "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+            "regulatory_ladder_enabled": False,
+            "rebalance_buffer_ranks": 30,
+            "bucket_hysteresis_days": 7,
+            "alpha_health": {"enabled": False},
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {"enabled": False},
+        }
+        with open(policy_path, "w") as f:
+            json.dump(policy, f)
+
+        _write_trade_decision_policy(env["td_policy_path"])
+
+        def _mock_build(as_of_date, snap_dir, *, positions_dir, **kwargs):
+            _write_positions(positions_dir, as_of_date, positions)
+            return {
+                "positions_path": str(positions_dir / f"{as_of_date}.json"),
+                "n_positions": len(positions),
+                "metadata": {"ruleset_id": "test1234"},
+                "performance": None,
+            }
+
+        with patch("tools.run_weekly_execution.build_shadow_positions", side_effect=_mock_build):
+            packet = run_weekly_execution(
+                env["as_of"],
+                snap_root=env["snap_root"],
+                positions_dir=env["positions_dir"],
+                execution_root=env["execution_root"],
+                manifest_path=env["manifest_path"],
+                perf_csv=env["perf_csv"],
+                price_source=env["price_csv"],
+                skip_snapshot=True,
+                trade_decision_policy_path=env["td_policy_path"],
+                policy_path=policy_path,
+            )
+
+        assert packet["status"] == "READY"
+        ce = packet.get("caps_enforcement")
+        assert ce is not None, "caps_enforcement should be present when global cap is enabled"
+        assert ce["caps_applied"] is True
+        # Max position should be reduced
+        assert ce["targets_after"]["largest_position_pct"] <= 3.5 + 0.01
+
+    def test_global_cap_in_packet_md(self, tmp_path):
+        """EXECUTION_PACKET.md shows global cap params."""
+        env = _setup_full_env(tmp_path, prior_as_of=None)
+        positions = _make_positions()
+        positions[0]["target_dollars"] = 25000
+        positions[0]["weight_pct"] = 5.0
+
+        policy_path = tmp_path / "portfolio_policy.json"
+        policy = {
+            "schema": "portfolio_policy.v3",
+            "rebalance_cadence": "weekly",
+            "rebalance_day": "FRIDAY",
+            "execution": "NEXT_OPEN",
+            "account_usd": 500000,
+            "family_filter_mode": "secondary",
+            "bucket_targets": {"binary_91_180": 0.55, "binary_31_90": 0.25, "binary_0_30": 0.10, "less_binary": 0.10},
+            "bucket_top_k": {"binary_91_180": 20, "binary_31_90": 15, "binary_0_30": 10, "less_binary": 15},
+            "bucket_name_caps": {"binary_91_180": 3.0, "binary_31_90": 2.0, "binary_0_30": 1.0, "less_binary": 2.0},
+            "family_overrides": {},
+            "family_targets": {},
+            "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+            "regulatory_ladder_enabled": False,
+            "rebalance_buffer_ranks": 30,
+            "bucket_hysteresis_days": 7,
+            "alpha_health": {"enabled": False},
+            "global_name_cap": {"enabled": True, "cap_pct": 0.035},
+            "global_cap_shock": {"enabled": False},
+        }
+        with open(policy_path, "w") as f:
+            json.dump(policy, f)
+
+        _write_trade_decision_policy(env["td_policy_path"])
+
+        def _mock_build(as_of_date, snap_dir, *, positions_dir, **kwargs):
+            _write_positions(positions_dir, as_of_date, positions)
+            return {
+                "positions_path": str(positions_dir / f"{as_of_date}.json"),
+                "n_positions": len(positions),
+                "metadata": {"ruleset_id": "test1234"},
+                "performance": None,
+            }
+
+        with patch("tools.run_weekly_execution.build_shadow_positions", side_effect=_mock_build):
+            run_weekly_execution(
+                env["as_of"],
+                snap_root=env["snap_root"],
+                positions_dir=env["positions_dir"],
+                execution_root=env["execution_root"],
+                manifest_path=env["manifest_path"],
+                perf_csv=env["perf_csv"],
+                price_source=env["price_csv"],
+                skip_snapshot=True,
+                trade_decision_policy_path=env["td_policy_path"],
+                policy_path=policy_path,
+            )
+
+        md = (env["execution_root"] / env["as_of"] / "EXECUTION_PACKET.md").read_text()
+        assert "Global name cap" in md
+        assert "0.035" in md

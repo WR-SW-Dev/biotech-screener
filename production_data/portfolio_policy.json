@@ -80,5 +80,18 @@
     "min_weeks": 3,
     "no_add_if_portfolio_hedged_excess_lt": 0.0,
     "no_add_if_b91_hedged_excess_lt": 0.0
+  },
+
+  "global_name_cap": {
+    "enabled": true,
+    "cap_pct": 0.030,
+    "comment": "Universal per-name cap: no single position > 3.0% of account_usd. Matches bucket_name_caps max. A/B shows all bars pass at 3.0% with +0.03pp tail improvement."
+  },
+  "global_cap_shock": {
+    "enabled": false,
+    "xbi_weekly_ret_floor": -0.05,
+    "dd_change_floor_pp": -5.0,
+    "multiplier": 0.8,
+    "comment": "Optional: tighten global cap by multiplier when XBI weekly return <= floor AND drawdown deepens by >= floor_pp. Default disabled."
   }
 }

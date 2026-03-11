@@ -660,6 +660,11 @@ def apply_caps_to_positions(
                 for p in capped:
                     p["target_dollars"] = round(p.get("target_dollars", 0) * scale, 2)
 
+        elif cap_type == "global_name_cap":
+            name_cap_pct = cap.get("name_cap_pct", 0.035)
+            name_cap_dollars = account_usd * name_cap_pct
+            _apply_global_name_cap_reflow(capped, name_cap_dollars)
+
         elif cap_type == "min_trade_bump":
             min_trade_usd_bump = max(min_trade_usd_bump, cap.get("min_trade_usd_bump", 0))
 
@@ -715,6 +720,17 @@ def apply_caps_to_positions(
             return 0
         return round(max(p.get("target_dollars", 0) for p in pos_list) / account_usd * 100, 2)
 
+    # Extract global cap params for transparency
+    global_cap_params = None
+    for cap in caps:
+        if cap.get("type") == "global_name_cap":
+            global_cap_params = {
+                "name_cap_pct": cap.get("name_cap_pct"),
+                "base_cap_pct": cap.get("base_cap_pct"),
+                "shock_applied": cap.get("shock_applied", False),
+            }
+            break
+
     summary = {
         "caps_applied": True,
         "caps_detail": caps,
@@ -736,7 +752,94 @@ def apply_caps_to_positions(
         "top_reductions": top_reductions,
     }
 
+    if global_cap_params:
+        summary["global_cap_params"] = global_cap_params
+
     return capped, summary
+
+
+def _apply_global_name_cap_reflow(
+    positions: List[Dict[str, Any]],
+    name_cap_dollars: float,
+    max_iterations: int = 10,
+) -> None:
+    """Cap every position at name_cap_dollars, reflowing overflow proportionally.
+
+    Modifies positions in-place.  Iterates because reflow can push previously-
+    uncapped names over the cap.  Total budget is conserved (sum of target_dollars
+    is unchanged, up to floating-point rounding).
+    """
+    for _ in range(max_iterations):
+        overflow = 0.0
+        uncapped_total = 0.0
+
+        for p in positions:
+            td = p.get("target_dollars", 0)
+            if td > name_cap_dollars:
+                overflow += td - name_cap_dollars
+                p["target_dollars"] = name_cap_dollars
+            else:
+                uncapped_total += td
+
+        if overflow < 0.01:
+            break
+
+        if uncapped_total <= 0:
+            break
+
+        # Distribute overflow proportionally to positions still under the cap
+        for p in positions:
+            td = p.get("target_dollars", 0)
+            if td < name_cap_dollars:
+                share = td / uncapped_total
+                p["target_dollars"] = round(td + overflow * share, 2)
+
+
+def build_global_name_cap(
+    policy: Dict[str, Any],
+    *,
+    xbi_weekly_ret: Optional[float] = None,
+    xbi_dd_change_pp: Optional[float] = None,
+) -> Optional[Dict[str, Any]]:
+    """Build a global_name_cap dict from portfolio policy, or None if disabled.
+
+    Args:
+        policy: portfolio_policy.json contents
+        xbi_weekly_ret: XBI 1-week return as decimal (e.g. -0.06 for -6%)
+        xbi_dd_change_pp: XBI drawdown change in percentage points (e.g. -7.0)
+
+    Returns cap dict suitable for apply_caps_to_positions, or None.
+    """
+    gnc = policy.get("global_name_cap", {})
+    if not gnc.get("enabled", False):
+        return None
+
+    base_cap_pct = gnc.get("cap_pct", 0.035)
+    cap_pct = base_cap_pct
+
+    shock_applied = False
+    shock_cfg = policy.get("global_cap_shock", {})
+    if shock_cfg.get("enabled", False):
+        floor_ret = shock_cfg.get("xbi_weekly_ret_floor", -0.05)
+        floor_dd = shock_cfg.get("dd_change_floor_pp", -5.0)
+        multiplier = shock_cfg.get("multiplier", 0.8)
+
+        if (
+            xbi_weekly_ret is not None
+            and xbi_dd_change_pp is not None
+            and xbi_weekly_ret <= floor_ret
+            and xbi_dd_change_pp <= floor_dd
+        ):
+            cap_pct = base_cap_pct * multiplier
+            shock_applied = True
+
+    return {
+        "type": "global_name_cap",
+        "name_cap_pct": cap_pct,
+        "base_cap_pct": base_cap_pct,
+        "shock_applied": shock_applied,
+        "triggered_by": "global_name_cap",
+    }
 
 
 def _classify_cap_reason(ticker: str, caps: List[Dict[str, Any]]) -> str:
@@ -749,6 +852,8 @@ def _classify_cap_reason(ticker: str, caps: List[Dict[str, Any]]) -> str:
                 reasons.append("gap_risk_cap")
             if cap.get("budget_reduction_pct", 0) > 0:
                 reasons.append("budget_reduction")
+        elif cap_type == "global_name_cap":
+            reasons.append("global_name_cap")
         elif cap_type == "min_trade_bump":
             pass  # Doesn't affect position sizing
     return ", ".join(sorted(set(reasons))) if reasons else "budget_reduction"

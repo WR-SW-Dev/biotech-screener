@@ -410,6 +410,13 @@ def _render_packet_md(packet: Dict[str, Any]) -> List[str]:
         lines.append(f"**caps_applied**: {ce.get('caps_applied', False)}")
         lines.append("")
 
+        gcp = ce.get("global_cap_params")
+        if gcp:
+            lines.append(f"**Global name cap**: {gcp.get('name_cap_pct', 0):.4f}")
+            lines.append(f"**Base cap**: {gcp.get('base_cap_pct', 0):.4f}")
+            lines.append(f"**Shock applied**: {gcp.get('shock_applied', False)}")
+            lines.append("")
+
         before = ce.get("targets_before", {})
         after = ce.get("targets_after", {})
         lines.append("| Metric | Before | After |")
@@ -516,6 +523,19 @@ def run_weekly_execution(
 
     snap_dir = Path(snap_result["snapshot_dir"])
 
+    # Step 1b: Run calendar slip tracker (best-effort, WARN-only)
+    slip_result = None
+    try:
+        from tools.track_calendar_slips import run_slip_tracker
+
+        slip_result = run_slip_tracker(
+            as_of_date,
+            snap_root=snap_root,
+            out_root=execution_root.parent / "calendar_slips",
+        )
+    except Exception as slip_exc:
+        log.warning("Calendar slip tracker failed (non-blocking): %s", slip_exc)
+
     # Step 2: Build shadow positions
     pos_result = build_shadow_positions(
         as_of_date,
@@ -585,8 +605,8 @@ def run_weekly_execution(
     from tools.ic_packet import build_ic_packet, write_ic_packet
     from tools.trade_decision import (
         VERDICT_NO_TRADE,
-        VERDICT_TRADE_WITH_CAPS,
         apply_caps_to_positions,
+        build_global_name_cap,
         build_trade_decision,
         load_trade_decision_policy,
         write_trade_decision,
@@ -640,12 +660,26 @@ def run_weekly_execution(
         _write_packet(packet, out_dir)
         return packet
 
-    # Step 6: Apply caps if TRADE_WITH_CAPS
+    # Step 6: Apply caps — trade decision caps + universal global name cap
     trade_positions: Optional[List[Dict[str, Any]]] = None
     min_trade_usd = DEFAULT_MIN_TRADE_USD
 
-    if verdict == VERDICT_TRADE_WITH_CAPS and td:
-        active_caps = td.get("caps", [])
+    # Collect caps from trade decision
+    active_caps = td.get("caps", []) if td else []
+
+    # Build global name cap from portfolio policy (universal, not GO/NO-GO)
+    xbi_ret = _extract_xbi_weekly_ret(pos_result)
+    xbi_dd_change = _extract_xbi_dd_change(pos_result, perf_csv)
+    global_cap = build_global_name_cap(
+        policy,
+        xbi_weekly_ret=xbi_ret,
+        xbi_dd_change_pp=xbi_dd_change,
+    )
+    if global_cap:
+        active_caps = list(active_caps) + [global_cap]
+
+    caps_summary = None
+    if active_caps and verdict != VERDICT_NO_TRADE:
         account_usd = policy.get("account_usd", 500_000)
         try:
             capped_positions, caps_summary = apply_caps_to_positions(positions, active_caps, account_usd)
@@ -657,6 +691,7 @@ def run_weekly_execution(
             _write_capped_positions(out_dir, as_of_date, capped_positions)
         except Exception as cap_exc:
             log.warning("Cap enforcement failed, proceeding uncapped: %s", cap_exc)
+            caps_summary = None
 
     # Step 7: Build trade plan
     from tools.build_trade_plan import build_trade_plan
@@ -703,8 +738,64 @@ def run_weekly_execution(
     if caps_summary:
         packet["caps_enforcement"] = caps_summary
 
+    if slip_result and slip_result.get("status") == "OK":
+        packet["calendar_slips"] = {
+            "prior_date": slip_result.get("prior_date"),
+            "elapsed_days": slip_result.get("elapsed_days"),
+            "large_slip_count": slip_result["summary"].get("large_slip_count", 0),
+            "imminent_large_slip_count": slip_result["summary"].get("imminent_large_slip_count", 0),
+            "gate_status": slip_result["gate"].get("status", "PASS"),
+            "artifacts_path": slip_result.get("paths", {}).get("csv_path", ""),
+        }
+
     _write_packet(packet, out_dir)
     return packet
+
+
+def _extract_xbi_weekly_ret(pos_result: Dict[str, Any]) -> Optional[float]:
+    """Extract XBI weekly return as decimal from performance result."""
+    perf = pos_result.get("performance")
+    if not perf or isinstance(perf, dict) and "error" in perf:
+        return None
+    xbi_pct = perf.get("xbi_return_pct")
+    if xbi_pct is None:
+        return None
+    return xbi_pct / 100.0  # Convert percentage to decimal
+
+
+def _extract_xbi_dd_change(pos_result: Dict[str, Any], perf_csv: Path) -> Optional[float]:
+    """Compute XBI drawdown change (pp) from current vs prior week performance.
+
+    Returns negative values when drawdown deepens (e.g., -7.0 means 7pp worse).
+    Best-effort: returns None if insufficient data.
+    """
+    import csv as _csv
+
+    perf = pos_result.get("performance")
+    if not perf or isinstance(perf, dict) and "error" in perf:
+        return None
+
+    try:
+        if not perf_csv.is_file():
+            return None
+        with open(perf_csv) as f:
+            rows = list(_csv.DictReader(f))
+        if len(rows) < 2:
+            return None
+        # Sum last 2 XBI returns to approximate drawdown change
+        # This is a rough proxy — for production use we'd compute from price series
+        recent = rows[-2:]
+        xbi_rets = []
+        for r in recent:
+            v = r.get("xbi_return_pct", "")
+            if v:
+                xbi_rets.append(float(v))
+        if len(xbi_rets) < 2:
+            return None
+        # Drawdown change ≈ this week's XBI return (if negative, drawdown deepens)
+        return xbi_rets[-1]
+    except Exception:
+        return None
 
 
 def _summarize_trade_decision(td: Dict[str, Any]) -> Dict[str, Any]:
