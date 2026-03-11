@@ -884,14 +884,17 @@ def _load_pdufa_events(data_dir: Path) -> List[LedgerEntry]:
         if not ticker or not pdufa_date:
             continue
 
-        curated_disclosed_at = rec.get("curated_disclosed_at")
-        rec_confidence = rec.get("confidence", "")
-        if curated_disclosed_at:
-            disclosed_at = curated_disclosed_at
-            confidence = "HIGH"
+        # v2 schema: as_of_disclosed_at; old schema: curated_disclosed_at
+        disclosed_raw = rec.get("as_of_disclosed_at") or rec.get("curated_disclosed_at") or ""
+        rec_confidence = str(rec.get("confidence", "")).upper()
+        if disclosed_raw:
+            disclosed_at = disclosed_raw
+            # Trust the record's confidence if it's a recognized level,
+            # otherwise default to HIGH (has explicit disclosure date).
+            confidence = rec_confidence if rec_confidence in ("HIGH", "MED", "LOW") else "HIGH"
             tags: Tuple[str, ...] = ()
-        elif rec_confidence == "confirmed":
-            # Confirmed company guidance without curated disclosure date.
+        elif rec_confidence in ("CONFIRMED", "HIGH"):
+            # Confirmed company guidance without explicit disclosure date.
             # PDUFA dates are publicly announced via SEC filings / press
             # releases — MED is appropriate (known event, imprecise PIT anchor).
             disclosed_at = pdufa_date  # fallback to PDUFA date itself

@@ -190,6 +190,56 @@ class TestLedgerBuilder:
         assert len(entries) == 1
         assert entries[0].confidence == "LOW"
 
+    def test_pdufa_v2_schema_as_of_disclosed_at(self, tmp_cache):
+        """PDUFA v2 schema with as_of_disclosed_at -> uses it for disclosed_at, keeps confidence."""
+        pdufa = [
+            {
+                "ticker": "CYTK",
+                "drug_name": "Aficamten",
+                "indication": "Hypertrophic Cardiomyopathy",
+                "pdufa_date": "2026-03-28",
+                "event_type": "PDUFA",
+                "submission_type": "NDA",
+                "confidence": "HIGH",
+                "source": "COMPANY_GUIDANCE",
+                "as_of_disclosed_at": "2025-09-28",
+            }
+        ]
+        pdufa_path = tmp_cache["data"] / "pdufa_dates.json"
+        pdufa_path.write_text(json.dumps(pdufa))
+
+        entries = _load_pdufa_events(tmp_cache["data"])
+
+        assert len(entries) == 1
+        e = entries[0]
+        assert e.disclosed_at == "2025-09-28"
+        assert e.confidence == "HIGH"
+        assert e.tags == ()  # no missing_disclosed_at tag
+        assert e.source == "PDUFA_MANUAL"
+        assert e.event_date == "2026-03-28"
+
+    def test_pdufa_v2_high_confidence_missing_disclosed_at(self, tmp_cache):
+        """PDUFA v2 with confidence=HIGH but no disclosed_at -> MED with tag."""
+        pdufa = [
+            {
+                "ticker": "ACME",
+                "drug_name": "AcmeDrug",
+                "indication": "Test",
+                "pdufa_date": "2026-05-01",
+                "confidence": "HIGH",
+                "source": "COMPANY_GUIDANCE",
+            }
+        ]
+        pdufa_path = tmp_cache["data"] / "pdufa_dates.json"
+        pdufa_path.write_text(json.dumps(pdufa))
+
+        entries = _load_pdufa_events(tmp_cache["data"])
+
+        assert len(entries) == 1
+        e = entries[0]
+        assert e.confidence == "MED"
+        assert "missing_disclosed_at" in e.tags
+
     def test_pit_filter_excludes_future(self, tmp_cache):
         """Entry with disclosed_at > as_of_date excluded from ledger output."""
         events = [

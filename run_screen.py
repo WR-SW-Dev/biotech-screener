@@ -4208,6 +4208,14 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Options diagnostics snapshot failed (%s) — skipping sidecar", exc)
 
+    # --- Write regulatory coverage telemetry sidecar ---
+    try:
+        from common.regulatory_coverage_telemetry import write_telemetry as _write_reg_tel
+
+        _write_reg_tel(snap_path, csv_rows, as_of_date, snapshots_dir=snap_path.parent)
+    except Exception as exc:
+        logger.warning("Regulatory coverage telemetry failed (%s) — skipping sidecar", exc)
+
     # --- Write eligibility summary sidecar ---
     try:
         from decision_engine_codes import canonicalize_reasons
