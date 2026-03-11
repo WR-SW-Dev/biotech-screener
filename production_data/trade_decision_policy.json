@@ -1,0 +1,45 @@
+{
+  "schema": "trade_decision_policy.v1",
+  "description": "Deterministic GO/NO-GO thresholds for weekly trade execution",
+
+  "gates": {
+    "pre_trade_must_pass": true,
+    "comment": "If pre_trade overall=FAIL, decision is always NO_TRADE"
+  },
+
+  "risk_limits": {
+    "max_gap_risk_high_count": 4,
+    "max_gap_risk_high_weight_pct": 8.0,
+    "max_missing_price_coverage": 2,
+    "max_resolved_regulatory": 3
+  },
+
+  "execution_quality": {
+    "min_fill_coverage_pct": 50.0,
+    "max_avg_slippage_bps": 50.0,
+    "comment": "Only enforced when fill data is available"
+  },
+
+  "model_vs_realized": {
+    "max_negative_gap_pct": -0.50,
+    "comment": "If realized is worse than model by more than this, flag"
+  },
+
+  "alpha_health": {
+    "min_trailing_excess_pct": -1.0,
+    "comment": "Floor for trailing hedged excess vs XBI (from alpha_attribution)"
+  },
+
+  "turnover": {
+    "max_turnover_pct": 40.0
+  },
+
+  "caps": {
+    "gap_risk_high_count_trigger": 3,
+    "gap_risk_high_name_cap_pct": 0.25,
+    "gap_risk_high_budget_reduction_pct": 15.0,
+    "realized_worse_slippage_trigger_bps": 30.0,
+    "realized_worse_min_trade_usd_bump": 500,
+    "comment": "Auto-caps applied when TRADE_OK_WITH_CAPS"
+  }
+}

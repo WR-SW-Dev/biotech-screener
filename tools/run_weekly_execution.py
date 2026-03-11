@@ -505,6 +505,28 @@ def run_weekly_execution(
             policy_path=policy_path,
         )
         write_ic_packet(out_dir, ic)
+
+        # Trade Decision (best-effort — skip on failure)
+        try:
+            from tools.trade_decision import build_trade_decision, load_trade_decision_policy, write_trade_decision
+
+            td_policy_file = PROJECT_ROOT / "production_data" / "trade_decision_policy.json"
+            if td_policy_file.is_file():
+                td_policy = load_trade_decision_policy(td_policy_file)
+                td = build_trade_decision(ic, td_policy)
+                write_trade_decision(out_dir, td)
+                packet["trade_decision"] = {
+                    "verdict": td.get("verdict"),
+                    "n_pass": td.get("n_pass"),
+                    "n_warn": td.get("n_warn"),
+                    "n_fail": td.get("n_fail"),
+                    "caps": td.get("caps", []),
+                }
+        except Exception as td_exc:
+            import logging as _log_td
+
+            _log_td.getLogger(__name__).warning("Trade decision failed: %s", td_exc)
+
     except Exception as exc:
         import logging
 
