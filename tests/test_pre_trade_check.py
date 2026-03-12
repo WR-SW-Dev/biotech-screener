@@ -239,7 +239,19 @@ class TestOverallResult:
         )
         snap = tmp_path / "snap"
         snap.mkdir()
-        (snap / "metadata.json").write_text(json.dumps({"ruleset_id": "abc", "as_of_date": "2026-03-08"}))
+        (snap / "metadata.json").write_text(
+            json.dumps(
+                {
+                    "ruleset_id": "abc",
+                    "as_of_date": "2026-03-08",
+                    "source_reliability": {
+                        "table_loaded": True,
+                        "table_buckets": 5,
+                        "action_counts": {"ALLOW": 10},
+                    },
+                }
+            )
+        )
         manifest = _write_manifest(tmp_path, active_id="abc")
 
         result = run_pre_trade_check(
@@ -754,3 +766,73 @@ class TestValidatePositions:
         date, positions = load_positions_json(path, validate=False)
         assert date == "2026-01-01"
         assert len(positions) == 1
+
+
+# ---------------------------------------------------------------------------
+# Source reliability gate
+# ---------------------------------------------------------------------------
+
+
+class TestSourceReliabilityGate:
+
+    def _snap_with_reliability(self, tmp_path, rel_meta):
+        snap = tmp_path / "snap"
+        snap.mkdir()
+        metadata = {
+            "ruleset_id": "abc",
+            "as_of_date": "2026-03-08",
+            "source_reliability": rel_meta,
+        }
+        (snap / "metadata.json").write_text(json.dumps(metadata))
+        return snap
+
+    def test_pass_healthy_table(self, tmp_path):
+        from tools.pre_trade_check import check_source_reliability
+
+        snap = self._snap_with_reliability(
+            tmp_path,
+            {
+                "table_loaded": True,
+                "table_buckets": 10,
+                "action_counts": {"ALLOW": 80, "DEMOTE": 15, "SUPPRESS": 5},
+            },
+        )
+        result = check_source_reliability(snap)
+        assert result.status == "PASS"
+
+    def test_warn_no_table(self, tmp_path):
+        from tools.pre_trade_check import check_source_reliability
+
+        snap = self._snap_with_reliability(
+            tmp_path,
+            {
+                "table_loaded": False,
+                "table_buckets": 0,
+                "action_counts": {},
+            },
+        )
+        result = check_source_reliability(snap)
+        assert result.status == "WARN"
+
+    def test_warn_high_suppress(self, tmp_path):
+        from tools.pre_trade_check import check_source_reliability
+
+        snap = self._snap_with_reliability(
+            tmp_path,
+            {
+                "table_loaded": True,
+                "table_buckets": 10,
+                "action_counts": {"ALLOW": 20, "SUPPRESS": 80},
+            },
+        )
+        result = check_source_reliability(snap)
+        assert result.status == "WARN"
+        assert "High SUPPRESS" in result.detail
+
+    def test_warn_no_metadata(self, tmp_path):
+        from tools.pre_trade_check import check_source_reliability
+
+        snap = tmp_path / "empty_snap"
+        snap.mkdir()
+        result = check_source_reliability(snap)
+        assert result.status == "WARN"

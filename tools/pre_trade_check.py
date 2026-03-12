@@ -285,6 +285,67 @@ def check_positions_integrity(
     )
 
 
+def check_source_reliability(
+    snap_dir: Path,
+    *,
+    max_stale_days: int = 14,
+    max_suppress_pct: float = 30.0,
+) -> CheckResult:
+    """WARN if source reliability table is stale or has high SUPPRESS rate.
+
+    Looks at metadata.json source_reliability block from the snapshot.
+    """
+    metadata = load_metadata(snap_dir)
+    if not metadata:
+        return CheckResult(
+            "source_reliability",
+            "WARN",
+            "Cannot check — metadata.json not found",
+        )
+
+    rel_meta = metadata.get("source_reliability", {})
+    if not rel_meta.get("table_loaded"):
+        return CheckResult(
+            "source_reliability",
+            "WARN",
+            "No reliability table loaded for this snapshot",
+        )
+
+    action_counts = rel_meta.get("action_counts", {})
+    total = sum(action_counts.values())
+    suppress_n = action_counts.get("SUPPRESS", 0)
+    demote_n = action_counts.get("DEMOTE", 0)
+
+    if total == 0:
+        return CheckResult(
+            "source_reliability",
+            "PASS",
+            "Reliability table loaded, no catalyst sources to evaluate",
+        )
+
+    suppress_pct = suppress_n / total * 100
+    detail = (
+        f"n={total}, ALLOW={action_counts.get('ALLOW', 0)}, "
+        f"DEMOTE={demote_n}, SUPPRESS={suppress_n} ({suppress_pct:.0f}%), "
+        f"UNKNOWN={action_counts.get('UNKNOWN', 0)}"
+    )
+
+    if suppress_pct > max_suppress_pct:
+        return CheckResult(
+            "source_reliability",
+            "WARN",
+            f"High SUPPRESS rate: {detail}",
+            value=round(suppress_pct, 1),
+            threshold=max_suppress_pct,
+        )
+
+    return CheckResult(
+        "source_reliability",
+        "PASS",
+        detail,
+    )
+
+
 def check_turnover(
     current_positions: List[Dict[str, Any]],
     prior_positions: List[Dict[str, Any]],
@@ -461,6 +522,7 @@ def run_pre_trade_check(
     checks = [
         check_provenance(snap_dir),
         check_ruleset_active(snap_dir, relaxed=relaxed, manifest_path=manifest_path),
+        check_source_reliability(snap_dir),
         check_positions_integrity(current_positions),
         check_bucket_deviation(current_positions, policy, deviation_max_pct),
         check_missing_prices(current_positions, max_missing_prices),

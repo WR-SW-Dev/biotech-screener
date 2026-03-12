@@ -1438,6 +1438,9 @@ SNAPSHOT_COLUMNS = [
     "missing_components",
     "missingness_penalty",
     "confidence_overall",
+    # --- Source reliability (empirical slip-based) ---
+    "source_reliability_action",
+    "source_reliability_penalty",
     # --- Underlying module scores (informational) ---
     "momentum_score",
     "catalyst_score",
@@ -3197,6 +3200,21 @@ def save_validation_snapshot(
     # even when M3 events don't include the PDUFA entry.
     _pdufa_manual = _load_pdufa_manual(as_of_date=as_of_date)
 
+    # Load source reliability table (empirical slip-based trust actions).
+    # Used to penalize noisy calendar sources in priority ranking.
+    _reliability_table: list = []
+    try:
+        from common.source_reliability import load_reliability_table
+
+        _rel_root = Path(__file__).resolve().parent / "artifacts" / "calendar_source_reliability"
+        if _rel_root.is_dir():
+            _rel_dates = sorted(d.name for d in _rel_root.iterdir() if d.is_dir() and d.name <= as_of_date)
+            if _rel_dates:
+                _rel_path = _rel_root / _rel_dates[-1] / "source_reliability.json"
+                _reliability_table = load_reliability_table(_rel_path)
+    except Exception:
+        _reliability_table = []
+
     # Build the event ledger for direct regulatory event scanning.
     # M3's scored events (summaries[ticker].events) only include CTGov/SEC
     # pipeline events — not FDA ADCOM, FDA regulatory, EMA, or PDUFA ledger
@@ -4899,6 +4917,7 @@ def save_validation_snapshot(
             _pdufa_manual,
             as_of_date,
             n_eligible=_eligible_count,
+            reliability_table=_reliability_table or None,
         )
         _cal_telemetry = get_calendar_telemetry(_cal_used, selection_diag=_cal_diag)
     except Exception:
@@ -4919,6 +4938,39 @@ def save_validation_snapshot(
             "coverage_pct",
             round(len({r.get("ticker") for r in _pdufa_manual}) / max(_eligible_count, 1) * 100, 1),
         ),
+    }
+
+    # --- Per-ticker source reliability annotation ---
+    _rel_action_counts: Dict[str, int] = {}
+    if _reliability_table:
+        try:
+            from common.source_reliability import compute_priority_penalty, get_source_action
+
+            for r in csv_rows:
+                src = r.get("catalyst_source", "")
+                conf = r.get("confidence_overall", "")
+                fam = r.get("catalyst_family", "")
+                if src:
+                    action, _reason = get_source_action(
+                        _reliability_table,
+                        src,
+                        conf,
+                        fam,
+                    )
+                    penalty = compute_priority_penalty(action)
+                    r["source_reliability_action"] = action
+                    r["source_reliability_penalty"] = str(round(penalty, 1)) if penalty else ""
+                    _rel_action_counts[action] = _rel_action_counts.get(action, 0) + 1
+                else:
+                    r["source_reliability_action"] = ""
+                    r["source_reliability_penalty"] = ""
+        except Exception:
+            pass
+
+    metadata["source_reliability"] = {
+        "table_loaded": bool(_reliability_table),
+        "table_buckets": len(_reliability_table),
+        "action_counts": _rel_action_counts,
     }
 
     meta_path = snap_path / "metadata.json"
