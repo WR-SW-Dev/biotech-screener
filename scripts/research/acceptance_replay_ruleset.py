@@ -93,11 +93,14 @@ def compute_ranking_delta_for_date(
     candidate_rs: DecisionRuleset,
     top_ks: List[int],
     candidate_pre_fn: Optional[Any] = None,
+    candidate_csv_path: Optional[Path] = None,
 ) -> Optional[Dict[str, Any]]:
     """Rerank one snapshot with both rulesets and compute deltas.
 
     candidate_pre_fn: optional callable(rows, ruleset) -> rows that transforms
         candidate rows before reranking (e.g. sleeve-scoped neutralization).
+    candidate_csv_path: if provided, candidate arm reads from this CSV instead
+        of csv_path (e.g. regenerated snapshots with different alpha tables).
     """
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -108,7 +111,14 @@ def compute_ranking_delta_for_date(
         return None
 
     rows_base = copy.deepcopy(rows)
-    rows_cand = copy.deepcopy(rows)
+
+    # Candidate arm: use separate CSV if provided, else deep-copy baseline
+    if candidate_csv_path is not None and candidate_csv_path.exists():
+        with open(candidate_csv_path, newline="", encoding="utf-8") as f:
+            cand_reader = csv.DictReader(f)
+            rows_cand = list(cand_reader)
+    else:
+        rows_cand = copy.deepcopy(rows)
 
     # Apply optional pre-processing to candidate arm (e.g. neutralization)
     if candidate_pre_fn is not None:
@@ -737,6 +747,7 @@ def run_acceptance_replay(
     baseline_ruleset_path: Path,
     *,
     snapshot_root: Path = DEFAULT_SNAPSHOT_ROOT,
+    candidate_snapshot_root: Optional[Path] = None,
     policy_path: Path = DEFAULT_POLICY_PATH,
     price_path: Path = DEFAULT_PRICE_PATH,
     out_dir: Optional[Path] = None,
@@ -767,13 +778,17 @@ def run_acceptance_replay(
     if not dates:
         return {"error": "no snapshot dates found"}
 
+    if candidate_snapshot_root:
+        print(f"Candidate snapshots: {candidate_snapshot_root}")
+
     # Step 1: Ranking deltas
     print("\n--- Ranking Deltas ---")
     by_date: Dict[str, Dict[str, Any]] = {}
     n_skip = 0
     for date in dates:
         csv_path = snapshot_root / date / "rankings.csv"
-        result = compute_ranking_delta_for_date(csv_path, baseline_rs, candidate_rs, top_ks, candidate_pre_fn)
+        cand_csv = (candidate_snapshot_root / date / "rankings.csv") if candidate_snapshot_root else None
+        result = compute_ranking_delta_for_date(csv_path, baseline_rs, candidate_rs, top_ks, candidate_pre_fn, cand_csv)
         if result is None:
             n_skip += 1
             continue
@@ -849,6 +864,12 @@ def main() -> None:
     parser.add_argument("--candidate-ruleset", type=Path, required=True)
     parser.add_argument("--baseline-ruleset", type=Path, required=True)
     parser.add_argument("--snapshot-root", type=Path, default=DEFAULT_SNAPSHOT_ROOT)
+    parser.add_argument(
+        "--candidate-snapshot-root",
+        type=Path,
+        default=None,
+        help="Separate snapshot root for candidate arm (e.g. regenerated alpha tables)",
+    )
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY_PATH)
     parser.add_argument("--price-csv", type=Path, default=DEFAULT_PRICE_PATH)
     parser.add_argument("--date-from", type=str, default=None)
@@ -917,6 +938,7 @@ def main() -> None:
         args.candidate_ruleset,
         args.baseline_ruleset,
         snapshot_root=args.snapshot_root,
+        candidate_snapshot_root=args.candidate_snapshot_root,
         policy_path=args.policy,
         price_path=args.price_csv,
         out_dir=args.out_dir,
