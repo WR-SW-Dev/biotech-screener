@@ -1,0 +1,7 @@
+{
+  "schema": "canary_policy.v1",
+  "structural_block_enabled": true,
+  "statistical_warn_enabled": true,
+  "consecutive_warn_to_block": 0,
+  "ratchet_after_n_runs": 0
+}

@@ -76,6 +76,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "risk_concentration",
         "ruleset_governance",
         "regulatory_calendar",
+        "canary_regression",
     }
 )
 
@@ -1223,6 +1224,73 @@ def check_ruleset_health(
         status=gate_status,
         detail=detail,
         value=result,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Canary regression gate (BLOCK->FAIL, WARN->WARN, INFO->PASS)
+# ---------------------------------------------------------------------------
+
+
+def check_canary_regression(
+    staging_date_dir: Path,
+    *,
+    policy_path: Optional[Path] = None,
+    thresholds_path: Optional[Path] = None,
+    history_path: Optional[Path] = None,
+    ruleset_path: Optional[Path] = None,
+) -> GateResult:
+    """Canary regression gate. Maps BLOCK->FAIL, WARN->WARN, INFO->PASS.
+
+    Wraps entire canary run in try/except — degrades to WARN on crash
+    (matches other advisory gates).
+    """
+    from scripts.replay_diff import DiffThresholds
+    from scripts.run_canary_dates import DEFAULT_RULESET as CANARY_DEFAULT_RULESET
+    from scripts.run_canary_dates import DEFAULT_THRESHOLDS as CANARY_DEFAULT_THRESHOLDS
+    from scripts.run_canary_dates import CanaryOutcome, CanaryPolicy, run_canary_classified
+
+    if policy_path is None:
+        policy_path = REPO_ROOT / "production_data" / "canary_policy.json"
+    if thresholds_path is None:
+        thresholds_path = CANARY_DEFAULT_THRESHOLDS
+    if history_path is None:
+        history_path = REPO_ROOT / "artifacts" / "canary_regression_history.jsonl"
+    if ruleset_path is None:
+        ruleset_path = CANARY_DEFAULT_RULESET
+
+    try:
+        policy = CanaryPolicy.from_json(policy_path) if policy_path.exists() else CanaryPolicy.default()
+        thresholds = DiffThresholds.from_json(str(thresholds_path)) if thresholds_path.exists() else DiffThresholds()
+        verdict = run_canary_classified(
+            thresholds,
+            policy,
+            ruleset_path,
+            history_path,
+        )
+    except Exception as exc:
+        return GateResult(
+            name="canary_regression",
+            status="WARN",
+            detail=f"canary failed to run: {exc}",
+        )
+
+    outcome_to_status = {
+        CanaryOutcome.BLOCK: "FAIL",
+        CanaryOutcome.WARN: "WARN",
+        CanaryOutcome.INFO: "PASS",
+    }
+
+    status = outcome_to_status[verdict.overall_outcome]
+    detail_parts = []
+    for d in sorted(verdict.per_date):
+        detail_parts.append(f"{d}={verdict.per_date[d].outcome.value}")
+    detail = f"overall={verdict.overall_outcome.value} ({', '.join(detail_parts)})"
+
+    return GateResult(
+        name="canary_regression",
+        status=status,
+        detail=detail,
     )
 
 
@@ -3545,6 +3613,11 @@ def run_daily(
     rh_gate = check_ruleset_health(staging_date_dir)
     gate_results.append(rh_gate)
     print(f"  Ruleset health gate: {rh_gate.status} — {rh_gate.detail}")
+
+    # --- Gate: canary_regression (BLOCK->FAIL, WARN->WARN, INFO->PASS) ---
+    canary_gate = check_canary_regression(staging_date_dir)
+    gate_results.append(canary_gate)
+    print(f"  Canary regression gate: {canary_gate.status} — {canary_gate.detail}")
 
     # --- Gate: ctgov PIT dates (WARN-only) ---
     pit_dates_gate = check_ctgov_pit_dates(_cache_dir, as_of_date)
