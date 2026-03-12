@@ -18,7 +18,7 @@ import json
 import math
 import statistics
 import sys
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -53,6 +53,8 @@ SIGNAL_COLUMNS: Dict[str, Tuple[str, bool]] = {
     "composite": ("composite_score", True),
     "actionable_rank": ("actionable_rank", False),  # lower rank = better
     "alpha_incr": ("alpha_cohort_raw", True),  # alias for incremental alpha
+    "opt_term_slope": ("opt_term_slope", False),  # more negative = stronger event premium
+    "opt_atm_iv": ("opt_atm_iv", True),  # higher IV = more event uncertainty
 }
 
 
@@ -70,6 +72,7 @@ def _safe_float(v: Any, default: float = float("nan")) -> float:
 # ---------------------------------------------------------------------------
 # Signal extraction
 # ---------------------------------------------------------------------------
+
 
 def extract_signal(
     rankings: List[Dict[str, str]],
@@ -116,9 +119,11 @@ def select_bottom_k(
 # Per-date evaluation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DateRow:
     """One row in portfolio_timeseries.csv."""
+
     date: str
     trade_date: str
     regime: str = ""
@@ -152,6 +157,7 @@ def _portfolio_gross(
 # ---------------------------------------------------------------------------
 # Core evaluation loop
 # ---------------------------------------------------------------------------
+
 
 def evaluate_signal_portfolio(
     snapshot_root: Path,
@@ -187,12 +193,10 @@ def evaluate_signal_portfolio(
     regime_map: Dict[str, str] = {}
     if regime_price_csv is not None or price_csv.exists():
         try:
-            import pandas as pd
-            from backtest.regime import (
-                assign_regime_to_rebalance_dates,
-                compute_regime_series,
-                load_price_history,
-            )
+            import pandas as pd  # noqa: F401
+
+            from backtest.regime import assign_regime_to_rebalance_dates, compute_regime_series, load_price_history
+
             rpcsv = regime_price_csv or price_csv
             pdf = load_price_history(rpcsv)
             regime_df = compute_regime_series(pdf, market_ticker="XBI")
@@ -220,16 +224,14 @@ def evaluate_signal_portfolio(
         snap_dir = snapshot_root / snap_date
         trade_date = resolve_trade_date(sorted_dates, snap_date, anchor_mode)
         if trade_date is None:
-            row = DateRow(date=snap_date, trade_date="", skipped=True,
-                          skip_reason="ANCHOR_NOT_FOUND")
+            row = DateRow(date=snap_date, trade_date="", skipped=True, skip_reason="ANCHOR_NOT_FOUND")
             date_rows.append(row)
             n_skipped += 1
             continue
 
         rankings = load_rankings(snap_dir)
         if not rankings:
-            row = DateRow(date=snap_date, trade_date=trade_date, skipped=True,
-                          skip_reason="EMPTY_RANKINGS")
+            row = DateRow(date=snap_date, trade_date=trade_date, skipped=True, skip_reason="EMPTY_RANKINGS")
             date_rows.append(row)
             n_skipped += 1
             continue
@@ -237,9 +239,13 @@ def evaluate_signal_portfolio(
         # Extract signal
         signal_pairs = extract_signal(rankings, signal)
         if len(signal_pairs) < top_k:
-            row = DateRow(date=snap_date, trade_date=trade_date, skipped=True,
-                          skip_reason=f"INSUFFICIENT_SIGNAL ({len(signal_pairs)}<{top_k})",
-                          n_signal=len(signal_pairs))
+            row = DateRow(
+                date=snap_date,
+                trade_date=trade_date,
+                skipped=True,
+                skip_reason=f"INSUFFICIENT_SIGNAL ({len(signal_pairs)}<{top_k})",
+                n_signal=len(signal_pairs),
+            )
             date_rows.append(row)
             n_skipped += 1
             continue
@@ -250,16 +256,24 @@ def evaluate_signal_portfolio(
             if ticker not in prices:
                 continue
             ret = compute_forward_return(
-                prices[ticker], sorted_dates, trade_date, horizon,
+                prices[ticker],
+                sorted_dates,
+                trade_date,
+                horizon,
             )
             if ret is not None:
                 fwd_rets[ticker] = ret
 
         coverage = len(fwd_rets) / max(len(signal_pairs), 1)
         if coverage < min_coverage:
-            row = DateRow(date=snap_date, trade_date=trade_date, skipped=True,
-                          skip_reason=f"LOW_COVERAGE ({coverage:.1%})",
-                          n_signal=len(signal_pairs), coverage=round(coverage, 4))
+            row = DateRow(
+                date=snap_date,
+                trade_date=trade_date,
+                skipped=True,
+                skip_reason=f"LOW_COVERAGE ({coverage:.1%})",
+                n_signal=len(signal_pairs),
+                coverage=round(coverage, 4),
+            )
             date_rows.append(row)
             n_skipped += 1
             continue
@@ -356,6 +370,7 @@ def evaluate_signal_portfolio(
 # Summary builder
 # ---------------------------------------------------------------------------
 
+
 def _safe_mean(vals: List[float]) -> Optional[float]:
     return statistics.mean(vals) if vals else None
 
@@ -373,7 +388,7 @@ def _cumulative(returns: List[float]) -> Optional[float]:
         return None
     cum = 1.0
     for r in returns:
-        cum *= (1.0 + r)
+        cum *= 1.0 + r
     return cum - 1.0
 
 
@@ -466,15 +481,28 @@ def _build_summary(
 # Output writers
 # ---------------------------------------------------------------------------
 
+
 def write_timeseries_csv(date_rows: List[DateRow], out_dir: Path) -> Path:
     """Write portfolio_timeseries.csv."""
     path = out_dir / "portfolio_timeseries.csv"
     fieldnames = [
-        "date", "trade_date", "regime",
-        "long_gross", "long_net", "long_turnover", "long_n_held",
-        "short_gross", "short_net", "short_turnover", "short_n_held",
-        "ls_gross", "ls_net",
-        "n_signal", "coverage", "skipped", "skip_reason",
+        "date",
+        "trade_date",
+        "regime",
+        "long_gross",
+        "long_net",
+        "long_turnover",
+        "long_n_held",
+        "short_gross",
+        "short_net",
+        "short_turnover",
+        "short_n_held",
+        "ls_gross",
+        "ls_net",
+        "n_signal",
+        "coverage",
+        "skipped",
+        "skip_reason",
     ]
     with open(path, "w", newline="", encoding="utf-8") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames, restval="")
@@ -496,60 +524,79 @@ def write_summary_json(summary: Dict[str, Any], out_dir: Path) -> Path:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Portfolio-realistic signal backtest with turnover and costs",
     )
     parser.add_argument(
-        "--signal", required=True,
+        "--signal",
+        required=True,
         choices=list(SIGNAL_COLUMNS.keys()),
         help="Signal column to rank by",
     )
     parser.add_argument(
-        "--horizon", type=int, default=DEFAULT_HORIZON,
+        "--horizon",
+        type=int,
+        default=DEFAULT_HORIZON,
         help=f"Forward-return horizon in trading days (default: {DEFAULT_HORIZON})",
     )
     parser.add_argument(
-        "--k", type=int, default=DEFAULT_TOP_K,
+        "--k",
+        type=int,
+        default=DEFAULT_TOP_K,
         help=f"Portfolio size (default: {DEFAULT_TOP_K})",
     )
     parser.add_argument(
-        "--cost-bps", type=float, default=DEFAULT_COST_BPS,
+        "--cost-bps",
+        type=float,
+        default=DEFAULT_COST_BPS,
         help=f"One-way transaction cost in bps (default: {DEFAULT_COST_BPS})",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
         help="Root directory for snapshot dates",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
         help="Path to price_history.csv",
     )
     parser.add_argument(
-        "--start", type=str, default=None,
+        "--start",
+        type=str,
+        default=None,
         help="Start date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--end", type=str, default=None,
+        "--end",
+        type=str,
+        default=None,
         help="End date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--anchor-mode", default=DEFAULT_ANCHOR_MODE,
+        "--anchor-mode",
+        default=DEFAULT_ANCHOR_MODE,
         choices=["exact", "next_trading_day", "prev_trading_day"],
         help=f"Trade date anchor mode (default: {DEFAULT_ANCHOR_MODE})",
     )
     parser.add_argument(
-        "--min-coverage", type=float, default=DEFAULT_MIN_COVERAGE,
+        "--min-coverage",
+        type=float,
+        default=DEFAULT_MIN_COVERAGE,
         help=f"Minimum price coverage fraction (default: {DEFAULT_MIN_COVERAGE})",
     )
     parser.add_argument(
-        "--long-short", action="store_true",
+        "--long-short",
+        action="store_true",
         help="Include short leg (bottom-K)",
     )
     parser.add_argument(
-        "--out-dir", type=Path,
+        "--out-dir",
+        type=Path,
         default=PROJECT_ROOT / "output" / "signal_portfolios",
         help="Output directory",
     )
@@ -557,8 +604,10 @@ def main() -> int:
 
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Signal: {args.signal}  Horizon: {args.horizon}d  K: {args.k}  "
-          f"Cost: {args.cost_bps} bps  L/S: {args.long_short}")
+    print(
+        f"Signal: {args.signal}  Horizon: {args.horizon}d  K: {args.k}  "
+        f"Cost: {args.cost_bps} bps  L/S: {args.long_short}"
+    )
 
     date_rows, summary = evaluate_signal_portfolio(
         snapshot_root=args.snapshot_root,
@@ -579,21 +628,27 @@ def main() -> int:
 
     print(f"\nResults: {summary['n_evaluated']} / {summary['n_dates']} dates evaluated")
     lg = summary["long"]
-    print(f"Long:  mean_gross={_fmt_pct(lg['mean_gross'])}  "
-          f"mean_net={_fmt_pct(lg['mean_net'])}  "
-          f"cum_net={_fmt_pct(lg['cumulative_net'])}  "
-          f"mean_turn={_fmt(lg['mean_turnover'])}")
+    print(
+        f"Long:  mean_gross={_fmt_pct(lg['mean_gross'])}  "
+        f"mean_net={_fmt_pct(lg['mean_net'])}  "
+        f"cum_net={_fmt_pct(lg['cumulative_net'])}  "
+        f"mean_turn={_fmt(lg['mean_turnover'])}"
+    )
     if args.long_short and "long_short" in summary:
         ls = summary["long_short"]
-        print(f"L/S:   mean_gross={_fmt_pct(ls['mean_gross'])}  "
-              f"mean_net={_fmt_pct(ls['mean_net'])}  "
-              f"cum_net={_fmt_pct(ls['cumulative_net'])}")
+        print(
+            f"L/S:   mean_gross={_fmt_pct(ls['mean_gross'])}  "
+            f"mean_net={_fmt_pct(ls['mean_net'])}  "
+            f"cum_net={_fmt_pct(ls['cumulative_net'])}"
+        )
     if "regime_slices" in summary:
         print("\nRegime slices:")
         for regime, sl in summary["regime_slices"].items():
-            print(f"  {regime:12s}  n={sl['n_dates']:2d}  "
-                  f"mean_net={_fmt_pct(sl['mean_net'])}  "
-                  f"cum_net={_fmt_pct(sl['cumulative_net'])}")
+            print(
+                f"  {regime:12s}  n={sl['n_dates']:2d}  "
+                f"mean_net={_fmt_pct(sl['mean_net'])}  "
+                f"cum_net={_fmt_pct(sl['cumulative_net'])}"
+            )
 
     print(f"\nWrote: {ts_path}")
     print(f"Wrote: {sm_path}")
