@@ -180,6 +180,10 @@ def _compute_verdict(
         verdict = "INVESTIGATE"
         jac_str = f"{mean_jac:.3f}" if mean_jac is not None else "N/A"
         reason = f"IC +{ic_rel:.1f}% rel but Jaccard={jac_str} < 0.70"
+    elif ic_improves and churn_ok and not net_improves:
+        verdict = "INVESTIGATE"
+        nd_str = f"{net_delta:+.4%}" if net_delta is not None else "N/A"
+        reason = f"IC +{ic_rel:.1f}% rel, churn OK, but net return flat ({nd_str})"
     elif abs(ic_rel) < 2.5:
         verdict = "KEEP BASELINE"
         reason = f"IC change negligible ({ic_rel:+.1f}% rel)"
