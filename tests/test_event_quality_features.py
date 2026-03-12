@@ -8,7 +8,12 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.event_quality_features import EVENT_QUALITY_COLUMNS, compute_event_quality_features
+from common.event_quality_features import (
+    EVENT_QUALITY_COLUMNS,
+    OPTIONS_QUALITY_COLUMNS,
+    compute_event_quality_features,
+    compute_options_quality_composite,
+)
 
 
 class TestRegulatoryQuality:
@@ -141,3 +146,72 @@ class TestEventQualityColumns:
         assert "clinical_quality" in EVENT_QUALITY_COLUMNS
         assert "has_adcom" in EVENT_QUALITY_COLUMNS
         assert "single_asset_risk" in EVENT_QUALITY_COLUMNS
+
+
+# ---------------------------------------------------------------------------
+# Options quality composite
+# ---------------------------------------------------------------------------
+
+
+class TestOptionsQualityComposite:
+    def _base_row(self, **overrides):
+        row = {
+            "opt_use_for_judgment": "YES",
+            "opt_event_premium": "YES",
+            "opt_liquidity_ok": "1",
+            "opt_iv_regime": "NORMAL",
+            "opt_term_slope": "-0.20",
+            "opt_put_call_skew": "0.05",
+        }
+        row.update(overrides)
+        return row
+
+    def test_options_quality_no_data(self):
+        row = {"opt_use_for_judgment": ""}
+        f = compute_options_quality_composite(row)
+        assert f["options_quality_composite"] == ""
+
+    def test_options_quality_not_usable(self):
+        row = {"opt_use_for_judgment": "NO"}
+        f = compute_options_quality_composite(row)
+        assert f["options_quality_composite"] == ""
+
+    def test_options_quality_full_signal(self):
+        # YES + event premium(+0.40) + liquid(+0.20) + normal IV(0)
+        # + slope -0.20 → +0.20 * (0.20/0.30) ≈ +0.1333
+        # + skew 0.05 → +0.20 * (0.05/0.10) = +0.10
+        # total ≈ 0.40 + 0.20 + 0.1333 + 0.10 = 0.8333
+        row = self._base_row()
+        f = compute_options_quality_composite(row)
+        val = f["options_quality_composite"]
+        assert isinstance(val, float)
+        assert 0.80 < val < 0.90
+
+    def test_options_quality_extreme_iv(self):
+        row = self._base_row(opt_iv_regime="EXTREME")
+        f = compute_options_quality_composite(row)
+        base = compute_options_quality_composite(self._base_row())
+        assert f["options_quality_composite"] < base["options_quality_composite"]
+
+    def test_options_quality_no_event_premium(self):
+        row = self._base_row(opt_event_premium="NO")
+        f = compute_options_quality_composite(row)
+        base = compute_options_quality_composite(self._base_row())
+        # Missing event premium removes 0.40
+        assert f["options_quality_composite"] < base["options_quality_composite"] - 0.3
+
+    def test_options_quality_skew_bonus(self):
+        no_skew = self._base_row(opt_put_call_skew="0")
+        with_skew = self._base_row(opt_put_call_skew="0.08")
+        f_no = compute_options_quality_composite(no_skew)
+        f_yes = compute_options_quality_composite(with_skew)
+        assert f_yes["options_quality_composite"] > f_no["options_quality_composite"]
+
+    def test_options_quality_capped_at_1(self):
+        # Max everything: event(0.40) + liq(0.20) + slope(0.20) + skew(0.20) = 1.0
+        row = self._base_row(opt_term_slope="-0.50", opt_put_call_skew="0.20")
+        f = compute_options_quality_composite(row)
+        assert f["options_quality_composite"] <= 1.0
+
+    def test_options_quality_columns_list(self):
+        assert "options_quality_composite" in OPTIONS_QUALITY_COLUMNS

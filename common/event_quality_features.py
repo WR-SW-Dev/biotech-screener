@@ -360,3 +360,58 @@ def compute_clinical_91_180_quality(row: Dict[str, Any]) -> Dict[str, Any]:
         "clinical_program_depth": round(prog_depth, 4),
         "clinical_quality_composite": round(composite, 4),
     }
+
+
+# ---------------------------------------------------------------------------
+# Options quality composite (tastytrade diagnostics → [0, 1])
+# ---------------------------------------------------------------------------
+
+OPTIONS_QUALITY_COLUMNS = [
+    "options_quality_composite",
+]
+
+
+def compute_options_quality_composite(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Bounded [0, 1] composite from tastytrade diagnostics.
+
+    Components (additive, capped at 1.0):
+      - use_for_judgment gate:  0.0 if opt_use_for_judgment != "YES" (hard zero)
+      - event_premium credit:   +0.40 if opt_event_premium == "YES"
+      - liquidity credit:       +0.20 if opt_liquidity_ok == "1"
+      - iv_regime penalty:      -0.20 if opt_iv_regime == "EXTREME", else 0
+      - term_slope bonus:       +0.20 * min(1.0, abs(slope) / 0.30) if slope < 0
+      - skew context:           +0.20 * clamp(skew / 0.10, 0, 1) if skew > 0
+    """
+    # Hard gate: no usable chain → empty (DE defaults to 0.0)
+    if str(row.get("opt_use_for_judgment", "")) != "YES":
+        return {"options_quality_composite": ""}
+
+    score = 0.0
+
+    # Event premium (+0.40): market sees a binary event
+    if str(row.get("opt_event_premium", "")) == "YES":
+        score += 0.40
+
+    # Liquidity (+0.20): baseline chain quality
+    if str(row.get("opt_liquidity_ok", "")) == "1":
+        score += 0.20
+
+    # IV regime penalty (-0.20): EXTREME chains are noise
+    if str(row.get("opt_iv_regime", "")) == "EXTREME":
+        score -= 0.20
+
+    # Term slope bonus (+0.20): graduated backwardation strength
+    slope_raw = row.get("opt_term_slope", "")
+    if slope_raw != "" and slope_raw is not None:
+        slope = _safe_float(slope_raw, default=0.0)
+        if slope < 0:
+            score += 0.20 * min(1.0, abs(slope) / 0.30)
+
+    # Skew context (+0.20): put demand proxy
+    skew_raw = row.get("opt_put_call_skew", "")
+    if skew_raw != "" and skew_raw is not None:
+        skew = _safe_float(skew_raw, default=0.0)
+        if skew > 0:
+            score += 0.20 * min(1.0, skew / 0.10)
+
+    return {"options_quality_composite": round(max(0.0, min(1.0, score)), 4)}

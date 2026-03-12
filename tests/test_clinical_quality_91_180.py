@@ -365,3 +365,77 @@ class TestDegenerateNoop:
 
     def test_sort_contrib_keys_includes_clinical_quality(self):
         assert "clinical_quality_91_180" in SORT_CONTRIB_KEYS
+
+
+# ---------------------------------------------------------------------------
+# 7. Options quality DE contribution (REGULATORY family, options_quality mode)
+# ---------------------------------------------------------------------------
+
+
+class TestOptionsQualityDEContribution:
+    def _make_fields(self, bucket="less_binary", family="REGULATORY", composite="0.70"):
+        return {
+            "catalyst_bucket": bucket,
+            "catalyst_family": family,
+            "options_quality_composite": composite,
+            "binary_quality_score": "0.5",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": "120",
+            "stage_bucket": "mid",
+            "clinical_score_z_tier": "0",
+            "inst_delta_z": "0",
+            "clinical_score_v2_z": "0",
+            "alpha_cohort_pct": "0",
+        }
+
+    def test_options_quality_contribution_regulatory(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="options_quality",
+            binary_91_180_options_quality_weight=1.0,
+        )
+        fields = self._make_fields()
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "options_quality_91_180" in names
+        oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
+        assert oq.delta == pytest.approx(0.70)
+
+    def test_options_quality_contribution_clinical_ignored(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="options_quality",
+            binary_91_180_options_quality_weight=1.0,
+        )
+        fields = self._make_fields(family="CLINICAL")
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "options_quality_91_180" not in names
+
+    def test_options_quality_contribution_wrong_bucket(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="options_quality",
+            binary_91_180_options_quality_weight=1.0,
+        )
+        fields = self._make_fields(bucket="binary_0_30")
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "options_quality_91_180" not in names
+
+    def test_options_quality_contribution_baseline_mode(self):
+        rs = DecisionRuleset(binary_91_180_sort_mode="baseline")
+        fields = self._make_fields()
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "options_quality_91_180" not in names
+
+    def test_options_quality_weight_scales(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="options_quality",
+            binary_91_180_options_quality_weight=0.5,
+        )
+        fields = self._make_fields(composite="0.80")
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
+        assert oq.delta == pytest.approx(0.40)
+
+    def test_sort_contrib_keys_includes_options_quality(self):
+        assert "options_quality_91_180" in SORT_CONTRIB_KEYS

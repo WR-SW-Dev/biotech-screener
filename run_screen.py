@@ -71,7 +71,12 @@ from common.data_integration_contracts import (
 
 # Common utilities
 from common.date_utils import normalize_date, to_date_object, to_date_string
-from common.event_quality_features import compute_clinical_91_180_quality, compute_event_quality_features
+from common.event_quality_features import (
+    OPTIONS_QUALITY_COLUMNS,
+    compute_clinical_91_180_quality,
+    compute_event_quality_features,
+    compute_options_quality_composite,
+)
 from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
 from common.options_diagnostics import OPTIONS_DIAGNOSTIC_COLUMNS, empty_diagnostics
 
@@ -1433,6 +1438,8 @@ SNAPSHOT_COLUMNS = [
     *ADCOM_VOTE_COLUMNS,
     # --- Options-implied vol/skew diagnostics (passive, tastytrade) ---
     *OPTIONS_DIAGNOSTIC_COLUMNS,
+    # --- Options quality composite (derived from diagnostics) ---
+    *OPTIONS_QUALITY_COLUMNS,
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
@@ -4233,6 +4240,10 @@ def save_validation_snapshot(
         logger.warning("Options diagnostics failed (%s) — columns will be empty", exc)
         for row in csv_rows:
             row.update(empty_diagnostics(f"error: {exc}"))
+
+    # --- Options quality composite (derived from diagnostics) ---
+    for row in csv_rows:
+        row.update(compute_options_quality_composite(row))
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
