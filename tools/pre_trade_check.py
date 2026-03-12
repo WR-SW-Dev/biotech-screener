@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.build_trade_deltas import POSITIONS_DIR, find_prior_positions, load_positions_json
+from tools.build_trade_deltas import POSITIONS_DIR, find_prior_positions, load_positions_json, validate_positions
 from tools.live_shadow_portfolio import BUCKET_DISPLAY, BUCKET_NAMES, SHADOW_ROOT, load_metadata, load_policy
 
 PRE_TRADE_ROOT = SHADOW_ROOT / "pre_trade"
@@ -251,6 +251,40 @@ def check_gap_risk_concentration(
     )
 
 
+def check_positions_integrity(
+    positions: List[Dict[str, Any]],
+    *,
+    max_weight_deviation_pct: float = 1.0,
+) -> CheckResult:
+    """FAIL if positions have structural issues (dupes, missing fields,
+    weight sum deviates > max_weight_deviation_pct from 100%).
+    """
+    warnings = validate_positions(positions, source="pre_trade_check")
+    if not warnings:
+        weight_sum = sum(float(p.get("weight_pct", 0) or 0) for p in positions)
+        return CheckResult(
+            "positions_integrity",
+            "PASS",
+            f"OK ({len(positions)} positions, weight_sum={weight_sum:.2f}%)",
+        )
+
+    # Classify: dupes and missing fields are FAIL, weight deviation is WARN
+    critical = [w for w in warnings if "missing fields" in w or "not numeric" in w or "Duplicate" in w]
+    non_critical = [w for w in warnings if w not in critical]
+
+    if critical:
+        return CheckResult(
+            "positions_integrity",
+            "FAIL",
+            "; ".join(critical[:5]),
+        )
+    return CheckResult(
+        "positions_integrity",
+        "WARN",
+        "; ".join(non_critical[:5]),
+    )
+
+
 def check_turnover(
     current_positions: List[Dict[str, Any]],
     prior_positions: List[Dict[str, Any]],
@@ -427,6 +461,7 @@ def run_pre_trade_check(
     checks = [
         check_provenance(snap_dir),
         check_ruleset_active(snap_dir, relaxed=relaxed, manifest_path=manifest_path),
+        check_positions_integrity(current_positions),
         check_bucket_deviation(current_positions, policy, deviation_max_pct),
         check_missing_prices(current_positions, max_missing_prices),
         check_gap_risk_concentration(current_positions, policy, max_gap_high_pct),

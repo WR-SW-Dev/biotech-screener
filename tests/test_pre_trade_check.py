@@ -20,7 +20,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 
-def _pos(ticker, dollars, bucket="binary_91_180", gap_risk="", price_coverage="OK"):
+def _pos(ticker, dollars, bucket="binary_91_180", gap_risk="", price_coverage="OK", weight_pct=5.0):
     return {
         "ticker": ticker,
         "target_dollars": dollars,
@@ -30,7 +30,7 @@ def _pos(ticker, dollars, bucket="binary_91_180", gap_risk="", price_coverage="O
         "tier": "A",
         "catalyst_days": "",
         "actionable_rank": 1,
-        "weight_pct": 5.0,
+        "weight_pct": weight_pct,
         "reason": "",
     }
 
@@ -233,8 +233,8 @@ class TestOverallResult:
             pos_dir / "2026-03-08.json",
             "2026-03-08",
             [
-                _pos("AAPL", 5000),
-                _pos("GOOG", 3000),
+                _pos("AAPL", 5000, weight_pct=50.0),
+                _pos("GOOG", 3000, weight_pct=50.0),
             ],
         )
         snap = tmp_path / "snap"
@@ -630,3 +630,127 @@ class TestIsolationEnforcement:
         assert not violations, "Found test calls missing required isolation kwargs:\n" + "\n".join(
             f"  {v}" for v in violations
         )
+
+
+# ---------------------------------------------------------------------------
+# Positions integrity check
+# ---------------------------------------------------------------------------
+
+
+class TestPositionsIntegrity:
+
+    def test_valid_positions_pass(self):
+        from tools.pre_trade_check import check_positions_integrity
+
+        positions = [
+            _pos("AAAA", 25000, weight_pct=25.0),
+            _pos("BBBB", 25000, weight_pct=25.0),
+            _pos("CCCC", 25000, weight_pct=25.0),
+            _pos("DDDD", 25000, weight_pct=25.0),
+        ]
+        result = check_positions_integrity(positions)
+        assert result.status == "PASS"
+
+    def test_duplicate_tickers_fail(self):
+        from tools.pre_trade_check import check_positions_integrity
+
+        positions = [
+            _pos("AAAA", 50000),
+            _pos("AAAA", 50000),  # duplicate
+        ]
+        result = check_positions_integrity(positions)
+        assert result.status == "FAIL"
+        assert "Duplicate" in result.detail
+
+    def test_missing_field_fail(self):
+        from tools.pre_trade_check import check_positions_integrity
+
+        positions = [{"ticker": "X"}]  # missing bucket, target_dollars
+        result = check_positions_integrity(positions)
+        assert result.status == "FAIL"
+        assert "missing fields" in result.detail
+
+    def test_weight_deviation_warn(self):
+        from tools.pre_trade_check import check_positions_integrity
+
+        positions = [
+            _pos("AAAA", 25000, weight_pct=90.0),
+            _pos("BBBB", 25000, weight_pct=5.0),
+        ]
+        # weight_sum = 95% → deviation > 1pp
+        result = check_positions_integrity(positions)
+        assert result.status == "WARN"
+        assert "Weight sum" in result.detail
+
+
+# ---------------------------------------------------------------------------
+# Positions validation (build_trade_deltas)
+# ---------------------------------------------------------------------------
+
+
+class TestValidatePositions:
+
+    def test_valid_list(self):
+        from tools.build_trade_deltas import validate_positions
+
+        positions = [_pos("A", 1000, weight_pct=50.0), _pos("B", 2000, weight_pct=50.0)]
+        assert validate_positions(positions) == []
+
+    def test_empty_list(self):
+        from tools.build_trade_deltas import validate_positions
+
+        warnings = validate_positions([])
+        assert any("Empty" in w for w in warnings)
+
+    def test_missing_required_fields(self):
+        from tools.build_trade_deltas import validate_positions
+
+        warnings = validate_positions([{"ticker": "X"}])
+        assert any("missing fields" in w for w in warnings)
+
+    def test_non_numeric_target_dollars(self):
+        from tools.build_trade_deltas import validate_positions
+
+        positions = [{"ticker": "X", "bucket": "b", "target_dollars": "abc"}]
+        warnings = validate_positions(positions)
+        assert any("not numeric" in w for w in warnings)
+
+    def test_negative_target_dollars(self):
+        from tools.build_trade_deltas import validate_positions
+
+        positions = [{"ticker": "X", "bucket": "b", "target_dollars": -100}]
+        warnings = validate_positions(positions)
+        assert any("negative" in w for w in warnings)
+
+    def test_duplicate_tickers(self):
+        from tools.build_trade_deltas import validate_positions
+
+        positions = [_pos("SAME", 1000), _pos("SAME", 2000)]
+        warnings = validate_positions(positions)
+        assert any("Duplicate" in w for w in warnings)
+
+    def test_load_validates_by_default(self, tmp_path):
+        import json
+
+        from tools.build_trade_deltas import load_positions_json
+
+        bad_pos = [{"ticker": "X"}]  # missing bucket, target_dollars
+        path = tmp_path / "test.json"
+        path.write_text(json.dumps({"as_of_date": "2026-01-01", "positions": bad_pos}))
+        import pytest
+
+        with pytest.raises(ValueError, match="missing fields"):
+            load_positions_json(path)
+
+    def test_load_skip_validation(self, tmp_path):
+        import json
+
+        from tools.build_trade_deltas import load_positions_json
+
+        bad_pos = [{"ticker": "X"}]
+        path = tmp_path / "test.json"
+        path.write_text(json.dumps({"as_of_date": "2026-01-01", "positions": bad_pos}))
+        # Should not raise when validate=False
+        date, positions = load_positions_json(path, validate=False)
+        assert date == "2026-01-01"
+        assert len(positions) == 1

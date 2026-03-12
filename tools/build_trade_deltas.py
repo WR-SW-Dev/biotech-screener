@@ -56,11 +56,89 @@ BUCKET_DISPLAY = {
 # ---------------------------------------------------------------------------
 
 
-def load_positions_json(path: Path) -> Tuple[str, List[Dict[str, Any]]]:
-    """Load a positions JSON and return (as_of_date, positions_list)."""
+_REQUIRED_POSITION_FIELDS = {"ticker", "bucket", "target_dollars"}
+
+
+def validate_positions(
+    positions: List[Dict[str, Any]],
+    *,
+    source: str = "",
+) -> List[str]:
+    """Validate a positions list. Returns list of warnings (empty if OK).
+
+    Checks:
+      - Required fields present on every position
+      - target_dollars is numeric and non-negative
+      - No duplicate tickers
+      - Weight sum is within tolerance of 100%
+    """
+    warnings: List[str] = []
+    label = f" ({source})" if source else ""
+
+    if not positions:
+        warnings.append(f"Empty positions list{label}")
+        return warnings
+
+    # Required fields
+    for i, p in enumerate(positions):
+        missing = _REQUIRED_POSITION_FIELDS - set(p.keys())
+        if missing:
+            warnings.append(
+                f"Position {i} ({p.get('ticker', '?')}){label} missing " f"fields: {', '.join(sorted(missing))}"
+            )
+
+    # target_dollars type check
+    for p in positions:
+        td = p.get("target_dollars")
+        if td is not None:
+            try:
+                v = float(td)
+                if v < 0:
+                    warnings.append(f"{p.get('ticker', '?')}{label}: " f"target_dollars={td} is negative")
+            except (ValueError, TypeError):
+                warnings.append(f"{p.get('ticker', '?')}{label}: " f"target_dollars={td!r} is not numeric")
+
+    # Duplicate tickers
+    tickers = [p.get("ticker", "") for p in positions]
+    seen: Dict[str, int] = {}
+    for t in tickers:
+        seen[t] = seen.get(t, 0) + 1
+    dupes = {t: c for t, c in seen.items() if c > 1}
+    if dupes:
+        warnings.append(f"Duplicate tickers{label}: {dupes}")
+
+    # Weight sum
+    weight_sum = sum(float(p.get("weight_pct", 0) or 0) for p in positions)
+    if weight_sum > 0 and abs(weight_sum - 100.0) > 1.0:
+        warnings.append(f"Weight sum{label} = {weight_sum:.2f}% " f"(deviates > 1pp from 100%)")
+
+    return warnings
+
+
+def load_positions_json(
+    path: Path,
+    *,
+    validate: bool = True,
+) -> Tuple[str, List[Dict[str, Any]]]:
+    """Load a positions JSON and return (as_of_date, positions_list).
+
+    When validate=True (default), runs validate_positions and raises
+    ValueError if critical issues are found (missing required fields
+    or non-numeric target_dollars).
+    """
     with open(path) as f:
         doc = json.load(f)
-    return doc.get("as_of_date", path.stem), doc.get("positions", [])
+    as_of_date = doc.get("as_of_date", path.stem)
+    positions = doc.get("positions", [])
+
+    if validate and positions:
+        warnings = validate_positions(positions, source=str(path.name))
+        # Critical warnings (missing fields, non-numeric dollars) → raise
+        critical = [w for w in warnings if "missing fields" in w or "not numeric" in w]
+        if critical:
+            raise ValueError(f"Positions validation failed for {path}: " + "; ".join(critical))
+
+    return as_of_date, positions
 
 
 def find_prior_positions(
