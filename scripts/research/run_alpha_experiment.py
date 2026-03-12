@@ -603,10 +603,18 @@ def neutralize_exposures(
     ranked = _avg_ranks(residuals)
     pct = [(r - 1.0) / max(n - 1, 1) for r in ranked]
 
-    # Inject neutralized percentile as alpha_cohort_pct
+    # Inject neutralized percentile into the field(s) the sort key reads.
+    # For sort_anchor="alpha_cohort", the sort reads alpha_cohort_pct.
+    # For sort_anchor="optionality_pct", the sort reads
+    # clinical_optionality_pct_dev (dev archetype) or commercial_quality_pct
+    # (commercial archetype).  Write to all three so neutralization is
+    # effective regardless of which anchor the downstream rerank uses.
     for idx in range(n):
         row_idx = valid_indices[idx]
-        rows[row_idx]["alpha_cohort_pct"] = str(round(pct[idx], 6))
+        pct_str = str(round(pct[idx], 6))
+        rows[row_idx]["alpha_cohort_pct"] = pct_str
+        rows[row_idx]["clinical_optionality_pct_dev"] = pct_str
+        rows[row_idx]["commercial_quality_pct"] = pct_str
 
     # For rows not in valid set (ineligible or missing data), leave as-is
     return rows, r2, beta

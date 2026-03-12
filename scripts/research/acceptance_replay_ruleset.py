@@ -92,8 +92,13 @@ def compute_ranking_delta_for_date(
     baseline_rs: DecisionRuleset,
     candidate_rs: DecisionRuleset,
     top_ks: List[int],
+    candidate_pre_fn: Optional[Any] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Rerank one snapshot with both rulesets and compute deltas."""
+    """Rerank one snapshot with both rulesets and compute deltas.
+
+    candidate_pre_fn: optional callable(rows, ruleset) -> rows that transforms
+        candidate rows before reranking (e.g. sleeve-scoped neutralization).
+    """
     with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         cols = reader.fieldnames or []
@@ -104,6 +109,10 @@ def compute_ranking_delta_for_date(
 
     rows_base = copy.deepcopy(rows)
     rows_cand = copy.deepcopy(rows)
+
+    # Apply optional pre-processing to candidate arm (e.g. neutralization)
+    if candidate_pre_fn is not None:
+        rows_cand = candidate_pre_fn(rows_cand, candidate_rs)
 
     rerank(rows_base, baseline_rs)
     rerank(rows_cand, candidate_rs)
@@ -734,6 +743,7 @@ def run_acceptance_replay(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,
     top_ks: Optional[List[int]] = None,
+    candidate_pre_fn: Optional[Any] = None,
 ) -> Dict[str, Any]:
     """Run the full acceptance replay."""
     if top_ks is None:
@@ -763,7 +773,7 @@ def run_acceptance_replay(
     n_skip = 0
     for date in dates:
         csv_path = snapshot_root / date / "rankings.csv"
-        result = compute_ranking_delta_for_date(csv_path, baseline_rs, candidate_rs, top_ks)
+        result = compute_ranking_delta_for_date(csv_path, baseline_rs, candidate_rs, top_ks, candidate_pre_fn)
         if result is None:
             n_skip += 1
             continue
@@ -845,9 +855,63 @@ def main() -> None:
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument("--top-ks", type=str, default="20,60")
     parser.add_argument("--out-dir", type=Path, default=None)
+    parser.add_argument(
+        "--candidate-neutralize-sleeve",
+        choices=["core", "binary"],
+        default=None,
+        help="Apply exposure neutralization to candidate arm for this sleeve only",
+    )
+    parser.add_argument(
+        "--neutralize-exposures",
+        type=str,
+        default="beta,drawdown,vol,mcap",
+        help="Comma-separated exposures for sleeve neutralization",
+    )
     args = parser.parse_args()
 
     top_ks = [int(x.strip()) for x in args.top_ks.split(",")]
+
+    # Build candidate pre-processing function for sleeve neutralization
+    candidate_pre_fn = None
+    if args.candidate_neutralize_sleeve:
+        from scripts.research.run_alpha_experiment import neutralize_exposures
+        from tools.build_action_lists import classify_action_bucket
+        from tools.live_shadow_portfolio import SLEEVE_MAP
+
+        neut_sleeve = args.candidate_neutralize_sleeve
+        neut_exposures = [e.strip() for e in args.neutralize_exposures.split(",")]
+
+        def _neutralize_sleeve(rows, ruleset):
+            """Neutralize exposures for rows in the target sleeve only."""
+            from common.ranking_utils import backfill_columns
+
+            backfill_columns(rows)
+
+            # Split rows by sleeve membership
+            sleeve_indices = []
+            for i, r in enumerate(rows):
+                bucket = classify_action_bucket(r)
+                if SLEEVE_MAP.get(bucket, "core") == neut_sleeve:
+                    sleeve_indices.append(i)
+
+            if not sleeve_indices:
+                return rows
+
+            # Extract sleeve rows, neutralize, then put back
+            sleeve_rows = [rows[i] for i in sleeve_indices]
+            sleeve_rows, _r2, _coeffs = neutralize_exposures(
+                sleeve_rows,
+                neut_exposures,
+                ruleset,
+            )
+
+            for idx, orig_i in enumerate(sleeve_indices):
+                rows[orig_i] = sleeve_rows[idx]
+
+            return rows
+
+        candidate_pre_fn = _neutralize_sleeve
+        print(f"Sleeve neutralization: {neut_sleeve} with {neut_exposures}")
 
     run_acceptance_replay(
         args.candidate_ruleset,
@@ -859,6 +923,7 @@ def main() -> None:
         date_from=args.date_from,
         date_to=args.date_to,
         top_ks=top_ks,
+        candidate_pre_fn=candidate_pre_fn,
     )
 
 
