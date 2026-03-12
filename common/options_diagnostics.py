@@ -344,24 +344,231 @@ async def _fetch_metrics_batch(
     return result
 
 
-async def _fetch_option_chain_skew(
-    session,
-    symbol: str,
-    spot_price: float,
-    front_expiry: _date,
+def compute_risk_reversal_25d(
+    greeks_by_strike: Dict[float, Dict[str, Any]],
 ) -> Optional[float]:
-    """Fetch ATM put/call skew for a symbol at the front expiry.
+    """Compute 25-delta risk reversal: IV(25d put) - IV(25d call).
 
-    Reserved for future implementation.  The REST MarketData endpoint does
-    not expose per-option IV; computing skew requires either:
-    - The DXLink streaming greeks feed, or
-    - A Black-Scholes solver applied to bid/ask mid prices.
-
-    Returns None in the pilot.
+    Positive = puts more expensive than calls at 25-delta wings.
+    Returns None if no suitable strikes found.
     """
-    # Placeholder: skew requires streaming greeks or BS solver.
-    # See compute_put_call_skew() for the math once IV is available.
-    return None
+    best_call = None  # (strike, delta, iv)
+    best_put = None
+
+    for strike, data in greeks_by_strike.items():
+        c_d = data.get("call_delta")
+        c_iv = data.get("call_iv")
+        p_d = data.get("put_delta")
+        p_iv = data.get("put_iv")
+
+        if c_d is not None and c_iv is not None and c_iv > 0:
+            dist = abs(c_d - 0.25)
+            if best_call is None or dist < abs(best_call[1] - 0.25):
+                best_call = (strike, c_d, c_iv)
+
+        if p_d is not None and p_iv is not None and p_iv > 0:
+            dist = abs(p_d - (-0.25))
+            if best_put is None or dist < abs(best_put[1] - (-0.25)):
+                best_put = (strike, p_d, p_iv)
+
+    if best_call is None or best_put is None:
+        return None
+    # Reject if nearest deltas are too far from 25d (>15d away)
+    if abs(best_call[1] - 0.25) > 0.15 or abs(best_put[1] - (-0.25)) > 0.15:
+        return None
+    return round(best_put[2] - best_call[2], 4)
+
+
+# Timeout for the streaming greeks fetch per symbol (seconds)
+_STREAMING_TIMEOUT_PER_SYMBOL = 5.0
+# Overall timeout for the entire streaming skew pass
+_STREAMING_TIMEOUT_TOTAL = 60.0
+# Maximum symbols to fetch skew for (keeps latency bounded)
+_SKEW_MAX_SYMBOLS = 80
+
+
+async def _fetch_skew_for_symbol(
+    session,
+    streamer,
+    symbol: str,
+    front_expiry: _date,
+    spot_price: float,
+) -> Dict[str, Any]:
+    """Fetch per-option greeks via DXLinkStreamer for one symbol at one expiry.
+
+    Returns dict with opt_put_call_skew and opt_rr_25d, or empty strings
+    on failure/timeout.
+    """
+    from tastytrade.dxfeed import Greeks
+    from tastytrade.instruments import get_option_chain
+
+    empty = {"opt_put_call_skew": "", "opt_rr_25d": ""}
+
+    try:
+        chain = await get_option_chain(session, symbol)
+    except Exception as exc:
+        logger.debug("Skew: no chain for %s: %s", symbol, exc)
+        return empty
+
+    strikes_list = chain.get(front_expiry, [])
+    if not strikes_list:
+        # Try nearest available expiry within 14 days of front
+        for exp in sorted(chain.keys()):
+            if abs((exp - front_expiry).days) <= 14 and chain[exp]:
+                strikes_list = chain[exp]
+                break
+    if not strikes_list:
+        return empty
+
+    # Pair calls and puts by strike
+    calls = {}
+    puts = {}
+    for s in strikes_list:
+        sp = float(s.strike_price)
+        if "CALL" in str(s.option_type):
+            calls[sp] = s
+        elif "PUT" in str(s.option_type):
+            puts[sp] = s
+
+    common = sorted(set(calls) & set(puts))
+    if not common:
+        return empty
+
+    # Discover spot from chain if not provided
+    if spot_price <= 0:
+        spot_price = common[len(common) // 2]
+
+    # Subscribe to greeks for all paired strikes
+    sub_syms = []
+    for sp in common:
+        sub_syms.append(calls[sp].streamer_symbol)
+        sub_syms.append(puts[sp].streamer_symbol)
+
+    await streamer.subscribe(Greeks, sub_syms)
+
+    greeks_map: Dict[str, Any] = {}
+    for _ in range(len(sub_syms)):
+        try:
+            g = await asyncio.wait_for(
+                streamer.get_event(Greeks),
+                timeout=_STREAMING_TIMEOUT_PER_SYMBOL,
+            )
+            greeks_map[g.event_symbol] = g
+        except asyncio.TimeoutError:
+            break
+
+    if not greeks_map:
+        return empty
+
+    # Build per-strike IV/delta table
+    greeks_by_strike: Dict[float, Dict[str, Any]] = {}
+    atm_call_iv = None
+    atm_put_iv = None
+    best_atm_dist = float("inf")
+
+    for sp in common:
+        cg = greeks_map.get(calls[sp].streamer_symbol)
+        pg = greeks_map.get(puts[sp].streamer_symbol)
+        if not cg or not pg:
+            continue
+        if not cg.volatility or not pg.volatility:
+            continue
+
+        c_iv = float(cg.volatility)
+        p_iv = float(pg.volatility)
+        c_d = float(cg.delta) if cg.delta else None
+        p_d = float(pg.delta) if pg.delta else None
+
+        greeks_by_strike[sp] = {
+            "call_iv": c_iv,
+            "put_iv": p_iv,
+            "call_delta": c_d,
+            "put_delta": p_d,
+        }
+
+        # Track ATM strike
+        dist = abs(sp - spot_price)
+        if dist < best_atm_dist:
+            best_atm_dist = dist
+            atm_call_iv = c_iv
+            atm_put_iv = p_iv
+
+    result: Dict[str, Any] = {}
+
+    # ATM put/call skew
+    skew = compute_put_call_skew(atm_put_iv, atm_call_iv)
+    result["opt_put_call_skew"] = round(skew, 4) if skew is not None else ""
+
+    # 25-delta risk reversal
+    rr = compute_risk_reversal_25d(greeks_by_strike)
+    result["opt_rr_25d"] = round(rr, 4) if rr is not None else ""
+
+    return result
+
+
+async def _fetch_streaming_skew(
+    session,
+    diag_results: Dict[str, Dict[str, Any]],
+    as_of_date: _date,
+) -> None:
+    """Second pass: populate opt_put_call_skew and opt_rr_25d via streaming.
+
+    Only fetches for symbols where opt_use_for_judgment == YES and
+    opt_has_data == '1'.  Mutates diag_results in place.
+
+    Best-effort: any failure leaves the fields as empty strings (the
+    current default).  Bounded by _STREAMING_TIMEOUT_TOTAL.
+    """
+    from tastytrade.streamer import DXLinkStreamer
+
+    # Select liquid subset
+    candidates = [
+        sym
+        for sym, diag in diag_results.items()
+        if diag.get("opt_use_for_judgment") == "YES" and diag.get("opt_has_data") == "1"
+    ]
+    if not candidates:
+        return
+
+    candidates = candidates[:_SKEW_MAX_SYMBOLS]
+    logger.info("Streaming skew fetch for %d liquid symbols", len(candidates))
+
+    try:
+        async with DXLinkStreamer(session) as streamer:
+            for symbol in candidates:
+                diag = diag_results[symbol]
+                front_str = diag.get("opt_nearest_expiry", "")
+                try:
+                    front_expiry = _date.fromisoformat(front_str)
+                except (ValueError, TypeError):
+                    continue
+
+                try:
+                    skew_data = await asyncio.wait_for(
+                        _fetch_skew_for_symbol(
+                            session,
+                            streamer,
+                            symbol,
+                            front_expiry,
+                            spot_price=0.0,  # helper discovers spot from chain
+                        ),
+                        timeout=_STREAMING_TIMEOUT_PER_SYMBOL * 3,
+                    )
+                    diag.update(skew_data)
+                    if skew_data.get("opt_put_call_skew") != "":
+                        logger.debug(
+                            "Skew for %s: skew=%s rr25d=%s",
+                            symbol,
+                            skew_data["opt_put_call_skew"],
+                            skew_data["opt_rr_25d"],
+                        )
+                except asyncio.TimeoutError:
+                    logger.debug("Skew timeout for %s", symbol)
+                except Exception as exc:
+                    logger.debug("Skew error for %s: %s", symbol, exc)
+
+    except Exception as exc:
+        logger.warning("Streaming skew pass failed: %s", exc)
 
 
 async def _fetch_diagnostics_async(
@@ -440,13 +647,27 @@ async def _fetch_diagnostics_async(
                 "opt_front_iv": round(front_iv, 4),
                 "opt_back_iv": round(back_iv, 4) if back_iv is not None else "",
                 "opt_term_slope": term_slope if term_slope is not None else "",
-                "opt_put_call_skew": "",  # requires streaming greeks; reserved
-                "opt_rr_25d": "",  # requires per-strike delta; reserved
+                "opt_put_call_skew": "",  # populated by streaming pass if liquid
+                "opt_rr_25d": "",  # populated by streaming pass if liquid
                 "opt_diagnostic_basis": "tt_market_metrics",
             }
             # Derive operator flags
             diag.update(compute_operator_flags(diag, liquidity_rating=liq))
             result[symbol] = diag
+
+        # Second pass: streaming skew for liquid subset
+        try:
+            await asyncio.wait_for(
+                _fetch_streaming_skew(session, result, ref_date),
+                timeout=_STREAMING_TIMEOUT_TOTAL,
+            )
+            skew_filled = sum(1 for d in result.values() if d.get("opt_put_call_skew") != "")
+            if skew_filled:
+                logger.info("Streaming skew: %d/%d symbols populated", skew_filled, len(result))
+        except asyncio.TimeoutError:
+            logger.warning("Streaming skew pass timed out after %ds", _STREAMING_TIMEOUT_TOTAL)
+        except Exception as exc:
+            logger.warning("Streaming skew pass failed: %s", exc)
 
         return result
 

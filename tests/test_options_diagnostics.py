@@ -16,6 +16,7 @@ from common.options_diagnostics import (
     classify_use_for_judgment,
     compute_operator_flags,
     compute_put_call_skew,
+    compute_risk_reversal_25d,
     compute_term_slope,
     empty_diagnostics,
     fetch_options_diagnostics,
@@ -532,3 +533,151 @@ class TestNoRankingEffect:
         flag_cols = ["opt_iv_regime", "opt_event_premium", "opt_liquidity_ok", "opt_use_for_judgment"]
         for col in flag_cols:
             assert col in OPTIONS_DIAGNOSTIC_COLUMNS, f"{col} missing from schema"
+
+
+# ---------------------------------------------------------------------------
+# 7. Risk reversal computation
+# ---------------------------------------------------------------------------
+
+
+class TestRiskReversal25d:
+    def test_basic_rr(self):
+        """25d put IV - 25d call IV."""
+        greeks = {
+            50.0: {"call_delta": 0.50, "call_iv": 0.40, "put_delta": -0.50, "put_iv": 0.42},
+            55.0: {"call_delta": 0.25, "call_iv": 0.38, "put_delta": -0.75, "put_iv": 0.50},
+            45.0: {"call_delta": 0.75, "call_iv": 0.45, "put_delta": -0.25, "put_iv": 0.44},
+        }
+        rr = compute_risk_reversal_25d(greeks)
+        # 25d put at strike 45 (iv=0.44) minus 25d call at strike 55 (iv=0.38)
+        assert rr == 0.06
+
+    def test_no_25d_strikes(self):
+        """All deltas far from 25d → None."""
+        greeks = {
+            50.0: {"call_delta": 0.50, "call_iv": 0.40, "put_delta": -0.50, "put_iv": 0.42},
+        }
+        rr = compute_risk_reversal_25d(greeks)
+        # Nearest call delta is 0.50, which is 0.25 away from target — exceeds 0.15 threshold
+        assert rr is None
+
+    def test_empty_greeks(self):
+        assert compute_risk_reversal_25d({}) is None
+
+    def test_missing_iv(self):
+        greeks = {
+            55.0: {"call_delta": 0.25, "call_iv": None, "put_delta": -0.25, "put_iv": 0.44},
+        }
+        rr = compute_risk_reversal_25d(greeks)
+        assert rr is None
+
+    def test_rejects_distant_delta(self):
+        """Strikes with delta far from 25d are rejected."""
+        greeks = {
+            50.0: {"call_delta": 0.50, "call_iv": 0.40, "put_delta": -0.50, "put_iv": 0.42},
+            60.0: {"call_delta": 0.10, "call_iv": 0.35, "put_delta": -0.90, "put_iv": 0.55},
+        }
+        # Nearest 25d call is 0.10 (dist=0.15), nearest 25d put is -0.50 (dist=0.25 > 0.15)
+        rr = compute_risk_reversal_25d(greeks)
+        assert rr is None
+
+
+# ---------------------------------------------------------------------------
+# 8. Streaming skew — mock-based tests
+# ---------------------------------------------------------------------------
+
+
+class TestStreamingSkewFallback:
+    """Streaming skew degrades gracefully on failure/timeout."""
+
+    @patch("common.options_diagnostics._has_credentials", return_value=True)
+    @patch("common.options_diagnostics._create_session")
+    @patch("common.options_diagnostics._fetch_metrics_batch")
+    @patch("common.options_diagnostics._fetch_streaming_skew")
+    def test_skew_fields_empty_when_streaming_fails(
+        self,
+        mock_streaming,
+        mock_batch,
+        mock_session,
+        mock_creds,
+    ):
+        """When streaming raises, skew fields stay empty."""
+        mock_sess = AsyncMock()
+        mock_sess.__aenter__ = AsyncMock(return_value=mock_sess)
+        mock_sess.__aexit__ = AsyncMock(return_value=None)
+        mock_session.return_value = mock_sess
+        mock_batch.return_value = {
+            "ACME": _mock_market_metric("ACME", iv_index=0.85),
+        }
+        mock_streaming.side_effect = Exception("websocket died")
+
+        result = fetch_options_diagnostics(["ACME"], "2026-03-11")
+        assert result["ACME"]["opt_has_data"] == "1"
+        assert result["ACME"]["opt_put_call_skew"] == ""
+        assert result["ACME"]["opt_rr_25d"] == ""
+
+    @patch("common.options_diagnostics._has_credentials", return_value=True)
+    @patch("common.options_diagnostics._create_session")
+    @patch("common.options_diagnostics._fetch_metrics_batch")
+    @patch("common.options_diagnostics._fetch_streaming_skew")
+    def test_skew_fields_populated_when_streaming_succeeds(
+        self,
+        mock_streaming,
+        mock_batch,
+        mock_session,
+        mock_creds,
+    ):
+        """When streaming works, skew fields are populated."""
+        mock_sess = AsyncMock()
+        mock_sess.__aenter__ = AsyncMock(return_value=mock_sess)
+        mock_sess.__aexit__ = AsyncMock(return_value=None)
+        mock_session.return_value = mock_sess
+        mock_batch.return_value = {
+            "ACME": _mock_market_metric("ACME", iv_index=0.85),
+        }
+
+        async def fake_streaming(session, results, ref_date):
+            for sym, diag in results.items():
+                if diag.get("opt_use_for_judgment") == "YES":
+                    diag["opt_put_call_skew"] = 0.0312
+                    diag["opt_rr_25d"] = -0.0150
+
+        mock_streaming.side_effect = fake_streaming
+
+        result = fetch_options_diagnostics(["ACME"], "2026-03-11")
+        assert result["ACME"]["opt_put_call_skew"] == 0.0312
+        assert result["ACME"]["opt_rr_25d"] == -0.0150
+
+    @patch("common.options_diagnostics._has_credentials", return_value=True)
+    @patch("common.options_diagnostics._create_session")
+    @patch("common.options_diagnostics._fetch_metrics_batch")
+    @patch("common.options_diagnostics._fetch_streaming_skew")
+    def test_non_liquid_skipped_by_streaming(
+        self,
+        mock_streaming,
+        mock_batch,
+        mock_session,
+        mock_creds,
+    ):
+        """Non-liquid tickers (use_for_judgment=NO) should keep empty skew."""
+        mock_sess = AsyncMock()
+        mock_sess.__aenter__ = AsyncMock(return_value=mock_sess)
+        mock_sess.__aexit__ = AsyncMock(return_value=None)
+        mock_session.return_value = mock_sess
+        # Low liquidity → use_for_judgment=NO
+        mock_batch.return_value = {
+            "JUNK": _mock_market_metric("JUNK", iv_index=0.85, liquidity_rating=1),
+        }
+
+        async def fake_streaming(session, results, ref_date):
+            # Should not be called for non-liquid names, but even if it is,
+            # verify the streaming function only touches liquid names
+            for sym, diag in results.items():
+                if diag.get("opt_use_for_judgment") == "YES":
+                    diag["opt_put_call_skew"] = 0.05
+
+        mock_streaming.side_effect = fake_streaming
+
+        result = fetch_options_diagnostics(["JUNK"], "2026-03-11")
+        assert result["JUNK"]["opt_put_call_skew"] == ""
+        assert result["JUNK"]["opt_rr_25d"] == ""
