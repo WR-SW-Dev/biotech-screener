@@ -55,7 +55,7 @@ from typing import Any, Dict, List, Set, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.adcom_empirical import OUTCOMES_SCHEMA, validate_record
+from common.adcom_empirical import _ACCEPTED_SCHEMAS, OUTCOMES_SCHEMA, validate_record
 
 logger = logging.getLogger(__name__)
 
@@ -223,12 +223,17 @@ def normalize_record(rec: Dict[str, Any]) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
-def _dedup_key(rec: Dict[str, Any]) -> Tuple[str, str, str]:
-    """Dedup key: (meeting_date, committee, question_type)."""
+def _dedup_key(rec: Dict[str, Any]) -> Tuple[str, str, str, str]:
+    """Dedup key: (meeting_date, committee, question_type, drug_name).
+
+    v3 schema adds drug_name to distinguish multiple drugs reviewed
+    at the same committee meeting on the same day.
+    """
     return (
         rec.get("meeting_date", ""),
         rec.get("committee", ""),
         str(rec.get("question_type", "")).upper(),
+        rec.get("drug_name", ""),
     )
 
 
@@ -238,9 +243,9 @@ def dedup_candidates(
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """Split candidates into new vs duplicate (already in existing).
 
-    Dedup key: (meeting_date, committee, question_type).
+    Dedup key: (meeting_date, committee, question_type, drug_name).
     """
-    existing_keys: Set[Tuple[str, str, str]] = set()
+    existing_keys: Set[Tuple[str, str, str, str]] = set()
     for rec in existing:
         existing_keys.add(_dedup_key(rec))
 
@@ -268,7 +273,7 @@ def load_existing_outcomes(outcomes_path: Path) -> List[Dict[str, Any]]:
         return []
     try:
         data = json.loads(outcomes_path.read_text(encoding="utf-8"))
-        if data.get("schema") != OUTCOMES_SCHEMA:
+        if data.get("schema") not in _ACCEPTED_SCHEMAS:
             return []
         return data.get("records", [])
     except (json.JSONDecodeError, OSError):

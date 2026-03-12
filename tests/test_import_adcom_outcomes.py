@@ -23,7 +23,7 @@ from tools.import_adcom_outcomes import (
 # Helpers
 # ---------------------------------------------------------------------------
 
-_SCHEMA = "adcom_outcomes.v2"
+_SCHEMA = "adcom_outcomes.v3"
 
 
 def _make_candidate(**overrides) -> Dict[str, Any]:
@@ -215,6 +215,22 @@ class TestDedup:
         _, dupes = dedup_candidates(candidates, existing)
         assert len(dupes) == 1
 
+    def test_different_drug_name_not_dupe(self):
+        """v3: different drugs at the same meeting+committee+qtype are NOT dupes."""
+        existing = [_make_candidate(drug_name="DrugA")]
+        candidates = [_make_candidate(drug_name="DrugB")]
+        new, dupes = dedup_candidates(candidates, existing)
+        assert len(new) == 1
+        assert len(dupes) == 0
+
+    def test_same_drug_name_is_dupe(self):
+        """v3: same drug at same meeting+committee+qtype is a dupe."""
+        existing = [_make_candidate(drug_name="DrugA")]
+        candidates = [_make_candidate(drug_name="DrugA")]
+        new, dupes = dedup_candidates(candidates, existing)
+        assert len(new) == 0
+        assert len(dupes) == 1
+
 
 # ===========================================================================
 # Ingestion
@@ -252,6 +268,18 @@ class TestIngestion:
         report = ingest_candidates([_make_candidate()], path, dry_run=False)
         assert report["duplicates_skipped"] == 1
         assert report["accepted"] == 0
+
+    def test_v2_schema_readable(self, tmp_path):
+        """v2 schema files are still readable for backward compat."""
+        path = _write_outcomes(tmp_path, [_make_candidate()], schema="adcom_outcomes.v2")
+        report = ingest_candidates(
+            [_make_candidate(meeting_date="2024-01-01", publication_date="2024-01-02")],
+            path,
+            dry_run=False,
+        )
+        assert report["accepted"] == 1
+        data = json.loads(path.read_text())
+        assert len(data["records"]) == 2
 
     def test_preserves_existing(self, tmp_path):
         existing = [_make_candidate(meeting_date="2022-01-01", publication_date="2022-01-02")]

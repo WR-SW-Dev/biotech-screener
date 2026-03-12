@@ -41,7 +41,8 @@ PRIOR_ALPHA = 7.0
 PRIOR_BETA = 3.0
 
 # Schema version for the outcomes file
-OUTCOMES_SCHEMA = "adcom_outcomes.v2"
+OUTCOMES_SCHEMA = "adcom_outcomes.v3"
+_ACCEPTED_SCHEMAS = frozenset({"adcom_outcomes.v2", "adcom_outcomes.v3"})
 
 # Required provenance fields — records missing any of these are excluded
 PROVENANCE_REQUIRED_FIELDS = ("source_url", "publication_date", "source_doc_type")
@@ -166,10 +167,10 @@ def load_outcomes(
         return []
     try:
         data = json.loads(outcomes_path.read_text(encoding="utf-8"))
-        if data.get("schema") != OUTCOMES_SCHEMA:
+        if data.get("schema") not in _ACCEPTED_SCHEMAS:
             logger.warning(
-                "AdCom outcomes schema mismatch: expected %s, got %s",
-                OUTCOMES_SCHEMA,
+                "AdCom outcomes schema mismatch: expected one of %s, got %s",
+                sorted(_ACCEPTED_SCHEMAS),
                 data.get("schema"),
             )
             return []

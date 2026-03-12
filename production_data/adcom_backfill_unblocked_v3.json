@@ -1,0 +1,40 @@
+[
+  {
+    "meeting_date": "2024-03-15",
+    "committee": "Oncologic Drugs Advisory Committee",
+    "question_type": "APPROVAL",
+    "vote_yes": 11,
+    "vote_no": 0,
+    "vote_abstain": 0,
+    "source_url": "https://investors.legendbiotech.com/news-releases/news-release-details/carvyktir-ciltacabtagene-autoleucel-receives-recommendation-us",
+    "publication_date": "2024-03-15",
+    "source_doc_type": "press_release",
+    "drug_name": "Ciltacabtagene autoleucel (CARVYKTI)",
+    "sponsor": "Legend Biotech / Janssen",
+    "ticker": "LEGN",
+    "indication": "Relapsed or refractory multiple myeloma after at least one prior line of therapy (earlier-line expansion)",
+    "vote_favorable": true,
+    "fda_outcome": "APPROVED",
+    "fda_aligned_with_vote": true,
+    "notes": "ODAC voted 11-0 favorable risk-benefit for cilta-cel in earlier-line R/R MM (CARTITUDE-4). FDA approved Apr 5, 2024. Previously rejected due to v2 dedup key collision with Abecma (same date/committee/qtype); unblocked by v3 schema adding drug_name to dedup key. Verified from Legend Biotech investor relations press release."
+  },
+  {
+    "meeting_date": "2022-10-26",
+    "committee": "Cardiovascular and Renal Drugs Advisory Committee",
+    "question_type": "APPROVAL",
+    "vote_yes": 5,
+    "vote_no": 11,
+    "vote_abstain": 0,
+    "source_url": "https://us.gsk.com/en-us/media/press-releases/gsk-reports-outcome-from-us-fda-advisory-committee-meeting-on-daprodustat-for-anaemia-of-ckd/",
+    "publication_date": "2022-10-28",
+    "source_doc_type": "press_release",
+    "drug_name": "Daprodustat (Jesduvroq) — non-dialysis CKD",
+    "sponsor": "GSK",
+    "ticker": "GSK",
+    "indication": "Anemia of chronic kidney disease in adult non-dialysis patients",
+    "vote_favorable": false,
+    "fda_outcome": "NOT_APPLICABLE",
+    "fda_aligned_with_vote": true,
+    "notes": "CRDAC voted 5-11 benefits do NOT outweigh risks for daprodustat in non-dialysis CKD patients. FDA approved for dialysis patients only (Feb 2023). Previously rejected due to v2 dedup key collision with dialysis-population vote (same date/committee/qtype); unblocked by v3 schema adding drug_name to dedup key. Verified from GSK press release; corroborated by Medthority, Healio."
+  }
+]

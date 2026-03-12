@@ -178,6 +178,12 @@ class TestLoadOutcomes:
         result = load_outcomes(path)
         assert result == []
 
+    def test_v2_schema_still_loads(self, tmp_path):
+        """Backward compat: v2 schema files are still readable."""
+        path = _write_outcomes_file(tmp_path, [_make_record()], schema="adcom_outcomes.v2")
+        result = load_outcomes(path)
+        assert len(result) == 1
+
     def test_missing_file_returns_empty(self, tmp_path):
         result = load_outcomes(tmp_path / "nonexistent.json")
         assert result == []
@@ -313,24 +319,24 @@ class TestScoreEmpirical:
 # ===========================================================================
 
 
-class TestProductionFileEmpty:
-    """Verify that the current production adcom_outcomes.json (v2, empty records)
-    results in no empirical scoring — committee_prior only."""
+class TestProductionFileLoads:
+    """Verify that the current production adcom_outcomes.json loads
+    and produces a valid posterior table."""
 
-    def test_production_file_yields_no_empirical(self):
+    def test_production_file_loads_validated_records(self):
         prod_path = Path(__file__).resolve().parent.parent / "production_data" / "adcom_outcomes.json"
         if not prod_path.exists():
             pytest.skip("production adcom_outcomes.json not found")
         records = load_outcomes(prod_path)
-        assert records == [], "Production file should have 0 validated records"
+        assert len(records) >= 17, f"Expected >=17 validated records, got {len(records)}"
         table = build_posterior_table(records, "2026-03-11")
-        assert table == {}, "Empty records should produce empty posterior table"
-        # Scoring must always fall through to committee_prior
+        assert len(table) >= 3, "Should have at least 3 posterior table entries"
         score, n, basis = score_empirical(
             "Oncologic Drugs Advisory Committee",
             "APPROVAL",
             table,
             0.63,
         )
-        assert basis == "committee_prior"
-        assert n == 0
+        # With 17+ records, ODAC|APPROVAL should hit empirical
+        assert basis in ("empirical_committee_question", "empirical_committee")
+        assert n >= 3
