@@ -748,11 +748,23 @@ def build_positions(
                 for f in unlisted_fams:
                     active_targets[f] = residual / len(unlisted_fams)
             # Redistribute inactive share proportionally
-            if inactive_share > 0 and active_targets:
-                total_active = sum(active_targets.values())
-                if total_active > 0:
-                    for f in active_targets:
-                        active_targets[f] += inactive_share * (active_targets[f] / total_active)
+            if inactive_share > 0:
+                if not active_targets:
+                    # All targeted families empty and no unlisted families;
+                    # should be unreachable given n > 0 guard above.
+                    import logging
+
+                    logging.getLogger(__name__).warning(
+                        "FAMILY_REFLOW: %s inactive_share=%.2f cannot be "
+                        "redistributed (no active families); budget lost",
+                        bucket_name,
+                        inactive_share,
+                    )
+                else:
+                    total_active = sum(active_targets.values())
+                    if total_active > 0:
+                        for f in active_targets:
+                            active_targets[f] += inactive_share * (active_targets[f] / total_active)
 
             # Now allocate within each family slice
             for fam_name, fam_rows in by_family.items():

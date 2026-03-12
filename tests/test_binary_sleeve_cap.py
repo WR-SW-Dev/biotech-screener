@@ -218,3 +218,84 @@ class TestRulesetValidation:
         assert rs.binary_sleeve_max_weight_pct == 25.0
         assert rs.binary_sleeve_per_name_max_pct == 5.0
         assert rs.binary_sleeve_days_threshold == 45
+
+
+# ---------------------------------------------------------------------------
+# Fail-closed: excess redistribution warnings
+# ---------------------------------------------------------------------------
+
+
+class TestExcessRedistributionWarnings:
+    """Verify warnings surface when excess cannot be redistributed."""
+
+    def test_returns_warnings_list(self):
+        """apply_binary_sleeve_caps returns a list (possibly empty)."""
+        rs = DecisionRuleset()
+        rows = [
+            _make_row("A", catalyst_days=10, catalyst_mode="specific_days", target_weight_pct=50.0),
+            _make_row("B", catalyst_days=90, catalyst_mode="no_upcoming", target_weight_pct=50.0),
+        ]
+        result = apply_binary_sleeve_caps(rows, rs)
+        assert isinstance(result, list)
+
+    def test_no_warnings_normal_case(self):
+        """Normal cap with non-binary absorbers produces no warnings."""
+        rs = DecisionRuleset(binary_sleeve_per_name_max_pct=10.0)
+        rows = [
+            _make_row("BIN", catalyst_days=5, catalyst_mode="specific_days", target_weight_pct=20.0),
+            _make_row("SAFE", catalyst_days=90, catalyst_mode="no_upcoming", target_weight_pct=80.0),
+        ]
+        warnings = apply_binary_sleeve_caps(rows, rs)
+        assert warnings == []
+
+    def test_all_binary_per_name_excess_warns(self):
+        """All-binary universe: per-name excess triggers warning."""
+        rs = DecisionRuleset(binary_sleeve_per_name_max_pct=10.0)
+        rows = [
+            _make_row("BIN1", catalyst_days=5, catalyst_mode="specific_days", target_weight_pct=50.0),
+            _make_row("BIN2", catalyst_days=10, catalyst_mode="specific_days", target_weight_pct=50.0),
+        ]
+        warnings = apply_binary_sleeve_caps(rows, rs)
+        assert any("per-name excess" in w for w in warnings)
+        # Total still ~100% (re-normalize fallback)
+        assert abs(_total_weight(rows) - 100.0) < 0.15
+
+    def test_all_binary_aggregate_excess_warns(self):
+        """All-binary universe: aggregate excess triggers warning."""
+        rs = DecisionRuleset(binary_sleeve_max_weight_pct=30.0)
+        rows = [
+            _make_row("BIN1", catalyst_days=5, catalyst_mode="specific_days", target_weight_pct=25.0),
+            _make_row("BIN2", catalyst_days=10, catalyst_mode="specific_days", target_weight_pct=25.0),
+            _make_row("BIN3", catalyst_days=15, catalyst_mode="specific_days", target_weight_pct=25.0),
+            _make_row("BIN4", catalyst_days=20, catalyst_mode="specific_days", target_weight_pct=25.0),
+        ]
+        warnings = apply_binary_sleeve_caps(rows, rs)
+        assert any("aggregate excess" in w or "unenforceable" in w for w in warnings)
+
+    def test_renormalize_respects_caps_with_non_binary(self):
+        """Re-normalize absorbs gap into non-binary names, not binary."""
+        rs = DecisionRuleset(binary_sleeve_per_name_max_pct=10.0)
+        rows = [
+            _make_row("BIN1", catalyst_days=5, catalyst_mode="specific_days", target_weight_pct=30.0),
+            _make_row("BIN2", catalyst_days=10, catalyst_mode="specific_days", target_weight_pct=30.0),
+            _make_row("SAFE", catalyst_days=90, catalyst_mode="no_upcoming", target_weight_pct=40.0),
+        ]
+        warnings = apply_binary_sleeve_caps(rows, rs)
+        assert warnings == []
+        # Binary names should be at or below cap
+        for r in rows:
+            if r["ticker"].startswith("BIN"):
+                assert float(r["target_weight_pct"]) <= 10.0 + 0.01
+        assert abs(_total_weight(rows) - 100.0) < 0.15
+
+    def test_warnings_attached_to_rows(self):
+        """compute_target_weights attaches sleeve warnings to first row."""
+        rs = DecisionRuleset(binary_sleeve_per_name_max_pct=10.0)
+        rows = [
+            _make_row("BIN1", catalyst_days=5, catalyst_mode="specific_days"),
+            _make_row("BIN2", catalyst_days=10, catalyst_mode="specific_days"),
+        ]
+        compute_target_weights(rows, ruleset=rs)
+        # All-binary → warnings should be attached
+        sizing_warnings = rows[0].get("_sizing_warnings", [])
+        assert len(sizing_warnings) > 0

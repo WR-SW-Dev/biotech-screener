@@ -1691,7 +1691,7 @@ def _is_binary_name(row: Dict[str, Any], days_threshold: int) -> bool:
 def apply_binary_sleeve_caps(
     rows: List[Dict[str, Any]],
     ruleset: DecisionRuleset,
-) -> None:
+) -> List[str]:
     """Enforce per-name and aggregate weight caps on binary-event names.
 
     Operates in-place on rows that already have ``target_weight_pct``.
@@ -1699,14 +1699,17 @@ def apply_binary_sleeve_caps(
     After capping, weights are re-normalized to sum to 100%.
 
     No-op when both caps are 100% (the default).
+
+    Returns list of warning strings (empty when no issues detected).
     """
+    warnings: List[str] = []
     per_cap = ruleset.binary_sleeve_per_name_max_pct
     agg_cap = ruleset.binary_sleeve_max_weight_pct
     threshold = ruleset.binary_sleeve_days_threshold
 
     # Fast path: defaults → nothing to do
     if per_cap >= 100.0 and agg_cap >= 100.0:
-        return
+        return warnings
 
     # Classify rows
     binary_idx = []
@@ -1721,7 +1724,7 @@ def apply_binary_sleeve_caps(
             non_binary_idx.append(i)
 
     if not binary_idx:
-        return
+        return warnings
 
     # --- Per-name cap ---
     excess = 0.0
@@ -1732,12 +1735,24 @@ def apply_binary_sleeve_caps(
             rows[i]["target_weight_pct"] = round(per_cap, 2)
 
     # Redistribute per-name excess to non-binary proportionally
-    if excess > 0 and non_binary_idx:
-        nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
-        if nb_total > 0:
-            for j in non_binary_idx:
-                w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
-                rows[j]["target_weight_pct"] = round(w + excess * (w / nb_total), 2)
+    if excess > 0:
+        if not non_binary_idx:
+            warnings.append(
+                f"BINARY_SLEEVE: {excess:.2f}pp per-name excess cannot be "
+                f"redistributed (no non-binary names); excess held in binary "
+                f"names via re-normalize"
+            )
+        else:
+            nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
+            if nb_total > 0:
+                for j in non_binary_idx:
+                    w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
+                    rows[j]["target_weight_pct"] = round(w + excess * (w / nb_total), 2)
+            else:
+                warnings.append(
+                    f"BINARY_SLEEVE: {excess:.2f}pp per-name excess cannot be "
+                    f"redistributed (non-binary weights sum to 0)"
+                )
 
     # --- Aggregate cap ---
     binary_total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in binary_idx)
@@ -1748,20 +1763,54 @@ def apply_binary_sleeve_caps(
             w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
             rows[i]["target_weight_pct"] = round(w * scale, 2)
         # Redistribute aggregate excess to non-binary
-        if non_binary_idx:
+        if not non_binary_idx:
+            warnings.append(
+                f"BINARY_SLEEVE: {agg_excess:.2f}pp aggregate excess cannot "
+                f"be redistributed (no non-binary names); excess held in "
+                f"binary names via re-normalize"
+            )
+        else:
             nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
             if nb_total > 0:
                 for j in non_binary_idx:
                     w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
                     rows[j]["target_weight_pct"] = round(w + agg_excess * (w / nb_total), 2)
+            else:
+                warnings.append(
+                    f"BINARY_SLEEVE: {agg_excess:.2f}pp aggregate excess "
+                    f"cannot be redistributed (non-binary weights sum to 0)"
+                )
 
     # --- Re-normalize to 100% ---
+    # Only scale up non-binary names when binary names are capped.
+    # Scaling binary names back up would undo the cap.
     all_idx = binary_idx + non_binary_idx
     total = sum(_safe_float(rows[i]["target_weight_pct"], default=0.0) for i in all_idx)
     if total > 0 and abs(total - 100.0) > 0.01:
-        for i in all_idx:
-            w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
-            rows[i]["target_weight_pct"] = round(w / total * 100, 2)
+        if non_binary_idx:
+            # Absorb the gap into non-binary names only
+            nb_total = sum(_safe_float(rows[j]["target_weight_pct"], default=0.0) for j in non_binary_idx)
+            gap = 100.0 - total
+            if nb_total > 0:
+                for j in non_binary_idx:
+                    w = _safe_float(rows[j]["target_weight_pct"], default=0.0)
+                    rows[j]["target_weight_pct"] = round(w + gap * (w / nb_total), 2)
+            else:
+                # Fallback: scale all (caps effectively unenforceable)
+                for i in all_idx:
+                    w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+                    rows[i]["target_weight_pct"] = round(w / total * 100, 2)
+        else:
+            # All-binary universe: scale all (caps effectively unenforceable)
+            for i in all_idx:
+                w = _safe_float(rows[i]["target_weight_pct"], default=0.0)
+                rows[i]["target_weight_pct"] = round(w / total * 100, 2)
+            warnings.append(
+                "BINARY_SLEEVE: re-normalize scaled binary names above caps "
+                "(all-binary universe, caps unenforceable)"
+            )
+
+    return warnings
 
 
 def compute_target_weights(
@@ -1800,7 +1849,11 @@ def compute_target_weights(
         row["target_weight_pct"] = round(rw / total * 100, 2)
 
     # Apply binary sleeve caps (no-op when defaults are 100%)
-    apply_binary_sleeve_caps(rows, rs)
+    sleeve_warnings = apply_binary_sleeve_caps(rows, rs)
+    if sleeve_warnings:
+        # Attach warnings to first row for downstream visibility
+        existing = rows[0].get("_sizing_warnings", [])
+        rows[0]["_sizing_warnings"] = existing + sleeve_warnings
 
     # Less-binary construction mode
     _apply_less_binary_construction(rows, rs)
