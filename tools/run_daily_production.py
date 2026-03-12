@@ -36,6 +36,11 @@ from typing import Any, Dict, List, Optional
 # ---------------------------------------------------------------------------
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
+
+# Load .env file from repo root (credentials, API keys)
+from dotenv import load_dotenv
+
+load_dotenv(REPO_ROOT / ".env")
 from archive_snapshot import get_git_info
 
 # ---------------------------------------------------------------------------

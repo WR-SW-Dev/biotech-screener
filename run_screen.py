@@ -46,6 +46,11 @@ import tempfile
 from datetime import date, datetime, timezone
 from decimal import Decimal
 
+# Load .env file (credentials, API keys) before any module reads os.environ
+from dotenv import load_dotenv
+
+load_dotenv()
+
 # Configure logging with rotation support
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
