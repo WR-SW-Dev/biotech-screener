@@ -239,8 +239,9 @@ class DecisionRuleset:
     #   "quality_plus_institutional": binary_quality_score + institutional delta z
     #   "clinical_quality":           clinical_quality_composite for CLINICAL family
     #   "options_quality":            options_quality_composite for REGULATORY family
+    #   "clinical_plus_options":      both clinical_quality (CLINICAL) + options_quality (REGULATORY)
     binary_91_180_sort_mode: str = (
-        "baseline"  # "baseline" | "quality_primary" | "quality_plus_institutional" | "clinical_quality" | "options_quality"
+        "baseline"  # "baseline" | "quality_primary" | "quality_plus_institutional" | "clinical_quality" | "options_quality" | "clinical_plus_options"
     )
     binary_91_180_quality_weight: float = 1.0  # scale for binary_quality_score contribution
     binary_91_180_institutional_weight: float = 0.3  # scale for inst_delta_z (quality_plus_institutional only)
@@ -1432,10 +1433,10 @@ def _build_sort_contributions(
             delta_i = bi_w * iz_eff
             contribs.append(SortContribution("binary_institutional", iz, bi_w, delta_i))
 
-    # 9. Binary 91-180 clinical quality tilt (clinical_quality mode only)
+    # 9. Binary 91-180 clinical quality tilt (clinical_quality or clinical_plus_options mode)
     # Only applies to CLINICAL family within less_binary bucket.
     # clinical_quality_composite [0, 1] from event_quality_features.
-    if bucket == "less_binary" and b91_mode == "clinical_quality":
+    if bucket == "less_binary" and b91_mode in ("clinical_quality", "clinical_plus_options"):
         family = str(decision_fields.get("catalyst_family", ""))
         if family == "CLINICAL":
             cqc = _safe_float(decision_fields.get("clinical_quality_composite"), default=0.0)
@@ -1443,10 +1444,10 @@ def _build_sort_contributions(
             delta_cq = cq_w * cqc
             contribs.append(SortContribution("clinical_quality_91_180", cqc, cq_w, delta_cq))
 
-    # 10. Binary 91-180 options quality tilt (options_quality mode only)
+    # 10. Binary 91-180 options quality tilt (options_quality or clinical_plus_options mode)
     # Only applies to REGULATORY family within less_binary bucket.
     # options_quality_composite [0, 1] from tastytrade diagnostics.
-    if bucket == "less_binary" and b91_mode == "options_quality":
+    if bucket == "less_binary" and b91_mode in ("options_quality", "clinical_plus_options"):
         family = str(decision_fields.get("catalyst_family", ""))
         if family == "REGULATORY":
             oqc = _safe_float(decision_fields.get("options_quality_composite"), default=0.0)

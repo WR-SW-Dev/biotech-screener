@@ -439,3 +439,90 @@ class TestOptionsQualityDEContribution:
 
     def test_sort_contrib_keys_includes_options_quality(self):
         assert "options_quality_91_180" in SORT_CONTRIB_KEYS
+
+
+# ---------------------------------------------------------------------------
+# 8. Combined clinical_plus_options mode
+# ---------------------------------------------------------------------------
+
+
+class TestClinicalPlusOptionsMode:
+    """Verify that clinical_plus_options fires CLINICAL quality for CLINICAL
+    family AND options quality for REGULATORY family simultaneously."""
+
+    def test_clinical_fires_in_combined_mode(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="clinical_plus_options",
+            binary_91_180_clinical_quality_weight=0.5,
+            binary_91_180_options_quality_weight=0.5,
+        )
+        fields = {
+            "catalyst_bucket": "less_binary",
+            "catalyst_family": "CLINICAL",
+            "clinical_quality_composite": "0.80",
+            "options_quality_composite": "0.70",
+            "binary_quality_score": "0.5",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": "120",
+            "stage_bucket": "mid",
+            "clinical_score_z_tier": "0",
+            "inst_delta_z": "0",
+            "clinical_score_v2_z": "0",
+            "alpha_cohort_pct": "0",
+        }
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "clinical_quality_91_180" in names
+        assert "options_quality_91_180" not in names  # CLINICAL family → no options contrib
+
+    def test_regulatory_fires_in_combined_mode(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="clinical_plus_options",
+            binary_91_180_clinical_quality_weight=0.5,
+            binary_91_180_options_quality_weight=0.5,
+        )
+        fields = {
+            "catalyst_bucket": "less_binary",
+            "catalyst_family": "REGULATORY",
+            "clinical_quality_composite": "0.80",
+            "options_quality_composite": "0.70",
+            "binary_quality_score": "0.5",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": "120",
+            "stage_bucket": "mid",
+            "clinical_score_z_tier": "0",
+            "inst_delta_z": "0",
+            "clinical_score_v2_z": "0",
+            "alpha_cohort_pct": "0",
+        }
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "options_quality_91_180" in names
+        assert "clinical_quality_91_180" not in names  # REGULATORY family → no clinical contrib
+        oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
+        assert oq.delta == pytest.approx(0.35)  # 0.5 * 0.70
+
+    def test_combined_mode_wrong_bucket_no_fire(self):
+        rs = DecisionRuleset(
+            binary_91_180_sort_mode="clinical_plus_options",
+            binary_91_180_clinical_quality_weight=0.5,
+            binary_91_180_options_quality_weight=0.5,
+        )
+        fields = {
+            "catalyst_bucket": "build_window",
+            "catalyst_family": "CLINICAL",
+            "clinical_quality_composite": "0.80",
+            "options_quality_composite": "0.70",
+            "binary_quality_score": "0.5",
+            "catalyst_mode": "specific_days",
+            "catalyst_days": "60",
+            "stage_bucket": "mid",
+            "clinical_score_z_tier": "0",
+            "inst_delta_z": "0",
+            "clinical_score_v2_z": "0",
+            "alpha_cohort_pct": "0",
+        }
+        contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
+        names = [c.name for c in contribs]
+        assert "clinical_quality_91_180" not in names
+        assert "options_quality_91_180" not in names
