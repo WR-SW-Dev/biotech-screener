@@ -280,6 +280,9 @@ except ImportError as e:
 
 VERSION = "1.6.0"  # Bumped for governance-friendly CLI enhancements
 DETERMINISTIC_TIMESTAMP_SUFFIX = "T00:00:00Z"
+SCHEMA_DECISION_PORTFOLIO = "decision_portfolio.v1"
+SCHEMA_PORTFOLIO_POSITIONS = "portfolio_positions.v1"
+SCHEMA_METADATA = "metadata.v1"
 
 # =============================================================================
 # CATALYST WINDOW PRESETS AND DECAY FUNCTIONS
@@ -3132,6 +3135,31 @@ def load_cache_refresh_sidecar(path: Path) -> Dict[str, Any]:
         return empty
 
 
+def _compute_config_fingerprint(
+    decision_mode,
+    ranking_mode,
+    tier_filter,
+    top_k,
+    alpha_schema_mode,
+    ruleset_id,
+    reliability_table,
+) -> str:
+    """SHA256[:8] of deterministic config subset."""
+    import hashlib
+
+    rel_hash = hashlib.sha256(json.dumps(reliability_table or [], sort_keys=True).encode()).hexdigest()[:16]
+    obj = {
+        "decision_mode": decision_mode,
+        "ranking_mode": ranking_mode,
+        "tier_filter": sorted(tier_filter) if tier_filter else [],
+        "top_k": top_k,
+        "alpha_schema_mode": alpha_schema_mode,
+        "ruleset_id": ruleset_id,
+        "source_reliability_table_hash": rel_hash,
+    }
+    return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
+
+
 def save_validation_snapshot(
     snapshot_dir: Path,
     as_of_date: str,
@@ -3142,7 +3170,7 @@ def save_validation_snapshot(
     price_history_path: Optional[Path] = None,
     market_data_by_ticker: Optional[Dict[str, Dict]] = None,
     trial_records: Optional[List[Dict]] = None,
-    alpha_schema_mode: str = "warn",
+    alpha_schema_mode: str = "fail",
     inputs_manifest_mode: str = "off",
     ranking_mode: str = "decision",
     prior_snapshot_dir: Optional[Path] = None,
@@ -4532,6 +4560,9 @@ def save_validation_snapshot(
         try:
             n_eligible = sum(1 for r in portfolio_rows if r.get("eligible") == "1")
             portfolio_payload = {
+                "schema_version": SCHEMA_DECISION_PORTFOLIO,
+                "generator_version": VERSION,
+                "config_fingerprint": None,  # populated in metadata.json
                 "snapshot_date": as_of_date,
                 "decision_engine_version": DE_VERSION,
                 "ruleset_id": rs.ruleset_id,
@@ -4606,6 +4637,9 @@ def save_validation_snapshot(
                 2,
             )
             positions_payload = {
+                "schema_version": SCHEMA_PORTFOLIO_POSITIONS,
+                "generator_version": VERSION,
+                "config_fingerprint": None,  # populated in metadata.json
                 "snapshot_date": as_of_date,
                 "decision_engine_version": DE_VERSION,
                 "ruleset_id": rs.ruleset_id,
@@ -4770,8 +4804,20 @@ def save_validation_snapshot(
     _git = get_git_info(Path(__file__).resolve().parent)
     _ruleset_path = snap_path / "decision_ruleset.json"
     _ruleset_hash = sha256_file(str(_ruleset_path)) if _ruleset_path.exists() else None
+    _config_fingerprint = _compute_config_fingerprint(
+        decision_mode=decision_mode,
+        ranking_mode=ranking_mode,
+        tier_filter=PHASE2_DEFAULT_TIER_FILTER,
+        top_k=PHASE2_DEFAULT_TOP_K,
+        alpha_schema_mode=alpha_schema_mode,
+        ruleset_id=_rs.ruleset_id,
+        reliability_table=_reliability_table,
+    )
 
     metadata = {
+        "schema_version": SCHEMA_METADATA,
+        "generator_version": VERSION,
+        "config_fingerprint": _config_fingerprint,
         "as_of_date": as_of_date,
         "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision_mode": decision_mode,
@@ -8422,10 +8468,10 @@ Module 3 Catalyst Detection:
     parser.add_argument(
         "--alpha-schema-mode",
         type=str,
-        default="warn",
+        default="fail",
         choices=["warn", "fail"],
-        help="Alpha signal contract enforcement: 'warn' (log + continue, default) "
-        "or 'fail' (raise on missing required fields).",
+        help="Alpha signal contract enforcement: 'fail' (raise on missing required "
+        "fields, default) or 'warn' (log + continue, for historical replay).",
     )
 
     parser.add_argument(
@@ -9261,9 +9307,17 @@ Module 3 Catalyst Detection:
                             logger.warning("--strict: Phase-2 health WARN, exiting 2")
                             return 2
 
-                # Weekly readiness scorecard (best-effort, never blocks)
+                # Weekly readiness scorecard — policy-controlled gate
                 try:
-                    from tools.weekly_readiness_scorecard import build_scorecard, format_scorecard_md
+                    from tools.weekly_readiness_scorecard import (
+                        DEFAULT_READINESS_POLICY,
+                        ReadinessPolicy,
+                        append_history,
+                        build_scorecard,
+                        evaluate_readiness_gate,
+                        format_scorecard_md,
+                        load_history,
+                    )
 
                     _readiness_dir = Path(getattr(args, "data_dir", ".")).parent / "artifacts" / "readiness"
                     _sc = build_scorecard(
@@ -9279,12 +9333,29 @@ Module 3 Catalyst Detection:
                         _f.write("\n")
                     with open(_readiness_dir / f"scorecard_{args.as_of_date}.md", "w") as _f:
                         _f.write(format_scorecard_md(_sc))
-                    from tools.weekly_readiness_scorecard import append_history
 
                     append_history(_readiness_dir / "history.jsonl", _sc)
-                    logger.info(
-                        "[READINESS] %s — %s", _sc["verdict"], _readiness_dir / f"scorecard_{args.as_of_date}.md"
+
+                    # Evaluate gate verdict against policy
+                    _rp = (
+                        ReadinessPolicy.from_json(DEFAULT_READINESS_POLICY)
+                        if DEFAULT_READINESS_POLICY.exists()
+                        else ReadinessPolicy.default()
                     )
+                    _hist = load_history(_readiness_dir / "history.jsonl")
+                    _gate = evaluate_readiness_gate(_sc, _rp, _hist)
+
+                    logger.info(
+                        "[READINESS] %s (gate=%s) — %s",
+                        _sc["verdict"],
+                        _gate["gate_status"],
+                        _readiness_dir / f"scorecard_{args.as_of_date}.md",
+                    )
+
+                    # In --strict mode, HOLD blocks the screen run
+                    if getattr(args, "strict", False) and _gate["gate_status"] == "FAIL":
+                        logger.error("--strict: readiness HOLD, exiting 1")
+                        return 1
                 except Exception as _exc:
                     logger.debug("Readiness scorecard skipped: %s", _exc)
 

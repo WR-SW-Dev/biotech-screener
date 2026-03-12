@@ -1,0 +1,7 @@
+{
+  "schema": "readiness_policy.v1",
+  "hold_blocks_trades": true,
+  "review_blocks_trades": false,
+  "consecutive_review_to_hold": 0,
+  "ratchet_after_n_runs": 0
+}

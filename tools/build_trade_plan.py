@@ -514,6 +514,37 @@ def build_trade_plan(
         except Exception:
             pass  # Pre-trade check is best-effort; don't block on import/runtime errors
 
+    # Readiness gate — block trades on HOLD verdict (policy-controlled)
+    try:
+        from tools.weekly_readiness_scorecard import (
+            DEFAULT_READINESS_POLICY,
+            ReadinessPolicy,
+            evaluate_readiness_gate,
+            load_history,
+            load_json_safe,
+        )
+
+        _readiness_dir = PROJECT_ROOT / "artifacts" / "readiness"
+        _sc_path = _readiness_dir / f"scorecard_{as_of_date}.json"
+        _sc = load_json_safe(_sc_path)
+        if _sc is not None:
+            _policy = (
+                ReadinessPolicy.from_json(DEFAULT_READINESS_POLICY)
+                if DEFAULT_READINESS_POLICY.exists()
+                else ReadinessPolicy.default()
+            )
+            _history = load_history(_readiness_dir / "history.jsonl")
+            _gate = evaluate_readiness_gate(_sc, _policy, _history)
+            if not _gate["can_trade"]:
+                return {
+                    "error": f"readiness gate {_gate['gate_status']} — trades blocked",
+                    "readiness_verdict": _gate["verdict"],
+                    "readiness_detail": _gate["detail"],
+                    "can_trade": False,
+                }
+    except Exception:
+        pass  # Readiness gate is best-effort; don't block on import/runtime errors
+
     # Alpha health gate — determine risk permission
     risk_permission = "ADD_OK"
     if ptc is not None:

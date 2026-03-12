@@ -39,6 +39,7 @@ import csv
 import json
 import logging
 import sys
+from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -50,6 +51,8 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 
 SCHEMA_VERSION = "weekly_readiness_scorecard.v1"
+
+DEFAULT_READINESS_POLICY = Path(__file__).resolve().parent.parent / "production_data" / "readiness_policy.json"
 
 # Minimum weeks of performance data to evaluate (cold-start → HOLD)
 MIN_PERF_WEEKS = 2
@@ -604,6 +607,120 @@ def load_history(history_path: Path) -> List[Dict[str, Any]]:
                 except json.JSONDecodeError:
                     continue
     return entries
+
+
+# ---------------------------------------------------------------------------
+# Readiness policy & gate evaluation
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True)
+class ReadinessPolicy:
+    """Controls how the readiness verdict maps to execution boundaries."""
+
+    schema: str = "readiness_policy.v1"
+    hold_blocks_trades: bool = True
+    review_blocks_trades: bool = False
+    consecutive_review_to_hold: int = 0  # 0 = disabled
+    ratchet_after_n_runs: int = 0  # 0 = disabled
+
+    @classmethod
+    def from_json(cls, path: Path) -> ReadinessPolicy:
+        with open(path, "r", encoding="utf-8") as f:
+            d = json.load(f)
+        known = {fld for fld in cls.__dataclass_fields__}
+        return cls(**{k: v for k, v in d.items() if k in known})
+
+    @classmethod
+    def default(cls) -> ReadinessPolicy:
+        return cls()
+
+
+def count_consecutive_verdict(
+    history: List[Dict[str, Any]],
+    verdict: str,
+) -> int:
+    """Count consecutive entries with the given verdict at the tail of history."""
+    count = 0
+    for entry in reversed(history):
+        if entry.get("verdict") == verdict:
+            count += 1
+        else:
+            break
+    return count
+
+
+def evaluate_readiness_gate(
+    scorecard: Dict[str, Any],
+    policy: ReadinessPolicy,
+    history: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Evaluate whether the readiness verdict allows trading.
+
+    Returns a dict with:
+        can_trade: bool
+        gate_status: "PASS" | "WARN" | "FAIL"
+        verdict: str (original scorecard verdict)
+        detail: str
+        consecutive_review_runs: int
+    """
+    verdict = scorecard.get("verdict", "HOLD")
+    consecutive_review = 0
+
+    if history is not None:
+        consecutive_review = count_consecutive_verdict(history, "REVIEW")
+        # Count current run if it's REVIEW
+        if verdict == "REVIEW":
+            consecutive_review += 1
+
+    # Ratchet escalation: consecutive REVIEW → HOLD
+    ratchet_applied = False
+    if (
+        verdict == "REVIEW"
+        and policy.consecutive_review_to_hold > 0
+        and policy.ratchet_after_n_runs > 0
+        and history is not None
+        and len(history) >= policy.ratchet_after_n_runs
+        and consecutive_review >= policy.consecutive_review_to_hold
+    ):
+        verdict = "HOLD"
+        ratchet_applied = True
+
+    # Map verdict to gate result
+    if verdict == "HOLD":
+        if policy.hold_blocks_trades:
+            gate_status = "FAIL"
+            can_trade = False
+            detail = "HOLD — trades blocked by readiness policy"
+            if ratchet_applied:
+                detail = f"HOLD (ratchet: {consecutive_review} consecutive REVIEW) — trades blocked"
+        else:
+            gate_status = "WARN"
+            can_trade = True
+            detail = "HOLD — readiness policy set to advisory mode"
+    elif verdict == "REVIEW":
+        if policy.review_blocks_trades:
+            gate_status = "FAIL"
+            can_trade = False
+            detail = "REVIEW — trades blocked by readiness policy"
+        else:
+            gate_status = "WARN"
+            can_trade = True
+            detail = f"REVIEW — advisory (consecutive={consecutive_review})"
+    else:
+        gate_status = "PASS"
+        can_trade = True
+        detail = "READY — all checks pass"
+
+    return {
+        "can_trade": can_trade,
+        "gate_status": gate_status,
+        "verdict": verdict,
+        "original_verdict": scorecard.get("verdict", "HOLD"),
+        "detail": detail,
+        "consecutive_review_runs": consecutive_review,
+        "ratchet_applied": ratchet_applied,
+    }
 
 
 # ---------------------------------------------------------------------------
