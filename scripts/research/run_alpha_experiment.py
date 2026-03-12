@@ -53,16 +53,19 @@ import math
 import statistics
 import sys
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from dataclasses import replace as dc_replace
+
 from common.ranking_utils import backfill_columns, safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-from dataclasses import replace as dc_replace
+from tools.build_action_lists import classify_action_bucket
+from tools.live_shadow_portfolio import SLEEVE_MAP
 
 # Reuse building blocks from eval_forward_returns (import at function scope
 # to avoid heavy top-level import if module isn't on sys.path yet)
@@ -95,6 +98,7 @@ DEFAULT_MISSINGNESS_THRESHOLD = 0.15  # 15%
 # ---------------------------------------------------------------------------
 # Data loading (lightweight, no pandas)
 # ---------------------------------------------------------------------------
+
 
 def load_price_series(csv_path: Path) -> Dict[str, Dict[str, float]]:
     """Load price_history.csv -> {ticker: {date_str: close}}."""
@@ -172,6 +176,7 @@ def filter_date_grid(dates: List[str], grid: str) -> List[str]:
 # ---------------------------------------------------------------------------
 # Forward returns & IC (minimal reimplementation of eval_forward_returns)
 # ---------------------------------------------------------------------------
+
 
 def _trading_days_after(all_dates: List[str], start: str, n: int) -> Optional[str]:
     """Return the trading date n trading days after start, or None."""
@@ -266,6 +271,7 @@ def compute_turnover(prev_set: List[str], curr_set: List[str]) -> float:
 # OLS (deterministic, no numpy — identical to eval_forward_returns._multi_ols)
 # ---------------------------------------------------------------------------
 
+
 def multi_ols(
     x_cols: List[List[float]],
     y: List[float],
@@ -325,6 +331,7 @@ def multi_ols(
 # Exposure extraction
 # ---------------------------------------------------------------------------
 
+
 def _extract_exposure(row: Dict[str, str], exposure_name: str) -> Optional[float]:
     """Extract a single exposure value from a rankings row."""
     col = EXPOSURE_MAP.get(exposure_name)
@@ -353,6 +360,7 @@ def _extract_anchor(row: Dict[str, str], ruleset: DecisionRuleset) -> Optional[f
 # ---------------------------------------------------------------------------
 # On-the-fly exposure hydration (fills gaps in legacy snapshots)
 # ---------------------------------------------------------------------------
+
 
 def _get_closes(
     tseries: Dict[str, float],
@@ -420,9 +428,6 @@ def hydrate_missing_exposures(
         # --- Beta vs XBI ---
         if not row.get("de_beta_xbi_60d") and len(xbi_rets) >= 20:
             # Align returns by date index (both computed from same date range)
-            # Use paired returns where both are available
-            ticker_closes = [c for c in closes_raw if c is not None and c > 0]
-            xbi_closes_clean = [c for c in xbi_closes if c is not None and c > 0]
             # Rebuild aligned pairs from the raw close arrays
             paired_t = []
             paired_x = []
@@ -430,16 +435,23 @@ def hydrate_missing_exposures(
             for i in range(len(closes_raw)):
                 tc = closes_raw[i]
                 xc = xbi_closes[i] if i < len(xbi_closes) else None
-                if (tc is not None and tc > 0 and prev_t is not None and prev_t > 0
-                        and xc is not None and xc > 0 and prev_x is not None and prev_x > 0):
+                if (
+                    tc is not None
+                    and tc > 0
+                    and prev_t is not None
+                    and prev_t > 0
+                    and xc is not None
+                    and xc > 0
+                    and prev_x is not None
+                    and prev_x > 0
+                ):
                     paired_t.append(math.log(tc / prev_t))
                     paired_x.append(math.log(xc / prev_x))
                 prev_t = tc if (tc is not None and tc > 0) else None
                 prev_x = xc if (xc is not None and xc > 0) else None
             if len(paired_t) >= 20:
                 mx = statistics.mean(paired_x)
-                cov = sum((paired_t[i] - statistics.mean(paired_t)) * (paired_x[i] - mx)
-                          for i in range(len(paired_t)))
+                cov = sum((paired_t[i] - statistics.mean(paired_t)) * (paired_x[i] - mx) for i in range(len(paired_t)))
                 var_x = sum((paired_x[i] - mx) ** 2 for i in range(len(paired_x)))
                 if var_x > 1e-12:
                     beta = cov / var_x
@@ -486,7 +498,8 @@ def filter_universe_by_prices(
     in OLS neutralization (only fit on tickers we can actually evaluate).
     """
     return [
-        r for r in rows
+        r
+        for r in rows
         if (r.get("ticker") or "").strip().upper() in prices
         and prices[(r.get("ticker") or "").strip().upper()].get(snap_date) is not None
     ]
@@ -495,6 +508,7 @@ def filter_universe_by_prices(
 # ---------------------------------------------------------------------------
 # Missingness reporting
 # ---------------------------------------------------------------------------
+
 
 def compute_exposure_missingness(
     rows: List[Dict[str, str]],
@@ -515,6 +529,7 @@ def compute_exposure_missingness(
 # ---------------------------------------------------------------------------
 # Exposure neutralization
 # ---------------------------------------------------------------------------
+
 
 def neutralize_exposures(
     rows: List[Dict[str, str]],
@@ -577,7 +592,6 @@ def neutralize_exposures(
 
     # Compute residuals
     n = len(valid_indices)
-    p = len(exposure_names) + 1
     residuals = []
     for idx in range(n):
         predicted = beta[0]  # intercept
@@ -602,6 +616,7 @@ def neutralize_exposures(
 # Faithful reranking (same pattern as rerank_snapshots.py)
 # ---------------------------------------------------------------------------
 
+
 def rerank_faithful(
     rows: List[Dict[str, str]],
     ruleset: DecisionRuleset,
@@ -609,24 +624,28 @@ def rerank_faithful(
     """Re-sort rows using production-identical sort key and assign fresh ranks."""
     backfill_columns(rows)
 
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            safe_float(r.get("alpha_cohort_pct"))
-            if ruleset.sort_anchor == "alpha_cohort"
-            else (safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-        alpha_raw=safe_float(r.get("alpha_cohort_raw")),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                safe_float(r.get("alpha_cohort_pct"))
+                if ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+            alpha_raw=safe_float(r.get("alpha_cohort_raw")),
+        )
+    )
 
     rank = 1
     for r in rows:
@@ -643,9 +662,11 @@ def rerank_faithful(
 # Per-date evaluation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class DateMetrics:
     """Metrics for a single snapshot date."""
+
     date: str
     n_eligible: int = 0
     n_valid_for_ols: int = 0
@@ -728,8 +749,7 @@ def evaluate_single_date(
             metrics.n_held[h] = 0
             continue
 
-        signal_vals = [-float(i + 1) for i, t in enumerate(tickers_ranked)
-                       if t in fwd_rets]
+        signal_vals = [-float(i + 1) for i, t in enumerate(tickers_ranked) if t in fwd_rets]
         return_vals = [fwd_rets[t] for t in signal_tickers]
         metrics.ics[h] = spearman_ic(signal_vals, return_vals)
 
@@ -751,9 +771,7 @@ def evaluate_single_date(
             v = _extract_exposure(r, exp_name)
             if v is not None:
                 vals.append(v)
-        metrics.exposure_means_topk[exp_name] = (
-            statistics.mean(vals) if vals else None
-        )
+        metrics.exposure_means_topk[exp_name] = statistics.mean(vals) if vals else None
 
     return metrics
 
@@ -762,9 +780,11 @@ def evaluate_single_date(
 # Experiment result
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class ExperimentResult:
     """Aggregated result of a full experiment run."""
+
     name: str
     mode: str
     n_dates: int = 0
@@ -792,20 +812,15 @@ class ExperimentResult:
             ics = [m.ics[h] for m in valid if m.ics.get(h) is not None]
             self.mean_ic[h] = statistics.mean(ics) if ics else None
 
-            gross = [m.gross_returns[h] for m in valid
-                     if m.gross_returns.get(h) is not None]
+            gross = [m.gross_returns[h] for m in valid if m.gross_returns.get(h) is not None]
             self.mean_gross[h] = statistics.mean(gross) if gross else None
 
         for exp in self.exposure_names:
-            vals = [m.exposure_means_topk[exp] for m in valid
-                    if m.exposure_means_topk.get(exp) is not None]
+            vals = [m.exposure_means_topk[exp] for m in valid if m.exposure_means_topk.get(exp) is not None]
             self.mean_exposure_topk[exp] = statistics.mean(vals) if vals else None
 
-            miss_vals = [m.exposure_missingness.get(exp) for m in valid
-                         if m.exposure_missingness.get(exp) is not None]
-            self.mean_exposure_missingness[exp] = (
-                statistics.mean(miss_vals) if miss_vals else None
-            )
+            miss_vals = [m.exposure_missingness.get(exp) for m in valid if m.exposure_missingness.get(exp) is not None]
+            self.mean_exposure_missingness[exp] = statistics.mean(miss_vals) if miss_vals else None
 
         r2s = [m.ols_r2 for m in valid if m.ols_r2 is not None]
         self.mean_ols_r2 = statistics.mean(r2s) if r2s else None
@@ -822,12 +837,8 @@ class ExperimentResult:
             "ruleset_id": self.ruleset_id,
             "mean_ic": {str(k): _round_opt(v, 4) for k, v in self.mean_ic.items()},
             "mean_gross": {str(k): _round_opt(v, 6) for k, v in self.mean_gross.items()},
-            "mean_exposure_topk": {
-                k: _round_opt(v, 4) for k, v in self.mean_exposure_topk.items()
-            },
-            "mean_exposure_missingness": {
-                k: _round_opt(v, 4) for k, v in self.mean_exposure_missingness.items()
-            },
+            "mean_exposure_topk": {k: _round_opt(v, 4) for k, v in self.mean_exposure_topk.items()},
+            "mean_exposure_missingness": {k: _round_opt(v, 4) for k, v in self.mean_exposure_missingness.items()},
             "mean_ols_r2": _round_opt(self.mean_ols_r2, 4),
             "by_date": [
                 {
@@ -838,12 +849,8 @@ class ExperimentResult:
                     "ics": {str(k): _round_opt(v, 4) for k, v in m.ics.items()},
                     "gross_returns": {str(k): _round_opt(v, 6) for k, v in m.gross_returns.items()},
                     "top_k_tickers": m.top_k_tickers[:10],
-                    "exposure_means_topk": {
-                        k: _round_opt(v, 4) for k, v in m.exposure_means_topk.items()
-                    },
-                    "exposure_missingness": {
-                        k: _round_opt(v, 4) for k, v in m.exposure_missingness.items()
-                    },
+                    "exposure_means_topk": {k: _round_opt(v, 4) for k, v in m.exposure_means_topk.items()},
+                    "exposure_missingness": {k: _round_opt(v, 4) for k, v in m.exposure_missingness.items()},
                     "ols_r2": _round_opt(m.ols_r2, 4),
                 }
                 for m in self.date_metrics
@@ -862,6 +869,7 @@ def _round_opt(v: Optional[float], n: int) -> Optional[float]:
 # Main experiment runner
 # ---------------------------------------------------------------------------
 
+
 def run_experiment(
     experiment_name: str,
     mode: str,
@@ -877,6 +885,7 @@ def run_experiment(
     date_grid: str = "all",
     universe_mode: str = "current",
     missingness_threshold: float = DEFAULT_MISSINGNESS_THRESHOLD,
+    sleeve: str = "all",
 ) -> Tuple[ExperimentResult, Optional[ExperimentResult]]:
     """Run the experiment: baseline, and optionally neutralized.
 
@@ -888,6 +897,7 @@ def run_experiment(
                        (filter to rows with a price on snap_date).
         missingness_threshold: hard FAIL if any exposure exceeds this
                                fraction missing in a date's eligible rows.
+        sleeve: "all" (no filter), "binary", or "core".
 
     Returns:
         (baseline_result, neutralized_result_or_None)
@@ -924,14 +934,18 @@ def run_experiment(
         exposure_names=exposure_names,
         ruleset_id=ruleset.ruleset_id,
     )
-    neutralized = ExperimentResult(
-        name=f"{experiment_name}_neutralized",
-        mode="neutralized",
-        horizons=horizons,
-        top_k=top_k,
-        exposure_names=exposure_names,
-        ruleset_id=ruleset.ruleset_id,
-    ) if run_neutral else None
+    neutralized = (
+        ExperimentResult(
+            name=f"{experiment_name}_neutralized",
+            mode="neutralized",
+            horizons=horizons,
+            top_k=top_k,
+            exposure_names=exposure_names,
+            ruleset_id=ruleset.ruleset_id,
+        )
+        if run_neutral
+        else None
+    )
 
     missingness_fails: List[str] = []
 
@@ -941,7 +955,8 @@ def run_experiment(
 
         if not raw_rows or len(raw_rows[0]) < min_cols:
             skip_metrics = DateMetrics(
-                date=snap_date, skipped=True,
+                date=snap_date,
+                skipped=True,
                 skip_reason=f"SKIP ({len(raw_rows[0]) if raw_rows else 0} cols < {min_cols})",
             )
             if run_baseline:
@@ -952,7 +967,10 @@ def run_experiment(
 
         # --- Hydrate missing exposures from prices ---
         hydrated = hydrate_missing_exposures(
-            raw_rows, prices, snap_date, sorted_dates,
+            raw_rows,
+            prices,
+            snap_date,
+            sorted_dates,
         )
         filled = {k: v for k, v in hydrated.items() if v > 0}
         if filled:
@@ -967,12 +985,30 @@ def run_experiment(
             if after < before:
                 print(f"  {snap_date}: universe filter {before} → {after} rows")
 
+        # --- Sleeve filter ---
+        if sleeve != "all":
+            before_sleeve = len(raw_rows)
+            raw_rows = [r for r in raw_rows if SLEEVE_MAP.get(classify_action_bucket(r), "core") == sleeve]
+            after_sleeve = len(raw_rows)
+            if after_sleeve < before_sleeve:
+                print(f"  {snap_date}: sleeve filter ({sleeve}) {before_sleeve} → {after_sleeve} rows")
+            if not raw_rows:
+                skip_metrics = DateMetrics(
+                    date=snap_date,
+                    skipped=True,
+                    skip_reason=f"SKIP (no rows in {sleeve} sleeve)",
+                )
+                if run_baseline:
+                    baseline.date_metrics.append(skip_metrics)
+                if neutralized:
+                    neutralized.date_metrics.append(copy.deepcopy(skip_metrics))
+                continue
+
         # --- Missingness check ---
         miss = compute_exposure_missingness(raw_rows, exposure_names)
         breached = {k: v for k, v in miss.items() if v > missingness_threshold}
         if breached:
-            msg = (f"{snap_date}: MISSINGNESS FAIL — "
-                   + ", ".join(f"{k}={v:.1%}" for k, v in breached.items()))
+            msg = f"{snap_date}: MISSINGNESS FAIL — " + ", ".join(f"{k}={v:.1%}" for k, v in breached.items())
             missingness_fails.append(msg)
             print(f"  SKIP: {msg}")
             continue  # refuse to OLS-neutralize on junk coverage
@@ -983,14 +1019,21 @@ def run_experiment(
             backfill_columns(base_rows)
             # Use existing actionable_rank from production (already faithful)
             base_metrics = evaluate_single_date(
-                snap_date, base_rows, prices, sorted_dates,
-                horizons, top_k, exposure_names,
+                snap_date,
+                base_rows,
+                prices,
+                sorted_dates,
+                horizons,
+                top_k,
+                exposure_names,
             )
             base_metrics.exposure_missingness = miss
             baseline.date_metrics.append(base_metrics)
-            print(f"  {snap_date} baseline: "
-                  f"eligible={base_metrics.n_eligible}, "
-                  f"IC(20d)={_round_opt(base_metrics.ics.get(20), 3)}")
+            print(
+                f"  {snap_date} baseline: "
+                f"eligible={base_metrics.n_eligible}, "
+                f"IC(20d)={_round_opt(base_metrics.ics.get(20), 3)}"
+            )
 
         # --- Neutralized ---
         if neutralized:
@@ -999,24 +1042,33 @@ def run_experiment(
 
             # Neutralize exposures
             neut_rows, r2, coeffs = neutralize_exposures(
-                neut_rows, exposure_names, ruleset,
+                neut_rows,
+                exposure_names,
+                ruleset,
             )
 
             # Rerank with neutralized signal
             neut_rows = rerank_faithful(neut_rows, neutral_ruleset)
 
             neut_metrics = evaluate_single_date(
-                snap_date, neut_rows, prices, sorted_dates,
-                horizons, top_k, exposure_names,
+                snap_date,
+                neut_rows,
+                prices,
+                sorted_dates,
+                horizons,
+                top_k,
+                exposure_names,
             )
             neut_metrics.ols_r2 = r2
             neut_metrics.ols_coefficients = coeffs
             neut_metrics.exposure_missingness = miss
             neutralized.date_metrics.append(neut_metrics)
-            print(f"  {snap_date} neutral:  "
-                  f"eligible={neut_metrics.n_eligible}, "
-                  f"IC(20d)={_round_opt(neut_metrics.ics.get(20), 3)}, "
-                  f"R²={_round_opt(r2, 3)}")
+            print(
+                f"  {snap_date} neutral:  "
+                f"eligible={neut_metrics.n_eligible}, "
+                f"IC(20d)={_round_opt(neut_metrics.ics.get(20), 3)}, "
+                f"R²={_round_opt(r2, 3)}"
+            )
 
     # Hard FAIL summary
     if missingness_fails:
@@ -1037,10 +1089,12 @@ def run_experiment(
 # Comparison report
 # ---------------------------------------------------------------------------
 
+
 def generate_comparison_report(
     baseline: ExperimentResult,
     neutralized: Optional[ExperimentResult],
     exposure_names: List[str],
+    sleeve: str = "all",
 ) -> str:
     """Generate a markdown comparison report."""
     lines: List[str] = []
@@ -1048,6 +1102,7 @@ def generate_comparison_report(
     lines.append(f"# Alpha Experiment: {baseline.name.replace('_baseline', '')}")
     lines.append("")
     lines.append(f"- **Ruleset**: {baseline.ruleset_id}")
+    lines.append(f"- **Sleeve**: {sleeve}")
     lines.append(f"- **Dates evaluated**: {baseline.n_dates} ({baseline.n_skipped} skipped)")
     lines.append(f"- **Top-K**: {baseline.top_k}")
     lines.append(f"- **Horizons**: {baseline.horizons}")
@@ -1170,8 +1225,7 @@ def generate_comparison_report(
         lines.append(f"Mean R² across dates: **{neutralized.mean_ols_r2:.4f}**")
         lines.append("")
         # Show coefficients from last non-skipped date
-        valid_dates = [m for m in neutralized.date_metrics
-                       if not m.skipped and m.ols_coefficients]
+        valid_dates = [m for m in neutralized.date_metrics if not m.skipped and m.ols_coefficients]
         if valid_dates:
             last = valid_dates[-1]
             lines.append(f"Coefficients (last date {last.date}):")
@@ -1204,24 +1258,16 @@ def generate_comparison_report(
     lines.append("")
     if baseline.n_dates > 0:
         b_positive = sum(
-            1 for m in baseline.date_metrics
-            if not m.skipped and m.ics.get(ref_h) is not None and m.ics[ref_h] > 0
+            1 for m in baseline.date_metrics if not m.skipped and m.ics.get(ref_h) is not None and m.ics[ref_h] > 0
         )
-        b_total = sum(
-            1 for m in baseline.date_metrics
-            if not m.skipped and m.ics.get(ref_h) is not None
-        )
+        b_total = sum(1 for m in baseline.date_metrics if not m.skipped and m.ics.get(ref_h) is not None)
         b_hr = b_positive / max(b_total, 1)
         lines.append(f"- Baseline: {b_positive}/{b_total} = **{b_hr:.1%}**")
     if neutralized and neutralized.n_dates > 0:
         n_positive = sum(
-            1 for m in neutralized.date_metrics
-            if not m.skipped and m.ics.get(ref_h) is not None and m.ics[ref_h] > 0
+            1 for m in neutralized.date_metrics if not m.skipped and m.ics.get(ref_h) is not None and m.ics[ref_h] > 0
         )
-        n_total = sum(
-            1 for m in neutralized.date_metrics
-            if not m.skipped and m.ics.get(ref_h) is not None
-        )
+        n_total = sum(1 for m in neutralized.date_metrics if not m.skipped and m.ics.get(ref_h) is not None)
         n_hr = n_positive / max(n_total, 1)
         lines.append(f"- Neutralized: {n_positive}/{n_total} = **{n_hr:.1%}**")
     lines.append("")
@@ -1261,6 +1307,7 @@ def generate_comparison_report(
 # Top-K overlap between baseline and neutralized
 # ---------------------------------------------------------------------------
 
+
 def _topk_overlap(baseline: ExperimentResult, neutralized: ExperimentResult, k: int) -> Dict[str, Any]:
     """Compute per-date top-K Jaccard overlap between baseline and neutralized."""
     overlaps = []
@@ -1284,42 +1331,64 @@ def _topk_overlap(baseline: ExperimentResult, neutralized: ExperimentResult, k: 
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Alpha experiment runner: baseline vs exposure-neutralized evaluation",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("--experiment-name", required=True,
-                        help="Name for this experiment (used in output paths)")
-    parser.add_argument("--mode", choices=["baseline", "neutralize", "compare"],
-                        default="compare",
-                        help="baseline: production only; neutralize: neutralized only; compare: both")
-    parser.add_argument("--snapshot-root", type=Path,
-                        default=PROJECT_ROOT / "data" / "snapshots")
-    parser.add_argument("--price-csv", type=Path,
-                        default=PROJECT_ROOT / "production_data" / "price_history.csv")
-    parser.add_argument("--ruleset", type=Path, default=None,
-                        help="Path to ruleset JSON (default: latest snapshot's decision_ruleset.json)")
-    parser.add_argument("--exposures", type=str, default="beta,drawdown",
-                        help="Comma-separated exposure names: beta,drawdown,vol,mcap")
+    parser.add_argument("--experiment-name", required=True, help="Name for this experiment (used in output paths)")
+    parser.add_argument(
+        "--mode",
+        choices=["baseline", "neutralize", "compare"],
+        default="compare",
+        help="baseline: production only; neutralize: neutralized only; compare: both",
+    )
+    parser.add_argument("--snapshot-root", type=Path, default=PROJECT_ROOT / "data" / "snapshots")
+    parser.add_argument("--price-csv", type=Path, default=PROJECT_ROOT / "production_data" / "price_history.csv")
+    parser.add_argument(
+        "--ruleset",
+        type=Path,
+        default=None,
+        help="Path to ruleset JSON (default: latest snapshot's decision_ruleset.json)",
+    )
+    parser.add_argument(
+        "--exposures", type=str, default="beta,drawdown", help="Comma-separated exposure names: beta,drawdown,vol,mcap"
+    )
     parser.add_argument("--horizons", type=str, default="5,20,63")
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
-    parser.add_argument("--out-root", type=Path, default=None,
-                        help="Output directory (default: output/alpha_experiments/{name})")
-    parser.add_argument("--min-cols", type=int, default=50,
-                        help="Skip snapshots with fewer columns")
+    parser.add_argument(
+        "--out-root", type=Path, default=None, help="Output directory (default: output/alpha_experiments/{name})"
+    )
+    parser.add_argument("--min-cols", type=int, default=50, help="Skip snapshots with fewer columns")
     parser.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
-    parser.add_argument("--date-grid", choices=["all", "monthly"], default="all",
-                        help="Date frequency: all (every snapshot) or monthly (last per month)")
-    parser.add_argument("--universe-mode", choices=["current", "price_available"],
-                        default="current",
-                        help="current: all rows; price_available: only rows with snap_date price")
-    parser.add_argument("--missingness-threshold", type=float,
-                        default=DEFAULT_MISSINGNESS_THRESHOLD,
-                        help="Hard FAIL if any exposure exceeds this fraction missing (default 0.15)")
+    parser.add_argument(
+        "--date-grid",
+        choices=["all", "monthly"],
+        default="all",
+        help="Date frequency: all (every snapshot) or monthly (last per month)",
+    )
+    parser.add_argument(
+        "--universe-mode",
+        choices=["current", "price_available"],
+        default="current",
+        help="current: all rows; price_available: only rows with snap_date price",
+    )
+    parser.add_argument(
+        "--sleeve",
+        choices=["all", "binary", "core"],
+        default="all",
+        help="Filter to sleeve before evaluation (default: all)",
+    )
+    parser.add_argument(
+        "--missingness-threshold",
+        type=float,
+        default=DEFAULT_MISSINGNESS_THRESHOLD,
+        help="Hard FAIL if any exposure exceeds this fraction missing (default 0.15)",
+    )
     args = parser.parse_args()
 
     # Parse list args
@@ -1336,11 +1405,13 @@ def main() -> None:
     if args.ruleset:
         ruleset = DecisionRuleset.from_json(str(args.ruleset))
     else:
-        dates = sorted([
-            p.name for p in args.snapshot_root.iterdir()
-            if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-            and (p / "decision_ruleset.json").exists()
-        ])
+        dates = sorted(
+            [
+                p.name
+                for p in args.snapshot_root.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
         if not dates:
             print("ERROR: No snapshot with decision_ruleset.json found")
             sys.exit(1)
@@ -1351,6 +1422,14 @@ def main() -> None:
     # Output directory
     out_root = args.out_root or (PROJECT_ROOT / "output" / "alpha_experiments" / args.experiment_name)
     out_root.mkdir(parents=True, exist_ok=True)
+
+    # Sleeve-specific horizon defaults
+    if args.sleeve == "binary" and args.horizons == "5,20,63":
+        horizons = [5, 20, 84]
+        print(f"Sleeve=binary: using default horizons {horizons}")
+    elif args.sleeve == "core" and args.horizons == "5,20,63":
+        horizons = [84, 126]
+        print(f"Sleeve=core: using default horizons {horizons}")
 
     # Run experiment
     t0 = time.time()
@@ -1369,6 +1448,7 @@ def main() -> None:
         date_grid=args.date_grid,
         universe_mode=args.universe_mode,
         missingness_threshold=args.missingness_threshold,
+        sleeve=args.sleeve,
     )
     elapsed = time.time() - t0
 
@@ -1376,6 +1456,7 @@ def main() -> None:
     print(f"\n{'='*60}")
     print(f"Experiment: {args.experiment_name}")
     print(f"Mode: {args.mode}")
+    print(f"Sleeve: {args.sleeve}")
     print(f"Elapsed: {elapsed:.1f}s")
     print()
 
@@ -1410,7 +1491,7 @@ def main() -> None:
             json.dump(neutralized.to_dict(), f, indent=2, default=str)
 
     # 2. Comparison report
-    report = generate_comparison_report(baseline, neutralized, exposure_names)
+    report = generate_comparison_report(baseline, neutralized, exposure_names, sleeve=args.sleeve)
     report_path = out_root / "compare.md"
     with open(report_path, "w", encoding="utf-8") as f:
         f.write(report)
