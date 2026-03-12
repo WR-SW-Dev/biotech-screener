@@ -144,14 +144,25 @@ def _build_summary(
     iv_ranked.sort(key=lambda x: float(x["opt_atm_iv"]), reverse=True)
     top_iv = iv_ranked[:10]
 
+    # Diagnostic basis distribution (for ALL rows, not just those with data)
+    basis_counts = Counter(r.get("opt_diagnostic_basis", "") for r in all_rows)
+    has_credentials = "no_credentials" not in basis_counts
+
+    # Options quality composite coverage
+    n_oqc = sum(1 for r in all_rows if r.get("options_quality_composite", "") != "")
+
     return {
-        "schema": "options_diagnostics_summary.v1",
+        "schema": "options_diagnostics_summary.v2",
         "as_of_date": as_of_date,
         "coverage": {
             "n_universe": n_total,
             "n_with_options_data": n_with_data,
             "coverage_pct": round(n_with_data / max(n_total, 1) * 100, 1),
+            "n_options_quality_composite": n_oqc,
+            "has_credentials": has_credentials,
+            "ab_ready": n_oqc > 0,
         },
+        "diagnostic_basis": dict(sorted(basis_counts.items())),
         "flag_distributions": {
             "iv_regime": dict(sorted(iv_regime_counts.items())),
             "event_premium": dict(sorted(event_premium_counts.items())),
@@ -167,8 +178,14 @@ def _format_summary_md(summary: Dict[str, Any]) -> str:
     """Format summary as markdown."""
     cov = summary.get("coverage", {})
     flags = summary.get("flag_distributions", {})
+    basis = summary.get("diagnostic_basis", {})
+    has_creds = cov.get("has_credentials", False)
+    ab_ready = cov.get("ab_ready", False)
     lines = [
         f"# Options Diagnostics Summary — {summary.get('as_of_date', '?')}",
+        "",
+        f"**Credentials**: {'OK' if has_creds else 'MISSING (TT_SECRET / TT_REFRESH)'}",
+        f"**A/B ready**: {'YES' if ab_ready else 'NO — options_quality_composite not populated'}",
         "",
         "## Coverage",
         "",
@@ -177,10 +194,25 @@ def _format_summary_md(summary: Dict[str, Any]) -> str:
         f"| Universe | {cov.get('n_universe', 0)} |",
         f"| With options data | {cov.get('n_with_options_data', 0)} |",
         f"| Coverage % | {cov.get('coverage_pct', 0)}% |",
-        "",
-        "## Flag Distributions",
+        f"| Options quality composite | {cov.get('n_options_quality_composite', 0)} |",
         "",
     ]
+
+    if basis:
+        lines.append("## Diagnostic Basis")
+        lines.append("")
+        lines.append("| Reason | Count |")
+        lines.append("|--------|-------|")
+        for reason, cnt in sorted(basis.items()):
+            lines.append(f"| {reason or '(empty)'} | {cnt} |")
+        lines.append("")
+
+    lines.extend(
+        [
+            "## Flag Distributions",
+            "",
+        ]
+    )
 
     for flag_name, counts in flags.items():
         lines.append(f"### {flag_name}")

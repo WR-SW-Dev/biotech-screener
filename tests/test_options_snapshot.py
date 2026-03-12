@@ -98,7 +98,7 @@ class TestWriteOptionsSnapshot:
         snap.mkdir()
         write_options_snapshot(snap, [_make_row()], "2026-03-11")
         summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
-        assert summary["schema"] == "options_diagnostics_summary.v1"
+        assert summary["schema"] == "options_diagnostics_summary.v2"
         assert summary["as_of_date"] == "2026-03-11"
 
     def test_summary_coverage(self, tmp_path):
@@ -341,3 +341,69 @@ class TestReportGenerator:
         )
         md = format_report_md(report)
         assert "insufficient" in md.lower() or "Need" in md
+
+
+# ---------------------------------------------------------------------------
+# Summary v2 fields (credentials, diagnostic_basis, ab_ready)
+# ---------------------------------------------------------------------------
+
+
+class TestSummaryV2Fields:
+    def test_has_credentials_true_when_data_present(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        rows = [_make_row(opt_has_data="1")]
+        write_options_snapshot(snap, rows, "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        assert summary["coverage"]["has_credentials"] is True
+
+    def test_has_credentials_false_when_no_credentials(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        row = _make_row(opt_has_data="0")
+        row["opt_diagnostic_basis"] = "no_credentials"
+        write_options_snapshot(snap, [row], "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        assert summary["coverage"]["has_credentials"] is False
+
+    def test_diagnostic_basis_counts(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        r1 = _make_row(opt_has_data="0")
+        r1["opt_diagnostic_basis"] = "no_credentials"
+        r2 = _make_row(ticker="B", opt_has_data="0")
+        r2["opt_diagnostic_basis"] = "no_credentials"
+        r3 = _make_row(ticker="C", opt_has_data="1")
+        r3["opt_diagnostic_basis"] = "tastytrade_metrics"
+        write_options_snapshot(snap, [r1, r2, r3], "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        assert summary["diagnostic_basis"]["no_credentials"] == 2
+        assert summary["diagnostic_basis"]["tastytrade_metrics"] == 1
+
+    def test_ab_ready_true_with_composite(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        row = _make_row()
+        row["options_quality_composite"] = "0.65"
+        write_options_snapshot(snap, [row], "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        assert summary["coverage"]["ab_ready"] is True
+
+    def test_ab_ready_false_without_composite(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        row = _make_row()
+        row["options_quality_composite"] = ""
+        write_options_snapshot(snap, [row], "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        assert summary["coverage"]["ab_ready"] is False
+
+    def test_md_shows_credential_status(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        row = _make_row(opt_has_data="0")
+        row["opt_diagnostic_basis"] = "no_credentials"
+        write_options_snapshot(snap, [row], "2026-03-11")
+        md = (snap / "options_diagnostics_summary.md").read_text()
+        assert "MISSING" in md
+        assert "TT_SECRET" in md

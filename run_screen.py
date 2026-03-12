@@ -4229,10 +4229,22 @@ def save_validation_snapshot(
         _opt_tickers = select_catalyst_tickers(csv_rows)
         if _opt_tickers:
             _opt_lookup = fetch_options_diagnostics(_opt_tickers, as_of_date)
+            _opt_with_data = sum(1 for v in _opt_lookup.values() if str(v.get("opt_has_data", "0")) == "1")
             for row in csv_rows:
                 tk = (row.get("ticker") or "").upper()
                 row.update(_opt_lookup.get(tk, empty_diagnostics()))
-            logger.info("Options diagnostics: %d/%d tickers enriched", len(_opt_lookup), len(_opt_tickers))
+            logger.info(
+                "Options diagnostics: %d/%d tickers enriched, %d with data",
+                len(_opt_lookup),
+                len(_opt_tickers),
+                _opt_with_data,
+            )
+            if _opt_with_data == 0:
+                _sample_basis = next((v.get("opt_diagnostic_basis", "") for v in _opt_lookup.values()), "")
+                if _sample_basis == "no_credentials":
+                    logger.warning("Options diagnostics: TT_SECRET / TT_REFRESH not set — all opt_* columns empty")
+                else:
+                    logger.warning("Options diagnostics: 0 tickers with data (basis: %s)", _sample_basis)
         else:
             for row in csv_rows:
                 row.update(empty_diagnostics())
@@ -5028,6 +5040,30 @@ def save_validation_snapshot(
         "table_loaded": bool(_reliability_table),
         "table_buckets": len(_reliability_table),
         "action_counts": _rel_action_counts,
+    }
+
+    # Options diagnostics coverage telemetry
+    _n_opt_candidates = sum(1 for r in csv_rows if r.get("opt_has_data") is not None)
+    _n_opt_has_data = sum(1 for r in csv_rows if str(r.get("opt_has_data", "0")) == "1")
+    _n_opt_usable = sum(1 for r in csv_rows if r.get("opt_use_for_judgment") == "YES")
+    _n_opt_composite = sum(1 for r in csv_rows if r.get("options_quality_composite", "") != "")
+    _opt_basis_counts: Dict[str, int] = {}
+    for r in csv_rows:
+        basis = r.get("opt_diagnostic_basis", "")
+        if basis:
+            _opt_basis_counts[basis] = _opt_basis_counts.get(basis, 0) + 1
+    _opt_has_credentials = (
+        not any(r.get("opt_diagnostic_basis") == "no_credentials" for r in csv_rows[:1]) if csv_rows else False
+    )
+    metadata["options_diagnostics"] = {
+        "has_credentials": _opt_has_credentials,
+        "n_candidates": _n_opt_candidates,
+        "n_with_data": _n_opt_has_data,
+        "n_use_for_judgment": _n_opt_usable,
+        "n_options_quality_composite": _n_opt_composite,
+        "coverage_pct": round(_n_opt_has_data / max(_n_opt_candidates, 1) * 100, 1),
+        "diagnostic_basis_counts": dict(sorted(_opt_basis_counts.items())),
+        "ab_ready": _n_opt_composite > 0,
     }
 
     meta_path = snap_path / "metadata.json"
