@@ -1,0 +1,18 @@
+{
+  "fail_eligibility_change_count": 40,
+  "fail_rank_spearman_rho": 0.6,
+  "fail_top20_overlap_pct": 30.0,
+  "fail_top60_overlap_pct": 40.0,
+  "warn_catalyst_good_to_bad": 10,
+  "warn_catalyst_mode_change_count": 25,
+  "warn_composite_score_rmse": 8.0,
+  "warn_eligibility_change_count": 15,
+  "warn_mean_abs_rank_delta_top60": 20.0,
+  "warn_rank_spearman_rho": 0.75,
+  "warn_score_rank_pct_mae": 0.2,
+  "warn_tier_migration_count": 20,
+  "warn_top100_overlap_pct": 70.0,
+  "warn_top20_overlap_pct": 50.0,
+  "warn_top60_overlap_pct": 55.0,
+  "warn_weight_l1_top20": 50.0
+}

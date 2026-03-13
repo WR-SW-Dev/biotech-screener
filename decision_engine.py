@@ -1445,11 +1445,19 @@ def _build_sort_contributions(
             contribs.append(SortContribution("clinical_quality_91_180", cqc, cq_w, delta_cq))
 
     # 10. Binary 91-180 options quality tilt (options_quality or clinical_plus_options mode)
-    # Only applies to REGULATORY family within less_binary bucket.
-    # options_quality_composite [0, 1] from tastytrade diagnostics.
-    if bucket == "less_binary" and b91_mode in ("options_quality", "clinical_plus_options"):
-        family = str(decision_fields.get("catalyst_family", ""))
-        if family == "REGULATORY":
+    # Uses secondary regulatory path: a ticker qualifies if it has an upcoming
+    # regulatory event within the less_binary window (91-180d), regardless of
+    # what the primary catalyst is. This unblocks PDUFA names whose primary
+    # slot is occupied by a closer clinical event.
+    if b91_mode in ("options_quality", "clinical_plus_options"):
+        _has_reg = str(decision_fields.get("has_regulatory_upcoming_180d", "")) == "1"
+        _reg_days = _safe_float(decision_fields.get("regulatory_days"), default=None)
+        _in_less_binary = (
+            _reg_days is not None
+            and _reg_days > BUCKET_BUILD_WINDOW_MAX  # > 90
+            and _reg_days <= BUCKET_LESS_BINARY_MAX
+        )  # <= 180
+        if _has_reg and _in_less_binary:
             oqc = _safe_float(decision_fields.get("options_quality_composite"), default=0.0)
             oq_w = ruleset.binary_91_180_options_quality_weight
             delta_oq = oq_w * oqc
@@ -1474,7 +1482,9 @@ _EXTERNAL_SORT_FIELDS: frozenset = frozenset(
         "catalyst_bucket",  # used by binary_91_180_sort_mode bucket gate
         "clinical_quality_composite",  # used by clinical_quality sort mode
         "options_quality_composite",  # used by options_quality sort mode
-        "catalyst_family",  # used by clinical_quality/options_quality sort mode family gate
+        "catalyst_family",  # used by clinical_quality sort mode family gate
+        "has_regulatory_upcoming_180d",  # used by options_quality sort mode secondary reg path
+        "regulatory_days",  # used by options_quality sort mode secondary reg path
     }
 )
 

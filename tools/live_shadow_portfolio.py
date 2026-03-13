@@ -75,6 +75,15 @@ BUCKET_DISPLAY = {
 
 BUCKET_NAMES = ["binary_0_30", "binary_31_90", "binary_91_180", "less_binary"]
 
+# Book-split: near-term binary (0-90d) vs core (91-180d + less_binary)
+SLEEVE_MAP: Dict[str, str] = {
+    "binary_0_30": "binary",
+    "binary_31_90": "binary",
+    "binary_91_180": "core",
+    "less_binary": "core",
+}
+SLEEVE_NAMES: List[str] = ["binary", "core"]
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -1754,6 +1763,67 @@ def append_performance(
         if write_header:
             writer.writeheader()
         writer.writerow(row)
+
+
+# ---------------------------------------------------------------------------
+# Book-split sleeve comparison
+# ---------------------------------------------------------------------------
+
+# Column name for each bucket's PnL in the perf CSV
+_SLEEVE_PNL_COL = {
+    "binary_0_30": "sleeve_binary_0_30_pnl",
+    "binary_31_90": "sleeve_binary_31_90_pnl",
+    "binary_91_180": "sleeve_binary_91_180_pnl",
+    "less_binary": "sleeve_less_binary_pnl",
+}
+
+
+def compare_sleeve_performance(
+    perf_csv: Path,
+    trailing_weeks: int = 12,
+) -> Dict[str, Any]:
+    """Compare binary-book vs core-book sleeve performance.
+
+    Reads the perf CSV, aggregates per-bucket PnL into book-level totals
+    over the trailing N weeks, and returns a comparison dict.
+
+    Returns {"verdict": "cold_start"} if no data is available.
+    """
+    perf_csv = Path(perf_csv)
+    if not perf_csv.is_file():
+        return {"verdict": "cold_start"}
+
+    rows: List[Dict[str, str]] = []
+    with open(perf_csv, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            rows.append(row)
+
+    if not rows:
+        return {"verdict": "cold_start"}
+
+    # Take the last trailing_weeks rows
+    used = rows[-trailing_weeks:]
+    weeks_used = len(used)
+
+    # Aggregate PnL by book
+    book_pnl: Dict[str, float] = {"binary": 0.0, "core": 0.0}
+    total_pnl = 0.0
+    for row in used:
+        row_total = _safe_float(row.get("total_pnl"))
+        total_pnl += row_total
+        for bucket, col in _SLEEVE_PNL_COL.items():
+            book = SLEEVE_MAP[bucket]
+            book_pnl[book] += _safe_float(row.get(col))
+
+    return {
+        "schema": "sleeve_comparison.v1",
+        "binary_book": {"pnl": round(book_pnl["binary"], 2)},
+        "core_book": {"pnl": round(book_pnl["core"], 2)},
+        "combined_book_pnl": round(book_pnl["binary"] + book_pnl["core"], 2),
+        "portfolio_total_pnl": round(total_pnl, 2),
+        "weeks_used": weeks_used,
+        "verdict": "tracking",
+    }
 
 
 # ---------------------------------------------------------------------------
