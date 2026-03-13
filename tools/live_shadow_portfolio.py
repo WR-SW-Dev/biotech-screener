@@ -916,6 +916,39 @@ def build_positions(
 # ---------------------------------------------------------------------------
 
 
+def _find_nearest_trading_date(
+    price_path: Path,
+    target_date: str,
+    max_lookback: int = 3,
+) -> Optional[str]:
+    """Find the most recent date <= target_date that has XBI data.
+
+    Scans price_history.csv for XBI rows and returns the nearest date
+    at or before target_date, within max_lookback calendar days.
+    Returns None if no suitable date is found.
+    """
+    if not price_path.is_file():
+        return None
+    from datetime import datetime, timedelta
+
+    target_dt = datetime.strptime(target_date, "%Y-%m-%d")
+    min_dt = target_dt - timedelta(days=max_lookback)
+    min_date = min_dt.strftime("%Y-%m-%d")
+
+    best: Optional[str] = None
+    with open(price_path, encoding="utf-8") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("ticker") != "XBI":
+                continue
+            d = row.get("date", "")
+            if min_date <= d <= target_date:
+                close = _safe_float(row.get("close", ""))
+                if close > 0 and (best is None or d > best):
+                    best = d
+    return best
+
+
 def load_price_map(
     price_path: Path,
     date: str,
@@ -1302,8 +1335,23 @@ def compute_performance(
     for the entry cost basis.
     """
     _assert_not_production_default("price_path", price_path, PRICE_HISTORY_PATH)
+
+    # Nearest-trading-day fallback: if exact date has no prices (weekend/
+    # holiday), find the most recent trading day within 3 calendar days.
+    effective_prior = prior_date
+    effective_current = current_date
     prior_prices = load_price_map(price_path, prior_date)
+    if not prior_prices:
+        fallback = _find_nearest_trading_date(price_path, prior_date)
+        if fallback and fallback != prior_date:
+            prior_prices = load_price_map(price_path, fallback)
+            effective_prior = fallback
     current_prices = load_price_map(price_path, current_date)
+    if not current_prices:
+        fallback = _find_nearest_trading_date(price_path, current_date)
+        if fallback and fallback != current_date:
+            current_prices = load_price_map(price_path, fallback)
+            effective_current = fallback
 
     # Override entry cost basis with fill prices when available
     fill_prices = _load_fill_prices(prior_date, fills_root=fills_root, trades_root=trades_root)
@@ -1324,8 +1372,8 @@ def compute_performance(
         if "effective_family" not in fd or not fd["effective_family"]:
             fd["effective_family"] = pm.get("effective_family", "OTHER")
 
-    xbi_prior = load_xbi_price(price_path, prior_date)
-    xbi_current = load_xbi_price(price_path, current_date)
+    xbi_prior = load_xbi_price(price_path, effective_prior)
+    xbi_current = load_xbi_price(price_path, effective_current)
 
     # XBI return (compute early — needed for contributors)
     xbi_return = None
@@ -1640,22 +1688,52 @@ PERF_COLUMNS = [
 ]
 
 
+def _perf_row_exists(
+    perf_csv: Path,
+    date: str,
+    prior_date: str,
+    ruleset_id: str,
+) -> bool:
+    """Check if a performance row with matching (date, prior_date, ruleset_id)
+    already exists. Prevents duplicate rows from re-runs."""
+    if not perf_csv.is_file():
+        return False
+    with open(perf_csv, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            if row.get("date") == date and row.get("prior_date") == prior_date and row.get("ruleset_id") == ruleset_id:
+                return True
+    return False
+
+
 def append_performance(
     as_of_date: str,
     perf: Dict[str, Any],
     ruleset_id: str = "",
     perf_csv: Path = PERFORMANCE_CSV,
 ) -> None:
-    """Append a row to the append-only performance CSV."""
+    """Append a row to the append-only performance CSV.
+
+    Skips the append if a row with the same (date, prior_date, ruleset_id)
+    already exists (dedup guard against re-runs).
+    """
     _assert_not_production_default("perf_csv", perf_csv, PERFORMANCE_CSV)
     perf_csv.parent.mkdir(parents=True, exist_ok=True)
+
+    prior_date = perf.get("prior_date", "")
+    if _perf_row_exists(perf_csv, as_of_date, prior_date, ruleset_id):
+        print(
+            f"  [WARN] Dedup: performance row already exists for "
+            f"date={as_of_date}, prior={prior_date}, ruleset={ruleset_id}. Skipping."
+        )
+        return
+
     write_header = not perf_csv.is_file()
 
     sleeve = perf.get("sleeve_attribution", {})
     row = {
         "schema_version": PERF_SCHEMA_VERSION,
         "date": as_of_date,
-        "prior_date": perf.get("prior_date", ""),
+        "prior_date": prior_date,
         "total_pnl": perf.get("total_pnl", ""),
         "pnl_pct": perf.get("pnl_pct", ""),
         "xbi_return_pct": perf.get("xbi_return_pct", ""),

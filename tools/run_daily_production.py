@@ -279,6 +279,9 @@ def refresh_prices(
             tickers = [e.get("ticker", e) if isinstance(e, dict) else str(e) for e in universe]
         elif isinstance(universe, dict) and "tickers" in universe:
             tickers = universe["tickers"]
+        # Filter synthetic tickers (e.g. _XBI_BENCHMARK_) — not real symbols
+        if tickers:
+            tickers = [t for t in tickers if t and not t.startswith("_")]
         # Always include XBI benchmark
         if tickers and "XBI" not in tickers:
             tickers.append("XBI")
@@ -440,6 +443,33 @@ def run_audit(
 # ---------------------------------------------------------------------------
 # Step 4: Hard gates
 # ---------------------------------------------------------------------------
+
+
+def check_trading_day(as_of_date: str) -> GateResult:
+    """FAIL if as_of_date falls on a weekend.
+
+    Prevents the pipeline from producing degenerate snapshots and
+    performance rows on non-trading days (blank prices → blank excess →
+    poisoned alpha-health window).
+    """
+    dt = datetime.strptime(as_of_date, "%Y-%m-%d")
+    weekday = dt.weekday()  # 0=Mon .. 6=Sun
+    if weekday >= 5:
+        day_name = "Saturday" if weekday == 5 else "Sunday"
+        return GateResult(
+            name="trading_day",
+            status="FAIL",
+            detail=f"{as_of_date} is {day_name} — not a trading day",
+            value={"weekday": weekday, "day_name": day_name},
+            threshold=None,
+        )
+    return GateResult(
+        name="trading_day",
+        status="PASS",
+        detail=f"{as_of_date} is a weekday (trading day)",
+        value={"weekday": weekday},
+        threshold=None,
+    )
 
 
 def check_xbi_staleness(
@@ -3274,6 +3304,25 @@ def run_daily(
         return manifest
     # Stamp governance mode for manifest
     _governance_mode = gov_gate.value or "STRICT"
+
+    # --- Gate: Trading day (reject weekends before expensive work) ---
+    td_gate = check_trading_day(as_of_date)
+    gate_results.append(td_gate)
+    print(f"  Trading day: {td_gate.status} — {td_gate.detail}")
+    if td_gate.status == "FAIL":
+        print("\n  FATAL: Not a trading day. Aborting to prevent degenerate data.")
+        manifest = build_run_manifest(
+            as_of_date,
+            gate_results,
+            {},
+            subprocess.CompletedProcess(args=[], returncode=-1),
+            None,
+            config,
+            requested_as_of_date=requested_as_of_date,
+            git_pre_run=git_pre_run,
+            data_dir=data_dir,
+        )
+        return manifest
 
     # --- Step 1: Price refresh ---
     price_stats: Dict[str, Any] = {}

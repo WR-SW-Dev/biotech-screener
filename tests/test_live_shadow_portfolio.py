@@ -445,6 +445,55 @@ class TestPersistence:
         assert reader[1]["date"] == "2026-03-09"
         assert set(reader[0].keys()) == set(PERF_COLUMNS)
 
+    def test_append_performance_dedup(self, tmp_path):
+        """Re-appending same (date, prior_date, ruleset_id) is a no-op."""
+        perf_csv = tmp_path / "performance.csv"
+        perf = {
+            "prior_date": "2026-03-06",
+            "total_pnl": 500.0,
+            "pnl_pct": 1.5,
+            "xbi_return_pct": 0.5,
+            "excess_vs_xbi_pct": 1.0,
+            "n_prior": 20,
+            "turnover": 0.1,
+            "gap_risk_high_count": 0,
+            "n_missing_price": 0,
+            "sleeve_attribution": {
+                "binary_0_30": {"pnl": 100},
+                "binary_31_90": {"pnl": 150},
+                "binary_91_180": {"pnl": 200},
+                "less_binary": {"pnl": 50},
+            },
+        }
+        append_performance("2026-03-08", perf, "test_rs", perf_csv)
+        append_performance("2026-03-08", perf, "test_rs", perf_csv)  # duplicate
+
+        with open(perf_csv) as f:
+            reader = list(csv.DictReader(f))
+        assert len(reader) == 1, f"Expected 1 row, got {len(reader)} (dedup failed)"
+
+    def test_append_performance_different_ruleset_not_deduped(self, tmp_path):
+        """Different ruleset_id on same date is NOT a duplicate."""
+        perf_csv = tmp_path / "performance.csv"
+        perf = {
+            "prior_date": "2026-03-06",
+            "total_pnl": 500.0,
+            "pnl_pct": 1.5,
+            "xbi_return_pct": 0.5,
+            "excess_vs_xbi_pct": 1.0,
+            "n_prior": 20,
+            "turnover": 0.1,
+            "gap_risk_high_count": 0,
+            "n_missing_price": 0,
+            "sleeve_attribution": {},
+        }
+        append_performance("2026-03-08", perf, "rs_a", perf_csv)
+        append_performance("2026-03-08", perf, "rs_b", perf_csv)
+
+        with open(perf_csv) as f:
+            reader = list(csv.DictReader(f))
+        assert len(reader) == 2
+
 
 # ---------------------------------------------------------------------------
 # E) Weekly summary

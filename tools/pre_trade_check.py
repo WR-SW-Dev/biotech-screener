@@ -384,6 +384,27 @@ def check_turnover(
 # ---------------------------------------------------------------------------
 
 
+def _is_valid_perf_row(row: Dict[str, str]) -> bool:
+    """Return True if a performance row has usable excess data.
+
+    Rows where ``n_missing_price == n_held`` (all prices missing, typically
+    from weekend/holiday runs) or ``excess_vs_xbi_pct`` is blank/NaN are
+    structurally invalid and should be excluded from the alpha-health window.
+    """
+    excess = (row.get("excess_vs_xbi_pct") or "").strip()
+    if not excess or excess.lower() in ("nan", "none"):
+        return False
+    n_missing = row.get("n_missing_price", "")
+    n_held = row.get("n_held", "")
+    if n_missing and n_held:
+        try:
+            if int(n_missing) > 0 and int(n_missing) >= int(n_held):
+                return False
+        except (ValueError, TypeError):
+            pass
+    return True
+
+
 def check_alpha_health(
     perf_rows: List[Dict[str, str]],
     policy: Dict[str, Any],
@@ -393,6 +414,9 @@ def check_alpha_health(
 
     Returns PASS (ADD_OK) on cold start, insufficient history, or when
     at least one of the two metrics is non-negative.
+
+    Rows with blank/NaN excess or where all prices are missing (weekend/
+    holiday runs) are filtered out before computing the lookback window.
     """
     ah = policy.get("alpha_health", {})
     if not ah.get("enabled", True):
@@ -403,15 +427,20 @@ def check_alpha_health(
     portfolio_thresh = ah.get("no_add_if_portfolio_hedged_excess_lt", 0.0)
     b91_thresh = ah.get("no_add_if_b91_hedged_excess_lt", 0.0)
 
-    if len(perf_rows) < min_weeks:
+    # Filter out degenerate rows (blank excess, all prices missing)
+    valid_rows = [r for r in perf_rows if _is_valid_perf_row(r)]
+    n_filtered = len(perf_rows) - len(valid_rows)
+
+    if len(valid_rows) < min_weeks:
         return CheckResult(
             "alpha_health",
             "PASS",
-            f"insufficient history (cold start): {len(perf_rows)} weeks < min_weeks={min_weeks}",
-            value={"weeks_available": len(perf_rows), "decision": "ADD_OK"},
+            f"insufficient history (cold start): {len(valid_rows)} valid weeks < min_weeks={min_weeks}"
+            + (f" ({n_filtered} degenerate rows filtered)" if n_filtered else ""),
+            value={"weeks_available": len(valid_rows), "rows_filtered": n_filtered, "decision": "ADD_OK"},
         )
 
-    tail = perf_rows[-lookback:]
+    tail = valid_rows[-lookback:]
     weeks_used = len(tail)
 
     # Portfolio hedged excess (sum over trailing window)
@@ -434,12 +463,15 @@ def check_alpha_health(
         f"weeks={weeks_used}",
         f"decision={decision}",
     ]
+    if n_filtered:
+        detail_parts.append(f"rows_filtered={n_filtered}")
     detail = "; ".join(detail_parts)
 
     value = {
         "portfolio_hedged_excess_4w": round(portfolio_excess, 4),
         "bucket_hedged_excess_4w": {b: round(v, 2) for b, v in bucket_excess.items()},
         "weeks_used": weeks_used,
+        "rows_filtered": n_filtered,
         "decision": decision,
     }
 

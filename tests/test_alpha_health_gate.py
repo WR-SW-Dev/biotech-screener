@@ -441,3 +441,85 @@ class TestBucketDetail:
         assert "less_binary" in bh
         assert bh["binary_91_180"] == -400.0
         assert bh["binary_31_90"] == 200.0
+
+
+# ---------------------------------------------------------------------------
+# 9. Blank / degenerate row filtering
+# ---------------------------------------------------------------------------
+
+
+def _make_blank_row(date: str) -> dict:
+    """Row with blank excess — simulates weekend/holiday run."""
+    return {
+        "schema_version": "live_shadow_perf.v1",
+        "date": date,
+        "prior_date": "",
+        "total_pnl": "0.0",
+        "pnl_pct": "0.0",
+        "xbi_return_pct": "",
+        "excess_vs_xbi_pct": "",
+        "n_held": "60",
+        "turnover": "0.1",
+        "gap_risk_high_count": "0",
+        "n_missing_price": "60",
+        "sleeve_binary_0_30_pnl": "0.0",
+        "sleeve_binary_31_90_pnl": "0.0",
+        "sleeve_binary_91_180_pnl": "0.0",
+        "sleeve_less_binary_pnl": "0.0",
+        "ruleset_id": "test",
+    }
+
+
+class TestBlankRowFiltering:
+    """Degenerate rows (blank excess, all prices missing) must be
+    filtered before computing the alpha-health lookback window."""
+
+    def test_blank_rows_filtered_from_window(self):
+        """3 valid + 3 blank = 3 valid weeks used (not 6 raw rows)."""
+        rows = [
+            _make_perf_row("2026-02-14", excess_vs_xbi_pct="0.5", sleeve_b91_pnl="100"),
+            _make_blank_row("2026-02-15"),
+            _make_perf_row("2026-02-21", excess_vs_xbi_pct="0.3", sleeve_b91_pnl="80"),
+            _make_blank_row("2026-02-22"),
+            _make_perf_row("2026-02-28", excess_vs_xbi_pct="0.2", sleeve_b91_pnl="50"),
+            _make_blank_row("2026-03-01"),
+        ]
+        result = check_alpha_health(rows, _DEFAULT_POLICY)
+        assert result.status == "PASS"
+        assert result.value["decision"] == "ADD_OK"
+        assert result.value["weeks_used"] == 3
+        assert result.value["rows_filtered"] == 3
+
+    def test_all_blank_triggers_cold_start(self):
+        """If ALL rows are blank, treated as insufficient history."""
+        rows = [_make_blank_row(f"2026-03-{i:02d}") for i in range(1, 6)]
+        result = check_alpha_health(rows, _DEFAULT_POLICY)
+        assert result.status == "PASS"
+        assert result.value["decision"] == "ADD_OK"
+        assert "degenerate" in result.detail
+
+    def test_blank_rows_dont_dilute_real_excess(self):
+        """Blank rows should not zero-out the excess sum. Without filtering,
+        blank rows contribute 0.0 and dilute real positive values."""
+        valid_rows = [
+            _make_perf_row("2026-02-14", excess_vs_xbi_pct="-0.5", sleeve_b91_pnl="-100"),
+            _make_perf_row("2026-02-21", excess_vs_xbi_pct="-0.3", sleeve_b91_pnl="-80"),
+            _make_perf_row("2026-02-28", excess_vs_xbi_pct="-0.2", sleeve_b91_pnl="-50"),
+        ]
+        # Without blank rows: NO_ADD_RISK
+        result_clean = check_alpha_health(valid_rows, _DEFAULT_POLICY)
+        assert result_clean.value["decision"] == "NO_ADD_RISK"
+
+        # Add blank rows — should NOT change the decision
+        rows_with_blanks = valid_rows + [_make_blank_row("2026-03-01")]
+        result_mixed = check_alpha_health(rows_with_blanks, _DEFAULT_POLICY)
+        assert result_mixed.value["decision"] == "NO_ADD_RISK"
+
+    def test_n_missing_equals_n_held_filtered(self):
+        """Row where n_missing_price == n_held (all prices missing) is filtered."""
+        row = _make_perf_row("2026-03-01", excess_vs_xbi_pct="0.5", sleeve_b91_pnl="100")
+        row["n_missing_price"] = "60"
+        row["n_held"] = "60"
+        rows = [row]
+        result = check_alpha_health(rows, _DEFAULT_POLICY)
+        assert result.value["rows_filtered"] == 1

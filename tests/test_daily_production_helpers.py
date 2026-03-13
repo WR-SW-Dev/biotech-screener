@@ -3,6 +3,7 @@
 Covers: _parse_cache_date, _find_prior_snapshot, _compute_drift_metrics,
 check_cache_health, append_gate_verdict, DriftThresholds, _write_drift_report_md.
 """
+
 from __future__ import annotations
 
 import csv
@@ -11,24 +12,22 @@ import sys
 from datetime import date
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
 from run_daily_production import (
     DriftThresholds,
-    GateResult,
     _compute_drift_metrics,
     _find_prior_snapshot,
     _parse_cache_date,
     _write_drift_report_md,
     append_gate_verdict,
     check_cache_health,
+    check_trading_day,
 )
-
 
 # =============================================================================
 # Helpers
 # =============================================================================
+
 
 def _write_rankings_csv(path: Path, rows: list[dict], *, columns: list[str] | None = None) -> None:
     """Write a minimal rankings.csv with given rows."""
@@ -44,6 +43,7 @@ def _write_rankings_csv(path: Path, rows: list[dict], *, columns: list[str] | No
 # =============================================================================
 # _parse_cache_date
 # =============================================================================
+
 
 class TestParseCacheDate:
     def test_valid_filename(self):
@@ -66,6 +66,7 @@ class TestParseCacheDate:
 # =============================================================================
 # _find_prior_snapshot
 # =============================================================================
+
 
 class TestFindPriorSnapshot:
     def test_finds_most_recent_prior(self, tmp_path):
@@ -128,17 +129,15 @@ class TestFindPriorSnapshot:
 # _compute_drift_metrics
 # =============================================================================
 
+
 class TestComputeDriftMetrics:
-    def _make_csv(self, tmp_path, name, rows):
+    def _make_csv(self, tmp_path, name, rows, columns=None):
         p = tmp_path / name
-        _write_rankings_csv(p, rows)
+        _write_rankings_csv(p, rows, columns=columns)
         return p
 
     def test_identical_rankings(self, tmp_path):
-        rows = [
-            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(1, 21)
-        ]
+        rows = [{"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(1, 21)]
         cur = self._make_csv(tmp_path, "current.csv", rows)
         pri = self._make_csv(tmp_path, "prior.csv", rows)
         m = _compute_drift_metrics(cur, pri)
@@ -151,12 +150,10 @@ class TestComputeDriftMetrics:
 
     def test_completely_different_universes(self, tmp_path):
         cur_rows = [
-            {"ticker": f"A{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(1, 21)
+            {"ticker": f"A{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(1, 21)
         ]
         pri_rows = [
-            {"ticker": f"B{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(1, 21)
+            {"ticker": f"B{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(1, 21)
         ]
         cur = self._make_csv(tmp_path, "current.csv", cur_rows)
         pri = self._make_csv(tmp_path, "prior.csv", pri_rows)
@@ -197,12 +194,10 @@ class TestComputeDriftMetrics:
     def test_top20_entrants_exits(self, tmp_path):
         # 20 tickers in current, swap one
         cur_rows = [
-            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(1, 21)
+            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(1, 21)
         ]
         pri_rows = [
-            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(2, 22)
+            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(2, 22)
         ]
         cur = self._make_csv(tmp_path, "current.csv", cur_rows)
         pri = self._make_csv(tmp_path, "prior.csv", pri_rows)
@@ -214,8 +209,7 @@ class TestComputeDriftMetrics:
         """Perfectly reversed rankings should give rho ~ -1."""
         n = 20
         cur_rows = [
-            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"}
-            for i in range(1, n + 1)
+            {"ticker": f"T{i}", "actionable_rank": str(i), "tier_dev": "A", "eligible": "1"} for i in range(1, n + 1)
         ]
         pri_rows = [
             {"ticker": f"T{i}", "actionable_rank": str(n + 1 - i), "tier_dev": "A", "eligible": "1"}
@@ -231,20 +225,20 @@ class TestComputeDriftMetrics:
         """When actionable_rank is absent, should use composite_rank."""
         cur_rows = [{"ticker": "ACME", "composite_rank": "1", "tier_dev": "A", "eligible": "1"}]
         pri_rows = [{"ticker": "ACME", "composite_rank": "1", "tier_dev": "A", "eligible": "1"}]
-        cur = self._make_csv(tmp_path, "current.csv", cur_rows,)
+        cur = self._make_csv(
+            tmp_path,
+            "current.csv",
+            cur_rows,
+        )
         pri = self._make_csv(tmp_path, "prior.csv", pri_rows)
         m = _compute_drift_metrics(cur, pri)
         assert m["rank_column_current"] == "composite_rank"
-
-    def _make_csv(self, tmp_path, name, rows, columns=None):
-        p = tmp_path / name
-        _write_rankings_csv(p, rows, columns=columns)
-        return p
 
 
 # =============================================================================
 # check_cache_health
 # =============================================================================
+
 
 class TestCheckCacheHealth:
     def test_missing_file_passes(self, tmp_path):
@@ -300,6 +294,7 @@ class TestCheckCacheHealth:
 # =============================================================================
 # append_gate_verdict
 # =============================================================================
+
 
 class TestAppendGateVerdict:
     def test_appends_jsonl_row(self, tmp_path, monkeypatch):
@@ -361,6 +356,7 @@ class TestAppendGateVerdict:
 # DriftThresholds
 # =============================================================================
 
+
 class TestDriftThresholds:
     def test_thresholds_id_deterministic(self):
         t1 = DriftThresholds()
@@ -399,6 +395,7 @@ class TestDriftThresholds:
 # =============================================================================
 # _write_drift_report_md
 # =============================================================================
+
 
 class TestWriteDriftReportMd:
     def test_writes_markdown_file(self, tmp_path):
@@ -450,3 +447,32 @@ class TestWriteDriftReportMd:
         _write_drift_report_md(report, out)
         content = out.read_text()
         assert "N/A" in content
+
+
+# =============================================================================
+# Trading-day guard
+# =============================================================================
+
+
+class TestCheckTradingDay:
+    def test_weekday_passes(self):
+        # 2026-03-13 is a Friday
+        result = check_trading_day("2026-03-13")
+        assert result.status == "PASS"
+
+    def test_saturday_fails(self):
+        # 2026-03-14 is a Saturday
+        result = check_trading_day("2026-03-14")
+        assert result.status == "FAIL"
+        assert "Saturday" in result.detail
+
+    def test_sunday_fails(self):
+        # 2026-03-15 is a Sunday
+        result = check_trading_day("2026-03-15")
+        assert result.status == "FAIL"
+        assert "Sunday" in result.detail
+
+    def test_monday_passes(self):
+        # 2026-03-16 is a Monday
+        result = check_trading_day("2026-03-16")
+        assert result.status == "PASS"
