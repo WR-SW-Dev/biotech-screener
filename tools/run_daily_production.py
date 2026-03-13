@@ -82,6 +82,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "ruleset_governance",
         "regulatory_calendar",
         "canary_regression",
+        "options_coverage",
     }
 )
 
@@ -2591,6 +2592,92 @@ def check_regulatory_calendar(
     return GateResult(name=name, status="PASS", detail=detail)
 
 
+def check_options_coverage(
+    staging_date_dir: Path,
+) -> GateResult:
+    """WARN-only gate: check options_quality_composite population in snapshot.
+
+    Reports TT diagnostics coverage so silent degradation (expired creds,
+    API outage) is caught immediately instead of discovered weeks later
+    when the clinical_plus_options A/B window is unusable.
+
+    Never FAIL — options data is not required for the active production
+    ruleset.  WARN when coverage drops to zero or credentials are missing.
+    """
+    name = "options_coverage"
+    rankings_path = staging_date_dir / "rankings.csv"
+    if not rankings_path.exists():
+        return GateResult(name=name, status="PASS", detail="no rankings.csv (pre-screen)")
+
+    try:
+        with open(rankings_path, encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            rows = list(reader)
+    except Exception as exc:
+        return GateResult(name=name, status="WARN", detail=f"could not read rankings: {exc}")
+
+    n_total = len(rows)
+    if n_total == 0:
+        return GateResult(name=name, status="PASS", detail="empty rankings")
+
+    n_has_data = sum(1 for r in rows if str(r.get("opt_has_data", "0")).strip() == "1")
+    n_oqc = sum(1 for r in rows if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0"))
+    n_reg_lb_oqc = sum(
+        1
+        for r in rows
+        if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0")
+        and str(r.get("catalyst_family", "")).strip() == "REGULATORY"
+        and str(r.get("catalyst_bucket", "")).strip() == "less_binary"
+    )
+    no_creds = any(r.get("opt_diagnostic_basis") == "no_credentials" for r in rows[:1])
+
+    value = {
+        "n_total": n_total,
+        "n_has_data": n_has_data,
+        "n_oqc_nonzero": n_oqc,
+        "n_regulatory_less_binary_oqc": n_reg_lb_oqc,
+        "ab_ready": n_oqc > 0,
+        "has_credentials": not no_creds,
+    }
+
+    detail_parts = [
+        f"opt_has_data={n_has_data}/{n_total}",
+        f"oqc_nonzero={n_oqc}",
+        f"reg_lb_oqc={n_reg_lb_oqc}",
+    ]
+
+    if no_creds:
+        return GateResult(
+            name=name,
+            status="WARN",
+            detail="TT credentials missing — options_quality_composite unpopulated; " + ", ".join(detail_parts),
+            value=value,
+        )
+
+    if n_oqc == 0 and n_has_data == 0:
+        return GateResult(
+            name=name,
+            status="WARN",
+            detail="zero options data (API outage or no liquid chains?); " + ", ".join(detail_parts),
+            value=value,
+        )
+
+    if n_oqc == 0 and n_has_data > 0:
+        return GateResult(
+            name=name,
+            status="WARN",
+            detail="options data present but zero OQC (all filtered by use_for_judgment?); " + ", ".join(detail_parts),
+            value=value,
+        )
+
+    return GateResult(
+        name=name,
+        status="PASS",
+        detail=", ".join(detail_parts),
+        value=value,
+    )
+
+
 def check_audit_result(
     audit_proc: subprocess.CompletedProcess,
     config: GateConfig,
@@ -3797,6 +3884,11 @@ def run_daily(
     reg_cal_gate = check_regulatory_calendar(staging_date_dir, as_of_date, config)
     gate_results.append(reg_cal_gate)
     print(f"  Regulatory calendar gate: {reg_cal_gate.status} — {reg_cal_gate.detail}")
+
+    # --- Gate: options_coverage (WARN-only, tracks TT diagnostics health) ---
+    opt_cov_gate = check_options_coverage(staging_date_dir)
+    gate_results.append(opt_cov_gate)
+    print(f"  Options coverage gate: {opt_cov_gate.status} — {opt_cov_gate.detail}")
 
     # --- Step 5: Build manifest ---
     print("\n[5/5] Building run manifest ...")
