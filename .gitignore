@@ -155,7 +155,11 @@ data/snapshots/
 data/snapshots_pit/
 data/snapshots_reranked/
 data/snapshots_reranked_*/
+data/snapshots_ablation_*/
+data/snapshots_weight_sweep_*/
+data/snapshots_catalyst_tilt_*/
 data/snapshots_v3_tiltfix/
+data/research/
 data/grid_search/
 data/diag/
 

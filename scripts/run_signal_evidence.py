@@ -507,8 +507,7 @@ def _run_rerank(
 
     from decision_engine import DecisionRuleset
 
-    ruleset_data = json.loads(rerank_spec.read_text())
-    ruleset = DecisionRuleset.from_dict(ruleset_data)
+    ruleset = DecisionRuleset.from_json(str(rerank_spec))
 
     for d in manifest_dates:
         src_dir = baseline_root / d

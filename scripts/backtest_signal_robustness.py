@@ -20,7 +20,8 @@ import statistics
 import sys
 import tarfile
 from collections import defaultdict
-from datetime import date as _date_cls, timedelta
+from datetime import date as _date_cls
+from datetime import timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -30,7 +31,9 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from run_rank_ic_backtest import (          # noqa: E402
+from backtest.returns_provider import CSVReturnsProvider  # noqa: E402
+from module_5_alpha_cohort import compute_alpha_cohort_key, compute_alpha_raw  # noqa: E402
+from run_rank_ic_backtest import (  # noqa: E402
     ARCHIVE_DIR,
     PRICE_CSV,
     RETURNS_JSON,
@@ -38,11 +41,6 @@ from run_rank_ic_backtest import (          # noqa: E402
     MorningstarReturnsProvider,
     compute_forward_returns,
     discover_archives,
-)
-from backtest.returns_provider import CSVReturnsProvider  # noqa: E402
-from module_5_alpha_cohort import (         # noqa: E402
-    compute_alpha_cohort_key,
-    compute_alpha_raw,
 )
 
 log = logging.getLogger(__name__)
@@ -170,14 +168,16 @@ def compute_cell_diagnostics(
             delta = mean_post - mean_pre
         else:
             delta = float("nan")
-        results.append({
-            "cell": key,
-            "mean_excess_pre": mean_pre,
-            "mean_excess_post": mean_post,
-            "delta": delta,
-            "n_pre": len(pre),
-            "n_post": len(post),
-        })
+        results.append(
+            {
+                "cell": key,
+                "mean_excess_pre": mean_pre,
+                "mean_excess_post": mean_post,
+                "delta": delta,
+                "n_pre": len(pre),
+                "n_post": len(post),
+            }
+        )
 
     # Sort by delta ascending; NaN sorts to end
     results.sort(key=lambda r: (math.isnan(r["delta"]), r["delta"]))
@@ -242,6 +242,7 @@ def backfill_clinical_z_tier(rows: List[Dict[str, str]]) -> None:
 # Spearman rank correlation (no scipy)
 # ---------------------------------------------------------------------------
 
+
 def _avg_ranks(values: List[float]) -> List[float]:
     """Assign average ranks (1-based) with tie handling."""
     n = len(values)
@@ -280,6 +281,7 @@ def spearman_rank_corr(x: List[float], y: List[float]) -> float:
 # Spread computation
 # ---------------------------------------------------------------------------
 
+
 def compute_spread(
     signals: List[float],
     excess_rets: List[float],
@@ -302,6 +304,7 @@ def compute_spread(
 # ---------------------------------------------------------------------------
 # Rank-residualization (partial IC)
 # ---------------------------------------------------------------------------
+
 
 def residualize_ranks(x: List[float], z: List[float]) -> List[float]:
     """Residualize x ranks vs z ranks via OLS on ranks.
@@ -328,6 +331,7 @@ def residualize_ranks(x: List[float], z: List[float]) -> List[float]:
 # ---------------------------------------------------------------------------
 # Double-sort spread
 # ---------------------------------------------------------------------------
+
 
 def compute_double_sort_spread(
     sort1_signals: List[float],
@@ -368,6 +372,7 @@ def compute_double_sort_spread(
 # ---------------------------------------------------------------------------
 # Rolling out-of-sample alpha cohort table
 # ---------------------------------------------------------------------------
+
 
 def build_rolling_alpha_table(
     train_cache: List[Dict[str, Any]],
@@ -430,6 +435,7 @@ def score_alpha_oos(
 # Signal extraction
 # ---------------------------------------------------------------------------
 
+
 def _extract_clinical(row: Dict[str, str]) -> Optional[float]:
     """Return clinical_score_z_tier for drug developers, else None."""
     arch = (row.get("archetype") or "").strip()
@@ -462,6 +468,7 @@ def _extract_catalyst(row: Dict[str, str]) -> Optional[float]:
 # ---------------------------------------------------------------------------
 # Price extension
 # ---------------------------------------------------------------------------
+
 
 def _last_trading_day(d: _date_cls) -> _date_cls:
     """Roll back to Friday if *d* falls on a weekend."""
@@ -503,6 +510,7 @@ def extend_price_csv(
                     n_already_current, n_tickers_total}.
     """
     import tempfile
+
     import yfinance as yf  # lazy — not needed unless --extend-prices
 
     # Load existing data (if any)
@@ -521,32 +529,43 @@ def extend_price_csv(
     # Merge ticker sets: CSV tickers + provided tickers
     all_tickers = set(max_dates.keys())
     if tickers:
-        all_tickers |= set(t.upper() for t in tickers)
+        all_tickers |= set(t.upper() for t in tickers if not t.startswith("_"))
+    # Drop any synthetic tickers that leaked in from CSV history
+    all_tickers = {t for t in all_tickers if not t.startswith("_")}
     if include_xbi:
         all_tickers.add("XBI")
 
     if not all_tickers:
         log.warning("extend_price_csv: no tickers (CSV empty/missing and none provided)")
-        return {"n_extended": 0, "n_rows_appended": 0, "n_failed": 0,
-                "failed_tickers": [], "n_already_current": 0,
-                "n_tickers_total": 0}
+        return {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": 0,
+            "n_tickers_total": 0,
+        }
 
     # Determine fetch needs per ticker
     needs_fetch: Dict[str, str] = {}  # ticker -> fetch_start_date
     for t in sorted(all_tickers):
         if t in max_dates:
             if max_dates[t] < through_date:
-                needs_fetch[t] = (_date_cls.fromisoformat(max_dates[t])
-                                  + timedelta(days=1)).isoformat()
+                needs_fetch[t] = (_date_cls.fromisoformat(max_dates[t]) + timedelta(days=1)).isoformat()
         else:
             # New ticker — full bootstrap
             needs_fetch[t] = start_date
 
     n_total = len(all_tickers)
     if not needs_fetch:
-        return {"n_extended": 0, "n_rows_appended": 0, "n_failed": 0,
-                "failed_tickers": [], "n_already_current": n_total,
-                "n_tickers_total": n_total}
+        return {
+            "n_extended": 0,
+            "n_rows_appended": 0,
+            "n_failed": 0,
+            "failed_tickers": [],
+            "n_already_current": n_total,
+            "n_tickers_total": n_total,
+        }
 
     # yfinance end is exclusive — add 1 day to include through_date
     end_yf = (_date_cls.fromisoformat(through_date) + timedelta(days=1)).isoformat()
@@ -555,8 +574,7 @@ def extend_price_csv(
     failed: List[str] = []
     for ticker, fetch_start in sorted(needs_fetch.items()):
         try:
-            hist = yf.Ticker(ticker).history(start=fetch_start, end=end_yf,
-                                             auto_adjust=False)
+            hist = yf.Ticker(ticker).history(start=fetch_start, end=end_yf, auto_adjust=False)
         except Exception as exc:
             log.warning("  %s: yfinance fetch failed (%s)", ticker, exc)
             failed.append(ticker)
@@ -568,13 +586,17 @@ def extend_price_csv(
             close = row.get("Close")
             if close is None or close != close:  # NaN guard
                 continue
-            new_rows.append({
-                "date": dt, "ticker": ticker, "close": str(close),
-                "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
-                "high": str(row["High"]) if row.get("High") == row.get("High") else "",
-                "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
-                "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
-            })
+            new_rows.append(
+                {
+                    "date": dt,
+                    "ticker": ticker,
+                    "close": str(close),
+                    "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
+                    "high": str(row["High"]) if row.get("High") == row.get("High") else "",
+                    "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
+                    "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
+                }
+            )
 
     # Deduplicate: keep last occurrence per (ticker, date)
     all_rows = existing_rows + new_rows
@@ -603,15 +625,20 @@ def extend_price_csv(
             raise
 
     n_ext = len(needs_fetch) - len(failed)
-    return {"n_extended": n_ext, "n_rows_appended": len(new_rows),
-            "n_failed": len(failed), "failed_tickers": failed,
-            "n_already_current": n_total - len(needs_fetch),
-            "n_tickers_total": n_total}
+    return {
+        "n_extended": n_ext,
+        "n_rows_appended": len(new_rows),
+        "n_failed": len(failed),
+        "failed_tickers": failed,
+        "n_already_current": n_total - len(needs_fetch),
+        "n_tickers_total": n_total,
+    }
 
 
 # ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
+
 
 def run_backtest(
     archive_dir: Path,
@@ -647,23 +674,24 @@ def run_backtest(
         universe_tickers: Optional[List[str]] = None
         if UNIVERSE_JSON.exists():
             with open(UNIVERSE_JSON) as uf:
-                universe_tickers = [
-                    t["ticker"] for t in json.load(uf)
-                    if not t["ticker"].startswith("_")
-                ]
-        log.info("Extending price_history.csv through %s (%d universe tickers) …",
-                 through, len(universe_tickers or []))
+                universe_tickers = [t["ticker"] for t in json.load(uf) if not t["ticker"].startswith("_")]
+        log.info("Extending price_history.csv through %s (%d universe tickers) …", through, len(universe_tickers or []))
         ext = extend_price_csv(PRICE_CSV, through, tickers=universe_tickers)
         price_extension_result = ext
-        log.info("Price extension: %d tickers extended, %d rows appended, "
-                 "%d already current, %d failed",
-                 ext["n_extended"], ext["n_rows_appended"],
-                 ext["n_already_current"], ext["n_failed"])
+        log.info(
+            "Price extension: %d tickers extended, %d rows appended, " "%d already current, %d failed",
+            ext["n_extended"],
+            ext["n_rows_appended"],
+            ext["n_already_current"],
+            ext["n_failed"],
+        )
         if ext["failed_tickers"]:
             log.warning("  Failed tickers: %s", ", ".join(ext["failed_tickers"]))
         if ext["n_tickers_total"] == 0:
-            log.error("--extend-prices: no tickers found (CSV empty/missing "
-                      "and universe.json not available) — extension is a no-op")
+            log.error(
+                "--extend-prices: no tickers found (CSV empty/missing "
+                "and universe.json not available) — extension is a no-op"
+            )
 
     # Build returns provider AFTER extension so freshness reflects new data
     ms = MorningstarReturnsProvider(RETURNS_JSON)
@@ -684,11 +712,17 @@ def run_backtest(
         rows = load_rankings_dicts(tar_path)
         if not rows:
             log.warning("  empty rankings in %s — skipping", tar_path.name)
-            date_diagnostics.append({
-                "date": date_str, "n_rows": 0, "n_price_rows": 0,
-                "n_fwd_rets": 0, "fwd_ret_coverage": 0.0,
-                "skip_reason": "EMPTY_RANKINGS", "included": False,
-            })
+            date_diagnostics.append(
+                {
+                    "date": date_str,
+                    "n_rows": 0,
+                    "n_price_rows": 0,
+                    "n_fwd_rets": 0,
+                    "fwd_ret_coverage": 0.0,
+                    "skip_reason": "EMPTY_RANKINGS",
+                    "included": False,
+                }
+            )
             continue
 
         backfill_clinical_z_tier(rows)
@@ -708,15 +742,27 @@ def run_backtest(
         elif min_fwd_coverage > 0.0 and coverage < min_fwd_coverage:
             skip_reason = "LOW_COVERAGE"
 
-        date_diagnostics.append({
-            "date": date_str, "n_rows": n_rows, "n_price_rows": n_price_rows,
-            "n_fwd_rets": n_fwd, "fwd_ret_coverage": round(coverage, 4),
-            "skip_reason": skip_reason, "included": skip_reason == "",
-        })
+        date_diagnostics.append(
+            {
+                "date": date_str,
+                "n_rows": n_rows,
+                "n_price_rows": n_price_rows,
+                "n_fwd_rets": n_fwd,
+                "fwd_ret_coverage": round(coverage, 4),
+                "skip_reason": skip_reason,
+                "included": skip_reason == "",
+            }
+        )
 
         if skip_reason:
-            log.warning("  %s: %d/%d fwd returns (%.1f%% of priceable) — skipping (%s)",
-                        date_str, n_fwd, n_price_rows, coverage * 100, skip_reason)
+            log.warning(
+                "  %s: %d/%d fwd returns (%.1f%% of priceable) — skipping (%s)",
+                date_str,
+                n_fwd,
+                n_price_rows,
+                coverage * 100,
+                skip_reason,
+            )
             continue
 
         median_ret = statistics.median(fwd_rets.values())
@@ -726,9 +772,9 @@ def run_backtest(
         # not backfilled z-tier, since backfill masks missing data as "0.0")
         n_dd = sum(1 for r in rows if (r.get("archetype") or "").strip() in _DD_ARCHETYPES)
         n_raw_clin = sum(
-            1 for r in rows
-            if (r.get("archetype") or "").strip() in _DD_ARCHETYPES
-            and (r.get("clinical_score") or "").strip() != ""
+            1
+            for r in rows
+            if (r.get("archetype") or "").strip() in _DD_ARCHETYPES and (r.get("clinical_score") or "").strip() != ""
         )
         clin_ratio = n_raw_clin / n_dd if n_dd > 0 else 0.0
 
@@ -745,25 +791,33 @@ def run_backtest(
                 n_pos += 1
         pos_share = n_pos / n_valid_clin if n_valid_clin > 0 else 0.0
 
-        date_cache.append({
-            "date": date_str,
-            "rows": rows,
-            "fwd_rets": fwd_rets,
-            "excess": excess,
-            "clinical_coverage": clin_ratio,
-            "clinical_pos_share": pos_share,
-        })
+        date_cache.append(
+            {
+                "date": date_str,
+                "rows": rows,
+                "fwd_rets": fwd_rets,
+                "excess": excess,
+                "clinical_coverage": clin_ratio,
+                "clinical_pos_share": pos_share,
+            }
+        )
 
     # Write date_diagnostics.csv (all dates, including skipped)
-    _write_csv(out_dir / "date_diagnostics.csv", date_diagnostics,
-               ["date", "n_rows", "n_price_rows", "n_fwd_rets",
-                "fwd_ret_coverage", "skip_reason", "included"])
+    _write_csv(
+        out_dir / "date_diagnostics.csv",
+        date_diagnostics,
+        ["date", "n_rows", "n_price_rows", "n_fwd_rets", "fwd_ret_coverage", "skip_reason", "included"],
+    )
     n_included = sum(1 for d in date_diagnostics if d["included"])
     n_skipped = sum(1 for d in date_diagnostics if not d["included"])
-    log.info("Wrote date_diagnostics.csv (%d dates, %d included, %d skipped, "
-             "threshold=%.2f, price_universe=%d)",
-             len(date_diagnostics), n_included, n_skipped,
-             min_fwd_coverage, n_price_universe)
+    log.info(
+        "Wrote date_diagnostics.csv (%d dates, %d included, %d skipped, " "threshold=%.2f, price_universe=%d)",
+        len(date_diagnostics),
+        n_included,
+        n_skipped,
+        min_fwd_coverage,
+        n_price_universe,
+    )
 
     log.info("Usable dates after forward-return filter: %d", len(date_cache))
     if not date_cache:
@@ -775,16 +829,16 @@ def run_backtest(
     # -----------------------------------------------------------------------
     regime_by_date: Dict[str, str] = {}
     if use_regime:
-        from backtest.regime import (
-            load_price_history,
-            compute_regime_series,
-            assign_regime_to_rebalance_dates,
-        )
+        from backtest.regime import assign_regime_to_rebalance_dates, compute_regime_series, load_price_history
+
         price_df = load_price_history(PRICE_CSV)
         regime_series = compute_regime_series(price_df, "XBI")
         eval_dates = [e["date"] for e in date_cache]
         regime_by_date = assign_regime_to_rebalance_dates(regime_series, eval_dates)
-        log.info("Regime labels assigned: %s", {v: sum(1 for x in regime_by_date.values() if x == v) for v in set(regime_by_date.values())})
+        log.info(
+            "Regime labels assigned: %s",
+            {v: sum(1 for x in regime_by_date.values() if x == v) for v in set(regime_by_date.values())},
+        )
 
     # Parse training mode
     tm_mode, tm_param = parse_train_mode(train_mode)
@@ -814,13 +868,15 @@ def run_backtest(
             if sig is not None and tk in excess:
                 clin_pairs.append((sig, excess[tk]))
 
-        ic_clinical = spearman_rank_corr(
-            [p[0] for p in clin_pairs], [p[1] for p in clin_pairs]
-        ) if len(clin_pairs) >= 3 else float("nan")
+        ic_clinical = (
+            spearman_rank_corr([p[0] for p in clin_pairs], [p[1] for p in clin_pairs])
+            if len(clin_pairs) >= 3
+            else float("nan")
+        )
 
-        spread_clinical = compute_spread(
-            [p[0] for p in clin_pairs], [p[1] for p in clin_pairs]
-        ) if clin_pairs else float("nan")
+        spread_clinical = (
+            compute_spread([p[0] for p in clin_pairs], [p[1] for p in clin_pairs]) if clin_pairs else float("nan")
+        )
 
         # --- Catalyst (all rows) ---
         cat_pairs_all: List[Tuple[float, float]] = []
@@ -834,14 +890,18 @@ def run_backtest(
                     cat_pairs_nonzero.append((sig, excess[tk]))
 
         # IC on all rows (including zeros)
-        ic_catalyst = spearman_rank_corr(
-            [p[0] for p in cat_pairs_all], [p[1] for p in cat_pairs_all]
-        ) if len(cat_pairs_all) >= 3 else float("nan")
+        ic_catalyst = (
+            spearman_rank_corr([p[0] for p in cat_pairs_all], [p[1] for p in cat_pairs_all])
+            if len(cat_pairs_all) >= 3
+            else float("nan")
+        )
 
         # Spread on non-zero catalyst only
-        spread_catalyst = compute_spread(
-            [p[0] for p in cat_pairs_nonzero], [p[1] for p in cat_pairs_nonzero]
-        ) if cat_pairs_nonzero else float("nan")
+        spread_catalyst = (
+            compute_spread([p[0] for p in cat_pairs_nonzero], [p[1] for p in cat_pairs_nonzero])
+            if cat_pairs_nonzero
+            else float("nan")
+        )
 
         # --- Alpha (out-of-sample rolling) ---
         ic_alpha = float("nan")
@@ -853,14 +913,15 @@ def run_backtest(
         # 2. Sign homogeneity (pos_share ≈ 0 or ≈ 1 → no sign variation)
         if (min_clinical_coverage > 0.0) or (min_clinical_pos_share > 0.0) or (max_clinical_pos_share < 1.0):
             train_dates = [
-                d for d in train_dates
+                d
+                for d in train_dates
                 if d["clinical_coverage"] >= min_clinical_coverage
                 and min_clinical_pos_share <= d["clinical_pos_share"] <= max_clinical_pos_share
             ]
 
         # Apply training mode dispatch
         if tm_mode == "trailing" and tm_param is not None:
-            train_dates = train_dates[max(0, len(train_dates) - tm_param):]
+            train_dates = train_dates[max(0, len(train_dates) - tm_param) :]
 
         if len(train_dates) >= MIN_TRAIN_DATES:
             if tm_mode == "decay" and tm_param is not None:
@@ -868,10 +929,7 @@ def run_backtest(
                 # i.e. exp(-ln(2) * distance / H), so at distance=H, w=0.5
                 n_train = len(train_dates)
                 ln2 = math.log(2)
-                weights = [
-                    math.exp(-ln2 * (n_train - 1 - i) / tm_param)
-                    for i in range(n_train)
-                ]
+                weights = [math.exp(-ln2 * (n_train - 1 - i) / tm_param) for i in range(n_train)]
                 table = build_weighted_alpha_table(train_dates, weights, shrink_k=shrink_k)
             else:
                 table = build_rolling_alpha_table(train_dates, shrink_k=shrink_k)
@@ -883,16 +941,15 @@ def run_backtest(
                     alpha_pairs.append((alpha_val, excess[tk]))
 
             if len(alpha_pairs) >= 3:
-                ic_alpha = spearman_rank_corr(
-                    [p[0] for p in alpha_pairs], [p[1] for p in alpha_pairs]
-                )
-            spread_alpha = compute_spread(
-                [p[0] for p in alpha_pairs], [p[1] for p in alpha_pairs]
-            ) if alpha_pairs else float("nan")
+                ic_alpha = spearman_rank_corr([p[0] for p in alpha_pairs], [p[1] for p in alpha_pairs])
+            spread_alpha = (
+                compute_spread([p[0] for p in alpha_pairs], [p[1] for p in alpha_pairs])
+                if alpha_pairs
+                else float("nan")
+            )
         else:
             alpha_skipped += 1
-            log.info("  alpha skipped: only %d train dates (need %d)",
-                     len(train_dates), MIN_TRAIN_DATES)
+            log.info("  alpha skipped: only %d train dates (need %d)", len(train_dates), MIN_TRAIN_DATES)
 
         # --- Incremental IC: alpha residualized vs catalyst ---
         ic_alpha_incr = float("nan")
@@ -916,35 +973,41 @@ def run_backtest(
                 residuals = residualize_ranks(alpha_vals, cat_vals)
                 ic_alpha_incr = spearman_rank_corr(residuals, excess_vals)
                 spread_alpha_double = compute_double_sort_spread(
-                    cat_vals, alpha_vals, excess_vals,
+                    cat_vals,
+                    alpha_vals,
+                    excess_vals,
                 )
 
         regime_label = regime_by_date.get(date_str, "")
-        ic_rows.append({
-            "date": date_str,
-            "horizon": horizon,
-            "regime": regime_label,
-            "n_all": len(fwd_rets),
-            "n_dd": n_dd_total,
-            "n_clinical_valid": len(clin_pairs),
-            "clinical_pos_share": round(entry["clinical_pos_share"], 4),
-            "n_cat_nonzero": len(cat_pairs_nonzero),
-            "n_train_dates": len(train_dates),
-            "ic_clinical": ic_clinical,
-            "ic_catalyst": ic_catalyst,
-            "ic_alpha": ic_alpha,
-            "ic_alpha_incr": ic_alpha_incr,
-            "n_incr": n_incr,
-        })
-        spread_rows.append({
-            "date": date_str,
-            "horizon": horizon,
-            "regime": regime_label,
-            "spread_clinical": spread_clinical,
-            "spread_catalyst": spread_catalyst,
-            "spread_alpha": spread_alpha,
-            "spread_alpha_double": spread_alpha_double,
-        })
+        ic_rows.append(
+            {
+                "date": date_str,
+                "horizon": horizon,
+                "regime": regime_label,
+                "n_all": len(fwd_rets),
+                "n_dd": n_dd_total,
+                "n_clinical_valid": len(clin_pairs),
+                "clinical_pos_share": round(entry["clinical_pos_share"], 4),
+                "n_cat_nonzero": len(cat_pairs_nonzero),
+                "n_train_dates": len(train_dates),
+                "ic_clinical": ic_clinical,
+                "ic_catalyst": ic_catalyst,
+                "ic_alpha": ic_alpha,
+                "ic_alpha_incr": ic_alpha_incr,
+                "n_incr": n_incr,
+            }
+        )
+        spread_rows.append(
+            {
+                "date": date_str,
+                "horizon": horizon,
+                "regime": regime_label,
+                "spread_clinical": spread_clinical,
+                "spread_catalyst": spread_catalyst,
+                "spread_alpha": spread_alpha,
+                "spread_alpha_double": spread_alpha_double,
+            }
+        )
 
     # -----------------------------------------------------------------------
     # Cell diagnostics (always computed)
@@ -952,25 +1015,49 @@ def run_backtest(
     cell_diags = compute_cell_diagnostics(date_cache, cutoff=cutoff)
     if cell_diags:
         _write_csv(
-            out_dir / "cell_diagnostics.csv", cell_diags,
+            out_dir / "cell_diagnostics.csv",
+            cell_diags,
             ["cell", "mean_excess_pre", "mean_excess_post", "delta", "n_pre", "n_post"],
         )
         log.info("Wrote cell_diagnostics.csv (%d cells)", len(cell_diags))
 
     # Write CSV outputs
-    _write_csv(out_dir / "ic_timeseries.csv", ic_rows,
-               ["date", "horizon", "regime", "n_all", "n_dd", "n_clinical_valid",
-                "clinical_pos_share", "n_cat_nonzero", "n_train_dates",
-                "ic_clinical", "ic_catalyst", "ic_alpha", "ic_alpha_incr", "n_incr"])
-    _write_csv(out_dir / "spread_timeseries.csv", spread_rows,
-               ["date", "horizon", "regime", "spread_clinical", "spread_catalyst", "spread_alpha",
-                "spread_alpha_double"])
+    _write_csv(
+        out_dir / "ic_timeseries.csv",
+        ic_rows,
+        [
+            "date",
+            "horizon",
+            "regime",
+            "n_all",
+            "n_dd",
+            "n_clinical_valid",
+            "clinical_pos_share",
+            "n_cat_nonzero",
+            "n_train_dates",
+            "ic_clinical",
+            "ic_catalyst",
+            "ic_alpha",
+            "ic_alpha_incr",
+            "n_incr",
+        ],
+    )
+    _write_csv(
+        out_dir / "spread_timeseries.csv",
+        spread_rows,
+        ["date", "horizon", "regime", "spread_clinical", "spread_catalyst", "spread_alpha", "spread_alpha_double"],
+    )
 
     # Build summary
     max_archive_date = archives[-1][0] if archives else None
     summary = _build_summary(
-        ic_rows, spread_rows, horizon, alpha_skipped,
-        cell_diags=cell_diags, train_mode=train_mode, cutoff=cutoff,
+        ic_rows,
+        spread_rows,
+        horizon,
+        alpha_skipped,
+        cell_diags=cell_diags,
+        train_mode=train_mode,
+        cutoff=cutoff,
         min_clinical_coverage=min_clinical_coverage,
         min_clinical_pos_share=min_clinical_pos_share,
         max_clinical_pos_share=max_clinical_pos_share,
@@ -1041,9 +1128,7 @@ def _build_summary(
         if ics:
             result["mean_ic"] = round(statistics.mean(ics), 4)
             result["median_ic"] = round(statistics.median(ics), 4)
-            result["stderr_ic"] = round(
-                statistics.stdev(ics) / math.sqrt(len(ics)), 4
-            ) if len(ics) >= 2 else 0.0
+            result["stderr_ic"] = round(statistics.stdev(ics) / math.sqrt(len(ics)), 4) if len(ics) >= 2 else 0.0
             result["n_dates"] = len(ics)
         if spreads:
             result["mean_spread"] = round(statistics.mean(spreads), 4)
@@ -1086,9 +1171,9 @@ def _build_summary(
     if incr_ics:
         alpha_incr_stats["mean_ic"] = round(statistics.mean(incr_ics), 4)
         alpha_incr_stats["median_ic"] = round(statistics.median(incr_ics), 4)
-        alpha_incr_stats["stderr_ic"] = round(
-            statistics.stdev(incr_ics) / math.sqrt(len(incr_ics)), 4
-        ) if len(incr_ics) >= 2 else 0.0
+        alpha_incr_stats["stderr_ic"] = (
+            round(statistics.stdev(incr_ics) / math.sqrt(len(incr_ics)), 4) if len(incr_ics) >= 2 else 0.0
+        )
     if incr_spreads:
         alpha_incr_stats["mean_double_sort_spread"] = round(statistics.mean(incr_spreads), 4)
         alpha_incr_stats["median_double_sort_spread"] = round(statistics.median(incr_spreads), 4)
@@ -1115,10 +1200,7 @@ def _build_summary(
         valid_deltas = [c for c in cell_diags if not math.isnan(c["delta"])]
         n_positive = sum(1 for c in valid_deltas if c["delta"] > 0)
         n_negative = sum(1 for c in valid_deltas if c["delta"] < 0)
-        top5_worst = [
-            {"cell": c["cell"], "delta": round(c["delta"], 6)}
-            for c in valid_deltas[:5]
-        ]
+        top5_worst = [{"cell": c["cell"], "delta": round(c["delta"], 6)} for c in valid_deltas[:5]]
         cell_summary = {
             "n_cells": len(cell_diags),
             "n_positive_delta": n_positive,
@@ -1185,9 +1267,7 @@ def _build_summary(
         # Ground-truth staleness: newest archive date is not evaluable
         # (derived from actual skip_reason, not from price_gap_days)
         last_diag = max(date_diagnostics, key=lambda d: d["date"])
-        freshness["fwd_returns_stale"] = (
-            last_diag["skip_reason"] in ("NO_FWD_RET", "LOW_COVERAGE")
-        )
+        freshness["fwd_returns_stale"] = last_diag["skip_reason"] in ("NO_FWD_RET", "LOW_COVERAGE")
 
         # Price extension telemetry (machine-readable, even when Morningstar
         # masks the staleness).  Only present when --extend-prices was used.
@@ -1196,31 +1276,24 @@ def _build_summary(
             freshness["price_extension_attempted"] = True
             freshness["price_extension_no_tickers"] = ext["n_tickers_total"] == 0
             freshness["price_extension_failed_all"] = (
-                ext["n_tickers_total"] > 0
-                and ext["n_failed"] == ext["n_tickers_total"]
+                ext["n_tickers_total"] > 0 and ext["n_failed"] == ext["n_tickers_total"]
             )
 
         result["fwd_return_diagnostics"] = {
             "n_archives_total": len(date_diagnostics),
             "n_dates_included": len(included_dates),
-            "n_dates_skipped_no_fwd": sum(
-                1 for d in date_diagnostics if d["skip_reason"] == "NO_FWD_RET"
-            ),
+            "n_dates_skipped_no_fwd": sum(1 for d in date_diagnostics if d["skip_reason"] == "NO_FWD_RET"),
             "n_dates_skipped_low_coverage": len(skipped_low),
-            "n_dates_skipped_empty_rankings": sum(
-                1 for d in date_diagnostics if d["skip_reason"] == "EMPTY_RANKINGS"
-            ),
+            "n_dates_skipped_empty_rankings": sum(1 for d in date_diagnostics if d["skip_reason"] == "EMPTY_RANKINGS"),
             "min_fwd_coverage_threshold": min_fwd_coverage,
             "n_price_universe": n_price_universe,
             "coverage_stats": coverage_stats,
             "data_freshness": freshness,
             "bottom_5_included": [
-                {"date": d["date"], "fwd_ret_coverage": d["fwd_ret_coverage"]}
-                for d in bottom_5_included
+                {"date": d["date"], "fwd_ret_coverage": d["fwd_ret_coverage"]} for d in bottom_5_included
             ],
             "top_5_skipped_low_coverage": [
-                {"date": d["date"], "fwd_ret_coverage": d["fwd_ret_coverage"]}
-                for d in top_5_skipped
+                {"date": d["date"], "fwd_ret_coverage": d["fwd_ret_coverage"]} for d in top_5_skipped
             ],
         }
 
@@ -1235,17 +1308,17 @@ def _get_freshness(summary: Dict[str, Any]) -> Dict[str, Any]:
     """
     diag = summary.get("fwd_return_diagnostics")
     if not diag:
-        return {"fwd_returns_stale": None, "price_end_date": None,
-                "max_archive_date": None, "price_gap_days": None}
-    return diag.get("data_freshness", {"fwd_returns_stale": None,
-                                        "price_end_date": None,
-                                        "max_archive_date": None,
-                                        "price_gap_days": None})
+        return {"fwd_returns_stale": None, "price_end_date": None, "max_archive_date": None, "price_gap_days": None}
+    return diag.get(
+        "data_freshness",
+        {"fwd_returns_stale": None, "price_end_date": None, "max_archive_date": None, "price_gap_days": None},
+    )
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Signal robustness backtest")
@@ -1255,26 +1328,54 @@ def main() -> None:
     parser.add_argument("--end", type=str, default=None)
     parser.add_argument("--shrink-k", type=float, default=DEFAULT_SHRINK_K)
     parser.add_argument("--regime", action="store_true", help="Add regime (BULL/BEAR/CHOP) labels")
-    parser.add_argument("--train-mode", type=str, default="expanding",
-                        help="Training mode: expanding (default), trailing-N, decay-H")
-    parser.add_argument("--cutoff", type=str, default="2025-01-01",
-                        help="Cutoff date for pre/post splits (cell diagnostics, subperiod)")
-    parser.add_argument("--min-clinical-coverage", type=float, default=0.0,
-                        help="Min clinical_valid/n_dd ratio to include a date in alpha training (0=off)")
-    parser.add_argument("--min-clinical-pos-share", type=float, default=0.05,
-                        help="Min clinical pos_share to include a date in alpha training (default 0.05)")
-    parser.add_argument("--max-clinical-pos-share", type=float, default=0.95,
-                        help="Max clinical pos_share to include a date in alpha training (default 0.95)")
-    parser.add_argument("--min-fwd-coverage", type=float, default=0.0,
-                        help="Min fwd_ret_coverage to include a date (0.0=only skip zero-return dates)")
-    parser.add_argument("--extend-prices", action="store_true", default=False,
-                        help="Fetch missing price data via yfinance before running")
-    parser.add_argument("--prices-through", type=str, default=None,
-                        help="Pin price extension end date (YYYY-MM-DD) for PIT reproducibility")
-    parser.add_argument("--fail-if-stale", action="store_true", default=False,
-                        help="Exit with code 2 if forward returns are stale")
-    parser.add_argument("--no-warn-if-stale", action="store_true", default=False,
-                        help="Suppress the default staleness warning")
+    parser.add_argument(
+        "--train-mode", type=str, default="expanding", help="Training mode: expanding (default), trailing-N, decay-H"
+    )
+    parser.add_argument(
+        "--cutoff", type=str, default="2025-01-01", help="Cutoff date for pre/post splits (cell diagnostics, subperiod)"
+    )
+    parser.add_argument(
+        "--min-clinical-coverage",
+        type=float,
+        default=0.0,
+        help="Min clinical_valid/n_dd ratio to include a date in alpha training (0=off)",
+    )
+    parser.add_argument(
+        "--min-clinical-pos-share",
+        type=float,
+        default=0.05,
+        help="Min clinical pos_share to include a date in alpha training (default 0.05)",
+    )
+    parser.add_argument(
+        "--max-clinical-pos-share",
+        type=float,
+        default=0.95,
+        help="Max clinical pos_share to include a date in alpha training (default 0.95)",
+    )
+    parser.add_argument(
+        "--min-fwd-coverage",
+        type=float,
+        default=0.0,
+        help="Min fwd_ret_coverage to include a date (0.0=only skip zero-return dates)",
+    )
+    parser.add_argument(
+        "--extend-prices",
+        action="store_true",
+        default=False,
+        help="Fetch missing price data via yfinance before running",
+    )
+    parser.add_argument(
+        "--prices-through",
+        type=str,
+        default=None,
+        help="Pin price extension end date (YYYY-MM-DD) for PIT reproducibility",
+    )
+    parser.add_argument(
+        "--fail-if-stale", action="store_true", default=False, help="Exit with code 2 if forward returns are stale"
+    )
+    parser.add_argument(
+        "--no-warn-if-stale", action="store_true", default=False, help="Suppress the default staleness warning"
+    )
     parser.add_argument("--log-level", type=str, default="INFO")
     args = parser.parse_args()
 
@@ -1307,12 +1408,8 @@ def main() -> None:
         # Staleness guardrail (CLI path only)
         fresh = _get_freshness(summary)
         if fresh["fwd_returns_stale"] is True:
-            msg = (
-                "Forward returns stale: price_end_date=%s "
-                "max_archive_date=%s price_gap_days=%s"
-            )
-            fields = (fresh["price_end_date"], fresh["max_archive_date"],
-                      fresh["price_gap_days"])
+            msg = "Forward returns stale: price_end_date=%s " "max_archive_date=%s price_gap_days=%s"
+            fields = (fresh["price_end_date"], fresh["max_archive_date"], fresh["price_gap_days"])
             if args.fail_if_stale:
                 log.error(msg, *fields)
                 raise SystemExit(2)
