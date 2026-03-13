@@ -1,7 +1,7 @@
 # Biotech Screener Model Documentation
 
-**Version:** 2.7.0
-**Last Updated:** March 8, 2026
+**Version:** 2.8.0
+**Last Updated:** March 13, 2026
 **System:** Wake Robin Capital Biotech Screening Pipeline
 
 ---
@@ -870,6 +870,33 @@ When `far_window_days > 0` in the ruleset, the pipeline scans trial_records for 
 
 **Good catalyst modes** (for health gating): `{"specific_days", "blended_window", "far_window"}`
 
+### Catalyst Tilt (L3 Sizing)
+
+**Status:** Candidate (`2b1c8959`, v1.13.0) — shadowing, not yet promoted.
+
+When `enable_catalyst_tilt: true`, L3 sizing applies proximity-based weight multipliers after initial weight allocation. Weights are re-normalized post-tilt so total allocation is unchanged.
+
+| Bucket | Multiplier | Effect |
+|--------|-----------|--------|
+| NEAR (≤120d) | 1.10 | +10% weight |
+| MID (≤180d) | 1.05 | +5% weight |
+| FAR (>180d) | 0.95 | -5% weight |
+| MISSING | 0.90 | -10% weight |
+
+**Mode:** `hard` (discrete bands, no logistic decay).
+
+**Evidence (34 snapshots, 16 grid variants):** All variants beat baseline. Default mults: +0.66pp at 63d (80% win rate), +1.16pp at 84d (96% win rate). Turnover impact: 0.89% (negligible — pure weight reallocation). t-stats low (0.43/0.38) due to per-date variance.
+
+**Promotion battery result:** 4/4 buckets PROMOTE (+5.8pp to +30.4pp), but weekly gate FAIL — bucket_binary_31_90 -1.81pp and global_cum_hedged -2.43pp trip per-bucket guardrails. Policy-level weekly metrics PASS (+4.14pp cum, +0.13pp mean).
+
+**DecisionRuleset fields:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `enable_catalyst_tilt` | bool | `False` | Master switch |
+| `catalyst_tilt_mults` | list | `[["NEAR",1.1],["MID",1.05],["FAR",0.95],["MISSING",0.9]]` | Per-bucket multipliers |
+| `catalyst_tilt_mode` | str | `"hard"` | `"hard"` (discrete) or `"logistic"` (smooth decay) |
+
 ### Catalyst Priority (Tiebreaker Mode)
 
 When tickers share the same tier/rank, catalyst source priority breaks ties:
@@ -1004,7 +1031,7 @@ clin_adj = clinical_sort_weight * cz_eff * stage_mult
 
 **Relationship to Module 5:** Module 5 continues to run and produce `composite_score`, `composite_rank`, and all component scores consumed by the Decision Engine. Alpha cohort scoring is an alternative ranking signal that replaces `composite_rank` in the sort key when enabled. Both `composite_score` and `alpha_cohort_pct` are written to the snapshot for diagnostic comparison.
 
-**Active status:** In ruleset v1.6.1 (ID=`0c1129f6`), `composite_engine="alpha_cohort"` and `sort_anchor="alpha_cohort"` are both enabled, making alpha cohort the authoritative ranking signal for all portfolio decisions. Alpha modifier (within_tier, w=0.05) is active. Clinical sort remains ON.
+**Active status:** In ruleset v1.11.0 (ID=`7177a4ea`), `composite_engine="alpha_cohort"` and `sort_anchor="optionality_pct"` are set, with clinical quality sort for binary_91_180 CLINICAL w=0.5, flatten_tier_91_180, calendar alpha w=0.3, institutional delta weight=0.3, buffer=30. Clinical sort signal OFF, coinvest OFF.
 
 ### Composite Engine Override
 
@@ -1044,10 +1071,10 @@ validate_alpha_outputs(csv_rows, schema_mode="warn", alpha_cohort_enabled=True)
 
 Decision rules are externalized as frozen `DecisionRuleset` dataclass instances, serialized to JSON with content-hash IDs for reproducibility.
 
-- **Active ruleset**: `v1.6.1_alpha_modifier_within_tier.json` (ID=`0c1129f6`) — alpha modifier within_tier (w=0.05) + alpha cohort ON + clinical sort ON
+- **Active ruleset**: `v1.11.0_b91_clinical_quality_w05_candidate.json` (ID=`7177a4ea`) — clinical_quality sort for b91 CLINICAL w=0.5, flatten_tier_91_180, optionality anchor, cal_alpha w=0.3, inst_sort w=0.3, clinical OFF, coinvest OFF, buffer=30
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
-- **Previous**: `v1.5.1_coinvest_off.json` (ID=`88d7ae9a`), `v1.5.0_coinvest_candidate.json` (ID=`8f99d47e`)
-- **Candidates**: `v1.4.1_tier_first_candidate.json` (ID=`054bc5cc`), `v1.4.0_candidate.json` (ID=`25f50278`), `v1.3.4_clinical_sort_candidate.json` (ID=`f9842e1f`)
+- **Candidates**: `v1.13.0_catalyst_tilt_on_candidate.json` (ID=`2b1c8959`) — catalyst tilt enabled, promotion battery FAIL (weekly gate), shadowing for 3-5 weeks
+- **Previous active**: `v1.6.1_alpha_modifier_within_tier.json` (ID=`0c1129f6`), `v1.5.1_coinvest_off.json` (ID=`88d7ae9a`)
 
 ### Phase-2 Health Gate
 
@@ -1311,6 +1338,35 @@ python warm_caches.py --as-of-date 2026-02-19 --sources sec_13f
 **Receipt schema:** Rollback receipts include `"action": "rollback"` + `"reason"` field. Forward promotions include `"action": "promote"`. Receipt filename prefix: `rollback_*` or `promotion_*`.
 
 **Changelog:** Skipped for rollbacks (rollbacks are urgent; changelog entries not required).
+
+### Promotion Battery (`scripts/research/run_promotion_battery.py`)
+
+**Purpose:** Comprehensive governance gate that must PASS before any ruleset can be promoted to active.
+
+**Two-stage evaluation:**
+
+1. **Bucketed snapshot verdicts** — evaluate candidate vs baseline across 4 catalyst buckets (binary_0_30, binary_31_90, binary_91_180, less_binary) using mean hedged returns at 63d and 84d horizons. Per-bucket verdict: PROMOTE (clears both primary and guardrail thresholds), ARCHIVE (below thresholds), or NEEDS_MORE (insufficient data).
+
+2. **Weekly live-sim** — simulate weekly rebalancing with both candidate and baseline rulesets over historical periods. Checks policy-level metrics (cum hedged, mean hedged) and per-bucket guardrails (> -0.20pp threshold per bucket).
+
+**Overall verdict logic:**
+- PASS: weekly PASS AND all buckets PROMOTE
+- FAIL: weekly FAIL OR any bucket ARCHIVE
+- NEEDS_MORE: otherwise
+
+**Outputs:** `PROMOTION_PACKET.json` (machine-readable) + `PROMOTION_PACKET.md` (human-readable) in designated output directory.
+
+**Thresholds:**
+
+| Check | Threshold |
+|-------|-----------|
+| Primary delta (per bucket) | >= +0.20pp |
+| Guardrail delta (per bucket) | > -0.05pp |
+| Policy cum hedged | >= +1.00pp |
+| Policy mean hedged | >= +0.00pp |
+| Per-bucket weekly | > -0.20pp |
+| Global mean hedged | >= -0.01pp |
+| Global cum hedged | >= -1.00pp |
 
 ### Catalyst Shadow Metrics (Telemetry)
 
@@ -1717,7 +1773,16 @@ python run_screen.py \
 | Shadow Metrics Rollup | `scripts/rollup_shadow_metrics.py` | Aggregate per-snapshot telemetry into timeseries |
 | IC One-Pager | `scripts/make_ic_onepager.py` | Generate IC summary from snapshot artifacts |
 | Ruleset Compare/Replay | `scripts/compare_rulesets_replay.py` | Re-sort rankings with baseline vs candidate ruleset |
-| Cache Warmer | `warm_caches.py` | Pre-build SEC 8-K, FDA, and 13F caches before screen run |
+| Cache Warmer | `warm_caches.py` | Pre-build SEC 8-K, FDA, EU/EEA registries, and 13F caches before screen run |
+| Event Ledger | `event_ledger.py` | Multi-source event aggregator (7+ sources: CTGov, merged trials, SEC 8-K, SEC multi-form, FDA ADCOM, FDA regulatory, PDUFA manual, EMA) |
+| EU CTR Collector | `wake_robin_data_pipeline/collectors/euctr_collector.py` | EU Clinical Trials Register |
+| CTIS Collector | `wake_robin_data_pipeline/collectors/ctis_collector.py` | Clinical Trials Information System (EU) |
+| ISRCTN Collector | `wake_robin_data_pipeline/collectors/isrctn_collector.py` | ISRCTN Registry |
+| Trial Merger | `trial_registry_merger.py` | Cross-registry dedup by NCT/EudraCT IDs |
+| FDA Regulatory Collector | `wake_robin_data_pipeline/collectors/fda_regulatory_collector.py` | Federal Register FDA regulatory notices |
+| Massive Options Provider | `common/options_history_massive.py` | REST + S3 options data (day aggs, minute aggs, trades, contracts) |
+| Promotion Battery | `scripts/research/run_promotion_battery.py` | Bucketed verdicts + weekly live-sim for ruleset promotion |
+| Catalyst Tilt Sweep | `scripts/research/eval_catalyst_tilt_sweep.py` | Analytical L3 sizing sweep for catalyst proximity multipliers |
 | 13F Cache Builder | `tools/warm_13f_cache.py` | PIT-safe 13F holdings cache + schema validator |
 | Manager Registry | `elite_managers.py` | Elite (Tier 1) and full manager CIK lists |
 | Flipper Return Attribution | `scripts/diag_flipper_returns.py` | Forward return analysis for catalyst flips |
@@ -1748,6 +1813,7 @@ python run_screen.py \
 
 ## Changelog
 
+- **2026-03-13 v2.8.0**: Active ruleset updated to v1.11.0 (ID=`7177a4ea`) — clinical_quality sort for binary_91_180 CLINICAL w=0.5, flatten_tier_91_180, optionality anchor, cal_alpha w=0.3, institutional delta weight=0.3, buffer=30. Ruleset progression from v1.6.1 through v1.11.0 includes: institutional delta sort signal (v1.9.0), flatten tier sort for 91-180d bucket (v1.10.0), binary_91_180 clinical quality sort (v1.11.0), core-neutral rejection (v1.12.0). Catalyst tilt candidate (ID=`2b1c8959`, v1.13.0): `enable_catalyst_tilt: true` with NEAR=1.10, MID=1.05, FAR=0.95, MISSING=0.90 multipliers. Analytical sweep across 34 snapshots and 16 grid variants: all beat baseline, best variant +0.66pp/63d and +1.16pp/84d. Promotion battery: 4/4 buckets PROMOTE (+5.8pp to +30.4pp) but weekly gate FAIL — per-bucket guardrails trip on bucket_binary_31_90 (-1.81pp) and global_cum_hedged (-2.43pp). Decision: shadow 3-5 weeks, then re-gate. EU/EEA trial registry collectors: EUCTR, CTIS, ISRCTN with cross-registry dedup via `trial_registry_merger.py`. FDA regulatory collector (`fda_regulatory_collector.py`) for Federal Register notices, integrated into `warm_caches.py` dispatcher. Event ledger expanded to 7+ sources. Massive options data provider (`common/options_history_massive.py`) — REST + S3 clients for day/minute aggregates, trades, and contracts from Massive Developer tier; write-once cache at `data/caches/massive_options/`. Promotion governance system: `run_promotion_battery.py` (bucketed snapshot verdicts + weekly live-sim), `promote_ruleset.py` (blocks unless battery PASS), `eval_catalyst_tilt_sweep.py` (analytical L3 sizing sweep). Universe: 353 tickers.
 - **2026-03-08 v2.7.0**: Action list builder with account-aware sizing (`--account-usd`), band-based per-name caps (XS=2%, S=3%, M=5%, L=5%), overage-safe 3-pass trim algorithm. Risk rails: gap-risk HIGH (catalyst ≤7d) + MODERATE (8-30d), price coverage OK/MISSING. Bucket target tilts (`--bucket-targets`) for allocation rebalancing. Decision memo builder (`tools/build_decision_memo.py`) — 1-page IC output with provenance, allocation summary, risk rails, top-10 per bucket, rank delta vs prior, actionable bullets; JSON sidecar (`decision_memo.v1`). Binary sleeve risk cap in L3 sizing: configurable per-name + aggregate caps on binary-event names with excess redistribution. 4-tier semantic audit exit codes: 0=OK→PASS, 1=critical→FAIL, 2=warn→WARN, 3=stale_mismatch→WARN(hardcoded). Bucket-specific evaluation horizons as default. Live shadow portfolio tracker (`tools/live_shadow_portfolio.py`) — policy-driven position ledger with top-K per bucket, per-bucket name caps, gap-risk caps, P&L vs XBI + sleeve attribution, append-only performance.csv, weekly summary markdown. Portfolio policy file (`production_data/portfolio_policy.json`) — weekly cadence, 55/25/10/10 bucket split, 60 names total. Live run on 2026-03-08: 60 positions, $497,500 allocated, policy-aligned. Tests: 23 shadow portfolio + 16 memo + 20 sizing + 11 rails + 18 binary sleeve + 16 audit exit codes.
 - **2026-03-01 v2.6.0**: First-class rollback in `promote_ruleset.py` — `--rollback --reason` without `--force`, auto-discover LKG via `_find_last_known_good()`, receipt `action` field (`"promote"`/`"rollback"`), changelog skipped for rollbacks. New `tools/ruleset_health_monitor.py` — post-promotion health check comparing daily drift against promotion baseline, JSONL history tracking, consecutive WARN detection with rollback recommendation. `ruleset_health` gate added to daily production (WARN-only, 23 gates total). Eligibility false-positive fix: Gate 0 `financials_missing` now checks `cash_total > 0` — companies with cash via MarketableSecurities (not cash_and_equivalents) no longer misclassified (GILD, ARWR, ILMN, NTRA recovered). Active ruleset updated to v1.6.1 (ID=`0c1129f6`, alpha modifier within_tier w=0.05). Universe: 354 tickers, 297 ranked, 194 eligible, 103 ineligible. ~9370 tests across 281 files.
 - **2026-02-25 v2.5.0**: Acquired ticker cleanup — AKRO (Eli Lilly, Dec 2025), MRUS (Dec 2025), CDTX (Jan 2026), ATXS (Jan 2026), GBIO (Feb 2026) marked `excluded_acquired` in universe.json. Fixed Module 1 `_classify_status()` to recognize `"excluded_acquired"` status. Defensive overlay false-positive fixes: self-sustaining exemption for `single_asset_early_stage` (burn_ttm<=0 + cash>=$500M, e.g. ILMN), debt-driven exemption for `survivability_critical` (cash/burn>=5yr, e.g. FTRE). AKRO CIK and SEC EDGAR financial data added. WSL2 `safe_mkdir` permissions fix. Added daily production workflow and data integrity audit documentation. Updated active ruleset to v1.5.1 (ID=`88d7ae9a`, coinvest OFF). Universe: 354 tickers, 297 ranked, 194 eligible, 9 red flags. ~7900+ tests across 233 files.
