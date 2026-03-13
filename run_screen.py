@@ -5014,6 +5014,10 @@ def save_validation_snapshot(
         ),
     }
 
+    _reg_cov_pct = metadata["regulatory_coverage"].get("regulatory_secondary_coverage_pct", 0.0)
+    if _reg_cov_pct < 5.0:
+        logger.warning("Regulatory secondary coverage %.1f%% < 5.0%% — consider expanding event sources", _reg_cov_pct)
+
     # --- Per-ticker source reliability annotation ---
     _rel_action_counts: Dict[str, int] = {}
     if _reliability_table:

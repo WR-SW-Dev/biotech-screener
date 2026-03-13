@@ -10,6 +10,7 @@ Usage:
     python warm_caches.py                          # warm all caches for today
     python warm_caches.py --as-of-date 2026-02-07  # warm for specific date
     python warm_caches.py --sources fda_adcom      # warm only FDA ADCOM
+    python warm_caches.py --sources fda_regulatory # warm only FDA regulatory notices
     python warm_caches.py --sources sec_8k         # warm only SEC 8-K
     python warm_caches.py --sources ctgov          # warm only CTGov PIT cache
     python warm_caches.py --sources sec_13f               # warm only SEC 13F
@@ -17,6 +18,7 @@ Usage:
 
 Cache files are written to:
     cache/fda/adcom_calendar_{date}.json
+    cache/fda/fda_regulatory_{date}.json
     cache/sec/8k_catalysts/8k_catalysts_{date}.json
     cache/ctgov/trial_records_{date}.json
 
@@ -36,13 +38,13 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from cache_health import (
-    SEC8K_MIN_RATIO_VS_PRIOR,
-    CTGOV_BAD_RATIO_LOW,
     CTGOV_BAD_RATIO_HIGH,
-    EMA_AGENDA_BAD_RATIO_LOW,
+    CTGOV_BAD_RATIO_LOW,
     EMA_AGENDA_BAD_RATIO_HIGH,
-    EMA_OUTCOMES_BAD_RATIO_LOW,
+    EMA_AGENDA_BAD_RATIO_LOW,
     EMA_OUTCOMES_BAD_RATIO_HIGH,
+    EMA_OUTCOMES_BAD_RATIO_LOW,
+    SEC8K_MIN_RATIO_VS_PRIOR,
 )
 
 logging.basicConfig(
@@ -88,8 +90,7 @@ def validate_cache_refresh(
             ratio = new_count / prior_count
             if ratio < CTGOV_BAD_RATIO_LOW or ratio > CTGOV_BAD_RATIO_HIGH:
                 return False, (
-                    f"out_of_band (ratio={ratio:.2f}, "
-                    f"band=[{CTGOV_BAD_RATIO_LOW}, {CTGOV_BAD_RATIO_HIGH}])"
+                    f"out_of_band (ratio={ratio:.2f}, " f"band=[{CTGOV_BAD_RATIO_LOW}, {CTGOV_BAD_RATIO_HIGH}])"
                 )
         return True, ""
 
@@ -123,7 +124,8 @@ def validate_cache_refresh(
         if new_count == 0:
             return False, "empty_refresh"
         if prior_count is not None and prior_count > 0:
-            from cache_health import TRIAL_MERGE_BAD_RATIO_LOW, TRIAL_MERGE_BAD_RATIO_HIGH
+            from cache_health import TRIAL_MERGE_BAD_RATIO_HIGH, TRIAL_MERGE_BAD_RATIO_LOW
+
             ratio = new_count / prior_count
             if ratio < TRIAL_MERGE_BAD_RATIO_LOW or ratio > TRIAL_MERGE_BAD_RATIO_HIGH:
                 return False, (
@@ -138,8 +140,8 @@ def validate_cache_refresh(
 def warm_fda_adcom(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
     """Fetch and cache FDA ADCOM calendar events. Returns count."""
     from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-        collect_fda_adcom_events,
         build_product_ticker_map,
+        collect_fda_adcom_events,
     )
 
     logger.info("Building product-to-ticker map...")
@@ -157,6 +159,31 @@ def warm_fda_adcom(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
 
     cache_path = cache_dir / f"adcom_calendar_{as_of_date.isoformat()}.json"
     logger.info(f"FDA ADCOM: {len(events)} events cached → {cache_path}")
+    return len(events)
+
+
+def warm_fda_regulatory(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
+    """Fetch and cache FDA regulatory notices from Federal Register. Returns count."""
+    from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
+        build_product_ticker_map,
+        collect_fda_regulatory_notices,
+    )
+
+    logger.info("Building product-to-ticker map for FDA regulatory...")
+    product_map = build_product_ticker_map(data_dir)
+    if not product_map:
+        logger.warning("Empty product map — check pdufa_dates.json / fda_designations.json")
+        return 0
+
+    logger.info(f"Fetching FDA regulatory notices for {as_of_date}...")
+    events = collect_fda_regulatory_notices(
+        product_ticker_map=product_map,
+        as_of_date=as_of_date,
+        cache_dir=cache_dir,
+    )
+
+    cache_path = cache_dir / f"fda_regulatory_{as_of_date.isoformat()}.json"
+    logger.info(f"FDA regulatory: {len(events)} notices cached → {cache_path}")
     return len(events)
 
 
@@ -180,8 +207,8 @@ def warm_sec_8k(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
     against the prior cache, and only commits to the live path on pass.
     """
     from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-        collect_8k_timing_events,
         _versioned_cache_path,
+        collect_8k_timing_events,
     )
 
     # Short-circuit if live cache already exists
@@ -213,8 +240,7 @@ def warm_sec_8k(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
         accepted, reason = validate_cache_refresh("sec_8k", len(events), prior_count)
         if not accepted:
             logger.warning(
-                f"SEC 8-K refresh REJECTED: {reason} "
-                f"(new={len(events)}, prior={prior_count}) — keeping prior cache"
+                f"SEC 8-K refresh REJECTED: {reason} " f"(new={len(events)}, prior={prior_count}) — keeping prior cache"
             )
             return len(events)
 
@@ -281,10 +307,7 @@ def warm_ctgov(as_of_date: date, data_dir: Path, cache_dir: Path | None = None) 
     cutoff = as_of_date.isoformat()
 
     missing_lup = sum(1 for r in records if not (r.get("last_update_posted") or "").strip())
-    filtered = [
-        r for r in records
-        if (r.get("last_update_posted") or "")[:10] <= cutoff
-    ]
+    filtered = [r for r in records if (r.get("last_update_posted") or "")[:10] <= cutoff]
 
     cache_dir.mkdir(parents=True, exist_ok=True)
 
@@ -293,8 +316,7 @@ def warm_ctgov(as_of_date: date, data_dir: Path, cache_dir: Path | None = None) 
     accepted, reason = validate_cache_refresh("ctgov", len(filtered), prior_count)
     if not accepted:
         logger.warning(
-            f"CTGov refresh REJECTED: {reason} "
-            f"(new={len(filtered)}, prior={prior_count}) — keeping prior cache"
+            f"CTGov refresh REJECTED: {reason} " f"(new={len(filtered)}, prior={prior_count}) — keeping prior cache"
         )
         return len(filtered)
 
@@ -371,9 +393,9 @@ def warm_sec_8k_delta(
     Returns event count.
     """
     from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-        collect_8k_timing_events,
         PATTERN_VERSION,
         _versioned_cache_path,
+        collect_8k_timing_events,
     )
 
     # Validate seed exists
@@ -473,7 +495,7 @@ def warm_event_ledger(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
     Reads all cached sources (CTGov, SEC, FDA, PDUFA) and writes a unified
     ledger file for downstream consumption.  Returns entry count.
     """
-    from event_ledger import build_event_ledger, write_ledger_jsonl, LedgerConfig
+    from event_ledger import LedgerConfig, build_event_ledger, write_ledger_jsonl
 
     ledger_config = LedgerConfig(
         ctgov_cache_dir=cache_dir.parent / "ctgov",
@@ -507,9 +529,7 @@ def warm_price_pit(
         logger.warning(f"rankings.csv not found at {rankings_csv} — skipping price_pit")
         return 0
 
-    out_dir = cache_dir or (
-        PROJECT_ROOT / "data" / "caches" / "price_pit" / "PIT" / as_of_date.isoformat()
-    )
+    out_dir = cache_dir or (PROJECT_ROOT / "data" / "caches" / "price_pit" / "PIT" / as_of_date.isoformat())
     price_csv = data_dir / "price_history.csv"
     if not price_csv.exists():
         # Fallback to production_data
@@ -526,12 +546,8 @@ def warm_price_pit(
 
 def warm_ema_committee_events(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
     """Fetch and cache EMA committee agenda events. Returns count."""
-    from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-        collect_ema_committee_events,
-    )
-    from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-        build_product_ticker_map,
-    )
+    from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_committee_events
+    from wake_robin_data_pipeline.collectors.fda_adcom_collector import build_product_ticker_map
 
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -553,12 +569,8 @@ def warm_ema_committee_events(as_of_date: date, data_dir: Path, cache_dir: Path)
 
 def warm_ema_meeting_outcomes(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
     """Fetch and cache EMA meeting outcome events. Returns count."""
-    from wake_robin_data_pipeline.collectors.ema_committee_collector import (
-        collect_ema_meeting_outcomes,
-    )
-    from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-        build_product_ticker_map,
-    )
+    from wake_robin_data_pipeline.collectors.ema_committee_collector import collect_ema_meeting_outcomes
+    from wake_robin_data_pipeline.collectors.fda_adcom_collector import build_product_ticker_map
 
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -600,7 +612,9 @@ def warm_euctr(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
 
 
 def warm_ctis(
-    as_of_date: date, data_dir: Path, cache_dir: Path,
+    as_of_date: date,
+    data_dir: Path,
+    cache_dir: Path,
     enrich_detail: bool = True,
 ) -> int:
     """Fetch and cache CTIS trial records. Returns count."""
@@ -647,26 +661,15 @@ def warm_isrctn(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
 
 def warm_merged_trials(as_of_date: date, data_dir: Path, cache_root: Path) -> int:
     """Merge all per-registry trial caches into unified merged output. Returns count."""
-    from wake_robin_data_pipeline.collectors.trial_registry_merger import (
-        merge_trial_registries,
-        write_merged_cache,
-    )
+    from wake_robin_data_pipeline.collectors.trial_registry_merger import merge_trial_registries, write_merged_cache
 
     cache_root = Path(cache_root)
 
     # Load per-registry caches (empty list if absent)
-    ctgov_records = _load_registry_cache(
-        _CTGOV_CACHE_DIR / f"trial_records_{as_of_date.isoformat()}.json"
-    )
-    euctr_records = _load_registry_cache(
-        cache_root / "euctr" / f"euctr_{as_of_date.isoformat()}.json"
-    )
-    ctis_records = _load_registry_cache(
-        cache_root / "ctis" / f"ctis_{as_of_date.isoformat()}.json"
-    )
-    isrctn_records = _load_registry_cache(
-        cache_root / "isrctn" / f"isrctn_{as_of_date.isoformat()}.json"
-    )
+    ctgov_records = _load_registry_cache(_CTGOV_CACHE_DIR / f"trial_records_{as_of_date.isoformat()}.json")
+    euctr_records = _load_registry_cache(cache_root / "euctr" / f"euctr_{as_of_date.isoformat()}.json")
+    ctis_records = _load_registry_cache(cache_root / "ctis" / f"ctis_{as_of_date.isoformat()}.json")
+    isrctn_records = _load_registry_cache(cache_root / "isrctn" / f"isrctn_{as_of_date.isoformat()}.json")
 
     total_input = len(ctgov_records) + len(euctr_records) + len(ctis_records) + len(isrctn_records)
     if total_input == 0:
@@ -675,11 +678,18 @@ def warm_merged_trials(as_of_date: date, data_dir: Path, cache_root: Path) -> in
 
     logger.info(
         "Merging trials: ctgov=%d, euctr=%d, ctis=%d, isrctn=%d",
-        len(ctgov_records), len(euctr_records), len(ctis_records), len(isrctn_records),
+        len(ctgov_records),
+        len(euctr_records),
+        len(ctis_records),
+        len(isrctn_records),
     )
 
     merged = merge_trial_registries(
-        ctgov_records, euctr_records, ctis_records, isrctn_records, as_of_date,
+        ctgov_records,
+        euctr_records,
+        ctis_records,
+        isrctn_records,
+        as_of_date,
     )
 
     merged_dir = cache_root / "merged"
@@ -699,14 +709,15 @@ def _merge_calendar_sources(universe: list, data_dir: Path) -> list:
             load_company_calendar_sources,
             merge_universe_with_company_calendar_sources,
         )
+
         sources = load_company_calendar_sources(sources_path)
         if not sources:
             return universe
         merged, stats = merge_universe_with_company_calendar_sources(universe, sources)
         logger.info(
-            "Company calendar sources merged: ir_added=%d pr_added=%d "
-            "tickers_with_urls=%d->%d/%d unmapped=%d",
-            stats["ir_url_added"], stats["pr_rss_url_added"],
+            "Company calendar sources merged: ir_added=%d pr_added=%d " "tickers_with_urls=%d->%d/%d unmapped=%d",
+            stats["ir_url_added"],
+            stats["pr_rss_url_added"],
             stats["ir_url_before"] + stats["pr_rss_url_before"],
             stats["ir_url_after"] + stats["pr_rss_url_after"],
             stats["tickers_total"],
@@ -794,12 +805,8 @@ def warm_conference_calendar(
     edition_year: int | None = None,
 ) -> int:
     """Fetch and cache conference program + derived catalyst events. Returns count."""
-    from wake_robin_data_pipeline.collectors.conference_program_collector import (
-        collect_conference_derived_events,
-    )
-    from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-        build_product_ticker_map,
-    )
+    from wake_robin_data_pipeline.collectors.conference_program_collector import collect_conference_derived_events
+    from wake_robin_data_pipeline.collectors.fda_adcom_collector import build_product_ticker_map
 
     cache_dir = Path(cache_dir)
     cache_dir.mkdir(parents=True, exist_ok=True)
@@ -847,7 +854,7 @@ def main():
         "--sources",
         type=str,
         default="fda_adcom,sec_8k",
-        help="Comma-separated sources to warm: fda_adcom,sec_8k,ctgov,sec_13f,event_ledger,price_pit (default: fda_adcom,sec_8k)",
+        help="Comma-separated sources to warm: fda_adcom,fda_regulatory,sec_8k,ctgov,sec_13f,event_ledger,price_pit (default: fda_adcom,sec_8k)",
     )
     parser.add_argument(
         "--data-dir",
@@ -964,6 +971,15 @@ def main():
         except Exception as e:
             logger.error(f"FDA ADCOM warm failed: {e}")
 
+    fda_regulatory_count = 0
+    if "fda_regulatory" in sources:
+        fda_cache_dir = Path(args.fda_cache_dir)
+        fda_cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            fda_regulatory_count = warm_fda_regulatory(as_of, data_dir, fda_cache_dir)
+        except Exception as e:
+            logger.error(f"FDA regulatory warm failed: {e}")
+
     if "sec_8k" in sources:
         sec_cache_dir = Path(args.sec_cache_dir)
         sec_cache_dir.mkdir(parents=True, exist_ok=True)
@@ -979,14 +995,16 @@ def main():
         accepted, reason = validate_cache_refresh("sec_8k", sec_8k_count, prior_8k)
         if accepted:
             total += sec_8k_count
-        refresh_results.append({
-            "source": "sec_8k",
-            "count": sec_8k_count,
-            "prior_count": prior_8k,
-            "accepted": accepted,
-            "committed": accepted,
-            "reason": reason,
-        })
+        refresh_results.append(
+            {
+                "source": "sec_8k",
+                "count": sec_8k_count,
+                "prior_count": prior_8k,
+                "accepted": accepted,
+                "committed": accepted,
+                "reason": reason,
+            }
+        )
 
     sec_13f_count = 0
     if "sec_13f" in sources:
@@ -1004,14 +1022,16 @@ def main():
         except Exception as e:
             logger.error(f"CTGov warm failed: {e}")
         accepted, reason = validate_cache_refresh("ctgov", ctgov_records, prior_ctgov)
-        refresh_results.append({
-            "source": "ctgov",
-            "count": ctgov_records,
-            "prior_count": prior_ctgov,
-            "accepted": accepted,
-            "committed": accepted,
-            "reason": reason,
-        })
+        refresh_results.append(
+            {
+                "source": "ctgov",
+                "count": ctgov_records,
+                "prior_count": prior_ctgov,
+                "accepted": accepted,
+                "committed": accepted,
+                "reason": reason,
+            }
+        )
 
     ledger_entries = 0
     if "event_ledger" in sources:
@@ -1039,14 +1059,16 @@ def main():
         except Exception as e:
             logger.error(f"EMA committee events warm failed: {e}")
         accepted, reason = validate_cache_refresh("ema_agenda", ema_agenda_count, prior_ema_agenda)
-        refresh_results.append({
-            "source": "ema_agenda",
-            "count": ema_agenda_count,
-            "prior_count": prior_ema_agenda,
-            "accepted": accepted,
-            "committed": accepted,
-            "reason": reason,
-        })
+        refresh_results.append(
+            {
+                "source": "ema_agenda",
+                "count": ema_agenda_count,
+                "prior_count": prior_ema_agenda,
+                "accepted": accepted,
+                "committed": accepted,
+                "reason": reason,
+            }
+        )
 
     ema_outcomes_count = 0
     if "ema_outcomes" in sources:
@@ -1058,14 +1080,16 @@ def main():
         except Exception as e:
             logger.error(f"EMA meeting outcomes warm failed: {e}")
         accepted, reason = validate_cache_refresh("ema_outcomes", ema_outcomes_count, prior_ema_outcomes)
-        refresh_results.append({
-            "source": "ema_outcomes",
-            "count": ema_outcomes_count,
-            "prior_count": prior_ema_outcomes,
-            "accepted": accepted,
-            "committed": accepted,
-            "reason": reason,
-        })
+        refresh_results.append(
+            {
+                "source": "ema_outcomes",
+                "count": ema_outcomes_count,
+                "prior_count": prior_ema_outcomes,
+                "accepted": accepted,
+                "committed": accepted,
+                "reason": reason,
+            }
+        )
 
     euctr_count = 0
     if "euctr" in sources:
@@ -1080,7 +1104,9 @@ def main():
         try:
             ctis_cache_dir = Path(args.ctis_cache_dir)
             ctis_count = warm_ctis(
-                as_of, data_dir, ctis_cache_dir,
+                as_of,
+                data_dir,
+                ctis_cache_dir,
                 enrich_detail=not args.no_ctis_enrich_detail,
             )
         except Exception as e:
@@ -1105,15 +1131,18 @@ def main():
     conference_count = 0
     if "conference_calendar" in sources:
         from wake_robin_data_pipeline.collectors.conference_program_collector import ALL_CONFERENCE_SLUGS
+
         raw_conf = getattr(args, "conferences", "all")
-        conf_slugs = list(ALL_CONFERENCE_SLUGS) if raw_conf.strip() == "all" else [
-            s.strip() for s in raw_conf.split(",")
-        ]
+        conf_slugs = (
+            list(ALL_CONFERENCE_SLUGS) if raw_conf.strip() == "all" else [s.strip() for s in raw_conf.split(",")]
+        )
         conf_cache_dir = Path(args.conference_cache_dir)
         for slug in conf_slugs:
             try:
                 count = warm_conference_calendar(
-                    as_of, data_dir, conf_cache_dir,
+                    as_of,
+                    data_dir,
+                    conf_cache_dir,
                     conference_slug=slug,
                     edition_year=args.conference_year,
                 )
@@ -1143,16 +1172,23 @@ def main():
         cache_root.mkdir(parents=True, exist_ok=True)
         sidecar_path = cache_root / f"cache_refresh_{as_of.isoformat()}.json"
         try:
-            sidecar_path.write_text(json.dumps({
-                "schema": "cache_refresh.v1",
-                "as_of_date": as_of.isoformat(),
-                "results": refresh_results,
-            }, indent=2))
+            sidecar_path.write_text(
+                json.dumps(
+                    {
+                        "schema": "cache_refresh.v1",
+                        "as_of_date": as_of.isoformat(),
+                        "results": refresh_results,
+                    },
+                    indent=2,
+                )
+            )
             logger.info(f"Refresh diagnostics → {sidecar_path}")
         except OSError as e:
             logger.warning(f"Could not write refresh sidecar: {e}")
 
     parts = [f"{total} events"]
+    if fda_regulatory_count:
+        parts.append(f"{fda_regulatory_count} FDA regulatory notices")
     if sec_13f_count:
         parts.append(f"{sec_13f_count} 13F managers")
     if ctgov_records:

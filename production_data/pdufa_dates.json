@@ -50,5 +50,44 @@
     "source_url": "https://www.sec.gov/Archives/edgar/data/899460/000119312525265810/mnkd-ex99_1.htm",
     "as_of_disclosed_at": "2025-11-05",
     "notes": "FDA accepted sBLA for Afrezza in pediatric population. PDUFA date May 29, 2026. Verified from Q3 2025 earnings 8-K Exhibit 99.1 (accession 0001193125-25-265810)."
+  },
+  {
+    "ticker": "BIIB",
+    "drug_name": "SPINRAZA (nusinersen) high dose",
+    "indication": "Spinal Muscular Atrophy (high dose regimen)",
+    "pdufa_date": "2026-04-03",
+    "event_type": "PDUFA",
+    "submission_type": "sBLA",
+    "confidence": "HIGH",
+    "source": "SEC_8K",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/875045/000087504525000047/0000875045-25-000047-index.htm",
+    "as_of_disclosed_at": "2025-10-30",
+    "notes": "SPINRAZA high dose regimen U.S. FDA PDUFA April 3, 2026. Already approved in Japan and E.U. Verified from Q3 2025 earnings 8-K (accession 0000875045-25-000047)."
+  },
+  {
+    "ticker": "BIIB",
+    "drug_name": "LEQEMBI (lecanemab) subcutaneous",
+    "indication": "Alzheimer's Disease (SC formulation)",
+    "pdufa_date": "2026-05-24",
+    "event_type": "PDUFA",
+    "submission_type": "sBLA",
+    "confidence": "HIGH",
+    "source": "SEC_8K",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/875045/000087504526000011/exhibit991-q42025pressrele.htm",
+    "as_of_disclosed_at": "2026-02-06",
+    "notes": "LEQEMBI subcutaneous treatment initiation granted FDA Priority Review with PDUFA date May 24, 2026. Verified from Q4 2025 earnings 8-K press release (accession 0000875045-26-000011)."
+  },
+  {
+    "ticker": "REPL",
+    "drug_name": "RP1 (vusolimogene oderparepvec)",
+    "indication": "Anti-PD-1 Failed Melanoma",
+    "pdufa_date": "2026-04-10",
+    "event_type": "PDUFA",
+    "submission_type": "BLA",
+    "confidence": "HIGH",
+    "source": "SEC_8K",
+    "source_url": "https://www.sec.gov/Archives/edgar/data/1737953/000110465926002721/tm262890d1_ex99-1.htm",
+    "as_of_disclosed_at": "2026-01-12",
+    "notes": "RP1 for anti-PD-1 failed melanoma, near-term PDUFA date April 10, 2026. Commercial team launch ready. Verified from JPM 2026 presentation 8-K Exhibit 99.1 (accession 0001104659-26-002721)."
   }
 ]
