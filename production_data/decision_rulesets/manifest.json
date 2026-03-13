@@ -332,6 +332,16 @@
       "notes": "Derived from v1.11.0 (7177a4ea). Identical parameters + exposure_neutralize_sleeve=core, exposure_neutralize_factors=[beta,drawdown,vol,mcap]. ARCHIVED: acceptance replay (30 dates, 2026-02-02..2026-03-10) shows real rank effects after wiring fix but ROLLBACK on cumulative hedged delta (-0.36pp vs +0.20pp threshold). Stability passed (top-20 median overlap 1.00, turnover delta 0). Both core sub-sleeves (binary_91_180, less_binary) contributed negative deltas. Earlier matrix PROMOTE was a false positive: IC was measured on alpha_cohort_pct which the live sort key (clinical_optionality_pct_dev) did not consume.",
       "updated_by": "acceptance_replay_ruleset.py",
       "updated_at": "2026-03-12T00:00:00Z"
+    },
+    {
+      "id": "2b1c8959",
+      "file": "v1.13.0_catalyst_tilt_on_candidate.json",
+      "created_at": "2026-03-13",
+      "engine_version": "v1.3.0",
+      "description": "Catalyst tilt ON: L3 sizing multipliers NEAR=1.10/MID=1.05/FAR=0.95/MISSING=0.90",
+      "status": "candidate",
+      "requires_replay": false,
+      "notes": "Derived from v1.11.0 (7177a4ea). Only change: enable_catalyst_tilt=true (mults already present). Analytical sweep (34 dates, 2025-06..2025-12): all 16 grid variants beat baseline. Best (default mults): +0.66pp 63d (80% win), +1.16pp 84d (96% win). Turnover impact <1%. Pure L3 sizing — no membership or sort order change. Prior Feb 2026 validation parked (10 dates, +0.18pp); this sweep supersedes with 3x more data and monotone grid ordering."
     }
   ]
 }
