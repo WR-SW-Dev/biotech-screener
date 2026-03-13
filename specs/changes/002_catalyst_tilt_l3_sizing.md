@@ -75,8 +75,40 @@ Average across 34 dates:
 3. If stable: promote via `scripts/promote_ruleset.py`
 4. Track via `catalyst_tilt_applied` / `catalyst_tilt_mult` columns in rankings.csv
 
+## Promotion Battery (2026-03-13)
+
+**Overall: FAIL** — 4/4 buckets PROMOTE, weekly gate FAIL.
+
+Bucketed verdicts (all PROMOTE):
+
+| Bucket | Delta 63d | Delta 84d |
+|--------|-----------|-----------|
+| binary_0_30 | +10.6pp | +15.4pp |
+| binary_31_90 | +7.4pp | +5.8pp |
+| binary_91_180 | +10.3pp | +12.8pp |
+| less_binary | +21.6pp | +30.4pp |
+
+Weekly gate failures (5/11 checks passed):
+- `bucket_binary_31_90` (policy): -1.81pp vs -0.20pp threshold
+- `bucket_less_binary` (policy): -0.21pp vs -0.20pp (barely fails)
+- `global_mean_hedged`: -0.04pp vs -0.01pp (barely fails)
+- `global_cum_hedged`: -2.43pp vs -1.00pp
+- `bucket_binary_91_180` (global): -1.42pp vs -0.20pp
+- `bucket_less_binary` (global): -0.21pp vs -0.20pp (barely fails)
+
+Policy-level weekly metrics PASS: `+4.14pp` cum hedged, `+0.13pp` mean hedged.
+
+**Decision**: Signal evidence positive, governance evidence insufficient.
+Shadow for 3-5 more weeks, then re-run `run_promotion_battery.py` on
+longer date manifest. Do not promote until weekly verdict clears. If
+candidate continues to fail narrowly on per-bucket weekly rails while
+policy/global remain positive, consider L3-specific governance calibration
+as a follow-up task — but do not loosen thresholds off one case.
+
 ## Artifacts
 
 - Sweep results: `output/research/catalyst_tilt_sweep/catalyst_tilt_sweep.json`
 - Sweep script: `scripts/research/eval_catalyst_tilt_sweep.py`
 - Prior validation: `artifacts/catalyst_tilt_validation_2026-02-12.md`
+- Promotion packet: `output/promotion_battery_catalyst_tilt/PROMOTION_PACKET.json`
+- Candidate snapshots: `data/snapshots_catalyst_tilt_2b1c8959/` (34 dates)

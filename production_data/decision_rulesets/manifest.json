@@ -341,7 +341,7 @@
       "description": "Catalyst tilt ON: L3 sizing multipliers NEAR=1.10/MID=1.05/FAR=0.95/MISSING=0.90",
       "status": "candidate",
       "requires_replay": false,
-      "notes": "Derived from v1.11.0 (7177a4ea). Only change: enable_catalyst_tilt=true (mults already present). Analytical sweep (34 dates, 2025-06..2025-12): all 16 grid variants beat baseline. Best (default mults): +0.66pp 63d (80% win), +1.16pp 84d (96% win). Turnover impact <1%. Pure L3 sizing — no membership or sort order change. Prior Feb 2026 validation parked (10 dates, +0.18pp); this sweep supersedes with 3x more data and monotone grid ordering."
+      "notes": "Derived from v1.11.0 (7177a4ea). Only change: enable_catalyst_tilt=true (mults already present). Analytical sweep (34 dates, 2025-06..2025-12): all 16 grid variants beat baseline. Best (default mults): +0.66pp 63d (80% win), +1.16pp 84d (96% win). Turnover impact <1%. Pure L3 sizing — no membership or sort order change. PROMOTION BATTERY 2026-03-13: 4/4 buckets PROMOTE (+5.8pp to +30.4pp), but weekly gate FAIL — bucket_binary_31_90 -1.81pp and global_cum_hedged -2.43pp trip tight per-bucket guardrails. Policy-level weekly metrics PASS (+4.14pp cum, +0.13pp mean). DECISION: shadow for 3-5 more weeks, then re-gate. Do not promote until weekly verdict clears."
     }
   ]
 }
