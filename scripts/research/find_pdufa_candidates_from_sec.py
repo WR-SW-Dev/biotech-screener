@@ -6,10 +6,14 @@ Scans the SEC 8-K catalyst cache for filings mentioning PDUFA/NDA/BLA keywords,
 cross-references against the universe, and outputs candidate entries for manual
 verification and addition to pdufa_dates.json.
 
+Two output formats:
+  --format discovery  (default) CSV for triage — ticker, keyword_excerpt, dates_found
+  --format ingestion  JSON shaped for collect_pdufa_forward.py --validate/--ingest
+
 Usage:
     python scripts/research/find_pdufa_candidates_from_sec.py
+    python scripts/research/find_pdufa_candidates_from_sec.py --format ingestion --out-json candidates.json
     python scripts/research/find_pdufa_candidates_from_sec.py --as-of-date 2026-03-12
-    python scripts/research/find_pdufa_candidates_from_sec.py --out-csv output/pdufa_candidates.csv
 """
 
 import argparse
@@ -20,6 +24,7 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Dict, List
 
 # Ensure project root is on sys.path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -32,11 +37,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger("find_pdufa_candidates")
 
-# Keywords that suggest a PDUFA/regulatory action date
+# Keywords that suggest a PDUFA/regulatory action date.
+# Grouped by category for maintainability:
+#   1. Submission types: PDUFA, NDA, BLA, sNDA, sBLA
+#   2. Action-date phrasing: action date, target date, target action date,
+#      FDA action date, DUFA date
+#   3. Review classification: priority review, standard review
+#   4. Acceptance/filing: accepted for filing/review, acceptance for filing/review,
+#      accepted for review, filing accepted
+#   5. Post-decision: complete response, complete response letter
+#   6. Advisory committee: advisory committee meeting, ADCOM
 _PDUFA_KEYWORDS = re.compile(
-    r"(?i)\b(PDUFA|NDA|BLA|sNDA|sBLA|action\s+date|target\s+date|user\s+fee|"
-    r"prescription\s+drug\s+user\s+fee|priority\s+review|standard\s+review|"
-    r"complete\s+response|accept(?:ed|ance)\s+for\s+(?:filing|review))\b"
+    r"(?i)\b("
+    # Submission types
+    r"PDUFA|NDA|BLA|sNDA|sBLA"
+    r"|user\s+fee|prescription\s+drug\s+user\s+fee|DUFA\s+date"
+    # Action-date phrasing
+    r"|(?:FDA\s+)?action\s+date|target\s+(?:action\s+)?date"
+    # Review classification
+    r"|priority\s+review|standard\s+review"
+    # Acceptance / filing
+    r"|accept(?:ed|ance)\s+for\s+(?:filing|review)|filing\s+accepted"
+    # Post-decision
+    r"|complete\s+response(?:\s+letter)?"
+    # Advisory committee
+    r"|advisory\s+committee\s+meeting|ADCOM"
+    r")\b"
 )
 
 # Date patterns in event text: "April 30, 2026" or "2026-04-30"
@@ -44,6 +70,17 @@ _DATE_IN_TEXT = re.compile(
     r"(\b(?:January|February|March|April|May|June|July|August|September|"
     r"October|November|December)\s+\d{1,2},?\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b)"
 )
+
+# Submission type extraction from keyword text
+_SUBMISSION_TYPE = re.compile(r"\b(sNDA|sBLA|NDA|BLA)\b", re.IGNORECASE)
+
+# Normalise extracted submission types to canonical form
+_SUBMISSION_CANONICAL = {
+    "nda": "NDA",
+    "bla": "BLA",
+    "snda": "sNDA",
+    "sbla": "sBLA",
+}
 
 
 def load_universe(data_dir: Path) -> set:
@@ -135,6 +172,79 @@ def scan_8k_cache(cache_dir: Path, universe: set, existing_pdufa: set) -> list:
     return candidates
 
 
+def _extract_submission_type(text: str) -> str:
+    """Extract submission type (NDA/BLA/sNDA/sBLA) from text."""
+    m = _SUBMISSION_TYPE.search(text)
+    if m:
+        return _SUBMISSION_CANONICAL.get(m.group(1).lower(), "")
+    return ""
+
+
+def format_for_ingestion(
+    candidates: List[Dict[str, str]],
+    as_of_date: str = "",
+) -> List[Dict[str, str]]:
+    """Convert discovery-format candidates to ingestion-format records.
+
+    Ingestion records are shaped for collect_pdufa_forward.py --validate/--ingest.
+    Fields that require manual review are left empty with a _review_status marker.
+
+    Field mapping:
+        event_date      → pdufa_date (NEEDS_REVIEW — may be imprecise)
+        disclosed_at    → as_of_disclosed_at
+        (hardcoded)     → source = "SEC_8K"
+        (empty)         → source_url (reviewer fills in from EDGAR)
+        keyword_excerpt → notes (with dates_found context)
+        (extracted)     → submission_type (from keyword text)
+    """
+    ingestion_records: List[Dict[str, str]] = []
+    ref_date = as_of_date or date.today().isoformat()
+
+    for c in candidates:
+        keyword_excerpt = c.get("keyword_excerpt", "")
+        dates_found = c.get("dates_found", "")
+        source_file = c.get("source_file", "")
+
+        # Build notes with discovery context for the reviewer
+        notes_parts = [f"SEC 8-K keyword match: {keyword_excerpt}"]
+        if dates_found:
+            notes_parts.append(f"Dates mentioned: {dates_found}")
+        notes_parts.append(f"Source cache: {source_file}")
+        notes_parts.append(f"Scanned: {ref_date}")
+
+        ingestion_records.append(
+            {
+                "ticker": c.get("ticker", ""),
+                "pdufa_date": c.get("event_date", ""),
+                "event_type": "PDUFA",
+                "submission_type": _extract_submission_type(keyword_excerpt),
+                "confidence": c.get("confidence", ""),
+                "source": "SEC_8K",
+                "source_url": "",
+                "as_of_disclosed_at": c.get("disclosed_at", ""),
+                "drug_name": "",
+                "indication": "",
+                "notes": "; ".join(notes_parts),
+                "_review_status": "NEEDS_REVIEW",
+                "_source_file": source_file,
+            }
+        )
+
+    return ingestion_records
+
+
+_DISCOVERY_FIELDNAMES = [
+    "ticker",
+    "event_type",
+    "event_date",
+    "disclosed_at",
+    "confidence",
+    "keyword_excerpt",
+    "dates_found",
+    "source_file",
+]
+
+
 def main():
     parser = argparse.ArgumentParser(description="Find PDUFA candidates from SEC 8-K cache for manual verification.")
     parser.add_argument(
@@ -153,13 +263,26 @@ def main():
         "--out-csv",
         type=str,
         default=None,
-        help="Output CSV path (default: stdout)",
+        help="Output CSV path (discovery format only, default: stdout)",
+    )
+    parser.add_argument(
+        "--out-json",
+        type=str,
+        default=None,
+        help="Output JSON path (ingestion format only)",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["discovery", "ingestion"],
+        default="discovery",
+        dest="output_format",
+        help="Output format: discovery (CSV triage) or ingestion (JSON for collect_pdufa_forward)",
     )
     parser.add_argument(
         "--as-of-date",
         type=str,
         default=date.today().isoformat(),
-        help="Reference date (for logging only)",
+        help="Reference date (used in ingestion notes and logging)",
     )
     args = parser.parse_args()
 
@@ -187,28 +310,31 @@ def main():
     # Sort by ticker
     candidates.sort(key=lambda c: c["ticker"])
 
-    # Output
-    fieldnames = [
-        "ticker",
-        "event_type",
-        "event_date",
-        "disclosed_at",
-        "confidence",
-        "keyword_excerpt",
-        "dates_found",
-        "source_file",
-    ]
+    if args.output_format == "ingestion":
+        records = format_for_ingestion(candidates, as_of_date=args.as_of_date)
+        out_path = Path(args.out_json) if args.out_json else None
+        if out_path:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(
+                json.dumps(records, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            logger.info(f"Wrote {len(records)} ingestion candidates → {out_path}")
+        else:
+            print(json.dumps(records, indent=2, ensure_ascii=False))
+        return 0
 
+    # Discovery format (CSV)
     if args.out_csv:
         out_path = Path(args.out_csv)
         out_path.parent.mkdir(parents=True, exist_ok=True)
         with open(out_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=_DISCOVERY_FIELDNAMES)
             writer.writeheader()
             writer.writerows(candidates)
         logger.info(f"Wrote {len(candidates)} candidates → {out_path}")
     else:
-        writer = csv.DictWriter(sys.stdout, fieldnames=fieldnames)
+        writer = csv.DictWriter(sys.stdout, fieldnames=_DISCOVERY_FIELDNAMES)
         writer.writeheader()
         writer.writerows(candidates)
 
