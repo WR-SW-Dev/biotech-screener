@@ -33,7 +33,7 @@
       "description": "No logic change. Version bump to pair with drift guardrail calibration (496b27b).",
       "status": "retired",
       "requires_replay": false,
-      "notes": "Identical parameters to v1.2.1_candidate. Drift guardrails tightened: rs_morningstar 70\u219285%, rs_unknown 10\u21928.5%, cat_eligible 80\u219295%, cs_ctgov 50\u219237%. Superseded by v1.3.0_candidate (enable_catalyst_priority).",
+      "notes": "Identical parameters to v1.2.1_candidate. Drift guardrails tightened: rs_morningstar 70→85%, rs_unknown 10→8.5%, cat_eligible 80→95%, cs_ctgov 50→37%. Superseded by v1.3.0_candidate (enable_catalyst_priority).",
       "updated_by": "promote_ruleset.py",
       "updated_at": "2026-02-13T00:00:00Z"
     },
@@ -127,7 +127,7 @@
       "description": "Commercial tier promotion: tier_first mode (commercial A-tier competes with dev B/C in portfolio)",
       "status": "candidate",
       "requires_replay": true,
-      "notes": "Same params as v1.3.3 + tiering_priority_mode=tier_first, tier_a_commercial_floor=0.85, tier_b_commercial_floor=0.60. Candidate \u2014 no promotion until replay + review.",
+      "notes": "Same params as v1.3.3 + tiering_priority_mode=tier_first, tier_a_commercial_floor=0.85, tier_b_commercial_floor=0.60. Candidate — no promotion until replay + review.",
       "updated_by": "manual_bootstrap",
       "updated_at": "2026-02-16T00:00:00Z"
     },
@@ -136,7 +136,7 @@
       "file": "v1.3.4_clinical_sort_candidate.json",
       "created_at": "2026-02-16",
       "engine_version": "v1.3.0",
-      "description": "Clinical sort signal: tier-local z, stage-gated (mid=1.0, late=1.5), pos-only, clamped \u00b12.0, w=1.0",
+      "description": "Clinical sort signal: tier-local z, stage-gated (mid=1.0, late=1.5), pos-only, clamped ±2.0, w=1.0",
       "status": "candidate",
       "requires_replay": true,
       "notes": "Same params as v1.3.3 + enable_clinical_sort_signal=true, clinical_sort_weight=1.0, clinical_positive_only=true, clinical_stage_mults early=0/mid=1/late=1.5. Replay shows: 100% top-20/60 overlap, max churn 2, zero tier changes. Clinical affects within-tier ordering only.",
@@ -163,7 +163,7 @@
       "description": "Alpha modifier tiebreak mode: OOS alpha nudges within-tier ordering as last tiebreaker",
       "status": "retired",
       "requires_replay": true,
-      "notes": "Same params as v1.5.1_coinvest_off + alpha_modifier_mode=tiebreak, alpha_modifier_weight=0.05, alpha_table_rebuild_policy=if_missing. RETIRED: tiebreak slot unreachable \u2014 unique upstream floats (alpha_cohort_pct) in sort key mean no two rows ever tie at positions 0-7. Zero rank shifts across 9 dates. Superseded by v1.6.1 (within_tier).",
+      "notes": "Same params as v1.5.1_coinvest_off + alpha_modifier_mode=tiebreak, alpha_modifier_weight=0.05, alpha_table_rebuild_policy=if_missing. RETIRED: tiebreak slot unreachable — unique upstream floats (alpha_cohort_pct) in sort key mean no two rows ever tie at positions 0-7. Zero rank shifts across 9 dates. Superseded by v1.6.1 (within_tier).",
       "updated_by": "manual_bootstrap",
       "updated_at": "2026-02-26T00:00:00Z"
     },
@@ -184,7 +184,7 @@
       "file": "v1.5.1_coinvest_off.json",
       "created_at": "2026-02-21",
       "engine_version": "v1.3.0",
-      "description": "Coinvest sort OFF (w=0.0) + alpha cohort + clinical sort \u2014 actual pinned production ruleset",
+      "description": "Coinvest sort OFF (w=0.0) + alpha cohort + clinical sort — actual pinned production ruleset",
       "status": "retired",
       "requires_replay": true,
       "notes": "Was PHASE2_PINNED_RULESET_ID in run_screen.py but missing from manifest (oversight). Same as v1.5.0 but coinvest_sort_weight=0.0 (disabled). Superseded by v1.6.1 (alpha modifier within-tier, 0c1129f6).",
@@ -247,7 +247,7 @@
       "status": "rejected",
       "requires_replay": true,
       "description": "v1.9.0 coinvest sort signal at w=0.40 (optionality anchor). Empirically validated 2020-2025: +0.94pp/+0.55pp/+2.39pp spread at 63/84/126d vs fb0af0ac baseline, OOS t-stats 8-12, contra monotone. First weight to clear all governance bars.",
-      "notes": "REJECTED: look-ahead contaminated \u2014 all coinvest data from static Q3 2025 holdings_snapshots.json with no date field. PIT-correct re-evaluation showed signal harmful (IS 2025 paired t=-3.4 to -4.4 for level, t=-6.4 to -8.7 for delta). NOT PROMOTED."
+      "notes": "REJECTED: look-ahead contaminated — all coinvest data from static Q3 2025 holdings_snapshots.json with no date field. PIT-correct re-evaluation showed signal harmful (IS 2025 paired t=-3.4 to -4.4 for level, t=-6.4 to -8.7 for delta). NOT PROMOTED."
     },
     {
       "id": "4f12a7f8",
@@ -269,7 +269,7 @@
       "description": "Portfolio mechanics: rebalance_buffer_ranks=30 (existing holdings stay unless rank > K+30)",
       "status": "retired",
       "requires_replay": false,
-      "notes": "Derived from v1.8.2 (4f12a7f8). 4x4 turnover sweep (buffer x cap) OOS 2020-2024: buffer=30 dominates with +0.98pp 126d net, turnover 6.17%->2.03%. IS 2025 validation confirms improvement. No rerank needed \u2014 buffer is eval-time portfolio construction, not snapshot sort order.",
+      "notes": "Derived from v1.8.2 (4f12a7f8). 4x4 turnover sweep (buffer x cap) OOS 2020-2024: buffer=30 dominates with +0.98pp 126d net, turnover 6.17%->2.03%. IS 2025 validation confirms improvement. No rerank needed — buffer is eval-time portfolio construction, not snapshot sort order.",
       "updated_by": "promote_ruleset.py",
       "updated_at": "2026-03-06T15:50:49Z"
     },
@@ -298,14 +298,14 @@
       "updated_at": "2026-03-10T00:00:00Z"
     },
     {
-      "id": "7177a4ea",
+      "id": "9f1f4587",
       "file": "v1.11.0_b91_clinical_quality_w05_candidate.json",
       "created_at": "2026-03-10",
       "engine_version": "v1.3.0",
       "description": "binary_91_180 clinical quality sort tilt: clinical_quality_composite for CLINICAL family (w=0.5)",
       "status": "active",
       "requires_replay": true,
-      "notes": "Derived from v1.10.0 (bebe73f8). binary_91_180_sort_mode=clinical_quality, binary_91_180_clinical_quality_weight=0.5. Weekly A/B (eval_b91_clinical_quality_weekly_ab.py): cum hedged delta +2.58pp, mean weekly delta +0.03pp, turnover delta -0.02pp. CLINICAL-family names in less_binary bucket get clinical_quality_composite blended into sort anchor.",
+      "notes": "Derived from v1.10.0 (bebe73f8). binary_91_180_sort_mode=clinical_quality, binary_91_180_clinical_quality_weight=0.5. Weekly A/B (eval_b91_clinical_quality_weekly_ab.py): cum hedged delta +2.58pp, mean weekly delta +0.03pp, turnover delta -0.02pp. CLINICAL-family names in less_binary bucket get clinical_quality_composite blended into sort anchor. Updated 2026-03-14: enabled far_window_days=540 for clinical coverage hydration.",
       "updated_by": "promote_ruleset.py",
       "updated_at": "2026-03-10T00:00:00Z"
     },
