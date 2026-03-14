@@ -90,6 +90,165 @@ def black_scholes_greeks(
         return nan_result
 
 
+def _bs_price(S: float, K: float, T: float, r: float, sigma: float, option_type: str) -> float:
+    """BS price only (no Greeks), for use in the IV solver inner loop."""
+    if S <= 0 or K <= 0 or T <= 0 or sigma <= 0:
+        return float("nan")
+    sqrt_T = math.sqrt(T)
+    d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * sqrt_T)
+    d2 = d1 - sigma * sqrt_T
+    if option_type == "call":
+        return S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+    return K * math.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+
+
+def implied_volatility(
+    market_price: float,
+    S: float,
+    K: float,
+    T: float,
+    r: float = 0.05,
+    option_type: str = "call",
+    tol: float = 1e-6,
+    max_iter: int = 100,
+) -> float:
+    """Solve for implied volatility using Brent's method.
+
+    Given observed option market price and BS inputs, find the sigma
+    that makes BS_price(sigma) = market_price.
+
+    Args:
+        market_price: Observed option close price.
+        S: Underlying price.
+        K: Strike price.
+        T: Time to expiry in years.
+        r: Risk-free rate.
+        option_type: "call" or "put".
+        tol: Convergence tolerance.
+        max_iter: Maximum iterations.
+
+    Returns:
+        Implied volatility (annualized), or NaN if solver fails.
+    """
+    if market_price <= 0 or S <= 0 or K <= 0 or T <= 0:
+        return float("nan")
+
+    # Intrinsic value check — price must exceed intrinsic
+    if option_type == "call":
+        intrinsic = max(S - K * math.exp(-r * T), 0)
+    else:
+        intrinsic = max(K * math.exp(-r * T) - S, 0)
+    if market_price < intrinsic - tol:
+        return float("nan")
+
+    try:
+        from scipy.optimize import brentq
+
+        def objective(sigma: float) -> float:
+            return _bs_price(S, K, T, r, sigma, option_type) - market_price
+
+        # Search in [0.01, 10.0] — covers 1% to 1000% annualized IV
+        return brentq(objective, 0.01, 10.0, xtol=tol, maxiter=max_iter)
+    except (ValueError, RuntimeError):
+        return float("nan")
+
+
+def compute_historical_greeks(
+    option_close: float,
+    underlying_close: float,
+    strike: float,
+    days_to_expiry: int,
+    option_type: str,
+    r: float = 0.05,
+) -> Dict[str, Any]:
+    """Compute full Greeks from a historical option close price.
+
+    Solves for implied vol from the market price, then computes all
+    BS Greeks at that IV. This is the core function for building
+    historical IV surfaces and Greek time series from Massive day aggs.
+
+    Args:
+        option_close: Historical option close price (from day aggs).
+        underlying_close: Historical underlying close (from price_history.csv).
+        strike: Strike price (parsed from option ticker).
+        days_to_expiry: Calendar days to expiry on that date.
+        option_type: "call" or "put".
+        r: Risk-free rate.
+
+    Returns:
+        Dict with implied_vol plus all BS Greeks, or nans on failure.
+    """
+    T = days_to_expiry / 365.0 if days_to_expiry > 0 else 0.0
+
+    iv = implied_volatility(option_close, underlying_close, strike, T, r, option_type)
+    if math.isnan(iv):
+        return {
+            "implied_vol": float("nan"),
+            "price": option_close,
+            "delta": float("nan"),
+            "gamma": float("nan"),
+            "vega": float("nan"),
+            "theta": float("nan"),
+        }
+
+    greeks = black_scholes_greeks(underlying_close, strike, T, r, iv, option_type)
+    greeks["implied_vol"] = round(iv, 6)
+    return greeks
+
+
+def parse_option_ticker(ticker: str) -> Dict[str, Any]:
+    """Parse an OCC/OPRA option ticker into components.
+
+    Format: O:BIIB260403C00200000
+    → underlying=BIIB, expiry=2026-04-03, type=call, strike=200.00
+
+    Returns dict with underlying, expiry_str, option_type, strike.
+    """
+    t = ticker
+    if t.startswith("O:"):
+        t = t[2:]
+    if len(t) < 15:
+        return {"underlying": "", "expiry_str": "", "option_type": "", "strike": 0.0}
+
+    # Underlying: letters at start
+    i = 0
+    while i < len(t) and t[i].isalpha():
+        i += 1
+    underlying = t[:i].upper()
+    rest = t[i:]
+
+    if len(rest) < 15:
+        return {"underlying": underlying, "expiry_str": "", "option_type": "", "strike": 0.0}
+
+    # Date: 6 digits YYMMDD
+    date_part = rest[:6]
+    try:
+        yy = int(date_part[:2])
+        mm = int(date_part[2:4])
+        dd = int(date_part[4:6])
+        expiry_str = f"20{yy:02d}-{mm:02d}-{dd:02d}"
+    except (ValueError, IndexError):
+        expiry_str = ""
+
+    # Type: C or P
+    type_char = rest[6] if len(rest) > 6 else ""
+    option_type = "call" if type_char == "C" else "put" if type_char == "P" else ""
+
+    # Strike: 8 digits, divide by 1000
+    strike_str = rest[7:15] if len(rest) >= 15 else ""
+    try:
+        strike = int(strike_str) / 1000.0
+    except (ValueError, IndexError):
+        strike = 0.0
+
+    return {
+        "underlying": underlying,
+        "expiry_str": expiry_str,
+        "option_type": option_type,
+        "strike": strike,
+    }
+
+
 def iv_crush_stress_test(
     chain_contracts: List[Dict[str, Any]],
     underlying_price: float,

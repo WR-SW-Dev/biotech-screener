@@ -7,7 +7,13 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from common.options_greeks import black_scholes_greeks, iv_crush_stress_test
+from common.options_greeks import (
+    black_scholes_greeks,
+    compute_historical_greeks,
+    implied_volatility,
+    iv_crush_stress_test,
+    parse_option_ticker,
+)
 
 
 class TestBlackScholesGreeks:
@@ -144,3 +150,86 @@ class TestIVCrushStressTest:
         # After crush, breakeven should be ~5-6%
         assert result["breakeven_move_pct"] is not None
         assert result["breakeven_move_pct"] > 0
+
+
+class TestImpliedVolatility:
+    def test_roundtrip_call(self):
+        """Compute BS price, then solve back for IV — should match."""
+        S, K, T, r, sigma = 100, 100, 0.25, 0.05, 0.40
+        g = black_scholes_greeks(S, K, T, r, sigma, "call")
+        recovered = implied_volatility(g["price"], S, K, T, r, "call")
+        assert abs(recovered - sigma) < 0.001
+
+    def test_roundtrip_put(self):
+        S, K, T, r, sigma = 150, 140, 0.5, 0.05, 0.60
+        g = black_scholes_greeks(S, K, T, r, sigma, "put")
+        recovered = implied_volatility(g["price"], S, K, T, r, "put")
+        assert abs(recovered - sigma) < 0.001
+
+    def test_high_iv(self):
+        """Biotech with 200% IV should solve correctly."""
+        S, K, T, r, sigma = 50, 50, 0.1, 0.05, 2.00
+        g = black_scholes_greeks(S, K, T, r, sigma, "call")
+        recovered = implied_volatility(g["price"], S, K, T, r, "call")
+        assert abs(recovered - sigma) < 0.01
+
+    def test_zero_price_returns_nan(self):
+        assert math.isnan(implied_volatility(0, 100, 100, 0.25, 0.05, "call"))
+
+    def test_negative_price_returns_nan(self):
+        assert math.isnan(implied_volatility(-1, 100, 100, 0.25, 0.05, "call"))
+
+    def test_zero_T_returns_nan(self):
+        assert math.isnan(implied_volatility(5, 100, 100, 0, 0.05, "call"))
+
+
+class TestParseOptionTicker:
+    def test_standard_call(self):
+        result = parse_option_ticker("O:BIIB260403C00200000")
+        assert result["underlying"] == "BIIB"
+        assert result["expiry_str"] == "2026-04-03"
+        assert result["option_type"] == "call"
+        assert result["strike"] == 200.0
+
+    def test_standard_put(self):
+        result = parse_option_ticker("O:MRNA260320P00025000")
+        assert result["underlying"] == "MRNA"
+        assert result["expiry_str"] == "2026-03-20"
+        assert result["option_type"] == "put"
+        assert result["strike"] == 25.0
+
+    def test_fractional_strike(self):
+        result = parse_option_ticker("O:VERA260620C00007500")
+        assert result["underlying"] == "VERA"
+        assert result["strike"] == 7.5
+
+    def test_no_prefix(self):
+        result = parse_option_ticker("BIIB260403C00200000")
+        assert result["underlying"] == "BIIB"
+        assert result["option_type"] == "call"
+
+    def test_empty(self):
+        result = parse_option_ticker("")
+        assert result["underlying"] == ""
+
+
+class TestComputeHistoricalGreeks:
+    def test_basic(self):
+        """Given a known option price, recover IV and compute Greeks."""
+        # Use BS to generate a known price at IV=0.50
+        S, K, T_days, r, sigma = 100, 100, 30, 0.05, 0.50
+        g = black_scholes_greeks(S, K, T_days / 365, r, sigma, "call")
+        price = g["price"]
+
+        # Now recover from the price
+        result = compute_historical_greeks(price, S, K, T_days, "call", r)
+        assert abs(result["implied_vol"] - 0.50) < 0.01
+        assert abs(result["delta"] - g["delta"]) < 0.01
+
+    def test_zero_dte(self):
+        result = compute_historical_greeks(5.0, 100, 100, 0, "call")
+        assert math.isnan(result["implied_vol"])
+
+    def test_zero_price(self):
+        result = compute_historical_greeks(0, 100, 100, 30, "call")
+        assert math.isnan(result["implied_vol"])
