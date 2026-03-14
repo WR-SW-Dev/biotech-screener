@@ -4693,6 +4693,9 @@ def save_validation_snapshot(
     # --- Market-model disagreement overlay (shadow diagnostic) ---
     # Surfaces where model quality diverges from market-implied event magnitude.
     # Not used in ranking — diagnostics and review-queue only.
+    # Pre-filter: only compute for catalyst_days <= 180 to avoid stale-window
+    # artifacts where distant PCDs inflate implied_event_move mechanically.
+    _POS_DIV_MAX_DAYS = 180
     try:
         from common.pos_divergence import _safe_float as _pd_float
         from common.pos_divergence import _safe_int as _pd_int
@@ -4702,7 +4705,11 @@ def save_validation_snapshot(
         _pos_days = [_pd_int(r.get("catalyst_days")) for r in csv_rows]
         _pos_model = [_pd_float(r.get("composite_score")) for r in csv_rows]
 
-        _implied = [compute_implied_event_move(iv, d) for iv, d in zip(_pos_atm, _pos_days)]
+        # Mask out names beyond the decision engine's catalyst window
+        _implied = [
+            compute_implied_event_move(iv, d) if 0 < d <= _POS_DIV_MAX_DAYS else float("nan")
+            for iv, d in zip(_pos_atm, _pos_days)
+        ]
         _implied_z = z_score_array(_implied)
         _model_z = z_score_array(_pos_model)
 
