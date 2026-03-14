@@ -2680,6 +2680,7 @@ def _hydrate_far_horizon_catalysts(
     trial_records: List[dict],
     as_of_date: str,
     ruleset: "DecisionRuleset",
+    m3_summaries: Optional[Dict[str, Any]] = None,
 ) -> int:
     """Override no_upcoming/missing tickers with far_window when a far PCD exists.
 
@@ -2687,6 +2688,11 @@ def _hydrate_far_horizon_catalysts(
     trial_records for active INTERVENTIONAL trials with a future PCD within
     ``ruleset.far_window_days``.  If found, sets catalyst_mode="far_window"
     and populates catalyst fields with a dampened signal.
+
+    Also scans M3 scored events as a fallback for names not covered by
+    trial_records (e.g. events from SEC 8-K, press releases, or non-CTgov
+    registries that produced scored DATA_READOUT / CT_PRIMARY_COMPLETION
+    events but where integration.next_catalyst_date was null).
 
     Returns the count of overridden tickers (for telemetry).
     """
@@ -2697,7 +2703,7 @@ def _hydrate_far_horizon_catalysts(
     # Only consider PCDs beyond the current catalyst window (> 270d) but
     # within far_window_days — that's the operational gap we're filling.
     # Also include PCDs within 270d that the pipeline missed (missing mode).
-    min_future_pcd: Dict[str, int] = {}
+    min_future_pcd: Dict[str, Tuple[int, str, str]] = {}  # ticker → (days, source, event_type)
     for t in trial_records:
         tk = t.get("ticker", "")
         if not tk:
@@ -2720,8 +2726,38 @@ def _hydrate_far_horizon_catalysts(
             continue  # past PCD — not a future catalyst
         if days > far_max:
             continue  # beyond far window
-        if tk not in min_future_pcd or days < min_future_pcd[tk]:
-            min_future_pcd[tk] = days
+        if tk not in min_future_pcd or days < min_future_pcd[tk][0]:
+            min_future_pcd[tk] = (days, "CTGOV_PCD_FAR", "CT_PRIMARY_COMPLETION")
+
+    # M3 fallback: scan scored events for names not yet covered
+    if m3_summaries:
+        _clinical_types = frozenset(
+            {"CT_PRIMARY_COMPLETION", "CT_STUDY_COMPLETION", "DATA_READOUT", "DATA_PRESENTATION"}
+        )
+        as_of_str = as_of_date[:10]
+        for tk_upper, summary in m3_summaries.items():
+            if tk_upper in min_future_pcd:
+                continue  # already covered by trial_records
+            if not isinstance(summary, dict):
+                continue
+            for event in summary.get("events") or []:
+                if not isinstance(event, dict):
+                    continue
+                et = event.get("event_type", "")
+                if et not in _clinical_types:
+                    continue
+                ed = event.get("event_date", "")
+                if not ed or ed <= as_of_str:
+                    continue
+                try:
+                    days = (datetime.strptime(ed[:10], "%Y-%m-%d").date() - as_of).days
+                except (ValueError, TypeError):
+                    continue
+                if days > far_max:
+                    continue
+                src = event.get("source", "M3_EVENT")
+                if tk_upper not in min_future_pcd or days < min_future_pcd[tk_upper][0]:
+                    min_future_pcd[tk_upper] = (days, src, et)
 
     # Override eligible rows
     n_overrides = 0
@@ -2732,11 +2768,11 @@ def _hydrate_far_horizon_catalysts(
         tk = row.get("ticker", "")
         if tk not in min_future_pcd:
             continue
-        days = min_future_pcd[tk]
+        days, source, event_type = min_future_pcd[tk]
         row["catalyst_mode"] = "far_window"
         row["catalyst_days"] = days
-        row["catalyst_source"] = "CTGOV_PCD_FAR"
-        row["catalyst_event_type"] = "CT_PRIMARY_COMPLETION"
+        row["catalyst_source"] = source
+        row["catalyst_event_type"] = event_type
         row["catalyst_strength"] = "far"
         row["catalyst_decay_w"] = ruleset.far_window_decay_mult
         n_overrides += 1
@@ -4111,12 +4147,13 @@ def save_validation_snapshot(
 
     # --- Far-horizon catalyst hydration (opt-in, after DE sets catalyst_mode) ---
     _n_far_window = 0
-    if trial_records and ruleset and ruleset.far_window_days > 0:
+    if ruleset and ruleset.far_window_days > 0:
         _n_far_window = _hydrate_far_horizon_catalysts(
             csv_rows,
-            trial_records,
+            trial_records or [],
             as_of_date,
             ruleset,
+            m3_summaries=m3_summaries,
         )
         if _n_far_window:
             logger.info(f"  Far-horizon catalyst: {_n_far_window} tickers overridden to far_window")

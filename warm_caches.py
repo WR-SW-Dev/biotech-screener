@@ -853,8 +853,10 @@ def main():
     parser.add_argument(
         "--sources",
         type=str,
-        default="fda_adcom,sec_8k",
-        help="Comma-separated sources to warm: fda_adcom,fda_regulatory,sec_8k,ctgov,sec_13f,event_ledger,price_pit (default: fda_adcom,sec_8k)",
+        default="fda_adcom,sec_8k,euctr,ctis,isrctn,merged_trials",
+        help="Comma-separated sources to warm: fda_adcom,fda_regulatory,sec_8k,ctgov,sec_13f,"
+        "euctr,ctis,isrctn,merged_trials,event_ledger,price_pit "
+        "(default: fda_adcom,sec_8k,euctr,ctis,isrctn,merged_trials)",
     )
     parser.add_argument(
         "--data-dir",

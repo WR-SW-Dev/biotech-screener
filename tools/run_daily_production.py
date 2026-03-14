@@ -4178,10 +4178,11 @@ def main():
     )
     parser.add_argument(
         "--warm-sources",
-        default="sec_8k,ctgov,sec_13f",
+        default="sec_8k,ctgov,sec_13f,euctr,ctis,isrctn,merged_trials",
         help=(
             "Comma-separated sources passed to warm_caches.py in step 1.5 "
-            "(default: sec_8k,ctgov,sec_13f). Use empty string to skip."
+            "(default: sec_8k,ctgov,sec_13f,euctr,ctis,isrctn,merged_trials). "
+            "Use empty string to skip."
         ),
     )
     parser.add_argument(
