@@ -3306,6 +3306,7 @@ def _write_coverage_quality(
     metadata: dict,
     as_of_date: str,
     log: logging.Logger,
+    options_freshness: Optional[Dict[str, Any]] = None,
 ) -> None:
     """Generate coverage_quality.json and coverage_quality.md in the snapshot dir.
 
@@ -3478,6 +3479,7 @@ def _write_coverage_quality(
             "n_high": len(disagree_high_names),
             "high_names": sorted(disagree_high_names)[:15],
         },
+        "options_data_freshness": options_freshness or {},
         "term_structure_flags": {
             "n_mismatch": sum(1 for r in csv_rows if r.get("ts_flag_type") == "MARKET_SEES_SOONER"),
             "n_blind_spot": sum(1 for r in csv_rows if r.get("ts_flag_type") == "BLIND_SPOT"),
@@ -3503,9 +3505,22 @@ def _write_coverage_quality(
     lines = [
         f"# Coverage Quality Report — {as_of_date}",
         "",
-        f"## Phase-2 Health: **{h['status']}**",
-        "",
     ]
+
+    # Staleness warning
+    _of = options_freshness or {}
+    if _of and not _of.get("all_fresh", True):
+        _tt = _of.get("tastytrade_status", "unknown")
+        _mv = _of.get("massive_status", "unknown")
+        lines.append(f"**OPTIONS DATA STALE** — Tastytrade: {_tt.upper()}, Massive: {_mv.upper()}")
+        lines.append(
+            "Options signals (quality composite, disagreement overlay, term structure flags) "
+            "may be unreliable for this run."
+        )
+        lines.append("")
+
+    lines.append(f"## Phase-2 Health: **{h['status']}**")
+    lines.append("")
     if h["reasons"]:
         for reason in h["reasons"]:
             lines.append(f"- {reason}")
@@ -4679,6 +4694,44 @@ def save_validation_snapshot(
                 )
             )
 
+    # --- Options data freshness preflight ---
+    _options_freshness: Dict[str, Any] = {
+        "tastytrade_status": "unknown",
+        "tastytrade_as_of": "",
+        "massive_status": "unknown",
+        "massive_as_of": "",
+        "all_fresh": False,
+    }
+    try:
+        from common.options_diagnostics import _has_credentials as _tt_has_creds
+
+        if _tt_has_creds():
+            _options_freshness["tastytrade_status"] = "ok"
+            _options_freshness["tastytrade_as_of"] = as_of_date
+        else:
+            _options_freshness["tastytrade_status"] = "no_credentials"
+            logger.warning("[OPTIONS_WARM] Tastytrade: no credentials (TT_SECRET / TT_REFRESH not set)")
+    except Exception as _tt_exc:
+        _options_freshness["tastytrade_status"] = "failed"
+        logger.warning("[OPTIONS_WARM] Tastytrade preflight failed: %s", _tt_exc)
+
+    try:
+        from common.options_history_massive import _get_config as _massive_config
+
+        _mc = _massive_config()
+        if _mc.get("api_key"):
+            _options_freshness["massive_status"] = "ok"
+            _options_freshness["massive_as_of"] = as_of_date
+        else:
+            _options_freshness["massive_status"] = "no_credentials"
+    except Exception:
+        _options_freshness["massive_status"] = "not_available"
+
+    _options_freshness["all_fresh"] = _options_freshness["tastytrade_status"] == "ok"
+    _tt_status = _options_freshness["tastytrade_status"]
+    _mv_status = _options_freshness["massive_status"]
+    logger.info("[OPTIONS_WARM] Tastytrade: %s, Massive: %s", _tt_status, _mv_status)
+
     # --- Options diagnostics (passive, tastytrade) ---
     # Restricted to catalyst-relevant names only to limit API latency.
     # Non-blocking: degrades gracefully if credentials missing or API unavailable.
@@ -4689,6 +4742,13 @@ def save_validation_snapshot(
         if _opt_tickers:
             _opt_lookup = fetch_options_diagnostics(_opt_tickers, as_of_date)
             _opt_with_data = sum(1 for v in _opt_lookup.values() if str(v.get("opt_has_data", "0")) == "1")
+            # Update freshness based on actual fetch result
+            if _opt_with_data > 0:
+                _options_freshness["tastytrade_status"] = "ok"
+                _options_freshness["tastytrade_as_of"] = as_of_date
+            elif _options_freshness["tastytrade_status"] == "ok":
+                _options_freshness["tastytrade_status"] = "stale"
+            _options_freshness["all_fresh"] = _options_freshness["tastytrade_status"] == "ok"
             for row in csv_rows:
                 tk = (row.get("ticker") or "").upper()
                 row.update(_opt_lookup.get(tk, empty_diagnostics()))
@@ -4760,6 +4820,20 @@ def save_validation_snapshot(
                 row["pos_divergence"] = ""
                 row["market_model_disagreement"] = ""
 
+        # Phase 3 guard: demote high-disagreement when options data is stale
+        if not _options_freshness["all_fresh"]:
+            _demoted = 0
+            for row in csv_rows:
+                if row.get("market_model_disagreement") == "high":
+                    row["market_model_disagreement"] = "medium"
+                    _demoted += 1
+            if _demoted:
+                logger.warning(
+                    "[POS_DIV] Options data stale — demoted %d high-disagreement to medium",
+                    _demoted,
+                )
+            _n_disagreement = 0  # reset count after demotion
+
         if _n_disagreement:
             logger.info(
                 "[POS_DIV] Market-model disagreement: %d high-disagreement names",
@@ -4809,6 +4883,19 @@ def save_validation_snapshot(
                 _ts_mismatch += 1
             elif ts["flag_type"] == "BLIND_SPOT":
                 _ts_blind += 1
+
+        # Phase 3 guard: demote BLIND_SPOT when options data is stale
+        if not _options_freshness["all_fresh"]:
+            _bs_demoted = 0
+            for row in csv_rows:
+                if row.get("ts_flag_type") == "BLIND_SPOT":
+                    row["ts_flag_type"] = "BLIND_SPOT_UNCONFIRMED"
+                    _bs_demoted += 1
+            if _bs_demoted:
+                logger.warning(
+                    "[TS_VALID] Options data stale — demoted %d BLIND_SPOT to BLIND_SPOT_UNCONFIRMED",
+                    _bs_demoted,
+                )
 
         if _ts_mismatch or _ts_blind:
             logger.info(
@@ -5658,7 +5745,7 @@ def save_validation_snapshot(
 
     # --- Coverage quality artifact (v1) ---
     try:
-        _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger)
+        _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger, _options_freshness)
     except Exception as _cq_exc:
         logger.debug("Coverage quality artifact skipped: %s", _cq_exc)
 
