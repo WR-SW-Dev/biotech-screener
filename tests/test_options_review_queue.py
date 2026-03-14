@@ -25,6 +25,15 @@ def _row(**kwargs):
     return defaults
 
 
+def _hard_row(**kwargs):
+    """Row with hard catalyst defaults (SEC 8-K data readout)."""
+    return _row(
+        catalyst_event_type="DATA_READOUT",
+        catalyst_source="SEC_8K_FILING",
+        **kwargs,
+    )
+
+
 class TestDeriveReviewReasons:
     def test_cheap_straddle(self):
         r = _row(cheap_vol_score="1.5")
@@ -93,28 +102,51 @@ class TestComputeReviewPriority:
 
 
 class TestBuildOptionsReviewQueue:
-    def test_filters_no_trigger(self):
-        rows = [_row(ticker="CLEAN")]
-        queue = build_options_review_queue(rows)
-        assert queue["summary"]["n_total"] == 0
-
-    def test_includes_triggered(self):
+    def test_hard_only_default_filters_soft(self):
+        """Default hard_only=True skips soft/PCD rows."""
         rows = [
-            _row(ticker="CHEAP", cheap_vol_score="1.5"),
-            _row(ticker="DISAGREE", market_model_disagreement="high"),
-            _row(ticker="CLEAN"),
+            _row(ticker="SOFT_CHEAP", cheap_vol_score="1.5", catalyst_source="CTGOV_CALENDAR"),
+            _hard_row(ticker="HARD_CHEAP", cheap_vol_score="1.5"),
         ]
         queue = build_options_review_queue(rows)
+        assert queue["hard_only"] is True
+        assert queue["summary"]["n_total"] == 1
+        assert queue["summary"]["n_soft_skipped"] == 1
+        assert queue["rows"][0]["ticker"] == "HARD_CHEAP"
+
+    def test_hard_only_false_includes_all(self):
+        """hard_only=False restores old behavior."""
+        rows = [
+            _row(ticker="SOFT_CHEAP", cheap_vol_score="1.5"),
+            _hard_row(ticker="HARD_CHEAP", cheap_vol_score="1.5"),
+        ]
+        queue = build_options_review_queue(rows, hard_only=False)
+        assert queue["hard_only"] is False
         assert queue["summary"]["n_total"] == 2
+        assert queue["summary"]["n_soft_skipped"] == 0
+
+    def test_filters_no_trigger(self):
+        rows = [_hard_row(ticker="CLEAN")]
+        queue = build_options_review_queue(rows)
+        # hard_catalyst is itself a reason, so a hard row with no other triggers still queues
+        assert queue["summary"]["n_total"] == 1
+
+    def test_includes_triggered_hard_rows(self):
+        rows = [
+            _hard_row(ticker="CHEAP", cheap_vol_score="1.5"),
+            _hard_row(ticker="DISAGREE", market_model_disagreement="high"),
+            _hard_row(ticker="CLEAN"),
+        ]
+        queue = build_options_review_queue(rows)
+        assert queue["summary"]["n_total"] == 3
         tickers = [r["ticker"] for r in queue["rows"]]
         assert "CHEAP" in tickers
         assert "DISAGREE" in tickers
-        assert "CLEAN" not in tickers
 
     def test_sorted_by_priority(self):
         rows = [
-            _row(ticker="LOW", cheap_vol_score="1.4", catalyst_days="200"),
-            _row(
+            _hard_row(ticker="LOW", cheap_vol_score="1.4", catalyst_days="200"),
+            _hard_row(
                 ticker="HIGH",
                 market_model_disagreement="high",
                 ts_flag="1",
@@ -127,17 +159,22 @@ class TestBuildOptionsReviewQueue:
 
     def test_summary_counts(self):
         rows = [
-            _row(ticker="A", market_model_disagreement="high"),
-            _row(ticker="B", ts_flag="1", ts_flag_type="BLIND_SPOT"),
-            _row(ticker="C", opt_rr_25d="0.20"),
+            _hard_row(ticker="A", market_model_disagreement="high"),
+            _hard_row(ticker="B", ts_flag="1", ts_flag_type="BLIND_SPOT"),
+            _hard_row(ticker="C", opt_rr_25d="0.20"),
         ]
         queue = build_options_review_queue(rows)
         s = queue["summary"]
         assert s["n_high_disagreement"] == 1
         assert s["n_term_structure_flag"] == 1
         assert s["n_extreme_skew"] == 1
+        assert s["n_hard_catalyst"] == 3
 
     def test_empty_input(self):
         queue = build_options_review_queue([])
         assert queue["summary"]["n_total"] == 0
         assert queue["rows"] == []
+
+    def test_schema_version_v2(self):
+        queue = build_options_review_queue([])
+        assert queue["schema_version"] == "options_review_queue.v2"

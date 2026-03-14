@@ -117,22 +117,33 @@ QUEUE_COLUMNS = [
 def build_options_review_queue(
     csv_rows: List[dict],
     max_rows: int = 0,
+    hard_only: bool = True,
 ) -> Dict[str, Any]:
     """Build the daily options mispricing review queue.
+
+    Args:
+        hard_only: If True (default), only include rows where is_hard_catalyst
+            is True.  Soft/CTGov-calendar rows are excluded to avoid polluting
+            the queue with PCD noise.
 
     Returns dict with summary and rows list.
     """
     queue_rows: List[Dict[str, Any]] = []
+    n_soft_skipped = 0
 
     for row in csv_rows:
-        reasons = derive_review_reasons(row)
-        if not reasons:
-            continue
-
         hc = classify_hard_catalyst(
             row.get("catalyst_event_type", ""),
             row.get("catalyst_source", ""),
         )
+
+        if hard_only and not hc["is_hard_catalyst"]:
+            n_soft_skipped += 1
+            continue
+
+        reasons = derive_review_reasons(row)
+        if not reasons:
+            continue
         priority = compute_review_priority(row, reasons)
 
         entry: Dict[str, Any] = {}
@@ -171,9 +182,11 @@ def build_options_review_queue(
     n_skew = sum(1 for r in queue_rows if "extreme_skew" in r.get("review_reasons", ""))
 
     return {
-        "schema_version": "options_review_queue.v1",
+        "schema_version": "options_review_queue.v2",
+        "hard_only": hard_only,
         "summary": {
             "n_total": len(queue_rows),
+            "n_soft_skipped": n_soft_skipped,
             "n_hard_catalyst": n_hard,
             "n_high_disagreement": n_disagree,
             "n_term_structure_flag": n_ts,
@@ -210,12 +223,16 @@ def write_options_review_queue(
         f.write("\n")
 
     # Markdown
+    hard_only = queue.get("hard_only", False)
     md_lines = [
         f"# Options Mispricing Review Queue — {as_of_date}",
+        "",
+        f"**Filter:** {'hard catalysts only' if hard_only else 'all triggers'}",
         "",
         "## Summary",
         "",
         f"- Total queued: {summary.get('n_total', 0)}",
+        f"- Soft/PCD skipped: {summary.get('n_soft_skipped', 0)}",
         f"- Hard catalysts: {summary.get('n_hard_catalyst', 0)}",
         f"- High disagreement: {summary.get('n_high_disagreement', 0)}",
         f"- Term structure flags: {summary.get('n_term_structure_flag', 0)}",

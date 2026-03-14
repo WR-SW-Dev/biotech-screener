@@ -5145,9 +5145,10 @@ def save_validation_snapshot(
         write_options_review_queue(_opt_queue, snap_path, as_of_date)
         _oqs = _opt_queue["summary"]
         logger.info(
-            "[OPTIONS_QUEUE] queued=%d hard=%d cheap=%d rich=%d disagree=%d ts=%d skew=%d",
+            "[OPTIONS_QUEUE] queued=%d hard=%d soft_skipped=%d cheap=%d rich=%d disagree=%d ts=%d skew=%d",
             _oqs["n_total"],
             _oqs["n_hard_catalyst"],
+            _oqs["n_soft_skipped"],
             _oqs["n_cheap_straddle"],
             _oqs["n_rich_straddle"],
             _oqs["n_high_disagreement"],
