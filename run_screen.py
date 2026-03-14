@@ -4910,6 +4910,63 @@ def save_validation_snapshot(
             row.setdefault("ts_flag_type", "")
             row.setdefault("ts_flag_reason", "")
 
+    # --- Review queue artifact ---
+    _review_queue: List[dict] = []
+    try:
+        from common.review_queue import (
+            build_review_queue,
+            compute_blind_spot_streaks,
+            compute_queue_summary,
+            format_review_queue_md,
+            write_review_queue_csv,
+        )
+
+        # Find previous snapshot for blind-spot streak continuity
+        _prev_rankings = None
+        _snap_parent = snap_path.parent
+        _prior_dates = sorted(
+            d.name
+            for d in _snap_parent.iterdir()
+            if d.is_dir() and d.name[:4].isdigit() and d.name < as_of_date and "__" not in d.name
+        )
+        if _prior_dates:
+            _prev_rankings = _snap_parent / _prior_dates[-1] / "rankings.csv"
+
+        _state_dir = snap_path.parent.parent / "state"
+        _blind_streaks = compute_blind_spot_streaks(csv_rows, _prev_rankings, _state_dir)
+
+        # Inject blind spot days into csv_rows for downstream use
+        for row in csv_rows:
+            row["ts_blind_spot_days"] = _blind_streaks.get(row.get("ticker", ""), 0)
+
+        _review_queue = build_review_queue(
+            csv_rows,
+            options_data_fresh=_options_freshness.get("all_fresh", False),
+            blind_spot_streaks=_blind_streaks,
+        )
+
+        if _review_queue:
+            write_review_queue_csv(_review_queue, snap_path / "review_queue.csv", as_of_date)
+            _rq_md = format_review_queue_md(_review_queue, as_of_date, _options_freshness.get("all_fresh", False))
+            with open(snap_path / "review_queue.md", "w", encoding="utf-8") as f:
+                f.write(_rq_md)
+
+        _rq_summary = compute_queue_summary(_review_queue)
+        _n_noadd = _rq_summary.get("no_add_until_review", 0)
+        _n_haircut = _rq_summary.get("size_haircut", 0)
+        _n_review = _rq_summary.get("manual_review_required", 0)
+        _n_monitor = _rq_summary.get("monitor_only", 0)
+        logger.info(
+            "[REVIEW_QUEUE] %d no-add, %d haircut, %d manual-review, %d monitor",
+            _n_noadd,
+            _n_haircut,
+            _n_review,
+            _n_monitor,
+        )
+
+    except Exception as _rq_exc:
+        logger.debug("Review queue skipped: %s", _rq_exc)
+
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
     try:
@@ -5748,6 +5805,21 @@ def save_validation_snapshot(
         _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger, _options_freshness)
     except Exception as _cq_exc:
         logger.debug("Coverage quality artifact skipped: %s", _cq_exc)
+
+    # Patch review_queue_summary into coverage_quality.json (must run after both are written)
+    if _review_queue:
+        try:
+            from common.review_queue import compute_queue_summary as _cqs
+
+            _cq_path = snap_path / "coverage_quality.json"
+            if _cq_path.exists():
+                _cq = json.loads(_cq_path.read_text())
+                _cq["review_queue_summary"] = _cqs(_review_queue)
+                with open(_cq_path, "w", encoding="utf-8") as f:
+                    json.dump(_cq, f, indent=2, default=str)
+                    f.write("\n")
+        except Exception:
+            pass
 
     logger.info(f"[SNAPSHOT] Saved validation snapshot: {snap_path} " f"({len(ranked)} tickers, v{version})")
     return snap_path
