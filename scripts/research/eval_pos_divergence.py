@@ -151,6 +151,10 @@ def build_pos_divergence_dataset(
             atm_iv_col="opt_atm_iv",
             catalyst_days_col="catalyst_days",
         )
+        # Add abs_pos_divergence for risk-overlay testing
+        for row in date_rows:
+            pd = row.get("pos_divergence", float("nan"))
+            row["abs_pos_divergence"] = abs(pd) if not math.isnan(pd) else float("nan")
         enriched.extend(date_rows)
 
     return enriched
@@ -371,7 +375,7 @@ def run_simple_tests(
     """Run all simple predictive tests for PoS divergence signals."""
     results: Dict[str, Any] = {}
 
-    signal_cols = ["pos_divergence_z", "implied_event_move", "pos_divergence"]
+    signal_cols = ["pos_divergence_z", "implied_event_move", "pos_divergence", "abs_pos_divergence"]
     return_targets = ["abs_gap", "signed_gap"]
     for h in horizons:
         return_targets.append(f"fwd_ret_{h}d")
@@ -393,7 +397,7 @@ def run_incremental_tests(
     """Run incremental IC tests controlling for catalyst timing."""
     results: Dict[str, Any] = {}
 
-    signal_cols = ["pos_divergence_z", "pos_divergence"]
+    signal_cols = ["pos_divergence_z", "pos_divergence", "abs_pos_divergence"]
     control = "catalyst_decay_w"
     return_targets = ["abs_gap", "signed_gap"]
     for h in horizons:
@@ -440,7 +444,7 @@ def run_portfolio_slices(
 ) -> Dict[str, Any]:
     """Portfolio slice tests for pos_divergence signals."""
     results: Dict[str, Any] = {}
-    for sig in ["pos_divergence_z", "pos_divergence"]:
+    for sig in ["pos_divergence_z", "pos_divergence", "abs_pos_divergence"]:
         for ret in ["abs_gap", "signed_gap"]:
             results[f"{sig}_vs_{ret}"] = compute_portfolio_slice(dataset, sig, ret, top_k, min_obs)
         for h in horizons:
@@ -449,7 +453,45 @@ def run_portfolio_slices(
 
 
 # ---------------------------------------------------------------------------
-# Section E: Decision rule
+# Section E: Subgroup splits
+# ---------------------------------------------------------------------------
+
+
+def run_subgroup_splits(
+    dataset: List[Dict[str, Any]],
+    min_obs: int = DEFAULT_MIN_OBS,
+) -> Dict[str, Any]:
+    """Run IC tests within subgroups: catalyst_family, iv_regime."""
+    results: Dict[str, Any] = {}
+
+    subgroups = {
+        "catalyst_family_REGULATORY": lambda r: r.get("catalyst_family") == "REGULATORY",
+        "catalyst_family_CLINICAL": lambda r: r.get("catalyst_family") == "CLINICAL",
+        "iv_regime_NORMAL": lambda r: r.get("opt_iv_regime") == "NORMAL",
+        "iv_regime_ELEVATED": lambda r: r.get("opt_iv_regime") == "ELEVATED",
+    }
+
+    for group_name, predicate in subgroups.items():
+        subset = [r for r in dataset if predicate(r)]
+        n = len(subset)
+        group_result: Dict[str, Any] = {"n": n}
+
+        if n >= min_obs:
+            for ret in ["abs_gap", "signed_gap"]:
+                group_result[f"ic_pos_divergence_z_vs_{ret}"] = compute_raw_ic(subset, "pos_divergence_z", ret, min_obs)
+                group_result[f"ic_abs_pos_divergence_vs_{ret}"] = compute_raw_ic(
+                    subset, "abs_pos_divergence", ret, min_obs
+                )
+        else:
+            group_result["status"] = "insufficient_sample"
+
+        results[group_name] = group_result
+
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Section F: Decision rule
 # ---------------------------------------------------------------------------
 
 
@@ -524,6 +566,7 @@ def generate_report(
     simple_tests: Dict[str, Any],
     incremental_tests: Dict[str, Any],
     portfolio_slices: Dict[str, Any],
+    subgroup_splits: Dict[str, Any],
     decision: Dict[str, Any],
     model_signal: str,
     horizons: List[int],
@@ -542,6 +585,7 @@ def generate_report(
         "simple_tests": simple_tests,
         "incremental_tests": incremental_tests,
         "portfolio_slices": portfolio_slices,
+        "subgroup_splits": subgroup_splits,
         "decision": decision,
     }
 
@@ -604,6 +648,27 @@ def format_report_md(report: Dict[str, Any]) -> str:
             lines.append(f"| {key} | {val['top_mean']:.4f} | {val['rest_mean']:.4f} | " f"{val['spread']:.4f} | {bl} |")
     lines.append("")
 
+    # Subgroup splits
+    subgroups = report.get("subgroup_splits", {})
+    if subgroups:
+        lines.append("## Subgroup Splits")
+        lines.append("")
+        lines.append("| Subgroup | n | pos_div_z vs signed | pos_div_z vs abs | abs_pos_div vs abs |")
+        lines.append("|----------|---|--------------------|--------------------|---------------------|")
+        for group_name, gdata in sorted(subgroups.items()):
+            n = gdata.get("n", 0)
+            if gdata.get("status") == "insufficient_sample":
+                lines.append(f"| {group_name} | {n} | - | - | - |")
+                continue
+            s_ic = gdata.get("ic_pos_divergence_z_vs_signed_gap", {})
+            a_ic = gdata.get("ic_pos_divergence_z_vs_abs_gap", {})
+            aa_ic = gdata.get("ic_abs_pos_divergence_vs_abs_gap", {})
+            s_val = f"{s_ic['ic']:.4f}" if s_ic.get("status") == "ok" else "-"
+            a_val = f"{a_ic['ic']:.4f}" if a_ic.get("status") == "ok" else "-"
+            aa_val = f"{aa_ic['ic']:.4f}" if aa_ic.get("status") == "ok" else "-"
+            lines.append(f"| {group_name} | {n} | {s_val} | {a_val} | {aa_val} |")
+        lines.append("")
+
     # Descriptive
     desc = report["descriptive"]
     lines.append("## Dataset Summary")
@@ -658,6 +723,9 @@ def main(argv=None) -> int:
     logger.info("Running portfolio slice tests...")
     portfolio_slices = run_portfolio_slices(dataset, horizons, args.top_k, args.min_obs)
 
+    logger.info("Running subgroup splits...")
+    subgroup_splits = run_subgroup_splits(dataset, args.min_obs)
+
     logger.info("Evaluating decision rule...")
     decision = evaluate_decision_rule(simple_tests, incremental_tests)
 
@@ -667,6 +735,7 @@ def main(argv=None) -> int:
         simple_tests,
         incremental_tests,
         portfolio_slices,
+        subgroup_splits,
         decision,
         args.model_signal,
         horizons,
