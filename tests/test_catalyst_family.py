@@ -272,7 +272,7 @@ class TestPDUFAFamily:
 
 
 # ---------------------------------------------------------------------------
-# E) _find_nearest_catalyst_event: three-tier lookup
+# E) _find_nearest_catalyst_event: four-tier lookup
 # ---------------------------------------------------------------------------
 
 
@@ -402,4 +402,74 @@ class TestFindNearestCatalystEvent:
 
         m3 = _make_m3("FATE", "2026-05-01", source_uid="NCT05934097", events=[])
         et = _nearest_catalyst_event_type(m3, "FATE")
+        assert classify_catalyst_family(et) == "CLINICAL"
+
+    # --- Tier 0: earliest future event when next_catalyst_date is null ---
+
+    def test_tier0_picks_earliest_future_event(self):
+        """When next_catalyst_date is null, pick earliest future event."""
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "ESPR",
+            None,  # integration didn't select a date
+            events=[
+                {"event_date": "2026-01-15", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-03-30", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-07-30", "event_type": "CT_STUDY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "ESPR", as_of_date="2026-03-13")
+        assert ev["event_date"] == "2026-03-30"
+        assert ev["event_type"] == "DATA_READOUT"
+
+    def test_tier0_skips_past_events(self):
+        """Tier 0 should only consider events after as_of_date."""
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "LENZ",
+            None,
+            events=[
+                {"event_date": "2026-02-25", "event_type": "CT_RESULTS_POSTED", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "LENZ", as_of_date="2026-03-13")
+        assert ev is None  # only event is in the past
+
+    def test_tier0_no_events_returns_none(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3("FAKE", None, events=[])
+        assert _find_nearest_catalyst_event(m3, "FAKE", as_of_date="2026-03-13") is None
+
+    def test_tier0_does_not_fire_when_next_date_exists(self):
+        """Tier 0 only activates when next_catalyst_date is null."""
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "ACME",
+            "2026-06-01",
+            events=[
+                {"event_date": "2026-04-01", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-06-01", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        # Should use tier 1 (exact match), not tier 0
+        ev = _find_nearest_catalyst_event(m3, "ACME", as_of_date="2026-03-13")
+        assert ev["event_date"] == "2026-06-01"
+
+    def test_tier0_family_classification(self):
+        """Tier 0 result should classify into correct family."""
+        from event_ledger import classify_catalyst_family
+        from run_screen import _nearest_catalyst_event_type
+
+        m3 = _make_m3(
+            "ESPR",
+            None,
+            events=[
+                {"event_date": "2026-03-30", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        et = _nearest_catalyst_event_type(m3, "ESPR", as_of_date="2026-03-13")
         assert classify_catalyst_family(et) == "CLINICAL"

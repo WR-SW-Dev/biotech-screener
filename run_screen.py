@@ -2285,10 +2285,15 @@ def _find_nearest_catalyst_event(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
     max_fuzzy_days: int = 14,
+    as_of_date: Optional[str] = None,
 ) -> Optional[Dict[str, Any]]:
     """Find the M3 event corresponding to the integration nearest catalyst.
 
-    Three-tier lookup:
+    Four-tier lookup:
+      0. Earliest future event fallback: when integration.next_catalyst_date
+         is null but the events list contains future events, pick the earliest.
+         This covers names where the scoring pipeline found events but the
+         integration layer rejected them (confidence-gated).
       1. Exact date match: event_date == integration.next_catalyst_date
       2. Fuzzy date match: closest event within ±max_fuzzy_days
       3. Source UID inference: if nearest_catalyst_source_uid starts with
@@ -2304,10 +2309,30 @@ def _find_nearest_catalyst_event(
         return None
     integration = summary.get("integration") or {}
     next_date = integration.get("next_catalyst_date")
-    if not next_date:
-        return None
 
     events = [e for e in (summary.get("events") or []) if isinstance(e, dict)]
+
+    # Tier 0: when integration didn't select a catalyst but events exist,
+    # pick the earliest future event from the list.
+    if not next_date and events:
+        from datetime import date as _date
+
+        ref = as_of_date or ""
+        future = []
+        for event in events:
+            ed = event.get("event_date", "")
+            if not ed:
+                continue
+            # Only consider events after the reference date
+            if ref and ed <= ref:
+                continue
+            future.append((ed, event))
+        if future:
+            future.sort(key=lambda x: x[0])
+            return future[0][1]
+
+    if not next_date:
+        return None
 
     # Tier 1: exact date match
     for event in events:
@@ -2354,18 +2379,20 @@ def _find_nearest_catalyst_event(
 def _nearest_catalyst_source(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
+    as_of_date: Optional[str] = None,
 ) -> str:
     """Extract the source of the nearest catalyst event from Module 3 summaries."""
-    event = _find_nearest_catalyst_event(m3_summaries, ticker)
+    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date)
     return event.get("source", "") if event else ""
 
 
 def _nearest_catalyst_event_type(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
+    as_of_date: Optional[str] = None,
 ) -> str:
     """Extract the event_type of the nearest catalyst event from Module 3."""
-    event = _find_nearest_catalyst_event(m3_summaries, ticker)
+    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date)
     return event.get("event_type", "") if event else ""
 
 
@@ -3782,8 +3809,8 @@ def save_validation_snapshot(
         row["returns_source"] = "morningstar"
 
         # Catalyst source provenance: extract from Module 3 nearest event
-        row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker)
-        row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker)
+        row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker, as_of_date=as_of_date)
+        row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker, as_of_date=as_of_date)
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         # Corroboration check: noisy clinical sources need independent confirmation
         _corr = _check_catalyst_corroboration(m3_summaries, ticker, row["catalyst_source"], row["catalyst_family"])
