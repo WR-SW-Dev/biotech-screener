@@ -458,24 +458,60 @@ def _allocate_sub_bucket_quality(
     for i, row in enumerate(sb_rows):
         wt = assigned[i]
         wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+
+        # Options construction overlays (bounded, A/B-gated)
+        _overlay_mult = 1.0
+        _overlay_reasons: List[str] = []
+        _risk_controls: Dict[str, Any] = {}
+        try:
+            from common.options_construction_overlay import compute_31_90_weight_multiplier
+            from common.options_risk_controls import compute_0_30_risk_controls
+
+            _opts_fresh = row.get("_options_fresh", False)
+
+            if bucket_name == "binary_31_90":
+                _ov = compute_31_90_weight_multiplier(row, options_fresh=_opts_fresh)
+                _overlay_mult = _ov["weight_multiplier"]
+                _overlay_reasons = _ov["overlay_reasons"]
+
+            if bucket_name == "binary_0_30":
+                _rc = compute_0_30_risk_controls(
+                    row,
+                    rv_30d=_safe_float(row.get("_rv_30d", ""), None),
+                    options_fresh=_opts_fresh,
+                    crowding_panel_populated=bool(row.get("_crowding_panel_populated")),
+                )
+                _risk_controls = _rc
+                _overlay_mult = _rc["hard_cap_multiplier"]
+                _overlay_reasons = _rc["control_reasons"]
+        except ImportError:
+            pass
+
+        wt *= _overlay_mult
+
         source = (row.get("de_beta_xbi_60d_source") or "").strip()
         is_secondary_reg = (
             row.get("has_regulatory_upcoming_180d") == "1"
             and (row.get("catalyst_family") or "").upper() != "REGULATORY"
         )
-        result.append(
-            _make_position(
-                row,
-                bucket_name,
-                "REGULATORY",
-                wt,
-                gap_risk,
-                source,
-                acct,
-                is_secondary_reg,
-                reg_sub=sb,
-            )
+        pos = _make_position(
+            row,
+            bucket_name,
+            "REGULATORY",
+            wt,
+            gap_risk,
+            source,
+            acct,
+            is_secondary_reg,
+            reg_sub=sb,
         )
+        # Audit trail
+        if _overlay_reasons:
+            pos["options_overlay_multiplier"] = _overlay_mult
+            pos["options_overlay_reasons"] = "|".join(_overlay_reasons)
+        if _risk_controls.get("review_required"):
+            pos["options_review_required"] = True
+        result.append(pos)
     return result
 
 
@@ -649,10 +685,22 @@ def build_positions(
     conf_clip_hi = policy.get("regulatory_confidence_clip_hi", 1.00)
     resolution_enabled = policy.get("regulatory_resolution_enabled", False)
 
+    # Options overlay config (from policy or caller)
+    _options_overlay_cfg = policy.get("options_overlay", {})
+    _options_overlay_enabled = _options_overlay_cfg.get("enabled", False)
+    _options_fresh = _options_overlay_cfg.get("options_fresh", False)
+    _crowding_populated = _options_overlay_cfg.get("crowding_panel_populated", False)
+
     # Classify into buckets, compute effective family
     buckets: Dict[str, List[Dict[str, str]]] = {b: [] for b in BUCKET_NAMES}
     resolved_rows: List[Dict[str, str]] = []
     for row in rankings:
+        # Inject options overlay context into each row for downstream use
+        if _options_overlay_enabled:
+            row["_options_fresh"] = _options_fresh
+            row["_crowding_panel_populated"] = _crowding_populated
+        else:
+            row["_options_fresh"] = False
         bucket = classify_action_bucket(row)
         # Stamp effective_family for downstream use
         row["_effective_family"] = _effective_family(row, family_mode)
@@ -814,24 +862,56 @@ def build_positions(
                     for row in fam_rows:
                         wt = min(equal_wt, eff_cap)
                         wt, gap_risk = _apply_gap_risk(wt, row, bucket_name, gap_high_days, gap_high_cap)
+
+                        # Options overlay (same logic as sub-bucket path)
+                        _ov_mult = 1.0
+                        _ov_reasons: List[str] = []
+                        _ov_review = False
+                        try:
+                            from common.options_construction_overlay import compute_31_90_weight_multiplier
+                            from common.options_risk_controls import compute_0_30_risk_controls
+
+                            _opts_f = row.get("_options_fresh", False)
+                            if bucket_name == "binary_31_90":
+                                _ov = compute_31_90_weight_multiplier(row, options_fresh=_opts_f)
+                                _ov_mult = _ov["weight_multiplier"]
+                                _ov_reasons = _ov["overlay_reasons"]
+                            if bucket_name == "binary_0_30":
+                                _rc = compute_0_30_risk_controls(
+                                    row,
+                                    rv_30d=_safe_float(row.get("_rv_30d", ""), None),
+                                    options_fresh=_opts_f,
+                                    crowding_panel_populated=bool(row.get("_crowding_panel_populated")),
+                                )
+                                _ov_mult = _rc["hard_cap_multiplier"]
+                                _ov_reasons = _rc["control_reasons"]
+                                _ov_review = _rc.get("review_required", False)
+                        except ImportError:
+                            pass
+                        wt *= _ov_mult
+
                         source = (row.get("de_beta_xbi_60d_source") or "").strip()
                         is_secondary_reg = (
                             fam_name == "REGULATORY"
                             and row.get("has_regulatory_upcoming_180d") == "1"
                             and (row.get("catalyst_family") or "").upper() != "REGULATORY"
                         )
-                        positions.append(
-                            _make_position(
-                                row,
-                                bucket_name,
-                                fam_name,
-                                wt,
-                                gap_risk,
-                                source,
-                                acct,
-                                is_secondary_reg,
-                            )
+                        pos = _make_position(
+                            row,
+                            bucket_name,
+                            fam_name,
+                            wt,
+                            gap_risk,
+                            source,
+                            acct,
+                            is_secondary_reg,
                         )
+                        if _ov_reasons:
+                            pos["options_overlay_multiplier"] = _ov_mult
+                            pos["options_overlay_reasons"] = "|".join(_ov_reasons)
+                        if _ov_review:
+                            pos["options_review_required"] = True
+                        positions.append(pos)
         else:
             # --- Flat allocation (no family targets) ---
             equal_wt = (target_frac * 100.0) / n
