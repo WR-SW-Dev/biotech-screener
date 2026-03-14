@@ -3287,6 +3287,286 @@ def _compute_config_fingerprint(
     return hashlib.sha256(json.dumps(obj, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
+# =============================================================================
+# COVERAGE QUALITY ARTIFACT (v1)
+# =============================================================================
+
+
+def _write_coverage_quality(
+    snap_path: Path,
+    csv_rows: List[dict],
+    metadata: dict,
+    as_of_date: str,
+    log: logging.Logger,
+) -> None:
+    """Generate coverage_quality.json and coverage_quality.md in the snapshot dir.
+
+    Consolidates the key coverage and rescue metrics into a single artifact
+    so that every screen run produces an observable record of data health.
+    """
+    n_eligible = sum(1 for r in csv_rows if r.get("eligible") == "1")
+    n_total = len(csv_rows)
+    dev_rows = [r for r in csv_rows if r.get("archetype") == "drug_developer"]
+    n_dev = len(dev_rows)
+
+    # -- Phase-2 health (read sidecar if present, else summarise from metadata) --
+    health_path = snap_path / "phase2_health.json"
+    if health_path.exists():
+        health = json.loads(health_path.read_text())
+    else:
+        health = {"status": "UNAVAILABLE", "reasons": [], "metrics": {}}
+
+    # -- Catalyst coverage by mode --
+    mode_dist: Dict[str, int] = {}
+    for r in dev_rows:
+        m = r.get("catalyst_mode", "") or "missing"
+        mode_dist[m] = mode_dist.get(m, 0) + 1
+
+    n_specific = mode_dist.get("specific_days", 0)
+    n_far_window = mode_dist.get("far_window", 0)
+    n_no_upcoming = mode_dist.get("no_upcoming", 0)
+    n_missing_cat = mode_dist.get("missing", 0)
+    catalyst_coverage_pct = round(n_specific / max(n_dev, 1) * 100, 1)
+
+    # -- Catalyst-family coverage --
+    family_dist: Dict[str, int] = {}
+    family_missing: List[str] = []
+    for r in csv_rows:
+        fam = r.get("catalyst_family", "")
+        if fam:
+            family_dist[fam] = family_dist.get(fam, 0) + 1
+        elif r.get("eligible") == "1":
+            family_missing.append(r.get("ticker", "?"))
+    n_with_family = sum(family_dist.values())
+    catalyst_family_coverage_pct = round(n_with_family / max(n_total, 1) * 100, 1)
+
+    # -- Far-window / M3-fallback rescue counters (all archetypes) --
+    n_far_ctgov = 0
+    n_far_m3 = 0
+    n_far_total = 0
+    for r in csv_rows:
+        if r.get("catalyst_mode") == "far_window":
+            n_far_total += 1
+            src = r.get("catalyst_source", "")
+            if "M3" in src.upper():
+                n_far_m3 += 1
+            else:
+                n_far_ctgov += 1
+
+    # -- Tier-0 fallback rescue (tickers with catalyst_strength == "far") --
+    # This captures names rescued by the four-tier lookup (earliest future event)
+    n_tier0_rescue = sum(1 for r in csv_rows if r.get("catalyst_strength") == "far")
+
+    # -- Drawdown rescue --
+    n_dd_rescued = sum(1 for r in csv_rows if r.get("dd_rel_margin_rescued") == "1")
+
+    # -- Secondary regulatory coverage --
+    n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
+    reg_secondary_pct = round(n_reg_flagged / max(n_eligible, 1) * 100, 1)
+
+    # Regulatory by proximity bucket
+    reg_0_30 = 0
+    reg_31_90 = 0
+    reg_91_180 = 0
+    for r in csv_rows:
+        if r.get("has_regulatory_upcoming_180d") != "1":
+            continue
+        try:
+            d = int(r.get("regulatory_days", 9999))
+        except (ValueError, TypeError):
+            continue
+        if d <= 30:
+            reg_0_30 += 1
+        elif d <= 90:
+            reg_31_90 += 1
+        else:
+            reg_91_180 += 1
+
+    # -- Sponsor / drawdown / catalyst-component coverage --
+    n_sponsor = sum(
+        1 for r in csv_rows if isinstance(r.get("sponsor_tier1_count"), (int, float)) and r["sponsor_tier1_count"] > 0
+    )
+    sponsor_pct = round(n_sponsor / max(n_total, 1) * 100, 1)
+
+    n_drawdown_present = sum(1 for r in csv_rows if r.get("de_drawdown") not in (None, "", "None"))
+    drawdown_pct = round(n_drawdown_present / max(n_total, 1) * 100, 1)
+
+    catalyst_comp_pct = round(metadata.get("options_diagnostics", {}).get("coverage_pct", 0.0), 1)
+
+    # -- Missingness penalty distribution --
+    miss_counts: Dict[int, int] = {}
+    for r in csv_rows:
+        try:
+            p = int(r.get("missingness_penalty", 0))
+        except (ValueError, TypeError):
+            p = 0
+        miss_counts[p] = miss_counts.get(p, 0) + 1
+
+    # -- Top missing names (eligible, no catalyst family) --
+    top_missing = sorted(family_missing)[:15]
+
+    # -- Build JSON --
+    cq: Dict[str, Any] = {
+        "schema_version": "coverage_quality.v1",
+        "as_of_date": as_of_date,
+        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "phase2_health": {
+            "status": health.get("status"),
+            "reasons": health.get("reasons", []),
+            "a_count": health.get("metrics", {}).get("a_count"),
+            "portfolio_size": health.get("metrics", {}).get("portfolio_size"),
+        },
+        "catalyst_coverage": {
+            "n_dev": n_dev,
+            "n_specific_days": n_specific,
+            "n_far_window": n_far_window,
+            "n_no_upcoming": n_no_upcoming,
+            "n_missing": n_missing_cat,
+            "specific_days_pct": catalyst_coverage_pct,
+            "mode_distribution": dict(sorted(mode_dist.items(), key=lambda x: -x[1])),
+        },
+        "catalyst_family_coverage": {
+            "n_with_family": n_with_family,
+            "n_total": n_total,
+            "coverage_pct": catalyst_family_coverage_pct,
+            "family_distribution": dict(sorted(family_dist.items(), key=lambda x: -x[1])),
+        },
+        "rescue_counters": {
+            "far_window_ctgov": n_far_ctgov,
+            "far_window_m3_fallback": n_far_m3,
+            "far_window_total": n_far_total,
+            "tier0_earliest_future_event": n_tier0_rescue,
+            "drawdown_margin_rescued": n_dd_rescued,
+        },
+        "regulatory_secondary": {
+            "n_flagged": n_reg_flagged,
+            "n_eligible": n_eligible,
+            "coverage_pct": reg_secondary_pct,
+            "by_proximity": {
+                "0_30d": reg_0_30,
+                "31_90d": reg_31_90,
+                "91_180d": reg_91_180,
+            },
+        },
+        "component_coverage": {
+            "sponsor_pct": sponsor_pct,
+            "drawdown_pct": drawdown_pct,
+            "options_pct": catalyst_comp_pct,
+        },
+        "missingness_penalty_distribution": dict(sorted(miss_counts.items())),
+        "top_missing_names": top_missing,
+    }
+
+    # -- Write JSON --
+    cq_json_path = snap_path / "coverage_quality.json"
+    with open(cq_json_path, "w", encoding="utf-8") as f:
+        json.dump(cq, f, indent=2, default=str)
+        f.write("\n")
+
+    # -- Write Markdown --
+    h = cq["phase2_health"]
+    cc = cq["catalyst_coverage"]
+    cf = cq["catalyst_family_coverage"]
+    rc = cq["rescue_counters"]
+    rs = cq["regulatory_secondary"]
+    comp = cq["component_coverage"]
+
+    lines = [
+        f"# Coverage Quality Report — {as_of_date}",
+        "",
+        f"## Phase-2 Health: **{h['status']}**",
+        "",
+    ]
+    if h["reasons"]:
+        for reason in h["reasons"]:
+            lines.append(f"- {reason}")
+    else:
+        lines.append("No issues detected.")
+    lines.append("")
+    lines.append(f"- A-tier count: {h['a_count']}")
+    lines.append(f"- Portfolio size: {h['portfolio_size']}")
+    lines.append("")
+
+    lines.append("## Catalyst Coverage (drug_developer)")
+    lines.append("")
+    lines.append(f"| Metric | Value |")
+    lines.append(f"|--------|-------|")
+    lines.append(f"| specific_days | {cc['n_specific_days']}/{cc['n_dev']} ({cc['specific_days_pct']}%) |")
+    lines.append(f"| far_window | {cc['n_far_window']} |")
+    lines.append(f"| no_upcoming | {cc['n_no_upcoming']} |")
+    lines.append(f"| missing | {cc['n_missing']} |")
+    lines.append("")
+
+    lines.append("## Catalyst-Family Coverage")
+    lines.append("")
+    lines.append(f"**{cf['n_with_family']}/{cf['n_total']}** ({cf['coverage_pct']}%)")
+    lines.append("")
+    if cf["family_distribution"]:
+        lines.append("| Family | Count |")
+        lines.append("|--------|-------|")
+        for fam, cnt in cf["family_distribution"].items():
+            lines.append(f"| {fam} | {cnt} |")
+        lines.append("")
+
+    lines.append("## Rescue Counters")
+    lines.append("")
+    lines.append(f"| Rescue Type | Count |")
+    lines.append(f"|-------------|-------|")
+    lines.append(f"| Far-window (CTGov PCD) | {rc['far_window_ctgov']} |")
+    lines.append(f"| Far-window (M3 fallback) | {rc['far_window_m3_fallback']} |")
+    lines.append(f"| Tier-0 earliest future event | {rc['tier0_earliest_future_event']} |")
+    lines.append(f"| Drawdown margin rescue | {rc['drawdown_margin_rescued']} |")
+    lines.append("")
+
+    lines.append("## Secondary Regulatory Coverage")
+    lines.append("")
+    lines.append(f"**{rs['n_flagged']}/{rs['n_eligible']}** ({rs['coverage_pct']}%)")
+    lines.append("")
+    lines.append(f"| Window | Count |")
+    lines.append(f"|--------|-------|")
+    lines.append(f"| 0-30d | {rs['by_proximity']['0_30d']} |")
+    lines.append(f"| 31-90d | {rs['by_proximity']['31_90d']} |")
+    lines.append(f"| 91-180d | {rs['by_proximity']['91_180d']} |")
+    lines.append("")
+
+    lines.append("## Component Coverage")
+    lines.append("")
+    lines.append(f"| Component | Coverage |")
+    lines.append(f"|-----------|----------|")
+    lines.append(f"| Sponsor (13F) | {comp['sponsor_pct']}% |")
+    lines.append(f"| Drawdown | {comp['drawdown_pct']}% |")
+    lines.append(f"| Options | {comp['options_pct']}% |")
+    lines.append("")
+
+    if top_missing:
+        lines.append("## Top Missing Names (eligible, no catalyst family)")
+        lines.append("")
+        lines.append(", ".join(top_missing))
+        lines.append("")
+
+    cq_md_path = snap_path / "coverage_quality.md"
+    with open(cq_md_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(lines))
+
+    log.info(
+        "[COVERAGE] %s — catalyst=%s/%s (%s%%), family=%s/%s (%s%%), reg_secondary=%s%%, "
+        "rescue: far=%s (ctgov=%s, m3=%s), tier0=%s, dd=%s",
+        h["status"],
+        cc["n_specific_days"],
+        cc["n_dev"],
+        cc["specific_days_pct"],
+        cf["n_with_family"],
+        cf["n_total"],
+        cf["coverage_pct"],
+        rs["coverage_pct"],
+        rc["far_window_total"],
+        rc["far_window_ctgov"],
+        rc["far_window_m3_fallback"],
+        rc["tier0_earliest_future_event"],
+        rc["drawdown_margin_rescued"],
+    )
+
+
 def save_validation_snapshot(
     snapshot_dir: Path,
     as_of_date: str,
@@ -5210,6 +5490,12 @@ def save_validation_snapshot(
                     f.write("\n")
             except OSError as e:
                 logger.warning(f"Could not write inputs_manifest.json: {e}")
+
+    # --- Coverage quality artifact (v1) ---
+    try:
+        _write_coverage_quality(snap_path, csv_rows, metadata, as_of_date, logger)
+    except Exception as _cq_exc:
+        logger.debug("Coverage quality artifact skipped: %s", _cq_exc)
 
     logger.info(f"[SNAPSHOT] Saved validation snapshot: {snap_path} " f"({len(ranked)} tickers, v{version})")
     return snap_path
