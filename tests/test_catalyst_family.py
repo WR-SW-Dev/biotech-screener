@@ -269,3 +269,137 @@ class TestPDUFAFamily:
         from event_ledger import classify_catalyst_family
 
         assert classify_catalyst_family("PDUFA") == "REGULATORY"
+
+
+# ---------------------------------------------------------------------------
+# E) _find_nearest_catalyst_event: three-tier lookup
+# ---------------------------------------------------------------------------
+
+
+def _make_m3(
+    ticker,
+    next_date,
+    source_uid="",
+    events=None,
+):
+    """Build minimal M3 summaries dict for _find_nearest_catalyst_event."""
+    return {
+        ticker: {
+            "integration": {
+                "next_catalyst_date": next_date,
+                "nearest_catalyst_source_uid": source_uid,
+            },
+            "events": events or [],
+        }
+    }
+
+
+class TestFindNearestCatalystEvent:
+
+    def test_tier1_exact_date_match(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "ACME",
+            "2026-06-01",
+            events=[
+                {"event_date": "2026-06-01", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-09-01", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "ACME")
+        assert ev["event_type"] == "DATA_READOUT"
+        assert ev["event_date"] == "2026-06-01"
+
+    def test_tier2_fuzzy_match_within_14d(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "JAZZ",
+            "2026-04-01",
+            events=[
+                {"event_date": "2026-03-26", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-09-01", "event_type": "CT_STUDY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "JAZZ")
+        assert ev["event_type"] == "CT_PRIMARY_COMPLETION"
+        assert ev["event_date"] == "2026-03-26"
+
+    def test_tier2_picks_closest(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "TEM",
+            "2026-04-01",
+            events=[
+                {"event_date": "2026-03-20", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-03-31", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "TEM")
+        assert ev["event_type"] == "CT_PRIMARY_COMPLETION"
+        assert ev["event_date"] == "2026-03-31"
+
+    def test_tier2_outside_14d_falls_through(self):
+        """Events >14d away from next_catalyst_date should not match tier 2."""
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3(
+            "VERA",
+            "2026-03-15",
+            source_uid="NCT05609812",
+            events=[
+                {"event_date": "2026-09-01", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
+            ],
+        )
+        ev = _find_nearest_catalyst_event(m3, "VERA")
+        # Should fall through to tier 3 (NCT inference), not match the distant event
+        assert ev["event_type"] == "CT_PRIMARY_COMPLETION"
+        assert ev.get("_inferred") is True
+
+    def test_tier3_nct_source_uid_infers_clinical(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3("FATE", "2026-05-01", source_uid="NCT05934097", events=[])
+        ev = _find_nearest_catalyst_event(m3, "FATE")
+        assert ev is not None
+        assert ev["event_type"] == "CT_PRIMARY_COMPLETION"
+        assert ev["source"] == "CTGOV_CALENDAR"
+        assert ev.get("_inferred") is True
+
+    def test_tier3_non_nct_returns_none(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = _make_m3("FAKE", "2026-05-01", source_uid="SEC_12345", events=[])
+        ev = _find_nearest_catalyst_event(m3, "FAKE")
+        assert ev is None
+
+    def test_no_m3_summaries(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        assert _find_nearest_catalyst_event(None, "ACME") is None
+        assert _find_nearest_catalyst_event({}, "ACME") is None
+
+    def test_no_next_catalyst_date(self):
+        from run_screen import _find_nearest_catalyst_event
+
+        m3 = {"ACME": {"integration": {}, "events": []}}
+        assert _find_nearest_catalyst_event(m3, "ACME") is None
+
+    def test_source_and_event_type_helpers(self):
+        """_nearest_catalyst_source and _nearest_catalyst_event_type use the new lookup."""
+        from run_screen import _nearest_catalyst_event_type, _nearest_catalyst_source
+
+        m3 = _make_m3("FATE", "2026-05-01", source_uid="NCT05934097", events=[])
+        assert _nearest_catalyst_event_type(m3, "FATE") == "CT_PRIMARY_COMPLETION"
+        assert _nearest_catalyst_source(m3, "FATE") == "CTGOV_CALENDAR"
+
+    def test_family_from_inferred_event(self):
+        """classify_catalyst_family should work on the inferred event_type."""
+        from event_ledger import classify_catalyst_family
+        from run_screen import _nearest_catalyst_event_type
+
+        m3 = _make_m3("FATE", "2026-05-01", source_uid="NCT05934097", events=[])
+        et = _nearest_catalyst_event_type(m3, "FATE")
+        assert classify_catalyst_family(et) == "CLINICAL"

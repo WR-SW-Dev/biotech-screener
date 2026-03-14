@@ -2281,56 +2281,92 @@ def _check_catalyst_corroboration(
     return evaluate_corroboration(catalyst_source, next_date, events, catalyst_family)
 
 
+def _find_nearest_catalyst_event(
+    m3_summaries: Optional[Dict[str, Any]],
+    ticker: str,
+    max_fuzzy_days: int = 14,
+) -> Optional[Dict[str, Any]]:
+    """Find the M3 event corresponding to the integration nearest catalyst.
+
+    Three-tier lookup:
+      1. Exact date match: event_date == integration.next_catalyst_date
+      2. Fuzzy date match: closest event within ±max_fuzzy_days
+      3. Source UID inference: if nearest_catalyst_source_uid starts with
+         "NCT", synthesise a minimal CLINICAL event (covers trials found
+         by the integration layer but filtered from the scored events list)
+
+    Returns the matched event dict, or None.
+    """
+    if not m3_summaries:
+        return None
+    summary = m3_summaries.get(ticker.upper()) or m3_summaries.get(ticker)
+    if not summary or not isinstance(summary, dict):
+        return None
+    integration = summary.get("integration") or {}
+    next_date = integration.get("next_catalyst_date")
+    if not next_date:
+        return None
+
+    events = [e for e in (summary.get("events") or []) if isinstance(e, dict)]
+
+    # Tier 1: exact date match
+    for event in events:
+        if event.get("event_date") == next_date:
+            return event
+
+    # Tier 2: closest event within ±max_fuzzy_days
+    if events:
+        best_event = None
+        best_delta = None
+        try:
+            from datetime import date as _date
+
+            target = _date.fromisoformat(next_date[:10])
+            for event in events:
+                ed = event.get("event_date", "")
+                if not ed:
+                    continue
+                try:
+                    delta = abs((_date.fromisoformat(ed[:10]) - target).days)
+                except (ValueError, TypeError):
+                    continue
+                if delta <= max_fuzzy_days and (best_delta is None or delta < best_delta):
+                    best_delta = delta
+                    best_event = event
+        except (ValueError, TypeError):
+            pass
+        if best_event is not None:
+            return best_event
+
+    # Tier 3: infer from source UID (NCT → CLINICAL)
+    source_uid = integration.get("nearest_catalyst_source_uid", "")
+    if source_uid.startswith("NCT"):
+        return {
+            "event_type": "CT_PRIMARY_COMPLETION",
+            "source": "CTGOV_CALENDAR",
+            "event_date": next_date,
+            "_inferred": True,
+        }
+
+    return None
+
+
 def _nearest_catalyst_source(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
 ) -> str:
-    """Extract the source of the nearest catalyst event from Module 3 summaries.
-
-    Looks up the ticker's catalyst summary, finds the event matching
-    ``integration.next_catalyst_date``, and returns its ``source`` field.
-    Returns empty string when data is unavailable.
-    """
-    if not m3_summaries:
-        return ""
-    summary = m3_summaries.get(ticker.upper()) or m3_summaries.get(ticker)
-    if not summary or not isinstance(summary, dict):
-        return ""
-    next_date = (summary.get("integration") or {}).get("next_catalyst_date")
-    if not next_date:
-        return ""
-    for event in summary.get("events") or []:
-        if not isinstance(event, dict):
-            continue
-        # Match by event_date (exact match with next_catalyst_date)
-        if event.get("event_date") == next_date:
-            return event.get("source", "")
-    return ""
+    """Extract the source of the nearest catalyst event from Module 3 summaries."""
+    event = _find_nearest_catalyst_event(m3_summaries, ticker)
+    return event.get("source", "") if event else ""
 
 
 def _nearest_catalyst_event_type(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
 ) -> str:
-    """Extract the event_type of the nearest catalyst event from Module 3.
-
-    Same lookup logic as ``_nearest_catalyst_source`` but returns
-    ``event_type`` (e.g. ``"DATA_READOUT"``, ``"FDA_DECISION"``).
-    """
-    if not m3_summaries:
-        return ""
-    summary = m3_summaries.get(ticker.upper()) or m3_summaries.get(ticker)
-    if not summary or not isinstance(summary, dict):
-        return ""
-    next_date = (summary.get("integration") or {}).get("next_catalyst_date")
-    if not next_date:
-        return ""
-    for event in summary.get("events") or []:
-        if not isinstance(event, dict):
-            continue
-        if event.get("event_date") == next_date:
-            return event.get("event_type", "")
-    return ""
+    """Extract the event_type of the nearest catalyst event from Module 3."""
+    event = _find_nearest_catalyst_event(m3_summaries, ticker)
+    return event.get("event_type", "") if event else ""
 
 
 def _load_pdufa_manual(
