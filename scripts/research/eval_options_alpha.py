@@ -190,6 +190,8 @@ def load_enriched_dataset(
                 "catalyst_decay_w": _safe_float(rank_row.get("catalyst_decay_w", "")),
                 "catalyst_mode": rank_row.get("catalyst_mode", ""),
                 "catalyst_family": rank_row.get("catalyst_family", ""),
+                "catalyst_event_type": rank_row.get("catalyst_event_type", ""),
+                "catalyst_source": rank_row.get("catalyst_source", ""),
                 "eligible": rank_row.get("eligible", ""),
             }
 
@@ -213,9 +215,80 @@ def load_enriched_dataset(
             )
             out.update(event)
 
+            # Hard catalyst flag (for filtering PCD noise)
+            out["is_hard_catalyst"] = _is_hard_catalyst(out)
+
             result.append(out)
 
     return result
+
+
+# Hard catalyst event types and sources for filtering calendar noise
+_HARD_CATALYST_SOURCES = frozenset(
+    {
+        "FDA_PDUFA_DATE",
+        "SEC_8K_FILING",
+        "DATA_READOUT",
+        "COMPANY_GUIDANCE",
+    }
+)
+
+
+def _is_hard_catalyst(row: dict) -> bool:
+    """Determine if a row represents a genuine binary catalyst event.
+
+    Excludes calendar-inferred completion dates (CT_PRIMARY_COMPLETION,
+    CT_STUDY_COMPLETION from CTGOV_CALENDAR) which typically produce
+    < 5% abs_gap and are not meaningful for mispricing or PoS studies.
+
+    Returns True for hard sources, hard event types, or large abs_gap
+    as a backstop for miscategorized events.
+    """
+    event_type = (row.get("catalyst_event_type") or "").lower()
+    source = row.get("catalyst_source") or ""
+    abs_gap = row.get("abs_gap")
+
+    # Rows without outcomes: unknown, not False
+    if abs_gap is None or (isinstance(abs_gap, float) and math.isnan(abs_gap)):
+        # For rows without outcomes, classify based on source/type alone
+        if source in _HARD_CATALYST_SOURCES:
+            return True
+        if source == "CTGOV_CALENDAR":
+            return False
+        return False  # conservative default
+
+    abs_gap_val = float(abs_gap)
+
+    # Exclude calendar-inferred completions with small moves
+    if source == "CTGOV_CALENDAR":
+        return False
+    if "completion" in event_type and abs_gap_val < 0.08:
+        return False
+
+    # Include hard sources regardless of event type
+    if source in _HARD_CATALYST_SOURCES:
+        return True
+
+    # Include hard event type keywords
+    hard_keywords = {
+        "pdufa",
+        "nda_bla",
+        "snda",
+        "sbla",
+        "top_line",
+        "data_readout",
+        "interim_analysis",
+        "phase3_completion",
+        "advisory_committee",
+    }
+    if any(h in event_type for h in hard_keywords):
+        return True
+
+    # Backstop: any row with abs_gap >= 10% is a real move
+    if abs_gap_val >= 0.10:
+        return True
+
+    return False
 
 
 # ---------------------------------------------------------------------------

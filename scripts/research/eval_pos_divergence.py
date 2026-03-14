@@ -696,6 +696,11 @@ def main(argv=None) -> int:
     p.add_argument("--min-obs", type=int, default=DEFAULT_MIN_OBS)
     p.add_argument("--top-k", type=int, default=10, help="Top-K for portfolio slice tests")
     p.add_argument("--output-dir", type=Path, default=Path("output/pos_divergence_study"))
+    p.add_argument(
+        "--hard-catalysts-only",
+        action="store_true",
+        help="Filter to hard catalyst events only (exclude PCD calendar noise)",
+    )
     p.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING", "ERROR"])
     args = p.parse_args(argv)
 
@@ -706,6 +711,11 @@ def main(argv=None) -> int:
     logger.info("Loading dataset (model_signal=%s)...", args.model_signal)
     dataset = build_pos_divergence_dataset(args.snapshots_dir, args.price_csv, horizons, args.model_signal)
     logger.info("Dataset: %d observations", len(dataset))
+
+    if args.hard_catalysts_only:
+        before = len(dataset)
+        dataset = [r for r in dataset if r.get("is_hard_catalyst") is True]
+        logger.info("Hard-catalysts-only filter: %d -> %d rows", before, len(dataset))
 
     if not dataset:
         logger.error("No data — check snapshots dir and options_diagnostics.csv sidecars")

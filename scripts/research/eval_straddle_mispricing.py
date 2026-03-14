@@ -470,6 +470,7 @@ def main(argv=None) -> int:
     p.add_argument("--horizons", default="5,21")
     p.add_argument("--min-obs", type=int, default=DEFAULT_MIN_OBS)
     p.add_argument("--output-dir", type=Path, default=Path("output/straddle_mispricing"))
+    p.add_argument("--hard-catalysts-only", action="store_true", help="Filter to hard catalyst events only")
     p.add_argument("--log-level", default="INFO")
     args = p.parse_args(argv)
 
@@ -488,6 +489,11 @@ def main(argv=None) -> int:
     logger.info("Loading dataset...")
     dataset = build_mispricing_dataset(args.snapshots_dir, args.price_csv, horizons, event_table)
     logger.info("Dataset: %d rows", len(dataset))
+
+    if args.hard_catalysts_only:
+        before = len(dataset)
+        dataset = [r for r in dataset if r.get("is_hard_catalyst") is True]
+        logger.info("Hard-catalysts-only filter: %d -> %d rows", before, len(dataset))
 
     if not dataset:
         logger.error("No data")
