@@ -13,6 +13,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from scripts.research.find_pdufa_candidates_from_sec import (
     _PDUFA_KEYWORDS,
     _extract_submission_type,
+    _is_imprecise_date,
+    filter_forward_only,
     format_for_ingestion,
 )
 from tools.collect_pdufa_forward import validate_candidate
@@ -233,3 +235,123 @@ class TestKeywordRegex:
     )
     def test_keyword_no_false_positives(self, text):
         assert not _PDUFA_KEYWORDS.search(text), f"Unexpected match for: {text!r}"
+
+
+# ---------------------------------------------------------------------------
+# 7. Forward-only filter
+# ---------------------------------------------------------------------------
+
+
+def _make_candidate(
+    ticker="ACME",
+    event_date="2026-08-15",
+    confidence="HIGH",
+):
+    return {
+        "ticker": ticker,
+        "event_type": "PDUFA",
+        "event_date": event_date,
+        "disclosed_at": "2026-03-01",
+        "confidence": confidence,
+        "keyword_excerpt": "PDUFA date set",
+        "dates_found": "",
+        "source_file": "cache.json",
+    }
+
+
+class TestFilterForwardOnly:
+
+    def test_future_date_survives(self):
+        candidates = [_make_candidate(event_date="2026-08-15")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 1
+        assert all(len(v) == 0 for v in rejections.values())
+
+    def test_past_date_rejected(self):
+        candidates = [_make_candidate(event_date="2025-12-01")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 0
+        assert len(rejections["past_date"]) == 1
+
+    def test_same_day_rejected(self):
+        """event_date == as_of_date is considered past (already happened)."""
+        candidates = [_make_candidate(event_date="2026-03-13")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 0
+        assert len(rejections["past_date"]) == 1
+
+    def test_duplicate_existing_rejected(self):
+        candidates = [_make_candidate(ticker="VERA", event_date="2026-07-07")]
+        existing_keys = {("VERA", "2026-07-07")}
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", existing_keys)
+        assert len(survivors) == 0
+        assert len(rejections["duplicate_existing"]) == 1
+
+    def test_imprecise_quarter_boundary_rejected(self):
+        candidates = [_make_candidate(event_date="2026-07-01", confidence="LOW")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 0
+        assert len(rejections["imprecise_date"]) == 1
+
+    def test_imprecise_quarter_boundary_high_confidence(self):
+        """Quarter boundaries with HIGH confidence are still flagged as imprecise."""
+        candidates = [_make_candidate(event_date="2026-07-01", confidence="HIGH")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 0
+        assert len(rejections["imprecise_date"]) == 1
+
+    def test_precise_date_high_confidence_survives(self):
+        candidates = [_make_candidate(event_date="2026-07-07", confidence="HIGH")]
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", set())
+        assert len(survivors) == 1
+
+    def test_mixed_batch(self):
+        candidates = [
+            _make_candidate(ticker="PAST", event_date="2025-12-01"),
+            _make_candidate(ticker="GOOD", event_date="2026-08-15"),
+            _make_candidate(ticker="QRTR", event_date="2026-07-01", confidence="LOW"),
+            _make_candidate(ticker="DUP", event_date="2026-04-03"),
+        ]
+        existing_keys = {("DUP", "2026-04-03")}
+        survivors, rejections = filter_forward_only(candidates, "2026-03-13", existing_keys)
+        assert len(survivors) == 1
+        assert survivors[0]["ticker"] == "GOOD"
+        assert len(rejections["past_date"]) == 1
+        assert len(rejections["imprecise_date"]) == 1
+        assert len(rejections["duplicate_existing"]) == 1
+
+    def test_empty_input(self):
+        survivors, rejections = filter_forward_only([], "2026-03-13", set())
+        assert survivors == []
+        assert all(len(v) == 0 for v in rejections.values())
+
+
+class TestIsImpreciseDate:
+
+    @pytest.mark.parametrize(
+        "event_date",
+        [
+            "2026-01-01",
+            "2026-04-01",
+            "2026-07-01",
+            "2026-10-01",
+            "2026-06-01",
+            "2026-12-01",
+            "2026-03-31",
+            "2026-06-30",
+            "2026-09-30",
+            "2026-12-31",
+        ],
+    )
+    def test_quarter_boundaries_are_imprecise(self, event_date):
+        assert _is_imprecise_date(event_date, "HIGH") is True
+
+    @pytest.mark.parametrize(
+        "event_date",
+        ["2026-07-07", "2026-08-15", "2026-04-05", "2026-11-14"],
+    )
+    def test_specific_dates_are_precise(self, event_date):
+        assert _is_imprecise_date(event_date, "HIGH") is False
+
+    def test_low_confidence_always_imprecise(self):
+        assert _is_imprecise_date("2026-07-07", "LOW") is True

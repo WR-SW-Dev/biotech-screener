@@ -10,10 +10,16 @@ Two output formats:
   --format discovery  (default) CSV for triage — ticker, keyword_excerpt, dates_found
   --format ingestion  JSON shaped for collect_pdufa_forward.py --validate/--ingest
 
+Filters:
+  --forward-only      Drop candidates whose event_date is on or before --as-of-date.
+                       Also classifies imprecise quarter-level dates. Prints a
+                       rejection summary by reason (past_date, duplicate_existing,
+                       imprecise_date).
+
 Usage:
-    python scripts/research/find_pdufa_candidates_from_sec.py
-    python scripts/research/find_pdufa_candidates_from_sec.py --format ingestion --out-json candidates.json
-    python scripts/research/find_pdufa_candidates_from_sec.py --as-of-date 2026-03-12
+    python scripts/research/find_pdufa_candidates_from_sec.py --forward-only
+    python scripts/research/find_pdufa_candidates_from_sec.py --format ingestion --forward-only --out-json candidates.json
+    python scripts/research/find_pdufa_candidates_from_sec.py --as-of-date 2026-03-14
 """
 
 import argparse
@@ -24,7 +30,7 @@ import re
 import sys
 from datetime import date
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Set, Tuple
 
 # Ensure project root is on sys.path
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -82,6 +88,23 @@ _SUBMISSION_CANONICAL = {
     "sbla": "sBLA",
 }
 
+# Quarter-boundary dates that signal imprecise "Q1/Q2/H1/H2" estimates
+_QUARTER_BOUNDARIES = frozenset(
+    {
+        "01-01",
+        "04-01",
+        "07-01",
+        "10-01",
+        "06-01",
+        "12-01",
+        "01-31",
+        "03-31",
+        "06-30",
+        "09-30",
+        "12-31",
+    }
+)
+
 
 def load_universe(data_dir: Path) -> set:
     """Load universe tickers from universe.json."""
@@ -98,19 +121,38 @@ def load_universe(data_dir: Path) -> set:
     return set()
 
 
-def load_existing_pdufa(data_dir: Path) -> set:
-    """Load existing PDUFA tickers to exclude from candidates."""
+def load_existing_pdufa_keys(data_dir: Path) -> Tuple[Set[str], Set[Tuple[str, str]]]:
+    """Load existing PDUFA entries.
+
+    Returns (ticker_set, (ticker, pdufa_date) key_set) for dedup reporting.
+    """
     pdufa_path = data_dir / "pdufa_dates.json"
     if not pdufa_path.exists():
-        return set()
+        return set(), set()
     with open(pdufa_path, "r", encoding="utf-8") as f:
         data = json.load(f)
     entries = data if isinstance(data, list) else data.get("events", [])
-    return {e.get("ticker", "") for e in entries}
+    tickers = {e.get("ticker", "") for e in entries}
+    keys = {(e.get("ticker", "").upper(), e.get("pdufa_date", "")) for e in entries}
+    return tickers, keys
 
 
-def scan_8k_cache(cache_dir: Path, universe: set, existing_pdufa: set) -> list:
-    """Scan SEC 8-K cache files for PDUFA keyword matches."""
+def _is_imprecise_date(event_date: str, confidence: str) -> bool:
+    """Detect quarter-level placeholder dates."""
+    if confidence == "LOW":
+        return True
+    if len(event_date) >= 10:
+        md = event_date[5:10]  # "MM-DD"
+        if md in _QUARTER_BOUNDARIES:
+            return True
+    return False
+
+
+def scan_8k_cache(cache_dir: Path, universe: set, existing_tickers: set) -> list:
+    """Scan SEC 8-K cache files for PDUFA keyword matches.
+
+    Note: existing_tickers filter is applied here for backward compatibility.
+    """
     candidates = []
     cache_files = sorted(cache_dir.glob("8k_catalysts_*.json"), reverse=True)
 
@@ -133,7 +175,7 @@ def scan_8k_cache(cache_dir: Path, universe: set, existing_pdufa: set) -> list:
         ticker = ev.get("ticker", "")
         if not ticker or ticker not in universe:
             continue
-        if ticker in existing_pdufa:
+        if ticker in existing_tickers:
             continue
 
         event_name = ev.get("event_name", "")
@@ -170,6 +212,48 @@ def scan_8k_cache(cache_dir: Path, universe: set, existing_pdufa: set) -> list:
         )
 
     return candidates
+
+
+def filter_forward_only(
+    candidates: List[Dict[str, str]],
+    as_of_date: str,
+    existing_keys: Set[Tuple[str, str]],
+) -> Tuple[List[Dict[str, str]], Dict[str, List[Dict[str, str]]]]:
+    """Filter candidates to forward-looking only.
+
+    Returns (survivors, rejections_by_reason).
+    Rejection reasons: past_date, duplicate_existing, imprecise_date.
+    """
+    survivors = []
+    rejections: Dict[str, List[Dict[str, str]]] = {
+        "past_date": [],
+        "duplicate_existing": [],
+        "imprecise_date": [],
+    }
+
+    for c in candidates:
+        ticker = c.get("ticker", "")
+        event_date = c.get("event_date", "")
+        confidence = c.get("confidence", "")
+
+        # Check duplicate against existing (ticker, date) keys
+        if event_date and (ticker.upper(), event_date) in existing_keys:
+            rejections["duplicate_existing"].append(c)
+            continue
+
+        # Check past date
+        if event_date and event_date <= as_of_date:
+            rejections["past_date"].append(c)
+            continue
+
+        # Check imprecise date
+        if event_date and _is_imprecise_date(event_date, confidence):
+            rejections["imprecise_date"].append(c)
+            continue
+
+        survivors.append(c)
+
+    return survivors, rejections
 
 
 def _extract_submission_type(text: str) -> str:
@@ -279,10 +363,15 @@ def main():
         help="Output format: discovery (CSV triage) or ingestion (JSON for collect_pdufa_forward)",
     )
     parser.add_argument(
+        "--forward-only",
+        action="store_true",
+        help="Drop past-date, duplicate, and imprecise candidates; print rejection summary",
+    )
+    parser.add_argument(
         "--as-of-date",
         type=str,
         default=date.today().isoformat(),
-        help="Reference date (used in ingestion notes and logging)",
+        help="Reference date (used for --forward-only filter and ingestion notes)",
     )
     args = parser.parse_args()
 
@@ -297,15 +386,28 @@ def main():
         return 1
     logger.info(f"Universe: {len(universe)} tickers")
 
-    existing_pdufa = load_existing_pdufa(data_dir)
-    logger.info(f"Existing PDUFA entries: {len(existing_pdufa)} tickers ({', '.join(sorted(existing_pdufa))})")
+    existing_tickers, existing_keys = load_existing_pdufa_keys(data_dir)
+    logger.info(f"Existing PDUFA entries: {len(existing_tickers)} tickers ({', '.join(sorted(existing_tickers))})")
 
-    candidates = scan_8k_cache(cache_dir, universe, existing_pdufa)
-    logger.info(f"Found {len(candidates)} PDUFA candidates (excluding existing)")
+    candidates = scan_8k_cache(cache_dir, universe, existing_tickers)
+    logger.info(f"Found {len(candidates)} PDUFA candidates (excluding existing tickers)")
 
     if not candidates:
         logger.info("No new PDUFA candidates found")
         return 0
+
+    # Apply forward-only filter
+    if args.forward_only:
+        candidates, rejections = filter_forward_only(candidates, args.as_of_date, existing_keys)
+        total_rejected = sum(len(v) for v in rejections.values())
+        logger.info(f"Forward-only filter: {len(candidates)} survivors, {total_rejected} rejected")
+        for reason, items in rejections.items():
+            if items:
+                tickers = ", ".join(c["ticker"] for c in items)
+                logger.info(f"  {reason}: {len(items)} ({tickers})")
+        if not candidates:
+            logger.info("No forward-looking candidates after filtering")
+            return 0
 
     # Sort by ticker
     candidates.sort(key=lambda c: c["ticker"])
