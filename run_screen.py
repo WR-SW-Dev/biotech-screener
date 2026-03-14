@@ -10030,6 +10030,21 @@ Module 3 Catalyst Detection:
             else:
                 logger.info("Input freshness check: all hashes match previous run")
 
+        # Refresh price_history.csv with latest prices (non-blocking)
+        try:
+            from scripts.refresh_price_history import main as _refresh_prices
+
+            _price_csv = args.data_dir / "price_history.csv"
+            if _price_csv.exists():
+                logger.info("[PRICE_REFRESH] Refreshing price_history.csv...")
+                _refresh_rc = _refresh_prices(["--price-csv", str(_price_csv), "--days-back", "5"])
+                if _refresh_rc == 0:
+                    logger.info("[PRICE_REFRESH] Done")
+                else:
+                    logger.warning("[PRICE_REFRESH] Non-zero return: %d", _refresh_rc)
+        except Exception as _pr_exc:
+            logger.debug("Price refresh skipped: %s", _pr_exc)
+
         # Run pipeline
         results = run_screening_pipeline(
             as_of_date=args.as_of_date,
