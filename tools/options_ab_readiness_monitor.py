@@ -8,13 +8,14 @@ accumulated enough TT-populated snapshots for a meaningful weekly A/B.
 Tracks the exact preconditions the A/B harness
 (eval_b91_options_quality_weekly_ab.py) needs:
   - options_quality_composite populated (non-empty, non-zero)
-  - REGULATORY + less_binary segment coverage (the target for the candidate)
+  - Step-10 eligible segment: secondary regulatory path (91-180d) with
+    nonzero OQC — mirrors decision_engine.py Step 10 exactly
   - ab_ready status from metadata.json
   - consecutive gaps (credential expiry, API outage)
 
 Trigger threshold (configurable):
   - MIN_AB_READY_WEEKS: minimum weekly periods with ab_ready=true
-  - Requires n_regulatory_less_binary_oqc > 0 in at least one snapshot
+  - Requires n_step10_eligible_oqc > 0 in at least one snapshot
 
 Usage:
     python tools/options_ab_readiness_monitor.py [--snapshot-root data/snapshots]
@@ -36,13 +37,30 @@ from typing import Any, Dict, List, Optional
 MIN_AB_READY_WEEKS = 10
 """Minimum weekly snapshots with ab_ready=true before triggering A/B."""
 
-MIN_REG_LB_OQC_SNAPSHOTS = 1
-"""At least one snapshot must have REGULATORY+less_binary OQC > 0."""
+MIN_STEP10_OQC_SNAPSHOTS = 1
+"""At least one snapshot must have Step-10 eligible OQC > 0."""
 
 
 # ---------------------------------------------------------------------------
 # Core scan
 # ---------------------------------------------------------------------------
+
+
+def _is_step10_eligible(row: dict) -> bool:
+    """Check if a row meets Step-10 eligibility for options quality tilt.
+
+    Mirrors decision_engine.py Step 10: has_regulatory_upcoming_180d=1,
+    regulatory_days in (90, 180], and options_quality_composite > 0.
+    """
+    if row.get("options_quality_composite", "").strip() in ("", "0", "0.0"):
+        return False
+    if str(row.get("has_regulatory_upcoming_180d", "")).strip() != "1":
+        return False
+    try:
+        reg_d = float(row.get("regulatory_days", ""))
+    except (ValueError, TypeError):
+        return False
+    return reg_d > 90 and reg_d <= 180
 
 
 def scan_snapshot(snap_dir: Path) -> Optional[Dict[str, Any]]:
@@ -63,13 +81,7 @@ def scan_snapshot(snap_dir: Path) -> Optional[Dict[str, Any]]:
     n_total = len(rows)
     n_has_data = sum(1 for r in rows if str(r.get("opt_has_data", "0")).strip() == "1")
     n_oqc = sum(1 for r in rows if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0"))
-    n_reg_lb_oqc = sum(
-        1
-        for r in rows
-        if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0")
-        and str(r.get("catalyst_family", "")).strip() == "REGULATORY"
-        and str(r.get("catalyst_bucket", "")).strip() == "less_binary"
-    )
+    n_step10_oqc = sum(1 for r in rows if _is_step10_eligible(r))
 
     # Check metadata for ab_ready if available
     meta_ab_ready = None
@@ -88,7 +100,7 @@ def scan_snapshot(snap_dir: Path) -> Optional[Dict[str, Any]]:
         "n_total": n_total,
         "n_has_data": n_has_data,
         "n_oqc_nonzero": n_oqc,
-        "n_regulatory_less_binary_oqc": n_reg_lb_oqc,
+        "n_step10_eligible_oqc": n_step10_oqc,
         "ab_ready": ab_ready,
         "meta_ab_ready": meta_ab_ready,
     }
@@ -113,13 +125,13 @@ def scan_all_snapshots(snapshot_root: Path) -> List[Dict[str, Any]]:
 def compute_readiness(
     snapshots: List[Dict[str, Any]],
     min_weeks: int = MIN_AB_READY_WEEKS,
-    min_reg_lb: int = MIN_REG_LB_OQC_SNAPSHOTS,
+    min_step10: int = MIN_STEP10_OQC_SNAPSHOTS,
 ) -> Dict[str, Any]:
     """Compute A/B readiness from snapshot scan results."""
     ab_ready_snapshots = [s for s in snapshots if s["ab_ready"]]
     n_ab_ready = len(ab_ready_snapshots)
 
-    has_reg_lb = sum(1 for s in snapshots if s["n_regulatory_less_binary_oqc"] > 0)
+    has_step10 = sum(1 for s in snapshots if s["n_step10_eligible_oqc"] > 0)
 
     # Find gaps (consecutive non-ab_ready after first ab_ready)
     gaps = []
@@ -141,21 +153,21 @@ def compute_readiness(
 
     # Determine trigger status
     weeks_met = n_ab_ready >= min_weeks
-    reg_lb_met = has_reg_lb >= min_reg_lb
+    step10_met = has_step10 >= min_step10
 
-    if weeks_met and reg_lb_met:
+    if weeks_met and step10_met:
         trigger = "READY"
         trigger_detail = (
             f"Trigger met: {n_ab_ready} ab_ready snapshots (>= {min_weeks}), "
-            f"{has_reg_lb} with REGULATORY+less_binary OQC (>= {min_reg_lb}). "
+            f"{has_step10} with Step-10 eligible OQC (>= {min_step10}). "
             f"Run eval_b91_options_quality_weekly_ab.py"
         )
-    elif weeks_met and not reg_lb_met:
+    elif weeks_met and not step10_met:
         trigger = "BLOCKED"
         trigger_detail = (
             f"Enough snapshots ({n_ab_ready} >= {min_weeks}) but "
-            f"zero REGULATORY+less_binary OQC coverage. "
-            f"Candidate cannot diverge from baseline until REGULATORY family appears."
+            f"zero Step-10 eligible OQC (secondary reg 91-180d with nonzero OQC). "
+            f"Candidate cannot diverge from baseline until regulatory supply appears."
         )
     else:
         remaining = min_weeks - n_ab_ready
@@ -163,21 +175,21 @@ def compute_readiness(
         trigger_detail = (
             f"{n_ab_ready}/{min_weeks} ab_ready snapshots. "
             f"Need {remaining} more. "
-            f"REGULATORY+less_binary coverage: {has_reg_lb} snapshots."
+            f"Step-10 eligible coverage: {has_step10} snapshots."
         )
 
     return {
-        "schema": "options_ab_readiness.v1",
+        "schema": "options_ab_readiness.v2",
         "trigger": trigger,
         "trigger_detail": trigger_detail,
         "thresholds": {
             "min_ab_ready_weeks": min_weeks,
-            "min_reg_lb_oqc_snapshots": min_reg_lb,
+            "min_step10_oqc_snapshots": min_step10,
         },
         "totals": {
             "total_snapshots": len(snapshots),
             "ab_ready_snapshots": n_ab_ready,
-            "snapshots_with_reg_lb_oqc": has_reg_lb,
+            "snapshots_with_step10_oqc": has_step10,
         },
         "gaps": gaps,
         "candidate_id": "73113d54",
@@ -206,7 +218,7 @@ def print_report(
     totals = readiness["totals"]
     print(f"  Total snapshots scanned: {totals['total_snapshots']}")
     print(f"  ab_ready snapshots: {totals['ab_ready_snapshots']}")
-    print(f"  With REGULATORY+less_binary OQC: {totals['snapshots_with_reg_lb_oqc']}")
+    print(f"  With Step-10 eligible OQC: {totals['snapshots_with_step10_oqc']}")
     print()
 
     if readiness["gaps"]:
@@ -219,13 +231,13 @@ def print_report(
     recent = snapshots[-10:] if len(snapshots) > 10 else snapshots
     if recent:
         print("  Recent snapshots:")
-        print(f"  {'Date':<14} {'has_data':>8} {'OQC':>5} {'REG_LB':>6} {'ab_ready':>8}")
-        print(f"  {'-'*14} {'-'*8} {'-'*5} {'-'*6} {'-'*8}")
+        print(f"  {'Date':<14} {'has_data':>8} {'OQC':>5} {'S10':>5} {'ab_ready':>8}")
+        print(f"  {'-'*14} {'-'*8} {'-'*5} {'-'*5} {'-'*8}")
         for s in recent:
             ab = "YES" if s["ab_ready"] else "no"
             print(
                 f"  {s['date']:<14} {s['n_has_data']:>8} "
-                f"{s['n_oqc_nonzero']:>5} {s['n_regulatory_less_binary_oqc']:>6} "
+                f"{s['n_oqc_nonzero']:>5} {s['n_step10_eligible_oqc']:>5} "
                 f"{ab:>8}"
             )
     print()

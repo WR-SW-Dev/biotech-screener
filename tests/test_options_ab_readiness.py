@@ -36,23 +36,23 @@ def _row(
     ticker: str,
     has_data: str = "1",
     oqc: str = "0.5",
-    family: str = "CLINICAL",
-    bucket: str = "less_binary",
+    has_reg_180d: str = "0",
+    reg_days: str = "",
 ) -> dict:
     return {
         "ticker": ticker,
         "opt_has_data": has_data,
         "options_quality_composite": oqc,
-        "catalyst_family": family,
-        "catalyst_bucket": bucket,
+        "has_regulatory_upcoming_180d": has_reg_180d,
+        "regulatory_days": reg_days,
     }
 
 
 class TestScanSnapshot:
     def test_populated_snapshot(self, tmp_path):
         rows = [
-            _row("A", oqc="0.6", family="REGULATORY", bucket="less_binary"),
-            _row("B", oqc="0.4", family="CLINICAL"),
+            _row("A", oqc="0.6", has_reg_180d="1", reg_days="120"),
+            _row("B", oqc="0.4"),
             _row("C", has_data="0", oqc=""),
         ]
         snap = _make_snapshot(tmp_path, "2026-03-13", rows, meta_ab_ready=True)
@@ -62,9 +62,27 @@ class TestScanSnapshot:
         assert result["n_total"] == 3
         assert result["n_has_data"] == 2
         assert result["n_oqc_nonzero"] == 2
-        assert result["n_regulatory_less_binary_oqc"] == 1
+        assert result["n_step10_eligible_oqc"] == 1
         assert result["ab_ready"] is True
         assert result["meta_ab_ready"] is True
+
+    def test_reg_outside_91_180_window(self, tmp_path):
+        """regulatory_days <= 90 should NOT count as step10 eligible."""
+        rows = [
+            _row("A", oqc="0.6", has_reg_180d="1", reg_days="60"),
+        ]
+        snap = _make_snapshot(tmp_path, "2026-03-13", rows)
+        result = scan_snapshot(snap)
+        assert result["n_step10_eligible_oqc"] == 0
+
+    def test_reg_no_oqc(self, tmp_path):
+        """has reg 91-180d but no OQC should NOT count."""
+        rows = [
+            _row("A", oqc="", has_reg_180d="1", reg_days="120"),
+        ]
+        snap = _make_snapshot(tmp_path, "2026-03-13", rows)
+        result = scan_snapshot(snap)
+        assert result["n_step10_eligible_oqc"] == 0
 
     def test_empty_snapshot(self, tmp_path):
         snap = _make_snapshot(tmp_path, "2026-03-10", [_row("A", has_data="0", oqc="")])
@@ -101,7 +119,7 @@ class TestComputeReadiness:
             {
                 "date": f"2026-03-{10+i:02d}",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -112,12 +130,12 @@ class TestComputeReadiness:
         assert result["trigger"] == "ACCUMULATING"
         assert "7 more" in result["trigger_detail"]
 
-    def test_blocked_no_reg_lb(self):
+    def test_blocked_no_step10(self):
         snapshots = [
             {
                 "date": f"2026-03-{i:02d}",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -126,14 +144,14 @@ class TestComputeReadiness:
         ]
         result = compute_readiness(snapshots, min_weeks=10)
         assert result["trigger"] == "BLOCKED"
-        assert "REGULATORY" in result["trigger_detail"]
+        assert "Step-10" in result["trigger_detail"]
 
     def test_ready(self):
         snapshots = [
             {
                 "date": f"2026-03-{i:02d}",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 2,
+                "n_step10_eligible_oqc": 2,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -149,7 +167,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-01",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -157,7 +175,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-02",
                 "ab_ready": False,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 0,
                 "n_oqc_nonzero": 0,
                 "n_total": 20,
@@ -165,7 +183,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-03",
                 "ab_ready": False,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 0,
                 "n_oqc_nonzero": 0,
                 "n_total": 20,
@@ -173,7 +191,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-04",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -189,7 +207,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-01",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -197,7 +215,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-02",
                 "ab_ready": False,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 0,
                 "n_oqc_nonzero": 0,
                 "n_total": 20,
@@ -212,7 +230,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-01",
                 "ab_ready": False,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 0,
                 "n_oqc_nonzero": 0,
                 "n_total": 20,
@@ -220,7 +238,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-02",
                 "ab_ready": False,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 0,
                 "n_oqc_nonzero": 0,
                 "n_total": 20,
@@ -228,7 +246,7 @@ class TestComputeReadiness:
             {
                 "date": "2026-03-03",
                 "ab_ready": True,
-                "n_regulatory_less_binary_oqc": 0,
+                "n_step10_eligible_oqc": 0,
                 "n_has_data": 10,
                 "n_oqc_nonzero": 5,
                 "n_total": 20,
@@ -241,3 +259,7 @@ class TestComputeReadiness:
         result = compute_readiness([], min_weeks=10)
         assert result["trigger"] == "ACCUMULATING"
         assert result["totals"]["total_snapshots"] == 0
+
+    def test_schema_version(self):
+        result = compute_readiness([], min_weeks=10)
+        assert result["schema"] == "options_ab_readiness.v2"

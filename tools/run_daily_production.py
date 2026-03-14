@@ -2622,20 +2622,28 @@ def check_options_coverage(
 
     n_has_data = sum(1 for r in rows if str(r.get("opt_has_data", "0")).strip() == "1")
     n_oqc = sum(1 for r in rows if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0"))
-    n_reg_lb_oqc = sum(
-        1
-        for r in rows
-        if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0")
-        and str(r.get("catalyst_family", "")).strip() == "REGULATORY"
-        and str(r.get("catalyst_bucket", "")).strip() == "less_binary"
-    )
+    # Step-10 eligible: secondary regulatory path (91-180d) with nonzero OQC.
+    # Mirrors decision_engine.py Step 10: has_regulatory_upcoming_180d=1,
+    # regulatory_days in (90, 180], and options_quality_composite > 0.
+    n_step10_oqc = 0
+    for r in rows:
+        if r.get("options_quality_composite", "").strip() in ("", "0", "0.0"):
+            continue
+        if str(r.get("has_regulatory_upcoming_180d", "")).strip() != "1":
+            continue
+        try:
+            reg_d = float(r.get("regulatory_days", ""))
+        except (ValueError, TypeError):
+            continue
+        if reg_d > 90 and reg_d <= 180:
+            n_step10_oqc += 1
     no_creds = any(r.get("opt_diagnostic_basis") == "no_credentials" for r in rows[:1])
 
     value = {
         "n_total": n_total,
         "n_has_data": n_has_data,
         "n_oqc_nonzero": n_oqc,
-        "n_regulatory_less_binary_oqc": n_reg_lb_oqc,
+        "n_step10_eligible_oqc": n_step10_oqc,
         "ab_ready": n_oqc > 0,
         "has_credentials": not no_creds,
     }
@@ -2643,7 +2651,7 @@ def check_options_coverage(
     detail_parts = [
         f"opt_has_data={n_has_data}/{n_total}",
         f"oqc_nonzero={n_oqc}",
-        f"reg_lb_oqc={n_reg_lb_oqc}",
+        f"step10_oqc={n_step10_oqc}",
     ]
 
     if no_creds:

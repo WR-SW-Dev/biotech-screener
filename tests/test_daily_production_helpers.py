@@ -500,24 +500,24 @@ class TestCheckOptionsCoverage:
                 "opt_has_data": "1",
                 "options_quality_composite": "0.6000",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "120",
             },
             {
                 "ticker": "BETA",
                 "opt_has_data": "1",
                 "options_quality_composite": "0.4000",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "CLINICAL",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "0",
+                "regulatory_days": "",
             },
             {
                 "ticker": "GAMA",
                 "opt_has_data": "0",
                 "options_quality_composite": "",
                 "opt_diagnostic_basis": "no_liquid_expiry",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "30",
             },
         ]
         staging = self._make_rows(tmp_path, rows)
@@ -525,7 +525,7 @@ class TestCheckOptionsCoverage:
         assert result.status == "PASS"
         assert result.value["n_has_data"] == 2
         assert result.value["n_oqc_nonzero"] == 2
-        assert result.value["n_regulatory_less_binary_oqc"] == 1
+        assert result.value["n_step10_eligible_oqc"] == 1
         assert result.value["ab_ready"] is True
 
     def test_warn_no_credentials(self, tmp_path):
@@ -535,8 +535,8 @@ class TestCheckOptionsCoverage:
                 "opt_has_data": "0",
                 "options_quality_composite": "",
                 "opt_diagnostic_basis": "no_credentials",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "120",
             },
         ]
         staging = self._make_rows(tmp_path, rows)
@@ -552,8 +552,8 @@ class TestCheckOptionsCoverage:
                 "opt_has_data": "0",
                 "options_quality_composite": "",
                 "opt_diagnostic_basis": "",
-                "catalyst_family": "CLINICAL",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "0",
+                "regulatory_days": "",
             },
         ]
         staging = self._make_rows(tmp_path, rows)
@@ -568,8 +568,8 @@ class TestCheckOptionsCoverage:
                 "opt_has_data": "1",
                 "options_quality_composite": "",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "120",
             },
         ]
         staging = self._make_rows(tmp_path, rows)
@@ -583,36 +583,36 @@ class TestCheckOptionsCoverage:
         result = check_options_coverage(staging)
         assert result.status == "PASS"
 
-    def test_regulatory_less_binary_count(self, tmp_path):
+    def test_step10_eligible_count(self, tmp_path):
         rows = [
             {
                 "ticker": "REG1",
                 "opt_has_data": "1",
                 "options_quality_composite": "0.5",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "120",
             },
             {
                 "ticker": "REG2",
                 "opt_has_data": "1",
                 "options_quality_composite": "0.3",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "REGULATORY",
-                "catalyst_bucket": "binary",
+                "has_regulatory_upcoming_180d": "1",
+                "regulatory_days": "60",
             },
             {
                 "ticker": "CLIN1",
                 "opt_has_data": "1",
                 "options_quality_composite": "0.7",
                 "opt_diagnostic_basis": "tt_market_metrics",
-                "catalyst_family": "CLINICAL",
-                "catalyst_bucket": "less_binary",
+                "has_regulatory_upcoming_180d": "0",
+                "regulatory_days": "",
             },
         ]
         staging = self._make_rows(tmp_path, rows)
         result = check_options_coverage(staging)
         assert result.status == "PASS"
-        # Only REG1 is REGULATORY + less_binary with nonzero OQC
-        assert result.value["n_regulatory_less_binary_oqc"] == 1
+        # Only REG1 has reg 91-180d with nonzero OQC (REG2 is <=90)
+        assert result.value["n_step10_eligible_oqc"] == 1
         assert result.value["n_oqc_nonzero"] == 3
