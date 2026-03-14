@@ -4876,6 +4876,64 @@ def save_validation_snapshot(
         for row in csv_rows:
             row.update(empty_diagnostics(f"error: {exc}"))
 
+    # --- Massive chain analytics (deep per-strike data) ---
+    # Populates opt_rr_25d, opt_put_call_skew from chain, plus straddle pricing
+    # and OI/volume metrics for the crowding panel. Non-blocking.
+    _chain_analytics: Dict[str, Dict[str, Any]] = {}
+    try:
+        from common.massive_chain_analytics import warm_chain_analytics
+
+        # Use catalyst-relevant tickers (same set as Tastytrade)
+        _chain_tickers = [
+            r.get("ticker", "")
+            for r in csv_rows
+            if r.get("opt_has_data") == "1" or r.get("catalyst_mode") == "specific_days"
+        ][
+            :100
+        ]  # cap to avoid API overload
+
+        if _chain_tickers and _options_freshness.get("massive_status") == "ok":
+            # Build price lookup from market_data.json
+            _chain_prices: Dict[str, float] = {}
+            _mkt_json = snap_path.parent.parent / "production_data" / "market_data.json"
+            if not _mkt_json.exists():
+                _mkt_json = Path("production_data") / "market_data.json"
+            if _mkt_json.exists():
+                try:
+                    for _rec in json.loads(_mkt_json.read_text()):
+                        if isinstance(_rec, dict) and "ticker" in _rec:
+                            _p = _rec.get("price") or _rec.get("regularMarketPrice") or _rec.get("previousClose") or 0
+                            if _p:
+                                _chain_prices[_rec["ticker"].upper()] = float(_p)
+                except Exception:
+                    pass
+
+            _chain_analytics = warm_chain_analytics(_chain_tickers, snap_path, as_of_date, _chain_prices)
+
+            # Enrich csv_rows with chain analytics fields
+            for row in csv_rows:
+                tk = row.get("ticker", "")
+                ca = _chain_analytics.get(tk, {})
+                if ca.get("status") == "ok":
+                    # Populate empty opt_rr_25d and opt_put_call_skew from chain
+                    if not row.get("opt_rr_25d") and ca.get("rr_25d") is not None:
+                        row["opt_rr_25d"] = str(round(ca["rr_25d"], 4))
+                    if not row.get("opt_put_call_skew") and ca.get("put_call_skew") is not None:
+                        row["opt_put_call_skew"] = str(round(ca["put_call_skew"], 4))
+                    # Store chain-derived fields for downstream use
+                    row["_chain_straddle_price"] = ca.get("straddle_price")
+                    row["_chain_actual_implied_move"] = ca.get("actual_implied_move")
+                    row["_chain_oi_concentration"] = ca.get("oi_concentration")
+                    row["_chain_near_term_vol_share"] = ca.get("near_term_volume_share")
+
+            logger.info(
+                "[MASSIVE_CHAIN] Enriched %d/%d tickers with chain analytics",
+                sum(1 for ca in _chain_analytics.values() if ca.get("status") == "ok"),
+                len(_chain_tickers),
+            )
+    except Exception as _mc_exc:
+        logger.debug("Massive chain analytics skipped: %s", _mc_exc)
+
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
         row.update(compute_options_quality_composite(row))

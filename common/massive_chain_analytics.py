@@ -11,7 +11,12 @@ to compute analytics that Tastytrade diagnostics cannot provide:
 
 from __future__ import annotations
 
+import json
+import logging
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 
 def find_25delta_contracts(
@@ -312,3 +317,90 @@ def compute_chain_analytics(
         "near_term_volume_share": near_share,
         "total_chain_volume": total_vol,
     }
+
+
+# ---------------------------------------------------------------------------
+# Persistence + warm pass
+# ---------------------------------------------------------------------------
+
+
+def save_chain_snapshot(
+    chain: List[Dict[str, Any]],
+    snap_dir: Path,
+    ticker: str,
+) -> Path:
+    """Persist raw chain snapshot to disk for downstream consumers."""
+    chains_dir = snap_dir / "chains"
+    chains_dir.mkdir(parents=True, exist_ok=True)
+    path = chains_dir / f"{ticker.upper()}.json"
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(chain, f, default=str)
+        f.write("\n")
+    return path
+
+
+def load_chain_snapshot(snap_dir: Path, ticker: str) -> List[Dict[str, Any]]:
+    """Load a persisted chain snapshot from disk."""
+    path = snap_dir / "chains" / f"{ticker.upper()}.json"
+    if not path.exists():
+        return []
+    try:
+        return json.loads(path.read_text())
+    except Exception:
+        return []
+
+
+def warm_chain_analytics(
+    tickers: List[str],
+    snap_dir: Path,
+    as_of_date: str,
+    prices: Optional[Dict[str, float]] = None,
+) -> Dict[str, Dict[str, Any]]:
+    """Fetch chain snapshots and compute analytics for a list of tickers.
+
+    Args:
+        tickers: List of underlying tickers to fetch.
+        snap_dir: Snapshot directory to persist chains into.
+        as_of_date: Date string for volume bucketing.
+        prices: {ticker: last_close} for underlying prices. If None, ATM
+                straddle and delta-based analytics may be less accurate.
+
+    Returns:
+        {ticker: analytics_dict} for each ticker with data.
+    """
+    try:
+        from common.options_history_massive import fetch_chain_snapshot
+    except ImportError:
+        logger.warning("options_history_massive not available")
+        return {}
+
+    results: Dict[str, Dict[str, Any]] = {}
+    n_fetched = 0
+    n_failed = 0
+
+    for ticker in tickers:
+        try:
+            chain = fetch_chain_snapshot(ticker.upper(), limit=250)
+            if not chain:
+                n_failed += 1
+                continue
+
+            # Persist raw chain
+            save_chain_snapshot(chain, snap_dir, ticker)
+
+            # Compute analytics
+            underlying_price = (prices or {}).get(ticker.upper(), 0.0)
+            analytics = compute_chain_analytics(chain, underlying_price, as_of_date)
+            results[ticker.upper()] = analytics
+            n_fetched += 1
+        except Exception as exc:
+            logger.debug("Chain fetch failed for %s: %s", ticker, exc)
+            n_failed += 1
+
+    logger.info(
+        "[MASSIVE_CHAIN] Warmed %d/%d tickers (%d failed)",
+        n_fetched,
+        len(tickers),
+        n_failed,
+    )
+    return results

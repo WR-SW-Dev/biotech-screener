@@ -11,7 +11,7 @@ action generation once the study validates.
 from __future__ import annotations
 
 import math
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from common.event_move_lookup import indication_bucket, lookup_event_move, phase_bucket
 
@@ -23,6 +23,8 @@ def compute_cheap_vol_score(
     lead_program_phase: str,
     therapeutic_area: str,
     event_move_table: Dict[str, Dict[str, Any]],
+    actual_straddle_price: Optional[float] = None,
+    underlying_price: Optional[float] = None,
 ) -> Dict[str, Any]:
     """Compare market-implied move to historical empirical distribution.
 
@@ -33,6 +35,10 @@ def compute_cheap_vol_score(
         lead_program_phase: Raw phase string (e.g. "3.0").
         therapeutic_area: Raw indication string.
         event_move_table: Loaded from event_move_table.json.
+        actual_straddle_price: ATM straddle close price from Massive chain
+            (optional). When provided with underlying_price, used instead
+            of the IV approximation for more accurate implied move.
+        underlying_price: Current underlying price (optional).
 
     Returns:
         Dict with cheap_vol_score, vol_classification, and context.
@@ -49,12 +55,25 @@ def compute_cheap_vol_score(
         "lookup_key": "",
     }
 
-    if math.isnan(opt_atm_iv) or opt_atm_iv <= 0 or catalyst_days <= 0:
+    if catalyst_days <= 0:
         return empty
 
-    # Market-implied move from ATM IV
-    t = catalyst_days / 365.0
-    implied_move = opt_atm_iv * math.sqrt(t)
+    # Market-implied move: prefer actual straddle price, fall back to IV approx
+    implied_move = None
+    move_source = "iv_approximation"
+    if (
+        actual_straddle_price is not None
+        and underlying_price is not None
+        and actual_straddle_price > 0
+        and underlying_price > 0
+    ):
+        implied_move = actual_straddle_price / underlying_price
+        move_source = "actual_straddle"
+    elif not math.isnan(opt_atm_iv) and opt_atm_iv > 0:
+        t = catalyst_days / 365.0
+        implied_move = opt_atm_iv * math.sqrt(t)
+    else:
+        return empty
 
     # Historical fair move from lookup table
     phase = phase_bucket(lead_program_phase)
@@ -93,6 +112,7 @@ def compute_cheap_vol_score(
 
     return {
         "implied_move": round(implied_move, 4),
+        "move_source": move_source,
         "historical_p50": p50,
         "historical_p25": hist.get("p25"),
         "historical_p75": hist.get("p75"),
