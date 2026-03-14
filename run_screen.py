@@ -1870,6 +1870,7 @@ def _hydrate_drawdown(
             continue
 
         series.sort(key=lambda x: x[0])
+        unfiltered_series = list(series)  # preserve for fallback
 
         # Filter split artifacts before computing drawdown
         series, split_warns = _filter_price_outliers(series)
@@ -1882,8 +1883,23 @@ def _hydrate_drawdown(
                 "; ".join(f"{w['date']} {w['pct_change']:+.0%}" for w in split_warns),
             )
         if len(series) < MIN_BARS_FOR_ESTIMATE:
-            df["drawdown_missing_reason"] = "series_too_short"
-            continue
+            # Fallback: if the filter over-truncated (e.g. a real biotech
+            # crash misidentified as a split), use the unfiltered series
+            # when it had sufficient bars.  The drawdown will use the
+            # post-event price regime via the WINDOW cap anyway.
+            if len(unfiltered_series) >= MIN_BARS_FOR_ESTIMATE and split_warns:
+                logger.info(
+                    "_hydrate_drawdown: %s split-filter fallback: "
+                    "filtered=%d bars < %d, restoring unfiltered %d bars",
+                    ticker,
+                    len(series),
+                    MIN_BARS_FOR_ESTIMATE,
+                    len(unfiltered_series),
+                )
+                series = unfiltered_series
+            else:
+                df["drawdown_missing_reason"] = "series_too_short"
+                continue
 
         closes = [p for _, p in series]
         look = closes[-WINDOW:] if len(closes) >= WINDOW else closes
