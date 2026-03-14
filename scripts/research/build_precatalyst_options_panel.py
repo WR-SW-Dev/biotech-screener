@@ -206,10 +206,12 @@ def _build_underlying_date_pairs(
 def fetch_options_for_dates(
     dates_needed: set,
     force: bool = False,
+    cached_only: bool = False,
 ) -> Dict[date, List[Dict[str, Any]]]:
     """Download and ingest day aggs for all needed dates.
 
     Returns {date: [normalized records]}.
+    If cached_only=True, skip dates that aren't already in the local cache.
     """
     from common.options_history_massive import ingest_day_aggs
 
@@ -219,13 +221,25 @@ def fetch_options_for_dates(
         "Fetching day aggs for %d unique dates (%s to %s)", len(sorted_dates), sorted_dates[0], sorted_dates[-1]
     )
 
+    cache_root = REPO_ROOT / "data" / "caches" / "massive_options"
+    skipped = 0
     for dt in sorted_dates:
+        if cached_only:
+            cache_path = (
+                cache_root / "day_aggs" / str(dt.year) / f"{dt.month:02d}" / f"{dt.strftime('%Y-%m-%d')}.csv.gz"
+            )
+            if not cache_path.exists():
+                skipped += 1
+                continue
         records = ingest_day_aggs(dt, force=force)
         if records:
             result[dt] = records
             logger.info("  %s: %d records", dt, len(records))
         else:
             logger.debug("  %s: no data", dt)
+
+    if skipped:
+        logger.info("Skipped %d dates not in local cache (--cached-only)", skipped)
 
     return result
 
@@ -429,6 +443,9 @@ def main() -> int:
     parser.add_argument("--lookback-days", type=int, default=10, help="Days of options data before snapshot")
     parser.add_argument("--min-date", default=None, help="Earliest archive date (YYYY-MM-DD)")
     parser.add_argument("--force", action="store_true", help="Re-download cached files")
+    parser.add_argument(
+        "--cached-only", action="store_true", help="Use only locally cached day aggs, skip S3 downloads"
+    )
     parser.add_argument("--dry-run", action="store_true", help="Extract events only, skip options fetch")
     args = parser.parse_args()
 
@@ -477,7 +494,7 @@ def main() -> int:
         all_dates.update(dates)
 
     logger.info("Need options data for %d unique dates across %d tickers", len(all_dates), len(ticker_dates))
-    day_aggs = fetch_options_for_dates(all_dates, force=args.force)
+    day_aggs = fetch_options_for_dates(all_dates, force=args.force, cached_only=args.cached_only)
 
     # Build volume index
     vol_index = _build_ticker_volume_index(day_aggs)
