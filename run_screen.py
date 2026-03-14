@@ -1449,6 +1449,10 @@ SNAPSHOT_COLUMNS = [
     "implied_event_move",
     "pos_divergence",
     "market_model_disagreement",
+    # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
+    "ts_flag",
+    "ts_flag_type",
+    "ts_flag_reason",
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
@@ -3474,6 +3478,12 @@ def _write_coverage_quality(
             "n_high": len(disagree_high_names),
             "high_names": sorted(disagree_high_names)[:15],
         },
+        "term_structure_flags": {
+            "n_mismatch": sum(1 for r in csv_rows if r.get("ts_flag_type") == "MARKET_SEES_SOONER"),
+            "n_blind_spot": sum(1 for r in csv_rows if r.get("ts_flag_type") == "BLIND_SPOT"),
+            "n_not_pricing": sum(1 for r in csv_rows if r.get("ts_flag_type") == "MARKET_NOT_PRICING_EVENT"),
+            "flagged_names": sorted(r.get("ticker", "?") for r in csv_rows if r.get("ts_flag") == "1")[:20],
+        },
     }
 
     # -- Write JSON --
@@ -3575,6 +3585,22 @@ def _write_coverage_quality(
         lines.append("")
         lines.append(f"**High-disagreement names** ({mmd['n_high']}): " f"{', '.join(mmd.get('high_names', []))}")
         lines.append("")
+
+    tsf = cq.get("term_structure_flags", {})
+    n_ts_total = tsf.get("n_mismatch", 0) + tsf.get("n_blind_spot", 0) + tsf.get("n_not_pricing", 0)
+    if n_ts_total > 0:
+        lines.append("## Term Structure Flags (Agent 0 staleness / blind spot)")
+        lines.append("")
+        lines.append("| Flag Type | Count |")
+        lines.append("|-----------|-------|")
+        lines.append(f"| MARKET_SEES_SOONER | {tsf.get('n_mismatch', 0)} |")
+        lines.append(f"| MARKET_NOT_PRICING_EVENT | {tsf.get('n_not_pricing', 0)} |")
+        lines.append(f"| BLIND_SPOT | {tsf.get('n_blind_spot', 0)} |")
+        lines.append("")
+        flagged = tsf.get("flagged_names", [])
+        if flagged:
+            lines.append(f"Flagged: {', '.join(flagged)}")
+            lines.append("")
 
     cq_md_path = snap_path / "coverage_quality.md"
     with open(cq_md_path, "w", encoding="utf-8") as f:
@@ -4745,6 +4771,57 @@ def save_validation_snapshot(
             row.setdefault("implied_event_move", "")
             row.setdefault("pos_divergence", "")
             row.setdefault("market_model_disagreement", "")
+
+    # --- Term structure validation (Agent 0 staleness / blind spot flags) ---
+    # Purely diagnostic: flags catalyst date mismatches and unsurfaced events.
+    try:
+        from common.term_structure_validator import validate_term_structure
+
+        # Compute cross-sectional median IV as baseline
+        _all_ivs = [
+            float(r.get("opt_atm_iv", 0))
+            for r in csv_rows
+            if r.get("opt_has_data") == "1" and r.get("opt_atm_iv", "") not in ("", "0")
+        ]
+        _baseline_iv = sorted(_all_ivs)[len(_all_ivs) // 2] if _all_ivs else None
+
+        _ts_mismatch = 0
+        _ts_blind = 0
+        for row in csv_rows:
+            _cd_raw = row.get("catalyst_days", "")
+            _cd = int(float(_cd_raw)) if _cd_raw not in ("", None) else None
+            _slope_raw = row.get("opt_term_slope", "")
+            _slope = float(_slope_raw) if _slope_raw not in ("", None) else None
+            _iv_raw = row.get("opt_atm_iv", "")
+            _iv = float(_iv_raw) if _iv_raw not in ("", None) else None
+
+            ts = validate_term_structure(
+                catalyst_days=_cd,
+                catalyst_mode=row.get("catalyst_mode"),
+                opt_term_slope=_slope,
+                opt_atm_iv=_iv,
+                baseline_iv=_baseline_iv,
+            )
+            row["ts_flag"] = "1" if ts["flag"] else ""
+            row["ts_flag_type"] = ts["flag_type"]
+            row["ts_flag_reason"] = ts["reason"]
+            if ts["flag_type"] == "MARKET_SEES_SOONER":
+                _ts_mismatch += 1
+            elif ts["flag_type"] == "BLIND_SPOT":
+                _ts_blind += 1
+
+        if _ts_mismatch or _ts_blind:
+            logger.info(
+                "[TS_VALID] Term structure flags: %d mismatch, %d blind_spot",
+                _ts_mismatch,
+                _ts_blind,
+            )
+    except Exception as _ts_exc:
+        logger.debug("Term structure validation skipped: %s", _ts_exc)
+        for row in csv_rows:
+            row.setdefault("ts_flag", "")
+            row.setdefault("ts_flag_type", "")
+            row.setdefault("ts_flag_reason", "")
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
