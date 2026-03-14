@@ -5137,6 +5137,26 @@ def save_validation_snapshot(
     except Exception as _rq_exc:
         logger.debug("Review queue skipped: %s", _rq_exc)
 
+    # --- Options mispricing review queue ---
+    try:
+        from common.options_review_queue import build_options_review_queue, write_options_review_queue
+
+        _opt_queue = build_options_review_queue(csv_rows)
+        write_options_review_queue(_opt_queue, snap_path, as_of_date)
+        _oqs = _opt_queue["summary"]
+        logger.info(
+            "[OPTIONS_QUEUE] queued=%d hard=%d cheap=%d rich=%d disagree=%d ts=%d skew=%d",
+            _oqs["n_total"],
+            _oqs["n_hard_catalyst"],
+            _oqs["n_cheap_straddle"],
+            _oqs["n_rich_straddle"],
+            _oqs["n_high_disagreement"],
+            _oqs["n_term_structure_flag"],
+            _oqs["n_extreme_skew"],
+        )
+    except Exception as _oq_exc:
+        logger.debug("Options review queue skipped: %s", _oq_exc)
+
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
     try:
