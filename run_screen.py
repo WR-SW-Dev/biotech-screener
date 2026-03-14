@@ -1445,6 +1445,10 @@ SNAPSHOT_COLUMNS = [
     *OPTIONS_DIAGNOSTIC_COLUMNS,
     # --- Options quality composite (derived from diagnostics) ---
     *OPTIONS_QUALITY_COLUMNS,
+    # --- Market-model disagreement (shadow diagnostic, not ranking) ---
+    "implied_event_move",
+    "pos_divergence",
+    "market_model_disagreement",
     # --- Secondary regulatory catalyst (independent of nearest) ---
     "regulatory_days",
     "regulatory_event_type",
@@ -3405,6 +3409,16 @@ def _write_coverage_quality(
     # -- Top missing names (eligible, no catalyst family) --
     top_missing = sorted(family_missing)[:15]
 
+    # -- Market-model disagreement summary --
+    disagree_dist: Dict[str, int] = {}
+    disagree_high_names: List[str] = []
+    for r in csv_rows:
+        d = r.get("market_model_disagreement", "")
+        if d:
+            disagree_dist[d] = disagree_dist.get(d, 0) + 1
+        if d == "high" and r.get("eligible") == "1":
+            disagree_high_names.append(r.get("ticker", "?"))
+
     # -- Build JSON --
     cq: Dict[str, Any] = {
         "schema_version": "coverage_quality.v1",
@@ -3455,6 +3469,11 @@ def _write_coverage_quality(
         },
         "missingness_penalty_distribution": dict(sorted(miss_counts.items())),
         "top_missing_names": top_missing,
+        "market_model_disagreement": {
+            "distribution": dict(sorted(disagree_dist.items())),
+            "n_high": len(disagree_high_names),
+            "high_names": sorted(disagree_high_names)[:15],
+        },
     }
 
     # -- Write JSON --
@@ -3542,6 +3561,19 @@ def _write_coverage_quality(
         lines.append("## Top Missing Names (eligible, no catalyst family)")
         lines.append("")
         lines.append(", ".join(top_missing))
+        lines.append("")
+
+    mmd = cq.get("market_model_disagreement", {})
+    if mmd.get("n_high", 0) > 0:
+        lines.append("## Market-Model Disagreement (shadow diagnostic)")
+        lines.append("")
+        dd = mmd.get("distribution", {})
+        lines.append(f"| Level | Count |")
+        lines.append(f"|-------|-------|")
+        for level in ["low", "medium", "high"]:
+            lines.append(f"| {level} | {dd.get(level, 0)} |")
+        lines.append("")
+        lines.append(f"**High-disagreement names** ({mmd['n_high']}): " f"{', '.join(mmd.get('high_names', []))}")
         lines.append("")
 
     cq_md_path = snap_path / "coverage_quality.md"
@@ -4657,6 +4689,55 @@ def save_validation_snapshot(
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
         row.update(compute_options_quality_composite(row))
+
+    # --- Market-model disagreement overlay (shadow diagnostic) ---
+    # Surfaces where model quality diverges from market-implied event magnitude.
+    # Not used in ranking — diagnostics and review-queue only.
+    try:
+        from common.pos_divergence import _safe_float as _pd_float
+        from common.pos_divergence import _safe_int as _pd_int
+        from common.pos_divergence import compute_implied_event_move, z_score_array
+
+        _pos_atm = [_pd_float(r.get("opt_atm_iv")) for r in csv_rows]
+        _pos_days = [_pd_int(r.get("catalyst_days")) for r in csv_rows]
+        _pos_model = [_pd_float(r.get("composite_score")) for r in csv_rows]
+
+        _implied = [compute_implied_event_move(iv, d) for iv, d in zip(_pos_atm, _pos_days)]
+        _implied_z = z_score_array(_implied)
+        _model_z = z_score_array(_pos_model)
+
+        _n_disagreement = 0
+        for i, row in enumerate(csv_rows):
+            im = _implied[i]
+            row["implied_event_move"] = round(im, 4) if not math.isnan(im) else ""
+            mz = _model_z[i]
+            iz = _implied_z[i]
+            if not math.isnan(mz) and not math.isnan(iz):
+                div = round(mz - iz, 4)
+                row["pos_divergence"] = div
+                abs_div = abs(div)
+                if abs_div >= 1.5:
+                    row["market_model_disagreement"] = "high"
+                    _n_disagreement += 1
+                elif abs_div >= 0.75:
+                    row["market_model_disagreement"] = "medium"
+                else:
+                    row["market_model_disagreement"] = "low"
+            else:
+                row["pos_divergence"] = ""
+                row["market_model_disagreement"] = ""
+
+        if _n_disagreement:
+            logger.info(
+                "[POS_DIV] Market-model disagreement: %d high-disagreement names",
+                _n_disagreement,
+            )
+    except Exception as _pd_exc:
+        logger.debug("Market-model disagreement overlay skipped: %s", _pd_exc)
+        for row in csv_rows:
+            row.setdefault("implied_event_move", "")
+            row.setdefault("pos_divergence", "")
+            row.setdefault("market_model_disagreement", "")
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
