@@ -4694,6 +4694,110 @@ def save_validation_snapshot(
                 )
             )
 
+    # --- Hard catalyst source forward-carry ---
+    # Once a hard catalyst source (SEC_8K_FILING, FDA_PDUFA_DATE, etc.) appears
+    # for a ticker, carry it forward into subsequent snapshots until the event
+    # date passes. Prevents intermittent 8-K fetch gaps from resetting flags.
+    try:
+        _carry_state_dir = snap_path.parent.parent / "state"
+        _carry_state_dir.mkdir(parents=True, exist_ok=True)
+        _carry_file = _carry_state_dir / "hard_catalyst_carry.json"
+
+        # Load prior carry state
+        _carry_state: Dict[str, Dict[str, Any]] = {}
+        if _carry_file.exists():
+            try:
+                _carry_state = json.loads(_carry_file.read_text())
+            except Exception:
+                pass
+
+        _CARRY_SOURCES = frozenset({"SEC_8K_FILING", "FDA_PDUFA_DATE", "DATA_READOUT", "COMPANY_GUIDANCE"})
+
+        _n_carried = 0
+        _n_learned = 0
+        _n_expired = 0
+
+        # Step 1: Carry forward from state into rows missing hard source
+        for row in csv_rows:
+            ticker = row.get("ticker", "")
+            current_source = row.get("catalyst_source", "")
+            if not ticker:
+                continue
+
+            # If current run already has a hard source, don't override
+            if current_source in _CARRY_SOURCES:
+                continue
+
+            # Check carry state for this ticker
+            entry = _carry_state.get(ticker)
+            if not entry:
+                continue
+
+            # Check if event has passed
+            event_date_str = entry.get("estimated_event_date", "")
+            if event_date_str and event_date_str < as_of_date:
+                continue  # expired, will be cleaned up below
+
+            # Carry forward
+            row["catalyst_source"] = entry["catalyst_source"]
+            row["catalyst_event_type"] = entry["catalyst_event_type"]
+            _n_carried += 1
+
+        # Step 2: Learn new hard sources from current run
+        for row in csv_rows:
+            ticker = row.get("ticker", "")
+            source = row.get("catalyst_source", "")
+            event_type = row.get("catalyst_event_type", "")
+            if not ticker or source not in _CARRY_SOURCES:
+                continue
+
+            if ticker not in _carry_state:
+                cat_days_str = row.get("catalyst_days", "")
+                try:
+                    cat_days = int(float(cat_days_str))
+                except (ValueError, TypeError):
+                    cat_days = 0
+                from datetime import timedelta
+
+                est_event = (
+                    (datetime.strptime(as_of_date, "%Y-%m-%d") + timedelta(days=cat_days)).strftime("%Y-%m-%d")
+                    if cat_days > 0
+                    else ""
+                )
+                _carry_state[ticker] = {
+                    "catalyst_event_type": event_type,
+                    "catalyst_source": source,
+                    "catalyst_days_at_first_seen": cat_days,
+                    "first_seen_date": as_of_date,
+                    "estimated_event_date": est_event,
+                }
+                _n_learned += 1
+
+        # Step 3: Expire entries where event date has passed
+        expired_tickers = [
+            tk
+            for tk, entry in _carry_state.items()
+            if entry.get("estimated_event_date", "") and entry["estimated_event_date"] < as_of_date
+        ]
+        for tk in expired_tickers:
+            del _carry_state[tk]
+            _n_expired += 1
+
+        # Write updated state
+        with open(_carry_file, "w", encoding="utf-8") as f:
+            json.dump(_carry_state, f, indent=2, default=str)
+            f.write("\n")
+
+        if _n_carried or _n_learned or _n_expired:
+            logger.info(
+                "[CARRY] Hard catalyst forward-carry: %d carried, %d learned, %d expired",
+                _n_carried,
+                _n_learned,
+                _n_expired,
+            )
+    except Exception as _carry_exc:
+        logger.debug("Hard catalyst forward-carry skipped: %s", _carry_exc)
+
     # --- Options data freshness preflight ---
     _options_freshness: Dict[str, Any] = {
         "tastytrade_status": "unknown",
