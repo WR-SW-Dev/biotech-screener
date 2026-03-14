@@ -299,7 +299,26 @@ def compute_chain_analytics(
     total_vol = sum(vol_buckets.values())
     near_share = round(vol_buckets.get("near_0_30d", 0) / total_vol, 4) if total_vol > 0 else None
 
-    return {
+    # IV crush stress test
+    crush: Dict[str, Any] = {}
+    if underlying_price > 0:
+        try:
+            from common.options_greeks import iv_crush_stress_test
+
+            # Estimate catalyst_days from as_of_date → expiry
+            _cat_days = 30  # default
+            if as_of_date and expiry:
+                from datetime import date as _date
+
+                try:
+                    _cat_days = (_date.fromisoformat(expiry) - _date.fromisoformat(as_of_date)).days
+                except (ValueError, TypeError):
+                    pass
+            crush = iv_crush_stress_test(chain_snapshot, underlying_price, max(_cat_days, 1))
+        except Exception:
+            pass
+
+    result = {
         "status": "ok",
         "expiry_used": expiry,
         "n_contracts": len([c for c in chain_snapshot if c.get("expiration_date") == expiry]),
@@ -317,6 +336,12 @@ def compute_chain_analytics(
         "near_term_volume_share": near_share,
         "total_chain_volume": total_vol,
     }
+    # Add crush metrics (prefixed to avoid key collision)
+    if crush.get("confidence") == "ok":
+        result["iv_crush_breakeven_pct"] = crush.get("breakeven_move_pct")
+        result["crush_adjusted_implied_move"] = crush.get("crush_adjusted_implied_move")
+        result["crush_loss_per_contract"] = crush.get("crush_loss_per_contract")
+    return result
 
 
 # ---------------------------------------------------------------------------

@@ -1449,6 +1449,9 @@ SNAPSHOT_COLUMNS = [
     "implied_event_move",
     "pos_divergence",
     "market_model_disagreement",
+    # --- IV crush stress test (from Massive chain analytics) ---
+    "iv_crush_breakeven_pct",
+    "crush_adjusted_implied_move",
     # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
     "ts_flag",
     "ts_flag_type",
@@ -4925,6 +4928,11 @@ def save_validation_snapshot(
                     row["_chain_actual_implied_move"] = ca.get("actual_implied_move")
                     row["_chain_oi_concentration"] = ca.get("oi_concentration")
                     row["_chain_near_term_vol_share"] = ca.get("near_term_volume_share")
+                    # IV crush metrics
+                    if ca.get("iv_crush_breakeven_pct") is not None:
+                        row["iv_crush_breakeven_pct"] = str(round(ca["iv_crush_breakeven_pct"], 4))
+                    if ca.get("crush_adjusted_implied_move") is not None:
+                        row["crush_adjusted_implied_move"] = str(round(ca["crush_adjusted_implied_move"], 4))
 
             logger.info(
                 "[MASSIVE_CHAIN] Enriched %d/%d tickers with chain analytics",
