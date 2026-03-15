@@ -16,6 +16,7 @@ import logging
 import re
 import statistics
 import sys
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
@@ -45,7 +46,22 @@ def _has_oqc(row: dict) -> bool:
     return v not in ("", "0", "0.0")
 
 
-def analyze_snapshots(snapshots_dir: Path) -> List[Dict[str, Any]]:
+def load_inferred_calendar(data_dir: Path) -> Dict[str, str]:
+    """Load inferred_regulatory_dates.json → {ticker: inferred_pdufa_date}."""
+    path = data_dir / "inferred_regulatory_dates.json"
+    if not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text())
+        entries = data.get("entries", [])
+        return {e["ticker"].upper(): e["pdufa_date"] for e in entries if e.get("pdufa_date")}
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
+def analyze_snapshots(snapshots_dir: Path, inferred_calendar: Dict[str, str] = None) -> List[Dict[str, Any]]:
+    if inferred_calendar is None:
+        inferred_calendar = {}
     date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
     results = []
 
@@ -98,6 +114,33 @@ def analyze_snapshots(snapshots_dir: Path) -> List[Dict[str, Any]]:
                 if oqc:
                     f_tickers.add(ticker)
 
+        # G: Step-10-like with inferred entries admitted
+        # Simulate: if inferred regulatory dates counted as has_regulatory_upcoming
+        g_tickers: Set[str] = set(e_tickers)  # start with confirmed Step-10 + OQC
+        snap_date_obj = None
+        try:
+            snap_date_obj = date.fromisoformat(d.name)
+        except (ValueError, TypeError):
+            pass
+
+        if snap_date_obj:
+            for inf_ticker, inf_date_str in inferred_calendar.items():
+                if not inf_date_str:
+                    continue
+                try:
+                    inf_date = date.fromisoformat(inf_date_str)
+                    inf_days = (inf_date - snap_date_obj).days
+                except (ValueError, TypeError):
+                    continue
+                # Would this name be Step-10 eligible if inferred date counted?
+                if 91 <= inf_days <= 210:
+                    # Check if it has OQC in this snapshot
+                    for row in rows:
+                        tk = (row.get("ticker") or "").strip().upper()
+                        if tk == inf_ticker and _has_oqc(row):
+                            g_tickers.add(tk)
+                            break
+
         results.append(
             {
                 "date": d.name,
@@ -108,6 +151,8 @@ def analyze_snapshots(snapshots_dir: Path) -> List[Dict[str, Any]]:
                 "D_widened_reg_oqc": len(d_tickers),
                 "E_current_step10_oqc": len(e_tickers),
                 "F_broad_hard_oqc": len(f_tickers),
+                "G_step10_with_inferred_oqc": len(g_tickers),
+                "G_delta_from_E": len(g_tickers) - len(e_tickers),
                 "overlap_B_C": len(b_tickers & c_tickers),
                 "overlap_D_F": len(d_tickers & f_tickers),
                 "A_tickers": sorted(a_tickers),
@@ -127,6 +172,7 @@ def summarize(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         "D_widened_reg_oqc",
         "E_current_step10_oqc",
         "F_broad_hard_oqc",
+        "G_step10_with_inferred_oqc",
     ]
 
     summary = {}
@@ -159,7 +205,9 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     logger.info("Analyzing snapshots from %s ...", snapshots_dir)
-    results = analyze_snapshots(snapshots_dir)
+    inferred_cal = load_inferred_calendar(PROJECT_ROOT / "production_data")
+    logger.info("Loaded %d inferred regulatory entries", len(inferred_cal))
+    results = analyze_snapshots(snapshots_dir, inferred_cal)
     logger.info("Analyzed %d snapshots", len(results))
 
     if not results:
@@ -177,6 +225,8 @@ def main() -> int:
         "D_widened_reg_oqc",
         "E_current_step10_oqc",
         "F_broad_hard_oqc",
+        "G_step10_with_inferred_oqc",
+        "G_delta_from_E",
         "overlap_B_C",
         "overlap_D_F",
     ]
@@ -219,6 +269,7 @@ def main() -> int:
         "D_widened_reg_oqc",
         "E_current_step10_oqc",
         "F_broad_hard_oqc",
+        "G_step10_with_inferred_oqc",
     ]:
         s = summary[cond]
         md.append(
