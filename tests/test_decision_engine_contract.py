@@ -1000,6 +1000,8 @@ class TestSnapshotInputContract:
             "de_sort_contrib_catalyst_bonus",
             "de_sort_contrib_binary_quality",
             "de_sort_contrib_binary_institutional",
+            "de_sort_contrib_clinical_quality_91_180",
+            "de_sort_contrib_options_quality_91_180",
         }
     )
 
