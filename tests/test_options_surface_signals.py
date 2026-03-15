@@ -114,6 +114,34 @@ class TestIvRampFlag:
         assert derive_iv_ramp_flag(None) == ""
 
 
+class TestPostEventDriftRisk:
+    def test_high_from_pctile(self):
+        from common.options_surface_signals import derive_post_event_drift_risk
+
+        assert derive_post_event_drift_risk(0.85, 0.03) == "high"
+
+    def test_high_from_iv_ramp(self):
+        from common.options_surface_signals import derive_post_event_drift_risk
+
+        assert derive_post_event_drift_risk(0.50, 0.12) == "high"
+
+    def test_med(self):
+        from common.options_surface_signals import derive_post_event_drift_risk
+
+        assert derive_post_event_drift_risk(0.65, 0.03) == "med"
+        assert derive_post_event_drift_risk(0.50, 0.06) == "med"
+
+    def test_low(self):
+        from common.options_surface_signals import derive_post_event_drift_risk
+
+        assert derive_post_event_drift_risk(0.40, 0.02) == "low"
+
+    def test_none(self):
+        from common.options_surface_signals import derive_post_event_drift_risk
+
+        assert derive_post_event_drift_risk(None, None) == ""
+
+
 class TestSignalQuality:
     def test_ok(self):
         assert compute_surface_signal_quality(0.8, 0.05, True, 40) == "ok"
@@ -144,3 +172,10 @@ class TestEnrichRow:
         row = {"ticker": "BIIB", "opt_atm_iv": "", "implied_event_move": ""}
         enrich_row_with_surface_signals(row, hist, "2026-02-15")
         assert row["surface_signal_quality"] == "missing_current_surface"
+
+    def test_drift_risk_and_validation_basis(self):
+        hist = _hist(40, base_iv=0.50, base_move=0.03)
+        row = {"ticker": "BIIB", "opt_atm_iv": "0.70", "implied_event_move": "0.10"}
+        enrich_row_with_surface_signals(row, hist, "2026-02-15")
+        assert row["post_event_drift_risk"] == "high"
+        assert row["surface_validation_basis"] == "retro_hard_filter"

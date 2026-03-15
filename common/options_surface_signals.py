@@ -153,6 +153,24 @@ def derive_iv_ramp_flag(change: Optional[float]) -> str:
     return "flat"
 
 
+def derive_post_event_drift_risk(
+    pctile: Optional[float],
+    iv_change: Optional[float],
+) -> str:
+    """Combined post-event giveback risk flag."""
+    if pctile is None and iv_change is None:
+        return ""
+    high_move = pctile is not None and pctile >= MOVE_EXTREME_HIGH
+    strong_ramp = iv_change is not None and iv_change >= IV_RAMP_STRONG
+    med_move = pctile is not None and pctile >= MOVE_EXTREME_MED
+    mild_ramp = iv_change is not None and iv_change >= IV_RAMP_THRESHOLD
+    if high_move or strong_ramp:
+        return "high"
+    if med_move or mild_ramp:
+        return "med"
+    return "low"
+
+
 def compute_surface_signal_quality(
     pctile: Optional[float],
     iv_change: Optional[float],
@@ -196,11 +214,13 @@ def enrich_row_with_surface_signals(
     row["surface_move_extreme"] = derive_surface_move_extreme(pctile)
     row["atm_iv_change_5d"] = f"{iv_change:.6f}" if iv_change is not None else ""
     row["iv_ramp_flag"] = derive_iv_ramp_flag(iv_change)
+    row["post_event_drift_risk"] = derive_post_event_drift_risk(pctile, iv_change)
     row["surface_signal_quality"] = compute_surface_signal_quality(
         pctile,
         iv_change,
         has_surface,
         n_hist,
     )
+    row["surface_validation_basis"] = "retro_hard_filter"
 
     return row

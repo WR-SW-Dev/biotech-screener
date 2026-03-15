@@ -73,6 +73,10 @@ def derive_review_reasons(row: dict) -> List[str]:
         elif ivr == "falling":
             reasons.append("iv_ramp_falling")
 
+        drift = row.get("post_event_drift_risk", "")
+        if drift == "high":
+            reasons.append("post_event_drift_risk_high")
+
     return reasons
 
 
@@ -94,18 +98,21 @@ def compute_review_priority(row: dict, reasons: List[str]) -> int:
     if 0 < cat_days <= 90:
         score += 1
 
-    # Surface signal boosts (hard-catalyst only)
+    # Surface signal boosts (hard-catalyst only, capped at +3)
     if "hard_catalyst" in reasons:
+        surface_boost = 0
         if "surface_move_high" in reasons:
-            score += 2
+            surface_boost += 2
         elif "surface_move_med" in reasons:
-            score += 1
+            surface_boost += 1
 
         iv_change = _safe_float(row.get("atm_iv_change_5d"))
         if iv_change >= 0.10:
-            score += 2
+            surface_boost += 2
         elif iv_change >= 0.05:
-            score += 1
+            surface_boost += 1
+
+        score += min(surface_boost, 3)  # cap total surface overlay
 
     return score
 
@@ -140,7 +147,9 @@ QUEUE_COLUMNS = [
     "surface_move_extreme",
     "atm_iv_change_5d",
     "iv_ramp_flag",
+    "post_event_drift_risk",
     "surface_signal_quality",
+    "surface_validation_basis",
     "review_priority_score",
     "review_reasons",
 ]

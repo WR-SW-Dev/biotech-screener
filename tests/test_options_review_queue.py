@@ -175,6 +175,31 @@ class TestBuildOptionsReviewQueue:
         assert queue["summary"]["n_total"] == 0
         assert queue["rows"] == []
 
-    def test_schema_version_v2(self):
+    def test_schema_version_v3(self):
         queue = build_options_review_queue([])
         assert queue["schema_version"] == "options_review_queue.v3"
+
+    def test_surface_boost_cap_at_3(self):
+        """Surface overlay capped at +3 even when both high move + strong ramp."""
+        row = _hard_row(
+            ticker="CAPPED",
+            cheap_vol_score="1.5",
+            surface_move_extreme="high",  # +2
+            atm_iv_change_5d="0.15",  # +2 → total would be 4, capped to 3
+        )
+        reasons = derive_review_reasons(row)
+        score = compute_review_priority(row, reasons)
+        # Base: hard_catalyst=2, cheap_straddle=2, within_90d=1, surface=3(capped)
+        assert score == 2 + 2 + 1 + 3  # 8
+
+    def test_non_hard_gets_no_surface_boost(self):
+        row = _row(
+            ticker="SOFT",
+            cheap_vol_score="1.5",
+        )
+        row["surface_move_extreme"] = "high"
+        row["atm_iv_change_5d"] = "0.15"
+        queue = build_options_review_queue([row], hard_only=False)
+        if queue["rows"]:
+            reasons = queue["rows"][0].get("review_reasons", "")
+            assert "surface_move_high" not in reasons
