@@ -95,11 +95,82 @@ def load_iv_features(path: Path) -> Dict[str, Dict[str, Dict[str, float]]]:
     return dict(index)
 
 
+def load_catalog_events(
+    catalog_path: Path,
+    prices: Dict[str, Dict[str, float]],
+) -> List[Dict[str, Any]]:
+    """Load events from the FDA historical regulatory catalog.
+
+    Computes event outcomes (signed_gap, abs_gap) from price data.
+    """
+    data = json.loads(catalog_path.read_text())
+    raw_events = data.get("events", [])
+    events = []
+
+    for ev in raw_events:
+        ticker = ev.get("ticker", "").upper()
+        decision_date = ev.get("decision_date", "")
+        if not ticker or not decision_date:
+            continue
+
+        # Compute outcome from price data around decision date
+        ticker_prices = prices.get(ticker, {})
+        if not ticker_prices:
+            continue
+        sorted_dates = sorted(ticker_prices.keys())
+
+        # Find the trading day on or after the decision date
+        event_td = None
+        for d in sorted_dates:
+            if d >= decision_date:
+                event_td = d
+                break
+        if event_td is None:
+            continue
+
+        try:
+            ev_idx = sorted_dates.index(event_td)
+        except ValueError:
+            continue
+
+        # 1-day move: close[event] / close[event-1] - 1
+        if ev_idx < 1:
+            continue
+        prev_close = ticker_prices.get(sorted_dates[ev_idx - 1])
+        event_close = ticker_prices.get(event_td)
+        if not prev_close or not event_close or prev_close <= 0:
+            continue
+
+        signed_gap = (event_close / prev_close) - 1.0
+        abs_gap = abs(signed_gap)
+
+        events.append(
+            {
+                "ticker": ticker,
+                "event_date": decision_date,
+                "event_td": event_td,
+                "event_type": ev.get("submission_type", "NDA"),
+                "review_type": ev.get("review_type", "unknown"),
+                "decision_outcome": ev.get("decision_outcome", ""),
+                "binary_outcome": ev.get("binary_outcome", 1),
+                "drug_name": ev.get("drug_name", ""),
+                "application_number": ev.get("application_number", ""),
+                "sources": ev.get("sources", []),
+                "confidence": ev.get("confidence", "HIGH"),
+                "signed_gap": round(signed_gap, 6),
+                "abs_gap": round(abs_gap, 6),
+            }
+        )
+
+    logger.info("Catalog: %d raw events, %d with price outcomes", len(raw_events), len(events))
+    return events
+
+
 def find_resolved_regulatory_events(
     snapshots_dir: Path,
     prices: Dict[str, Dict[str, float]],
 ) -> List[Dict[str, Any]]:
-    """Find regulatory events from snapshots that have resolved outcomes."""
+    """Legacy: find regulatory events from snapshots (fallback if no catalog)."""
     date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
     events = []
     seen: set = set()
@@ -121,26 +192,22 @@ def find_resolved_regulatory_events(
                     src = row.get("catalyst_source", "")
                     family = row.get("catalyst_family", "")
 
-                    # Only regulatory events
                     if family != "REGULATORY" and et not in REGULATORY_EVENT_TYPES:
                         continue
 
-                    hc = classify_hard_catalyst(et, src)
+                    classify_hard_catalyst(et, src)  # validate but don't filter
                     cat_days = _sf(row.get("catalyst_days"))
                     if math.isnan(cat_days) or cat_days <= 0 or cat_days > 210:
                         continue
 
-                    # Estimate event date
                     snap_date = date.fromisoformat(d.name)
                     est_event = snap_date + timedelta(days=int(cat_days))
                     est_str = est_event.isoformat()
 
-                    # Dedup by (ticker, estimated_event_date)
                     key = (ticker, est_str)
                     if key in seen:
                         continue
 
-                    # Check if event has resolved (outcome available)
                     ticker_prices = prices.get(ticker, {})
                     sorted_dates = sorted(ticker_prices.keys()) if ticker_prices else []
                     outcome = resolve_event_outcome(
@@ -153,21 +220,24 @@ def find_resolved_regulatory_events(
                     abs_gap = _sf(outcome.get("abs_gap"))
 
                     if math.isnan(signed_gap):
-                        continue  # Event hasn't resolved yet
+                        continue
 
                     seen.add(key)
                     events.append(
                         {
                             "ticker": ticker,
-                            "snap_date": d.name,
-                            "estimated_event_date": est_str,
-                            "catalyst_days_at_snap": int(cat_days),
-                            "catalyst_event_type": et,
-                            "catalyst_source": src,
-                            "is_hard_catalyst": hc["is_hard_catalyst"],
+                            "event_date": est_str,
+                            "event_td": est_str,
+                            "event_type": et,
+                            "review_type": "unknown",
+                            "decision_outcome": "",
+                            "binary_outcome": 1,
+                            "drug_name": "",
+                            "application_number": "",
+                            "sources": ["SNAPSHOT_DERIVED"],
+                            "confidence": "MED",
                             "signed_gap": signed_gap,
                             "abs_gap": abs_gap,
-                            "oqc": _sf(row.get("options_quality_composite")),
                         }
                     )
         except (OSError, csv.Error) as exc:
@@ -183,7 +253,10 @@ def compute_approach_features(
     """Add pre-event options features for each approach window (in-place)."""
     for ev in events:
         ticker = ev["ticker"]
-        est_event = date.fromisoformat(ev["estimated_event_date"])
+        event_date_str = ev.get("event_date") or ev.get("estimated_event_date", "")
+        if not event_date_str:
+            continue
+        est_event = date.fromisoformat(event_date_str)
         ticker_data = iv_index.get(ticker, {})
         ticker_dates = sorted(ticker_data.keys())
 
@@ -264,6 +337,12 @@ def main() -> int:
     parser.add_argument("--iv-features", type=Path, required=True)
     parser.add_argument("--snapshots-dir", type=Path, required=True)
     parser.add_argument("--price-csv", type=Path, required=True)
+    parser.add_argument(
+        "--catalog",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "regulatory" / "historical_regulatory_events.json",
+        help="FDA historical catalog (primary source)",
+    )
     parser.add_argument("--min-obs", type=int, default=10)
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "output" / "regulatory_approach_window")
     args = parser.parse_args()
@@ -274,8 +353,13 @@ def main() -> int:
     logger.info("Loading prices ...")
     prices = load_price_series(args.price_csv)
 
-    logger.info("Finding resolved regulatory events ...")
-    events = find_resolved_regulatory_events(args.snapshots_dir, prices)
+    # Use catalog as primary event source, fall back to snapshots
+    if args.catalog.exists():
+        logger.info("Loading events from FDA catalog: %s", args.catalog)
+        events = load_catalog_events(args.catalog, prices)
+    else:
+        logger.info("No catalog found, falling back to snapshot-derived events ...")
+        events = find_resolved_regulatory_events(args.snapshots_dir, prices)
     logger.info("Found %d resolved regulatory events", len(events))
 
     if not events:
@@ -301,16 +385,26 @@ def main() -> int:
             w.writeheader()
             w.writerows(events)
 
+    # Overlap stats: how many events have IV data in each window?
+    overlap = {}
+    for window_name, _, _ in WINDOWS:
+        n_with_iv = sum(1 for e in events if e.get(f"{window_name}_n_iv_obs", 0) >= 5)
+        overlap[window_name] = {"n_with_iv_5plus": n_with_iv, "n_total": len(events)}
+
     # Report
-    n_hard = sum(1 for e in events if e.get("is_hard_catalyst"))
     tickers = sorted(set(e["ticker"] for e in events))
+    by_review = {}
+    for e in events:
+        rt = e.get("review_type", "unknown")
+        by_review[rt] = by_review.get(rt, 0) + 1
 
     report = {
         "schema": STUDY_SCHEMA,
         "n_events": len(events),
-        "n_hard": n_hard,
         "n_tickers": len(tickers),
         "tickers": tickers,
+        "by_review_type": by_review,
+        "iv_overlap": overlap,
         "ic_results": ic_results,
     }
     (args.output_dir / "report.json").write_text(json.dumps(report, indent=2, default=str) + "\n")
@@ -319,7 +413,8 @@ def main() -> int:
     md = [
         "# Regulatory Approach-Window Event Study",
         "",
-        f"**Events**: {len(events)} ({n_hard} hard)",
+        f"**Events**: {len(events)}",
+        f"**Review types**: {by_review}",
         f"**Tickers**: {len(tickers)}",
         "",
         "## IC Results",
@@ -332,10 +427,20 @@ def main() -> int:
         ic_str = f"{v['ic']:.4f}" if v.get("status") == "ok" else "—"
         md.append(f"| {key} | | {ic_str} | {v.get('n', 0)} |")
 
-    md += ["", "## Event Summary", ""]
-    for ev in sorted(events, key=lambda e: e["estimated_event_date"])[:20]:
+    md += [
+        "",
+        "## IV Data Overlap by Window",
+        "",
+        "| Window | Events with 5+ IV obs | Total |",
+        "|--------|----------------------|-------|",
+    ]
+    for wn, stats in overlap.items():
+        md.append(f"| {wn} | {stats['n_with_iv_5plus']} | {stats['n_total']} |")
+
+    md += ["", "## Event Summary (first 20)", ""]
+    for ev in sorted(events, key=lambda e: e.get("event_date", ""))[:20]:
         md.append(
-            f"- {ev['ticker']} {ev['estimated_event_date']} ({ev['catalyst_event_type']}): gap={ev['signed_gap']:.3f}"
+            f"- {ev['ticker']} {ev.get('event_date', '')} ({ev.get('event_type', '')}): gap={ev['signed_gap']:.3f}"
         )
 
     md.append("")
