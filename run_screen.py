@@ -3748,7 +3748,21 @@ def save_validation_snapshot(
     # --- FDA AdCom vote features (passive pilot) ---
     _adcom_vote_lookup: Dict[str, Dict[str, Any]] = {}
     try:
-        _adcom_cache_path = Path(__file__).resolve().parent / "cache" / "fda" / f"adcom_calendar_{as_of_date}.json"
+        _fda_cache_dir = Path(__file__).resolve().parent / "cache" / "fda"
+        _adcom_cache_path = _fda_cache_dir / f"adcom_calendar_{as_of_date}.json"
+        if not _adcom_cache_path.exists():
+            # Fallback: most recent adcom cache at or before as_of_date
+            _adcom_candidates = sorted(
+                (
+                    p
+                    for p in _fda_cache_dir.glob("adcom_calendar_*.json")
+                    if p.name <= f"adcom_calendar_{as_of_date}.json"
+                ),
+                reverse=True,
+            )
+            if _adcom_candidates:
+                _adcom_cache_path = _adcom_candidates[0]
+                logger.info("Snapshot: AdCom cache fallback to %s", _adcom_cache_path.name)
         if _adcom_cache_path.exists():
             _adcom_raw = json.loads(_adcom_cache_path.read_text())
             _adcom_vote_lookup = build_adcom_vote_lookup(_adcom_raw, as_of_date)
