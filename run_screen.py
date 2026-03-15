@@ -5051,6 +5051,27 @@ def save_validation_snapshot(
     except Exception as _rq_exc:
         logger.debug("Review queue skipped: %s", _rq_exc)
 
+    # --- Surface signal enrichment (Spec 020) ---
+    try:
+        from common.options_surface_signals import enrich_row_with_surface_signals, load_historical_iv_feature_history
+
+        _iv_hist_path = Path(__file__).resolve().parent / "data" / "research" / "historical_iv_features.csv"
+        if _iv_hist_path.exists():
+            _iv_hist = load_historical_iv_feature_history(_iv_hist_path)
+            _n_enriched = 0
+            for row in csv_rows:
+                ticker = (row.get("ticker") or "").upper()
+                hist = _iv_hist.get(ticker, [])
+                if hist:
+                    enrich_row_with_surface_signals(row, hist, as_of_date)
+                    if row.get("surface_signal_quality") in ("ok", "partial"):
+                        _n_enriched += 1
+            logger.info("[SURFACE] Enriched %d/%d rows with surface signals", _n_enriched, len(csv_rows))
+        else:
+            logger.debug("[SURFACE] historical_iv_features.csv not found — skipping")
+    except Exception as _surf_exc:
+        logger.debug("Surface signal enrichment skipped: %s", _surf_exc)
+
     # --- Options mispricing review queue ---
     try:
         from common.options_review_queue import build_options_review_queue, write_options_review_queue
@@ -5059,7 +5080,7 @@ def save_validation_snapshot(
         write_options_review_queue(_opt_queue, snap_path, as_of_date)
         _oqs = _opt_queue["summary"]
         logger.info(
-            "[OPTIONS_QUEUE] queued=%d hard=%d soft_skipped=%d cheap=%d rich=%d disagree=%d ts=%d skew=%d",
+            "[OPTIONS_QUEUE] queued=%d hard=%d soft_skipped=%d cheap=%d rich=%d disagree=%d ts=%d skew=%d surf_hi=%d surf_med=%d iv_up=%d",
             _oqs["n_total"],
             _oqs["n_hard_catalyst"],
             _oqs["n_soft_skipped"],
@@ -5068,6 +5089,9 @@ def save_validation_snapshot(
             _oqs["n_high_disagreement"],
             _oqs["n_term_structure_flag"],
             _oqs["n_extreme_skew"],
+            _oqs.get("n_surface_move_high", 0),
+            _oqs.get("n_surface_move_med", 0),
+            _oqs.get("n_iv_ramp_rising", 0),
         )
     except Exception as _oq_exc:
         logger.debug("Options review queue skipped: %s", _oq_exc)

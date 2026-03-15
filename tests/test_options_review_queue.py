@@ -177,4 +177,4 @@ class TestBuildOptionsReviewQueue:
 
     def test_schema_version_v2(self):
         queue = build_options_review_queue([])
-        assert queue["schema_version"] == "options_review_queue.v2"
+        assert queue["schema_version"] == "options_review_queue.v3"

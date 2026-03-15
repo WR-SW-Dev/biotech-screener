@@ -59,11 +59,25 @@ def derive_review_reasons(row: dict) -> List[str]:
     if abs(rr) >= 0.15:
         reasons.append("extreme_skew")
 
+    # Surface signals (hard-catalyst only)
+    if hc["is_hard_catalyst"]:
+        sme = row.get("surface_move_extreme", "")
+        if sme == "high":
+            reasons.append("surface_move_high")
+        elif sme == "med":
+            reasons.append("surface_move_med")
+
+        ivr = row.get("iv_ramp_flag", "")
+        if ivr == "rising":
+            reasons.append("iv_ramp_rising")
+        elif ivr == "falling":
+            reasons.append("iv_ramp_falling")
+
     return reasons
 
 
 def compute_review_priority(row: dict, reasons: List[str]) -> int:
-    """Compute priority score for queue ordering."""
+    """Compute priority score for queue ordering (v2 with surface boosts)."""
     score = 0
     if "high_disagreement" in reasons:
         score += 3
@@ -79,6 +93,19 @@ def compute_review_priority(row: dict, reasons: List[str]) -> int:
     cat_days = _safe_float(row.get("catalyst_days"), 9999)
     if 0 < cat_days <= 90:
         score += 1
+
+    # Surface signal boosts (hard-catalyst only)
+    if "hard_catalyst" in reasons:
+        if "surface_move_high" in reasons:
+            score += 2
+        elif "surface_move_med" in reasons:
+            score += 1
+
+        iv_change = _safe_float(row.get("atm_iv_change_5d"))
+        if iv_change >= 0.10:
+            score += 2
+        elif iv_change >= 0.05:
+            score += 1
 
     return score
 
@@ -109,6 +136,11 @@ QUEUE_COLUMNS = [
     "vol_classification",
     "iv_crush_breakeven_pct",
     "crush_adjusted_implied_move",
+    "actual_implied_move_pctile",
+    "surface_move_extreme",
+    "atm_iv_change_5d",
+    "iv_ramp_flag",
+    "surface_signal_quality",
     "review_priority_score",
     "review_reasons",
 ]
@@ -180,9 +212,13 @@ def build_options_review_queue(
     n_cheap = sum(1 for r in queue_rows if "cheap_straddle" in r.get("review_reasons", ""))
     n_rich = sum(1 for r in queue_rows if "rich_straddle" in r.get("review_reasons", ""))
     n_skew = sum(1 for r in queue_rows if "extreme_skew" in r.get("review_reasons", ""))
+    n_surf_hi = sum(1 for r in queue_rows if "surface_move_high" in r.get("review_reasons", ""))
+    n_surf_med = sum(1 for r in queue_rows if "surface_move_med" in r.get("review_reasons", ""))
+    n_iv_up = sum(1 for r in queue_rows if "iv_ramp_rising" in r.get("review_reasons", ""))
+    n_iv_down = sum(1 for r in queue_rows if "iv_ramp_falling" in r.get("review_reasons", ""))
 
     return {
-        "schema_version": "options_review_queue.v2",
+        "schema_version": "options_review_queue.v3",
         "hard_only": hard_only,
         "summary": {
             "n_total": len(queue_rows),
@@ -193,6 +229,10 @@ def build_options_review_queue(
             "n_cheap_straddle": n_cheap,
             "n_rich_straddle": n_rich,
             "n_extreme_skew": n_skew,
+            "n_surface_move_high": n_surf_hi,
+            "n_surface_move_med": n_surf_med,
+            "n_iv_ramp_rising": n_iv_up,
+            "n_iv_ramp_falling": n_iv_down,
         },
         "rows": queue_rows,
     }
