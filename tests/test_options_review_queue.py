@@ -179,18 +179,18 @@ class TestBuildOptionsReviewQueue:
         queue = build_options_review_queue([])
         assert queue["schema_version"] == "options_review_queue.v3"
 
-    def test_surface_boost_cap_at_3(self):
-        """Surface overlay capped at +3 even when both high move + strong ramp."""
+    def test_surface_boost_move_only(self):
+        """Only surface_move_extreme gets priority boost; IV ramp is informational."""
         row = _hard_row(
-            ticker="CAPPED",
+            ticker="BOOSTED",
             cheap_vol_score="1.5",
             surface_move_extreme="high",  # +2
-            atm_iv_change_5d="0.15",  # +2 → total would be 4, capped to 3
+            atm_iv_change_5d="0.15",  # informational, no boost
         )
         reasons = derive_review_reasons(row)
         score = compute_review_priority(row, reasons)
-        # Base: hard_catalyst=2, cheap_straddle=2, within_90d=1, surface=3(capped)
-        assert score == 2 + 2 + 1 + 3  # 8
+        # Base: hard_catalyst=2, cheap_straddle=2, within_90d=1, surface_move_high=2
+        assert score == 2 + 2 + 1 + 2  # 7
 
     def test_non_hard_gets_no_surface_boost(self):
         row = _row(

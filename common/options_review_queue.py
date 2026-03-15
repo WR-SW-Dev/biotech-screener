@@ -98,21 +98,14 @@ def compute_review_priority(row: dict, reasons: List[str]) -> int:
     if 0 < cat_days <= 90:
         score += 1
 
-    # Surface signal boosts (hard-catalyst only, capped at +3)
+    # Surface signal boosts (hard-catalyst only)
+    # Only actual_implied_move_pctile (via surface_move_extreme) gets a boost.
+    # atm_iv_change_5d is informational-only (unstable per walk-forward).
     if "hard_catalyst" in reasons:
-        surface_boost = 0
         if "surface_move_high" in reasons:
-            surface_boost += 2
+            score += 2
         elif "surface_move_med" in reasons:
-            surface_boost += 1
-
-        iv_change = _safe_float(row.get("atm_iv_change_5d"))
-        if iv_change >= 0.10:
-            surface_boost += 2
-        elif iv_change >= 0.05:
-            surface_boost += 1
-
-        score += min(surface_boost, 3)  # cap total surface overlay
+            score += 1
 
     return score
 
