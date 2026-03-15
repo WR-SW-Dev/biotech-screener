@@ -32,10 +32,7 @@ SEC_SEARCH_URL = "https://efts.sec.gov/LATEST/search-index"
 SEC_ARCHIVES_BASE = "https://www.sec.gov/Archives/edgar/data"
 
 # SEC requires User-Agent header with contact info
-USER_AGENT = os.environ.get(
-    "SEC_USER_AGENT",
-    "Wake Robin Research contact@wakerobincapital.com"
-)
+USER_AGENT = os.environ.get("SEC_USER_AGENT", "Wake Robin Research contact@wakerobincapital.com")
 
 # Default cache directory — matches Module3Config's default path (relative to project root)
 DEFAULT_CACHE_DIR = Path("cache") / "sec" / "8k_catalysts"
@@ -54,13 +51,13 @@ _MAX_FILINGS_PER_TICKER = 2
 
 # Map filing form type to source label for events
 FORM_TO_SOURCE = {
-    "8-K":  "SEC_8K_FILING",
+    "8-K": "SEC_8K_FILING",
     "10-Q": "SEC_10Q_FILING",
     "10-K": "SEC_10K_FILING",
-    "6-K":  "SEC_6K_FILING",
-    "6-K/A": "SEC_6K_FILING",   # Amended 6-K → same source label
-    "10-Q/A": "SEC_10Q_FILING", # Amended 10-Q → same source label
-    "10-K/A": "SEC_10K_FILING", # Amended 10-K → same source label
+    "6-K": "SEC_6K_FILING",
+    "6-K/A": "SEC_6K_FILING",  # Amended 6-K → same source label
+    "10-Q/A": "SEC_10Q_FILING",  # Amended 10-Q → same source label
+    "10-K/A": "SEC_10K_FILING",  # Amended 10-K → same source label
 }
 
 # SEC official ticker-to-CIK mapping
@@ -150,6 +147,61 @@ TIMING_PATTERNS = [
         "FDA_ADCOM",
         "QUARTER",
     ),
+    # ── NDA/BLA submission and resubmission (QUARTER / DAY) ──
+    # "NDA resubmission accepted" / "BLA resubmitted" / "sNDA filed"
+    (
+        r"(?:NDA|BLA|sNDA|sBLA)\s+(?:re)?(?:submission|submitted|filed|accepted)\s+.*?(Q[1-4]\s*\d{4})",
+        "FDA_PDUFA_DATE",
+        "QUARTER",
+    ),
+    (
+        r"(?:NDA|BLA|sNDA|sBLA)\s+(?:re)?(?:submission|submitted|filed|accepted)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+    ),
+    # ── PDUFA extension / revision ──
+    # "PDUFA date was extended to July 15, 2026" / "PDUFA date revised to ..."
+    (
+        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised|moved|pushed)\s+(?:to|until)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+    ),
+    (
+        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised)\s+.*?(Q[1-4]\s*\d{4})",
+        "FDA_PDUFA_DATE",
+        "QUARTER",
+    ),
+    # ── FDA meetings (Type A/B/C, mid-cycle, late-cycle) ──
+    # "Type A meeting scheduled for March 2026" / "late-cycle meeting"
+    (
+        r"Type\s+[ABC]\s+meeting\s+.*?(?:scheduled|set|planned)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+    ),
+    (
+        r"(?:mid[- ]?cycle|late[- ]?cycle)\s+(?:review|meeting)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+    ),
+    (
+        r"(?:mid[- ]?cycle|late[- ]?cycle)\s+(?:review|meeting)\s+.*?(Q[1-4]\s*\d{4})",
+        "FDA_PDUFA_DATE",
+        "QUARTER",
+    ),
+    # ── Breakthrough / Priority / Accelerated designations with timeline ──
+    # "granted Breakthrough Therapy Designation ... expects approval Q2 2026"
+    (
+        r"(?:Breakthrough|Priority|Accelerated)\s+(?:Therapy\s+)?(?:Designation|Review)\s+.*?(?:expects?|anticipates?)\s+.*?(Q[1-4]\s*\d{4})",
+        "FDA_PDUFA_DATE",
+        "QUARTER",
+    ),
+    # ── Phase 2 data readout (QUARTER) ──
+    # "Phase 2 data expected in Q1 2026" / "Phase 2 results anticipated Q3 2026"
+    (
+        r"Phase\s+2\s+.*?(?:data|results?)\s+(?:expected|anticipated)\s+.*?(Q[1-4]\s*\d{4})",
+        "DATA_READOUT",
+        "QUARTER",
+    ),
 ]
 
 # Downside patterns: (regex, event_type, confidence)
@@ -163,6 +215,17 @@ DOWNSIDE_PATTERNS = [
     ),
     (
         r"CRL\s+from\s+(?:the\s+)?FDA",
+        "FDA_CRL",
+        "HIGH",
+    ),
+    # CRL variants
+    (
+        r"[Cc]omplete\s+[Rr]esponse\s+[Ll]etter\s+(?:was\s+)?received",
+        "FDA_CRL",
+        "HIGH",
+    ),
+    (
+        r"FDA\s+issued\s+a\s+[Cc]omplete\s+[Rr]esponse\s+[Ll]etter",
         "FDA_CRL",
         "HIGH",
     ),
@@ -230,14 +293,17 @@ _DIAG_COUNTERS: Dict[str, int] = {
 _DIAG_DROPPED: List[Dict[str, Any]] = []
 
 
-def _append_dropped(ticker: str, event_type: str, captured: str,
-                    reason: str, snippet: str) -> None:
+def _append_dropped(ticker: str, event_type: str, captured: str, reason: str, snippet: str) -> None:
     if len(_DIAG_DROPPED) < 10:
-        _DIAG_DROPPED.append({
-            "ticker": ticker, "event_type": event_type,
-            "captured": captured, "drop_reason": reason,
-            "snippet": snippet[:100],
-        })
+        _DIAG_DROPPED.append(
+            {
+                "ticker": ticker,
+                "event_type": event_type,
+                "captured": captured,
+                "drop_reason": reason,
+                "snippet": snippet[:100],
+            }
+        )
 
 
 def reset_extraction_diagnostics() -> None:
@@ -310,18 +376,20 @@ def _extract_downside_events(
         match = re.search(pattern, clean_text, re.IGNORECASE)
         if match:
             seen_types.add(event_type)
-            events.append({
-                "ticker": ticker,
-                "event_type": event_type,
-                "event_date": filing_date,
-                "event_date_end": None,
-                "date_precision": "DAY",
-                "event_name": f"8-K: {match.group(0)[:80]}",
-                "confidence": confidence,
-                "source": "SEC_8K_FILING",
-                "disclosed_at": filing_date,
-                "tags": ["sec_8k", "downside"],
-            })
+            events.append(
+                {
+                    "ticker": ticker,
+                    "event_type": event_type,
+                    "event_date": filing_date,
+                    "event_date_end": None,
+                    "date_precision": "DAY",
+                    "event_name": f"8-K: {match.group(0)[:80]}",
+                    "confidence": confidence,
+                    "source": "SEC_8K_FILING",
+                    "disclosed_at": filing_date,
+                    "tags": ["sec_8k", "downside"],
+                }
+            )
 
     return events
 
@@ -402,14 +470,31 @@ def _parse_exact_date(date_str: str) -> Optional[str]:
 
 
 _BOILERPLATE_KWS = (
-    "foreseeable future", "going concern", "material weakness",
-    "accounting standard", "fasb", "asu", "impairment", "adopt",
+    "foreseeable future",
+    "going concern",
+    "material weakness",
+    "accounting standard",
+    "fasb",
+    "asu",
+    "impairment",
+    "adopt",
 )
 _BIOPHARMA_KWS = (
-    "fda", "pdufa", "nda", "bla", "crl",
-    "phase 1", "phase 2", "phase 3", "topline", "readout",
-    "primary endpoint", "enrollment", "interim analysis",
-    "clinical", "regulatory",
+    "fda",
+    "pdufa",
+    "nda",
+    "bla",
+    "crl",
+    "phase 1",
+    "phase 2",
+    "phase 3",
+    "topline",
+    "readout",
+    "primary endpoint",
+    "enrollment",
+    "interim analysis",
+    "clinical",
+    "regulatory",
 )
 
 
@@ -455,16 +540,14 @@ def _extract_timing_events(
         for match in re.finditer(pattern, text, re.IGNORECASE):
             _DIAG_COUNTERS["raw_matches"] += 1
             # Context-based relevance filters (±300 chars around match)
-            ctx = text[max(0, match.start() - 300):min(len(text), match.end() + 300)].lower()
+            ctx = text[max(0, match.start() - 300) : min(len(text), match.end() + 300)].lower()
             if block_boilerplate and any(k in ctx for k in _BOILERPLATE_KWS):
                 _DIAG_COUNTERS["boilerplate_dropped"] += 1
-                _append_dropped(ticker, event_type, match.group(1).strip(),
-                                "boilerplate", ctx[:100])
+                _append_dropped(ticker, event_type, match.group(1).strip(), "boilerplate", ctx[:100])
                 continue
             if require_biopharma_context and not any(k in ctx for k in _BIOPHARMA_KWS):
                 _DIAG_COUNTERS["biopharma_context_dropped"] += 1
-                _append_dropped(ticker, event_type, match.group(1).strip(),
-                                "biopharma_context", ctx[:100])
+                _append_dropped(ticker, event_type, match.group(1).strip(), "biopharma_context", ctx[:100])
                 continue
 
             captured = match.group(1).strip()
@@ -486,7 +569,7 @@ def _extract_timing_events(
             elif precision == "HALF_YEAR":
                 # Determine which half from surrounding context
                 context_start = max(0, match.start() - 100)
-                context = text[context_start:match.end()].lower()
+                context = text[context_start : match.end()].lower()
                 half = "second" if "second" in context or "mid" in context or "year-end" in context else "first"
                 try:
                     event_date, event_date_end = _half_year_to_date_range(captured, half)
@@ -504,8 +587,9 @@ def _extract_timing_events(
                 continue
             if event_year < min_year or event_year > max_year:
                 _DIAG_COUNTERS["year_guard_dropped"] += 1
-                _append_dropped(ticker, event_type, captured,
-                                "year_guard", f"{event_date} outside [{min_year},{max_year}]")
+                _append_dropped(
+                    ticker, event_type, captured, "year_guard", f"{event_date} outside [{min_year},{max_year}]"
+                )
                 logger.debug(
                     f"Year guard: skipping {ticker} {event_type} {event_date} "
                     f"(year {event_year} outside [{min_year}, {max_year}])"
@@ -516,8 +600,7 @@ def _extract_timing_events(
             end_for_staleness = event_date_end or event_date
             if staleness_cutoff and end_for_staleness < staleness_cutoff:
                 _DIAG_COUNTERS["staleness_dropped"] += 1
-                _append_dropped(ticker, event_type, captured,
-                                "staleness", f"{end_for_staleness} < {staleness_cutoff}")
+                _append_dropped(ticker, event_type, captured, "staleness", f"{end_for_staleness} < {staleness_cutoff}")
                 logger.debug(
                     f"Staleness filter: skipping {ticker} {event_type} {end_for_staleness} "
                     f"(older than {staleness_cutoff})"
@@ -525,18 +608,20 @@ def _extract_timing_events(
                 continue
 
             _DIAG_COUNTERS["accepted"] += 1
-            events.append({
-                "ticker": ticker,
-                "event_type": event_type,
-                "event_date": event_date,
-                "event_date_end": event_date_end,
-                "date_precision": precision,
-                "event_name": f"8-K: {match.group(0)[:80]}",
-                "confidence": confidence,
-                "source": "SEC_8K_FILING",
-                "disclosed_at": filing_date,
-                "tags": ["sec_8k"],
-            })
+            events.append(
+                {
+                    "ticker": ticker,
+                    "event_type": event_type,
+                    "event_date": event_date,
+                    "event_date_end": event_date_end,
+                    "date_precision": precision,
+                    "event_name": f"8-K: {match.group(0)[:80]}",
+                    "confidence": confidence,
+                    "source": "SEC_8K_FILING",
+                    "disclosed_at": filing_date,
+                    "tags": ["sec_8k"],
+                }
+            )
 
     return events
 
@@ -565,7 +650,6 @@ def _rate_limit():
 
 def _sec_get(session: Any, url: str, **kwargs) -> Any:
     """GET with backoff on 403/429."""
-    import requests as _requests
     _rate_limit()
     resp = session.get(url, timeout=30, **kwargs)
     if resp.status_code in (403, 429):
@@ -763,6 +847,12 @@ def collect_8k_timing_events(
         '"regulatory decision" AND ("expected" OR "anticipated")',
         '"Advisory Committee" AND ("meeting" OR "scheduled")',
         '"ADCOM" AND ("meeting" OR "scheduled" OR "expected")',
+        '"NDA" AND ("resubmission" OR "resubmitted" OR "accepted")',
+        '"BLA" AND ("resubmission" OR "resubmitted" OR "accepted")',
+        '"PDUFA" AND ("extended" OR "revised" OR "moved")',
+        '"mid-cycle review" OR "late-cycle meeting"',
+        '"Type A meeting" OR "Type B meeting" OR "Type C meeting"',
+        '"Phase 2" AND ("data" OR "results") AND ("expected" OR "anticipated")',
     ]
 
     # Max pages per query to avoid runaway requests
@@ -857,10 +947,7 @@ def collect_8k_timing_events(
     # Sort by file_date descending (most recent first) so the cap keeps
     # the freshest filings rather than whichever query ran first.
     if len(filings_to_fetch) > _MAX_FILINGS_PER_RUN:
-        logger.warning(
-            f"Capping filing fetches at {_MAX_FILINGS_PER_RUN} "
-            f"(found {len(filings_to_fetch)})"
-        )
+        logger.warning(f"Capping filing fetches at {_MAX_FILINGS_PER_RUN} " f"(found {len(filings_to_fetch)})")
         sorted_items = sorted(
             filings_to_fetch.items(),
             key=lambda x: x[1]["file_date"],
@@ -910,8 +997,7 @@ def collect_8k_timing_events(
             deduped.append(event)
 
     logger.info(
-        f"Collected {len(deduped)} SEC 8-K timing events "
-        f"({len(all_events) - len(deduped)} duplicates removed)"
+        f"Collected {len(deduped)} SEC 8-K timing events " f"({len(all_events) - len(deduped)} duplicates removed)"
     )
 
     # Cache results
@@ -1068,6 +1154,12 @@ def collect_sec_filing_events(
         '"regulatory decision" AND ("expected" OR "anticipated")',
         '"Advisory Committee" AND ("meeting" OR "scheduled")',
         '"ADCOM" AND ("meeting" OR "scheduled" OR "expected")',
+        '"NDA" AND ("resubmission" OR "resubmitted" OR "accepted")',
+        '"BLA" AND ("resubmission" OR "resubmitted" OR "accepted")',
+        '"PDUFA" AND ("extended" OR "revised" OR "moved")',
+        '"mid-cycle review" OR "late-cycle meeting"',
+        '"Type A meeting" OR "Type B meeting" OR "Type C meeting"',
+        '"Phase 2" AND ("data" OR "results") AND ("expected" OR "anticipated")',
     ]
 
     _MAX_PAGES_PER_QUERY = 5  # More conservative for multi-form
@@ -1167,15 +1259,13 @@ def collect_sec_filing_events(
     filings_to_fetch = capped
     if pre_cap != len(filings_to_fetch):
         logger.info(
-            f"Per-ticker cap ({_MAX_FILINGS_PER_TICKER}/ticker): "
-            f"{pre_cap} → {len(filings_to_fetch)} filings"
+            f"Per-ticker cap ({_MAX_FILINGS_PER_TICKER}/ticker): " f"{pre_cap} → {len(filings_to_fetch)} filings"
         )
 
     # Global backstop cap (after per-ticker cap)
     if len(filings_to_fetch) > _MAX_FILINGS_PER_MULTI_FORM_RUN:
         logger.warning(
-            f"Capping multi-form fetches at {_MAX_FILINGS_PER_MULTI_FORM_RUN} "
-            f"(found {len(filings_to_fetch)})"
+            f"Capping multi-form fetches at {_MAX_FILINGS_PER_MULTI_FORM_RUN} " f"(found {len(filings_to_fetch)})"
         )
         sorted_items = sorted(
             filings_to_fetch.items(),
@@ -1209,13 +1299,14 @@ def collect_sec_filing_events(
 
         if filing_idx % 10 == 0 or filing_idx == 1:
             logger.info(
-                f"Multi-form [{filing_idx}/{total_filings}] fetching {ticker} "
-                f"{form_type} {adsh} ({file_date})"
+                f"Multi-form [{filing_idx}/{total_filings}] fetching {ticker} " f"{form_type} {adsh} ({file_date})"
             )
 
         try:
             text = _fetch_filing_text(
-                cik, adsh, session,
+                cik,
+                adsh,
+                session,
                 prefer_exhibits_only=form_type in ("10-Q", "10-K"),
             )
             if not text:
@@ -1225,7 +1316,10 @@ def collect_sec_filing_events(
 
             network_fetches += 1
             extracted = _extract_timing_events(
-                text, ticker, file_date, as_of_date,
+                text,
+                ticker,
+                file_date,
+                as_of_date,
                 require_biopharma_context=True,
                 block_boilerplate=True,
             )
@@ -1257,8 +1351,7 @@ def collect_sec_filing_events(
             fetch_errors += 1
 
     logger.info(
-        f"Multi-form phase 2: {cache_hits} cache hits, "
-        f"{network_fetches} network fetches, {fetch_errors} errors"
+        f"Multi-form phase 2: {cache_hits} cache hits, " f"{network_fetches} network fetches, {fetch_errors} errors"
     )
 
     # Deduplicate events by (ticker, event_type, event_date)

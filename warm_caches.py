@@ -187,6 +187,35 @@ def warm_fda_regulatory(as_of_date: date, data_dir: Path, cache_dir: Path) -> in
     return len(events)
 
 
+def warm_openfda_drugs(as_of_date: date, data_dir: Path, cache_dir: Path) -> int:
+    """Fetch and cache openFDA Drugs@FDA approval events. Returns count."""
+    from wake_robin_data_pipeline.collectors.openfda_drugs_collector import (
+        build_sponsor_ticker_map,
+        collect_openfda_approvals,
+    )
+
+    logger.info("Building sponsor→ticker map for openFDA...")
+    sponsor_map = build_sponsor_ticker_map(data_dir)
+    if not sponsor_map:
+        logger.warning("Empty sponsor map — check universe.json")
+        return 0
+
+    logger.info(f"Fetching openFDA Drugs@FDA events for {as_of_date}...")
+    events = collect_openfda_approvals(
+        data_dir=data_dir,
+        as_of_date=as_of_date,
+        sponsor_map=sponsor_map,
+        cache_dir=cache_dir / "openfda",
+    )
+
+    logger.info(
+        "openFDA: %d events for %d tickers",
+        len(events),
+        len(set(e["ticker"] for e in events)),
+    )
+    return len(events)
+
+
 def _find_prior_sec8k_count(cache_dir: Path) -> int | None:
     """Find most recent prior 8-K cache file and return its event count."""
     candidates = sorted(cache_dir.glob("8k_catalysts_*_*.json"), reverse=True)
@@ -854,7 +883,7 @@ def main():
         "--sources",
         type=str,
         default="fda_adcom,sec_8k,euctr,ctis,isrctn,merged_trials",
-        help="Comma-separated sources to warm: fda_adcom,fda_regulatory,sec_8k,ctgov,sec_13f,"
+        help="Comma-separated sources to warm: fda_adcom,fda_regulatory,openfda,sec_8k,ctgov,sec_13f,"
         "euctr,ctis,isrctn,merged_trials,event_ledger,price_pit "
         "(default: fda_adcom,sec_8k,euctr,ctis,isrctn,merged_trials)",
     )
@@ -972,6 +1001,14 @@ def main():
             total += warm_fda_adcom(as_of, data_dir, fda_cache_dir)
         except Exception as e:
             logger.error(f"FDA ADCOM warm failed: {e}")
+
+    if "openfda" in sources:
+        fda_cache_dir = Path(args.fda_cache_dir)
+        fda_cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            total += warm_openfda_drugs(as_of, data_dir, fda_cache_dir)
+        except Exception as e:
+            logger.error(f"openFDA warm failed: {e}")
 
     fda_regulatory_count = 0
     if "fda_regulatory" in sources:

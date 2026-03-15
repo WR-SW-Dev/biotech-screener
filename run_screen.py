@@ -82,6 +82,7 @@ from common.event_quality_features import (
     compute_event_quality_features,
     compute_options_quality_composite,
 )
+from common.hard_catalyst import is_hard_catalyst as _is_hard_catalyst
 from common.integration_contracts import SchemaValidationError, validate_module_5_output, validate_pipeline_handoff
 from common.options_diagnostics import OPTIONS_DIAGNOSTIC_COLUMNS, empty_diagnostics
 
@@ -1427,6 +1428,7 @@ SNAPSHOT_COLUMNS = [
     "returns_source",
     "catalyst_source",
     "catalyst_event_type",
+    "is_hard_catalyst",
     "catalyst_family",
     "binary_quality_score",
     "regulatory_quality",
@@ -4219,6 +4221,7 @@ def save_validation_snapshot(
         # Catalyst source provenance: extract from Module 3 nearest event
         row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker, as_of_date=as_of_date)
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker, as_of_date=as_of_date)
+        row["is_hard_catalyst"] = "1" if _is_hard_catalyst(row["catalyst_event_type"], row["catalyst_source"]) else "0"
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         # Corroboration check: noisy clinical sources need independent confirmation
         _corr = _check_catalyst_corroboration(m3_summaries, ticker, row["catalyst_source"], row["catalyst_family"])
