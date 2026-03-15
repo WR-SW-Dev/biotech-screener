@@ -202,6 +202,35 @@ class GateConfig:
     regulatory_calendar_max_stale_days: int = 180
     """WARN if newest as_of_disclosed_at in manual calendar is older than this many days."""
 
+    # --- Hard-catalyst production gates (Spec 018) ---
+
+    hard_queue_min_warn: int = 8
+    """Min hard-catalyst count before WARN."""
+
+    hard_queue_min_fail: int = 3
+    """Min hard-catalyst count before FAIL."""
+
+    hard_queue_near_term_min_warn: int = 4
+    """Min hard-catalyst within 90d before WARN."""
+
+    hard_queue_near_term_min_fail: int = 1
+    """Min hard-catalyst within 90d before FAIL (0 = FAIL)."""
+
+    hard_options_coverage_warn_pct: float = 60.0
+    """Min % of hard rows with opt_atm_iv before WARN."""
+
+    hard_options_coverage_fail_pct: float = 40.0
+    """Min % of hard rows with opt_atm_iv before FAIL."""
+
+    hard_actual_straddle_warn_pct: float = 50.0
+    """Min % of hard rows with actual straddle before WARN."""
+
+    hard_actual_straddle_fail_pct: float = 20.0
+    """Min % of hard rows with actual straddle before FAIL."""
+
+    hard_reviewable_min_warn: int = 3
+    """Min reviewable hard names before WARN."""
+
     @staticmethod
     def from_json(path: Path) -> "GateConfig":
         with open(path) as f:
@@ -2686,6 +2715,274 @@ def check_options_coverage(
     )
 
 
+# ---------------------------------------------------------------------------
+# Hard-catalyst production gates (Spec 018)
+# ---------------------------------------------------------------------------
+
+
+def _load_queue_json(staging_date_dir: Path) -> Optional[Dict[str, Any]]:
+    """Load options_review_queue.json from snapshot dir."""
+    path = staging_date_dir / "options_review_queue.json"
+    if not path.exists():
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def check_hard_queue_artifacts(staging_date_dir: Path) -> GateResult:
+    """Gate: verify hard queue JSON and CSV exist and are readable."""
+    name = "hard_queue_artifacts"
+    json_path = staging_date_dir / "options_review_queue.json"
+    csv_path = staging_date_dir / "options_review_queue.csv"
+
+    json_ok = False
+    csv_ok = False
+
+    if json_path.exists():
+        try:
+            with open(json_path, encoding="utf-8") as f:
+                json.load(f)
+            json_ok = True
+        except Exception:
+            pass
+
+    if csv_path.exists():
+        try:
+            with open(csv_path, encoding="utf-8") as f:
+                next(csv.reader(f))  # read header
+            csv_ok = True
+        except Exception:
+            pass
+
+    detail = f"queue_json={'ok' if json_ok else 'MISSING'}, queue_csv={'ok' if csv_ok else 'MISSING'}"
+    if json_ok and csv_ok:
+        return GateResult(name=name, status="PASS", detail=detail)
+    return GateResult(name=name, status="FAIL", detail=detail)
+
+
+def check_hard_catalyst_supply(
+    staging_date_dir: Path,
+    config: GateConfig,
+) -> GateResult:
+    """Gate: ensure queue has enough hard-catalyst rows."""
+    name = "hard_catalyst_supply"
+    queue = _load_queue_json(staging_date_dir)
+    if queue is None:
+        return GateResult(name=name, status="FAIL", detail="queue_json missing or unreadable")
+
+    rows = queue.get("rows", [])
+    n_hard = sum(1 for r in rows if str(r.get("is_hard_catalyst", "0")).strip() == "1")
+    n_hard_0_90 = 0
+    for r in rows:
+        if str(r.get("is_hard_catalyst", "0")).strip() != "1":
+            continue
+        try:
+            cd = float(r.get("catalyst_days", 9999))
+        except (ValueError, TypeError):
+            continue
+        if 0 < cd <= 90:
+            n_hard_0_90 += 1
+
+    detail = f"hard={n_hard}, hard_0_90d={n_hard_0_90}"
+    value = {"n_hard": n_hard, "n_hard_0_90d": n_hard_0_90}
+
+    status = "PASS"
+    if n_hard < config.hard_queue_min_fail:
+        status = "FAIL"
+    elif n_hard < config.hard_queue_min_warn:
+        status = "WARN"
+
+    if n_hard_0_90 < config.hard_queue_near_term_min_fail:
+        status = "FAIL"
+    elif n_hard_0_90 < config.hard_queue_near_term_min_warn and status != "FAIL":
+        status = "WARN"
+
+    return GateResult(name=name, status=status, detail=detail, value=value)
+
+
+def check_hard_options_coverage(
+    staging_date_dir: Path,
+    config: GateConfig,
+) -> GateResult:
+    """Gate: measure options enrichment on hard-catalyst rows."""
+    name = "hard_options_coverage"
+    queue = _load_queue_json(staging_date_dir)
+    if queue is None:
+        return GateResult(name=name, status="FAIL", detail="queue_json missing")
+
+    rows = queue.get("rows", [])
+    hard_rows = [r for r in rows if str(r.get("is_hard_catalyst", "0")).strip() == "1"]
+    n_hard = len(hard_rows)
+    if n_hard == 0:
+        return GateResult(name=name, status="PASS", detail="no hard rows to check")
+
+    n_with_iv = sum(1 for r in hard_rows if r.get("opt_atm_iv", "").strip() not in ("", "0", "0.0"))
+    n_with_straddle = sum(1 for r in hard_rows if r.get("cheap_vol_score", "").strip() not in ("", "0", "0.0"))
+    n_reviewable = sum(
+        1
+        for r in hard_rows
+        if any(
+            t in (r.get("review_reasons", "") or "")
+            for t in ("cheap_straddle", "rich_straddle", "high_disagreement", "term_structure", "extreme_skew")
+        )
+    )
+
+    opt_pct = 100.0 * n_with_iv / n_hard
+    straddle_pct = 100.0 * n_with_straddle / n_hard
+
+    detail = f"hard={n_hard}, opt_cov={opt_pct:.1f}%, straddle_cov={straddle_pct:.1f}%, reviewable={n_reviewable}"
+    value = {
+        "n_hard": n_hard,
+        "n_with_iv": n_with_iv,
+        "n_with_straddle": n_with_straddle,
+        "n_reviewable": n_reviewable,
+        "opt_pct": opt_pct,
+        "straddle_pct": straddle_pct,
+    }
+
+    status = "PASS"
+    if opt_pct < config.hard_options_coverage_fail_pct:
+        status = "FAIL"
+    elif opt_pct < config.hard_options_coverage_warn_pct:
+        status = "WARN"
+
+    if straddle_pct < config.hard_actual_straddle_fail_pct:
+        status = "FAIL"
+    elif straddle_pct < config.hard_actual_straddle_warn_pct and status != "FAIL":
+        status = "WARN"
+
+    if n_reviewable == 0 and status != "FAIL":
+        status = "WARN"
+
+    return GateResult(name=name, status=status, detail=detail, value=value)
+
+
+def check_hard_carry_state(
+    staging_date_dir: Path,
+    as_of_date: str,
+) -> GateResult:
+    """Gate: verify forward-carry state health and no backslides."""
+    name = "hard_carry_state"
+
+    # Find carry state file — check multiple possible locations
+    candidates = [
+        staging_date_dir.parent / "state" / "hard_catalyst_carry.json",
+        staging_date_dir.parent.parent / "state" / "hard_catalyst_carry.json",
+        staging_date_dir.parent.parent / "data" / "state" / "hard_catalyst_carry.json",
+    ]
+    state_path = None
+    for c in candidates:
+        if c.exists():
+            state_path = c
+            break
+
+    if state_path is None:
+        # Check if there are hard catalysts that should have been learned
+        queue = _load_queue_json(staging_date_dir)
+        if queue and queue.get("summary", {}).get("n_hard_catalyst", 0) > 0:
+            return GateResult(
+                name=name,
+                status="WARN",
+                detail="carry state absent but hard queue non-empty",
+            )
+        return GateResult(name=name, status="PASS", detail="no carry state (no hard events yet)")
+
+    try:
+        with open(state_path, encoding="utf-8") as f:
+            state = json.load(f)
+    except Exception as exc:
+        return GateResult(name=name, status="FAIL", detail=f"carry state unreadable: {exc}")
+
+    n_entries = len(state)
+
+    # Check for backslides: tickers in carry state with unexpired events
+    # that still show soft source in rankings
+    rankings_path = staging_date_dir / "rankings.csv"
+    n_backslides = 0
+    if rankings_path.exists():
+        try:
+            with open(rankings_path, encoding="utf-8") as f:
+                rankings = {r["ticker"]: r for r in csv.DictReader(f)}
+        except Exception:
+            rankings = {}
+
+        soft_sources = {"CTGOV_CALENDAR", "CTGOV_PCD_FAR", ""}
+        for ticker, entry in state.items():
+            est_date = entry.get("estimated_event_date", "")
+            if est_date and est_date < as_of_date:
+                continue  # expired, ok
+            if ticker in rankings:
+                src = rankings[ticker].get("catalyst_source", "")
+                if src in soft_sources:
+                    n_backslides += 1
+
+    detail = f"state_entries={n_entries}, backslides={n_backslides}"
+    if n_backslides > 0:
+        return GateResult(
+            name=name, status="FAIL", detail=detail, value={"n_entries": n_entries, "n_backslides": n_backslides}
+        )
+    return GateResult(name=name, status="PASS", detail=detail, value={"n_entries": n_entries, "n_backslides": 0})
+
+
+def check_hard_queue_actionability(
+    staging_date_dir: Path,
+    config: GateConfig,
+) -> GateResult:
+    """Gate: measure whether hard queue contains reviewable names."""
+    name = "hard_queue_actionability"
+    queue = _load_queue_json(staging_date_dir)
+    if queue is None:
+        return GateResult(name=name, status="WARN", detail="queue_json missing")
+
+    rows = queue.get("rows", [])
+    hard_rows = [r for r in rows if str(r.get("is_hard_catalyst", "0")).strip() == "1"]
+
+    n_reviewable = 0
+    n_cheap_rich = 0
+    n_disagree = 0
+    n_ts = 0
+    n_skew = 0
+
+    for r in hard_rows:
+        reasons = r.get("review_reasons", "") or ""
+        has_signal = False
+        if "cheap_straddle" in reasons or "rich_straddle" in reasons:
+            n_cheap_rich += 1
+            has_signal = True
+        if "high_disagreement" in reasons:
+            n_disagree += 1
+            has_signal = True
+        if "term_structure" in reasons:
+            n_ts += 1
+            has_signal = True
+        if "extreme_skew" in reasons:
+            n_skew += 1
+            has_signal = True
+        if has_signal:
+            n_reviewable += 1
+
+    detail = (
+        f"reviewable={n_reviewable}, cheap_rich={n_cheap_rich}, disagreement={n_disagree}, ts={n_ts}, skew={n_skew}"
+    )
+    value = {
+        "n_reviewable": n_reviewable,
+        "n_cheap_rich": n_cheap_rich,
+        "n_disagree": n_disagree,
+        "n_ts": n_ts,
+        "n_skew": n_skew,
+    }
+
+    if n_reviewable >= config.hard_reviewable_min_warn:
+        status = "PASS"
+    else:
+        status = "WARN"
+
+    return GateResult(name=name, status=status, detail=detail, value=value)
+
+
 def check_audit_result(
     audit_proc: subprocess.CompletedProcess,
     config: GateConfig,
@@ -3897,6 +4194,27 @@ def run_daily(
     opt_cov_gate = check_options_coverage(staging_date_dir)
     gate_results.append(opt_cov_gate)
     print(f"  Options coverage gate: {opt_cov_gate.status} — {opt_cov_gate.detail}")
+
+    # --- Hard-catalyst production gates (Spec 018) ---
+    hq_artifacts = check_hard_queue_artifacts(staging_date_dir)
+    gate_results.append(hq_artifacts)
+    print(f"  Hard queue artifacts: {hq_artifacts.status} — {hq_artifacts.detail}")
+
+    hq_supply = check_hard_catalyst_supply(staging_date_dir, config)
+    gate_results.append(hq_supply)
+    print(f"  Hard catalyst supply: {hq_supply.status} — {hq_supply.detail}")
+
+    hq_opts = check_hard_options_coverage(staging_date_dir, config)
+    gate_results.append(hq_opts)
+    print(f"  Hard options coverage: {hq_opts.status} — {hq_opts.detail}")
+
+    hq_carry = check_hard_carry_state(staging_date_dir, as_of_date)
+    gate_results.append(hq_carry)
+    print(f"  Hard carry state: {hq_carry.status} — {hq_carry.detail}")
+
+    hq_action = check_hard_queue_actionability(staging_date_dir, config)
+    gate_results.append(hq_action)
+    print(f"  Hard queue actionability: {hq_action.status} — {hq_action.detail}")
 
     # --- Step 5: Build manifest ---
     print("\n[5/5] Building run manifest ...")
