@@ -171,6 +171,36 @@ def derive_post_event_drift_risk(
     return "low"
 
 
+def compute_rr_25d_trend_7d(
+    current_rr: float,
+    hist_rows: List[Dict[str, Any]],
+    current_date: str,
+    n: int = 7,
+    min_history_rows: int = MIN_HISTORY_ROWS,
+) -> Optional[float]:
+    """Compute 7-trading-day change in rr_25d."""
+    if math.isnan(current_rr):
+        return None
+    prior = [r for r in hist_rows if r["date"] < current_date and not math.isnan(r.get("rr_25d", float("nan")))]
+    if len(prior) < max(n, min_history_rows):
+        return None
+    lag_rr = prior[-n].get("rr_25d", float("nan"))
+    if math.isnan(lag_rr):
+        return None
+    return current_rr - lag_rr
+
+
+def derive_rr_trend_flag(trend: Optional[float]) -> str:
+    """Classify rr_25d_trend_7d into bullish/flat/bearish."""
+    if trend is None:
+        return ""
+    if trend >= 0.03:
+        return "bullish"
+    if trend <= -0.03:
+        return "bearish"
+    return "flat"
+
+
 def compute_surface_signal_quality(
     pctile: Optional[float],
     iv_change: Optional[float],
@@ -215,6 +245,13 @@ def enrich_row_with_surface_signals(
     row["atm_iv_change_5d"] = f"{iv_change:.6f}" if iv_change is not None else ""
     row["iv_ramp_flag"] = derive_iv_ramp_flag(iv_change)
     row["post_event_drift_risk"] = derive_post_event_drift_risk(pctile, iv_change)
+
+    # RR trend (7-trading-day change in rr_25d from historical features)
+    current_rr = _sf(row.get("opt_rr_25d"))
+    rr_trend = compute_rr_25d_trend_7d(current_rr, hist_rows, current_date)
+    row["rr_25d_trend_7d"] = f"{rr_trend:.6f}" if rr_trend is not None else ""
+    row["rr_trend_flag"] = derive_rr_trend_flag(rr_trend)
+
     row["surface_signal_quality"] = compute_surface_signal_quality(
         pctile,
         iv_change,

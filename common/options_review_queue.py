@@ -143,6 +143,8 @@ QUEUE_COLUMNS = [
     "post_event_drift_risk",
     "surface_signal_quality",
     "surface_validation_basis",
+    "rr_25d_trend_7d",
+    "rr_trend_flag",
     "review_priority_score",
     "review_reasons",
 ]
@@ -287,13 +289,14 @@ def write_options_review_queue(
     if rows:
         md_lines.append("## Top Review Names")
         md_lines.append("")
-        md_lines.append("| Ticker | Priority | CatDays | Hard? | Disagree | TS Flag | RR_25d | Reasons |")
-        md_lines.append("|--------|----------|---------|-------|----------|---------|--------|---------|")
+        md_lines.append("| Ticker | Priority | CatDays | Hard? | Disagree | TS Flag | RR_25d | RR Trend | Reasons |")
+        md_lines.append("|--------|----------|---------|-------|----------|---------|--------|----------|---------|")
         for r in rows[:25]:
             hard = "Y" if r.get("is_hard_catalyst") == "1" else ""
             disagree = r.get("market_model_disagreement", "")
             ts = r.get("ts_flag_type", "")
             rr = r.get("opt_rr_25d", "")
+            rr_trend = r.get("rr_trend_flag", "")
             if rr:
                 try:
                     rr = f"{float(rr):.3f}"
@@ -302,7 +305,7 @@ def write_options_review_queue(
             reasons = r.get("review_reasons", "")
             md_lines.append(
                 f"| {r['ticker']} | {r['review_priority_score']} | {r.get('catalyst_days', '')} "
-                f"| {hard} | {disagree} | {ts} | {rr} | {reasons} |"
+                f"| {hard} | {disagree} | {ts} | {rr} | {rr_trend} | {reasons} |"
             )
         md_lines.append("")
     else:
