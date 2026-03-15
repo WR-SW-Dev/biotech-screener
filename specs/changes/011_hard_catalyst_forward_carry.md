@@ -1,6 +1,6 @@
 # Spec 11: Hard Catalyst Source Forward-Carry
 
-**Status**: SPEC READY
+**Status**: IMPLEMENTED (2026-03-15)
 
 ## Problem
 
