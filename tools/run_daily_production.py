@@ -83,6 +83,12 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "regulatory_calendar",
         "canary_regression",
         "options_coverage",
+        "trading_day",
+        "hard_queue_artifacts",
+        "hard_catalyst_supply",
+        "hard_options_coverage",
+        "hard_carry_state",
+        "hard_queue_actionability",
     }
 )
 
