@@ -61,6 +61,8 @@ DEFAULT_HORIZONS = [5, 21]
 SIGNALS = [
     "put_call_volume_ratio",
     "total_volume_z",
+    "volume_decile",
+    "vrp",
     "cheap_vol_score",
     "actual_implied_move_pctile",
     "atm_iv_change_5d",
@@ -277,21 +279,69 @@ def build_dataset(
                     if not math.isnan(v):
                         dataset[i]["total_volume_z"] = (v - mu) / sd
 
+    # Volume decile (within-date, for non-linearity testing)
+    for dt, indices in by_date.items():
+        vols_with_idx = [(dataset[i]["total_volume"], i) for i in indices if not math.isnan(dataset[i]["total_volume"])]
+        if len(vols_with_idx) >= 10:
+            vols_with_idx.sort(key=lambda x: x[0])
+            n = len(vols_with_idx)
+            for rank, (_, i) in enumerate(vols_with_idx):
+                dataset[i]["volume_decile"] = int(10 * rank / n)
+        for i in indices:
+            dataset[i].setdefault("volume_decile", float("nan"))
+
+    # Realized vol (trailing 30d from price_history, annualized)
+    for r in dataset:
+        ticker = r["ticker"]
+        dt = r["date"]
+        ticker_prices = prices.get(ticker, {})
+        if not ticker_prices:
+            r["realized_vol_30d"] = float("nan")
+            r["vrp"] = float("nan")
+            continue
+        sorted_pdates = sorted(d for d in ticker_prices if d <= dt)
+        if len(sorted_pdates) < 22:
+            r["realized_vol_30d"] = float("nan")
+            r["vrp"] = float("nan")
+            continue
+        recent = sorted_pdates[-22:]  # ~1 month of trading days
+        log_rets = []
+        for j in range(1, len(recent)):
+            p0 = ticker_prices[recent[j - 1]]
+            p1 = ticker_prices[recent[j]]
+            if p0 > 0 and p1 > 0:
+                log_rets.append(math.log(p1 / p0))
+        if len(log_rets) >= 15:
+            mu_r = sum(log_rets) / len(log_rets)
+            var = sum((x - mu_r) ** 2 for x in log_rets) / len(log_rets)
+            rv = math.sqrt(var * 252)  # annualized
+            r["realized_vol_30d"] = round(rv, 6)
+            atm_iv = r.get("opt_atm_iv", float("nan"))
+            if not math.isnan(atm_iv) and atm_iv > 0:
+                r["vrp"] = round(atm_iv - rv, 6)  # positive = IV rich vs realized
+            else:
+                r["vrp"] = float("nan")
+        else:
+            r["realized_vol_30d"] = float("nan")
+            r["vrp"] = float("nan")
+
     # Compute interaction signal: total_volume_z * sign(rr_25d_canonical)
-    # High volume + bullish RR = strong positive; High volume + bearish RR = strong negative
     for r in dataset:
         vz = r.get("total_volume_z", float("nan"))
-        # Get RR from historical features (canonical: call - put)
         ticker_hist = iv_index.get(r["ticker"], {})
         hist_rr = (ticker_hist.get(r["date"]) or {}).get("rr_25d", float("nan"))
-        rr = hist_rr  # historical is more reliably available across panel
+        rr = hist_rr
 
         if not math.isnan(vz) and not math.isnan(rr):
-            # Interaction: volume z-score * RR sign (+1/-1)
             rr_sign = 1 if rr > 0 else (-1 if rr < 0 else 0)
             r["vol_rr_interaction"] = vz * rr_sign
         else:
             r["vol_rr_interaction"] = float("nan")
+
+    # Liquidity gate: flag rows with sufficient volume for trustworthy results
+    for r in dataset:
+        tv = r.get("total_volume", float("nan"))
+        r["liquid"] = 1 if not math.isnan(tv) and tv >= 100 else 0
 
     logger.info("Dataset: %d rows", len(dataset))
     return dataset
@@ -401,6 +451,46 @@ def _run_terciles(dataset, signals, targets, min_obs):
     return results
 
 
+def _run_decile_analysis(dataset, signal, target, min_obs):
+    """Per-decile mean target value to detect non-linearity."""
+    pairs = [(r.get(signal, float("nan")), _sf(r.get(target))) for r in dataset]
+    pairs = [(s, t) for s, t in pairs if not math.isnan(s) and not math.isnan(t) and s == int(s)]
+
+    if len(pairs) < min_obs * 5:
+        return {"status": "insufficient", "n": len(pairs)}
+
+    from collections import defaultdict as _dd
+
+    buckets = _dd(list)
+    for s, t in pairs:
+        buckets[int(s)].append(t)
+
+    deciles = []
+    for d in range(10):
+        vals = buckets.get(d, [])
+        if vals:
+            deciles.append({"decile": d, "n": len(vals), "mean": round(sum(vals) / len(vals), 6)})
+        else:
+            deciles.append({"decile": d, "n": 0, "mean": None})
+
+    # Check for non-monotonicity: does the top decile reverse?
+    means = [d["mean"] for d in deciles if d["mean"] is not None]
+    peak_decile = None
+    if len(means) >= 5:
+        max_mean = max(means)
+        peak_idx = means.index(max_mean)
+        if peak_idx < len(means) - 1:
+            peak_decile = peak_idx
+
+    return {
+        "status": "ok",
+        "n": len(pairs),
+        "deciles": deciles,
+        "peak_decile": peak_decile,
+        "monotonic": all(means[i] <= means[i + 1] for i in range(len(means) - 1)) if len(means) >= 2 else None,
+    }
+
+
 def _walkforward_monthly(dataset, signals, targets, min_obs):
     buckets: Dict[str, List[Dict]] = defaultdict(list)
     for r in dataset:
@@ -501,6 +591,9 @@ def main() -> int:
     logger.info("Running tercile analysis ...")
     terciles = _run_terciles(dataset, SIGNALS, targets, args.min_obs)
 
+    logger.info("Running volume decile analysis ...")
+    decile_analysis = _run_decile_analysis(dataset, "volume_decile", "signed_gap", args.min_obs)
+
     walkforward = {}
     if args.walkforward:
         logger.info("Running walk-forward ...")
@@ -536,6 +629,7 @@ def main() -> int:
         "incremental_ics": incr_ics,
         "slices": slices,
         "terciles": terciles,
+        "decile_analysis": decile_analysis,
         "walkforward": walkforward,
     }
     (args.output_dir / "report.json").write_text(json.dumps(report, indent=2, default=str) + "\n")
@@ -605,6 +699,17 @@ def main() -> int:
             )
         else:
             md.append(f"| {sig} | — | — | — | — | — |")
+
+    # Decile analysis for volume non-linearity
+    if decile_analysis.get("status") == "ok":
+        md += ["", "## Volume Decile Analysis (vs signed_gap)", ""]
+        md.append(f"**Monotonic**: {'Yes' if decile_analysis.get('monotonic') else 'No'}")
+        if decile_analysis.get("peak_decile") is not None:
+            md.append(f"**Peak decile**: {decile_analysis['peak_decile']}")
+        md += ["", "| Decile | N | Mean signed_gap |", "|--------|---|----------------|"]
+        for d in decile_analysis.get("deciles", []):
+            mean_str = f"{d['mean']:.4f}" if d["mean"] is not None else "—"
+            md.append(f"| {d['decile']} | {d['n']} | {mean_str} |")
 
     md.append("")
     (args.output_dir / "report.md").write_text("\n".join(md))
