@@ -151,6 +151,41 @@ class TestIVCrushStressTest:
         assert result["breakeven_move_pct"] is not None
         assert result["breakeven_move_pct"] > 0
 
+    def test_scenario_fields_present(self):
+        """New scenario-based output has both base and stress fields."""
+        chain = self._make_chain(iv=0.80)
+        result = iv_crush_stress_test(chain, underlying_price=100, catalyst_days=20)
+        assert result["crush_scenario"] == "base"
+        assert result["crush_ratio_used"] is not None
+        assert result["stress_post_crush_straddle"] is not None
+        assert result["stress_crush_loss_per_contract"] is not None
+        assert result["stress_breakeven_move_pct"] is not None
+
+    def test_stress_more_severe_than_base(self):
+        """Stress scenario should show larger crush loss than base."""
+        chain = self._make_chain(iv=0.80, close_call=8.0, close_put=7.0)
+        result = iv_crush_stress_test(chain, underlying_price=100, catalyst_days=20)
+        if result["crush_loss_per_contract"] and result["stress_crush_loss_per_contract"]:
+            assert result["stress_crush_loss_per_contract"] >= result["crush_loss_per_contract"]
+
+    def test_catalyst_family_clinical(self):
+        """CLINICAL family uses higher base ratio than default."""
+        chain = self._make_chain(iv=0.80)
+        result = iv_crush_stress_test(chain, 100, 20, catalyst_family="CLINICAL")
+        assert result["crush_ratio_used"] == 0.95
+
+    def test_catalyst_family_regulatory(self):
+        """REGULATORY family uses 0.90 base ratio."""
+        chain = self._make_chain(iv=0.80)
+        result = iv_crush_stress_test(chain, 100, 20, catalyst_family="REGULATORY")
+        assert result["crush_ratio_used"] == 0.90
+
+    def test_explicit_ratio_overrides_family(self):
+        """Explicit post_crush_iv_ratio overrides family-based default."""
+        chain = self._make_chain(iv=0.80)
+        result = iv_crush_stress_test(chain, 100, 20, post_crush_iv_ratio=0.50)
+        assert result["crush_ratio_used"] == 0.50
+
 
 class TestImpliedVolatility:
     def test_roundtrip_call(self):

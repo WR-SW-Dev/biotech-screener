@@ -249,30 +249,45 @@ def parse_option_ticker(ticker: str) -> Dict[str, Any]:
     }
 
 
+# Empirical crush ratios from measure_iv_crush.py (2026-03-15, retro hard filter)
+# CLINICAL: median T+1 = 1.04, T+3 = 1.08 (no systematic crush)
+# REGULATORY: median T+1 = 0.98, T+3 = 0.90 (modest crush, n=6)
+# Stress: retain 0.45 as severe downside scenario
+CRUSH_RATIO_BASE = {
+    "CLINICAL": 0.95,  # conservative base below empirical 1.04 median
+    "REGULATORY": 0.90,  # empirical T+3 median
+    "default": 0.90,  # conservative default
+}
+CRUSH_RATIO_STRESS = 0.45  # severe scenario (legacy default)
+
+
 def iv_crush_stress_test(
     chain_contracts: List[Dict[str, Any]],
     underlying_price: float,
     catalyst_days: int,
-    post_crush_iv_ratio: float = 0.45,
+    post_crush_iv_ratio: float = None,
     risk_free_rate: float = 0.05,
+    catalyst_family: str = "",
 ) -> Dict[str, Any]:
-    """IV crush stress test for biotech binary catalysts.
+    """IV crush scenario analysis for biotech binary catalysts.
 
     Computes breakeven stock move required to overcome IV crush on an
-    ATM straddle position. The post_crush_iv_ratio is the fraction of
-    pre-event IV assumed to remain after the event resolves (default 0.45
-    = IV drops to 45% of pre-event level, calibrated to PDUFA/readout
-    events — should be tuned per catalyst type when outcome data permits).
+    ATM straddle position under both base-case and stress scenarios.
+
+    Base-case ratios are empirically calibrated from historical IV crush
+    measurements (Spec 021). Stress scenario retains the legacy 0.45
+    severe-crush assumption.
 
     Args:
         chain_contracts: Massive chain snapshot (list of contract dicts).
         underlying_price: Current underlying close price.
         catalyst_days: Days to catalyst event.
-        post_crush_iv_ratio: Post-event IV as fraction of pre-event.
+        post_crush_iv_ratio: Explicit override (None = use calibrated default).
         risk_free_rate: Risk-free rate.
+        catalyst_family: CLINICAL or REGULATORY for calibrated base case.
 
     Returns:
-        Dict with crush metrics and confidence flag.
+        Dict with crush metrics for both base and stress scenarios.
     """
     empty: Dict[str, Any] = {
         "pre_crush_straddle": None,
@@ -283,6 +298,14 @@ def iv_crush_stress_test(
         "post_crush_iv": None,
         "expiry_used": None,
         "atm_strike": None,
+        "crush_scenario": "base",
+        "crush_ratio_used": None,
+        # Stress scenario fields
+        "stress_post_crush_straddle": None,
+        "stress_crush_loss_per_contract": None,
+        "stress_breakeven_move_pct": None,
+        "stress_crush_adjusted_implied_move": None,
+        "stress_post_crush_iv": None,
         "confidence": "insufficient_data",
     }
 
@@ -344,28 +367,56 @@ def iv_crush_stress_test(
         if math.isnan(pre_straddle):
             return empty
 
-    # Post-crush: BS model at reduced IV, T≈1 day (event just happened)
-    post_iv = atm_iv * post_crush_iv_ratio
-    T_post = 1 / 365.0  # day-of pricing
-    bs_call_post = black_scholes_greeks(underlying_price, atm_strike, T_post, risk_free_rate, post_iv, "call")
-    bs_put_post = black_scholes_greeks(underlying_price, atm_strike, T_post, risk_free_rate, post_iv, "put")
-    post_straddle = bs_call_post["price"] + bs_put_post["price"]
-    if math.isnan(post_straddle):
-        post_straddle = 0.0
+    # Determine base-case crush ratio
+    if post_crush_iv_ratio is not None:
+        base_ratio = post_crush_iv_ratio
+    else:
+        fam_key = catalyst_family.upper() if catalyst_family else "default"
+        base_ratio = CRUSH_RATIO_BASE.get(fam_key, CRUSH_RATIO_BASE["default"])
 
-    crush_loss = pre_straddle - post_straddle
-    breakeven_move = crush_loss / underlying_price if underlying_price > 0 else None
-    implied_move = pre_straddle / underlying_price if underlying_price > 0 else None
-    crush_adj_move = (implied_move - breakeven_move) if implied_move and breakeven_move else None
+    T_post = 1 / 365.0  # day-of pricing
+
+    def _compute_scenario(ratio: float):
+        piv = atm_iv * ratio
+        bc = black_scholes_greeks(underlying_price, atm_strike, T_post, risk_free_rate, piv, "call")
+        bp = black_scholes_greeks(underlying_price, atm_strike, T_post, risk_free_rate, piv, "put")
+        ps = bc["price"] + bp["price"]
+        if math.isnan(ps):
+            ps = 0.0
+        cl = pre_straddle - ps
+        bm = cl / underlying_price if underlying_price > 0 else None
+        im = pre_straddle / underlying_price if underlying_price > 0 else None
+        cam = (im - bm) if im is not None and bm is not None else None
+        return {
+            "post_straddle": round(ps, 4),
+            "crush_loss": round(cl * 100, 2),
+            "breakeven_move": round(bm, 4) if bm is not None else None,
+            "crush_adj_move": round(cam, 4) if cam is not None else None,
+            "post_iv": round(piv, 4),
+        }
+
+    # Base case
+    base = _compute_scenario(base_ratio)
+
+    # Stress case (always use severe ratio)
+    stress = _compute_scenario(CRUSH_RATIO_STRESS)
 
     return {
         "pre_crush_straddle": round(pre_straddle, 4),
-        "post_crush_straddle": round(post_straddle, 4),
-        "crush_loss_per_contract": round(crush_loss * 100, 2),  # per 100 shares
-        "breakeven_move_pct": round(breakeven_move, 4) if breakeven_move else None,
-        "crush_adjusted_implied_move": round(crush_adj_move, 4) if crush_adj_move else None,
-        "post_crush_iv": round(post_iv, 4),
+        "post_crush_straddle": base["post_straddle"],
+        "crush_loss_per_contract": base["crush_loss"],
+        "breakeven_move_pct": base["breakeven_move"],
+        "crush_adjusted_implied_move": base["crush_adj_move"],
+        "post_crush_iv": base["post_iv"],
         "expiry_used": target_expiry,
         "atm_strike": atm_strike,
+        "crush_scenario": "base",
+        "crush_ratio_used": round(base_ratio, 4),
+        # Stress scenario
+        "stress_post_crush_straddle": stress["post_straddle"],
+        "stress_crush_loss_per_contract": stress["crush_loss"],
+        "stress_breakeven_move_pct": stress["breakeven_move"],
+        "stress_crush_adjusted_implied_move": stress["crush_adj_move"],
+        "stress_post_crush_iv": stress["post_iv"],
         "confidence": "ok",
     }

@@ -265,6 +265,7 @@ def compute_chain_analytics(
     underlying_price: float,
     as_of_date: str = "",
     target_expiry: Optional[str] = None,
+    catalyst_family: str = "",
 ) -> Dict[str, Any]:
     """Compute full chain analytics from a Massive chain snapshot.
 
@@ -314,7 +315,12 @@ def compute_chain_analytics(
                     _cat_days = (_date.fromisoformat(expiry) - _date.fromisoformat(as_of_date)).days
                 except (ValueError, TypeError):
                     pass
-            crush = iv_crush_stress_test(chain_snapshot, underlying_price, max(_cat_days, 1))
+            crush = iv_crush_stress_test(
+                chain_snapshot,
+                underlying_price,
+                max(_cat_days, 1),
+                catalyst_family=catalyst_family,
+            )
         except Exception:
             pass
 
