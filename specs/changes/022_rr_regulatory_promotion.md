@@ -18,20 +18,38 @@ This is the first statistically robust directional regulatory-options signal.
 
 | Ticker | Event ~Date | Mean RR | Direction Prediction |
 |--------|-----------|---------|---------------------|
-| BIIB | Apr 3 (PDUFA) | -0.048 | BEARISH |
-| CELC | Apr 1 (data) | -0.072 | BEARISH |
-| PVLA | Apr 1 (data) | -0.019 | MIXED (flipping) |
-| TBPH | Apr 1 (data) | +0.326 | BULLISH |
+| BIIB | Apr 3 (PDUFA) | -0.048 | BEARISH | pending |
+| CELC | Apr 1 (data) | -0.072 | BEARISH | pending |
+| PVLA | Apr 1 (data) | -0.019 | MIXED (flipping) | pending |
+| TBPH | Q1 2026 (data) | +0.326 | BULLISH | **WRONG** — resolved Mar 3, -26.3% gap |
+| ESPR | ~Mar 30 (data) | -0.017 | NEUTRAL | pending (priority 8 in queue) |
 
-## Validation Gate
+### TBPH Post-Mortem (2026-03-15)
+TBPH "topline data Q1 2026" resolved on 2026-03-03 with a -26.3% gap.
+Pre-event RR was extremely bullish (+1.66 latest, +0.33 mean).
+The bullish prediction was WRONG. Scorecard starts at 0/1.
+
+Data quality issue: catalyst_days=657 in today's snapshot because the
+Q1 2026 date resolved to 2026-01-01 (past), causing the pipeline to
+fall through to a far-future CTGov date. The SEC 8-K event was correct
+but dropped as stale.
+
+### ESPR (added to scorecard)
+Highest queue priority (8). Event ~Mar 30 (catalyst_days=15). RR is
+nearly flat (-0.017), so this is more of a magnitude/disagreement test
+than a directional RR test.
+
+## Validation Gate (revised)
 
 Do NOT execute any production changes until:
-1. At least 3/4 April events have resolved outcomes
-2. RR directional prediction matches signed_gap direction on >= 3/4
-3. Event-anchored study rerun with April included still shows IC > 0.05
+1. At least 3/5 tracked events have resolved outcomes
+2. RR directional prediction matches signed_gap direction on >= 3/5
+3. Event-anchored study rerun with new events still shows IC > 0.05
 4. Subgroup splits (priority vs standard) don't show regime dependence
 
-If 2 or fewer April events confirm: PAUSE and reassess.
+Current scorecard: 0/1 (TBPH wrong). Need 3/4 remaining correct to pass.
+
+If 2 or fewer of remaining events confirm: PAUSE and reassess.
 
 ## Proposed Changes (post-validation only)
 
