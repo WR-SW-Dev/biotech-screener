@@ -65,10 +65,14 @@ _DRUG_RE = re.compile(
 )
 
 # Review timeline defaults (months from submission/acceptance to decision)
+# FDA statutory review timelines (from FDA.gov):
+# Priority Review: 6 months from filing acceptance
+# Standard Review: 10 months from filing acceptance
+# https://www.fda.gov/patients/fast-track-breakthrough-therapy-accelerated-approval-priority-review/priority-review
 REVIEW_MONTHS = {
     "priority": 6,
     "standard": 10,
-    "unknown": 10,  # conservative default
+    "unknown": 10,  # conservative default (standard review)
     "resubmission": 6,  # Class 2 resubmission default
 }
 
