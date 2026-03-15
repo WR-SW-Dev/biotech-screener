@@ -65,6 +65,7 @@ SIGNALS = [
     "actual_implied_move_pctile",
     "atm_iv_change_5d",
     "atm_iv_dev_from_baseline",
+    "vol_rr_interaction",
 ]
 TARGETS = ["signed_gap", "abs_gap"]
 CONTROLS = ["catalyst_decay_w", "opt_atm_iv"]
@@ -276,6 +277,22 @@ def build_dataset(
                     if not math.isnan(v):
                         dataset[i]["total_volume_z"] = (v - mu) / sd
 
+    # Compute interaction signal: total_volume_z * sign(rr_25d_canonical)
+    # High volume + bullish RR = strong positive; High volume + bearish RR = strong negative
+    for r in dataset:
+        vz = r.get("total_volume_z", float("nan"))
+        # Get RR from historical features (canonical: call - put)
+        ticker_hist = iv_index.get(r["ticker"], {})
+        hist_rr = (ticker_hist.get(r["date"]) or {}).get("rr_25d", float("nan"))
+        rr = hist_rr  # historical is more reliably available across panel
+
+        if not math.isnan(vz) and not math.isnan(rr):
+            # Interaction: volume z-score * RR sign (+1/-1)
+            rr_sign = 1 if rr > 0 else (-1 if rr < 0 else 0)
+            r["vol_rr_interaction"] = vz * rr_sign
+        else:
+            r["vol_rr_interaction"] = float("nan")
+
     logger.info("Dataset: %d rows", len(dataset))
     return dataset
 
@@ -351,6 +368,39 @@ def _run_slices(dataset, signals, targets, top_k, min_obs):
     return results
 
 
+def _run_terciles(dataset, signals, targets, min_obs):
+    """Tercile analysis: top/mid/bottom third by signal vs mean target."""
+    results = {}
+    for sig in signals:
+        for tgt in targets:
+            pairs = [(_sf(r.get(sig)), _sf(r.get(tgt))) for r in dataset]
+            pairs = [(s, t) for s, t in pairs if not math.isnan(s) and not math.isnan(t)]
+            key = f"tercile_{sig}_vs_{tgt}"
+            if len(pairs) < min_obs * 3:
+                results[key] = {"status": "insufficient", "n": len(pairs)}
+                continue
+            pairs.sort(key=lambda x: x[0])
+            n = len(pairs)
+            t1 = n // 3
+            t2 = 2 * n // 3
+            bot = [t for _, t in pairs[:t1]]
+            mid = [t for _, t in pairs[t1:t2]]
+            top = [t for _, t in pairs[t2:]]
+            m_bot = sum(bot) / len(bot) if bot else 0
+            m_mid = sum(mid) / len(mid) if mid else 0
+            m_top = sum(top) / len(top) if top else 0
+            results[key] = {
+                "status": "ok",
+                "n": n,
+                "bot_mean": round(m_bot, 6),
+                "mid_mean": round(m_mid, 6),
+                "top_mean": round(m_top, 6),
+                "top_minus_bot": round(m_top - m_bot, 6),
+                "monotonic": m_bot <= m_mid <= m_top or m_bot >= m_mid >= m_top,
+            }
+    return results
+
+
 def _walkforward_monthly(dataset, signals, targets, min_obs):
     buckets: Dict[str, List[Dict]] = defaultdict(list)
     for r in dataset:
@@ -397,6 +447,8 @@ def main() -> int:
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--min-obs", type=int, default=20)
     parser.add_argument("--walkforward", action="store_true")
+    parser.add_argument("--start-date", default=None, help="Filter snapshots >= this date (YYYY-MM-DD)")
+    parser.add_argument("--end-date", default=None, help="Filter snapshots <= this date (YYYY-MM-DD)")
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "output" / "options_signal_pack")
     args = parser.parse_args()
 
@@ -412,6 +464,16 @@ def main() -> int:
         args.max_catalyst_days,
         horizons,
     )
+
+    # Apply date window filter
+    if args.start_date:
+        before = len(dataset)
+        dataset = [r for r in dataset if r["date"] >= args.start_date]
+        logger.info("Start-date filter: %d → %d rows", before, len(dataset))
+    if args.end_date:
+        before = len(dataset)
+        dataset = [r for r in dataset if r["date"] <= args.end_date]
+        logger.info("End-date filter: %d → %d rows", before, len(dataset))
 
     if not dataset:
         logger.warning("Empty dataset")
@@ -435,6 +497,9 @@ def main() -> int:
 
     logger.info("Running portfolio slices ...")
     slices = _run_slices(dataset, SIGNALS, targets, args.top_k, args.min_obs)
+
+    logger.info("Running tercile analysis ...")
+    terciles = _run_terciles(dataset, SIGNALS, targets, args.min_obs)
 
     walkforward = {}
     if args.walkforward:
@@ -470,6 +535,7 @@ def main() -> int:
         "raw_ics": raw_ics,
         "incremental_ics": incr_ics,
         "slices": slices,
+        "terciles": terciles,
         "walkforward": walkforward,
     }
     (args.output_dir / "report.json").write_text(json.dumps(report, indent=2, default=str) + "\n")
@@ -522,6 +588,23 @@ def main() -> int:
             )
         else:
             md.append(f"| {sig} | — | — | — | — | {sg.get('n', 0)} |")
+
+    # Tercile analysis for key signals
+    md += [
+        "",
+        "## Tercile Analysis (vs signed_gap)",
+        "",
+        "| Signal | Bottom 1/3 | Middle 1/3 | Top 1/3 | Top-Bot Spread | Monotonic |",
+        "|--------|-----------|-----------|---------|---------------|-----------|",
+    ]
+    for sig in SIGNALS:
+        t = terciles.get(f"tercile_{sig}_vs_signed_gap", {})
+        if t.get("status") == "ok":
+            md.append(
+                f"| {sig} | {t['bot_mean']:.4f} | {t['mid_mean']:.4f} | {t['top_mean']:.4f} | {t['top_minus_bot']:.4f} | {'Y' if t['monotonic'] else 'N'} |"
+            )
+        else:
+            md.append(f"| {sig} | — | — | — | — | — |")
 
     md.append("")
     (args.output_dir / "report.md").write_text("\n".join(md))
