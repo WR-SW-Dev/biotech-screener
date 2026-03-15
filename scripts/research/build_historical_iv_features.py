@@ -189,7 +189,7 @@ def main(argv=None) -> int:
                     "gamma": float(row["gamma"]) if row.get("gamma") else None,
                     "vega": float(row["vega"]) if row.get("vega") else None,
                     "theta": float(row["theta"]) if row.get("theta") else None,
-                    "volume": int(row["volume"]) if row.get("volume") else 0,
+                    "volume": int(float(row["volume"])) if row.get("volume") else 0,
                 }
             )
             underlying_prices[key] = float(row["underlying_close"])
