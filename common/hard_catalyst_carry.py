@@ -125,10 +125,29 @@ def forward_carry_hard_catalysts(
         if current_source not in _SOFT_SOURCES:
             continue
 
-        # Apply carry
+        # Apply carry — source, event type, and catalyst_days from estimated date
         row["catalyst_source"] = carried_source
         row["catalyst_event_type"] = carried_event_type
         row["is_hard_catalyst"] = "1"
+
+        # Override catalyst_days if the carry has a better estimate
+        est_date = entry.get("estimated_event_date", "")
+        if est_date:
+            try:
+                est = date.fromisoformat(est_date)
+                carried_days = (est - as_of_date).days
+                if carried_days > 0:
+                    current_days_str = row.get("catalyst_days", "")
+                    try:
+                        current_days = int(float(current_days_str)) if current_days_str else 9999
+                    except (ValueError, TypeError):
+                        current_days = 9999
+                    # Only override if the current catalyst_days looks wrong
+                    # (e.g. far-future CTGov date when carry has a near-term date)
+                    if carried_days < current_days:
+                        row["catalyst_days"] = str(carried_days)
+            except (ValueError, TypeError):
+                pass
         carry_count += 1
         logger.info(
             "[CARRY] %s: %s from %s (first seen %s)",
