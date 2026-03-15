@@ -64,6 +64,9 @@ DEFAULT_SIGNALS = [
 ]
 TARGETS = ["signed_gap", "abs_gap", "fwd_ret_5d", "fwd_ret_21d"]
 
+# Promotion-grade signals (the two that survived the alpha pack)
+PROMOTION_SIGNALS = ["actual_implied_move_pctile", "atm_iv_change_5d"]
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -199,6 +202,7 @@ def build_dataset(
     event_subset: str = "hard",
     max_catalyst_days: int = 180,
     horizons: List[int] = None,
+    hard_filter_mode: str = "retro",
 ) -> List[Dict[str, Any]]:
     """Build enriched dataset for surface alpha evaluation."""
     if horizons is None:
@@ -232,8 +236,15 @@ def build_dataset(
         src = row.get("catalyst_source", "")
         hc = classify_hard_catalyst(et, src)
 
-        if event_subset == "hard" and not hc["is_hard_catalyst"]:
-            continue
+        if event_subset == "hard":
+            if hard_filter_mode == "snapshot_native":
+                # Use the is_hard_catalyst field from the snapshot itself
+                if str(row.get("is_hard_catalyst", "0")).strip() != "1":
+                    continue
+            else:
+                # Retroactive classification from event_type + source
+                if not hc["is_hard_catalyst"]:
+                    continue
 
         # Catalyst days filter
         cat_days = _sf(row.get("catalyst_days"), float("nan"))
@@ -504,6 +515,114 @@ def _decide(raw_ics: dict, incr_ics: dict) -> Dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
+# Walk-forward stability (promotion gate)
+# ---------------------------------------------------------------------------
+
+
+def _run_walkforward(
+    dataset: List[Dict[str, Any]],
+    signals: List[str],
+    targets: List[str],
+    min_obs: int,
+    period: str = "monthly",
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Compute IC per time period for stability assessment.
+
+    Args:
+        period: 'monthly' (YYYY-MM) or 'quarterly' (YYYY-Q#)
+
+    Returns {signal: [{period, n, ic_signed_gap, ic_fwd_ret_21d}]}
+    """
+    # Bucket rows by period
+    buckets: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for r in dataset:
+        dt = r.get("date", "")
+        if not dt or len(dt) < 7:
+            continue
+        if period == "monthly":
+            key = dt[:7]  # YYYY-MM
+        else:
+            month = int(dt[5:7])
+            q = (month - 1) // 3 + 1
+            key = f"{dt[:4]}-Q{q}"
+        buckets[key].append(r)
+
+    results: Dict[str, List[Dict[str, Any]]] = {}
+    for sig in signals:
+        sig_periods = []
+        for pkey in sorted(buckets):
+            subset = buckets[pkey]
+            entry: Dict[str, Any] = {"period": pkey, "n": len(subset)}
+
+            for tgt in targets:
+                pairs = [(_sf(r.get(sig)), _sf(r.get(tgt))) for r in subset]
+                pairs = [(s, t) for s, t in pairs if not math.isnan(s) and not math.isnan(t)]
+                if len(pairs) >= min_obs:
+                    sx, tx = zip(*pairs)
+                    entry[f"ic_{tgt}"] = round(spearman_rank_corr(list(sx), list(tx)), 6)
+                    entry[f"n_{tgt}"] = len(pairs)
+                else:
+                    entry[f"ic_{tgt}"] = None
+                    entry[f"n_{tgt}"] = len(pairs)
+
+            sig_periods.append(entry)
+        results[sig] = sig_periods
+
+    return results
+
+
+def _promotion_verdict(
+    walkforward: Dict[str, List[Dict[str, Any]]],
+    signals: List[str],
+    target: str = "signed_gap",
+) -> Dict[str, Dict[str, Any]]:
+    """Assess promotion readiness from walk-forward stability.
+
+    For each signal:
+    - Count periods with valid IC
+    - Check sign consistency
+    - Compute mean IC across periods
+    - Verdict: stable_shadow_overlay / unstable_keep_in_research / insufficient_sample
+    """
+    verdicts = {}
+    for sig in signals:
+        periods = walkforward.get(sig, [])
+        ics = [p.get(f"ic_{target}") for p in periods if p.get(f"ic_{target}") is not None]
+
+        if len(ics) < 3:
+            verdicts[sig] = {
+                "verdict": "insufficient_sample",
+                "n_periods": len(ics),
+                "reason": f"only {len(ics)} periods with valid IC (need >= 3)",
+            }
+            continue
+
+        mean_ic = sum(ics) / len(ics)
+        n_positive = sum(1 for ic in ics if ic > 0)
+        n_negative = sum(1 for ic in ics if ic < 0)
+        sign_consistency = max(n_positive, n_negative) / len(ics)
+
+        if sign_consistency >= 0.67 and abs(mean_ic) >= 0.03:
+            verdict = "stable_shadow_overlay_candidate"
+        elif sign_consistency >= 0.50:
+            verdict = "unstable_keep_in_research"
+        else:
+            verdict = "unstable_keep_in_research"
+
+        verdicts[sig] = {
+            "verdict": verdict,
+            "n_periods": len(ics),
+            "mean_ic": round(mean_ic, 6),
+            "sign_consistency": round(sign_consistency, 4),
+            "n_positive": n_positive,
+            "n_negative": n_negative,
+            "ics_by_period": ics,
+        }
+
+    return verdicts
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -515,11 +634,13 @@ def main() -> int:
     parser.add_argument("--iv-features", type=Path, required=True)
     parser.add_argument("--event-move-table", type=Path, required=True)
     parser.add_argument("--event-subset", default="hard", choices=["hard", "all"])
+    parser.add_argument("--hard-filter-mode", default="retro", choices=["retro", "snapshot_native"])
     parser.add_argument("--max-catalyst-days", type=int, default=180)
     parser.add_argument("--signals", default=None, help="Comma-separated signal override")
     parser.add_argument("--horizons", default="5,21")
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--min-obs", type=int, default=30)
+    parser.add_argument("--walkforward", default="none", choices=["none", "monthly", "quarterly"])
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "output" / "surface_alpha_pack")
     args = parser.parse_args()
 
@@ -536,6 +657,7 @@ def main() -> int:
         event_subset=args.event_subset,
         max_catalyst_days=args.max_catalyst_days,
         horizons=horizons,
+        hard_filter_mode=args.hard_filter_mode,
     )
 
     if not dataset:
@@ -573,6 +695,28 @@ def main() -> int:
     logger.info("Computing decision rule ...")
     decisions = _decide(raw_ics, incr_ics)
 
+    # Walk-forward stability (promotion gate)
+    walkforward = {}
+    promotion = {}
+    if args.walkforward != "none":
+        logger.info("Running %s walk-forward stability ...", args.walkforward)
+        wf_signals = [s for s in PROMOTION_SIGNALS if s in signals]
+        wf_targets = ["signed_gap", "abs_gap"]
+        if "fwd_ret_21d" in targets:
+            wf_targets.append("fwd_ret_21d")
+        walkforward = _run_walkforward(dataset, wf_signals, wf_targets, args.min_obs, args.walkforward)
+        promotion = _promotion_verdict(walkforward, wf_signals, target="signed_gap")
+
+        for sig, v in promotion.items():
+            logger.info(
+                "  [PROMOTION] %s: %s (mean_ic=%s, consistency=%s, n=%d)",
+                sig,
+                v["verdict"],
+                v.get("mean_ic", "?"),
+                v.get("sign_consistency", "?"),
+                v["n_periods"],
+            )
+
     # Write dataset CSV
     args.output_dir.mkdir(parents=True, exist_ok=True)
     ds_path = args.output_dir / "surface_alpha_pack_dataset.csv"
@@ -593,7 +737,9 @@ def main() -> int:
         "schema": STUDY_SCHEMA,
         "metadata": {
             "event_subset": args.event_subset,
+            "hard_filter_mode": args.hard_filter_mode,
             "max_catalyst_days": args.max_catalyst_days,
+            "walkforward": args.walkforward,
             "n_rows": len(dataset),
             "n_hard": n_hard,
             "n_snap_dates": len(snap_dates),
@@ -610,6 +756,8 @@ def main() -> int:
         "portfolio_slices": slices,
         "subgroup_splits": subgroups,
         "decision": decisions,
+        "walkforward": walkforward,
+        "promotion": promotion,
     }
 
     json_path = args.output_dir / "surface_alpha_pack_report.json"
@@ -656,6 +804,40 @@ def main() -> int:
     for key, val in sorted(raw_ics.items()):
         ic_str = f"{val['ic']:.4f}" if val.get("status") == "ok" else "—"
         md_lines.append(f"| {key} | {ic_str} | {val.get('n', 0)} |")
+
+    # Walk-forward stability tables
+    if walkforward:
+        md_lines += ["", "## Walk-Forward Stability", ""]
+        for sig in sorted(walkforward):
+            periods = walkforward[sig]
+            md_lines.append(f"### {sig}")
+            md_lines.append("")
+            cols = ["Period", "N"]
+            tgt_keys = [k for k in periods[0] if k.startswith("ic_") and not k.startswith("n_")]
+            cols += [k.replace("ic_", "IC ") for k in tgt_keys]
+            md_lines.append("| " + " | ".join(cols) + " |")
+            md_lines.append("| " + " | ".join(["---"] * len(cols)) + " |")
+            for p in periods:
+                row_parts = [p["period"], str(p["n"])]
+                for k in tgt_keys:
+                    v = p.get(k)
+                    row_parts.append(f"{v:.4f}" if v is not None else "—")
+                md_lines.append("| " + " | ".join(row_parts) + " |")
+            md_lines.append("")
+
+    # Promotion verdicts
+    if promotion:
+        md_lines += ["## Promotion Verdicts", ""]
+        md_lines.append("| Signal | Verdict | Mean IC | Sign Consistency | Periods |")
+        md_lines.append("|--------|---------|---------|------------------|---------|")
+        for sig, v in sorted(promotion.items()):
+            md_lines.append(
+                f"| {sig} | **{v['verdict']}** "
+                f"| {v.get('mean_ic', '—')} "
+                f"| {v.get('sign_consistency', '—')} "
+                f"| {v['n_periods']} |"
+            )
+        md_lines.append("")
 
     md_lines.append("")
     md_path = args.output_dir / "surface_alpha_pack_report.md"
