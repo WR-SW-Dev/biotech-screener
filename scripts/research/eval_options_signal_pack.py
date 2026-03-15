@@ -62,6 +62,9 @@ SIGNALS = [
     "put_call_volume_ratio",
     "total_volume_z",
     "volume_decile",
+    "volume_pctile",
+    "volume_tercile_flag",
+    "volume_decile_flag",
     "vrp",
     "cheap_vol_score",
     "actual_implied_move_pctile",
@@ -539,6 +542,10 @@ def main() -> int:
     parser.add_argument("--walkforward", action="store_true")
     parser.add_argument("--start-date", default=None, help="Filter snapshots >= this date (YYYY-MM-DD)")
     parser.add_argument("--end-date", default=None, help="Filter snapshots <= this date (YYYY-MM-DD)")
+    parser.add_argument(
+        "--liquidity-min-volume", type=int, default=0, help="Min total_volume to include row (0=no filter)"
+    )
+    parser.add_argument("--focus-signal", default=None, help="Signal name for dedicated summary section")
     parser.add_argument("--output-dir", type=Path, default=PROJECT_ROOT / "output" / "options_signal_pack")
     args = parser.parse_args()
 
@@ -564,6 +571,41 @@ def main() -> int:
         before = len(dataset)
         dataset = [r for r in dataset if r["date"] <= args.end_date]
         logger.info("End-date filter: %d → %d rows", before, len(dataset))
+
+    # Liquidity filter
+    if args.liquidity_min_volume > 0:
+        before = len(dataset)
+        dataset = [
+            r
+            for r in dataset
+            if not math.isnan(r.get("total_volume", float("nan"))) and r["total_volume"] >= args.liquidity_min_volume
+        ]
+        logger.info("Liquidity filter (>=%d): %d → %d rows", args.liquidity_min_volume, before, len(dataset))
+
+    # Add volume percentile (within-date rank, clipped to [0.05, 0.95])
+    by_date_pctile: Dict[str, List[int]] = defaultdict(list)
+    for i, r in enumerate(dataset):
+        by_date_pctile[r["date"]].append(i)
+    for dt, indices in by_date_pctile.items():
+        vols = [(dataset[i].get("total_volume", float("nan")), i) for i in indices]
+        valid = [(v, i) for v, i in vols if not math.isnan(v)]
+        if len(valid) >= 5:
+            valid.sort(key=lambda x: x[0])
+            n = len(valid)
+            for rank, (_, i) in enumerate(valid):
+                pct = max(0.05, min(0.95, rank / (n - 1) if n > 1 else 0.5))
+                dataset[i]["volume_pctile"] = round(pct, 4)
+        for i in indices:
+            dataset[i].setdefault("volume_pctile", float("nan"))
+
+    # Add tercile/decile flags
+    for r in dataset:
+        vz = r.get("total_volume_z", float("nan"))
+        r["volume_tercile_flag"] = (
+            1 if not math.isnan(vz) and vz >= 0.43 else (0 if not math.isnan(vz) else float("nan"))
+        )
+        vd = r.get("volume_decile", float("nan"))
+        r["volume_decile_flag"] = 1 if not math.isnan(vd) and vd >= 9 else (0 if not math.isnan(vd) else float("nan"))
 
     if not dataset:
         logger.warning("Empty dataset")
@@ -623,6 +665,10 @@ def main() -> int:
             "n_rows": len(dataset),
             "n_dates": n_dates,
             "n_tickers": n_tickers,
+            "liquidity_min_volume": args.liquidity_min_volume,
+            "focus_signal": args.focus_signal,
+            "start_date": args.start_date,
+            "end_date": args.end_date,
         },
         "coverage": coverage,
         "raw_ics": raw_ics,
@@ -710,6 +756,26 @@ def main() -> int:
         for d in decile_analysis.get("deciles", []):
             mean_str = f"{d['mean']:.4f}" if d["mean"] is not None else "—"
             md.append(f"| {d['decile']} | {d['n']} | {mean_str} |")
+
+    # Focus signal summary
+    if args.focus_signal:
+        fs = args.focus_signal
+        md += ["", f"## Focus Signal: {fs}", ""]
+        # Collect all results for this signal
+        for key, val in sorted(raw_ics.items()):
+            if fs in key and val.get("status") == "ok":
+                md.append(f"- Raw {key}: IC={val['ic']:.4f} (n={val['n']})")
+        for key, val in sorted(incr_ics.items()):
+            if fs in key and val.get("status") == "ok":
+                md.append(f"- Incr {key}: raw={val['raw_ic']:.4f} incr={val['incr_ic']:.4f} (n={val['n']})")
+        for key, val in sorted(terciles.items()):
+            if fs in key and val.get("status") == "ok":
+                md.append(
+                    f"- Tercile {key}: top-bot spread={val['top_minus_bot']:.4f} monotonic={'Y' if val['monotonic'] else 'N'}"
+                )
+        for key, val in sorted(slices.items()):
+            if fs in key and val.get("status") == "ok":
+                md.append(f"- Slice {key}: spread={val['spread']:.4f} (n={val['n']})")
 
     md.append("")
     (args.output_dir / "report.md").write_text("\n".join(md))
