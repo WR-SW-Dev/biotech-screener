@@ -1,6 +1,6 @@
 # Spec 23: Clinical PoS Prior Recalibration
 
-**Status**: IMPLEMENTING
+**Status**: HOLD — comparison shows large prior shifts (+17pp median), integration path undefined
 **Date**: 2026-03-16
 **Depends on**: clinical PIT backfill, CT.gov outcome labels v2, DEM clinical prior path
 
