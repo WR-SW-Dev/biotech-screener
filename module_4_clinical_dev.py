@@ -69,6 +69,31 @@ PHASE_SCORES_V2 = {
     "preclinical": Decimal("2"),
 }
 
+# V3 phase scores derived from survivorship-adjusted empirical priors (Spec 024).
+# Phase 4 forced to Wong fallback: adjusted rate (27.2%) is too far from
+# reference (65.0%) — likely composition-distorted in this universe.
+# Evidence: clinical_design_backtest.v1 + clinical_pos_priors.v3.
+#
+# Calibration history (2026-03-13 snapshot, unknown→preclinical fallback):
+#   v3a (down=-4, up=+1): top60=91.7%, max_shift=72, REJECTED (tail too volatile)
+#   v3b (down=-3, up=+1): top60=91.7%, max_shift=59, HOLD (still above 30)
+#   v3c (down=-2, up=+0): current candidate — compressed P2/P3 differential
+#
+# Design: keep max cross-phase differential at 1pt to limit tail reordering.
+# Phase 2: v3 shrunk=25.7% (Wong 30.5%, ratio 0.84) → 18-2=16
+# Phase 3: v3 shrunk=53.4% (Wong 58.0%, ratio 0.92) → 25-1=24
+# Phase 1: v3 shrunk= 3.5% (Wong  6.6%, ratio 0.53) → 8-2=6
+# Phase 4: FORCED WONG FALLBACK
+PHASE_SCORES_V3 = {
+    "approved": Decimal("30"),
+    "phase 3": Decimal("24"),
+    "phase 2/3": Decimal("21"),
+    "phase 2": Decimal("16"),
+    "phase 1/2": Decimal("11"),
+    "phase 1": Decimal("6"),
+    "preclinical": Decimal("2"),
+}
+
 # Design quality indicators
 STRONG_ENDPOINTS = frozenset(
     [

@@ -448,6 +448,63 @@ def main(argv: Optional[List[str]] = None) -> int:
         except ValueError:
             return str(p)
 
+    # Phase-level metadata for production consumers
+    phase_notes = {
+        "phase1": "Thin support (n=56 labeled); survivorship-adjusted rate (3.5%) is"
+        " plausible but uncertain. Shrunk heavily toward Wong (6.6%).",
+        "phase2": "Primary discrimination phase. Survivorship adjustment drops observed"
+        " 52.4% to adjusted 25.4%. Largest labeled pool (n=607).",
+        "phase3": "Strongest signal. Survivorship-adjusted 53.0% still above Wong 58.0%"
+        " reference after shrinkage. n=814 labeled.",
+        "phase4": "FORCED WONG FALLBACK. Adjusted rate (27.2%) is too far from reference"
+        " (65.0%) — likely composition-distorted in this biotech universe."
+        " Do not use empirical rate for production scoring.",
+        "phase1_2": "No labeled data. Falls back to Wong reference (18.6%).",
+        "phase2_3": "No labeled data. Falls back to Wong reference (44.3%).",
+    }
+
+    fallback_overrides = {
+        "phase4": {
+            "override": "wong_reference",
+            "reason": "Adjusted rate (27.2%) implausibly far from Wong (65.0%);"
+            " likely composition effect (biotech universe Phase 4 trials"
+            " are not representative of general Phase 4 population).",
+            "wong_rate": WONG_REFERENCE["phase4"],
+        },
+    }
+
+    survivorship_assumptions = {
+        "method": "probabilistic_imputation",
+        "description": "Unlabeled trials assigned assumed failure probabilities"
+        " by status. Labeled trials used at face value.",
+        "terminated_fail_prob": args.terminated_fail_prob,
+        "withdrawn_fail_prob": args.withdrawn_fail_prob,
+        "completed_no_results_fail_prob": args.completed_no_results_fail_prob,
+        "rationale": {
+            "terminated": "Strong prior for failure (trial stopped for cause)."
+            f" Default {args.terminated_fail_prob:.0%} allows 25% chance of"
+            " strategic termination (e.g. pivoting, commercial decision).",
+            "withdrawn": "Weaker signal than terminated; often administrative."
+            f" Default {args.withdrawn_fail_prob:.0%}.",
+            "completed_no_results": "Median 592-day lag from completion to results"
+            " posting. Most are simply slow to post, not failures."
+            f" Conservative default {args.completed_no_results_fail_prob:.0%}.",
+        },
+        "score_translation": {
+            "method": "asymmetric_cap",
+            "down_cap": -2,
+            "up_cap": 0,
+            "rationale": "Survivorship adjustment corrects upward bias (v2 problem),"
+            " but risks over-correction downward. Compressed differential"
+            " keeps max cross-phase gap at 1pt to limit tail reordering.",
+            "calibration_history": [
+                "v3a down=-4 up=+1: proxy top60=91.7% proxy max_shift=72 REJECTED",
+                "v3b down=-3 up=+1: proxy top60=91.7% proxy max_shift=59 HOLD",
+                "v3c down=-2 up=+0: full DEM top60=98.3% max_shift=9 APPROVED",
+            ],
+        },
+    }
+
     out_obj = {
         "schema_version": SCHEMA,
         "built_as_of": date.today().isoformat(),
@@ -475,6 +532,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 "Endpoint modifiers are bounded and biomarker stays neutral in v3.",
             ],
         },
+        "phase_notes": phase_notes,
+        "fallback_overrides": fallback_overrides,
+        "survivorship_assumptions": survivorship_assumptions,
         "overall": overall_summary,
         "phase_priors": by_phase,
         "endpoint_modifiers": endpoint_modifiers,

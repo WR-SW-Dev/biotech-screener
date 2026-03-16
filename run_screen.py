@@ -7344,6 +7344,7 @@ def run_screening_pipeline(
     inputs_manifest_mode: str = "off",
     inputs_manifest_verify_path: Optional[Path] = None,
     phase_scores_v2: bool = False,
+    phase_scores_v3: bool = False,
 ) -> Dict[str, Any]:
     """
     Execute full screening pipeline with deterministic guarantees.
@@ -7962,7 +7963,12 @@ def run_screening_pipeline(
 
     if m4_result is None:
         _m4_phase_scores = None
-        if phase_scores_v2:
+        if phase_scores_v3:
+            from module_4_clinical_dev import PHASE_SCORES_V3
+
+            _m4_phase_scores = PHASE_SCORES_V3
+            logger.info("[M4] Using PHASE_SCORES_V3 (Spec 024, asymmetric caps, P4 Wong fallback)")
+        elif phase_scores_v2:
             from module_4_clinical_dev import PHASE_SCORES_V2
 
             _m4_phase_scores = PHASE_SCORES_V2
@@ -9667,6 +9673,13 @@ Module 3 Catalyst Detection:
         "Opt-in only. ±2 capped, 90%% top-60 overlap gate passed.",
     )
     parser.add_argument(
+        "--phase-scores-v3",
+        action="store_true",
+        default=False,
+        help="Use survivorship-adjusted phase scores (Spec 024). "
+        "Opt-in only. Asymmetric caps (down=-4, up=+1), Phase 4 Wong fallback.",
+    )
+    parser.add_argument(
         "--sec-multi-form-mode",
         type=str,
         default="off",
@@ -9852,6 +9865,9 @@ Module 3 Catalyst Detection:
 
     if args.resume_from and not args.checkpoint_dir:
         parser.error("--resume-from requires --checkpoint-dir")
+
+    if getattr(args, "phase_scores_v2", False) and getattr(args, "phase_scores_v3", False):
+        parser.error("--phase-scores-v2 and --phase-scores-v3 are mutually exclusive")
 
     # Validate catalyst window format if provided
     catalyst_window = None
@@ -10065,6 +10081,7 @@ Module 3 Catalyst Detection:
             inputs_manifest_verify_path=getattr(args, "inputs_manifest_path", None),
             ctgov_cache_dir=getattr(args, "ctgov_cache_dir", None),
             phase_scores_v2=getattr(args, "phase_scores_v2", False),
+            phase_scores_v3=getattr(args, "phase_scores_v3", False),
         )
 
         # Add bootstrap analysis if requested
@@ -10244,7 +10261,11 @@ Module 3 Catalyst Detection:
                 ranking_mode=args.ranking_mode,
                 prior_snapshot_dir=prior_snapshot_dir,
                 ctgov_cache_date=_ctgov_cache_date,
-                phase_scores_version="v2" if getattr(args, "phase_scores_v2", False) else "v1",
+                phase_scores_version=(
+                    "v3"
+                    if getattr(args, "phase_scores_v3", False)
+                    else ("v2" if getattr(args, "phase_scores_v2", False) else "v1")
+                ),
             )
             if snap_result:
                 logger.info(f"Snapshot dir:       {snap_result}")

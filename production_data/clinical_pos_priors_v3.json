@@ -61,6 +61,13 @@
       "source": "observed_labeled_only"
     }
   },
+  "fallback_overrides": {
+    "phase4": {
+      "override": "wong_reference",
+      "reason": "Adjusted rate (27.2%) implausibly far from Wong (65.0%); likely composition effect (biotech universe Phase 4 trials are not representative of general Phase 4 population).",
+      "wong_rate": 0.65
+    }
+  },
   "overall": {
     "assumption_applied": {
       "completed_no_results_fail_prob": 0.15,
@@ -89,6 +96,14 @@
       "upper_observed": 0.636472
     },
     "worst_case_rate_all_unlabeled_fail": 0.101376
+  },
+  "phase_notes": {
+    "phase1": "Thin support (n=56 labeled); survivorship-adjusted rate (3.5%) is plausible but uncertain. Shrunk heavily toward Wong (6.6%).",
+    "phase1_2": "No labeled data. Falls back to Wong reference (18.6%).",
+    "phase2": "Primary discrimination phase. Survivorship adjustment drops observed 52.4% to adjusted 25.4%. Largest labeled pool (n=607).",
+    "phase2_3": "No labeled data. Falls back to Wong reference (44.3%).",
+    "phase3": "Strongest signal. Survivorship-adjusted 53.0% still above Wong 58.0% reference after shrinkage. n=814 labeled.",
+    "phase4": "FORCED WONG FALLBACK. Adjusted rate (27.2%) is too far from reference (65.0%) \u2014 likely composition-distorted in this biotech universe. Do not use empirical rate for production scoring."
   },
   "phase_priors": {
     "approved": {
@@ -363,5 +378,28 @@
       "path": "data/clinical/clinical_outcome_labels_v2.json",
       "sha256": "81da6de93f9e5a75a37fe3a8675efc4ac78b217531c2ac04c69e23258e08e054"
     }
+  },
+  "survivorship_assumptions": {
+    "completed_no_results_fail_prob": 0.15,
+    "description": "Unlabeled trials assigned assumed failure probabilities by status. Labeled trials used at face value.",
+    "method": "probabilistic_imputation",
+    "rationale": {
+      "completed_no_results": "Median 592-day lag from completion to results posting. Most are simply slow to post, not failures. Conservative default 15%.",
+      "terminated": "Strong prior for failure (trial stopped for cause). Default 75% allows 25% chance of strategic termination (e.g. pivoting, commercial decision).",
+      "withdrawn": "Weaker signal than terminated; often administrative. Default 60%."
+    },
+    "score_translation": {
+      "calibration_history": [
+        "v3a down=-4 up=+1: proxy top60=91.7% proxy max_shift=72 REJECTED",
+        "v3b down=-3 up=+1: proxy top60=91.7% proxy max_shift=59 HOLD",
+        "v3c down=-2 up=+0: full DEM top60=98.3% max_shift=9 APPROVED"
+      ],
+      "down_cap": -2,
+      "method": "asymmetric_cap",
+      "rationale": "Survivorship adjustment corrects upward bias (v2 problem), but risks over-correction downward. Compressed differential keeps max cross-phase gap at 1pt to limit tail reordering.",
+      "up_cap": 0
+    },
+    "terminated_fail_prob": 0.75,
+    "withdrawn_fail_prob": 0.6
   }
 }
