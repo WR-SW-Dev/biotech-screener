@@ -1,0 +1,367 @@
+{
+  "assumptions": {
+    "completed_no_results_fail_prob": 0.15,
+    "min_label_confidence": "high",
+    "min_support": 50,
+    "notes": [
+      "Observed posted-results rates are upward-biased by survivorship.",
+      "Survivorship-adjusted rate is the working empirical anchor.",
+      "Shrunk rate is the production-facing rate.",
+      "Endpoint modifiers are bounded and biomarker stays neutral in v3."
+    ],
+    "prior_strength": 150.0,
+    "terminated_fail_prob": 0.75,
+    "withdrawn_fail_prob": 0.6
+  },
+  "biomarker_modifier": {
+    "modifier_delta": 0.0,
+    "note": "Keep neutral until survivorship-adjusted biomarker cell has materially larger support.",
+    "source": "neutral_due_to_confounding_and_thin_support"
+  },
+  "built_as_of": "2026-03-16",
+  "endpoint_modifiers": {
+    "objective_response_rate": {
+      "bounded_cap": 0.1,
+      "endpoint": "objective_response_rate",
+      "modifier_delta": 0.1,
+      "n_labeled": 4,
+      "observed_rate": 1.0,
+      "source": "observed_labeled_only"
+    },
+    "other": {
+      "bounded_cap": 0.1,
+      "endpoint": "other",
+      "modifier_delta": 0.1,
+      "n_labeled": 1149,
+      "observed_rate": 0.662315,
+      "source": "observed_labeled_only"
+    },
+    "overall_survival": {
+      "bounded_cap": 0.1,
+      "endpoint": "overall_survival",
+      "modifier_delta": 0.1,
+      "n_labeled": 524,
+      "observed_rate": 0.578244,
+      "source": "observed_labeled_only"
+    },
+    "progression_free_survival": {
+      "bounded_cap": 0.1,
+      "endpoint": "progression_free_survival",
+      "modifier_delta": 0.0,
+      "n_labeled": 0,
+      "observed_rate": null,
+      "source": "observed_labeled_only"
+    },
+    "surrogate": {
+      "bounded_cap": 0.1,
+      "endpoint": "surrogate",
+      "modifier_delta": -0.1,
+      "n_labeled": 1,
+      "observed_rate": 0.0,
+      "source": "observed_labeled_only"
+    }
+  },
+  "overall": {
+    "assumption_applied": {
+      "completed_no_results_fail_prob": 0.15,
+      "terminated_fail_prob": 0.75,
+      "withdrawn_fail_prob": 0.6
+    },
+    "counts": {
+      "n_catalog": 18689,
+      "n_completed_no_results_unlabeled": 6637,
+      "n_labeled_failure": 610,
+      "n_labeled_success": 1068,
+      "n_labeled_total": 1678,
+      "n_other_unlabeled": 8154,
+      "n_terminated_unlabeled": 1673,
+      "n_unlabeled_total": 17011,
+      "n_withdrawn_unlabeled": 547
+    },
+    "observed_rate_posted_results_only": 0.636472,
+    "phase": "overall",
+    "reference_rate_wong": 0.415,
+    "shrunk_rate": 0.253292,
+    "source": "shrunk_empirical",
+    "survivorship_adjusted_rate": 0.25091,
+    "uncertainty_bounds": {
+      "lower_worst_case": 0.101376,
+      "upper_observed": 0.636472
+    },
+    "worst_case_rate_all_unlabeled_fail": 0.101376
+  },
+  "phase_priors": {
+    "approved": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 0,
+        "n_completed_no_results_unlabeled": 0,
+        "n_labeled_failure": 0,
+        "n_labeled_success": 0,
+        "n_labeled_total": 0,
+        "n_other_unlabeled": 0,
+        "n_terminated_unlabeled": 0,
+        "n_unlabeled_total": 0,
+        "n_withdrawn_unlabeled": 0
+      },
+      "observed_rate_posted_results_only": null,
+      "phase": "approved",
+      "reference_rate_wong": 0.95,
+      "shrunk_rate": 0.95,
+      "source": "reference_no_empirical",
+      "survivorship_adjusted_rate": null,
+      "uncertainty_bounds": {
+        "lower_worst_case": null,
+        "upper_observed": null
+      },
+      "worst_case_rate_all_unlabeled_fail": null
+    },
+    "phase1": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 4815,
+        "n_completed_no_results_unlabeled": 2324,
+        "n_labeled_failure": 25,
+        "n_labeled_success": 31,
+        "n_labeled_total": 56,
+        "n_other_unlabeled": 1676,
+        "n_terminated_unlabeled": 608,
+        "n_unlabeled_total": 4759,
+        "n_withdrawn_unlabeled": 151
+      },
+      "observed_rate_posted_results_only": 0.553571,
+      "phase": "phase1",
+      "reference_rate_wong": 0.066,
+      "shrunk_rate": 0.034529,
+      "source": "shrunk_empirical",
+      "survivorship_adjusted_rate": 0.03259,
+      "uncertainty_bounds": {
+        "lower_worst_case": 0.009876,
+        "upper_observed": 0.553571
+      },
+      "worst_case_rate_all_unlabeled_fail": 0.009876
+    },
+    "phase1_2": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 0,
+        "n_completed_no_results_unlabeled": 0,
+        "n_labeled_failure": 0,
+        "n_labeled_success": 0,
+        "n_labeled_total": 0,
+        "n_other_unlabeled": 0,
+        "n_terminated_unlabeled": 0,
+        "n_unlabeled_total": 0,
+        "n_withdrawn_unlabeled": 0
+      },
+      "observed_rate_posted_results_only": null,
+      "phase": "phase1_2",
+      "reference_rate_wong": 0.186,
+      "shrunk_rate": 0.186,
+      "source": "reference_no_empirical",
+      "survivorship_adjusted_rate": null,
+      "uncertainty_bounds": {
+        "lower_worst_case": null,
+        "upper_observed": null
+      },
+      "worst_case_rate_all_unlabeled_fail": null
+    },
+    "phase2": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 4451,
+        "n_completed_no_results_unlabeled": 1021,
+        "n_labeled_failure": 289,
+        "n_labeled_success": 318,
+        "n_labeled_total": 607,
+        "n_other_unlabeled": 2132,
+        "n_terminated_unlabeled": 519,
+        "n_unlabeled_total": 3844,
+        "n_withdrawn_unlabeled": 172
+      },
+      "observed_rate_posted_results_only": 0.523888,
+      "phase": "phase2",
+      "reference_rate_wong": 0.305,
+      "shrunk_rate": 0.256735,
+      "source": "shrunk_empirical",
+      "survivorship_adjusted_rate": 0.253872,
+      "uncertainty_bounds": {
+        "lower_worst_case": 0.137128,
+        "upper_observed": 0.523888
+      },
+      "worst_case_rate_all_unlabeled_fail": 0.137128
+    },
+    "phase2_3": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 0,
+        "n_completed_no_results_unlabeled": 0,
+        "n_labeled_failure": 0,
+        "n_labeled_success": 0,
+        "n_labeled_total": 0,
+        "n_other_unlabeled": 0,
+        "n_terminated_unlabeled": 0,
+        "n_unlabeled_total": 0,
+        "n_withdrawn_unlabeled": 0
+      },
+      "observed_rate_posted_results_only": null,
+      "phase": "phase2_3",
+      "reference_rate_wong": 0.443,
+      "shrunk_rate": 0.443,
+      "source": "reference_no_empirical",
+      "survivorship_adjusted_rate": null,
+      "uncertainty_bounds": {
+        "lower_worst_case": null,
+        "upper_observed": null
+      },
+      "worst_case_rate_all_unlabeled_fail": null
+    },
+    "phase3": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 3184,
+        "n_completed_no_results_unlabeled": 615,
+        "n_labeled_failure": 216,
+        "n_labeled_success": 598,
+        "n_labeled_total": 814,
+        "n_other_unlabeled": 1447,
+        "n_terminated_unlabeled": 247,
+        "n_unlabeled_total": 2370,
+        "n_withdrawn_unlabeled": 61
+      },
+      "observed_rate_posted_results_only": 0.734644,
+      "phase": "phase3",
+      "reference_rate_wong": 0.58,
+      "shrunk_rate": 0.533578,
+      "source": "shrunk_empirical",
+      "survivorship_adjusted_rate": 0.530095,
+      "uncertainty_bounds": {
+        "lower_worst_case": 0.344272,
+        "upper_observed": 0.734644
+      },
+      "worst_case_rate_all_unlabeled_fail": 0.344272
+    },
+    "phase4": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 1078,
+        "n_completed_no_results_unlabeled": 346,
+        "n_labeled_failure": 53,
+        "n_labeled_success": 74,
+        "n_labeled_total": 127,
+        "n_other_unlabeled": 472,
+        "n_terminated_unlabeled": 89,
+        "n_unlabeled_total": 951,
+        "n_withdrawn_unlabeled": 44
+      },
+      "observed_rate_posted_results_only": 0.582677,
+      "phase": "phase4",
+      "reference_rate_wong": 0.65,
+      "shrunk_rate": 0.347356,
+      "source": "shrunk_empirical",
+      "survivorship_adjusted_rate": 0.272009,
+      "uncertainty_bounds": {
+        "lower_worst_case": 0.122112,
+        "upper_observed": 0.582677
+      },
+      "worst_case_rate_all_unlabeled_fail": 0.122112
+    },
+    "preclinical": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 0,
+        "n_completed_no_results_unlabeled": 0,
+        "n_labeled_failure": 0,
+        "n_labeled_success": 0,
+        "n_labeled_total": 0,
+        "n_other_unlabeled": 0,
+        "n_terminated_unlabeled": 0,
+        "n_unlabeled_total": 0,
+        "n_withdrawn_unlabeled": 0
+      },
+      "observed_rate_posted_results_only": null,
+      "phase": "preclinical",
+      "reference_rate_wong": 0.03,
+      "shrunk_rate": 0.03,
+      "source": "reference_no_empirical",
+      "survivorship_adjusted_rate": null,
+      "uncertainty_bounds": {
+        "lower_worst_case": null,
+        "upper_observed": null
+      },
+      "worst_case_rate_all_unlabeled_fail": null
+    },
+    "unknown": {
+      "assumption_applied": {
+        "completed_no_results_fail_prob": 0.15,
+        "terminated_fail_prob": 0.75,
+        "withdrawn_fail_prob": 0.6
+      },
+      "counts": {
+        "n_catalog": 5161,
+        "n_completed_no_results_unlabeled": 2331,
+        "n_labeled_failure": 27,
+        "n_labeled_success": 47,
+        "n_labeled_total": 74,
+        "n_other_unlabeled": 2427,
+        "n_terminated_unlabeled": 210,
+        "n_unlabeled_total": 5087,
+        "n_withdrawn_unlabeled": 119
+      },
+      "observed_rate_posted_results_only": 0.635135,
+      "phase": "unknown",
+      "reference_rate_wong": 0.305,
+      "shrunk_rate": 0.084652,
+      "source": "shrunk_empirical",
+      "survivorship_adjusted_rate": 0.072025,
+      "uncertainty_bounds": {
+        "lower_worst_case": 0.017191,
+        "upper_observed": 0.635135
+      },
+      "worst_case_rate_all_unlabeled_fail": 0.017191
+    }
+  },
+  "schema_version": "clinical_pos_priors.v3",
+  "source_artifacts": {
+    "clinical_history_catalog": {
+      "path": "data/clinical/clinical_history_catalog.json",
+      "sha256": "b77da6e4d007e9ec45787f865fdbbd7d3e60f96d75e68568c01c0afcde7bfbbd"
+    },
+    "clinical_outcome_labels_v2": {
+      "path": "data/clinical/clinical_outcome_labels_v2.json",
+      "sha256": "81da6de93f9e5a75a37fe3a8675efc4ac78b217531c2ac04c69e23258e08e054"
+    }
+  }
+}
