@@ -3660,6 +3660,7 @@ def save_validation_snapshot(
     ranking_mode: str = "decision",
     prior_snapshot_dir: Optional[Path] = None,
     ctgov_cache_date: Optional[str] = None,
+    phase_scores_version: str = "v1",
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -5690,6 +5691,8 @@ def save_validation_snapshot(
         reliability_table=_reliability_table,
     )
 
+    _phase_scores_version = phase_scores_version
+
     metadata = {
         "schema_version": SCHEMA_METADATA,
         "generator_version": VERSION,
@@ -5703,6 +5706,7 @@ def save_validation_snapshot(
         "ruleset_file": getattr(_rs, "_source_path", None),
         "ruleset_hash": _ruleset_hash,
         "engine_version": DE_VERSION,
+        "phase_scores_version": _phase_scores_version,
         "git_sha": _git.get("commit_sha"),
         "ticker_count": len(ranked),
         "source_type": "live_pipeline_v3",
@@ -7339,6 +7343,7 @@ def run_screening_pipeline(
     # Input manifest mode: "off", "write", "verify"
     inputs_manifest_mode: str = "off",
     inputs_manifest_verify_path: Optional[Path] = None,
+    phase_scores_v2: bool = False,
 ) -> Dict[str, Any]:
     """
     Execute full screening pipeline with deterministic guarantees.
@@ -7956,10 +7961,17 @@ def run_screening_pipeline(
         }
 
     if m4_result is None:
+        _m4_phase_scores = None
+        if phase_scores_v2:
+            from module_4_clinical_dev import PHASE_SCORES_V2
+
+            _m4_phase_scores = PHASE_SCORES_V2
+            logger.info("[M4] Using PHASE_SCORES_V2 (Spec 023, ±2 capped)")
         m4_result = compute_module_4_clinical_dev(
             trial_records=trial_records,
             active_tickers=active_tickers,
             as_of_date=as_of_date,  # Explicit threading
+            phase_scores=_m4_phase_scores,
         )
         if checkpoint_dir:
             save_checkpoint(checkpoint_dir, "module_4", as_of_date, m4_result)
@@ -9648,6 +9660,13 @@ Module 3 Catalyst Detection:
         "Only allowed when --as-of-date equals today (PIT safety).",
     )
     parser.add_argument(
+        "--phase-scores-v2",
+        action="store_true",
+        default=False,
+        help="Use empirically calibrated phase scores (Spec 023). "
+        "Opt-in only. ±2 capped, 90%% top-60 overlap gate passed.",
+    )
+    parser.add_argument(
         "--sec-multi-form-mode",
         type=str,
         default="off",
@@ -10045,6 +10064,7 @@ Module 3 Catalyst Detection:
             inputs_manifest_mode=args.inputs_manifest,
             inputs_manifest_verify_path=getattr(args, "inputs_manifest_path", None),
             ctgov_cache_dir=getattr(args, "ctgov_cache_dir", None),
+            phase_scores_v2=getattr(args, "phase_scores_v2", False),
         )
 
         # Add bootstrap analysis if requested
@@ -10224,6 +10244,7 @@ Module 3 Catalyst Detection:
                 ranking_mode=args.ranking_mode,
                 prior_snapshot_dir=prior_snapshot_dir,
                 ctgov_cache_date=_ctgov_cache_date,
+                phase_scores_version="v2" if getattr(args, "phase_scores_v2", False) else "v1",
             )
             if snap_result:
                 logger.info(f"Snapshot dir:       {snap_result}")
