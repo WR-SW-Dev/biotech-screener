@@ -56,14 +56,17 @@ PHASE_SCORES = {
 # Phase 2: 52.2% (Wong 30.5%, ratio 1.68) → 18+4=22
 # Phase 3: 72.7% (Wong 58.0%, ratio 1.25) → 25+4=29
 # Phase 1:  3.8% (Wong  6.6%, ratio 0.58) →  8-3=5
+# Conservative ±2 cap chosen after rank-impact comparison:
+# ±4 cap produced 81.7% top-60 overlap (below 90% gate)
+# ±2 cap produces 90.0% top-60 overlap (at gate threshold)
 PHASE_SCORES_V2 = {
     "approved": Decimal("30"),
-    "phase 3": Decimal("29"),
-    "phase 2/3": Decimal("26"),
-    "phase 2": Decimal("22"),
+    "phase 3": Decimal("27"),
+    "phase 2/3": Decimal("24"),
+    "phase 2": Decimal("20"),
     "phase 1/2": Decimal("12"),
-    "phase 1": Decimal("5"),
-    "preclinical": Decimal("3"),
+    "phase 1": Decimal("6"),
+    "preclinical": Decimal("2"),
 }
 
 # Design quality indicators

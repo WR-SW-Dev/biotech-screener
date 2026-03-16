@@ -1,6 +1,6 @@
 # Spec 23: Clinical PoS Prior Recalibration
 
-**Status**: HOLD — comparison shows large prior shifts (+17pp median), integration path undefined
+**Status**: COMPARISON_PASSED (±2 cap) — top-60 overlap 90.0%, mean rank shift 2.4, ready for opt-in enable
 **Date**: 2026-03-16
 **Depends on**: clinical PIT backfill, CT.gov outcome labels v2, DEM clinical prior path
 
