@@ -20,14 +20,15 @@ vNext changes:
 - Mutual exclusivity for endpoint scoring (strong wins)
 - Recency flags: recency_unknown, recency_stale
 """
+
 from __future__ import annotations
 
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
-from datetime import datetime, date
 
-from common.provenance import create_provenance
 from common.pit_enforcement import compute_pit_cutoff, is_pit_admissible
+from common.provenance import create_provenance
 from common.score_utils import piecewise_lerp
 from common.types import Severity
 
@@ -48,15 +49,45 @@ PHASE_SCORES = {
     "preclinical": Decimal("3"),
 }
 
-# Design quality indicators
-STRONG_ENDPOINTS = frozenset([
-    "overall survival", "os", "progression-free survival", "pfs",
-    "complete response", "cr", "objective response rate", "orr",
-])
+# V2 phase scores derived from universe-specific empirical priors (Spec 023).
+# Ratio-adjusted from PHASE_SCORES using v2/Wong success rate ratios,
+# capped at ±4 points per phase to keep changes bounded.
+# Evidence: 1,587 high-confidence CT.gov p-value outcomes.
+# Phase 2: 52.2% (Wong 30.5%, ratio 1.68) → 18+4=22
+# Phase 3: 72.7% (Wong 58.0%, ratio 1.25) → 25+4=29
+# Phase 1:  3.8% (Wong  6.6%, ratio 0.58) →  8-3=5
+PHASE_SCORES_V2 = {
+    "approved": Decimal("30"),
+    "phase 3": Decimal("29"),
+    "phase 2/3": Decimal("26"),
+    "phase 2": Decimal("22"),
+    "phase 1/2": Decimal("12"),
+    "phase 1": Decimal("5"),
+    "preclinical": Decimal("3"),
+}
 
-WEAK_ENDPOINTS = frozenset([
-    "biomarker", "pharmacokinetic", "pk", "safety",
-])
+# Design quality indicators
+STRONG_ENDPOINTS = frozenset(
+    [
+        "overall survival",
+        "os",
+        "progression-free survival",
+        "pfs",
+        "complete response",
+        "cr",
+        "objective response rate",
+        "orr",
+    ]
+)
+
+WEAK_ENDPOINTS = frozenset(
+    [
+        "biomarker",
+        "pharmacokinetic",
+        "pk",
+        "safety",
+    ]
+)
 
 
 def _parse_phase(phase_str: Optional[str]) -> str:
@@ -64,7 +95,7 @@ def _parse_phase(phase_str: Optional[str]) -> str:
     if not phase_str:
         return "unknown"
     phase = phase_str.lower().strip()
-    
+
     if "approved" in phase or "4" in phase:
         return "approved"
     if "3" in phase:
@@ -79,7 +110,7 @@ def _parse_phase(phase_str: Optional[str]) -> str:
         return "phase 1"
     elif "preclinical" in phase:
         return "preclinical"
-    
+
     return "unknown"
 
 
@@ -131,7 +162,7 @@ def _normalize_conditions(conditions_raw: Any) -> List[str]:
     result = []
     if isinstance(conditions_raw, str):
         # Single string - split on common delimiters
-        for part in conditions_raw.replace(';', ',').replace('|', ',').split(','):
+        for part in conditions_raw.replace(";", ",").replace("|", ",").split(","):
             cleaned = part.lower().strip()
             if cleaned:
                 result.append(cleaned)
@@ -158,9 +189,9 @@ def _tokenize_conditions(conditions: List[str]) -> set:
     tokens = set()
     for cond in conditions:
         # Split on whitespace and common separators
-        for word in cond.replace('-', ' ').replace('/', ' ').split():
+        for word in cond.replace("-", " ").replace("/", " ").split():
             # Skip common stopwords
-            if word and len(word) > 2 and word not in {'and', 'the', 'for', 'with', 'not'}:
+            if word and len(word) > 2 and word not in {"and", "the", "for", "with", "not"}:
                 tokens.add(word)
     return tokens
 
@@ -182,14 +213,15 @@ def _score_indication_diversity(all_conditions: List[List[str]]) -> Decimal:
     unique_tokens = _tokenize_conditions(list(union_conditions))
     return piecewise_lerp(len(unique_tokens), _DIV_KNOTS)
 
+
 def _parse_date_safe(date_str: Optional[str]) -> Optional[date]:
     """Parse ISO date string to date object, return None on failure."""
     if not date_str:
         return None
     try:
         # Handle various ISO formats
-        cleaned = date_str.replace('Z', '+00:00')
-        if 'T' in cleaned:
+        cleaned = date_str.replace("Z", "+00:00")
+        if "T" in cleaned:
             return datetime.fromisoformat(cleaned).date()
         else:
             return date.fromisoformat(cleaned[:10])
@@ -197,10 +229,7 @@ def _parse_date_safe(date_str: Optional[str]) -> Optional[date]:
         return None
 
 
-def _score_recency(
-    last_update: Optional[str],
-    as_of_date: str
-) -> Tuple[Decimal, Optional[int], bool, bool]:
+def _score_recency(last_update: Optional[str], as_of_date: str) -> Tuple[Decimal, Optional[int], bool, bool]:
     """
     Score based on most recent trial update (0-5 pts).
 
@@ -238,18 +267,18 @@ def _score_recency(
 def _score_design(trial: Dict[str, Any]) -> Decimal:
     """Score trial design quality (0-25)."""
     score = Decimal("12")  # Base
-    
+
     # Randomized bonus
     if trial.get("randomized"):
         score += Decimal("5")
-    
+
     # Double-blind bonus
     if trial.get("blinded", "").lower() in ("double", "double-blind"):
         score += Decimal("4")
-    
+
     # Endpoint strength
     primary_endpoint = (trial.get("primary_endpoint") or "").lower()
-    
+
     for strong in STRONG_ENDPOINTS:
         if strong in primary_endpoint:
             score += Decimal("4")
@@ -259,7 +288,7 @@ def _score_design(trial: Dict[str, Any]) -> Decimal:
             if weak in primary_endpoint:
                 score -= Decimal("3")
                 break
-    
+
     return max(Decimal("0"), min(Decimal("25"), score))
 
 
@@ -356,6 +385,7 @@ def compute_module_4_clinical_dev(
     trial_records: List[Dict[str, Any]],
     active_tickers: List[str],
     as_of_date: str,
+    phase_scores: Optional[Dict[str, Decimal]] = None,
 ) -> Dict[str, Any]:
     """
     Compute clinical development quality scores (vNext).
@@ -457,6 +487,8 @@ def compute_module_4_clinical_dev(
     if date_coverage_pct < 90.0 and total_raw > 0:
         date_coverage_warning = f"Low date coverage ({date_coverage_pct:.1f}%) - {no_date_excluded} trials excluded due to missing PIT dates"
 
+    _active_phase_scores = phase_scores if phase_scores is not None else PHASE_SCORES
+
     scores = []
 
     for ticker in active_tickers:
@@ -473,7 +505,7 @@ def compute_module_4_clinical_dev(
 
         for t in trials:
             phase = t["phase"]
-            ps = PHASE_SCORES.get(phase, Decimal("0"))
+            ps = _active_phase_scores.get(phase, Decimal("0"))
             if ps > lead_phase_score:
                 lead_phase = phase
                 lead_phase_score = ps
@@ -502,9 +534,7 @@ def compute_module_4_clinical_dev(
                         most_recent_str = update_str
 
         # Recency with flags
-        recency_bonus, recency_days, recency_unknown, recency_stale = _score_recency(
-            most_recent_str, as_of_date
-        )
+        recency_bonus, recency_days, recency_unknown, recency_stale = _score_recency(most_recent_str, as_of_date)
 
         # Phase progress bonus
         phase_progress_map = {
@@ -527,9 +557,16 @@ def compute_module_4_clinical_dev(
         endpoint_score = _score_endpoints(trials)
 
         # Total (0-120, normalized to 0-100)
-        total = (phase_score + phase_progress + trial_count_bonus +
-                diversity_bonus + recency_bonus + design_score +
-                execution_score + endpoint_score)
+        total = (
+            phase_score
+            + phase_progress
+            + trial_count_bonus
+            + diversity_bonus
+            + recency_bonus
+            + design_score
+            + execution_score
+            + endpoint_score
+        )
 
         normalized_score = (total / Decimal("120")) * Decimal("100")
 
@@ -551,8 +588,13 @@ def compute_module_4_clinical_dev(
 
         # Per-phase trial counts (diagnostic only, no scoring impact)
         phase_counts = {
-            "phase_1": 0, "phase_1_2": 0, "phase_2": 0,
-            "phase_2_3": 0, "phase_3": 0, "approved": 0, "other": 0,
+            "phase_1": 0,
+            "phase_1_2": 0,
+            "phase_2": 0,
+            "phase_2_3": 0,
+            "phase_3": 0,
+            "approved": 0,
+            "other": 0,
         }
         for t in trials:
             p = t["phase"].lower().replace(" ", "_").replace("/", "_")
@@ -561,29 +603,31 @@ def compute_module_4_clinical_dev(
             else:
                 phase_counts["other"] += 1
 
-        scores.append({
-            "ticker": ticker,
-            "clinical_score": str(normalized_score.quantize(Decimal("0.01"))),
-            "phase_score": str(phase_score),
-            "phase_progress": str(phase_progress),
-            "trial_count_bonus": str(trial_count_bonus),
-            "diversity_bonus": str(diversity_bonus.quantize(Decimal("0.01"))),
-            "recency_bonus": str(recency_bonus.quantize(Decimal("0.01"))),
-            "design_score": str(design_score.quantize(Decimal("0.01"))),
-            "execution_score": str(execution_score.quantize(Decimal("0.01"))),
-            "endpoint_score": str(endpoint_score.quantize(Decimal("0.01"))),
-            "lead_phase": lead_phase,
-            "trial_count": n_trials_unique,
-            "flags": flags,
-            "severity": severity.value,
-            # Per-ticker diagnostics (new)
-            "n_trials_unique": n_trials_unique,
-            "n_trials_raw": raw_count_ticker,
-            "pit_filtered_count_ticker": pit_filtered_ticker,
-            "lead_trial_nct_id": lead_trial_nct_id,
-            "recency_days": recency_days,
-            "phase_counts": phase_counts,
-        })
+        scores.append(
+            {
+                "ticker": ticker,
+                "clinical_score": str(normalized_score.quantize(Decimal("0.01"))),
+                "phase_score": str(phase_score),
+                "phase_progress": str(phase_progress),
+                "trial_count_bonus": str(trial_count_bonus),
+                "diversity_bonus": str(diversity_bonus.quantize(Decimal("0.01"))),
+                "recency_bonus": str(recency_bonus.quantize(Decimal("0.01"))),
+                "design_score": str(design_score.quantize(Decimal("0.01"))),
+                "execution_score": str(execution_score.quantize(Decimal("0.01"))),
+                "endpoint_score": str(endpoint_score.quantize(Decimal("0.01"))),
+                "lead_phase": lead_phase,
+                "trial_count": n_trials_unique,
+                "flags": flags,
+                "severity": severity.value,
+                # Per-ticker diagnostics (new)
+                "n_trials_unique": n_trials_unique,
+                "n_trials_raw": raw_count_ticker,
+                "pit_filtered_count_ticker": pit_filtered_ticker,
+                "lead_trial_nct_id": lead_trial_nct_id,
+                "recency_days": recency_days,
+                "phase_counts": phase_counts,
+            }
+        )
 
     return {
         "as_of_date": as_of_date,
