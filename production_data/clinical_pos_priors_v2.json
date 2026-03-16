@@ -1,0 +1,87 @@
+{
+  "schema": "clinical_pos_priors.v2",
+  "built_as_of": "2026-03-16",
+  "label_policy": {
+    "allowed_sources": [
+      "CT_GOV_RESULTS_API"
+    ],
+    "allowed_confidence": [
+      "high"
+    ],
+    "excluded_sources": [
+      "completion_proxy"
+    ]
+  },
+  "global": {
+    "n": 1587,
+    "success_rate": 0.6333
+  },
+  "by_phase": {
+    "phase1": {
+      "n": 54,
+      "raw_rate": 0.5741,
+      "shrunk_rate": 0.2442,
+      "reference_rate": 0.066,
+      "support_confidence": "low"
+    },
+    "phase2": {
+      "n": 580,
+      "raw_rate": 0.5224,
+      "shrunk_rate": 0.5134,
+      "reference_rate": 0.305,
+      "support_confidence": "high"
+    },
+    "phase3": {
+      "n": 760,
+      "raw_rate": 0.7316,
+      "shrunk_rate": 0.7268,
+      "reference_rate": 0.58,
+      "support_confidence": "high"
+    },
+    "phase4": {
+      "n": 120,
+      "raw_rate": 0.575,
+      "shrunk_rate": 0.5971,
+      "reference_rate": 0.65,
+      "support_confidence": "medium"
+    }
+  },
+  "endpoint_modifiers": {
+    "other": {
+      "n": 1078,
+      "raw_rate": 0.6586,
+      "raw_delta_vs_global": 0.0253,
+      "shrunk_delta": 0.0241,
+      "support_confidence": "high"
+    },
+    "overall_survival": {
+      "n": 504,
+      "raw_rate": 0.5774,
+      "raw_delta_vs_global": -0.0559,
+      "shrunk_delta": -0.0532,
+      "support_confidence": "high"
+    }
+  },
+  "biomarker_modifiers": {
+    "yes": {
+      "n": 70,
+      "raw_rate": 0.5143,
+      "raw_delta_vs_global": -0.119,
+      "shrunk_delta": 0.0,
+      "support_confidence": "low",
+      "policy": "do_not_apply_directly"
+    },
+    "no": {
+      "n": 1517,
+      "raw_rate": 0.6388,
+      "raw_delta_vs_global": 0.0055,
+      "shrunk_delta": 0.005,
+      "support_confidence": "high"
+    }
+  },
+  "fallback_policy": {
+    "min_n_for_direct_use": 200,
+    "min_n_for_shrunk_use": 75,
+    "otherwise": "reference_prior_only"
+  }
+}
