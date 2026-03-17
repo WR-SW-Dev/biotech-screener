@@ -1,0 +1,15 @@
+{
+  "schema_version": "data_collection_health_thresholds.v1",
+  "market_data_min_coverage_pct": 0.95,
+  "ctgov_min_trial_count": 15000,
+  "ctgov_min_tickers_covered": 250,
+  "ctgov_max_malformed_count": 0,
+  "ctgov_max_pcd_after_cd_count": 0,
+  "ctgov_diff_events_warn_if_zero": true,
+  "sec8k_warn_if_zero_without_skip": true,
+  "options_top60_min_chain_coverage_pct": 0.60,
+  "options_universe_min_coverage_pct": 0.50,
+  "inputs_manifest_required_missing_max": 0,
+  "catalyst_min_total_events": 500,
+  "catalyst_min_tickers_with_events": 200
+}
