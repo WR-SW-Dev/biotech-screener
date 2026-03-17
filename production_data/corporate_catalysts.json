@@ -1,12 +1,12 @@
 {
-  "collection_date": "2026-02-26",
+  "collection_date": "2026-03-17",
   "lookahead_days": 180,
   "summary": {
-    "total_events": 11,
+    "total_events": 14,
     "earnings_events": 0,
-    "pdufa_events": 11,
+    "pdufa_events": 14,
     "readout_events": 0,
-    "tickers_with_events": 11
+    "tickers_with_events": 13
   },
   "upcoming_conferences": [
     {
@@ -15,7 +15,7 @@
       "start_date": "2026-04-05",
       "end_date": "2026-04-10",
       "tier": 1,
-      "days_until": 38
+      "days_until": 19
     },
     {
       "conference_name": "AAN Annual Meeting",
@@ -23,7 +23,7 @@
       "start_date": "2026-04-15",
       "end_date": "2026-04-20",
       "tier": 2,
-      "days_until": 48
+      "days_until": 29
     },
     {
       "conference_name": "ASCO Annual Meeting",
@@ -31,7 +31,7 @@
       "start_date": "2026-06-01",
       "end_date": "2026-06-05",
       "tier": 1,
-      "days_until": 95
+      "days_until": 76
     },
     {
       "conference_name": "EASL Congress",
@@ -39,141 +39,177 @@
       "start_date": "2026-06-15",
       "end_date": "2026-06-19",
       "tier": 2,
-      "days_until": 109
+      "days_until": 90
     }
   ],
   "events": [
     {
-      "ticker": "KRYS",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-02-28",
-      "event_name": "PDUFA: KarXT",
-      "drug_name": "KarXT",
-      "indication": "Schizophrenia",
-      "submission_type": "NDA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 2
-    },
-    {
-      "ticker": "INSM",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-03-14",
-      "event_name": "PDUFA: Brensocatib",
-      "drug_name": "Brensocatib",
-      "indication": "Bronchiectasis",
-      "submission_type": "NDA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 16
-    },
-    {
-      "ticker": "CYTK",
+      "ticker": "RCKT",
       "event_type": "FDA_PDUFA_DATE",
       "event_date": "2026-03-28",
-      "event_name": "PDUFA: Aficamten",
-      "drug_name": "Aficamten",
-      "indication": "Hypertrophic Cardiomyopathy",
-      "submission_type": "NDA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 30
-    },
-    {
-      "ticker": "VRTX",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-03-30",
-      "event_name": "PDUFA: VX-548",
-      "drug_name": "VX-548",
-      "indication": "Acute Pain",
-      "submission_type": "NDA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 32
-    },
-    {
-      "ticker": "ACAD",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-04-03",
-      "event_name": "PDUFA: Pimavanserin",
-      "drug_name": "Pimavanserin",
-      "indication": "Major Depressive Disorder",
-      "submission_type": "sNDA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 36
-    },
-    {
-      "ticker": "NBIX",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-04-15",
-      "event_name": "PDUFA: Elahere",
-      "drug_name": "Elahere",
-      "indication": "Ovarian Cancer 2L",
-      "submission_type": "sBLA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 48
-    },
-    {
-      "ticker": "MRNA",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-05-12",
-      "event_name": "PDUFA: mRNA-1345",
-      "drug_name": "mRNA-1345",
-      "indication": "RSV Vaccine",
+      "event_name": "PDUFA: KRESLADI (RP-L201)",
+      "drug_name": "KRESLADI (RP-L201)",
+      "indication": "Leukocyte Adhesion Deficiency Type I",
       "submission_type": "BLA",
       "confidence": "MED",
       "source": "pdufa_file",
-      "days_until": 75
+      "days_until": 11
+    },
+    {
+      "ticker": "BIIB",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-04-03",
+      "event_name": "PDUFA: SPINRAZA (nusinersen) high dose",
+      "drug_name": "SPINRAZA (nusinersen) high dose",
+      "indication": "Spinal Muscular Atrophy (high dose regimen)",
+      "submission_type": "sBLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 17
+    },
+    {
+      "ticker": "IONS",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-04-03",
+      "event_name": "PDUFA: Olezarsen (Tryngolza) high dose",
+      "drug_name": "Olezarsen (Tryngolza) high dose",
+      "indication": "Familial Chylomicronemia Syndrome",
+      "submission_type": "sNDA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 17
+    },
+    {
+      "ticker": "DNLI",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-04-05",
+      "event_name": "PDUFA: Tividenofusp alfa (DNL310)",
+      "drug_name": "Tividenofusp alfa (DNL310)",
+      "indication": "Hunter Syndrome (MPS II)",
+      "submission_type": "BLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 19
+    },
+    {
+      "ticker": "REPL",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-04-10",
+      "event_name": "PDUFA: RP1 (vusolimogene oderparepvec)",
+      "drug_name": "RP1 (vusolimogene oderparepvec)",
+      "indication": "Anti-PD-1 Failed Melanoma",
+      "submission_type": "BLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 24
     },
     {
       "ticker": "AXSM",
       "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-05-22",
-      "event_name": "PDUFA: AXS-05",
-      "drug_name": "AXS-05",
+      "event_date": "2026-04-30",
+      "event_name": "PDUFA: AXS-05 (dextromethorphan/bupropion)",
+      "drug_name": "AXS-05 (dextromethorphan/bupropion)",
       "indication": "Alzheimer's Disease Agitation",
+      "submission_type": "sNDA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 44
+    },
+    {
+      "ticker": "ARVN",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-05-10",
+      "event_name": "PDUFA: ARV-471 (vepdegestrant)",
+      "drug_name": "ARV-471 (vepdegestrant)",
+      "indication": "ER+/HER2- Breast Cancer",
       "submission_type": "NDA",
-      "confidence": "HIGH",
+      "confidence": "MED",
       "source": "pdufa_file",
-      "days_until": 85
+      "days_until": 54
     },
     {
-      "ticker": "SRPT",
+      "ticker": "RGNX",
       "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-06-21",
-      "event_name": "PDUFA: Elevidys",
-      "drug_name": "Elevidys",
-      "indication": "DMD (Full Approval)",
-      "submission_type": "sBLA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 115
-    },
-    {
-      "ticker": "REGN",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-06-27",
-      "event_name": "PDUFA: Dupixent",
-      "drug_name": "Dupixent",
-      "indication": "COPD",
-      "submission_type": "sBLA",
-      "confidence": "HIGH",
-      "source": "pdufa_file",
-      "days_until": 121
-    },
-    {
-      "ticker": "RVMD",
-      "event_type": "FDA_PDUFA_DATE",
-      "event_date": "2026-07-15",
-      "event_name": "PDUFA: RVT-3101",
-      "drug_name": "RVT-3101",
-      "indication": "Ulcerative Colitis",
+      "event_date": "2026-05-12",
+      "event_name": "PDUFA: RGX-314",
+      "drug_name": "RGX-314",
+      "indication": "Wet Age-Related Macular Degeneration",
       "submission_type": "BLA",
       "confidence": "MED",
       "source": "pdufa_file",
-      "days_until": 139
+      "days_until": 56
+    },
+    {
+      "ticker": "BIIB",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-05-24",
+      "event_name": "PDUFA: LEQEMBI (lecanemab) subcutaneous",
+      "drug_name": "LEQEMBI (lecanemab) subcutaneous",
+      "indication": "Alzheimer's Disease (SC formulation)",
+      "submission_type": "sBLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 68
+    },
+    {
+      "ticker": "MNKD",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-05-29",
+      "event_name": "PDUFA: Afrezza (insulin human) pediatric",
+      "drug_name": "Afrezza (insulin human) pediatric",
+      "indication": "Diabetes (Pediatric Population)",
+      "submission_type": "sBLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 73
+    },
+    {
+      "ticker": "ARGX",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-06-07",
+      "event_name": "PDUFA: Efgartigimod (VYVGART)",
+      "drug_name": "Efgartigimod (VYVGART)",
+      "indication": "Generalized Myasthenia Gravis (new formulation)",
+      "submission_type": "sBLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 82
+    },
+    {
+      "ticker": "VRDN",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-06-30",
+      "event_name": "PDUFA: Veligrotug",
+      "drug_name": "Veligrotug",
+      "indication": "Thyroid Eye Disease",
+      "submission_type": "BLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 105
+    },
+    {
+      "ticker": "VERA",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-07-07",
+      "event_name": "PDUFA: Atacicept",
+      "drug_name": "Atacicept",
+      "indication": "IgA Nephropathy",
+      "submission_type": "BLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 112
+    },
+    {
+      "ticker": "MRNA",
+      "event_type": "FDA_PDUFA_DATE",
+      "event_date": "2026-08-05",
+      "event_name": "PDUFA: mRNA-1010",
+      "drug_name": "mRNA-1010",
+      "indication": "Seasonal Influenza (adults 50+)",
+      "submission_type": "BLA",
+      "confidence": "MED",
+      "source": "pdufa_file",
+      "days_until": 141
     }
   ]
 }

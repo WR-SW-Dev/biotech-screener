@@ -75,6 +75,95 @@ Every new signal must include:
 2. Leakage test confirming data_available_timestamp compliance
 3. Ablation test stub showing Sharpe contribution ≥ 0.1
 
+## Long-Call Contract Recommendations (Post-Screen)
+
+When producing long-call candidates from the screen output, also recommend the best executable long-call contract for each surviving candidate.
+
+**Goal:** For every name that passes the long-call filter, recommend:
+1. One primary contract
+2. One backup contract
+3. Or explicitly mark `NO_TRADE` if no contract is liquid / priced well enough
+
+Do NOT just say "buy calls." Pick an actual strike + expiry from the chain data available in the repo/output.
+
+### Step 1 — Expiry selection
+- Base case: choose the first liquid expiry that is AFTER the catalyst date and still leaves 14–35 calendar days of cushion after the event
+- If catalyst_days is 21–45: allow tighter post-event cushion of 7–21 days
+- Avoid expiries that occur BEFORE the catalyst
+- Avoid very long expiries unless all nearer expiries are illiquid or the event date is uncertain
+- Prefer standard monthly expiries over odd weeklies when liquidity is similar
+
+### Step 2 — Strike selection
+- Target call delta between 0.30 and 0.50
+- Higher-conviction names: prefer 0.40–0.50 delta
+- Lower-conviction / higher-IV names: prefer 0.30–0.40 delta
+- Avoid ultra-OTM lottery strikes unless premium is tiny and liquidity is still acceptable
+- Avoid deep ITM unless spread/liquidity is clearly superior and thesis is very high conviction
+
+### Step 3 — Liquidity filter
+Reject contracts if any of these are true:
+- open_interest is too low
+- volume is too low
+- bid/ask spread is too wide
+- pricing looks stale
+
+If the repo does not have exact spread fields, use the best liquidity proxies available and state the limitation.
+
+### Step 4 — Entry economics
+For each candidate contract, compute or estimate:
+- mid premium
+- breakeven move to expiry
+- event-date implied move
+- crush-adjusted move if available
+- delta
+- DTE
+
+Prefer contracts where:
+- directional thesis is confirmed by RR / skew
+- implied move is not already extreme
+- the contract still has room to profit after likely post-event IV compression
+- premium at risk is reasonable relative to conviction
+
+### Step 5 — Rank contracts
+Choose the primary contract by this priority:
+1. Expiry appropriately covering the catalyst
+2. Strongest liquidity
+3. Delta in target band
+4. Best breakeven vs thesis
+5. Cleaner spread / execution quality
+
+Choose one backup contract that is either:
+- one strike lower/higher with similar expiry, or
+- next best expiry with similar delta profile
+
+### Output format for each candidate
+```
+ticker:
+  catalyst: <event_type> in <N> days
+  thesis: <1-2 lines>
+  primary_contract:
+    expiry:
+    DTE:
+    strike:
+    option_type: CALL
+    delta:
+    premium_or_mid:
+    open_interest:
+    volume:
+    spread_or_liquidity_proxy:
+    breakeven_move_pct:
+    why_this_contract:
+  backup_contract:
+    <same fields>
+  no_trade_reason: <if applicable>
+```
+
+### Important constraints
+- If exact contract-chain data is unavailable from the snapshot alone, look for the nearest chain artifact/cache already produced by the repo for that date
+- If the contract recommendation depends on missing chain fields, say so explicitly and give the best constrained recommendation possible
+- Do not change DEM scoring or ranking logic
+- This is a post-screen execution recommendation only
+
 ## Key File Locations
 | Area | File |
 |------|------|

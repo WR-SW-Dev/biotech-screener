@@ -3660,7 +3660,7 @@ def save_validation_snapshot(
     ranking_mode: str = "decision",
     prior_snapshot_dir: Optional[Path] = None,
     ctgov_cache_date: Optional[str] = None,
-    phase_scores_version: str = "v1",
+    phase_scores_version: str = "v3",
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -7344,7 +7344,8 @@ def run_screening_pipeline(
     inputs_manifest_mode: str = "off",
     inputs_manifest_verify_path: Optional[Path] = None,
     phase_scores_v2: bool = False,
-    phase_scores_v3: bool = False,
+    phase_scores_v3: bool = True,
+    phase_scores_v1: bool = False,
 ) -> Dict[str, Any]:
     """
     Execute full screening pipeline with deterministic guarantees.
@@ -7963,11 +7964,14 @@ def run_screening_pipeline(
 
     if m4_result is None:
         _m4_phase_scores = None
-        if phase_scores_v3:
+        if phase_scores_v1:
+            _m4_phase_scores = None  # Wong defaults
+            logger.info("[M4] Using PHASE_SCORES_V1 (Wong reference, explicit rollback)")
+        elif phase_scores_v3:
             from module_4_clinical_dev import PHASE_SCORES_V3
 
             _m4_phase_scores = PHASE_SCORES_V3
-            logger.info("[M4] Using PHASE_SCORES_V3 (Spec 024, asymmetric caps, P4 Wong fallback)")
+            logger.info("[M4] Using PHASE_SCORES_V3 (Spec 024, default-on, survivorship-adjusted)")
         elif phase_scores_v2:
             from module_4_clinical_dev import PHASE_SCORES_V2
 
@@ -9366,6 +9370,18 @@ Module 3 Catalyst Detection:
         default=False,
         help="Disable automatic validation snapshot saving.",
     )
+    parser.add_argument(
+        "--no-long-call-report",
+        action="store_true",
+        default=False,
+        help="Skip automatic long-call candidate report after snapshot.",
+    )
+    parser.add_argument(
+        "--no-data-collection-health",
+        action="store_true",
+        default=False,
+        help="Skip automatic data collection health report after snapshot.",
+    )
 
     parser.add_argument(
         "--decision-mode",
@@ -9666,6 +9682,12 @@ Module 3 Catalyst Detection:
         "Only allowed when --as-of-date equals today (PIT safety).",
     )
     parser.add_argument(
+        "--phase-scores-v1",
+        action="store_true",
+        default=False,
+        help="Rollback to Wong reference phase scores (v1). " "Overrides the default v3 scores.",
+    )
+    parser.add_argument(
         "--phase-scores-v2",
         action="store_true",
         default=False,
@@ -9675,9 +9697,10 @@ Module 3 Catalyst Detection:
     parser.add_argument(
         "--phase-scores-v3",
         action="store_true",
-        default=False,
+        default=True,
         help="Use survivorship-adjusted phase scores (Spec 024). "
-        "Opt-in only. Asymmetric caps (down=-4, up=+1), Phase 4 Wong fallback.",
+        "DEFAULT-ON. Bounded caps (down=-2, up=+0), Phase 4 Wong fallback. "
+        "9-date aggregate: mean top-60 overlap 99.43%%, max shift 13.",
     )
     parser.add_argument(
         "--sec-multi-form-mode",
@@ -9866,8 +9889,17 @@ Module 3 Catalyst Detection:
     if args.resume_from and not args.checkpoint_dir:
         parser.error("--resume-from requires --checkpoint-dir")
 
-    if getattr(args, "phase_scores_v2", False) and getattr(args, "phase_scores_v3", False):
-        parser.error("--phase-scores-v2 and --phase-scores-v3 are mutually exclusive")
+    _ps_explicit = sum(
+        [
+            getattr(args, "phase_scores_v1", False),
+            getattr(args, "phase_scores_v2", False),
+            # v3 is default-on; only count as explicit if v1 or v2 also set
+        ]
+    )
+    if _ps_explicit > 1:
+        parser.error("--phase-scores-v1, --phase-scores-v2, and --phase-scores-v3 are mutually exclusive")
+    if getattr(args, "phase_scores_v1", False) or getattr(args, "phase_scores_v2", False):
+        args.phase_scores_v3 = False  # explicit v1/v2 overrides default v3
 
     # Validate catalyst window format if provided
     catalyst_window = None
@@ -10080,8 +10112,9 @@ Module 3 Catalyst Detection:
             inputs_manifest_mode=args.inputs_manifest,
             inputs_manifest_verify_path=getattr(args, "inputs_manifest_path", None),
             ctgov_cache_dir=getattr(args, "ctgov_cache_dir", None),
+            phase_scores_v1=getattr(args, "phase_scores_v1", False),
             phase_scores_v2=getattr(args, "phase_scores_v2", False),
-            phase_scores_v3=getattr(args, "phase_scores_v3", False),
+            phase_scores_v3=getattr(args, "phase_scores_v3", True),
         )
 
         # Add bootstrap analysis if requested
@@ -10262,9 +10295,9 @@ Module 3 Catalyst Detection:
                 prior_snapshot_dir=prior_snapshot_dir,
                 ctgov_cache_date=_ctgov_cache_date,
                 phase_scores_version=(
-                    "v3"
-                    if getattr(args, "phase_scores_v3", False)
-                    else ("v2" if getattr(args, "phase_scores_v2", False) else "v1")
+                    "v1"
+                    if getattr(args, "phase_scores_v1", False)
+                    else ("v2" if getattr(args, "phase_scores_v2", False) else "v3")
                 ),
             )
             if snap_result:
@@ -10277,6 +10310,32 @@ Module 3 Catalyst Detection:
                         create_replay_bundle(_manifest, args.replay_bundle_out)
                     else:
                         logger.warning("[REPLAY BUNDLE] No inputs_manifest in results — skipping bundle creation")
+
+                # Long-call candidate report (Spec 025)
+                if not getattr(args, "no_long_call_report", False):
+                    try:
+                        from scripts.research.build_long_call_candidates import run_from_screen as _run_long_call_report
+
+                        _run_long_call_report(
+                            snapshot_dir=snap_result,
+                            data_dir=Path(args.data_dir),
+                            as_of_date=args.as_of_date,
+                        )
+                    except Exception as _lc_exc:
+                        logger.debug("[LONG_CALL] Skipped: %s", _lc_exc)
+
+                # Data collection health report (Spec 026)
+                if not getattr(args, "no_data_collection_health", False):
+                    try:
+                        from tools.build_data_collection_health import run_from_screen as _run_collection_health
+
+                        _run_collection_health(
+                            snapshot_dir=snap_result,
+                            data_dir=Path(args.data_dir),
+                            as_of_date=args.as_of_date,
+                        )
+                    except Exception as _ch_exc:
+                        logger.debug("[COLLECTION_HEALTH] Skipped: %s", _ch_exc)
 
                 # Phase-2 delta report hook
                 if args.decision_mode == "phase2" and not getattr(args, "no_delta", False):

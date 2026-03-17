@@ -1,7 +1,7 @@
 # Spec 24: Clinical Design-Feature Backtest + V3 Priors
 
-**Status**: APPROVED_MONITORED_OPT_IN
-**Date**: 2026-03-16
+**Status**: DEFAULT-ON APPROVED
+**Date**: 2026-03-16 (opt-in approved) → 2026-03-16 (default-on approved)
 **Depends on**: Spec 023 (clinical PIT backfill + outcome labels v2)
 
 ## Objective
@@ -111,15 +111,27 @@ Largest movers all C-tier, ranks 75-107. A-tier and B-tier untouched.
 - [x] A-tier names stable (0 downgrades, 0 upgrades)
 - [x] All movers explainable by phase-table change (C-tier Phase 2 names)
 - [x] Unknown-phase names treated as preclinical (no artifact)
-- [x] Default behavior remains Wong
+- [x] Default behavior is now v3 (survivorship-adjusted)
+- [x] `--phase-scores-v1` rollback to Wong available
+- [x] 9-date multi-date aggregate compare passed all promotion gates
 
 ## Approval
 
-**APPROVED: monitored opt-in** (2026-03-16)
+**DEFAULT-ON APPROVED** (2026-03-16)
 
-Single-date gate passed comfortably. Default-on promotion requires multi-date
-aggregate pass per repo promotion checker:
-- min top-60 overlap >= 0.90 across rolling window
-- aggregate mean top-60 overlap >= 0.93
-- max shift <= 30 on every date
-- zero tier-A regressions on every date
+9-date aggregate compare (multi-date window) passed all promotion gates:
+
+| Gate | Value | Threshold | Status |
+|------|-------|-----------|--------|
+| Mean top-60 overlap | 99.43% | >= 93% | PASS |
+| Min top-60 overlap | 98.3% | >= 90% | PASS |
+| Max rank shift | 13 | <= 30 | PASS |
+| Worst A-tier regression | 0 | 0 | PASS |
+| Flagged dates | 0 | 0 | PASS |
+
+Rollback: `--phase-scores-v1` restores Wong reference scores.
+
+**Survivorship caveat**: Underlying priors use plausible-case survivorship
+adjustment (41.5%). This is handled by bounded translation (down=-2, up=+0)
+and Phase 4 Wong fallback — both of which limit tail sensitivity to the
+survivorship estimate.
