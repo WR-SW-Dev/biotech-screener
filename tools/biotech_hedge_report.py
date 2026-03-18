@@ -1526,6 +1526,27 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
             )
             lines.append("")
 
+    # Top-N backtest comparison
+    top_n = d.get("top_n_backtests", [])
+    if len(top_n) > 1:
+        lines.append("### Top Structure Backtest Comparison\n")
+        lines.append("| Rank | Vehicle | Structure | Pricing | Hedged Return | Max DD | Hedge P&L | Sharpe |")
+        lines.append("|---|---|---|---|---|---|---|---|")
+        for entry in top_n:
+            s = entry.get("backtest_summary", {})
+            pm = entry.get("pricing_mode", "bs")
+            sh = s.get("sharpe_hedged")
+            sh_str = f"{sh:.2f}" if sh else "N/A"
+            lines.append(
+                f"| {entry['rank']} | {entry['vehicle']} | {entry['structure']} "
+                f"| {pm} "
+                f"| {s.get('total_return_hedged', 0):.2%} "
+                f"| {s.get('max_drawdown_hedged', 0):.2%} "
+                f"| ${s.get('total_hedge_pnl', 0):,.0f} "
+                f"| {sh_str} |"
+            )
+        lines.append("")
+
     # Regime analysis
     regimes = d.get("regime_analysis", [])
     if regimes:
@@ -1601,6 +1622,130 @@ def _fmt_ptile(v: Optional[float]) -> str:
 BACKTEST_AUTO = "auto"
 BACKTEST_HISTORICAL = "historical"
 BACKTEST_BS = "bs"
+
+
+# ---------------------------------------------------------------------------
+# Weekly archive + diff
+# ---------------------------------------------------------------------------
+
+
+def _find_prior_report(
+    archive_dir: Path,
+    current_date: str,
+) -> Optional[Dict[str, Any]]:
+    """Find the most recent archived report before current_date."""
+    if not archive_dir.exists():
+        return None
+    candidates = sorted(archive_dir.glob("hedge_report_*.json"), reverse=True)
+    for path in candidates:
+        try:
+            report_date = path.stem.replace("hedge_report_", "")
+            if report_date < current_date:
+                return json.loads(path.read_text())
+        except (ValueError, json.JSONDecodeError):
+            continue
+    return None
+
+
+def _compute_weekly_diff(
+    prior: Dict[str, Any],
+    current: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Compute week-over-week changes between two bioshort reports."""
+    diff: Dict[str, Any] = {
+        "prior_date": prior.get("as_of_date", ""),
+        "current_date": current.get("as_of_date", ""),
+    }
+
+    # Vehicle change
+    diff["best_vehicle_prior"] = prior.get("best_hedge_vehicle", "")
+    diff["best_vehicle_current"] = current.get("best_hedge_vehicle", "")
+    diff["vehicle_changed"] = diff["best_vehicle_prior"] != diff["best_vehicle_current"]
+
+    # Top structure change
+    prior_ranked = prior.get("ranked_structures", [])
+    current_ranked = current.get("ranked_structures", [])
+    p_top = prior_ranked[0] if prior_ranked else {}
+    c_top = current_ranked[0] if current_ranked else {}
+    diff["top_structure_prior"] = f"{p_top.get('vehicle', '')} {p_top.get('structure', '')}"
+    diff["top_structure_current"] = f"{c_top.get('vehicle', '')} {c_top.get('structure', '')}"
+    diff["structure_changed"] = diff["top_structure_prior"] != diff["top_structure_current"]
+
+    # Annualized carry
+    diff["ann_cost_bps_prior"] = p_top.get("ann_cost_bps", 0)
+    diff["ann_cost_bps_current"] = c_top.get("ann_cost_bps", 0)
+
+    # Historical down-month payoff
+    p_regime = prior.get("regime_analysis", [])
+    c_regime = current.get("regime_analysis", [])
+    p_down = next((r for r in p_regime if "Down" in r.get("regime", "")), {})
+    c_down = next((r for r in c_regime if "Down" in r.get("regime", "")), {})
+    diff["down_month_avg_pnl_prior"] = p_down.get("avg_hedge_pnl", 0)
+    diff["down_month_avg_pnl_current"] = c_down.get("avg_hedge_pnl", 0)
+
+    # Source mix
+    p_trace = prior.get("decision_trace", {})
+    c_trace = current.get("decision_trace", {})
+    diff["source_prior"] = prior.get("options_source_used", "")
+    diff["source_current"] = current.get("options_source_used", "")
+    diff["backtest_pricing_prior"] = p_trace.get("backtest_pricing", "")
+    diff["backtest_pricing_current"] = c_trace.get("backtest_pricing", "")
+
+    # Beta changes
+    for etf in HEDGE_ETFS:
+        p_beta = prior.get("beta_stats", {}).get(etf, {})
+        c_beta = current.get("beta_stats", {}).get(etf, {})
+        diff[f"{etf}_beta_prior"] = p_beta.get("beta")
+        diff[f"{etf}_beta_current"] = c_beta.get("beta")
+
+    return diff
+
+
+def _render_diff_markdown(diff: Dict[str, Any]) -> str:
+    """Render the weekly diff as a markdown section."""
+    if not diff.get("prior_date"):
+        return ""
+
+    lines: List[str] = []
+    lines.append(f"## Week-over-Week Changes (vs {diff['prior_date']})\n")
+
+    # Flags
+    flags = []
+    if diff.get("vehicle_changed"):
+        flags.append(f"Hedge vehicle changed: {diff['best_vehicle_prior']} → {diff['best_vehicle_current']}")
+    if diff.get("structure_changed"):
+        flags.append(f"Top structure changed: {diff['top_structure_prior']} → {diff['top_structure_current']}")
+    if flags:
+        for f in flags:
+            lines.append(f"- **{f}**")
+        lines.append("")
+
+    # Comparison table
+    lines.append("| Metric | Prior | Current | Delta |")
+    lines.append("|---|---|---|---|")
+
+    cost_p = diff.get("ann_cost_bps_prior", 0) or 0
+    cost_c = diff.get("ann_cost_bps_current", 0) or 0
+    lines.append(f"| Annualized carry (bps) | {cost_p:.0f} | {cost_c:.0f} | {cost_c - cost_p:+.0f} |")
+
+    down_p = diff.get("down_month_avg_pnl_prior", 0) or 0
+    down_c = diff.get("down_month_avg_pnl_current", 0) or 0
+    lines.append(f"| Down-month avg hedge P&L | ${down_p:,.0f} | ${down_c:,.0f} | ${down_c - down_p:+,.0f} |")
+
+    for etf in HEDGE_ETFS:
+        bp = diff.get(f"{etf}_beta_prior")
+        bc = diff.get(f"{etf}_beta_current")
+        if bp is not None and bc is not None:
+            lines.append(f"| {etf} beta | {bp:.3f} | {bc:.3f} | {bc - bp:+.3f} |")
+
+    lines.append(f"| Options source | {diff.get('source_prior', 'N/A')} | {diff.get('source_current', 'N/A')} | |")
+    lines.append(
+        f"| Backtest pricing | {diff.get('backtest_pricing_prior', 'N/A')} "
+        f"| {diff.get('backtest_pricing_current', 'N/A')} | |"
+    )
+    lines.append("")
+
+    return "\n".join(lines)
 
 
 def run_hedge_report(
@@ -1764,70 +1909,133 @@ def run_hedge_report(
     logger.info("Phase 4: Historical backtest...")
     monthly_rets = compute_monthly_returns(weights, all_prices, as_of_date, months=12)
 
+    TOP_N_BACKTEST = 3
     backtest = {}
     bs_comparison = {}
     regime_analysis = []
     backtest_pricing_mode = "bs"
+    top_n_backtests: List[Dict[str, Any]] = []
 
     if ranked and monthly_rets:
-        top_struct = ranked[0]
-        etf_for_bt = top_struct["vehicle"]
-        offsets_bt = _infer_strike_offsets(top_struct)
-        sigma_bt = (
-            surface.get(etf_for_bt, {}).get("atm_iv_near")
-            or surface.get(etf_for_bt, {}).get("realized_vol_30d")
-            or 0.30
-        )
-
-        # Always run BS backtest (used as fallback or comparison baseline)
-        bs_bt = backtest_structure(
-            top_struct,
-            all_prices.get(etf_for_bt, {}),
-            monthly_rets,
-            sigma_bt,
-            hedge_notional,
-        )
-
-        # Try historical options-priced backtest
         use_historical = backtest_mode in (BACKTEST_AUTO, BACKTEST_HISTORICAL)
-        if use_historical:
-            try:
-                from common.historical_hedge_backtest import run_historical_backtest
 
-                hist_bt = run_historical_backtest(
-                    top_struct,
-                    offsets_bt,
-                    etf_for_bt,
-                    all_prices.get(etf_for_bt, {}),
-                    monthly_rets,
-                    hedge_notional,
-                    top_struct.get("contracts", 1),
-                )
-                bt_summary = hist_bt.get("summary", {})
-                hist_months = bt_summary.get("historical_months", 0)
-                total_months = bt_summary.get("total_months", 0)
-                if hist_months > 0:
-                    backtest = hist_bt
-                    backtest_pricing_mode = bt_summary.get("backtest_pricing", "mixed")
-                    # Save BS as comparison baseline
-                    bs_comparison = bs_bt.get("summary", {})
-                    logger.info(
-                        "  Historical backtest: %d/%d months from actual option closes",
-                        hist_months,
-                        total_months,
+        # Backtest top N structures
+        for idx, struct in enumerate(ranked[:TOP_N_BACKTEST]):
+            etf_bt = struct["vehicle"]
+            offsets_bt = _infer_strike_offsets(struct)
+            sigma_bt = (
+                surface.get(etf_bt, {}).get("atm_iv_near") or surface.get(etf_bt, {}).get("realized_vol_30d") or 0.30
+            )
+
+            # BS backtest (always)
+            bs_bt = backtest_structure(
+                struct,
+                all_prices.get(etf_bt, {}),
+                monthly_rets,
+                sigma_bt,
+                hedge_notional,
+            )
+
+            # Historical backtest (if available)
+            hist_bt = None
+            if use_historical:
+                try:
+                    from common.historical_hedge_backtest import run_historical_backtest
+
+                    hist_bt = run_historical_backtest(
+                        struct,
+                        offsets_bt,
+                        etf_bt,
+                        all_prices.get(etf_bt, {}),
+                        monthly_rets,
+                        hedge_notional,
+                        struct.get("contracts", 1),
                     )
-                else:
-                    logger.info("  No historical option data available; using BS")
-            except Exception as exc:
-                logger.info("  Historical backtest failed: %s; using BS", exc)
+                    hs = hist_bt.get("summary", {})
+                    if hs.get("historical_months", 0) == 0:
+                        hist_bt = None
+                except Exception:
+                    hist_bt = None
 
-        # Use BS if historical didn't produce results
-        if not backtest:
-            backtest = bs_bt
-            backtest_pricing_mode = "bs"
+            # Pick the better result
+            best_bt = hist_bt if hist_bt else bs_bt
+            best_summary = best_bt.get("summary", {})
+
+            entry = {
+                "rank": struct["rank"],
+                "vehicle": struct["vehicle"],
+                "structure": struct["structure"],
+                "hedge_score": struct.get("hedge_score", 0),
+                "ann_cost_bps": struct.get("ann_cost_bps", 0),
+                "backtest_summary": best_summary,
+                "bs_summary": bs_bt.get("summary", {}),
+                "pricing_mode": best_summary.get("backtest_pricing", "bs"),
+            }
+            top_n_backtests.append(entry)
+
+            if idx == 0:
+                logger.info(
+                    "  #%d %s %s: %s, hedge P&L=$%s",
+                    struct["rank"],
+                    struct["vehicle"],
+                    struct["structure"],
+                    entry["pricing_mode"],
+                    f"{best_summary.get('total_hedge_pnl', 0):,.0f}",
+                )
+
+        # Primary backtest = top-ranked structure
+        primary = top_n_backtests[0] if top_n_backtests else {}
+        if primary:
+            # Find the full backtest result for rank #1
+            struct_0 = ranked[0]
+            etf_0 = struct_0["vehicle"]
+            offsets_0 = _infer_strike_offsets(struct_0)
+            sigma_0 = (
+                surface.get(etf_0, {}).get("atm_iv_near") or surface.get(etf_0, {}).get("realized_vol_30d") or 0.30
+            )
+
+            # Re-run to get full months array for regime analysis
+            if use_historical:
+                try:
+                    from common.historical_hedge_backtest import run_historical_backtest
+
+                    hist_bt = run_historical_backtest(
+                        struct_0,
+                        offsets_0,
+                        etf_0,
+                        all_prices.get(etf_0, {}),
+                        monthly_rets,
+                        hedge_notional,
+                        struct_0.get("contracts", 1),
+                    )
+                    hs = hist_bt.get("summary", {})
+                    if hs.get("historical_months", 0) > 0:
+                        backtest = hist_bt
+                        backtest_pricing_mode = hs.get("backtest_pricing", "mixed")
+                        bs_bt_0 = backtest_structure(
+                            struct_0,
+                            all_prices.get(etf_0, {}),
+                            monthly_rets,
+                            sigma_0,
+                            hedge_notional,
+                        )
+                        bs_comparison = bs_bt_0.get("summary", {})
+                except Exception:
+                    pass
+
+            if not backtest:
+                backtest = backtest_structure(
+                    struct_0,
+                    all_prices.get(etf_0, {}),
+                    monthly_rets,
+                    sigma_0,
+                    hedge_notional,
+                )
+                backtest_pricing_mode = "bs"
 
         if backtest.get("months"):
-            regime_analysis = compute_regime_analysis(backtest["months"], all_prices.get(etf_for_bt, {}))
+            etf_for_regime = ranked[0]["vehicle"] if ranked else "XBI"
+            regime_analysis = compute_regime_analysis(backtest["months"], all_prices.get(etf_for_regime, {}))
 
     # --- Phase 5: Assemble report data ---
     # Build decision trace for auditability
@@ -1872,6 +2080,7 @@ def run_hedge_report(
         "backtest": backtest.get("summary", {}),
         "backtest_months": backtest.get("months", []),
         "bs_backtest_comparison": bs_comparison if bs_comparison else None,
+        "top_n_backtests": top_n_backtests,
         "regime_analysis": regime_analysis,
         "price_history_range": price_range,
     }
@@ -1905,6 +2114,52 @@ def run_hedge_report(
         tmp_name = tmp.name
     os.replace(tmp_name, str(json_path))
     logger.info("Phase 5: Wrote %s", json_path)
+
+    # --- Weekly archive + diff ---
+    archive_dir = REPO_ROOT / "output" / "hedge_report" / "archive"
+    archive_dir.mkdir(parents=True, exist_ok=True)
+    archive_json = archive_dir / f"hedge_report_{as_of_date}.json"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".json",
+        dir=str(archive_dir),
+        delete=False,
+    ) as tmp:
+        json.dump(report_data, tmp, indent=2, default=str)
+        tmp_name = tmp.name
+    os.replace(tmp_name, str(archive_json))
+
+    # Generate week-over-week diff if prior report exists
+    prior_report = _find_prior_report(archive_dir, as_of_date)
+    if prior_report:
+        diff = _compute_weekly_diff(prior_report, report_data)
+        report_data["weekly_diff"] = diff
+        # Append diff section to markdown
+        diff_md = _render_diff_markdown(diff)
+        if diff_md:
+            md_content_with_diff = md_content.rstrip() + "\n\n" + diff_md
+            with tempfile.NamedTemporaryFile(
+                mode="w",
+                suffix=".md",
+                dir=str(output_dir),
+                delete=False,
+            ) as tmp:
+                tmp.write(md_content_with_diff)
+                tmp_name = tmp.name
+            os.replace(tmp_name, str(md_path))
+        # Re-write JSON with diff included
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            suffix=".json",
+            dir=str(output_dir),
+            delete=False,
+        ) as tmp:
+            json.dump(report_data, tmp, indent=2, default=str)
+            tmp_name = tmp.name
+        os.replace(tmp_name, str(json_path))
+        logger.info("  Weekly diff vs %s", prior_report.get("as_of_date", "unknown"))
+
+    logger.info("  Archived to %s", archive_json)
 
     return report_data
 
