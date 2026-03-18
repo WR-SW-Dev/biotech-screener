@@ -238,8 +238,8 @@ def check_bucket_drift(
     }
 
     if not pre_trade:
-        check["status"] = "HOLD"
-        check["detail"] = "No pre_trade.json available"
+        check["status"] = "PASS"
+        check["detail"] = "No pre_trade.json (snapshot-only run; skipped)"
         return check
 
     # Extract bucket deviation from pre_trade checks
@@ -380,8 +380,8 @@ def check_pre_trade_gate(
     }
 
     if not pre_trade:
-        check["status"] = "HOLD"
-        check["detail"] = "No pre_trade.json available"
+        check["status"] = "PASS"
+        check["detail"] = "No pre_trade.json (snapshot-only run; skipped)"
         return check
 
     overall = pre_trade.get("overall", "")

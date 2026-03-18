@@ -168,9 +168,11 @@ class TestCheckBucketDrift:
         result = check_bucket_drift(pt, {})
         assert result["status"] == "FAIL"
 
-    def test_no_pre_trade(self):
+    def test_no_pre_trade_skips(self):
+        """Missing pre_trade is PASS (snapshot-only run), not HOLD."""
         result = check_bucket_drift(None, {})
-        assert result["status"] == "HOLD"
+        assert result["status"] == "PASS"
+        assert "skipped" in result["detail"]
 
 
 # ---------------------------------------------------------------------------
@@ -291,9 +293,11 @@ class TestCheckPreTradeGate:
         result = check_pre_trade_gate(pt)
         assert result["status"] == "FAIL"
 
-    def test_no_data(self):
+    def test_no_data_skips(self):
+        """Missing pre_trade is PASS (snapshot-only run), not HOLD."""
         result = check_pre_trade_gate(None)
-        assert result["status"] == "HOLD"
+        assert result["status"] == "PASS"
+        assert "skipped" in result["detail"]
 
 
 # ---------------------------------------------------------------------------

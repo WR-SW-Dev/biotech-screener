@@ -2825,8 +2825,8 @@ def check_hard_options_coverage(
     if n_hard == 0:
         return GateResult(name=name, status="PASS", detail="no hard rows to check")
 
-    n_with_iv = sum(1 for r in hard_rows if r.get("opt_atm_iv", "").strip() not in ("", "0", "0.0"))
-    n_with_straddle = sum(1 for r in hard_rows if r.get("cheap_vol_score", "").strip() not in ("", "0", "0.0"))
+    n_with_iv = sum(1 for r in hard_rows if str(r.get("opt_atm_iv", "")).strip() not in ("", "0", "0.0"))
+    n_with_straddle = sum(1 for r in hard_rows if str(r.get("cheap_vol_score", "")).strip() not in ("", "0", "0.0"))
     n_reviewable = sum(
         1
         for r in hard_rows
