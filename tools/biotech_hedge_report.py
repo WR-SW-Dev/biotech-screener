@@ -1520,7 +1520,17 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
             "day\\_close or BS theoretical prices — not Tastytrade quotes."
         )
     lines.append("- **Beta window**: 60 trading days")
-    lines.append("- **Backtest**: monthly rebalance, BS pricing, no transaction costs")
+    bt_pricing = dtrace.get("backtest_pricing", "bs")
+    if bt_pricing == "historical":
+        lines.append(
+            "- **Backtest**: monthly rebalance, **historical option closes** (Massive day aggs), no transaction costs"
+        )
+    elif bt_pricing == "mixed":
+        lines.append(
+            "- **Backtest**: monthly rebalance, historical option closes + BS fallback (mixed), no transaction costs"
+        )
+    else:
+        lines.append("- **Backtest**: monthly rebalance, BS pricing, no transaction costs")
     lines.append("- **This report is for IC discussion, not execution**")
     lines.append("")
 
@@ -1544,6 +1554,11 @@ def _fmt_ptile(v: Optional[float]) -> str:
 # ---------------------------------------------------------------------------
 
 
+BACKTEST_AUTO = "auto"
+BACKTEST_HISTORICAL = "historical"
+BACKTEST_BS = "bs"
+
+
 def run_hedge_report(
     as_of_date: str,
     portfolio_csv: Optional[Path],
@@ -1552,6 +1567,7 @@ def run_hedge_report(
     output_dir: Path,
     snap_dir: Optional[Path] = None,
     options_source: str = OPTIONS_SOURCE_AUTO,
+    backtest_mode: str = BACKTEST_AUTO,
 ) -> Dict[str, Any]:
     """Run the full hedge report pipeline.  Returns the report data dict."""
     logger.info("=== Biotech Portfolio Hedge Report — %s ===", as_of_date)
@@ -1706,24 +1722,65 @@ def run_hedge_report(
 
     backtest = {}
     regime_analysis = []
+    backtest_pricing_mode = "bs"
+
     if ranked and monthly_rets:
         top_struct = ranked[0]
         etf_for_bt = top_struct["vehicle"]
-        sigma_bt = (
-            surface.get(etf_for_bt, {}).get("atm_iv_near")
-            or surface.get(etf_for_bt, {}).get("realized_vol_30d")
-            or 0.30
-        )
-        bt = backtest_structure(
-            top_struct,
-            all_prices.get(etf_for_bt, {}),
-            monthly_rets,
-            sigma_bt,
-            hedge_notional,
-        )
-        backtest = bt
-        if bt.get("months"):
-            regime_analysis = compute_regime_analysis(bt["months"], all_prices.get(etf_for_bt, {}))
+        offsets_bt = _infer_strike_offsets(top_struct)
+
+        # Try historical options-priced backtest
+        use_historical = backtest_mode in (BACKTEST_AUTO, BACKTEST_HISTORICAL)
+        if use_historical:
+            try:
+                from common.historical_hedge_backtest import run_historical_backtest
+
+                bt = run_historical_backtest(
+                    top_struct,
+                    offsets_bt,
+                    etf_for_bt,
+                    all_prices.get(etf_for_bt, {}),
+                    monthly_rets,
+                    hedge_notional,
+                    top_struct.get("contracts", 1),
+                )
+                bt_summary = bt.get("summary", {})
+                hist_months = bt_summary.get("historical_months", 0)
+                total_months = bt_summary.get("total_months", 0)
+                if hist_months > 0:
+                    backtest = bt
+                    backtest_pricing_mode = bt_summary.get("backtest_pricing", "mixed")
+                    logger.info(
+                        "  Historical backtest: %d/%d months from actual option closes",
+                        hist_months,
+                        total_months,
+                    )
+                else:
+                    logger.info("  No historical option data available; falling back to BS")
+                    use_historical = False
+            except Exception as exc:
+                logger.info("  Historical backtest failed: %s; falling back to BS", exc)
+                use_historical = False
+
+        # BS fallback
+        if not backtest:
+            sigma_bt = (
+                surface.get(etf_for_bt, {}).get("atm_iv_near")
+                or surface.get(etf_for_bt, {}).get("realized_vol_30d")
+                or 0.30
+            )
+            bt = backtest_structure(
+                top_struct,
+                all_prices.get(etf_for_bt, {}),
+                monthly_rets,
+                sigma_bt,
+                hedge_notional,
+            )
+            backtest = bt
+            backtest_pricing_mode = "bs"
+
+        if backtest.get("months"):
+            regime_analysis = compute_regime_analysis(backtest["months"], all_prices.get(etf_for_bt, {}))
 
     # --- Phase 5: Assemble report data ---
     # Build decision trace for auditability
@@ -1747,6 +1804,7 @@ def run_hedge_report(
     decision_trace: Dict[str, Any] = {
         "surface_source_by_etf": surface_source_by_etf,
         "structure_pricing_source_by_etf": structure_pricing_by_etf,
+        "backtest_pricing": backtest_pricing_mode,
         "fallbacks_triggered": fallbacks,
     }
 
@@ -1850,6 +1908,13 @@ def main() -> int:
         default="auto",
         help="Options data source: auto (best available), massive, or tasty",
     )
+    parser.add_argument(
+        "--backtest-mode",
+        type=str,
+        choices=["auto", "historical", "bs"],
+        default="auto",
+        help="Backtest pricing: auto (historical if S3 creds, else BS), historical, or bs",
+    )
     args = parser.parse_args()
 
     report = run_hedge_report(
@@ -1860,6 +1925,7 @@ def main() -> int:
         output_dir=args.output_dir,
         snap_dir=args.snap_dir,
         options_source=args.options_source,
+        backtest_mode=args.backtest_mode,
     )
 
     if report.get("error"):

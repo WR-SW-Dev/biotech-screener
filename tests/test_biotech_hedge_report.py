@@ -531,6 +531,84 @@ class TestOptionsSourceSelection:
         assert result["data_source"] == "realized_vol_proxy"
 
 
+class TestHistoricalBacktest:
+    """Test historical contract matching."""
+
+    def test_find_best_contract_exact_strike(self):
+        from common.historical_hedge_backtest import find_best_contract
+
+        records = [
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00120000", "close": 3.50, "volume": 100},
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00115000", "close": 2.10, "volume": 50},
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417C00130000", "close": 4.00, "volume": 200},
+        ]
+        match = find_best_contract(records, "XBI", 120.0, "put", "2026-04-01", "2026-05-01")
+        assert match is not None
+        assert match["strike"] == 120.0
+        assert match["close"] == 3.50
+
+    def test_find_best_contract_nearest_strike(self):
+        from common.historical_hedge_backtest import find_best_contract
+
+        records = [
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00118000", "close": 2.80, "volume": 100},
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00122000", "close": 3.90, "volume": 50},
+        ]
+        match = find_best_contract(records, "XBI", 120.0, "put", "2026-04-01", "2026-05-01")
+        assert match is not None
+        assert match["strike"] == 118.0  # closer to 120 than 122
+
+    def test_find_best_contract_no_match(self):
+        from common.historical_hedge_backtest import find_best_contract
+
+        records = [
+            {"underlying_ticker": "IBB", "option_ticker": "O:IBB260417P00150000", "close": 2.00, "volume": 10},
+        ]
+        # Looking for XBI, not IBB
+        match = find_best_contract(records, "XBI", 120.0, "put", "2026-04-01", "2026-05-01")
+        assert match is None
+
+    def test_price_structure_historical_straight_put(self):
+        from common.historical_hedge_backtest import price_structure_historical
+
+        entry = [
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00114000", "close": 2.50, "volume": 100},
+        ]
+        exit_recs = [
+            {"underlying_ticker": "XBI", "option_ticker": "O:XBI260417P00114000", "close": 8.00, "volume": 80},
+        ]
+        result = price_structure_historical(
+            "straight_put",
+            {"put": -0.05},
+            120.0,
+            "XBI",
+            entry,
+            exit_recs,
+            "2026-04-01",
+            "2026-05-01",
+            10,
+        )
+        assert result["pricing_source"] == "historical"
+        # PnL = (8.00 - 2.50) * 10 * 100 = 5500
+        assert result["pnl"] == 5500
+
+    def test_price_structure_missing_data(self):
+        from common.historical_hedge_backtest import price_structure_historical
+
+        result = price_structure_historical(
+            "straight_put",
+            {"put": -0.05},
+            120.0,
+            "XBI",
+            [],
+            [],
+            "2026-04-01",
+            "2026-05-01",
+            10,
+        )
+        assert result["pricing_source"] == "missing"
+
+
 class TestSimulatePnl:
     """Test structure PnL simulation."""
 
