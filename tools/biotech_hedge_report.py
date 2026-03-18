@@ -1880,6 +1880,22 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
             )
         lines.append("")
 
+    # Regime preference (shadow classifier)
+    rp = d.get("regime_preference", {})
+    if rp.get("regime_preference"):
+        pref = rp["regime_preference"]
+        conf = rp.get("regime_confidence", "low")
+        pref_display = {
+            "collar_preferred": "Collar preferred",
+            "otm_put_preferred": "OTM put preferred",
+            "ambiguous": "Ambiguous",
+        }.get(pref, pref)
+        lines.append("## Regime Structure Preference (shadow)\n")
+        lines.append(f"**{pref_display}** (confidence: {conf})\n")
+        for reason in rp.get("regime_reasons", []):
+            lines.append(f"- {reason}")
+        lines.append("")
+
     # Regime analysis
     regimes = d.get("regime_analysis", [])
     if regimes:
@@ -2646,6 +2662,31 @@ def run_hedge_report(
     # Shadow efficacy comparison (Spec 029 research diagnostic)
     shadow_efficacy = _compute_shadow_efficacy(top_n_backtests, ranked)
     report_data["shadow_efficacy"] = shadow_efficacy
+
+    # Shadow regime preference classifier
+    try:
+        from common.hedge_regime_classifier import classify_hedge_regime
+
+        best_surf = surface.get(best_etf, {})
+        best_strad = best_surf.get("straddles", [{}])
+        regime_class = classify_hedge_regime(
+            vrp=best_surf.get("vrp"),
+            vrp_percentile=best_surf.get("vrp_percentile"),
+            cost_regime=best_strad[0].get("cost_regime", "") if best_strad else "",
+            implied_move_pct=best_strad[0].get("implied_move_pct") if best_strad else None,
+            r_squared=beta_stats.get(best_etf, {}).get("r_squared"),
+            skew_25d=best_surf.get("skew_25d"),
+        )
+        report_data["regime_preference"] = regime_class
+        logger.info(
+            "  Regime preference: %s (%s) — collar=%d, put=%d",
+            regime_class["regime_preference"],
+            regime_class["regime_confidence"],
+            regime_class["collar_score"],
+            regime_class["put_score"],
+        )
+    except Exception as _rp_exc:
+        logger.debug("Regime classifier skipped: %s", _rp_exc)
 
     # Compute IC decision block (needs full report_data)
     ic_decision = compute_ic_decision(report_data)
