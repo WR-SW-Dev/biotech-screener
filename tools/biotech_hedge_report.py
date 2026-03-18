@@ -1346,6 +1346,29 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
 
     lines.append(f"# Biotech Portfolio Hedge Report — {d['as_of_date']}\n")
 
+    # IC Decision Banner
+    ic = d.get("ic_decision", {})
+    if ic:
+        action = ic.get("policy_action", "WATCH")
+        action_emoji = {"HEDGE NOW": ">>", "WATCH": "--", "DEFER": "!!"}
+        banner = (
+            f"**[{action_emoji.get(action, '--')} {action}]** | "
+            f"Primary: **{ic.get('primary_hedge', 'none')}** | "
+            f"Confidence: **{ic.get('confidence', 'N/A')}** | "
+            f"{ic.get('change_reason', '')}"
+        )
+        lines.append(banner)
+        lines.append("")
+        if ic.get("policy_reasons"):
+            for reason in ic["policy_reasons"]:
+                lines.append(f"- {reason}")
+        if ic.get("secondary_hedge") and ic["secondary_hedge"] != "none":
+            sec_line = (
+                f"- Secondary alternative: {ic['secondary_hedge']} " f"({ic.get('secondary_cost_bps', 0):.0f} bps)"
+            )
+            lines.append(sec_line)
+        lines.append("")
+
     # Portfolio summary
     lines.append("## Portfolio Summary\n")
     ps = d.get("portfolio_summary", {})
@@ -1622,6 +1645,148 @@ def _fmt_ptile(v: Optional[float]) -> str:
 BACKTEST_AUTO = "auto"
 BACKTEST_HISTORICAL = "historical"
 BACKTEST_BS = "bs"
+
+# Policy thresholds
+CARRY_EXPENSIVE_BPS = 400  # above this, defer
+CARRY_CHEAP_BPS = 50  # below this, hedge now (protection is cheap)
+MIN_HISTORICAL_COVERAGE = 0.50  # at least 50% months from actual closes
+CONFIDENCE_HIGH_COVERAGE = 0.75  # 75%+ historical for high confidence
+
+
+def compute_ic_decision(report_data: Dict[str, Any]) -> Dict[str, Any]:
+    """Compute IC decision block: recommendation banner, confidence, policy trigger.
+
+    Returns dict with:
+        primary_hedge, secondary_hedge, recommendation_changed, change_reason,
+        confidence, confidence_drivers, policy_action, policy_reasons
+    """
+    ranked = report_data.get("ranked_structures", [])
+    bt_summary = report_data.get("backtest", {})
+    diff = report_data.get("weekly_diff")
+
+    result: Dict[str, Any] = {}
+
+    # --- Recommendation banner ---
+    if ranked:
+        top = ranked[0]
+        result["primary_hedge"] = f"{top['vehicle']} {top['structure']}"
+        result["primary_cost_bps"] = top.get("ann_cost_bps", 0)
+        result["primary_score"] = top.get("hedge_score", 0)
+    else:
+        result["primary_hedge"] = "none"
+        result["primary_cost_bps"] = 0
+        result["primary_score"] = 0
+
+    if len(ranked) >= 2:
+        sec = ranked[1]
+        result["secondary_hedge"] = f"{sec['vehicle']} {sec['structure']}"
+        result["secondary_cost_bps"] = sec.get("ann_cost_bps", 0)
+    else:
+        result["secondary_hedge"] = "none"
+
+    # Change vs prior week
+    if diff:
+        result["recommendation_changed"] = diff.get("structure_changed", False)
+        if diff.get("structure_changed"):
+            result["change_reason"] = (
+                f"changed from {diff.get('top_structure_prior', '?')} " f"to {diff.get('top_structure_current', '?')}"
+            )
+        elif diff.get("vehicle_changed"):
+            result["change_reason"] = (
+                f"vehicle changed from {diff.get('best_vehicle_prior', '?')} "
+                f"to {diff.get('best_vehicle_current', '?')}"
+            )
+        else:
+            result["change_reason"] = "no change vs prior week"
+    else:
+        result["recommendation_changed"] = None
+        result["change_reason"] = "no prior report for comparison"
+
+    # --- Confidence ---
+    drivers: List[str] = []
+    conf_score = 0.0
+
+    # Historical coverage quality (0-40 points)
+    hist_m = bt_summary.get("historical_months", 0)
+    total_m = bt_summary.get("total_months", 0)
+    hist_pct = hist_m / total_m if total_m > 0 else 0
+    if hist_pct >= CONFIDENCE_HIGH_COVERAGE:
+        conf_score += 40
+        drivers.append(f"historical coverage {hist_pct:.0%} (high)")
+    elif hist_pct >= MIN_HISTORICAL_COVERAGE:
+        conf_score += 25
+        drivers.append(f"historical coverage {hist_pct:.0%} (adequate)")
+    elif hist_pct > 0:
+        conf_score += 10
+        drivers.append(f"historical coverage {hist_pct:.0%} (low)")
+    else:
+        drivers.append("no historical option data (BS-only)")
+
+    # Source quality (0-30 points)
+    source = report_data.get("options_source_used", "")
+    if source == OPTIONS_SOURCE_TASTY:
+        conf_score += 30
+        drivers.append("live Tastytrade IV/skew")
+    elif source == OPTIONS_SOURCE_MASSIVE:
+        conf_score += 20
+        drivers.append("Massive chain data")
+    else:
+        conf_score += 5
+        drivers.append("realized vol proxy only")
+
+    # Stability vs prior week (0-30 points)
+    if diff:
+        if not diff.get("structure_changed") and not diff.get("vehicle_changed"):
+            conf_score += 30
+            drivers.append("stable vs prior week")
+        elif not diff.get("structure_changed"):
+            conf_score += 20
+            drivers.append("structure stable, vehicle changed")
+        else:
+            conf_score += 5
+            drivers.append("recommendation changed from prior week")
+    else:
+        conf_score += 15  # first run, neutral
+        drivers.append("first report (no stability data)")
+
+    if conf_score >= 80:
+        confidence = "HIGH"
+    elif conf_score >= 50:
+        confidence = "MEDIUM"
+    else:
+        confidence = "LOW"
+
+    result["confidence"] = confidence
+    result["confidence_score"] = round(conf_score, 0)
+    result["confidence_drivers"] = drivers
+
+    # --- Policy trigger ---
+    cost_bps = result.get("primary_cost_bps", 0) or 0
+    reasons: List[str] = []
+
+    if confidence == "LOW":
+        action = "DEFER"
+        reasons.append("low confidence — insufficient data quality for hedge sizing")
+    elif cost_bps > CARRY_EXPENSIVE_BPS:
+        action = "WATCH"
+        reasons.append(f"carry {cost_bps:.0f} bps > {CARRY_EXPENSIVE_BPS} bps threshold — protection expensive")
+    elif cost_bps <= CARRY_CHEAP_BPS:
+        action = "HEDGE NOW"
+        reasons.append(f"carry {cost_bps:.0f} bps <= {CARRY_CHEAP_BPS} bps — protection is cheap")
+    elif hist_pct < MIN_HISTORICAL_COVERAGE and total_m > 0:
+        action = "WATCH"
+        reasons.append(f"historical coverage {hist_pct:.0%} below {MIN_HISTORICAL_COVERAGE:.0%} minimum")
+    elif confidence == "HIGH":
+        action = "HEDGE NOW"
+        reasons.append("high confidence, reasonable carry")
+    else:
+        action = "WATCH"
+        reasons.append("medium confidence — review top-3 comparison before sizing")
+
+    result["policy_action"] = action
+    result["policy_reasons"] = reasons
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -2084,6 +2249,10 @@ def run_hedge_report(
         "regime_analysis": regime_analysis,
         "price_history_range": price_range,
     }
+
+    # Compute IC decision block (needs full report_data)
+    ic_decision = compute_ic_decision(report_data)
+    report_data["ic_decision"] = ic_decision
 
     # Write outputs
     output_dir.mkdir(parents=True, exist_ok=True)
