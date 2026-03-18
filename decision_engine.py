@@ -258,6 +258,15 @@ class DecisionRuleset:
     binary_now_quality_weight: float = 1.0
     binary_now_institutional_weight: float = 0.3
 
+    # Build-window clinical sort tilt (shadow, default "baseline")
+    # Bucket-gated version of clinical sort: only applies inside build_window.
+    # Uses clinical_score_z_tier (PIT-safe), same clamp/stage logic as global
+    # clinical sort but restricted to one sleeve.
+    #   "baseline":     no change
+    #   "clinical_z":   clinical_score_z_tier sort tilt in build_window only
+    build_window_clinical_mode: str = "baseline"
+    build_window_clinical_weight: float = 0.5
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -1340,6 +1349,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "options_quality_91_180",
     "binary_quality_now",
     "binary_institutional_now",
+    "clinical_build_window",
 )
 
 
@@ -1491,6 +1501,17 @@ def _build_sort_contributions(
             bi_w = ruleset.binary_now_institutional_weight
             delta_i = bi_w * iz_eff
             contribs.append(SortContribution("binary_institutional_now", iz, bi_w, delta_i))
+
+    # 12. Build-window clinical sort tilt (shadow, bucket-gated)
+    bw_mode = ruleset.build_window_clinical_mode
+    if bucket == "build_window" and bw_mode == "clinical_z":
+        cz_tier = _safe_float(decision_fields.get("clinical_score_z_tier"), default=0.0)
+        stage = str(decision_fields.get("stage_bucket", ""))
+        stage_mult = dict(ruleset.clinical_stage_mults).get(stage, 1.0)
+        cz_eff = min(2.0, max(0.0, cz_tier))  # positive-only
+        bw_w = ruleset.build_window_clinical_weight
+        delta_bw = bw_w * cz_eff * stage_mult
+        contribs.append(SortContribution("clinical_build_window", cz_tier, bw_w, delta_bw))
 
     return contribs
 
