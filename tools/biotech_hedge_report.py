@@ -1467,7 +1467,16 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
     bt = d.get("backtest", {})
     bs = bt if "total_months" in bt else bt.get("summary", {})
     if bs:
-        lines.append("## Historical Effectiveness (trailing 12mo)\n")
+        hist_m = bs.get("historical_months", 0)
+        total_m = bs.get("total_months", 0)
+        bt_mode = bs.get("backtest_pricing", "bs")
+
+        header = "## Historical Effectiveness (trailing 12mo)"
+        if hist_m > 0:
+            pct_hist = hist_m / total_m * 100 if total_m > 0 else 0
+            header += f" — {hist_m}/{total_m} months from actual option closes ({pct_hist:.0f}%)"
+        lines.append(header + "\n")
+
         lines.append("| Metric | Unhedged | Hedged (top pick) |")
         lines.append("|---|---|---|")
         lines.append(f"| Return | {bs.get('total_return_unhedged', 0):.2%} | {bs.get('total_return_hedged', 0):.2%} |")
@@ -1481,6 +1490,41 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
         sh_h = bs.get("sharpe_hedged")
         lines.append(f"| Sharpe | {sh_u:.2f} | {sh_h:.2f} |" if sh_u and sh_h else "| Sharpe | N/A | N/A |")
         lines.append("")
+
+        # BS vs Historical comparison if both are available
+        bs_bt = d.get("bs_backtest_comparison")
+        if bs_bt and bt_mode in ("historical", "mixed"):
+            lines.append("### BS vs Historical Backtest Comparison\n")
+            lines.append("| Metric | BS-only | Historical |")
+            lines.append("|---|---|---|")
+            lines.append(
+                f"| Hedged return | {bs_bt.get('total_return_hedged', 0):.2%} "
+                f"| {bs.get('total_return_hedged', 0):.2%} |"
+            )
+            lines.append(
+                f"| Hedged max DD | {bs_bt.get('max_drawdown_hedged', 0):.2%} "
+                f"| {bs.get('max_drawdown_hedged', 0):.2%} |"
+            )
+            lines.append(
+                f"| Hedged worst month | {bs_bt.get('worst_month_hedged', 0):.2%} "
+                f"| {bs.get('worst_month_hedged', 0):.2%} |"
+            )
+            bs_sh = bs_bt.get("sharpe_hedged")
+            lines.append(
+                f"| Hedged Sharpe | {bs_sh:.2f} | {sh_h:.2f} |" if bs_sh and sh_h else "| Hedged Sharpe | N/A | N/A |"
+            )
+            lines.append(
+                f"| Total hedge P&L | ${bs_bt.get('total_hedge_pnl', 0):,.0f} "
+                f"| ${bs.get('total_hedge_pnl', 0):,.0f} |"
+            )
+            lines.append("")
+            lines.append(
+                "> **IC note**: BS-based hedge backtests likely understate realized "
+                "payoff of OTM put hedges due to the market volatility risk premium "
+                "(VRP). Historical option closes capture this premium and produce a "
+                "more accurate picture of actual hedge effectiveness."
+            )
+            lines.append("")
 
     # Regime analysis
     regimes = d.get("regime_analysis", [])
@@ -1721,6 +1765,7 @@ def run_hedge_report(
     monthly_rets = compute_monthly_returns(weights, all_prices, as_of_date, months=12)
 
     backtest = {}
+    bs_comparison = {}
     regime_analysis = []
     backtest_pricing_mode = "bs"
 
@@ -1728,6 +1773,20 @@ def run_hedge_report(
         top_struct = ranked[0]
         etf_for_bt = top_struct["vehicle"]
         offsets_bt = _infer_strike_offsets(top_struct)
+        sigma_bt = (
+            surface.get(etf_for_bt, {}).get("atm_iv_near")
+            or surface.get(etf_for_bt, {}).get("realized_vol_30d")
+            or 0.30
+        )
+
+        # Always run BS backtest (used as fallback or comparison baseline)
+        bs_bt = backtest_structure(
+            top_struct,
+            all_prices.get(etf_for_bt, {}),
+            monthly_rets,
+            sigma_bt,
+            hedge_notional,
+        )
 
         # Try historical options-priced backtest
         use_historical = backtest_mode in (BACKTEST_AUTO, BACKTEST_HISTORICAL)
@@ -1735,7 +1794,7 @@ def run_hedge_report(
             try:
                 from common.historical_hedge_backtest import run_historical_backtest
 
-                bt = run_historical_backtest(
+                hist_bt = run_historical_backtest(
                     top_struct,
                     offsets_bt,
                     etf_for_bt,
@@ -1744,39 +1803,27 @@ def run_hedge_report(
                     hedge_notional,
                     top_struct.get("contracts", 1),
                 )
-                bt_summary = bt.get("summary", {})
+                bt_summary = hist_bt.get("summary", {})
                 hist_months = bt_summary.get("historical_months", 0)
                 total_months = bt_summary.get("total_months", 0)
                 if hist_months > 0:
-                    backtest = bt
+                    backtest = hist_bt
                     backtest_pricing_mode = bt_summary.get("backtest_pricing", "mixed")
+                    # Save BS as comparison baseline
+                    bs_comparison = bs_bt.get("summary", {})
                     logger.info(
                         "  Historical backtest: %d/%d months from actual option closes",
                         hist_months,
                         total_months,
                     )
                 else:
-                    logger.info("  No historical option data available; falling back to BS")
-                    use_historical = False
+                    logger.info("  No historical option data available; using BS")
             except Exception as exc:
-                logger.info("  Historical backtest failed: %s; falling back to BS", exc)
-                use_historical = False
+                logger.info("  Historical backtest failed: %s; using BS", exc)
 
-        # BS fallback
+        # Use BS if historical didn't produce results
         if not backtest:
-            sigma_bt = (
-                surface.get(etf_for_bt, {}).get("atm_iv_near")
-                or surface.get(etf_for_bt, {}).get("realized_vol_30d")
-                or 0.30
-            )
-            bt = backtest_structure(
-                top_struct,
-                all_prices.get(etf_for_bt, {}),
-                monthly_rets,
-                sigma_bt,
-                hedge_notional,
-            )
-            backtest = bt
+            backtest = bs_bt
             backtest_pricing_mode = "bs"
 
         if backtest.get("months"):
@@ -1824,6 +1871,7 @@ def run_hedge_report(
         "ranked_structures": ranked,
         "backtest": backtest.get("summary", {}),
         "backtest_months": backtest.get("months", []),
+        "bs_backtest_comparison": bs_comparison if bs_comparison else None,
         "regime_analysis": regime_analysis,
         "price_history_range": price_range,
     }
