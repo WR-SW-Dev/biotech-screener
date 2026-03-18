@@ -1625,7 +1625,7 @@ def run_hedge_report(
             try:
                 from common.options_history_massive import fetch_chain_snapshot as _fetch
 
-                chain = _fetch(etf, limit=500)
+                chain = _fetch(etf, limit=250)
                 if chain:
                     logger.info("  %s: fetched live chain (%d contracts)", etf, len(chain))
                     if snap_dir:
