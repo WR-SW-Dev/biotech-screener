@@ -1852,6 +1852,34 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
             )
         lines.append("")
 
+    # Shadow efficacy diagnostic
+    se = d.get("shadow_efficacy", {})
+    if se.get("status") == "ok":
+        lines.append("## Static vs Historical Efficacy (shadow diagnostic)\n")
+        if se.get("agree"):
+            lines.append(f"Static scorer and historical efficacy **agree**: " f"**{se['static_winner']}**")
+        else:
+            lines.append("Static scorer and historical efficacy **disagree**:")
+            lines.append("")
+            lines.append("| | Static Winner | Efficacy Winner |")
+            lines.append("|---|---|---|")
+            lines.append(f"| Structure | {se['static_winner']} | {se['efficacy_winner']} |")
+            lines.append(f"| Hedge score | {se['static_hedge_score']:.1f} | {se['efficacy_hedge_score']:.1f} |")
+            lines.append(f"| Carry (bps ann) | {se['static_ann_cost_bps']:.0f} | {se['efficacy_ann_cost_bps']:.0f} |")
+            s_dd = se.get("static_max_dd_hedged")
+            e_dd = se.get("efficacy_max_dd_hedged")
+            lines.append(
+                f"| Max DD (hedged) | {s_dd:.2%} | {e_dd:.2%} |"
+                if s_dd is not None and e_dd is not None
+                else "| Max DD (hedged) | N/A | N/A |"
+            )
+            lines.append("")
+            lines.append(
+                f"DD gap: {se.get('dd_reduction_delta', 0):+.2%} | "
+                f"Carry gap: {se.get('carry_delta_bps', 0):+.0f} bps"
+            )
+        lines.append("")
+
     # Regime analysis
     regimes = d.get("regime_analysis", [])
     if regimes:
@@ -1927,6 +1955,68 @@ def _fmt_ptile(v: Optional[float]) -> str:
 BACKTEST_AUTO = "auto"
 BACKTEST_HISTORICAL = "historical"
 BACKTEST_BS = "bs"
+
+
+def _compute_shadow_efficacy(
+    top_n_backtests: List[Dict[str, Any]],
+    ranked: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Compare static scorer winner vs historical-efficacy winner.
+
+    Shadow diagnostic — does not change any ranking or recommendation.
+    Surfaces whether the static score is systematically missing the
+    better realized hedge structure.
+    """
+    if not top_n_backtests or len(top_n_backtests) < 2:
+        return {"status": "insufficient_data", "n_candidates": len(top_n_backtests)}
+
+    # Static winner = rank 1 by hedge_score
+    static_winner = top_n_backtests[0]
+
+    # Historical-efficacy winner = best by drawdown reduction
+    # (lowest max_drawdown_hedged among candidates with historical data)
+    candidates_with_bt = [e for e in top_n_backtests if e.get("backtest_summary", {}).get("total_months", 0) > 0]
+    if not candidates_with_bt:
+        return {"status": "no_backtest_data", "n_candidates": len(top_n_backtests)}
+
+    efficacy_winner = min(
+        candidates_with_bt,
+        key=lambda e: e.get("backtest_summary", {}).get("max_drawdown_hedged", 1.0),
+    )
+
+    static_name = f"{static_winner.get('vehicle', '')} {static_winner.get('structure', '')}"
+    efficacy_name = f"{efficacy_winner.get('vehicle', '')} {efficacy_winner.get('structure', '')}"
+    agree = static_name == efficacy_name
+
+    s_bt = static_winner.get("backtest_summary", {})
+    e_bt = efficacy_winner.get("backtest_summary", {})
+
+    return {
+        "status": "ok",
+        "n_candidates": len(top_n_backtests),
+        "static_winner": static_name,
+        "static_hedge_score": static_winner.get("hedge_score", 0),
+        "static_ann_cost_bps": static_winner.get("ann_cost_bps", 0),
+        "static_max_dd_hedged": s_bt.get("max_drawdown_hedged"),
+        "static_down_avg_pnl": s_bt.get("total_hedge_pnl"),
+        "efficacy_winner": efficacy_name,
+        "efficacy_hedge_score": efficacy_winner.get("hedge_score", 0),
+        "efficacy_ann_cost_bps": efficacy_winner.get("ann_cost_bps", 0),
+        "efficacy_max_dd_hedged": e_bt.get("max_drawdown_hedged"),
+        "efficacy_down_avg_pnl": e_bt.get("total_hedge_pnl"),
+        "agree": agree,
+        "dd_reduction_delta": (
+            round((s_bt.get("max_drawdown_hedged", 0) or 0) - (e_bt.get("max_drawdown_hedged", 0) or 0), 4)
+            if not agree
+            else 0
+        ),
+        "carry_delta_bps": (
+            round((static_winner.get("ann_cost_bps", 0) or 0) - (efficacy_winner.get("ann_cost_bps", 0) or 0), 0)
+            if not agree
+            else 0
+        ),
+    }
+
 
 # Policy thresholds
 CARRY_EXPENSIVE_BPS = 400  # above this, defer
@@ -2552,6 +2642,10 @@ def run_hedge_report(
         "regime_analysis": regime_analysis,
         "price_history_range": price_range,
     }
+
+    # Shadow efficacy comparison (Spec 029 research diagnostic)
+    shadow_efficacy = _compute_shadow_efficacy(top_n_backtests, ranked)
+    report_data["shadow_efficacy"] = shadow_efficacy
 
     # Compute IC decision block (needs full report_data)
     ic_decision = compute_ic_decision(report_data)
