@@ -1454,6 +1454,10 @@ SNAPSHOT_COLUMNS = [
     # --- IV crush stress test (from Massive chain analytics) ---
     "iv_crush_breakeven_pct",
     "crush_adjusted_implied_move",
+    # --- Straddle mispricing (from event_move_table + chain/IV) ---
+    "cheap_vol_score",
+    "vol_classification",
+    "straddle_price",
     # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
     "ts_flag",
     "ts_flag_type",
@@ -4870,6 +4874,57 @@ def save_validation_snapshot(
             )
     except Exception as _mc_exc:
         logger.debug("Massive chain analytics skipped: %s", _mc_exc)
+
+    # --- Straddle mispricing / cheap_vol_score ---
+    try:
+        from common.straddle_mispricing import compute_cheap_vol_score
+
+        _emt_path = Path(__file__).resolve().parent / "data" / "research" / "event_move_table.json"
+        if _emt_path.exists():
+            import json as _json_strad
+
+            with open(_emt_path, encoding="utf-8") as _f:
+                _emt_raw = _json_strad.load(_f)
+            _event_move_table = _emt_raw.get("table", _emt_raw)
+        else:
+            _event_move_table = {}
+
+        _n_straddle_scored = 0
+        for row in csv_rows:
+            atm_iv = row.get("opt_atm_iv") or row.get("_chain_actual_implied_move")
+            cat_days_s = row.get("catalyst_days", "")
+            cat_fam = row.get("catalyst_family", "")
+            phase = row.get("lead_program_phase", row.get("archetype", ""))
+            ta = row.get("therapeutic_area", "")
+            straddle = row.get("_chain_straddle_price")
+            price_val = row.get("_last_close") or row.get("close")
+
+            try:
+                iv_f = float(atm_iv) if atm_iv else 0
+                cd_i = int(float(cat_days_s)) if cat_days_s else 0
+            except (ValueError, TypeError):
+                continue
+            if iv_f <= 0 or cd_i <= 0:
+                continue
+
+            cvs = compute_cheap_vol_score(
+                iv_f,
+                cd_i,
+                cat_fam,
+                phase,
+                ta,
+                _event_move_table,
+                actual_straddle_price=float(straddle) if straddle else None,
+                underlying_price=float(price_val) if price_val else None,
+            )
+            if cvs.get("cheap_vol_score") is not None:
+                row["cheap_vol_score"] = str(round(cvs["cheap_vol_score"], 4))
+                row["vol_classification"] = cvs.get("vol_classification", "")
+                row["straddle_price"] = str(round(cvs["implied_move"], 4)) if cvs.get("implied_move") else ""
+                _n_straddle_scored += 1
+        logger.info("[STRADDLE] Scored %d/%d tickers", _n_straddle_scored, len(csv_rows))
+    except Exception as _strad_exc:
+        logger.warning("Straddle mispricing skipped: %s", _strad_exc)
 
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
