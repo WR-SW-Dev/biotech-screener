@@ -108,9 +108,19 @@ def _check_catalyst_source_mix(snap_dir: Path, thresholds: Dict) -> Dict[str, An
 
     # Diff-based events check
     ctgov_diff = pre_dedup.get("CTGOV", 0)
+    ctgov_calendar = pre_dedup.get("CTGOV_CALENDAR", 0)
     if ctgov_diff == 0 and thresholds.get("ctgov_diff_events_warn_if_zero"):
-        flags.append("diff_based_catalyst_events=0 (trial_records may be stale)")
-        status = "FAIL"
+        if ctgov_calendar > 0 and total_events >= thresholds.get("catalyst_min_total_events", 0):
+            # Calendar coverage is healthy — diff gap is expected on unchanged days
+            flags.append(
+                "diff_based_catalyst_events=0 " "(no CTGov deltas vs prior snapshot; calendar coverage still present)"
+            )
+            if status != "FAIL":
+                status = "WARN"
+        else:
+            # Both diff AND calendar are absent — real blind spot
+            flags.append("diff_based_catalyst_events=0 (trial_records may be stale)")
+            status = "FAIL"
 
     # SEC 8-K check
     sec8k_count = pre_dedup.get("SEC_8K_FILING", 0)

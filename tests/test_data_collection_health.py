@@ -250,12 +250,36 @@ class TestBuildHealth:
 
 
 class TestSourceChecks:
-    def test_diff_events_zero_fails(self, healthy_snapshot):
+    def test_diff_events_zero_warns_when_calendar_healthy(self, healthy_snapshot):
+        """Zero diff events + healthy calendar → WARN, not FAIL."""
         snap, data = healthy_snapshot
-        # Overwrite source mix with zero diff events
+        # Overwrite source mix with zero diff events but calendar still present
         _write_source_mix(snap, ctgov_diff=0, sec8k=400)
         health = build_health(snap, data, "2026-03-17")
-        assert health["sources"]["catalyst_source_mix"]["status"] == "FAIL"
+        csm = health["sources"]["catalyst_source_mix"]
+        assert csm["status"] == "WARN"
+        assert any("diff_based_catalyst_events=0" in f for f in csm["flags"])
+        assert any("calendar coverage still present" in f for f in csm["flags"])
+
+    def test_diff_events_zero_fails_when_calendar_absent(self, healthy_snapshot):
+        """Zero diff events + no calendar → FAIL."""
+        snap, data = healthy_snapshot
+        # Write source mix with zero diff AND zero calendar
+        (snap / "catalyst_source_mix.json").write_text(
+            json.dumps(
+                {
+                    "total_events": 50,
+                    "unique_tickers_with_events": 20,
+                    "by_source": {"SEC_8K_FILING": 50},
+                    "pre_dedup_by_source": {"CTGOV": 0, "CTGOV_CALENDAR": 0, "SEC_8K_FILING": 50},
+                }
+            ),
+            encoding="utf-8",
+        )
+        health = build_health(snap, data, "2026-03-17")
+        csm = health["sources"]["catalyst_source_mix"]
+        assert csm["status"] == "FAIL"
+        assert any("trial_records may be stale" in f for f in csm["flags"])
 
     def test_sec8k_zero_warns(self, healthy_snapshot):
         snap, data = healthy_snapshot
