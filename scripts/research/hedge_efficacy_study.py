@@ -578,6 +578,187 @@ def run_study(
     return study_data
 
 
+def run_rolling_study(
+    etf_ticker: str,
+    total_months: int,
+    window_sizes: List[int],
+    as_of_date: str,
+    price_csv: Path,
+    output_dir: Path,
+    contracts: int = 10,
+) -> Dict[str, Any]:
+    """Run rolling-window hedge efficacy study.
+
+    For each window size, slides across the total period and backtests
+    all structures on each subwindow.  Reports per-window winners and
+    cross-window stability.
+    """
+    import csv as _csv
+
+    logger.info(
+        "=== Rolling Hedge Efficacy — %s, %dm total, windows=%s ===",
+        etf_ticker,
+        total_months,
+        window_sizes,
+    )
+
+    etf_prices: Dict[str, float] = {}
+    with open(price_csv, newline="", encoding="utf-8") as f:
+        for row in _csv.DictReader(f):
+            if row.get("ticker", "").strip() == etf_ticker:
+                try:
+                    etf_prices[row["date"]] = float(row["close"])
+                except (ValueError, KeyError):
+                    pass
+
+    # Generate all monthly periods for the full window
+    all_periods = generate_monthly_periods(as_of_date, total_months, etf_prices)
+    logger.info("Full period: %d months", len(all_periods))
+
+    rolling_results: Dict[int, List[Dict[str, Any]]] = {}
+
+    for win in window_sizes:
+        if win > len(all_periods):
+            logger.info("  Window %dm: skipped (only %d periods)", win, len(all_periods))
+            continue
+
+        windows = []
+        for start_idx in range(len(all_periods) - win + 1):
+            window_periods = all_periods[start_idx : start_idx + win]
+            window_label = f"{window_periods[0]['start_date']}_to_{window_periods[-1]['end_date']}"
+
+            # Backtest each structure on this window
+            window_winners: Dict[str, Any] = {"label": window_label, "n_months": len(window_periods)}
+            best_dd_name = ""
+            best_dd_val = 1.0
+
+            for name, (stype, offsets) in STRUCTURES.items():
+                result = backtest_structure_historical(
+                    name,
+                    stype,
+                    offsets,
+                    etf_ticker,
+                    window_periods,
+                    contracts,
+                )
+                s = result.get("summary", {})
+                dd_hedged = s.get("max_dd_hedged", 1.0)
+                if dd_hedged < best_dd_val:
+                    best_dd_val = dd_hedged
+                    best_dd_name = name
+                window_winners[name] = {
+                    "dd_reduction": s.get("dd_reduction", 0),
+                    "max_dd_hedged": dd_hedged,
+                    "down_avg_pnl": s.get("down_avg_pnl", 0),
+                    "total_hedge_pnl": s.get("total_hedge_pnl", 0),
+                    "historical_pct": s.get("historical_pct", 0),
+                }
+
+            window_winners["efficacy_winner"] = best_dd_name
+            windows.append(window_winners)
+
+        rolling_results[win] = windows
+        # Count how often each structure wins
+        win_counts: Dict[str, int] = {}
+        for w in windows:
+            winner = w.get("efficacy_winner", "")
+            win_counts[winner] = win_counts.get(winner, 0) + 1
+        logger.info(
+            "  Window %dm: %d subwindows, winner counts: %s",
+            win,
+            len(windows),
+            ", ".join(f"{k}={v}" for k, v in sorted(win_counts.items(), key=lambda x: -x[1])),
+        )
+
+    # Write outputs
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    study_data = {
+        "schema": "hedge_efficacy_rolling.v1",
+        "etf_ticker": etf_ticker,
+        "total_months": total_months,
+        "window_sizes": window_sizes,
+        "as_of_date": as_of_date,
+        "n_full_periods": len(all_periods),
+        "rolling_results": {str(k): v for k, v in rolling_results.items()},
+    }
+
+    json_path = output_dir / "hedge_efficacy_rolling.json"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".json",
+        dir=str(output_dir),
+        delete=False,
+    ) as tmp:
+        json.dump(study_data, tmp, indent=2, default=str)
+        tmp_name = tmp.name
+    os.replace(tmp_name, str(json_path))
+
+    # Markdown summary
+    lines = [
+        f"# Rolling Hedge Efficacy — {etf_ticker}",
+        "",
+        f"*{total_months}-month total, windows={window_sizes}, ending {as_of_date}*",
+        "",
+    ]
+
+    for win in window_sizes:
+        windows = rolling_results.get(win, [])
+        if not windows:
+            continue
+
+        # Winner frequency
+        win_counts = {}
+        for w in windows:
+            winner = w.get("efficacy_winner", "")
+            win_counts[winner] = win_counts.get(winner, 0) + 1
+
+        lines.append(f"## {win}-Month Rolling Windows ({len(windows)} subwindows)\n")
+        lines.append("### Winner Frequency\n")
+        lines.append("| Structure | Windows Won | Win Rate |")
+        lines.append("|---|---|---|")
+        for name, count in sorted(win_counts.items(), key=lambda x: -x[1]):
+            pct = count / len(windows) if windows else 0
+            lines.append(f"| {name} | {count} | {pct:.0%} |")
+        lines.append("")
+
+        # Per-structure average DD reduction across windows
+        lines.append("### Average DD Reduction Across Windows\n")
+        lines.append("| Structure | Avg DD Reduction | Avg Down-Month P&L | Avg Historical Coverage |")
+        lines.append("|---|---|---|---|")
+        for name in STRUCTURES:
+            dd_vals = [w.get(name, {}).get("dd_reduction", 0) for w in windows]
+            pnl_vals = [w.get(name, {}).get("down_avg_pnl", 0) for w in windows]
+            cov_vals = [w.get(name, {}).get("historical_pct", 0) for w in windows]
+            avg_dd = sum(dd_vals) / len(dd_vals) if dd_vals else 0
+            avg_pnl = sum(pnl_vals) / len(pnl_vals) if pnl_vals else 0
+            avg_cov = sum(cov_vals) / len(cov_vals) if cov_vals else 0
+            lines.append(f"| {name} | {avg_dd:+.2%} | ${avg_pnl:,.0f} | {avg_cov:.0%} |")
+        lines.append("")
+
+    lines.append("## Caveats\n")
+    lines.append("- Massive S3 day-agg option closes, BS fallback when missing")
+    lines.append("- Monthly rebalance, no transaction costs")
+    lines.append("- Rolling windows overlap; not independent samples")
+    lines.append("")
+
+    md_path = output_dir / "hedge_efficacy_rolling.md"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".md",
+        dir=str(output_dir),
+        delete=False,
+    ) as tmp:
+        tmp.write("\n".join(lines))
+        tmp_name = tmp.name
+    os.replace(tmp_name, str(md_path))
+
+    logger.info("Wrote %s", json_path)
+    logger.info("Wrote %s", md_path)
+
+    return study_data
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Hedge structure efficacy study using Massive historical options",
@@ -601,7 +782,31 @@ def main() -> int:
         default=PROJECT_ROOT / "output" / "hedge_efficacy",
     )
     parser.add_argument("--contracts", type=int, default=10)
+    parser.add_argument(
+        "--rolling",
+        action="store_true",
+        help="Run rolling-window study instead of point-in-time",
+    )
+    parser.add_argument(
+        "--windows",
+        type=str,
+        default="6,12",
+        help="Rolling window sizes in months (comma-separated)",
+    )
     args = parser.parse_args()
+
+    if args.rolling:
+        window_sizes = [int(w.strip()) for w in args.windows.split(",")]
+        run_rolling_study(
+            etf_ticker=args.etf,
+            total_months=args.months,
+            window_sizes=window_sizes,
+            as_of_date=args.as_of_date,
+            price_csv=args.price_csv,
+            output_dir=args.output_dir,
+            contracts=args.contracts,
+        )
+        return 0
 
     run_study(
         etf_ticker=args.etf,
