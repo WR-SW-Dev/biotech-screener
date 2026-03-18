@@ -248,6 +248,16 @@ class DecisionRuleset:
     binary_91_180_clinical_quality_weight: float = 0.0  # scale for clinical_quality_composite (clinical_quality mode)
     binary_91_180_options_quality_weight: float = 0.0  # scale for options_quality_composite (options_quality mode)
 
+    # Binary 0-90 within-bucket re-ranking (shadow, default "baseline")
+    # Same pattern as binary_91_180 but for binary_now + build_window buckets.
+    # Only affects intra-bucket ordering within the near-term binary names.
+    #   "baseline":                   no change (current behavior)
+    #   "quality_primary":            binary_quality_score dominates within bucket
+    #   "quality_plus_institutional": binary_quality_score + institutional delta z
+    binary_now_sort_mode: str = "baseline"
+    binary_now_quality_weight: float = 1.0
+    binary_now_institutional_weight: float = 0.3
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -1328,6 +1338,8 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "binary_institutional",
     "clinical_quality_91_180",
     "options_quality_91_180",
+    "binary_quality_now",
+    "binary_institutional_now",
 )
 
 
@@ -1462,6 +1474,23 @@ def _build_sort_contributions(
             oq_w = ruleset.binary_91_180_options_quality_weight
             delta_oq = oq_w * oqc
             contribs.append(SortContribution("options_quality_91_180", oqc, oq_w, delta_oq))
+
+    # 11. Binary 0-90 within-bucket quality re-ranking (shadow)
+    # Same pattern as binary_91_180 but for binary_now and build_window.
+    # Only activates when binary_now_sort_mode != "baseline".
+    bn_mode = ruleset.binary_now_sort_mode
+    if bucket in ("binary_now", "build_window") and bn_mode != "baseline":
+        bqs = _safe_float(decision_fields.get("binary_quality_score"), default=0.0)
+        bqs_w = ruleset.binary_now_quality_weight
+        delta_bn = bqs_w * bqs
+        contribs.append(SortContribution("binary_quality_now", bqs, bqs_w, delta_bn))
+
+        if bn_mode == "quality_plus_institutional":
+            iz = _safe_float(decision_fields.get("inst_delta_z"), default=0.0)
+            iz_eff = min(2.0, max(0.0, iz))
+            bi_w = ruleset.binary_now_institutional_weight
+            delta_i = bi_w * iz_eff
+            contribs.append(SortContribution("binary_institutional_now", iz, bi_w, delta_i))
 
     return contribs
 
