@@ -2330,7 +2330,129 @@ def run_hedge_report(
 
     logger.info("  Archived to %s", archive_json)
 
+    # --- Verdict artifact ---
+    _write_verdict(report_data, output_dir, as_of_date)
+
     return report_data
+
+
+def _write_verdict(
+    report_data: Dict[str, Any],
+    output_dir: Path,
+    as_of_date: str,
+) -> None:
+    """Write governed BIOSHORT_VERDICT.json and .md."""
+    ic = report_data.get("ic_decision", {})
+    if not ic:
+        return
+
+    bt = report_data.get("backtest", {})
+    diff = report_data.get("weekly_diff")
+
+    # --- JSON ---
+    verdict_doc: Dict[str, Any] = {
+        "schema": "bioshort_verdict.v1",
+        "as_of_date": as_of_date,
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "verdict": ic.get("policy_action", "WATCH"),
+        "recommendation": ic.get("primary_hedge", "none"),
+        "secondary": ic.get("secondary_hedge", "none"),
+        "confidence": ic.get("confidence", "LOW"),
+        "confidence_score": ic.get("confidence_score", 0),
+        "thresholds": {
+            "carry_expensive_bps": CARRY_EXPENSIVE_BPS,
+            "carry_cheap_bps": CARRY_CHEAP_BPS,
+            "min_historical_coverage": MIN_HISTORICAL_COVERAGE,
+            "confidence_high_coverage": CONFIDENCE_HIGH_COVERAGE,
+        },
+        "evidence": {
+            "primary_cost_bps": ic.get("primary_cost_bps", 0),
+            "primary_score": ic.get("primary_score", 0),
+            "historical_months": bt.get("historical_months", 0),
+            "total_months": bt.get("total_months", 0),
+            "backtest_pricing": bt.get("backtest_pricing", "bs"),
+            "options_source": report_data.get("options_source_used", ""),
+            "best_vehicle": report_data.get("best_hedge_vehicle", ""),
+            "best_vehicle_r_squared": (
+                report_data.get("beta_stats", {}).get(report_data.get("best_hedge_vehicle", "XBI"), {}).get("r_squared")
+            ),
+        },
+        "confidence_drivers": ic.get("confidence_drivers", []),
+        "policy_reasons": ic.get("policy_reasons", []),
+        "recommendation_changed": ic.get("recommendation_changed"),
+        "change_reason": ic.get("change_reason", ""),
+        "prior_date": diff.get("prior_date") if diff else None,
+    }
+
+    verdict_json_path = output_dir / "BIOSHORT_VERDICT.json"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".json",
+        dir=str(output_dir),
+        delete=False,
+    ) as tmp:
+        json.dump(verdict_doc, tmp, indent=2, default=str)
+        tmp_name = tmp.name
+    os.replace(tmp_name, str(verdict_json_path))
+
+    # --- Markdown ---
+    v = verdict_doc["verdict"]
+    lines = [
+        f"# Bioshort Verdict: **{v}**",
+        "",
+        f"*{as_of_date}*",
+        "",
+        f"**Recommendation**: {verdict_doc['recommendation']}",
+        f"**Confidence**: {verdict_doc['confidence']} ({verdict_doc['confidence_score']:.0f}/100)",
+        f"**Status vs prior**: {verdict_doc['change_reason']}",
+        "",
+        "## Evidence",
+        "",
+        f"- Carry: {verdict_doc['evidence']['primary_cost_bps']:.0f} bps annualized",
+        f"- Hedge score: {verdict_doc['evidence']['primary_score']:.1f}",
+        f"- Backtest: {verdict_doc['evidence']['historical_months']}/{verdict_doc['evidence']['total_months']} "
+        f"months historical ({verdict_doc['evidence']['backtest_pricing']})",
+        f"- Options source: {verdict_doc['evidence']['options_source']}",
+        f"- Best vehicle: {verdict_doc['evidence']['best_vehicle']} "
+        f"(R²={verdict_doc['evidence']['best_vehicle_r_squared']})",
+        "",
+        "## Confidence Drivers",
+        "",
+    ]
+    for driver in verdict_doc["confidence_drivers"]:
+        lines.append(f"- {driver}")
+    lines.extend(["", "## Policy Reasons", ""])
+    for reason in verdict_doc["policy_reasons"]:
+        lines.append(f"- {reason}")
+    lines.extend(
+        [
+            "",
+            "## Thresholds",
+            "",
+            f"- Carry expensive: >{verdict_doc['thresholds']['carry_expensive_bps']} bps",
+            f"- Carry cheap: <{verdict_doc['thresholds']['carry_cheap_bps']} bps",
+            f"- Min historical coverage: {verdict_doc['thresholds']['min_historical_coverage']:.0%}",
+            f"- High confidence coverage: {verdict_doc['thresholds']['confidence_high_coverage']:.0%}",
+            "",
+        ]
+    )
+
+    if verdict_doc.get("secondary") and verdict_doc["secondary"] != "none":
+        lines.append(f"**Secondary alternative**: {verdict_doc['secondary']}")
+        lines.append("")
+
+    verdict_md_path = output_dir / "BIOSHORT_VERDICT.md"
+    with tempfile.NamedTemporaryFile(
+        mode="w",
+        suffix=".md",
+        dir=str(output_dir),
+        delete=False,
+    ) as tmp:
+        tmp.write("\n".join(lines))
+        tmp_name = tmp.name
+    os.replace(tmp_name, str(verdict_md_path))
+
+    logger.info("  Verdict: %s → %s", v, verdict_json_path)
 
 
 def main() -> int:
