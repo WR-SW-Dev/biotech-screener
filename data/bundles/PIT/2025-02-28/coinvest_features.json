@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:25:06Z",
+  "created_at": "2026-03-18T22:09:16Z",
   "as_of_date": "2024-12-31",
   "cache_as_of_date": "2024-12-31",
   "period_of_report": "2024-09-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2024-09-30",
   "managers_total": 35,
   "managers_with_filing": 34,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 316,
-  "signal_coverage_pct": 89.5,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 314,
+  "signal_coverage_pct": 90.0,
   "tickers": {
     "ABCL": {
       "tier1_count": 4,
@@ -477,53 +477,6 @@
         "D.E. Shaw": "DECREASE",
         "Millennium Management": "INCREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 8,
-      "sponsor_tier1_count": 8,
-      "sponsor_overlap_count": 10,
-      "coinvest_overlap_count": 10,
-      "conviction_overlap": 14.5463,
-      "tier1_conviction_overlap": 13.9888,
-      "max_tier1_position_pct": 2.48,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Perceptive Advisors",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "RTW Investments",
-        "Rock Springs",
-        "Logos Global",
-        "Deep Track"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Perceptive Advisors": 1,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "RTW Investments": 1,
-        "Rock Springs": 1,
-        "Logos Global": 1,
-        "Deep Track": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "DECREASE",
-        "Perceptive Advisors": "INCREASE",
-        "Baker Bros": "INCREASE",
-        "Millennium Management": "DECREASE",
-        "Redmile Group": "HOLD",
-        "Boxer Capital": "INCREASE",
-        "RTW Investments": "INCREASE",
-        "Rock Springs": "HOLD",
-        "Logos Global": "INCREASE",
-        "Deep Track": "NEW"
       }
     },
     "AKTX": {
@@ -2605,35 +2558,6 @@
         "Millennium Management": "DECREASE"
       }
     },
-    "CDTX": {
-      "tier1_count": 2,
-      "sponsor_tier1_count": 2,
-      "sponsor_overlap_count": 4,
-      "coinvest_overlap_count": 4,
-      "conviction_overlap": 2.9821,
-      "tier1_conviction_overlap": 2.1475,
-      "max_tier1_position_pct": 0.79,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Millennium Management",
-        "RA Capital",
-        "Bain Capital Life"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Millennium Management": 2,
-        "RA Capital": 1,
-        "Bain Capital Life": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "HOLD",
-        "Millennium Management": "NEW",
-        "RA Capital": "NEW",
-        "Bain Capital Life": "NEW"
-      }
-    },
     "CDXS": {
       "tier1_count": 2,
       "sponsor_tier1_count": 2,
@@ -2956,6 +2880,41 @@
         "Millennium Management": "HOLD",
         "Acuta Capital": "NEW",
         "Logos Global": "HOLD"
+      }
+    },
+    "CMPX": {
+      "tier1_count": 4,
+      "sponsor_tier1_count": 4,
+      "sponsor_overlap_count": 6,
+      "coinvest_overlap_count": 6,
+      "conviction_overlap": 4.5279,
+      "tier1_conviction_overlap": 3.7866,
+      "max_tier1_position_pct": 0.75,
+      "days_since_latest_filing": 47,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Tang Capital",
+        "Baker Bros",
+        "Millennium Management",
+        "Rock Springs"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Tang Capital": 1,
+        "Baker Bros": 1,
+        "Millennium Management": 2,
+        "Rock Springs": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "INCREASE",
+        "Orbimed Advisors": "INCREASE",
+        "Tang Capital": "NEW",
+        "Baker Bros": "INCREASE",
+        "Millennium Management": "DECREASE",
+        "Rock Springs": "INCREASE"
       }
     },
     "CNTA": {
@@ -3364,26 +3323,6 @@
         "Casdin Capital": "HOLD",
         "Suvretta Capital": "HOLD",
         "Samsara BioCapital": "HOLD"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 1,
-      "coinvest_overlap_count": 1,
-      "conviction_overlap": 0.2787,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "Millennium Management": "DECREASE"
       }
     },
     "CYTK": {
@@ -11732,11 +11671,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 324,
-      "INCREASE": 760,
-      "HOLD": 348,
-      "DECREASE": 612,
-      "EXIT": 278
+      "NEW": 321,
+      "INCREASE": 759,
+      "HOLD": 345,
+      "DECREASE": 610,
+      "EXIT": 277
     }
   }
 }

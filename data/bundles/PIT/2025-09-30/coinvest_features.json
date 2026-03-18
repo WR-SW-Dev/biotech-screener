@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:24:09Z",
+  "created_at": "2026-03-18T22:12:08Z",
   "as_of_date": "2025-09-30",
   "cache_as_of_date": "2025-09-30",
   "period_of_report": "2025-06-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2025-06-30",
   "managers_total": 2,
   "managers_with_filing": 2,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 111,
-  "signal_coverage_pct": 31.4,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 109,
+  "signal_coverage_pct": 31.2,
   "tickers": {
     "ABCL": {
       "tier1_count": 1,
@@ -137,26 +137,6 @@
       },
       "position_changes": {
         "Baker Bros": "NEW"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 1,
-      "sponsor_tier1_count": 1,
-      "sponsor_overlap_count": 1,
-      "coinvest_overlap_count": 1,
-      "conviction_overlap": 0.4646,
-      "tier1_conviction_overlap": 0.4646,
-      "max_tier1_position_pct": 0.17,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Baker Bros"
-      ],
-      "holder_tiers": {
-        "Baker Bros": 1
-      },
-      "position_changes": {
-        "Baker Bros": "DECREASE"
       }
     },
     "ALGS": {
@@ -357,29 +337,6 @@
       },
       "position_changes": {
         "Baker Bros": "INCREASE"
-      }
-    },
-    "CDTX": {
-      "tier1_count": 2,
-      "sponsor_tier1_count": 2,
-      "sponsor_overlap_count": 2,
-      "coinvest_overlap_count": 2,
-      "conviction_overlap": 3.3479,
-      "tier1_conviction_overlap": 3.3479,
-      "max_tier1_position_pct": 2.76,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Baker Bros",
-        "RA Capital"
-      ],
-      "holder_tiers": {
-        "Baker Bros": 1,
-        "RA Capital": 1
-      },
-      "position_changes": {
-        "Baker Bros": "NEW",
-        "RA Capital": "INCREASE"
       }
     },
     "CELC": {
@@ -2307,11 +2264,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 13,
-      "INCREASE": 52,
+      "NEW": 12,
+      "INCREASE": 51,
       "HOLD": 23,
-      "DECREASE": 40,
-      "EXIT": 26
+      "DECREASE": 39,
+      "EXIT": 27
     }
   }
 }

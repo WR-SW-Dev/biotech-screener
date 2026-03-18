@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:33Z",
+  "created_at": "2026-03-18T22:11:36Z",
   "as_of_date": "2021-09-30",
   "cache_as_of_date": "2021-09-30",
   "period_of_report": "2021-06-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2021-06-30",
   "managers_total": 35,
   "managers_with_filing": 33,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 229,
-  "signal_coverage_pct": 64.9,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 227,
+  "signal_coverage_pct": 65.0,
   "tickers": {
     "ABCL": {
       "tier1_count": 2,
@@ -279,41 +279,6 @@
         "Suvretta Capital": "HOLD",
         "Rock Springs": "HOLD",
         "Sofinnova Investments": "NEW"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 6,
-      "coinvest_overlap_count": 6,
-      "conviction_overlap": 5.556,
-      "tier1_conviction_overlap": 5.556,
-      "max_tier1_position_pct": 6.44,
-      "days_since_latest_filing": 45,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Baker Bros",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Baker Bros": 1,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Baker Bros": "DECREASE",
-        "Redmile Group": "HOLD",
-        "Boxer Capital": "DECREASE",
-        "Cormorant Asset": "DECREASE",
-        "Rock Springs": "DECREASE",
-        "Venbio Partners": "DECREASE"
       }
     },
     "ALDX": {
@@ -2293,35 +2258,6 @@
         "Great Point": "NEW",
         "RA Capital": "DECREASE",
         "RTW Investments": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 1,
-      "sponsor_tier1_count": 1,
-      "sponsor_overlap_count": 4,
-      "coinvest_overlap_count": 4,
-      "conviction_overlap": 2.1875,
-      "tier1_conviction_overlap": 0.7812,
-      "max_tier1_position_pct": 0.13,
-      "days_since_latest_filing": 45,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Orbimed Advisors",
-        "Balyasny Asset",
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Orbimed Advisors": 1,
-        "Balyasny Asset": 2,
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "D.E. Shaw": "NEW",
-        "Orbimed Advisors": "NEW",
-        "Balyasny Asset": "NEW",
-        "Millennium Management": "INCREASE"
       }
     },
     "CYTK": {
@@ -8006,11 +7942,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 254,
-      "INCREASE": 343,
-      "HOLD": 234,
-      "DECREASE": 466,
-      "EXIT": 192
+      "NEW": 251,
+      "INCREASE": 342,
+      "HOLD": 233,
+      "DECREASE": 461,
+      "EXIT": 189
     }
   }
 }

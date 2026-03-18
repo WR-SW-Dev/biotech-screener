@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:28Z",
+  "created_at": "2026-03-18T22:11:32Z",
   "as_of_date": "2021-03-31",
   "cache_as_of_date": "2021-03-31",
   "period_of_report": "2020-12-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2020-12-31",
   "managers_total": 35,
   "managers_with_filing": 32,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 205,
-  "signal_coverage_pct": 58.1,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 203,
+  "signal_coverage_pct": 58.2,
   "tickers": {
     "ABCL": {
       "tier1_count": 5,
@@ -285,47 +285,6 @@
         "Casdin Capital": "INCREASE",
         "Suvretta Capital": "NEW",
         "Rock Springs": "INCREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 8,
-      "coinvest_overlap_count": 8,
-      "conviction_overlap": 6.1973,
-      "tier1_conviction_overlap": 5.2639,
-      "max_tier1_position_pct": 5.57,
-      "days_since_latest_filing": 43,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "INCREASE",
-        "Baker Bros": "DECREASE",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "DECREASE",
-        "Cormorant Asset": "DECREASE",
-        "Rock Springs": "HOLD",
-        "Venbio Partners": "DECREASE"
       }
     },
     "ALDX": {
@@ -2191,32 +2150,6 @@
         "Renaissance Technologies": "DECREASE",
         "Millennium Management": "INCREASE",
         "RTW Investments": "HOLD"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 1,
-      "sponsor_tier1_count": 1,
-      "sponsor_overlap_count": 3,
-      "coinvest_overlap_count": 3,
-      "conviction_overlap": 1.5941,
-      "tier1_conviction_overlap": 0.8374,
-      "max_tier1_position_pct": 0.78,
-      "days_since_latest_filing": 42,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Millennium Management",
-        "Samsara BioCapital"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Millennium Management": 2,
-        "Samsara BioCapital": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "NEW",
-        "Millennium Management": "DECREASE",
-        "Samsara BioCapital": "DECREASE"
       }
     },
     "CYTK": {
@@ -7148,10 +7081,10 @@
       }
     ],
     "change_summary": {
-      "NEW": 271,
-      "INCREASE": 505,
-      "HOLD": 142,
-      "DECREASE": 221,
+      "NEW": 270,
+      "INCREASE": 503,
+      "HOLD": 141,
+      "DECREASE": 214,
       "EXIT": 133
     }
   }

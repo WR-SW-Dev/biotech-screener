@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:42Z",
+  "created_at": "2026-03-18T22:11:44Z",
   "as_of_date": "2022-09-30",
   "cache_as_of_date": "2022-09-30",
   "period_of_report": "2022-06-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2022-06-30",
   "managers_total": 35,
   "managers_with_filing": 34,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 262,
-  "signal_coverage_pct": 74.2,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 261,
+  "signal_coverage_pct": 74.8,
   "tickers": {
     "ABCL": {
       "tier1_count": 3,
@@ -405,50 +405,6 @@
         "Casdin Capital": "DECREASE",
         "Suvretta Capital": "INCREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 9,
-      "coinvest_overlap_count": 9,
-      "conviction_overlap": 6.0599,
-      "tier1_conviction_overlap": 4.6661,
-      "max_tier1_position_pct": 5.84,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Renaissance Technologies",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Renaissance Technologies": 2,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "NEW",
-        "Renaissance Technologies": "INCREASE",
-        "Baker Bros": "DECREASE",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "DECREASE",
-        "Cormorant Asset": "DECREASE",
-        "Rock Springs": "DECREASE",
-        "Venbio Partners": "DECREASE"
       }
     },
     "ALDX": {
@@ -2367,6 +2323,38 @@
         "Millennium Management": "DECREASE"
       }
     },
+    "CMPX": {
+      "tier1_count": 3,
+      "sponsor_tier1_count": 3,
+      "sponsor_overlap_count": 5,
+      "coinvest_overlap_count": 5,
+      "conviction_overlap": 4.2994,
+      "tier1_conviction_overlap": 3.3723,
+      "max_tier1_position_pct": 1.05,
+      "days_since_latest_filing": 46,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Millennium Management",
+        "Rock Springs",
+        "Avidity Partners"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Millennium Management": 2,
+        "Rock Springs": 1,
+        "Avidity Partners": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "INCREASE",
+        "Orbimed Advisors": "INCREASE",
+        "Millennium Management": "INCREASE",
+        "Rock Springs": "INCREASE",
+        "Avidity Partners": "INCREASE"
+      }
+    },
     "CNTA": {
       "tier1_count": 6,
       "sponsor_tier1_count": 6,
@@ -2735,29 +2723,6 @@
         "Tang Capital": "NEW",
         "Millennium Management": "DECREASE",
         "RTW Investments": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 2,
-      "coinvest_overlap_count": 2,
-      "conviction_overlap": 0.7467,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "D.E. Shaw": "INCREASE",
-        "Millennium Management": "DECREASE"
       }
     },
     "CYTK": {
@@ -9248,10 +9213,10 @@
       }
     ],
     "change_summary": {
-      "NEW": 259,
-      "INCREASE": 417,
+      "NEW": 258,
+      "INCREASE": 419,
       "HOLD": 181,
-      "DECREASE": 665,
+      "DECREASE": 658,
       "EXIT": 172
     }
   }

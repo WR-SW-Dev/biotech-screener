@@ -1,11 +1,11 @@
 {
   "schema_version": "catalyst_events_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:52Z",
+  "created_at": "2026-03-18T22:11:54Z",
   "as_of_date": "2023-12-31",
-  "tickers_in_universe": 353,
+  "tickers_in_universe": 349,
   "tickers_with_catalyst": 64,
-  "catalyst_coverage_pct": 18.1,
+  "catalyst_coverage_pct": 18.3,
   "ledger_total_entries": 9621,
   "tickers": {
     "AARD": {
@@ -240,21 +240,6 @@
         "CTGOV": 35
       }
     },
-    "AKRO": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
-      "source_mix": {
-        "CTGOV": 2
-      }
-    },
     "AKTX": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
@@ -397,8 +382,8 @@
       "catalyst_decay_w": 1.0,
       "nearest_event_type": "CLINICAL_PCD",
       "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04231682 PCD 2024-01-01",
-      "nearest_disclosed_at": "2020-06-26",
+      "nearest_event_name": "NCT03815279 PCD 2024-01-01",
+      "nearest_disclosed_at": "2019-08-16",
       "nearest_event_date": "2024-01-01",
       "event_count": 797,
       "source_mix": {
@@ -990,19 +975,6 @@
         "CTGOV": 4
       }
     },
-    "BLUE": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
     "BMEA": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
@@ -1143,21 +1115,6 @@
       "event_count": 90,
       "source_mix": {
         "CTGOV": 90
-      }
-    },
-    "CDTX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 6,
-      "source_mix": {
-        "CTGOV": 6
       }
     },
     "CDXS": {
@@ -1305,6 +1262,19 @@
       "source_mix": {
         "CTGOV": 8
       }
+    },
+    "CMPX": {
+      "days_to_catalyst": null,
+      "catalyst_mode": "missing",
+      "catalyst_strength": "missing",
+      "catalyst_decay_w": 0.0,
+      "nearest_event_type": "",
+      "nearest_event_source": "",
+      "nearest_event_name": "",
+      "nearest_disclosed_at": "",
+      "nearest_event_date": "",
+      "event_count": 0,
+      "source_mix": {}
     },
     "CNTA": {
       "days_to_catalyst": null,
@@ -1508,21 +1478,6 @@
       "event_count": 2,
       "source_mix": {
         "CTGOV": 2
-      }
-    },
-    "CVAC": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 25,
-      "source_mix": {
-        "CTGOV": 25
       }
     },
     "CYTK": {
@@ -1889,19 +1844,6 @@
       }
     },
     "FDMT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
-    "FGEN": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
       "catalyst_strength": "missing",
@@ -4366,7 +4308,7 @@
       "catalyst_decay_w": 0.3,
       "nearest_event_type": "CLINICAL_CD",
       "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04815967 CD 2024-07-01",
+      "nearest_event_name": "NCT04099667 CD 2024-07-01",
       "nearest_disclosed_at": "2023-03-07",
       "nearest_event_date": "2024-07-01",
       "event_count": 37,

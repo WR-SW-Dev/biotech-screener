@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:24Z",
+  "created_at": "2026-03-18T22:11:29Z",
   "as_of_date": "2020-09-30",
   "cache_as_of_date": "2020-09-30",
   "period_of_report": "2020-06-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2020-06-30",
   "managers_total": 35,
   "managers_with_filing": 31,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 180,
-  "signal_coverage_pct": 51.0,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 179,
+  "signal_coverage_pct": 51.3,
   "tickers": {
     "ABUS": {
       "tier1_count": 1,
@@ -259,47 +259,6 @@
         "Casdin Capital": "INCREASE",
         "Rock Springs": "INCREASE",
         "Ghost Tree": "NEW"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 8,
-      "coinvest_overlap_count": 8,
-      "conviction_overlap": 7.7038,
-      "tier1_conviction_overlap": 6.7767,
-      "max_tier1_position_pct": 65.27,
-      "days_since_latest_filing": 47,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Samsara BioCapital",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Samsara BioCapital": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "NEW",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "INCREASE",
-        "Cormorant Asset": "HOLD",
-        "Rock Springs": "INCREASE",
-        "Samsara BioCapital": "DECREASE",
-        "Venbio Partners": "INCREASE"
       }
     },
     "ALDX": {
@@ -6300,11 +6259,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 280,
-      "INCREASE": 503,
-      "HOLD": 90,
-      "DECREASE": 137,
-      "EXIT": 154
+      "NEW": 279,
+      "INCREASE": 499,
+      "HOLD": 89,
+      "DECREASE": 135,
+      "EXIT": 153
     }
   }
 }

@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:26Z",
+  "created_at": "2026-03-18T22:11:31Z",
   "as_of_date": "2020-12-31",
   "cache_as_of_date": "2020-12-31",
   "period_of_report": "2020-09-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2020-09-30",
   "managers_total": 35,
   "managers_with_filing": 31,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 189,
-  "signal_coverage_pct": 53.5,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 187,
+  "signal_coverage_pct": 53.6,
   "tickers": {
     "ABUS": {
       "tier1_count": 1,
@@ -256,47 +256,6 @@
         "Casdin Capital": "HOLD",
         "Rock Springs": "DECREASE",
         "Ghost Tree": "HOLD"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 8,
-      "coinvest_overlap_count": 8,
-      "conviction_overlap": 9.9588,
-      "tier1_conviction_overlap": 9.0276,
-      "max_tier1_position_pct": 11.44,
-      "days_since_latest_filing": 44,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "INCREASE",
-        "Baker Bros": "NEW",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "INCREASE",
-        "Boxer Capital": "INCREASE",
-        "Cormorant Asset": "INCREASE",
-        "Rock Springs": "INCREASE",
-        "Venbio Partners": "HOLD"
       }
     },
     "ALDX": {
@@ -1951,29 +1910,6 @@
         "Tang Capital": "DECREASE",
         "Millennium Management": "INCREASE",
         "RTW Investments": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 1,
-      "sponsor_tier1_count": 1,
-      "sponsor_overlap_count": 2,
-      "coinvest_overlap_count": 2,
-      "conviction_overlap": 3.5938,
-      "tier1_conviction_overlap": 3.125,
-      "max_tier1_position_pct": 4.81,
-      "days_since_latest_filing": 45,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Millennium Management",
-        "Samsara BioCapital"
-      ],
-      "holder_tiers": {
-        "Millennium Management": 2,
-        "Samsara BioCapital": 1
-      },
-      "position_changes": {
-        "Millennium Management": "NEW",
-        "Samsara BioCapital": "NEW"
       }
     },
     "CYTK": {
@@ -6426,11 +6362,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 191,
-      "INCREASE": 285,
-      "HOLD": 143,
+      "NEW": 188,
+      "INCREASE": 279,
+      "HOLD": 142,
       "DECREASE": 382,
-      "EXIT": 200
+      "EXIT": 199
     }
   }
 }

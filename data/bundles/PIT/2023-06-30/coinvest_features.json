@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:49Z",
+  "created_at": "2026-03-18T22:11:50Z",
   "as_of_date": "2023-06-30",
   "cache_as_of_date": "2023-06-30",
   "period_of_report": "2023-03-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2023-03-31",
   "managers_total": 35,
   "managers_with_filing": 33,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 279,
-  "signal_coverage_pct": 79.0,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 278,
+  "signal_coverage_pct": 79.7,
   "tickers": {
     "ABCL": {
       "tier1_count": 3,
@@ -432,53 +432,6 @@
         "Millennium Management": "INCREASE",
         "Suvretta Capital": "DECREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 7,
-      "sponsor_tier1_count": 7,
-      "sponsor_overlap_count": 10,
-      "coinvest_overlap_count": 10,
-      "conviction_overlap": 11.4072,
-      "tier1_conviction_overlap": 10.3868,
-      "max_tier1_position_pct": 3.39,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Renaissance Technologies",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Rock Springs",
-        "Ghost Tree",
-        "Avidity Partners",
-        "Logos Global"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Renaissance Technologies": 2,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Rock Springs": 1,
-        "Ghost Tree": 1,
-        "Avidity Partners": 1,
-        "Logos Global": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "DECREASE",
-        "Renaissance Technologies": "INCREASE",
-        "Baker Bros": "DECREASE",
-        "Millennium Management": "DECREASE",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "DECREASE",
-        "Rock Springs": "DECREASE",
-        "Ghost Tree": "INCREASE",
-        "Avidity Partners": "DECREASE",
-        "Logos Global": "DECREASE"
       }
     },
     "ALDX": {
@@ -2427,6 +2380,44 @@
         "Millennium Management": "INCREASE"
       }
     },
+    "CMPX": {
+      "tier1_count": 4,
+      "sponsor_tier1_count": 4,
+      "sponsor_overlap_count": 7,
+      "coinvest_overlap_count": 7,
+      "conviction_overlap": 3.6867,
+      "tier1_conviction_overlap": 2.6638,
+      "max_tier1_position_pct": 1.44,
+      "days_since_latest_filing": 46,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Balyasny Asset",
+        "Baker Bros",
+        "Millennium Management",
+        "Rock Springs",
+        "Avidity Partners"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Balyasny Asset": 2,
+        "Baker Bros": 1,
+        "Millennium Management": 2,
+        "Rock Springs": 1,
+        "Avidity Partners": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "DECREASE",
+        "Orbimed Advisors": "DECREASE",
+        "Balyasny Asset": "DECREASE",
+        "Baker Bros": "DECREASE",
+        "Millennium Management": "INCREASE",
+        "Rock Springs": "DECREASE",
+        "Avidity Partners": "DECREASE"
+      }
+    },
     "CNTA": {
       "tier1_count": 4,
       "sponsor_tier1_count": 4,
@@ -2765,35 +2756,6 @@
         "Renaissance Technologies": "DECREASE",
         "Tang Capital": "INCREASE",
         "Millennium Management": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 2,
-      "sponsor_tier1_count": 2,
-      "sponsor_overlap_count": 4,
-      "coinvest_overlap_count": 4,
-      "conviction_overlap": 4.412,
-      "tier1_conviction_overlap": 3.572,
-      "max_tier1_position_pct": 1.93,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Balyasny Asset",
-        "Millennium Management",
-        "RA Capital",
-        "Avidity Partners"
-      ],
-      "holder_tiers": {
-        "Balyasny Asset": 2,
-        "Millennium Management": 2,
-        "RA Capital": 1,
-        "Avidity Partners": 1
-      },
-      "position_changes": {
-        "Balyasny Asset": "HOLD",
-        "Millennium Management": "INCREASE",
-        "RA Capital": "NEW",
-        "Avidity Partners": "NEW"
       }
     },
     "CYTK": {
@@ -9864,11 +9826,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 271,
-      "INCREASE": 429,
-      "HOLD": 215,
-      "DECREASE": 718,
-      "EXIT": 242
+      "NEW": 269,
+      "INCREASE": 427,
+      "HOLD": 214,
+      "DECREASE": 716,
+      "EXIT": 240
     }
   }
 }

@@ -1,11 +1,11 @@
 {
   "schema_version": "catalyst_events_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:41Z",
+  "created_at": "2026-03-18T22:11:43Z",
   "as_of_date": "2022-09-30",
-  "tickers_in_universe": 353,
-  "tickers_with_catalyst": 52,
-  "catalyst_coverage_pct": 14.7,
+  "tickers_in_universe": 349,
+  "tickers_with_catalyst": 51,
+  "catalyst_coverage_pct": 14.6,
   "ledger_total_entries": 8105,
   "tickers": {
     "AARD": {
@@ -236,21 +236,6 @@
       "event_count": 34,
       "source_mix": {
         "CTGOV": 34
-      }
-    },
-    "AKRO": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
-      "source_mix": {
-        "CTGOV": 2
       }
     },
     "AKTX": {
@@ -976,19 +961,6 @@
         "CTGOV": 2
       }
     },
-    "BLUE": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
     "BMEA": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
@@ -1125,21 +1097,6 @@
       "event_count": 81,
       "source_mix": {
         "CTGOV": 81
-      }
-    },
-    "CDTX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 5,
-      "source_mix": {
-        "CTGOV": 5
       }
     },
     "CDXS": {
@@ -1285,6 +1242,19 @@
       "source_mix": {
         "CTGOV": 2
       }
+    },
+    "CMPX": {
+      "days_to_catalyst": null,
+      "catalyst_mode": "missing",
+      "catalyst_strength": "missing",
+      "catalyst_decay_w": 0.0,
+      "nearest_event_type": "",
+      "nearest_event_source": "",
+      "nearest_event_name": "",
+      "nearest_disclosed_at": "",
+      "nearest_event_date": "",
+      "event_count": 0,
+      "source_mix": {}
     },
     "CNTA": {
       "days_to_catalyst": null,
@@ -1486,21 +1456,6 @@
         "CTGOV": 1
       }
     },
-    "CVAC": {
-      "days_to_catalyst": 1,
-      "catalyst_mode": "specific_days",
-      "catalyst_strength": "near",
-      "catalyst_decay_w": 1.0,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT03291002 PCD 2022-10-01",
-      "nearest_disclosed_at": "2021-11-04",
-      "nearest_event_date": "2022-10-01",
-      "event_count": 20,
-      "source_mix": {
-        "CTGOV": 20
-      }
-    },
     "CYTK": {
       "days_to_catalyst": 1519,
       "catalyst_mode": "specific_days",
@@ -1534,10 +1489,10 @@
       "catalyst_mode": "specific_days",
       "catalyst_strength": "near",
       "catalyst_decay_w": 1.0,
-      "nearest_event_type": "CLINICAL_PCD",
+      "nearest_event_type": "CLINICAL_CD",
       "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04996836 PCD 2022-12-01",
-      "nearest_disclosed_at": "2021-08-13",
+      "nearest_event_name": "NCT03853044 CD 2022-12-01",
+      "nearest_disclosed_at": "2022-04-20",
       "nearest_event_date": "2022-12-01",
       "event_count": 302,
       "source_mix": {
@@ -1859,19 +1814,6 @@
       }
     },
     "FDMT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
-    "FGEN": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
       "catalyst_strength": "missing",

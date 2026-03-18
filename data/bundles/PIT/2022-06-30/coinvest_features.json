@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:40Z",
+  "created_at": "2026-03-18T22:11:42Z",
   "as_of_date": "2022-06-30",
   "cache_as_of_date": "2022-06-30",
   "period_of_report": "2022-03-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2022-03-31",
   "managers_total": 35,
   "managers_with_filing": 34,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 256,
-  "signal_coverage_pct": 72.5,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 255,
+  "signal_coverage_pct": 73.1,
   "tickers": {
     "ABCL": {
       "tier1_count": 2,
@@ -369,47 +369,6 @@
         "Casdin Capital": "DECREASE",
         "Suvretta Capital": "DECREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 8,
-      "coinvest_overlap_count": 8,
-      "conviction_overlap": 5.8854,
-      "tier1_conviction_overlap": 4.9542,
-      "max_tier1_position_pct": 6.83,
-      "days_since_latest_filing": 45,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "NEW",
-        "Baker Bros": "DECREASE",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "DECREASE",
-        "Cormorant Asset": "DECREASE",
-        "Rock Springs": "DECREASE",
-        "Venbio Partners": "DECREASE"
       }
     },
     "ALDX": {
@@ -2202,6 +2161,41 @@
         "Millennium Management": "DECREASE"
       }
     },
+    "CMPX": {
+      "tier1_count": 4,
+      "sponsor_tier1_count": 4,
+      "sponsor_overlap_count": 6,
+      "coinvest_overlap_count": 6,
+      "conviction_overlap": 2.9875,
+      "tier1_conviction_overlap": 2.0563,
+      "max_tier1_position_pct": 0.48,
+      "days_since_latest_filing": 45,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Millennium Management",
+        "RA Capital",
+        "Rock Springs",
+        "Avidity Partners"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Millennium Management": 2,
+        "RA Capital": 1,
+        "Rock Springs": 1,
+        "Avidity Partners": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "NEW",
+        "Orbimed Advisors": "DECREASE",
+        "Millennium Management": "INCREASE",
+        "RA Capital": "DECREASE",
+        "Rock Springs": "DECREASE",
+        "Avidity Partners": "DECREASE"
+      }
+    },
     "CNTA": {
       "tier1_count": 7,
       "sponsor_tier1_count": 7,
@@ -2558,32 +2552,6 @@
         "Orbimed Advisors": "DECREASE",
         "Millennium Management": "HOLD",
         "RTW Investments": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 3,
-      "coinvest_overlap_count": 3,
-      "conviction_overlap": 1.2188,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 45,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Balyasny Asset",
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Balyasny Asset": 2,
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "D.E. Shaw": "DECREASE",
-        "Balyasny Asset": "NEW",
-        "Millennium Management": "INCREASE"
       }
     },
     "CYTK": {
@@ -8885,10 +8853,10 @@
       }
     ],
     "change_summary": {
-      "NEW": 219,
-      "INCREASE": 321,
+      "NEW": 218,
+      "INCREASE": 320,
       "HOLD": 164,
-      "DECREASE": 731,
+      "DECREASE": 728,
       "EXIT": 212
     }
   }

@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:30Z",
+  "created_at": "2026-03-18T22:11:34Z",
   "as_of_date": "2021-06-30",
   "cache_as_of_date": "2021-06-30",
   "period_of_report": "2021-03-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2021-03-31",
   "managers_total": 35,
   "managers_with_filing": 33,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 217,
-  "signal_coverage_pct": 61.5,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 215,
+  "signal_coverage_pct": 61.6,
   "tickers": {
     "ABCL": {
       "tier1_count": 2,
@@ -262,44 +262,6 @@
         "Casdin Capital": "HOLD",
         "Suvretta Capital": "INCREASE",
         "Rock Springs": "INCREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 7,
-      "coinvest_overlap_count": 7,
-      "conviction_overlap": 9.2048,
-      "tier1_conviction_overlap": 8.9223,
-      "max_tier1_position_pct": 6.74,
-      "days_since_latest_filing": 44,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Baker Bros": "INCREASE",
-        "Millennium Management": "DECREASE",
-        "Redmile Group": "INCREASE",
-        "Boxer Capital": "INCREASE",
-        "Cormorant Asset": "INCREASE",
-        "Rock Springs": "INCREASE",
-        "Venbio Partners": "INCREASE"
       }
     },
     "ALDX": {
@@ -2188,32 +2150,6 @@
         "Millennium Management": "INCREASE",
         "RA Capital": "NEW",
         "RTW Investments": "INCREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 2,
-      "sponsor_tier1_count": 2,
-      "sponsor_overlap_count": 3,
-      "coinvest_overlap_count": 3,
-      "conviction_overlap": 4.6494,
-      "tier1_conviction_overlap": 4.1786,
-      "max_tier1_position_pct": 1.93,
-      "days_since_latest_filing": 43,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Millennium Management",
-        "Samsara BioCapital",
-        "Ally Bridge"
-      ],
-      "holder_tiers": {
-        "Millennium Management": 2,
-        "Samsara BioCapital": 1,
-        "Ally Bridge": 1
-      },
-      "position_changes": {
-        "Millennium Management": "INCREASE",
-        "Samsara BioCapital": "INCREASE",
-        "Ally Bridge": "NEW"
       }
     },
     "CYTK": {
@@ -7568,11 +7504,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 246,
-      "INCREASE": 320,
+      "NEW": 245,
+      "INCREASE": 312,
       "HOLD": 183,
-      "DECREASE": 440,
-      "EXIT": 211
+      "DECREASE": 439,
+      "EXIT": 209
     }
   }
 }

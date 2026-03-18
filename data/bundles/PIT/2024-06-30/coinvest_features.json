@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:57Z",
+  "created_at": "2026-03-18T22:11:58Z",
   "as_of_date": "2024-06-30",
   "cache_as_of_date": "2024-06-30",
   "period_of_report": "2024-03-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2024-03-31",
   "managers_total": 35,
   "managers_with_filing": 34,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 295,
-  "signal_coverage_pct": 83.6,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 294,
+  "signal_coverage_pct": 84.2,
   "tickers": {
     "ABCL": {
       "tier1_count": 3,
@@ -492,53 +492,6 @@
         "Millennium Management": "INCREASE",
         "Acuta Capital": "NEW",
         "Rock Springs": "HOLD"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 8,
-      "sponsor_tier1_count": 8,
-      "sponsor_overlap_count": 10,
-      "coinvest_overlap_count": 10,
-      "conviction_overlap": 13.4345,
-      "tier1_conviction_overlap": 12.5012,
-      "max_tier1_position_pct": 2.09,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Deerfield Management",
-        "Perceptive Advisors",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "Boxer Capital",
-        "RTW Investments",
-        "Rock Springs",
-        "Logos Global"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Deerfield Management": 1,
-        "Perceptive Advisors": 1,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "RTW Investments": 1,
-        "Rock Springs": 1,
-        "Logos Global": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "INCREASE",
-        "Deerfield Management": "NEW",
-        "Perceptive Advisors": "INCREASE",
-        "Baker Bros": "INCREASE",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "INCREASE",
-        "Boxer Capital": "HOLD",
-        "RTW Investments": "INCREASE",
-        "Rock Springs": "INCREASE",
-        "Logos Global": "HOLD"
       }
     },
     "AKTX": {
@@ -2651,6 +2604,44 @@
         "Logos Global": "DECREASE"
       }
     },
+    "CMPX": {
+      "tier1_count": 5,
+      "sponsor_tier1_count": 5,
+      "sponsor_overlap_count": 7,
+      "coinvest_overlap_count": 7,
+      "conviction_overlap": 6.5691,
+      "tier1_conviction_overlap": 6.0116,
+      "max_tier1_position_pct": 1.37,
+      "days_since_latest_filing": 32,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Baker Bros",
+        "Millennium Management",
+        "Cormorant Asset",
+        "Rock Springs",
+        "Opaleye Management"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Baker Bros": 1,
+        "Millennium Management": 2,
+        "Cormorant Asset": 1,
+        "Rock Springs": 1,
+        "Opaleye Management": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "DECREASE",
+        "Orbimed Advisors": "INCREASE",
+        "Baker Bros": "INCREASE",
+        "Millennium Management": "DECREASE",
+        "Cormorant Asset": "NEW",
+        "Rock Springs": "INCREASE",
+        "Opaleye Management": "NEW"
+      }
+    },
     "CNTA": {
       "tier1_count": 3,
       "sponsor_tier1_count": 3,
@@ -3022,29 +3013,6 @@
         "Tang Capital": "INCREASE",
         "Millennium Management": "INCREASE",
         "Ghost Tree": "NEW"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 2,
-      "coinvest_overlap_count": 2,
-      "conviction_overlap": 0.7467,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "D.E. Shaw": "INCREASE",
-        "Millennium Management": "DECREASE"
       }
     },
     "CYTK": {
@@ -10901,11 +10869,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 420,
-      "INCREASE": 761,
-      "HOLD": 258,
-      "DECREASE": 447,
-      "EXIT": 281
+      "NEW": 421,
+      "INCREASE": 756,
+      "HOLD": 256,
+      "DECREASE": 448,
+      "EXIT": 279
     }
   }
 }

@@ -1,11 +1,11 @@
 {
   "schema_version": "catalyst_events_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:48Z",
+  "created_at": "2026-03-18T22:11:49Z",
   "as_of_date": "2023-06-30",
-  "tickers_in_universe": 353,
+  "tickers_in_universe": 349,
   "tickers_with_catalyst": 54,
-  "catalyst_coverage_pct": 15.3,
+  "catalyst_coverage_pct": 15.5,
   "ledger_total_entries": 8967,
   "tickers": {
     "AARD": {
@@ -236,21 +236,6 @@
       "event_count": 34,
       "source_mix": {
         "CTGOV": 34
-      }
-    },
-    "AKRO": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
-      "source_mix": {
-        "CTGOV": 2
       }
     },
     "AKTX": {
@@ -982,19 +967,6 @@
         "CTGOV": 4
       }
     },
-    "BLUE": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
     "BMEA": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
@@ -1131,21 +1103,6 @@
       "event_count": 87,
       "source_mix": {
         "CTGOV": 87
-      }
-    },
-    "CDTX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 6,
-      "source_mix": {
-        "CTGOV": 6
       }
     },
     "CDXS": {
@@ -1291,6 +1248,19 @@
       "source_mix": {
         "CTGOV": 7
       }
+    },
+    "CMPX": {
+      "days_to_catalyst": null,
+      "catalyst_mode": "missing",
+      "catalyst_strength": "missing",
+      "catalyst_decay_w": 0.0,
+      "nearest_event_type": "",
+      "nearest_event_source": "",
+      "nearest_event_name": "",
+      "nearest_disclosed_at": "",
+      "nearest_event_date": "",
+      "event_count": 0,
+      "source_mix": {}
     },
     "CNTA": {
       "days_to_catalyst": null,
@@ -1494,21 +1464,6 @@
       "event_count": 2,
       "source_mix": {
         "CTGOV": 2
-      }
-    },
-    "CVAC": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 23,
-      "source_mix": {
-        "CTGOV": 23
       }
     },
     "CYTK": {
@@ -1873,19 +1828,6 @@
       }
     },
     "FDMT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
-    },
-    "FGEN": {
       "days_to_catalyst": null,
       "catalyst_mode": "missing",
       "catalyst_strength": "missing",

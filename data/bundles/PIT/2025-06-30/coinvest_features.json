@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:24:07Z",
+  "created_at": "2026-03-18T22:12:06Z",
   "as_of_date": "2025-06-30",
   "cache_as_of_date": "2025-06-30",
   "period_of_report": "2025-03-31",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2025-03-31",
   "managers_total": 35,
   "managers_with_filing": 34,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 327,
-  "signal_coverage_pct": 92.6,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 325,
+  "signal_coverage_pct": 93.1,
   "tickers": {
     "AARD": {
       "tier1_count": 2,
@@ -520,65 +520,6 @@
         "Palo Alto Investors": "NEW",
         "Casdin Capital": "DECREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 11,
-      "sponsor_tier1_count": 11,
-      "sponsor_overlap_count": 14,
-      "coinvest_overlap_count": 14,
-      "conviction_overlap": 21.8451,
-      "tier1_conviction_overlap": 20.6339,
-      "max_tier1_position_pct": 8.64,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Renaissance Technologies",
-        "Orbimed Advisors",
-        "Perceptive Advisors",
-        "Baker Bros",
-        "Millennium Management",
-        "Redmile Group",
-        "RTW Investments",
-        "EcoR1 Capital",
-        "Rock Springs",
-        "Sofinnova Investments",
-        "Avidity Partners",
-        "Logos Global",
-        "Deep Track"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Renaissance Technologies": 2,
-        "Orbimed Advisors": 1,
-        "Perceptive Advisors": 1,
-        "Baker Bros": 1,
-        "Millennium Management": 2,
-        "Redmile Group": 1,
-        "RTW Investments": 1,
-        "EcoR1 Capital": 1,
-        "Rock Springs": 1,
-        "Sofinnova Investments": 1,
-        "Avidity Partners": 1,
-        "Logos Global": 1,
-        "Deep Track": 1
-      },
-      "position_changes": {
-        "D.E. Shaw": "DECREASE",
-        "Renaissance Technologies": "INCREASE",
-        "Orbimed Advisors": "INCREASE",
-        "Perceptive Advisors": "HOLD",
-        "Baker Bros": "DECREASE",
-        "Millennium Management": "INCREASE",
-        "Redmile Group": "INCREASE",
-        "RTW Investments": "INCREASE",
-        "EcoR1 Capital": "NEW",
-        "Rock Springs": "HOLD",
-        "Sofinnova Investments": "NEW",
-        "Avidity Partners": "HOLD",
-        "Logos Global": "INCREASE",
-        "Deep Track": "INCREASE"
       }
     },
     "AKTX": {
@@ -2564,38 +2505,6 @@
         "Millennium Management": "DECREASE"
       }
     },
-    "CDTX": {
-      "tier1_count": 3,
-      "sponsor_tier1_count": 3,
-      "sponsor_overlap_count": 5,
-      "coinvest_overlap_count": 5,
-      "conviction_overlap": 5.4842,
-      "tier1_conviction_overlap": 4.7388,
-      "max_tier1_position_pct": 3.14,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Renaissance Technologies",
-        "Millennium Management",
-        "RA Capital",
-        "Acuta Capital",
-        "Bain Capital Life"
-      ],
-      "holder_tiers": {
-        "Renaissance Technologies": 2,
-        "Millennium Management": 2,
-        "RA Capital": 1,
-        "Acuta Capital": 1,
-        "Bain Capital Life": 1
-      },
-      "position_changes": {
-        "Renaissance Technologies": "DECREASE",
-        "Millennium Management": "INCREASE",
-        "RA Capital": "DECREASE",
-        "Acuta Capital": "INCREASE",
-        "Bain Capital Life": "DECREASE"
-      }
-    },
     "CDXS": {
       "tier1_count": 2,
       "sponsor_tier1_count": 2,
@@ -2920,6 +2829,44 @@
         "RTW Investments": "INCREASE",
         "Logos Global": "NEW",
         "Deep Track": "NEW"
+      }
+    },
+    "CMPX": {
+      "tier1_count": 4,
+      "sponsor_tier1_count": 4,
+      "sponsor_overlap_count": 7,
+      "coinvest_overlap_count": 7,
+      "conviction_overlap": 6.2494,
+      "tier1_conviction_overlap": 4.8515,
+      "max_tier1_position_pct": 1.16,
+      "days_since_latest_filing": 46,
+      "coinvest_recency_state": "fresh",
+      "coinvest_holders": [
+        "Renaissance Technologies",
+        "Orbimed Advisors",
+        "Balyasny Asset",
+        "Tang Capital",
+        "Baker Bros",
+        "Millennium Management",
+        "Rock Springs"
+      ],
+      "holder_tiers": {
+        "Renaissance Technologies": 2,
+        "Orbimed Advisors": 1,
+        "Balyasny Asset": 2,
+        "Tang Capital": 1,
+        "Baker Bros": 1,
+        "Millennium Management": 2,
+        "Rock Springs": 1
+      },
+      "position_changes": {
+        "Renaissance Technologies": "INCREASE",
+        "Orbimed Advisors": "INCREASE",
+        "Balyasny Asset": "NEW",
+        "Tang Capital": "INCREASE",
+        "Baker Bros": "DECREASE",
+        "Millennium Management": "INCREASE",
+        "Rock Springs": "INCREASE"
       }
     },
     "CNTA": {
@@ -3307,26 +3254,6 @@
         "Casdin Capital": "DECREASE",
         "Suvretta Capital": "DECREASE",
         "Samsara BioCapital": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 1,
-      "coinvest_overlap_count": 1,
-      "conviction_overlap": 0.28,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "Millennium Management": "DECREASE"
       }
     },
     "CYTK": {
@@ -11736,11 +11663,11 @@
       }
     ],
     "change_summary": {
-      "NEW": 267,
-      "INCREASE": 469,
-      "HOLD": 245,
-      "DECREASE": 1002,
-      "EXIT": 259
+      "NEW": 266,
+      "INCREASE": 465,
+      "HOLD": 242,
+      "DECREASE": 997,
+      "EXIT": 257
     }
   }
 }

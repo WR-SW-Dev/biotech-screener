@@ -1,7 +1,7 @@
 {
   "schema_version": "coinvest_features.v1",
   "version": "1.0.0",
-  "created_at": "2026-02-23T16:23:35Z",
+  "created_at": "2026-03-18T22:11:38Z",
   "as_of_date": "2021-12-31",
   "cache_as_of_date": "2021-12-31",
   "period_of_report": "2021-09-30",
@@ -9,9 +9,9 @@
   "prior_cache_as_of_date": "2021-09-30",
   "managers_total": 35,
   "managers_with_filing": 33,
-  "tickers_in_universe": 353,
-  "tickers_with_signal": 251,
-  "signal_coverage_pct": 71.1,
+  "tickers_in_universe": 349,
+  "tickers_with_signal": 249,
+  "signal_coverage_pct": 71.3,
   "tickers": {
     "ABCL": {
       "tier1_count": 2,
@@ -348,41 +348,6 @@
         "Casdin Capital": "DECREASE",
         "Suvretta Capital": "INCREASE",
         "Rock Springs": "DECREASE"
-      }
-    },
-    "AKRO": {
-      "tier1_count": 6,
-      "sponsor_tier1_count": 6,
-      "sponsor_overlap_count": 6,
-      "coinvest_overlap_count": 6,
-      "conviction_overlap": 6.6308,
-      "tier1_conviction_overlap": 6.6308,
-      "max_tier1_position_pct": 4.9,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "Baker Bros",
-        "Redmile Group",
-        "Boxer Capital",
-        "Cormorant Asset",
-        "Rock Springs",
-        "Venbio Partners"
-      ],
-      "holder_tiers": {
-        "Baker Bros": 1,
-        "Redmile Group": 1,
-        "Boxer Capital": 1,
-        "Cormorant Asset": 1,
-        "Rock Springs": 1,
-        "Venbio Partners": 1
-      },
-      "position_changes": {
-        "Baker Bros": "HOLD",
-        "Redmile Group": "DECREASE",
-        "Boxer Capital": "HOLD",
-        "Cormorant Asset": "HOLD",
-        "Rock Springs": "HOLD",
-        "Venbio Partners": "HOLD"
       }
     },
     "ALDX": {
@@ -2484,29 +2449,6 @@
         "Great Point": "INCREASE",
         "RA Capital": "DECREASE",
         "RTW Investments": "DECREASE"
-      }
-    },
-    "CVAC": {
-      "tier1_count": 0,
-      "sponsor_tier1_count": 0,
-      "sponsor_overlap_count": 2,
-      "coinvest_overlap_count": 2,
-      "conviction_overlap": 0.56,
-      "tier1_conviction_overlap": 0.0,
-      "max_tier1_position_pct": 0.0,
-      "days_since_latest_filing": 46,
-      "coinvest_recency_state": "fresh",
-      "coinvest_holders": [
-        "D.E. Shaw",
-        "Millennium Management"
-      ],
-      "holder_tiers": {
-        "D.E. Shaw": 2,
-        "Millennium Management": 2
-      },
-      "position_changes": {
-        "D.E. Shaw": "DECREASE",
-        "Millennium Management": "DECREASE"
       }
     },
     "CYTK": {
@@ -8556,9 +8498,9 @@
     "change_summary": {
       "NEW": 254,
       "INCREASE": 378,
-      "HOLD": 203,
-      "DECREASE": 520,
-      "EXIT": 196
+      "HOLD": 198,
+      "DECREASE": 517,
+      "EXIT": 194
     }
   }
 }
