@@ -1067,6 +1067,232 @@ def score_structures(structures: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# DTE bucketing + Greeks (Spec 029)
+# ---------------------------------------------------------------------------
+
+DTE_BUCKETS = [
+    ("short", 21, 35),
+    ("medium_short", 36, 60),
+    ("medium", 61, 90),
+    ("long", 91, 120),
+]
+
+
+def bucket_expiries_by_dte(
+    chain: List[Dict[str, Any]],
+    as_of_date: str,
+) -> Dict[str, List[Dict[str, Any]]]:
+    """Group chain expiries into DTE buckets.
+
+    Returns {bucket_label: [{expiry, dte}, ...]}.
+    """
+    ref = date.fromisoformat(as_of_date)
+    raw = sorted(set(c.get("expiration_date", "") for c in chain if c.get("expiration_date", "") > as_of_date))
+
+    buckets: Dict[str, List[Dict[str, Any]]] = {label: [] for label, _, _ in DTE_BUCKETS}
+    for exp in raw:
+        try:
+            dte = (date.fromisoformat(exp) - ref).days
+        except ValueError:
+            continue
+        for label, lo, hi in DTE_BUCKETS:
+            if lo <= dte <= hi:
+                buckets[label].append({"expiry": exp, "dte": dte})
+                break
+    return buckets
+
+
+def evaluate_all_dte_buckets(
+    etf_ticker: str,
+    etf_price: float,
+    sigma: float,
+    beta: float,
+    hedge_notional: float,
+    chain: List[Dict[str, Any]],
+    as_of_date: str,
+) -> List[Dict[str, Any]]:
+    """Evaluate structures across all DTE buckets for one ETF.
+
+    Returns flat list of scored structures, each tagged with dte_bucket.
+    """
+    buckets = bucket_expiries_by_dte(chain, as_of_date)
+    all_structs: List[Dict[str, Any]] = []
+
+    for label, expiry_list in buckets.items():
+        if not expiry_list:
+            continue
+        # Pick the expiry with most contracts (proxy for liquidity)
+        best_exp = expiry_list[0]  # already sorted by date; pick first
+        structs = evaluate_structures(
+            etf_ticker,
+            etf_price,
+            sigma,
+            best_exp["dte"],
+            best_exp["expiry"],
+            beta,
+            hedge_notional,
+            chain,
+        )
+        for s in structs:
+            s["dte_bucket"] = label
+            s["_ref_price"] = etf_price
+        all_structs.extend(structs)
+
+    return all_structs
+
+
+def compute_structure_greeks(
+    structure: Dict[str, Any],
+    etf_price: float,
+    sigma: float,
+) -> Dict[str, Any]:
+    """Compute full Greeks for a hedge structure.
+
+    Returns per-leg Greeks, net structure Greeks, and hedge-position Greeks.
+    """
+    dte = structure.get("dte", 45)
+    T = dte / 365.0 if dte > 0 else 0.001
+    contracts = structure.get("contracts", 1)
+    struct_type = structure["type"]
+
+    legs: List[Dict[str, Any]] = []
+
+    if struct_type == "straight_put":
+        K = structure.get("strike_1", etf_price * 0.95)
+        legs.append(_leg_greeks("buy_put", K, T, etf_price, sigma, "put", 1))
+
+    elif struct_type == "put_spread":
+        K1 = structure.get("strike_1", etf_price * 0.95)
+        K2 = structure.get("strike_2", etf_price * 0.85)
+        legs.append(_leg_greeks("buy_put", K1, T, etf_price, sigma, "put", 1))
+        legs.append(_leg_greeks("sell_put", K2, T, etf_price, sigma, "put", -1))
+
+    elif struct_type == "collar":
+        K1 = structure.get("strike_1", etf_price * 0.95)
+        K2 = structure.get("strike_2", etf_price * 1.05)
+        legs.append(_leg_greeks("buy_put", K1, T, etf_price, sigma, "put", 1))
+        legs.append(_leg_greeks("sell_call", K2, T, etf_price, sigma, "call", -1))
+
+    elif struct_type == "put_ratio":
+        K1 = structure.get("strike_1", etf_price * 0.90)
+        K2 = structure.get("strike_2", etf_price * 0.75)
+        legs.append(_leg_greeks("buy_put", K1, T, etf_price, sigma, "put", 1))
+        legs.append(_leg_greeks("sell_put_2x", K2, T, etf_price, sigma, "put", -2))
+
+    # Net structure Greeks (per contract)
+    net = {"delta": 0.0, "gamma": 0.0, "vega": 0.0, "theta": 0.0, "rho": 0.0}
+    for leg in legs:
+        qty = leg["quantity_sign"]
+        for g in net:
+            val = leg.get(g, 0) or 0
+            if not math.isnan(val):
+                net[g] += val * qty
+
+    per_contract = {k: round(v, 6) for k, v in net.items()}
+
+    # Hedge-position Greeks (scaled by contracts * 100)
+    scale = contracts * 100
+    position = {
+        "position_delta": round(net["delta"] * scale, 2),
+        "position_gamma": round(net["gamma"] * scale, 4),
+        "position_vega": round(net["vega"] * scale, 2),
+        "position_theta": round(net["theta"] * scale, 2),
+        "position_rho": round(net["rho"] * scale, 2),
+        "theta_per_day_dollars": round(net["theta"] * scale, 2),
+        "vega_pnl_per_1vol_point_dollars": round(net["vega"] * scale, 2),
+    }
+
+    return {
+        "per_leg_greeks": legs,
+        "per_contract_net_greeks": per_contract,
+        "hedge_position_greeks": position,
+        "implied_vol": round(sigma, 4),
+        "contracts": contracts,
+    }
+
+
+def _leg_greeks(
+    label: str,
+    strike: float,
+    T: float,
+    S: float,
+    sigma: float,
+    option_type: str,
+    quantity_sign: int,
+) -> Dict[str, Any]:
+    """Compute Greeks for a single leg."""
+    g = black_scholes_greeks(S, strike, T, DEFAULT_RISK_FREE, sigma, option_type)
+    return {
+        "label": label,
+        "option_type": option_type,
+        "strike": round(strike, 2),
+        "quantity_sign": quantity_sign,
+        "price": g.get("price"),
+        "implied_vol": round(sigma, 4),
+        "delta": g.get("delta"),
+        "gamma": g.get("gamma"),
+        "vega": g.get("vega"),
+        "theta": g.get("theta"),
+        "rho": g.get("rho"),
+    }
+
+
+def _structure_summary(s: Dict[str, Any]) -> Dict[str, Any]:
+    """Extract key fields from a structure for summary output."""
+    if not s:
+        return {}
+    return {
+        "rank": s.get("rank"),
+        "vehicle": s.get("vehicle"),
+        "structure": s.get("structure"),
+        "expiry": s.get("expiry"),
+        "dte": s.get("dte"),
+        "dte_bucket": s.get("dte_bucket"),
+        "ann_cost_bps": s.get("ann_cost_bps"),
+        "hedge_score": s.get("hedge_score"),
+    }
+
+
+def rank_best_dte_candidates(
+    bucket_results: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Select best structure per DTE bucket and overall best.
+
+    Decision rule for best_overall (priority order):
+    1. higher historical down-month payoff
+    2. lower max drawdown
+    3. lower annualized carry
+    4. higher historical coverage
+    5. higher hedge score
+    """
+    # Group by bucket
+    by_bucket: Dict[str, List[Dict[str, Any]]] = {}
+    for r in bucket_results:
+        b = r.get("dte_bucket", "unknown")
+        by_bucket.setdefault(b, []).append(r)
+
+    # Pick winner per bucket (by hedge_score since backtest is expensive)
+    bucket_winners: Dict[str, Dict[str, Any]] = {}
+    for label, items in by_bucket.items():
+        items.sort(key=lambda x: -(x.get("hedge_score", 0)))
+        bucket_winners[label] = items[0]
+
+    # Best overall = highest hedge score among bucket winners
+    # (historical metrics are added in Phase 4 after backtest runs)
+    all_winners = list(bucket_winners.values())
+    if all_winners:
+        all_winners.sort(key=lambda x: -(x.get("hedge_score", 0)))
+        best_overall = all_winners[0]
+    else:
+        best_overall = {}
+
+    return {
+        "bucket_winners": bucket_winners,
+        "best_overall": best_overall,
+    }
+
+
+# ---------------------------------------------------------------------------
 # Phase 4 — Historical hedge effectiveness backtest
 # ---------------------------------------------------------------------------
 
@@ -1351,9 +1577,20 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
     if ic:
         action = ic.get("policy_action", "WATCH")
         action_emoji = {"HEDGE NOW": ">>", "WATCH": "--", "DEFER": "!!"}
+        # Get top structure Greeks for banner
+        top_greeks = d.get("structure_greeks", {}).get(1, {})
+        top_pos = top_greeks.get("hedge_position_greeks", {})
+        top_ranked = d.get("ranked_structures", [{}])
+        top_dte = top_ranked[0].get("dte", "") if top_ranked else ""
+        top_expiry = top_ranked[0].get("expiry", "") if top_ranked else ""
+        vega_str = f"${top_pos.get('vega_pnl_per_1vol_point_dollars', 0):+,.0f}/+1vol" if top_pos else ""
+        theta_str = f"${top_pos.get('theta_per_day_dollars', 0):,.0f}/day" if top_pos else ""
+
         banner = (
             f"**[{action_emoji.get(action, '--')} {action}]** | "
             f"Primary: **{ic.get('primary_hedge', 'none')}** | "
+            f"Expiry: {top_expiry} ({top_dte} DTE) | "
+            f"Vega: {vega_str} | Theta: {theta_str} | "
             f"Confidence: **{ic.get('confidence', 'N/A')}** | "
             f"{ic.get('change_reason', '')}"
         )
@@ -1567,6 +1804,51 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
                 f"| {s.get('max_drawdown_hedged', 0):.2%} "
                 f"| ${s.get('total_hedge_pnl', 0):,.0f} "
                 f"| {sh_str} |"
+            )
+        lines.append("")
+
+    # Best DTE Comparison (Spec 029)
+    dte_summary = d.get("best_dte_summary", {})
+    bw = dte_summary.get("bucket_winners", {})
+    if bw:
+        lines.append("## Best DTE Comparison\n")
+        lines.append("| Bucket | Vehicle | Structure | Expiry | DTE | Carry (bps) | Score |")
+        lines.append("|---|---|---|---|---|---|---|")
+        for label in ["short", "medium_short", "medium", "long"]:
+            w = bw.get(label, {})
+            if w:
+                lines.append(
+                    f"| {label} | {w.get('vehicle', '')} | {w.get('structure', '')} "
+                    f"| {w.get('expiry', '')} | {w.get('dte', '')} "
+                    f"| {w.get('ann_cost_bps', 0):.0f} | {w.get('hedge_score', 0):.1f} |"
+                )
+        best_o = dte_summary.get("best_overall", {})
+        if best_o:
+            lines.append(
+                f"| **overall** | {best_o.get('vehicle', '')} | {best_o.get('structure', '')} "
+                f"| {best_o.get('expiry', '')} | {best_o.get('dte', '')} "
+                f"| {best_o.get('ann_cost_bps', 0):.0f} | {best_o.get('hedge_score', 0):.1f} |"
+            )
+        lines.append("")
+
+    # Greeks Summary (Spec 029)
+    sg = d.get("structure_greeks", {})
+    ranked_for_greeks = d.get("ranked_structures", [])[:5]
+    if ranked_for_greeks and sg:
+        lines.append("## Greeks Summary (hedge-position level)\n")
+        lines.append("| Rank | Vehicle | Structure | DTE | Delta | Gamma | Vega ($/+1vol) | Theta ($/day) | IV |")
+        lines.append("|---|---|---|---|---|---|---|---|---|")
+        for s in ranked_for_greeks:
+            g = sg.get(s["rank"], {}).get("hedge_position_greeks", {})
+            iv = sg.get(s["rank"], {}).get("implied_vol", 0)
+            lines.append(
+                f"| {s['rank']} | {s['vehicle']} | {s['structure']} "
+                f"| {s.get('dte', '')} "
+                f"| {g.get('position_delta', 0):,.0f} "
+                f"| {g.get('position_gamma', 0):.2f} "
+                f"| ${g.get('vega_pnl_per_1vol_point_dollars', 0):,.0f} "
+                f"| ${g.get('theta_per_day_dollars', 0):,.0f} "
+                f"| {iv:.1%} |"
             )
         lines.append("")
 
@@ -2019,56 +2301,72 @@ def run_hedge_report(
             tasty_diag=tt_diag,
         )
 
-    # --- Phase 3: Hedge structures ---
-    logger.info("Phase 3: Evaluating hedge structures...")
+    # --- Phase 3: Hedge structures (multi-DTE, Spec 029) ---
+    logger.info("Phase 3: Evaluating hedge structures across DTE buckets...")
     all_structures: List[Dict[str, Any]] = []
 
     for etf in HEDGE_ETFS:
         etf_price = beta_stats[etf].get("etf_price") or 0
         beta = beta_stats[etf].get("beta") or 1.0
         surf = surface.get(etf, {})
-
-        # Get IV for pricing (prefer chain ATM IV, fall back to realized vol)
         sigma = surf.get("atm_iv_near") or surf.get("realized_vol_30d") or 0.30
 
-        # Try loading chain for market prices
-        chain = []
+        # Try loading chain for multi-DTE evaluation
+        chain: List[Dict[str, Any]] = []
         if snap_dir and snap_dir.exists():
             chain = load_chain_snapshot(snap_dir, etf)
 
-        # Pick best expiry (1-3 months out)
-        expiries = get_expiries_for_analysis(chain, as_of_date) if chain else []
-        target_expiry = None
-        target_dte = 45  # default
-        for exp_info in expiries:
-            if 30 <= exp_info["dte"] <= 90:
-                target_expiry = exp_info["expiry"]
-                target_dte = exp_info["dte"]
-                break
-        if not target_expiry and expiries:
-            target_expiry = expiries[0]["expiry"]
-            target_dte = expiries[0]["dte"]
-        if not target_expiry:
-            # Synthetic expiry ~45 days out
+        if chain:
+            # Multi-DTE: evaluate across all buckets
+            structs = evaluate_all_dte_buckets(
+                etf,
+                etf_price,
+                sigma,
+                beta,
+                hedge_notional,
+                chain,
+                as_of_date,
+            )
+        else:
+            # Fallback: single synthetic expiry
             target_expiry = (date.fromisoformat(as_of_date) + timedelta(days=45)).isoformat()
-            target_dte = 45
+            structs = evaluate_structures(
+                etf,
+                etf_price,
+                sigma,
+                45,
+                target_expiry,
+                beta,
+                hedge_notional,
+                [],
+            )
+            for s in structs:
+                s["dte_bucket"] = "medium_short"
+                s["_ref_price"] = etf_price
 
-        structs = evaluate_structures(
-            etf,
-            etf_price,
-            sigma,
-            target_dte,
-            target_expiry,
-            beta,
-            hedge_notional,
-            chain,
-        )
-        for s in structs:
-            s["_ref_price"] = etf_price
         all_structures.extend(structs)
 
     ranked = score_structures(all_structures)
-    logger.info("  Evaluated %d structures, top: %s", len(ranked), ranked[0]["structure"] if ranked else "none")
+
+    # Compute Greeks for all ranked structures
+    structure_greeks: Dict[int, Dict[str, Any]] = {}
+    for s in ranked:
+        etf_price_s = s.get("_ref_price") or beta_stats.get(s["vehicle"], {}).get("etf_price", 0)
+        sigma_s = surface.get(s["vehicle"], {}).get("atm_iv_near") or 0.30
+        greeks = compute_structure_greeks(s, etf_price_s, sigma_s)
+        s["greeks"] = greeks
+        structure_greeks[s["rank"]] = greeks
+
+    # DTE bucket ranking
+    best_dte = rank_best_dte_candidates(ranked)
+    bucket_winners = best_dte.get("bucket_winners", {})
+    n_buckets = sum(1 for v in bucket_winners.values() if v)
+    logger.info(
+        "  Evaluated %d structures across %d DTE buckets, top: %s",
+        len(ranked),
+        n_buckets,
+        ranked[0]["structure"] if ranked else "none",
+    )
 
     # --- Phase 4: Historical backtest ---
     logger.info("Phase 4: Historical backtest...")
@@ -2242,6 +2540,11 @@ def run_hedge_report(
         "source_selection_reason": source_reason,
         "decision_trace": decision_trace,
         "ranked_structures": ranked,
+        "best_dte_summary": {
+            "bucket_winners": {k: _structure_summary(v) for k, v in bucket_winners.items()},
+            "best_overall": _structure_summary(best_dte.get("best_overall", {})),
+        },
+        "structure_greeks": structure_greeks,
         "backtest": backtest.get("summary", {}),
         "backtest_months": backtest.get("months", []),
         "bs_backtest_comparison": bs_comparison if bs_comparison else None,

@@ -15,14 +15,17 @@ sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
 from tools.biotech_hedge_report import (
     _simulate_structure_pnl,
+    bucket_expiries_by_dte,
     compute_beta_stats,
     compute_concentration_metrics,
     compute_hedge_contracts,
     compute_log_returns,
     compute_realized_vol,
     compute_regime_analysis,
+    compute_structure_greeks,
     evaluate_structures,
     load_portfolio_weights,
+    rank_best_dte_candidates,
     score_structures,
 )
 
@@ -639,3 +642,144 @@ class TestSimulatePnl:
             contracts=10,
         )
         assert pnl < 0, f"Put PnL should be negative on 10% rise, got {pnl}"
+
+
+# ---------------------------------------------------------------------------
+# Spec 029: DTE bucketing + Greeks
+# ---------------------------------------------------------------------------
+
+
+class TestDTEBucketing:
+    """Test DTE bucket assignment and ranking."""
+
+    def test_bucket_assignment_short(self):
+        """Expiry with DTE 30 goes to short bucket."""
+        chain = [{"expiration_date": "2026-04-17"}]  # 30d from 2026-03-18
+        buckets = bucket_expiries_by_dte(chain, "2026-03-18")
+        assert len(buckets["short"]) == 1
+        assert buckets["short"][0]["dte"] == 30
+
+    def test_bucket_assignment_medium(self):
+        """Expiry with DTE 75 goes to medium bucket."""
+        chain = [{"expiration_date": "2026-06-01"}]  # 75d from 2026-03-18
+        buckets = bucket_expiries_by_dte(chain, "2026-03-18")
+        assert len(buckets["medium"]) == 1
+
+    def test_bucket_assignment_out_of_range(self):
+        """Expiry with DTE 150 goes to no bucket."""
+        chain = [{"expiration_date": "2026-08-15"}]  # 150d from 2026-03-18
+        buckets = bucket_expiries_by_dte(chain, "2026-03-18")
+        assert all(len(v) == 0 for v in buckets.values())
+
+    def test_bucket_winner_selection_deterministic(self):
+        """Same inputs produce same bucket winners."""
+        structs = evaluate_structures("XBI", 100.0, 0.30, 45, "2026-05-01", 1.0, 1_000_000, [])
+        for s in structs:
+            s["dte_bucket"] = "medium_short"
+        scored = score_structures(structs)
+        r1 = rank_best_dte_candidates(scored)
+        r2 = rank_best_dte_candidates(scored)
+        assert r1["best_overall"].get("hedge_score") == r2["best_overall"].get("hedge_score")
+
+
+class TestStructureGreeks:
+    """Test Greek computation at leg, structure, and position level."""
+
+    def test_straight_put_greeks_present(self):
+        """Straight put should have all Greek fields."""
+        struct = {
+            "type": "straight_put",
+            "strike_1": 95.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        assert "per_leg_greeks" in g
+        assert len(g["per_leg_greeks"]) == 1
+        leg = g["per_leg_greeks"][0]
+        assert leg["delta"] is not None
+        assert leg["delta"] < 0  # put delta is negative
+        assert g["per_contract_net_greeks"]["delta"] < 0
+
+    def test_put_spread_net_greeks(self):
+        """Put spread net Greeks = signed sum of legs."""
+        struct = {
+            "type": "put_spread",
+            "strike_1": 95.0,
+            "strike_2": 85.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        legs = g["per_leg_greeks"]
+        assert len(legs) == 2
+        # Net delta = buy_put_delta * 1 + sell_put_delta * (-1)
+        expected_delta = legs[0]["delta"] * 1 + legs[1]["delta"] * (-1)
+        assert abs(g["per_contract_net_greeks"]["delta"] - expected_delta) < 1e-5
+
+    def test_collar_net_greeks(self):
+        """Collar net Greeks reflect short-call subtraction."""
+        struct = {
+            "type": "collar",
+            "strike_1": 95.0,
+            "strike_2": 105.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        legs = g["per_leg_greeks"]
+        assert legs[0]["option_type"] == "put"
+        assert legs[1]["option_type"] == "call"
+        assert legs[1]["quantity_sign"] == -1
+
+    def test_ratio_spread_quantity_scaling(self):
+        """1x2 ratio spread has quantity_sign=-2 on the short leg."""
+        struct = {
+            "type": "put_ratio",
+            "strike_1": 90.0,
+            "strike_2": 75.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        legs = g["per_leg_greeks"]
+        assert legs[1]["quantity_sign"] == -2
+
+    def test_position_greeks_scale_by_contracts(self):
+        """Hedge-position Greeks = net * contracts * 100."""
+        struct = {
+            "type": "straight_put",
+            "strike_1": 95.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        net_delta = g["per_contract_net_greeks"]["delta"]
+        pos_delta = g["hedge_position_greeks"]["position_delta"]
+        assert abs(pos_delta - net_delta * 10 * 100) < 0.01
+
+    def test_theta_dollar_scaling(self):
+        """Theta/day in dollars = net theta * contracts * 100."""
+        struct = {
+            "type": "straight_put",
+            "strike_1": 95.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        net_theta = g["per_contract_net_greeks"]["theta"]
+        theta_dollars = g["hedge_position_greeks"]["theta_per_day_dollars"]
+        assert abs(theta_dollars - net_theta * 10 * 100) < 0.01
+
+    def test_vega_dollar_scaling(self):
+        """Vega P&L per +1 vol point = net vega * contracts * 100."""
+        struct = {
+            "type": "straight_put",
+            "strike_1": 95.0,
+            "dte": 45,
+            "contracts": 10,
+        }
+        g = compute_structure_greeks(struct, 100.0, 0.30)
+        net_vega = g["per_contract_net_greeks"]["vega"]
+        vega_dollars = g["hedge_position_greeks"]["vega_pnl_per_1vol_point_dollars"]
+        assert abs(vega_dollars - net_vega * 10 * 100) < 0.01
