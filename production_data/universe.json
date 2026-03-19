@@ -5531,65 +5531,6 @@
     "NetIncome": -115234000
   },
   {
-    "ticker": "ATXS",
-    "name": "ATXS",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "excluded_acquired",
-    "added_from_etf": true,
-    "added_date": "2026-01-07",
-    "etf_sources": [
-      "IBB"
-    ],
-    "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
-    "cik": "0001454789",
-    "market_data": {
-      "price": 12.58,
-      "market_cap": 718127296,
-      "shares_outstanding": 57084838,
-      "volume_avg_30d": 1065178,
-      "52_week_high": 13.29,
-      "52_week_low": 3.555,
-      "pe_ratio": null,
-      "company_name": "Astria Therapeutics, Inc.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "financial_data": {
-      "cash": 227720992,
-      "debt": 4459000,
-      "net_debt": -223261992,
-      "revenue_ttm": 706000,
-      "assets": null,
-      "liabilities": 4459000,
-      "equity": null,
-      "currency": "USD",
-      "cik": "0001454789"
-    },
-    "defensive_features": {
-      "vol_60d": 0.187,
-      "vol_20d": 0.1949,
-      "ret_21d": -0.0248,
-      "corr_xbi": "0.2697"
-    },
-    "Cash": 96280000,
-    "MarketableSecurities": null,
-    "ShortTermInvestments": 131441000,
-    "AvailableForSaleSecurities": 14931000,
-    "LongTermDebt": 833000,
-    "LongTermDebtCurrent": 831000,
-    "ConvertibleDebt": null,
-    "Assets": 271866000,
-    "CurrentAssets": 253546000,
-    "Liabilities": 38613000,
-    "CurrentLiabilities": 23517000,
-    "ShareholdersEquity": 233253000,
-    "Revenue": 706000,
-    "R&D": 9859000,
-    "NetIncome": -98404000
-  },
-  {
     "ticker": "AUPH",
     "name": "AUPH",
     "exchange": "NASDAQ",
@@ -17094,22 +17035,6 @@
     "Revenue": 7800000
   },
   {
-    "ticker": "GBIO",
-    "market_data": {
-      "price": 5.58,
-      "market_cap": 37601080,
-      "shares_outstanding": 6738545,
-      "volume_avg_30d": 77646,
-      "52_week_high": 8.66,
-      "52_week_low": 3.0,
-      "pe_ratio": null,
-      "company_name": "Healthcare",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "status": "excluded_acquired"
-  },
-  {
     "ticker": "GERN",
     "name": "GERN",
     "exchange": "NASDAQ",
@@ -26128,21 +26053,6 @@
     "NetIncome": -133725000
   },
   {
-    "ticker": "LYRA",
-    "market_data": {
-      "price": 2.05,
-      "market_cap": 3638508,
-      "shares_outstanding": 1774882,
-      "volume_avg_30d": 85250,
-      "52_week_high": 37.5,
-      "52_week_low": 1.6,
-      "pe_ratio": null,
-      "company_name": "Healthcare",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    }
-  },
-  {
     "ticker": "MAZE",
     "name": "MAZE",
     "exchange": "NASDAQ",
@@ -26873,8 +26783,8 @@
     "Revenue": 237011000
   },
   {
-    "ticker": "MNMD",
-    "name": "MNMD",
+    "ticker": "DFTX",
+    "name": "MNMD (was MNMD)",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
     "status": "active",
@@ -27039,160 +26949,6 @@
     "Revenue": 1266000000,
     "R&D": 2357000000,
     "NetIncome": -1996000000
-  },
-  {
-    "ticker": "MRSN",
-    "name": "Mersana Therapeutics, Inc.",
-    "status": "excluded_acquired",
-    "status_reason": "active",
-    "market_cap_usd": "145363648",
-    "price_usd": "29.08",
-    "shares_outstanding": "4998750",
-    "defensive_features": {
-      "price_current": "29.08",
-      "price_60d_ago": "9.07",
-      "return_60d": "2.2062",
-      "vol_60d": "3.7130",
-      "drawdown_60d": "-0.7581",
-      "corr_xbi": "-0.1047",
-      "rsi_14d": "68.3",
-      "vol_regime": "high",
-      "timestamp": "2026-01-06T14:35:35.997944Z"
-    },
-    "financial_health": {
-      "cash_usd": "36340912",
-      "total_debt_usd": "14536364",
-      "quarterly_burn_usd": "2907272",
-      "runway_quarters": "12"
-    },
-    "lead_program": {
-      "phase": "phase_2",
-      "indication": "oncology",
-      "trial_id": "NCT00000000"
-    },
-    "financial_data": {
-      "cash": 56391000,
-      "debt": 2293000,
-      "net_debt": -54098000,
-      "revenue_ttm": 33180000,
-      "assets": null,
-      "liabilities": null,
-      "equity": null,
-      "currency": "USD",
-      "cik": null
-    },
-    "market_data": {
-      "price": 29.08,
-      "market_cap": 145363648,
-      "shares_outstanding": 4998750,
-      "volume_avg_30d": 136650,
-      "52_week_high": 36.25,
-      "52_week_low": 5.21,
-      "pe_ratio": null,
-      "company_name": "Mersana Therapeutics, Inc.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "clinical_data": {
-      "total_trials": 11,
-      "active_trials": 3,
-      "completed_trials": 5,
-      "lead_stage": "unknown",
-      "by_phase": {},
-      "conditions": [],
-      "top_trials": [
-        {
-          "nct_id": "NCT00455052",
-          "title": "A Study of Intravenous XMT-1001 in Patients With Advanced Solid Tumors",
-          "status": "COMPLETED",
-          "phase": "PHASE1"
-        },
-        {
-          "nct_id": "NCT05329545",
-          "title": "Upifitamab Rilsodotin Maintenance in Platinum-Sensitive Recurrent Ovarian Cancer (UP-NEXT)",
-          "status": "TERMINATED",
-          "phase": "PHASE3"
-        },
-        {
-          "nct_id": "NCT05377996",
-          "title": "A Study of XMT-1660 in Participants With Solid Tumors",
-          "status": "RECRUITING",
-          "phase": "PHASE1"
-        },
-        {
-          "nct_id": "NCT05514717",
-          "title": "A Study of XMT-2056 in Advanced/Recurrent Solid Tumors That Express HER2",
-          "status": "RECRUITING",
-          "phase": "PHASE1"
-        },
-        {
-          "nct_id": "NCT04907968",
-          "title": "Study of Upifitamab Rilsodotin in Combination With Carboplatin in Participants With High-grade Serous Ovarian Cancer",
-          "status": "TERMINATED",
-          "phase": "PHASE1"
-        }
-      ]
-    },
-    "exclusion_reason": "Acquired by Day One Biopharmaceuticals, delisted from NASDAQ January 6, 2026",
-    "exclusion_date": "2026-01-06",
-    "cik": "0001442836",
-    "Cash": 56391000,
-    "MarketableSecurities": null,
-    "ShortTermInvestments": null,
-    "AvailableForSaleSecurities": 88143000,
-    "LongTermDebt": 20098000,
-    "LongTermDebtCurrent": 0,
-    "ConvertibleDebt": null,
-    "Assets": 62686000,
-    "CurrentAssets": 59988000,
-    "Liabilities": 122223000,
-    "CurrentLiabilities": 43269000,
-    "ShareholdersEquity": -59537000,
-    "Revenue": 16819000,
-    "R&D": 46741000,
-    "NetIncome": -55964000
-  },
-  {
-    "ticker": "MRUS",
-    "name": "Merus N.V.",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "excluded_acquired",
-    "added_date": "2026-01-31",
-    "description": "Bispecific antibody oncology (Dutch). 5 Tier 1 managers, +149% 2Y.",
-    "market_cap": 6826245632,
-    "cik": null,
-    "market_data": {
-      "price": 90.0,
-      "market_cap": 6826245632,
-      "shares_outstanding": 75847175,
-      "volume_avg_30d": 1253685,
-      "52_week_high": 97.14,
-      "52_week_low": 33.19,
-      "pe_ratio": null,
-      "company_name": "Merus N.V.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "financial_data": {
-      "cash": 635932032,
-      "debt": 12317000,
-      "net_debt": -623615032,
-      "revenue_ttm": 56606000,
-      "currency": "USD",
-      "cik": null
-    },
-    "defensive_features": {},
-    "clinical_data": {
-      "total_trials": 0,
-      "active_trials": 0,
-      "completed_trials": 0,
-      "lead_stage": "unknown",
-      "by_phase": {},
-      "conditions": [],
-      "top_trials": []
-    },
-    "market_cap_mm": 6826.245632
   },
   {
     "ticker": "MRVI",
@@ -30727,65 +30483,6 @@
     "ShareholdersEquity": 511617000,
     "R&D": 64531000,
     "NetIncome": -77720000
-  },
-  {
-    "ticker": "RAPT",
-    "name": "RAPT",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "active",
-    "added_from_etf": true,
-    "added_date": "2026-01-07",
-    "etf_sources": [
-      "IBB"
-    ],
-    "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
-    "cik": "0001673772",
-    "market_data": {
-      "price": 57.63,
-      "market_cap": 1668998272,
-      "shares_outstanding": 28960580,
-      "volume_avg_30d": 1004277,
-      "52_week_high": 57.705,
-      "52_week_low": 5.664,
-      "pe_ratio": null,
-      "company_name": "RAPT Therapeutics, Inc.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "financial_data": {
-      "cash": 157344000,
-      "debt": 2596000,
-      "net_debt": -154748000,
-      "revenue_ttm": null,
-      "assets": null,
-      "liabilities": 2596000,
-      "equity": null,
-      "currency": "USD",
-      "cik": "0001673772"
-    },
-    "defensive_features": {
-      "vol_60d": 1.4599,
-      "vol_20d": 2.3807,
-      "ret_21d": 0.628,
-      "corr_xbi": "0.3343"
-    },
-    "Cash": 37930000,
-    "MarketableSecurities": 119414000,
-    "ShortTermInvestments": null,
-    "AvailableForSaleSecurities": null,
-    "LongTermDebt": null,
-    "LongTermDebtCurrent": null,
-    "ConvertibleDebt": null,
-    "Assets": 165739000,
-    "CurrentAssets": 161045000,
-    "Liabilities": 13762000,
-    "CurrentLiabilities": 13375000,
-    "ShareholdersEquity": 151977000,
-    "R&D": 36416000,
-    "NetIncome": -52388000,
-    "Revenue": 0
   },
   {
     "ticker": "RARE",
@@ -40072,31 +39769,6 @@
     "NetIncome": -208518000
   },
   {
-    "ticker": "VERV",
-    "name": "Verve Therapeutics, Inc.",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "delisted",
-    "added_date": "2026-01-31",
-    "market_cap": null,
-    "description": "Gene editing for cardiovascular disease. Acquired by Eli Lilly July 2025.",
-    "cik": null,
-    "market_data": {},
-    "financial_data": {},
-    "defensive_features": {},
-    "clinical_data": {
-      "total_trials": 0,
-      "active_trials": 0,
-      "completed_trials": 0,
-      "lead_stage": "unknown",
-      "by_phase": {},
-      "conditions": [],
-      "top_trials": []
-    },
-    "status_reason": "Acquired by Eli Lilly (July 2025, $10.50/share + CVR)",
-    "notes": "No trading data found - possibly delisted/acquired as of 2026-02-03"
-  },
-  {
     "ticker": "VIR",
     "name": "VIR",
     "exchange": "NASDAQ",
@@ -41406,64 +41078,6 @@
     "Revenue": 10559700000,
     "R&D": 691200000,
     "NetIncome": -170000000
-  },
-  {
-    "ticker": "VTYX",
-    "name": "VTYX",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "active",
-    "added_from_etf": true,
-    "added_date": "2026-01-07",
-    "etf_sources": [
-      "IBB"
-    ],
-    "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
-    "cik": "0001851194",
-    "market_data": {
-      "price": 14.03,
-      "market_cap": 1006654528,
-      "shares_outstanding": 71750148,
-      "volume_avg_30d": 3508418,
-      "52_week_high": 25.0,
-      "52_week_low": 0.783,
-      "pe_ratio": null,
-      "company_name": "Ventyx Biosciences, Inc.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "financial_data": {
-      "cash": 192638000,
-      "debt": 10024000,
-      "net_debt": -182614000,
-      "revenue_ttm": null,
-      "assets": null,
-      "liabilities": 10024000,
-      "equity": null,
-      "currency": "USD",
-      "cik": "0001851194"
-    },
-    "defensive_features": {
-      "vol_60d": 1.2298,
-      "vol_20d": 1.6848,
-      "ret_21d": 0.5469,
-      "corr_xbi": "0.3215"
-    },
-    "Cash": 31970000,
-    "MarketableSecurities": 160668000,
-    "ShortTermInvestments": null,
-    "AvailableForSaleSecurities": null,
-    "LongTermDebt": null,
-    "LongTermDebtCurrent": null,
-    "ConvertibleDebt": null,
-    "Assets": 211465000,
-    "CurrentAssets": 201094000,
-    "Liabilities": 20101000,
-    "CurrentLiabilities": 11259000,
-    "ShareholdersEquity": 191364000,
-    "R&D": 62870000,
-    "NetIncome": -77256000
   },
   {
     "ticker": "VYGR",
