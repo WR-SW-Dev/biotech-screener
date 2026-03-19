@@ -1,7 +1,7 @@
 {
   "schema_version": "clinical_features_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-03-19T04:23:49Z",
+  "created_at": "2026-03-19T13:54:59Z",
   "as_of_date": "2022-03-31",
   "trial_records_source": "/mnt/c/Projects/biotech_screener/biotech-screener/production_data/trial_records.json",
   "pit_convention": "first_posted_or_last_update_lte_as_of",

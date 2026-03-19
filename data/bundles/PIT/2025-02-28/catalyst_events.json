@@ -1,12 +1,12 @@
 {
   "schema_version": "catalyst_events_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-03-18T22:09:15Z",
+  "created_at": "2026-03-19T13:56:23Z",
   "as_of_date": "2025-02-28",
   "tickers_in_universe": 349,
-  "tickers_with_catalyst": 118,
-  "catalyst_coverage_pct": 33.8,
-  "ledger_total_entries": 11714,
+  "tickers_with_catalyst": 144,
+  "catalyst_coverage_pct": 41.3,
+  "ledger_total_entries": 12099,
   "tickers": {
     "AARD": {
       "days_to_catalyst": null,
@@ -39,18 +39,19 @@
       }
     },
     "ABEO": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 7,
+      "days_to_catalyst": 60,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: BLA Resubmission of Pz-cel for the Treatment of Recessive Dystrophic Epidermolys",
+      "nearest_disclosed_at": "2024-11-12",
+      "nearest_event_date": "2025-04-29",
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 7
+        "CTGOV": 7,
+        "SEC_8K": 5
       }
     },
     "ABOS": {
@@ -63,9 +64,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 2,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 2
       }
     },
     "ABSI": {
@@ -78,9 +80,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 4,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 1
       }
     },
     "ABUS": {
@@ -93,9 +96,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 12,
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 12
+        "CTGOV": 12,
+        "SEC_8K": 1
       }
     },
     "ABVX": {
@@ -168,9 +172,10 @@
       "nearest_event_name": "NCT05791474 PCD 2025-06-30",
       "nearest_disclosed_at": "2023-11-29",
       "nearest_event_date": "2025-06-30",
-      "event_count": 40,
+      "event_count": 41,
       "source_mix": {
-        "CTGOV": 40
+        "CTGOV": 40,
+        "SEC_8K": 1
       }
     },
     "ACRV": {
@@ -196,9 +201,10 @@
       "nearest_event_name": "NCT05228249 PCD 2025-10-01",
       "nearest_disclosed_at": "2023-01-13",
       "nearest_event_date": "2025-10-01",
-      "event_count": 21,
+      "event_count": 23,
       "source_mix": {
-        "CTGOV": 21
+        "CTGOV": 21,
+        "SEC_8K": 2
       }
     },
     "ADMA": {
@@ -239,9 +245,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 40,
+      "event_count": 41,
       "source_mix": {
-        "CTGOV": 40
+        "CTGOV": 40,
+        "SEC_8K": 1
       }
     },
     "AKTX": {
@@ -260,18 +267,19 @@
       }
     },
     "ALDX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 25,
+      "days_to_catalyst": 33,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA Date is April 2, 2025",
+      "nearest_disclosed_at": "2024-11-18",
+      "nearest_event_date": "2025-04-02",
+      "event_count": 26,
       "source_mix": {
-        "CTGOV": 25
+        "CTGOV": 25,
+        "SEC_8K": 1
       }
     },
     "ALGS": {
@@ -305,18 +313,19 @@
       }
     },
     "ALLO": {
-      "days_to_catalyst": 154,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "mid",
-      "catalyst_decay_w": 0.7,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04416984 PCD 2025-08-01",
-      "nearest_disclosed_at": "2025-01-24",
-      "nearest_event_date": "2025-08-01",
-      "event_count": 4,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: BLA Submission in 2027 ALLO-329 in Autoimmune Disease (AID) Pre-Clinical Data Hi",
+      "nearest_disclosed_at": "2024-11-07",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 4
       }
     },
     "ALMS": {
@@ -329,9 +338,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 5,
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 3
       }
     },
     "ALNY": {
@@ -344,9 +354,10 @@
       "nearest_event_name": "NCT06225544 CD 2025-03-01",
       "nearest_disclosed_at": "2024-08-21",
       "nearest_event_date": "2025-03-01",
-      "event_count": 69,
+      "event_count": 71,
       "source_mix": {
-        "CTGOV": 69
+        "CTGOV": 69,
+        "SEC_8K": 2
       }
     },
     "ALT": {
@@ -359,9 +370,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 8,
+      "event_count": 9,
       "source_mix": {
-        "CTGOV": 8
+        "CTGOV": 8,
+        "SEC_8K": 1
       }
     },
     "ALVO": {
@@ -449,9 +461,10 @@
       "nearest_event_name": "NCT06041269 CD 2025-05-30",
       "nearest_disclosed_at": "2024-11-25",
       "nearest_event_date": "2025-05-30",
-      "event_count": 11,
+      "event_count": 16,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 5
       }
     },
     "ANIP": {
@@ -464,9 +477,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 7,
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 7
+        "CTGOV": 7,
+        "SEC_8K": 1
       }
     },
     "ANNX": {
@@ -479,9 +493,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 15,
+      "event_count": 19,
       "source_mix": {
-        "CTGOV": 15
+        "CTGOV": 15,
+        "SEC_8K": 4
       }
     },
     "ANRO": {
@@ -494,9 +509,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 8,
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 8
+        "CTGOV": 8,
+        "SEC_8K": 2
       }
     },
     "APGE": {
@@ -509,8 +525,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 3,
+      "source_mix": {
+        "SEC_8K": 3
+      }
     },
     "APLS": {
       "days_to_catalyst": null,
@@ -528,18 +546,19 @@
       }
     },
     "AQST": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 13,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission in Q1 2025",
+      "nearest_disclosed_at": "2024-11-04",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 20,
       "source_mix": {
-        "CTGOV": 13
+        "CTGOV": 13,
+        "SEC_8K": 7
       }
     },
     "ARCT": {
@@ -586,18 +605,19 @@
       }
     },
     "ARQT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 21,
+      "days_to_catalyst": 83,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA action date set for May 22, 2025",
+      "nearest_disclosed_at": "2024-11-06",
+      "nearest_event_date": "2025-05-22",
+      "event_count": 23,
       "source_mix": {
-        "CTGOV": 21
+        "CTGOV": 21,
+        "SEC_8K": 2
       }
     },
     "ARTV": {
@@ -640,9 +660,10 @@
       "nearest_event_name": "NCT05949294 PCD 2025-03-01",
       "nearest_disclosed_at": "2024-04-17",
       "nearest_event_date": "2025-03-01",
-      "event_count": 2,
+      "event_count": 3,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 1
       }
     },
     "ASMB": {
@@ -655,9 +676,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 24,
+      "event_count": 26,
       "source_mix": {
-        "CTGOV": 24
+        "CTGOV": 24,
+        "SEC_8K": 2
       }
     },
     "ASND": {
@@ -689,18 +711,19 @@
       "source_mix": {}
     },
     "ATXS": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 1,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 meeting with the U.S. Food and Drug Administration (FDA) held in Decembe",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 3,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 2
       }
     },
     "AUPH": {
@@ -728,9 +751,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 1,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 4
       }
     },
     "AUTL": {
@@ -756,8 +780,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "AVIR": {
       "days_to_catalyst": null,
@@ -769,9 +795,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 29,
+      "event_count": 30,
       "source_mix": {
-        "CTGOV": 29
+        "CTGOV": 29,
+        "SEC_8K": 1
       }
     },
     "AVTR": {
@@ -812,9 +839,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 16,
+      "event_count": 23,
       "source_mix": {
-        "CTGOV": 16
+        "CTGOV": 16,
+        "SEC_8K": 7
       }
     },
     "AZN": {
@@ -833,18 +861,19 @@
       }
     },
     "BBIO": {
-      "days_to_catalyst": 550,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04882735 PCD 2026-09-01",
-      "nearest_disclosed_at": "2024-09-19",
-      "nearest_event_date": "2026-09-01",
-      "event_count": 27,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: expect topline results in 2H 2025 Up to 4 years BBP-812Canavan Disease BBP-812 h",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 33,
       "source_mix": {
-        "CTGOV": 27
+        "CTGOV": 27,
+        "SEC_8K": 6
       }
     },
     "BBOT": {
@@ -898,9 +927,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 1,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 3
       }
     },
     "BDTX": {
@@ -926,9 +956,10 @@
       "nearest_event_name": "NCT05885464 PCD 2026-12-01",
       "nearest_disclosed_at": "2025-01-13",
       "nearest_event_date": "2026-12-01",
-      "event_count": 1,
+      "event_count": 3,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 2
       }
     },
     "BHVN": {
@@ -941,9 +972,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 14,
+      "event_count": 16,
       "source_mix": {
-        "CTGOV": 14
+        "CTGOV": 14,
+        "SEC_8K": 2
       }
     },
     "BIIB": {
@@ -1001,9 +1033,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 1,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 4
       }
     },
     "BMRN": {
@@ -1063,18 +1096,19 @@
       "source_mix": {}
     },
     "CADL": {
-      "days_to_catalyst": 276,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT02446093 PCD 2025-12-01",
-      "nearest_disclosed_at": "2024-01-08",
-      "nearest_event_date": "2025-12-01",
-      "event_count": 13,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: topline data in non-metastatic, localized prostate cancer for CAN-2409 in the fo",
+      "nearest_disclosed_at": "2024-11-14",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 18,
       "source_mix": {
-        "CTGOV": 13
+        "CTGOV": 13,
+        "SEC_8K": 5
       }
     },
     "CAI": {
@@ -1102,9 +1136,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 1,
+      "event_count": 2,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 1
       }
     },
     "CCCC": {
@@ -1160,9 +1195,10 @@
       "nearest_event_name": "NCT04901299 CD 2025-07-01",
       "nearest_disclosed_at": "2023-08-01",
       "nearest_event_date": "2025-07-01",
-      "event_count": 6,
+      "event_count": 7,
       "source_mix": {
-        "CTGOV": 6
+        "CTGOV": 6,
+        "SEC_8K": 1
       }
     },
     "CERS": {
@@ -1278,37 +1314,41 @@
       "nearest_event_name": "NCT04433858 PCD 2025-06-01",
       "nearest_disclosed_at": "2024-08-09",
       "nearest_event_date": "2025-06-01",
-      "event_count": 12,
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 12
+        "CTGOV": 12,
+        "SEC_8K": 1
       }
     },
     "CMPX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 clinical trials in mid-2025 using novel biomarkers: tovecimig [in DLL4-p",
+      "nearest_disclosed_at": "2025-02-27",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 3,
+      "source_mix": {
+        "SEC_8K": 3
+      }
     },
     "CNTA": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 9,
+      "days_to_catalyst": 122,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 clinical trials for NT1, NT2 and IH. ORX750 has not been approved by the",
+      "nearest_disclosed_at": "2024-11-12",
+      "nearest_event_date": "2025-04-01",
+      "event_count": 11,
       "source_mix": {
-        "CTGOV": 9
+        "CTGOV": 9,
+        "SEC_8K": 2
       }
     },
     "CNTX": {
@@ -1327,18 +1367,19 @@
       }
     },
     "COGT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 5,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 APEX clinical trial evaluating bezuclastinib in patients with advanced s",
+      "nearest_disclosed_at": "2024-12-09",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 3
       }
     },
     "COLL": {
@@ -1400,18 +1441,19 @@
       }
     },
     "CRNX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 6,
+      "days_to_catalyst": 209,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "far",
+      "catalyst_decay_w": 0.3,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission for once-daily, oral paltusotine included data from the PATHFNDR-",
+      "nearest_disclosed_at": "2024-12-09",
+      "nearest_event_date": "2025-09-25",
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 6
+        "CTGOV": 6,
+        "SEC_8K": 4
       }
     },
     "CRSP": {
@@ -1439,9 +1481,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 11,
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 1
       }
     },
     "CSTL": {
@@ -1510,9 +1553,10 @@
       "nearest_event_name": "NCT04464525 PCD 2026-11-27",
       "nearest_disclosed_at": "2021-07-30",
       "nearest_event_date": "2026-11-27",
-      "event_count": 45,
+      "event_count": 48,
       "source_mix": {
-        "CTGOV": 45
+        "CTGOV": 45,
+        "SEC_8K": 3
       }
     },
     "DAWN": {
@@ -1555,9 +1599,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 13,
+      "event_count": 14,
       "source_mix": {
-        "CTGOV": 13
+        "CTGOV": 13,
+        "SEC_8K": 1
       }
     },
     "DNTH": {
@@ -1570,8 +1615,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "DRMA": {
       "days_to_catalyst": null,
@@ -1619,18 +1666,19 @@
       }
     },
     "DVAX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 34,
+      "days_to_catalyst": 214,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "far",
+      "catalyst_decay_w": 0.3,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Top-line results in Phase 1 2 shingles trial expected in Q3 2025",
+      "nearest_disclosed_at": "2025-02-20",
+      "nearest_event_date": "2025-07-01",
+      "event_count": 36,
       "source_mix": {
-        "CTGOV": 34
+        "CTGOV": 34,
+        "SEC_8K": 2
       }
     },
     "DYN": {
@@ -1727,9 +1775,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 55,
+      "event_count": 57,
       "source_mix": {
-        "CTGOV": 55
+        "CTGOV": 55,
+        "SEC_8K": 2
       }
     },
     "EOLS": {
@@ -1772,9 +1821,10 @@
       "nearest_event_name": "NCT05279859 PCD 2025-03-01",
       "nearest_disclosed_at": "2022-06-15",
       "nearest_event_date": "2025-03-01",
-      "event_count": 11,
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 2
       }
     },
     "ESPR": {
@@ -1821,33 +1871,35 @@
       }
     },
     "EXEL": {
-      "days_to_catalyst": 93,
+      "days_to_catalyst": 34,
       "catalyst_mode": "specific_days",
       "catalyst_strength": "near",
       "catalyst_decay_w": 1.0,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04289779 PCD 2025-06-01",
-      "nearest_disclosed_at": "2024-12-04",
-      "nearest_event_date": "2025-06-01",
-      "event_count": 93,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA action date of April 3, 2025",
+      "nearest_disclosed_at": "2025-02-11",
+      "nearest_event_date": "2025-04-03",
+      "event_count": 96,
       "source_mix": {
-        "CTGOV": 93
+        "CTGOV": 93,
+        "SEC_8K": 3
       }
     },
     "EYPT": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 10,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Topline Data in 2026 Exceptional Enrollment to Date Driven by Significant Invest",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 19,
       "source_mix": {
-        "CTGOV": 10
+        "CTGOV": 10,
+        "SEC_8K": 9
       }
     },
     "FATE": {
@@ -1866,18 +1918,19 @@
       }
     },
     "FDMT": {
-      "days_to_catalyst": 307,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04519749 PCD 2026-01-01",
-      "nearest_disclosed_at": "2024-04-08",
-      "nearest_event_date": "2026-01-01",
-      "event_count": 4,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: topline data in the 4FRONT Phase 3 studies.&#x201d; Recent Corporate Highlights ",
+      "nearest_disclosed_at": "2024-11-13",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 11,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 7
       }
     },
     "FHTX": {
@@ -1905,8 +1958,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "FOLD": {
       "days_to_catalyst": null,
@@ -1946,9 +2001,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 5,
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 1
       }
     },
     "GBIO": {
@@ -2040,17 +2096,19 @@
       }
     },
     "GLUE": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 dose determined as 0.5 mg daily at a 21 days on, 7 days off drug dosing ",
+      "nearest_disclosed_at": "2024-12-05",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "GMAB": {
       "days_to_catalyst": 32,
@@ -2077,9 +2135,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 12,
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 12
+        "CTGOV": 12,
+        "SEC_8K": 1
       }
     },
     "GPCR": {
@@ -2092,9 +2151,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 3,
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 3
       }
     },
     "GRAL": {
@@ -2150,22 +2210,25 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "HRMY": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 1,
+      "days_to_catalyst": 214,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "far",
+      "catalyst_decay_w": 0.3,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: sNDA submission for pitolisant in IH; anticipated PDUFA Q2/Q3 2025",
+      "nearest_disclosed_at": "2024-10-01",
+      "nearest_event_date": "2025-07-01",
+      "event_count": 7,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 6
       }
     },
     "HROW": {
@@ -2178,8 +2241,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "HRTX": {
       "days_to_catalyst": 246,
@@ -2236,8 +2301,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "IKT": {
       "days_to_catalyst": null,
@@ -2275,9 +2342,10 @@
       "nearest_event_name": "NCT06627244 PCD 2028-02-17",
       "nearest_disclosed_at": "2025-02-19",
       "nearest_event_date": "2028-02-17",
-      "event_count": 13,
+      "event_count": 15,
       "source_mix": {
-        "CTGOV": 13
+        "CTGOV": 13,
+        "SEC_8K": 2
       }
     },
     "IMMP": {
@@ -2305,8 +2373,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "IMTX": {
       "days_to_catalyst": null,
@@ -2363,9 +2433,10 @@
       "nearest_event_name": "NCT02785250 CD 2025-05-01",
       "nearest_disclosed_at": "2021-06-18",
       "nearest_event_date": "2025-05-01",
-      "event_count": 297,
+      "event_count": 300,
       "source_mix": {
-        "CTGOV": 297
+        "CTGOV": 297,
+        "SEC_8K": 3
       }
     },
     "INDV": {
@@ -2384,18 +2455,19 @@
       }
     },
     "INSM": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 37,
+      "days_to_catalyst": 165,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: FDA target action date set for August 12, 2025",
+      "nearest_disclosed_at": "2025-02-20",
+      "nearest_event_date": "2025-08-12",
+      "event_count": 41,
       "source_mix": {
-        "CTGOV": 37
+        "CTGOV": 37,
+        "SEC_8K": 4
       }
     },
     "INVA": {
@@ -2423,9 +2495,10 @@
       "nearest_event_name": "NCT06153966 PCD 2025-07-01",
       "nearest_disclosed_at": "2024-12-27",
       "nearest_event_date": "2025-07-01",
-      "event_count": 166,
+      "event_count": 171,
       "source_mix": {
-        "CTGOV": 166
+        "CTGOV": 166,
+        "SEC_8K": 5
       }
     },
     "IOVA": {
@@ -2444,33 +2517,35 @@
       }
     },
     "IRON": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission under a potential accelerated approval path for bitopertin in ery",
+      "nearest_disclosed_at": "2025-01-10",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 9,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 7
       }
     },
     "IRWD": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 51,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission in Q1 2025",
+      "nearest_disclosed_at": "2024-11-07",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 55,
       "source_mix": {
-        "CTGOV": 51
+        "CTGOV": 51,
+        "SEC_8K": 4
       }
     },
     "IVVD": {
@@ -2511,9 +2586,10 @@
       "nearest_event_name": "NCT04217278 PCD 2025-03-01",
       "nearest_disclosed_at": "2023-05-10",
       "nearest_event_date": "2025-03-01",
-      "event_count": 246,
+      "event_count": 250,
       "source_mix": {
-        "CTGOV": 246
+        "CTGOV": 246,
+        "SEC_8K": 4
       }
     },
     "JBIO": {
@@ -2539,8 +2615,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "KALV": {
       "days_to_catalyst": null,
@@ -2552,9 +2630,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 5,
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 1
       }
     },
     "KMDA": {
@@ -2582,9 +2661,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 12,
+      "event_count": 15,
       "source_mix": {
-        "CTGOV": 12
+        "CTGOV": 12,
+        "SEC_8K": 3
       }
     },
     "KOD": {
@@ -2597,24 +2677,26 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 14,
+      "event_count": 15,
       "source_mix": {
-        "CTGOV": 14
+        "CTGOV": 14,
+        "SEC_8K": 1
       }
     },
     "KROS": {
-      "days_to_catalyst": 182,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT05927012 PCD 2025-08-29",
-      "nearest_disclosed_at": "2023-11-24",
-      "nearest_event_date": "2025-08-29",
-      "event_count": 2,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: topline data in the second quarter of 2025 1Patients with a primary diagnosis of",
+      "nearest_disclosed_at": "2025-01-10",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 3,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 1
       }
     },
     "KRYS": {
@@ -2633,18 +2715,19 @@
       }
     },
     "KURA": {
-      "days_to_catalyst": 879,
+      "days_to_catalyst": 122,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT05693090 PCD 2027-07-27",
-      "nearest_disclosed_at": "2023-03-06",
-      "nearest_event_date": "2027-07-27",
-      "event_count": 8,
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission anticipated Q2 2025",
+      "nearest_disclosed_at": "2025-02-05",
+      "nearest_event_date": "2025-04-01",
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 8
+        "CTGOV": 8,
+        "SEC_8K": 5
       }
     },
     "KYMR": {
@@ -2657,9 +2740,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 3,
+      "event_count": 7,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 4
       }
     },
     "KYTX": {
@@ -2738,18 +2822,19 @@
       }
     },
     "LENZ": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 12,
+      "days_to_catalyst": 161,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission for the treatment of presbyopia is supported by positive data fro",
+      "nearest_disclosed_at": "2024-11-06",
+      "nearest_event_date": "2025-08-08",
+      "event_count": 13,
       "source_mix": {
-        "CTGOV": 12
+        "CTGOV": 12,
+        "SEC_8K": 1
       }
     },
     "LFCR": {
@@ -2775,8 +2860,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "LQDA": {
       "days_to_catalyst": 92,
@@ -2818,8 +2905,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "LYEL": {
       "days_to_catalyst": null,
@@ -2846,9 +2935,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 5,
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 1
       }
     },
     "MAZE": {
@@ -2867,18 +2957,19 @@
       }
     },
     "MBX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 3,
+      "days_to_catalyst": 214,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "far",
+      "catalyst_decay_w": 0.3,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 Avail trial of MBX 2109 in hypoparathyroidism on track to complete in Q1",
+      "nearest_disclosed_at": "2024-11-07",
+      "nearest_event_date": "2025-07-01",
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 3
       }
     },
     "MCRB": {
@@ -2962,22 +3053,25 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "MIRM": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 24,
+      "days_to_catalyst": 28,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submission for chenodiol and the in-licensing of MRM-3379 for Fragile X synd",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-03-28",
+      "event_count": 27,
       "source_mix": {
-        "CTGOV": 24
+        "CTGOV": 24,
+        "SEC_8K": 3
       }
     },
     "MLTX": {
@@ -2990,24 +3084,26 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 4,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 1
       }
     },
     "MLYS": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: topline data in Q1 2025",
+      "nearest_disclosed_at": "2024-09-25",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 10
       }
     },
     "MNKD": {
@@ -3035,8 +3131,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "MRNA": {
       "days_to_catalyst": 396,
@@ -3048,9 +3146,10 @@
       "nearest_event_name": "NCT02872025 PCD 2026-03-31",
       "nearest_disclosed_at": "2025-01-30",
       "nearest_event_date": "2026-03-31",
-      "event_count": 43,
+      "event_count": 44,
       "source_mix": {
-        "CTGOV": 43
+        "CTGOV": 43,
+        "SEC_8K": 1
       }
     },
     "MRSN": {
@@ -3119,9 +3218,10 @@
       "nearest_event_name": "NCT05202509 PCD 2026-11-01",
       "nearest_disclosed_at": "2024-06-04",
       "nearest_event_date": "2026-11-01",
-      "event_count": 19,
+      "event_count": 22,
       "source_mix": {
-        "CTGOV": 19
+        "CTGOV": 19,
+        "SEC_8K": 3
       }
     },
     "NAUT": {
@@ -3175,9 +3275,10 @@
       "nearest_event_name": "NCT05228145 PCD 2028-11-01",
       "nearest_disclosed_at": "2024-08-12",
       "nearest_event_date": "2028-11-01",
-      "event_count": 3,
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 5
       }
     },
     "NKTX": {
@@ -3205,8 +3306,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 3,
+      "source_mix": {
+        "SEC_8K": 3
+      }
     },
     "NRIX": {
       "days_to_catalyst": null,
@@ -3263,9 +3366,10 @@
       "nearest_event_name": "NCT05191004 PCD 2025-06-01",
       "nearest_disclosed_at": "2023-07-11",
       "nearest_event_date": "2025-06-01",
-      "event_count": 9,
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 9
+        "CTGOV": 9,
+        "SEC_8K": 1
       }
     },
     "NUVL": {
@@ -3291,9 +3395,10 @@
       "nearest_event_name": "NCT05468736 CD 2025-10-25",
       "nearest_disclosed_at": "2024-12-20",
       "nearest_event_date": "2025-10-25",
-      "event_count": 55,
+      "event_count": 58,
       "source_mix": {
-        "CTGOV": 55
+        "CTGOV": 55,
+        "SEC_8K": 3
       }
     },
     "NVCR": {
@@ -3390,8 +3495,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "OMER": {
       "days_to_catalyst": 641,
@@ -3418,9 +3525,10 @@
       "nearest_event_name": "NCT05596097 CD 2026-07-30",
       "nearest_disclosed_at": "2022-10-27",
       "nearest_event_date": "2026-07-30",
-      "event_count": 4,
+      "event_count": 7,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 3
       }
     },
     "OPCH": {
@@ -3476,8 +3584,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "PACB": {
       "days_to_catalyst": null,
@@ -3543,9 +3653,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 2,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 2
       }
     },
     "PEPG": {
@@ -3571,9 +3682,10 @@
       "nearest_event_name": "NCT03927261 CD 2025-08-01",
       "nearest_disclosed_at": "2024-11-08",
       "nearest_event_date": "2025-08-01",
-      "event_count": 7,
+      "event_count": 9,
       "source_mix": {
-        "CTGOV": 7
+        "CTGOV": 7,
+        "SEC_8K": 2
       }
     },
     "PHAT": {
@@ -3616,9 +3728,10 @@
       "nearest_event_name": "NCT06840925 PCD 2025-05-30",
       "nearest_disclosed_at": "2025-02-21",
       "nearest_event_date": "2025-05-30",
-      "event_count": 11,
+      "event_count": 14,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 3
       }
     },
     "PRLD": {
@@ -3631,9 +3744,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 7,
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 7
+        "CTGOV": 7,
+        "SEC_8K": 5
       }
     },
     "PRME": {
@@ -3646,8 +3760,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "PRQR": {
       "days_to_catalyst": null,
@@ -3674,9 +3790,10 @@
       "nearest_event_name": "NCT06699680 PCD 2026-01-23",
       "nearest_disclosed_at": "2024-11-21",
       "nearest_event_date": "2026-01-23",
-      "event_count": 11,
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 1
       }
     },
     "PRVA": {
@@ -3706,18 +3823,19 @@
       "source_mix": {}
     },
     "PTCT": {
-      "days_to_catalyst": 1462,
+      "days_to_catalyst": 122,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_CD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT03605550 CD 2029-03-01",
-      "nearest_disclosed_at": "2025-02-24",
-      "nearest_event_date": "2029-03-01",
-      "event_count": 72,
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA Accepted Translarna nmDMD NDA Accepted Vatiquinone Friedreich&#x2019;s Ataxi",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-04-01",
+      "event_count": 77,
       "source_mix": {
-        "CTGOV": 72
+        "CTGOV": 72,
+        "SEC_8K": 5
       }
     },
     "PTGX": {
@@ -3730,9 +3848,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 11,
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 1
       }
     },
     "PVLA": {
@@ -3760,8 +3879,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "QSI": {
       "days_to_catalyst": 276,
@@ -3801,9 +3922,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 5,
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 5
       }
     },
     "RANI": {
@@ -3831,8 +3953,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 3,
+      "source_mix": {
+        "SEC_8K": 3
+      }
     },
     "RAPT": {
       "days_to_catalyst": null,
@@ -3844,9 +3968,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 7,
+      "event_count": 9,
       "source_mix": {
-        "CTGOV": 7
+        "CTGOV": 7,
+        "SEC_8K": 2
       }
     },
     "RARE": {
@@ -3859,9 +3984,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 47,
+      "event_count": 51,
       "source_mix": {
-        "CTGOV": 47
+        "CTGOV": 47,
+        "SEC_8K": 4
       }
     },
     "RCKT": {
@@ -3889,39 +4015,42 @@
       "nearest_event_name": "NCT04892875 PCD 2025-12-01",
       "nearest_disclosed_at": "2023-11-30",
       "nearest_event_date": "2025-12-01",
-      "event_count": 20,
+      "event_count": 21,
       "source_mix": {
-        "CTGOV": 20
+        "CTGOV": 20,
+        "SEC_8K": 1
       }
     },
     "REGN": {
-      "days_to_catalyst": 93,
+      "days_to_catalyst": 31,
       "catalyst_mode": "specific_days",
       "catalyst_strength": "near",
       "catalyst_decay_w": 1.0,
-      "nearest_event_type": "CLINICAL_CD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT03669718 CD 2025-06-01",
-      "nearest_disclosed_at": "2023-12-29",
-      "nearest_event_date": "2025-06-01",
-      "event_count": 453,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: FDA approval anticipated by mid - 2025 Differentiated Phase 3 programs in earlie",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 457,
       "source_mix": {
-        "CTGOV": 453
+        "CTGOV": 453,
+        "SEC_8K": 4
       }
     },
     "REPL": {
-      "days_to_catalyst": 185,
+      "days_to_catalyst": 144,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT04050436 PCD 2025-09-01",
-      "nearest_disclosed_at": "2025-01-27",
-      "nearest_event_date": "2025-09-01",
-      "event_count": 1,
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA date of July 22, 2025",
+      "nearest_disclosed_at": "2025-02-12",
+      "nearest_event_date": "2025-07-22",
+      "event_count": 2,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 1
       }
     },
     "RGEN": {
@@ -3947,9 +4076,10 @@
       "nearest_event_name": "NCT03566043 CD 2025-08-01",
       "nearest_disclosed_at": "2025-01-28",
       "nearest_event_date": "2025-08-01",
-      "event_count": 9,
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 9
+        "CTGOV": 9,
+        "SEC_8K": 1
       }
     },
     "RIGL": {
@@ -3977,22 +4107,25 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "RNA": {
-      "days_to_catalyst": 1128,
+      "days_to_catalyst": 19,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_PCD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT06547216 PCD 2028-04-01",
-      "nearest_disclosed_at": "2024-12-20",
-      "nearest_event_date": "2028-04-01",
-      "event_count": 2,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: BLA submission planned for year-end 2025. We are also rapidly progressing del-de",
+      "nearest_disclosed_at": "2025-02-27",
+      "nearest_event_date": "2025-03-19",
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 2
       }
     },
     "ROIV": {
@@ -4005,23 +4138,26 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 3,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 1
       }
     },
     "RPRX": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "days_to_catalyst": 34,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA date is April 3, 2025",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-04-03",
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "RVMD": {
       "days_to_catalyst": 276,
@@ -4033,9 +4169,10 @@
       "nearest_event_name": "NCT05462717 CD 2025-12-01",
       "nearest_disclosed_at": "2024-11-07",
       "nearest_event_date": "2025-12-01",
-      "event_count": 5,
+      "event_count": 7,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 2
       }
     },
     "RXRX": {
@@ -4061,9 +4198,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 17,
+      "event_count": 20,
       "source_mix": {
-        "CTGOV": 17
+        "CTGOV": 17,
+        "SEC_8K": 3
       }
     },
     "SABS": {
@@ -4076,9 +4214,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 10,
+      "event_count": 11,
       "source_mix": {
-        "CTGOV": 10
+        "CTGOV": 10,
+        "SEC_8K": 1
       }
     },
     "SANA": {
@@ -4203,8 +4342,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 1,
+      "source_mix": {
+        "SEC_8K": 1
+      }
     },
     "SLN": {
       "days_to_catalyst": null,
@@ -4231,9 +4372,10 @@
       "nearest_event_name": "NCT06396065 PCD 2025-12-31",
       "nearest_disclosed_at": "2024-10-08",
       "nearest_event_date": "2025-12-31",
-      "event_count": 11,
+      "event_count": 12,
       "source_mix": {
-        "CTGOV": 11
+        "CTGOV": 11,
+        "SEC_8K": 1
       }
     },
     "SNDX": {
@@ -4246,9 +4388,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 50,
+      "event_count": 53,
       "source_mix": {
-        "CTGOV": 50
+        "CTGOV": 50,
+        "SEC_8K": 3
       }
     },
     "SNY": {
@@ -4267,18 +4410,19 @@
       }
     },
     "SPRY": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 3,
+      "days_to_catalyst": 6,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: sNDA filed with the U.S. FDA for neffy for children who weigh 15 to 30 kg has a ",
+      "nearest_disclosed_at": "2025-01-13",
+      "nearest_event_date": "2025-03-06",
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 2
       }
     },
     "SRPT": {
@@ -4291,24 +4435,26 @@
       "nearest_event_name": "NCT03992430 PCD 2026-10-31",
       "nearest_disclosed_at": "2024-12-20",
       "nearest_event_date": "2026-10-31",
-      "event_count": 45,
+      "event_count": 46,
       "source_mix": {
-        "CTGOV": 45
+        "CTGOV": 45,
+        "SEC_8K": 1
       }
     },
     "SRRK": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 2,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: Phase 2 EMBRAZE trial enrollment completed for apitegromab in obesity with topli",
+      "nearest_disclosed_at": "2024-11-12",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 6
       }
     },
     "SRZN": {
@@ -4375,9 +4521,10 @@
       "nearest_event_name": "NCT06798896 PCD 2026-10-01",
       "nearest_disclosed_at": "2025-02-06",
       "nearest_event_date": "2026-10-01",
-      "event_count": 48,
+      "event_count": 49,
       "source_mix": {
-        "CTGOV": 48
+        "CTGOV": 48,
+        "SEC_8K": 1
       }
     },
     "SVRA": {
@@ -4405,9 +4552,10 @@
       "nearest_event_name": "NCT06622070 PCD 2026-04-03",
       "nearest_disclosed_at": "2024-11-27",
       "nearest_event_date": "2026-04-03",
-      "event_count": 3,
+      "event_count": 8,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 5
       }
     },
     "TARA": {
@@ -4420,9 +4568,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 3,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 1
       }
     },
     "TARS": {
@@ -4441,18 +4590,19 @@
       }
     },
     "TBPH": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 97,
+      "days_to_catalyst": 31,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: NDA submitted in China (June 2024) o $7.5M approval milestone, up to $37.5M in m",
+      "nearest_disclosed_at": "2025-02-26",
+      "nearest_event_date": "2025-01-01",
+      "event_count": 101,
       "source_mix": {
-        "CTGOV": 97
+        "CTGOV": 97,
+        "SEC_8K": 4
       }
     },
     "TCRX": {
@@ -4493,8 +4643,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "TEM": {
       "days_to_catalyst": 4,
@@ -4536,8 +4688,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "TGTX": {
       "days_to_catalyst": 1037,
@@ -4577,9 +4731,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 1,
+      "event_count": 3,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 2
       }
     },
     "TNYA": {
@@ -4620,9 +4775,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 2,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 2
       }
     },
     "TSHA": {
@@ -4635,9 +4791,10 @@
       "nearest_event_name": "NCT04798235 PCD 2027-03-12",
       "nearest_disclosed_at": "2023-05-09",
       "nearest_event_date": "2027-03-12",
-      "event_count": 1,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 4
       }
     },
     "TVTX": {
@@ -4650,9 +4807,10 @@
       "nearest_event_name": "NCT04663204 PCD 2025-03-31",
       "nearest_disclosed_at": "2025-01-06",
       "nearest_event_date": "2025-03-31",
-      "event_count": 5,
+      "event_count": 11,
       "source_mix": {
-        "CTGOV": 5
+        "CTGOV": 5,
+        "SEC_8K": 6
       }
     },
     "TWST": {
@@ -4706,24 +4864,26 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 4,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 1
       }
     },
     "URGN": {
-      "days_to_catalyst": 1068,
+      "days_to_catalyst": 105,
       "catalyst_mode": "specific_days",
-      "catalyst_strength": "far",
-      "catalyst_decay_w": 0.3,
-      "nearest_event_type": "CLINICAL_CD",
-      "nearest_event_source": "CTGOV",
-      "nearest_event_name": "NCT05243550 CD 2028-02-01",
-      "nearest_disclosed_at": "2024-11-04",
-      "nearest_event_date": "2028-02-01",
-      "event_count": 16,
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: PDUFA date of June 13, 2025",
+      "nearest_disclosed_at": "2025-01-14",
+      "nearest_event_date": "2025-06-13",
+      "event_count": 18,
       "source_mix": {
-        "CTGOV": 16
+        "CTGOV": 16,
+        "SEC_8K": 2
       }
     },
     "UTHR": {
@@ -4770,18 +4930,19 @@
       "source_mix": {}
     },
     "VERA": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 1,
+      "days_to_catalyst": 122,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "mid",
+      "catalyst_decay_w": 0.7,
+      "nearest_event_type": "DATA_READOUT",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: topline results in Q2 2025",
+      "nearest_disclosed_at": "2024-11-07",
+      "nearest_event_date": "2025-04-01",
+      "event_count": 9,
       "source_mix": {
-        "CTGOV": 1
+        "CTGOV": 1,
+        "SEC_8K": 8
       }
     },
     "VERV": {
@@ -4822,9 +4983,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 9,
+      "event_count": 10,
       "source_mix": {
-        "CTGOV": 9
+        "CTGOV": 9,
+        "SEC_8K": 1
       }
     },
     "VNDA": {
@@ -4856,17 +5018,19 @@
       "source_mix": {}
     },
     "VRDN": {
-      "days_to_catalyst": null,
-      "catalyst_mode": "missing",
-      "catalyst_strength": "missing",
-      "catalyst_decay_w": 0.0,
-      "nearest_event_type": "",
-      "nearest_event_source": "",
-      "nearest_event_name": "",
-      "nearest_disclosed_at": "",
-      "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "days_to_catalyst": 3,
+      "catalyst_mode": "specific_days",
+      "catalyst_strength": "near",
+      "catalyst_decay_w": 1.0,
+      "nearest_event_type": "FDA_PDUFA_DATE",
+      "nearest_event_source": "SEC_8K",
+      "nearest_event_name": "8-K: BLA submission is on track for 2H 2025 and our early commercial preparations are",
+      "nearest_disclosed_at": "2025-02-27",
+      "nearest_event_date": "2025-03-03",
+      "event_count": 13,
+      "source_mix": {
+        "SEC_8K": 13
+      }
     },
     "VRTX": {
       "days_to_catalyst": null,
@@ -4878,9 +5042,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 221,
+      "event_count": 222,
       "source_mix": {
-        "CTGOV": 221
+        "CTGOV": 221,
+        "SEC_8K": 1
       }
     },
     "VTRS": {
@@ -4906,9 +5071,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 3,
+      "event_count": 6,
       "source_mix": {
-        "CTGOV": 3
+        "CTGOV": 3,
+        "SEC_8K": 3
       }
     },
     "VYGR": {
@@ -4921,9 +5087,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 4,
+      "event_count": 5,
       "source_mix": {
-        "CTGOV": 4
+        "CTGOV": 4,
+        "SEC_8K": 1
       }
     },
     "WVE": {
@@ -4936,9 +5103,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 9,
+      "event_count": 11,
       "source_mix": {
-        "CTGOV": 9
+        "CTGOV": 9,
+        "SEC_8K": 2
       }
     },
     "XENE": {
@@ -4951,9 +5119,10 @@
       "nearest_event_name": "NCT03796962 CD 2028-10-01",
       "nearest_disclosed_at": "2024-09-24",
       "nearest_event_date": "2028-10-01",
-      "event_count": 21,
+      "event_count": 23,
       "source_mix": {
-        "CTGOV": 21
+        "CTGOV": 21,
+        "SEC_8K": 2
       }
     },
     "XERS": {
@@ -4994,8 +5163,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 0,
-      "source_mix": {}
+      "event_count": 2,
+      "source_mix": {
+        "SEC_8K": 2
+      }
     },
     "ZLAB": {
       "days_to_catalyst": 275,
@@ -5007,9 +5178,10 @@
       "nearest_event_name": "NCT06162286 CD 2025-11-30",
       "nearest_disclosed_at": "2024-06-14",
       "nearest_event_date": "2025-11-30",
-      "event_count": 44,
+      "event_count": 48,
       "source_mix": {
-        "CTGOV": 44
+        "CTGOV": 44,
+        "SEC_8K": 4
       }
     },
     "ZVRA": {
@@ -5037,9 +5209,10 @@
       "nearest_event_name": "",
       "nearest_disclosed_at": "",
       "nearest_event_date": "",
-      "event_count": 2,
+      "event_count": 4,
       "source_mix": {
-        "CTGOV": 2
+        "CTGOV": 2,
+        "SEC_8K": 2
       }
     },
     "_XBI_BENCHMARK_": {
@@ -5060,7 +5233,8 @@
     "builder": "build_catalyst_events_pit.py",
     "builder_version": "1.0.0",
     "ledger_sources": {
-      "CTGOV": 11714
+      "CTGOV": 11714,
+      "SEC_8K": 385
     },
     "catalyst_near_days": 120,
     "catalyst_mid_days": 180,

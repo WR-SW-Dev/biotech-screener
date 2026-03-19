@@ -2,26 +2,26 @@
   "schema_version": "pit_bundle_manifest.v1",
   "version": "1.0.0",
   "as_of_date": "2024-03-31",
-  "created_at": "2026-03-19T04:24:07Z",
+  "created_at": "2026-03-19T13:55:21Z",
   "bundle_root": "/mnt/c/Projects/biotech_screener/biotech-screener/data/bundles/PIT",
-  "pit_mode": "strict",
+  "pit_mode": "degrade",
   "components": {
     "clinical_features": {
       "file": "clinical_features.json",
       "schema_version": "clinical_features_pit.v1",
-      "sha256": "1b0800abf3771458a6bdf7ab704dde59522c88050dd60aef10cec38e362d46ff",
+      "sha256": "40d738c14626e96a3b688a3d1696ecf5471f6ff185810ac620ca0b0656431956",
       "coverage_pct": 88.0
     },
     "catalyst_events": {
       "file": "catalyst_events.json",
       "schema_version": "catalyst_events_pit.v1",
-      "sha256": "a2821b8c19ea056f9e66f4ef904da4ba4b5a5060d6b615b12131b93c075049e1",
+      "sha256": "f1c4999832cdd5a2f4b02b1b0bce5a8cc9ae988fa92eac00da4f7c0130cb4dbe",
       "coverage_pct": 28.1
     },
     "coinvest_features": {
       "file": "coinvest_features.json",
       "schema_version": "coinvest_features.v1",
-      "sha256": "a0cb9e655ec2ee1e281bf5ba721211307738e17fe18ef2a1b555daf493887415",
+      "sha256": "f9be7e29031045e8531a7821a36eba15a838d0d649842d2bf5495605aec22171",
       "coverage_pct": 82.2
     }
   },
@@ -31,5 +31,5 @@
     "catalyst_tickers_future_disclosed_at": 0
   },
   "universe_size": 349,
-  "build_duration_seconds": 2.45
+  "build_duration_seconds": 2.17
 }

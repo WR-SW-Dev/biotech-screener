@@ -1,7 +1,7 @@
 {
   "schema_version": "catalyst_events_pit.v1",
   "version": "1.0.0",
-  "created_at": "2026-03-19T04:23:44Z",
+  "created_at": "2026-03-19T13:54:53Z",
   "as_of_date": "2021-06-30",
   "tickers_in_universe": 349,
   "tickers_with_catalyst": 48,
