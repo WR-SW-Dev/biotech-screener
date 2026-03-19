@@ -18,7 +18,7 @@ import csv
 import json
 import logging
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -434,7 +434,7 @@ def build_health(
     return {
         "schema_version": SCHEMA_VERSION,
         "as_of_date": as_of_date,
-        "generated_at": datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "status": overall,
         "sources": sources,
         "thresholds": thresholds,

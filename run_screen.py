@@ -3896,7 +3896,7 @@ def save_validation_snapshot(
     dev_rows = [
         (i, r)
         for i, r in enumerate(csv_rows)
-        if r.get("archetype") == "drug_developer" and r.get("clinical_score") is not None
+        if r.get("archetype") == "drug_developer" and r.get("clinical_score") not in (None, "")
     ]
     if dev_rows:
         # Sort dev tickers by clinical_score DESC then ticker ASC (deterministic)
@@ -4988,8 +4988,8 @@ def save_validation_snapshot(
                         else:
                             _pcr_call[_pcr_ul] = _pcr_call.get(_pcr_ul, 0) + _pcr_vol
                 _pcr_loaded += 1
-            except Exception:
-                pass
+            except (OSError, ValueError, KeyError) as _pcr_file_exc:
+                logger.debug("[PCR] Skipped day agg %s: %s", _pcr_file, _pcr_file_exc)
             if _pcr_loaded >= _PCR_LOOKBACK:
                 break
 

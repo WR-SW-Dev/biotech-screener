@@ -322,7 +322,7 @@
       "updated_at": "2026-03-09T22:43:00Z"
     },
     {
-      "id": "9ef27486",
+      "id": "e1bfc5a7",
       "file": "v1.12.0_core_neutral_candidate.json",
       "created_at": "2026-03-12",
       "engine_version": "v1.3.0",
@@ -334,24 +334,28 @@
       "updated_at": "2026-03-12T00:00:00Z"
     },
     {
-      "id": "2b1c8959",
+      "id": "a08749e4",
       "file": "v1.13.0_catalyst_tilt_on_candidate.json",
       "created_at": "2026-03-13",
       "engine_version": "v1.3.0",
       "description": "Catalyst tilt ON: L3 sizing multipliers NEAR=1.10/MID=1.05/FAR=0.95/MISSING=0.90",
       "status": "candidate",
       "requires_replay": false,
-      "notes": "Derived from v1.11.0 (7177a4ea). Only change: enable_catalyst_tilt=true (mults already present). Analytical sweep (34 dates, 2025-06..2025-12): all 16 grid variants beat baseline. Best (default mults): +0.66pp 63d (80% win), +1.16pp 84d (96% win). Turnover impact <1%. Pure L3 sizing \u2014 no membership or sort order change. PROMOTION BATTERY 2026-03-13: 4/4 buckets PROMOTE (+5.8pp to +30.4pp), but weekly gate FAIL \u2014 bucket_binary_31_90 -1.81pp and global_cum_hedged -2.43pp trip tight per-bucket guardrails. Policy-level weekly metrics PASS (+4.14pp cum, +0.13pp mean). DECISION: shadow for 3-5 more weeks, then re-gate. Do not promote until weekly verdict clears."
+      "notes": "Derived from v1.11.0 (7177a4ea). Only change: enable_catalyst_tilt=true (mults already present). Analytical sweep (34 dates, 2025-06..2025-12): all 16 grid variants beat baseline. Best (default mults): +0.66pp 63d (80% win), +1.16pp 84d (96% win). Turnover impact <1%. Pure L3 sizing \u2014 no membership or sort order change. PROMOTION BATTERY 2026-03-13: 4/4 buckets PROMOTE (+5.8pp to +30.4pp), but weekly gate FAIL \u2014 bucket_binary_31_90 -1.81pp and global_cum_hedged -2.43pp trip tight per-bucket guardrails. Policy-level weekly metrics PASS (+4.14pp cum, +0.13pp mean). DECISION: shadow for 3-5 more weeks, then re-gate. Do not promote until weekly verdict clears.",
+      "updated_by": "manual_bootstrap",
+      "updated_at": "2026-03-13"
     },
     {
-      "id": "73113d54",
+      "id": "1ecddc8c",
       "file": "v1.13.0_b91_clinical_plus_options_candidate.json",
       "created_at": "2026-03-13",
       "engine_version": "v1.3.0",
       "description": "binary_91_180 clinical+options quality sort: CLINICAL uses clinical_quality_composite (w=0.5), REGULATORY uses options_quality_composite (w=0.5)",
       "status": "candidate",
       "requires_replay": true,
-      "notes": "Derived from v1.11.0 (7177a4ea). binary_91_180_sort_mode=clinical_plus_options, binary_91_180_clinical_quality_weight=0.5, binary_91_180_options_quality_weight=0.5. Decision engine wiring proven by 19 unit tests (test_clinical_plus_options_rerank.py). DEMOTED 2026-03-13: REGULATORY classification audit across 408 snapshots found zero REGULATORY+less_binary rows \u2014 not a bug, genuine scarcity. PDUFA dates are hard-dated binary events (97.7% land in binary_now). Candidate is structurally identical to baseline until this segment is populated. Infrastructure stays: options_coverage gate, ab_readiness_monitor, A/B harness (eval_b91_options_quality_weekly_ab.py). Revisit after forward regulatory event coverage expansion creates REGULATORY+less_binary population."
+      "notes": "Derived from v1.11.0 (7177a4ea). binary_91_180_sort_mode=clinical_plus_options, binary_91_180_clinical_quality_weight=0.5, binary_91_180_options_quality_weight=0.5. Decision engine wiring proven by 19 unit tests (test_clinical_plus_options_rerank.py). DEMOTED 2026-03-13: REGULATORY classification audit across 408 snapshots found zero REGULATORY+less_binary rows \u2014 not a bug, genuine scarcity. PDUFA dates are hard-dated binary events (97.7% land in binary_now). Candidate is structurally identical to baseline until this segment is populated. Infrastructure stays: options_coverage gate, ab_readiness_monitor, A/B harness (eval_b91_options_quality_weekly_ab.py). Revisit after forward regulatory event coverage expansion creates REGULATORY+less_binary population.",
+      "updated_by": "manual_bootstrap",
+      "updated_at": "2026-03-13"
     },
     {
       "id": "d59b6cc3",
@@ -362,7 +366,9 @@
       "engine_version": "v1.3.0",
       "created_at": "2026-03-19T00:00:00Z",
       "requires_replay": false,
-      "notes": ""
+      "notes": "",
+      "updated_by": "manual_bootstrap",
+      "updated_at": "2026-03-19T00:00:00Z"
     },
     {
       "id": "eeded48d",
@@ -373,7 +379,9 @@
       "engine_version": "v1.3.0",
       "created_at": "2026-03-19T00:00:00Z",
       "requires_replay": false,
-      "notes": ""
+      "notes": "",
+      "updated_by": "manual_bootstrap",
+      "updated_at": "2026-03-19T00:00:00Z"
     }
   ]
 }

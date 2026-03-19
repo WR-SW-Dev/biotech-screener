@@ -1516,7 +1516,7 @@ def _build_sort_contributions(
     if bucket == "build_window" and bw_mode == "clinical_z":
         cz_tier = _safe_float(decision_fields.get("clinical_score_z_tier"), default=0.0)
         stage = str(decision_fields.get("stage_bucket", ""))
-        stage_mult = dict(ruleset.clinical_stage_mults).get(stage, 1.0)
+        stage_mult = dict(ruleset.clinical_stage_mults).get(stage, 0.0)
         cz_eff = min(2.0, max(0.0, cz_tier))  # positive-only
         bw_w = ruleset.build_window_clinical_weight
         delta_bw = bw_w * cz_eff * stage_mult
@@ -1592,8 +1592,8 @@ def compute_actionable_sort_key(
       leapfrog nearby ranks but not distant ones.
 
     External fields (see ``_EXTERNAL_SORT_FIELDS``): ``clinical_score_z_tier``,
-    ``coinvest_score_z``, ``inst_delta_z``, and ``stage_bucket`` are injected
-    by ``run_screen.py`` after the DE loop and default to 0.0 when absent.
+    ``inst_delta_z``, and ``stage_bucket`` are injected by ``run_screen.py``
+    after the DE loop and default to 0.0 when absent.
     """
     eligible_val = decision_fields.get("eligible", "0")
     is_eligible = 0 if eligible_val == "1" else 1
