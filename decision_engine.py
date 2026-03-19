@@ -267,6 +267,14 @@ class DecisionRuleset:
     build_window_clinical_mode: str = "baseline"
     build_window_clinical_weight: float = 0.5
 
+    # Put/call ratio penalty (shadow, default OFF)
+    # Applies a negative sort penalty for high pre-event put/call ratio,
+    # gated to build_window bucket + CLINICAL family only.
+    #   "off":       no penalty (default)
+    #   "tiebreak":  small last-key penalty (safest live read)
+    pcr_penalty_mode: str = "off"
+    pcr_penalty_weight: float = 0.25
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -1350,6 +1358,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "binary_quality_now",
     "binary_institutional_now",
     "clinical_build_window",
+    "pcr_penalty_bw",
 )
 
 
@@ -1513,6 +1522,21 @@ def _build_sort_contributions(
         delta_bw = bw_w * cz_eff * stage_mult
         contribs.append(SortContribution("clinical_build_window", cz_tier, bw_w, delta_bw))
 
+    # 13. Put/call ratio penalty (shadow, bucket + family gated)
+    # High put/call ratio in build_window CLINICAL → negative sort penalty.
+    # Signal: pre_event_put_call_ratio (0-1 scale, 0.5 = neutral).
+    # Penalty = weight * max(0, pcr - 0.5) * 2 → 0 when neutral, up to weight at pcr=1.
+    pcr_mode = ruleset.pcr_penalty_mode
+    if pcr_mode == "tiebreak" and bucket == "build_window":
+        cat_fam = str(decision_fields.get("catalyst_family", ""))
+        if cat_fam == "CLINICAL":
+            pcr_raw = _safe_float(decision_fields.get("pre_event_put_call_ratio"), default=0.0)
+            # Only penalize above-neutral put/call ratio
+            pcr_excess = max(0.0, pcr_raw - 0.5) * 2.0  # scale to [0, 1]
+            pcr_w = ruleset.pcr_penalty_weight
+            delta_pcr = -(pcr_w * pcr_excess)  # negative = penalty
+            contribs.append(SortContribution("pcr_penalty_bw", pcr_raw, pcr_w, delta_pcr))
+
     return contribs
 
 
@@ -1535,6 +1559,7 @@ _EXTERNAL_SORT_FIELDS: frozenset = frozenset(
         "catalyst_family",  # used by clinical_quality sort mode family gate
         "has_regulatory_upcoming_180d",  # used by options_quality sort mode secondary reg path
         "regulatory_days",  # used by options_quality sort mode secondary reg path
+        "pre_event_put_call_ratio",  # used by pcr_penalty_mode penalty
     }
 )
 

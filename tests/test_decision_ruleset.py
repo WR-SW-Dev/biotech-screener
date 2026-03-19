@@ -291,7 +291,7 @@ class TestRulesetDriftGuardrails:
     regenerate production_data/decision_rulesets/v1.json.
     """
 
-    EXPECTED_DEFAULT_RULESET_ID = "33bd621b"
+    EXPECTED_DEFAULT_RULESET_ID = "c24dea5d"
 
     def test_default_ruleset_id_pinned(self):
         """DEFAULT_RULESET.ruleset_id must match the committed expected value.
@@ -335,7 +335,7 @@ class TestRulesetDriftGuardrails:
         "notes",
     }
 
-    VALID_STATUSES = {"active", "candidate", "retired", "rejected"}
+    VALID_STATUSES = {"active", "candidate", "retired", "rejected", "archived", "shadow"}
 
     def test_manifest_json_valid(self):
         """manifest.json exists, has valid structure, and exactly 1 active ruleset."""

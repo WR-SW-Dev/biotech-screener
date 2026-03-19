@@ -43,7 +43,7 @@ import shutil
 import sys
 import tarfile
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 
 # Load .env file (credentials, API keys) before any module reads os.environ
@@ -1458,6 +1458,8 @@ SNAPSHOT_COLUMNS = [
     "cheap_vol_score",
     "vol_classification",
     "straddle_price",
+    # --- Pre-event put/call ratio (from Massive day aggs, shadow) ---
+    "pre_event_put_call_ratio",
     # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
     "ts_flag",
     "ts_flag_type",
@@ -4925,6 +4927,87 @@ def save_validation_snapshot(
         logger.info("[STRADDLE] Scored %d/%d tickers", _n_straddle_scored, len(csv_rows))
     except Exception as _strad_exc:
         logger.warning("Straddle mispricing skipped: %s", _strad_exc)
+
+    # --- Pre-event put/call ratio (from Massive day aggs, shadow) ---
+    # Computes volume-based put/call ratio over a 10-day lookback from
+    # cached day aggs.  Injected as pre_event_put_call_ratio for the
+    # pcr_penalty_mode sort contribution (build_window CLINICAL only).
+    _PCR_LOOKBACK = 10
+    try:
+        from common.options_history_massive import ingest_day_aggs
+
+        _pcr_cache_root = Path(__file__).resolve().parent / "data" / "caches" / "massive_options" / "day_aggs"
+        _pcr_aod = date.fromisoformat(as_of_date) if isinstance(as_of_date, str) else as_of_date
+        # Collect day aggs for lookback window
+        _pcr_put: Dict[str, int] = {}
+        _pcr_call: Dict[str, int] = {}
+        _pcr_loaded = 0
+        for _pcr_offset in range(_PCR_LOOKBACK + 4):  # +4 for weekends
+            _pcr_dt = _pcr_aod - timedelta(days=_pcr_offset)
+            if _pcr_dt.weekday() >= 5:
+                continue
+            _pcr_file = _pcr_cache_root / str(_pcr_dt.year) / f"{_pcr_dt.month:02d}" / f"{_pcr_dt.isoformat()}.csv.gz"
+            if not _pcr_file.exists():
+                continue
+            import gzip as _pcr_gz
+
+            try:
+                with _pcr_gz.open(_pcr_file, "rt") as _pf:
+                    _pcr_reader = csv.DictReader(_pf)
+                    for _pcr_rec in _pcr_reader:
+                        _pcr_tk = _pcr_rec.get("ticker", "")
+                        if not _pcr_tk:
+                            continue
+                        # Parse underlying from OCC ticker: O:UNDERLYING...
+                        _pcr_stripped = _pcr_tk[2:] if _pcr_tk.startswith("O:") else _pcr_tk
+                        # Find the date portion (6 digits after underlying)
+                        _pcr_ul = ""
+                        for _ci, _ch in enumerate(_pcr_stripped):
+                            if _ch.isdigit():
+                                _pcr_ul = _pcr_stripped[:_ci]
+                                break
+                        if not _pcr_ul:
+                            continue
+                        _pcr_vol = int(float(_pcr_rec.get("volume", 0) or 0))
+                        if _pcr_vol <= 0:
+                            continue
+                        # Determine put/call from last letter before strike digits
+                        _pcr_is_put = False
+                        for _pch in reversed(_pcr_stripped):
+                            if _pch == "P":
+                                _pcr_is_put = True
+                                break
+                            elif _pch == "C":
+                                break
+                            elif _pch.isdigit():
+                                continue
+                            else:
+                                break
+                        if _pcr_is_put:
+                            _pcr_put[_pcr_ul] = _pcr_put.get(_pcr_ul, 0) + _pcr_vol
+                        else:
+                            _pcr_call[_pcr_ul] = _pcr_call.get(_pcr_ul, 0) + _pcr_vol
+                _pcr_loaded += 1
+            except Exception:
+                pass
+            if _pcr_loaded >= _PCR_LOOKBACK:
+                break
+
+        _n_pcr = 0
+        for row in csv_rows:
+            tk = row.get("ticker", "")
+            p = _pcr_put.get(tk, 0)
+            c = _pcr_call.get(tk, 0)
+            if p + c > 0:
+                row["pre_event_put_call_ratio"] = str(round(p / (p + c), 4))
+                _n_pcr += 1
+            else:
+                row["pre_event_put_call_ratio"] = ""
+        logger.info(
+            "[PCR] Computed put/call ratio for %d/%d tickers (%d trading days)", _n_pcr, len(csv_rows), _pcr_loaded
+        )
+    except Exception as _pcr_exc:
+        logger.debug("Pre-event put/call ratio skipped: %s", _pcr_exc)
 
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
