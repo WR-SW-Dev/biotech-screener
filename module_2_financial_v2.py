@@ -56,13 +56,14 @@ from __future__ import annotations
 
 import hashlib
 import logging
-from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
+from common.score_utils import clamp_score, piecewise_lerp
 from common.types import Severity
-from common.score_utils import clamp_score, piecewise_lerp, to_decimal as score_to_decimal
 
 __version__ = "2.0.0"
 RULESET_VERSION = "2.0.0-V2"
@@ -89,25 +90,27 @@ RUNWAY_WARNING = Decimal("12")
 RUNWAY_CAUTION = Decimal("18")
 
 # Liquidity gate threshold (dollar ADV)
-LIQUIDITY_GATE_WARN = Decimal("500000")   # $500K - WARN
-LIQUIDITY_GATE_FAIL = Decimal("100000")   # $100K - FAIL
+LIQUIDITY_GATE_WARN = Decimal("500000")  # $500K - WARN
+LIQUIDITY_GATE_FAIL = Decimal("100000")  # $100K - FAIL
 
 # Dilution risk thresholds
-DILUTION_CASH_MCAP_LOW = Decimal("0.05")      # <5% = HIGH risk
-DILUTION_CASH_MCAP_MED = Decimal("0.15")      # <15% = MODERATE risk
-DILUTION_CASH_MCAP_HIGH = Decimal("0.30")     # <30% = LOW risk
+DILUTION_CASH_MCAP_LOW = Decimal("0.05")  # <5% = HIGH risk
+DILUTION_CASH_MCAP_MED = Decimal("0.15")  # <15% = MODERATE risk
+DILUTION_CASH_MCAP_HIGH = Decimal("0.30")  # <30% = LOW risk
 
 
 class BurnConfidence(str, Enum):
     """Burn rate confidence levels."""
-    HIGH = "HIGH"       # CFO/FCF available
-    MEDIUM = "MEDIUM"   # NetIncome proxy
-    LOW = "LOW"         # R&D proxy
-    NONE = "NONE"       # No data
+
+    HIGH = "HIGH"  # CFO/FCF available
+    MEDIUM = "MEDIUM"  # NetIncome proxy
+    LOW = "LOW"  # R&D proxy
+    NONE = "NONE"  # No data
 
 
 class BurnSource(str, Enum):
     """Burn rate data source."""
+
     CFO_QUARTERLY = "CFO_quarterly"
     CFO_YTD = "CFO_YTD"
     CFO_ANNUAL = "CFO_annual"
@@ -122,31 +125,35 @@ class BurnSource(str, Enum):
 
 class DataState(str, Enum):
     """Financial data completeness state."""
-    FULL = "FULL"           # All key fields present
-    PARTIAL = "PARTIAL"     # Some fields present
-    MINIMAL = "MINIMAL"     # Only basic fields
-    NONE = "NONE"           # No data
+
+    FULL = "FULL"  # All key fields present
+    PARTIAL = "PARTIAL"  # Some fields present
+    MINIMAL = "MINIMAL"  # Only basic fields
+    NONE = "NONE"  # No data
 
 
 class LiquidityGate(str, Enum):
     """Liquidity gate status."""
-    PASS = "PASS"           # >= $500K ADV
-    WARN = "WARN"           # $100K - $500K ADV
-    FAIL = "FAIL"           # < $100K ADV
+
+    PASS = "PASS"  # >= $500K ADV
+    WARN = "WARN"  # $100K - $500K ADV
+    FAIL = "FAIL"  # < $100K ADV
 
 
 class DilutionRiskBucket(str, Enum):
     """Dilution risk categories."""
-    LOW = "LOW"             # >= 30% cash/mcap
-    MODERATE = "MODERATE"   # 15-30% cash/mcap
-    HIGH = "HIGH"           # 5-15% cash/mcap
-    SEVERE = "SEVERE"       # < 5% cash/mcap
-    UNKNOWN = "UNKNOWN"     # No data
+
+    LOW = "LOW"  # >= 30% cash/mcap
+    MODERATE = "MODERATE"  # 15-30% cash/mcap
+    HIGH = "HIGH"  # 5-15% cash/mcap
+    SEVERE = "SEVERE"  # < 5% cash/mcap
+    UNKNOWN = "UNKNOWN"  # No data
 
 
 # ============================================================================
 # HELPER FUNCTIONS
 # ============================================================================
+
 
 def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """
@@ -169,11 +176,7 @@ def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decim
         return default
 
 
-def _safe_divide(
-    numerator: Decimal,
-    denominator: Decimal,
-    default: Optional[Decimal] = None
-) -> Optional[Decimal]:
+def _safe_divide(numerator: Decimal, denominator: Decimal, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """Safe division with eps floor."""
     if denominator is None or abs(denominator) < EPS:
         return default
@@ -199,9 +202,11 @@ def _quantize_rate(value: Decimal) -> Decimal:
 # BURN RATE CALCULATION (HIERARCHICAL WITH PROVENANCE)
 # ============================================================================
 
+
 @dataclass
 class BurnAcceleration:
     """Result of burn acceleration analysis."""
+
     is_accelerating: bool
     acceleration_rate: Optional[Decimal]  # % change Q-over-Q
     trend_direction: str  # "accelerating", "stable", "decelerating", "unknown"
@@ -213,6 +218,7 @@ class BurnAcceleration:
 @dataclass
 class BurnResult:
     """Result of burn rate calculation with full provenance."""
+
     monthly_burn: Optional[Decimal]
     burn_source: BurnSource
     burn_confidence: BurnConfidence
@@ -220,7 +226,7 @@ class BurnResult:
     quarters_used: int = 1
     raw_value: Optional[Decimal] = None
     ytd_quarters: Optional[int] = None
-    rejection_reasons: Dict[str, str] = field(default_factory=dict)  # source -> reason
+    rejection_reasons: Dict[str, str] = dataclass_field(default_factory=dict)  # source -> reason
     # Burn acceleration tracking
     acceleration: Optional[BurnAcceleration] = None
 
@@ -234,7 +240,7 @@ def _extract_quarterly_burns(financial_data: Dict) -> List[Decimal]:
     burns = []
 
     # Check for burn history arrays
-    for field in ['burn_history', 'quarterly_burns', 'cfo_history', 'quarterly_cfo']:
+    for field in ["burn_history", "quarterly_burns", "cfo_history", "quarterly_cfo"]:
         history = financial_data.get(field)
         if history and isinstance(history, (list, tuple)):
             for val in history:
@@ -358,15 +364,16 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
     rejection_reasons: Dict[str, str] = {}
 
     # === CHECK PROFITABILITY FIRST ===
-    cfo = _to_decimal(financial_data.get('CFO'))
-    cfo_ops = _to_decimal(financial_data.get('CashFlowFromOperations'))
-    net_income = _to_decimal(financial_data.get('NetIncome'))
+    cfo = _to_decimal(financial_data.get("CFO"))
+    cfo_ops = _to_decimal(financial_data.get("CashFlowFromOperations"))
+    net_income = _to_decimal(financial_data.get("NetIncome"))
 
     effective_cfo = cfo if cfo is not None else cfo_ops
 
     # Profitable company
-    if (effective_cfo is not None and effective_cfo > Decimal("0")) or \
-       (net_income is not None and net_income > Decimal("0")):
+    if (effective_cfo is not None and effective_cfo > Decimal("0")) or (
+        net_income is not None and net_income > Decimal("0")
+    ):
         return BurnResult(
             monthly_burn=Decimal("0"),
             burn_source=BurnSource.PROFITABLE,
@@ -377,8 +384,8 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
         )
 
     # === PRIORITY 1: CFO QUARTERLY ===
-    cfo_q = _to_decimal(financial_data.get('CFO_quarterly'))
-    cfo_q_alt = _to_decimal(financial_data.get('CFO_Q'))
+    cfo_q = _to_decimal(financial_data.get("CFO_quarterly"))
+    cfo_q_alt = _to_decimal(financial_data.get("CFO_Q"))
     effective_cfo_q = cfo_q if cfo_q is not None else cfo_q_alt
 
     if effective_cfo_q is not None and effective_cfo_q < Decimal("0"):
@@ -397,12 +404,12 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
         rejection_reasons["CFO_quarterly"] = "non_negative"
 
     # === PRIORITY 2: CFO YTD WITH DIFFERENCING ===
-    cfo_ytd = _to_decimal(financial_data.get('CFO_YTD'))
-    cfo_ytd_prior = _to_decimal(financial_data.get('CFO_YTD_prior'))
+    cfo_ytd = _to_decimal(financial_data.get("CFO_YTD"))
+    cfo_ytd_prior = _to_decimal(financial_data.get("CFO_YTD_prior"))
 
     if cfo_ytd is not None and cfo_ytd < Decimal("0"):
         # Get quarters in YTD (default 2 for mid-year)
-        quarters_in_ytd = int(financial_data.get('quarters_in_ytd', 2))
+        quarters_in_ytd = int(financial_data.get("quarters_in_ytd", 2))
         months_in_ytd = Decimal(quarters_in_ytd * 3)
 
         # If we have prior YTD, compute quarterly diff
@@ -472,10 +479,10 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
         rejection_reasons["CFO_trailing_4q"] = "no_history"
 
     # === PRIORITY 5: FCF ===
-    fcf_q = _to_decimal(financial_data.get('FCF_quarterly'))
-    fcf_q_alt = _to_decimal(financial_data.get('FCF_Q'))
-    fcf = _to_decimal(financial_data.get('FCF'))
-    fcf_alt = _to_decimal(financial_data.get('FreeCashFlow'))
+    fcf_q = _to_decimal(financial_data.get("FCF_quarterly"))
+    fcf_q_alt = _to_decimal(financial_data.get("FCF_Q"))
+    fcf = _to_decimal(financial_data.get("FCF"))
+    fcf_alt = _to_decimal(financial_data.get("FreeCashFlow"))
 
     effective_fcf_q = fcf_q if fcf_q is not None else fcf_q_alt
     effective_fcf = fcf if fcf is not None else fcf_alt
@@ -528,8 +535,8 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
         rejection_reasons["NetIncome"] = "non_negative"
 
     # === PRIORITY 7: R&D PROXY (LAST RESORT) ===
-    rd = _to_decimal(financial_data.get('R&D'))
-    rd_alt = _to_decimal(financial_data.get('ResearchAndDevelopment'))
+    rd = _to_decimal(financial_data.get("R&D"))
+    rd_alt = _to_decimal(financial_data.get("ResearchAndDevelopment"))
     effective_rd = rd if rd is not None else rd_alt
 
     if effective_rd is not None and effective_rd > Decimal("0"):
@@ -563,9 +570,11 @@ def calculate_burn_rate_v2(financial_data: Dict) -> BurnResult:
 # LIQUID ASSETS CALCULATION
 # ============================================================================
 
+
 @dataclass
 class LiquidAssetsResult:
     """Result of liquid assets calculation."""
+
     liquid_assets: Decimal
     cash: Decimal
     marketable_securities: Decimal
@@ -581,13 +590,18 @@ def calculate_liquid_assets(financial_data: Dict) -> LiquidAssetsResult:
     components = []
 
     # Primary: Cash and cash equivalents
-    cash = _to_decimal(financial_data.get('Cash'), Decimal("0"))
+    cash = _to_decimal(financial_data.get("Cash"), Decimal("0"))
     if cash > Decimal("0"):
         components.append("Cash")
 
-    # Marketable securities (check multiple field names)
+    # Marketable securities (check multiple field names, first match wins)
     mkt_sec = None
-    for field in ['MarketableSecurities', 'ShortTermInvestments', 'AvailableForSaleSecurities']:
+    for field in [
+        "MarketableSecurities",
+        "ShortTermInvestments",
+        "AvailableForSaleSecurities",
+        "AvailableForSaleDebtCurrent",
+    ]:
         val = _to_decimal(financial_data.get(field))
         if val is not None and val > Decimal("0"):
             mkt_sec = val
@@ -610,6 +624,7 @@ def calculate_liquid_assets(financial_data: Dict) -> LiquidAssetsResult:
 # ============================================================================
 # RUNWAY SCORING
 # ============================================================================
+
 
 def _score_runway(runway_months: Decimal) -> Decimal:
     """Score based on runway months (0-100), piecewise-linear continuous mapping.
@@ -636,6 +651,7 @@ def _score_runway(runway_months: Decimal) -> Decimal:
 @dataclass
 class RunwayResult:
     """Result of runway calculation."""
+
     runway_months: Optional[Decimal]
     runway_score: Decimal
     monthly_burn: Optional[Decimal]
@@ -645,7 +661,7 @@ class RunwayResult:
     burn_confidence: BurnConfidence
     burn_period: str
     quarters_used: int
-    burn_rejection_reasons: Dict[str, str] = field(default_factory=dict)
+    burn_rejection_reasons: Dict[str, str] = dataclass_field(default_factory=dict)
     # Burn acceleration tracking for accuracy improvement
     burn_acceleration: Optional[BurnAcceleration] = None
     runway_score_pre_acceleration: Optional[Decimal] = None  # Score before accel adjustment
@@ -734,9 +750,11 @@ def calculate_runway(financial_data: Dict, market_data: Dict) -> RunwayResult:
 # DILUTION RISK AND FINANCING PRESSURE
 # ============================================================================
 
+
 @dataclass
 class DilutionResult:
     """Result of dilution risk calculation."""
+
     cash_to_mcap: Optional[Decimal]
     burn_to_mcap: Optional[Decimal]
     dilution_score: Decimal
@@ -765,11 +783,11 @@ def calculate_dilution_risk(
     """
     # Get liquid assets
     liquid = calculate_liquid_assets(financial_data)
-    market_cap = _to_decimal(market_data.get('market_cap'))
+    market_cap = _to_decimal(market_data.get("market_cap"))
 
     # Check for share count growth
-    shares_current = _to_decimal(financial_data.get('shares_outstanding'))
-    shares_prior = _to_decimal(financial_data.get('shares_outstanding_prior'))
+    shares_current = _to_decimal(financial_data.get("shares_outstanding"))
+    shares_prior = _to_decimal(financial_data.get("shares_outstanding_prior"))
 
     share_count_growth = None
     if shares_current is not None and shares_prior is not None and shares_prior > EPS:
@@ -828,6 +846,7 @@ def calculate_dilution_risk(
         else:
             # Use Python's exp on float, then convert back
             import math
+
             exp_val = Decimal(str(math.exp(float(exp_input))))
             dilution_score = Decimal("100") / (Decimal("1") + exp_val)
 
@@ -900,9 +919,11 @@ def calculate_dilution_risk(
 # LIQUIDITY SCORING
 # ============================================================================
 
+
 @dataclass
 class LiquidityResult:
     """Result of liquidity scoring."""
+
     liquidity_score: Decimal
     liquidity_gate: LiquidityGate
     dollar_adv_20d: Decimal
@@ -915,9 +936,9 @@ def score_liquidity(market_data: Dict) -> LiquidityResult:
     Dollar ADV weighted 60%, market cap 40%.
     Includes PASS/WARN/FAIL gating.
     """
-    market_cap = _to_decimal(market_data.get('market_cap'), Decimal("0"))
-    avg_volume = _to_decimal(market_data.get('avg_volume'), Decimal("0"))
-    price = _to_decimal(market_data.get('price'), Decimal("0"))
+    market_cap = _to_decimal(market_data.get("market_cap"), Decimal("0"))
+    avg_volume = _to_decimal(market_data.get("avg_volume"), Decimal("0"))
+    price = _to_decimal(market_data.get("price"), Decimal("0"))
 
     # Calculate dollar ADV
     dollar_adv = avg_volume * price
@@ -975,9 +996,11 @@ def score_liquidity(market_data: Dict) -> LiquidityResult:
 # DATA QUALITY ASSESSMENT
 # ============================================================================
 
+
 @dataclass
 class DataQualityResult:
     """Result of data quality assessment."""
+
     financial_data_state: DataState
     missing_fields: List[str]
     inputs_used: Dict[str, str]
@@ -995,12 +1018,12 @@ def assess_data_quality(financial_data: Dict, market_data: Dict) -> DataQualityR
 
     # Key fields to check
     key_fields = {
-        'cash': ['Cash'],
-        'marketable_securities': ['MarketableSecurities', 'ShortTermInvestments'],
-        'burn_rate': ['CFO', 'CashFlowFromOperations', 'FCF', 'FreeCashFlow', 'NetIncome', 'R&D'],
-        'market_cap': ['market_cap'],
-        'avg_volume': ['avg_volume', 'volume_avg_30d'],
-        'price': ['price'],
+        "cash": ["Cash"],
+        "marketable_securities": ["MarketableSecurities", "ShortTermInvestments"],
+        "burn_rate": ["CFO", "CashFlowFromOperations", "FCF", "FreeCashFlow", "NetIncome", "R&D"],
+        "market_cap": ["market_cap"],
+        "avg_volume": ["avg_volume", "volume_avg_30d"],
+        "price": ["price"],
     }
 
     fields_found = 0
@@ -1008,7 +1031,7 @@ def assess_data_quality(financial_data: Dict, market_data: Dict) -> DataQualityR
 
     for category, field_names in key_fields.items():
         found = False
-        source_data = market_data if category in ['market_cap', 'avg_volume', 'price'] else financial_data
+        source_data = market_data if category in ["market_cap", "avg_volume", "price"] else financial_data
 
         for field in field_names:
             val = source_data.get(field)
@@ -1023,7 +1046,7 @@ def assess_data_quality(financial_data: Dict, market_data: Dict) -> DataQualityR
             missing_fields.append(category)
 
     # Determine data state
-    critical_missing = [f for f in ['cash', 'market_cap'] if f in missing_fields]
+    critical_missing = [f for f in ["cash", "market_cap"] if f in missing_fields]
 
     if len(missing_fields) == 0:
         data_state = DataState.FULL
@@ -1049,6 +1072,7 @@ def assess_data_quality(financial_data: Dict, market_data: Dict) -> DataQualityR
 # ============================================================================
 # SEVERITY DETERMINATION
 # ============================================================================
+
 
 def determine_severity(
     runway_months: Optional[Decimal],
@@ -1077,6 +1101,7 @@ def determine_severity(
 # ============================================================================
 # MAIN SCORING FUNCTION
 # ============================================================================
+
 
 def score_financial_health_v2(
     ticker: str,
@@ -1107,16 +1132,16 @@ def score_financial_health_v2(
 
     # Calculate composite score
     scores_valid = (
-        runway.runway_score is not None and
-        dilution.dilution_score is not None and
-        liquidity.liquidity_score is not None
+        runway.runway_score is not None
+        and dilution.dilution_score is not None
+        and liquidity.liquidity_score is not None
     )
 
     if scores_valid:
         composite = (
-            runway.runway_score * Decimal("0.50") +
-            dilution.dilution_score * Decimal("0.30") +
-            liquidity.liquidity_score * Decimal("0.20")
+            runway.runway_score * Decimal("0.50")
+            + dilution.dilution_score * Decimal("0.30")
+            + liquidity.liquidity_score * Decimal("0.20")
         )
         # Use clamp_score utility for consistent bounds enforcement
         composite = clamp_score(composite, Decimal("0"), Decimal("100")) or Decimal("50")
@@ -1187,43 +1212,40 @@ def score_financial_health_v2(
         "has_financial_data": has_data,
         "severity": severity.value,
         "flags": flags,
-
         # Burn hierarchy fields
         "burn_source": runway.burn_source.value,
         "burn_confidence": runway.burn_confidence.value,
         "burn_period": runway.burn_period,
         "quarters_used": runway.quarters_used,
         "burn_rejection_reasons": runway.burn_rejection_reasons,
-
         # Liquidity fields (back-compat: liquidity_gate bool + new enum)
         "liquidity_gate": liquidity.liquidity_gate != LiquidityGate.PASS,  # bool for back-compat
         "liquidity_gate_status": liquidity.liquidity_gate.value,  # new enum field
         "dollar_adv": _to_float(liquidity.dollar_adv_20d),  # back-compat name
         "dollar_adv_20d": _to_float(liquidity.dollar_adv_20d),  # new name
-
         # Liquid assets fields
         "liquid_assets": _to_float(runway.liquid_assets),
         "liquid_components": runway.liquid_components,
-
         # Dilution/financing fields (v2 additions)
         "burn_to_mcap": _to_float(dilution.burn_to_mcap),
         "financing_pressure_score": _to_float(dilution.financing_pressure_score),
         "dilution_risk_bucket": dilution.dilution_risk_bucket.value,
         "share_count_growth": _to_float(dilution.share_count_growth),
-
         # Data quality fields
         "financial_data_state": quality.financial_data_state.value,
         "missing_fields": quality.missing_fields,
         "inputs_used": quality.inputs_used,
         "confidence": _to_float(quality.confidence),
-
         # Burn acceleration fields (accuracy improvement)
-        "burn_acceleration_rate": _to_float(runway.burn_acceleration.acceleration_rate) if runway.burn_acceleration else None,
+        "burn_acceleration_rate": (
+            _to_float(runway.burn_acceleration.acceleration_rate) if runway.burn_acceleration else None
+        ),
         "burn_acceleration_trend": runway.burn_acceleration.trend_direction if runway.burn_acceleration else "unknown",
-        "burn_acceleration_penalty": _to_float(runway.burn_acceleration.penalty_factor) if runway.burn_acceleration else None,
+        "burn_acceleration_penalty": (
+            _to_float(runway.burn_acceleration.penalty_factor) if runway.burn_acceleration else None
+        ),
         "burn_acceleration_confidence": runway.burn_acceleration.confidence if runway.burn_acceleration else "none",
         "runway_score_pre_acceleration": _to_float(runway.runway_score_pre_acceleration),
-
         # Audit fields (v2 additions)
         "determinism_hash": determinism_hash,
         "schema_version": SCHEMA_VERSION,
@@ -1233,6 +1255,7 @@ def score_financial_health_v2(
 # ============================================================================
 # ENTRY POINT
 # ============================================================================
+
 
 def run_module_2_v2(
     universe: List[str],
@@ -1275,8 +1298,8 @@ def run_module_2_v2(
         market_data = []
 
     # Create lookup dicts
-    fin_lookup = {f['ticker']: f for f in financial_data if 'ticker' in f}
-    mkt_lookup = {m['ticker']: m for m in market_data if 'ticker' in m}
+    fin_lookup = {f["ticker"]: f for f in financial_data if "ticker" in f}
+    mkt_lookup = {m["ticker"]: m for m in market_data if "ticker" in m}
 
     results = []
     severity_counts: Dict[str, int] = {}
@@ -1317,6 +1340,7 @@ def run_module_2_v2(
 # BACKWARDS COMPATIBILITY WRAPPER
 # ============================================================================
 
+
 def compute_module_2_financial(*args, **kwargs):
     """
     Backwards-compatible wrapper for v2.
@@ -1325,14 +1349,14 @@ def compute_module_2_financial(*args, **kwargs):
     if len(args) >= 2:
         records = args[0]
         universe = args[1]
-        as_of_date = args[2] if len(args) > 2 else kwargs.get('as_of_date')
+        _as_of_date = args[2] if len(args) > 2 else kwargs.get("as_of_date")  # noqa: F841
         financial_data = records
         market_data = []
     else:
-        universe = kwargs.get('universe', kwargs.get('active_tickers', kwargs.get('active_universe', [])))
-        financial_data = kwargs.get('financial_records', kwargs.get('financial_data', []))
-        market_data = kwargs.get('market_records', kwargs.get('market_data', []))
-        as_of_date = kwargs.get('as_of_date')
+        universe = kwargs.get("universe", kwargs.get("active_tickers", kwargs.get("active_universe", [])))
+        financial_data = kwargs.get("financial_records", kwargs.get("financial_data", []))
+        market_data = kwargs.get("market_records", kwargs.get("market_data", []))
+        _as_of_date = kwargs.get("as_of_date")  # noqa: F841
 
     if isinstance(universe, set):
         universe = list(universe)
@@ -1342,55 +1366,65 @@ def compute_module_2_financial(*args, **kwargs):
     mapped_market = []
 
     for rec in financial_data:
-        ticker = rec.get('ticker')
+        ticker = rec.get("ticker")
 
-        fin_rec = {'ticker': ticker}
+        fin_rec = {"ticker": ticker}
 
         # Map cash
-        if 'cash_mm' in rec:
-            fin_rec['Cash'] = rec['cash_mm'] * 1e6
-        elif 'Cash' in rec:
-            fin_rec['Cash'] = rec['Cash']
+        if "cash_mm" in rec:
+            fin_rec["Cash"] = rec["cash_mm"] * 1e6
+        elif "Cash" in rec:
+            fin_rec["Cash"] = rec["Cash"]
 
         # Map burn
-        if 'burn_rate_mm' in rec:
-            fin_rec['NetIncome'] = -rec['burn_rate_mm'] * 1e6
-        elif 'NetIncome' in rec:
-            fin_rec['NetIncome'] = rec['NetIncome']
+        if "burn_rate_mm" in rec:
+            fin_rec["NetIncome"] = -rec["burn_rate_mm"] * 1e6
+        elif "NetIncome" in rec:
+            fin_rec["NetIncome"] = rec["NetIncome"]
 
         # R&D
-        if 'rd_mm' in rec:
-            fin_rec['R&D'] = rec['rd_mm'] * 1e6
-        elif 'R&D' in rec:
-            fin_rec['R&D'] = rec['R&D']
+        if "rd_mm" in rec:
+            fin_rec["R&D"] = rec["rd_mm"] * 1e6
+        elif "R&D" in rec:
+            fin_rec["R&D"] = rec["R&D"]
 
         # Pass through other fields
-        for field in ['CFO', 'CFO_quarterly', 'CFO_YTD', 'FCF', 'FCF_quarterly',
-                      'MarketableSecurities', 'Debt', 'shares_outstanding']:
+        for field in [
+            "CFO",
+            "CFO_quarterly",
+            "CFO_YTD",
+            "FCF",
+            "FCF_quarterly",
+            "MarketableSecurities",
+            "Debt",
+            "shares_outstanding",
+        ]:
             if field in rec:
                 fin_rec[field] = rec[field]
 
         mapped_financial.append(fin_rec)
 
         # Extract market data
-        mkt_rec = {'ticker': ticker}
-        if 'market_cap_mm' in rec:
-            mkt_rec['market_cap'] = rec['market_cap_mm'] * 1e6
-        elif 'market_cap' in rec:
-            mkt_rec['market_cap'] = rec['market_cap']
+        mkt_rec = {"ticker": ticker}
+        if "market_cap_mm" in rec:
+            mkt_rec["market_cap"] = rec["market_cap_mm"] * 1e6
+        elif "market_cap" in rec:
+            mkt_rec["market_cap"] = rec["market_cap"]
 
-        mkt_rec['avg_volume'] = rec.get('avg_volume', rec.get('volume_avg_30d', 100000))
-        mkt_rec['price'] = rec.get('price', 10.0)
+        mkt_rec["avg_volume"] = rec.get("avg_volume", rec.get("volume_avg_30d", 100000))
+        mkt_rec["price"] = rec.get("price", 10.0)
 
         mapped_market.append(mkt_rec)
 
     # Add separate market data
     for rec in market_data:
-        mapped_market.append({
-            'ticker': rec.get('ticker'),
-            'market_cap': rec.get('market_cap'),
-            'price': rec.get('price'),
-            'avg_volume': rec.get('volume_avg_30d') or rec.get('avg_volume'),
-        })
+        mapped_market.append(
+            {
+                "ticker": rec.get("ticker"),
+                "market_cap": rec.get("market_cap"),
+                "price": rec.get("price"),
+                "avg_volume": rec.get("volume_avg_30d") or rec.get("avg_volume"),
+            }
+        )
 
     return run_module_2_v2(universe, mapped_financial, mapped_market)
