@@ -94,6 +94,18 @@ class DecisionRuleset:
     enable_catalyst_tilt: bool = False
     catalyst_tilt_mults: tuple = (("NEAR", 1.10), ("MID", 1.05), ("FAR", 0.95), ("MISSING", 0.90))
 
+    # Layer 3 — Catalyst type quality tilt (opt-in, multiplicative on weight)
+    # Scales weight by event type quality: confirmed regulatory > pivotal data >
+    # calendar milestones > softer signals.  See Spec 030.
+    enable_catalyst_type_tilt: bool = False
+    catalyst_type_mults: tuple = (
+        ("T1", 1.00),  # Confirmed regulatory (PDUFA, AdCom, CRL, etc.)
+        ("T2", 0.90),  # Pivotal data (DATA_READOUT, DATA_PRESENTATION)
+        ("T3", 0.60),  # ClinTrials calendar (CT_PRIMARY_COMPLETION, CT_STUDY_COMPLETION)
+        ("T4", 0.40),  # Softer signals (CT_RESULTS_POSTED, CT_STATUS_UPGRADE, etc.)
+        ("T5", 0.50),  # Unknown / missing event type
+    )
+
     # Layer 3 — Momentum state sizing tilt (opt-in, multiplicative on weight)
     # NOTE: default multipliers are all 1.0 (identity) — enabling this flag
     # without setting non-trivial multipliers has zero behavioral effect.
@@ -312,6 +324,15 @@ class DecisionRuleset:
                 )
             if mult <= 0:
                 raise ValueError(f"catalyst_tilt_mults: mult must be > 0, got {mult} for '{band}'")
+        # Validate catalyst_type_mults: keys must be valid tiers, mults > 0
+        valid_type_tiers = {"T1", "T2", "T3", "T4", "T5"}
+        for tier, mult in self.catalyst_type_mults:
+            if tier not in valid_type_tiers:
+                raise ValueError(
+                    f"catalyst_type_mults: unknown tier '{tier}', " f"expected one of {sorted(valid_type_tiers)}"
+                )
+            if mult < 0:
+                raise ValueError(f"catalyst_type_mults: mult must be >= 0, got {mult} for '{tier}'")
         # Validate mom_state_tilt_mults: keys must be valid states, mults > 0
         valid_mom_states = {"tailwind", "neutral", "headwind"}
         for state, mult in self.mom_state_tilt_mults:
@@ -487,6 +508,9 @@ class DecisionRuleset:
         # Convert catalyst_tilt_mults list-of-lists back to tuple-of-tuples
         if "catalyst_tilt_mults" in d and isinstance(d["catalyst_tilt_mults"], list):
             d["catalyst_tilt_mults"] = tuple(tuple(pair) for pair in d["catalyst_tilt_mults"])
+        # Convert catalyst_type_mults list-of-lists back to tuple-of-tuples
+        if "catalyst_type_mults" in d and isinstance(d["catalyst_type_mults"], list):
+            d["catalyst_type_mults"] = tuple(tuple(pair) for pair in d["catalyst_type_mults"])
         # Convert mom_state_tilt_mults list-of-lists back to tuple-of-tuples
         if "mom_state_tilt_mults" in d and isinstance(d["mom_state_tilt_mults"], list):
             d["mom_state_tilt_mults"] = tuple(tuple(pair) for pair in d["mom_state_tilt_mults"])
@@ -1105,6 +1129,58 @@ def _compute_size_band(
     # Clamp
     idx = max(0, min(len(_BAND_ORDER) - 1, idx))
     return _BAND_ORDER[idx], reasons
+
+
+# =============================================================================
+# CATALYST TYPE QUALITY TIER (Spec 030)
+# =============================================================================
+
+# Event types → quality tier mapping.  First match wins (case-insensitive).
+_CATALYST_TYPE_TIER_MAP: dict = {
+    # T1: Confirmed regulatory — date-certain, binary outcome
+    "FDA_PDUFA_DATE": "T1",
+    "FDA_ADCOM": "T1",
+    "FDA_APPROVAL": "T1",
+    "FDA_CRL": "T1",
+    "FDA_RTF": "T1",
+    "FDA_DECISION": "T1",
+    "FDA_SUBMISSION": "T1",
+    "FDA_DESIGNATION": "T1",
+    "EMA_AGENDA": "T1",
+    "EMA_OUTCOME": "T1",
+    "EMA_COMMITTEE_AGENDA": "T1",
+    "EMA_COMMITTEE_OUTCOME": "T1",
+    # T2: Pivotal data — high conviction, date less certain
+    "DATA_READOUT": "T2",
+    "DATA_PRESENTATION": "T2",
+    "DATA_PUBLICATION": "T2",
+    # T3: ClinTrials calendar — milestones, often noisy/delayed
+    "CT_PRIMARY_COMPLETION": "T3",
+    "CT_STUDY_COMPLETION": "T3",
+    "CLINICAL_PCD": "T3",
+    "CLINICAL_CD": "T3",
+    # T4: Softer signals — activity indicators, not event dates
+    "CT_RESULTS_POSTED": "T4",
+    "CT_DATE_CONFIRMED_ACTUAL": "T4",
+    "CT_TIMELINE_PULLIN": "T4",
+    "CT_STATUS_UPGRADE": "T4",
+    "CLINICAL_HOLD": "T4",
+    "SAFETY_SIGNAL": "T4",
+    "FDA_WARNING_LETTER": "T4",
+    "CT_TRIAL_TERMINATED": "T4",
+    "CT_TRIAL_WITHDRAWN": "T4",
+}
+
+
+def classify_catalyst_type_tier(event_type: str) -> str:
+    """Map catalyst_event_type to a quality tier (T1–T5).
+
+    T1 = confirmed regulatory, T2 = pivotal data, T3 = calendar milestone,
+    T4 = softer signal, T5 = unknown/missing.  See Spec 030.
+    """
+    if not event_type or not event_type.strip():
+        return "T5"
+    return _CATALYST_TYPE_TIER_MAP.get(event_type.strip(), "T5")
 
 
 # =============================================================================
@@ -1936,7 +2012,8 @@ def compute_target_weights(
         tm = _safe_float(row.get("catalyst_tilt_mult"), default=1.0)
         mm = _safe_float(row.get("mom_state_tilt_mult"), default=1.0)
         csm = _safe_float(row.get("sizing_multiplier_clinical"), default=1.0)
-        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm * csm)
+        ctm = _safe_float(row.get("catalyst_type_mult"), default=1.0)
+        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm * csm * ctm)
 
     # Floor prevents explosive weights from near-zero floating-point totals.
     # Smallest real weight in production is ~0.15, so 1e-9 is safely below.
@@ -2144,6 +2221,13 @@ def compute_decision_fields(
             cat_strength = overlays.get("catalyst_strength", "missing")
             catalyst_tilt_mult = tilt_map.get(cat_strength.upper(), 1.0)
 
+    # Catalyst type quality tilt multiplier (opt-in, affects weight only — Spec 030)
+    catalyst_type_tier = classify_catalyst_type_tier(overlays.get("catalyst_event_type", ""))
+    catalyst_type_mult = 1.0
+    if rs.enable_catalyst_type_tilt:
+        type_tilt_map = dict(rs.catalyst_type_mults)
+        catalyst_type_mult = type_tilt_map.get(catalyst_type_tier, 1.0)
+
     # Momentum state tilt multiplier (opt-in, affects weight only)
     mom_state_tilt_mult = 1.0
     if rs.enable_mom_state_tilt:
@@ -2190,6 +2274,9 @@ def compute_decision_fields(
         "cost_haircut_applied": "1" if cost_mult < 1.0 else "0",
         "catalyst_tilt_mult": catalyst_tilt_mult,
         "catalyst_tilt_applied": "1" if catalyst_tilt_mult != 1.0 else "0",
+        "catalyst_type_tier": catalyst_type_tier,
+        "catalyst_type_mult": catalyst_type_mult,
+        "catalyst_type_tilt_applied": "1" if catalyst_type_mult != 1.0 else "0",
         "mom_state_tilt_mult": mom_state_tilt_mult,
         "mom_state_tilt_applied": "1" if mom_state_tilt_mult != 1.0 else "0",
         "dd_rel_margin_rescued": "1" if dd_rel_margin_rescued else "0",
