@@ -59,6 +59,7 @@ VERSION = "1.0.0"
 # Phase A — Load & validate
 # ---------------------------------------------------------------------------
 
+
 def _load_json(path: Path) -> Any:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -160,6 +161,7 @@ def discover_bundle_dates(
 # Phase B — Build per-ticker rec dicts
 # ---------------------------------------------------------------------------
 
+
 def classify_company_archetype(
     ticker: str,
     industry: str,
@@ -251,8 +253,7 @@ def _derive_smart_money(coinvest_data: dict) -> dict:
             holders_decreasing.append(mgr)
 
     return {
-        "overlap_count": coinvest_data.get("sponsor_overlap_count",
-                                           coinvest_data.get("coinvest_overlap_count", 0)),
+        "overlap_count": coinvest_data.get("sponsor_overlap_count", coinvest_data.get("coinvest_overlap_count", 0)),
         "holders_increasing": holders_increasing,
         "holders_decreasing": holders_decreasing,
         "tier_breakdown": coinvest_data.get("holder_tiers", {}),
@@ -267,6 +268,7 @@ def _load_price_history(price_csv: Path) -> Optional["pd.DataFrame"]:
     """
     try:
         import pandas as pd
+
         df = pd.read_csv(price_csv)
         cols_lower = [c.lower() for c in df.columns]
         if "ticker" in cols_lower and "close" in cols_lower:
@@ -306,8 +308,8 @@ def _compute_price_features(
     Returns dict with: drawdown, drawdown_xbi, drawdown_rel_xbi,
     beta_xbi_60d, alpha_60d, rsi_14d, vol_60d, and source/missing_reason fields.
     """
-    import pandas as pd
     import numpy as np
+    import pandas as pd
 
     result = {
         "drawdown": None,
@@ -358,9 +360,7 @@ def _compute_price_features(
             if xbi_peak > 0:
                 result["drawdown_xbi"] = round((xbi_current / xbi_peak) - 1.0, 6)
                 if result["drawdown"] is not None:
-                    result["drawdown_rel_xbi"] = round(
-                        result["drawdown"] - result["drawdown_xbi"], 6
-                    )
+                    result["drawdown_rel_xbi"] = round(result["drawdown"] - result["drawdown_xbi"], 6)
 
     # --- RSI ---
     if len(closes) >= MIN_BARS_RSI:
@@ -413,7 +413,7 @@ def _compute_price_features(
         return result
 
     # Take last BETA_WINDOW+1 aligned bars
-    aligned_idx = common_idx[-(BETA_WINDOW + 1):]
+    aligned_idx = common_idx[-(BETA_WINDOW + 1) :]
     t_vals = series.loc[aligned_idx].values
     x_vals = xbi_pit.loc[aligned_idx].values
 
@@ -551,6 +551,7 @@ def _build_rec(
 # Phase C — Score & rank
 # ---------------------------------------------------------------------------
 
+
 def _safe_float(v: Any) -> Optional[float]:
     if v is None or v == "":
         return None
@@ -585,7 +586,7 @@ def _z_score_by_group(rows: List[Dict[str, Any]], value_col: str, group_col: str
         raw = [v for _, v in vals]
         mu = statistics.mean(raw)
         var = sum((x - mu) ** 2 for x in raw) / len(raw)
-        std = var ** 0.5
+        std = var**0.5
 
         for i in indices:
             v = _safe_float(rows[i].get(value_col))
@@ -628,7 +629,7 @@ def _z_score_sparse(
     if real:
         mu = sum(real) / len(real)
         var = sum((x - mu) ** 2 for x in real) / len(real)
-        std = var ** 0.5
+        std = var**0.5
     else:
         mu, std = 0.0, 0.0
 
@@ -669,7 +670,7 @@ def _compute_clinical_alpha_z(rows: List[Dict[str, Any]]) -> None:
     clipped = [max(lo, min(hi, v)) for v in raws]
     mu = sum(clipped) / len(clipped)
     var = sum((x - mu) ** 2 for x in clipped) / len(clipped)
-    std = var ** 0.5
+    std = var**0.5
 
     for r in rows:
         v = _safe_float(r.get("clinical_alpha_raw"))
@@ -707,7 +708,7 @@ def _compute_clinical_optionality(rows: List[Dict[str, Any]]) -> None:
         pct = round((rank_idx - 0.5) / n, 6) if n > 0 else 0.5
         rows[i]["clinical_optionality_pct_dev"] = pct
         rows[i]["has_clinical_optionality_dev"] = "1"
-        rows[i]["clinical_rank_pct_dev"] = pct
+        rows[i]["clinical_rank_pct_dev"] = round(1.0 - pct, 6)
 
     # Non-dev tickers get empty
     dev_set = set(dev_indices)
@@ -751,7 +752,10 @@ def _resolve_alpha_table_for_bundle(
 
     _logger = logging.getLogger("run_screen_from_bundle.alpha")
     return resolve_alpha_table_path(
-        ruleset, as_of_date, _PROJECT_ROOT, _logger,
+        ruleset,
+        as_of_date,
+        _PROJECT_ROOT,
+        _logger,
         allow_rebuild=False,
     )
 
@@ -773,20 +777,17 @@ def run_screen_for_date(
     """
     # Lazy imports for decision engine
     sys.path.insert(0, str(_PROJECT_ROOT))
+    # Prepare XBI series
+    import pandas as pd
+
     from decision_engine import (
-        DecisionRuleset,
         SORT_CONTRIB_KEYS,
+        DecisionRuleset,
         compute_actionable_sort_key,
         compute_decision_fields,
         compute_sort_contribs,
     )
-    from module_5_alpha_cohort import (
-        attach_alpha_scores,
-        load_alpha_cohort_table,
-    )
-
-    # Prepare XBI series
-    import pandas as pd
+    from module_5_alpha_cohort import attach_alpha_scores, load_alpha_cohort_table
 
     xbi_series = None
     if prices_df is not None and "XBI" in prices_df.columns:
@@ -806,10 +807,17 @@ def run_screen_for_date(
             price_feats = _compute_price_features(prices_df, ticker, as_of_date, xbi_series)
         else:
             price_feats = {
-                "drawdown": None, "drawdown_xbi": None, "drawdown_rel_xbi": None,
-                "beta_xbi_60d": None, "alpha_60d": None, "rsi_14d": None, "vol_60d": None,
-                "beta_xbi_60d_source": "", "beta_xbi_60d_missing_reason": "no_price_data",
-                "alpha_60d_source": "", "alpha_60d_missing_reason": "no_price_data",
+                "drawdown": None,
+                "drawdown_xbi": None,
+                "drawdown_rel_xbi": None,
+                "beta_xbi_60d": None,
+                "alpha_60d": None,
+                "rsi_14d": None,
+                "vol_60d": None,
+                "beta_xbi_60d_source": "",
+                "beta_xbi_60d_missing_reason": "no_price_data",
+                "alpha_60d_source": "",
+                "alpha_60d_missing_reason": "no_price_data",
                 "drawdown_missing_reason": "no_price_data",
             }
 
@@ -923,12 +931,11 @@ def run_screen_for_date(
             "top_3_drivers": "",
             "cat_priority": "",
             # Signal presence flags
-            "has_coinvest_signal": str(bool(coinvest.get(ticker, {}).get("tier1_count") is not None
-                                            and ticker in coinvest)),
-            "has_inst_delta": "False",  # bundles don't carry institutional delta
-            "has_catalyst_signal": str(
-                catalyst.get(ticker, {}).get("catalyst_mode", "missing") != "missing"
+            "has_coinvest_signal": str(
+                bool(coinvest.get(ticker, {}).get("tier1_count") is not None and ticker in coinvest)
             ),
+            "has_inst_delta": "False",  # bundles don't carry institutional delta
+            "has_catalyst_signal": str(catalyst.get(ticker, {}).get("catalyst_mode", "missing") != "missing"),
             # Institutional delta (not available from bundles)
             "inst_delta_z": "0",
             "inst_delta_net": "0",
@@ -998,8 +1005,11 @@ def run_screen_for_date(
     # --- Coinvest score z (cross-sectional z of sponsor_tier1_count, ddof=0) ---
     _sparse_mode = getattr(ruleset, "sparse_signal_mode", "legacy")
     _coinvest_z_scored = _z_score_sparse(
-        rows, "sponsor_tier1_count", "coinvest_score_z",
-        flag_col="has_coinvest_signal", sparse_mode=_sparse_mode,
+        rows,
+        "sponsor_tier1_count",
+        "coinvest_score_z",
+        flag_col="has_coinvest_signal",
+        sparse_mode=_sparse_mode,
     )
 
     # --- Alpha cohort scoring ---
@@ -1008,11 +1018,13 @@ def run_screen_for_date(
     _alpha_table_path_resolved = Path()
     try:
         _alpha_table_path_resolved, _alpha_table_source = _resolve_alpha_table_for_bundle(
-            as_of_date, ruleset,
+            as_of_date,
+            ruleset,
         )
         table = load_alpha_cohort_table(_alpha_table_path_resolved)
         attach_alpha_scores(
-            rows, table,
+            rows,
+            table,
             shrink_k=ruleset.alpha_cohort_shrink_k,
             clip_min=ruleset.alpha_cohort_clip_min,
             clip_max=ruleset.alpha_cohort_clip_max,
@@ -1026,17 +1038,19 @@ def run_screen_for_date(
 
     # Warn loudly if static fallback was used for a date that should have per-date tables
     from common.alpha_table import EARLIEST_DAILY_TABLE_DATE
+
     if "static" in _alpha_table_source and as_of_date >= EARLIEST_DAILY_TABLE_DATE:
         print(
-            f"  WARNING: alpha table static fallback for {as_of_date} "
-            f"(source={_alpha_table_source}) — PIT-unsafe!",
+            f"  WARNING: alpha table static fallback for {as_of_date} " f"(source={_alpha_table_source}) — PIT-unsafe!",
             file=sys.stderr,
         )
 
     # --- Composite rank override for alpha_cohort engine ---
     if ruleset.composite_engine == "alpha_cohort":
         # Sort by alpha_cohort_raw DESC, ticker ASC → assign composite_rank
-        rows_sorted = sorted(rows, key=lambda r: (-(_safe_float(r.get("alpha_cohort_raw")) or 0.0), r.get("ticker", "")))
+        rows_sorted = sorted(
+            rows, key=lambda r: (-(_safe_float(r.get("alpha_cohort_raw")) or 0.0), r.get("ticker", ""))
+        )
         n = len(rows_sorted)
         for i, r in enumerate(rows_sorted, start=1):
             r["composite_rank"] = i
@@ -1044,23 +1058,27 @@ def run_screen_for_date(
             r["score_rank_pct"] = round((i - 0.5) / n, 6) if n > 0 else 0.5
 
     # --- Sort: compute actionable sort key ---
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            _safe_float(r.get("alpha_cohort_pct"))
-            if ruleset.sort_anchor == "alpha_cohort"
-            else (_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                _safe_float(r.get("alpha_cohort_pct"))
+                if ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+        )
+    )
 
     # Populate sort contribution diagnostics (same inputs as sort key above)
     for r in rows:
@@ -1071,9 +1089,11 @@ def run_screen_for_date(
             tiebreaker_pct=(
                 _safe_float(r.get("alpha_cohort_pct"))
                 if ruleset.sort_anchor == "alpha_cohort"
-                else (_safe_float(r.get("commercial_quality_pct"))
-                      if r.get("archetype", "").startswith("commercial_")
-                      else _safe_float(r.get("clinical_optionality_pct_dev")))
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
             ),
             alpha_raw=_safe_float(r.get("alpha_cohort_raw")),
             catalyst_event_type=r.get("catalyst_event_type", ""),
@@ -1107,19 +1127,21 @@ def run_screen_for_date(
         "decision_engine_version": rows[0].get("decision_engine_version", "") if rows else "",
         "ticker_count": len(rows),
         "eligible_count": sum(1 for r in rows if r.get("eligible") == "1"),
-        "component_coverage": {
-            name: info.get("coverage_pct", 0.0)
-            for name, info in components.items()
-        },
+        "component_coverage": {name: info.get("coverage_pct", 0.0) for name, info in components.items()},
         "pit_quality": pq,
         "bundle_manifest_schema": manifest.get("schema_version", ""),
     }
 
     # Alpha table audit metadata
     from common.alpha_table import alpha_table_metadata
-    metadata.update(alpha_table_metadata(
-        as_of_date, _alpha_table_path_resolved, _alpha_table_source,
-    ))
+
+    metadata.update(
+        alpha_table_metadata(
+            as_of_date,
+            _alpha_table_path_resolved,
+            _alpha_table_source,
+        )
+    )
 
     return rows, metadata
 
@@ -1130,41 +1152,110 @@ def run_screen_for_date(
 
 # Columns to write — matches SNAPSHOT_COLUMNS from run_screen.py
 SNAPSHOT_COLUMNS = [
-    "ticker", "company_name",
-    "actionable_rank", "target_weight_pct",
-    "tier_any", "tier_any_reason", "tier_dev", "tier_reason",
-    "tier_commercial", "alpha_cohort_pct", "commercial_quality_pct", "has_commercial_quality",
-    "clinical_optionality_pct_dev", "has_clinical_optionality_dev", "clinical_rank_pct_dev",
-    "catalyst_days", "catalyst_in_window", "catalyst_mode", "cat_priority", "mom_state",
-    "risk_flags", "size_band", "size_reasons",
-    "top_3_drivers", "catalyst_reason_detail",
-    "decision_engine_version", "decision_engine_ruleset_id", "eligible", "ineligible_reasons",
-    "alpha_cohort_key", "alpha_cohort_raw", "commercial_quality",
-    "clinical_alpha_z", "clinical_readout_days", "clinical_coverage_flag",
-    "clinical_score_z", "clinical_score_z_tier",
-    "sponsor_tier1_count", "sponsor_overlap_count", "sponsor_net_buying",
-    "coinvest_score_z", "coinvest_tag", "coinvest_conviction", "coinvest_tier1_conviction",
-    "coinvest_max_position_pct", "coinvest_filing_age_days", "coinvest_recency_state",
-    "inst_delta_z", "inst_delta_net", "inst_delta_new", "inst_delta_exit",
-    "has_coinvest_signal", "has_inst_delta", "has_catalyst_signal",
-    "catalyst_strength", "catalyst_decay_w", "runway_bucket",
-    "cost_bucket", "est_cost_bps", "cost_mult", "cost_haircut_applied",
+    "ticker",
+    "company_name",
+    "actionable_rank",
+    "target_weight_pct",
+    "tier_any",
+    "tier_any_reason",
+    "tier_dev",
+    "tier_reason",
+    "tier_commercial",
+    "alpha_cohort_pct",
+    "commercial_quality_pct",
+    "has_commercial_quality",
+    "clinical_optionality_pct_dev",
+    "has_clinical_optionality_dev",
+    "clinical_rank_pct_dev",
+    "catalyst_days",
+    "catalyst_in_window",
+    "catalyst_mode",
+    "cat_priority",
+    "mom_state",
+    "risk_flags",
+    "size_band",
+    "size_reasons",
+    "top_3_drivers",
+    "catalyst_reason_detail",
+    "decision_engine_version",
+    "decision_engine_ruleset_id",
+    "eligible",
+    "ineligible_reasons",
+    "alpha_cohort_key",
+    "alpha_cohort_raw",
+    "commercial_quality",
+    "clinical_alpha_z",
+    "clinical_readout_days",
+    "clinical_coverage_flag",
+    "clinical_score_z",
+    "clinical_score_z_tier",
+    "sponsor_tier1_count",
+    "sponsor_overlap_count",
+    "sponsor_net_buying",
+    "coinvest_score_z",
+    "coinvest_tag",
+    "coinvest_conviction",
+    "coinvest_tier1_conviction",
+    "coinvest_max_position_pct",
+    "coinvest_filing_age_days",
+    "coinvest_recency_state",
+    "inst_delta_z",
+    "inst_delta_net",
+    "inst_delta_new",
+    "inst_delta_exit",
+    "has_coinvest_signal",
+    "has_inst_delta",
+    "has_catalyst_signal",
+    "catalyst_strength",
+    "catalyst_decay_w",
+    "runway_bucket",
+    "cost_bucket",
+    "est_cost_bps",
+    "cost_mult",
+    "cost_haircut_applied",
     "dd_rel_margin_rescued",
-    "catalyst_tilt_mult", "catalyst_tilt_applied",
-    "mom_state_tilt_mult", "mom_state_tilt_applied",
-    "de_catalyst_days", "de_catalyst_in_window", "de_catalyst_mode",
-    "de_alpha_60d", "de_alpha_60d_source", "de_alpha_60d_missing_reason",
+    "catalyst_tilt_mult",
+    "catalyst_tilt_applied",
+    "mom_state_tilt_mult",
+    "mom_state_tilt_applied",
+    "de_catalyst_days",
+    "de_catalyst_in_window",
+    "de_catalyst_mode",
+    "de_alpha_60d",
+    "de_alpha_60d_source",
+    "de_alpha_60d_missing_reason",
     "de_tier1_count",
-    "de_beta_xbi_60d", "de_beta_xbi_60d_source", "de_beta_xbi_60d_missing_reason",
-    "de_drawdown", "de_drawdown_missing_reason", "de_rsi_14d",
-    "de_drawdown_xbi", "de_drawdown_rel_xbi",
-    "stage_bucket", "market_cap_bucket", "severity", "archetype",
-    "returns_source", "catalyst_source", "catalyst_event_type",
-    "missing_components", "missingness_penalty", "confidence_overall",
-    "momentum_score", "catalyst_score", "smart_money_score",
-    "valuation_score", "clinical_score", "financial_score",
-    "composite_rank", "composite_score", "score_rank_pct", "score_z",
-    "composite_score_attn", "score_rank_pct_attn", "score_z_attn",
+    "de_beta_xbi_60d",
+    "de_beta_xbi_60d_source",
+    "de_beta_xbi_60d_missing_reason",
+    "de_drawdown",
+    "de_drawdown_missing_reason",
+    "de_rsi_14d",
+    "de_drawdown_xbi",
+    "de_drawdown_rel_xbi",
+    "stage_bucket",
+    "market_cap_bucket",
+    "severity",
+    "archetype",
+    "returns_source",
+    "catalyst_source",
+    "catalyst_event_type",
+    "missing_components",
+    "missingness_penalty",
+    "confidence_overall",
+    "momentum_score",
+    "catalyst_score",
+    "smart_money_score",
+    "valuation_score",
+    "clinical_score",
+    "financial_score",
+    "composite_rank",
+    "composite_score",
+    "score_rank_pct",
+    "score_z",
+    "composite_score_attn",
+    "score_rank_pct_attn",
+    "score_z_attn",
     # --- Sort contribution diagnostics ---
     "de_sort_total_adj",
     "de_sort_contrib_clinical",
@@ -1282,41 +1373,54 @@ def run_batch(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Run decision-engine screen from PIT bundles",
     )
     parser.add_argument(
-        "--bundle-dir", type=Path, default=None,
+        "--bundle-dir",
+        type=Path,
+        default=None,
         help="Single date bundle directory",
     )
     parser.add_argument(
-        "--bundle-root", type=Path, default=None,
+        "--bundle-root",
+        type=Path,
+        default=None,
         help="Batch mode: root containing date subdirs",
     )
     parser.add_argument(
-        "--out-root", type=Path,
+        "--out-root",
+        type=Path,
         default=_PROJECT_ROOT / "data" / "snapshots_pit",
         help="Output root for snapshots",
     )
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help="Path to decision_ruleset.json",
     )
     parser.add_argument(
-        "--universe", type=Path,
+        "--universe",
+        type=Path,
         default=_PROJECT_ROOT / "production_data" / "universe.json",
     )
     parser.add_argument(
-        "--financial-records", type=Path,
+        "--financial-records",
+        type=Path,
         default=_PROJECT_ROOT / "production_data" / "financial_records.json",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=_PROJECT_ROOT / "production_data" / "price_history.csv",
     )
     parser.add_argument(
-        "--pit-mode", choices=["strict", "lenient"], default="strict",
+        "--pit-mode",
+        choices=["strict", "lenient"],
+        default="strict",
     )
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
@@ -1349,6 +1453,7 @@ def main() -> None:
             ruleset = DecisionRuleset()
     # Override alpha table policy from CLI (default: if_missing for PIT safety)
     import dataclasses
+
     ruleset = dataclasses.replace(
         ruleset,
         alpha_table_rebuild_policy=args.alpha_table_policy,
@@ -1413,8 +1518,10 @@ def main() -> None:
         date_to=args.date_to,
     )
 
-    print(f"\nSummary: {summary['dates_processed']} processed, "
-          f"{summary['dates_skipped']} skipped out of {summary['total_dates']} dates")
+    print(
+        f"\nSummary: {summary['dates_processed']} processed, "
+        f"{summary['dates_skipped']} skipped out of {summary['total_dates']} dates"
+    )
     if summary["skip_reasons"]:
         for dt, reason in sorted(summary["skip_reasons"].items()):
             print(f"  SKIP {dt}: {reason}")

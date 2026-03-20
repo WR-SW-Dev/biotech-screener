@@ -22,4 +22,5 @@ per-file-ignores =
     optimization/validate_weights.py:F401,F841,F541
     pos_ablation_framework.py:F401
     run_screen.py:F401,F541,F811,E731,E231
+    scripts/run_screen_from_bundle.py:F401,F821,F841
     src/scripts/clean_universe.py:F401
