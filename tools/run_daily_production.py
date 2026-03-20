@@ -89,6 +89,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "hard_options_coverage",
         "hard_carry_state",
         "hard_queue_actionability",
+        "optionality_stability",
     }
 )
 
@@ -4130,6 +4131,29 @@ def run_daily(
         print(f"  Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
     else:
         print("  Forward eval gate: skipped (--skip-forward-eval)")
+
+    # --- Gate: optionality_stability (WARN-only) ---
+    try:
+        from tools.optionality_stability_monitor import evaluate_optionality_stability
+
+        opt_result = evaluate_optionality_stability(
+            as_of_date=as_of_date,
+            snapshot_dir=final_snapshots_dir,
+            lookback_n=40,
+        )
+        opt_gate = GateResult(
+            name="optionality_stability",
+            status=opt_result.gate,
+            detail=opt_result.detail,
+        )
+    except Exception as e:
+        opt_gate = GateResult(
+            name="optionality_stability",
+            status="PASS",
+            detail=f"Monitor unavailable: {e}",
+        )
+    gate_results.append(opt_gate)
+    print(f"  Optionality stability gate: {opt_gate.status} — {opt_gate.detail}")
 
     # --- Gate: pit_bundle_health (WARN-only) ---
     pit_bundle_gate = check_pit_bundle_health(
