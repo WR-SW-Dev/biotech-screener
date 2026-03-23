@@ -105,5 +105,42 @@ else
     echo "[$(date -Iseconds)] FAIL: daily production failed (exit ${EXIT_CODE})" | tee -a "${LOG_FILE}"
 fi
 
+# --- Housekeeping: prune pre-staging snapshots and old logs ---
+# Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
+# Regular snapshots are kept indefinitely (small, used for backtesting).
+# Logs older than 60 days are removed.
+PRE_STAGING_DAYS=7
+LOG_RETENTION_DAYS=60
+
+prune_count=0
+for dir in "${SNAPSHOT_DIR}"/*__pre_*; do
+    [ -d "${dir}" ] || continue
+    dirname=$(basename "${dir}")
+    snap_date="${dirname:0:10}"
+    snap_epoch=$(date -d "${snap_date}" +%s 2>/dev/null || continue)
+    now_epoch=$(date +%s)
+    age_days=$(( (now_epoch - snap_epoch) / 86400 ))
+    if [ ${age_days} -gt ${PRE_STAGING_DAYS} ]; then
+        rm -rf "${dir}"
+        prune_count=$((prune_count + 1))
+    fi
+done
+
+# Prune old logs
+for logfile in "${LOG_DIR}"/daily_production_*.log; do
+    [ -f "${logfile}" ] || continue
+    log_epoch=$(stat -c %Y "${logfile}" 2>/dev/null || continue)
+    now_epoch=$(date +%s)
+    age_days=$(( (now_epoch - log_epoch) / 86400 ))
+    if [ ${age_days} -gt ${LOG_RETENTION_DAYS} ]; then
+        rm -f "${logfile}"
+        prune_count=$((prune_count + 1))
+    fi
+done
+
+if [ ${prune_count} -gt 0 ]; then
+    echo "[$(date -Iseconds)] Housekeeping: pruned ${prune_count} old pre-staging/log item(s)" | tee -a "${LOG_FILE}"
+fi
+
 echo "[$(date -Iseconds)] Log: ${LOG_FILE}" | tee -a "${LOG_FILE}"
 exit ${EXIT_CODE}
