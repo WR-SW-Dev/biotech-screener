@@ -46,163 +46,148 @@ import json
 import logging
 from collections import Counter
 from dataclasses import dataclass, field
-from datetime import datetime, date
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple, Set, Union
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
-from common.provenance import create_provenance
-from common.types import Severity
 from common.integration_contracts import (
-    extract_financial_score,
+    SchemaValidationError,
     extract_catalyst_score,
     extract_clinical_score,
+    extract_financial_score,
     validate_module_1_output,
     validate_module_2_output,
     validate_module_3_output,
     validate_module_4_output,
-    SchemaValidationError,
 )
-from common.production_hardening import (
-    safe_parse_date,
-    DateParseError,
-    get_module_logger,
+from common.production_hardening import DateParseError, get_module_logger, safe_parse_date
+from common.provenance import create_provenance
+from common.types import Severity
+
+# Import diagnostics module (extracted for maintainability)
+from module_5_diagnostics_v3 import (
+    build_momentum_health,
+    check_coverage_guardrail,
+    compute_momentum_breakdown,
+    format_momentum_log_lines,
+)
+
+# Import scoring module (extracted for maintainability)
+from module_5_scoring_v3 import (  # Types (re-exported for backwards compatibility); Constants used by both scoring and orchestration; Baker-style mode configs; Helper functions; Main scoring function; Smart money cohort stats
+    BAKER_STYLE_TILT_CONFIG,
+    CATALYST_DEFAULT_BASE,
+    CATALYST_DEFAULT_SCORE,
+    CATALYST_PROXIMITY_WEIGHT,
+    CATALYST_WINDOW_WEIGHT,
+    CONFIDENCE_GATE_THRESHOLD,
+    CRITICAL_COMPONENTS,
+    HYBRID_ALPHA,
+    MAX_UNCERTAINTY_PENALTY,
+    MIN_COHORT_SIZE,
+    POS_DELTA_CAP,
+    SEVERITY_GATE_LABELS,
+    SEVERITY_MULTIPLIERS,
+    THESIS_GATE_CONFIG,
+    WINSOR_HIGH,
+    WINSOR_LOW,
+    ComponentScore,
+    MonotonicCap,
+    NormalizationMethod,
+    RunStatus,
+    ScoreBreakdown,
+    ScoringMode,
+    V3ScoringResult,
+    _apply_cohort_normalization_v3,
+    _apply_monotonic_caps,
+    _coalesce,
+    _compute_catalyst_effective,
+    _compute_determinism_hash,
+    _compute_global_stats,
+    _enrich_with_coinvest,
+    _extract_confidence_catalyst,
+    _extract_confidence_clinical,
+    _extract_confidence_financial,
+    _extract_confidence_pos,
+    _get_worst_severity,
+    _market_cap_bucket,
+    _quarter_from_date,
+    _rank_normalize_winsorized,
+    _score_single_ticker_v3,
+    _stage_bucket,
+    compute_smart_money_cohort_stats,
 )
 
 # Import IC enhancement utilities
-from src.modules.ic_enhancements import (
-    # Core enhancement functions
-    compute_volatility_adjustment,
-    apply_volatility_to_score,
-    compute_momentum_signal,
-    compute_momentum_signal_with_fallback,  # V2: Multi-window with fallback
-    compute_valuation_signal,
-    compute_catalyst_decay,
-    apply_catalyst_decay,
-    compute_smart_money_signal,
-    compute_interaction_terms,
-    shrinkage_normalize,
-    apply_regime_to_weights,
-    compute_adaptive_weights,
-    compute_enhanced_score,
-    get_regime_signal_importance,
-    # Types
-    VolatilityAdjustment,
-    VolatilityBucket,
-    MomentumSignal,
-    MultiWindowMomentumInput,  # V2: Multi-window input
-    ValuationSignal,
-    CatalystDecayResult,
-    SmartMoneySignal,
-    InteractionTerms,
-    AdaptiveWeights,
-    RegimeType,
-    EnhancedScoringResult,
-    # Helpers
-    _to_decimal,
-    _quantize_score,
-    _quantize_weight,
-    _clamp,
-    _safe_divide,
+from src.modules.ic_enhancements import MultiWindowMomentumInput  # V2: Multi-window input
+from src.modules.ic_enhancements import compute_momentum_signal_with_fallback  # V2: Multi-window with fallback
+from src.modules.ic_enhancements import (  # Core enhancement functions; Types; Helpers
     EPS,
     SCORE_PRECISION,
     WEIGHT_PRECISION,
-)
-
-# Import scoring robustness enhancements (v3.3)
-from src.modules.scoring_robustness import (
-    # Core functions
-    winsorize_component_score,
-    winsorize_cohort,
-    apply_confidence_shrinkage,
-    compute_rank_stability_penalty,
-    blend_timeframe_signals,
-    apply_asymmetric_bounds,
-    apply_weight_floors,
-    evaluate_defensive_triggers,
-    check_distribution_health,
-    apply_robustness_enhancements,
-    # Types
-    WinsorizedScore,
-    ShrinkageResult,
-    RankStabilityAdjustment,
-    AsymmetricBounds,
-    WeightFloorResult,
-    DefensiveOverrideResult,
-    DistributionHealthCheck,
-    RobustnessEnhancements,
-    DefensivePosture,
-    DistributionHealth,
+    AdaptiveWeights,
+    CatalystDecayResult,
+    EnhancedScoringResult,
+    InteractionTerms,
+    MomentumSignal,
+    RegimeType,
+    SmartMoneySignal,
+    ValuationSignal,
+    VolatilityAdjustment,
+    VolatilityBucket,
+    _clamp,
+    _quantize_score,
+    _quantize_weight,
+    _safe_divide,
+    _to_decimal,
+    apply_catalyst_decay,
+    apply_regime_to_weights,
+    apply_volatility_to_score,
+    compute_adaptive_weights,
+    compute_catalyst_decay,
+    compute_enhanced_score,
+    compute_interaction_terms,
+    compute_momentum_signal,
+    compute_smart_money_signal,
+    compute_valuation_signal,
+    compute_volatility_adjustment,
+    get_regime_signal_importance,
+    shrinkage_normalize,
 )
 
 # Import PIT validation
 from src.modules.ic_pit_validation import (
-    run_production_gate,
-    create_weight_provenance,
     PITValidationError,
-    WeightStabilityError,
     ProductionGateResult,
     WeightProvenance,
+    WeightStabilityError,
+    create_weight_provenance,
+    run_production_gate,
 )
 
-# Import scoring module (extracted for maintainability)
-from module_5_scoring_v3 import (
-    # Types (re-exported for backwards compatibility)
-    MonotonicCap,
-    ScoringMode,
-    RunStatus,
-    NormalizationMethod,
-    ComponentScore,
-    ScoreBreakdown,
-    V3ScoringResult,
-    # Constants used by both scoring and orchestration
-    SEVERITY_MULTIPLIERS,
-    SEVERITY_GATE_LABELS,
-    MIN_COHORT_SIZE,
-    MAX_UNCERTAINTY_PENALTY,
-    WINSOR_LOW,
-    WINSOR_HIGH,
-    HYBRID_ALPHA,
-    CRITICAL_COMPONENTS,
-    POS_DELTA_CAP,
-    CATALYST_WINDOW_WEIGHT,
-    CATALYST_PROXIMITY_WEIGHT,
-    CATALYST_DEFAULT_BASE,
-    CATALYST_DEFAULT_SCORE,
-    CONFIDENCE_GATE_THRESHOLD,
-    # Baker-style mode configs
-    BAKER_STYLE_TILT_CONFIG,
-    THESIS_GATE_CONFIG,
-    # Helper functions
-    _coalesce,
-    _compute_catalyst_effective,
-    _market_cap_bucket,
-    _stage_bucket,
-    _quarter_from_date,
-    _get_worst_severity,
-    _rank_normalize_winsorized,
-    _extract_confidence_financial,
-    _extract_confidence_clinical,
-    _extract_confidence_catalyst,
-    _extract_confidence_pos,
-    _apply_monotonic_caps,
-    _compute_determinism_hash,
-    _enrich_with_coinvest,
-    _apply_cohort_normalization_v3,
-    _compute_global_stats,
-    # Main scoring function
-    _score_single_ticker_v3,
-    # Smart money cohort stats
-    compute_smart_money_cohort_stats,
-)
-
-# Import diagnostics module (extracted for maintainability)
-from module_5_diagnostics_v3 import (
-    compute_momentum_breakdown,
-    build_momentum_health,
-    format_momentum_log_lines,
-    check_coverage_guardrail,
+# Import scoring robustness enhancements (v3.3)
+from src.modules.scoring_robustness import (  # Core functions; Types
+    AsymmetricBounds,
+    DefensiveOverrideResult,
+    DefensivePosture,
+    DistributionHealth,
+    DistributionHealthCheck,
+    RankStabilityAdjustment,
+    RobustnessEnhancements,
+    ShrinkageResult,
+    WeightFloorResult,
+    WinsorizedScore,
+    apply_asymmetric_bounds,
+    apply_confidence_shrinkage,
+    apply_robustness_enhancements,
+    apply_weight_floors,
+    blend_timeframe_signals,
+    check_distribution_health,
+    compute_rank_stability_penalty,
+    evaluate_defensive_triggers,
+    winsorize_cohort,
+    winsorize_component_score,
 )
 
 __version__ = "3.0.0"
@@ -248,21 +233,21 @@ V3_PARTIAL_WEIGHTS = {
 # Thesis-first: clinical+pos = 53%, survivability = 22%, mispricing = 15%
 # Timing (catalyst) = 7%, overlays (momentum+short_interest) = 3%
 BAKER_STYLE_WEIGHTS = {
-    "clinical": Decimal("0.35"),      # Core thesis - biology quality
-    "pos": Decimal("0.18"),           # Core thesis - probability of success
-    "financial": Decimal("0.22"),     # Survivability - execution risk
-    "valuation": Decimal("0.15"),     # Mispricing - risk/reward
-    "catalyst": Decimal("0.07"),      # Timing (not thesis)
-    "momentum": Decimal("0.02"),      # Overlay only
-    "short_interest": Decimal("0.01"), # Risk context only
+    "clinical": Decimal("0.35"),  # Core thesis - biology quality
+    "pos": Decimal("0.18"),  # Core thesis - probability of success
+    "financial": Decimal("0.22"),  # Survivability - execution risk
+    "valuation": Decimal("0.15"),  # Mispricing - risk/reward
+    "catalyst": Decimal("0.07"),  # Timing (not thesis)
+    "momentum": Decimal("0.02"),  # Overlay only
+    "short_interest": Decimal("0.01"),  # Risk context only
 }
 
 # Pipeline health thresholds (fraction of universe)
 # NOTE: Biotech-adjusted thresholds - sparse coverage is normal for optional enhancement components
 HEALTH_GATE_THRESHOLDS = {
-    "catalyst": Decimal("0.10"),    # Fail if <10% have catalyst events (core component)
-    "momentum": Decimal("0.00"),    # Optional: 13F fallback provides sparse coverage by design
-    "smart_money": Decimal("0.00"), # Coverage-gated at runtime (5% when covered, 0% otherwise)
+    "catalyst": Decimal("0.10"),  # Fail if <10% have catalyst events (core component)
+    "momentum": Decimal("0.00"),  # Optional: 13F fallback provides sparse coverage by design
+    "smart_money": Decimal("0.00"),  # Coverage-gated at runtime (5% when covered, 0% otherwise)
 }
 
 # =============================================================================
@@ -277,13 +262,7 @@ HEALTH_GATE_THRESHOLDS = {
 # Implementation moved to common/score_to_er.py for reuse across modules.
 # =============================================================================
 
-from common.score_to_er import (
-    compute_expected_returns,
-    DEFAULT_LAMBDA_ANNUAL,
-    ER_MODEL_ID,
-    ER_MODEL_VERSION,
-    _norm_ppf,
-)
+from common.score_to_er import DEFAULT_LAMBDA_ANNUAL, ER_MODEL_ID, ER_MODEL_VERSION, _norm_ppf, compute_expected_returns
 
 # Re-export for backward compatibility
 EXPECTED_RETURN_LAMBDA = DEFAULT_LAMBDA_ANNUAL  # 8% per 1σ per year (conservative)
@@ -304,6 +283,7 @@ EXPECTED_RETURN_LAMBDA = DEFAULT_LAMBDA_ANNUAL  # 8% per 1σ per year (conservat
 # =============================================================================
 # MAIN COMPOSITE FUNCTION
 # =============================================================================
+
 
 def compute_module_5_composite_v3(
     universe_result: Dict[str, Any],
@@ -622,7 +602,9 @@ def compute_module_5_composite_v3(
                     # Dict path (legacy format)
                     integration = existing.get("integration", {})
                     current_conf_str = integration.get("catalyst_confidence", "LOW")
-                    current_conf = {"HIGH": Decimal("0.70"), "MED": Decimal("0.50"), "LOW": Decimal("0.35")}.get(current_conf_str, Decimal("0.30"))
+                    current_conf = {"HIGH": Decimal("0.70"), "MED": Decimal("0.50"), "LOW": Decimal("0.35")}.get(
+                        current_conf_str, Decimal("0.30")
+                    )
 
                     if override_conf > current_conf:
                         integration["catalyst_confidence"] = "HIGH" if override_conf >= Decimal("0.70") else "MED"
@@ -646,7 +628,10 @@ def compute_module_5_composite_v3(
                     if override_conf > current_conf_val:
                         # Modify dataclass attributes directly
                         from module_3_schema_v2 import ConfidenceLevel
-                        existing.catalyst_confidence = ConfidenceLevel.HIGH if override_conf >= Decimal("0.70") else ConfidenceLevel.MED
+
+                        existing.catalyst_confidence = (
+                            ConfidenceLevel.HIGH if override_conf >= Decimal("0.70") else ConfidenceLevel.MED
+                        )
                         existing.override_confidence = override_conf
                         existing.override_event_type = override.get("event_type")
                         existing.override_source = override.get("source", "manual_override")
@@ -654,8 +639,10 @@ def compute_module_5_composite_v3(
                         catalyst_overrides_applied += 1
 
             if catalyst_overrides_applied > 0 or catalyst_overrides_rejected > 0:
-                logger.info(f"  Catalyst overrides: {catalyst_overrides_applied} applied, "
-                           f"{catalyst_overrides_rejected} rejected (future source_filed_at)")
+                logger.info(
+                    f"  Catalyst overrides: {catalyst_overrides_applied} applied, "
+                    f"{catalyst_overrides_rejected} rejected (future source_filed_at)"
+                )
         except Exception as e:
             logger.warning(f"  Failed to load catalyst overrides: {e}")
 
@@ -680,9 +667,18 @@ def compute_module_5_composite_v3(
         raw_fin = raw_financial_by_ticker.get(ticker.upper(), {})
         if raw_fin:
             # Add raw fields that survivability module needs
-            for key in ['Cash', 'CFO', 'R&D', 'OperatingExpenses', 'InterestExpense',
-                        'LongTermDebt', 'LongTermDebtCurrent', 'ShortTermInvestments',
-                        'MarketableSecurities', 'Revenue']:
+            for key in [
+                "Cash",
+                "CFO",
+                "R&D",
+                "OperatingExpenses",
+                "InterestExpense",
+                "LongTermDebt",
+                "LongTermDebtCurrent",
+                "ShortTermInvestments",
+                "MarketableSecurities",
+                "Revenue",
+            ]:
                 if key in raw_fin and key not in fin:
                     fin[key] = raw_fin[key]
         cat = catalyst_by_ticker.get(ticker, {})
@@ -702,7 +698,7 @@ def compute_module_5_composite_v3(
         clin_score = _to_decimal(extract_clinical_score(clin))
 
         # Extract catalyst score
-        if hasattr(cat, 'score_blended'):
+        if hasattr(cat, "score_blended"):
             cat_score = _to_decimal(cat.score_blended)
         elif isinstance(cat, dict):
             scores = cat.get("scores", cat)
@@ -712,20 +708,17 @@ def compute_module_5_composite_v3(
 
         pos_score = _to_decimal(pos.get("pos_score")) if pos else None
 
-        # Apply FDA designation multiplier to PoS BEFORE cohort normalization
-        # This ensures the FDA-boosted value is used in winsorized ranking
-        if pos_score is not None and fda:
-            fda_multiplier = _to_decimal(fda.get("pos_multiplier"))
-            if fda_multiplier and fda_multiplier > Decimal("1.0"):
-                pos_score = (pos_score * fda_multiplier).quantize(Decimal("0.01"))
-                pos_score = min(pos_score, Decimal("95"))  # Cap at 95
+        # FDA designation pos_multiplier DISABLED (Spec 034).
+        # Audit found designations are a negative return signal (IC=-0.035, t=-5.14,
+        # -9.53pp spread at 63d). The multiplier was boosting names that systematically
+        # underperform. Designation data preserved in fda_designation_signal for attribution.
 
         # Get severities
         severities = [
             fin.get("severity", "none"),
             clin.get("severity", "none"),
         ]
-        if hasattr(cat, 'severe_negative_flag') and cat.severe_negative_flag:
+        if hasattr(cat, "severe_negative_flag") and cat.severe_negative_flag:
             severities.append("sev1")
         elif isinstance(cat, dict) and cat.get("flags", {}).get("severe_negative_flag"):
             severities.append("sev1")
@@ -734,11 +727,13 @@ def compute_module_5_composite_v3(
 
         # Exclude sev3
         if worst_severity == Severity.SEV3:
-            excluded.append({
-                "ticker": ticker,
-                "reason": "sev3_gate",
-                "severity": worst_severity.value,
-            })
+            excluded.append(
+                {
+                    "ticker": ticker,
+                    "reason": "sev3_gate",
+                    "severity": worst_severity.value,
+                }
+            )
             continue
 
         # Get cohort info
@@ -746,31 +741,33 @@ def compute_module_5_composite_v3(
         market_cap_mm = fin.get("market_cap_mm")
         trial_count = clin.get("trial_count", 0)
 
-        combined.append({
-            "ticker": ticker,
-            "clinical_raw": clin_score,
-            "financial_raw": fin_score,
-            "catalyst_raw": cat_score,
-            "pos_raw": pos_score,
-            "market_cap_bucket": _market_cap_bucket(market_cap_mm),
-            "stage_bucket": _stage_bucket(lead_phase),
-            "lead_phase": lead_phase,
-            "market_cap_mm": _to_decimal(market_cap_mm),
-            "trial_count": trial_count,
-            "fin_data": fin,
-            "cat_data": cat,
-            "clin_data": clin,
-            "pos_data": pos,
-            "si_data": si,
-            "market_data": market,
-            "fda_data": fda,
-            "diversity_data": diversity,
-            "intensity_data": intensity,
-            "partnership_data": partnership,
-            "cash_burn_data": cash_burn,
-            "phase_momentum_data": phase_momentum,
-            "morningstar_data": morningstar_by_ticker.get(ticker.upper()),
-        })
+        combined.append(
+            {
+                "ticker": ticker,
+                "clinical_raw": clin_score,
+                "financial_raw": fin_score,
+                "catalyst_raw": cat_score,
+                "pos_raw": pos_score,
+                "market_cap_bucket": _market_cap_bucket(market_cap_mm),
+                "stage_bucket": _stage_bucket(lead_phase),
+                "lead_phase": lead_phase,
+                "market_cap_mm": _to_decimal(market_cap_mm),
+                "trial_count": trial_count,
+                "fin_data": fin,
+                "cat_data": cat,
+                "clin_data": clin,
+                "pos_data": pos,
+                "si_data": si,
+                "market_data": market,
+                "fda_data": fda,
+                "diversity_data": diversity,
+                "intensity_data": intensity,
+                "partnership_data": partnership,
+                "cash_burn_data": cash_burn,
+                "phase_momentum_data": phase_momentum,
+                "morningstar_data": morningstar_by_ticker.get(ticker.upper()),
+            }
+        )
 
     # =========================================================================
     # COMPUTE GLOBAL STATS FOR SHRINKAGE
@@ -803,16 +800,18 @@ def compute_module_5_composite_v3(
         ev_raw = mkt.get("enterprise_value")
         enterprise_value_mm = Decimal(str(ev_raw)) / Decimal("1000000") if ev_raw is not None else None
 
-        peer_valuations.append({
-            "ticker": r["ticker"],
-            "market_cap_mm": r["market_cap_mm"],
-            "trial_count": r["trial_count"],
-            "stage_bucket": r["stage_bucket"],
-            "has_revenue": fin.get("has_revenue", False),
-            "revenue_mm": revenue_mm,
-            "cfo_mm": cfo_mm,
-            "enterprise_value_mm": enterprise_value_mm,
-        })
+        peer_valuations.append(
+            {
+                "ticker": r["ticker"],
+                "market_cap_mm": r["market_cap_mm"],
+                "trial_count": r["trial_count"],
+                "stage_bucket": r["stage_bucket"],
+                "has_revenue": fin.get("has_revenue", False),
+                "revenue_mm": revenue_mm,
+                "cfo_mm": cfo_mm,
+                "enterprise_value_mm": enterprise_value_mm,
+            }
+        )
 
     # =========================================================================
     # COHORT GROUPING AND NORMALIZATION (Hybrid: stage + financial stage×size)
@@ -889,13 +888,18 @@ def compute_module_5_composite_v3(
         if coinvest_signals:
             rec["coinvest"] = _enrich_with_coinvest(rec["ticker"], coinvest_signals, as_of_dt)
         else:
-            rec["coinvest"] = {"coinvest_overlap_count": 0, "coinvest_holders": [], "coinvest_usable": False, "position_changes": {}}
+            rec["coinvest"] = {
+                "coinvest_overlap_count": 0,
+                "coinvest_holders": [],
+                "coinvest_usable": False,
+                "position_changes": {},
+            }
 
     # =========================================================================
     # APPLY ACCURACY ENHANCEMENTS (if available)
     # =========================================================================
 
-    accuracy_by_ticker = accuracy_by_ticker if 'accuracy_by_ticker' in dir() else {}
+    accuracy_by_ticker = accuracy_by_ticker if "accuracy_by_ticker" in dir() else {}
     if accuracy_by_ticker:
         for rec in combined:
             ticker = rec["ticker"].upper()
@@ -931,13 +935,15 @@ def compute_module_5_composite_v3(
     for rec in combined:
         # Determine alpha stage bucket for smart money cohort normalization
         cat_data = rec.get("cat_data", {})
-        if hasattr(cat_data, 'nearest_catalyst_type'):
-            cat_event_type = getattr(cat_data, 'nearest_catalyst_type', "DEFAULT")
-            days_to_cat = getattr(cat_data, 'catalyst_window_days', None)
+        if hasattr(cat_data, "nearest_catalyst_type"):
+            cat_event_type = getattr(cat_data, "nearest_catalyst_type", "DEFAULT")
+            days_to_cat = getattr(cat_data, "catalyst_window_days", None)
         elif isinstance(cat_data, dict):
             scores = cat_data.get("scores", cat_data)
             cat_event_type = scores.get("nearest_catalyst_type", "DEFAULT")
-            days_to_cat = cat_data.get("integration", {}).get("catalyst_window_days") or scores.get("catalyst_window_days")
+            days_to_cat = cat_data.get("integration", {}).get("catalyst_window_days") or scores.get(
+                "catalyst_window_days"
+            )
         else:
             cat_event_type = "DEFAULT"
             days_to_cat = None
@@ -967,7 +973,7 @@ def compute_module_5_composite_v3(
             return None
         m = sum(xs) / n
         v = sum((x - m) ** 2 for x in xs) / (n - 1)  # Sample variance
-        return {"mean": m, "std": (v ** 0.5), "n": n}
+        return {"mean": m, "std": (v**0.5), "n": n}
 
     cohort_conviction_data = {}
     global_conviction_vals = []
@@ -1002,15 +1008,19 @@ def compute_module_5_composite_v3(
     if mode == ScoringMode.BAKER_STYLE:
         if conviction_active:
             logger.info(f"  Conviction: ACTIVE ({conviction_coverage}/{len(combined)} = {conviction_pct:.1f}%)")
-            logger.info(f"  Conviction cohort stats: {len(cohort_conviction_stats)} cohorts, "
-                        f"global mean={global_conviction_stats['mean']:.2f}")
+            logger.info(
+                f"  Conviction cohort stats: {len(cohort_conviction_stats)} cohorts, "
+                f"global mean={global_conviction_stats['mean']:.2f}"
+            )
         else:
             logger.warning("  Conviction: INACTIVE (fallback to tier1_overlap count)")
             logger.warning("  [!] holdings_detailed.json missing or empty - conviction×timing disabled")
     elif cohort_conviction_stats:
-        logger.info(f"  Conviction cohort stats: {len(cohort_conviction_stats)} cohorts, "
-                    f"{conviction_coverage}/{len(combined)} tickers with conviction data, "
-                    f"global mean={global_conviction_stats['mean']:.2f}")
+        logger.info(
+            f"  Conviction cohort stats: {len(cohort_conviction_stats)} cohorts, "
+            f"{conviction_coverage}/{len(combined)} tickers with conviction data, "
+            f"global mean={global_conviction_stats['mean']:.2f}"
+        )
 
     # =========================================================================
     # SCORE EACH TICKER
@@ -1028,9 +1038,7 @@ def compute_module_5_composite_v3(
         # Get cohort conviction stats for this ticker's stage×size bucket
         rec_stage = rec.get("stage_bucket_alpha", rec.get("stage_bucket", "pivotal"))
         rec_size = rec.get("market_cap_bucket", "mid")
-        rec_cohort_conviction = cohort_conviction_stats.get(
-            (rec_stage, rec_size), global_conviction_stats
-        )
+        rec_cohort_conviction = cohort_conviction_stats.get((rec_stage, rec_size), global_conviction_stats)
 
         result = _score_single_ticker_v3(
             ticker=rec["ticker"],
@@ -1085,22 +1093,37 @@ def compute_module_5_composite_v3(
     try:
         # Build universe stats for defensive trigger evaluation
         universe_stats = {
-            "severity_ratio": Decimal(str(
-                sum(1 for s in scored if s["severity"].value in ("sev2", "sev3")) / max(len(scored), 1)
-            )),
-            "avg_runway_months": Decimal(str(
-                sum(
-                    _to_decimal(s.get("score_breakdown", {}).penalties_and_gates.get("runway_months"), Decimal("24"))
-                    if hasattr(s.get("score_breakdown"), "penalties_and_gates") else Decimal("24")
-                    for s in scored
-                ) / max(len(scored), 1)
-            )) if scored else Decimal("24"),
-            "high_vol_ratio": Decimal(str(
-                sum(1 for s in scored if s.get("volatility_adjustment", {}).get("vol_bucket") == "high") / max(len(scored), 1)
-            )),
-            "positive_momentum_ratio": Decimal(str(
-                sum(1 for s in scored if "strong_positive_momentum" in s.get("flags", [])) / max(len(scored), 1)
-            )),
+            "severity_ratio": Decimal(
+                str(sum(1 for s in scored if s["severity"].value in ("sev2", "sev3")) / max(len(scored), 1))
+            ),
+            "avg_runway_months": (
+                Decimal(
+                    str(
+                        sum(
+                            (
+                                _to_decimal(
+                                    s.get("score_breakdown", {}).penalties_and_gates.get("runway_months"), Decimal("24")
+                                )
+                                if hasattr(s.get("score_breakdown"), "penalties_and_gates")
+                                else Decimal("24")
+                            )
+                            for s in scored
+                        )
+                        / max(len(scored), 1)
+                    )
+                )
+                if scored
+                else Decimal("24")
+            ),
+            "high_vol_ratio": Decimal(
+                str(
+                    sum(1 for s in scored if s.get("volatility_adjustment", {}).get("vol_bucket") == "high")
+                    / max(len(scored), 1)
+                )
+            ),
+            "positive_momentum_ratio": Decimal(
+                str(sum(1 for s in scored if "strong_positive_momentum" in s.get("flags", [])) / max(len(scored), 1))
+            ),
         }
 
         # Evaluate defensive triggers
@@ -1117,20 +1140,13 @@ def compute_module_5_composite_v3(
         # Apply asymmetric bounds to interaction terms
         interaction_caps_applied = 0
         for rec in scored:
-            interaction_adj = _to_decimal(
-                rec.get("interaction_terms", {}).get("total_adjustment"),
-                Decimal("0")
-            )
+            interaction_adj = _to_decimal(rec.get("interaction_terms", {}).get("total_adjustment"), Decimal("0"))
             bounds = apply_asymmetric_bounds(interaction_adj)
             if bounds.was_capped:
                 interaction_caps_applied += 1
                 # Adjust composite score for capped interaction
                 score_delta = bounds.applied_value - interaction_adj
-                rec["composite_score"] = _clamp(
-                    rec["composite_score"] + score_delta,
-                    Decimal("0"),
-                    Decimal("100")
-                )
+                rec["composite_score"] = _clamp(rec["composite_score"] + score_delta, Decimal("0"), Decimal("100"))
                 if "asymmetric_interaction_capped" not in rec["flags"]:
                     rec["flags"].append("asymmetric_interaction_capped")
 
@@ -1155,8 +1171,7 @@ def compute_module_5_composite_v3(
         # Log warnings for distribution health issues
         if dist_health.health != DistributionHealth.HEALTHY:
             logger.warning(
-                f"Robustness: Distribution health {dist_health.health.value} "
-                f"- issues: {dist_health.issues}"
+                f"Robustness: Distribution health {dist_health.health.value} " f"- issues: {dist_health.issues}"
             )
 
     except (ValueError, TypeError, KeyError, ArithmeticError, AttributeError) as e:
@@ -1171,11 +1186,13 @@ def compute_module_5_composite_v3(
     # =========================================================================
 
     # Sort by composite score (desc), then coinvest (desc), then ticker (asc)
-    scored.sort(key=lambda x: (
-        -x["composite_score"],
-        -(x["coinvest"]["coinvest_overlap_count"] if x["coinvest"] else 0),
-        x["ticker"]
-    ))
+    scored.sort(
+        key=lambda x: (
+            -x["composite_score"],
+            -(x["coinvest"]["coinvest_overlap_count"] if x["coinvest"] else 0),
+            x["ticker"],
+        )
+    )
 
     for i, rec in enumerate(scored):
         rec["composite_rank"] = i + 1
@@ -1185,11 +1202,17 @@ def compute_module_5_composite_v3(
     # =========================================================================
     # Sort by smart money effective contribution (desc), then conviction_overlap (desc), then ticker (asc)
     n_scored = len(scored)
-    sm_sorted = sorted(scored, key=lambda x: (
-        -(x["effective_weights"].get("smart_money", Decimal("0")) * Decimal(str(x.get("smart_money_signal", {}).get("score", 0) if x.get("smart_money_signal") else 0))),
-        -((x.get("coinvest") or {}).get("conviction_overlap") or 0),
-        x["ticker"],
-    ))
+    sm_sorted = sorted(
+        scored,
+        key=lambda x: (
+            -(
+                x["effective_weights"].get("smart_money", Decimal("0"))
+                * Decimal(str(x.get("smart_money_signal", {}).get("score", 0) if x.get("smart_money_signal") else 0))
+            ),
+            -((x.get("coinvest") or {}).get("conviction_overlap") or 0),
+            x["ticker"],
+        ),
+    )
     for i, rec in enumerate(sm_sorted):
         rec["smart_money_rank"] = i + 1
         rec["divergence_flag"] = abs(rec["composite_rank"] - rec["smart_money_rank"]) > 0.25 * n_scored
@@ -1212,34 +1235,29 @@ def compute_module_5_composite_v3(
             "severity": rec["severity"].value,
             "flags": rec["flags"],
             "rankable": True,
-
             # Cohort info
             "market_cap_bucket": rec["market_cap_bucket"],
             "stage_bucket": rec["stage_bucket"],
             "cohort_key": rec["cohort_key"],
             "normalization_method": rec["normalization_method"],
-
             # Confidence
             "confidence_clinical": str(rec["confidence_clinical"]),
             "confidence_financial": str(rec["confidence_financial"]),
             "confidence_catalyst": str(rec["confidence_catalyst"]),
             "confidence_pos": str(rec["confidence_pos"]) if rec["confidence_pos"] else None,
             "confidence_overall": str(rec["confidence_overall"]),
-
             # Weights
             "effective_weights": {k: str(v) for k, v in rec["effective_weights"].items()},
-
             # Caps and penalties
             "monotonic_caps_applied": rec["caps_applied"],
             "uncertainty_penalty": str(rec["uncertainty_penalty"]),
-
             # Audit
             "determinism_hash": rec["determinism_hash"],
             "schema_version": SCHEMA_VERSION,
-
             # Score breakdown
             "score_breakdown": {
-                "version": bd.version, "mode": bd.mode,
+                "version": bd.version,
+                "mode": bd.mode,
                 "base_weights": bd.base_weights,
                 "regime_adjustments": bd.regime_adjustments,
                 "effective_weights": bd.effective_weights,
@@ -1252,10 +1270,8 @@ def compute_module_5_composite_v3(
                 "cohort_info": bd.cohort_info,
                 "hybrid_aggregation": bd.hybrid_aggregation,
             },
-
             # Top-level component_scores (mirrors score_breakdown.components for convenience)
             "component_scores": bd.components,
-
             # Co-invest
             "coinvest_overlap_count": coinvest.get("coinvest_overlap_count", 0),
             "coinvest_holders": coinvest.get("coinvest_holders", []),
@@ -1268,7 +1284,6 @@ def compute_module_5_composite_v3(
                 "max_tier1_position_pct": coinvest.get("max_tier1_position_pct"),
                 "days_since_latest_filing": coinvest.get("days_since_latest_filing"),
             },
-
             # V3 Enhancement signals
             "momentum_signal": rec.get("momentum_signal"),
             "valuation_signal": rec.get("valuation_signal"),
@@ -1285,7 +1300,6 @@ def compute_module_5_composite_v3(
             "survivability_signal": rec.get("survivability_signal"),
             "morningstar_signal": rec.get("morningstar_data"),
             "morningstar_cross_validation": rec.get("morningstar_cross_validation"),
-
             # Attenuated signal variant (A/B testing)
             "composite_score_attn": str(rec.get("composite_score_attn", rec["composite_score"])),
             "attn_flags": rec.get("attn_flags", []),
@@ -1331,12 +1345,7 @@ def compute_module_5_composite_v3(
     sm_blocked = 0
     sm_applied = 0
     for r in ranked_securities:
-        diag = (
-            (r.get("score_breakdown", {}) or {})
-            .get("enhancements", {})
-            .get("smart_money_reinforcement", {})
-            or {}
-        )
+        diag = (r.get("score_breakdown", {}) or {}).get("enhancements", {}).get("smart_money_reinforcement", {}) or {}
         if diag.get("thesis_gate_blocked"):
             sm_blocked += 1
         if diag.get("reinforcement_applied") is True:
@@ -1384,22 +1393,37 @@ def compute_module_5_composite_v3(
         "rankable": len(ranked_securities),
         "excluded": len(excluded),
         "cohort_count": len(cohort_stats),
-
         # Enhancement coverage
         "with_pos_scores": sum(1 for r in ranked_securities if r.get("confidence_pos")),
-        "with_market_data": sum(1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("annualized_vol_pct")),
+        "with_market_data": sum(
+            1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("annualized_vol_pct")
+        ),
         "with_momentum_signal": sum(1 for r in ranked_securities if r.get("momentum_signal", {}).get("alpha_60d")),
-        "with_valuation_signal": sum(1 for r in ranked_securities if r.get("valuation_signal", {}).get("peer_count", 0) >= 5),
+        "with_valuation_signal": sum(
+            1 for r in ranked_securities if r.get("valuation_signal", {}).get("peer_count", 0) >= 5
+        ),
         "with_smart_money": sum(1 for r in ranked_securities if r.get("coinvest_overlap_count", 0) > 0),
-        "with_fda_designations": sum(1 for r in ranked_securities if r.get("fda_designation_signal", {}).get("has_designations")),
-        "with_pipeline_diversity": sum(1 for r in ranked_securities if r.get("pipeline_diversity_signal", {}).get("diversity_score")),
-        "with_competitive_intensity": sum(1 for r in ranked_securities if r.get("competitive_intensity_signal", {}).get("intensity_score")),
-        "with_partnerships": sum(1 for r in ranked_securities if r.get("partnership_signal", {}).get("partnership_count", 0) > 0),
-        "with_morningstar": sum(1 for r in ranked_securities if r.get("morningstar_signal") and r["morningstar_signal"].get("status") == "SUCCESS"),
-        "fv_blended_count": sum(1 for r in ranked_securities
-            if any(f.startswith("morningstar_fv_blended_w=") for f in r.get("flags", []))),
+        "with_fda_designations": sum(
+            1 for r in ranked_securities if r.get("fda_designation_signal", {}).get("has_designations")
+        ),
+        "with_pipeline_diversity": sum(
+            1 for r in ranked_securities if r.get("pipeline_diversity_signal", {}).get("diversity_score")
+        ),
+        "with_competitive_intensity": sum(
+            1 for r in ranked_securities if r.get("competitive_intensity_signal", {}).get("intensity_score")
+        ),
+        "with_partnerships": sum(
+            1 for r in ranked_securities if r.get("partnership_signal", {}).get("partnership_count", 0) > 0
+        ),
+        "with_morningstar": sum(
+            1
+            for r in ranked_securities
+            if r.get("morningstar_signal") and r["morningstar_signal"].get("status") == "SUCCESS"
+        ),
+        "fv_blended_count": sum(
+            1 for r in ranked_securities if any(f.startswith("morningstar_fv_blended_w=") for f in r.get("flags", []))
+        ),
         "fv_blended_pct": f"{sum(1 for r in ranked_securities if any(f.startswith('morningstar_fv_blended_w=') for f in r.get('flags', []))) / max(1, len(ranked_securities)) * 100:.1f}%",
-
         # Momentum state breakdown (for debugging/attribution)
         # Categories are MUTUALLY EXCLUSIVE and sum to total_rankable:
         # 1. missing_prices: No price data available for any window
@@ -1407,63 +1431,45 @@ def compute_module_5_composite_v3(
         # 3. applied_negative: Strong negative signal
         # 4. applied_positive: Strong positive signal
         # 5. applied_neutral: Signal computed but not strong either way
-        "momentum_missing_prices": sum(
-            1 for r in ranked_securities
-            if "momentum_missing_prices" in r.get("flags", [])
-        ),
+        "momentum_missing_prices": sum(1 for r in ranked_securities if "momentum_missing_prices" in r.get("flags", [])),
         "momentum_computed_low_conf": sum(
-            1 for r in ranked_securities
-            if "momentum_low_confidence" in r.get("flags", [])
+            1 for r in ranked_securities if "momentum_low_confidence" in r.get("flags", [])
         ),
         "momentum_applied_negative": sum(
-            1 for r in ranked_securities
-            if "strong_negative_momentum" in r.get("flags", [])
-            and "momentum_missing_prices" not in r.get("flags", [])
+            1
+            for r in ranked_securities
+            if "strong_negative_momentum" in r.get("flags", []) and "momentum_missing_prices" not in r.get("flags", [])
         ),
         "momentum_applied_positive": sum(
-            1 for r in ranked_securities
-            if "strong_positive_momentum" in r.get("flags", [])
-            and "momentum_missing_prices" not in r.get("flags", [])
+            1
+            for r in ranked_securities
+            if "strong_positive_momentum" in r.get("flags", []) and "momentum_missing_prices" not in r.get("flags", [])
         ),
-
         # Window usage breakdown
-        "momentum_window_20d": sum(
-            1 for r in ranked_securities
-            if "momentum_window_20d" in r.get("flags", [])
-        ),
-        "momentum_window_60d": sum(
-            1 for r in ranked_securities
-            if "momentum_window_60d" in r.get("flags", [])
-        ),
-        "momentum_window_120d": sum(
-            1 for r in ranked_securities
-            if "momentum_window_120d" in r.get("flags", [])
-        ),
-
+        "momentum_window_20d": sum(1 for r in ranked_securities if "momentum_window_20d" in r.get("flags", [])),
+        "momentum_window_60d": sum(1 for r in ranked_securities if "momentum_window_60d" in r.get("flags", [])),
+        "momentum_window_120d": sum(1 for r in ranked_securities if "momentum_window_120d" in r.get("flags", [])),
         # Legacy compat: "no_alpha" = missing_prices + computed_low_conf
-        "momentum_no_alpha": sum(
-            1 for r in ranked_securities
-            if r.get("momentum_signal", {}).get("alpha_60d") is None
-        ),
+        "momentum_no_alpha": sum(1 for r in ranked_securities if r.get("momentum_signal", {}).get("alpha_60d") is None),
         "momentum_gated_with_data": sum(
-            1 for r in ranked_securities
+            1
+            for r in ranked_securities
             if r.get("momentum_signal", {}).get("alpha_60d") is not None
             and "momentum_confidence_gated" in r.get("flags", [])
         ),
-
         # NEW v3.2: Stable coverage metrics for momentum
         # These three metrics are stable and avoid "coverage inflation"
         #
         # 1. momentum_computable: Any window computed (low_conf + applied)
         #    = tickers where we have at least one return window
         "momentum_computable": sum(
-            1 for r in ranked_securities
-            if r.get("momentum_signal", {}).get("window_used") is not None
+            1 for r in ranked_securities if r.get("momentum_signal", {}).get("window_used") is not None
         ),
         # 2. momentum_meaningful: Confidence >= 0.5 threshold
         #    = signals strong enough to be trusted
         "momentum_meaningful": sum(
-            1 for r in ranked_securities
+            1
+            for r in ranked_securities
             if _to_decimal(r.get("momentum_signal", {}).get("confidence", "0")) >= Decimal("0.5")
         ),
         # 3. momentum_strong_signal: Score moved away from 50 by at least 2.5 points
@@ -1476,16 +1482,20 @@ def compute_module_5_composite_v3(
         #    - Raw (no shrinkage):      |score-50| >= 2.5 requires |alpha| >= ~1.67%
         #    Inclusive boundary: score=47.5 or score=52.5 counts as strong.
         "momentum_strong_signal": sum(
-            1 for r in ranked_securities
-            if abs(_to_decimal(r.get("momentum_signal", {}).get("momentum_score", "50")) - Decimal("50")) >= Decimal("2.5")
+            1
+            for r in ranked_securities
+            if abs(_to_decimal(r.get("momentum_signal", {}).get("momentum_score", "50")) - Decimal("50"))
+            >= Decimal("2.5")
             and r.get("momentum_signal", {}).get("window_used") is not None
         ),
         # 4. momentum_strong_and_effective: Strong signal AND high enough confidence to matter
         #    = signals that are both strong (|score-50| >= 2.5) AND have confidence >= 0.6
         #    This is the "portfolio impact" metric: signals likely to move composites
         "momentum_strong_and_effective": sum(
-            1 for r in ranked_securities
-            if abs(_to_decimal(r.get("momentum_signal", {}).get("momentum_score", "50")) - Decimal("50")) >= Decimal("2.5")
+            1
+            for r in ranked_securities
+            if abs(_to_decimal(r.get("momentum_signal", {}).get("momentum_score", "50")) - Decimal("50"))
+            >= Decimal("2.5")
             and r.get("momentum_signal", {}).get("window_used") is not None
             and _to_decimal(r.get("momentum_signal", {}).get("confidence", "0")) >= Decimal("0.6")
         ),
@@ -1493,12 +1503,14 @@ def compute_module_5_composite_v3(
         #    prices = computed from daily price returns
         #    13f = injected from institutional momentum data
         "momentum_source_prices": sum(
-            1 for r in ranked_securities
+            1
+            for r in ranked_securities
             if r.get("momentum_signal", {}).get("source") == "prices"
             and r.get("momentum_signal", {}).get("window_used") is not None
         ),
         "momentum_source_13f": sum(
-            1 for r in ranked_securities
+            1
+            for r in ranked_securities
             if r.get("momentum_signal", {}).get("source") == "13f"
             and r.get("momentum_signal", {}).get("window_used") is not None
         ),
@@ -1506,34 +1518,37 @@ def compute_module_5_composite_v3(
         #    Helps distinguish "strong=0 because low dispersion" from "strong=0 because bug"
         #    Values stored as strings for Decimal consistency
         **_compute_alpha_distribution_metrics(ranked_securities),
-
         # Quality metrics
         "with_caps_applied": sum(1 for r in ranked_securities if r.get("monotonic_caps_applied")),
         "with_interaction_flags": sum(1 for r in ranked_securities if r.get("interaction_terms", {}).get("flags")),
-        "high_volatility_count": sum(1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "high"),
-        "low_volatility_count": sum(1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "low"),
+        "high_volatility_count": sum(
+            1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "high"
+        ),
+        "low_volatility_count": sum(
+            1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "low"
+        ),
         "in_catalyst_window": sum(1 for r in ranked_securities if r.get("catalyst_decay", {}).get("in_optimal_window")),
-
         # Catalyst coverage breakdown (new in v3.1)
         # Raw coverage = has any catalyst events (confidence > default 0.3)
         # Window coverage = in optimal catalyst window (15-45 days from event)
         "with_catalyst_events": sum(
-            1 for r in ranked_securities
+            1
+            for r in ranked_securities
             if _to_decimal(r.get("confidence_catalyst")) and _to_decimal(r.get("confidence_catalyst")) > Decimal("0.3")
         ),
         # New in v3.2: Proximity-blended catalyst tracking
         # Counts tickers where proximity score was factored into catalyst_effective
         "with_catalyst_proximity_blended": sum(
-            1 for r in ranked_securities
-            if r.get("catalyst_effective", {}).get("catalyst_proximity_blended", False)
+            1 for r in ranked_securities if r.get("catalyst_effective", {}).get("catalyst_proximity_blended", False)
         ),
-
         # Conviction horizon overlay: high-conviction names with long-dated catalysts
         # that received a catalyst weight floor
         "conviction_horizon_overlay_applied": sum(
-            1 for r in ranked_securities
-            if (r.get("score_breakdown", {}).get("enhancements", {})
-                .get("conviction_horizon_overlay", {}) or {}).get("applied", False)
+            1
+            for r in ranked_securities
+            if (r.get("score_breakdown", {}).get("enhancements", {}).get("conviction_horizon_overlay", {}) or {}).get(
+                "applied", False
+            )
         ),
     }
 
@@ -1606,11 +1621,15 @@ def compute_module_5_composite_v3(
                 if run_status != RunStatus.FAIL:
                     run_status = RunStatus.DEGRADED
                 degraded_components.append(component)
-                health_warnings.append(f"DEGRADED: {component} coverage {coverage*100:.1f}% < {threshold*100:.0f}% threshold")
+                health_warnings.append(
+                    f"DEGRADED: {component} coverage {coverage*100:.1f}% < {threshold*100:.0f}% threshold"
+                )
             else:
                 # Other components just warn
                 degraded_components.append(component)
-                health_warnings.append(f"WARNING: {component} coverage {coverage*100:.1f}% < {threshold*100:.0f}% threshold")
+                health_warnings.append(
+                    f"WARNING: {component} coverage {coverage*100:.1f}% < {threshold*100:.0f}% threshold"
+                )
 
     # Check gated components (high rate of confidence gating indicates data issue)
     # NOTE: In biotech, high gating rates are common for optional enhancement components:
@@ -1622,7 +1641,9 @@ def compute_module_5_composite_v3(
         gated_pct = Decimal(str(count)) / Decimal(str(total_rankable))
         if gated_pct > Decimal("0.5"):  # >50% of universe gated for this component
             # Log as info, not degradation - sparse optional component coverage is normal
-            health_warnings.append(f"INFO: {comp} confidence-gated for {gated_pct*100:.1f}% of universe (sparse coverage expected)")
+            health_warnings.append(
+                f"INFO: {comp} confidence-gated for {gated_pct*100:.1f}% of universe (sparse coverage expected)"
+            )
 
     # Compute momentum breakdown (single source of truth)
     # This ensures applied = neg + pos + neutral = total_rankable - missing - low_conf
@@ -1713,7 +1734,11 @@ def compute_module_5_composite_v3(
         "schema_version": SCHEMA_VERSION,
         "provenance": create_provenance(
             RULESET_VERSION,
-            {"tickers": sorted(active_tickers), "weights": {k: str(v) for k, v in sorted(base_weights.items())}, "mode": mode.value},
+            {
+                "tickers": sorted(active_tickers),
+                "weights": {k: str(v) for k, v in sorted(base_weights.items())},
+                "mode": mode.value,
+            },
             as_of_date,
         ),
     }
@@ -1795,12 +1820,23 @@ def _empty_result(as_of_date: str) -> Dict[str, Any]:
         "cohort_stats": {},
         "global_stats": {},
         "diagnostic_counts": {
-            "total_input": 0, "rankable": 0, "excluded": 0, "cohort_count": 0,
-            "with_pos_scores": 0, "with_market_data": 0, "with_momentum_signal": 0,
-            "with_valuation_signal": 0, "with_smart_money": 0, "with_caps_applied": 0,
-            "with_interaction_flags": 0, "high_volatility_count": 0, "low_volatility_count": 0,
-            "in_catalyst_window": 0, "with_morningstar": 0,
-            "fv_blended_count": 0, "fv_blended_pct": "0.0%",
+            "total_input": 0,
+            "rankable": 0,
+            "excluded": 0,
+            "cohort_count": 0,
+            "with_pos_scores": 0,
+            "with_market_data": 0,
+            "with_momentum_signal": 0,
+            "with_valuation_signal": 0,
+            "with_smart_money": 0,
+            "with_caps_applied": 0,
+            "with_interaction_flags": 0,
+            "high_volatility_count": 0,
+            "low_volatility_count": 0,
+            "in_catalyst_window": 0,
+            "with_morningstar": 0,
+            "fv_blended_count": 0,
+            "fv_blended_pct": "0.0%",
         },
         "enhancement_applied": False,
         "enhancement_diagnostics": None,

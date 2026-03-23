@@ -32,38 +32,35 @@ from common.types import Severity
 from financial_module_2_survivability import compute_survivability_score
 
 # Import IC enhancement utilities
-from src.modules.ic_enhancements import (
-    # Core enhancement functions
-    compute_volatility_adjustment,
-    apply_volatility_to_score,
-    compute_momentum_signal_with_fallback,
-    compute_momentum_signal_multiwindow,
-    compute_valuation_signal,
-    compute_catalyst_decay,
-    apply_catalyst_decay,
-    compute_smart_money_signal,
-    compute_interaction_terms,
-    shrinkage_normalize,
-    apply_regime_to_weights,
-    detect_contradictions,  # Enhancement 6: Contradiction detector
-    # Types
-    VolatilityAdjustment,
-    VolatilityBucket,
-    MomentumSignal,
-    MultiWindowMomentumInput,
-    ValuationSignal,
-    ValuationRegime,
-    CatalystDecayResult,
-    SmartMoneySignal,
-    InteractionTerms,
-    ContradictionResult,  # Enhancement 6: Contradiction result type
-    # Helpers
-    _to_decimal,
-    _quantize_score,
-    _quantize_weight,
-    _clamp,
+from src.modules.ic_enhancements import ContradictionResult  # Enhancement 6: Contradiction result type
+from src.modules.ic_enhancements import detect_contradictions  # Enhancement 6: Contradiction detector
+from src.modules.ic_enhancements import (  # Core enhancement functions; Types; Helpers
     EPS,
     SCORE_PRECISION,
+    CatalystDecayResult,
+    InteractionTerms,
+    MomentumSignal,
+    MultiWindowMomentumInput,
+    SmartMoneySignal,
+    ValuationRegime,
+    ValuationSignal,
+    VolatilityAdjustment,
+    VolatilityBucket,
+    _clamp,
+    _quantize_score,
+    _quantize_weight,
+    _to_decimal,
+    apply_catalyst_decay,
+    apply_regime_to_weights,
+    apply_volatility_to_score,
+    compute_catalyst_decay,
+    compute_interaction_terms,
+    compute_momentum_signal_multiwindow,
+    compute_momentum_signal_with_fallback,
+    compute_smart_money_signal,
+    compute_valuation_signal,
+    compute_volatility_adjustment,
+    shrinkage_normalize,
 )
 
 # =============================================================================
@@ -81,7 +78,7 @@ SEVERITY_MULTIPLIERS = {
     Severity.NONE: Decimal("1.0"),
     Severity.SEV1: Decimal("0.90"),  # 10% penalty
     Severity.SEV2: Decimal("0.50"),  # 50% penalty (soft gate)
-    Severity.SEV3: Decimal("0.0"),   # Hard gate (excluded)
+    Severity.SEV3: Decimal("0.0"),  # Hard gate (excluded)
 }
 
 SEVERITY_GATE_LABELS = {
@@ -121,14 +118,14 @@ CONFIDENCE_GATE_THRESHOLD = Decimal("0.4")
 
 REGIME_GATE_CONFIG = {
     "BEAR": {
-        "momentum_cap_pct": Decimal("0.30"),      # Cap momentum at 30% of deviation from neutral
-        "valuation_upside_cap": Decimal("55"),    # Cap valuation score at 55
-        "financial_penalty_mult": Decimal("1.25"), # Amplify financial penalties 25%
+        "momentum_cap_pct": Decimal("0.30"),  # Cap momentum at 30% of deviation from neutral
+        "valuation_upside_cap": Decimal("55"),  # Cap valuation score at 55
+        "financial_penalty_mult": Decimal("1.25"),  # Amplify financial penalties 25%
     },
     "BULL": {
-        "momentum_cap_pct": Decimal("1.0"),       # Full momentum
-        "catalyst_boost": Decimal("1.15"),        # 15% catalyst boost
-        "financial_penalty_mult": Decimal("0.85"), # Soften penalties 15%
+        "momentum_cap_pct": Decimal("1.0"),  # Full momentum
+        "catalyst_boost": Decimal("1.15"),  # 15% catalyst boost
+        "financial_penalty_mult": Decimal("0.85"),  # Soften penalties 15%
     },
     "NEUTRAL": {},  # No gating
 }
@@ -183,8 +180,8 @@ COMMERCIAL_CEILING_CONFIG = {
 
 DEV_CATALYST_GUARDRAIL_CONFIG = {
     "enabled": True,
-    "rule1_enabled": True,   # share cap — independently toggleable
-    "rule2_enabled": True,   # composite ceiling — independently toggleable
+    "rule1_enabled": True,  # share cap — independently toggleable
+    "rule2_enabled": True,  # composite ceiling — independently toggleable
     "apply_to_stages": ("early", "poc"),
     # Rule 1: share cap when date specificity is low + no corroboration
     "catalyst_share_cap": Decimal("0.35"),
@@ -219,7 +216,7 @@ DEV_CATALYST_ATTENUATION_CONFIG = {
     "corroboration_threshold": Decimal("45"),
     "corroborating_components": ("smart_money", "financial"),
     "max_shrink": Decimal("0.40"),  # maximum catalyst weight reduction (40%)
-    "shrink_curve": "linear",       # "linear" or "logistic"
+    "shrink_curve": "linear",  # "linear" or "logistic"
 }
 
 # Runtime override via env var (for grid search tuning):
@@ -231,8 +228,10 @@ if _atten_env:
     _overrides = json.loads(_atten_env)
     _risk_map = DEV_CATALYST_ATTENUATION_CONFIG["specificity_risk"]
     for _k, _spec_key in [
-        ("risk_exact", "EXACT"), ("risk_month", "MONTH"),
-        ("risk_quarter", "QUARTER"), ("risk_year", "YEAR"),
+        ("risk_exact", "EXACT"),
+        ("risk_month", "MONTH"),
+        ("risk_quarter", "QUARTER"),
+        ("risk_year", "YEAR"),
         ("risk_unknown", "UNKNOWN"),
     ]:
         if _k in _overrides:
@@ -249,9 +248,9 @@ if _atten_env:
 # =============================================================================
 
 ASYMMETRY_CONFIG = {
-    "upside_dampening": Decimal("0.6"),       # +10 → +6
-    "downside_amplification": Decimal("1.2"), # -10 → -12
-    "neutral_threshold": Decimal("50"),       # Scores above/below this
+    "upside_dampening": Decimal("0.6"),  # +10 → +6
+    "downside_amplification": Decimal("1.2"),  # -10 → -12
+    "neutral_threshold": Decimal("50"),  # Scores above/below this
 }
 
 # =============================================================================
@@ -276,31 +275,34 @@ SMART_MONEY_COVERAGE_GATED_WEIGHT = Decimal("0.05")  # 5% when coverage exists
 
 SMART_MONEY_ENHANCEMENT_CONFIG = {
     "enabled": True,  # Master switch
-
     # A: Stage×size dependent base weights
     "base_weights_by_stage_size": {
-        "early": {
-            "micro": Decimal("0.07"), "small": Decimal("0.07"),
-            "mid": Decimal("0.06"), "large": Decimal("0.05")
-        },
+        "early": {"micro": Decimal("0.07"), "small": Decimal("0.07"), "mid": Decimal("0.06"), "large": Decimal("0.05")},
         "poc": {  # PoC = highest predictive power for smart money
-            "micro": Decimal("0.10"), "small": Decimal("0.09"),
-            "mid": Decimal("0.08"), "large": Decimal("0.07")
+            "micro": Decimal("0.10"),
+            "small": Decimal("0.09"),
+            "mid": Decimal("0.08"),
+            "large": Decimal("0.07"),
         },
         "pivotal": {
-            "micro": Decimal("0.08"), "small": Decimal("0.08"),
-            "mid": Decimal("0.07"), "large": Decimal("0.06")
+            "micro": Decimal("0.08"),
+            "small": Decimal("0.08"),
+            "mid": Decimal("0.07"),
+            "large": Decimal("0.06"),
         },
         "regulatory": {  # Regulatory = also high predictive power
-            "micro": Decimal("0.09"), "small": Decimal("0.09"),
-            "mid": Decimal("0.08"), "large": Decimal("0.07")
+            "micro": Decimal("0.09"),
+            "small": Decimal("0.09"),
+            "mid": Decimal("0.08"),
+            "large": Decimal("0.07"),
         },
         "commercial": {
-            "micro": Decimal("0.06"), "small": Decimal("0.06"),
-            "mid": Decimal("0.05"), "large": Decimal("0.04")
+            "micro": Decimal("0.06"),
+            "small": Decimal("0.06"),
+            "mid": Decimal("0.05"),
+            "large": Decimal("0.04"),
         },
     },
-
     # B: Expanded score range parameters
     "score_range": {
         "min": Decimal("20"),
@@ -310,7 +312,6 @@ SMART_MONEY_ENHANCEMENT_CONFIG = {
         "per_position_increase_boost": Decimal("3.0"),  # Each "INCREASE" adds +3
         "max_boost_from_holders": Decimal("15.0"),  # Cap total holder boost
     },
-
     # C: Cohort normalization parameters
     "cohort_normalization": {
         "enabled": True,
@@ -318,12 +319,11 @@ SMART_MONEY_ENHANCEMENT_CONFIG = {
         "zscore_to_score_factor": Decimal("15.0"),  # 1σ = 15 points
         "floor_overlap_for_cohort": 2,  # Need ≥2 holders to be in cohort stats
     },
-
     # E: Confidence from overlap
     "confidence_from_overlap": {
         "base_confidence": Decimal("0.5"),
         "per_overlap_boost": Decimal("0.08"),  # +0.08 per holder
-        "per_tier1_boost": Decimal("0.12"),    # +0.12 per Tier-1
+        "per_tier1_boost": Decimal("0.12"),  # +0.12 per Tier-1
         "max_confidence": Decimal("0.95"),
     },
 }
@@ -339,96 +339,96 @@ SMART_MONEY_ENHANCEMENT_CONFIG = {
 
 STAGE_SIZE_TILT_CONFIG = {
     "enabled": True,  # Master switch for tilting
-
     # Stage tilts (multiplicative) - what matters at each development phase
     "stage_tilts": {
         "early": {  # Preclinical → Phase 1
-            "clinical": Decimal("1.00"),    # → Regression: clin(dev) ≈ 0; neutralize
-            "pos": Decimal("1.25"),         # ↑ Binary outcomes
-            "financial": Decimal("1.40"),   # ↑↑ Regression: fin(dev) significant alpha
+            "clinical": Decimal("1.00"),  # → Regression: clin(dev) ≈ 0; neutralize
+            "pos": Decimal("1.25"),  # ↑ Binary outcomes
+            "financial": Decimal("1.40"),  # ↑↑ Regression: fin(dev) significant alpha
             "short_interest": Decimal("1.10"),  # ↑ Micro-cap positioning
-            "catalyst": Decimal("0.65"),    # ↓↓ Events far out + high timing uncertainty
-            "valuation": Decimal("0.75"),   # ↓ No fundamentals
-            "momentum": Decimal("0.90"),    # ↓ No commercial traction
+            "catalyst": Decimal("0.65"),  # ↓↓ Events far out + high timing uncertainty
+            "valuation": Decimal("0.75"),  # ↓ No fundamentals
+            "momentum": Decimal("0.90"),  # ↓ No commercial traction
         },
         "poc": {  # Phase 2 → Proof-of-concept
-            "catalyst": Decimal("1.10"),    # ↑ Readout events matter, but timing uncertain
-            "clinical": Decimal("1.10"),    # ↑ PoC data matters
+            "catalyst": Decimal("1.10"),  # ↑ Readout events matter, but timing uncertain
+            "clinical": Decimal("1.10"),  # ↑ PoC data matters
             "short_interest": Decimal("1.15"),  # ↑ Positioning around binary
-            "momentum": Decimal("1.10"),    # ↑ Pre-readout moves
-            "pos": Decimal("1.05"),         # → Refined PoS post-data
-            "financial": Decimal("0.95"),   # → Less critical pre-commercial
-            "valuation": Decimal("0.85"),   # → Still speculative
+            "momentum": Decimal("1.10"),  # ↑ Pre-readout moves
+            "pos": Decimal("1.05"),  # → Refined PoS post-data
+            "financial": Decimal("0.95"),  # → Less critical pre-commercial
+            "valuation": Decimal("0.85"),  # → Still speculative
         },
         "pivotal": {  # Phase 3 → Regulatory submission
-            "catalyst": Decimal("1.25"),    # ↑ Pivotal data/regulatory events
-            "financial": Decimal("1.10"),   # ↑ Capital needs for launch
-            "clinical": Decimal("1.00"),    # → Mature dataset
-            "valuation": Decimal("1.10"),   # ↑ Starting to model commercial
-            "pos": Decimal("0.95"),         # ↓ Lower info uncertainty
+            "catalyst": Decimal("1.25"),  # ↑ Pivotal data/regulatory events
+            "financial": Decimal("1.10"),  # ↑ Capital needs for launch
+            "clinical": Decimal("1.00"),  # → Mature dataset
+            "valuation": Decimal("1.10"),  # ↑ Starting to model commercial
+            "pos": Decimal("0.95"),  # ↓ Lower info uncertainty
             "short_interest": Decimal("1.00"),  # → Neutral
-            "momentum": Decimal("1.00"),    # → Neutral
+            "momentum": Decimal("1.00"),  # → Neutral
         },
         "regulatory": {  # PDUFA/approval phase
-            "catalyst": Decimal("1.60"),    # ↑↑ Binary regulatory event
-            "valuation": Decimal("1.25"),   # ↑ Commercial value crystallizes
-            "financial": Decimal("1.15"),   # ↑ Launch funding critical
-            "momentum": Decimal("1.10"),    # ↑ Pre-PDUFA positioning
-            "clinical": Decimal("0.85"),    # ↓ Science mostly priced
-            "pos": Decimal("0.90"),         # ↓ Low info uncertainty
+            "catalyst": Decimal("1.60"),  # ↑↑ Binary regulatory event
+            "valuation": Decimal("1.25"),  # ↑ Commercial value crystallizes
+            "financial": Decimal("1.15"),  # ↑ Launch funding critical
+            "momentum": Decimal("1.10"),  # ↑ Pre-PDUFA positioning
+            "clinical": Decimal("0.85"),  # ↓ Science mostly priced
+            "pos": Decimal("0.90"),  # ↓ Low info uncertainty
             "short_interest": Decimal("0.95"),  # ↓ Less short interest usually
         },
         "commercial": {  # Post-approval, revenue generating
-            "clinical": Decimal("1.40"),    # ↑↑ Regression: clin(commercial) = +0.057
-            "valuation": Decimal("1.30"),   # ↑↑ Fundamentals matter
-            "momentum": Decimal("1.20"),    # ↑ Sales/trajectory drives price
-            "catalyst": Decimal("0.85"),    # → Few binary events
-            "financial": Decimal("0.85"),   # ↓ Regression: fin(commercial) ≈ 0
-            "pos": Decimal("0.75"),         # ↓↓ Low clinical uncertainty
+            "clinical": Decimal("1.40"),  # ↑↑ Regression: clin(commercial) = +0.057
+            "valuation": Decimal("1.30"),  # ↑↑ Fundamentals matter
+            "momentum": Decimal("1.20"),  # ↑ Sales/trajectory drives price
+            "catalyst": Decimal("0.85"),  # → Few binary events
+            "financial": Decimal("0.85"),  # ↓ Regression: fin(commercial) ≈ 0
+            "pos": Decimal("0.75"),  # ↓↓ Low clinical uncertainty
             "short_interest": Decimal("0.90"),  # → Lower short interest
         },
         # Neutral fallback (no tilting)
         "none": {},
     },
-
     # Size tilts (multiplicative) - what matters at each market cap tier
     "size_tilts": {
         "micro": {  # <$300M
-            "financial": Decimal("1.25"),   # ↑↑ Survivability is everything
-            "catalyst": Decimal("1.15"),    # ↑ Binary events lifeline
+            "financial": Decimal("1.25"),  # ↑↑ Survivability is everything
+            "catalyst": Decimal("1.15"),  # ↑ Binary events lifeline
             "short_interest": Decimal("1.15"),  # ↑ High short interest common
-            "clinical": Decimal("1.05"),    # → Binary science risk
-            "pos": Decimal("1.10"),         # → PoS more uncertain
-            "valuation": Decimal("0.80"),   # ↓ No fundamentals
-            "momentum": Decimal("0.85"),    # → Illiquid, noise-driven
+            "clinical": Decimal("1.05"),  # → Binary science risk
+            "pos": Decimal("1.10"),  # → PoS more uncertain
+            "valuation": Decimal("0.80"),  # ↓ No fundamentals
+            "momentum": Decimal("0.85"),  # → Illiquid, noise-driven
         },
         "small": {  # $300M-$2B
-            "financial": Decimal("1.10"),   # ↑ Capital discipline key
-            "catalyst": Decimal("1.05"),    # → Events still material
+            "financial": Decimal("1.10"),  # ↑ Capital discipline key
+            "catalyst": Decimal("1.05"),  # → Events still material
             "short_interest": Decimal("1.05"),  # → Shorts active
-            "valuation": Decimal("0.95"),   # → Starting to matter
-            "momentum": Decimal("0.95"),    # → Some liquidity
-            "clinical": Decimal("1.00"),    # → Neutral
-            "pos": Decimal("1.00"),         # → Neutral
+            "valuation": Decimal("0.95"),  # → Starting to matter
+            "momentum": Decimal("0.95"),  # → Some liquidity
+            "clinical": Decimal("1.00"),  # → Neutral
+            "pos": Decimal("1.00"),  # → Neutral
         },
         "mid": {  # $2B-$10B (neutral baseline)
-            "clinical": Decimal("1.00"), "financial": Decimal("1.00"),
-            "catalyst": Decimal("1.00"), "pos": Decimal("1.00"),
-            "momentum": Decimal("1.00"), "valuation": Decimal("1.00"),
+            "clinical": Decimal("1.00"),
+            "financial": Decimal("1.00"),
+            "catalyst": Decimal("1.00"),
+            "pos": Decimal("1.00"),
+            "momentum": Decimal("1.00"),
+            "valuation": Decimal("1.00"),
             "short_interest": Decimal("1.00"),
         },
         "large": {  # >$10B
-            "valuation": Decimal("1.20"),   # ↑ Fundamental valuation
-            "financial": Decimal("1.15"),   # ↑ Capital allocation key
-            "momentum": Decimal("1.10"),    # ↑ Liquidity, institutional flows
-            "catalyst": Decimal("0.85"),    # → Events less material
+            "valuation": Decimal("1.20"),  # ↑ Fundamental valuation
+            "financial": Decimal("1.15"),  # ↑ Capital allocation key
+            "momentum": Decimal("1.10"),  # ↑ Liquidity, institutional flows
+            "catalyst": Decimal("0.85"),  # → Events less material
             "short_interest": Decimal("0.85"),  # ↓ Minimal short interest
-            "clinical": Decimal("0.90"),    # → Diversified, priced in
-            "pos": Decimal("0.95"),         # → Lower uncertainty
+            "clinical": Decimal("0.90"),  # → Diversified, priced in
+            "pos": Decimal("0.95"),  # → Lower uncertainty
         },
         "unknown": {},  # No tilting if size unknown
     },
-
     # Clamping ranges (applied INDIVIDUALLY to stage and size multipliers)
     "clamp_min": Decimal("0.70"),
     "clamp_max": Decimal("1.40"),
@@ -449,95 +449,95 @@ STAGE_SIZE_TILT_CONFIG = {
 
 BAKER_STYLE_TILT_CONFIG = {
     "enabled": True,
-
     # Stage tilts - thesis dominates early, execution/valuation rise later
     "stage_tilts": {
         "early": {  # Preclinical → Phase 1: thesis is everything
-            "clinical": Decimal("1.30"),    # ↑↑ Biology quality dominant
-            "pos": Decimal("1.25"),         # ↑↑ Binary outcomes
-            "financial": Decimal("1.25"),   # ↑ Survivability critical
-            "valuation": Decimal("0.65"),   # ↓↓ No fundamentals yet
-            "catalyst": Decimal("0.70"),    # ↓ Events far out, low quality
-            "momentum": Decimal("0.50"),    # ↓↓ Noise, not signal
+            "clinical": Decimal("1.30"),  # ↑↑ Biology quality dominant
+            "pos": Decimal("1.25"),  # ↑↑ Binary outcomes
+            "financial": Decimal("1.25"),  # ↑ Survivability critical
+            "valuation": Decimal("0.65"),  # ↓↓ No fundamentals yet
+            "catalyst": Decimal("0.70"),  # ↓ Events far out, low quality
+            "momentum": Decimal("0.50"),  # ↓↓ Noise, not signal
             "short_interest": Decimal("0.50"),  # ↓↓ Overlay only
         },
         "poc": {  # Phase 2 → Proof-of-concept: thesis still key, catalysts rise
-            "clinical": Decimal("1.15"),    # ↑ PoC data critical
-            "pos": Decimal("1.10"),         # ↑ Refined probability
-            "financial": Decimal("1.00"),   # → Neutral
-            "valuation": Decimal("0.85"),   # → Still speculative
-            "catalyst": Decimal("1.20"),    # ↑ Readout events matter
-            "momentum": Decimal("0.70"),    # ↓ Pre-readout noise
+            "clinical": Decimal("1.15"),  # ↑ PoC data critical
+            "pos": Decimal("1.10"),  # ↑ Refined probability
+            "financial": Decimal("1.00"),  # → Neutral
+            "valuation": Decimal("0.85"),  # → Still speculative
+            "catalyst": Decimal("1.20"),  # ↑ Readout events matter
+            "momentum": Decimal("0.70"),  # ↓ Pre-readout noise
             "short_interest": Decimal("0.80"),  # ↓ Context only
         },
         "pivotal": {  # Phase 3 → Regulatory submission
-            "clinical": Decimal("1.00"),    # → Mature dataset
-            "pos": Decimal("0.95"),         # → Lower uncertainty
-            "financial": Decimal("1.10"),   # ↑ Capital for launch
-            "valuation": Decimal("1.10"),   # ↑ Starting to model commercial
-            "catalyst": Decimal("1.00"),    # → Pivotal events
-            "momentum": Decimal("0.80"),    # ↓ Context
+            "clinical": Decimal("1.00"),  # → Mature dataset
+            "pos": Decimal("0.95"),  # → Lower uncertainty
+            "financial": Decimal("1.10"),  # ↑ Capital for launch
+            "valuation": Decimal("1.10"),  # ↑ Starting to model commercial
+            "catalyst": Decimal("1.00"),  # → Pivotal events
+            "momentum": Decimal("0.80"),  # ↓ Context
             "short_interest": Decimal("0.90"),  # → Context
         },
         "regulatory": {  # PDUFA/approval phase: binary event
-            "clinical": Decimal("0.85"),    # ↓ Science priced
-            "pos": Decimal("0.85"),         # ↓ Binary now
-            "financial": Decimal("1.15"),   # ↑ Launch funding
-            "valuation": Decimal("1.25"),   # ↑ Commercial value crystallizes
-            "catalyst": Decimal("1.40"),    # ↑↑ Binary regulatory event
-            "momentum": Decimal("1.00"),    # → Pre-PDUFA positioning
+            "clinical": Decimal("0.85"),  # ↓ Science priced
+            "pos": Decimal("0.85"),  # ↓ Binary now
+            "financial": Decimal("1.15"),  # ↑ Launch funding
+            "valuation": Decimal("1.25"),  # ↑ Commercial value crystallizes
+            "catalyst": Decimal("1.40"),  # ↑↑ Binary regulatory event
+            "momentum": Decimal("1.00"),  # → Pre-PDUFA positioning
             "short_interest": Decimal("0.95"),  # → Context
         },
         "commercial": {  # Post-approval: execution + fundamentals
-            "clinical": Decimal("0.75"),    # ↓↓ Science priced in
-            "pos": Decimal("0.70"),         # ↓↓ No clinical uncertainty
-            "financial": Decimal("1.30"),   # ↑↑ Execution risk dominant
-            "valuation": Decimal("1.40"),   # ↑↑ Fundamentals matter
-            "catalyst": Decimal("0.60"),    # ↓↓ Few binary events
-            "momentum": Decimal("1.20"),    # ↑ Sales trajectory drives price
+            "clinical": Decimal("0.75"),  # ↓↓ Science priced in
+            "pos": Decimal("0.70"),  # ↓↓ No clinical uncertainty
+            "financial": Decimal("1.30"),  # ↑↑ Execution risk dominant
+            "valuation": Decimal("1.40"),  # ↑↑ Fundamentals matter
+            "catalyst": Decimal("0.60"),  # ↓↓ Few binary events
+            "momentum": Decimal("1.20"),  # ↑ Sales trajectory drives price
             "short_interest": Decimal("0.80"),  # ↓ Context
         },
         "none": {},
     },
-
     # Size tilts - same structure as STAGE_SIZE_TILT_CONFIG
     "size_tilts": {
         "micro": {
-            "financial": Decimal("1.30"),   # ↑↑ Survivability is everything
-            "clinical": Decimal("1.10"),    # ↑ Binary science risk
-            "pos": Decimal("1.10"),         # ↑ More uncertain
-            "catalyst": Decimal("1.10"),    # ↑ Binary events lifeline
-            "valuation": Decimal("0.70"),   # ↓↓ No fundamentals
-            "momentum": Decimal("0.60"),    # ↓↓ Illiquid, noise
+            "financial": Decimal("1.30"),  # ↑↑ Survivability is everything
+            "clinical": Decimal("1.10"),  # ↑ Binary science risk
+            "pos": Decimal("1.10"),  # ↑ More uncertain
+            "catalyst": Decimal("1.10"),  # ↑ Binary events lifeline
+            "valuation": Decimal("0.70"),  # ↓↓ No fundamentals
+            "momentum": Decimal("0.60"),  # ↓↓ Illiquid, noise
             "short_interest": Decimal("0.80"),  # ↓ Context
         },
         "small": {
-            "financial": Decimal("1.15"),   # ↑ Capital discipline
-            "clinical": Decimal("1.05"),    # → Neutral+
-            "pos": Decimal("1.05"),         # → Neutral+
-            "catalyst": Decimal("1.00"),    # → Neutral
-            "valuation": Decimal("0.90"),   # → Starting to matter
-            "momentum": Decimal("0.80"),    # ↓ Context
+            "financial": Decimal("1.15"),  # ↑ Capital discipline
+            "clinical": Decimal("1.05"),  # → Neutral+
+            "pos": Decimal("1.05"),  # → Neutral+
+            "catalyst": Decimal("1.00"),  # → Neutral
+            "valuation": Decimal("0.90"),  # → Starting to matter
+            "momentum": Decimal("0.80"),  # ↓ Context
             "short_interest": Decimal("0.90"),  # → Context
         },
         "mid": {
-            "clinical": Decimal("1.00"), "financial": Decimal("1.00"),
-            "catalyst": Decimal("1.00"), "pos": Decimal("1.00"),
-            "momentum": Decimal("1.00"), "valuation": Decimal("1.00"),
+            "clinical": Decimal("1.00"),
+            "financial": Decimal("1.00"),
+            "catalyst": Decimal("1.00"),
+            "pos": Decimal("1.00"),
+            "momentum": Decimal("1.00"),
+            "valuation": Decimal("1.00"),
             "short_interest": Decimal("1.00"),
         },
         "large": {
-            "valuation": Decimal("1.25"),   # ↑ Fundamental valuation
-            "financial": Decimal("1.15"),   # ↑ Capital allocation
-            "momentum": Decimal("1.15"),    # ↑ Institutional flows
-            "clinical": Decimal("0.85"),    # ↓ Diversified, priced
-            "pos": Decimal("0.90"),         # ↓ Lower uncertainty
-            "catalyst": Decimal("0.80"),    # ↓ Events less material
+            "valuation": Decimal("1.25"),  # ↑ Fundamental valuation
+            "financial": Decimal("1.15"),  # ↑ Capital allocation
+            "momentum": Decimal("1.15"),  # ↑ Institutional flows
+            "clinical": Decimal("0.85"),  # ↓ Diversified, priced
+            "pos": Decimal("0.90"),  # ↓ Lower uncertainty
+            "catalyst": Decimal("0.80"),  # ↓ Events less material
             "short_interest": Decimal("0.85"),  # ↓ Minimal short interest
         },
         "unknown": {},
     },
-
     "clamp_min": Decimal("0.50"),
     "clamp_max": Decimal("1.50"),
     "combined_clamp_min": Decimal("0.40"),
@@ -556,44 +556,40 @@ BAKER_STYLE_TILT_CONFIG = {
 
 THESIS_GATE_CONFIG = {
     "enabled": True,
-
     # Threshold: average of clinical + pos normalized scores
     # Below this = weak thesis, cap the final score
     "thresholds_by_stage": {
-        "early": Decimal("58"),      # Strict: thesis must be strong
-        "poc": Decimal("55"),        # Strict: thesis still dominant
-        "pivotal": Decimal("50"),    # Moderate: execution matters too
-        "regulatory": Decimal("48"), # Looser: binary event dominates
-        "commercial": Decimal("45"), # Loosest: execution/valuation matter
-        "late": Decimal("45"),       # Late-stage companies (Phase 3+/approved) - same as commercial
-        "none": Decimal("50"),       # Default fallback
+        "early": Decimal("58"),  # Strict: thesis must be strong
+        "poc": Decimal("55"),  # Strict: thesis still dominant
+        "pivotal": Decimal("50"),  # Moderate: execution matters too
+        "regulatory": Decimal("48"),  # Looser: binary event dominates
+        "commercial": Decimal("45"),  # Loosest: execution/valuation matter
+        "late": Decimal("45"),  # Late-stage companies (Phase 3+/approved) - same as commercial
+        "none": Decimal("50"),  # Default fallback
     },
-
     # Conviction override: bypass thesis gate if institutional signal is very strong
     # This allows high-conviction late-stage names to receive reinforcement
     "conviction_override": {
         "enabled": True,
-        "min_tier1": 10,            # Require at least 10 tier-1 holders
+        "min_tier1": 10,  # Require at least 10 tier-1 holders
         "min_conviction": Decimal("15"),  # Require conviction overlap >= 15
     },
-
     # Score ceiling when thesis gate triggers
     # This prevents weak-thesis names from ranking in top decile
     "ceiling_by_stage": {
-        "early": Decimal("62"),      # Can't exceed ~60th percentile
-        "poc": Decimal("65"),        # Can't exceed ~65th percentile
-        "pivotal": Decimal("68"),    # Slightly more permissive
-        "regulatory": Decimal("70"), # Even more permissive
-        "commercial": Decimal("72"), # Most permissive
-        "late": Decimal("72"),       # Late-stage - same as commercial
-        "none": Decimal("65"),       # Default fallback
+        "early": Decimal("62"),  # Can't exceed ~60th percentile
+        "poc": Decimal("65"),  # Can't exceed ~65th percentile
+        "pivotal": Decimal("68"),  # Slightly more permissive
+        "regulatory": Decimal("70"),  # Even more permissive
+        "commercial": Decimal("72"),  # Most permissive
+        "late": Decimal("72"),  # Late-stage - same as commercial
+        "none": Decimal("65"),  # Default fallback
     },
-
     # Soft penalty (enabled) - applies smooth penalty instead of hard ceiling
     # Works regardless of score compression (ceiling approach fails with compressed scores)
     "use_soft_penalty": True,
     "soft_penalty_base": Decimal("0.92"),  # Multiply score by this at threshold
-    "soft_penalty_floor": Decimal("0.80"), # Minimum multiplier (at 20pt gap below threshold)
+    "soft_penalty_floor": Decimal("0.80"),  # Minimum multiplier (at 20pt gap below threshold)
 }
 
 # =============================================================================
@@ -610,40 +606,36 @@ THESIS_GATE_CONFIG = {
 
 SMART_MONEY_REINFORCEMENT_CONFIG = {
     "enabled": True,  # Master switch (only active in BAKER_STYLE mode)
-
     # Stages where reinforcement applies (event-alpha regimes)
     "active_stages": ["poc", "regulatory"],
-
     # Minimum confidence/overlap to apply reinforcement
     "min_smart_money_confidence": Decimal("0.65"),
     "min_tier1_overlap": 2,
-
     # Reinforcement multipliers for component contributions
     # Positive overlap (Tier-1s holding) → amplify catalyst contribution
     "catalyst_reinforcement": {
-        "strong_overlap_mult": Decimal("1.10"),   # 3+ Tier-1s → +10% catalyst contribution
-        "moderate_overlap_mult": Decimal("1.05"), # 2 Tier-1s → +5% catalyst contribution
-        "weak_overlap_mult": Decimal("1.00"),     # <2 Tier-1s → no change
+        "strong_overlap_mult": Decimal("1.10"),  # 3+ Tier-1s → +10% catalyst contribution
+        "moderate_overlap_mult": Decimal("1.05"),  # 2 Tier-1s → +5% catalyst contribution
+        "weak_overlap_mult": Decimal("1.00"),  # <2 Tier-1s → no change
         "negative_signal_mult": Decimal("0.93"),  # Selling signal → -7% catalyst contribution
     },
-
     # Momentum reinforcement (half the size of catalyst)
     "momentum_reinforcement": {
-        "strong_overlap_mult": Decimal("1.05"),   # 3+ Tier-1s → +5% momentum contribution
-        "moderate_overlap_mult": Decimal("1.02"), # 2 Tier-1s → +2% momentum contribution
-        "weak_overlap_mult": Decimal("1.00"),     # <2 Tier-1s → no change
+        "strong_overlap_mult": Decimal("1.05"),  # 3+ Tier-1s → +5% momentum contribution
+        "moderate_overlap_mult": Decimal("1.02"),  # 2 Tier-1s → +2% momentum contribution
+        "weak_overlap_mult": Decimal("1.00"),  # <2 Tier-1s → no change
         "negative_signal_mult": Decimal("0.97"),  # Selling signal → -3% momentum contribution
     },
-
     # Tier-1 overlap thresholds
     "strong_overlap_threshold": 3,  # ≥3 Tier-1s = strong
-    "moderate_overlap_threshold": 2, # ≥2 Tier-1s = moderate
+    "moderate_overlap_threshold": 2,  # ≥2 Tier-1s = moderate
 }
 
 
 # =============================================================================
 # TYPES
 # =============================================================================
+
 
 class MonotonicCap:
     LIQUIDITY_FAIL_CAP = Decimal("35")
@@ -656,6 +648,7 @@ class MonotonicCap:
 
 class ScoringMode(str, Enum):
     """Scoring mode based on available data."""
+
     DEFAULT = "default"
     PARTIAL = "partial"
     ENHANCED = "enhanced"
@@ -665,6 +658,7 @@ class ScoringMode(str, Enum):
 
 class RunStatus(str, Enum):
     """Pipeline run status based on data coverage health."""
+
     OK = "OK"
     DEGRADED = "DEGRADED"
     FAIL = "FAIL"
@@ -672,6 +666,7 @@ class RunStatus(str, Enum):
 
 class NormalizationMethod(str, Enum):
     """Normalization method applied."""
+
     COHORT = "cohort"
     COHORT_WINSORIZED = "cohort_winsorized"
     COHORT_SHRINKAGE = "cohort_shrinkage"
@@ -683,6 +678,7 @@ class NormalizationMethod(str, Enum):
 @dataclass
 class ComponentScore:
     """Individual component score with full breakdown."""
+
     name: str
     raw: Optional[Decimal]
     normalized: Optional[Decimal]
@@ -698,6 +694,7 @@ class ComponentScore:
 @dataclass
 class ScoreBreakdown:
     """Complete score breakdown for auditability."""
+
     version: str
     mode: str
     base_weights: Dict[str, str]
@@ -716,6 +713,7 @@ class ScoreBreakdown:
 @dataclass
 class V3ScoringResult:
     """Complete v3 scoring result for a single ticker."""
+
     ticker: str
     composite_score: Decimal
     composite_rank: int
@@ -744,6 +742,7 @@ class V3ScoringResult:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def _coalesce(*vals: Any, default: Optional[Any] = None) -> Any:
     """Return the first value that is not None.
@@ -932,15 +931,14 @@ def _compute_catalyst_effective(
 
     if has_window and has_proximity:
         effective = (
-            CATALYST_WINDOW_WEIGHT * catalyst_score_window +
-            CATALYST_PROXIMITY_WEIGHT * catalyst_proximity_score
+            CATALYST_WINDOW_WEIGHT * catalyst_score_window + CATALYST_PROXIMITY_WEIGHT * catalyst_proximity_score
         )
         proximity_blended = True
         blend_mode = "full_blend"
     elif has_proximity and not has_window:
         effective = (
-            CATALYST_DEFAULT_BASE * CATALYST_DEFAULT_SCORE +
-            (Decimal("1") - CATALYST_DEFAULT_BASE) * catalyst_proximity_score
+            CATALYST_DEFAULT_BASE * CATALYST_DEFAULT_SCORE
+            + (Decimal("1") - CATALYST_DEFAULT_BASE) * catalyst_proximity_score
         )
         proximity_blended = True
         blend_mode = "proximity_only"
@@ -1016,38 +1014,89 @@ def _determine_stage_bucket_alpha(
             return "pivotal"
 
         # Regulatory events (keyword matching)
-        if any(kw in cat_type_lower for kw in [
-            "pdufa", "adcom", "nda", "bla", "fda_pdufa", "fda_adcom",
-            "filing", "approval", "regulatory", "label", "crl",
-        ]):
+        if any(
+            kw in cat_type_lower
+            for kw in [
+                "pdufa",
+                "adcom",
+                "nda",
+                "bla",
+                "fda_pdufa",
+                "fda_adcom",
+                "filing",
+                "approval",
+                "regulatory",
+                "label",
+                "crl",
+            ]
+        ):
             return "regulatory"
 
         # Pivotal/Phase 3 events
-        if any(kw in cat_type_lower for kw in [
-            "phase 3", "phase_3", "ph3", "pivotal", "registrational",
-            "phase iii", "p3", "primary_completion",
-        ]):
+        if any(
+            kw in cat_type_lower
+            for kw in [
+                "phase 3",
+                "phase_3",
+                "ph3",
+                "pivotal",
+                "registrational",
+                "phase iii",
+                "p3",
+                "primary_completion",
+            ]
+        ):
             return "pivotal"
 
         # Proof-of-concept/Phase 2 events
-        if any(kw in cat_type_lower for kw in [
-            "phase 2", "phase_2", "ph2", "interim", "readout", "data",
-            "phase ii", "p2", "topline", "results",
-        ]):
+        if any(
+            kw in cat_type_lower
+            for kw in [
+                "phase 2",
+                "phase_2",
+                "ph2",
+                "interim",
+                "readout",
+                "data",
+                "phase ii",
+                "p2",
+                "topline",
+                "results",
+            ]
+        ):
             return "poc"
 
         # Early stage events
-        if any(kw in cat_type_lower for kw in [
-            "phase 1", "phase_1", "ph1", "preclinical", "ind",
-            "phase i", "p1", "first_patient", "dose_escalation",
-        ]):
+        if any(
+            kw in cat_type_lower
+            for kw in [
+                "phase 1",
+                "phase_1",
+                "ph1",
+                "preclinical",
+                "ind",
+                "phase i",
+                "p1",
+                "first_patient",
+                "dose_escalation",
+            ]
+        ):
             return "early"
 
         # Commercial events
-        if any(kw in cat_type_lower for kw in [
-            "launch", "sales", "earnings", "guidance", "partnership",
-            "acquisition", "commercial", "revenue",
-        ]):
+        if any(
+            kw in cat_type_lower
+            for kw in [
+                "launch",
+                "sales",
+                "earnings",
+                "guidance",
+                "partnership",
+                "acquisition",
+                "commercial",
+                "revenue",
+            ]
+        ):
             return "commercial"
 
     # Phase 2: Lead phase fallback
@@ -1073,9 +1122,9 @@ def _determine_stage_bucket_alpha(
             if days < 60:
                 return "regulatory"  # Imminent event likely regulatory
             elif days < 120:
-                return "pivotal"     # Near-term likely pivotal
+                return "pivotal"  # Near-term likely pivotal
             elif days < 270:
-                return "poc"         # Medium-term likely PoC
+                return "poc"  # Medium-term likely PoC
         except (ValueError, TypeError):
             pass
 
@@ -1185,6 +1234,7 @@ def _apply_stage_size_tilts(
 # SMART MONEY ENHANCEMENT FUNCTIONS (A+B+C+E)
 # =============================================================================
 
+
 def compute_smart_money_cohort_stats(
     combined_records: List[Dict],
 ) -> Dict[Tuple[str, str], Tuple[Decimal, Decimal]]:
@@ -1269,10 +1319,8 @@ def compute_enhanced_smart_money_signal_v2(
     tier1_count = len(tier1_holders) if tier1_holders else tier1_count_raw
 
     # Get position change direction
-    increasing_holders = [h for h, change in position_changes.items()
-                         if change in ("INCREASE", "NEW")]
-    decreasing_holders = [h for h, change in position_changes.items()
-                         if change in ("DECREASE", "EXIT")]
+    increasing_holders = [h for h, change in position_changes.items() if change in ("INCREASE", "NEW")]
+    decreasing_holders = [h for h, change in position_changes.items() if change in ("DECREASE", "EXIT")]
 
     # =========================================================================
     # C: COHORT-NORMALIZED CONVICTION (prevents size bias)
@@ -1283,12 +1331,11 @@ def compute_enhanced_smart_money_signal_v2(
     z_score = Decimal("0")
 
     # Use continuous conviction_overlap for z-score; fall back to integer count
-    conviction_metric = (Decimal(str(conviction_overlap))
-                         if conviction_overlap is not None
-                         else Decimal(str(overlap_count)))
+    conviction_metric = (
+        Decimal(str(conviction_overlap)) if conviction_overlap is not None else Decimal(str(overlap_count))
+    )
 
-    if (config["cohort_normalization"]["enabled"] and
-        cohort_stats and cohort_key in cohort_stats):
+    if config["cohort_normalization"]["enabled"] and cohort_stats and cohort_key in cohort_stats:
         cohort_mean, cohort_std = cohort_stats[cohort_key]
         if cohort_std > Decimal("0.1"):  # Avoid division by tiny std
             z_score = (conviction_metric - cohort_mean) / cohort_std
@@ -1296,8 +1343,9 @@ def compute_enhanced_smart_money_signal_v2(
             z_score = _clamp(z_score, Decimal("-2.0"), Decimal("2.0"))
 
     # Convert z-score to base score component (centered at neutral)
-    cohort_component = (config["score_range"]["neutral"] +
-                        z_score * config["cohort_normalization"]["zscore_to_score_factor"])
+    cohort_component = (
+        config["score_range"]["neutral"] + z_score * config["cohort_normalization"]["zscore_to_score_factor"]
+    )
 
     # =========================================================================
     # B: EXPANDED SCORE RANGE WITH CONTINUOUS BOOSTS
@@ -1329,26 +1377,22 @@ def compute_enhanced_smart_money_signal_v2(
         # Fall back to integer tier1_count when position_pct not available
         tier1_boost = min(
             Decimal(str(tier1_count)) * config["score_range"]["per_tier1_holder_boost"],
-            config["score_range"]["max_boost_from_holders"]
+            config["score_range"]["max_boost_from_holders"],
         )
 
     # Position increase boost
-    increase_boost = (Decimal(str(len(increasing_holders))) *
-                      config["score_range"]["per_position_increase_boost"])
+    increase_boost = Decimal(str(len(increasing_holders))) * config["score_range"]["per_position_increase_boost"]
 
     # Position decrease penalty
-    decrease_penalty = (Decimal(str(len(decreasing_holders))) *
-                        config["score_range"]["per_position_increase_boost"] * Decimal("-1"))
+    decrease_penalty = (
+        Decimal(str(len(decreasing_holders))) * config["score_range"]["per_position_increase_boost"] * Decimal("-1")
+    )
 
     # Calculate raw boosted score
     raw_boosted = base_score + tier1_boost + increase_boost + decrease_penalty
 
     # Apply expanded range
-    final_score = _clamp(
-        raw_boosted,
-        config["score_range"]["min"],
-        config["score_range"]["max"]
-    )
+    final_score = _clamp(raw_boosted, config["score_range"]["min"], config["score_range"]["max"])
 
     # =========================================================================
     # E: CONFIDENCE FROM OVERLAP (continuous)
@@ -1358,21 +1402,11 @@ def compute_enhanced_smart_money_signal_v2(
 
     # Use continuous conviction_metric for confidence boost (instead of integer count)
     # conviction_overlap ≈ 1.0 per typical holder → maps similarly to overlap_count
-    overlap_boost = min(
-        conviction_metric * conf_config["per_overlap_boost"],
-        Decimal("0.3")
-    )
-    tier1_confidence_boost = min(
-        Decimal(str(tier1_count)) * conf_config["per_tier1_boost"],
-        Decimal("0.4")
-    )
+    overlap_boost = min(conviction_metric * conf_config["per_overlap_boost"], Decimal("0.3"))
+    tier1_confidence_boost = min(Decimal(str(tier1_count)) * conf_config["per_tier1_boost"], Decimal("0.4"))
 
     final_confidence = base_conf + overlap_boost + tier1_confidence_boost
-    final_confidence = _clamp(
-        final_confidence,
-        Decimal("0.3"),
-        conf_config["max_confidence"]
-    )
+    final_confidence = _clamp(final_confidence, Decimal("0.3"), conf_config["max_confidence"])
 
     # =========================================================================
     # A: STAGE×SIZE DYNAMIC WEIGHT
@@ -1485,8 +1519,9 @@ def _extract_confidence_financial(fin_data: Dict) -> Decimal:
     if conf is not None:
         return _clamp(conf, Decimal("0"), Decimal("1"))
     state = fin_data.get("financial_data_state", "NONE")
-    return {"FULL": Decimal("1.0"), "PARTIAL": Decimal("0.7"),
-            "MINIMAL": Decimal("0.4"), "NONE": Decimal("0.1")}.get(state, Decimal("0.5"))
+    return {"FULL": Decimal("1.0"), "PARTIAL": Decimal("0.7"), "MINIMAL": Decimal("0.4"), "NONE": Decimal("0.1")}.get(
+        state, Decimal("0.5")
+    )
 
 
 def _extract_confidence_clinical(clin_data: Dict) -> Decimal:
@@ -1521,7 +1556,7 @@ def _extract_confidence_catalyst(cat_data: Any) -> Decimal:
         "UNKNOWN": Decimal("0.30"),
     }
 
-    if hasattr(cat_data, 'catalyst_confidence') and hasattr(cat_data.catalyst_confidence, 'value'):
+    if hasattr(cat_data, "catalyst_confidence") and hasattr(cat_data.catalyst_confidence, "value"):
         conf_str = cat_data.catalyst_confidence.value
         if conf_str in CONFIDENCE_MAP:
             return CONFIDENCE_MAP[conf_str]
@@ -1543,7 +1578,7 @@ def _extract_confidence_catalyst(cat_data: Any) -> Decimal:
         if events_total > 0 and conf_str is None:
             return Decimal("0.50")
 
-    if hasattr(cat_data, 'n_high_confidence'):
+    if hasattr(cat_data, "n_high_confidence"):
         n_high = cat_data.n_high_confidence
         n_events = cat_data.events_detected_total
         if n_events > 0:
@@ -1579,7 +1614,7 @@ def _extract_lead_date_specificity(cat_data: Any) -> str:
         "MONTH": "MONTH",
         "QUARTER": "QUARTER",
         "HALF_YEAR": "YEAR",
-        "RANGE": "QUARTER",     # conservative: treat range as imprecise
+        "RANGE": "QUARTER",  # conservative: treat range as imprecise
         "EXACT": "EXACT",
         "YEAR": "YEAR",
         "UNKNOWN": "UNKNOWN",
@@ -1632,7 +1667,9 @@ def _extract_lead_date_specificity(cat_data: Any) -> str:
 
     # --- Dict path ---
     if isinstance(cat_data, dict):
-        next_date = cat_data.get("integration", {}).get("next_catalyst_date") or cat_data.get("scores", {}).get("next_catalyst_date")
+        next_date = cat_data.get("integration", {}).get("next_catalyst_date") or cat_data.get("scores", {}).get(
+            "next_catalyst_date"
+        )
         events = cat_data.get("events", [])
         if events:
             if next_date:
@@ -1775,13 +1812,15 @@ def summarize_dev_catalyst_guardrail(ranked_securities: List[Dict[str, Any]]) ->
         if hit_r2:
             rule2_hits.append(ticker)
         if hit_r1 or hit_r2:
-            impacted.append({
-                "ticker": ticker,
-                "rank": rank,
-                "rule1": hit_r1,
-                "rule2": hit_r2,
-                "flags": [f for f in flags if "dev_catalyst_guardrail" in f],
-            })
+            impacted.append(
+                {
+                    "ticker": ticker,
+                    "rank": rank,
+                    "rule1": hit_r1,
+                    "rule2": hit_r2,
+                    "flags": [f for f in flags if "dev_catalyst_guardrail" in f],
+                }
+            )
 
     impacted.sort(key=lambda x: x["rank"])
     n_impacted = len(impacted)
@@ -1984,16 +2023,22 @@ def _compute_determinism_hash(
         "mode": mode,
         "base_weights": {k: str(v) for k, v in sorted(base_weights.items())},
         "effective_weights": {k: str(v) for k, v in sorted(effective_weights.items())},
-        "components": sorted([
-            {"name": c.name, "raw": str(c.raw) if c.raw is not None else None,
-             "normalized": str(c.normalized) if c.normalized is not None else None,
-             "contribution": str(c.contribution)}
-            for c in component_scores
-        ], key=lambda x: x["name"]),
+        "components": sorted(
+            [
+                {
+                    "name": c.name,
+                    "raw": str(c.raw) if c.raw is not None else None,
+                    "normalized": str(c.normalized) if c.normalized is not None else None,
+                    "contribution": str(c.contribution),
+                }
+                for c in component_scores
+            ],
+            key=lambda x: x["name"],
+        ),
         "enhancements": {k: str(v) if isinstance(v, Decimal) else v for k, v in sorted(enhancements.items())},
         "final_score": str(final_score),
     }
-    canonical = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
@@ -2040,7 +2085,7 @@ def _enrich_with_coinvest(ticker: str, coinvest_signals: dict, as_of_date: date)
             "days_since_latest_filing": signal.get("days_since_latest_filing"),
         }
 
-    if not hasattr(signal, 'positions'):
+    if not hasattr(signal, "positions"):
         return {
             "coinvest_overlap_count": 0,
             "coinvest_holders": [],
@@ -2075,13 +2120,13 @@ def _enrich_with_coinvest(ticker: str, coinvest_signals: dict, as_of_date: date)
     for p in pit_positions:
         manager_name = p.manager_name
         if manager_name not in holder_tiers:
-            tier = getattr(p, 'manager_tier', None)
+            tier = getattr(p, "manager_tier", None)
             if tier is not None:
                 holder_tiers[manager_name] = tier
 
     position_changes = {}
     for p in pit_positions:
-        change_type = getattr(p, 'change_type', None)
+        change_type = getattr(p, "change_type", None)
         if change_type is not None:
             position_changes[p.manager_name] = change_type
 
@@ -2188,6 +2233,7 @@ def _compute_global_stats(combined: List[Dict]) -> Dict[str, Tuple[Decimal, Deci
 # ENHANCEMENT 1: HARD REGIME GATING
 # =============================================================================
 
+
 def apply_regime_gates(
     normalized_scores: Dict[str, Decimal],
     regime: str,
@@ -2235,7 +2281,11 @@ def apply_regime_gates(
 
     # Track financial penalty multiplier for downstream use
     if "financial_penalty_mult" in config:
-        flags.append("regime_financial_amplified" if config["financial_penalty_mult"] > Decimal("1.0") else "regime_financial_softened")
+        flags.append(
+            "regime_financial_amplified"
+            if config["financial_penalty_mult"] > Decimal("1.0")
+            else "regime_financial_softened"
+        )
 
     return gated, config, flags
 
@@ -2243,6 +2293,7 @@ def apply_regime_gates(
 # =============================================================================
 # ENHANCEMENT 2: EXISTENTIAL FLAW DETECTION
 # =============================================================================
+
 
 def detect_existential_flaws(
     fin_data: Dict,
@@ -2286,7 +2337,7 @@ def detect_existential_flaws(
     debt_maturity = fin_data.get("debt_maturity_months")
     days_to_cat = None
 
-    if hasattr(cat_data, 'days_to_nearest_catalyst'):
+    if hasattr(cat_data, "days_to_nearest_catalyst"):
         days_to_cat = cat_data.days_to_nearest_catalyst
     elif isinstance(cat_data, dict):
         scores = cat_data.get("scores", cat_data)
@@ -2334,6 +2385,7 @@ def apply_existential_cap(
 # ENHANCEMENT 3: CONFIDENCE-WEIGHTED AGGREGATION
 # =============================================================================
 
+
 def compute_confidence_weighted_contribution(
     normalized_score: Decimal,
     weight: Decimal,
@@ -2376,6 +2428,7 @@ def compute_confidence_weighted_contribution(
 # =============================================================================
 # ENHANCEMENT 4: DYNAMIC SCORE CEILINGS
 # =============================================================================
+
 
 def apply_dynamic_ceilings(
     score: Decimal,
@@ -2441,6 +2494,7 @@ def apply_dynamic_ceilings(
 # =============================================================================
 # ENHANCEMENT 5: ASYMMETRIC TRANSFORM (CONVEX DOWNSIDE, CONCAVE UPSIDE)
 # =============================================================================
+
 
 def apply_asymmetric_transform(
     normalized_score: Decimal,
@@ -2535,6 +2589,7 @@ def apply_asymmetric_transform_to_contribution(
 # =============================================================================
 # ENHANCEMENT 11: SMART MONEY REINFORCEMENT (OPTION D) - BAKER-STYLE
 # =============================================================================
+
 
 def compute_smart_money_reinforcement(
     stage_bucket: str,
@@ -2666,7 +2721,7 @@ def compute_smart_money_reinforcement(
         # NO CATALYST = NO TIMING BOOST (PIT-safe, prevents "general momentum" reinforcement)
         if days_to_catalyst is not None and days_to_catalyst > 0:
             # Peak at ~90 days, drops off outside 30-180 range
-            timing = math.exp(-((days_to_catalyst - 90) / 90) ** 2)
+            timing = math.exp(-(((days_to_catalyst - 90) / 90) ** 2))
         else:
             # No catalyst data: no timing-based reinforcement (and do not mark as applied)
             diagnostics["timing_reason"] = "no_catalyst_data"
@@ -2761,6 +2816,7 @@ def compute_smart_money_reinforcement(
 # ENHANCEMENT 10: THESIS GATE (CLINICAL+POS ELIGIBILITY)
 # =============================================================================
 
+
 def apply_thesis_gate(
     score: Decimal,
     clinical_normalized: Optional[Decimal],
@@ -2815,12 +2871,8 @@ def apply_thesis_gate(
     thesis_score = _quantize_score(thesis_score)
 
     # Get threshold and ceiling for this stage
-    threshold = config["thresholds_by_stage"].get(
-        stage_bucket, config["thresholds_by_stage"]["none"]
-    )
-    ceiling = config["ceiling_by_stage"].get(
-        stage_bucket, config["ceiling_by_stage"]["none"]
-    )
+    threshold = config["thresholds_by_stage"].get(stage_bucket, config["thresholds_by_stage"]["none"])
+    ceiling = config["ceiling_by_stage"].get(stage_bucket, config["ceiling_by_stage"]["none"])
 
     diagnostics["thesis_score"] = str(thesis_score)
     diagnostics["thesis_threshold"] = str(threshold)
@@ -2838,10 +2890,7 @@ def apply_thesis_gate(
             # Penalty scales with how far below threshold
             gap = threshold - thesis_score
             gap_factor = min(gap / Decimal("20"), Decimal("1"))  # Max at 20pt gap
-            penalty = max(
-                penalty_floor,
-                penalty_base - gap_factor * (penalty_base - penalty_floor)
-            )
+            penalty = max(penalty_floor, penalty_base - gap_factor * (penalty_base - penalty_floor))
 
             # Smart money attenuation: lerp penalty toward 1.0
             # smart_money_strength is 0..1 (from conviction/z-score), capped at 0.30
@@ -2875,6 +2924,7 @@ def apply_thesis_gate(
 # =============================================================================
 # MAIN SCORING FUNCTION
 # =============================================================================
+
 
 def _score_single_ticker_v3(
     ticker: str,
@@ -2924,13 +2974,9 @@ def _score_single_ticker_v3(
     fda_timeline_acceleration = fda_data.get("timeline_acceleration_months", 0) if fda_data else 0
     fda_designation_types = fda_data.get("designation_types", []) if fda_data else []
 
-    # Apply FDA designation multiplier to PoS score
-    # BTD (+25%), Fast Track (+12%), etc. boost approval probability
+    # FDA designation pos_multiplier DISABLED (Spec 034).
+    # Designations are a negative return signal — see fda_designation_audit_2026_03.md.
     pos_raw_unadjusted = pos_raw
-    if pos_raw is not None and fda_pos_multiplier and fda_pos_multiplier > Decimal("1.0"):
-        pos_raw = (pos_raw * fda_pos_multiplier).quantize(Decimal("0.01"))
-        # Cap at 95 to avoid overconfidence
-        pos_raw = min(pos_raw, Decimal("95"))
 
     # Extract pipeline diversity data
     diversity_score = _to_decimal(diversity_data.get("diversity_score")) if diversity_data else None
@@ -2950,7 +2996,9 @@ def _score_single_ticker_v3(
     partnership_strength = partnership_data.get("partnership_strength", "unknown") if partnership_data else "unknown"
     partnership_count = partnership_data.get("partnership_count", 0) if partnership_data else 0
     partnership_top_tier = partnership_data.get("top_tier_partners", 0) if partnership_data else 0
-    partnership_total_value = _to_decimal(partnership_data.get("total_deal_value", 0)) if partnership_data else Decimal("0")
+    partnership_total_value = (
+        _to_decimal(partnership_data.get("total_deal_value", 0)) if partnership_data else Decimal("0")
+    )
     partnership_top_partners = partnership_data.get("top_partners", []) if partnership_data else []
 
     # Extract cash burn trajectory data
@@ -2959,8 +3007,12 @@ def _score_single_ticker_v3(
 
     # Extract phase momentum data
     phase_momentum_value = phase_momentum_data.get("momentum", "unknown") if phase_momentum_data else "unknown"
-    phase_momentum_confidence = _to_decimal(phase_momentum_data.get("confidence", 0)) if phase_momentum_data else Decimal("0")
-    phase_momentum_lead_phase = phase_momentum_data.get("current_lead_phase", "unknown") if phase_momentum_data else "unknown"
+    phase_momentum_confidence = (
+        _to_decimal(phase_momentum_data.get("confidence", 0)) if phase_momentum_data else Decimal("0")
+    )
+    phase_momentum_lead_phase = (
+        phase_momentum_data.get("current_lead_phase", "unknown") if phase_momentum_data else "unknown"
+    )
 
     # Extract Morningstar quantitative signal data
     ms_fv_score = _to_decimal(morningstar_data.get("fair_value_discount_score")) if morningstar_data else None
@@ -2970,15 +3022,15 @@ def _score_single_ticker_v3(
     ms_efficiency_score = _to_decimal(morningstar_data.get("capital_efficiency_score")) if morningstar_data else None
 
     # Extract catalyst scores and metadata
-    if hasattr(cat_data, 'score_blended'):
+    if hasattr(cat_data, "score_blended"):
         cat_window = _to_decimal(cat_data.score_blended)
-        cat_proximity = _to_decimal(getattr(cat_data, 'catalyst_proximity_score', 0)) or Decimal("0")
-        cat_delta = _to_decimal(getattr(cat_data, 'catalyst_delta_score', 0)) or Decimal("0")
+        cat_proximity = _to_decimal(getattr(cat_data, "catalyst_proximity_score", 0)) or Decimal("0")
+        cat_delta = _to_decimal(getattr(cat_data, "catalyst_delta_score", 0)) or Decimal("0")
         days_to_cat = _coalesce(
-            getattr(cat_data, 'catalyst_window_days', None),
-            getattr(cat_data, 'days_to_nearest_catalyst', None),
+            getattr(cat_data, "catalyst_window_days", None),
+            getattr(cat_data, "days_to_nearest_catalyst", None),
         )
-        cat_event_type = getattr(cat_data, 'nearest_catalyst_type', "DEFAULT")
+        cat_event_type = getattr(cat_data, "nearest_catalyst_type", "DEFAULT")
     elif isinstance(cat_data, dict):
         scores = cat_data.get("scores", cat_data)
         cat_window = _to_decimal(scores.get("score_blended", scores.get("catalyst_score_net")))
@@ -2999,9 +3051,7 @@ def _score_single_ticker_v3(
         cat_event_type = "DEFAULT"
 
     # Compute effective catalyst score
-    cat_effective, cat_proximity_blended, cat_blend_mode = _compute_catalyst_effective(
-        cat_window, cat_proximity
-    )
+    cat_effective, cat_proximity_blended, cat_blend_mode = _compute_catalyst_effective(cat_window, cat_proximity)
     cat_raw = cat_effective
     if cat_proximity_blended:
         flags.append("catalyst_proximity_blended")
@@ -3054,7 +3104,11 @@ def _score_single_ticker_v3(
         cfo_mm = _to_decimal(raw_cfo) / Decimal("1000000")
     elif fin_data.get("burn_source") == "profitable":
         # Fallback: Profitable = positive CFO, use liquid_assets as proxy
-        cfo_mm = _to_decimal(fin_data.get("liquid_assets")) / Decimal("1000000") if fin_data.get("liquid_assets") else Decimal("1")
+        cfo_mm = (
+            _to_decimal(fin_data.get("liquid_assets")) / Decimal("1000000")
+            if fin_data.get("liquid_assets")
+            else Decimal("1")
+        )
     elif fin_data.get("monthly_burn") == 0 or fin_data.get("monthly_burn") == 0.0:
         # Fallback: No burn = likely profitable
         cfo_mm = Decimal("1")
@@ -3139,7 +3193,10 @@ def _score_single_ticker_v3(
 
     # 3. Valuation signal (V2: with regime routing)
     valuation = compute_valuation_signal(
-        market_cap_mm, trial_count, lead_phase, peer_valuations,
+        market_cap_mm,
+        trial_count,
+        lead_phase,
+        peer_valuations,
         revenue_mm=revenue_mm,
         cfo_mm=cfo_mm,
         enterprise_value_mm=enterprise_value_mm,
@@ -3189,8 +3246,10 @@ def _score_single_ticker_v3(
         runway_gate = "PASS"
     else:
         runway_gate = "UNKNOWN"
-    dilution_gate = "PASS" if dilution_bucket in ("LOW", "MEDIUM") else (
-        "FAIL" if dilution_bucket in ("HIGH", "SEVERE") else "UNKNOWN"
+    dilution_gate = (
+        "PASS"
+        if dilution_bucket in ("LOW", "MEDIUM")
+        else ("FAIL" if dilution_bucket in ("HIGH", "SEVERE") else "UNKNOWN")
     )
 
     interactions = compute_interaction_terms(
@@ -3345,10 +3404,7 @@ def _score_single_ticker_v3(
     # Store financial penalty multiplier for later use
     financial_penalty_mult = regime_config.get("financial_penalty_mult", Decimal("1.0"))
 
-    vol_adjusted_weights = {
-        k: v * vol_adj.weight_adjustment_factor
-        for k, v in regime_weights.items()
-    }
+    vol_adjusted_weights = {k: v * vol_adj.weight_adjustment_factor for k, v in regime_weights.items()}
 
     confidences = {
         "clinical": conf_clin,
@@ -3402,10 +3458,7 @@ def _score_single_ticker_v3(
         if clin_norm is not None and pos_norm is not None:
             thesis_score_pre = (clin_norm + pos_norm) / Decimal("2")
             # Prefer already-computed display stage when present; fall back to lead_phase
-            display_stage = (
-                stage if stage in {"early", "mid", "late"}
-                else _stage_bucket(lead_phase)
-            )
+            display_stage = stage if stage in {"early", "mid", "late"} else _stage_bucket(lead_phase)
             threshold_pre = THESIS_GATE_CONFIG["thresholds_by_stage"].get(
                 display_stage, THESIS_GATE_CONFIG["thresholds_by_stage"]["none"]
             )
@@ -3484,9 +3537,7 @@ def _score_single_ticker_v3(
                 asymmetric_flags.append(f"{name}_asymmetric_downside_amplified")
 
         # ENHANCEMENT 3: Confidence-weighted contribution
-        contrib, conf_factor = compute_confidence_weighted_contribution(
-            transformed_norm, w_eff, conf
-        )
+        contrib, conf_factor = compute_confidence_weighted_contribution(transformed_norm, w_eff, conf)
         contributions[name] = contrib
         confidence_factors[name] = conf_factor
         transformed_norms[name] = transformed_norm
@@ -3499,17 +3550,19 @@ def _score_single_ticker_v3(
         if conf_factor < Decimal("0.7"):
             notes.append(f"conf_weighted_{conf_factor}")
 
-        component_scores.append(ComponentScore(
-            name=name,
-            raw=raw,
-            normalized=transformed_norm,  # Store transformed value
-            confidence=conf,
-            weight_base=base_weights.get(name, Decimal("0")),
-            weight_effective=w_eff,
-            contribution=_quantize_score(contrib),
-            decay_factor=decay.decay_factor if name == "catalyst" else None,
-            notes=notes,
-        ))
+        component_scores.append(
+            ComponentScore(
+                name=name,
+                raw=raw,
+                normalized=transformed_norm,  # Store transformed value
+                confidence=conf,
+                weight_base=base_weights.get(name, Decimal("0")),
+                weight_effective=w_eff,
+                contribution=_quantize_score(contrib),
+                decay_factor=decay.decay_factor if name == "catalyst" else None,
+                notes=notes,
+            )
+        )
 
     # Add asymmetric transform flags
     flags.extend(asymmetric_flags)
@@ -3539,16 +3592,18 @@ def _score_single_ticker_v3(
             if conf_factor < Decimal("0.7"):
                 mom_notes.append(f"conf_weighted_{conf_factor}")
 
-            component_scores.append(ComponentScore(
-                name="momentum",
-                raw=momentum.alpha_60d,
-                normalized=transformed_momentum,
-                confidence=momentum.confidence,
-                weight_base=base_weights.get("momentum", Decimal("0")),
-                weight_effective=w_eff,
-                contribution=_quantize_score(contrib),
-                notes=mom_notes,
-            ))
+            component_scores.append(
+                ComponentScore(
+                    name="momentum",
+                    raw=momentum.alpha_60d,
+                    normalized=transformed_momentum,
+                    confidence=momentum.confidence,
+                    weight_base=base_weights.get("momentum", Decimal("0")),
+                    weight_effective=w_eff,
+                    contribution=_quantize_score(contrib),
+                    notes=mom_notes,
+                )
+            )
 
         if "valuation" in effective_weights:
             w_eff = effective_weights["valuation"]
@@ -3574,16 +3629,18 @@ def _score_single_ticker_v3(
             if conf_factor < Decimal("0.7"):
                 val_notes.append(f"conf_weighted_{conf_factor}")
 
-            component_scores.append(ComponentScore(
-                name="valuation",
-                raw=valuation.mcap_per_asset,
-                normalized=transformed_valuation,
-                confidence=valuation.confidence,
-                weight_base=base_weights.get("valuation", Decimal("0")),
-                weight_effective=w_eff,
-                contribution=_quantize_score(contrib),
-                notes=val_notes,
-            ))
+            component_scores.append(
+                ComponentScore(
+                    name="valuation",
+                    raw=valuation.mcap_per_asset,
+                    normalized=transformed_valuation,
+                    confidence=valuation.confidence,
+                    weight_base=base_weights.get("valuation", Decimal("0")),
+                    weight_effective=w_eff,
+                    contribution=_quantize_score(contrib),
+                    notes=val_notes,
+                )
+            )
 
         # Short interest signal integration
         if "short_interest" in effective_weights and si_raw is not None:
@@ -3613,16 +3670,18 @@ def _score_single_ticker_v3(
             elif si_trend_direction == "BUILDING":
                 flags.append("shorts_building")
 
-            component_scores.append(ComponentScore(
-                name="short_interest",
-                raw=si_raw,
-                normalized=si_norm,
-                confidence=conf_si,
-                weight_base=base_weights.get("short_interest", Decimal("0")),
-                weight_effective=w_eff,
-                contribution=_quantize_score(contrib),
-                notes=si_notes if si_notes else [],
-            ))
+            component_scores.append(
+                ComponentScore(
+                    name="short_interest",
+                    raw=si_raw,
+                    normalized=si_norm,
+                    confidence=conf_si,
+                    weight_base=base_weights.get("short_interest", Decimal("0")),
+                    weight_effective=w_eff,
+                    contribution=_quantize_score(contrib),
+                    notes=si_notes if si_notes else [],
+                )
+            )
             flags.append("short_interest_applied")
 
     pos_contrib_raw = Decimal("0")
@@ -3642,16 +3701,18 @@ def _score_single_ticker_v3(
         contributions["pos"] = pos_contrib_capped
         transformed_norms["pos"] = pos_norm
 
-        component_scores.append(ComponentScore(
-            name="pos",
-            raw=pos_raw,
-            normalized=pos_norm,
-            confidence=conf_pos,
-            weight_base=base_weights.get("pos", Decimal("0")),
-            weight_effective=w_eff,
-            contribution=_quantize_score(pos_contrib_capped),
-            notes=["delta_capped"] if pos_delta_was_capped else [],
-        ))
+        component_scores.append(
+            ComponentScore(
+                name="pos",
+                raw=pos_raw,
+                normalized=pos_norm,
+                confidence=conf_pos,
+                weight_base=base_weights.get("pos", Decimal("0")),
+                weight_effective=w_eff,
+                contribution=_quantize_score(pos_contrib_capped),
+                notes=["delta_capped"] if pos_delta_was_capped else [],
+            )
+        )
         flags.append("pos_score_applied")
 
     # =========================================================================
@@ -3699,16 +3760,18 @@ def _score_single_ticker_v3(
             if smart_money.conditional_capped:
                 sm_notes.append("conditional_capped")
 
-        component_scores.append(ComponentScore(
-            name="smart_money",
-            raw=Decimal(str(smart_money.overlap_count)),  # Raw overlap count
-            normalized=sm_norm,
-            confidence=sm_confidence,
-            weight_base=sm_base_weight,
-            weight_effective=sm_w_eff,
-            contribution=_quantize_score(sm_contrib),
-            notes=sm_notes if sm_notes else [],
-        ))
+        component_scores.append(
+            ComponentScore(
+                name="smart_money",
+                raw=Decimal(str(smart_money.overlap_count)),  # Raw overlap count
+                normalized=sm_norm,
+                confidence=sm_confidence,
+                weight_base=sm_base_weight,
+                weight_effective=sm_w_eff,
+                contribution=_quantize_score(sm_contrib),
+                notes=sm_notes if sm_notes else [],
+            )
+        )
         flags.append("smart_money_applied")
 
     # =========================================================================
@@ -3750,10 +3813,7 @@ def _score_single_ticker_v3(
             # This allows late-stage companies to use the "late" threshold (45)
             # instead of being forced into "poc" threshold (55) by catalyst type
             # Prefer already-computed display stage when present; fall back to lead_phase
-            display_stage_bucket = (
-                stage if stage in {"early", "mid", "late"}
-                else _stage_bucket(lead_phase)
-            )
+            display_stage_bucket = stage if stage in {"early", "mid", "late"} else _stage_bucket(lead_phase)
             threshold = THESIS_GATE_CONFIG["thresholds_by_stage"].get(
                 display_stage_bucket, THESIS_GATE_CONFIG["thresholds_by_stage"]["none"]
             )
@@ -3773,6 +3833,7 @@ def _score_single_ticker_v3(
 
     # Compute smart money strength for thesis gate attenuation + partial reinforcement
     import math as _math_reinf
+
     if conviction_overlap is not None and cohort_conviction_stats and cohort_conviction_stats.get("std", 0) > 0.01:
         _z_reinf = (conviction_overlap - cohort_conviction_stats["mean"]) / max(cohort_conviction_stats["std"], 0.01)
         _sm_strength_reinf = Decimal(str(1 / (1 + _math_reinf.exp(-_z_reinf))))  # sigmoid -> 0..1
@@ -3817,9 +3878,7 @@ def _score_single_ticker_v3(
         # Single asset + early stage (binary risk)
         # Guard: only fire when lead_phase is explicitly known (stage defaults
         # to "early" when lead_phase is absent — not reliable).
-        if (diversity_risk_profile == "single_asset"
-                and stage.lower() in ("early", "preclinical")
-                and lead_phase):
+        if diversity_risk_profile == "single_asset" and stage.lower() in ("early", "preclinical") and lead_phase:
             _red_flag_reasons.append("single_asset_early")
         # No revenue + late stage
         if has_revenue is False and stage.lower() in ("late",):
@@ -3832,10 +3891,12 @@ def _score_single_ticker_v3(
             _red_flag_reasons.append("sponsor_absent_late")
         # Weak competitive position under intense crowding
         # Guard: require competitor_count > 0 to prove signal was computed
-        if (intensity_crowding == "intense"
-                and intensity_position in ("weak", "disadvantaged")
-                and intensity_competitor_count is not None
-                and intensity_competitor_count > 0):
+        if (
+            intensity_crowding == "intense"
+            and intensity_position in ("weak", "disadvantaged")
+            and intensity_competitor_count is not None
+            and intensity_competitor_count > 0
+        ):
             _red_flag_reasons.append("weak_competitive")
 
         if _red_flag_reasons:
@@ -3869,8 +3930,7 @@ def _score_single_ticker_v3(
     # Add thesis gate diagnostic details (display stage + bypass reason)
     # Prefer already-computed display stage when present; fall back to lead_phase
     reinforcement_diagnostics["thesis_display_stage"] = (
-        stage if stage in {"early", "mid", "late"}
-        else _stage_bucket(lead_phase)
+        stage if stage in {"early", "mid", "late"} else _stage_bucket(lead_phase)
     )
     if thesis_gate_bypass_reason:
         reinforcement_diagnostics["thesis_gate_bypass"] = thesis_gate_bypass_reason
@@ -3898,7 +3958,10 @@ def _score_single_ticker_v3(
     # =========================================================================
 
     contributions, guardrail_flags, guardrail_diag = apply_dev_catalyst_guardrail(
-        contributions, stage_bucket_alpha, conf_cat, lead_date_spec,
+        contributions,
+        stage_bucket_alpha,
+        conf_cat,
+        lead_date_spec,
         {"smart_money": sm_norm, "financial": fin_norm},
     )
     flags.extend(guardrail_flags)
@@ -3962,7 +4025,7 @@ def _score_single_ticker_v3(
     post_uncertainty = pre_penalty * (Decimal("1") - uncertainty_penalty)
 
     severities = [fin_data.get("severity", "none"), clin_data.get("severity", "none")]
-    if hasattr(cat_data, 'severe_negative_flag') and cat_data.severe_negative_flag:
+    if hasattr(cat_data, "severe_negative_flag") and cat_data.severe_negative_flag:
         severities.append("sev1")
     elif isinstance(cat_data, dict):
         flags_dict = cat_data.get("flags", {})
@@ -3974,12 +4037,7 @@ def _score_single_ticker_v3(
     post_severity = post_uncertainty * severity_multiplier
     post_severity = _quantize_score(post_severity)
 
-    post_cap, caps_applied = _apply_monotonic_caps(
-        post_severity,
-        liquidity_status,
-        runway_months,
-        dilution_bucket
-    )
+    post_cap, caps_applied = _apply_monotonic_caps(post_severity, liquidity_status, runway_months, dilution_bucket)
 
     # =========================================================================
     # ENHANCEMENT 4: DYNAMIC SCORE CEILINGS
@@ -4030,11 +4088,13 @@ def _score_single_ticker_v3(
     if existential_flags:
         flags.extend(existential_flags)
         if post_existential < post_ceiling:
-            caps_applied.append({
-                "reason": "existential_cap",
-                "cap": str(EXISTENTIAL_FLAW_CONFIG["existential_cap"]),
-                "flaws": existential_flaws,
-            })
+            caps_applied.append(
+                {
+                    "reason": "existential_cap",
+                    "cap": str(EXISTENTIAL_FLAW_CONFIG["existential_cap"]),
+                    "flaws": existential_flaws,
+                }
+            )
 
     post_vol = apply_volatility_to_score(post_existential, vol_adj)
 
@@ -4046,7 +4106,9 @@ def _score_single_ticker_v3(
     survivability_contribution = (survivability_score * SURVIVABILITY_WEIGHT).quantize(SCORE_PRECISION)
 
     # Allow negative raw scores (e.g. negative-weight models) without collapsing to 0
-    final_score = _clamp(post_vol + delta_bonus + survivability_contribution + ms_cross_validation_adj, Decimal("-100"), Decimal("100"))
+    final_score = _clamp(
+        post_vol + delta_bonus + survivability_contribution + ms_cross_validation_adj, Decimal("-100"), Decimal("100")
+    )
     final_score = _quantize_score(final_score)
 
     # =========================================================================
@@ -4087,7 +4149,9 @@ def _score_single_ticker_v3(
 
     if attn_cfg.get("enabled", True):
         attn_weights, attn_flags, attn_diag = apply_dev_catalyst_weight_attenuation(
-            effective_weights, stage_bucket_alpha, lead_date_spec,
+            effective_weights,
+            stage_bucket_alpha,
+            lead_date_spec,
             {"smart_money": sm_norm, "financial": fin_norm},
         )
         if attn_diag.get("attenuated"):
@@ -4141,7 +4205,9 @@ def _score_single_ticker_v3(
             attn_post_unc = attn_pre_penalty * (Decimal("1") - uncertainty_penalty)
             attn_post_sev = _quantize_score(attn_post_unc * severity_multiplier)
             attn_post_cap, _ = _apply_monotonic_caps(attn_post_sev, liquidity_status, runway_months, dilution_bucket)
-            attn_post_ceil, _ = apply_dynamic_ceilings(attn_post_cap, lead_phase, days_to_cat, revenue_growth, is_commercial)
+            attn_post_ceil, _ = apply_dynamic_ceilings(
+                attn_post_cap, lead_phase, days_to_cat, revenue_growth, is_commercial
+            )
             if guardrail_diag.get("ceiling"):
                 _gr_cap_attn = Decimal(guardrail_diag["ceiling"])
                 if attn_post_ceil > _gr_cap_attn:
@@ -4150,7 +4216,8 @@ def _score_single_ticker_v3(
             attn_post_vol = apply_volatility_to_score(attn_post_exist, vol_adj)
             attn_final_score = _clamp(
                 attn_post_vol + delta_bonus + survivability_contribution + ms_cross_validation_adj,
-                Decimal("-100"), Decimal("100"),
+                Decimal("-100"),
+                Decimal("100"),
             )
             attn_final_score = _quantize_score(attn_final_score)
 
@@ -4206,8 +4273,14 @@ def _score_single_ticker_v3(
     }
 
     determinism_hash = _compute_determinism_hash(
-        ticker, SCHEMA_VERSION, mode.value, base_weights, effective_weights,
-        component_scores, enhancements_dict, final_score
+        ticker,
+        SCHEMA_VERSION,
+        mode.value,
+        base_weights,
+        effective_weights,
+        component_scores,
+        enhancements_dict,
+        final_score,
     )
 
     # Confidence: weight-proportional blend of component confidences
@@ -4220,9 +4293,7 @@ def _score_single_ticker_v3(
         if _cw > 0 and _cc is not None and _cc > 0:
             _conf_total_w += _cw
             _conf_total_wc += _cw * _cc
-    confidence_overall = (
-        (_conf_total_wc / _conf_total_w) if _conf_total_w > 0 else Decimal("0.5")
-    )
+    confidence_overall = (_conf_total_wc / _conf_total_w) if _conf_total_w > 0 else Decimal("0.5")
     confidence_overall = _clamp(confidence_overall, Decimal("0.1"), Decimal("0.9"))
 
     breakdown = ScoreBreakdown(
@@ -4231,19 +4302,37 @@ def _score_single_ticker_v3(
         base_weights={k: str(v) for k, v in base_weights.items()},
         regime_adjustments={"regime": regime},
         effective_weights={k: str(v) for k, v in effective_weights.items()},
-        components=[{
-            "name": c.name, "raw": str(c.raw) if c.raw is not None else None,
-            "normalized": str(c.normalized) if c.normalized is not None else None,
-            "confidence": str(c.confidence), "weight_base": str(c.weight_base),
-            "weight_effective": str(c.weight_effective), "contribution": str(c.contribution),
-            "decay_factor": str(c.decay_factor) if c.decay_factor is not None else None,
-            "notes": c.notes,
-        } for c in component_scores],
+        components=[
+            {
+                "name": c.name,
+                "raw": str(c.raw) if c.raw is not None else None,
+                "normalized": str(c.normalized) if c.normalized is not None else None,
+                "confidence": str(c.confidence),
+                "weight_base": str(c.weight_base),
+                "weight_effective": str(c.weight_effective),
+                "contribution": str(c.contribution),
+                "decay_factor": str(c.decay_factor) if c.decay_factor is not None else None,
+                "notes": c.notes,
+            }
+            for c in component_scores
+        ],
         enhancements={
-            "momentum": {"score": str(momentum.momentum_score), "alpha_60d": str(momentum.alpha_60d) if momentum.alpha_60d else None, "confidence": str(momentum.confidence)},
-            "valuation": {"score": str(valuation.valuation_score), "peer_count": valuation.peer_count, "confidence": str(valuation.confidence)},
+            "momentum": {
+                "score": str(momentum.momentum_score),
+                "alpha_60d": str(momentum.alpha_60d) if momentum.alpha_60d else None,
+                "confidence": str(momentum.confidence),
+            },
+            "valuation": {
+                "score": str(valuation.valuation_score),
+                "peer_count": valuation.peer_count,
+                "confidence": str(valuation.confidence),
+            },
             "smart_money": {"score": str(smart_money.smart_money_score), "overlap_count": smart_money.overlap_count},
-            "volatility": {"bucket": vol_adj.vol_bucket.value, "weight_factor": str(vol_adj.weight_adjustment_factor), "score_factor": str(vol_adj.score_adjustment_factor)},
+            "volatility": {
+                "bucket": vol_adj.vol_bucket.value,
+                "weight_factor": str(vol_adj.weight_adjustment_factor),
+                "score_factor": str(vol_adj.score_adjustment_factor),
+            },
             "catalyst_decay": {"factor": str(decay.decay_factor), "in_optimal_window": decay.in_optimal_window},
             "confidence_factors": {k: str(v) for k, v in confidence_factors.items()},
             "stage_size_weighting": tilt_diagnostics,
@@ -4297,8 +4386,13 @@ def _score_single_ticker_v3(
 
     # Phase-weighted trial computation (diagnostic only, no scoring impact)
     _pw_weights = {
-        "phase_1": 0.5, "phase_1_2": 0.75, "phase_2": 1.0,
-        "phase_2_3": 1.5, "phase_3": 2.0, "approved": 3.0, "other": 0.25,
+        "phase_1": 0.5,
+        "phase_1_2": 0.75,
+        "phase_2": 1.0,
+        "phase_2_3": 1.5,
+        "phase_3": 2.0,
+        "approved": 3.0,
+        "other": 0.25,
     }
     phase_weighted_trials = sum(phase_counts.get(p, 0) * w for p, w in _pw_weights.items())
     mcap_per_pw_trial = (
@@ -4333,7 +4427,9 @@ def _score_single_ticker_v3(
         "confidence_clinical": conf_clin,
         "confidence_financial": conf_fin,
         "confidence_catalyst": conf_cat,
-        "confidence_pos": conf_pos if mode in (ScoringMode.ENHANCED, ScoringMode.BAKER_STYLE, ScoringMode.ADAPTIVE) else None,
+        "confidence_pos": (
+            conf_pos if mode in (ScoringMode.ENHANCED, ScoringMode.BAKER_STYLE, ScoringMode.ADAPTIVE) else None
+        ),
         "confidence_short_interest": conf_si if si_raw is not None else None,
         "confidence_overall": confidence_overall,
         "effective_weights": effective_weights,
@@ -4358,18 +4454,22 @@ def _score_single_ticker_v3(
             "peer_count": valuation.peer_count,
             "confidence": str(valuation.confidence),
             # V2 regime routing fields
-            "regime": valuation.regime.value if hasattr(valuation.regime, 'value') else str(valuation.regime),
+            "regime": valuation.regime.value if hasattr(valuation.regime, "value") else str(valuation.regime),
             "method": valuation.method,
             "ev_multiple": str(valuation.ev_multiple) if valuation.ev_multiple else None,
-            "peer_median_ev_multiple": str(valuation.peer_median_ev_multiple) if valuation.peer_median_ev_multiple else None,
+            "peer_median_ev_multiple": (
+                str(valuation.peer_median_ev_multiple) if valuation.peer_median_ev_multiple else None
+            ),
             "mcap_per_asset": str(valuation.mcap_per_asset) if valuation.mcap_per_asset else None,
-            "peer_median_mcap_per_asset": str(valuation.peer_median_mcap_per_asset) if valuation.peer_median_mcap_per_asset else None,
+            "peer_median_mcap_per_asset": (
+                str(valuation.peer_median_mcap_per_asset) if valuation.peer_median_mcap_per_asset else None
+            ),
             "flags": valuation.flags if valuation.flags else [],
             # Debug/audit fields (ranking-neutral)
             "valuation_raw_metric": (
-                str(valuation.mcap_per_asset) if valuation.mcap_per_asset is not None
-                else str(valuation.ev_multiple) if valuation.ev_multiple is not None
-                else None
+                str(valuation.mcap_per_asset)
+                if valuation.mcap_per_asset is not None
+                else str(valuation.ev_multiple) if valuation.ev_multiple is not None else None
             ),
             "valuation_mcap_mm": str(valuation.mcap_used_mm) if valuation.mcap_used_mm is not None else None,
             "valuation_denom_trials_total": trial_count,
