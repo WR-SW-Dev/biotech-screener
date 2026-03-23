@@ -116,6 +116,12 @@ class DecisionRuleset:
         ("headwind", 1.0),
     )
 
+    # Oncology crowding penalty (opt-in, default OFF — Spec 033)
+    # Penalizes oncology names in crowded indications. Only fires when
+    # therapeutic_area == "oncology"; non-oncology names are unaffected.
+    enable_oncology_crowding_penalty: bool = False
+    oncology_crowding_weight: float = 0.3
+
     # Missingness penalties (opt-in, default off — tracking always on)
     enable_missingness_sort_penalty: bool = False
     enable_missingness_size_penalty: bool = False
@@ -1435,6 +1441,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "binary_institutional_now",
     "clinical_build_window",
     "pcr_penalty_bw",
+    "oncology_crowding",
 )
 
 
@@ -1453,6 +1460,7 @@ def _build_sort_contributions(
     *,
     alpha_raw: float,
     catalyst_bonus: float,
+    catalyst_type_mult: float = 1.0,
 ) -> List[SortContribution]:
     """Compute all sort-anchor adjustments as structured contributions.
 
@@ -1518,7 +1526,8 @@ def _build_sort_contributions(
 
     # 6. Catalyst bonus (non-zero only in blended mode)
     if catalyst_bonus != 0.0:
-        contribs.append(SortContribution("catalyst_bonus", catalyst_bonus, 1.0, catalyst_bonus))
+        scaled_bonus = catalyst_bonus * catalyst_type_mult
+        contribs.append(SortContribution("catalyst_bonus", catalyst_bonus, catalyst_type_mult, scaled_bonus))
 
     # 7. Binary 91-180 within-bucket quality re-ranking
     # Only activates for less_binary names when sort_mode != "baseline".
@@ -1529,7 +1538,7 @@ def _build_sort_contributions(
     if bucket == "less_binary" and b91_mode != "baseline":
         bqs = _safe_float(decision_fields.get("binary_quality_score"), default=0.0)
         bqs_w = ruleset.binary_91_180_quality_weight
-        delta = bqs_w * bqs
+        delta = bqs_w * bqs * catalyst_type_mult
         contribs.append(SortContribution("binary_quality", bqs, bqs_w, delta))
 
         # 8. Binary 91-180 institutional tilt (quality_plus_institutional only)
@@ -1548,7 +1557,7 @@ def _build_sort_contributions(
         if family == "CLINICAL":
             cqc = _safe_float(decision_fields.get("clinical_quality_composite"), default=0.0)
             cq_w = ruleset.binary_91_180_clinical_quality_weight
-            delta_cq = cq_w * cqc
+            delta_cq = cq_w * cqc * catalyst_type_mult
             contribs.append(SortContribution("clinical_quality_91_180", cqc, cq_w, delta_cq))
 
     # 10. Binary 91-180 options quality tilt (options_quality or clinical_plus_options mode)
@@ -1612,6 +1621,17 @@ def _build_sort_contributions(
             pcr_w = ruleset.pcr_penalty_weight
             delta_pcr = -(pcr_w * pcr_excess)  # negative = penalty
             contribs.append(SortContribution("pcr_penalty_bw", pcr_raw, pcr_w, delta_pcr))
+
+    # 14. Oncology crowding penalty (Spec 033)
+    # Penalizes oncology names in crowded indications. Non-oncology unaffected.
+    # Higher competitive_intensity_z = more crowded → negative delta → sorts later.
+    if ruleset.enable_oncology_crowding_penalty:
+        ta = str(decision_fields.get("therapeutic_area", ""))
+        if ta == "oncology":
+            ci_z = _safe_float(decision_fields.get("competitive_intensity_z"), default=0.0)
+            oc_w = ruleset.oncology_crowding_weight
+            delta_oc = -(oc_w * ci_z)  # negative: crowded → sorts later
+            contribs.append(SortContribution("oncology_crowding", ci_z, oc_w, delta_oc))
 
     return contribs
 
@@ -1746,11 +1766,18 @@ def compute_actionable_sort_key(
         bonus_map = dict(rs.catalyst_priority_rank_bonuses)
         catalyst_bonus = bonus_map.get(cat_priority, 0.0)
 
+    # Resolve catalyst type multiplier for sort-key scaling (Spec 030)
+    _ctm = 1.0
+    if rs.enable_catalyst_type_tilt:
+        _ct_tier = classify_catalyst_type_tier(catalyst_event_type)
+        _ctm = dict(rs.catalyst_type_mults).get(_ct_tier, 1.0)
+
     contribs = _build_sort_contributions(
         decision_fields,
         rs,
         alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
+        catalyst_type_mult=_ctm,
     )
     total_adj = sum(c.delta for c in contribs)
 
@@ -1833,11 +1860,18 @@ def compute_sort_contribs(
         )
         catalyst_bonus = bonus_map.get(cat_priority, 0.0)
 
+    # Resolve catalyst type multiplier for sort-key scaling (Spec 030)
+    _ctm = 1.0
+    if rs.enable_catalyst_type_tilt:
+        _ct_tier = classify_catalyst_type_tier(catalyst_event_type)
+        _ctm = dict(rs.catalyst_type_mults).get(_ct_tier, 1.0)
+
     contribs = _build_sort_contributions(
         decision_fields,
         rs,
         alpha_raw=_safe_float(alpha_raw, default=0.0),
         catalyst_bonus=catalyst_bonus,
+        catalyst_type_mult=_ctm,
     )
 
     # Build the output map — every key present, 0.0 when inactive.

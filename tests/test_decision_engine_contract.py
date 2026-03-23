@@ -1006,6 +1006,7 @@ class TestSnapshotInputContract:
             "de_sort_contrib_binary_institutional_now",
             "de_sort_contrib_clinical_build_window",
             "de_sort_contrib_pcr_penalty_bw",
+            "de_sort_contrib_oncology_crowding",
         }
     )
 

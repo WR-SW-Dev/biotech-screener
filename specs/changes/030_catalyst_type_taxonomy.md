@@ -154,6 +154,23 @@ expectation.
 - Distribution: 125 CT_PRIMARY_COMPLETION, 18 DATA_READOUT, 8 FDA_PDUFA_DATE, 22 empty
 - Existing hard_catalyst classifier provides the foundation; this spec adds gradation
 
+### 2026-03-21 — Evaluation complete → DORMANT
+- **Sort-key wiring gap found and fixed**: catalyst_type_mult was only in L3 sizing, not sort key.
+  Wired into _build_sort_contributions for catalyst_bonus (#6), binary_quality (#7),
+  clinical_quality_91_180 (#9). 205 contract tests pass.
+- **Rerank (87 dates, 2025-06 to 2026-03)**: top-60 overlap 99.2% (PASS), mean rank shift
+  0.39 (PASS). Effect localized to less_binary. T1/T2 signed shift -0.75 (UP, correct),
+  T3+ signed shift +0.05 (DOWN, correct). Separation +0.80.
+- **Signal evidence (27/34 dates, catalyst_tilt_eval manifest)**: all deltas positive but
+  effectively zero. 84d hedged delta +0.00pp vs +0.20pp bar → **NEEDS_MORE**.
+- **Root cause**: effect confined to mid-book less_binary names (ranks 23-50) that don't
+  enter top-K=20 portfolio driving forward returns.
+- **Decision**: DORMANT. Structurally valid, economically immaterial. Do not widen scope
+  into build_window/binary_now (different risk profile) or combine with catalyst tilt
+  (confounds attribution). Revisit only if catalyst tilt (a08749e4) clears weekly gate.
+- Manifest entry: b7511c92, status=dormant
+- Evidence packet: output/signal_evidence/catalyst_type_tilt/
+
 ---
 
 *Template version: 1.0.0 — see specs/SYSTEM_SPEC.md for system invariants*
