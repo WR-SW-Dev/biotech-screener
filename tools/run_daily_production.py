@@ -4451,6 +4451,20 @@ def run_daily(
         except Exception as _sc_err:
             print(f"  [WARN] Readiness scorecard failed: {_sc_err}")
 
+        # --- Step 5l: Ops digest (non-blocking) ---
+        try:
+            from tools.build_ops_digest import run_ops_digest
+
+            _od_result = run_ops_digest(as_of_date)
+            if "error" in _od_result:
+                print(f"  Ops digest → skipped ({_od_result['error']})")
+            else:
+                _od_attention = _od_result.get("attention", "?")
+                _od_path = _od_result.get("_paths", {}).get("md_path", "?")
+                print(f"  Ops digest → {_od_attention} ({_od_path})")
+        except Exception as _od_err:
+            print(f"  [WARN] Ops digest failed: {_od_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
