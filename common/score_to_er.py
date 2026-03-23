@@ -23,11 +23,12 @@ Default λ = 0.08 (8% per 1σ per year):
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import math
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Any, Dict, List, Optional
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List
 
 # =============================================================================
 # CONFIGURATION
@@ -45,6 +46,7 @@ ER_MODEL_VERSION = "1.0.0"
 # =============================================================================
 # INVERSE NORMAL CDF (Acklam Approximation)
 # =============================================================================
+
 
 def _norm_ppf(p: float) -> float:
     """
@@ -67,37 +69,37 @@ def _norm_ppf(p: float) -> float:
     if p <= 0.0:
         return -10.0  # Practical lower bound
     if p >= 1.0:
-        return 10.0   # Practical upper bound
+        return 10.0  # Practical upper bound
 
     # Coefficients for rational approximation
     a = [
-        -3.969683028665376e+01,
-        2.209460984245205e+02,
-        -2.759285104469687e+02,
-        1.383577518672690e+02,
-        -3.066479806614716e+01,
-        2.506628277459239e+00,
+        -3.969683028665376e01,
+        2.209460984245205e02,
+        -2.759285104469687e02,
+        1.383577518672690e02,
+        -3.066479806614716e01,
+        2.506628277459239e00,
     ]
     b = [
-        -5.447609879822406e+01,
-        1.615858368580409e+02,
-        -1.556989798598866e+02,
-        6.680131188771972e+01,
-        -1.328068155288572e+01,
+        -5.447609879822406e01,
+        1.615858368580409e02,
+        -1.556989798598866e02,
+        6.680131188771972e01,
+        -1.328068155288572e01,
     ]
     c = [
         -7.784894002430293e-03,
         -3.223964580411365e-01,
-        -2.400758277161838e+00,
-        -2.549732539343734e+00,
-        4.374664141464968e+00,
-        2.938163982698783e+00,
+        -2.400758277161838e00,
+        -2.549732539343734e00,
+        4.374664141464968e00,
+        2.938163982698783e00,
     ]
     d = [
         7.784695709041462e-03,
         3.224671290700398e-01,
-        2.445134137142996e+00,
-        3.754408661907416e+00,
+        2.445134137142996e00,
+        3.754408661907416e00,
     ]
 
     # Split points for approximation regions
@@ -107,28 +109,29 @@ def _norm_ppf(p: float) -> float:
     if p < p_low:
         # Lower tail approximation
         q = math.sqrt(-2.0 * math.log(p))
-        num = (((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5])
-        den = ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1.0)
+        num = ((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]
+        den = (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
         return num / den
 
     if p > p_high:
         # Upper tail approximation
         q = math.sqrt(-2.0 * math.log(1.0 - p))
-        num = -(((((c[0]*q + c[1])*q + c[2])*q + c[3])*q + c[4])*q + c[5])
-        den = ((((d[0]*q + d[1])*q + d[2])*q + d[3])*q + 1.0)
+        num = -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5])
+        den = (((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1.0
         return num / den
 
     # Central region approximation
     q = p - 0.5
     r = q * q
-    num = (((((a[0]*r + a[1])*r + a[2])*r + a[3])*r + a[4])*r + a[5]) * q
-    den = (((((b[0]*r + b[1])*r + b[2])*r + b[3])*r + b[4])*r + 1.0)
+    num = (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q
+    den = ((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1.0
     return num / den
 
 
 # =============================================================================
 # SCORE → PERCENTILE → Z-SCORE
 # =============================================================================
+
 
 def _safe_float(val: Any, default: float = 0.0) -> float:
     """Safely convert value to float, returning default on failure."""
@@ -271,6 +274,7 @@ def attach_rank_and_z(
 # Z-SCORE → EXPECTED EXCESS RETURN
 # =============================================================================
 
+
 def attach_expected_return(
     rows: List[Dict[str, Any]],
     lambda_annual: Decimal = DEFAULT_LAMBDA_ANNUAL,
@@ -302,21 +306,18 @@ def attach_expected_return(
 
         # Expected annual excess return
         er_annual = z_dec * lambda_annual
-        r["expected_excess_return_annual"] = float(
-            er_annual.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP)
-        )
+        r["expected_excess_return_annual"] = float(er_annual.quantize(Decimal("0.0001"), rounding=ROUND_HALF_UP))
 
         # Expected daily excess return (optional)
         if include_daily:
             er_daily = er_annual / trading_days
-            r["expected_excess_return_daily"] = float(
-                er_daily.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP)
-            )
+            r["expected_excess_return_daily"] = float(er_daily.quantize(Decimal("0.000001"), rounding=ROUND_HALF_UP))
 
 
 # =============================================================================
 # COMBINED CONVENIENCE FUNCTION
 # =============================================================================
+
 
 def compute_expected_returns(
     ranked_securities: List[Dict[str, Any]],
@@ -387,6 +388,7 @@ def compute_expected_returns(
 # VALIDATION
 # =============================================================================
 
+
 def validate_er_output(rows: List[Dict[str, Any]]) -> List[str]:
     """
     Validate expected return output.
@@ -420,7 +422,7 @@ def validate_er_output(rows: List[Dict[str, Any]]) -> List[str]:
 
         # Z-scores should span reasonable range for the sample size
         n = len(z_values)
-        expected_range = 2.0 * _norm_ppf(1 - 0.5/n) if n > 1 else 0
+        expected_range = 2.0 * _norm_ppf(1 - 0.5 / n) if n > 1 else 0
         actual_range = z_max - z_min
         if actual_range < expected_range * 0.5:
             warnings.append(f"Z-score range too narrow: {actual_range:.2f} vs expected {expected_range:.2f}")

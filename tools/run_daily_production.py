@@ -439,6 +439,8 @@ def run_screen(
         "--snapshot-dir",
         str(snapshot_dir),
         "--strict",
+        "--inputs-manifest",
+        "write",
     ]
     if ruleset_path:
         cmd.extend(["--ruleset", str(ruleset_path)])
@@ -3658,7 +3660,7 @@ def run_daily(
     price_cache_dir: Optional[Path] = None,
     fail_on_bad_cache: bool = False,
     skip_pit_warm: bool = False,
-    warm_sources: str = "sec_8k,ctgov,sec_13f",
+    warm_sources: str = "sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory",
     warm_price_pit: bool = True,
     price_pit_backfill: bool = False,
     auto_refresh_market_data: bool = True,
@@ -4534,10 +4536,10 @@ def main():
     )
     parser.add_argument(
         "--warm-sources",
-        default="sec_8k,ctgov,sec_13f,euctr,ctis,isrctn,merged_trials",
+        default="sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials",
         help=(
             "Comma-separated sources passed to warm_caches.py in step 1.5 "
-            "(default: sec_8k,ctgov,sec_13f,euctr,ctis,isrctn,merged_trials). "
+            "(default: sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials). "
             "Use empty string to skip."
         ),
     )

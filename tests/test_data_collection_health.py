@@ -301,10 +301,11 @@ class TestSourceChecks:
         health = build_health(snap, data, "2026-03-17")
         assert health["sources"]["cache_health"]["status"] == "FAIL"
 
-    def test_missing_inputs_manifest_warns(self, healthy_snapshot):
+    def test_missing_inputs_manifest_info(self, healthy_snapshot):
+        """Missing manifest is INFO (opt-in feature), not WARN."""
         snap, data = healthy_snapshot
         health = build_health(snap, data, "2026-03-17")
-        assert health["sources"]["inputs_manifest"]["status"] == "WARN"
+        assert health["sources"]["inputs_manifest"]["status"] == "INFO"
         assert not health["sources"]["inputs_manifest"].get("present")
 
 

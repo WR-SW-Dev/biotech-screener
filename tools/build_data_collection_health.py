@@ -392,8 +392,10 @@ def _check_fda(as_of_date: str) -> Dict[str, Any]:
         adcom_present = bool(list(fda_dir.glob(f"adcom_calendar_{as_of_date}*.json")))
         reg_present = bool(list(fda_dir.glob(f"fda_regulatory_{as_of_date}*.json")))
 
+    # INFO (not WARN) when FDA caches are absent — they are opt-in features,
+    # not a degraded state that requires action.
     return {
-        "status": "PASS" if (adcom_present or reg_present) else "WARN",
+        "status": "PASS" if (adcom_present or reg_present) else "INFO",
         "adcom_cache_present": adcom_present,
         "regulatory_cache_present": reg_present,
     }
@@ -402,7 +404,8 @@ def _check_fda(as_of_date: str) -> Dict[str, Any]:
 def _check_inputs_manifest(snap_dir: Path, thresholds: Dict) -> Dict[str, Any]:
     manifest = _load_json(snap_dir / "inputs_manifest.json")
     if manifest is None:
-        return {"status": "WARN", "present": False, "reason": "inputs_manifest.json not found"}
+        # INFO (not WARN) — inputs manifest is opt-in via --inputs-manifest write.
+        return {"status": "INFO", "present": False, "reason": "inputs_manifest.json not found"}
 
     deps = manifest.get("dependencies", [])
     required_missing = sum(1 for d in deps if d.get("required") and not d.get("present", True))
@@ -453,7 +456,7 @@ def build_health(
         for flag in src_result.get("flags", []):
             all_flags.append(f"[{src_name}] {flag}")
 
-    # Derive overall status
+    # Derive overall status (INFO does not escalate — it signals expected/opt-in state)
     statuses = [s.get("status", "PASS") for s in sources.values()]
     if "FAIL" in statuses:
         overall = "FAIL"
