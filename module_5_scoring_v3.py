@@ -32,18 +32,14 @@ from common.types import Severity
 from financial_module_2_survivability import compute_survivability_score
 
 # Import IC enhancement utilities
-from src.modules.ic_enhancements import ContradictionResult  # Enhancement 6: Contradiction result type
 from src.modules.ic_enhancements import detect_contradictions  # Enhancement 6: Contradiction detector
-from src.modules.ic_enhancements import (  # Core enhancement functions; Types; Helpers
+from src.modules.ic_enhancements import (
     EPS,
     SCORE_PRECISION,
     CatalystDecayResult,
     InteractionTerms,
-    MomentumSignal,
     MultiWindowMomentumInput,
     SmartMoneySignal,
-    ValuationRegime,
-    ValuationSignal,
     VolatilityAdjustment,
     VolatilityBucket,
     _clamp,
@@ -56,7 +52,6 @@ from src.modules.ic_enhancements import (  # Core enhancement functions; Types; 
     compute_catalyst_decay,
     compute_interaction_terms,
     compute_momentum_signal_multiwindow,
-    compute_momentum_signal_with_fallback,
     compute_smart_money_signal,
     compute_valuation_signal,
     compute_volatility_adjustment,
@@ -1305,7 +1300,6 @@ def compute_enhanced_smart_money_signal_v2(
 
     # Extract base data
     overlap_count = coinvest_data.get("coinvest_overlap_count", 0)
-    holders = coinvest_data.get("coinvest_holders", [])
     position_changes = coinvest_data.get("position_changes", {})
     holder_tiers = coinvest_data.get("holder_tiers", {})
     tier1_count_raw = coinvest_data.get("tier1_count", 0)

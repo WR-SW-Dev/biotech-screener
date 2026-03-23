@@ -41,20 +41,15 @@ Last Modified: 2026-01-17
 """
 from __future__ import annotations
 
-import hashlib
 import json
 import logging
 from collections import Counter
-from dataclasses import dataclass, field
 from datetime import date, datetime
-from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
-from enum import Enum
+from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 from common.integration_contracts import (
-    SchemaValidationError,
-    extract_catalyst_score,
     extract_clinical_score,
     extract_financial_score,
     validate_module_1_output,
@@ -62,7 +57,7 @@ from common.integration_contracts import (
     validate_module_3_output,
     validate_module_4_output,
 )
-from common.production_hardening import DateParseError, get_module_logger, safe_parse_date
+from common.production_hardening import DateParseError, safe_parse_date
 from common.provenance import create_provenance
 from common.types import Severity
 
@@ -75,23 +70,8 @@ from module_5_diagnostics_v3 import (
 )
 
 # Import scoring module (extracted for maintainability)
-from module_5_scoring_v3 import (  # Types (re-exported for backwards compatibility); Constants used by both scoring and orchestration; Baker-style mode configs; Helper functions; Main scoring function; Smart money cohort stats
-    BAKER_STYLE_TILT_CONFIG,
-    CATALYST_DEFAULT_BASE,
-    CATALYST_DEFAULT_SCORE,
-    CATALYST_PROXIMITY_WEIGHT,
-    CATALYST_WINDOW_WEIGHT,
-    CONFIDENCE_GATE_THRESHOLD,
-    CRITICAL_COMPONENTS,
-    HYBRID_ALPHA,
-    MAX_UNCERTAINTY_PENALTY,
-    MIN_COHORT_SIZE,
-    POS_DELTA_CAP,
-    SEVERITY_GATE_LABELS,
-    SEVERITY_MULTIPLIERS,
-    THESIS_GATE_CONFIG,
-    WINSOR_HIGH,
-    WINSOR_LOW,
+# Re-exported names are used by tests and downstream modules.
+from module_5_scoring_v3 import (  # noqa: F401 — re-exports for tests
     ComponentScore,
     MonotonicCap,
     NormalizationMethod,
@@ -106,13 +86,8 @@ from module_5_scoring_v3 import (  # Types (re-exported for backwards compatibil
     _compute_determinism_hash,
     _compute_global_stats,
     _enrich_with_coinvest,
-    _extract_confidence_catalyst,
-    _extract_confidence_clinical,
-    _extract_confidence_financial,
-    _extract_confidence_pos,
     _get_worst_severity,
     _market_cap_bucket,
-    _quarter_from_date,
     _rank_normalize_winsorized,
     _score_single_ticker_v3,
     _stage_bucket,
@@ -120,74 +95,19 @@ from module_5_scoring_v3 import (  # Types (re-exported for backwards compatibil
 )
 
 # Import IC enhancement utilities
-from src.modules.ic_enhancements import MultiWindowMomentumInput  # V2: Multi-window input
-from src.modules.ic_enhancements import compute_momentum_signal_with_fallback  # V2: Multi-window with fallback
-from src.modules.ic_enhancements import (  # Core enhancement functions; Types; Helpers
-    EPS,
-    SCORE_PRECISION,
-    WEIGHT_PRECISION,
-    AdaptiveWeights,
-    CatalystDecayResult,
-    EnhancedScoringResult,
-    InteractionTerms,
-    MomentumSignal,
-    RegimeType,
-    SmartMoneySignal,
-    ValuationSignal,
-    VolatilityAdjustment,
-    VolatilityBucket,
-    _clamp,
-    _quantize_score,
-    _quantize_weight,
-    _safe_divide,
-    _to_decimal,
-    apply_catalyst_decay,
-    apply_regime_to_weights,
-    apply_volatility_to_score,
-    compute_adaptive_weights,
-    compute_catalyst_decay,
-    compute_enhanced_score,
-    compute_interaction_terms,
-    compute_momentum_signal,
-    compute_smart_money_signal,
-    compute_valuation_signal,
-    compute_volatility_adjustment,
-    get_regime_signal_importance,
-    shrinkage_normalize,
-)
+from src.modules.ic_enhancements import _clamp, _to_decimal, compute_adaptive_weights
 
 # Import PIT validation
-from src.modules.ic_pit_validation import (
-    PITValidationError,
-    ProductionGateResult,
-    WeightProvenance,
-    WeightStabilityError,
-    create_weight_provenance,
-    run_production_gate,
-)
+from src.modules.ic_pit_validation import run_production_gate
 
 # Import scoring robustness enhancements (v3.3)
-from src.modules.scoring_robustness import (  # Core functions; Types
-    AsymmetricBounds,
-    DefensiveOverrideResult,
+from src.modules.scoring_robustness import (
     DefensivePosture,
     DistributionHealth,
-    DistributionHealthCheck,
-    RankStabilityAdjustment,
-    RobustnessEnhancements,
-    ShrinkageResult,
-    WeightFloorResult,
-    WinsorizedScore,
     apply_asymmetric_bounds,
-    apply_confidence_shrinkage,
-    apply_robustness_enhancements,
     apply_weight_floors,
-    blend_timeframe_signals,
     check_distribution_health,
-    compute_rank_stability_penalty,
     evaluate_defensive_triggers,
-    winsorize_cohort,
-    winsorize_component_score,
 )
 
 __version__ = "3.0.0"
@@ -262,7 +182,7 @@ HEALTH_GATE_THRESHOLDS = {
 # Implementation moved to common/score_to_er.py for reuse across modules.
 # =============================================================================
 
-from common.score_to_er import DEFAULT_LAMBDA_ANNUAL, ER_MODEL_ID, ER_MODEL_VERSION, _norm_ppf, compute_expected_returns
+from common.score_to_er import DEFAULT_LAMBDA_ANNUAL, _norm_ppf, compute_expected_returns
 
 # Re-export for backward compatibility
 EXPECTED_RETURN_LAMBDA = DEFAULT_LAMBDA_ANNUAL  # 8% per 1σ per year (conservative)
