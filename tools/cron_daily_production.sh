@@ -5,11 +5,14 @@
 # for today's date, logging output to a dated log file.
 #
 # Usage:
-#   ./tools/cron_daily_production.sh           # run for today
-#   ./tools/cron_daily_production.sh 2026-03-20 # run for specific date
+#   ./tools/cron_daily_production.sh              # run for today
+#   ./tools/cron_daily_production.sh 2026-03-20   # run for specific date
+#   ./tools/cron_daily_production.sh --catch-up   # backfill missed weekdays
 #
 # Cron example (weekdays at 5:30 PM ET, after market close):
 #   30 17 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_daily_production.sh >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/cron.log 2>&1
+# On WSL2 reboot, catch up any missed days:
+#   @reboot sleep 60 && /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_daily_production.sh --catch-up >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/cron.log 2>&1
 
 set -euo pipefail
 
@@ -17,6 +20,33 @@ REPO_ROOT="/mnt/c/Projects/biotech_screener/biotech-screener"
 PYTHON="/usr/bin/python3"
 LOG_DIR="${REPO_ROOT}/logs"
 LOCK_FILE="${REPO_ROOT}/logs/.daily_production.lock"
+SNAPSHOT_DIR="${REPO_ROOT}/data/snapshots"
+MAX_CATCHUP_DAYS=5
+
+# --- Catch-up mode: find and run missed weekdays ---
+if [ "${1:-}" = "--catch-up" ]; then
+    echo "[$(date -Iseconds)] Catch-up: scanning last ${MAX_CATCHUP_DAYS} weekdays for missed runs"
+    MISSED=0
+    for i in $(seq 1 ${MAX_CATCHUP_DAYS}); do
+        CHECK_DATE=$(date -d "-${i} days" +%Y-%m-%d 2>/dev/null || continue)
+        CHECK_DOW=$(date -d "${CHECK_DATE}" +%u 2>/dev/null || continue)
+        # Skip weekends
+        [ "${CHECK_DOW}" -gt 5 ] && continue
+        # Skip if snapshot already exists
+        if [ -d "${SNAPSHOT_DIR}/${CHECK_DATE}" ]; then
+            continue
+        fi
+        echo "[$(date -Iseconds)] Catch-up: missed ${CHECK_DATE}, running backfill"
+        "$0" "${CHECK_DATE}" || true
+        MISSED=$((MISSED + 1))
+    done
+    if [ ${MISSED} -eq 0 ]; then
+        echo "[$(date -Iseconds)] Catch-up: no missed runs found"
+    else
+        echo "[$(date -Iseconds)] Catch-up: backfilled ${MISSED} missed day(s)"
+    fi
+    exit 0
+fi
 
 # Date: use argument or today
 AS_OF_DATE="${1:-$(date +%Y-%m-%d)}"
