@@ -215,5 +215,40 @@
     "catalyst_days_at_first_seen": 290,
     "first_seen_date": "2026-03-17",
     "estimated_event_date": "2027-01-01"
+  },
+  "IRON": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 8,
+    "first_seen_date": "2026-03-23",
+    "estimated_event_date": "2026-03-31"
+  },
+  "TSHA": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 99,
+    "first_seen_date": "2026-03-23",
+    "estimated_event_date": "2026-06-30"
+  },
+  "LRMR": {
+    "catalyst_event_type": "FDA_PDUFA_DATE",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 99,
+    "first_seen_date": "2026-03-23",
+    "estimated_event_date": "2026-06-30"
+  },
+  "ENTA": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 100,
+    "first_seen_date": "2026-03-23",
+    "estimated_event_date": "2026-07-01"
+  },
+  "TARS": {
+    "catalyst_event_type": "DATA_READOUT",
+    "catalyst_source": "SEC_8K_FILING",
+    "catalyst_days_at_first_seen": 99,
+    "first_seen_date": "2026-03-23",
+    "estimated_event_date": "2026-06-30"
   }
 }
