@@ -378,3 +378,6 @@ production_data/cusip_cache.json
 /institutional_validation_integration_plan.md
 agents/*/.openclaw/
 agents/*/memory/
+agents/*/IDENTITY.md
+agents/*/USER.md
+agents/*/BOOTSTRAP.md
