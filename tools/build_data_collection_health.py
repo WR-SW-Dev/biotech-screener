@@ -194,41 +194,72 @@ def _check_market_data(snap_dir: Path, data_dir: Path, as_of_date: str, threshol
     status = "PASS"
 
     # Check price_history freshness
+    # On weekends/holidays the exact as_of_date has no data, so we fall
+    # back to the latest available trading day for coverage measurement.
     price_path = data_dir / "price_history.csv"
     latest_date = None
     ticker_count = 0
+    used_fallback = False
     if price_path.exists():
-        seen_tickers = set()
+        exact_tickers: set = set()
+        fallback_tickers: set = set()
         with open(price_path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 d = row.get("date", "")
                 t = row.get("ticker", "")
                 if d <= as_of_date:
                     if d == as_of_date:
-                        seen_tickers.add(t)
+                        exact_tickers.add(t)
                     if latest_date is None or d > latest_date:
                         latest_date = d
-        ticker_count = len(seen_tickers)
+                        fallback_tickers = {t}
+                    elif d == latest_date:
+                        fallback_tickers.add(t)
+        # Prefer exact date; fall back to latest trading day
+        if exact_tickers:
+            price_tickers = exact_tickers
+        else:
+            price_tickers = fallback_tickers
+            used_fallback = bool(fallback_tickers)
     else:
+        price_tickers = set()
         flags.append("price_history.csv missing")
         status = "FAIL"
 
-    # Check universe size for coverage ratio
+    # Load universe tickers for coverage denominator
     universe_path = data_dir / "universe.json"
-    universe_count = 0
+    universe_tickers: set = set()
     if universe_path.exists():
         with open(universe_path) as f:
             uni = json.load(f)
-        universe_count = len(uni) if isinstance(uni, list) else len(uni.get("tickers", []))
+        entries = uni if isinstance(uni, list) else uni.get("tickers", [])
+        for entry in entries:
+            if isinstance(entry, dict):
+                t = entry.get("ticker", "")
+                if t:
+                    universe_tickers.add(t)
+            elif isinstance(entry, str) and entry:
+                universe_tickers.add(entry)
 
+    # Coverage = universe tickers that have price data (intersection),
+    # so it never exceeds 100%.
+    universe_count = len(universe_tickers)
+    ticker_count = len(price_tickers & universe_tickers) if universe_tickers else len(price_tickers)
     coverage_pct = ticker_count / universe_count if universe_count > 0 else 0
     if coverage_pct < thresholds.get("market_data_min_coverage_pct", 0):
         flags.append(f"price_coverage={coverage_pct:.1%} below floor {thresholds['market_data_min_coverage_pct']:.0%}")
         status = "FAIL"
 
+    # Label weekend/holiday fallback transparently
+    measured_date = as_of_date
+    if used_fallback and latest_date:
+        measured_date = latest_date
+        flags.append(f"price_coverage measured on {latest_date} (as_of_date {as_of_date} is non-trading)")
+
     return {
         "status": status,
         "latest_price_date": latest_date,
+        "measured_price_date": measured_date,
         "as_of_date_ticker_count": ticker_count,
         "universe_ticker_count": universe_count,
         "price_coverage_pct": round(coverage_pct * 100, 1),
@@ -492,9 +523,10 @@ def write_markdown_report(health: Dict, path: Path) -> None:
 
     # Market data
     md = src.get("market_data", {})
-    lines.append(
-        f"| Market Data | {md.get('status', '?')} | latest={md.get('latest_price_date', '?')}, coverage={md.get('price_coverage_pct', '?')}% |"
-    )
+    md_detail = f"latest={md.get('latest_price_date', '?')}, coverage={md.get('price_coverage_pct', '?')}%"
+    if md.get("measured_price_date") and md["measured_price_date"] != health.get("as_of_date"):
+        md_detail += f" (measured on {md['measured_price_date']})"
+    lines.append(f"| Market Data | {md.get('status', '?')} | {md_detail} |")
 
     # CTGov
     ct = src.get("ctgov", {})
