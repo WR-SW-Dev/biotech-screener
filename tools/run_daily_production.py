@@ -4397,6 +4397,60 @@ def run_daily(
         except Exception as _alert_err:
             print(f"  [WARN] Portfolio alerts failed: {_alert_err}")
 
+        # --- Step 5i: Trade plan (daily, non-blocking) ---
+        try:
+            from tools.build_trade_plan import build_trade_plan
+
+            _tp_result = build_trade_plan(as_of_date, snap_dir=final_path)
+            if "error" in _tp_result:
+                print(f"  Trade plan → skipped ({_tp_result['error']})")
+            else:
+                _tp_n = len(_tp_result.get("trades", []))
+                _tp_path = _tp_result.get("csv_path", "?")
+                print(f"  Trade plan → {_tp_path} ({_tp_n} trades)")
+        except Exception as _tp_err:
+            print(f"  [WARN] Trade plan failed: {_tp_err}")
+
+        # --- Step 5j: Portfolio metrics update (non-blocking) ---
+        try:
+            from tools.build_portfolio_report import build_portfolio_report
+
+            _pr_result = build_portfolio_report()
+            print(f"  Portfolio report → {_pr_result['report_path']}")
+        except Exception as _pr_err:
+            print(f"  [WARN] Portfolio report failed: {_pr_err}")
+
+        # --- Step 5k: Readiness scorecard (daily history, non-blocking) ---
+        try:
+            from tools.weekly_readiness_scorecard import append_history, build_scorecard, format_scorecard_md
+
+            _pinned_id = ""
+            try:
+                from run_screen import PHASE2_PINNED_RULESET_ID
+
+                _pinned_id = PHASE2_PINNED_RULESET_ID
+            except ImportError:
+                pass
+            _sc_result = build_scorecard(
+                as_of_date,
+                snapshots_dir=final_snapshots_dir,
+                artifacts_dir=REPO_ROOT / "artifacts" / "live_shadow",
+                policy_path=REPO_ROOT / "production_data" / "portfolio_policy.json",
+                ruleset_id=_pinned_id,
+            )
+            _sc_verdict = _sc_result.get("verdict", "?")
+            # Write scorecard artifacts
+            _sc_out_dir = REPO_ROOT / "artifacts" / "readiness"
+            _sc_out_dir.mkdir(parents=True, exist_ok=True)
+            _sc_md = format_scorecard_md(_sc_result)
+            (_sc_out_dir / f"scorecard_{as_of_date}.md").write_text(_sc_md, encoding="utf-8")
+            with open(_sc_out_dir / f"scorecard_{as_of_date}.json", "w", encoding="utf-8") as _scf:
+                json.dump(_sc_result, _scf, indent=2, default=str)
+            append_history(_sc_out_dir / "history.jsonl", _sc_result)
+            print(f"  Readiness scorecard → {_sc_verdict}")
+        except Exception as _sc_err:
+            print(f"  [WARN] Readiness scorecard failed: {_sc_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
