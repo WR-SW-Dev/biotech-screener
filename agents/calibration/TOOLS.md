@@ -4,7 +4,7 @@
 
 ```bash
 cd /mnt/c/Projects/biotech_screener/biotech-screener
-python3 scripts/run_decision_ruleset_sweep.py \
+python3 run_decision_ruleset_sweep.py \
     --archive-dir data/archives \
     --holdout-split 2025-01-01 \
     --top-k-holdout 10 \
@@ -14,7 +14,7 @@ python3 scripts/run_decision_ruleset_sweep.py \
 ## Sweep (dry-run)
 
 ```bash
-python3 scripts/run_decision_ruleset_sweep.py --dry-run
+python3 run_decision_ruleset_sweep.py --dry-run
 ```
 
 ## Signal evidence (compare baseline vs candidate)
