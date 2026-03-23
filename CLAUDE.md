@@ -18,11 +18,13 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `7177a4ea` (v1.11.0)
+- **ID**: `9f1f4587` (v1.11.0)
 - **File**: `production_data/decision_rulesets/v1.11.0_b91_clinical_quality_w05_candidate.json`
 - **Key settings**: clinical_quality sort for b91 CLINICAL w=0.5, flatten_tier_91_180, optionality anchor, cal_alpha w=0.3, inst_sort w=0.3, clinical OFF, coinvest OFF, buffer=30
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
-- **Candidate**: `2b1c8959` (v1.13.0) — catalyst tilt enabled, shadowing for 3-5 weeks
+- **Shadow candidate**: `a08749e4` (catalyst tilt) — weekly gate failed, shadowing 3-5 more weeks
+- **Dormant**: catalyst type mult (`b7511c92`), top-book BQS (`846ae27b`/`7956312c`), oncology crowding (`v1.15.0`)
+- **Manifest**: 35+ entries, no dup IDs
 
 ## Decision Engine Architecture
 **File**: `decision_engine.py` (~620 lines, pure post-processing)
@@ -40,10 +42,23 @@ All downstream consumers use DE outputs (`tier_dev`, `actionable_rank`, `target_
 
 ## Event Ledger & Cache Warming
 - **Event ledger**: `build_event_ledger()` in `event_ledger.py` — 7+ sources (CTGov, merged trials, SEC 8-K, SEC multi-form, FDA ADCOM, FDA regulatory, PDUFA manual, EMA)
-- **Cache warmer**: `warm_caches.py --sources sec_8k,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials,sec_13f`
+- **Cache warmer**: `warm_caches.py --sources sec_8k,ctgov,sec_13f,fda_adcom,fda_regulatory,euctr,ctis,isrctn,merged_trials`
 - **EU/EEA registries**: `euctr_collector.py`, `ctis_collector.py`, `isrctn_collector.py` in `wake_robin_data_pipeline/collectors/`
 - **Trial merger**: `trial_registry_merger.py` — cross-registry dedup by NCT/EudraCT IDs
 - Always warm 8-K cache BEFORE running screen
+
+## Daily Production Pipeline
+- **Runner**: `tools/run_daily_production.py` — 13-step orchestrator
+- **Cron**: 5:30 PM ET weekdays + `@reboot` catch-up for missed runs
+- **Steps**: price refresh → cache warm (incl. FDA) → screen (with `--inputs-manifest write`) → audit → gates → manifest + promotion → drift report → action packet → shadow portfolio → trade plan → portfolio report → readiness scorecard → ops digest → PIT backfill (optional)
+- **Ops digest**: `tools/build_ops_digest.py` → `artifacts/ops_digest/YYYY-MM-DD_digest.md` — single-screen actionable summary
+- **Readiness**: `tools/weekly_readiness_scorecard.py` → READY / REVIEW / HOLD verdict
+- **Health checks**: collection health (INFO/WARN/FAIL with weekend-safe price fallback), phase-2 health, exposure metrics
+
+## OpenClaw Ops Agent
+- **Workspace**: `agents/ops/` — SOUL.md (boundaries), TOOLS.md (daily working set), HEARTBEAT.md (3-check)
+- **Role**: read-mostly operator — runs pipeline, reads digest, surfaces action items, refuses to modify rulesets
+- **Gateway**: 127.0.0.1:18789, loopback only, auth via setup token
 
 ## Shadow Portfolio
 - **File**: `tools/live_shadow_portfolio.py` (902 lines)
@@ -173,7 +188,16 @@ ticker:
 | Options Provider | `common/options_history_massive.py` |
 | Daily Production | `tools/run_daily_production.py` |
 | Shadow Portfolio | `tools/live_shadow_portfolio.py` |
+| Trade Plan | `tools/build_trade_plan.py` |
+| Portfolio Report | `tools/build_portfolio_report.py` |
+| Readiness Scorecard | `tools/weekly_readiness_scorecard.py` |
+| Ops Digest | `tools/build_ops_digest.py` |
+| Collection Health | `tools/build_data_collection_health.py` |
+| Hedge Report | `tools/biotech_hedge_report.py` |
 | Promotion Battery | `scripts/research/run_promotion_battery.py` |
+| Signal Evidence | `scripts/run_signal_evidence.py` |
 | Ruleset Manifest | `production_data/decision_rulesets/manifest.json` |
 | Cache Warmer | `warm_caches.py` |
 | Event Ledger | `event_ledger.py` |
+| Cron Wrapper | `tools/cron_daily_production.sh` |
+| Ops Agent Workspace | `agents/ops/` |
