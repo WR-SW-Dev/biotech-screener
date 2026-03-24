@@ -17,12 +17,15 @@ from __future__ import annotations
 
 import argparse
 import csv
+import logging
 import math
 import statistics
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -511,8 +514,8 @@ def build_trade_plan(
                     "pre_trade_checks": ptc.checks,
                     "can_trade": False,
                 }
-        except Exception:
-            pass  # Pre-trade check is best-effort; don't block on import/runtime errors
+        except Exception as e:
+            logger.warning("Pre-trade check failed (continuing): %s", e)
 
     # Readiness gate — block trades on HOLD verdict (policy-controlled)
     try:
@@ -542,8 +545,8 @@ def build_trade_plan(
                     "readiness_detail": _gate["detail"],
                     "can_trade": False,
                 }
-    except Exception:
-        pass  # Readiness gate is best-effort; don't block on import/runtime errors
+    except Exception as e:
+        logger.warning("Readiness gate failed (continuing): %s", e)
 
     # Alpha health gate — determine risk permission
     risk_permission = "ADD_OK"
@@ -557,8 +560,8 @@ def build_trade_plan(
                 ah_val = ah_check.get("value", {})
                 if isinstance(ah_val, dict) and ah_val.get("decision") == "NO_ADD_RISK":
                     risk_permission = "NO_ADD_RISK"
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Alpha health gate extraction failed (continuing): %s", e)
 
     # Annotate trades with risk_permission and filter BUYs if NO_ADD_RISK
     for t in trades:

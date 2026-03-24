@@ -213,7 +213,12 @@ def compute_execution_quality(fills_csv: Path) -> Dict[str, Any]:
     mean_slip = sum(slippages) / len(slippages) if slippages else 0.0
     sorted_slips = sorted(slippages)
     n = len(sorted_slips)
-    median_slip = sorted_slips[n // 2] if n else 0.0
+    if n == 0:
+        median_slip = 0.0
+    elif n % 2 == 1:
+        median_slip = sorted_slips[n // 2]
+    else:
+        median_slip = (sorted_slips[n // 2 - 1] + sorted_slips[n // 2]) / 2.0
 
     return {
         "total": total,

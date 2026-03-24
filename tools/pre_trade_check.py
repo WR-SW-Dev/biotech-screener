@@ -107,7 +107,7 @@ def _get_manifest_active_id(manifest_path: Path = MANIFEST_PATH) -> Optional[str
         data = json.loads(manifest_path.read_text(encoding="utf-8"))
         for entry in data.get("rulesets", []):
             if entry.get("status") == "active":
-                return entry["id"]
+                return entry.get("id")
     except Exception:
         pass
     return None

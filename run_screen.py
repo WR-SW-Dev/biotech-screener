@@ -6670,8 +6670,15 @@ def validate_inputs_dry_run(data_dir: Path, enable_coinvest: bool = False) -> Di
             content_hash = hashlib.sha256(filepath.read_bytes()).hexdigest()[:16]
             results["content_hashes"][filename] = content_hash
         elif filename == "coinvest_signals.json" and enable_coinvest:
-            results["errors"].append(f"Co-invest enabled but {filename} missing")
-            results["valid"] = False
+            # Mirror runtime fallback: holdings_detailed.json → holdings_snapshots.json
+            fallback_detailed = data_dir / "holdings_detailed.json"
+            fallback_snapshots = data_dir / "holdings_snapshots.json"
+            if fallback_detailed.exists() or fallback_snapshots.exists():
+                fallback_name = fallback_detailed.name if fallback_detailed.exists() else fallback_snapshots.name
+                results["optional_files"][filename]["fallback"] = fallback_name
+            else:
+                results["errors"].append(f"Co-invest enabled but {filename} missing (no holdings fallback found)")
+                results["valid"] = False
 
     return results
 

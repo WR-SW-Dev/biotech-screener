@@ -25,27 +25,26 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from run_screen import (
-    validate_as_of_date_param,
-    load_json_data,
-    write_json_output,
-    save_checkpoint,
-    load_checkpoint,
-    get_resume_module_index,
-    validate_inputs_dry_run,
-    create_audit_record,
-    _force_deterministic_generated_at,
-    _ensure_defaults,
-    _ALWAYS_NUMERIC_DEFAULTS,
     _SIGNAL_FLAG_DEFAULTS,
     CHECKPOINT_MODULES,
     SNAPSHOT_COLUMNS,
     VERSION,
+    _ensure_defaults,
+    _force_deterministic_generated_at,
+    create_audit_record,
+    get_resume_module_index,
+    load_checkpoint,
+    load_json_data,
+    save_checkpoint,
+    validate_as_of_date_param,
+    validate_inputs_dry_run,
+    write_json_output,
 )
-
 
 # ============================================================================
 # DATE VALIDATION TESTS
 # ============================================================================
+
 
 class TestDateValidation:
     """Tests for as_of_date validation."""
@@ -89,6 +88,7 @@ class TestDateValidation:
 # ============================================================================
 # JSON DATA LOADING TESTS
 # ============================================================================
+
 
 class TestJsonDataLoading:
     """Tests for JSON file loading."""
@@ -137,6 +137,7 @@ class TestJsonDataLoading:
 # ============================================================================
 # JSON OUTPUT TESTS
 # ============================================================================
+
 
 class TestJsonOutput:
     """Tests for JSON output writing."""
@@ -197,6 +198,7 @@ class TestJsonOutput:
 # ============================================================================
 # CHECKPOINTING TESTS
 # ============================================================================
+
 
 class TestCheckpointing:
     """Tests for checkpoint save/load functionality."""
@@ -269,6 +271,7 @@ class TestCheckpointing:
 # RESUME MODULE INDEX TESTS
 # ============================================================================
 
+
 class TestResumeModuleIndex:
     """Tests for resume_from module index calculation."""
 
@@ -294,6 +297,7 @@ class TestResumeModuleIndex:
 # ============================================================================
 # DRY-RUN VALIDATION TESTS
 # ============================================================================
+
 
 class TestDryRunValidation:
     """Tests for dry-run input validation."""
@@ -338,17 +342,27 @@ class TestDryRunValidation:
         assert universe_info["record_count"] >= 0
 
     def test_coinvest_required_when_enabled(self, sample_data_dir):
-        """Missing coinvest file should fail when coinvest enabled."""
-        # sample_data_dir doesn't have coinvest_signals.json
+        """Missing coinvest file should fail when coinvest enabled and no fallback."""
+        # sample_data_dir doesn't have coinvest_signals.json or holdings fallbacks
         result = validate_inputs_dry_run(sample_data_dir, enable_coinvest=True)
 
         assert result["valid"] is False
         assert any("coinvest" in err.lower() for err in result["errors"])
 
+    def test_coinvest_fallback_to_holdings(self, sample_data_dir):
+        """Dry-run should pass when holdings_snapshots.json exists as fallback."""
+        # No coinvest_signals.json, but holdings fallback present
+        (sample_data_dir / "holdings_snapshots.json").write_text(json.dumps([{"ticker": "TEST", "shares": 100}]))
+        result = validate_inputs_dry_run(sample_data_dir, enable_coinvest=True)
+
+        assert result["valid"] is True
+        assert result["optional_files"]["coinvest_signals.json"]["fallback"] == "holdings_snapshots.json"
+
 
 # ============================================================================
 # AUDIT RECORD TESTS
 # ============================================================================
+
 
 class TestAuditRecord:
     """Tests for audit record creation."""
@@ -378,6 +392,7 @@ class TestAuditRecord:
 # DETERMINISTIC TIMESTAMP TESTS
 # ============================================================================
 
+
 class TestDeterministicTimestamp:
     """Tests for deterministic timestamp forcing."""
 
@@ -385,12 +400,8 @@ class TestDeterministicTimestamp:
         """Should recursively replace all provenance.generated_at fields."""
         obj = {
             "provenance": {"generated_at": "2026-01-15T12:34:56Z"},
-            "nested": {
-                "provenance": {"generated_at": "2026-01-15T11:11:11Z"}
-            },
-            "array": [
-                {"provenance": {"generated_at": "2026-01-15T10:00:00Z"}}
-            ]
+            "nested": {"provenance": {"generated_at": "2026-01-15T11:11:11Z"}},
+            "array": [{"provenance": {"generated_at": "2026-01-15T10:00:00Z"}}],
         }
 
         _force_deterministic_generated_at(obj, "2026-01-15T00:00:00Z")
@@ -413,6 +424,7 @@ class TestDeterministicTimestamp:
 # CHECKPOINT MODULE CONSTANTS TESTS
 # ============================================================================
 
+
 class TestCheckpointModuleConstants:
     """Tests for checkpoint module constants."""
 
@@ -430,6 +442,7 @@ class TestCheckpointModuleConstants:
 # INTEGRATION TESTS (require more setup)
 # ============================================================================
 
+
 class TestPipelineIntegration:
     """Integration tests for full pipeline execution.
 
@@ -440,9 +453,10 @@ class TestPipelineIntegration:
     def test_full_pipeline_determinism(self, full_sample_data_dir, as_of_date_str, tmp_path):
         """Two runs with same inputs should produce identical outputs."""
         # Import here to avoid circular imports
-        from run_screen import run_screening_pipeline
-        import hashlib
         import copy
+        import hashlib
+
+        from run_screen import run_screening_pipeline
 
         # First run
         result1 = run_screening_pipeline(
@@ -538,10 +552,12 @@ class TestPipelineIntegration:
         )
 
         # Verify module_1 and module_2 results match (reused from checkpoints)
-        assert result_full["module_1_universe"] == result_resumed["module_1_universe"], \
-            "Module 1 results should match when resumed"
-        assert result_full["module_2_financial"] == result_resumed["module_2_financial"], \
-            "Module 2 results should match when resumed"
+        assert (
+            result_full["module_1_universe"] == result_resumed["module_1_universe"]
+        ), "Module 1 results should match when resumed"
+        assert (
+            result_full["module_2_financial"] == result_resumed["module_2_financial"]
+        ), "Module 2 results should match when resumed"
 
         # Verify final composite results have same structure
         assert len(result_resumed["module_5_composite"].get("ranked_securities", [])) >= 0
@@ -550,6 +566,7 @@ class TestPipelineIntegration:
 # ---------------------------------------------------------------------------
 # Tests: has_*_signal columns and sparse_signal_mode (Part 1A-1B)
 # ---------------------------------------------------------------------------
+
 
 class TestSignalFlags:
 
@@ -599,17 +616,20 @@ class TestSignalFlags:
     def test_sparse_signal_mode_in_decision_ruleset(self):
         """DecisionRuleset has sparse_signal_mode field."""
         from decision_engine import DecisionRuleset
+
         rs = DecisionRuleset()
         assert rs.sparse_signal_mode == "legacy"
 
     def test_sparse_signal_mode_exclude_missing_valid(self):
         """exclude_missing is a valid sparse_signal_mode."""
         from decision_engine import DecisionRuleset
+
         rs = DecisionRuleset(sparse_signal_mode="exclude_missing")
         assert rs.sparse_signal_mode == "exclude_missing"
 
     def test_sparse_signal_mode_invalid_raises(self):
         """Invalid sparse_signal_mode raises ValueError."""
         from decision_engine import DecisionRuleset
+
         with pytest.raises(ValueError, match="sparse_signal_mode"):
             DecisionRuleset(sparse_signal_mode="invalid")

@@ -2063,7 +2063,7 @@ def compute_target_weights(
 
     # Apply binary sleeve caps (no-op when defaults are 100%)
     sleeve_warnings = apply_binary_sleeve_caps(rows, rs)
-    if sleeve_warnings:
+    if sleeve_warnings and rows:
         # Attach warnings to first row for downstream visibility
         existing = rows[0].get("_sizing_warnings", [])
         rows[0]["_sizing_warnings"] = existing + sleeve_warnings
