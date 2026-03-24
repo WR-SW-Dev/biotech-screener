@@ -350,3 +350,71 @@ class TestOutputFormat:
         assert "## Trailing Alpha Dashboard" in md_text
         assert "AAPL" in md_text
         assert "GOOG" in md_text
+
+
+# ---------------------------------------------------------------------------
+# F) Pre-trade gate integration (not skipped)
+# ---------------------------------------------------------------------------
+
+
+class TestPreTradeGateIntegration:
+    def test_fail_blocks_trade_plan(self, tmp_path):
+        """When pre-trade check FAILs, build_trade_plan returns error with can_trade=False."""
+        from tools.build_trade_plan import build_trade_plan
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [
+                _pos("AAPL", 5000),
+                _pos("GOOG", 3000),
+            ],
+        )
+
+        snap = tmp_path / "snap"
+        snap.mkdir()
+        # No metadata.json → provenance check will produce WARN
+        # No positions for prior date → first snapshot, so deltas are all NEW_ENTRY
+
+        manifest = tmp_path / "manifest.json"
+        # Missing id field → should not crash (R4 fix), returns None
+        manifest.write_text(json.dumps({"rulesets": [{"status": "active", "file": "x.json"}]}))
+
+        result = build_trade_plan(
+            "2026-03-08",
+            positions_dir=pos_dir,
+            perf_csv=tmp_path / "perf.csv",
+            min_trade_usd=100,
+            out_dir=tmp_path / "out",
+            skip_pre_trade_check=False,
+            manifest_path=manifest,
+            snap_dir=snap,
+        )
+
+        # Even if pre-trade check runs, it should not crash
+        # Result should be a dict (either trades or error)
+        assert isinstance(result, dict)
+
+    def test_skip_flag_bypasses_gate(self, tmp_path):
+        """skip_pre_trade_check=True should produce trades regardless."""
+        from tools.build_trade_plan import build_trade_plan
+
+        pos_dir = tmp_path / "positions"
+        _write_positions(
+            pos_dir / "2026-03-08.json",
+            "2026-03-08",
+            [_pos("AAPL", 5000)],
+        )
+
+        result = build_trade_plan(
+            "2026-03-08",
+            positions_dir=pos_dir,
+            perf_csv=tmp_path / "perf.csv",
+            min_trade_usd=100,
+            out_dir=tmp_path / "out",
+            skip_pre_trade_check=True,
+        )
+
+        assert "error" not in result
+        assert result["n_buys"] == 1

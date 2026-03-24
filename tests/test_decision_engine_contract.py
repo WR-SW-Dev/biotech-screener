@@ -1210,3 +1210,8 @@ class TestWeightNormalizationEdgeCases:
         result = compute_target_weights(rows)
         total = sum(r["target_weight_pct"] for r in result)
         assert abs(total - 100.0) < 0.01
+
+    def test_empty_rows_no_crash(self):
+        """Empty rows list should return empty without IndexError."""
+        result = compute_target_weights([])
+        assert result == []

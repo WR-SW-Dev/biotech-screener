@@ -1,24 +1,22 @@
 """Tests for tools/ruleset_health_monitor.py — post-promotion health check."""
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
-import pytest
-
 from tools.ruleset_health_monitor import (
     HealthThresholds,
     _count_consecutive_warns,
-    _find_active_receipt,
     _load_history,
     evaluate_health,
     run_health_check,
 )
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _make_receipt(
     new_active_id: str = "abc12345",
@@ -123,12 +121,24 @@ class TestRecommendRollback:
 
         # Pre-populate 2 prior WARN days
         prior_entries = [
-            {"date": "2026-02-26", "active_ruleset_id": "abc12345", "status": "WARN",
-             "top60_overlap_pct": 80.0, "max_rank_shift": 15.0,
-             "consecutive_warn_days": 1, "recommend_rollback": False},
-            {"date": "2026-02-27", "active_ruleset_id": "abc12345", "status": "WARN",
-             "top60_overlap_pct": 79.0, "max_rank_shift": 16.0,
-             "consecutive_warn_days": 2, "recommend_rollback": False},
+            {
+                "date": "2026-02-26",
+                "active_ruleset_id": "abc12345",
+                "status": "WARN",
+                "top60_overlap_pct": 80.0,
+                "max_rank_shift": 15.0,
+                "consecutive_warn_days": 1,
+                "recommend_rollback": False,
+            },
+            {
+                "date": "2026-02-27",
+                "active_ruleset_id": "abc12345",
+                "status": "WARN",
+                "top60_overlap_pct": 79.0,
+                "max_rank_shift": 16.0,
+                "consecutive_warn_days": 2,
+                "recommend_rollback": False,
+            },
         ]
         with open(history, "w") as f:
             for entry in prior_entries:
@@ -176,11 +186,13 @@ class TestFirstDayAfterPromotion:
     def test_first_day_after_promotion(self, tmp_path):
         """First day after promotion — no false alarm when within baseline."""
         receipt = _make_receipt(
-            mean_top60_overlap=95.0, max_rank_shift=4.0,
+            mean_top60_overlap=95.0,
+            max_rank_shift=4.0,
             created_at_utc="2026-02-27T12:00:00Z",
         )
         drift = _make_drift_report(
-            top60_overlap_pct=94.0, mean_abs_rank_delta_top60=3.0,
+            top60_overlap_pct=94.0,
+            mean_abs_rank_delta_top60=3.0,
             current_date="2026-02-28",
         )
         history = tmp_path / "history.jsonl"
@@ -199,10 +211,20 @@ class TestStatusClearsAfterGoodDay:
 
         # Pre-populate 2 consecutive WARNs
         prior_entries = [
-            {"date": "2026-02-26", "active_ruleset_id": "abc12345", "status": "WARN",
-             "consecutive_warn_days": 1, "recommend_rollback": False},
-            {"date": "2026-02-27", "active_ruleset_id": "abc12345", "status": "WARN",
-             "consecutive_warn_days": 2, "recommend_rollback": False},
+            {
+                "date": "2026-02-26",
+                "active_ruleset_id": "abc12345",
+                "status": "WARN",
+                "consecutive_warn_days": 1,
+                "recommend_rollback": False,
+            },
+            {
+                "date": "2026-02-27",
+                "active_ruleset_id": "abc12345",
+                "status": "WARN",
+                "consecutive_warn_days": 2,
+                "recommend_rollback": False,
+            },
         ]
         with open(history, "w") as f:
             for entry in prior_entries:
@@ -234,17 +256,13 @@ class TestGateIntegration:
         receipts_dir = tmp_path / "receipts"
         receipts_dir.mkdir()
         receipt = _make_receipt()
-        (receipts_dir / "promotion_2026-02-25_abc12345.json").write_text(
-            json.dumps(receipt), encoding="utf-8"
-        )
+        (receipts_dir / "promotion_2026-02-25_abc12345.json").write_text(json.dumps(receipt), encoding="utf-8")
 
         # Set up staging dir with drift report
         staging = tmp_path / "staging"
         staging.mkdir()
         drift = _make_drift_report()
-        (staging / "drift_report.json").write_text(
-            json.dumps(drift), encoding="utf-8"
-        )
+        (staging / "drift_report.json").write_text(json.dumps(drift), encoding="utf-8")
 
         history = tmp_path / "history.jsonl"
 
@@ -265,3 +283,43 @@ class TestGateIntegration:
         assert sidecar.exists()
         sidecar_data = json.loads(sidecar.read_text())
         assert sidecar_data["schema"] == "ruleset_health.v1"
+
+
+class TestMalformedHistory:
+    def test_skips_malformed_lines(self, tmp_path):
+        """Malformed JSONL lines should be skipped, valid lines loaded."""
+        history = tmp_path / "history.jsonl"
+        history.write_text(
+            '{"status": "OK", "active_ruleset_id": "abc"}\n'
+            '{"broken json\n'
+            '{"status": "WARN", "active_ruleset_id": "abc"}\n',
+            encoding="utf-8",
+        )
+        entries = _load_history(history)
+        assert len(entries) == 2
+        assert entries[0]["status"] == "OK"
+        assert entries[1]["status"] == "WARN"
+
+    def test_empty_history_returns_empty(self, tmp_path):
+        """Empty history file should return empty list."""
+        history = tmp_path / "history.jsonl"
+        history.write_text("", encoding="utf-8")
+        assert _load_history(history) == []
+
+    def test_missing_history_returns_empty(self, tmp_path):
+        """Non-existent history file should return empty list."""
+        assert _load_history(tmp_path / "nonexistent.jsonl") == []
+
+    def test_consecutive_warns_with_malformed_gap(self, tmp_path):
+        """Malformed line between WARNs should break consecutive count."""
+        history = tmp_path / "history.jsonl"
+        history.write_text(
+            '{"status": "WARN", "active_ruleset_id": "abc"}\n'
+            '{"broken\n'
+            '{"status": "WARN", "active_ruleset_id": "abc"}\n',
+            encoding="utf-8",
+        )
+        entries = _load_history(history)
+        # Only 2 valid entries loaded (both WARN), but the gap is invisible
+        count = _count_consecutive_warns(entries, "abc")
+        assert count == 2

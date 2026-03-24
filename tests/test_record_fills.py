@@ -292,6 +292,75 @@ class TestExecutionQuality:
         assert q["total"] == 0
         assert q["fill_rate"] == 0.0
 
+    def test_median_even_count(self, tmp_path):
+        """Median with even number of fills should average the two middle values."""
+        fills_csv = tmp_path / "fills.csv"
+        fields = [
+            "ticker",
+            "action",
+            "target_usd",
+            "fill_price",
+            "fill_shares",
+            "fill_usd",
+            "slippage_bps",
+            "fill_date",
+            "status",
+        ]
+        with open(fills_csv, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fields)
+            w.writeheader()
+            # 4 fills with slippages: 10, 20, 30, 40 → median = (20+30)/2 = 25
+            for slip in [10, 20, 30, 40]:
+                w.writerow(
+                    {
+                        "ticker": f"T{slip}",
+                        "action": "BUY",
+                        "target_usd": "1000",
+                        "fill_price": "10",
+                        "fill_shares": "100",
+                        "fill_usd": "1000",
+                        "slippage_bps": str(slip),
+                        "fill_date": "2026-03-08",
+                        "status": "FILLED",
+                    }
+                )
+        q = compute_execution_quality(fills_csv)
+        assert q["median_slippage_bps"] == 25.0
+
+    def test_median_odd_count(self, tmp_path):
+        """Median with odd number of fills should return the middle value."""
+        fills_csv = tmp_path / "fills.csv"
+        fields = [
+            "ticker",
+            "action",
+            "target_usd",
+            "fill_price",
+            "fill_shares",
+            "fill_usd",
+            "slippage_bps",
+            "fill_date",
+            "status",
+        ]
+        with open(fills_csv, "w", newline="") as f:
+            w = csv.DictWriter(f, fieldnames=fields)
+            w.writeheader()
+            for slip in [10, 30, 50]:
+                w.writerow(
+                    {
+                        "ticker": f"T{slip}",
+                        "action": "BUY",
+                        "target_usd": "1000",
+                        "fill_price": "10",
+                        "fill_shares": "100",
+                        "fill_usd": "1000",
+                        "slippage_bps": str(slip),
+                        "fill_date": "2026-03-08",
+                        "status": "FILLED",
+                    }
+                )
+        q = compute_execution_quality(fills_csv)
+        assert q["median_slippage_bps"] == 30.0
+
 
 # ---------------------------------------------------------------------------
 # Fill summary
