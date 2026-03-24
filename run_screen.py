@@ -1175,6 +1175,19 @@ def compute_momentum_from_price_history(
 
     logger.info(f"Loaded price history for {len(prices_by_ticker)} tickers")
 
+    # Staleness check: warn if latest price date is far before as_of_date
+    if prices_by_ticker:
+        _max_dates = [max(pts, key=lambda x: x[0])[0] for pts in prices_by_ticker.values() if pts]
+        if _max_dates:
+            _latest_price_date = max(_max_dates)
+            _staleness_days = (ref_date - _latest_price_date).days
+            if _staleness_days > 7:
+                logger.warning(
+                    f"  Price history stale: latest date {_latest_price_date} is "
+                    f"{_staleness_days} days before as_of_date {as_of_date} — "
+                    f"momentum returns may be invalid"
+                )
+
     # Sort each ticker's prices by date (most recent first for easy lookups)
     for ticker in prices_by_ticker:
         prices_by_ticker[ticker].sort(key=lambda x: x[0], reverse=True)
@@ -7652,6 +7665,15 @@ def run_screening_pipeline(
 
     financial_records = load_json_data(data_dir / "financial_records.json", "Financial")
 
+    # Financial records staleness check
+    _fin_path = data_dir / "financial_records.json"
+    if _fin_path.exists():
+        _fin_age_days = (datetime.now().date() - datetime.fromtimestamp(_fin_path.stat().st_mtime).date()).days
+        if _fin_age_days > 30:
+            logger.warning(
+                f"  financial_records.json is {_fin_age_days} days old — " f"cash/runway data may be outdated"
+            )
+
     # Resolve trial_records: prefer PIT-filtered cache if available
     # ctgov_cache_dir=False disables cache lookup (used by tests)
     if ctgov_cache_dir is False:
@@ -7667,6 +7689,11 @@ def run_screening_pipeline(
         trial_records_path = _ctgov_cache
     else:
         trial_records_path = data_dir / "trial_records.json"
+        if ctgov_cache_dir is not False:
+            logger.warning(
+                f"  PIT cache miss: trial_records_{as_of_date}.json not found — "
+                f"falling back to {trial_records_path.name} (may be stale)"
+            )
 
     trial_records = load_json_data(trial_records_path, "Trials")
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
