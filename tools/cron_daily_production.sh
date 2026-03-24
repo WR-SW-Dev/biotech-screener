@@ -90,12 +90,23 @@ if [ "${DOW}" -gt 5 ]; then
     exit 0
 fi
 
-# Run the production pipeline
-${PYTHON} tools/run_daily_production.py \
-    --as-of-date "${AS_OF_DATE}" \
-    >> "${LOG_FILE}" 2>&1
-
-EXIT_CODE=$?
+# Run the production pipeline (timeout: 45 minutes)
+PIPELINE_TIMEOUT=2700
+if command -v timeout >/dev/null 2>&1; then
+    timeout --signal=TERM --kill-after=60 ${PIPELINE_TIMEOUT} \
+        ${PYTHON} tools/run_daily_production.py \
+        --as-of-date "${AS_OF_DATE}" \
+        >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
+    if [ ${EXIT_CODE} -eq 124 ]; then
+        echo "[$(date -Iseconds)] TIMEOUT: pipeline exceeded ${PIPELINE_TIMEOUT}s — killed" | tee -a "${LOG_FILE}"
+    fi
+else
+    ${PYTHON} tools/run_daily_production.py \
+        --as-of-date "${AS_OF_DATE}" \
+        >> "${LOG_FILE}" 2>&1
+    EXIT_CODE=$?
+fi
 
 if [ ${EXIT_CODE} -eq 0 ]; then
     echo "[$(date -Iseconds)] PASS: daily production completed successfully" | tee -a "${LOG_FILE}"
