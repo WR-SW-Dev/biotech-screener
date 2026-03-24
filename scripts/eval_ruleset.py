@@ -20,7 +20,6 @@ import argparse
 import csv
 import hashlib
 import json
-import math
 import statistics
 import sys
 from datetime import datetime, timezone
@@ -33,6 +32,9 @@ _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
+from common.ranking_utils import backfill_columns
+from common.ranking_utils import safe_float as _rerank_sf
+from decision_engine import DecisionRuleset, compute_actionable_sort_key
 from scripts.eval_forward_returns import (
     compute_forward_return,
     compute_turnover,
@@ -41,8 +43,6 @@ from scripts.eval_forward_returns import (
     net_return,
     resolve_trade_date,
 )
-from common.ranking_utils import backfill_columns, safe_float as _rerank_sf
-from decision_engine import DecisionRuleset, compute_actionable_sort_key
 
 VERSION = "1.0.0"
 SCHEMA = "ruleset_eval.v1"
@@ -106,9 +106,7 @@ def load_ruleset_id(path: Path) -> str:
     """Compute ruleset_id from file content (same as DecisionRuleset.from_json)."""
     data = _read_json(path)
     # Match decision_engine.py: sha256 of compact sorted JSON, first 8 hex chars
-    return hashlib.sha256(
-        json.dumps(data, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()[:8]
+    return hashlib.sha256(json.dumps(data, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
 def active_ruleset_from_manifest(manifest_path: Path) -> Tuple[str, str]:
@@ -195,23 +193,25 @@ def compute_overlap(curr: List[str], prior: List[str], k: int) -> Dict[str, Any]
     }
 
 
-def compute_rank_correlation(
-    curr_ranks: Dict[str, int], prior_ranks: Dict[str, int]
-) -> Dict[str, Optional[float]]:
+def compute_rank_correlation(curr_ranks: Dict[str, int], prior_ranks: Dict[str, int]) -> Dict[str, Optional[float]]:
     common = sorted(set(curr_ranks) & set(prior_ranks))
     if len(common) < 5:
         return {"spearman": None, "n_common": len(common)}
     n = len(common)
     cv = [curr_ranks[t] for t in common]
     pv = [prior_ranks[t] for t in common]
-    d_sq = sum((c - p) ** 2 for c, p in zip(cv, pv))
-    rho = 1 - (6 * d_sq) / (n * (n * n - 1)) if n > 1 else None
+    try:
+        from scipy.stats import spearmanr
+
+        rho, _ = spearmanr(cv, pv)
+    except ImportError:
+        # Fallback: classic formula (assumes no ties)
+        d_sq = sum((c - p) ** 2 for c, p in zip(cv, pv))
+        rho = 1 - (6 * d_sq) / (n * (n * n - 1)) if n > 1 else None
     return {"spearman": round(rho, 4) if rho is not None else None, "n_common": n}
 
 
-def compute_max_shift(
-    curr_ranks: Dict[str, int], prior_ranks: Dict[str, int]
-) -> Optional[Dict[str, Any]]:
+def compute_max_shift(curr_ranks: Dict[str, int], prior_ranks: Dict[str, int]) -> Optional[Dict[str, Any]]:
     common = set(curr_ranks) & set(prior_ranks)
     if not common:
         return None
@@ -238,12 +238,14 @@ def compute_top_shifts(
     for t in common:
         s = abs(curr_ranks[t] - prior_ranks[t])
         if s > 0:
-            entries.append({
-                "ticker": t,
-                "shift": s,
-                "from": prior_ranks[t],
-                "to": curr_ranks[t],
-            })
+            entries.append(
+                {
+                    "ticker": t,
+                    "shift": s,
+                    "from": prior_ranks[t],
+                    "to": curr_ranks[t],
+                }
+            )
     entries.sort(key=lambda x: (-x["shift"], x["ticker"]))
     return entries[:n]
 
@@ -268,9 +270,7 @@ def _enrich_shift(
     for out_key, csv_col in _ENRICHMENT_COLS:
         shift[out_key] = row.get(csv_col, "")
     mc = row.get("missing_components", "")
-    shift["missing_count"] = (
-        len([x for x in mc.split(";") if x.strip()]) if mc else 0
-    )
+    shift["missing_count"] = len([x for x in mc.split(";") if x.strip()]) if mc else 0
 
 
 # ---------------------------------------------------------------------------
@@ -290,26 +290,28 @@ def rerank_rows(
     work = [dict(r) for r in rows]
     backfill_columns(work)
 
-    work.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_rerank_sf(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            _rerank_sf(r.get("alpha_cohort_pct"))
-            if ruleset.sort_anchor == "alpha_cohort"
-            else (
-                _rerank_sf(r.get("commercial_quality_pct"))
-                if r.get("archetype", "").startswith("commercial_")
-                else _rerank_sf(r.get("clinical_optionality_pct_dev"))
-            )
-        ),
-        alpha_raw=_rerank_sf(r.get("alpha_cohort_raw")),
-    ))
+    work.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_rerank_sf(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                _rerank_sf(r.get("alpha_cohort_pct"))
+                if ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    _rerank_sf(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _rerank_sf(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+            alpha_raw=_rerank_sf(r.get("alpha_cohort_raw")),
+        )
+    )
 
     tickers: List[str] = []
     ranks: Dict[str, int] = {}
@@ -444,9 +446,7 @@ def evaluate_ruleset_rerank_only(
 
             common = set(cand_ranks) & set(base_ranks)
             if common:
-                changed = sum(
-                    1 for t in common if cand_ranks[t] != base_ranks[t]
-                )
+                changed = sum(1 for t in common if cand_ranks[t] != base_ranks[t])
                 pct = round(100 * changed / len(common), 1)
                 cross_pct_changed.append(pct)
                 date_row["cross_pct_rank_changed"] = pct
@@ -468,12 +468,8 @@ def evaluate_ruleset_rerank_only(
     # Temporal stability
     temporal: Dict[str, Any] = {}
     if temporal_overlaps_60:
-        temporal["mean_top20_overlap"] = round(
-            statistics.mean(temporal_overlaps_20), 1
-        )
-        temporal["mean_top60_overlap"] = round(
-            statistics.mean(temporal_overlaps_60), 1
-        )
+        temporal["mean_top20_overlap"] = round(statistics.mean(temporal_overlaps_20), 1)
+        temporal["mean_top60_overlap"] = round(statistics.mean(temporal_overlaps_60), 1)
         temporal["worst_top60_overlap"] = round(min(temporal_overlaps_60), 1)
     if temporal_spearman:
         temporal["mean_spearman"] = round(statistics.mean(temporal_spearman), 4)
@@ -491,12 +487,8 @@ def evaluate_ruleset_rerank_only(
     # Cross-comparison
     cross: Dict[str, Any] = {}
     if cross_overlaps_60:
-        cross["mean_top20_overlap"] = round(
-            statistics.mean(cross_overlaps_20), 1
-        )
-        cross["mean_top60_overlap"] = round(
-            statistics.mean(cross_overlaps_60), 1
-        )
+        cross["mean_top20_overlap"] = round(statistics.mean(cross_overlaps_20), 1)
+        cross["mean_top60_overlap"] = round(statistics.mean(cross_overlaps_60), 1)
         cross["worst_top60_overlap"] = round(min(cross_overlaps_60), 1)
     if cross_spearman:
         cross["mean_spearman"] = round(statistics.mean(cross_spearman), 4)
@@ -504,9 +496,7 @@ def evaluate_ruleset_rerank_only(
         worst = max(cross_max_shifts, key=lambda x: x["shift"])
         cross["max_rank_shift"] = worst
     if cross_pct_changed:
-        cross["mean_pct_rank_changed"] = round(
-            statistics.mean(cross_pct_changed), 1
-        )
+        cross["mean_pct_rank_changed"] = round(statistics.mean(cross_pct_changed), 1)
     result["cross_comparison"] = cross
 
     result["performance"] = {}
@@ -561,7 +551,7 @@ def evaluate_ruleset(
     cross_overlaps_20: List[float] = []
     cross_overlaps_60: List[float] = []
     cross_spearman: List[float] = []
-    cross_max_shifts: List[Dict[str, Any]] = []
+    cross_max_shifts: List[Dict[str, Any]] = []  # noqa: F841 — reserved for cross-comparison
 
     # Regime buckets
     regime_cand: Dict[str, List[float]] = {}
@@ -611,9 +601,7 @@ def evaluate_ruleset(
         if trade_date:
             for t in tickers:
                 if t in price_series:
-                    ret = compute_forward_return(
-                        price_series[t], all_trade_dates, trade_date, horizon
-                    )
+                    ret = compute_forward_return(price_series[t], all_trade_dates, trade_date, horizon)
                     if ret is not None:
                         fwd_rets[t] = ret
 
@@ -727,12 +715,8 @@ def evaluate_ruleset(
     # Temporal stability
     temporal: Dict[str, Any] = {}
     if temporal_overlaps_60:
-        temporal["mean_top20_overlap"] = round(
-            statistics.mean(temporal_overlaps_20), 1
-        )
-        temporal["mean_top60_overlap"] = round(
-            statistics.mean(temporal_overlaps_60), 1
-        )
+        temporal["mean_top20_overlap"] = round(statistics.mean(temporal_overlaps_20), 1)
+        temporal["mean_top60_overlap"] = round(statistics.mean(temporal_overlaps_60), 1)
         temporal["worst_top60_overlap"] = round(min(temporal_overlaps_60), 1)
     if temporal_spearman:
         temporal["mean_spearman"] = round(statistics.mean(temporal_spearman), 4)
@@ -754,9 +738,9 @@ def evaluate_ruleset(
             "n_periods": len(cand_returns_net),
             "mean_gross": round(statistics.mean(cand_returns_gross), 6),
             "mean_net": round(statistics.mean(cand_returns_net), 6),
-            "cumulative_net": round(_cumulative(cand_returns_net), 6)
-            if _cumulative(cand_returns_net) is not None
-            else None,
+            "cumulative_net": (
+                round(_cumulative(cand_returns_net), 6) if _cumulative(cand_returns_net) is not None else None
+            ),
             "mean_turnover": round(statistics.mean(cand_turnovers), 4),
         }
     if base_returns_net:
@@ -764,16 +748,14 @@ def evaluate_ruleset(
             "n_periods": len(base_returns_net),
             "mean_gross": round(statistics.mean(base_returns_gross), 6),
             "mean_net": round(statistics.mean(base_returns_net), 6),
-            "cumulative_net": round(_cumulative(base_returns_net), 6)
-            if _cumulative(base_returns_net) is not None
-            else None,
+            "cumulative_net": (
+                round(_cumulative(base_returns_net), 6) if _cumulative(base_returns_net) is not None else None
+            ),
             "mean_turnover": round(statistics.mean(base_turnovers), 4),
         }
     if "candidate" in perf and "baseline" in perf:
         perf["delta"] = {
-            "mean_net": round(
-                perf["candidate"]["mean_net"] - perf["baseline"]["mean_net"], 6
-            ),
+            "mean_net": round(perf["candidate"]["mean_net"] - perf["baseline"]["mean_net"], 6),
         }
     result["performance"] = perf
 
@@ -805,7 +787,7 @@ def evaluate_ruleset(
 
 
 _CROSS_NOOP_SPEARMAN_FLOOR = 0.999  # cross spearman must be >= this
-_CROSS_NOOP_OVERLAP_FLOOR = 99.0    # cross top60 overlap (%) must be >= this
+_CROSS_NOOP_OVERLAP_FLOOR = 99.0  # cross top60 overlap (%) must be >= this
 
 
 def _is_cross_noop(eval_result: Dict[str, Any]) -> bool:
@@ -863,21 +845,15 @@ def evaluate_gate(
                 f"mean_top60_overlap={mean_ov:.1f}% < fail={t['mean_top60_overlap_fail'] * 100 if t.get('mean_top60_overlap_fail', 0) < 1 else t.get('mean_top60_overlap_fail')}%"
             )
         elif mean_ov < t.get("mean_top60_overlap_warn", 0) * 100:
-            warn_reasons.append(
-                f"mean_top60_overlap={mean_ov:.1f}% < warn={t['mean_top60_overlap_warn'] * 100}%"
-            )
+            warn_reasons.append(f"mean_top60_overlap={mean_ov:.1f}% < warn={t['mean_top60_overlap_warn'] * 100}%")
 
     # Max rank shift
     ms = ts.get("max_rank_shift", {})
     shift = ms.get("shift", 0)
     if shift > t.get("max_rank_shift_fail", 999):
-        fail_reasons.append(
-            f"max_rank_shift={shift} > fail={t['max_rank_shift_fail']}"
-        )
+        fail_reasons.append(f"max_rank_shift={shift} > fail={t['max_rank_shift_fail']}")
     elif shift > t.get("max_rank_shift_warn", 999):
-        warn_reasons.append(
-            f"max_rank_shift={shift} > warn={t['max_rank_shift_warn']}"
-        )
+        warn_reasons.append(f"max_rank_shift={shift} > warn={t['max_rank_shift_warn']}")
 
     # Turnover excess
     perf = eval_result.get("performance", {})
@@ -886,28 +862,24 @@ def evaluate_gate(
     if cand_turn is not None and base_turn is not None:
         excess = cand_turn - base_turn
         if excess > t.get("turnover_excess_warn", 999):
-            warn_reasons.append(
-                f"turnover_excess={excess:.4f} > warn={t['turnover_excess_warn']}"
-            )
+            warn_reasons.append(f"turnover_excess={excess:.4f} > warn={t['turnover_excess_warn']}")
 
     # No-op override: if cross-comparison shows zero behavioral change, demote
     # any temporal-stability FAILs to WARNs.  The temporal instability is
     # attributable to the baseline data (archetype/alpha oscillation), not to
     # this candidate's changes.
     temporal_fail_keys = {"max_rank_shift", "mean_top60_overlap"}
-    temporal_fails = [
-        r for r in fail_reasons
-        if any(k in r for k in temporal_fail_keys)
-    ]
+    temporal_fails = [r for r in fail_reasons if any(k in r for k in temporal_fail_keys)]
     if temporal_fails and _is_cross_noop(eval_result):
         worst_ticker = ms.get("ticker", "?")
-        worst_date   = ms.get("date", "?")
+        worst_date = ms.get("date", "?")
         for r in temporal_fails:
             fail_reasons.remove(r)
         cc = eval_result.get("cross_comparison", {})
         pct_info = (
             f", cross_pct_changed_all={cc['mean_pct_rank_changed']:.1f}%"
-            if cc.get("mean_pct_rank_changed") is not None else ""
+            if cc.get("mean_pct_rank_changed") is not None
+            else ""
         )
         warn_reasons.append(
             f"baseline_temporal_instability (top60_overlap={cc.get('mean_top60_overlap', '?')}%"
@@ -922,10 +894,7 @@ def evaluate_gate(
     # They do not block PASS so that promote_ruleset.py can accept the result without
     # --force.  All other warn_reasons (zero_evaluated_dates, turnover_excess, etc.)
     # still produce a blocking WARN.
-    blocking_warns = [
-        w for w in warn_reasons
-        if not w.startswith("baseline_temporal_instability")
-    ]
+    blocking_warns = [w for w in warn_reasons if not w.startswith("baseline_temporal_instability")]
 
     if fail_reasons:
         verdict = "FAIL"
@@ -964,9 +933,7 @@ def render_markdown(
     lines.append(f"| baseline | `{baseline_id}` ({baseline_file}) |")
     for key in ("start", "end", "k", "horizon", "cost_bps", "anchor_mode"):
         lines.append(f"| {key} | `{config.get(key, '')}` |")
-    lines.append(
-        f"| dates evaluated | {eval_result['n_evaluated']} |"
-    )
+    lines.append(f"| dates evaluated | {eval_result['n_evaluated']} |")
     lines.append(f"| dates skipped | {eval_result['n_skipped']} |")
     lines.append("")
 
@@ -976,9 +943,7 @@ def render_markdown(
         from collections import Counter
 
         reasons = Counter(s["reason"] for s in skipped)
-        lines.append("**Skip reasons:** " + ", ".join(
-            f"{r}={c}" for r, c in sorted(reasons.items())
-        ))
+        lines.append("**Skip reasons:** " + ", ".join(f"{r}={c}" for r, c in sorted(reasons.items())))
         lines.append("")
 
     # Temporal stability
@@ -989,8 +954,11 @@ def render_markdown(
         lines.append("| Metric | Value |")
         lines.append("|--------|-------|")
         for key in (
-            "mean_top20_overlap", "mean_top60_overlap", "worst_top60_overlap",
-            "mean_spearman", "worst_spearman",
+            "mean_top20_overlap",
+            "mean_top60_overlap",
+            "worst_top60_overlap",
+            "mean_spearman",
+            "worst_spearman",
         ):
             val = ts.get(key)
             if val is not None:
@@ -1095,9 +1063,7 @@ def _main_rerank_only(args: argparse.Namespace) -> int:
             print(f"ERROR: cannot load baseline ruleset: {e}", file=sys.stderr)
             return 2
     else:
-        manifest_path = (
-            _PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
-        )
+        manifest_path = _PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
         try:
             _, baseline_file = active_ruleset_from_manifest(manifest_path)
         except Exception as e:
@@ -1107,9 +1073,7 @@ def _main_rerank_only(args: argparse.Namespace) -> int:
             )
             return 2
         try:
-            base_rs = DecisionRuleset.from_json(
-                str(manifest_path.parent / baseline_file)
-            )
+            base_rs = DecisionRuleset.from_json(str(manifest_path.parent / baseline_file))
         except Exception as e:
             print(f"ERROR: cannot load baseline ruleset: {e}", file=sys.stderr)
             return 2
@@ -1136,10 +1100,7 @@ def _main_rerank_only(args: argparse.Namespace) -> int:
         k=args.k,
     )
 
-    print(
-        f"  Evaluated: {eval_result['n_evaluated']}, "
-        f"Skipped: {eval_result['n_skipped']}"
-    )
+    print(f"  Evaluated: {eval_result['n_evaluated']}, " f"Skipped: {eval_result['n_skipped']}")
 
     gate_result = None
     if args.gate:
@@ -1166,11 +1127,7 @@ def _main_rerank_only(args: argparse.Namespace) -> int:
         "gate": gate_result,
     }
 
-    out_subdir = (
-        args.out_dir
-        / f"{candidate_id}__vs__{baseline_id}"
-        / f"{args.start}__{args.end}"
-    )
+    out_subdir = args.out_dir / f"{candidate_id}__vs__{baseline_id}" / f"{args.start}__{args.end}"
     out_subdir.mkdir(parents=True, exist_ok=True)
 
     json_path = out_subdir / "ruleset_eval.json"
@@ -1199,9 +1156,7 @@ def _main_rerank_only(args: argparse.Namespace) -> int:
                     all_fields.append(key)
                     seen.add(key)
         with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(
-                f, fieldnames=all_fields, extrasaction="ignore"
-            )
+            writer = csv.DictWriter(f, fieldnames=all_fields, extrasaction="ignore")
             writer.writeheader()
             writer.writerows(per_date)
 
@@ -1226,9 +1181,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument("--k", type=int, default=60)
     parser.add_argument("--horizon", type=int, default=5)
     parser.add_argument("--cost-bps", type=float, default=30.0)
-    parser.add_argument(
-        "--snapshot-dir", type=Path, default=_PROJECT_ROOT / "data" / "snapshots"
-    )
+    parser.add_argument("--snapshot-dir", type=Path, default=_PROJECT_ROOT / "data" / "snapshots")
     parser.add_argument(
         "--price-csv",
         type=Path,
@@ -1236,14 +1189,16 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument(
-        "--anchor-mode", default="prev_trading_day",
+        "--anchor-mode",
+        default="prev_trading_day",
         choices=["prev_trading_day", "next_trading_day", "exact"],
     )
     parser.add_argument("--gate", action="store_true")
     parser.add_argument("--long-short", action="store_true")
     parser.add_argument("--rebuild-snapshots", action="store_true")
     parser.add_argument(
-        "--rerank-only", action="store_true",
+        "--rerank-only",
+        action="store_true",
         help="Re-rank snapshots with candidate/baseline rulesets (no price data needed)",
     )
     args = parser.parse_args(argv)
@@ -1295,11 +1250,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Regime map (optional, degrade gracefully)
     regime_map: Optional[Dict[str, str]] = None
     try:
-        from backtest.regime import (
-            assign_regime_to_rebalance_dates,
-            compute_regime_series,
-            load_price_history,
-        )
+        from backtest.regime import assign_regime_to_rebalance_dates, compute_regime_series, load_price_history
+
         price_df = load_price_history(args.price_csv)
         regime_df = compute_regime_series(price_df, "XBI")
         regime_map = assign_regime_to_rebalance_dates(regime_df, dates)
@@ -1355,18 +1307,20 @@ def main(argv: Optional[List[str]] = None) -> int:
     }
 
     # Write outputs
-    out_subdir = (
-        args.out_dir / f"{candidate_id}__vs__{baseline_id}" / f"{args.start}__{args.end}"
-    )
+    out_subdir = args.out_dir / f"{candidate_id}__vs__{baseline_id}" / f"{args.start}__{args.end}"
     out_subdir.mkdir(parents=True, exist_ok=True)
 
     json_path = out_subdir / "ruleset_eval.json"
     json_path.write_text(_stable_json(output), encoding="utf-8")
 
     md = render_markdown(
-        candidate_id, args.candidate.name,
-        baseline_id, baseline_file,
-        eval_result, gate_result, config,
+        candidate_id,
+        args.candidate.name,
+        baseline_id,
+        baseline_file,
+        eval_result,
+        gate_result,
+        config,
     )
     md_path = out_subdir / "ruleset_eval.md"
     md_path.write_text(md, encoding="utf-8")

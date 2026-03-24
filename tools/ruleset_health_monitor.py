@@ -17,20 +17,25 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
-from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
 # Thresholds
 # ---------------------------------------------------------------------------
 
+
 @dataclass(frozen=True)
 class HealthThresholds:
     """Configurable thresholds for ruleset health checks."""
+
     overlap_warn_delta: float = 10.0
     """WARN if today's top60_overlap < baseline - delta."""
 
@@ -44,6 +49,7 @@ class HealthThresholds:
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
+
 
 def _find_active_receipt(
     receipts_dir: Path,
@@ -87,6 +93,7 @@ def _load_history(history_path: Path) -> List[Dict[str, Any]]:
             try:
                 entries.append(json.loads(line))
             except json.JSONDecodeError:
+                logger.warning("Skipped malformed health history line: %.80s", line)
                 continue
     return entries
 
@@ -199,16 +206,12 @@ def evaluate_health(
     if baseline_overlap is not None and today_overlap is not None:
         floor = baseline_overlap - th.overlap_warn_delta
         if today_overlap < floor:
-            warn_reasons.append(
-                f"top60_overlap {today_overlap:.1f}% < baseline floor {floor:.1f}%"
-            )
+            warn_reasons.append(f"top60_overlap {today_overlap:.1f}% < baseline floor {floor:.1f}%")
 
     if baseline_rank_shift is not None and today_rank_shift is not None:
         ceiling = baseline_rank_shift * th.rank_shift_warn_factor
         if today_rank_shift > ceiling:
-            warn_reasons.append(
-                f"rank_shift {today_rank_shift:.1f} > baseline ceiling {ceiling:.1f}"
-            )
+            warn_reasons.append(f"rank_shift {today_rank_shift:.1f} > baseline ceiling {ceiling:.1f}")
 
     status = "WARN" if warn_reasons else "OK"
 
@@ -297,30 +300,38 @@ def run_health_check(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[list] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Post-promotion ruleset health monitor.",
     )
     parser.add_argument(
-        "--drift-report", type=Path, default=None,
+        "--drift-report",
+        type=Path,
+        default=None,
         help="Path to drift_report.json from today's snapshot.",
     )
     parser.add_argument(
-        "--receipts-dir", type=Path,
+        "--receipts-dir",
+        type=Path,
         default=Path(__file__).resolve().parent.parent / "artifacts" / "promotions",
         help="Directory containing promotion receipts.",
     )
     parser.add_argument(
-        "--history-file", type=Path,
+        "--history-file",
+        type=Path,
         default=Path(__file__).resolve().parent.parent / "artifacts" / "ruleset_health_history.jsonl",
         help="JSONL history file for rolling tracking.",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=None,
+        "--output-dir",
+        type=Path,
+        default=None,
         help="Directory to write ruleset_health.json sidecar.",
     )
     parser.add_argument(
-        "--active-ruleset-id", default=None,
+        "--active-ruleset-id",
+        default=None,
         help="Active ruleset ID (auto-detected from latest receipt if omitted).",
     )
     args = parser.parse_args(argv)

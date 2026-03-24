@@ -485,7 +485,9 @@ def _allocate_sub_bucket_quality(
                 _overlay_mult = _rc["hard_cap_multiplier"]
                 _overlay_reasons = _rc["control_reasons"]
         except ImportError:
-            pass
+            import logging
+
+            logging.getLogger(__name__).warning("Options overlay modules unavailable — applying 1.0x multiplier")
 
         wt *= _overlay_mult
 
