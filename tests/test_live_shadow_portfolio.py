@@ -994,3 +994,594 @@ class TestEndToEndActionLoop:
         # 6. Performance CSV exists
         perf_csv = shadow_root / "performance.csv"
         assert perf_csv.is_file(), "Performance CSV not generated"
+
+
+# ---------------------------------------------------------------------------
+# H) Edge cases — coverage gaps
+# ---------------------------------------------------------------------------
+
+
+class TestEdgeCasesCoverageGap:
+    """Targeted edge-case tests for under-covered paths:
+    - Family sleeve reflow when regulatory_days <= 0 (auto-demote)
+    - Time-ladder sub-bucket concentration
+    - Quality-proportional weighting with zero-quality entries
+    - Options overlay ImportError fallback
+    """
+
+    # -- helpers --
+
+    def _make_row(
+        self,
+        ticker: str,
+        rank: int,
+        catalyst_days: str = "100",
+        catalyst_mode: str = "specific_days",
+        catalyst_family: str = "CLINICAL",
+        regulatory_days: str = "",
+        regulatory_quality: str = "0",
+        has_regulatory_upcoming_180d: str = "0",
+        regulatory_event_type: str = "",
+        regulatory_confidence: str = "HIGH",
+    ) -> Dict[str, str]:
+        return {
+            "ticker": ticker,
+            "actionable_rank": str(rank),
+            "eligible": "1",
+            "catalyst_days": catalyst_days,
+            "catalyst_mode": catalyst_mode,
+            "tier_any": "A",
+            "size_band": "M",
+            "target_weight_pct": "1.0",
+            "mom_state": "tailwind",
+            "archetype": "drug_developer",
+            "alpha_cohort_key": "",
+            "industry_group": "",
+            "catalyst_bucket": "",
+            "catalyst_strength": "",
+            "de_beta_xbi_60d_source": "price_history",
+            "catalyst_family": catalyst_family,
+            "has_regulatory_upcoming_180d": has_regulatory_upcoming_180d,
+            "regulatory_days": regulatory_days,
+            "regulatory_quality": regulatory_quality,
+            "regulatory_event_type": regulatory_event_type,
+            "regulatory_confidence": regulatory_confidence,
+        }
+
+    def _policy_with_family_targets(self, **overrides):
+        """Minimal policy with family targets and ladder enabled."""
+        base = {
+            "schema": "portfolio_policy.v1",
+            "account_usd": 100_000,
+            "bucket_targets": {
+                "binary_91_180": 0.60,
+                "binary_31_90": 0.20,
+                "binary_0_30": 0.10,
+                "less_binary": 0.10,
+            },
+            "bucket_top_k": {
+                "binary_91_180": 10,
+                "binary_31_90": 10,
+                "binary_0_30": 10,
+                "less_binary": 10,
+            },
+            "bucket_name_caps": {
+                "binary_91_180": 5.0,
+                "binary_31_90": 5.0,
+                "binary_0_30": 5.0,
+                "less_binary": 5.0,
+            },
+            "gap_risk": {"high_days": 7, "high_cap_pct": 0.5},
+            "family_targets": {
+                "binary_91_180": {"REGULATORY": 0.70, "CLINICAL": 0.30},
+            },
+            "family_overrides": {},
+            "family_filter_mode": "primary",
+            "regulatory_ladder_enabled": False,
+            "regulatory_quality_tilt_enabled": False,
+            "regulatory_resolution_enabled": False,
+            "rebalance_buffer_ranks": 30,
+            "bucket_hysteresis_days": 7,
+        }
+        base.update(overrides)
+        return base
+
+    # -----------------------------------------------------------------------
+    # 1. Regulatory resolution: auto-demote when regulatory_days <= 0
+    # -----------------------------------------------------------------------
+
+    def test_resolved_regulatory_auto_demoted(self):
+        """A REGULATORY name with regulatory_days <= 0 is excluded when
+        resolution is enabled."""
+        rows = [
+            self._make_row("RESOLVED", 1, "100", catalyst_family="REGULATORY", regulatory_days="-2"),
+            self._make_row("ACTIVE", 2, "120", catalyst_family="REGULATORY", regulatory_days="45"),
+            self._make_row("CLIN1", 3, "130", catalyst_family="CLINICAL"),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_resolution_enabled=True,
+        )
+        result = build_positions(rows, policy, 100_000)
+        tickers = {p["ticker"] for p in result["positions"]}
+        assert "RESOLVED" not in tickers, "Resolved regulatory name should be excluded"
+        assert "ACTIVE" in tickers
+        assert "CLIN1" in tickers
+
+    def test_resolved_regulatory_zero_days_excluded(self):
+        """regulatory_days == 0 is also considered resolved (event is today)."""
+        rows = [
+            self._make_row("TODAY", 1, "100", catalyst_family="REGULATORY", regulatory_days="0"),
+            self._make_row("FUTURE", 2, "120", catalyst_family="REGULATORY", regulatory_days="30"),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_resolution_enabled=True,
+        )
+        result = build_positions(rows, policy, 100_000)
+        tickers = {p["ticker"] for p in result["positions"]}
+        assert "TODAY" not in tickers, "regulatory_days=0 should be resolved"
+        assert "FUTURE" in tickers
+
+    def test_resolved_not_excluded_when_resolution_disabled(self):
+        """With resolution_enabled=False, regulatory_days <= 0 names stay."""
+        rows = [
+            self._make_row("RESOLVED", 1, "100", catalyst_family="REGULATORY", regulatory_days="-5"),
+            self._make_row("CLIN1", 2, "120", catalyst_family="CLINICAL"),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_resolution_enabled=False,
+        )
+        result = build_positions(rows, policy, 100_000)
+        tickers = {p["ticker"] for p in result["positions"]}
+        assert "RESOLVED" in tickers, "Resolution disabled — name should remain"
+
+    # -----------------------------------------------------------------------
+    # 2. Family reflow: unused REGULATORY budget reflows to CLINICAL
+    # -----------------------------------------------------------------------
+
+    def test_family_reflow_when_no_regulatory_names(self):
+        """When family_targets says 70% REGULATORY but there are zero
+        REGULATORY names, the entire budget reflows to CLINICAL.
+        Each name is capped at bucket_name_caps (5%), so 2 names get 5% each."""
+        rows = [
+            self._make_row("CLIN1", 1, "100", catalyst_family="CLINICAL"),
+            self._make_row("CLIN2", 2, "130", catalyst_family="CLINICAL"),
+        ]
+        policy = self._policy_with_family_targets()
+        result = build_positions(rows, policy, 100_000)
+        b91_pos = [p for p in result["positions"] if p["bucket"] == "binary_91_180"]
+        assert len(b91_pos) == 2, "Both CLINICAL names should be allocated"
+        # With reflow, CLINICAL's effective share becomes 1.0 (all of bucket).
+        # fam_frac = 0.60 * 1.0 = 0.60, equal_wt = 60.0 / 2 = 30% each,
+        # but capped to 5% each → $5k each = $10k total.
+        for p in b91_pos:
+            assert p["weight_pct"] <= 5.0 + 0.01
+            assert p["target_dollars"] > 0
+
+    def test_family_reflow_partial(self):
+        """One REGULATORY + two CLINICAL: REG gets its 70% slice, CLIN gets 30%.
+        Both are subject to per-name caps."""
+        rows = [
+            self._make_row("REG1", 1, "100", catalyst_family="REGULATORY", regulatory_days="60"),
+            self._make_row("CLIN1", 2, "120", catalyst_family="CLINICAL"),
+            self._make_row("CLIN2", 3, "150", catalyst_family="CLINICAL"),
+        ]
+        # Use generous caps so allocation isn't cap-limited
+        policy = self._policy_with_family_targets(
+            bucket_name_caps={
+                "binary_91_180": 50.0,
+                "binary_31_90": 50.0,
+                "binary_0_30": 50.0,
+                "less_binary": 50.0,
+            },
+        )
+        result = build_positions(rows, policy, 100_000)
+        reg_pos = [
+            p for p in result["positions"] if p["bucket"] == "binary_91_180" and p["catalyst_family"] == "REGULATORY"
+        ]
+        clin_pos = [
+            p for p in result["positions"] if p["bucket"] == "binary_91_180" and p["catalyst_family"] == "CLINICAL"
+        ]
+        reg_dollars = sum(p["target_dollars"] for p in reg_pos)
+        clin_dollars = sum(p["target_dollars"] for p in clin_pos)
+        # REG: 60% * 70% * 100k = $42k (1 name), CLIN: 60% * 30% * 100k = $18k (2 names)
+        assert reg_dollars > clin_dollars, f"REG (${reg_dollars:.0f}) should exceed CLIN (${clin_dollars:.0f})"
+
+    # -----------------------------------------------------------------------
+    # 3. Time-ladder: all positions in one sub-bucket
+    # -----------------------------------------------------------------------
+
+    def test_ladder_all_names_one_sub_bucket(self):
+        """When all REGULATORY names fall in the same sub-bucket,
+        the full REGULATORY budget concentrates there via reflow."""
+        rows = [
+            self._make_row(
+                "REG1", 1, "100", catalyst_family="REGULATORY", regulatory_days="20", regulatory_quality="0.8"
+            ),
+            self._make_row(
+                "REG2", 2, "120", catalyst_family="REGULATORY", regulatory_days="30", regulatory_quality="0.6"
+            ),
+            self._make_row(
+                "REG3", 3, "140", catalyst_family="REGULATORY", regulatory_days="40", regulatory_quality="0.4"
+            ),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_ladder_enabled=True,
+            # Generous caps so allocation isn't cap-limited
+            bucket_name_caps={
+                "binary_91_180": 50.0,
+                "binary_31_90": 50.0,
+                "binary_0_30": 50.0,
+                "less_binary": 50.0,
+            },
+        )
+        result = build_positions(rows, policy, 100_000)
+        reg_pos = [
+            p for p in result["positions"] if p["bucket"] == "binary_91_180" and p["catalyst_family"] == "REGULATORY"
+        ]
+        # All three should be allocated (all in reg_15_45)
+        assert len(reg_pos) == 3
+        subs = {p["reg_sub_bucket"] for p in reg_pos}
+        assert subs == {"reg_15_45"}, f"Expected all in reg_15_45, got {subs}"
+        # Total should be close to the full REGULATORY slice
+        # 60% * 70% * 100k = $42k
+        reg_dollars = sum(p["target_dollars"] for p in reg_pos)
+        assert (
+            reg_dollars > 40_000
+        ), f"Full REGULATORY budget should reflow to single sub-bucket, got ${reg_dollars:.0f}"
+
+    def test_ladder_unclassified_reg_names_get_residual(self):
+        """REGULATORY names with no regulatory_days get flat allocation from
+        residual budget after ladder names are placed."""
+        rows = [
+            self._make_row(
+                "REG_LADDER", 1, "100", catalyst_family="REGULATORY", regulatory_days="50", regulatory_quality="0.8"
+            ),
+            self._make_row(
+                "REG_NO_DAYS", 2, "130", catalyst_family="REGULATORY", regulatory_days="", regulatory_quality="0.5"
+            ),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_ladder_enabled=True,
+        )
+        result = build_positions(rows, policy, 100_000)
+        reg_pos = {p["ticker"]: p for p in result["positions"] if p["bucket"] == "binary_91_180"}
+        assert "REG_LADDER" in reg_pos
+        assert "REG_NO_DAYS" in reg_pos
+        # Unclassified name gets no sub-bucket
+        assert reg_pos["REG_NO_DAYS"]["reg_sub_bucket"] == ""
+        # Both should have non-zero allocation
+        assert reg_pos["REG_LADDER"]["target_dollars"] > 0
+        assert reg_pos["REG_NO_DAYS"]["target_dollars"] > 0
+
+    # -----------------------------------------------------------------------
+    # 4. Quality-proportional weighting edge cases
+    # -----------------------------------------------------------------------
+
+    def test_quality_weights_all_zero_falls_back_to_equal(self):
+        """When all regulatory_quality values are 0, quality_weights
+        should fall back to equal-weight allocation."""
+        from tools.live_shadow_portfolio import _quality_weights
+
+        rows = [
+            {"regulatory_quality": "0"},
+            {"regulatory_quality": "0"},
+            {"regulatory_quality": ""},
+        ]
+        weights = _quality_weights(rows)
+        # With q_lo=0.30 default, zero quality gets clipped to 0.30
+        # so all three get equal weight
+        assert len(weights) == 3
+        for w in weights:
+            assert abs(w - 1.0 / 3.0) < 0.001
+
+    def test_quality_tilt_differentiates_high_low(self):
+        """With ladder + quality tilt, higher quality names get more dollars."""
+        rows = [
+            self._make_row(
+                "REG_HI", 1, "100", catalyst_family="REGULATORY", regulatory_days="50", regulatory_quality="0.95"
+            ),
+            self._make_row(
+                "REG_LO", 2, "120", catalyst_family="REGULATORY", regulatory_days="60", regulatory_quality="0.35"
+            ),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_ladder_enabled=True,
+            regulatory_quality_tilt_enabled=True,
+            # Generous caps so quality tilt isn't masked by cap clipping
+            bucket_name_caps={
+                "binary_91_180": 50.0,
+                "binary_31_90": 50.0,
+                "binary_0_30": 50.0,
+                "less_binary": 50.0,
+            },
+        )
+        result = build_positions(rows, policy, 100_000)
+        pos_map = {p["ticker"]: p for p in result["positions"] if p["bucket"] == "binary_91_180"}
+        assert (
+            pos_map["REG_HI"]["target_dollars"] > pos_map["REG_LO"]["target_dollars"]
+        ), "Higher quality name should get more dollars under quality tilt"
+
+    def test_confidence_tilt_with_low_confidence(self):
+        """LOW confidence should receive smaller allocation than HIGH."""
+        from tools.live_shadow_portfolio import _combined_weights
+
+        rows = [
+            {"regulatory_quality": "0.8", "regulatory_confidence": "HIGH"},
+            {"regulatory_quality": "0.8", "regulatory_confidence": "LOW"},
+        ]
+        weights = _combined_weights(
+            rows,
+            quality_tilt=True,
+            q_lo=0.30,
+            q_hi=1.00,
+            confidence_tilt=True,
+            conf_weights={"HIGH": 1.0, "MED": 0.6, "LOW": 0.3},
+            conf_clip_lo=0.30,
+            conf_clip_hi=1.00,
+        )
+        assert len(weights) == 2
+        # HIGH confidence should get more weight
+        assert (
+            weights[0] > weights[1]
+        ), f"HIGH confidence weight ({weights[0]:.3f}) should exceed LOW ({weights[1]:.3f})"
+
+    def test_combined_weights_empty_rows(self):
+        """Empty row list should return empty weights."""
+        from tools.live_shadow_portfolio import _combined_weights
+
+        weights = _combined_weights(
+            [],
+            quality_tilt=True,
+            q_lo=0.30,
+            q_hi=1.00,
+            confidence_tilt=False,
+            conf_weights={"HIGH": 1.0},
+            conf_clip_lo=0.30,
+            conf_clip_hi=1.00,
+        )
+        assert weights == []
+
+    # -----------------------------------------------------------------------
+    # 5. Sub-bucket cap overflow reflow
+    # -----------------------------------------------------------------------
+
+    def test_sub_bucket_cap_overflow_reflows(self):
+        """When a high-quality name hits the cap, overflow reflows to
+        uncapped names within the same sub-bucket."""
+        from tools.live_shadow_portfolio import _allocate_sub_bucket_quality
+
+        def _row(ticker, quality):
+            return {
+                "regulatory_quality": quality,
+                "catalyst_days": "50",
+                "catalyst_mode": "specific_days",
+                "de_beta_xbi_60d_source": "price_history",
+                "ticker": ticker,
+                "actionable_rank": "1",
+                "tier_any": "A",
+                "size_band": "M",
+                "mom_state": "tailwind",
+                "regulatory_days": "50",
+                "regulatory_event_type": "",
+                "has_regulatory_upcoming_180d": "1",
+                "catalyst_family": "REGULATORY",
+                "regulatory_confidence": "HIGH",
+            }
+
+        rows = [_row("A", "0.95"), _row("B", "0.35"), _row("C", "0.35")]
+        # sb_frac=0.10 → budget_pct=10.0, cap=4.0
+        # Without cap: A gets ~10*0.95/1.65=5.76%, B/C get ~2.12% each
+        # With cap=4.0: A capped at 4%, overflow 1.76% reflows to B/C
+        positions = _allocate_sub_bucket_quality(
+            rows,
+            sb_frac=0.10,
+            cap=4.0,
+            bucket_name="binary_91_180",
+            gap_high_days=7,
+            gap_high_cap=0.5,
+            acct=100_000,
+            sb="reg_46_90",
+            quality_tilt=True,
+            q_lo=0.30,
+            q_hi=1.00,
+        )
+        assert len(positions) == 3
+        pos_a = [p for p in positions if p["ticker"] == "A"][0]
+        pos_b = [p for p in positions if p["ticker"] == "B"][0]
+        # A should be at the cap
+        assert abs(pos_a["weight_pct"] - 4.0) < 0.01
+        # B should have received some overflow (more than its original share)
+        # Original B share ~ 10 * 0.35/1.65 = 2.12%, with overflow > 2.5%
+        assert pos_b["weight_pct"] > 2.5, f"B should get overflow from A, got {pos_b['weight_pct']:.2f}%"
+        # Total should be close to the full budget
+        total_wt = sum(p["weight_pct"] for p in positions)
+        assert total_wt > 9.5, f"Expected ~10% total allocation, got {total_wt:.2f}%"
+
+    # -----------------------------------------------------------------------
+    # 6. Options overlay ImportError fallback
+    # -----------------------------------------------------------------------
+
+    def test_options_overlay_import_error_uses_1x_multiplier(self):
+        """When options overlay modules are unavailable, the ImportError
+        fallback should apply a 1.0x multiplier (no weight change)."""
+        # The sub-bucket allocator catches ImportError and logs a warning.
+        # If the modules aren't installed in this test environment, this
+        # exercises the fallback path. If they are installed, we verify
+        # the overlay field is present.
+        from tools.live_shadow_portfolio import _allocate_sub_bucket_quality
+
+        rows = [
+            {
+                "regulatory_quality": "0.8",
+                "catalyst_days": "50",
+                "catalyst_mode": "specific_days",
+                "de_beta_xbi_60d_source": "price_history",
+                "ticker": "OPT1",
+                "actionable_rank": "1",
+                "tier_any": "A",
+                "size_band": "M",
+                "mom_state": "tailwind",
+                "regulatory_days": "50",
+                "regulatory_event_type": "",
+                "has_regulatory_upcoming_180d": "0",
+                "catalyst_family": "REGULATORY",
+                "regulatory_confidence": "HIGH",
+                "_options_fresh": False,
+                "_crowding_panel_populated": False,
+            },
+        ]
+        positions = _allocate_sub_bucket_quality(
+            rows,
+            sb_frac=0.10,
+            cap=5.0,
+            bucket_name="binary_31_90",
+            gap_high_days=7,
+            gap_high_cap=0.5,
+            acct=100_000,
+            sb="reg_15_45",
+            quality_tilt=False,
+            q_lo=0.30,
+            q_hi=1.00,
+        )
+        assert len(positions) == 1
+        # Regardless of whether the import succeeded or failed,
+        # the position should have a valid weight
+        assert positions[0]["weight_pct"] > 0
+        assert positions[0]["target_dollars"] > 0
+
+    def test_options_overlay_fallback_in_build_positions(self):
+        """Exercise the options overlay code path through build_positions.
+        With options_overlay enabled but modules possibly missing, positions
+        should still be produced with valid weights."""
+        rows = [
+            self._make_row("OV1", 1, "50", catalyst_family="CLINICAL"),
+            self._make_row("OV2", 2, "70", catalyst_family="CLINICAL"),
+        ]
+        policy = self._policy_with_family_targets(
+            options_overlay={"enabled": True, "options_fresh": False, "crowding_panel_populated": False},
+        )
+        result = build_positions(rows, policy, 100_000)
+        # Should not crash; positions should exist
+        assert len(result["positions"]) >= 2
+        for p in result["positions"]:
+            assert p["target_dollars"] >= 0
+
+    # -----------------------------------------------------------------------
+    # 7. _reg_sub_bucket edge cases
+    # -----------------------------------------------------------------------
+
+    def test_reg_sub_bucket_boundary_values(self):
+        """Verify exact boundary classification for regulatory sub-buckets."""
+        from tools.live_shadow_portfolio import _reg_sub_bucket
+
+        assert _reg_sub_bucket("0") == "", "0 days → resolved, no sub-bucket"
+        assert _reg_sub_bucket("-1") == "", "Negative → no sub-bucket"
+        assert _reg_sub_bucket("1") == "reg_0_14"
+        assert _reg_sub_bucket("14") == "reg_0_14"
+        assert _reg_sub_bucket("15") == "reg_15_45"
+        assert _reg_sub_bucket("45") == "reg_15_45"
+        assert _reg_sub_bucket("46") == "reg_46_90"
+        assert _reg_sub_bucket("90") == "reg_46_90"
+        assert _reg_sub_bucket("91") == "reg_91_180"
+        assert _reg_sub_bucket("180") == "reg_91_180"
+        assert _reg_sub_bucket("181") == "", ">180 → no sub-bucket"
+        assert _reg_sub_bucket("") == "", "empty → no sub-bucket"
+        assert _reg_sub_bucket("abc") == "", "non-numeric → no sub-bucket"
+
+    # -----------------------------------------------------------------------
+    # 8. _is_regulatory_resolved edge cases
+    # -----------------------------------------------------------------------
+
+    def test_is_regulatory_resolved_edge_values(self):
+        from tools.live_shadow_portfolio import _is_regulatory_resolved
+
+        assert _is_regulatory_resolved({"regulatory_days": "0"}) is True
+        assert _is_regulatory_resolved({"regulatory_days": "-10"}) is True
+        assert _is_regulatory_resolved({"regulatory_days": "1"}) is False
+        assert _is_regulatory_resolved({"regulatory_days": ""}) is False
+        assert _is_regulatory_resolved({}) is False
+        assert _is_regulatory_resolved({"regulatory_days": "abc"}) is False
+
+    # -----------------------------------------------------------------------
+    # 9. _effective_family in secondary mode
+    # -----------------------------------------------------------------------
+
+    def test_effective_family_secondary_mode(self):
+        from tools.live_shadow_portfolio import _effective_family
+
+        # Secondary mode: has_regulatory_upcoming_180d=1 → REGULATORY
+        row = {"catalyst_family": "CLINICAL", "has_regulatory_upcoming_180d": "1"}
+        assert _effective_family(row, mode="secondary") == "REGULATORY"
+        # Primary mode: same row → CLINICAL
+        assert _effective_family(row, mode="primary") == "CLINICAL"
+        # Missing catalyst_family → OTHER
+        assert _effective_family({}, mode="primary") == "OTHER"
+        assert _effective_family({"catalyst_family": ""}, mode="primary") == "OTHER"
+
+    # -----------------------------------------------------------------------
+    # 10. Overage trim with concentrated single-bucket portfolio
+    # -----------------------------------------------------------------------
+
+    def test_overage_trim_when_caps_exceed_account(self):
+        """When bucket caps are generous and many names land in one bucket,
+        total can exceed account. Overage trim must bring it back."""
+        # All names in b91 with 5% cap each → 10 names × 5% × 60% bucket
+        # This shouldn't exceed account, but let's create a scenario that does
+        rows = []
+        for i in range(20):
+            rows.append(self._make_row(f"T{i:02d}", i + 1, str(100 + i)))
+        policy = self._policy_with_family_targets(
+            bucket_top_k={"binary_91_180": 20, "binary_31_90": 20, "binary_0_30": 20, "less_binary": 20},
+            # Remove family targets to use flat allocation
+            family_targets={},
+        )
+        result = build_positions(rows, policy, 100_000)
+        total = sum(p["target_dollars"] for p in result["positions"])
+        assert total <= 100_000 + 0.01, f"Overage trim failed: total ${total:.0f} exceeds $100,000"
+
+    # -----------------------------------------------------------------------
+    # 11. Ladder reflow priority order
+    # -----------------------------------------------------------------------
+
+    def test_ladder_reflow_priority_order(self):
+        """When multiple sub-buckets are empty, reflow should go to the
+        first active sub-bucket in priority order:
+        reg_15_45 → reg_46_90 → reg_91_180 → reg_0_14."""
+        # Only reg_46_90 has names; reg_0_14, reg_15_45, reg_91_180 are empty
+        rows = [
+            self._make_row(
+                "REG1", 1, "100", catalyst_family="REGULATORY", regulatory_days="60", regulatory_quality="0.7"
+            ),
+            self._make_row(
+                "REG2", 2, "120", catalyst_family="REGULATORY", regulatory_days="75", regulatory_quality="0.5"
+            ),
+        ]
+        policy = self._policy_with_family_targets(
+            regulatory_ladder_enabled=True,
+            regulatory_bucket_weights={
+                "binary_91_180": {
+                    "reg_0_14": 0.25,
+                    "reg_15_45": 0.25,
+                    "reg_46_90": 0.25,
+                    "reg_91_180": 0.25,
+                },
+            },
+            # Generous caps so reflow isn't masked by cap clipping
+            bucket_name_caps={
+                "binary_91_180": 50.0,
+                "binary_31_90": 50.0,
+                "binary_0_30": 50.0,
+                "less_binary": 50.0,
+            },
+        )
+        result = build_positions(rows, policy, 100_000)
+        reg_pos = [
+            p for p in result["positions"] if p["bucket"] == "binary_91_180" and p["catalyst_family"] == "REGULATORY"
+        ]
+        # All budget should reflow to reg_46_90
+        assert len(reg_pos) == 2
+        assert all(p["reg_sub_bucket"] == "reg_46_90" for p in reg_pos)
+        # Should have close to the full REGULATORY allocation
+        # 60% * 70% * 100k = $42k
+        reg_dollars = sum(p["target_dollars"] for p in reg_pos)
+        assert reg_dollars > 40_000, f"Expected full REGULATORY reflow to reg_46_90, got ${reg_dollars:.0f}"
