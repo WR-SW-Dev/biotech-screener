@@ -254,12 +254,17 @@ class TestOverallResult:
         )
         manifest = _write_manifest(tmp_path, active_id="abc")
 
+        # Empty perf CSV so alpha_health check gets cold-start PASS
+        perf_csv = tmp_path / "performance.csv"
+        perf_csv.write_text("")
+
         result = run_pre_trade_check(
             "2026-03-08",
             positions_dir=pos_dir,
             snap_dir=snap,
             deviation_max_pct=100,  # won't fail
             manifest_path=manifest,
+            perf_csv=perf_csv,
         )
         assert result.overall == "PASS"
         assert result.can_trade is True
