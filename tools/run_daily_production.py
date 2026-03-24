@@ -3624,14 +3624,35 @@ def promote_snapshot(
         # Archive existing by renaming with timestamp
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         backup = final_snapshots_dir / f"{as_of_date}__pre_{ts}"
-        shutil.move(str(final_date_dir), str(backup))
+        try:
+            shutil.move(str(final_date_dir), str(backup))
+        except (OSError, PermissionError):
+            # WSL2: Windows may hold directory handles; fall back to copy+delete
+            try:
+                shutil.copytree(str(final_date_dir), str(backup))
+                shutil.rmtree(str(final_date_dir), ignore_errors=True)
+            except (OSError, PermissionError):
+                # Last resort: leave existing in place, overwrite individual files
+                pass
 
-    try:
-        os.rename(str(staging_date_dir), str(final_date_dir))
-    except OSError:
-        # Cross-filesystem: copy then delete
-        shutil.copytree(str(staging_date_dir), str(final_date_dir))
-        shutil.rmtree(str(staging_date_dir))
+    if not final_date_dir.exists():
+        try:
+            os.rename(str(staging_date_dir), str(final_date_dir))
+        except OSError:
+            # Cross-filesystem: copy then delete
+            shutil.copytree(str(staging_date_dir), str(final_date_dir))
+            shutil.rmtree(str(staging_date_dir))
+    else:
+        # Existing dir couldn't be moved; copy staging files into it
+        for item in staging_date_dir.iterdir():
+            dest = final_date_dir / item.name
+            if item.is_file():
+                shutil.copy2(str(item), str(dest))
+            elif item.is_dir():
+                if dest.exists():
+                    shutil.rmtree(str(dest), ignore_errors=True)
+                shutil.copytree(str(item), str(dest))
+        shutil.rmtree(str(staging_date_dir), ignore_errors=True)
 
     return final_date_dir
 

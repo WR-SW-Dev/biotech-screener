@@ -526,10 +526,14 @@ def extend_price_csv(
                     if t not in max_dates or d > max_dates[t]:
                         max_dates[t] = d
 
-    # Merge ticker sets: CSV tickers + provided tickers
-    all_tickers = set(max_dates.keys())
+    # Merge ticker sets: when tickers provided, only refresh those (plus CSV tickers
+    # that are in the list). This avoids fetching prices for delisted tickers that
+    # have historical rows in the CSV but are no longer in the active universe.
     if tickers:
-        all_tickers |= set(t.upper() for t in tickers if not t.startswith("_"))
+        universe_set = set(t.upper() for t in tickers if not t.startswith("_"))
+        all_tickers = universe_set  # Only refresh universe tickers
+    else:
+        all_tickers = set(max_dates.keys())
     # Drop any synthetic tickers that leaked in from CSV history
     all_tickers = {t for t in all_tickers if not t.startswith("_")}
     if include_xbi:
