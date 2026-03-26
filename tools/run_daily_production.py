@@ -90,6 +90,7 @@ GATE_ALLOWLIST: frozenset[str] = frozenset(
         "hard_carry_state",
         "hard_queue_actionability",
         "optionality_stability",
+        "phase2_health",
     }
 )
 
