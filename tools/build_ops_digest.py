@@ -233,6 +233,33 @@ def _build_readiness_section(as_of_date: str) -> Dict[str, Any]:
     }
 
 
+def _build_surface_delta_section(snap_dir: Path) -> Dict[str, Any]:
+    """Optional post-open surface delta briefing (linked sidecar).
+
+    Reads surface_delta.json produced by surface_delta_monitor.py.
+    Only available when that tool has run for this snapshot date.
+    """
+    sd = _load_json(snap_dir / "surface_delta.json")
+    if not sd:
+        return {"available": False}
+
+    # Summarize: just counts and top alert names
+    deltas = sd.get("deltas", [])
+    alert_names = [d["ticker"] for d in deltas if d.get("severity") == "alert"]
+    watch_names = [d["ticker"] for d in deltas if d.get("severity") == "watch"]
+
+    return {
+        "available": True,
+        "prior_date": sd.get("prior_date", "?"),
+        "live_mode": sd.get("live_mode", False),
+        "n_compared": sd.get("n_compared", 0),
+        "n_alert": sd.get("n_alert", 0),
+        "n_watch": sd.get("n_watch", 0),
+        "alert_names": alert_names[:10],  # cap for digest brevity
+        "watch_names": watch_names[:10],
+    }
+
+
 def _build_nearest_catalysts(snap_dir: Path, n: int = 10) -> List[Dict[str, Any]]:
     """Extract nearest catalysts from delta details."""
     delta = _load_json(snap_dir / "phase2_run_delta_details.json")
@@ -272,6 +299,7 @@ def build_ops_digest(
     performance = _build_performance_section()
     readiness = _build_readiness_section(as_of_date)
     catalysts = _build_nearest_catalysts(snap_dir)
+    surface_delta = _build_surface_delta_section(snap_dir)
 
     # Compute overall attention level
     n_fails = len([a for a in health["alerts"] if a["level"] == "FAIL"])
@@ -395,6 +423,7 @@ def build_ops_digest(
         "performance": performance,
         "readiness": readiness,
         "nearest_catalysts": catalysts,
+        "surface_delta": surface_delta,
     }
 
 
@@ -559,6 +588,26 @@ def format_digest_md(d: Dict[str, Any]) -> str:
             days = cat.get("catalyst_days", cat.get("days", "?"))
             tier = cat.get("tier_dev", cat.get("tier", "?"))
             lines.append(f"| {t} | {days} | {tier} |")
+        lines.append("")
+
+    # Surface delta (post-open sidecar — only present when surface_delta_monitor ran)
+    sd = d.get("surface_delta", {})
+    if sd.get("available"):
+        source = "live" if sd.get("live_mode") else "snapshot"
+        lines.append("## Surface Delta (post-open)")
+        lines.append("")
+        lines.append(
+            f"vs {sd.get('prior_date', '?')} ({source}) | "
+            f"{sd.get('n_compared', 0)} compared | "
+            f"**{sd.get('n_alert', 0)} alert** / {sd.get('n_watch', 0)} watch"
+        )
+        alert_names = sd.get("alert_names", [])
+        if alert_names:
+            lines.append("")
+            lines.append(f"Alert names: {', '.join(alert_names)}")
+        watch_names = sd.get("watch_names", [])
+        if watch_names:
+            lines.append(f"Watch names: {', '.join(watch_names)}")
         lines.append("")
 
     return "\n".join(lines) + "\n"
