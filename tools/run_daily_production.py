@@ -4530,6 +4530,24 @@ def run_daily(
         except Exception as _tp_err:
             print(f"  [WARN] Trade plan failed: {_tp_err}")
 
+        # --- Step 5i.5: Surface delta monitor (non-blocking) ---
+        try:
+            from tools.surface_delta_monitor import run as run_surface_delta
+
+            _sdm_result = run_surface_delta(
+                as_of_date=as_of_date,
+                live=False,
+                json_only=True,
+            )
+            _sdm_n_alert = _sdm_result.get("n_alert", 0)
+            _sdm_n_watch = _sdm_result.get("n_watch", 0)
+            print(
+                f"  Surface delta → {_sdm_result.get('n_compared', 0)} compared, "
+                f"{_sdm_n_alert} alert / {_sdm_n_watch} watch"
+            )
+        except Exception as _sdm_err:
+            print(f"  [WARN] Surface delta monitor failed: {_sdm_err}")
+
         # --- Step 5j: Portfolio metrics update (non-blocking) ---
         try:
             from tools.build_portfolio_report import build_portfolio_report
@@ -4569,6 +4587,20 @@ def run_daily(
             print(f"  Readiness scorecard → {_sc_verdict}")
         except Exception as _sc_err:
             print(f"  [WARN] Readiness scorecard failed: {_sc_err}")
+
+        # --- Step 5k.5: Options chartbook (non-blocking) ---
+        try:
+            from tools.build_options_chartbook import build_chartbook
+
+            _cb_result = build_chartbook(as_of_date, snapshots_dir=final_snapshots_dir)
+            if "error" in _cb_result:
+                print(f"  Options chartbook → skipped ({_cb_result['error']})")
+            else:
+                _cb_n = _cb_result.get("scoreboard", {}).get("watchlist_size", 0)
+                _cb_path = _cb_result.get("_html_path", "?")
+                print(f"  Options chartbook → {_cb_path} ({_cb_n} names)")
+        except Exception as _cb_err:
+            print(f"  [WARN] Options chartbook failed: {_cb_err}")
 
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
