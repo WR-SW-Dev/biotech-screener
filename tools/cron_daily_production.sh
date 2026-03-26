@@ -9,8 +9,8 @@
 #   ./tools/cron_daily_production.sh 2026-03-20   # run for specific date
 #   ./tools/cron_daily_production.sh --catch-up   # backfill missed weekdays
 #
-# Cron example (weekdays at 5:30 PM ET, after market close):
-#   30 17 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_daily_production.sh >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/cron.log 2>&1
+# Cron example (weekdays at 4:30 PM ET, after market close):
+#   30 16 * * 1-5 /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_daily_production.sh >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/cron.log 2>&1
 # On WSL2 reboot, catch up any missed days:
 #   @reboot sleep 60 && /mnt/c/Projects/biotech_screener/biotech-screener/tools/cron_daily_production.sh --catch-up >> /mnt/c/Projects/biotech_screener/biotech-screener/logs/cron.log 2>&1
 
@@ -153,15 +153,9 @@ if [ ${prune_count} -gt 0 ]; then
     echo "[$(date -Iseconds)] Housekeeping: pruned ${prune_count} old pre-staging/log item(s)" | tee -a "${LOG_FILE}"
 fi
 
-# --- Trigger OpenClaw agent heartbeats (best-effort, after production) ---
-if command -v openclaw >/dev/null 2>&1; then
-    echo "[$(date -Iseconds)] Triggering OpenClaw agent heartbeats ..." | tee -a "${LOG_FILE}"
-    for AGENT in ops sentinel qa; do
-        openclaw agent --agent "${AGENT}" --message "HEARTBEAT" --timeout 180 --json > /dev/null 2>&1 &
-    done
-    # Don't wait — fire-and-forget, agents run async
-    echo "[$(date -Iseconds)] Agent heartbeats triggered (async)" | tee -a "${LOG_FILE}"
-fi
+# NOTE: OpenClaw agents (ops/sentinel/qa) run on their own cron schedule
+# staggered after production: 5:00 / 5:15 / 5:30 PM ET.
+# They are NOT triggered from this script to avoid inspecting half-built packets.
 
 echo "[$(date -Iseconds)] Log: ${LOG_FILE}" | tee -a "${LOG_FILE}"
 exit ${EXIT_CODE}
