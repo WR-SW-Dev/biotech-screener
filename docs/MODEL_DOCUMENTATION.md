@@ -1188,7 +1188,7 @@ Track these metrics each run to detect data issues, model drift, and unintended 
 | 5l | Ops Digest | `build_ops_digest.py` — single-screen actionable summary |
 | 6 | PIT Backfill | Optional forward-return backfill |
 
-**Automation:** Cron at 5:30 PM ET weekdays + `@reboot` catch-up for missed runs (WSL2 resilience). Pre-staging rotation (>7d) and log rotation (>60d).
+**Automation:** Cron at 4:30 PM ET weekdays + `@reboot` catch-up for missed runs (WSL2 resilience). OpenClaw agents staggered at 5:00/5:15/5:30 PM ET after packet completes. Pre-staging rotation (>7d) and log rotation (>60d).
 
 **Exit codes:** 0=PASS, 1=FAIL (snapshot stays in staging), 2=WARN (snapshot promoted with warnings)
 
