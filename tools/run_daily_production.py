@@ -3610,6 +3610,50 @@ def append_gate_verdict(manifest: Dict[str, Any]) -> None:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# Step progress tracker — idempotent reruns + agent visibility
+# ---------------------------------------------------------------------------
+
+_PROGRESS_FILE = "_step_progress.json"
+
+
+def _load_progress(snap_dir: Path) -> Dict[str, Any]:
+    """Load step progress from staging/snapshot directory."""
+    p = snap_dir / _PROGRESS_FILE
+    if p.exists():
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {"steps": {}, "started_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")}
+
+
+def _mark_step(snap_dir: Path, step_name: str, status: str = "done", detail: str = "") -> None:
+    """Mark a pipeline step as completed. Enables idempotent reruns."""
+    progress = _load_progress(snap_dir)
+    progress["steps"][step_name] = {
+        "status": status,
+        "completed_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "detail": detail,
+    }
+    progress["last_step"] = step_name
+    progress["last_updated"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    snap_dir.mkdir(parents=True, exist_ok=True)
+    (snap_dir / _PROGRESS_FILE).write_text(json.dumps(progress, indent=2) + "\n", encoding="utf-8")
+
+
+def _step_done(snap_dir: Path, step_name: str) -> bool:
+    """Check if a step was already completed (for idempotent reruns)."""
+    progress = _load_progress(snap_dir)
+    step = progress.get("steps", {}).get(step_name, {})
+    return step.get("status") == "done"
+
+
+# ---------------------------------------------------------------------------
+# Snapshot promotion
+# ---------------------------------------------------------------------------
+
+
 def promote_snapshot(
     staging_date_dir: Path,
     final_snapshots_dir: Path,
@@ -3703,6 +3747,18 @@ def run_daily(
     print(f"{'='*70}")
     print(f"PHASE-2 DAILY RUN — {as_of_date}")
     print(f"{'='*70}")
+
+    # --- Idempotent rerun check ---
+    _final_snap = final_snapshots_dir / as_of_date
+    if _step_done(_final_snap, "manifest_written"):
+        print(f"\n  Snapshot for {as_of_date} already has a completed manifest.")
+        print("  Skipping expensive steps (price, cache, screen, audit, gates).")
+        print(f"  To force a full rerun, delete: {_final_snap / _PROGRESS_FILE}")
+        _rm_path = _final_snap / "run_manifest.json"
+        existing_manifest = json.loads(_rm_path.read_text(encoding="utf-8")) if _rm_path.exists() else None
+        if existing_manifest:
+            return existing_manifest
+        # No manifest found despite progress marker — fall through
 
     # --- Gate: Ruleset governance (pre-flight, before expensive work) ---
     _manifest_path = REPO_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
@@ -4333,6 +4389,7 @@ def run_daily(
     with open(manifest_path, "w") as f:
         json.dump(manifest, f, indent=2, default=str)
     print(f"  Manifest → {manifest_path}")
+    _mark_step(staging_date_dir, "manifest_written", detail=f"overall={manifest['overall_status']}")
 
     # Append to gate verdict ledger (JSONL time-series for SLO tracking)
     try:
@@ -4353,6 +4410,8 @@ def run_daily(
         print(f"{'='*70}")
     else:
         final_path = promote_snapshot(staging_date_dir, final_snapshots_dir, as_of_date)
+        _mark_step(final_path, "manifest_written", detail=f"overall={overall}")
+        _mark_step(final_path, "promoted", detail=f"from staging to {final_path}")
         # Clean up empty staging parent
         if staging_dir.exists() and not any(staging_dir.iterdir()):
             staging_dir.rmdir()

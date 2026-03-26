@@ -153,5 +153,15 @@ if [ ${prune_count} -gt 0 ]; then
     echo "[$(date -Iseconds)] Housekeeping: pruned ${prune_count} old pre-staging/log item(s)" | tee -a "${LOG_FILE}"
 fi
 
+# --- Trigger OpenClaw agent heartbeats (best-effort, after production) ---
+if command -v openclaw >/dev/null 2>&1; then
+    echo "[$(date -Iseconds)] Triggering OpenClaw agent heartbeats ..." | tee -a "${LOG_FILE}"
+    for AGENT in ops sentinel qa; do
+        openclaw agent --agent "${AGENT}" --message "HEARTBEAT" --timeout 180 --json > /dev/null 2>&1 &
+    done
+    # Don't wait — fire-and-forget, agents run async
+    echo "[$(date -Iseconds)] Agent heartbeats triggered (async)" | tee -a "${LOG_FILE}"
+fi
+
 echo "[$(date -Iseconds)] Log: ${LOG_FILE}" | tee -a "${LOG_FILE}"
 exit ${EXIT_CODE}
