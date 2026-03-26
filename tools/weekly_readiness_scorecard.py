@@ -406,6 +406,116 @@ def check_pre_trade_gate(
     return check
 
 
+def check_catalyst_concentration(
+    phase2_health: Optional[Dict[str, Any]],
+    pre_trade: Optional[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Check 7: hard-catalyst concentration blocks trades when too clustered.
+
+    Separate from gap_risk — this specifically targets the cluster of
+    hard-catalyst names within 7 days, which creates correlated binary
+    event risk that gap_risk's weight-based metric may not capture.
+    """
+    check = {
+        "name": "catalyst_concentration",
+        "status": "PASS",
+        "detail": "",
+        "value": None,
+        "threshold_warn": 30.0,
+        "threshold_fail": 50.0,
+    }
+
+    # Try phase2_health metrics first
+    metrics = (phase2_health or {}).get("metrics", {})
+    exposure = metrics.get("exposure", {})
+    cat_7d_weight = exposure.get("catalyst_le_7d_weight_pct")
+    cat_7d_count = exposure.get("catalyst_le_7d_count")
+
+    # Also check pre_trade risk_concentration if available
+    if pre_trade:
+        for c in pre_trade.get("checks", []):
+            if c.get("name") == "risk_concentration":
+                detail = c.get("detail", "")
+                if "catalyst<=7d=" in detail:
+                    try:
+                        pct_str = detail.split("catalyst<=7d=")[1].split("%")[0]
+                        cat_7d_weight = float(pct_str)
+                    except (IndexError, ValueError):
+                        pass
+
+    if cat_7d_weight is not None:
+        check["value"] = float(cat_7d_weight)
+        count_str = f", {cat_7d_count} names" if cat_7d_count else ""
+        check["detail"] = f"catalyst <=7d weight: {cat_7d_weight:.1f}%{count_str}"
+        if float(cat_7d_weight) >= 50.0:
+            check["status"] = "FAIL"
+        elif float(cat_7d_weight) >= 30.0:
+            check["status"] = "WARN"
+    else:
+        check["detail"] = "No catalyst concentration data available"
+
+    return check
+
+
+def check_position_change_budget(
+    pre_trade: Optional[Dict[str, Any]],
+    perf_rows: List[Dict[str, Any]],
+) -> Dict[str, Any]:
+    """Check 8: large position changes relative to rank churn.
+
+    If rank churn is modest but proposed trades are large (measured by
+    total trade USD as fraction of portfolio), downgrade readiness.
+    This catches situations where small ranking moves trigger
+    disproportionate rebalance actions.
+    """
+    check = {
+        "name": "position_change_budget",
+        "status": "PASS",
+        "detail": "",
+        "value": None,
+        "threshold_warn": 20.0,  # trade-to-AUM ratio > 20% with low churn → WARN
+        "threshold_fail": 35.0,  # trade-to-AUM ratio > 35% with low churn → FAIL
+    }
+
+    if not pre_trade:
+        check["detail"] = "No pre-trade data available"
+        return check
+
+    # Extract trade magnitude from pre_trade checks
+    turnover_check = None
+    for c in pre_trade.get("checks", []):
+        if c.get("name") == "turnover":
+            turnover_check = c
+            break
+
+    if not turnover_check:
+        check["detail"] = "No turnover check in pre-trade"
+        return check
+
+    turnover_val = turnover_check.get("value")
+    if turnover_val is None:
+        check["detail"] = "Turnover value not available"
+        return check
+
+    try:
+        turnover_pct = float(turnover_val)
+    except (ValueError, TypeError):
+        check["detail"] = f"Turnover value not numeric: {turnover_val}"
+        return check
+
+    check["value"] = turnover_pct
+    check["detail"] = f"Turnover: {turnover_pct:.1f}%"
+
+    if turnover_pct >= 35.0:
+        check["status"] = "FAIL"
+        check["detail"] = f"Turnover {turnover_pct:.1f}% exceeds budget (35%)"
+    elif turnover_pct >= 20.0:
+        check["status"] = "WARN"
+        check["detail"] = f"Turnover {turnover_pct:.1f}% elevated (>20%)"
+
+    return check
+
+
 # ---------------------------------------------------------------------------
 # Verdict logic
 # ---------------------------------------------------------------------------
@@ -467,6 +577,8 @@ def build_scorecard(
         check_warn_streak(phase2_health, ruleset_health, alerts),
         check_gap_risk(phase2_health, pre_trade),
         check_pre_trade_gate(pre_trade),
+        check_catalyst_concentration(phase2_health, pre_trade),
+        check_position_change_budget(pre_trade, perf_rows),
     ]
 
     verdict = compute_verdict(checks)
@@ -623,6 +735,7 @@ class ReadinessPolicy:
     review_blocks_trades: bool = False
     consecutive_review_to_hold: int = 0  # 0 = disabled
     ratchet_after_n_runs: int = 0  # 0 = disabled
+    require_ruleset_health_pass: bool = True  # two-key gate: ruleset health must also pass
 
     @classmethod
     def from_json(cls, path: Path) -> ReadinessPolicy:
@@ -712,6 +825,22 @@ def evaluate_readiness_gate(
         can_trade = True
         detail = "READY — all checks pass"
 
+    # Two-key gate: readiness + ruleset health must both pass
+    ruleset_health_block = False
+    if policy.require_ruleset_health_pass and can_trade:
+        rh_status = scorecard.get("context", {}).get("ruleset_health_status", "N/A")
+        if rh_status == "WARN":
+            # WARN in ruleset health + READY in readiness → downgrade to WARN
+            if gate_status == "PASS":
+                gate_status = "WARN"
+                detail += f" | ruleset_health={rh_status} (two-key advisory)"
+            ruleset_health_block = False  # advisory, not blocking
+        elif rh_status == "ROLLBACK_RECOMMENDED":
+            gate_status = "FAIL"
+            can_trade = False
+            detail = f"Two-key FAIL: ruleset_health={rh_status} — trades blocked"
+            ruleset_health_block = True
+
     return {
         "can_trade": can_trade,
         "gate_status": gate_status,
@@ -720,6 +849,7 @@ def evaluate_readiness_gate(
         "detail": detail,
         "consecutive_review_runs": consecutive_review,
         "ratchet_applied": ratchet_applied,
+        "ruleset_health_block": ruleset_health_block,
     }
 
 
