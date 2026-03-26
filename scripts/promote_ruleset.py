@@ -273,6 +273,19 @@ def write_receipt(
         json.dumps(receipt, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
+    # Validate receipt completeness for health monitor
+    _HEALTH_MONITOR_FIELDS = {"mean_top60_overlap", "max_rank_shift"}
+    missing_fields = _HEALTH_MONITOR_FIELDS - set((gate_summary or {}).keys())
+    empty_fields = {k for k in _HEALTH_MONITOR_FIELDS & set(gate_summary.keys()) if gate_summary.get(k) is None}
+    if missing_fields or empty_fields:
+        gaps = sorted(missing_fields | empty_fields)
+        print(
+            f"WARNING: Receipt for {new_active_id} is missing health-monitor baseline fields: "
+            f"{gaps}. Sentinel drift monitoring will have no baseline for this ruleset.",
+            file=sys.stderr,
+        )
+
     return receipt_path
 
 
@@ -641,6 +654,26 @@ def main(argv: Optional[List[str]] = None) -> int:
         if computed_id != rid:
             print(
                 f"ERROR: File {target['file']} computes to ID '{computed_id}', " f"expected '{rid}'.",
+                file=sys.stderr,
+            )
+            return 1
+
+    # --- Receipt completeness gate (health monitor baseline) ---
+    if not args.force and not args.rollback and gate_data:
+        ts = gate_data.get("temporal_stability") or {}
+        _baseline_overlap = ts.get("mean_top60_overlap")
+        _baseline_shift = (ts.get("max_rank_shift") or {}).get("shift")
+        _missing_baseline = []
+        if _baseline_overlap is None:
+            _missing_baseline.append("mean_top60_overlap")
+        if _baseline_shift is None:
+            _missing_baseline.append("max_rank_shift")
+        if _missing_baseline:
+            print(
+                f"ERROR: Gate artifact is missing health-monitor baseline fields: "
+                f"{_missing_baseline}.\n"
+                f"  Sentinel drift monitoring will have no baseline for this ruleset.\n"
+                f"  Use --force to promote without baseline (not recommended).",
                 file=sys.stderr,
             )
             return 1
