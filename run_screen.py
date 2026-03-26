@@ -2364,9 +2364,11 @@ def _find_nearest_catalyst_event(
     events = [e for e in (summary.get("events") or []) if isinstance(e, dict)]
 
     # Tier 0: when integration didn't select a catalyst but events exist,
-    # pick the earliest future event from the list.
+    # pick the earliest future event from the list, preferring hard sources.
     if not next_date and events:
         from datetime import date as _date
+
+        from common.hard_catalyst import is_hard_catalyst as _is_hard_t0
 
         ref = as_of_date or ""
         future = []
@@ -2377,10 +2379,11 @@ def _find_nearest_catalyst_event(
             # Only consider events after the reference date
             if ref and ed <= ref:
                 continue
-            future.append((ed, event))
+            is_hard = _is_hard_t0(event.get("event_type", ""), event.get("source", ""))
+            future.append((ed, not is_hard, event))  # sort hard before soft at same date
         if future:
-            future.sort(key=lambda x: x[0])
-            return future[0][1]
+            future.sort(key=lambda x: (x[0], x[1]))
+            return future[0][2]
 
     if not next_date:
         return None
@@ -2390,12 +2393,15 @@ def _find_nearest_catalyst_event(
         if event.get("event_date") == next_date:
             return event
 
-    # Tier 2: closest event within ±max_fuzzy_days
+    # Tier 2: closest event within ±max_fuzzy_days, prefer hard sources at equal distance
     if events:
         best_event = None
         best_delta = None
+        best_is_soft = True
         try:
             from datetime import date as _date
+
+            from common.hard_catalyst import is_hard_catalyst as _is_hard_t2
 
             target = _date.fromisoformat(next_date[:10])
             for event in events:
@@ -2406,8 +2412,13 @@ def _find_nearest_catalyst_event(
                     delta = abs((_date.fromisoformat(ed[:10]) - target).days)
                 except (ValueError, TypeError):
                     continue
-                if delta <= max_fuzzy_days and (best_delta is None or delta < best_delta):
+                if delta > max_fuzzy_days:
+                    continue
+                is_soft = not _is_hard_t2(event.get("event_type", ""), event.get("source", ""))
+                # Prefer: closer date first, hard over soft at same distance
+                if best_delta is None or (delta, is_soft) < (best_delta, best_is_soft):
                     best_delta = delta
+                    best_is_soft = is_soft
                     best_event = event
         except (ValueError, TypeError):
             pass

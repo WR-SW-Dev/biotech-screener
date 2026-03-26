@@ -3950,7 +3950,7 @@ def run_daily(
     )
     staging_date_dir = staging_dir / as_of_date
 
-    if screen_proc.returncode not in (0, 2):
+    if screen_proc.returncode not in (0, 1, 2):
         print(f"  Screen FAILED (exit {screen_proc.returncode})")
         if screen_proc.stderr:
             for line in screen_proc.stderr.strip().splitlines()[-10:]:
@@ -3976,7 +3976,45 @@ def run_daily(
         )
         return manifest
 
-    if screen_proc.returncode == 2:
+    if screen_proc.returncode == 1:
+        # --strict Phase-2 health FAIL (policy gate, not data corruption).
+        # If rankings.csv exists, the screen completed — continue with
+        # downstream artifacts but record the gate failure.
+        _rankings_exists = (staging_date_dir / "rankings.csv").exists()
+        if _rankings_exists:
+            print("  Screen exited 1 (Phase-2 health FAIL) but snapshot is complete — continuing")
+            gate_results.append(
+                GateResult(
+                    name="phase2_health",
+                    status="WARN",
+                    detail="Phase-2 health FAIL (exit 1) — snapshot promoted with downstream artifacts",
+                    value=screen_proc.returncode,
+                )
+            )
+        else:
+            print("  Screen FAILED (exit 1) and no rankings.csv — aborting")
+            gate_results.append(
+                GateResult(
+                    name="screen",
+                    status="FAIL",
+                    detail="Screen failed (exit 1) with no output",
+                    value=screen_proc.returncode,
+                )
+            )
+            manifest = build_run_manifest(
+                as_of_date,
+                gate_results,
+                price_stats,
+                screen_proc,
+                None,
+                config,
+                requested_as_of_date=requested_as_of_date,
+                git_pre_run=git_pre_run,
+                data_dir=data_dir,
+            )
+            return manifest
+
+    elif screen_proc.returncode == 2:
         print("  Screen completed with WARN (exit 2)")
     else:
         print("  Screen completed OK")
