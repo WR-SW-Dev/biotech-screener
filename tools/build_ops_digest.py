@@ -165,10 +165,10 @@ def _build_delta_section(snap_dir: Path, prior_date: Optional[str]) -> Dict[str,
     if not delta:
         return {"available": False, "prior_date": prior_date}
 
-    pt = delta.get("portfolio_turnover", {})
+    pt = delta.get("portfolio_turnover") or {}
     return {
         "available": True,
-        "prior_date": delta.get("prior", {}).get("date", prior_date),
+        "prior_date": (delta.get("prior") or {}).get("date", prior_date),
         "entrants": pt.get("entrants", []),
         "exits": pt.get("exits", []),
         "name_turnover_pct": pt.get("name_turnover_pct", 0),
@@ -285,15 +285,52 @@ def build_ops_digest(
     else:
         attention = "CLEAR"
 
-    # Collect action items
-    action_items: List[str] = []
+    # Collect action items with root-cause codes and new/carried-over flags
+    action_items: List[Dict[str, str]] = []
+    prior_digest = _load_json(OUT_DIR / f"{prior_date}_digest.json") if prior_date else None
+    prior_codes = set()
+    if prior_digest:
+        for item in prior_digest.get("action_items", []):
+            if isinstance(item, dict):
+                prior_codes.add(item.get("code", ""))
+            elif isinstance(item, str):
+                prior_codes.add(item)
+
     for alert in health["alerts"]:
         if alert["level"] in ("FAIL", "WARN"):
-            action_items.append(f"[{alert['source']}] {alert['detail']}")
+            code = f"{alert['source']}:{alert['level']}"
+            is_new = code not in prior_codes and alert["detail"] not in prior_codes
+            action_items.append(
+                {
+                    "code": code,
+                    "level": alert["level"],
+                    "source": alert["source"],
+                    "detail": alert["detail"],
+                    "new": is_new,
+                }
+            )
     for item in readiness.get("fail_checks", []):
-        action_items.append(f"[readiness FAIL] {item}")
+        code = f"readiness:FAIL:{item.split(':')[0] if ':' in item else 'unknown'}"
+        action_items.append(
+            {
+                "code": code,
+                "level": "FAIL",
+                "source": "readiness",
+                "detail": item,
+                "new": code not in prior_codes,
+            }
+        )
     for item in readiness.get("warn_checks", []):
-        action_items.append(f"[readiness WARN] {item}")
+        code = f"readiness:WARN:{item.split(':')[0] if ':' in item else 'unknown'}"
+        action_items.append(
+            {
+                "code": code,
+                "level": "WARN",
+                "source": "readiness",
+                "detail": item,
+                "new": code not in prior_codes,
+            }
+        )
 
     # Load ruleset info from phase2_health (has the ID) + metadata
     p2_metrics = (health.get("_raw_phase2") or {}).get("metrics", {})
@@ -304,6 +341,44 @@ def build_ops_digest(
     meta = _load_json(snap_dir / "metadata.json") or {}
     ruleset_version = meta.get("decision_engine_version", meta.get("engine_version", "?"))
 
+    # Receipt provenance — find active receipt for ruleset context
+    receipt_provenance: Dict[str, Any] = {"available": False}
+    receipts_dir = REPO_ROOT / "artifacts" / "promotions"
+    if receipts_dir.exists() and ruleset_id != "?":
+        for rp in sorted(receipts_dir.glob("promotion_*.json"), reverse=True):
+            try:
+                rd = json.loads(rp.read_text(encoding="utf-8"))
+                if rd.get("new_active_id") == ruleset_id:
+                    receipt_provenance = {
+                        "available": True,
+                        "receipt_file": rp.name,
+                        "promoted_at": rd.get("created_at_utc", ""),
+                        "old_active_id": rd.get("old_active_id", ""),
+                        "forced": rd.get("forced", False),
+                        "gate_verdict": (rd.get("gate") or {}).get("verdict", "?"),
+                    }
+                    break
+            except (json.JSONDecodeError, OSError):
+                continue
+
+    # Decision diff — top rank movers from drift report
+    decision_diff: Dict[str, Any] = {"available": False}
+    drift = _load_json(snap_dir / "drift_report.json")
+    if drift:
+        dm = drift.get("metrics") or {}
+        decision_diff = {
+            "available": True,
+            "prior_date": drift.get("prior_date"),
+            "top20_entrants": dm.get("top20_entrants", []),
+            "top20_exits": dm.get("top20_exits", []),
+            "spearman_rho": dm.get("rank_spearman_rho"),
+            "top20_overlap_pct": dm.get("top20_overlap_pct"),
+            "top60_overlap_pct": dm.get("top60_overlap_pct"),
+            "tier_migrations": dm.get("tier_migration_count"),
+            "eligibility_changes": dm.get("eligibility_change_count"),
+            "mean_rank_delta_top60": dm.get("mean_abs_rank_delta_top60"),
+        }
+
     return {
         "schema": SCHEMA_VERSION,
         "as_of_date": as_of_date,
@@ -312,9 +387,11 @@ def build_ops_digest(
         "attention": attention,
         "action_items": action_items,
         "ruleset": {"id": ruleset_id, "version": ruleset_version},
+        "receipt_provenance": receipt_provenance,
         "health": health,
         "coverage": coverage,
         "delta": delta,
+        "decision_diff": decision_diff,
         "performance": performance,
         "readiness": readiness,
         "nearest_catalysts": catalysts,
@@ -335,18 +412,28 @@ def format_digest_md(d: Dict[str, Any]) -> str:
     lines.append(f"# Ops Digest — {d['as_of_date']}")
     lines.append("")
     lines.append(f"**Status: {icon.get(attention, attention)}**  ")
-    lines.append(f"Ruleset: `{d['ruleset']['id']}` ({d['ruleset']['version']})  ")
+    rs = d.get("ruleset", {})
+    rp = d.get("receipt_provenance", {})
+    lines.append(f"Ruleset: `{rs.get('id', '?')}` ({rs.get('version', '?')})  ")
+    if rp.get("available"):
+        lines.append(
+            f"Promoted: {rp.get('promoted_at', '?')} (from `{rp.get('old_active_id', '?')}`, gate={rp.get('gate_verdict', '?')}, forced={rp.get('forced', '?')})  "
+        )
     lines.append(f"Prior: {d.get('prior_date', 'none')}  ")
     lines.append(f"Generated: {d.get('generated_at', '')}")
     lines.append("")
 
-    # Action items
+    # Action items with new/carried-over flags
     action_items = d.get("action_items", [])
     if action_items:
         lines.append("## Action Items")
         lines.append("")
         for item in action_items:
-            lines.append(f"- {item}")
+            if isinstance(item, dict):
+                flag = "NEW" if item.get("new") else "carried"
+                lines.append(f"- [{flag}] [{item.get('source', '?')}] {item.get('detail', '?')}")
+            else:
+                lines.append(f"- {item}")
         lines.append("")
     else:
         lines.append("## No action items")
@@ -391,6 +478,35 @@ def format_digest_md(d: Dict[str, Any]) -> str:
         else:
             lines.append("No portfolio changes.")
         lines.append("")
+
+    # Decision diff
+    dd = d.get("decision_diff", {})
+    if dd.get("available"):
+        lines.append("## Decision Diff")
+        lines.append("")
+        lines.append(f"Spearman rho: {dd.get('spearman_rho', '?')}  ")
+        lines.append(f"Top-20 overlap: {dd.get('top20_overlap_pct', '?')}%  ")
+        lines.append(f"Top-60 overlap: {dd.get('top60_overlap_pct', '?')}%  ")
+        lines.append(f"Tier migrations: {dd.get('tier_migrations', '?')}  ")
+        lines.append(f"Eligibility changes: {dd.get('eligibility_changes', '?')}")
+        lines.append("")
+        t20_in = dd.get("top20_entrants", [])
+        t20_out = dd.get("top20_exits", [])
+        if t20_in or t20_out:
+            lines.append(f"Top-20 entrants: {', '.join(t20_in) if t20_in else 'none'}  ")
+            lines.append(f"Top-20 exits: {', '.join(t20_out) if t20_out else 'none'}")
+            lines.append("")
+        movers = dd.get("biggest_rank_movers", [])
+        if movers:
+            lines.append("Biggest rank movers:")
+            for m in movers[:5]:
+                if isinstance(m, dict):
+                    lines.append(
+                        f"  {m.get('ticker', '?')}: {m.get('prior_rank', '?')} → {m.get('current_rank', '?')} (Δ{m.get('shift', '?')})"
+                    )
+                else:
+                    lines.append(f"  {m}")
+            lines.append("")
 
     # Performance
     perf = d.get("performance", {})
