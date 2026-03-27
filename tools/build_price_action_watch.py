@@ -49,7 +49,9 @@ THRESHOLDS = {
     "iv_ramp_high": 0.10,  # atm_iv_change_5d
     "iv_crush": -0.10,  # atm_iv_change_5d
     "surface_move_high": 0.80,  # actual_implied_move_pctile
-    "skew_flip": 0.40,  # |opt_rr_25d| threshold — biotech skew is structurally elevated
+    "skew_zscore": 2.0,  # z-score vs name's own trailing RR distribution
+    "skew_abs_floor": 0.15,  # minimum |RR| to even consider (filters noise on near-zero RR names)
+    "skew_min_obs": 5,  # minimum trailing observations to compute z-score
 }
 
 
@@ -85,6 +87,38 @@ def _load_csv_tickers(path: Path) -> Set[str]:
 # ---------------------------------------------------------------------------
 # Price data
 # ---------------------------------------------------------------------------
+def load_trailing_rr(
+    snapshots_dir: Path,
+    tickers: Set[str],
+    as_of_date: str,
+    max_snapshots: int = 200,
+) -> Dict[str, List[float]]:
+    """Load trailing opt_rr_25d values per ticker from snapshot history."""
+    rr_history: Dict[str, List[float]] = {}
+    candidates = sorted(
+        d.name for d in snapshots_dir.iterdir() if d.is_dir() and len(d.name) == 10 and d.name < as_of_date
+    )
+    # Use most recent snapshots (options data is sparse in older ones)
+    candidates = candidates[-max_snapshots:]
+
+    for d in candidates:
+        rk = snapshots_dir / d / "rankings.csv"
+        if not rk.exists():
+            continue
+        with open(rk, encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                t = row.get("ticker", "")
+                if t not in tickers:
+                    continue
+                rr = row.get("opt_rr_25d", "")
+                if rr:
+                    try:
+                        rr_history.setdefault(t, []).append(float(rr))
+                    except ValueError:
+                        pass
+    return rr_history
+
+
 def load_recent_prices(
     price_csv: Path,
     tickers: Set[str],
@@ -158,6 +192,7 @@ def classify_alerts(
     ticker: str,
     stock: Dict[str, Any],
     options: Dict[str, str],
+    rr_history: Optional[List[float]] = None,
 ) -> List[str]:
     """Classify alerts for one name. Returns list of alert codes."""
     alerts = []
@@ -192,8 +227,21 @@ def classify_alerts(
         alerts.append("OPTIONS_SURFACE_MOVE_HIGH")
 
     rr = _sf(options.get("opt_rr_25d", ""))
-    if not math.isnan(rr) and abs(rr) >= THRESHOLDS["skew_flip"]:
-        alerts.append("SKEW_EXTREME")
+    if not math.isnan(rr) and abs(rr) >= THRESHOLDS["skew_abs_floor"]:
+        # Per-name z-score: is this RR extreme for THIS name?
+        if rr_history and len(rr_history) >= THRESHOLDS["skew_min_obs"]:
+            import statistics
+
+            hist_mean = statistics.mean(rr_history)
+            hist_std = statistics.stdev(rr_history) if len(rr_history) > 1 else 0.0
+            if hist_std > 0.01:
+                rr_z = abs(rr - hist_mean) / hist_std
+                if rr_z >= THRESHOLDS["skew_zscore"]:
+                    alerts.append("SKEW_EXTREME")
+        else:
+            # Fallback: no history, use absolute threshold of 0.50
+            if abs(rr) >= 0.50:
+                alerts.append("SKEW_EXTREME")
 
     # Stock/options divergence: stock down but IV ramping (or vice versa)
     if ret is not None and not math.isnan(iv_change):
@@ -285,8 +333,9 @@ def build_price_action_watch(
         ranked = sorted(watchlist, key=lambda t: _sf(rankings[t].get("actionable_rank", "9999")))
         watchlist = set(ranked[:WATCHLIST_MAX])
 
-    # Load prices
+    # Load prices and trailing RR history
     prices = load_recent_prices(price_csv, watchlist, as_of_date)
+    trailing_rr = load_trailing_rr(snapshots_dir, watchlist, as_of_date)
 
     # Classify each name (with freshness suppression)
     rows = []
@@ -304,7 +353,7 @@ def build_price_action_watch(
         stock_metrics = compute_stock_metrics(series)
         options_data = rankings.get(ticker, {})
 
-        alerts = classify_alerts(ticker, stock_metrics, options_data)
+        alerts = classify_alerts(ticker, stock_metrics, options_data, trailing_rr.get(ticker))
 
         r = rankings.get(ticker, {})
         entry = {
