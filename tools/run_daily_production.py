@@ -3839,6 +3839,21 @@ def run_daily(
         )
         return manifest
 
+    # --- Step 1.4: CTgov daily trial status poll (non-blocking) ---
+    # Runs before cache warm to detect trial transitions since last cache.
+    # Writes sidecar diff to artifacts/ctgov_daily/ — does not modify cache.
+    try:
+        from tools.poll_ctgov_daily import poll_ctgov_daily
+
+        _ctg_result = poll_ctgov_daily(as_of_date)
+        if "error" in _ctg_result:
+            print(f"  CTgov daily poll → skipped ({_ctg_result['error']})")
+        else:
+            _ctg_n = _ctg_result.get("n_changes", 0)
+            print(f"  CTgov daily poll → {_ctg_n} trial changes detected")
+    except Exception as _ctg_err:
+        print(f"  [WARN] CTgov daily poll failed: {_ctg_err}")
+
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).

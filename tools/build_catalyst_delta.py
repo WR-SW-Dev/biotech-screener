@@ -309,6 +309,31 @@ def build_catalyst_delta(
         if change is not None:
             raw_changes.append(change)
 
+    # Merge CTgov daily diff (trial-level transitions the snapshot comparison may miss)
+    ctgov_diff_path = artifacts_dir / "ctgov_daily" / f"{as_of_date}_diff.json"
+    ctgov_diff = _load_json(ctgov_diff_path)
+    n_ctgov_merged = 0
+    if ctgov_diff:
+        snapshot_tickers = {c["ticker"] for c in raw_changes}
+        for trial_change in ctgov_diff.get("changes", []):
+            ticker = trial_change.get("ticker", "")
+            if ticker in all_tickers and ticker not in snapshot_tickers:
+                # Trial-level change not visible in snapshot comparison
+                ctgov_codes = trial_change.get("codes", [])
+                raw_changes.append(
+                    {
+                        "ticker": ticker,
+                        "codes": [f"CTGOV_{c}" for c in ctgov_codes],
+                        "tier": current_rankings.get(ticker, {}).get("tier_dev", ""),
+                        "rank": current_rankings.get(ticker, {}).get("actionable_rank", ""),
+                        "catalyst_days": current_rankings.get(ticker, {}).get("catalyst_days", ""),
+                        "catalyst_family": current_rankings.get(ticker, {}).get("catalyst_family", ""),
+                        "nct_id": trial_change.get("nct_id", ""),
+                        "trial_detail": trial_change.get("title", "")[:60],
+                    }
+                )
+                n_ctgov_merged += 1
+
     # Apply noise filter
     filtered = [c for c in raw_changes if passes_noise_filter(c, position_tickers, trade_plan_tickers)]
 
@@ -343,6 +368,7 @@ def build_catalyst_delta(
             "n_prior_tickers": len(prior_rankings),
             "n_positions": len(position_tickers),
             "n_trade_plan": len(trade_plan_tickers),
+            "n_ctgov_merged": n_ctgov_merged,
         },
         "deltas": filtered,
     }
