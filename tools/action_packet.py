@@ -116,6 +116,99 @@ def assign_bucket(catalyst_days: Optional[int], catalyst_mode: str) -> str:
     return "core"
 
 
+# ── Performance summary ──────────────────────────────────────────────
+
+# Lookback periods: label, approximate trading days
+PERF_PERIODS = [
+    ("1d", 1),
+    ("1w", 5),
+    ("1m", 21),
+    ("3m", 63),
+    ("6m", 126),
+    ("1y", 252),
+    ("2y", 504),
+    ("3y", 756),
+]
+
+
+def compute_performance_summary(
+    as_of_date: str,
+    price_csv: Path,
+    tickers: List[str],
+    benchmark: str = "XBI",
+) -> Dict[str, Any]:
+    """Compute total return over standard lookback periods.
+
+    Uses equal-weight portfolio of given tickers plus benchmark.
+    Returns dict with period labels as keys.
+    """
+    if not price_csv.is_file():
+        return {}
+
+    # Load prices for portfolio tickers + benchmark
+    target = set(tickers) | {benchmark}
+    prices: Dict[str, List[tuple]] = {}  # ticker -> [(date, close), ...]
+    with open(price_csv, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            t = row.get("ticker", "")
+            d = row.get("date", "")
+            c = row.get("close", "")
+            if t in target and d and c and d <= as_of_date:
+                try:
+                    prices.setdefault(t, []).append((d, float(c)))
+                except ValueError:
+                    pass
+
+    # Sort each ticker's prices by date
+    for t in prices:
+        prices[t].sort()
+
+    # Get latest price date for each ticker
+    latest_prices: Dict[str, float] = {}
+    for t, series in prices.items():
+        if series:
+            latest_prices[t] = series[-1][1]
+
+    if not latest_prices:
+        return {}
+
+    periods = {}
+    for label, lookback_days in PERF_PERIODS:
+        # Find portfolio return over this period
+        ticker_returns = []
+        for t in tickers:
+            series = prices.get(t, [])
+            if len(series) < lookback_days + 1:
+                continue
+            end_price = series[-1][1]
+            start_idx = max(0, len(series) - 1 - lookback_days)
+            start_price = series[start_idx][1]
+            if start_price > 0:
+                ticker_returns.append((end_price - start_price) / start_price)
+
+        # Benchmark return
+        bench_series = prices.get(benchmark, [])
+        bench_return = None
+        if len(bench_series) >= lookback_days + 1:
+            end_b = bench_series[-1][1]
+            start_idx_b = max(0, len(bench_series) - 1 - lookback_days)
+            start_b = bench_series[start_idx_b][1]
+            if start_b > 0:
+                bench_return = (end_b - start_b) / start_b
+
+        if ticker_returns:
+            port_return = sum(ticker_returns) / len(ticker_returns)
+            excess = (port_return - bench_return) if bench_return is not None else None
+            periods[label] = {
+                "portfolio_pct": round(port_return * 100, 2),
+                "benchmark_pct": round(bench_return * 100, 2) if bench_return is not None else None,
+                "excess_pct": round(excess * 100, 2) if excess is not None else None,
+                "n_tickers": len(ticker_returns),
+            }
+
+    return periods
+
+
 # ── Build packet ─────────────────────────────────────────────────────
 
 
@@ -194,6 +287,11 @@ def build_action_packet(snapshot_dir: Path, top_n: int = 60) -> Dict[str, Any]:
     engine_version = metadata.get("version", "")
     as_of_date = metadata.get("as_of_date", snapshot_dir.name)
 
+    # Performance summary (equal-weight portfolio of top-N vs XBI)
+    price_csv = PROJECT_ROOT / "production_data" / "price_history.csv"
+    portfolio_tickers = [r.get("ticker", "") for r in top if r.get("ticker")]
+    performance = compute_performance_summary(as_of_date, price_csv, portfolio_tickers)
+
     return {
         "schema": SCHEMA,
         "as_of_date": as_of_date,
@@ -203,6 +301,7 @@ def build_action_packet(snapshot_dir: Path, top_n: int = 60) -> Dict[str, Any]:
         "top_n": top_n,
         "portfolio_names": portfolio_count,
         "buckets": structured_buckets,
+        "performance": performance,
         "summary": {
             "total_eligible_screened": len(top),
             "in_portfolio": portfolio_count,
@@ -259,6 +358,22 @@ def render_action_markdown(packet: Dict[str, Any]) -> str:
                 )
         else:
             lines.append("_No names in this bucket._")
+        lines.append("")
+
+    # Performance summary
+    performance = packet.get("performance", {})
+    if performance:
+        lines.append("## Performance (equal-weight top-N vs XBI)")
+        lines.append("")
+        lines.append("| Period | Portfolio | XBI | Excess | Names |")
+        lines.append("|--------|----------|-----|--------|-------|")
+        for label, _ in PERF_PERIODS:
+            p = performance.get(label)
+            if p:
+                port = f"{p['portfolio_pct']:+.2f}%"
+                bench = f"{p['benchmark_pct']:+.2f}%" if p.get("benchmark_pct") is not None else "n/a"
+                excess = f"{p['excess_pct']:+.2f}%" if p.get("excess_pct") is not None else "n/a"
+                lines.append(f"| {label} | {port} | {bench} | {excess} | {p['n_tickers']} |")
         lines.append("")
 
     # Summary footer
