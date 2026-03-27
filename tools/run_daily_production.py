@@ -4606,6 +4606,20 @@ def run_daily(
         except Exception as _ow_err:
             print(f"  [WARN] Options watch failed: {_ow_err}")
 
+        # --- Step 5k.5a-shadow: Options watch pre-open shadow (non-blocking) ---
+        try:
+            _ow_pre = build_options_watch(
+                as_of_date,
+                mode="pre_open",
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" not in _ow_pre:
+                _ow_pre_n = _ow_pre.get("watchlist_size", 0)
+                _ow_pre_flagged = _ow_pre.get("n_flagged", 0)
+                print(f"  Options watch (pre-open shadow) → {_ow_pre_n} names, {_ow_pre_flagged} flagged")
+        except Exception as _ow_pre_err:
+            print(f"  [WARN] Options watch pre-open shadow failed: {_ow_pre_err}")
+
         # --- Step 5k.5b: Options chartbook (non-blocking) ---
         try:
             from tools.build_options_chartbook import build_chartbook
