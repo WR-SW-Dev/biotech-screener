@@ -1018,6 +1018,7 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
         "clinical_score": {},
         "clinical_optionality_pct_dev": {},
         "clinical_score_v2_z": {},
+        "inst_delta_z": {},
         "eligible": {},
         "tier_dev": {},
         "size_band": {},
@@ -1091,6 +1092,7 @@ def load_snapshot_rankings(snapshot_dir: Path) -> SnapshotData:
                 "clinical_score",
                 "clinical_optionality_pct_dev",
                 "clinical_score_v2_z",
+                "inst_delta_z",
             ):
                 sig_str = row.get(sig_field, "").strip()
                 if sig_str:
@@ -1158,6 +1160,7 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
         "clinical_score": {},
         "clinical_optionality_pct_dev": {},
         "clinical_score_v2_z": {},
+        "inst_delta_z": {},
         "eligible": {},
         "tier_dev": {},
         "size_band": {},
@@ -1232,6 +1235,7 @@ def read_rankings_from_archive(tar_path: Path) -> SnapshotData:
                 "clinical_score",
                 "clinical_optionality_pct_dev",
                 "clinical_score_v2_z",
+                "inst_delta_z",
             ):
                 sig_str = row.get(sig_field, "").strip()
                 if sig_str:
@@ -2320,6 +2324,7 @@ def run_backtest(
             "clinical_score",
             "clinical_optionality_pct_dev",
             "clinical_score_v2_z",
+            "inst_delta_z",
             "eligible",
             "tier_dev",
             "size_band",
@@ -2336,6 +2341,7 @@ def run_backtest(
                 "clinical_score",
                 "clinical_optionality_pct_dev",
                 "clinical_score_v2_z",
+                "inst_delta_z",
                 "eligible",
                 "tier_dev",
                 "size_band",
@@ -3858,6 +3864,7 @@ def main() -> None:
             "clinical_score",
             "clinical_optionality_pct_dev",
             "clinical_score_v2_z",
+            "inst_delta_z",
             "eligible",
             "tier_dev",
             "size_band",
