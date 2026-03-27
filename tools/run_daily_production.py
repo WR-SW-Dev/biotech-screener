@@ -4665,6 +4665,19 @@ def run_daily(
         except Exception as _cb_err:
             print(f"  [WARN] Options chartbook failed: {_cb_err}")
 
+        # --- Step 5k.5c: Price action watch (non-blocking) ---
+        try:
+            from tools.build_price_action_watch import build_price_action_watch
+
+            _paw_result = build_price_action_watch(as_of_date, snapshots_dir=final_snapshots_dir)
+            if "error" in _paw_result:
+                print(f"  Price action watch → skipped ({_paw_result['error']})")
+            else:
+                _paw_n = _paw_result.get("n_alerted", 0)
+                print(f"  Price action watch → {_paw_result['watchlist_size']} names, {_paw_n} alerted")
+        except Exception as _paw_err:
+            print(f"  [WARN] Price action watch failed: {_paw_err}")
+
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
             from tools.build_shadow_monitor import build_shadow_monitor
