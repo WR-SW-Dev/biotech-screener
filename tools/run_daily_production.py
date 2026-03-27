@@ -4548,6 +4548,22 @@ def run_daily(
         except Exception as _sdm_err:
             print(f"  [WARN] Surface delta monitor failed: {_sdm_err}")
 
+        # --- Step 5i.6: Catalyst delta (non-blocking) ---
+        try:
+            from tools.build_catalyst_delta import build_catalyst_delta
+
+            _cd_result = build_catalyst_delta(
+                as_of_date,
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" in _cd_result:
+                print(f"  Catalyst delta → skipped ({_cd_result['error']})")
+            else:
+                _cd_n = _cd_result.get("n_filtered", 0)
+                print(f"  Catalyst delta → {_cd_n} changes surfaced")
+        except Exception as _cd_err:
+            print(f"  [WARN] Catalyst delta failed: {_cd_err}")
+
         # --- Step 5j: Portfolio metrics update (non-blocking) ---
         try:
             from tools.build_portfolio_report import build_portfolio_report
