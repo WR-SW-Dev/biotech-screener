@@ -4692,6 +4692,43 @@ def run_daily(
         except Exception as _sm_err:
             print(f"  [WARN] Shadow monitor failed: {_sm_err}")
 
+        # --- Step 5k.8: Competitive intelligence (non-blocking) ---
+        try:
+            from tools.build_competitive_intel import build_competitive_intel
+
+            _ci_result = build_competitive_intel(as_of_date, snapshots_dir=final_snapshots_dir)
+            if "error" in _ci_result:
+                print(f"  Competitive intel → skipped ({_ci_result['error']})")
+            else:
+                print(f"  Competitive intel → {_ci_result.get('n_competitive_events', 0)} events")
+        except Exception as _ci_err:
+            print(f"  [WARN] Competitive intel failed: {_ci_err}")
+
+        # --- Step 5k.9: Regulatory watch (non-blocking) ---
+        try:
+            from tools.build_regulatory_watch import build_regulatory_watch
+
+            _rw_result = build_regulatory_watch(as_of_date, snapshots_dir=final_snapshots_dir)
+            if "error" in _rw_result:
+                print(f"  Regulatory watch → skipped ({_rw_result['error']})")
+            else:
+                print(f"  Regulatory watch → {_rw_result.get('n_near_term_90d', 0)} near-term")
+        except Exception as _rw_err:
+            print(f"  [WARN] Regulatory watch failed: {_rw_err}")
+
+        # --- Step 5k.10: Filing watch (non-blocking) ---
+        try:
+            from tools.build_filing_watch import build_filing_watch
+
+            _fw_result = build_filing_watch(as_of_date, snapshots_dir=final_snapshots_dir)
+            if "error" in _fw_result:
+                print(f"  Filing watch → skipped ({_fw_result['error']})")
+            else:
+                _fw_dil = len(_fw_result.get("dilution_alerts", []))
+                print(f"  Filing watch → {_fw_result.get('n_relevant', 0)} relevant, {_fw_dil} dilution alerts")
+        except Exception as _fw_err:
+            print(f"  [WARN] Filing watch failed: {_fw_err}")
+
         # --- Step 5k.7: IC dashboard (non-blocking) ---
         try:
             from tools.build_ic_dashboard import build_ic_dashboard
