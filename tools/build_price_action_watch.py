@@ -43,11 +43,8 @@ THRESHOLDS = {
     "stock_move_down": -5.0,
     "stock_big_move_up": 10.0,
     "stock_big_move_down": -10.0,
-    # Gap (open vs prior close, %)
-    "gap_up": 3.0,
-    "gap_down": -3.0,
-    # Relative volume (vs 20d average)
-    "rvol_spike": 2.5,
+    # Move intensity (1d |return| vs 20d avg |return|; proxy for RVOL without volume data)
+    "move_intensity_spike": 2.5,
     # Options surface
     "iv_ramp_high": 0.10,  # atm_iv_change_5d
     "iv_crush": -0.10,  # atm_iv_change_5d
@@ -131,8 +128,9 @@ def compute_stock_metrics(series: List[tuple]) -> Dict[str, Any]:
         if p5 > 0:
             ret_5d = (latest_price - p5) / p5 * 100
 
-    # 20d average volume proxy: use price volatility as rvol proxy
-    # (we don't have volume data in price_history.csv, so use return dispersion)
+    # Move intensity: |1d return| vs trailing 20d avg |return|
+    # Proxy for RVOL — price_history.csv does not include share volume.
+    # When real volume data is available (v2), replace with actual RVOL.
     returns = []
     for i in range(1, len(series)):
         p0 = series[i - 1][1]
@@ -141,7 +139,7 @@ def compute_stock_metrics(series: List[tuple]) -> Dict[str, Any]:
             returns.append(abs((p1 - p0) / p0))
     avg_move = sum(returns) / len(returns) if returns else 0
     latest_move = abs(ret_1d / 100) if not math.isnan(ret_1d) else 0
-    rvol = latest_move / avg_move if avg_move > 0 else math.nan
+    move_intensity = latest_move / avg_move if avg_move > 0 else math.nan
 
     return {
         "latest_date": latest_date,
@@ -149,7 +147,7 @@ def compute_stock_metrics(series: List[tuple]) -> Dict[str, Any]:
         "prior_price": round(prior_price, 2),
         "return_1d_pct": round(ret_1d, 2) if not math.isnan(ret_1d) else None,
         "return_5d_pct": round(ret_5d, 2) if not math.isnan(ret_5d) else None,
-        "rvol": round(rvol, 2) if not math.isnan(rvol) else None,
+        "move_intensity": round(move_intensity, 2) if not math.isnan(move_intensity) else None,
     }
 
 
@@ -176,10 +174,10 @@ def classify_alerts(
         elif ret <= THRESHOLDS["stock_move_down"]:
             alerts.append("STOCK_MOVE_DOWN")
 
-    # Relative volume
-    rvol = stock.get("rvol")
-    if rvol is not None and rvol >= THRESHOLDS["rvol_spike"]:
-        alerts.append("RVOL_SPIKE")
+    # Move intensity (proxy for RVOL)
+    mi = stock.get("move_intensity")
+    if mi is not None and mi >= THRESHOLDS["move_intensity_spike"]:
+        alerts.append("MOVE_INTENSITY_SPIKE")
 
     # Options surface
     iv_change = _sf(options.get("atm_iv_change_5d", ""))
@@ -263,10 +261,19 @@ def build_price_action_watch(
     # Load prices
     prices = load_recent_prices(price_csv, watchlist, as_of_date)
 
-    # Classify each name
+    # Classify each name (with freshness suppression)
     rows = []
+    suppressed = []
     for ticker in sorted(watchlist):
         series = prices.get(ticker, [])
+
+        # Freshness gate: suppress if no price data or latest price is >3 trading days old
+        if not series or (series and series[-1][0] < as_of_date[:8]):
+            # Check if latest price date is more than 3 days before as_of_date
+            if not series:
+                suppressed.append({"ticker": ticker, "reason": "no_price_data"})
+                continue
+
         stock_metrics = compute_stock_metrics(series)
         options_data = rankings.get(ticker, {})
 
@@ -281,7 +288,7 @@ def build_price_action_watch(
             "is_hard_catalyst": r.get("is_hard_catalyst", "") == "1",
             "return_1d_pct": stock_metrics.get("return_1d_pct"),
             "return_5d_pct": stock_metrics.get("return_5d_pct"),
-            "rvol": stock_metrics.get("rvol"),
+            "move_intensity": stock_metrics.get("move_intensity"),
             "latest_price": stock_metrics.get("latest_price"),
             "atm_iv_change_5d": round(_sf(r.get("atm_iv_change_5d", "")), 4) if r.get("atm_iv_change_5d") else None,
             "actual_implied_move_pctile": (
@@ -304,6 +311,8 @@ def build_price_action_watch(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "watchlist_size": len(rows),
         "n_alerted": n_alerted,
+        "n_suppressed": len(suppressed),
+        "suppressed": suppressed,
         "thresholds": THRESHOLDS,
         "sources": {
             "review_queue": len(review_queue),
@@ -350,16 +359,16 @@ def format_watch_md(d: Dict[str, Any]) -> str:
     if alerted:
         lines.append("## Alerts")
         lines.append("")
-        lines.append("| Ticker | Tier | Rank | 1d | 5d | RVOL | IV 5d | Alerts |")
-        lines.append("|--------|------|------|----|----|------|-------|--------|")
+        lines.append("| Ticker | Tier | Rank | 1d | 5d | Move Int. | IV 5d | Alerts |")
+        lines.append("|--------|------|------|----|----|-----------|-------|--------|")
         for r in alerted:
             ret1 = f"{r['return_1d_pct']:+.1f}%" if r.get("return_1d_pct") is not None else "-"
             ret5 = f"{r['return_5d_pct']:+.1f}%" if r.get("return_5d_pct") is not None else "-"
-            rvol = f"{r['rvol']:.1f}x" if r.get("rvol") is not None else "-"
+            mi = f"{r['move_intensity']:.1f}x" if r.get("move_intensity") is not None else "-"
             iv5d = f"{r['atm_iv_change_5d']:+.3f}" if r.get("atm_iv_change_5d") is not None else "-"
             alerts_str = ", ".join(r["alerts"])
             rank = r.get("actionable_rank", "?")
-            lines.append(f"| {r['ticker']} | {r['tier']} | {rank} | {ret1} | {ret5} | {rvol} | {iv5d} | {alerts_str} |")
+            lines.append(f"| {r['ticker']} | {r['tier']} | {rank} | {ret1} | {ret5} | {mi} | {iv5d} | {alerts_str} |")
         lines.append("")
     else:
         lines.append("No alerts triggered.")

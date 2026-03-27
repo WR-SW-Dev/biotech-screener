@@ -16,7 +16,7 @@ Runs in daily production pipeline at step 5k.5c.
 | STOCK_MOVE_UP | 1d return >= +5% | Medium |
 | STOCK_BIG_MOVE_DOWN | 1d return <= -10% | High |
 | STOCK_MOVE_DOWN | 1d return <= -5% | Medium |
-| RVOL_SPIKE | Relative move >= 2.5x 20d avg | Medium |
+| MOVE_INTENSITY_SPIKE | 1d |return| >= 2.5x trailing 20d avg (proxy for RVOL; real volume v2) | Medium |
 | IV_RAMP_HIGH | atm_iv_change_5d >= +0.10 | Medium |
 | IV_CRUSH | atm_iv_change_5d <= -0.10 | Medium |
 | OPTIONS_SURFACE_MOVE_HIGH | actual_implied_move_pctile >= 0.80 | Medium |
