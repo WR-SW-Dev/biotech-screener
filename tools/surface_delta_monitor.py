@@ -102,15 +102,20 @@ def load_diagnostics_csv(path: Path) -> Dict[str, Dict[str, Any]]:
     return result
 
 
+def _is_promoted_snapshot(name: str) -> bool:
+    """True for promoted snapshot dirs (YYYY-MM-DD), false for staging/pre dirs."""
+    return len(name) == 10 and not name.startswith("_") and name != "state"
+
+
 def find_prior_snapshot(
     snapshots_root: Path,
     current_date: str,
 ) -> Optional[Path]:
-    """Find the most recent snapshot directory before current_date."""
+    """Find the most recent promoted snapshot directory before current_date."""
     candidates = sorted(
         d.name
         for d in snapshots_root.iterdir()
-        if d.is_dir() and not d.name.startswith("_") and d.name != "state" and d.name < current_date
+        if d.is_dir() and _is_promoted_snapshot(d.name) and d.name < current_date
     )
     if not candidates:
         return None
@@ -118,10 +123,8 @@ def find_prior_snapshot(
 
 
 def find_latest_snapshot(snapshots_root: Path) -> Optional[Path]:
-    """Find the latest snapshot directory."""
-    candidates = sorted(
-        d.name for d in snapshots_root.iterdir() if d.is_dir() and not d.name.startswith("_") and d.name != "state"
-    )
+    """Find the latest promoted snapshot directory."""
+    candidates = sorted(d.name for d in snapshots_root.iterdir() if d.is_dir() and _is_promoted_snapshot(d.name))
     if not candidates:
         return None
     return snapshots_root / candidates[-1]
