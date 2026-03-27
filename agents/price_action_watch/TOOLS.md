@@ -23,6 +23,10 @@ Runs in daily production pipeline at step 5k.5c.
 | SKEW_EXTREME | |opt_rr_25d| >= 0.40 | Low |
 | STOCK_DOWN_IV_UP | Stock -3%+ with IV +5%+ | High |
 | STOCK_UP_IV_DOWN | Stock +3%+ with IV -5%+ | Medium |
+| QUIET_BEFORE_CATALYST | Hard catalyst <=14d, no IV ramp, no event premium, no surface move | High |
+| POST_EVENT_FADE | +15% 5d return but -3%+ today (sell-the-news) | Medium |
+| POST_EVENT_BOUNCE | -15% 5d return but +3%+ today (dead-cat bounce) | Medium |
+| REACTION_MISMATCH | Stock moved 5%+ but IV barely changed (<2%) | Medium |
 
 ## Data sources
 

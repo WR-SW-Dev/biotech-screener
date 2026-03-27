@@ -202,6 +202,33 @@ def classify_alerts(
         elif ret >= 3.0 and iv_change <= -0.05:
             alerts.append("STOCK_UP_IV_DOWN")
 
+    # --- Compound biotech anomalies ---
+
+    # Quiet-before-catalyst: hard catalyst <=14d but no IV ramp, no event premium,
+    # no surface move. Unusual calm before a binary event.
+    is_hard = options.get("is_hard_catalyst", "") == "1"
+    cat_days = _sf(options.get("catalyst_days", ""))
+    event_prem = options.get("opt_event_premium", "")
+    if is_hard and not math.isnan(cat_days) and cat_days <= 14:
+        iv_quiet = math.isnan(iv_change) or abs(iv_change) < 0.03
+        move_quiet = math.isnan(move_pctile) or move_pctile < 0.40
+        no_premium = event_prem != "YES"
+        if iv_quiet and move_quiet and no_premium:
+            alerts.append("QUIET_BEFORE_CATALYST")
+
+    # Post-event follow-through failure: big 5d move but reversing on 1d
+    ret_5d = stock.get("return_5d_pct")
+    if ret is not None and ret_5d is not None:
+        if ret_5d >= 15.0 and ret <= -3.0:
+            alerts.append("POST_EVENT_FADE")
+        elif ret_5d <= -15.0 and ret >= 3.0:
+            alerts.append("POST_EVENT_BOUNCE")
+
+    # Reaction mismatch: big stock move but options didn't reprice
+    if ret is not None and abs(ret) >= 5.0:
+        if math.isnan(iv_change) or abs(iv_change) < 0.02:
+            alerts.append("REACTION_MISMATCH")
+
     return alerts
 
 
