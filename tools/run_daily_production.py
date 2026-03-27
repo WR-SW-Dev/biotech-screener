@@ -4588,7 +4588,25 @@ def run_daily(
         except Exception as _sc_err:
             print(f"  [WARN] Readiness scorecard failed: {_sc_err}")
 
-        # --- Step 5k.5: Options chartbook (non-blocking) ---
+        # --- Step 5k.5a: Options watch (post-packet, non-blocking) ---
+        try:
+            from tools.build_options_watch import build_options_watch
+
+            _ow_result = build_options_watch(
+                as_of_date,
+                mode="post_packet",
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" in _ow_result:
+                print(f"  Options watch → skipped ({_ow_result['error']})")
+            else:
+                _ow_n = _ow_result.get("watchlist_size", 0)
+                _ow_flagged = _ow_result.get("n_flagged", 0)
+                print(f"  Options watch → {_ow_n} names, {_ow_flagged} flagged")
+        except Exception as _ow_err:
+            print(f"  [WARN] Options watch failed: {_ow_err}")
+
+        # --- Step 5k.5b: Options chartbook (non-blocking) ---
         try:
             from tools.build_options_chartbook import build_chartbook
 
