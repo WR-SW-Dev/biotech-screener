@@ -37,7 +37,7 @@ SCHEMA_VERSION = "indication_master.v1"
 OT_API = "https://api.platform.opentargets.org/api/v4/graphql"
 
 
-def _api_get(url: str, timeout: int = 15) -> Any:
+def _api_get(url: str, timeout: int = 5) -> Any:
     req = urllib.request.Request(url, headers={"User-Agent": "biotech-screener/1.0", "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
@@ -92,33 +92,21 @@ NOISE = frozenset(
 
 
 def query_ot_disease(condition: str) -> Dict[str, Any]:
-    """Query Open Targets for a disease, returning EFO mapping + metadata."""
-    query = """
+    """Query Open Targets for a disease, returning EFO mapping + metadata.
+
+    Uses two-step approach: search for disease ID, then fetch full details.
+    The search endpoint returns generic SearchResult (not Disease), so
+    inline fragments like ``... on Disease`` do not work there.
+    """
+    # Step 1: search to get disease ID
+    search_query = """
     query DiseaseSearch($term: String!) {
       search(queryString: $term, entityNames: ["disease"], page: {size: 1, index: 0}) {
-        hits {
-          id
-          name
-          entity
-          ... on Disease {
-            therapeuticAreas {
-              id
-              name
-            }
-            isTherapeuticArea
-            synonyms {
-              terms
-            }
-            parents {
-              id
-              name
-            }
-          }
-        }
+        hits { id name entity }
       }
     }
     """
-    data = _graphql_post(query, {"term": condition})
+    data = _graphql_post(search_query, {"term": condition})
     if not data:
         return {}
 
@@ -126,13 +114,32 @@ def query_ot_disease(condition: str) -> Dict[str, Any]:
     if not hits:
         return {}
 
-    hit = hits[0]
+    disease_id = hits[0].get("id", "")
+    if not disease_id:
+        return {}
+
+    # Step 2: fetch full disease details by ID
+    detail_query = """
+    query DiseaseDetail($id: String!) {
+      disease(efoId: $id) {
+        id name therapeuticAreas { id name }
+        parents { id name } isTherapeuticArea
+        synonyms { terms }
+      }
+    }
+    """
+    detail = _graphql_post(detail_query, {"id": disease_id})
+    if not detail:
+        # Fall back to search-only result
+        return {"efo_id": disease_id, "efo_name": hits[0].get("name", "")}
+
+    hit = detail.get("data", {}).get("disease") or {}
     synonyms_obj = hit.get("synonyms") or {}
     synonyms = synonyms_obj.get("terms", []) if isinstance(synonyms_obj, dict) else []
 
     return {
-        "efo_id": hit.get("id", ""),
-        "efo_name": hit.get("name", ""),
+        "efo_id": hit.get("id", disease_id),
+        "efo_name": hit.get("name", hits[0].get("name", "")),
         "is_therapeutic_area": hit.get("isTherapeuticArea", False),
         "therapeutic_areas": [ta.get("name", "") for ta in hit.get("therapeuticAreas", [])],
         "parents": [{"id": p.get("id", ""), "name": p.get("name", "")} for p in hit.get("parents", [])[:3]],

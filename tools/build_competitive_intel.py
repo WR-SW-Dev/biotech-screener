@@ -64,8 +64,83 @@ def _load_json(path: Path):
         return None
 
 
-def build_indication_map(cache_dir: Path) -> Dict[str, Set[str]]:
-    """Build indication → tickers mapping from latest CTgov cache."""
+def _build_enriched_indication_map(
+    enrichment_dir: Path,
+) -> Dict[str, Set[str]]:
+    """Build indication → tickers using normalized EFO/MedGen entities.
+
+    Reads program_entity_view to get per-program indication entities, then
+    groups tickers by normalized disease ID (efo_id preferred, medgen_uid
+    fallback). Returns empty dict if enrichment data is insufficient.
+    """
+    pev_candidates = sorted(enrichment_dir.glob("program_entity_view_*.json"))
+    if not pev_candidates:
+        return {}
+
+    pev = _load_json(pev_candidates[-1])
+    if not pev or not pev.get("entries"):
+        return {}
+
+    ind_tickers: Dict[str, Set[str]] = defaultdict(set)
+    n_mapped = 0
+    n_total = 0
+
+    for entry in pev["entries"]:
+        ticker = entry.get("ticker", "")
+        if not ticker:
+            continue
+        for prog in entry.get("programs", []):
+            n_total += 1
+            ind = prog.get("indication", {})
+            # Prefer EFO ID, fall back to MedGen UID, then raw condition
+            efo_id = ind.get("efo_id", "")
+            efo_name = ind.get("efo_name", "")
+            medgen_uid = ind.get("medgen_uid", "")
+
+            if efo_id and efo_name:
+                key = f"efo:{efo_id}|{efo_name}"
+                ind_tickers[key].add(ticker)
+                n_mapped += 1
+            elif medgen_uid:
+                key = f"medgen:{medgen_uid}|{ind.get('raw_condition', '')}"
+                ind_tickers[key].add(ticker)
+                n_mapped += 1
+
+    if n_total == 0 or n_mapped / n_total < 0.10:
+        logger.info(
+            "Enriched indication map too sparse (%d/%d mapped), falling back to raw",
+            n_mapped,
+            n_total,
+        )
+        return {}
+
+    logger.info(
+        "Enriched indication map: %d indications, %d/%d programs mapped (%.0f%%)",
+        len(ind_tickers),
+        n_mapped,
+        n_total,
+        100 * n_mapped / max(n_total, 1),
+    )
+
+    # Filter to conditions with multiple tickers
+    return {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}
+
+
+def build_indication_map(
+    cache_dir: Path,
+    enrichment_dir: Path = REPO_ROOT / "data" / "enrichment",
+) -> Dict[str, Set[str]]:
+    """Build indication → tickers mapping.
+
+    Prefers enriched program_entity_view (normalized EFO/MedGen IDs) when
+    available and sufficiently populated. Falls back to raw CTgov conditions.
+    """
+    # Try enriched first
+    enriched = _build_enriched_indication_map(enrichment_dir)
+    if enriched:
+        return enriched
+
+    # Fallback: raw CTgov conditions
     candidates = sorted(p for p in cache_dir.glob("trial_records_*.json") if not p.name.endswith(".meta.json"))
     if not candidates:
         return {}
@@ -87,6 +162,17 @@ def build_indication_map(cache_dir: Path) -> Dict[str, Set[str]]:
     return {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}
 
 
+def _display_indication(key: str) -> str:
+    """Extract human-readable name from indication key.
+
+    Enriched keys look like 'efo:MONDO_0007254|breast cancer' or
+    'medgen:1866696|Breast Cancer'. Raw keys are plain condition strings.
+    """
+    if "|" in key:
+        return key.split("|", 1)[1]
+    return key
+
+
 def find_portfolio_competitive_groups(
     indication_map: Dict[str, Set[str]],
     portfolio_tickers: Set[str],
@@ -102,7 +188,8 @@ def find_portfolio_competitive_groups(
                 portfolio_competitors = competitors & portfolio_tickers
                 ticker_indications.append(
                     {
-                        "indication": indication,
+                        "indication": _display_indication(indication),
+                        "indication_key": indication,
                         "n_competitors": len(competitors),
                         "n_portfolio_competitors": len(portfolio_competitors),
                         "competitors": sorted(competitors)[:10],
@@ -157,7 +244,7 @@ def find_competitive_events(
                         "source": source_name,
                         "event_ticker": event_ticker,
                         "event_codes": event.get("codes", event.get("alerts", [])),
-                        "shared_indications": affected_indications[:3],
+                        "shared_indications": [_display_indication(i) for i in affected_indications[:3]],
                         "affected_portfolio_tickers": sorted(affected_portfolio),
                         "n_affected": len(affected_portfolio),
                     }

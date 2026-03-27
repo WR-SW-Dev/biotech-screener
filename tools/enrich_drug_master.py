@@ -39,7 +39,7 @@ CHEMBL_API = "https://www.ebi.ac.uk/chembl/api/data"
 RXNORM_API = "https://rxnav.nlm.nih.gov/REST"
 
 
-def _api_get(url: str, timeout: int = 15) -> Any:
+def _api_get(url: str, timeout: int = 5) -> Any:
     req = urllib.request.Request(url, headers={"User-Agent": "biotech-screener/1.0", "Accept": "application/json"})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
