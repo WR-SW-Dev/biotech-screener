@@ -129,7 +129,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0000318306"
   },
   {
     "ticker": "ABOS",
@@ -144,7 +146,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001576885"
   },
   {
     "ticker": "ABSI",
@@ -1377,7 +1381,8 @@
     "ShareholdersEquity": 917272000,
     "Revenue": 787516000,
     "R&D": 244045000,
-    "NetIncome": 117432000
+    "NetIncome": 117432000,
+    "status": "active"
   },
   {
     "ticker": "ACIU",
@@ -1555,7 +1560,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001781174"
   },
   {
     "ticker": "ADCT",
@@ -1859,7 +1866,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001541157"
   },
   {
     "ticker": "ALDX",
@@ -1874,7 +1883,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001341235"
   },
   {
     "ticker": "ALGS",
@@ -1889,7 +1900,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001799448"
   },
   {
     "ticker": "ALKS",
@@ -3222,7 +3235,8 @@
     "ShareholdersEquity": 233894000,
     "Revenue": 2616904000,
     "R&D": 947557000,
-    "NetIncome": 127328000
+    "NetIncome": 127328000,
+    "status": "active"
   },
   {
     "ticker": "ALT",
@@ -5117,7 +5131,8 @@
       "conditions": [],
       "top_trials": []
     },
-    "cik": "0001697862"
+    "cik": "0001697862",
+    "status": "active"
   },
   {
     "ticker": "ARQT",
@@ -5191,7 +5206,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001817241"
   },
   {
     "ticker": "ARVN",
@@ -5425,7 +5442,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001426800"
   },
   {
     "ticker": "ASND",
@@ -7111,7 +7130,8 @@
     "COGS": 12855000,
     "R&D": 335536000,
     "NetIncome": -69000,
-    "Revenue": 347898000
+    "Revenue": 347898000,
+    "status": "active"
   },
   {
     "ticker": "BBOT",
@@ -7859,7 +7879,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001889109"
   },
   {
     "ticker": "BMEA",
@@ -7874,7 +7896,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001840439"
   },
   {
     "ticker": "BMRN",
@@ -8964,7 +8988,8 @@
     "Revenue": 2346688000,
     "COGS": 441733000,
     "R&D": 729517000,
-    "NetIncome": 395474000
+    "NetIncome": 395474000,
+    "status": "active"
   },
   {
     "ticker": "BNTX",
@@ -9598,7 +9623,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001603454"
   },
   {
     "ticker": "CERS",
@@ -9613,7 +9640,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Medical Devices"
-    }
+    },
+    "status": "active",
+    "cik": "0001020214"
   },
   {
     "ticker": "CGEM",
@@ -9958,7 +9987,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001768446"
   },
   {
     "ticker": "CMPS",
@@ -10135,7 +10166,7 @@
     "added_date": "2026-01-31",
     "description": "Oncology (breast cancer). 3 Tier 1 managers, +153% 2Y.",
     "market_cap": 225563376,
-    "cik": null,
+    "cik": "0001842952",
     "market_data": {
       "price": 2.61,
       "market_cap": 239804640,
@@ -11666,7 +11697,8 @@
     "ShareholdersEquity": 1915982000,
     "Revenue": 2646000,
     "R&D": 201280000,
-    "NetIncome": -450986000
+    "NetIncome": -450986000,
+    "status": "active"
   },
   {
     "ticker": "CRVS",
@@ -12416,7 +12448,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001690585"
   },
   {
     "ticker": "DRMA",
@@ -12540,7 +12574,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001827401"
   },
   {
     "ticker": "DSGN",
@@ -12951,7 +12987,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001404281"
   },
   {
     "ticker": "ELVN",
@@ -13024,7 +13062,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001980845"
   },
   {
     "ticker": "ENTA",
@@ -14117,7 +14157,8 @@
     "ShareholdersEquity": 2216207,
     "Revenue": 0,
     "R&D": 20563225,
-    "NetIncome": -28220796
+    "NetIncome": -28220796,
+    "status": "active"
   },
   {
     "ticker": "ERAS",
@@ -15464,7 +15505,8 @@
     "ShareholdersEquity": 2160700000,
     "Revenue": 1721463000,
     "R&D": 611753000,
-    "NetIncome": 538042000
+    "NetIncome": 538042000,
+    "status": "active"
   },
   {
     "ticker": "EYPT",
@@ -16864,7 +16906,8 @@
     "ShareholdersEquity": 230424000,
     "Revenue": 448998000,
     "COGS": 10060000,
-    "NetIncome": -28800000
+    "NetIncome": -28800000,
+    "status": "active"
   },
   {
     "ticker": "FTRE",
@@ -18529,7 +18572,8 @@
     "CurrentLiabilities": 62117000,
     "ShareholdersEquity": -82333000,
     "NetIncome": -123132000,
-    "Revenue": 34672000
+    "Revenue": 34672000,
+    "status": "active"
   },
   {
     "ticker": "GPCR",
@@ -18816,7 +18860,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001785530"
   },
   {
     "ticker": "HRMY",
@@ -19236,7 +19282,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001750149"
   },
   {
     "ticker": "ILMN",
@@ -19576,7 +19624,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001809196"
   },
   {
     "ticker": "IMVT",
@@ -20854,7 +20904,8 @@
     "Revenue": 3634407000,
     "COGS": 250955000,
     "R&D": 1438780000,
-    "NetIncome": 987371000
+    "NetIncome": 987371000,
+    "status": "active"
   },
   {
     "ticker": "INDV",
@@ -22128,7 +22179,8 @@
     "ShareholdersEquity": 617967000,
     "Revenue": 740381000,
     "R&D": 638200000,
-    "NetIncome": -151993000
+    "NetIncome": -151993000,
+    "status": "active"
   },
   {
     "ticker": "IOVA",
@@ -23583,7 +23635,8 @@
     "ShareholdersEquity": 3959030000,
     "Revenue": 3069660000,
     "R&D": 299726000,
-    "NetIncome": -559599000
+    "NetIncome": -559599000,
+    "status": "active"
   },
   {
     "ticker": "JBIO",
@@ -23598,7 +23651,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001798749"
   },
   {
     "ticker": "KALA",
@@ -25247,7 +25302,8 @@
     "COGS": 36341000,
     "R&D": 232737000,
     "NetIncome": -224370000,
-    "Revenue": 36341000
+    "Revenue": 36341000,
+    "status": "active"
   },
   {
     "ticker": "KYTX",
@@ -25380,7 +25436,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001691082"
   },
   {
     "ticker": "LCTX",
@@ -26665,7 +26723,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001821586"
   },
   {
     "ticker": "MLYS",
@@ -27162,7 +27222,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001808805"
   },
   {
     "ticker": "NBIX",
@@ -27355,7 +27417,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001787400"
   },
   {
     "ticker": "NMRA",
@@ -28275,7 +28339,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001953530"
   },
   {
     "ticker": "OCUL",
@@ -29539,7 +29605,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001678660"
   },
   {
     "ticker": "PRME",
@@ -29613,7 +29681,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001612940"
   },
   {
     "ticker": "PRTA",
@@ -30126,7 +30196,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001583648"
   },
   {
     "ticker": "PYXS",
@@ -31576,7 +31648,8 @@
     "ShareholdersEquity": 9159000,
     "R&D": 546720000,
     "NetIncome": -446444000,
-    "Revenue": 465721000
+    "Revenue": 465721000,
+    "status": "active"
   },
   {
     "ticker": "RCKT",
@@ -33185,7 +33258,8 @@
     "ShareholdersEquity": 1886265000,
     "R&D": 392563000,
     "NetIncome": -447530000,
-    "Revenue": 17895000
+    "Revenue": 17895000,
+    "status": "active"
   },
   {
     "ticker": "ROIV",
@@ -34634,7 +34708,8 @@
     "ShareholdersEquity": 148817000,
     "Revenue": 132504000,
     "R&D": 125307000,
-    "NetIncome": -149034000
+    "NetIncome": -149034000,
+    "status": "active"
   },
   {
     "ticker": "SABS",
@@ -34649,7 +34724,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001833214"
   },
   {
     "ticker": "SANA",
@@ -34832,7 +34909,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Medical Devices"
-    }
+    },
+    "status": "active",
+    "cik": "0001534969"
   },
   {
     "ticker": "SGMO",
@@ -35134,7 +35213,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001516551"
   },
   {
     "ticker": "SLDB",
@@ -36642,7 +36723,8 @@
     "ShareholdersEquity": 1320120000,
     "Revenue": 1494689000,
     "R&D": 207239000,
-    "NetIncome": -430563000
+    "NetIncome": -430563000,
+    "status": "active"
   },
   {
     "ticker": "SRRK",
@@ -36712,7 +36794,7 @@
     "added_date": "2026-01-31",
     "description": "Wnt pathway tissue repair/regeneration. 3 Tier 1 managers, +161% 2Y.",
     "market_cap": 187199840,
-    "cik": null,
+    "cik": "0001824893",
     "market_data": {
       "price": 21.545,
       "market_cap": 184671264,
@@ -37094,7 +37176,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001359931"
   },
   {
     "ticker": "TARS",
@@ -37328,7 +37412,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001783328"
   },
   {
     "ticker": "TECH",
@@ -37568,7 +37654,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0000034956"
   },
   {
     "ticker": "TERN",
@@ -39538,7 +39626,8 @@
     "ShareholdersEquity": 6590200000,
     "Revenue": 2392500000,
     "R&D": 410500000,
-    "NetIncome": 970400000
+    "NetIncome": 970400000,
+    "status": "active"
   },
   {
     "ticker": "VCEL",
@@ -39841,7 +39930,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001607678"
   },
   {
     "ticker": "VNDA",
@@ -39969,7 +40060,9 @@
       "company_name": "Healthcare",
       "sector": "Healthcare",
       "industry": "Biotechnology"
-    }
+    },
+    "status": "active",
+    "cik": "0001590750"
   },
   {
     "ticker": "VRTX",
@@ -41018,7 +41111,8 @@
     "ShareholdersEquity": 17318800000,
     "Revenue": 8811300000,
     "R&D": 603100000,
-    "NetIncome": 2762100000
+    "NetIncome": 2762100000,
+    "status": "active"
   },
   {
     "ticker": "VTRS",
@@ -42410,6 +42504,7 @@
       "by_phase": {},
       "conditions": [],
       "top_trials": []
-    }
+    },
+    "status": "benchmark"
   }
 ]
