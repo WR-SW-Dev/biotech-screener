@@ -4664,6 +4664,19 @@ def run_daily(
         except Exception as _sm_err:
             print(f"  [WARN] Shadow monitor failed: {_sm_err}")
 
+        # --- Step 5k.7: IC dashboard (non-blocking) ---
+        try:
+            from tools.build_ic_dashboard import build_ic_dashboard
+
+            _ic_result = build_ic_dashboard(as_of_date, lookback=60)
+            if "error" in _ic_result:
+                print(f"  IC dashboard → skipped ({_ic_result['error']})")
+            else:
+                _ic_attn = _ic_result.get("attention", "?")
+                print(f"  IC dashboard → {_ic_attn}")
+        except Exception as _ic_err:
+            print(f"  [WARN] IC dashboard failed: {_ic_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
