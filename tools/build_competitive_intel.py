@@ -219,6 +219,46 @@ def build_competitive_intel(
         alerted = [r for r in paw.get("rows", []) if r.get("alerts")]
         event_sources["price_action"] = alerted
 
+    # Surface delta (covers ~190 names, much broader than price_action's 40)
+    sd = _load_json(snapshots_dir / as_of_date / "surface_delta.json")
+    if sd:
+        sd_events = [
+            {"ticker": d["ticker"], "codes": d.get("flags", []), "severity": d.get("severity", "")}
+            for d in sd.get("deltas", [])
+            if d.get("severity") in ("alert", "watch")
+        ]
+        event_sources["surface_delta"] = sd_events
+
+    # Universe-wide big movers: scan rankings for 1d returns > 5%
+    # This catches non-portfolio names that price_action_watch doesn't cover
+    rankings_path = snapshots_dir / as_of_date / "rankings.csv"
+    if rankings_path.exists():
+        universe_movers = []
+        with open(rankings_path, encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                ticker = row.get("ticker", "")
+                if not ticker or ticker in portfolio_tickers:
+                    continue
+                # Check momentum state as a proxy for big recent move
+                mom = row.get("mom_state", "")
+                tier = row.get("tier_dev", "")
+                if mom in ("tailwind", "headwind") and tier in ("A", "B"):
+                    universe_movers.append({"ticker": ticker, "codes": [f"MOMENTUM_{mom.upper()}"]})
+        if universe_movers:
+            event_sources["universe_momentum"] = universe_movers
+
+    # Filing watch
+    fw = _load_json(artifacts_dir / "filing_watch" / f"{as_of_date}_watch.json")
+    if fw:
+        # Dilution and material agreements are most competitively relevant
+        filing_events = [
+            {"ticker": f["ticker"], "codes": f.get("categories", [])}
+            for f in fw.get("recent_filings", [])
+            if any(c in ("DILUTION", "MATERIAL_AGREEMENT", "EARNINGS") for c in f.get("categories", []))
+        ]
+        if filing_events:
+            event_sources["filing_watch"] = filing_events
+
     # Find competitive events
     competitive_events = find_competitive_events(indication_map, portfolio_tickers, event_sources)
 
