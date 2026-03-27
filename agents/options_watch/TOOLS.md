@@ -88,9 +88,26 @@ artifacts/options_watch/
 4. **Top IV movers**: names with largest atm_iv_change_5d
 5. **Suppressed**: names skipped and why
 
+## Production builder
+
+The core watch logic is now implemented in `tools/build_options_watch.py`:
+
+```bash
+# Phase 2 post-packet (runs in daily production pipeline, step 5k.5a)
+python tools/build_options_watch.py --as-of-date 2026-03-27 --mode post_packet
+
+# Phase 3 pre-open shadow (runs automatically, accumulating data)
+python tools/build_options_watch.py --as-of-date 2026-03-27 --mode pre_open
+```
+
+Pre-open output goes to `{date}_premarket_watch.json`. Evaluation harness:
+`scripts/research/eval_preopen_watch.py --min-days 10`
+
+The agent's role is to interpret the builder's output, not duplicate its logic.
+
 ## Environment
 
 - WSL2 Ubuntu, Python 3.12
 - All reads are file-based — no API calls
-- Schedule: 5:40 PM ET weekdays (40 17 * * 1-5), after production packet
-- Phase 3 (future): add pre-open pass at ~8:45 AM ET once noise is proven manageable
+- Schedule: after production pipeline completes (steps 5k.5a / 5k.5a-shadow)
+- Phase 3 pre-open: shadowing since 2026-03-27, promotion gate at 10 trading days

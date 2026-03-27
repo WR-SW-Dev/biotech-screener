@@ -26,8 +26,19 @@ artifacts/catalyst_delta/
   {date}_delta.md      — human-readable summary
 ```
 
+## Production builder
+
+The core delta logic is now implemented in `tools/build_catalyst_delta.py`:
+
+```bash
+python tools/build_catalyst_delta.py --as-of-date 2026-03-27
+```
+
+This runs automatically in the daily production pipeline (step 5i.6).
+The agent's role is to interpret the builder's output, not duplicate its logic.
+
 ## Environment
 
 - WSL2 Ubuntu, Python 3.12
 - All reads are file-based — no API calls needed
-- Schedule: once daily after cache warm completes
+- Schedule: once daily after production pipeline completes (step 5i.6)
