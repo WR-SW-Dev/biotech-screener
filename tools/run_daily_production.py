@@ -4650,6 +4650,20 @@ def run_daily(
         except Exception as _cb_err:
             print(f"  [WARN] Options chartbook failed: {_cb_err}")
 
+        # --- Step 5k.6: Shadow monitor (non-blocking) ---
+        try:
+            from tools.build_shadow_monitor import build_shadow_monitor
+
+            _sm_result = build_shadow_monitor(as_of_date)
+            if "error" in _sm_result:
+                print(f"  Shadow monitor → skipped ({_sm_result['error']})")
+            else:
+                _sm_attn = _sm_result.get("attention", "?")
+                _sm_n_alerts = len(_sm_result.get("alerts", []))
+                print(f"  Shadow monitor → {_sm_attn} ({_sm_n_alerts} alerts)")
+        except Exception as _sm_err:
+            print(f"  [WARN] Shadow monitor failed: {_sm_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
