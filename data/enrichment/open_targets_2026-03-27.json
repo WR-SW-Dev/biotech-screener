@@ -1,0 +1,9 @@
+{
+  "schema": "open_targets_enrichment.v1",
+  "generated_at": "2026-03-27T18:51:58.606126+00:00",
+  "n_tickers_queried": 3,
+  "n_tickers_enriched": 0,
+  "n_queries": 9,
+  "n_hits": 0,
+  "enrichments": {}
+}

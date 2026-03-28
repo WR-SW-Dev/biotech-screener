@@ -66,22 +66,23 @@ def _load_json(path: Path):
 
 def _build_enriched_indication_map(
     enrichment_dir: Path,
-) -> Dict[str, Set[str]]:
+) -> tuple:
     """Build indication → tickers using normalized EFO/MedGen entities.
 
     Reads program_entity_view to get per-program indication entities, then
     groups tickers by normalized disease ID (efo_id preferred, medgen_uid
-    fallback). Returns empty dict if enrichment data is insufficient.
+    fallback). Returns (empty, empty) if enrichment data is insufficient.
     """
     pev_candidates = sorted(enrichment_dir.glob("program_entity_view_*.json"))
     if not pev_candidates:
-        return {}
+        return {}, {}
 
     pev = _load_json(pev_candidates[-1])
     if not pev or not pev.get("entries"):
-        return {}
+        return {}, {}
 
     ind_tickers: Dict[str, Set[str]] = defaultdict(set)
+    ind_ta: Dict[str, str] = {}  # indication_key → simplified_therapeutic_area
     n_mapped = 0
     n_total = 0
 
@@ -96,14 +97,19 @@ def _build_enriched_indication_map(
             efo_id = ind.get("efo_id", "")
             efo_name = ind.get("efo_name", "")
             medgen_uid = ind.get("medgen_uid", "")
+            sta = ind.get("simplified_therapeutic_area")
 
             if efo_id and efo_name:
                 key = f"efo:{efo_id}|{efo_name}"
                 ind_tickers[key].add(ticker)
+                if sta and key not in ind_ta:
+                    ind_ta[key] = sta
                 n_mapped += 1
             elif medgen_uid:
                 key = f"medgen:{medgen_uid}|{ind.get('raw_condition', '')}"
                 ind_tickers[key].add(ticker)
+                if sta and key not in ind_ta:
+                    ind_ta[key] = sta
                 n_mapped += 1
 
     if n_total == 0 or n_mapped / n_total < 0.10:
@@ -112,7 +118,7 @@ def _build_enriched_indication_map(
             n_mapped,
             n_total,
         )
-        return {}
+        return {}, {}
 
     logger.info(
         "Enriched indication map: %d indications, %d/%d programs mapped (%.0f%%)",
@@ -123,17 +129,21 @@ def _build_enriched_indication_map(
     )
 
     # Filter to conditions with multiple tickers
-    return {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}
+    filtered = {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}
+    return filtered, {k: v for k, v in ind_ta.items() if k in filtered}
 
 
 def build_indication_map(
     cache_dir: Path,
     enrichment_dir: Path = REPO_ROOT / "data" / "enrichment",
-) -> Dict[str, Set[str]]:
+) -> tuple:
     """Build indication → tickers mapping.
 
     Prefers enriched program_entity_view (normalized EFO/MedGen IDs) when
     available and sufficiently populated. Falls back to raw CTgov conditions.
+
+    Returns (ind_tickers, ind_ta) where ind_ta maps indication keys to
+    simplified therapeutic areas (may be empty for raw fallback).
     """
     # Try enriched first
     enriched = _build_enriched_indication_map(enrichment_dir)
@@ -143,7 +153,7 @@ def build_indication_map(
     # Fallback: raw CTgov conditions
     candidates = sorted(p for p in cache_dir.glob("trial_records_*.json") if not p.name.endswith(".meta.json"))
     if not candidates:
-        return {}
+        return {}, {}
 
     with open(candidates[-1], encoding="utf-8") as f:
         records = json.load(f)
@@ -158,8 +168,8 @@ def build_indication_map(
             if cond and cond not in NOISE_CONDITIONS:
                 ind_tickers[cond].add(ticker)
 
-    # Filter to conditions with multiple tickers
-    return {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}
+    # Filter to conditions with multiple tickers (no TA info in raw fallback)
+    return {c: ts for c, ts in ind_tickers.items() if len(ts) >= MIN_SHARED_TICKERS}, {}
 
 
 def _display_indication(key: str) -> str:
@@ -176,8 +186,10 @@ def _display_indication(key: str) -> str:
 def find_portfolio_competitive_groups(
     indication_map: Dict[str, Set[str]],
     portfolio_tickers: Set[str],
+    indication_ta: Dict[str, str] | None = None,
 ) -> Dict[str, Dict[str, Any]]:
     """For each portfolio ticker, find indications where competitors exist."""
+    ta_map = indication_ta or {}
     groups: Dict[str, Dict[str, Any]] = {}
 
     for ticker in sorted(portfolio_tickers):
@@ -186,16 +198,18 @@ def find_portfolio_competitive_groups(
             if ticker in tickers:
                 competitors = tickers - {ticker}
                 portfolio_competitors = competitors & portfolio_tickers
-                ticker_indications.append(
-                    {
-                        "indication": _display_indication(indication),
-                        "indication_key": indication,
-                        "n_competitors": len(competitors),
-                        "n_portfolio_competitors": len(portfolio_competitors),
-                        "competitors": sorted(competitors)[:10],
-                        "portfolio_competitors": sorted(portfolio_competitors),
-                    }
-                )
+                entry = {
+                    "indication": _display_indication(indication),
+                    "indication_key": indication,
+                    "n_competitors": len(competitors),
+                    "n_portfolio_competitors": len(portfolio_competitors),
+                    "competitors": sorted(competitors)[:10],
+                    "portfolio_competitors": sorted(portfolio_competitors),
+                }
+                ta = ta_map.get(indication)
+                if ta:
+                    entry["therapeutic_area"] = ta
+                ticker_indications.append(entry)
 
         if ticker_indications:
             # Sort by number of competitors descending
@@ -264,11 +278,11 @@ def build_competitive_intel(
 ) -> Dict[str, Any]:
     """Build competitive intelligence artifact."""
     # Build indication map
-    indication_map = build_indication_map(cache_dir)
+    indication_map, indication_ta = build_indication_map(cache_dir)
     if not indication_map:
         return {"error": "no CTgov cache for indication mapping"}
 
-    logger.info("Indication map: %d indications", len(indication_map))
+    logger.info("Indication map: %d indications (%d with TA)", len(indication_map), len(indication_ta))
 
     # Load portfolio tickers
     portfolio_tickers: Set[str] = set()
@@ -285,7 +299,7 @@ def build_competitive_intel(
             portfolio_tickers = {r["ticker"] for r in rows[:60] if r.get("ticker")}
 
     # Competitive groups
-    groups = find_portfolio_competitive_groups(indication_map, portfolio_tickers)
+    groups = find_portfolio_competitive_groups(indication_map, portfolio_tickers, indication_ta)
 
     # Load event sources for cross-referencing
     event_sources: Dict[str, List[Dict]] = {}

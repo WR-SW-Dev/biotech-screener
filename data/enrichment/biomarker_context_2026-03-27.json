@@ -1,0 +1,4301 @@
+{
+  "schema": "biomarker_context.v1",
+  "generated_at": "2026-03-27T19:10:41.062920+00:00",
+  "n_onco_tickers": 157,
+  "n_civic_hits": 47,
+  "n_pgx_hits": 0,
+  "entries": {
+    "ABSI": {
+      "ticker": "ABSI",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Breast Cancer Survivors",
+        "Carcinoma",
+        "Castration-resistant Prostate Cancer",
+        "Castration-resistant Prostate Cancer Metastatic to Bone",
+        "Colorectal (Colon or Rectal) Cancer Survivors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ABUS": {
+      "ticker": "ABUS",
+      "n_onco_conditions": 6,
+      "top_conditions": [
+        "Adrenocortical Carcinoma",
+        "Cancer",
+        "Hepatocellular Carcinoma",
+        "Liver Cancer, Adult",
+        "Liver Cell Carcinoma, Adult"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ABVX": {
+      "ticker": "ABVX",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Carcinoma, Hepatocellular"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ACLX": {
+      "ticker": "ACLX",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Multiple Myeloma",
+        "Relapsed and Refractory Multiple Myeloma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "ACRS": {
+      "ticker": "ACRS",
+      "n_onco_conditions": 6,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumor Malignancies",
+        "Cancer of the Pancreas",
+        "Hormone Receptor Positive HER-2 Negative Metastatic Breast Cancer",
+        "Metastatic Pancreatic Ductal Adenocarcinoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 1219,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Gemcitabine",
+            "Erlotinib"
+          ],
+          "disease": "Pancreatic Cancer",
+          "molecular_profile": "KRAS Exon 2 Mutation"
+        },
+        {
+          "civic_id": 1298,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Pancreatic Cancer",
+          "molecular_profile": "KRAS G12R"
+        },
+        {
+          "civic_id": 1300,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Pancreatic Cancer",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 5913,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Pancreatic Cancer",
+          "molecular_profile": "BRCA2 Mutation"
+        },
+        {
+          "civic_id": 5915,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Oxaliplatin"
+          ],
+          "disease": "Pancreatic Cancer",
+          "molecular_profile": "BRCA1 Mutation"
+        }
+      ],
+      "pgx": []
+    },
+    "ACRV": {
+      "ticker": "ACRV",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Endometrial Adenocarcinoma",
+        "Head and Neck Squamous Cell Carcinoma",
+        "Specific Advanced Solid Tumors"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 12525,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Endometrial Adenocarcinoma",
+          "molecular_profile": "POLE R1233*"
+        },
+        {
+          "civic_id": 10076,
+          "significance": "RESISTANCE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "MDM2 Inhibitor AMGMDS3"
+          ],
+          "disease": "Endometrial Adenocarcinoma",
+          "molecular_profile": "TP53 R175H"
+        },
+        {
+          "civic_id": 1319,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Sirolimus"
+          ],
+          "disease": "Endometrial Adenocarcinoma",
+          "molecular_profile": "MTOR S2215Y"
+        }
+      ],
+      "pgx": []
+    },
+    "ADCT": {
+      "ticker": "ADCT",
+      "n_onco_conditions": 67,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia (AML)",
+        "Advanced Solid Tumors",
+        "B-Cell Lymphomas"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "AGIO": {
+      "ticker": "AGIO",
+      "n_onco_conditions": 15,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia (AML)",
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumors",
+        "Chondrosarcoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ALDX": {
+      "ticker": "ALDX",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Primary Vitreoretinal Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ALLO": {
+      "ticker": "ALLO",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Advanced/Metastatic Clear Cell Renal Cell Carcinoma",
+        "Large B-cell Lymphoma",
+        "Relapsed or Refractory Large B Cell Lymphoma, Relapsed or Refractory Chronic Lymphocytic Leukemia, Relapsed or Refractory Small Lymphocytic Lymphoma",
+        "Relapsed/Refractory Follicular Lymphoma",
+        "Relapsed/Refractory Large B Cell Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 12578,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Immune Checkpoint Inhibitor"
+          ],
+          "disease": "Solid Tumors, Advanced",
+          "molecular_profile": "TMB High"
+        },
+        {
+          "civic_id": 10110,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Sotorasib"
+          ],
+          "disease": "Solid Tumors, Advanced",
+          "molecular_profile": "KRAS G12C"
+        },
+        {
+          "civic_id": 12640,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Claturafenib"
+          ],
+          "disease": "Solid Tumors, Advanced",
+          "molecular_profile": "BRAF V600E"
+        },
+        {
+          "civic_id": 12700,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Sorafenib"
+          ],
+          "disease": "Solid Tumors, Advanced",
+          "molecular_profile": "KRAS G12C OR KRAS G12D OR KRAS G13D OR RET M918T OR KRAS G12A OR KRAS G12V OR KRAS G12R OR KRAS Amplification OR KRAS G12S OR KRAS G13R OR KRAS G12P"
+        },
+        {
+          "civic_id": 12180,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "MRNA Vaccine",
+            "Pembrolizumab"
+          ],
+          "disease": "Solid Tumors, Advanced",
+          "molecular_profile": "KRAS G12V"
+        }
+      ],
+      "pgx": []
+    },
+    "ALNY": {
+      "ticker": "ALNY",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Advanced Hepatocellular Carcinoma",
+        "Metastatic Hepatocellular Carcinoma",
+        "Solid Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ALVO": {
+      "ticker": "ALVO",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Melanoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 1409,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Vemurafenib"
+          ],
+          "disease": "Skin Melanoma",
+          "molecular_profile": "BRAF V600E"
+        },
+        {
+          "civic_id": 1411,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Trametinib",
+            "Dabrafenib"
+          ],
+          "disease": "Skin Melanoma",
+          "molecular_profile": "BRAF V600"
+        },
+        {
+          "civic_id": 6044,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cobimetinib",
+            "Vemurafenib"
+          ],
+          "disease": "Melanoma",
+          "molecular_profile": "BRAF V600"
+        },
+        {
+          "civic_id": 7287,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Encorafenib",
+            "Binimetinib"
+          ],
+          "disease": "Melanoma",
+          "molecular_profile": "BRAF V600"
+        },
+        {
+          "civic_id": 11238,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Atezolizumab",
+            "Vemurafenib",
+            "Cobimetinib"
+          ],
+          "disease": "Melanoma",
+          "molecular_profile": "BRAF V600"
+        }
+      ],
+      "pgx": []
+    },
+    "AMGN": {
+      "ticker": "AMGN",
+      "n_onco_conditions": 349,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphoblastic Leukemia (ALL)",
+        "Acute Lymphoblastic Leukemia With Failed Remission",
+        "Acute Lymphoblastic Leukemia, in Relapse",
+        "Acute Lymphoblastic Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "AMRX": {
+      "ticker": "AMRX",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Chronic Myeloid Leukemia",
+        "Gastrointestinal Stromal Tumor"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 260,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 344,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 11342,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Dasatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion AND ABL1 TKD Mutation"
+        },
+        {
+          "civic_id": 220,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 261,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Nilotinib",
+            "Dasatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "ARGX": {
+      "ticker": "ARGX",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Cancer",
+        "Leukemia, Myeloid, Acute",
+        "Leukemia, Myelomonocytic, Chronic",
+        "Neoplasms"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 1433,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "v::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1445,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1441,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1774,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1838,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "TNKS2::PDGFRA Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "ARTV": {
+      "ticker": "ARTV",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Breast Cancer",
+        "Gastric Cancer",
+        "Gastroesophageal Junction Adenocarcinoma",
+        "Lymphoma, T-Cell",
+        "Non Hodgkin Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ARVN": {
+      "ticker": "ARVN",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Solid Cancer",
+        "Breast Cancer",
+        "Breast Neoplasms",
+        "Prostate Cancer Metastatic"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ARWR": {
+      "ticker": "ARWR",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Clear Cell Renal Cell Carcinoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 459,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Clear Cell Renal Cell Carcinoma",
+          "molecular_profile": "BAP1 Mutation"
+        },
+        {
+          "civic_id": 461,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Clear Cell Renal Cell Carcinoma",
+          "molecular_profile": "BAP1 Mutation"
+        },
+        {
+          "civic_id": 418,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Clear Cell Renal Cell Carcinoma",
+          "molecular_profile": "VHL Mutation"
+        },
+        {
+          "civic_id": 2896,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Clear Cell Renal Cell Carcinoma",
+          "molecular_profile": "GNAS c.393T>C"
+        },
+        {
+          "civic_id": 7247,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Anti-PD-L1 Monoclonal Antibody",
+            "CTLA-4 Inhibitor"
+          ],
+          "disease": "Clear Cell Renal Cell Carcinoma",
+          "molecular_profile": "PBRM1 Mutation"
+        }
+      ],
+      "pgx": []
+    },
+    "ASND": {
+      "ticker": "ASND",
+      "n_onco_conditions": 17,
+      "top_conditions": [
+        "2L+ Cervical Cancer",
+        "Advanced Solid Tumor",
+        "HPV-associated Cancers",
+        "Head and Neck Neoplasms",
+        "Head and Neck Squamous Cell Carcinoma HNSCC"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "AURA": {
+      "ticker": "AURA",
+      "n_onco_conditions": 11,
+      "top_conditions": [
+        "Choroidal Melanoma",
+        "Eye Cancer",
+        "Non-Muscle Invasive Bladder Cancer (&Amp;#34;NMIBC&Amp;#34;) Unresponsive/Intolerant to BCG",
+        "Non-Muscle Invasive Bladder Carcinoma",
+        "Non-Muscle Invasive Bladder Neoplasms"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "AVBP": {
+      "ticker": "AVBP",
+      "n_onco_conditions": 10,
+      "top_conditions": [
+        "Advanced Non-Small Cell Lung Cancer",
+        "Advanced Non-Small-Cell Lung Cancer",
+        "Colorectal Cancer",
+        "Gastric Cancer",
+        "Locally Advanced or Metastatic Solid Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "AZN": {
+      "ticker": "AZN",
+      "n_onco_conditions": 317,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Adenocarcinoma",
+        "Adenocarcinoma of the Gastroesophageal Junction",
+        "Advanced (Inoperable) Non Small Cell Lung Cancer",
+        "Advanced Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BBIO": {
+      "ticker": "BBIO",
+      "n_onco_conditions": 35,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Cholangiocarcinoma",
+        "Advanced Lung Cancer",
+        "Advanced Lung Carcinoma",
+        "Bladder Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BBOT": {
+      "ticker": "BBOT",
+      "n_onco_conditions": 20,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Lung Cancer",
+        "Advanced Lung Carcinoma",
+        "CRC (Colorectal Cancer)",
+        "HER2 Mutation-Related Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BCAX": {
+      "ticker": "BCAX",
+      "n_onco_conditions": 14,
+      "top_conditions": [
+        "Carcinoma, Squamous Cell",
+        "Colorectal Cancer",
+        "Cutaneous Squamous Cell Carcinoma",
+        "Epithelial Ovarian Cancer",
+        "Head and Neck Neoplasms"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 11243,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Niraparib"
+          ],
+          "disease": "Epithelial Ovarian Cancer",
+          "molecular_profile": "BRCA1 Mutation OR BRCA2 Mutation"
+        },
+        {
+          "civic_id": 464,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Epithelial Ovarian Cancer",
+          "molecular_profile": "BRCA1 Mutation"
+        },
+        {
+          "civic_id": 465,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Epithelial Ovarian Cancer",
+          "molecular_profile": "BRCA2 Mutation"
+        },
+        {
+          "civic_id": 664,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Carboplatin",
+            "Paclitaxel"
+          ],
+          "disease": "Epithelial Ovarian Cancer",
+          "molecular_profile": "KRAS RS61764370"
+        },
+        {
+          "civic_id": 10146,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Platinum Compound"
+          ],
+          "disease": "Epithelial Ovarian Cancer",
+          "molecular_profile": "ERCC1 Underexpression"
+        }
+      ],
+      "pgx": []
+    },
+    "BCRX": {
+      "ticker": "BCRX",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "B-cell Acute Lymphoblastic Leukemia",
+        "Cancer",
+        "Chronic Lymphocytic Leukemia (CLL)",
+        "Cutaneous T-cell Lymphoma (CTCL),",
+        "Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BCYC": {
+      "ticker": "BCYC",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Non-Small Cell Lung Cancer",
+        "Non-Small Cell Lung Sarcoma",
+        "Oesophageal Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BDTX": {
+      "ticker": "BDTX",
+      "n_onco_conditions": 12,
+      "top_conditions": [
+        "Advanced Lung Carcinoma",
+        "Advanced Non-Small Cell Squamous Lung Cancer",
+        "Brain Cancer",
+        "EGF-R Positive Non-Small Cell Lung Cancer",
+        "Glioblastoma (GBM)"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 11124,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Entrectinib"
+          ],
+          "disease": "Solid Tumor",
+          "molecular_profile": "v::NTRK1 Fusion"
+        },
+        {
+          "civic_id": 11125,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Entrectinib"
+          ],
+          "disease": "Solid Tumor",
+          "molecular_profile": "v::NTRK3 Fusion"
+        },
+        {
+          "civic_id": 11703,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Larotrectinib Regimen"
+          ],
+          "disease": "Solid Tumor",
+          "molecular_profile": "TPM3::NTRK1 Fusion"
+        },
+        {
+          "civic_id": 12013,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Trastuzumab Deruxtecan"
+          ],
+          "disease": "Solid Tumor",
+          "molecular_profile": "ERBB2 Overexpression"
+        },
+        {
+          "civic_id": 12708,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Selpercatinib"
+          ],
+          "disease": "Solid Tumor",
+          "molecular_profile": "v::RET Fusion OR RET Mutation"
+        }
+      ],
+      "pgx": []
+    },
+    "BEAM": {
+      "ticker": "BEAM",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Lymphoblastic Leukemia",
+        "Lymphoblastic Lymphoma",
+        "T-Cell Acute Lymphoblastic Leukemia/Lymphoma",
+        "T-Cell Lymphoblastic Leukemia/Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 263,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Palbociclib"
+          ],
+          "disease": "T-cell Lymphoblastic Leukemia/lymphoma",
+          "molecular_profile": "CCND3 Loss"
+        },
+        {
+          "civic_id": 5926,
+          "significance": "RESISTANCE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Asparaginase"
+          ],
+          "disease": "T-cell Lymphoblastic Leukemia/lymphoma",
+          "molecular_profile": "KMT2E::ASNS Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "BHVN": {
+      "ticker": "BHVN",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Brain Tumor",
+        "Glioblastoma",
+        "Melanoma",
+        "Metastatic Melanoma",
+        "Multiple Myeloma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "BIIB": {
+      "ticker": "BIIB",
+      "n_onco_conditions": 41,
+      "top_conditions": [
+        "Advanced Solid Tumors",
+        "B-Cell Chronic Lymphocytic Leukemia",
+        "Breast Cancer",
+        "Chronic Lymphocytic Leukemia",
+        "Colorectal Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BMEA": {
+      "ticker": "BMEA",
+      "n_onco_conditions": 25,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Mixed-Phenotype Leukemia",
+        "Acute Myeloid Leukemia",
+        "Cancer",
+        "Chronic Lymphocytic Leukemia"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "BMRN": {
+      "ticker": "BMRN",
+      "n_onco_conditions": 10,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Carcinoma, Non-Small Cell Lung",
+        "Childhood Solid Tumors",
+        "Metastatic Cancer",
+        "Non-Small Cell Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "BNTX": {
+      "ticker": "BNTX",
+      "n_onco_conditions": 92,
+      "top_conditions": [
+        "Adenocarcinoma, Pancreatic Ductal",
+        "Advanced Endometrial Cancer",
+        "Advanced Lung Cancer",
+        "Advanced Malignant Solid Tumor",
+        "Advanced Melanoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CADL": {
+      "ticker": "CADL",
+      "n_onco_conditions": 23,
+      "top_conditions": [
+        "Anaplastic Oligodendroglioma of Brain (Diagnosis)",
+        "Borderline Resectable Pancreatic Adenocarcinoma",
+        "Brain Cancer",
+        "Brain Tumor",
+        "Breast Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 490,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Promoter Methylation"
+        },
+        {
+          "civic_id": 2902,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Temozolomide"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Underexpression"
+        },
+        {
+          "civic_id": 6932,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "TP53 P72R"
+        },
+        {
+          "civic_id": 9838,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "H3-3A K27R"
+        },
+        {
+          "civic_id": 979,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "AGI-5198"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "IDH1 R132H"
+        }
+      ],
+      "pgx": []
+    },
+    "CAI": {
+      "ticker": "CAI",
+      "n_onco_conditions": 94,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Myeloid Leukemia",
+        "Adenocarcinoma",
+        "Advanced Breast Cancer",
+        "Advanced Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CATX": {
+      "ticker": "CATX",
+      "n_onco_conditions": 25,
+      "top_conditions": [
+        "Bronchial Neuroendocrine Tumor",
+        "Colorectal Cancer",
+        "Esophageal Cancer",
+        "Gastric Cancer",
+        "Gastroenteropancreatic Neuroendocrine Tumor"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CCCC": {
+      "ticker": "CCCC",
+      "n_onco_conditions": 8,
+      "top_conditions": [
+        "Lymphoma, Non-Hodgkin's",
+        "Melanoma",
+        "Multiple Myeloma",
+        "Multiple Myeloma (MM)",
+        "Relapsed/Refractory Multiple Myeloma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "CDNA": {
+      "ticker": "CDNA",
+      "n_onco_conditions": 112,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphoblastic Leukemia (ALL)",
+        "Acute Lymphoid Leukemia",
+        "Acute Myeloid Leukemia in Children",
+        "Adult Solid Neoplasm"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CELC": {
+      "ticker": "CELC",
+      "n_onco_conditions": 17,
+      "top_conditions": [
+        "Breast Cancer",
+        "Breast Neoplasm Malignant Female",
+        "ER Positive Breast Cancer",
+        "Early-stage Breast Cancer",
+        "Endometrial Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CERS": {
+      "ticker": "CERS",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Leukemia",
+        "Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7365,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "A",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "B-lymphoblastic Leukemia/lymphoma",
+          "molecular_profile": "IKZF1 Deletion"
+        },
+        {
+          "civic_id": 7404,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "A",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "B-lymphoblastic Leukemia/lymphoma",
+          "molecular_profile": "IKZF1 Deletion"
+        },
+        {
+          "civic_id": 8599,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "B-lymphoblastic Leukemia/lymphoma With ETV6-RUNX1",
+          "molecular_profile": "ETV6::RUNX1 Fusion"
+        },
+        {
+          "civic_id": 11771,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "B-lymphoblastic Leukemia/lymphoma With TCF3-PBX1",
+          "molecular_profile": "TCF3::PBX1 Fusion"
+        },
+        {
+          "civic_id": 6936,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "A",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "B-lymphoblastic Leukemia/lymphoma, BCR-ABL1\u2013like",
+          "molecular_profile": "v::ABL1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "CGEM": {
+      "ticker": "CGEM",
+      "n_onco_conditions": 6,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Multiple Myeloma",
+        "Nasopharyngeal Cancer",
+        "Nasopharyngeal Carcinoma",
+        "Non Small Cell Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CGON": {
+      "ticker": "CGON",
+      "n_onco_conditions": 11,
+      "top_conditions": [
+        "Bladder Cancer",
+        "Carcinoma in Situ",
+        "Carcinoma in Situ Concurrent With Papillary Tumors",
+        "High-Risk Non-Muscle-Invasive Bladder Cancer",
+        "High-grade Ta/ T1 Papillary Disease Bladder Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CHRS": {
+      "ticker": "CHRS",
+      "n_onco_conditions": 42,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced or Metastatic Solid Tumors",
+        "Clear Cell Renal Cell Carcinoma",
+        "HPV (Human Papillomavirus)-Associated Carcinoma",
+        "HPV 16 Positive Oropharyngeal Tumors (OPC)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CLDX": {
+      "ticker": "CLDX",
+      "n_onco_conditions": 118,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia (ALL)",
+        "Acute Myelogenous Leukemia (AML)",
+        "Acute Myeloid Leukemia",
+        "Advanced Breast Carcinoma",
+        "Advanced Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 490,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Promoter Methylation"
+        },
+        {
+          "civic_id": 2902,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Temozolomide"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Underexpression"
+        },
+        {
+          "civic_id": 6932,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "TP53 P72R"
+        },
+        {
+          "civic_id": 9838,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "H3-3A K27R"
+        },
+        {
+          "civic_id": 979,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "AGI-5198"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "IDH1 R132H"
+        }
+      ],
+      "pgx": []
+    },
+    "CLLS": {
+      "ticker": "CLLS",
+      "n_onco_conditions": 5,
+      "top_conditions": [
+        "B-cell Acute Lymphoblastic Leukemia",
+        "B-cell Non-Hodgkin Lymphoma (B-NHL)",
+        "Blastic Plasmacytoid Dendritic Cell Neoplasm (BPDCN)",
+        "Relapsed/Refractory Acute Myeloid Leukemia",
+        "Relapsed/Refractory Multiple Myeloma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 8601,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "B-cell Acute Lymphoblastic Leukemia",
+          "molecular_profile": "KMT2A Rearrangement"
+        },
+        {
+          "civic_id": 7003,
+          "significance": "PATHOGENIC",
+          "evidence_level": "B",
+          "evidence_type": "PREDISPOSING",
+          "therapies": [],
+          "disease": "Childhood B-cell Acute Lymphoblastic Leukemia",
+          "molecular_profile": "IKZF1 D186fs (c.556del)"
+        },
+        {
+          "civic_id": 7065,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Childhood B-cell Acute Lymphoblastic Leukemia",
+          "molecular_profile": "P2RY8::CRLF2 Fusion"
+        },
+        {
+          "civic_id": 7238,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Childhood B-cell Acute Lymphoblastic Leukemia",
+          "molecular_profile": "IGH::CRLF2 Fusion"
+        },
+        {
+          "civic_id": 7364,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Childhood B-cell Acute Lymphoblastic Leukemia",
+          "molecular_profile": "CRLF2 Overexpression"
+        }
+      ],
+      "pgx": []
+    },
+    "CMPX": {
+      "ticker": "CMPX",
+      "n_onco_conditions": 26,
+      "top_conditions": [
+        "Ampullary Cancer",
+        "Biliary Tract Cancer",
+        "Cholangiocarcinoma",
+        "Colon Cancer",
+        "Endometrial Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CNTA": {
+      "ticker": "CNTA",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Cutaneous Squamous Cell Carcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CNTX": {
+      "ticker": "CNTX",
+      "n_onco_conditions": 30,
+      "top_conditions": [
+        "Breast Cancer",
+        "Cholangiocarcinoma Advanced",
+        "Cholangiocarcinoma Non-resectable",
+        "Colorectal Cancer",
+        "ER-positive Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "COGT": {
+      "ticker": "COGT",
+      "n_onco_conditions": 23,
+      "top_conditions": [
+        "Advanced Gastrointestinal Stromal Tumors",
+        "Advanced Solid Tumor, Adult",
+        "Advanced Solid Tumors",
+        "Advanced Solid Tumors, Adult",
+        "B Cell Lymphomas"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CRBU": {
+      "ticker": "CRBU",
+      "n_onco_conditions": 14,
+      "top_conditions": [
+        "Acute Myeloid Leukemia Refractory",
+        "Acute Myeloid Leukemia, in Relapse",
+        "B Cell Lymphoma",
+        "B Cell Non-Hodgkin's Lymphoma",
+        "B-Cell Non-Hodgkin's Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CRL": {
+      "ticker": "CRL",
+      "n_onco_conditions": 26,
+      "top_conditions": [
+        "AML - Acute Myeloid Leukemia",
+        "Acute Myelogenous Leukemia",
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia Arising From Previous Myelodysplastic/Myeloproliferative Neoplasm",
+        "Acute Myeloid Leukemia Post Cytotoxic Therapy"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CRNX": {
+      "ticker": "CRNX",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Carcinoid Intestine Tumor",
+        "Carcinoid Tumor",
+        "Carcinoid Tumor of Cecum",
+        "Carcinoid Tumor of Ileum",
+        "Carcinoid Tumor of Liver"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CRSP": {
+      "ticker": "CRSP",
+      "n_onco_conditions": 17,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "B Cell Lymphoma",
+        "B-cell Lymphoma",
+        "Cervical Carcinoma",
+        "Chronic Lymphocytic Leukemia (CLL)/Small Lymphocytic Lymphoma (SLL)"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "CRVS": {
+      "ticker": "CRVS",
+      "n_onco_conditions": 22,
+      "top_conditions": [
+        "Angioimmunoblastic T-cell Lymphoma",
+        "Bladder Cancer",
+        "Cervical Cancer",
+        "Colorectal Cancer",
+        "Endometrial Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "CTMX": {
+      "ticker": "CTMX",
+      "n_onco_conditions": 15,
+      "top_conditions": [
+        "Breast Cancer",
+        "Breast Neoplasms",
+        "Breast Neoplasms, Hormone Receptor Positive/HER2 Negative",
+        "Breast Neoplasms, Triple-Negative",
+        "Diffuse Large B Cell Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2895,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Fluorouracil"
+          ],
+          "disease": "Esophageal Cancer",
+          "molecular_profile": "GNAS c.393T>C"
+        },
+        {
+          "civic_id": 9311,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Alvocidib",
+            "CAN508"
+          ],
+          "disease": "Esophageal Cancer",
+          "molecular_profile": "CDK9 Overexpression"
+        },
+        {
+          "civic_id": 6929,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Ibrutinib"
+          ],
+          "disease": "Esophageal Cancer",
+          "molecular_profile": "ERBB2 Amplification"
+        },
+        {
+          "civic_id": 1982,
+          "significance": "RESISTANCE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Fluorouracil",
+            "Docetaxel"
+          ],
+          "disease": "Esophageal Cancer",
+          "molecular_profile": "YAP1 Overexpression"
+        },
+        {
+          "civic_id": 1983,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Verteporfin"
+          ],
+          "disease": "Esophageal Cancer",
+          "molecular_profile": "YAP1 Overexpression"
+        }
+      ],
+      "pgx": []
+    },
+    "CVAC": {
+      "ticker": "CVAC",
+      "n_onco_conditions": 13,
+      "top_conditions": [
+        "Carcinoma, Adenoid Cystic",
+        "Carcinoma, Squamous Cell of Head and Neck",
+        "Glioblastoma",
+        "Hepatocellular Carcinoma",
+        "Hormonal Refractory Prostate Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 8842,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Castration-resistant Prostate Carcinoma",
+          "molecular_profile": "BRCA2 Mutation"
+        },
+        {
+          "civic_id": 8504,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Castration-resistant Prostate Carcinoma",
+          "molecular_profile": "PALB2 Mutation"
+        },
+        {
+          "civic_id": 8505,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Castration-resistant Prostate Carcinoma",
+          "molecular_profile": "ATM Mutation"
+        },
+        {
+          "civic_id": 11203,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Castration-resistant Prostate Carcinoma",
+          "molecular_profile": "BRCA1 Mutation"
+        },
+        {
+          "civic_id": 11204,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Olaparib"
+          ],
+          "disease": "Castration-resistant Prostate Carcinoma",
+          "molecular_profile": "CDK12 Mutation"
+        }
+      ],
+      "pgx": []
+    },
+    "CYTK": {
+      "ticker": "CYTK",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Breast Neoplasms",
+        "Non-Hodgkin's Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "DAWN": {
+      "ticker": "DAWN",
+      "n_onco_conditions": 17,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced or Metastatic Solid Tumors",
+        "Bladder Cancer",
+        "Bladder Urothelial Carcinoma",
+        "Colorectal Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 8904,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Spitzoid Melanoma",
+          "molecular_profile": "LMNA::NTRK1 Fusion"
+        },
+        {
+          "civic_id": 8903,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "D",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Spitzoid Melanoma",
+          "molecular_profile": "LMNA::NTRK1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "DNA": {
+      "ticker": "DNA",
+      "n_onco_conditions": 711,
+      "top_conditions": [
+        "AIDS Related Non-Hodgkin Lymphoma",
+        "AIDS-Related Burkitt Lymphoma",
+        "AIDS-Related Diffuse Large B-cell Lymphoma",
+        "AIDS-Related Plasmablastic Lymphoma",
+        "AIDS-Related Primary Effusion Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "DVAX": {
+      "ticker": "DVAX",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Advanced Non Small Cell Lung Cancer",
+        "B-cell Lymphoma",
+        "Colorectal Neoplasms",
+        "Head Neck Cancer",
+        "Metastatic Melanoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "EBS": {
+      "ticker": "EBS",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "T Cell Lymphoma",
+        "T-cell Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 628,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Peripheral T-cell Lymphoma",
+          "molecular_profile": "IDH2 R172"
+        },
+        {
+          "civic_id": 627,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Peripheral T-cell Lymphoma",
+          "molecular_profile": "IDH2 R172"
+        },
+        {
+          "civic_id": 4827,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Crizotinib"
+          ],
+          "disease": "Nasal Type Extranodal NK/T-cell Lymphoma",
+          "molecular_profile": "ALK R214H"
+        }
+      ],
+      "pgx": []
+    },
+    "ELVN": {
+      "ticker": "ELVN",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "CML (Chronic Myelogenous Leukemia)",
+        "Chronic Myeloid Leukemia",
+        "Chronic Phase Chronic Myeloid Leukemia, BCR-ABL1 Positive",
+        "Colorectal Cancer",
+        "HER2 Mutant Non-small Cell Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ERAS": {
+      "ticker": "ERAS",
+      "n_onco_conditions": 8,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Non-squamous Non-small-cell Lung Cancer",
+        "Advanced or Metastatic NRAS-mutant Melanoma",
+        "Advanced or Metastatic Solid Tumors",
+        "Glioblastoma Multiforme"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "EXEL": {
+      "ticker": "EXEL",
+      "n_onco_conditions": 254,
+      "top_conditions": [
+        "Activated B-Cell Type Diffuse Large B-Cell Lymphoma (ABC-DLBCL)",
+        "Adipocytic Sarcoma",
+        "Advanced Adult Hepatocellular Carcinoma",
+        "Advanced Cancer, Various, NOS",
+        "Advanced Clear Cell Renal Cell Carcinoma or Other Advanced Solid Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "FATE": {
+      "ticker": "FATE",
+      "n_onco_conditions": 48,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphoblastic Leukemia (ALL)",
+        "Acute Myelogenous Leukemia",
+        "Acute Myelogenous Leukemia (AML)",
+        "Acute Myeloid Leukemia"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "FHTX": {
+      "ticker": "FHTX",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Synovial Sarcoma",
+        "Metastatic Uveal Melanoma",
+        "Refractory Acute Myeloid Leukemia",
+        "Refractory Chronic Myelomonocytic Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GERN": {
+      "ticker": "GERN",
+      "n_onco_conditions": 14,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Breast Cancer",
+        "Breast Neoplasms",
+        "Locally Recurrent or Metastatic Breast Cancer",
+        "Lung Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "GH": {
+      "ticker": "GH",
+      "n_onco_conditions": 114,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Lymphoblastic Leukemia",
+        "Adenocarcinoma of the Gastroesophageal Junction",
+        "Adenocarcinoma of the Stomach",
+        "Advanced Non Small Cell Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GILD": {
+      "ticker": "GILD",
+      "n_onco_conditions": 271,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia (AML)",
+        "Acute Myeloid or Lymphoblastic Leukemia (AML or ALL)",
+        "Advanced Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GLPG": {
+      "ticker": "GLPG",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Lymphomas Non-Hodgkin&Amp;Amp;#39;s B-Cell",
+        "Relapsed/Refractory B-cell Non-Hodgkin Lymphoma",
+        "Solid Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GLUE": {
+      "ticker": "GLUE",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "HR-positive, HER2-negative Breast Cancer",
+        "High Grade Neuroendocrine Cancer",
+        "L-MYC and N-MYC Amplified Solid Tumors",
+        "Prostate Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GMAB": {
+      "ticker": "GMAB",
+      "n_onco_conditions": 155,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia (AML)",
+        "Advanced Endometrial Cancer",
+        "Advanced Malignant Solid Tumor",
+        "Advanced Malignant Solid Tumors"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7566,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Gemcitabine"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 9258,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 12119,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Neratinib"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "ERBB2 G292R"
+        },
+        {
+          "civic_id": 10490,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 G380R"
+        },
+        {
+          "civic_id": 10491,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 K650M"
+        }
+      ],
+      "pgx": []
+    },
+    "GOSS": {
+      "ticker": "GOSS",
+      "n_onco_conditions": 15,
+      "top_conditions": [
+        "CNS Lymphoma",
+        "Castration-resistant Prostate Cancer",
+        "Esophageal Adenocarcinoma",
+        "Esophageal Squamous Cell Carcinoma",
+        "Gastric Adenocarcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GRAL": {
+      "ticker": "GRAL",
+      "n_onco_conditions": 5,
+      "top_conditions": [
+        "Breast Cancer",
+        "Cancer",
+        "Early Detection of Cancer",
+        "Lung Cancer",
+        "Neoplasms"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "GRFS": {
+      "ticker": "GRFS",
+      "n_onco_conditions": 118,
+      "top_conditions": [
+        "AML (Acute Myelogenous Leukemia)",
+        "Acute Biphenotypic Leukemia",
+        "Acute Leukemia",
+        "Acute Leukemia (Category)",
+        "Acute Leukemia in Remission"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "HALO": {
+      "ticker": "HALO",
+      "n_onco_conditions": 19,
+      "top_conditions": [
+        "Advanced Pancreatic Ductal Adenocarcinoma",
+        "Bladder Cancer",
+        "Cholangiocarcinoma Non-resectable",
+        "Cholangiocarcinoma, Extrahepatic",
+        "Cholangiocarcinoma, Intrahepatic"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "HOWL": {
+      "ticker": "HOWL",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced or Metastatic Solid Tumors",
+        "Metastatic Solid Tumor",
+        "Non-Hodgkin Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "HRTX": {
+      "ticker": "HRTX",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Unspecified Adult Solid Tumor, Protocol Specific"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IBRX": {
+      "ticker": "IBRX",
+      "n_onco_conditions": 73,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Pancreatic Carcinoma",
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumors",
+        "Advanced Triple Negative Breast Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7566,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Gemcitabine"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 9258,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 12119,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Neratinib"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "ERBB2 G292R"
+        },
+        {
+          "civic_id": 10490,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 G380R"
+        },
+        {
+          "civic_id": 10491,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 K650M"
+        }
+      ],
+      "pgx": []
+    },
+    "IDYA": {
+      "ticker": "IDYA",
+      "n_onco_conditions": 29,
+      "top_conditions": [
+        "Adenocarcinoma of Esophagus",
+        "Advanced or Metastatic Solid Tumors",
+        "Bladder Cancer",
+        "Breast Cancer",
+        "Colon Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IMCR": {
+      "ticker": "IMCR",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Advanced Melanoma",
+        "Cancer",
+        "Malignant Melanoma",
+        "Melanoma (Skin)",
+        "Melanoma, Uveal"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 993,
+          "significance": "RESISTANCE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cetuximab"
+          ],
+          "disease": "Colorectal Cancer",
+          "molecular_profile": "KRAS Exon 2 Mutation"
+        },
+        {
+          "civic_id": 1434,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::PDGFRB Fusion"
+        },
+        {
+          "civic_id": 1435,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::FGFR1 Fusion"
+        },
+        {
+          "civic_id": 1436,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "PCM1::JAK2 Fusion"
+        },
+        {
+          "civic_id": 1792,
+          "significance": "ADVERSE_RESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Belinostat"
+          ],
+          "disease": "Cancer",
+          "molecular_profile": "UGT1A1 UGT1A1*28"
+        }
+      ],
+      "pgx": []
+    },
+    "IMMP": {
+      "ticker": "IMMP",
+      "n_onco_conditions": 16,
+      "top_conditions": [
+        "Adenocarcinoma Breast Stage IV",
+        "Advanced/Metastatic Non-Small Cell Lung Cancer (NSCLC)",
+        "Breast Cancer",
+        "Breast Carcinoma",
+        "HER 2 Negative Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IMRX": {
+      "ticker": "IMRX",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumor (Phase 1)",
+        "Malignant Melanoma (Cutaneous)",
+        "Non-small Cell Lung Cancer",
+        "Non-small Cell Lung Cancer (NSCLC)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IMTX": {
+      "ticker": "IMTX",
+      "n_onco_conditions": 20,
+      "top_conditions": [
+        "Adult Solid Tumor",
+        "Brain and Central Nervous System Tumors",
+        "CNS Tumor, Adult",
+        "Cancer",
+        "Colorectal Carcinoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 1433,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "v::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1445,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1441,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1774,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1838,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "TNKS2::PDGFRA Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "INBX": {
+      "ticker": "INBX",
+      "n_onco_conditions": 18,
+      "top_conditions": [
+        "Conventional Chondrosarcoma",
+        "Esophageal Adenocarcinoma",
+        "Ewing Sarcoma",
+        "Gastric Adenocarcinoma",
+        "Gastric Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 475,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Ewing Sarcoma",
+          "molecular_profile": "EWSR1::ERG Fusion"
+        },
+        {
+          "civic_id": 478,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Ewing Sarcoma",
+          "molecular_profile": "EWSR1::FLI1 Fusion"
+        },
+        {
+          "civic_id": 431,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Ewing Sarcoma",
+          "molecular_profile": "EWSR1::FLI1 e7::e6"
+        },
+        {
+          "civic_id": 1697,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Ewing Sarcoma Of Bone",
+          "molecular_profile": "STAG2 MUTATION"
+        },
+        {
+          "civic_id": 1752,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Ewing Sarcoma Of Bone",
+          "molecular_profile": "EWSR1::FLI1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "INCY": {
+      "ticker": "INCY",
+      "n_onco_conditions": 341,
+      "top_conditions": [
+        "AML (Acute Myelogenous Leukemia)",
+        "Accelerated Phase Chronic Myelogenous Leukemia",
+        "Accelerated Phase Chronic Myeloid Leukemia",
+        "Accelerated/Blast-phase Myeloproliferative Neoplasm",
+        "Acute Leukemia (Category)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "INSM": {
+      "ticker": "INSM",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Osteosarcoma Metastatic",
+        "Prostate Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "INVA": {
+      "ticker": "INVA",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Advanced/Metastatic Breast Cancer",
+        "Breast Cancer (Early Breast Cancer)",
+        "Breast Cancer Females",
+        "Melanoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IONS": {
+      "ticker": "IONS",
+      "n_onco_conditions": 11,
+      "top_conditions": [
+        "Advanced Adult Hepatocellular Carcinoma",
+        "Advanced Cancers",
+        "Advanced Solid Tumors",
+        "Castrate-Resistant Prostate Cancer",
+        "Hepatocellular Carcinoma Metastatic"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "IOVA": {
+      "ticker": "IOVA",
+      "n_onco_conditions": 99,
+      "top_conditions": [
+        "Adenocarcinomas",
+        "Adenosquamous Carcinoma",
+        "Anal Cancer",
+        "Bone Sarcoma",
+        "Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "JANX": {
+      "ticker": "JANX",
+      "n_onco_conditions": 10,
+      "top_conditions": [
+        "Castration Resistant Prostatic Cancer",
+        "Colorectal Carcinoma",
+        "Metastatic Castration-resistant Prostate Cancer",
+        "Non-Small Cell Lung Cancer",
+        "Pancreatic Ductal Adenocarcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "JAZZ": {
+      "ticker": "JAZZ",
+      "n_onco_conditions": 152,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphoblastic Leukemia (ALL)",
+        "Acute Lymphoblastic Leukemia (ALL)/Lymphoblastic Lymphoma (LBL)",
+        "Acute Lymphocytic Leukemia",
+        "Acute Lymphoid Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "KRYS": {
+      "ticker": "KRYS",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Advanced Cancer",
+        "Cancer",
+        "Cutaneous Melanoma",
+        "Lung Cancer (NSCLC)",
+        "Lung Cancer Metastatic"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "KURA": {
+      "ticker": "KURA",
+      "n_onco_conditions": 45,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Leukemia of Ambiguous Lineage",
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphoblastic Leukemia, With Appropriate Mutations",
+        "Acute Myeloid Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "KYMR": {
+      "ticker": "KYMR",
+      "n_onco_conditions": 11,
+      "top_conditions": [
+        "Acute Lymphocytic Leukemia",
+        "Advanced Solid Tumors",
+        "Cutaneous T-Cell Lymphoma (CTCL)",
+        "Diffuse Large B Cell Lymphoma",
+        "Large Granular Lymphocytic Leukemia (LGL-L)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "LAB": {
+      "ticker": "LAB",
+      "n_onco_conditions": 468,
+      "top_conditions": [
+        "ALK-activated Tumors",
+        "Acute Biphenotypic Leukemia",
+        "Acute Leukemia in Remission",
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "LEGN": {
+      "ticker": "LEGN",
+      "n_onco_conditions": 41,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Leukemia in Relapse",
+        "Acute Lymphocytic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Advanced Gastrointestinal Tumors"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "LYEL": {
+      "ticker": "LYEL",
+      "n_onco_conditions": 29,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Lung Carcinoma",
+        "Colorectal Cancer",
+        "Diffuse Large B Cell Lymphoma (DLBCL)",
+        "Diffuse Large B Cell Lymphoma Refractory"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "MCRB": {
+      "ticker": "MCRB",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Metastatic Melanoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "MESO": {
+      "ticker": "MESO",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myelogenous Leukemia",
+        "Leukemia",
+        "Non-Hodgkin's Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "MNKD": {
+      "ticker": "MNKD",
+      "n_onco_conditions": 24,
+      "top_conditions": [
+        "Advanced Melanoma",
+        "Anal Carcinoma",
+        "Biliary Tract Cancer",
+        "Bone Sarcomas",
+        "Breast Carcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "MRNA": {
+      "ticker": "MRNA",
+      "n_onco_conditions": 25,
+      "top_conditions": [
+        "Advanced Solid Tumors",
+        "Bladder Cancer",
+        "Carcinoma in Situ",
+        "Carcinoma, Intraductal, Noninfiltrating",
+        "Carcinoma, Non-Small-Cell Lung"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7566,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Gemcitabine"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 9258,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 12119,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Neratinib"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "ERBB2 G292R"
+        },
+        {
+          "civic_id": 10490,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 G380R"
+        },
+        {
+          "civic_id": 10491,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 K650M"
+        }
+      ],
+      "pgx": []
+    },
+    "MRSN": {
+      "ticker": "MRSN",
+      "n_onco_conditions": 26,
+      "top_conditions": [
+        "Adenoid Cystic Carcinoma",
+        "Advanced Breast Cancer",
+        "Advanced Gastric Cancer",
+        "Advanced Nonsmall Cell Lung Cancer",
+        "Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "MRUS": {
+      "ticker": "MRUS",
+      "n_onco_conditions": 26,
+      "top_conditions": [
+        "Acute Myelogenous Leukemia",
+        "Acute Myeloid Leukemia",
+        "Advanced Cancer",
+        "Advanced/Metastatic Solid Tumors",
+        "B-cell Lymphoma, Adult"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "NAUT": {
+      "ticker": "NAUT",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Chronic Myeloid Leukemia"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 260,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 344,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 11342,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Dasatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion AND ABL1 TKD Mutation"
+        },
+        {
+          "civic_id": 220,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 261,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Nilotinib",
+            "Dasatinib"
+          ],
+          "disease": "Chronic Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "NBIX": {
+      "ticker": "NBIX",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Brain and Central Nervous System Tumors",
+        "Breast Cancer",
+        "Kidney Cancer",
+        "Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "NGNE": {
+      "ticker": "NGNE",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Solid Tumor"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "NKTX": {
+      "ticker": "NKTX",
+      "n_onco_conditions": 9,
+      "top_conditions": [
+        "Aggressive Lymphoma",
+        "B-cell Acute Lymphoblastic Leukemia",
+        "Chronic Lymphocytic Leukemia",
+        "Indolent Lymphoma",
+        "Large B-cell Lymphoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 8184,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Venetoclax"
+          ],
+          "disease": "Chronic Lymphocytic Leukemia/small Lymphocytic Lymphoma",
+          "molecular_profile": "BCL2 G101A"
+        },
+        {
+          "civic_id": 8186,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Venetoclax"
+          ],
+          "disease": "Chronic Lymphocytic Leukemia/small Lymphocytic Lymphoma",
+          "molecular_profile": "BCL2 F104S"
+        },
+        {
+          "civic_id": 8187,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Venetoclax"
+          ],
+          "disease": "Chronic Lymphocytic Leukemia/small Lymphocytic Lymphoma",
+          "molecular_profile": "BCL2 F104L"
+        },
+        {
+          "civic_id": 8188,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Venetoclax"
+          ],
+          "disease": "Chronic Lymphocytic Leukemia/small Lymphocytic Lymphoma",
+          "molecular_profile": "BCL2 R107_R110dup"
+        },
+        {
+          "civic_id": 8189,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Venetoclax"
+          ],
+          "disease": "Chronic Lymphocytic Leukemia/small Lymphocytic Lymphoma",
+          "molecular_profile": "BCL2 A113G"
+        }
+      ],
+      "pgx": []
+    },
+    "NRIX": {
+      "ticker": "NRIX",
+      "n_onco_conditions": 23,
+      "top_conditions": [
+        "Cervical Cancer",
+        "Chronic Lymphocytic Leukemia (CLL)",
+        "Diffuse Large B Cell Lymphoma (DLBCL)",
+        "Diffuse Large B-cell Lymphoma (DLBCL)",
+        "Endometrial Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "NTLA": {
+      "ticker": "NTLA",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Acute Myeloid Leukemia"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 116,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "NPM1 EXON 11 MUTATION"
+        },
+        {
+          "civic_id": 259,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 7728,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Gilteritinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "FLT3 ITD OR FLT3 D835 OR FLT3 I836"
+        },
+        {
+          "civic_id": 8513,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia With T(1;22)(p13;q13)",
+          "molecular_profile": "RBM15::MRTFA Fusion"
+        },
+        {
+          "civic_id": 8558,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "A",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "RUNX1::RUNX1T1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "NTRA": {
+      "ticker": "NTRA",
+      "n_onco_conditions": 22,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Acute Promyelocytic Leukemia",
+        "Cancer",
+        "Carcinoma, Non-Small-Cell Lung"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 116,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "NPM1 EXON 11 MUTATION"
+        },
+        {
+          "civic_id": 259,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 7728,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Gilteritinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "FLT3 ITD OR FLT3 D835 OR FLT3 I836"
+        },
+        {
+          "civic_id": 8513,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia With T(1;22)(p13;q13)",
+          "molecular_profile": "RBM15::MRTFA Fusion"
+        },
+        {
+          "civic_id": 8558,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "A",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "RUNX1::RUNX1T1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "NUVB": {
+      "ticker": "NUVB",
+      "n_onco_conditions": 61,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Breast Carcinoma",
+        "Advanced Solid Tumor",
+        "Breast Cancer",
+        "Breast Carcinoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 490,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Promoter Methylation"
+        },
+        {
+          "civic_id": 2902,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Temozolomide"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Underexpression"
+        },
+        {
+          "civic_id": 6932,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "TP53 P72R"
+        },
+        {
+          "civic_id": 9838,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "H3-3A K27R"
+        },
+        {
+          "civic_id": 979,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "AGI-5198"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "IDH1 R132H"
+        }
+      ],
+      "pgx": []
+    },
+    "NUVL": {
+      "ticker": "NUVL",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "ALK-positive Non-small Cell Lung Cancer (NSCLC)",
+        "Anaplastic Lymphoma Kinase-positive",
+        "Locally Advanced Solid Tumor",
+        "Metastatic Solid Tumor",
+        "Non Small Cell Lung Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "NVCR": {
+      "ticker": "NVCR",
+      "n_onco_conditions": 86,
+      "top_conditions": [
+        "1-5 Brain Metastases From Non-Small Cell Lung Cancer",
+        "Adenocarcinoma of Lung",
+        "Adult Brain Glioblastoma",
+        "Adult Giant Cell Glioblastoma",
+        "Adult Glioblastoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 490,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Promoter Methylation"
+        },
+        {
+          "civic_id": 2902,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Temozolomide"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Underexpression"
+        },
+        {
+          "civic_id": 6932,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "TP53 P72R"
+        },
+        {
+          "civic_id": 9838,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "H3-3A K27R"
+        },
+        {
+          "civic_id": 979,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "AGI-5198"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "IDH1 R132H"
+        }
+      ],
+      "pgx": []
+    },
+    "OLMA": {
+      "ticker": "OLMA",
+      "n_onco_conditions": 12,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced or Metastatic Castration-Resistant Prostate Cancer (mCRPC)",
+        "Advanced or Metastatic ER+ HER2- Breast Cancer (mBC)",
+        "Advanced or Metastatic Non-Small Cell Lung Cancer (NSCLC)",
+        "Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ONC": {
+      "ticker": "ONC",
+      "n_onco_conditions": 116,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Breast Cancer",
+        "Advanced Cancer",
+        "Advanced Colorectal Cancer",
+        "Advanced Esophageal Adenocarcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ORIC": {
+      "ticker": "ORIC",
+      "n_onco_conditions": 5,
+      "top_conditions": [
+        "Metastatic Prostate Cancer",
+        "Prostatic Neoplasms",
+        "Relapsed or Refractory Multiple Myeloma",
+        "Solid Tumor",
+        "Solid Tumors"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "PBYI": {
+      "ticker": "PBYI",
+      "n_onco_conditions": 55,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Advanced Malignant Solid Tumors",
+        "Advanced Solid Tumor",
+        "Anatomic Stage I Breast Cancer",
+        "Anatomic Stage II Breast Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "PGEN": {
+      "ticker": "PGEN",
+      "n_onco_conditions": 44,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Cervical Cancer",
+        "Chronic Lymphocytic Leukemia",
+        "Diffuse Large B Cell Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "PHAT": {
+      "ticker": "PHAT",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Gastric Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "PRLD": {
+      "ticker": "PRLD",
+      "n_onco_conditions": 52,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia (AML)",
+        "Adenoid Cystic Carcinoma",
+        "Advanced Solid Tumor",
+        "Aggressive B-Cell Non-Hodgkin's Lymphoma (NHL)"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 628,
+          "significance": "POSITIVE",
+          "evidence_level": "B",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Peripheral T-cell Lymphoma",
+          "molecular_profile": "IDH2 R172"
+        },
+        {
+          "civic_id": 627,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Peripheral T-cell Lymphoma",
+          "molecular_profile": "IDH2 R172"
+        },
+        {
+          "civic_id": 4827,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Crizotinib"
+          ],
+          "disease": "Nasal Type Extranodal NK/T-cell Lymphoma",
+          "molecular_profile": "ALK R214H"
+        }
+      ],
+      "pgx": []
+    },
+    "PTCT": {
+      "ticker": "PTCT",
+      "n_onco_conditions": 12,
+      "top_conditions": [
+        "Advanced Cancer",
+        "Brain and Central Nervous System Tumors",
+        "Cancer",
+        "Colorectal Cancer",
+        "Diffuse Intrinsic Pontine Glioma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "PYXS": {
+      "ticker": "PYXS",
+      "n_onco_conditions": 6,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "CNS Primary Tumor, Not Otherwise Specified (NOS)",
+        "Diffuse Intrinsic Pontine Gliomas (DIPG)",
+        "Glioblastoma Multiforme",
+        "Melanoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "QSI": {
+      "ticker": "QSI",
+      "n_onco_conditions": 7,
+      "top_conditions": [
+        "Breast Cancer Invasive",
+        "Cancer",
+        "Cancers",
+        "Cervical Cancer",
+        "Cervical Pre-cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 993,
+          "significance": "RESISTANCE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cetuximab"
+          ],
+          "disease": "Colorectal Cancer",
+          "molecular_profile": "KRAS Exon 2 Mutation"
+        },
+        {
+          "civic_id": 1434,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::PDGFRB Fusion"
+        },
+        {
+          "civic_id": 1435,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::FGFR1 Fusion"
+        },
+        {
+          "civic_id": 1436,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "PCM1::JAK2 Fusion"
+        },
+        {
+          "civic_id": 1792,
+          "significance": "ADVERSE_RESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Belinostat"
+          ],
+          "disease": "Cancer",
+          "molecular_profile": "UGT1A1 UGT1A1*28"
+        }
+      ],
+      "pgx": []
+    },
+    "RAPT": {
+      "ticker": "RAPT",
+      "n_onco_conditions": 3,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Cancer",
+        "Advanced Melanoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 116,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "NPM1 EXON 11 MUTATION"
+        },
+        {
+          "civic_id": 259,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "BCR::ABL1 Fusion"
+        },
+        {
+          "civic_id": 7728,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Gilteritinib"
+          ],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "FLT3 ITD OR FLT3 D835 OR FLT3 I836"
+        },
+        {
+          "civic_id": 8513,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia With T(1;22)(p13;q13)",
+          "molecular_profile": "RBM15::MRTFA Fusion"
+        },
+        {
+          "civic_id": 8558,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "A",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Acute Myeloid Leukemia",
+          "molecular_profile": "RUNX1::RUNX1T1 Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "RARE": {
+      "ticker": "RARE",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Tumor-induced Osteomalacia (TIO)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "RCUS": {
+      "ticker": "RCUS",
+      "n_onco_conditions": 91,
+      "top_conditions": [
+        "Adenocarcinoma Gastroesophageal Junction",
+        "Adenocarcinoma Stomach",
+        "Adenocarcinoma of the Pancreas",
+        "Adenosquamous Carcinoma of the Pancreas",
+        "Advanced Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "REGN": {
+      "ticker": "REGN",
+      "n_onco_conditions": 214,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia Refractory",
+        "Acute Myeloid Leukemia, in Relapse",
+        "Adenocarcinoma",
+        "Adenocarcinoma of the Pancreas"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "REPL": {
+      "ticker": "REPL",
+      "n_onco_conditions": 28,
+      "top_conditions": [
+        "Advanced Cutaneous Squamous Cell Carcinoma",
+        "Advanced Melanoma",
+        "Advanced Solid Tumor",
+        "Angiosarcoma",
+        "Angiosarcoma, Adult"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "RIGL": {
+      "ticker": "RIGL",
+      "n_onco_conditions": 16,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Advanced Myeloproliferative Neoplasms",
+        "Chronic Myelomonocytic Leukemia",
+        "Diffuse Intrinsic Pontine Glioma",
+        "Diffuse Midline Glioma, H3 K27M-Mutant"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 490,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Promoter Methylation"
+        },
+        {
+          "civic_id": 2902,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Temozolomide"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "MGMT Underexpression"
+        },
+        {
+          "civic_id": 6932,
+          "significance": "POOR_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "TP53 P72R"
+        },
+        {
+          "civic_id": 9838,
+          "significance": "POSITIVE",
+          "evidence_level": "C",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "H3-3A K27R"
+        },
+        {
+          "civic_id": 979,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "D",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "AGI-5198"
+          ],
+          "disease": "Oligodendroglioma",
+          "molecular_profile": "IDH1 R132H"
+        }
+      ],
+      "pgx": []
+    },
+    "RLAY": {
+      "ticker": "RLAY",
+      "n_onco_conditions": 8,
+      "top_conditions": [
+        "Advanced Breast Cancer",
+        "Breast Cancer",
+        "HER2- Negative Breast Cancer",
+        "HER2-negative Breast Cancer",
+        "Hormone Receptor Positive Tumor"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "RVMD": {
+      "ticker": "RVMD",
+      "n_onco_conditions": 32,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumors",
+        "Colorectal Cancer",
+        "Colorectal Cancer (CRC)",
+        "Gastrointestinal Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SANA": {
+      "ticker": "SANA",
+      "n_onco_conditions": 4,
+      "top_conditions": [
+        "Chronic Lymphocytic Leukemia",
+        "Large B-cell Lymphoma",
+        "Non Hodgkin Lymphoma",
+        "Non Hodgkin's Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SGMT": {
+      "ticker": "SGMT",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Prostatic Neoplasms, Castration-Resistant",
+        "Solid Malignant Tumor"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SLN": {
+      "ticker": "SLN",
+      "n_onco_conditions": 2,
+      "top_conditions": [
+        "Advanced Solid Tumors",
+        "Carcinoma, Pancreatic Ductal"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SMMT": {
+      "ticker": "SMMT",
+      "n_onco_conditions": 42,
+      "top_conditions": [
+        "Adenoid Cystic Carcinoma",
+        "Advanced Esophageal Adenocarcinoma",
+        "Advanced Gastric Adenocarcinoma",
+        "Advanced Head and Neck Squamous Cell Carcinoma",
+        "Advanced Salivary Gland Carcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SNDX": {
+      "ticker": "SNDX",
+      "n_onco_conditions": 87,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Leukemia of Ambiguous Lineage",
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphocytic Leukemia",
+        "Acute Myeloid Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SNY": {
+      "ticker": "SNY",
+      "n_onco_conditions": 197,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Acute Lymphoblastic Leukemia",
+        "Acute Lymphocytic Leukemia",
+        "Acute Myeloblastic Leukemia",
+        "Acute Myelogenous Leukemia"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "SRPT": {
+      "ticker": "SRPT",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Neoplasms"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 1433,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "v::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1445,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1441,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1774,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "FIP1L1::PDGFRA Fusion"
+        },
+        {
+          "civic_id": 1838,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "C",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Imatinib"
+          ],
+          "disease": "Myeloid And Lymphoid Neoplasms With Eosinophilia And Abnormalities Of PDGFRA, PDGFRB, And FGFR1",
+          "molecular_profile": "TNKS2::PDGFRA Fusion"
+        }
+      ],
+      "pgx": []
+    },
+    "SRRK": {
+      "ticker": "SRRK",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 993,
+          "significance": "RESISTANCE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cetuximab"
+          ],
+          "disease": "Colorectal Cancer",
+          "molecular_profile": "KRAS Exon 2 Mutation"
+        },
+        {
+          "civic_id": 1434,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::PDGFRB Fusion"
+        },
+        {
+          "civic_id": 1435,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "v::FGFR1 Fusion"
+        },
+        {
+          "civic_id": 1436,
+          "significance": "POSITIVE",
+          "evidence_level": "A",
+          "evidence_type": "DIAGNOSTIC",
+          "therapies": [],
+          "disease": "Hematologic Cancer",
+          "molecular_profile": "PCM1::JAK2 Fusion"
+        },
+        {
+          "civic_id": 1792,
+          "significance": "ADVERSE_RESPONSE",
+          "evidence_level": "A",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Belinostat"
+          ],
+          "disease": "Cancer",
+          "molecular_profile": "UGT1A1 UGT1A1*28"
+        }
+      ],
+      "pgx": []
+    },
+    "STRO": {
+      "ticker": "STRO",
+      "n_onco_conditions": 34,
+      "top_conditions": [
+        "Acute Myeloid Leukemia (AML)",
+        "B Cells--Tumors",
+        "B-cell Lymphoma",
+        "Cervical Cancer",
+        "Colorectal Cancer"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 2010,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2011,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12A"
+        },
+        {
+          "civic_id": 2248,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2249,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12D"
+        },
+        {
+          "civic_id": 2259,
+          "significance": "RESISTANCE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Melphalan"
+          ],
+          "disease": "Multiple Myeloma",
+          "molecular_profile": "KRAS G12C"
+        }
+      ],
+      "pgx": []
+    },
+    "TARA": {
+      "ticker": "TARA",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Non-muscle Invasive Bladder Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "TCRX": {
+      "ticker": "TCRX",
+      "n_onco_conditions": 26,
+      "top_conditions": [
+        "Anogenital Cancers",
+        "Cervical Cancer",
+        "HPV Positive Oropharyngeal Squamous Cell Carcinoma",
+        "HPV Positive Rectal Squamous Cell Carcinoma",
+        "HPV-Associated Vaginal Adenocarcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "TECH": {
+      "ticker": "TECH",
+      "n_onco_conditions": 536,
+      "top_conditions": [
+        "Acute Lymphoblastic Leukemia",
+        "Acute Myeloid Leukemia",
+        "Acute Undifferentiated Leukemia",
+        "Adenocarcinoma",
+        "Adrenal Cortical Carcinoma"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7566,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Gemcitabine"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 9258,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 12119,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Neratinib"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "ERBB2 G292R"
+        },
+        {
+          "civic_id": 10490,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 G380R"
+        },
+        {
+          "civic_id": 10491,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 K650M"
+        }
+      ],
+      "pgx": []
+    },
+    "TEM": {
+      "ticker": "TEM",
+      "n_onco_conditions": 65,
+      "top_conditions": [
+        "Acute Myeloid Leukemia",
+        "Acute Myeloid Leukemia Arising From Previous Myelodysplastic Syndrome",
+        "Acute Myeloid Leukemia Post Cytotoxic Therapy",
+        "Adenocarcinoma of Esophagogastric Junction",
+        "Advanced Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "TGTX": {
+      "ticker": "TGTX",
+      "n_onco_conditions": 37,
+      "top_conditions": [
+        "Aggressive Lymphoma",
+        "B-Cell Lymphoma",
+        "B-cell Lymphoma",
+        "B-cell Lymphomas",
+        "B-cell Non Hodgkin Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "TNGX": {
+      "ticker": "TNGX",
+      "n_onco_conditions": 21,
+      "top_conditions": [
+        "BRCA-Associated Breast Carcinoma",
+        "BRCA-Mutated Ovarian Carcinoma",
+        "Brain Tumor",
+        "Breast Cancer",
+        "Glioma Glioblastoma Multiforme"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "TYRA": {
+      "ticker": "TYRA",
+      "n_onco_conditions": 20,
+      "top_conditions": [
+        "Advanced Solid Tumor",
+        "Advanced Solid Tumors",
+        "Advanced Urothelial Carcinoma",
+        "Bladder Cancer",
+        "Intrahepatic Cholangiocarcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "URGN": {
+      "ticker": "URGN",
+      "n_onco_conditions": 23,
+      "top_conditions": [
+        "Bladder Cancer",
+        "Carcinoma",
+        "Carcinoma in Situ of Bladder",
+        "Carcinoma of Urinary Bladder, Invasive",
+        "Carcinoma of Urinary Bladder, Superficial"
+      ],
+      "civic_evidence": [
+        {
+          "civic_id": 7566,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Cisplatin",
+            "Gemcitabine"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 9258,
+          "significance": "BETTER_OUTCOME",
+          "evidence_level": "B",
+          "evidence_type": "PROGNOSTIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 Mutation"
+        },
+        {
+          "civic_id": 12119,
+          "significance": "SENSITIVITYRESPONSE",
+          "evidence_level": "B",
+          "evidence_type": "PREDICTIVE",
+          "therapies": [
+            "Neratinib"
+          ],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "ERBB2 G292R"
+        },
+        {
+          "civic_id": 10490,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 G380R"
+        },
+        {
+          "civic_id": 10491,
+          "significance": "ONCOGENICITY",
+          "evidence_level": "C",
+          "evidence_type": "ONCOGENIC",
+          "therapies": [],
+          "disease": "Urinary Bladder Cancer",
+          "molecular_profile": "FGFR3 K650M"
+        }
+      ],
+      "pgx": []
+    },
+    "UTHR": {
+      "ticker": "UTHR",
+      "n_onco_conditions": 34,
+      "top_conditions": [
+        "Advanced Solid Tumors",
+        "Breast Cancer",
+        "ER Positive Breast Cancer",
+        "Ganglioneuroblastoma",
+        "Glioblastoma Multiforme (GBM)"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "VIR": {
+      "ticker": "VIR",
+      "n_onco_conditions": 6,
+      "top_conditions": [
+        "EGFR Positive Solid Tumors",
+        "Hematopoietic and Lymphoid Cell Neoplasm",
+        "Hormone-refractory Prostate Cancer",
+        "Locally Advanced or Metastatic HER2-Expressing Cancers",
+        "Malignant Solid Neoplasm"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "VOR": {
+      "ticker": "VOR",
+      "n_onco_conditions": 1,
+      "top_conditions": [
+        "Leukemia, Myeloid, Acute"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "VRTX": {
+      "ticker": "VRTX",
+      "n_onco_conditions": 8,
+      "top_conditions": [
+        "Acute Leukemia",
+        "Chronic Leukemia",
+        "Hodgkin's Lymphoma",
+        "Lung Cancer",
+        "Multiple Myeloma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "XNCR": {
+      "ticker": "XNCR",
+      "n_onco_conditions": 86,
+      "top_conditions": [
+        "Acute Myelogenous Leukemia",
+        "Advanced Melanoma",
+        "Advanced Solid Tumors",
+        "Advanced or Metastatic Solid Tumors",
+        "Anaplastic Large Cell Lymphoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ZLAB": {
+      "ticker": "ZLAB",
+      "n_onco_conditions": 32,
+      "top_conditions": [
+        "Advanced Cancer",
+        "Advanced Hepatocellular Carcinoma (HCC)",
+        "Advanced Solid Tumor",
+        "Advanced or Metastatic Solid Tumor",
+        "Biliary Tract Carcinoma"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    },
+    "ZYME": {
+      "ticker": "ZYME",
+      "n_onco_conditions": 8,
+      "top_conditions": [
+        "Advanced Solid Tumors",
+        "Biliary Tract Neoplasms",
+        "Breast Cancer",
+        "Carcinosarcoma",
+        "Endometrial Cancer"
+      ],
+      "civic_evidence": [],
+      "pgx": []
+    }
+  }
+}

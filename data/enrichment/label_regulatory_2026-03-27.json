@@ -1,0 +1,2985 @@
+{
+  "schema": "label_regulatory_master.v1",
+  "generated_at": "2026-03-27T19:12:17.015259+00:00",
+  "n_tickers": 54,
+  "n_tickers_with_data": 54,
+  "n_dailymed_hits": 97,
+  "n_openfda_hits": 93,
+  "entries": {
+    "ALT": [
+      {
+        "drug_name": "ACETAZOLAMIDE SODIUM",
+        "ticker": "ALT",
+        "dailymed": {
+          "set_id": "58093032-8480-4d0f-82be-92e643bdbea4",
+          "title": "ACETAZOLAMIDE (ACETAZOLAMIDE SODIUM) INJECTION, POWDER, FOR SOLUTION [SAGENT PHARMACEUTICALS]",
+          "published_date": "Jan 16, 2026"
+        }
+      },
+      {
+        "drug_name": "ACETYLCYSTEINE",
+        "ticker": "ALT",
+        "dailymed": {
+          "set_id": "9d305722-e74f-4f48-8d2c-0daa99144749",
+          "title": "ACETYLCYSTEINE INJECTION [PADAGIS US LLC]",
+          "published_date": "Mar 10, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA072489",
+            "sponsor_name": "AM REGENT",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010412"
+          },
+          {
+            "application_number": "ANDA214177",
+            "sponsor_name": "CONBA USA",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250314"
+          },
+          {
+            "application_number": "ANDA217182",
+            "sponsor_name": "ONESOURCE SPECIALTY",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230419"
+          }
+        ]
+      },
+      {
+        "drug_name": "ADRENALIN",
+        "ticker": "ALT",
+        "dailymed": {
+          "set_id": "6b553600-5a90-4014-b02a-0992562bd229",
+          "title": "EMOTIONAL DETOX AND DRAINAGE (ACONITUM NAPELLUS, ADRENALINUM, AMBRA GRISEA, AURUM MURIATICUM NATRONATUM, CALCAREA SULPHURICA, CIMICIFUGA RACEMOSA, CINCHONA OFFICINALIS, CORTISONE ACETICUM, CROCUS SATIVUS, DNA, HYOSCYAMUS NIGER, HYPOPHYSIS SUIS, HYPOTHALAMUS SUIS, IGNATIA AMARA, KALI BROMATUM, LACHESIS MUTUS, PULSATILLA (PRATENSIS), THYROIDINUM (BOVINE), VIOLA ODORATA) LIQUID [DESERET BIOLOGICALS, INC.]",
+          "published_date": "Mar 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA204200",
+            "sponsor_name": "PH HEALTH",
+            "n_products": 1,
+            "n_submissions": 9,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20160518"
+          },
+          {
+            "application_number": "NDA215875",
+            "sponsor_name": "PH HEALTH",
+            "n_products": 5,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20231019"
+          },
+          {
+            "application_number": "NDA204640",
+            "sponsor_name": "PH HEALTH",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230105"
+          }
+        ]
+      }
+    ],
+    "ALVO": [
+      {
+        "drug_name": "ACETYLCYSTEINE",
+        "ticker": "ALVO",
+        "dailymed": {
+          "set_id": "9d305722-e74f-4f48-8d2c-0daa99144749",
+          "title": "ACETYLCYSTEINE INJECTION [PADAGIS US LLC]",
+          "published_date": "Mar 10, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA072489",
+            "sponsor_name": "AM REGENT",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010412"
+          },
+          {
+            "application_number": "ANDA214177",
+            "sponsor_name": "CONBA USA",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250314"
+          },
+          {
+            "application_number": "ANDA217182",
+            "sponsor_name": "ONESOURCE SPECIALTY",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230419"
+          }
+        ]
+      },
+      {
+        "drug_name": "BONSITY",
+        "ticker": "ALVO",
+        "dailymed": {
+          "set_id": "2d0c89a2-3849-adf6-007d-aeca21cf417c",
+          "title": "BONSITY (TERIPARATIDE) INJECTION, SOLUTION [ALVOGEN INC.]",
+          "published_date": "Jun 09, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA211939",
+            "sponsor_name": "ALVOGEN",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20231116"
+          }
+        ]
+      },
+      {
+        "drug_name": "BOSENTAN",
+        "ticker": "ALVO",
+        "dailymed": {
+          "set_id": "b88cc559-93ae-42db-9c38-fb5e9c4802e6",
+          "title": "BOSENTAN TABLET, FOR SUSPENSION [ZYDUS LIFESCIENCES LIMITED]",
+          "published_date": "Feb 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA207760",
+            "sponsor_name": "ZYDUS PHARMS",
+            "n_products": 2,
+            "n_submissions": 8,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251105"
+          },
+          {
+            "application_number": "ANDA213154",
+            "sponsor_name": "NATCO PHARMA LTD",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251105"
+          },
+          {
+            "application_number": "ANDA209324",
+            "sponsor_name": "SUN PHARM",
+            "n_products": 2,
+            "n_submissions": 9,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251105"
+          }
+        ]
+      }
+    ],
+    "AMGN": [
+      {
+        "drug_name": "CORLANOR",
+        "ticker": "AMGN",
+        "dailymed": {
+          "set_id": "92018a65-38f6-45f7-91d4-a34921b81d0d",
+          "title": "CORLANOR (IVABRADINE) TABLET, FILM COATED CORLANOR (IVABRADINE) SOLUTION [AMGEN INC]",
+          "published_date": "Nov 17, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA206143",
+            "sponsor_name": "AMGEN INC",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210804"
+          },
+          {
+            "application_number": "NDA209964",
+            "sponsor_name": "AMGEN INC",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210804"
+          }
+        ]
+      },
+      {
+        "drug_name": "KYPROLIS",
+        "ticker": "AMGN",
+        "dailymed": {
+          "set_id": "ea66eb30-e665-4693-99a1-a9d3b4bbe2d6",
+          "title": "KYPROLIS (CARFILZOMIB) INJECTION, POWDER, LYOPHILIZED, FOR SOLUTION [ONYX PHARMACEUTICALS, INC.]",
+          "published_date": "Jun 26, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA202714",
+            "sponsor_name": "ONYX PHARMS AMGEN",
+            "n_products": 3,
+            "n_submissions": 28,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20161121"
+          }
+        ]
+      },
+      {
+        "drug_name": "LUMAKRAS",
+        "ticker": "AMGN",
+        "dailymed": {
+          "set_id": "c80a362c-7ac3-4894-a076-0691e68ef8c1",
+          "title": "LUMAKRAS (SOTORASIB) TABLET, COATED [AMGEN INC]",
+          "published_date": "Jan 30, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA214665",
+            "sponsor_name": "AMGEN INC",
+            "n_products": 3,
+            "n_submissions": 7,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20221121"
+          }
+        ]
+      }
+    ],
+    "AMPH": [
+      {
+        "drug_name": "BAQSIMI",
+        "ticker": "AMPH",
+        "dailymed": {
+          "set_id": "f1f5df9b-872f-44e5-a18f-f0b68e7e9254",
+          "title": "BAQSIMI (GLUCAGON) POWDER [AMPHASTAR PHARMACEUTICALS, INC.]",
+          "published_date": "Aug 11, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA210134",
+            "sponsor_name": "AMPHASTAR PHARMS INC",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190724"
+          }
+        ]
+      },
+      {
+        "drug_name": "CORTROSYN",
+        "ticker": "AMPH",
+        "dailymed": {
+          "set_id": "0c424fac-b114-41f6-aba8-cf710a34c26c",
+          "title": "CORTROSYN INJECTION, POWDER, LYOPHILIZED, FOR SOLUTION [HENRY SCHEIN, INC.]",
+          "published_date": "Jun 19, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA016750",
+            "sponsor_name": "AMPHASTAR PHARMS INC",
+            "n_products": 1,
+            "n_submissions": 20,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19821026"
+          }
+        ]
+      },
+      {
+        "drug_name": "DUOCAINE",
+        "ticker": "AMPH"
+      }
+    ],
+    "ANAB": [
+      {
+        "drug_name": "CHLORPHENIRAMINE MALEATE",
+        "ticker": "ANAB",
+        "dailymed": {
+          "set_id": "1a853e47-21a2-40e1-9e64-290af4843b13",
+          "title": "FLU HBP MAXIMUM STRENGTH (ACETAMINOPHEN, CHLORPHENIRAMINE MALEATE, DEXTROMETHORPHAN HBR) TABLET, FILM COATED [MEIJER DISTRIBUTION INC]",
+          "published_date": "Mar 26, 2026"
+        }
+      },
+      {
+        "drug_name": "DIPHENHYDRAMINE HYDROCHLORIDE",
+        "ticker": "ANAB",
+        "dailymed": {
+          "set_id": "4454df6a-931f-3f03-e063-6294a90afe73",
+          "title": "NIGHTTIME SLEEP AID (DIPHENHYDRAMINE HYDROCHLORIDE) LIQUID [GROCERY OUTLET, INC.]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA205723",
+            "sponsor_name": "MICRO LABS",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20181130"
+          },
+          {
+            "application_number": "ANDA205336",
+            "sponsor_name": "AVET LIFESCIENCES",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250624"
+          },
+          {
+            "application_number": "ANDA205337",
+            "sponsor_name": "AVET LIFESCIENCES",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251114"
+          }
+        ]
+      },
+      {
+        "drug_name": "MECLIZINE HYDROCHLORIDE",
+        "ticker": "ANAB",
+        "dailymed": {
+          "set_id": "beb36d86-9fb7-1f60-e053-2995a90aac13",
+          "title": "MECLIZINE HYDROCHLORIDE TABLET [NUCARE PHARMACEUTICALS,INC.]",
+          "published_date": "Mar 03, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA202640",
+            "sponsor_name": "AUROBINDO PHARMA USA",
+            "n_products": 3,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20191223"
+          },
+          {
+            "application_number": "ANDA203003",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 3,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20220811"
+          },
+          {
+            "application_number": "ANDA200294",
+            "sponsor_name": "EPIC PHARMA LLC",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20121228"
+          }
+        ]
+      }
+    ],
+    "ARWR": [
+      {
+        "drug_name": "REDEMPLO",
+        "ticker": "ARWR",
+        "dailymed": {
+          "set_id": "7fd37993-f85a-4af1-8bbe-133299f226ed",
+          "title": "REDEMPLO (PLOZASIRAN) INJECTION, SOLUTION [ARROWHEAD PHARMACEUTICALS, INC.]",
+          "published_date": "Nov 25, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219947",
+            "sponsor_name": "ARROWHEAD",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251118"
+          }
+        ]
+      }
+    ],
+    "AXSM": [
+      {
+        "drug_name": "AUVELITY",
+        "ticker": "AXSM",
+        "dailymed": {
+          "set_id": "dcefda7c-9a68-278e-e053-2995a90aec79",
+          "title": "AUVELITY (DEXTROMETHORPHAN HYDROBROMIDE, BUPROPION HYDROCHLORIDE) TABLET, MULTILAYER, EXTENDED RELEASE [AXSOME THERAPEUTICS, INC.]",
+          "published_date": "Jan 02, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215430",
+            "sponsor_name": "AXSOME",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251105"
+          }
+        ]
+      },
+      {
+        "drug_name": "SYMBRAVO",
+        "ticker": "AXSM",
+        "dailymed": {
+          "set_id": "dcf1ecd1-08a0-8e47-e053-2a95a90abdc7",
+          "title": "SYMBRAVO (MELOXICAM, RIZATRIPTAN) TABLET [AXSOME THERAPEUTICS, INC.]",
+          "published_date": "Nov 24, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215431",
+            "sponsor_name": "AXSOME",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250130"
+          }
+        ]
+      }
+    ],
+    "BBOT": [
+      {
+        "drug_name": "A-HYDROCORT",
+        "ticker": "BBOT"
+      },
+      {
+        "drug_name": "A-METHAPRED",
+        "ticker": "BBOT"
+      },
+      {
+        "drug_name": "A-POXIDE",
+        "ticker": "BBOT"
+      }
+    ],
+    "BCRX": [
+      {
+        "drug_name": "ORLADEYO",
+        "ticker": "BCRX",
+        "dailymed": {
+          "set_id": "3527ece1-e7e0-40b1-b0c5-6baeb0deabeb",
+          "title": "ORLADEYO (BEROTRALSTAT HYDROCHLORIDE) CAPSULE ORLADEYO (BEROTRALSTAT HYDROCHLORIDE) PELLET [BIOCRYST PHARMACEUTICALS, INC.]",
+          "published_date": "Feb 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219776",
+            "sponsor_name": "BIOCRYST",
+            "n_products": 4,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251211"
+          },
+          {
+            "application_number": "NDA214094",
+            "sponsor_name": "BIOCRYST",
+            "n_products": 2,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251223"
+          }
+        ]
+      },
+      {
+        "drug_name": "RAPIVAB",
+        "ticker": "BCRX",
+        "dailymed": {
+          "set_id": "fe04f6cd-e71c-4bd4-abac-97720bba2a0d",
+          "title": "RAPIVAB (PERAMIVIR) SOLUTION [BIOCRYST PHARMACEUTICALS, INC.]",
+          "published_date": "Jun 21, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA206426",
+            "sponsor_name": "BIOCRYST",
+            "n_products": 1,
+            "n_submissions": 8,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20170920"
+          }
+        ]
+      }
+    ],
+    "BEAM": [
+      {
+        "drug_name": "ACETAMINOPHEN AND CODEINE PHOSPHATE",
+        "ticker": "BEAM",
+        "dailymed": {
+          "set_id": "879db1b5-6365-4151-9879-80d8a2a3cd8a",
+          "title": "ACETAMINOPHEN AND CODEINE PHOSPHATE TABLET [BRYANT RANCH PREPACK]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA089990",
+            "sponsor_name": "STRIDES PHARMA INTL",
+            "n_products": 1,
+            "n_submissions": 21,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19950316"
+          },
+          {
+            "application_number": "ANDA211610",
+            "sponsor_name": "HIBROW HLTHCARE",
+            "n_products": 3,
+            "n_submissions": 7,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190627"
+          },
+          {
+            "application_number": "ANDA202800",
+            "sponsor_name": "AUROLIFE PHARMA LLC",
+            "n_products": 3,
+            "n_submissions": 15,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240305"
+          }
+        ]
+      },
+      {
+        "drug_name": "ALBUTEROL SULFATE",
+        "ticker": "BEAM",
+        "dailymed": {
+          "set_id": "87b8cd3c-2849-4b50-b63e-9ea379165c07",
+          "title": "ALBUTEROL SULFATE TABLET [SUN PHARMACEUTICAL INDUSTRIES, INC.]",
+          "published_date": "Mar 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA077788",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20070626"
+          },
+          {
+            "application_number": "ANDA076355",
+            "sponsor_name": "NEPHRON",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20100331"
+          },
+          {
+            "application_number": "ANDA211888",
+            "sponsor_name": "LUOXIN AUROVITAS",
+            "n_products": 2,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230623"
+          }
+        ]
+      },
+      {
+        "drug_name": "AMITRIPTYLINE HYDROCHLORIDE",
+        "ticker": "BEAM",
+        "dailymed": {
+          "set_id": "53f4f83c-4bfd-43d6-9bb8-82c21ed2864f",
+          "title": "AMITRIPTYLINE HYDROCHLORIDE TABLET, FILM COATED [A-S MEDICATION SOLUTIONS]",
+          "published_date": "Mar 24, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA071297",
+            "sponsor_name": "MYLAN PHARMS INC",
+            "n_products": 2,
+            "n_submissions": 29,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20051006"
+          },
+          {
+            "application_number": "ANDA089399",
+            "sponsor_name": "SUN PHARM INDS INC",
+            "n_products": 6,
+            "n_submissions": 27,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010807"
+          },
+          {
+            "application_number": "ANDA212654",
+            "sponsor_name": "AIPING PHARM INC",
+            "n_products": 6,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250627"
+          }
+        ]
+      }
+    ],
+    "BHVN": [
+      {
+        "drug_name": "HALOTHANE",
+        "ticker": "BHVN"
+      }
+    ],
+    "BIIB": [
+      {
+        "drug_name": "QALSODY",
+        "ticker": "BIIB",
+        "dailymed": {
+          "set_id": "81356b45-1cb7-4eef-88ea-e44cc18b47c5",
+          "title": "QALSODY (TOFERSEN) INJECTION [BIOGEN INC.]",
+          "published_date": "Nov 18, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215887",
+            "sponsor_name": "BIOGEN MA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230425"
+          }
+        ]
+      },
+      {
+        "drug_name": "SKYCLARYS",
+        "ticker": "BIIB",
+        "dailymed": {
+          "set_id": "2709e870-df3d-f30f-e063-6394a90aeda1",
+          "title": "SKYCLARYS (OMAVELOXOLONE) CAPSULE [BIOGEN]",
+          "published_date": "Mar 06, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA216718",
+            "sponsor_name": "BIOGEN US",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241220"
+          }
+        ]
+      },
+      {
+        "drug_name": "SPINRAZA",
+        "ticker": "BIIB",
+        "dailymed": {
+          "set_id": "dd70cd5f-b0fc-4ba4-a5ea-89a34778bd94",
+          "title": "SPINRAZA (NUSINERSEN) INJECTION, SOLUTION [BIOGEN INC.]",
+          "published_date": "Nov 21, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA209531",
+            "sponsor_name": "BIOGEN IDEC",
+            "n_products": 1,
+            "n_submissions": 11,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20181010"
+          }
+        ]
+      }
+    ],
+    "COLL": [
+      {
+        "drug_name": "FLUDEOXYGLUCOSE F18",
+        "ticker": "COLL",
+        "dailymed": {
+          "set_id": "1e415eb3-e8a5-4149-b4ec-ba9ab3b29d7f",
+          "title": "FLUDEOXYGLUCOSE F18 INJECTION [KREITCHMAN PET CENTER]",
+          "published_date": "Feb 05, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA203778",
+            "sponsor_name": "3D IMAGING DRUG",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200624"
+          },
+          {
+            "application_number": "ANDA204531",
+            "sponsor_name": "UNIV MICHIGAN",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150717"
+          },
+          {
+            "application_number": "ANDA203837",
+            "sponsor_name": "BIOMEDCL RES FDN",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150501"
+          }
+        ]
+      },
+      {
+        "drug_name": "NUCYNTA",
+        "ticker": "COLL",
+        "dailymed": {
+          "set_id": "80938c30-9fe3-4c7d-9d9c-5476638cfb2d",
+          "title": "NUCYNTA (TAPENTADOL HYDROCHLORIDE) TABLET, FILM COATED [COLLEGIUM PHARMACEUTICAL, INC.]",
+          "published_date": "Jan 06, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA200533",
+            "sponsor_name": "COLLEGIUM PHARM INC",
+            "n_products": 5,
+            "n_submissions": 20,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20161216"
+          },
+          {
+            "application_number": "NDA022304",
+            "sponsor_name": "COLLEGIUM PHARM INC",
+            "n_products": 3,
+            "n_submissions": 22,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251222"
+          }
+        ]
+      },
+      {
+        "drug_name": "NUCYNTA ER",
+        "ticker": "COLL",
+        "dailymed": {
+          "set_id": "c3d04d70-0155-4147-9ce4-a3b1fad4b373",
+          "title": "NUCYNTA ER (TAPENTADOL HYDROCHLORIDE) TABLET, FILM COATED, EXTENDED RELEASE [COLLEGIUM PHARMACEUTICAL, INC.]",
+          "published_date": "Jan 06, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA200533",
+            "sponsor_name": "COLLEGIUM PHARM INC",
+            "n_products": 5,
+            "n_submissions": 20,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20161216"
+          }
+        ]
+      }
+    ],
+    "CRNX": [
+      {
+        "drug_name": "PALSONIFY",
+        "ticker": "CRNX",
+        "dailymed": {
+          "set_id": "8a6d2ce0-a621-4ee7-983c-977cd948ff4d",
+          "title": "PALSONIFY (PALTUSOTINE) TABLET, FILM COATED [CRINETICS PHARMACEUTICALS, INC.]",
+          "published_date": "Oct 03, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219070",
+            "sponsor_name": "CRINETICS",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250925"
+          }
+        ]
+      }
+    ],
+    "CYTK": [
+      {
+        "drug_name": "MYQORZO",
+        "ticker": "CYTK",
+        "dailymed": {
+          "set_id": "fd778507-1274-4d1a-a659-5431d55c543a",
+          "title": "MYQORZO (AFICAMTEN) TABLET, FILM COATED [CYTOKINETICS INC.]",
+          "published_date": "Jan 12, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219083",
+            "sponsor_name": "CYTOKINETICS",
+            "n_products": 4,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251219"
+          }
+        ]
+      }
+    ],
+    "DAWN": [
+      {
+        "drug_name": "ETODOLAC",
+        "ticker": "DAWN",
+        "dailymed": {
+          "set_id": "03458123-e27c-4447-9ef3-3bd32481cb97",
+          "title": "ETODOLAC TABLET, FILM COATED [BRYANT RANCH PREPACK]",
+          "published_date": "Mar 11, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA209888",
+            "sponsor_name": "ADAPTIS",
+            "n_products": 2,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241121"
+          },
+          {
+            "application_number": "ANDA208834",
+            "sponsor_name": "AMNEAL PHARMS CO",
+            "n_products": 2,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241121"
+          },
+          {
+            "application_number": "ANDA205448",
+            "sponsor_name": "IPCA LABS LTD",
+            "n_products": 2,
+            "n_submissions": 3,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240801"
+          }
+        ]
+      }
+    ],
+    "DYN": [
+      {
+        "drug_name": "COLOVAGE",
+        "ticker": "DYN"
+      },
+      {
+        "drug_name": "DARVOCET A500",
+        "ticker": "DYN"
+      },
+      {
+        "drug_name": "DARVOCET-N 100",
+        "ticker": "DYN"
+      }
+    ],
+    "ENTA": [
+      {
+        "drug_name": "BRIVARACETAM",
+        "ticker": "ENTA",
+        "dailymed": {
+          "set_id": "260468dd-a604-488a-a47b-b6d82edcca37",
+          "title": "BRIVARACETAM SOLUTION [LUPIN PHARMACEUTICALS, INC.]",
+          "published_date": "Mar 09, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA219772",
+            "sponsor_name": "ALKEM LABS LTD",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20260223"
+          },
+          {
+            "application_number": "ANDA220164",
+            "sponsor_name": "LUPIN",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20260223"
+          },
+          {
+            "application_number": "ANDA214748",
+            "sponsor_name": "SUNSHINE",
+            "n_products": 5,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20260130"
+          }
+        ]
+      },
+      {
+        "drug_name": "DIAZEPAM",
+        "ticker": "ENTA",
+        "dailymed": {
+          "set_id": "1a8bcc90-68fa-474d-832c-0df01e825f39",
+          "title": "VALTOCO (DIAZEPAM) SPRAY [NEURELIS, INC]",
+          "published_date": "Mar 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA072079",
+            "sponsor_name": "HOSPIRA",
+            "n_products": 1,
+            "n_submissions": 15,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010214"
+          },
+          {
+            "application_number": "ANDA070302",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 11,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19930421"
+          },
+          {
+            "application_number": "ANDA070303",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 10,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010509"
+          }
+        ]
+      },
+      {
+        "drug_name": "MACRILEN",
+        "ticker": "ENTA",
+        "dailymed": {
+          "set_id": "aeb30f1a-4815-47ae-a2cb-b6b4e26372e1",
+          "title": "MACRILEN (MACIMORELIN ACETATE) GRANULE, FOR SOLUTION [AETERNA ZENTARIS GMBH]",
+          "published_date": "Feb 19, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA205598",
+            "sponsor_name": "AETERNA ZENTARIS",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20191127"
+          }
+        ]
+      }
+    ],
+    "ERAS": [
+      {
+        "drug_name": "AVMAPKI FAKZYNJA CO-PACK (COPACKAGED)",
+        "ticker": "ERAS"
+      }
+    ],
+    "ETON": [
+      {
+        "drug_name": "ALKINDI SPRINKLE",
+        "ticker": "ETON",
+        "dailymed": {
+          "set_id": "26c13a5f-7119-4c6a-bf10-fda4e07d7682",
+          "title": "ALKINDI SPRINKLE (HYDROCORTISONE) GRANULE ALKINDI SPRINKLE (HYDROCORTISONE) GRANULE [ETON PHARMACEUTICALS, INC.]",
+          "published_date": "Jan 14, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA213876",
+            "sponsor_name": "ETON",
+            "n_products": 4,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20221223"
+          }
+        ]
+      },
+      {
+        "drug_name": "BETAINE",
+        "ticker": "ETON",
+        "dailymed": {
+          "set_id": "6f14fa40-97ab-4ec5-b66b-793d6d1abac9",
+          "title": "ENBRACE HR (LEVOMEFOLATE MAGNESIUM, LEUCOVORIN, FOLIC ACID, FERROUS CYSTEINE GLYCINATE, MAGNESIUM ASCORBATE, ZINC ASCORBATE, COCARBOXYLASE, FLAVIN ADENINE DINUCLEOTIDE, NADH, PYRIDOXAL PHOSPHATE ANHYDROUS, COBAMAMIDE, BETAINE, MAGNESIUM L-THREONATE, 1,2-DOCOSAHEXANOYL-SN-GLYCERO-3-PHOSPHOSERINE CALCIUM, 1,2-ICOSAPENTOYL-SN-GLYCERO-3-PHOSPHOSERINE CALCIUM, AND PHOSPHATIDYL SERINE) CAPSULE, DELAYED RELEASE PELLETS [JAYMAC PHARMACEUTICALS, LLC]",
+          "published_date": "Feb 11, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA210508",
+            "sponsor_name": "ETON",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20220128"
+          },
+          {
+            "application_number": "ANDA214864",
+            "sponsor_name": "NOVITIUM PHARMA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20211123"
+          }
+        ]
+      },
+      {
+        "drug_name": "CAPTOPRIL",
+        "ticker": "ETON",
+        "dailymed": {
+          "set_id": "a43a5373-ded9-4912-8c98-edaec8352836",
+          "title": "CAPTOPRIL TABLET [MAJOR PHARMACEUTICALS]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA074505",
+            "sponsor_name": "HIKMA INTL PHARMS",
+            "n_products": 4,
+            "n_submissions": 19,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19981001"
+          },
+          {
+            "application_number": "ANDA074896",
+            "sponsor_name": "RISING",
+            "n_products": 4,
+            "n_submissions": 8,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20060814"
+          },
+          {
+            "application_number": "ANDA074677",
+            "sponsor_name": "ANDAS 5 HOLDING",
+            "n_products": 4,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19970530"
+          }
+        ]
+      }
+    ],
+    "GH": [
+      {
+        "drug_name": "AFRINOL",
+        "ticker": "GH"
+      },
+      {
+        "drug_name": "AMMONIA N 13",
+        "ticker": "GH",
+        "dailymed": {
+          "set_id": "26572b37-0999-4c83-8206-1c088026d407",
+          "title": "AMMONIA N 13 (AMMONIA N-13) INJECTION [KREITCHMAN PET CENTER]",
+          "published_date": "Feb 05, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA210524",
+            "sponsor_name": "IONETIX",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200131"
+          },
+          {
+            "application_number": "ANDA203779",
+            "sponsor_name": "3D IMAGING DRUG",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20151019"
+          },
+          {
+            "application_number": "ANDA203783",
+            "sponsor_name": "BRIGHAM WOMENS HOSP",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190814"
+          }
+        ]
+      },
+      {
+        "drug_name": "CHLOR-TRIMETON",
+        "ticker": "GH"
+      }
+    ],
+    "GILD": [
+      {
+        "drug_name": "ATRIPLA",
+        "ticker": "GILD",
+        "dailymed": {
+          "set_id": "076da359-b3d0-44f7-8c0e-662f5b7a8668",
+          "title": "ATRIPLA (EFAVIRENZ, EMTRICITABINE, AND TENOFOVIR DISOPROXIL FUMARATE) TABLET, FILM COATED [DOH CENTRAL PHARMACY]",
+          "published_date": "Feb 03, 2017"
+        }
+      },
+      {
+        "drug_name": "CAYSTON",
+        "ticker": "GILD",
+        "dailymed": {
+          "set_id": "67300ca3-8c53-4ce4-8e86-2c03be1f9b8a",
+          "title": "CAYSTON (AZTREONAM) KIT [GILEAD SCIENCES, INC.]",
+          "published_date": "Dec 22, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA050814",
+            "sponsor_name": "GILEAD",
+            "n_products": 1,
+            "n_submissions": 12,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20161222"
+          }
+        ]
+      },
+      {
+        "drug_name": "EMTRIVA",
+        "ticker": "GILD",
+        "dailymed": {
+          "set_id": "d6599395-3944-44f9-97f2-e0424c6b6a1f",
+          "title": "EMTRIVA (EMTRICITABINE) CAPSULE EMTRIVA (EMTRICITABINE) SOLUTION [GILEAD SCIENCES, INC.]",
+          "published_date": "Dec 22, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA021500",
+            "sponsor_name": "GILEAD",
+            "n_products": 1,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20181210"
+          },
+          {
+            "application_number": "NDA021896",
+            "sponsor_name": "GILEAD",
+            "n_products": 2,
+            "n_submissions": 11,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20061222"
+          }
+        ]
+      }
+    ],
+    "HUMA": [
+      {
+        "drug_name": "AMANTADINE HYDROCHLORIDE",
+        "ticker": "HUMA",
+        "dailymed": {
+          "set_id": "9a99bb98-82a4-4b9e-9216-554dade72a3c",
+          "title": "AMANTADINE HYDROCHLORIDE TABLET [STRIDES PHARMA INC.]",
+          "published_date": "Feb 02, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA214178",
+            "sponsor_name": "SHREE HARI INTL",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210820"
+          },
+          {
+            "application_number": "ANDA074509",
+            "sponsor_name": "PHARM ASSOC",
+            "n_products": 1,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20090429"
+          },
+          {
+            "application_number": "ANDA214580",
+            "sponsor_name": "HUMANWELL PURACAP",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20221220"
+          }
+        ]
+      },
+      {
+        "drug_name": "BUPROPION HYDROCHLORIDE",
+        "ticker": "HUMA",
+        "dailymed": {
+          "set_id": "33210109-2ddb-4b0f-a45e-988e493ca628",
+          "title": "BUPROPION HYDROCHLORIDE TABLET, FILM COATED [CADILA PHARMACEUTICALS LIMITED]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA216766",
+            "sponsor_name": "YICHANG HUMANWELL",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250917"
+          },
+          {
+            "application_number": "ANDA206122",
+            "sponsor_name": "SCIEGEN PHARMS",
+            "n_products": 1,
+            "n_submissions": 7,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20160817"
+          },
+          {
+            "application_number": "ANDA202304",
+            "sponsor_name": "PRINSTON INC",
+            "n_products": 3,
+            "n_submissions": 9,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250129"
+          }
+        ]
+      },
+      {
+        "drug_name": "CALCITRIOL",
+        "ticker": "HUMA",
+        "dailymed": {
+          "set_id": "626f23d5-31e6-41ca-a696-191a4f2bc7ef",
+          "title": "CALCITRIOL CAPSULE, LIQUID FILLED [BIONPHARMA INC.]",
+          "published_date": "Mar 16, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA018044",
+            "sponsor_name": "ESJAY PHARMA",
+            "n_products": 2,
+            "n_submissions": 30,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19781206"
+          },
+          {
+            "application_number": "ANDA075765",
+            "sponsor_name": "TEVA",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20070221"
+          },
+          {
+            "application_number": "ANDA204556",
+            "sponsor_name": "SUN PHARM",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190221"
+          }
+        ]
+      }
+    ],
+    "INSM": [
+      {
+        "drug_name": "ARIKAYCE KIT",
+        "ticker": "INSM"
+      },
+      {
+        "drug_name": "BRINSUPRI",
+        "ticker": "INSM",
+        "dailymed": {
+          "set_id": "b56986ae-e7db-421e-b622-a7f41e321f3d",
+          "title": "BRINSUPRI (BRENSOCATIB) TABLET [INSMED INCORPORATED]",
+          "published_date": "Mar 24, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA217673",
+            "sponsor_name": "INSMED INC",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250812"
+          }
+        ]
+      }
+    ],
+    "INVA": [
+      {
+        "drug_name": "ALFUZOSIN HYDROCHLORIDE",
+        "ticker": "INVA",
+        "dailymed": {
+          "set_id": "ffbd22eb-9df5-e0ad-e053-6294a90a7d4e",
+          "title": "ALFUZOSIN HYDROCHLORIDE TABLET, EXTENDED RELEASE [NORTHWIND HEALTH COMPANY, LLC]",
+          "published_date": "Jan 30, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA079013",
+            "sponsor_name": "APOTEX INC",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20181207"
+          },
+          {
+            "application_number": "ANDA079057",
+            "sponsor_name": "SUN PHARM",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110718"
+          },
+          {
+            "application_number": "ANDA079060",
+            "sponsor_name": "AUROBINDO PHARMA LTD",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150114"
+          }
+        ]
+      },
+      {
+        "drug_name": "AMANTADINE HYDROCHLORIDE",
+        "ticker": "INVA",
+        "dailymed": {
+          "set_id": "9a99bb98-82a4-4b9e-9216-554dade72a3c",
+          "title": "AMANTADINE HYDROCHLORIDE TABLET [STRIDES PHARMA INC.]",
+          "published_date": "Feb 02, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA214178",
+            "sponsor_name": "SHREE HARI INTL",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210820"
+          },
+          {
+            "application_number": "ANDA074509",
+            "sponsor_name": "PHARM ASSOC",
+            "n_products": 1,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20090429"
+          },
+          {
+            "application_number": "ANDA214580",
+            "sponsor_name": "HUMANWELL PURACAP",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20221220"
+          }
+        ]
+      },
+      {
+        "drug_name": "AMLODIPINE BESYLATE",
+        "ticker": "INVA",
+        "dailymed": {
+          "set_id": "ff807933-7433-4f8c-9d09-02a57e51d0fc",
+          "title": "AMLODIPINE BESYLATE AND BENAZEPRIL HYDROCHLORIDE CAPSULE [PD-RX PHARMACEUTICALS, INC.]",
+          "published_date": "Mar 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA077183",
+            "sponsor_name": "DR REDDYS LABS INC",
+            "n_products": 4,
+            "n_submissions": 10,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20120223"
+          },
+          {
+            "application_number": "ANDA077516",
+            "sponsor_name": "STRIDES PHARMA",
+            "n_products": 3,
+            "n_submissions": 3,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20070711"
+          },
+          {
+            "application_number": "ANDA078414",
+            "sponsor_name": "OXFORD PHARMS",
+            "n_products": 3,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150918"
+          }
+        ]
+      }
+    ],
+    "IOVA": [
+      {
+        "drug_name": "CARDIZEM",
+        "ticker": "IOVA",
+        "dailymed": {
+          "set_id": "1042fa13-e6af-46b9-8008-6c941f0978b1",
+          "title": "CARDIZEM CD (DILTIAZEM HYDROCHLORIDE) CAPSULE, COATED, EXTENDED RELEASE [BAUSCH HEALTH US LLC]",
+          "published_date": "Dec 12, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA020062",
+            "sponsor_name": "BAUSCH",
+            "n_products": 5,
+            "n_submissions": 39,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20030321"
+          },
+          {
+            "application_number": "NDA021392",
+            "sponsor_name": "BAUSCH",
+            "n_products": 6,
+            "n_submissions": 8,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250416"
+          },
+          {
+            "application_number": "NDA018602",
+            "sponsor_name": "BAUSCH",
+            "n_products": 4,
+            "n_submissions": 55,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19830527"
+          }
+        ]
+      },
+      {
+        "drug_name": "CARDIZEM SR",
+        "ticker": "IOVA"
+      },
+      {
+        "drug_name": "CITALOPRAM HYDROBROMIDE",
+        "ticker": "IOVA",
+        "dailymed": {
+          "set_id": "351ca54b-0eb6-4e93-8ab4-82fb18dcc9e1",
+          "title": "CITALOPRAM HYDROBROMIDE TABLET, FILM COATED [ST MARYS MEDICAL PARK PHARMACY]",
+          "published_date": "Mar 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA077534",
+            "sponsor_name": "INVAGEN PHARMS",
+            "n_products": 3,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20120425"
+          },
+          {
+            "application_number": "ANDA077812",
+            "sponsor_name": "AUROBINDO PHARMA",
+            "n_products": 1,
+            "n_submissions": 14,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20060828"
+          },
+          {
+            "application_number": "ANDA201450",
+            "sponsor_name": "HETERO LABS LTD III",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200420"
+          }
+        ]
+      }
+    ],
+    "IRON": [
+      {
+        "drug_name": "DUZALLO",
+        "ticker": "IRON"
+      },
+      {
+        "drug_name": "JORNAY PM",
+        "ticker": "IRON",
+        "dailymed": {
+          "set_id": "d95dede0-b1ff-4489-8f91-3bbe122852bf",
+          "title": "JORNAY PM EXTENDED-RELEASE (METHYLPHENIDATE HYDROCHLORIDE) CAPSULE [IRONSHORE PHARMACEUTICALS INC.]",
+          "published_date": "Nov 17, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA209311",
+            "sponsor_name": "IRONSHORE PHARMS",
+            "n_products": 5,
+            "n_submissions": 5,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20180808"
+          }
+        ]
+      },
+      {
+        "drug_name": "ZURAMPIC",
+        "ticker": "IRON"
+      }
+    ],
+    "KALV": [
+      {
+        "drug_name": "EKTERLY",
+        "ticker": "KALV",
+        "dailymed": {
+          "set_id": "1d145e2f-8e7e-2e90-e063-6294a90a4449",
+          "title": "EKTERLY (SEBETRALSTAT) TABLET [KALVISTA PHARMACEUTICALS LTD]",
+          "published_date": "Nov 21, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219301",
+            "sponsor_name": "KALVISTA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250703"
+          }
+        ]
+      }
+    ],
+    "KOD": [
+      {
+        "drug_name": "CARBOCAINE",
+        "ticker": "KOD",
+        "dailymed": {
+          "set_id": "29ccae8d-4d30-41ff-9461-9007f3bc4a4c",
+          "title": "CARBOCAINE V STERILE AQUEOUS (MEPIVACAINE HYDROCHLORIDE) SOLUTION [ZOETIS INC.]",
+          "published_date": "Jun 10, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA088387",
+            "sponsor_name": "DEPROCO",
+            "n_products": 1,
+            "n_submissions": 20,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20170608"
+          }
+        ]
+      },
+      {
+        "drug_name": "CARBOCAINE W/ NEO-COBEFRIN",
+        "ticker": "KOD"
+      },
+      {
+        "drug_name": "LIDOCAINE HYDROCHLORIDE AND EPINEPHRINE",
+        "ticker": "KOD",
+        "dailymed": {
+          "set_id": "77fd6ee4-108f-4525-8df5-7db9236042ee",
+          "title": "LIDOCAINE HYDROCHLORIDE AND EPINEPHRINE INJECTION, SOLUTION [CARDINAL HEALTH 107, LLC]",
+          "published_date": "Dec 29, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA088571",
+            "sponsor_name": "HOSPIRA",
+            "n_products": 1,
+            "n_submissions": 9,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19890510"
+          },
+          {
+            "application_number": "ANDA089635",
+            "sponsor_name": "HOSPIRA",
+            "n_products": 1,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19901109"
+          },
+          {
+            "application_number": "ANDA089644",
+            "sponsor_name": "HOSPIRA",
+            "n_products": 1,
+            "n_submissions": 12,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19900321"
+          }
+        ]
+      }
+    ],
+    "KURA": [
+      {
+        "drug_name": "KOMZIFTI",
+        "ticker": "KURA",
+        "dailymed": {
+          "set_id": "b650f696-3391-4274-8b55-a5f5e9d04769",
+          "title": "KOMZIFTI (ZIFTOMENIB) CAPSULE [KURA ONCOLOGY, INC.]",
+          "published_date": "Dec 16, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA220305",
+            "sponsor_name": "KURA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251113"
+          }
+        ]
+      }
+    ],
+    "LAB": [
+      {
+        "drug_name": "ABACAVIR SULFATE",
+        "ticker": "LAB",
+        "dailymed": {
+          "set_id": "f7633480-25aa-4326-bec9-82835b486a20",
+          "title": "ABACAVIR SULFATE TABLET, FILM COATED [SAFECOR HEALTH, LLC]",
+          "published_date": "Mar 06, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA091294",
+            "sponsor_name": "MYLAN PHARMS INC",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20151211"
+          }
+        ]
+      },
+      {
+        "drug_name": "ABACAVIR SULFATE AND LAMIVUDINE",
+        "ticker": "LAB",
+        "dailymed": {
+          "set_id": "3354e50f-4dc5-413f-b5ae-87353ab8913d",
+          "title": "TRIZIVIR (ABACAVIR SULFATE, LAMIVUDINE, AND ZIDOVUDINE) TABLET, FILM COATED [STATE OF FLORIDA DOH CENTRAL PHARMACY]",
+          "published_date": "Apr 28, 2014"
+        }
+      },
+      {
+        "drug_name": "ABLYSINOL",
+        "ticker": "LAB"
+      }
+    ],
+    "LENZ": [
+      {
+        "drug_name": "VIZZ",
+        "ticker": "LENZ",
+        "dailymed": {
+          "set_id": "7aed8024-ad30-44d6-8f3b-63338ad3ce52",
+          "title": "VIZZ (ACECLIDINE) SOLUTION/ DROPS [LENZ THERAPEUTICS, INC.]",
+          "published_date": "Jan 16, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA218585",
+            "sponsor_name": "LENZ THERAP",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250731"
+          }
+        ]
+      }
+    ],
+    "MDGL": [
+      {
+        "drug_name": "REZDIFFRA",
+        "ticker": "MDGL",
+        "dailymed": {
+          "set_id": "e67ea09f-a840-439c-86c8-f98585f978b2",
+          "title": "REZDIFFRA (RESMETIROM) TABLET, COATED REZDIFFRA (RESMETIROM) TABLET, COATED REZDIFFRA (RESMETIROM) TABLET, COATED [MADRIGAL PHARMACEUTICALS, INC.]",
+          "published_date": "Dec 31, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA217785",
+            "sponsor_name": "MADRIGAL",
+            "n_products": 3,
+            "n_submissions": 4,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240314"
+          }
+        ]
+      }
+    ],
+    "MEDP": [
+      {
+        "drug_name": "AQUATENSEN",
+        "ticker": "MEDP"
+      },
+      {
+        "drug_name": "BEPADIN",
+        "ticker": "MEDP"
+      },
+      {
+        "drug_name": "BUTICAPS",
+        "ticker": "MEDP"
+      }
+    ],
+    "MENS": [
+      {
+        "drug_name": "ADDERALL 10",
+        "ticker": "MENS"
+      },
+      {
+        "drug_name": "ADDERALL 12.5",
+        "ticker": "MENS"
+      },
+      {
+        "drug_name": "ADDERALL 15",
+        "ticker": "MENS"
+      }
+    ],
+    "NBP": [
+      {
+        "drug_name": "BENZONATATE",
+        "ticker": "NBP",
+        "dailymed": {
+          "set_id": "2256f7e4-b7e6-433f-941e-bf78ddcd55b2",
+          "title": "BENZONATATE CAPSULE [MAJOR PHARMACEUTICALS]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA202765",
+            "sponsor_name": "CSPC-NBP PHARM",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150731"
+          },
+          {
+            "application_number": "ANDA040597",
+            "sponsor_name": "ZYDUS PHARMS USA",
+            "n_products": 2,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110303"
+          },
+          {
+            "application_number": "ANDA040627",
+            "sponsor_name": "THEPHARMANETWORK LLC",
+            "n_products": 3,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150116"
+          }
+        ]
+      },
+      {
+        "drug_name": "OMEGA-3-ACID ETHYL ESTERS",
+        "ticker": "NBP",
+        "dailymed": {
+          "set_id": "21cfa4ce-0b05-47ed-b268-339eb1b83b75",
+          "title": "LOVAZA (OMEGA-3-ACID ETHYL ESTERS) CAPSULE [WAYLIS THERAPEUTICS LLC]",
+          "published_date": "Mar 11, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA204940",
+            "sponsor_name": "AMNEAL PHARMS",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200224"
+          },
+          {
+            "application_number": "ANDA215458",
+            "sponsor_name": "MANKIND PHARMA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20211115"
+          },
+          {
+            "application_number": "ANDA091028",
+            "sponsor_name": "GLW",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200402"
+          }
+        ]
+      }
+    ],
+    "NVCR": [
+      {
+        "drug_name": "OZEMPIC",
+        "ticker": "NVCR",
+        "dailymed": {
+          "set_id": "27f15fac-7d98-4114-a2ec-92494a91da98",
+          "title": "OZEMPIC (ORAL SEMAGLUTIDE) TABLET RYBELSUS (ORAL SEMAGLUTIDE) TABLET [NOVO NORDISK]",
+          "published_date": "Feb 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA213051",
+            "sponsor_name": "NOVO",
+            "n_products": 6,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251017"
+          },
+          {
+            "application_number": "NDA209637",
+            "sponsor_name": "NOVO",
+            "n_products": 4,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230922"
+          }
+        ]
+      },
+      {
+        "drug_name": "RIVFLOZA",
+        "ticker": "NVCR",
+        "dailymed": {
+          "set_id": "ace9d4bc-4d20-4beb-9e9d-888690424833",
+          "title": "RIVFLOZA (NEDOSIRAN) INJECTION, SOLUTION [NOVO NORDISK]",
+          "published_date": "Apr 10, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215842",
+            "sponsor_name": "NOVO",
+            "n_products": 3,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250327"
+          }
+        ]
+      },
+      {
+        "drug_name": "RYBELSUS",
+        "ticker": "NVCR",
+        "dailymed": {
+          "set_id": "27f15fac-7d98-4114-a2ec-92494a91da98",
+          "title": "OZEMPIC (ORAL SEMAGLUTIDE) TABLET RYBELSUS (ORAL SEMAGLUTIDE) TABLET [NOVO NORDISK]",
+          "published_date": "Feb 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA213051",
+            "sponsor_name": "NOVO",
+            "n_products": 6,
+            "n_submissions": 13,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20251017"
+          }
+        ]
+      }
+    ],
+    "OCUL": [
+      {
+        "drug_name": "DEXTENZA",
+        "ticker": "OCUL",
+        "dailymed": {
+          "set_id": "7514e6b8-c33f-4fbf-8810-ef520e1eb4bd",
+          "title": "DEXTENZA (DEXAMETHASONE) INSERT [OCULAR THERAPEUTIX, INC.\n]",
+          "published_date": "Mar 09, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA208742",
+            "sponsor_name": "OCULAR THERAPEUTIX",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190620"
+          }
+        ]
+      }
+    ],
+    "OLMA": [
+      {
+        "drug_name": "ELIGARD KIT",
+        "ticker": "OLMA"
+      },
+      {
+        "drug_name": "FENSOLVI KIT",
+        "ticker": "OLMA"
+      },
+      {
+        "drug_name": "JATENZO",
+        "ticker": "OLMA",
+        "dailymed": {
+          "set_id": "ed7b5d41-7475-4c10-99b9-b62b3434ae60",
+          "title": "JATENZO (TESTOSTERONE UNDECANOATE) CAPSULE, LIQUID FILLED [TOLMAR INC.]",
+          "published_date": "Sep 17, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA206089",
+            "sponsor_name": "TOLMAR",
+            "n_products": 3,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250711"
+          }
+        ]
+      }
+    ],
+    "OMER": [
+      {
+        "drug_name": "ACARBOSE",
+        "ticker": "OMER",
+        "dailymed": {
+          "set_id": "d1b627e1-d78d-47dd-93f5-2bf4998466ba",
+          "title": "ACARBOSE TABLET [CHARTWELL RX, LLC]",
+          "published_date": "Dec 10, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA078470",
+            "sponsor_name": "HIKMA",
+            "n_products": 3,
+            "n_submissions": 4,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20080507"
+          },
+          {
+            "application_number": "ANDA202271",
+            "sponsor_name": "AVET LIFESCIENCES",
+            "n_products": 3,
+            "n_submissions": 3,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20120207"
+          },
+          {
+            "application_number": "ANDA090912",
+            "sponsor_name": "STRIDES PHARMA",
+            "n_products": 3,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110727"
+          }
+        ]
+      },
+      {
+        "drug_name": "ACETAZOLAMIDE",
+        "ticker": "OMER",
+        "dailymed": {
+          "set_id": "84a582a9-c7e5-4159-a5eb-a47a96b4afc0",
+          "title": "ACETAZOLAMIDE TABLET [BRYANT RANCH PREPACK]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA203434",
+            "sponsor_name": "NOVAST LABS",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230606"
+          },
+          {
+            "application_number": "ANDA202693",
+            "sponsor_name": "AVET LIFESCIENCES",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240726"
+          },
+          {
+            "application_number": "ANDA205301",
+            "sponsor_name": "CADILA",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241126"
+          }
+        ]
+      },
+      {
+        "drug_name": "ACETYLCYSTEINE",
+        "ticker": "OMER",
+        "dailymed": {
+          "set_id": "9d305722-e74f-4f48-8d2c-0daa99144749",
+          "title": "ACETYLCYSTEINE INJECTION [PADAGIS US LLC]",
+          "published_date": "Mar 10, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA072489",
+            "sponsor_name": "AM REGENT",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010412"
+          },
+          {
+            "application_number": "ANDA214177",
+            "sponsor_name": "CONBA USA",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250314"
+          },
+          {
+            "application_number": "ANDA217182",
+            "sponsor_name": "ONESOURCE SPECIALTY",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230419"
+          }
+        ]
+      }
+    ],
+    "ONC": [
+      {
+        "drug_name": "DOCETAXEL",
+        "ticker": "ONC",
+        "dailymed": {
+          "set_id": "8fb7d980-d6c7-468b-a9f0-adff16101a4b",
+          "title": "BEIZRAY ( DOCETAXEL ) KIT BEIZRAY ( DOCETAXEL ) KIT BEIZRAY (DOCETAXEL) INJECTION, SOLUTION [ZYDUS PHARMACEUTICALS USA INC.]",
+          "published_date": "Dec 25, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA201195",
+            "sponsor_name": "ACCORD HLTHCARE",
+            "n_products": 5,
+            "n_submissions": 10,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230920"
+          },
+          {
+            "application_number": "ANDA207252",
+            "sponsor_name": "HENGRUI PHARMA",
+            "n_products": 3,
+            "n_submissions": 7,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230919"
+          },
+          {
+            "application_number": "ANDA210848",
+            "sponsor_name": "MYLAN LABS LTD",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200910"
+          }
+        ]
+      },
+      {
+        "drug_name": "DUTOPROL",
+        "ticker": "ONC"
+      },
+      {
+        "drug_name": "IMKELDI",
+        "ticker": "ONC",
+        "dailymed": {
+          "set_id": "26658bb7-9ba1-a10e-e063-6394a90a172e",
+          "title": "IMKELDI (IMATINIB ORAL) SOLUTION [SHORLA ONCOLOGY INC.,]",
+          "published_date": "Dec 20, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219097",
+            "sponsor_name": "SHORLA ONCOLOGY",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241122"
+          }
+        ]
+      }
+    ],
+    "OPK": [
+      {
+        "drug_name": "AMMONIA N 13",
+        "ticker": "OPK",
+        "dailymed": {
+          "set_id": "26572b37-0999-4c83-8206-1c088026d407",
+          "title": "AMMONIA N 13 (AMMONIA N-13) INJECTION [KREITCHMAN PET CENTER]",
+          "published_date": "Feb 05, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA210524",
+            "sponsor_name": "IONETIX",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200131"
+          },
+          {
+            "application_number": "ANDA203779",
+            "sponsor_name": "3D IMAGING DRUG",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20151019"
+          },
+          {
+            "application_number": "ANDA203783",
+            "sponsor_name": "BRIGHAM WOMENS HOSP",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190814"
+          }
+        ]
+      }
+    ],
+    "PHAT": [
+      {
+        "drug_name": "VOQUEZNA",
+        "ticker": "PHAT",
+        "dailymed": {
+          "set_id": "0cb2ee04-8581-46c8-a781-7be170ab5c86",
+          "title": "VOQUEZNA DUAL PAK (VONOPRAZAN FUMARATE AND AMOXICILLIN) KIT VOQUEZNA TRIPLE PAK (VONOPRAZAN FUMARATE, AMOXICILLIN AND CLARITHROMYCIN) KIT [PHATHOM PHARMACEUTICALS INC.]",
+          "published_date": "Dec 23, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215151",
+            "sponsor_name": "PHATHOM",
+            "n_products": 2,
+            "n_submissions": 3,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20231101"
+          },
+          {
+            "application_number": "NDA215152",
+            "sponsor_name": "PHATHOM",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230816"
+          },
+          {
+            "application_number": "NDA215153",
+            "sponsor_name": "PHATHOM",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20220503"
+          }
+        ]
+      },
+      {
+        "drug_name": "VOQUEZNA DUAL PAK",
+        "ticker": "PHAT",
+        "dailymed": {
+          "set_id": "0cb2ee04-8581-46c8-a781-7be170ab5c86",
+          "title": "VOQUEZNA DUAL PAK (VONOPRAZAN FUMARATE AND AMOXICILLIN) KIT VOQUEZNA TRIPLE PAK (VONOPRAZAN FUMARATE, AMOXICILLIN AND CLARITHROMYCIN) KIT [PHATHOM PHARMACEUTICALS INC.]",
+          "published_date": "Dec 23, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215153",
+            "sponsor_name": "PHATHOM",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20220503"
+          }
+        ]
+      },
+      {
+        "drug_name": "VOQUEZNA TRIPLE PAK",
+        "ticker": "PHAT",
+        "dailymed": {
+          "set_id": "0cb2ee04-8581-46c8-a781-7be170ab5c86",
+          "title": "VOQUEZNA DUAL PAK (VONOPRAZAN FUMARATE AND AMOXICILLIN) KIT VOQUEZNA TRIPLE PAK (VONOPRAZAN FUMARATE, AMOXICILLIN AND CLARITHROMYCIN) KIT [PHATHOM PHARMACEUTICALS INC.]",
+          "published_date": "Dec 23, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA215152",
+            "sponsor_name": "PHATHOM",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230816"
+          }
+        ]
+      }
+    ],
+    "PRAX": [
+      {
+        "drug_name": "DICYCLOMINE HYDROCHLORIDE",
+        "ticker": "PRAX",
+        "dailymed": {
+          "set_id": "cbc22f25-e100-4c59-8f38-5f82113166fb",
+          "title": "DICYCLOMINE HYDROCHLORIDE INJECTION, SOLUTION [FOSUN PHARMA USA INC.]",
+          "published_date": "Mar 16, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA218018",
+            "sponsor_name": "ANNORA PHARMA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240701"
+          },
+          {
+            "application_number": "ANDA040204",
+            "sponsor_name": "WEST WARD",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20120511"
+          },
+          {
+            "application_number": "ANDA084285",
+            "sponsor_name": "LANNETT",
+            "n_products": 1,
+            "n_submissions": 12,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20000810"
+          }
+        ]
+      },
+      {
+        "drug_name": "DOXYCYCLINE HYCLATE",
+        "ticker": "PRAX",
+        "dailymed": {
+          "set_id": "c96d3986-9d92-4ec4-a319-a50aeb2f4fe7",
+          "title": "DOXYCYCLINE (DOXYCYCLINE HYCLATE) TABLET, COATED [PD-RX PHARMACEUTICALS, INC.]",
+          "published_date": "Mar 20, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA211584",
+            "sponsor_name": "AJANTA PHARMA LTD",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200601"
+          },
+          {
+            "application_number": "ANDA208818",
+            "sponsor_name": "LUPIN LTD",
+            "n_products": 2,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230712"
+          },
+          {
+            "application_number": "ANDA210527",
+            "sponsor_name": "ALEMBIC",
+            "n_products": 2,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241025"
+          }
+        ]
+      },
+      {
+        "drug_name": "FOSAPREPITANT DIMEGLUMINE",
+        "ticker": "PRAX",
+        "dailymed": {
+          "set_id": "1a7d2f44-b578-4d99-a4ff-f267626064d0",
+          "title": "FOSAPREPITANT DIMEGLUMINE INJECTION, POWDER, LYOPHILIZED, FOR SOLUTION [HIKMA PHARMACEUTICALS USA INC.]",
+          "published_date": "Mar 20, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA210625",
+            "sponsor_name": "EUGIA PHARMA",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210112"
+          },
+          {
+            "application_number": "ANDA213106",
+            "sponsor_name": "QILU PHARM HAINAN",
+            "n_products": 1,
+            "n_submissions": 3,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230725"
+          }
+        ]
+      }
+    ],
+    "PTCT": [
+      {
+        "drug_name": "EMFLAZA",
+        "ticker": "PTCT",
+        "dailymed": {
+          "set_id": "31b347d2-f156-4055-9d8f-7cf0df420296",
+          "title": "EMFLAZA (DEFLAZACORT) TABLET EMFLAZA (DEFLAZACORT) SUSPENSION [PTC THERAPEUTICS, INC.]",
+          "published_date": "Dec 15, 2025"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA208684",
+            "sponsor_name": "PTC THERAP",
+            "n_products": 4,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210629"
+          },
+          {
+            "application_number": "NDA208685",
+            "sponsor_name": "PTC THERAP",
+            "n_products": 1,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210629"
+          }
+        ]
+      },
+      {
+        "drug_name": "SEPHIENCE",
+        "ticker": "PTCT",
+        "dailymed": {
+          "set_id": "32ac719c-49f0-4105-9c46-18c19583a5c2",
+          "title": "SEPHIENCE (SEPIAPTERIN) POWDER [PTC THERAPEUTICS INC.]",
+          "published_date": "Mar 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA219666",
+            "sponsor_name": "PTC THERAP",
+            "n_products": 2,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250728"
+          }
+        ]
+      }
+    ],
+    "SIGA": [
+      {
+        "drug_name": "TPOXX",
+        "ticker": "SIGA",
+        "dailymed": {
+          "set_id": "fce826ab-4d6a-4139-a2ee-a304a913a253",
+          "title": "TPOXX (TECOVIRIMAT MONOHYDRATE) INJECTION, SOLUTION, CONCENTRATE TPOXX (TECOVIRIMAT MONOHYDRATE) CAPSULE [SIGA TECHNOLOGIES, INC.]",
+          "published_date": "Jan 06, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA208627",
+            "sponsor_name": "SIGA TECHNOLOGIES",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20180713"
+          },
+          {
+            "application_number": "NDA214518",
+            "sponsor_name": "SIGA TECHNOLOGIES",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20240603"
+          }
+        ]
+      }
+    ],
+    "SION": [
+      {
+        "drug_name": "AMMONIA N 13",
+        "ticker": "SION",
+        "dailymed": {
+          "set_id": "26572b37-0999-4c83-8206-1c088026d407",
+          "title": "AMMONIA N 13 (AMMONIA N-13) INJECTION [KREITCHMAN PET CENTER]",
+          "published_date": "Feb 05, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA210524",
+            "sponsor_name": "IONETIX",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200131"
+          },
+          {
+            "application_number": "ANDA203779",
+            "sponsor_name": "3D IMAGING DRUG",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20151019"
+          },
+          {
+            "application_number": "ANDA203783",
+            "sponsor_name": "BRIGHAM WOMENS HOSP",
+            "n_products": 1,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20190814"
+          }
+        ]
+      },
+      {
+        "drug_name": "CALCIBIND",
+        "ticker": "SION"
+      },
+      {
+        "drug_name": "CARBINOXAMINE MALEATE",
+        "ticker": "SION",
+        "dailymed": {
+          "set_id": "c40b3f4e-2d71-41a1-a1fc-f64f38724879",
+          "title": "KARBINAL ER (CARBINOXAMINE MALEATE) SUSPENSION, EXTENDED RELEASE [AYTU THERAPEUTICS, LLC]",
+          "published_date": "Mar 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA022556",
+            "sponsor_name": "AYTU",
+            "n_products": 1,
+            "n_submissions": 6,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20210325"
+          },
+          {
+            "application_number": "ANDA090756",
+            "sponsor_name": "MISSION PHARMACAL",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110527"
+          },
+          {
+            "application_number": "ANDA215476",
+            "sponsor_name": "LEADING",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241219"
+          }
+        ]
+      }
+    ],
+    "SMMT": [
+      {
+        "drug_name": "ATROPEN",
+        "ticker": "SMMT",
+        "dailymed": {
+          "set_id": "e2d4307d-da8f-49f5-aac0-02355dd9ffb7",
+          "title": "ATROPEN AUTO-INJECTOR (ATROPINE) INJECTION [MERIDIAN MEDICAL TECHNOLOGIES LLC]",
+          "published_date": "Sep 21, 2022"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA017106",
+            "sponsor_name": "MMT",
+            "n_products": 4,
+            "n_submissions": 33,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19730515"
+          }
+        ]
+      },
+      {
+        "drug_name": "DUODOTE",
+        "ticker": "SMMT",
+        "dailymed": {
+          "set_id": "241f42a0-1a33-40e8-8221-201767d999e5",
+          "title": "DUODOTE (ATROPINE AND PRALIDOXIME CHLORIDE) KIT [MERIDIAN MEDICAL TECHNOLOGIES&REG; LLC]",
+          "published_date": "Jun 30, 2022"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA021983",
+            "sponsor_name": "MMT",
+            "n_products": 1,
+            "n_submissions": 11,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20160425"
+          }
+        ]
+      },
+      {
+        "drug_name": "SEIZALAM",
+        "ticker": "SMMT"
+      }
+    ],
+    "SNDX": [
+      {
+        "drug_name": "REVUFORJ",
+        "ticker": "SNDX",
+        "dailymed": {
+          "set_id": "6eb3cdbc-0e74-477d-82d6-3bb172d3f63f",
+          "title": "REVUFORJ (REVUMENIB) TABLET, FILM COATED [SYNDAX PHARMACEUTICALS, INC.]",
+          "published_date": "Feb 20, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA218944",
+            "sponsor_name": "SYNDAX",
+            "n_products": 3,
+            "n_submissions": 2,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241115"
+          }
+        ]
+      }
+    ],
+    "STRO": [
+      {
+        "drug_name": "ALBUTEROL",
+        "ticker": "STRO",
+        "dailymed": {
+          "set_id": "87b8cd3c-2849-4b50-b63e-9ea379165c07",
+          "title": "ALBUTEROL SULFATE TABLET [SUN PHARMACEUTICAL INDUSTRIES, INC.]",
+          "published_date": "Mar 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA077788",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20070626"
+          },
+          {
+            "application_number": "ANDA076355",
+            "sponsor_name": "NEPHRON",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20100331"
+          },
+          {
+            "application_number": "ANDA211888",
+            "sponsor_name": "LUOXIN AUROVITAS",
+            "n_products": 2,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230623"
+          }
+        ]
+      },
+      {
+        "drug_name": "ALBUTEROL SULFATE",
+        "ticker": "STRO",
+        "dailymed": {
+          "set_id": "87b8cd3c-2849-4b50-b63e-9ea379165c07",
+          "title": "ALBUTEROL SULFATE TABLET [SUN PHARMACEUTICAL INDUSTRIES, INC.]",
+          "published_date": "Mar 18, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA077788",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20070626"
+          },
+          {
+            "application_number": "ANDA076355",
+            "sponsor_name": "NEPHRON",
+            "n_products": 2,
+            "n_submissions": 5,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20100331"
+          },
+          {
+            "application_number": "ANDA211888",
+            "sponsor_name": "LUOXIN AUROVITAS",
+            "n_products": 2,
+            "n_submissions": 2,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230623"
+          }
+        ]
+      },
+      {
+        "drug_name": "EPINEPHRINE",
+        "ticker": "STRO",
+        "dailymed": {
+          "set_id": "74bad838-2800-4d36-a3ee-cc1d739d24c2",
+          "title": "XYLOCAINE (LIDOCAINE HYDROCHLORIDE,EPINEPHRINE BITARTRATE) INJECTION, SOLUTION [SPORTPHARM LLC]",
+          "published_date": "Mar 26, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA204200",
+            "sponsor_name": "PH HEALTH",
+            "n_products": 1,
+            "n_submissions": 9,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20160518"
+          },
+          {
+            "application_number": "ANDA213708",
+            "sponsor_name": "FRESENIUS KABI USA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20241120"
+          },
+          {
+            "application_number": "NDA215425",
+            "sponsor_name": "FRESENIUS KABI USA",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20250313"
+          }
+        ]
+      }
+    ],
+    "TARS": [
+      {
+        "drug_name": "XDEMVY",
+        "ticker": "TARS",
+        "dailymed": {
+          "set_id": "ccd9e37c-654e-4e84-8c85-6523457df979",
+          "title": "XDEMVY (LOTILANER OPHTHALMIC SOLUTION) SOLUTION/ DROPS [TARSUS PHARMACEUTICALS, INC.]",
+          "published_date": "Aug 12, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA217603",
+            "sponsor_name": "TARSUS",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20230724"
+          }
+        ]
+      }
+    ],
+    "TEM": [
+      {
+        "drug_name": "ALLEGRA",
+        "ticker": "TEM",
+        "dailymed": {
+          "set_id": "1fb77d6a-fae2-40ae-8f8e-fa2dc66f4403",
+          "title": "ALLEGRA-D ALLERGY AND CONGESTION (FEXOFENADINE HYDROCHLORIDE AND PSEUDOEPHEDRINE HYDROCHLORIDE) TABLET, FILM COATED, EXTENDED RELEASE [CHATTEM, INC.]",
+          "published_date": "Jan 12, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA021704",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 1,
+            "n_submissions": 12,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110124"
+          },
+          {
+            "application_number": "NDA201373",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 2,
+            "n_submissions": 9,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110124"
+          },
+          {
+            "application_number": "NDA020872",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 6,
+            "n_submissions": 26,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20030512"
+          }
+        ]
+      },
+      {
+        "drug_name": "ALLEGRA ALLERGY",
+        "ticker": "TEM",
+        "dailymed": {
+          "set_id": "1fb77d6a-fae2-40ae-8f8e-fa2dc66f4403",
+          "title": "ALLEGRA-D ALLERGY AND CONGESTION (FEXOFENADINE HYDROCHLORIDE AND PSEUDOEPHEDRINE HYDROCHLORIDE) TABLET, FILM COATED, EXTENDED RELEASE [CHATTEM, INC.]",
+          "published_date": "Jan 12, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA201373",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 2,
+            "n_submissions": 9,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20110124"
+          },
+          {
+            "application_number": "NDA020872",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 6,
+            "n_submissions": 26,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20030512"
+          },
+          {
+            "application_number": "NDA021909",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 2,
+            "n_submissions": 10,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20160801"
+          }
+        ]
+      },
+      {
+        "drug_name": "ALLEGRA HIVES",
+        "ticker": "TEM",
+        "dailymed": {
+          "set_id": "490b4c5f-448b-4563-928b-837117b59b9f",
+          "title": "ALLEGRA HIVES 24HR (FEXOFENADINE HYDROCHLORIDE) TABLET, FILM COATED [CHATTEM, INC.]",
+          "published_date": "Jan 12, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA020872",
+            "sponsor_name": "CHATTEM SANOFI",
+            "n_products": 6,
+            "n_submissions": 26,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20030512"
+          }
+        ]
+      }
+    ],
+    "VIR": [
+      {
+        "drug_name": "DIAZEPAM",
+        "ticker": "VIR",
+        "dailymed": {
+          "set_id": "1a8bcc90-68fa-474d-832c-0df01e825f39",
+          "title": "VALTOCO (DIAZEPAM) SPRAY [NEURELIS, INC]",
+          "published_date": "Mar 23, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA072079",
+            "sponsor_name": "HOSPIRA",
+            "n_products": 1,
+            "n_submissions": 15,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010214"
+          },
+          {
+            "application_number": "ANDA070302",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 11,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19930421"
+          },
+          {
+            "application_number": "ANDA070303",
+            "sponsor_name": "CHARTWELL RX",
+            "n_products": 1,
+            "n_submissions": 10,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20010509"
+          }
+        ]
+      },
+      {
+        "drug_name": "PHENDIMETRAZINE TARTRATE",
+        "ticker": "VIR",
+        "dailymed": {
+          "set_id": "ef4cfd54-7d3e-4571-ae77-38ab2fd1af3d",
+          "title": "PHENDIMETRAZINE TARTRATE TABLET [A-S MEDICATION SOLUTIONS]",
+          "published_date": "Jan 30, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "ANDA091042",
+            "sponsor_name": "KVK TECH",
+            "n_products": 1,
+            "n_submissions": 1,
+            "latest_submission_type": "ORIG",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20100831"
+          },
+          {
+            "application_number": "NDA018074",
+            "sponsor_name": "ACERTIS PHARMS",
+            "n_products": 1,
+            "n_submissions": 29,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19980923"
+          },
+          {
+            "application_number": "ANDA085588",
+            "sponsor_name": "ACERTIS PHARMS",
+            "n_products": 1,
+            "n_submissions": 12,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "19890123"
+          }
+        ]
+      }
+    ],
+    "ZYME": [
+      {
+        "drug_name": "CAPRELSA",
+        "ticker": "ZYME",
+        "dailymed": {
+          "set_id": "e5721cb8-4185-47b9-bbb3-1c587e558a03",
+          "title": "CAPRELSA (VANDETANIB) TABLET, FILM COATED [GENZYME CORPORATION]",
+          "published_date": "Feb 04, 2026"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA022405",
+            "sponsor_name": "GENZYME CORP",
+            "n_products": 2,
+            "n_submissions": 19,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20200615"
+          }
+        ]
+      },
+      {
+        "drug_name": "CERDELGA",
+        "ticker": "ZYME",
+        "dailymed": {
+          "set_id": "819f828a-b888-4e46-83fc-94d774a28a83",
+          "title": "CERDELGA (ELIGLUSTAT) CAPSULE [GENZYME CORPORATION]",
+          "published_date": "Mar 11, 2024"
+        },
+        "openfda_approvals": [
+          {
+            "application_number": "NDA205494",
+            "sponsor_name": "GENZYME CORP",
+            "n_products": 1,
+            "n_submissions": 4,
+            "latest_submission_type": "SUPPL",
+            "latest_submission_status": "AP",
+            "latest_submission_date": "20150511"
+          }
+        ]
+      },
+      {
+        "drug_name": "CLOLAR",
+        "ticker": "ZYME"
+      }
+    ]
+  }
+}

@@ -20,13 +20,16 @@ Version: 1.0.0
 
 import hashlib
 import json
-import re
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Set, Tuple
-from datetime import date
+import logging
 from collections import Counter, defaultdict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger("competitive_intensity_engine")
 
 
 __version__ = "1.0.0"
@@ -35,23 +38,26 @@ __author__ = "Wake Robin Capital Management"
 
 class CrowdingLevel(Enum):
     """Indication crowding classification."""
-    UNCROWDED = "uncrowded"           # <5 competing programs
-    MODERATE = "moderate"              # 5-15 competing programs
-    CROWDED = "crowded"                # 16-30 competing programs
+
+    UNCROWDED = "uncrowded"  # <5 competing programs
+    MODERATE = "moderate"  # 5-15 competing programs
+    CROWDED = "crowded"  # 16-30 competing programs
     HIGHLY_CROWDED = "highly_crowded"  # >30 competing programs
 
 
 class CompetitivePosition(Enum):
     """Competitive positioning classification."""
-    FIRST_IN_CLASS = "first_in_class"       # Novel mechanism, no competitors
-    FAST_FOLLOWER = "fast_follower"         # Early in class, few competitors
-    BEST_IN_CLASS = "best_in_class"         # Differentiated in crowded space
-    ME_TOO = "me_too"                       # Undifferentiated in crowded space
+
+    FIRST_IN_CLASS = "first_in_class"  # Novel mechanism, no competitors
+    FAST_FOLLOWER = "fast_follower"  # Early in class, few competitors
+    BEST_IN_CLASS = "best_in_class"  # Differentiated in crowded space
+    ME_TOO = "me_too"  # Undifferentiated in crowded space
 
 
 @dataclass
 class CompetitorProgram:
     """A competing program in the same indication."""
+
     ticker: str
     nct_id: str
     phase: str
@@ -63,6 +69,7 @@ class CompetitorProgram:
 @dataclass
 class IndicationLandscape:
     """Competitive landscape for an indication."""
+
     indication: str
     total_programs: int
     programs_by_phase: Dict[str, int]
@@ -112,18 +119,18 @@ class CompetitiveIntensityEngine:
 
     # Score adjustments by crowding level (higher crowding = higher competitive pressure)
     CROWDING_SCORE_ADJUSTMENTS = {
-        CrowdingLevel.UNCROWDED: Decimal("0"),        # Baseline - low competition
-        CrowdingLevel.MODERATE: Decimal("15"),        # Some competition
-        CrowdingLevel.CROWDED: Decimal("30"),         # Significant competition
+        CrowdingLevel.UNCROWDED: Decimal("0"),  # Baseline - low competition
+        CrowdingLevel.MODERATE: Decimal("15"),  # Some competition
+        CrowdingLevel.CROWDED: Decimal("30"),  # Significant competition
         CrowdingLevel.HIGHLY_CROWDED: Decimal("45"),  # Intense competition
     }
 
     # Bonus/penalty for competitive position
     POSITION_ADJUSTMENTS = {
-        CompetitivePosition.FIRST_IN_CLASS: Decimal("-20"),   # Advantage
-        CompetitivePosition.FAST_FOLLOWER: Decimal("-10"),    # Some advantage
-        CompetitivePosition.BEST_IN_CLASS: Decimal("0"),      # Neutral
-        CompetitivePosition.ME_TOO: Decimal("15"),            # Disadvantage
+        CompetitivePosition.FIRST_IN_CLASS: Decimal("-20"),  # Advantage
+        CompetitivePosition.FAST_FOLLOWER: Decimal("-10"),  # Some advantage
+        CompetitivePosition.BEST_IN_CLASS: Decimal("0"),  # Neutral
+        CompetitivePosition.ME_TOO: Decimal("15"),  # Disadvantage
     }
 
     # Approved drug penalty (existing competition)
@@ -135,42 +142,99 @@ class CompetitiveIntensityEngine:
     # Indication category mappings (for grouping similar conditions)
     INDICATION_CATEGORIES = {
         "oncology": [
-            "cancer", "tumor", "carcinoma", "leukemia", "lymphoma", "melanoma",
-            "sarcoma", "myeloma", "glioma", "neuroblastoma", "nsclc", "sclc",
-            "breast cancer", "lung cancer", "colorectal", "pancreatic", "ovarian",
-            "prostate cancer", "renal cell", "hepatocellular", "gastric"
+            "cancer",
+            "tumor",
+            "carcinoma",
+            "leukemia",
+            "lymphoma",
+            "melanoma",
+            "sarcoma",
+            "myeloma",
+            "glioma",
+            "neuroblastoma",
+            "nsclc",
+            "sclc",
+            "breast cancer",
+            "lung cancer",
+            "colorectal",
+            "pancreatic",
+            "ovarian",
+            "prostate cancer",
+            "renal cell",
+            "hepatocellular",
+            "gastric",
         ],
         "immunology": [
-            "rheumatoid arthritis", "psoriasis", "lupus", "crohn", "colitis",
-            "multiple sclerosis", "autoimmune", "inflammatory", "atopic dermatitis",
-            "ankylosing spondylitis", "psoriatic arthritis"
+            "rheumatoid arthritis",
+            "psoriasis",
+            "lupus",
+            "crohn",
+            "colitis",
+            "multiple sclerosis",
+            "autoimmune",
+            "inflammatory",
+            "atopic dermatitis",
+            "ankylosing spondylitis",
+            "psoriatic arthritis",
         ],
         "neurology": [
-            "alzheimer", "parkinson", "epilepsy", "migraine", "depression",
-            "schizophrenia", "bipolar", "anxiety", "huntington", "als",
-            "multiple sclerosis", "neuropathy", "stroke"
+            "alzheimer",
+            "parkinson",
+            "epilepsy",
+            "migraine",
+            "depression",
+            "schizophrenia",
+            "bipolar",
+            "anxiety",
+            "huntington",
+            "als",
+            "multiple sclerosis",
+            "neuropathy",
+            "stroke",
         ],
         "rare_disease": [
-            "orphan", "rare", "duchenne", "sma", "cystic fibrosis", "hemophilia",
-            "fabry", "gaucher", "pompe", "hunter", "hurler", "batten",
-            "sickle cell", "thalassemia", "pku"
+            "orphan",
+            "rare",
+            "duchenne",
+            "sma",
+            "cystic fibrosis",
+            "hemophilia",
+            "fabry",
+            "gaucher",
+            "pompe",
+            "hunter",
+            "hurler",
+            "batten",
+            "sickle cell",
+            "thalassemia",
+            "pku",
         ],
         "infectious": [
-            "hiv", "hepatitis", "covid", "influenza", "rsv", "bacterial",
-            "viral", "fungal", "tuberculosis", "malaria", "antibiotic"
+            "hiv",
+            "hepatitis",
+            "covid",
+            "influenza",
+            "rsv",
+            "bacterial",
+            "viral",
+            "fungal",
+            "tuberculosis",
+            "malaria",
+            "antibiotic",
         ],
         "cardiovascular": [
-            "heart failure", "hypertension", "atrial fibrillation", "cad",
-            "myocardial", "thrombosis", "stroke", "atherosclerosis", "pah"
+            "heart failure",
+            "hypertension",
+            "atrial fibrillation",
+            "cad",
+            "myocardial",
+            "thrombosis",
+            "stroke",
+            "atherosclerosis",
+            "pah",
         ],
-        "metabolic": [
-            "diabetes", "obesity", "nash", "fatty liver", "hyperlipidemia",
-            "gout", "metabolic syndrome"
-        ],
-        "ophthalmology": [
-            "macular degeneration", "diabetic retinopathy", "glaucoma",
-            "uveitis", "dry eye", "retinal"
-        ],
+        "metabolic": ["diabetes", "obesity", "nash", "fatty liver", "hyperlipidemia", "gout", "metabolic syndrome"],
+        "ophthalmology": ["macular degeneration", "diabetic retinopathy", "glaucoma", "uveitis", "dry eye", "retinal"],
     }
 
     # Mechanism keywords for MOA grouping
@@ -195,11 +259,78 @@ class CompetitiveIntensityEngine:
         self.ticker_programs: Dict[str, List[Dict]] = defaultdict(list)
         self.audit_trail: List[Dict[str, Any]] = []
         self._landscape_built = False
+        self._indication_source: str = "raw"  # "raw" or "enriched"
+
+    # ------------------------------------------------------------------
+    # PEV enrichment helpers
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _load_pev(enrichment_dir: Path) -> Optional[Dict]:
+        """Load the most recent program_entity_view from enrichment_dir."""
+        candidates = sorted(enrichment_dir.glob("program_entity_view_*.json"))
+        if not candidates:
+            return None
+        try:
+            with open(candidates[-1], encoding="utf-8") as f:
+                return json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    @staticmethod
+    def _build_pev_indication_index(pev: Dict) -> Dict[str, str]:
+        """Build nct_id → normalized indication key from PEV.
+
+        Key format matches build_competitive_intel.py:
+          efo:{efo_id}|{efo_name}
+          medgen:{medgen_uid}|{raw_condition}
+        Returns empty dict if PEV is too sparse (<10% mapped).
+        """
+        index: Dict[str, str] = {}
+        n_total = 0
+        n_mapped = 0
+
+        for entry in pev.get("entries", []):
+            for prog in entry.get("programs", []):
+                nct_id = prog.get("nct_id", "")
+                if not nct_id:
+                    continue
+                n_total += 1
+
+                ind = prog.get("indication") or {}
+                efo_id = ind.get("efo_id", "")
+                efo_name = ind.get("efo_name", "")
+                medgen_uid = ind.get("medgen_uid", "")
+
+                if efo_id and efo_name:
+                    index[nct_id] = f"efo:{efo_id}|{efo_name}"
+                    n_mapped += 1
+                elif medgen_uid:
+                    raw = ind.get("raw_condition", "")
+                    index[nct_id] = f"medgen:{medgen_uid}|{raw}"
+                    n_mapped += 1
+
+        if n_total == 0 or n_mapped / n_total < 0.10:
+            logger.info(
+                "PEV indication index too sparse (%d/%d), falling back to raw",
+                n_mapped,
+                n_total,
+            )
+            return {}
+
+        logger.info(
+            "PEV indication index: %d/%d trials mapped (%.0f%%)",
+            n_mapped,
+            n_total,
+            100 * n_mapped / max(n_total, 1),
+        )
+        return index
 
     def build_landscape(
         self,
         trial_records: List[Dict[str, Any]],
         as_of_date: date,
+        enrichment_dir: Optional[Path] = None,
     ) -> Dict[str, Any]:
         """
         Build competitive landscape from trial records.
@@ -207,6 +338,10 @@ class CompetitiveIntensityEngine:
         Args:
             trial_records: List of clinical trial records
             as_of_date: Point-in-time date for filtering
+            enrichment_dir: Path to data/enrichment/ directory.  When
+                provided and a program_entity_view is available, indications
+                are resolved via normalized EFO/MedGen keys instead of
+                keyword-based ``_normalize_indication()``.
 
         Returns:
             Dict with landscape statistics
@@ -214,24 +349,41 @@ class CompetitiveIntensityEngine:
         self.indication_landscapes = {}
         self.ticker_programs = defaultdict(list)
 
+        # Try to load PEV indication index
+        pev_index: Dict[str, str] = {}
+        if enrichment_dir is not None:
+            pev = self._load_pev(Path(enrichment_dir))
+            if pev:
+                pev_index = self._build_pev_indication_index(pev)
+
+        self._indication_source = "enriched" if pev_index else "raw"
+        n_enriched = 0
+        n_raw_fallback = 0
+
         # Group trials by normalized indication
         indication_programs: Dict[str, List[Dict]] = defaultdict(list)
 
         for trial in trial_records:
-            ticker = (
-                trial.get("lead_sponsor_ticker") or
-                trial.get("ticker") or ""
-            ).upper()
+            ticker = (trial.get("lead_sponsor_ticker") or trial.get("ticker") or "").upper()
 
             if not ticker:
                 continue
 
             # Extract and normalize indication
+            nct_id = trial.get("nct_id", "")
             conditions = trial.get("conditions", [])
             if isinstance(conditions, str):
                 conditions = [conditions]
 
-            indication = self._normalize_indication(conditions)
+            # Prefer PEV enriched indication, fall back to keyword matching
+            indication = pev_index.get(nct_id) if pev_index else None
+            if indication:
+                n_enriched += 1
+            else:
+                indication = self._normalize_indication(conditions)
+                if indication:
+                    n_raw_fallback += 1
+
             if not indication:
                 continue
 
@@ -292,11 +444,13 @@ class CompetitiveIntensityEngine:
         return {
             "indications_mapped": len(self.indication_landscapes),
             "tickers_mapped": len(self.ticker_programs),
-            "total_programs": sum(l.total_programs for l in self.indication_landscapes.values()),
+            "total_programs": sum(ls.total_programs for ls in self.indication_landscapes.values()),
             "top_indications": sorted(
-                [(k, v.total_programs) for k, v in self.indication_landscapes.items()],
-                key=lambda x: -x[1]
+                [(k, v.total_programs) for k, v in self.indication_landscapes.items()], key=lambda x: -x[1]
             )[:10],
+            "indication_source": self._indication_source,
+            "n_enriched": n_enriched,
+            "n_raw_fallback": n_raw_fallback,
         }
 
     def score_ticker(
@@ -333,15 +487,11 @@ class CompetitiveIntensityEngine:
         total_competitors = 0
         phase_3_plus_competitors = 0
         has_approved_competition = False
-        indication_scores = []
         primary_indication = None
         primary_indication_crowding = CrowdingLevel.UNCROWDED
 
         # Find primary indication (most advanced program)
-        programs_sorted = sorted(
-            programs,
-            key=lambda p: -self.PHASE_ORDER.get(p["phase"], 0)
-        )
+        programs_sorted = sorted(programs, key=lambda p: -self.PHASE_ORDER.get(p["phase"], 0))
 
         if programs_sorted:
             primary_indication = programs_sorted[0]["indication"]
@@ -364,13 +514,14 @@ class CompetitiveIntensityEngine:
 
             # Count Phase 3+ competitors
             p3_plus = (
-                landscape.programs_by_phase.get("phase_3", 0) +
-                landscape.programs_by_phase.get("nda_bla", 0) +
-                landscape.programs_by_phase.get("approved", 0)
+                landscape.programs_by_phase.get("phase_3", 0)
+                + landscape.programs_by_phase.get("nda_bla", 0)
+                + landscape.programs_by_phase.get("approved", 0)
             )
             # Subtract own Phase 3+ programs
             own_p3_plus = sum(
-                1 for p in programs
+                1
+                for p in programs
                 if p["indication"] == indication and p["phase"] in ["phase_3", "nda_bla", "approved"]
             )
             phase_3_plus_competitors += max(0, p3_plus - own_p3_plus)
@@ -383,9 +534,7 @@ class CompetitiveIntensityEngine:
                 primary_indication_crowding = self._classify_crowding(competitors)
 
         # Determine competitive position
-        competitive_position = self._assess_position(
-            ticker, programs, primary_indication, total_competitors
-        )
+        competitive_position = self._assess_position(ticker, programs, primary_indication, total_competitors)
 
         # Calculate score components
         base_score = Decimal("30")  # Baseline competitive pressure
@@ -400,19 +549,10 @@ class CompetitiveIntensityEngine:
         approved_penalty = self.APPROVED_DRUG_PENALTY if has_approved_competition else Decimal("0")
 
         # Phase 3 competitor penalty (capped)
-        p3_penalty = min(
-            Decimal(str(phase_3_plus_competitors)) * self.PHASE_3_COMPETITOR_PENALTY,
-            Decimal("20")
-        )
+        p3_penalty = min(Decimal(str(phase_3_plus_competitors)) * self.PHASE_3_COMPETITOR_PENALTY, Decimal("20"))
 
         # Calculate final score
-        intensity_score = (
-            base_score +
-            crowding_adj +
-            position_adj +
-            approved_penalty +
-            p3_penalty
-        )
+        intensity_score = base_score + crowding_adj + position_adj + approved_penalty + p3_penalty
 
         # Clamp to 0-100
         intensity_score = max(Decimal("0"), min(Decimal("100"), intensity_score))
@@ -456,6 +596,7 @@ class CompetitiveIntensityEngine:
         universe: List[Dict[str, Any]],
         trial_records: List[Dict[str, Any]],
         as_of_date: date,
+        enrichment_dir: Optional[Path] = None,
     ) -> Dict[str, Any]:
         """
         Score competitive intensity for entire universe.
@@ -464,18 +605,20 @@ class CompetitiveIntensityEngine:
             universe: List of dicts with 'ticker'
             trial_records: Clinical trial records
             as_of_date: Point-in-time date
+            enrichment_dir: Path to enrichment directory (forwarded to
+                build_landscape for PEV-backed indication resolution)
 
         Returns:
             Dict with scores, diagnostics, and provenance
         """
         # Build landscape first
-        landscape_stats = self.build_landscape(trial_records, as_of_date)
+        landscape_stats = self.build_landscape(trial_records, as_of_date, enrichment_dir=enrichment_dir)
 
         scores = []
         intensity_distribution: Dict[str, int] = {
-            "low": 0,      # 0-30
-            "moderate": 0, # 31-50
-            "high": 0,     # 51-70
+            "low": 0,  # 0-30
+            "moderate": 0,  # 31-50
+            "high": 0,  # 51-70
             "intense": 0,  # 71-100
         }
         crowding_distribution: Dict[str, int] = {}
@@ -488,16 +631,18 @@ class CompetitiveIntensityEngine:
 
             result = self.score_ticker(ticker, as_of_date)
 
-            scores.append({
-                "ticker": ticker,
-                "competitive_intensity_score": result["competitive_intensity_score"],
-                "crowding_level": result["crowding_level"],
-                "competitive_position": result["competitive_position"],
-                "competitor_count": result["competitor_count"],
-                "phase_3_competitors": result["phase_3_competitors"],
-                "has_approved_competition": result["has_approved_competition"],
-                "intensity_rating": result["intensity_rating"],
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "competitive_intensity_score": result["competitive_intensity_score"],
+                    "crowding_level": result["crowding_level"],
+                    "competitive_position": result["competitive_position"],
+                    "competitor_count": result["competitor_count"],
+                    "phase_3_competitors": result["phase_3_competitors"],
+                    "has_approved_competition": result["has_approved_competition"],
+                    "intensity_rating": result["intensity_rating"],
+                }
+            )
 
             # Track distributions
             rating = result["intensity_rating"]
@@ -511,8 +656,7 @@ class CompetitiveIntensityEngine:
 
         # Content hash for provenance
         scores_json = json.dumps(
-            [{"t": s["ticker"], "s": str(s["competitive_intensity_score"])} for s in scores],
-            sort_keys=True
+            [{"t": s["ticker"], "s": str(s["competitive_intensity_score"])} for s in scores], sort_keys=True
         )
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
@@ -632,12 +776,7 @@ class CompetitiveIntensityEngine:
         else:
             return "intense"
 
-    def _no_data_result(
-        self,
-        ticker: str,
-        as_of_date: date,
-        reason: str
-    ) -> Dict[str, Any]:
+    def _no_data_result(self, ticker: str, as_of_date: date, reason: str) -> Dict[str, Any]:
         """Return result when no data available."""
         return {
             "ticker": ticker,
@@ -661,12 +800,7 @@ class CompetitiveIntensityEngine:
         """Get landscape for a specific indication."""
         return self.indication_landscapes.get(indication)
 
-    def get_top_competitors(
-        self,
-        ticker: str,
-        indication: str,
-        limit: int = 10
-    ) -> List[Dict[str, Any]]:
+    def get_top_competitors(self, ticker: str, indication: str, limit: int = 10) -> List[Dict[str, Any]]:
         """Get top competitors in an indication."""
         landscape = self.indication_landscapes.get(indication)
         if not landscape:
@@ -675,10 +809,12 @@ class CompetitiveIntensityEngine:
         competitors = []
         for comp_ticker, count in landscape.programs_by_ticker.items():
             if comp_ticker != ticker.upper():
-                competitors.append({
-                    "ticker": comp_ticker,
-                    "program_count": count,
-                })
+                competitors.append(
+                    {
+                        "ticker": comp_ticker,
+                        "program_count": count,
+                    }
+                )
 
         return sorted(competitors, key=lambda x: -x["program_count"])[:limit]
 
@@ -701,28 +837,52 @@ if __name__ == "__main__":
 
     # Create sample trial records
     sample_trials = [
-        {"lead_sponsor_ticker": "ACME", "nct_id": "NCT001", "phase": "Phase 2",
-         "conditions": ["Breast Cancer"], "interventions": ["monoclonal antibody"]},
-        {"lead_sponsor_ticker": "ACME", "nct_id": "NCT002", "phase": "Phase 3",
-         "conditions": ["Lung Cancer"], "interventions": ["kinase inhibitor"]},
-        {"lead_sponsor_ticker": "COMP1", "nct_id": "NCT003", "phase": "Phase 3",
-         "conditions": ["Breast Cancer"], "interventions": ["antibody"]},
-        {"lead_sponsor_ticker": "COMP2", "nct_id": "NCT004", "phase": "Phase 2",
-         "conditions": ["Breast Cancer"], "interventions": ["adc"]},
-        {"lead_sponsor_ticker": "COMP3", "nct_id": "NCT005", "phase": "Phase 1",
-         "conditions": ["Breast Cancer"], "interventions": ["car-t"]},
+        {
+            "lead_sponsor_ticker": "ACME",
+            "nct_id": "NCT001",
+            "phase": "Phase 2",
+            "conditions": ["Breast Cancer"],
+            "interventions": ["monoclonal antibody"],
+        },
+        {
+            "lead_sponsor_ticker": "ACME",
+            "nct_id": "NCT002",
+            "phase": "Phase 3",
+            "conditions": ["Lung Cancer"],
+            "interventions": ["kinase inhibitor"],
+        },
+        {
+            "lead_sponsor_ticker": "COMP1",
+            "nct_id": "NCT003",
+            "phase": "Phase 3",
+            "conditions": ["Breast Cancer"],
+            "interventions": ["antibody"],
+        },
+        {
+            "lead_sponsor_ticker": "COMP2",
+            "nct_id": "NCT004",
+            "phase": "Phase 2",
+            "conditions": ["Breast Cancer"],
+            "interventions": ["adc"],
+        },
+        {
+            "lead_sponsor_ticker": "COMP3",
+            "nct_id": "NCT005",
+            "phase": "Phase 1",
+            "conditions": ["Breast Cancer"],
+            "interventions": ["car-t"],
+        },
     ]
 
     as_of = date(2026, 1, 26)
 
     # Build landscape
     stats = engine.build_landscape(sample_trials, as_of)
-    print(f"\nLandscape built: {stats['indications_mapped']} indications, "
-          f"{stats['tickers_mapped']} tickers")
+    print(f"\nLandscape built: {stats['indications_mapped']} indications, " f"{stats['tickers_mapped']} tickers")
 
     # Score a ticker
     result = engine.score_ticker("ACME", as_of)
-    print(f"\nACME Competitive Analysis:")
+    print("\nACME Competitive Analysis:")
     print(f"  Intensity Score: {result['competitive_intensity_score']}")
     print(f"  Crowding Level: {result['crowding_level']}")
     print(f"  Position: {result['competitive_position']}")

@@ -38,6 +38,8 @@ INXIGHT_API = "https://drugs.ncats.io/api/v1"
 CHEMBL_API = "https://www.ebi.ac.uk/chembl/api/data"
 RXNORM_API = "https://rxnav.nlm.nih.gov/REST"
 
+_CHEMBL_DISABLED = False
+
 
 def _api_get(url: str, timeout: int = 5) -> Any:
     req = urllib.request.Request(url, headers={"User-Agent": "biotech-screener/1.0", "Accept": "application/json"})
@@ -186,6 +188,12 @@ def build_drug_master(
 
     logger.info("Building drug master for %d tickers", len(tickers))
 
+    # Probe ChEMBL health — skip all ChEMBL calls if it's down
+    global _CHEMBL_DISABLED  # noqa: PLW0603
+    _CHEMBL_DISABLED = query_chembl("pembrolizumab") is None
+    if _CHEMBL_DISABLED:
+        logger.warning("ChEMBL API unavailable — skipping ChEMBL queries")
+
     drug_entries: Dict[str, List[Dict]] = {}
     n_inxight = 0
     n_chembl = 0
@@ -199,23 +207,26 @@ def build_drug_master(
             entry = {"raw_name": drug_name, "ticker": ticker}
 
             # Query each source with rate limiting
+            # Skip ChEMBL when it returns persistent 500s — avoid 5s
+            # timeout per drug.  Re-enable when their API recovers.
             inxight = query_inxight(drug_name)
             if inxight:
                 entry["inxight"] = inxight
                 n_inxight += 1
-            time.sleep(0.15)
+            time.sleep(0.05)
 
-            chembl = query_chembl(drug_name)
-            if chembl:
-                entry["chembl"] = chembl
-                n_chembl += 1
-            time.sleep(0.15)
+            if not _CHEMBL_DISABLED:
+                chembl = query_chembl(drug_name)
+                if chembl:
+                    entry["chembl"] = chembl
+                    n_chembl += 1
+                time.sleep(0.05)
 
             rxnorm = query_rxnorm(drug_name)
             if rxnorm:
                 entry["rxnorm"] = rxnorm
                 n_rxnorm += 1
-            time.sleep(0.1)
+            time.sleep(0.05)
 
             ticker_entries.append(entry)
 

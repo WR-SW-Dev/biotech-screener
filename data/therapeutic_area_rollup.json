@@ -1,0 +1,111 @@
+{
+  "_schema": "therapeutic_area_rollup.v1",
+  "_description": "Maps EFO therapeutic_area strings to the 11 simplified therapeutic areas used in indication_mapping.json. First match wins. Consumed by build_program_entity_view and build_competitive_intel for consistent peer grouping.",
+
+  "efo_to_ta": {
+    "cancer or benign tumor": "Oncology",
+    "neoplasm": "Oncology",
+
+    "nervous system disease": "CNS",
+    "neurodegenerative disease": "CNS",
+
+    "immune system disease": "Autoimmune",
+    "musculoskeletal or connective tissue disease": "Autoimmune",
+
+    "infectious disease": "Infectious Disease",
+
+    "respiratory or thoracic disease": "Respiratory",
+
+    "cardiovascular disease": "Cardiovascular",
+
+    "endocrine system disease": "Metabolic",
+    "metabolic disease": "Metabolic",
+    "nutritional or metabolic disease": "Metabolic",
+
+    "gastrointestinal disease": "GI/Hepatology",
+    "liver disease": "GI/Hepatology",
+
+    "eye disease": "Ophthalmology",
+    "visual system disease": "Ophthalmology",
+
+    "urinary system disease": "Urology",
+    "reproductive system or breast disease": "Oncology",
+
+    "hematologic disease": "Oncology",
+    "genetic, familial or congenital disease": "Rare Disease",
+
+    "integumentary system disease": "Autoimmune",
+
+    "phenotype": null,
+    "measurement": null
+  },
+
+  "condition_to_ta_override": {
+    "Duchenne Muscular Dystrophy": "Rare Disease",
+    "Hereditary Angioedema": "Rare Disease",
+    "Cystic Fibrosis": "Rare Disease",
+    "Friedreich Ataxia": "Rare Disease",
+    "Fabry Disease": "Rare Disease",
+    "Sickle Cell Disease": "Rare Disease",
+    "Spinal Muscular Atrophy": "Rare Disease",
+    "Prader-Willi Syndrome": "Rare Disease",
+    "Alpha 1-Antitrypsin Deficiency": "Rare Disease",
+    "Paroxysmal Nocturnal Hemoglobinuria": "Rare Disease",
+    "Huntington Disease": "Rare Disease",
+    "Hypoparathyroidism": "Rare Disease",
+
+    "Major Depressive Disorder": "CNS",
+    "Treatment Resistant Depression": "CNS",
+    "Parkinson's Disease": "CNS",
+    "Alzheimer Disease": "CNS",
+    "Amyotrophic Lateral Sclerosis": "CNS",
+    "Epilepsy": "CNS",
+    "Pain": "CNS",
+
+    "Pulmonary Arterial Hypertension": "Respiratory",
+    "Idiopathic Pulmonary Fibrosis": "Respiratory",
+
+    "Ulcerative Colitis": "GI/Hepatology",
+    "Chronic Hepatitis B": "GI/Hepatology",
+    "Hepatitis C": "GI/Hepatology",
+    "NASH - Nonalcoholic Steatohepatitis": "GI/Hepatology",
+
+    "Plaque Psoriasis": "Autoimmune",
+    "Hidradenitis Suppurativa": "Autoimmune",
+    "Lupus Nephritis": "Autoimmune",
+    "Thyroid Eye Disease": "Autoimmune",
+    "Atopic Dermatitis": "Autoimmune",
+
+    "Dry Eye": "Ophthalmology",
+    "Geographic Atrophy": "Ophthalmology",
+    "Diabetic Macular Edema": "Ophthalmology",
+    "Cataract": "Ophthalmology",
+    "Uveal Melanoma": "Ophthalmology",
+
+    "Type 1 Diabetes Mellitus": "Metabolic",
+    "Hypercholesterolemia": "Metabolic",
+
+    "Hypertension": "Cardiovascular",
+
+    "Influenza": "Infectious Disease",
+    "Smallpox": "Infectious Disease",
+    "Pneumococcal Vaccines": "Infectious Disease",
+
+    "Solid Tumor, Adult": "Oncology",
+    "Relapsed/Refractory Multiple Myeloma": "Oncology"
+  },
+
+  "ta_priority": [
+    "Oncology",
+    "Rare Disease",
+    "CNS",
+    "Autoimmune",
+    "Infectious Disease",
+    "Respiratory",
+    "Cardiovascular",
+    "Metabolic",
+    "GI/Hepatology",
+    "Ophthalmology",
+    "Urology"
+  ]
+}

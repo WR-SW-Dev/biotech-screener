@@ -1,0 +1,249 @@
+{
+  "schema": "drug_master.v1",
+  "generated_at": "2026-03-27T19:03:20.598468+00:00",
+  "n_tickers": 3,
+  "n_tickers_with_data": 3,
+  "n_inxight_hits": 11,
+  "n_chembl_hits": 4,
+  "n_rxnorm_hits": 11,
+  "entries": {
+    "AARD": [
+      {
+        "raw_name": "ARD-101",
+        "ticker": "AARD",
+        "inxight": {
+          "inxight_uuid": "75c38028-26f9-4cd3-8aa7-a021e38fc668",
+          "inxight_name": "DENATONIUM ACETATE MONOHYDRATE",
+          "substance_class": "chemical",
+          "status": "approved",
+          "approval_id": "YE84H43CRF",
+          "synonyms": []
+        }
+      },
+      {
+        "raw_name": "High Dose ARD-501",
+        "ticker": "AARD",
+        "inxight": {
+          "inxight_uuid": "6711d822-a623-41fc-830a-cfc63b1fa07c",
+          "inxight_name": "CP-122721",
+          "substance_class": "chemical",
+          "status": "approved",
+          "approval_id": "R7OYP6N58F",
+          "synonyms": []
+        },
+        "chembl": {
+          "chembl_id": "CHEMBL5790832",
+          "pref_name": null,
+          "molecule_type": null,
+          "max_phase": null,
+          "first_approval": null,
+          "oral": false,
+          "parenteral": false,
+          "topical": false
+        },
+        "rxnorm": {
+          "rxcui": "898542",
+          "rxnorm_name": ""
+        }
+      },
+      {
+        "raw_name": "Low Dose ARD-501",
+        "ticker": "AARD",
+        "inxight": {
+          "inxight_uuid": "89e600f3-a064-4d32-9834-76e0f364dda9",
+          "inxight_name": "CRS-3123",
+          "substance_class": "chemical",
+          "status": "approved",
+          "approval_id": "2P987FW4E8",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "218096",
+          "rxnorm_name": ""
+        }
+      },
+      {
+        "raw_name": "Placebo",
+        "ticker": "AARD",
+        "inxight": {
+          "inxight_uuid": "bb05f78b-cd88-87d6-3a28-70eb6806b3e4",
+          "inxight_name": "JNJ63871860 COMPONENT O1-POLYSACCHARIDE BIOCONJUGATE",
+          "substance_class": "structurallyDiverse",
+          "status": "approved",
+          "approval_id": "Q6ETP67RMI",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "8375",
+          "rxnorm_name": "placebo",
+          "tty": "IN"
+        }
+      }
+    ],
+    "ABCL": [
+      {
+        "raw_name": "ABCL575",
+        "ticker": "ABCL"
+      },
+      {
+        "raw_name": "ABCL635",
+        "ticker": "ABCL"
+      },
+      {
+        "raw_name": "Bamlanivimab",
+        "ticker": "ABCL",
+        "inxight": {
+          "inxight_uuid": "3a279ffb-5bf3-4df2-879b-a7a214349685",
+          "inxight_name": "BAMLANIVIMAB",
+          "substance_class": "protein",
+          "status": "approved",
+          "approval_id": "45I6OFJ8QH",
+          "synonyms": []
+        },
+        "chembl": {
+          "chembl_id": "CHEMBL4650379",
+          "pref_name": "BAMLANIVIMAB",
+          "molecule_type": "Antibody",
+          "max_phase": "3.0",
+          "first_approval": null,
+          "oral": false,
+          "parenteral": false,
+          "topical": false
+        },
+        "rxnorm": {
+          "rxcui": "2463114",
+          "rxnorm_name": "bamlanivimab",
+          "tty": "IN"
+        }
+      },
+      {
+        "raw_name": "Bebtelovimab",
+        "ticker": "ABCL",
+        "inxight": {
+          "inxight_uuid": "08e242f3-d7cd-4259-8424-93cdf17d0d0e",
+          "inxight_name": "BEBTELOVIMAB",
+          "substance_class": "protein",
+          "status": "approved",
+          "approval_id": "8YL4SYR6CU",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "2592360",
+          "rxnorm_name": "bebtelovimab",
+          "tty": "IN"
+        }
+      },
+      {
+        "raw_name": "Etesevimab",
+        "ticker": "ABCL",
+        "inxight": {
+          "inxight_uuid": "231f804d-778a-4e71-820a-a13a1af72319",
+          "inxight_name": "ETESEVIMAB",
+          "substance_class": "protein",
+          "status": "approved",
+          "approval_id": "N7Q9NLF11I",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "2477854",
+          "rxnorm_name": "etesevimab",
+          "tty": "IN"
+        }
+      }
+    ],
+    "ABEO": [
+      {
+        "raw_name": "ABO-101",
+        "ticker": "ABEO",
+        "inxight": {
+          "inxight_uuid": "a0ce25b7-1991-4cd9-b816-91d5c0d6cbca",
+          "inxight_name": "ABO-4EN-PINACA",
+          "substance_class": "chemical",
+          "status": "approved",
+          "approval_id": "D8TFV9M7H7",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "2637065",
+          "rxnorm_name": "ABO-102"
+        }
+      },
+      {
+        "raw_name": "ABO-102",
+        "ticker": "ABEO",
+        "inxight": {
+          "inxight_uuid": "a2120ce1-7ae1-48c7-b5cb-ba35e0d16c91",
+          "inxight_name": "Rebisufligene Etisparvovec",
+          "substance_class": "structurallyDiverse",
+          "status": "approved",
+          "approval_id": "V28L3Q0LVZ",
+          "synonyms": []
+        },
+        "rxnorm": {
+          "rxcui": "2637065",
+          "rxnorm_name": "ABO-102"
+        }
+      },
+      {
+        "raw_name": "Adjuvant IM Therapy",
+        "ticker": "ABEO",
+        "inxight": {
+          "inxight_uuid": "fe233792-3bf3-44f2-abc1-5d5ba120d681",
+          "inxight_name": "GTPASE KRAS G12S MUTANT",
+          "substance_class": "protein",
+          "status": "approved",
+          "approval_id": "UM47UG5W35",
+          "synonyms": []
+        },
+        "chembl": {
+          "chembl_id": "CHEMBL4650400",
+          "pref_name": "INCOMPLETE FREUND'S ADJUVANT",
+          "molecule_type": "Unknown",
+          "max_phase": "3.0",
+          "first_approval": null,
+          "oral": false,
+          "parenteral": false,
+          "topical": false
+        },
+        "rxnorm": {
+          "rxcui": "220290",
+          "rxnorm_name": ""
+        }
+      },
+      {
+        "raw_name": "EB-101",
+        "ticker": "ABEO",
+        "inxight": {
+          "inxight_uuid": "7d505971-c922-4220-abb5-a4f6436c1447",
+          "inxight_name": "Prademagene Zamikeracel",
+          "substance_class": "structurallyDiverse",
+          "status": "approved",
+          "approval_id": "4UU2O40RHU",
+          "synonyms": []
+        },
+        "chembl": {
+          "chembl_id": "CHEMBL4303238",
+          "pref_name": null,
+          "molecule_type": "Small molecule",
+          "max_phase": null,
+          "first_approval": null,
+          "oral": false,
+          "parenteral": false,
+          "topical": false
+        },
+        "rxnorm": {
+          "rxcui": "2641172",
+          "rxnorm_name": "EB-101"
+        }
+      },
+      {
+        "raw_name": "EB-101 Surgical application of RDEB wounds",
+        "ticker": "ABEO",
+        "rxnorm": {
+          "rxcui": "2641172",
+          "rxnorm_name": "EB-101"
+        }
+      }
+    ]
+  }
+}

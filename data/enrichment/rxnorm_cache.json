@@ -1,0 +1,26 @@
+{
+  "keytruda": {
+    "rxcui": "1547550",
+    "name": "Keytruda",
+    "tty": "BN",
+    "score": "100"
+  },
+  "pembrolizumab": {
+    "rxcui": "1547545",
+    "name": "pembrolizumab",
+    "tty": "IN",
+    "score": "100"
+  },
+  "mk-3475": {
+    "rxcui": "203435",
+    "name": "",
+    "tty": "",
+    "score": "6.366750717163086"
+  },
+  "tarcocimab": {
+    "rxcui": "2686264",
+    "name": "",
+    "tty": "",
+    "score": "9.77894911723137"
+  }
+}

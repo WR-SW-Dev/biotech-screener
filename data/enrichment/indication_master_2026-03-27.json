@@ -1,0 +1,2190 @@
+{
+  "schema": "indication_master.v1",
+  "generated_at": "2026-03-27T21:30:22.179613+00:00",
+  "n_conditions": 50,
+  "n_efo_mapped": 48,
+  "n_medgen_mapped": 48,
+  "n_rare_disease": 0,
+  "entries": {
+    "Breast Cancer": {
+      "raw_condition": "Breast Cancer",
+      "n_tickers": 47,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "ARTV",
+        "ARVN",
+        "AZN",
+        "BBIO",
+        "BIIB",
+        "BNTX",
+        "CADL",
+        "CAI"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0007254",
+        "efo_name": "breast cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "integumentary system disease",
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0000653",
+            "name": "integumentary system cancer"
+          },
+          {
+            "id": "MONDO_0003274",
+            "name": "thoracic cancer"
+          },
+          {
+            "id": "EFO_0003869",
+            "name": "breast neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1866696",
+        "medgen_name": "Locally Advanced Unresectable HER2-Negative BRCA-Associated Breast Carcinoma",
+        "concept_id": "C5959801",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Ovarian Cancer": {
+      "raw_condition": "Ovarian Cancer",
+      "n_tickers": 44,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "BIIB",
+        "BNTX",
+        "CADL",
+        "CATX",
+        "CDNA",
+        "CELC",
+        "CLDX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0008170",
+        "efo_name": "ovarian cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "endocrine system disease",
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0003893",
+            "name": "ovarian neoplasm"
+          },
+          {
+            "id": "EFO_1001331",
+            "name": "Genital neoplasm, female"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1866564",
+        "medgen_name": "FIGO Stage IC Ovarian Cancer 2014",
+        "concept_id": "C5959669",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "COVID-19": {
+      "raw_condition": "COVID-19",
+      "n_tickers": 42,
+      "tickers": [
+        "ABCL",
+        "ABVX",
+        "ALGS",
+        "AMGN",
+        "AVIR",
+        "AZN",
+        "BCRX",
+        "BNTX",
+        "CAI",
+        "CDNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0100096",
+        "efo_name": "COVID-19",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "infectious disease"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0020753",
+            "name": "Orthocoronavirinae infectious disease"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1879988",
+        "medgen_name": "Severe acute respiratory syndrome coronavirus 2 test declined",
+        "concept_id": "C6009148",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Colorectal Cancer": {
+      "raw_condition": "Colorectal Cancer",
+      "n_tickers": 41,
+      "tickers": [
+        "AMGN",
+        "AVBP",
+        "AZN",
+        "BCAX",
+        "BIIB",
+        "BMEA",
+        "BNTX",
+        "CAI",
+        "CATX",
+        "CDNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0005575",
+        "efo_name": "colorectal cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "gastrointestinal disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0004142",
+            "name": "colorectal neoplasm"
+          },
+          {
+            "id": "EFO_0007330",
+            "name": "intestinal cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883304",
+        "medgen_name": "Localized Colorectal Carcinoma",
+        "concept_id": "C5984560",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Melanoma": {
+      "raw_condition": "Melanoma",
+      "n_tickers": 39,
+      "tickers": [
+        "ADCT",
+        "ALVO",
+        "AMGN",
+        "AZN",
+        "BHVN",
+        "BIIB",
+        "BNTX",
+        "CCCC",
+        "CDNA",
+        "CLDX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000756",
+        "efo_name": "melanoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021143",
+            "name": "melanocytic neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1885434",
+        "medgen_name": "Unresectable Ocular Melanoma",
+        "concept_id": "C5985893",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Acute Myeloid Leukemia": {
+      "raw_condition": "Acute Myeloid Leukemia",
+      "n_tickers": 37,
+      "tickers": [
+        "ACLX",
+        "ADCT",
+        "AGIO",
+        "AMGN",
+        "AZN",
+        "BMEA",
+        "CAI",
+        "CLDX",
+        "CRL",
+        "CRSP"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000222",
+        "efo_name": "acute myeloid leukemia",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "hematologic disease",
+          "immune system disease",
+          "cancer or benign tumor",
+          "musculoskeletal or connective tissue disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_1000068",
+            "name": "Acute Leukemia"
+          },
+          {
+            "id": "MONDO_0004643",
+            "name": "myeloid leukemia"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883421",
+        "medgen_name": "Recurrent Secondary Acute Myeloid Leukemia",
+        "concept_id": "C5984911",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Gastric Cancer": {
+      "raw_condition": "Gastric Cancer",
+      "n_tickers": 37,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "ARTV",
+        "AVBP",
+        "AZN",
+        "BNTX",
+        "CAI",
+        "CATX",
+        "CLDX",
+        "CRL"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0001056",
+        "efo_name": "gastric cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "gastrointestinal disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0003897",
+            "name": "stomach neoplasm"
+          },
+          {
+            "id": "MONDO_0002516",
+            "name": "digestive system cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1852373",
+        "medgen_name": "Family history of hereditary diffuse gastric cancer",
+        "concept_id": "C5879464",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Advanced Solid Tumor": {
+      "raw_condition": "Advanced Solid Tumor",
+      "n_tickers": 36,
+      "tickers": [
+        "ACRS",
+        "AGIO",
+        "AMGN",
+        "ASND",
+        "AZN",
+        "BNTX",
+        "CAI",
+        "CGEM",
+        "CHRS",
+        "CNTA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0004243",
+        "efo_name": "carcinoid tumor",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "endocrine system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_1001901",
+            "name": "neuroendocrine neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1616641",
+        "medgen_name": "Locally Advanced Malignant Solid Neoplasm",
+        "concept_id": "C4524377",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Non-small Cell Lung Cancer": {
+      "raw_condition": "Non-small Cell Lung Cancer",
+      "n_tickers": 36,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BBOT",
+        "BNTX",
+        "CAI",
+        "CDNA",
+        "CHRS",
+        "CLDX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0003060",
+        "efo_name": "non-small cell lung carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "respiratory or thoracic disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0001071",
+            "name": "lung carcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883097",
+        "medgen_name": "PROphetNSCLC Score",
+        "concept_id": "C5983755",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Non Small Cell Lung Cancer": {
+      "raw_condition": "Non Small Cell Lung Cancer",
+      "n_tickers": 36,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BMEA",
+        "BNTX",
+        "CADL",
+        "CAI",
+        "CGEM",
+        "CLDX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0003060",
+        "efo_name": "non-small cell lung carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "respiratory or thoracic disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0001071",
+            "name": "lung carcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883097",
+        "medgen_name": "PROphetNSCLC Score",
+        "concept_id": "C5983755",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Solid Tumor": {
+      "raw_condition": "Solid Tumor",
+      "n_tickers": 35,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BDTX",
+        "BHVN",
+        "BNTX",
+        "CHRS",
+        "COGT",
+        "CTMX",
+        "DAWN"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_1000542",
+        "efo_name": "Solid Pseudopapillary Neoplasm of the Pancreas",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "endocrine system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0003860",
+            "name": "pancreatic neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1879896",
+        "medgen_name": "Early Stage Malignant Solid Neoplasm",
+        "concept_id": "C5984930",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Rheumatoid Arthritis": {
+      "raw_condition": "Rheumatoid Arthritis",
+      "n_tickers": 34,
+      "tickers": [
+        "ABVX",
+        "ACRS",
+        "ALVO",
+        "AMGN",
+        "AMRX",
+        "ANAB",
+        "ARTV",
+        "AZN",
+        "BIIB",
+        "CAI"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000685",
+        "efo_name": "rheumatoid arthritis",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "immune system disease",
+          "musculoskeletal or connective tissue disease",
+          "phenotype"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005755",
+            "name": "rheumatic disease"
+          },
+          {
+            "id": "EFO_0005856",
+            "name": "arthritis"
+          },
+          {
+            "id": "MONDO_0000589",
+            "name": "autoimmune disorder of musculoskeletal system"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1881952",
+        "medgen_name": "At increased risk of delayed healing of surgical wound",
+        "concept_id": "C5558501",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Prostate Cancer": {
+      "raw_condition": "Prostate Cancer",
+      "n_tickers": 33,
+      "tickers": [
+        "ABSI",
+        "AMGN",
+        "AZN",
+        "BNTX",
+        "CADL",
+        "CAI",
+        "CDNA",
+        "CELC",
+        "CHRS",
+        "CLDX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0008315",
+        "efo_name": "prostate cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021259",
+            "name": "prostate neoplasm"
+          },
+          {
+            "id": "EFO_0007355",
+            "name": "male reproductive organ cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1875284",
+        "medgen_name": "Active surveillance of prostate cancer not done",
+        "concept_id": "C5978300",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Pancreatic Cancer": {
+      "raw_condition": "Pancreatic Cancer",
+      "n_tickers": 33,
+      "tickers": [
+        "ACRS",
+        "AMGN",
+        "AVBP",
+        "AZN",
+        "BIIB",
+        "BMEA",
+        "BNTX",
+        "CADL",
+        "CLDX",
+        "CRVS"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0003860",
+        "efo_name": "pancreatic neoplasm",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "endocrine system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0009605",
+            "name": "pancreas disease"
+          },
+          {
+            "id": "EFO_0008549",
+            "name": "digestive system neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1841251",
+        "medgen_name": "Breast-ovarian cancer, familial, susceptibility to, 5",
+        "concept_id": "C5830615",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Solid Tumors": {
+      "raw_condition": "Solid Tumors",
+      "n_tickers": 33,
+      "tickers": [
+        "ALLO",
+        "ALNY",
+        "AMGN",
+        "AZN",
+        "BIIB",
+        "BMRN",
+        "BNTX",
+        "CCCC",
+        "CDNA",
+        "CTMX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0004282",
+        "efo_name": "thoracic aortic aneurysm",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "cardiovascular disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0001666",
+            "name": "aortic aneurysm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1876506",
+        "medgen_name": "Fanconi anemia, complementation group 10",
+        "concept_id": "C6012745",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Lung Cancer": {
+      "raw_condition": "Lung Cancer",
+      "n_tickers": 33,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BNTX",
+        "CADL",
+        "CAI",
+        "CDNA",
+        "CLDX",
+        "CRL",
+        "DNA",
+        "EXEL"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0008903",
+        "efo_name": "lung cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "respiratory or thoracic disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0003274",
+            "name": "thoracic cancer"
+          },
+          {
+            "id": "MONDO_0021117",
+            "name": "lung neoplasm"
+          },
+          {
+            "id": "MONDO_0000376",
+            "name": "respiratory system cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883097",
+        "medgen_name": "PROphetNSCLC Score",
+        "concept_id": "C5983755",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Endometrial Cancer": {
+      "raw_condition": "Endometrial Cancer",
+      "n_tickers": 32,
+      "tickers": [
+        "ABSI",
+        "AMGN",
+        "AZN",
+        "BNTX",
+        "CDNA",
+        "CELC",
+        "CMPX",
+        "CNTX",
+        "COGT",
+        "CRVS"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0011962",
+        "efo_name": "endometrial cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021251",
+            "name": "endometrium neoplasm"
+          },
+          {
+            "id": "MONDO_0002715",
+            "name": "uterine cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1866590",
+        "medgen_name": "POLEm Endometrial Carcinoma",
+        "concept_id": "C5959695",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Cancer": {
+      "raw_condition": "Cancer",
+      "n_tickers": 31,
+      "tickers": [
+        "ABUS",
+        "AMGN",
+        "ARGX",
+        "AZN",
+        "BCRX",
+        "BMEA",
+        "CAI",
+        "CDNA",
+        "DNA",
+        "EXEL"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0004992",
+        "efo_name": "cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0000616",
+            "name": "neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1885507",
+        "medgen_name": "Metastatic Malignant Uterine Corpus Neoplasm",
+        "concept_id": "C5984653",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Lymphoma": {
+      "raw_condition": "Lymphoma",
+      "n_tickers": 31,
+      "tickers": [
+        "AGIO",
+        "AMGN",
+        "AZN",
+        "BCRX",
+        "BIIB",
+        "BMEA",
+        "CAI",
+        "CDNA",
+        "CERS",
+        "COGT"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000574",
+        "efo_name": "lymphoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "hematologic disease",
+          "genetic, familial or congenital disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0015757",
+            "name": "lymphoid hemopathy"
+          },
+          {
+            "id": "Orphanet_322126",
+            "name": "Genetic tumor of hematopoietic and lymphoid tissues"
+          },
+          {
+            "id": "EFO_0001642",
+            "name": "lymphoid neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1885504",
+        "medgen_name": "Pleural Mucosa-Associated Lymphoid Tissue Lymphoma",
+        "concept_id": "C5985169",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Non-Small Cell Lung Cancer": {
+      "raw_condition": "Non-Small Cell Lung Cancer",
+      "n_tickers": 31,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BBOT",
+        "BCYC",
+        "BDTX",
+        "BIIB",
+        "BMRN",
+        "BNTX",
+        "CHRS"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0003060",
+        "efo_name": "non-small cell lung carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "respiratory or thoracic disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0001071",
+            "name": "lung carcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883097",
+        "medgen_name": "PROphetNSCLC Score",
+        "concept_id": "C5983755",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "NSCLC": {
+      "raw_condition": "NSCLC",
+      "n_tickers": 31,
+      "tickers": [
+        "AVBP",
+        "AZN",
+        "BBIO",
+        "BBOT",
+        "BDTX",
+        "BMEA",
+        "CAI",
+        "CCCC",
+        "CDNA",
+        "CGEM"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0003060",
+        "efo_name": "non-small cell lung carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "respiratory or thoracic disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0001071",
+            "name": "lung carcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883097",
+        "medgen_name": "PROphetNSCLC Score",
+        "concept_id": "C5983755",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Multiple Myeloma": {
+      "raw_condition": "Multiple Myeloma",
+      "n_tickers": 30,
+      "tickers": [
+        "ACLX",
+        "AMGN",
+        "BHVN",
+        "BIIB",
+        "BMEA",
+        "CCCC",
+        "CGEM",
+        "COGT",
+        "CRSP",
+        "CRVS"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0001378",
+        "efo_name": "multiple myeloma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "immune system disease",
+          "hematologic disease",
+          "cancer or benign tumor",
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0002427",
+            "name": "myeloid neoplasm"
+          },
+          {
+            "id": "EFO_0000200",
+            "name": "plasma cell neoplasm"
+          },
+          {
+            "id": "MONDO_0000621",
+            "name": "immune system cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1852633",
+        "medgen_name": "Multiple Myeloma with Recurrent Genetic Abnormalities",
+        "concept_id": "C5855564",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Obesity": {
+      "raw_condition": "Obesity",
+      "n_tickers": 29,
+      "tickers": [
+        "AARD",
+        "ABSI",
+        "ALNY",
+        "ALT",
+        "AMGN",
+        "ARWR",
+        "AZN",
+        "BHVN",
+        "BIOA",
+        "BMEA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0001073",
+        "efo_name": "obesity",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "nutritional or metabolic disease",
+          "phenotype"
+        ],
+        "parents": [
+          {
+            "id": "HP_0004324",
+            "name": "Increased body weight"
+          },
+          {
+            "id": "MONDO_0003916",
+            "name": "overnutrition"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1885376",
+        "medgen_name": "Common polygenetic childhood obesity",
+        "concept_id": "C6008394",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Hepatocellular Carcinoma": {
+      "raw_condition": "Hepatocellular Carcinoma",
+      "n_tickers": 29,
+      "tickers": [
+        "ABUS",
+        "AMGN",
+        "AZN",
+        "BIIB",
+        "CAI",
+        "CDNA",
+        "CHRS",
+        "CVAC",
+        "DNA",
+        "EXEL"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000182",
+        "efo_name": "hepatocellular carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "gastrointestinal disease",
+          "endocrine system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0000228",
+            "name": "adenocarcinoma"
+          },
+          {
+            "id": "MONDO_0018531",
+            "name": "carcinoma of liver and intrahepatic biliary tract"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1884672",
+        "medgen_name": "Colon Hepatoid Adenocarcinoma",
+        "concept_id": "C5984949",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Bladder Cancer": {
+      "raw_condition": "Bladder Cancer",
+      "n_tickers": 28,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BNTX",
+        "CDNA",
+        "CGON",
+        "CLDX",
+        "CRVS",
+        "DAWN"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0004986",
+        "efo_name": "urinary bladder carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "urinary system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0000313",
+            "name": "carcinoma"
+          },
+          {
+            "id": "MONDO_0001187",
+            "name": "urinary bladder cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1806334",
+        "medgen_name": "Bacillus Calmette-Guerin Unresponsive Disease",
+        "concept_id": "C5669939",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Advanced Solid Tumors": {
+      "raw_condition": "Advanced Solid Tumors",
+      "n_tickers": 28,
+      "tickers": [
+        "ADCT",
+        "AGIO",
+        "AMGN",
+        "BIIB",
+        "BNTX",
+        "COGT",
+        "DNA",
+        "FATE",
+        "GILD",
+        "GMAB"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000335",
+        "efo_name": "chromophobe renal cell carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "urinary system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005708",
+            "name": "renal cell adenocarcinoma"
+          }
+        ],
+        "synonyms": []
+      }
+    },
+    "Atopic Dermatitis": {
+      "raw_condition": "Atopic Dermatitis",
+      "n_tickers": 27,
+      "tickers": [
+        "ACRS",
+        "AKTX",
+        "ALDX",
+        "AMGN",
+        "ANAB",
+        "APGE",
+        "ARQT",
+        "BIIB",
+        "CAI",
+        "CDNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000274",
+        "efo_name": "atopic eczema",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "integumentary system disease",
+          "immune system disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_1000636",
+            "name": "inflammatory skin disease"
+          },
+          {
+            "id": "MONDO_0005271",
+            "name": "allergic disease"
+          },
+          {
+            "id": "MONDO_0002406",
+            "name": "dermatitis"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883939",
+        "medgen_name": "Combined immunodeficiency due to FOXN1 haploinsufficiency",
+        "concept_id": "C5925099",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Metastatic Breast Cancer": {
+      "raw_condition": "Metastatic Breast Cancer",
+      "n_tickers": 27,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BBIO",
+        "BBOT",
+        "BNTX",
+        "CAI",
+        "CDNA",
+        "CELC",
+        "CLDX",
+        "CNTX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0007254",
+        "efo_name": "breast cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "integumentary system disease",
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0000653",
+            "name": "integumentary system cancer"
+          },
+          {
+            "id": "MONDO_0003274",
+            "name": "thoracic cancer"
+          },
+          {
+            "id": "EFO_0003869",
+            "name": "breast neoplasm"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1639086",
+        "medgen_name": "Germline BRCA-mutated, HER2-negative metastatic breast cancer",
+        "concept_id": "C4708088",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Glioblastoma": {
+      "raw_condition": "Glioblastoma",
+      "n_tickers": 27,
+      "tickers": [
+        "AZN",
+        "BBIO",
+        "BHVN",
+        "BNTX",
+        "CADL",
+        "CAI",
+        "CDNA",
+        "CLDX",
+        "CVAC",
+        "DNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0018177",
+        "efo_name": "glioblastoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "nervous system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0016680",
+            "name": "high grade astrocytic tumor"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883335",
+        "medgen_name": "Optic Nerve Glioblastoma",
+        "concept_id": "C5986044",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Healthy Participants": {
+      "raw_condition": "Healthy Participants",
+      "n_tickers": 26,
+      "tickers": [
+        "ACIU",
+        "AGIO",
+        "AMGN",
+        "AQST",
+        "ARVN",
+        "ATXS",
+        "AZN",
+        "CDTX",
+        "CLDX",
+        "CYTK"
+      ],
+      "is_rare": false
+    },
+    "Myelodysplastic Syndromes": {
+      "raw_condition": "Myelodysplastic Syndromes",
+      "n_tickers": 26,
+      "tickers": [
+        "ACLX",
+        "AGIO",
+        "AMGN",
+        "ARGX",
+        "CRL",
+        "DNA",
+        "FATE",
+        "GERN",
+        "GILD",
+        "GRFS"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000198",
+        "efo_name": "myelodysplastic syndrome",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "hematologic disease",
+          "cancer or benign tumor",
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0015756",
+            "name": "myeloid hemopathy"
+          },
+          {
+            "id": "MONDO_0021058",
+            "name": "neoplastic syndrome"
+          },
+          {
+            "id": "Orphanet_322126",
+            "name": "Genetic tumor of hematopoietic and lymphoid tissues"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1865844",
+        "medgen_name": "Complete Remission in Myelodysplastic Syndrome with Partial Hematologic Recovery",
+        "concept_id": "C5958949",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Renal Cell Carcinoma": {
+      "raw_condition": "Renal Cell Carcinoma",
+      "n_tickers": 26,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "CDNA",
+        "CLDX",
+        "CRSP",
+        "DNA",
+        "EXEL",
+        "FATE",
+        "GMAB"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000681",
+        "efo_name": "renal cell carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "urinary system disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0002890",
+            "name": "renal carcinoma"
+          },
+          {
+            "id": "EFO_0000228",
+            "name": "adenocarcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883710",
+        "medgen_name": "Recurrent Unresectable Renal Cell Carcinoma",
+        "concept_id": "C5985793",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Triple Negative Breast Cancer": {
+      "raw_condition": "Triple Negative Breast Cancer",
+      "n_tickers": 26,
+      "tickers": [
+        "AZN",
+        "BNTX",
+        "CAI",
+        "CDNA",
+        "CELC",
+        "CLDX",
+        "CMPX",
+        "CRVS",
+        "DNA",
+        "EXEL"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0005537",
+        "efo_name": "triple-negative breast cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "integumentary system disease",
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0009780",
+            "name": "HER2 negative breast carcinoma"
+          },
+          {
+            "id": "EFO_0009781",
+            "name": "progesterone-receptor negative breast cancer"
+          },
+          {
+            "id": "EFO_1000650",
+            "name": "estrogen-receptor negative breast cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1649548",
+        "medgen_name": "Triple-negative breast carcinoma",
+        "concept_id": "C4722518",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Chronic Lymphocytic Leukemia": {
+      "raw_condition": "Chronic Lymphocytic Leukemia",
+      "n_tickers": 25,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "BIIB",
+        "BMEA",
+        "CLDX",
+        "DNA",
+        "EXEL",
+        "FATE",
+        "GILD"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000095",
+        "efo_name": "chronic lymphocytic leukemia",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "hematologic disease",
+          "immune system disease",
+          "genetic, familial or congenital disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0017594",
+            "name": "indolent B-cell non-Hodgkin lymphoma"
+          },
+          {
+            "id": "EFO_0000220",
+            "name": "acute lymphoblastic leukemia"
+          },
+          {
+            "id": "EFO_0000096",
+            "name": "neoplasm of mature B-cells"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1859721",
+        "medgen_name": "Transformed Chronic Lymphocytic Leukemia to Hodgkin Lymphoma",
+        "concept_id": "C5908262",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Healthy Subjects": {
+      "raw_condition": "Healthy Subjects",
+      "n_tickers": 25,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BEAM",
+        "BIIB",
+        "CAI",
+        "CERS",
+        "CLDX",
+        "CRVS",
+        "CYTK",
+        "DNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "HP_0002172",
+        "efo_name": "Postural instability",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "phenotype"
+        ],
+        "parents": [
+          {
+            "id": "HP_0100022",
+            "name": "Abnormality of movement"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "893325",
+        "medgen_name": "Prasugrel response",
+        "concept_id": "CN239061",
+        "semantic_type": {
+          "value": "Sign or Symptom"
+        }
+      }
+    },
+    "Esophageal Cancer": {
+      "raw_condition": "Esophageal Cancer",
+      "n_tickers": 24,
+      "tickers": [
+        "ADCT",
+        "AMGN",
+        "AZN",
+        "CATX",
+        "CLDX",
+        "CTMX",
+        "DNA",
+        "GH",
+        "GILD",
+        "GMAB"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0007576",
+        "efo_name": "esophageal cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "gastrointestinal disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0002516",
+            "name": "digestive system cancer"
+          },
+          {
+            "id": "MONDO_0021355",
+            "name": "neoplasm of esophagus"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1792119",
+        "medgen_name": "High Risk Barrett Esophagus",
+        "concept_id": "C5555678",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Covid19": {
+      "raw_condition": "Covid19",
+      "n_tickers": 24,
+      "tickers": [
+        "ALDX",
+        "AUPH",
+        "BIOA",
+        "CAI",
+        "CDNA",
+        "CVAC",
+        "DNA",
+        "GH",
+        "GILD",
+        "IBRX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0026767",
+        "efo_name": "immunodeficiency 74, COVID-19-related, X-linked",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "immune system disease",
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021094",
+            "name": "immunodeficiency disease"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1773793",
+        "medgen_name": "Respiratory failure due to COVID19 (SARS-CoV-2) infection",
+        "concept_id": "C5435750",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Head and Neck Cancer": {
+      "raw_condition": "Head and Neck Cancer",
+      "n_tickers": 24,
+      "tickers": [
+        "AMGN",
+        "AZN",
+        "BNTX",
+        "CATX",
+        "CDNA",
+        "CHRS",
+        "CLDX",
+        "CMPX",
+        "CTMX",
+        "DNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0006859",
+        "efo_name": "head and neck malignant neoplasia",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005950",
+            "name": "head and neck neoplasia"
+          },
+          {
+            "id": "MONDO_0004992",
+            "name": "cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1663644",
+        "medgen_name": "Recurrent Malignant Head and Neck Neoplasm",
+        "concept_id": "C4726630",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "HIV Infections": {
+      "raw_condition": "HIV Infections",
+      "n_tickers": 23,
+      "tickers": [
+        "ABVX",
+        "ALKS",
+        "AMGN",
+        "AMRX",
+        "BCRX",
+        "BIIB",
+        "CAI",
+        "CDNA",
+        "DNA",
+        "DVAX"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000764",
+        "efo_name": "HIV infection",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "infectious disease",
+          "reproductive system or breast disease"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021682",
+            "name": "viral sexually transmitted disease"
+          },
+          {
+            "id": "EFO_1001357",
+            "name": "Lentivirus Infections"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "5583",
+        "medgen_name": "Human immunodeficiency virus infection",
+        "concept_id": "C0019693",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Schizophrenia": {
+      "raw_condition": "Schizophrenia",
+      "n_tickers": 23,
+      "tickers": [
+        "ACAD",
+        "ALKS",
+        "AMGN",
+        "AMRX",
+        "ANRO",
+        "AVXL",
+        "AZN",
+        "BIIB",
+        "CAI",
+        "CDNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0005090",
+        "efo_name": "schizophrenia",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "psychiatric disorder",
+          "nervous system disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005407",
+            "name": "psychosis"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1877314",
+        "medgen_name": "Impaired drive",
+        "concept_id": "C6010514",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Hepatic Impairment": {
+      "raw_condition": "Hepatic Impairment",
+      "n_tickers": 23,
+      "tickers": [
+        "AGIO",
+        "ALKS",
+        "ALMS",
+        "AMGN",
+        "AVIR",
+        "AZN",
+        "BIIB",
+        "EXEL",
+        "GILD",
+        "INDV"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0009446",
+        "efo_name": "ichthyosis-intellectual disability-dwarfism-renal impairment syndrome",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0000508",
+            "name": "genetic disorder"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1653680",
+        "medgen_name": "Moderate Hepatic Insufficiency",
+        "concept_id": "C4725020",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Renal Impairment": {
+      "raw_condition": "Renal Impairment",
+      "n_tickers": 23,
+      "tickers": [
+        "ALKS",
+        "ALMS",
+        "AMGN",
+        "ARGX",
+        "AVIR",
+        "AZN",
+        "EXEL",
+        "GILD",
+        "GLPG",
+        "INCY"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0009446",
+        "efo_name": "ichthyosis-intellectual disability-dwarfism-renal impairment syndrome",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0000508",
+            "name": "genetic disorder"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1881053",
+        "medgen_name": "Chronic tophaceous gout of left wrist due to renal impairment",
+        "concept_id": "C6012567",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Asthma": {
+      "raw_condition": "Asthma",
+      "n_tickers": 23,
+      "tickers": [
+        "ALKS",
+        "AMGN",
+        "AMPH",
+        "ANAB",
+        "APGE",
+        "ARWR",
+        "AZN",
+        "CAI",
+        "DNA",
+        "GH"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0004979",
+        "efo_name": "asthma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "phenotype",
+          "respiratory or thoracic disease"
+        ],
+        "parents": [
+          {
+            "id": "HP_0010978",
+            "name": "Abnormality of immune system physiology"
+          },
+          {
+            "id": "EFO_1002018",
+            "name": "bronchial disease"
+          },
+          {
+            "id": "HP_0002086",
+            "name": "Abnormality of the respiratory system"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1885521",
+        "medgen_name": "Peeling skin syndrome 1",
+        "concept_id": "C5679693",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Cervical Cancer": {
+      "raw_condition": "Cervical Cancer",
+      "n_tickers": 23,
+      "tickers": [
+        "AZN",
+        "CAI",
+        "CRVS",
+        "DNA",
+        "EXEL",
+        "FATE",
+        "GILD",
+        "GMAB",
+        "IBRX",
+        "INCY"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0002974",
+        "efo_name": "cervical cancer",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "reproductive system or breast disease",
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0021230",
+            "name": "uterine cervix neoplasm"
+          },
+          {
+            "id": "MONDO_0002715",
+            "name": "uterine cancer"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1843219",
+        "medgen_name": "HIV-associated cancer",
+        "concept_id": "C5680059",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Cardiovascular Diseases": {
+      "raw_condition": "Cardiovascular Diseases",
+      "n_tickers": 22,
+      "tickers": [
+        "ABSI",
+        "AMGN",
+        "AZN",
+        "CAI",
+        "CDNA",
+        "CRL",
+        "DNA",
+        "ESPR",
+        "GH",
+        "GILD"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000319",
+        "efo_name": "cardiovascular disease",
+        "is_therapeutic_area": true,
+        "therapeutic_areas": [
+          "cardiovascular disease"
+        ],
+        "parents": [],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1718699",
+        "medgen_name": "Cardiometabolic Syndromes",
+        "concept_id": "C5243476",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Head and Neck Squamous Cell Carcinoma": {
+      "raw_condition": "Head and Neck Squamous Cell Carcinoma",
+      "n_tickers": 22,
+      "tickers": [
+        "ACRV",
+        "AZN",
+        "BCAX",
+        "CAI",
+        "CHRS",
+        "CLDX",
+        "CMPX",
+        "DNA",
+        "EXEL",
+        "FATE"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000181",
+        "efo_name": "head and neck squamous cell carcinoma",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "cancer or benign tumor"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0002038",
+            "name": "head and neck carcinoma"
+          },
+          {
+            "id": "EFO_0000707",
+            "name": "squamous cell carcinoma"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1884197",
+        "medgen_name": "Recurrent Unresectable Head and Neck Squamous Cell Carcinoma",
+        "concept_id": "C5985791",
+        "semantic_type": {
+          "value": "Neoplastic Process"
+        }
+      }
+    },
+    "Diabetes Mellitus, Type 2": {
+      "raw_condition": "Diabetes Mellitus, Type 2",
+      "n_tickers": 21,
+      "tickers": [
+        "ALKS",
+        "ARWR",
+        "AZN",
+        "BIIB",
+        "CAI",
+        "CDNA",
+        "CRL",
+        "DNA",
+        "ESPR",
+        "GH"
+      ],
+      "is_rare": false,
+      "medgen": {
+        "medgen_uid": "1834436",
+        "medgen_name": "Pre-Existing Type 2 Diabetes Mellitus, Type 2, in Pregnancy, Unspecified Trimester",
+        "concept_id": "C5786658",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Multiple Sclerosis": {
+      "raw_condition": "Multiple Sclerosis",
+      "n_tickers": 21,
+      "tickers": [
+        "ALKS",
+        "AXSM",
+        "BIIB",
+        "CABA",
+        "CAI",
+        "CDNA",
+        "CTNM",
+        "DNA",
+        "GH",
+        "GILD"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0005301",
+        "efo_name": "multiple sclerosis",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "nervous system disease",
+          "immune system disease"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005774",
+            "name": "brain disease"
+          },
+          {
+            "id": "MONDO_0020800",
+            "name": "demyelinating disease of central nervous system"
+          },
+          {
+            "id": "EFO_0020092",
+            "name": "neuroinflammatory disorder"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1883596",
+        "medgen_name": "Brown-S\u00e9quard syndrome due to multiple sclerosis",
+        "concept_id": "C6008051",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    },
+    "Psoriasis": {
+      "raw_condition": "Psoriasis",
+      "n_tickers": 21,
+      "tickers": [
+        "ALMS",
+        "ALVO",
+        "AMGN",
+        "AMRX",
+        "ARQT",
+        "AUPH",
+        "BIIB",
+        "CAI",
+        "CDNA",
+        "DNA"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "EFO_0000676",
+        "efo_name": "psoriasis",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "immune system disease",
+          "integumentary system disease",
+          "genetic, familial or congenital disease"
+        ],
+        "parents": [
+          {
+            "id": "MONDO_0002406",
+            "name": "dermatitis"
+          },
+          {
+            "id": "EFO_1000636",
+            "name": "inflammatory skin disease"
+          },
+          {
+            "id": "EFO_0000540",
+            "name": "immune system disease"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1878172",
+        "medgen_name": "Psoriasis-like lesions",
+        "concept_id": "C6013554",
+        "semantic_type": {
+          "value": "Finding"
+        }
+      }
+    },
+    "Systemic Lupus Erythematosus": {
+      "raw_condition": "Systemic Lupus Erythematosus",
+      "n_tickers": 21,
+      "tickers": [
+        "AMGN",
+        "ARTV",
+        "AZN",
+        "BIIB",
+        "CABA",
+        "CAI",
+        "CLYM",
+        "CRBU",
+        "DNA",
+        "GLPG"
+      ],
+      "is_rare": false,
+      "efo": {
+        "efo_id": "MONDO_0007915",
+        "efo_name": "systemic lupus erythematosus",
+        "is_therapeutic_area": false,
+        "therapeutic_areas": [
+          "immune system disease",
+          "urinary system disease",
+          "musculoskeletal or connective tissue disease",
+          "phenotype"
+        ],
+        "parents": [
+          {
+            "id": "EFO_0005140",
+            "name": "autoimmune disease"
+          },
+          {
+            "id": "HP_0002960",
+            "name": "Autoimmunity"
+          },
+          {
+            "id": "MONDO_0004670",
+            "name": "lupus erythematosus"
+          }
+        ],
+        "synonyms": []
+      },
+      "medgen": {
+        "medgen_uid": "1876466",
+        "medgen_name": "Immunodysregulation with variable immunodeficiency and autoimmunity",
+        "concept_id": "C6012736",
+        "semantic_type": {
+          "value": "Disease or Syndrome"
+        }
+      }
+    }
+  }
+}

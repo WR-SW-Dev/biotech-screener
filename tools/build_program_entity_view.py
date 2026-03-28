@@ -32,6 +32,55 @@ logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("program_entity_view")
 
 SCHEMA_VERSION = "program_entity_view.v1"
+DATA_DIR = REPO_ROOT / "data"
+
+
+def _load_condition_aliases() -> Dict[str, str]:
+    """Load condition alias map (variant → canonical)."""
+    path = DATA_DIR / "condition_aliases.json"
+    if not path.exists():
+        return {}
+    with open(path, encoding="utf-8") as f:
+        raw = json.load(f)
+    # Keys are already lowercased in the file; filter out metadata keys
+    return {k: v for k, v in raw.items() if not k.startswith("_")}
+
+
+def _load_ta_rollup() -> Dict[str, Any]:
+    """Load therapeutic area rollup config."""
+    path = DATA_DIR / "therapeutic_area_rollup.json"
+    if not path.exists():
+        return {}
+    with open(path, encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _resolve_simplified_ta(
+    raw_condition: str,
+    efo_therapeutic_areas: List[str],
+    ta_rollup: Dict[str, Any],
+) -> Optional[str]:
+    """Resolve a single simplified therapeutic area from EFO TAs + overrides."""
+    # Direct condition override takes priority
+    overrides = ta_rollup.get("condition_to_ta_override", {})
+    if raw_condition in overrides:
+        return overrides[raw_condition]
+
+    # Map from EFO therapeutic_areas via rollup, first non-null wins by priority
+    efo_map = ta_rollup.get("efo_to_ta", {})
+    ta_priority = ta_rollup.get("ta_priority", [])
+    mapped = set()
+    for efo_ta in efo_therapeutic_areas:
+        ta = efo_map.get(efo_ta)
+        if ta:
+            mapped.add(ta)
+    if mapped:
+        for ta in ta_priority:
+            if ta in mapped:
+                return ta
+        return next(iter(mapped))
+
+    return None
 
 
 def _load_latest(enrichment_dir: Path, prefix: str) -> Optional[Dict]:
@@ -65,6 +114,18 @@ def build_program_entity_view(
     cache_dir: Path = REPO_ROOT / "cache" / "ctgov",
 ) -> Dict[str, Any]:
     """Build unified program entity view from enrichment layers."""
+
+    # Load alias and TA rollup maps
+    condition_aliases = _load_condition_aliases()
+    ta_rollup = _load_ta_rollup()
+    if condition_aliases:
+        logger.info("Loaded %d condition aliases", len(condition_aliases))
+    if ta_rollup:
+        logger.info(
+            "Loaded TA rollup (%d EFO mappings, %d condition overrides)",
+            len(ta_rollup.get("efo_to_ta", {})),
+            len(ta_rollup.get("condition_to_ta_override", {})),
+        )
 
     # Load all enrichment sources
     drug_master = _load_latest(enrichment_dir, "drug_master")
@@ -167,23 +228,43 @@ def build_program_entity_view(
             drug_entity = {"raw_name": raw_interventions[0], "canonical_name": raw_interventions[0]}
 
         # Resolve indication entity (use first non-noise condition)
+        # Try alias-resolved lookup before exact match
         indication_entity = None
         for cond in raw_conditions[:3]:
-            match = indication_index.get(cond.lower())
+            cond_lower = cond.lower()
+            # Alias resolution: map variant → canonical, then look up canonical
+            canonical = condition_aliases.get(cond_lower)
+            match = None
+            if canonical:
+                match = indication_index.get(canonical.lower())
+            if not match:
+                match = indication_index.get(cond_lower)
             if match and not match.get("excluded"):
                 efo = match.get("efo", {}) or {}
                 medgen = match.get("medgen", {}) or {}
+                efo_tas = efo.get("therapeutic_areas", [])
+                raw_cond_display = canonical or cond
+                simplified_ta = _resolve_simplified_ta(raw_cond_display, efo_tas, ta_rollup)
                 indication_entity = {
                     "raw_condition": cond,
+                    "canonical_condition": canonical or cond,
                     "efo_id": efo.get("efo_id"),
                     "efo_name": efo.get("efo_name"),
                     "medgen_uid": medgen.get("medgen_uid"),
-                    "therapeutic_areas": efo.get("therapeutic_areas", []),
+                    "therapeutic_areas": efo_tas,
+                    "simplified_therapeutic_area": simplified_ta,
                     "is_rare": match.get("is_rare", False),
                 }
                 break
         if not indication_entity and raw_conditions:
-            indication_entity = {"raw_condition": raw_conditions[0]}
+            raw_cond = raw_conditions[0]
+            canonical = condition_aliases.get(raw_cond.lower())
+            simplified_ta = _resolve_simplified_ta(canonical or raw_cond, [], ta_rollup)
+            indication_entity = {
+                "raw_condition": raw_cond,
+                "canonical_condition": canonical or raw_cond,
+                "simplified_therapeutic_area": simplified_ta,
+            }
 
         # Attach trial context
         trial_context = endpoint_index.get(nct_id, {})

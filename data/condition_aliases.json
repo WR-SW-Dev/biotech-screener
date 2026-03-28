@@ -1,0 +1,175 @@
+{
+  "_schema": "condition_aliases.v1",
+  "_description": "Maps variant condition names to canonical forms for indication_master lookup. Keys are lowercased aliases; values are the canonical condition string (matching indication_master entry keys). Consumed by build_program_entity_view before exact-match lookup.",
+
+  "parkinson disease": "Parkinson's Disease",
+  "parkinson's disease (pd)": "Parkinson's Disease",
+  "parkinsons disease": "Parkinson's Disease",
+  "pd (parkinson's disease)": "Parkinson's Disease",
+
+  "alzheimer's disease": "Alzheimer Disease",
+  "alzheimers disease": "Alzheimer Disease",
+  "alzheimer's disease (ad)": "Alzheimer Disease",
+
+  "huntington's disease": "Huntington Disease",
+  "huntingtons disease": "Huntington Disease",
+  "hd (huntington disease)": "Huntington Disease",
+
+  "als": "Amyotrophic Lateral Sclerosis",
+  "amyotrophic lateral sclerosis (als)": "Amyotrophic Lateral Sclerosis",
+
+  "hepatitis b": "Chronic Hepatitis B",
+  "hepatitis b, chronic": "Chronic Hepatitis B",
+  "hbv": "Chronic Hepatitis B",
+  "hbv infection": "Chronic Hepatitis B",
+  "chronic hepatitis b virus": "Chronic Hepatitis B",
+  "chronic hepatitis b (chb)": "Chronic Hepatitis B",
+
+  "chronic hepatitis c": "Hepatitis C",
+  "hcv": "Hepatitis C",
+  "hcv infection": "Hepatitis C",
+  "hepatitis c virus": "Hepatitis C",
+
+  "dry eye syndromes": "Dry Eye",
+  "dry eye disease": "Dry Eye",
+  "dry eye syndrome": "Dry Eye",
+  "ded": "Dry Eye",
+  "keratoconjunctivitis sicca": "Dry Eye",
+
+  "pulmonary hypertension": "Pulmonary Arterial Hypertension",
+  "pah": "Pulmonary Arterial Hypertension",
+  "pulmonary arterial hypertension (pah)": "Pulmonary Arterial Hypertension",
+
+  "treatment-resistant depression": "Treatment Resistant Depression",
+  "trd": "Treatment Resistant Depression",
+
+  "mdd": "Major Depressive Disorder",
+  "major depression": "Major Depressive Disorder",
+  "major depressive disorder (mdd)": "Major Depressive Disorder",
+
+  "nonalcoholic steatohepatitis": "NASH - Nonalcoholic Steatohepatitis",
+  "nash": "NASH - Nonalcoholic Steatohepatitis",
+  "non-alcoholic steatohepatitis": "NASH - Nonalcoholic Steatohepatitis",
+  "metabolic dysfunction-associated steatohepatitis": "NASH - Nonalcoholic Steatohepatitis",
+  "mash": "NASH - Nonalcoholic Steatohepatitis",
+
+  "solid tumors": "Solid Tumor, Adult",
+  "advanced solid tumors": "Solid Tumor, Adult",
+  "advanced solid tumor": "Solid Tumor, Adult",
+  "solid tumor": "Solid Tumor, Adult",
+  "metastatic solid tumor": "Solid Tumor, Adult",
+
+  "multiple myeloma": "Relapsed/Refractory Multiple Myeloma",
+  "mm": "Relapsed/Refractory Multiple Myeloma",
+  "relapsed or refractory multiple myeloma": "Relapsed/Refractory Multiple Myeloma",
+
+  "dme": "Diabetic Macular Edema",
+  "diabetic macular oedema": "Diabetic Macular Edema",
+
+  "sma": "Spinal Muscular Atrophy",
+  "spinal muscular atrophy (sma)": "Spinal Muscular Atrophy",
+  "sma type 1": "Spinal Muscular Atrophy",
+
+  "cf": "Cystic Fibrosis",
+  "cystic fibrosis (cf)": "Cystic Fibrosis",
+
+  "dmd": "Duchenne Muscular Dystrophy",
+  "duchenne": "Duchenne Muscular Dystrophy",
+  "duchenne muscular dystrophy (dmd)": "Duchenne Muscular Dystrophy",
+
+  "hae": "Hereditary Angioedema",
+  "hereditary angioedema (hae)": "Hereditary Angioedema",
+
+  "t1d": "Type 1 Diabetes Mellitus",
+  "type 1 diabetes": "Type 1 Diabetes Mellitus",
+  "diabetes mellitus, type 1": "Type 1 Diabetes Mellitus",
+  "insulin-dependent diabetes mellitus": "Type 1 Diabetes Mellitus",
+
+  "friedreich's ataxia": "Friedreich Ataxia",
+  "frda": "Friedreich Ataxia",
+  "friedreich ataxia (frda)": "Friedreich Ataxia",
+
+  "fabry's disease": "Fabry Disease",
+  "anderson-fabry disease": "Fabry Disease",
+
+  "hypercholesterolaemia": "Hypercholesterolemia",
+  "familial hypercholesterolemia": "Hypercholesterolemia",
+  "heterozygous familial hypercholesterolemia": "Hypercholesterolemia",
+  "homozygous familial hypercholesterolemia": "Hypercholesterolemia",
+
+  "scd": "Sickle Cell Disease",
+  "sickle cell anemia": "Sickle Cell Disease",
+  "sickle cell anaemia": "Sickle Cell Disease",
+
+  "ted": "Thyroid Eye Disease",
+  "graves' ophthalmopathy": "Thyroid Eye Disease",
+  "thyroid-associated ophthalmopathy": "Thyroid Eye Disease",
+
+  "ipf": "Idiopathic Pulmonary Fibrosis",
+  "idiopathic pulmonary fibrosis (ipf)": "Idiopathic Pulmonary Fibrosis",
+
+  "geographic atrophy (ga)": "Geographic Atrophy",
+  "ga": "Geographic Atrophy",
+
+  "amd": "Geographic Atrophy",
+  "age-related macular degeneration": "Geographic Atrophy",
+
+  "uc": "Ulcerative Colitis",
+  "ulcerative colitis (uc)": "Ulcerative Colitis",
+
+  "plaque psoriasis (pso)": "Plaque Psoriasis",
+  "moderate to severe plaque psoriasis": "Plaque Psoriasis",
+  "psoriasis": "Plaque Psoriasis",
+
+  "pnh": "Paroxysmal Nocturnal Hemoglobinuria",
+  "paroxysmal nocturnal hemoglobinuria (pnh)": "Paroxysmal Nocturnal Hemoglobinuria",
+  "paroxysmal nocturnal haemoglobinuria": "Paroxysmal Nocturnal Hemoglobinuria",
+
+  "epilepsy, focal": "Epilepsy",
+  "focal epilepsy": "Epilepsy",
+  "partial-onset seizures": "Epilepsy",
+
+  "lupus": "Lupus Nephritis",
+  "systemic lupus erythematosus": "Lupus Nephritis",
+  "sle": "Lupus Nephritis",
+  "ln": "Lupus Nephritis",
+
+  "hidradenitis suppurativa (hs)": "Hidradenitis Suppurativa",
+  "hs": "Hidradenitis Suppurativa",
+
+  "prader-willi": "Prader-Willi Syndrome",
+  "pws": "Prader-Willi Syndrome",
+
+  "alpha-1 antitrypsin deficiency": "Alpha 1-Antitrypsin Deficiency",
+  "aatd": "Alpha 1-Antitrypsin Deficiency",
+  "alpha-1": "Alpha 1-Antitrypsin Deficiency",
+
+  "hpt": "Hypoparathyroidism",
+
+  "flu": "Influenza",
+  "influenza a": "Influenza",
+  "seasonal influenza": "Influenza",
+
+  "hypertension, essential": "Hypertension",
+  "essential hypertension": "Hypertension",
+  "high blood pressure": "Hypertension",
+
+  "smallpox vaccine": "Smallpox",
+  "mpox": "Smallpox",
+  "monkeypox": "Smallpox",
+
+  "pneumococcal disease": "Pneumococcal Vaccines",
+  "pneumococcal infection": "Pneumococcal Vaccines",
+  "pneumonia, pneumococcal": "Pneumococcal Vaccines",
+
+  "um": "Uveal Melanoma",
+  "uveal melanoma (um)": "Uveal Melanoma",
+  "ocular melanoma": "Uveal Melanoma",
+
+  "pain, chronic": "Pain",
+  "chronic pain": "Pain",
+  "neuropathic pain": "Pain",
+
+  "cataract surgery": "Cataract",
+  "cataracts": "Cataract"
+}

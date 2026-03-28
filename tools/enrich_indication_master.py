@@ -54,7 +54,7 @@ def _graphql_post(query: str, variables: dict) -> Any:
         headers={"Content-Type": "application/json", "User-Agent": "biotech-screener/1.0"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=5) as resp:
             return json.loads(resp.read())
     except Exception:
         return None
@@ -236,14 +236,14 @@ def build_indication_master(
         if efo:
             entry["efo"] = efo
             n_efo += 1
-        time.sleep(0.15)
+        time.sleep(0.05)
 
         # MedGen
         medgen = query_medgen(cond)
         if medgen:
             entry["medgen"] = medgen
             n_medgen += 1
-        time.sleep(0.15)
+        time.sleep(0.05)
 
         entries[cond] = entry
 
