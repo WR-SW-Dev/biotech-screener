@@ -56,90 +56,104 @@ def load_universe_drugs(cache_dir: Path) -> Dict[str, List[Dict]]:
     return {t: list(drugs) for t, drugs in ticker_drugs.items()}
 
 
-def query_open_targets_drug(drug_name: str) -> List[Dict[str, Any]]:
-    """Query Open Targets for a drug name, return disease associations."""
-    query = """
-    query DrugSearch($name: String!) {
-      search(queryString: $name, entityNames: ["drug"], page: {size: 1, index: 0}) {
-        hits {
-          id
-          name
-          entity
-          ... on Drug {
-            mechanismsOfAction {
-              rows {
-                mechanismOfAction
-                targets {
-                  approvedName
-                  approvedSymbol
-                }
-              }
-            }
-            indications {
-              rows {
-                disease {
-                  id
-                  name
-                  therapeuticAreas {
-                    id
-                    name
-                  }
-                }
-                maxPhaseForIndication
-              }
-            }
-          }
-        }
-      }
-    }
-    """
-    payload = json.dumps({"query": query, "variables": {"name": drug_name}}).encode()
+def _graphql_post(query: str, variables: dict) -> Any:
+    """Post a GraphQL query to Open Targets and return parsed JSON."""
+    payload = json.dumps({"query": query, "variables": variables}).encode()
     req = urllib.request.Request(
         OT_API,
         data=payload,
         headers={"Content-Type": "application/json", "User-Agent": "biotech-screener/1.0"},
     )
-
     try:
         with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read())
+            return json.loads(resp.read())
+    except Exception:
+        return None
 
-        hits = data.get("data", {}).get("search", {}).get("hits", [])
-        if not hits:
-            return []
 
-        hit = hits[0]
-        results = []
+def query_open_targets_drug(drug_name: str) -> List[Dict[str, Any]]:
+    """Query Open Targets for a drug name, return disease associations.
 
-        # Extract mechanisms
-        mechanisms = []
-        for moa in (hit.get("mechanismsOfAction") or {}).get("rows", []):
-            mech = moa.get("mechanismOfAction", "")
-            targets = [t.get("approvedSymbol", "") for t in moa.get("targets", [])]
-            if mech:
-                mechanisms.append({"mechanism": mech, "targets": targets})
-
-        # Extract indications with disease taxonomy
-        for ind in (hit.get("indications") or {}).get("rows", []):
-            disease = ind.get("disease", {})
-            tas = disease.get("therapeuticAreas", [])
-            results.append(
-                {
-                    "drug_id": hit.get("id", ""),
-                    "drug_name": hit.get("name", ""),
-                    "disease_id": disease.get("id", ""),
-                    "disease_name": disease.get("name", ""),
-                    "therapeutic_areas": [ta.get("name", "") for ta in tas],
-                    "max_phase": ind.get("maxPhaseForIndication"),
-                    "mechanisms": mechanisms[:3],
-                }
-            )
-
-        return results
-
-    except Exception as e:
-        logger.debug("Open Targets query failed for %s: %s", drug_name, e)
+    Uses two-step approach: search returns generic SearchResult (not Drug),
+    so inline fragments like ``... on Drug`` are silently ignored. We search
+    for the drug ID first, then fetch full details by chemblId.
+    """
+    # Step 1: search to get drug ID
+    search_query = """
+    query DrugSearch($name: String!) {
+      search(queryString: $name, entityNames: ["drug"], page: {size: 1, index: 0}) {
+        hits { id name entity }
+      }
+    }
+    """
+    data = _graphql_post(search_query, {"name": drug_name})
+    if not data:
         return []
+
+    hits = data.get("data", {}).get("search", {}).get("hits", [])
+    if not hits:
+        return []
+
+    drug_id = hits[0].get("id", "")
+    drug_display = hits[0].get("name", drug_name)
+    if not drug_id:
+        return []
+
+    # Step 2: fetch full drug details by chemblId
+    detail_query = """
+    query DrugDetail($id: String!) {
+      drug(chemblId: $id) {
+        id name
+        mechanismsOfAction {
+          rows {
+            mechanismOfAction
+            targets { approvedName approvedSymbol }
+          }
+        }
+        indications {
+          rows {
+            disease {
+              id name
+              therapeuticAreas { id name }
+            }
+            maxClinicalStage
+          }
+        }
+      }
+    }
+    """
+    detail = _graphql_post(detail_query, {"id": drug_id})
+    if not detail:
+        return []
+
+    hit = detail.get("data", {}).get("drug") or {}
+    results = []
+
+    # Extract mechanisms
+    mechanisms = []
+    for moa in (hit.get("mechanismsOfAction") or {}).get("rows", []):
+        mech = moa.get("mechanismOfAction", "")
+        targets = [t.get("approvedSymbol", "") for t in moa.get("targets", [])]
+        if mech:
+            mechanisms.append({"mechanism": mech, "targets": targets})
+
+    # Extract indications with disease taxonomy
+    for ind in (hit.get("indications") or {}).get("rows", []):
+        disease = ind.get("disease", {})
+        tas = disease.get("therapeuticAreas", [])
+        results.append(
+            {
+                "drug_id": drug_id,
+                "drug_name": hit.get("name", drug_display),
+                "disease_id": disease.get("id", ""),
+                "disease_name": disease.get("name", ""),
+                "therapeutic_areas": [ta.get("name", "") for ta in tas],
+                "max_phase": ind.get("maxClinicalStage"),
+                "mechanisms": mechanisms[:3],
+            }
+        )
+
+    return results
 
 
 def enrich_open_targets(

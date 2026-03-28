@@ -83,10 +83,24 @@ NOISE = frozenset(
         "Healthy",
         "Healthy Volunteers",
         "Healthy Volunteer",
+        "Healthy Participants",
+        "Healthy Volunteer Study",
+        "Healthy Adults",
+        "Healthy Adult Volunteers",
+        "Healthy Subjects",
+        "Healthy Male Volunteers",
+        "Normal Volunteers",
         "Safety",
         "Pharmacokinetics",
         "Drug Interaction",
+        "Drug Interactions",
         "Bioequivalence",
+        "Bioavailability",
+        "Dose Finding",
+        "Dose Escalation",
+        "Safety and Tolerability",
+        "Safety and Tolerability in Healthy Volunteers",
+        "Safety and Efficacy",
     }
 )
 
@@ -205,15 +219,16 @@ def build_indication_master(
     cache_dir: Path = REPO_ROOT / "cache" / "ctgov",
     output_dir: Path = REPO_ROOT / "data" / "enrichment",
     max_conditions: int = 0,
+    min_tickers: int = 1,
 ) -> Dict[str, Any]:
     """Build the indication master artifact."""
     cond_tickers = load_conditions(cache_dir)
     if not cond_tickers:
         return {"error": "no conditions data"}
 
-    # Sort by frequency, filter noise
+    # Sort by frequency, filter noise and low-frequency
     sorted_conds = sorted(cond_tickers.keys(), key=lambda c: -len(cond_tickers[c]))
-    sorted_conds = [c for c in sorted_conds if c not in NOISE]
+    sorted_conds = [c for c in sorted_conds if c not in NOISE and len(cond_tickers[c]) >= min_tickers]
     if max_conditions > 0:
         sorted_conds = sorted_conds[:max_conditions]
 
@@ -228,7 +243,6 @@ def build_indication_master(
             "raw_condition": cond,
             "n_tickers": len(cond_tickers[cond]),
             "tickers": sorted(cond_tickers[cond])[:10],
-            "is_rare": check_orphanet_rare(cond),
         }
 
         # Open Targets (EFO)
@@ -244,6 +258,11 @@ def build_indication_master(
             entry["medgen"] = medgen
             n_medgen += 1
         time.sleep(0.05)
+
+        # Rare disease: keyword heuristic OR EFO therapeutic area signal
+        efo_tas = [ta.lower() for ta in (efo or {}).get("therapeutic_areas", [])]
+        is_rare_efo = any("genetic" in ta or "congenital" in ta or "hereditary" in ta for ta in efo_tas)
+        entry["is_rare"] = check_orphanet_rare(cond) or is_rare_efo
 
         entries[cond] = entry
 
@@ -273,8 +292,9 @@ def build_indication_master(
 def main():
     parser = argparse.ArgumentParser(description="Indication master builder")
     parser.add_argument("--max-conditions", type=int, default=0)
+    parser.add_argument("--min-tickers", type=int, default=3, help="Minimum tickers sharing a condition (default: 3)")
     args = parser.parse_args()
-    result = build_indication_master(max_conditions=args.max_conditions)
+    result = build_indication_master(max_conditions=args.max_conditions, min_tickers=args.min_tickers)
     if "error" in result:
         logger.error(result["error"])
         sys.exit(1)

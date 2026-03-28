@@ -171,5 +171,44 @@
   "neuropathic pain": "Pain",
 
   "cataract surgery": "Cataract",
-  "cataracts": "Cataract"
+  "cataracts": "Cataract",
+
+  "covid 19": "COVID-19",
+  "covid19": "COVID-19",
+  "sars-cov-2": "COVID-19",
+  "sars-cov-2 infection": "COVID-19",
+
+  "homozygous familial hypercholesterolemia (hofh)": "Hypercholesterolemia",
+  "hofh": "Hypercholesterolemia",
+
+  "chronic hepatitis b infection": "Chronic Hepatitis B",
+  "chronic hbv infection": "Chronic Hepatitis B",
+
+  "open angle glaucoma": "Open-Angle Glaucoma",
+  "open-angle glaucoma (oag)": "Open-Angle Glaucoma",
+  "primary open-angle glaucoma": "Open-Angle Glaucoma",
+  "poag": "Open-Angle Glaucoma",
+
+  "select advanced solid tumors": "Solid Tumor, Adult",
+  "locally advanced solid tumors": "Solid Tumor, Adult",
+  "solid neoplasm": "Solid Tumor, Adult",
+
+  "epidermolysis bullosa dystrophica": "Dystrophic Epidermolysis Bullosa",
+  "rdeb": "Dystrophic Epidermolysis Bullosa",
+
+  "constipation predominant irritable bowel syndrome": "Irritable Bowel Syndrome With Constipation",
+  "ibs-c": "Irritable Bowel Syndrome With Constipation",
+
+  "phenylketonurias": "Phenylketonuria",
+  "pku": "Phenylketonuria",
+
+  "alzheimer's disease psychosis": "Alzheimer Disease",
+
+  "ttr-mediated amyloidosis": "Transthyretin Amyloidosis",
+  "attr amyloidosis": "Transthyretin Amyloidosis",
+  "attr-cm": "Transthyretin Amyloidosis",
+  "hereditary transthyretin amyloidosis": "Transthyretin Amyloidosis",
+
+  "mps iiia": "Mucopolysaccharidosis Type IIIA",
+  "sanfilippo syndrome": "Mucopolysaccharidosis Type IIIA"
 }
