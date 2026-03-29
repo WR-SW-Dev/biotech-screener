@@ -1,0 +1,4443 @@
+{
+  "schema": "graveyard_company_rollup.v1",
+  "built_as_of": "2026-03-29",
+  "generated_at": "2026-03-29T18:19:01.243709+00:00",
+  "min_confidence": "MEDIUM",
+  "n_tickers": 219,
+  "total_events": 4361,
+  "severity_p50": 2.4,
+  "severity_p90": 17.1,
+  "tickers": {
+    "ABEO": {
+      "ticker": "ABEO",
+      "n_graveyard_events": 6,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2023-07-25",
+      "recency_days": 978,
+      "failure_mix": {
+        "UNKNOWN": 6
+      },
+      "phase_mix": {
+        "phase3": 2,
+        "phase1": 2,
+        "phase2": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 2.8,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ABUS": {
+      "ticker": "ABUS",
+      "n_graveyard_events": 8,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2024-08-12",
+      "recency_days": 594,
+      "failure_mix": {
+        "SAFETY": 4,
+        "UNKNOWN": 3,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 6,
+        "phase2": 2
+      },
+      "graveyard_severity_score": 3.9,
+      "graveyard_confidence": "HIGH"
+    },
+    "ABVX": {
+      "ticker": "ABVX",
+      "n_graveyard_events": 4,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-11-26",
+      "recency_days": 123,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 3,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 2.05,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ACAD": {
+      "ticker": "ACAD",
+      "n_graveyard_events": 14,
+      "n_program_failures": 9,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-12-03",
+      "recency_days": 116,
+      "failure_mix": {
+        "UNKNOWN": 8,
+        "SAFETY": 3,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase2": 7,
+        "phase3": 3,
+        "phase1": 2,
+        "unknown": 1,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 12.83,
+      "graveyard_confidence": "HIGH"
+    },
+    "ACIU": {
+      "ticker": "ACIU",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2021-10-22",
+      "recency_days": 1619,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "ACRS": {
+      "ticker": "ACRS",
+      "n_graveyard_events": 5,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-11-27",
+      "recency_days": 487,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 4,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 4.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "ADCT": {
+      "ticker": "ADCT",
+      "n_graveyard_events": 16,
+      "n_program_failures": 13,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-12-12",
+      "recency_days": 107,
+      "failure_mix": {
+        "UNKNOWN": 9,
+        "SAFETY": 4,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase1": 12,
+        "phase2": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 8.78,
+      "graveyard_confidence": "HIGH"
+    },
+    "ADMA": {
+      "ticker": "ADMA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-07-30",
+      "recency_days": 1703,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "AGIO": {
+      "ticker": "AGIO",
+      "n_graveyard_events": 4,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-11-04",
+      "recency_days": 145,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 1.45,
+      "graveyard_confidence": "HIGH"
+    },
+    "AKTX": {
+      "ticker": "AKTX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2016-05-06",
+      "recency_days": 3614,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALDX": {
+      "ticker": "ALDX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-04-17",
+      "recency_days": 711,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALGS": {
+      "ticker": "ALGS",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-03-15",
+      "recency_days": 744,
+      "failure_mix": {
+        "SAFETY": 3
+      },
+      "phase_mix": {
+        "phase1": 3
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALKS": {
+      "ticker": "ALKS",
+      "n_graveyard_events": 26,
+      "n_program_failures": 8,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 18,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2026-02-06",
+      "recency_days": 51,
+      "failure_mix": {
+        "UNKNOWN": 24,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase3": 11,
+        "phase1": 8,
+        "phase2": 4,
+        "phase4": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 15.99,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ALLO": {
+      "ticker": "ALLO",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-12-31",
+      "recency_days": 88,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALMS": {
+      "ticker": "ALMS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-08-28",
+      "recency_days": 578,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALNY": {
+      "ticker": "ALNY",
+      "n_graveyard_events": 16,
+      "n_program_failures": 10,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-09-18",
+      "recency_days": 192,
+      "failure_mix": {
+        "UNKNOWN": 13,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase2": 7,
+        "phase1": 7,
+        "unknown": 2
+      },
+      "graveyard_severity_score": 8.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ALT": {
+      "ticker": "ALT",
+      "n_graveyard_events": 9,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 7,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-12-08",
+      "recency_days": 111,
+      "failure_mix": {
+        "UNKNOWN": 9
+      },
+      "phase_mix": {
+        "phase1": 6,
+        "phase2": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 2.99,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ALVO": {
+      "ticker": "ALVO",
+      "n_graveyard_events": 3,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-12-26",
+      "recency_days": 93,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "AMGN": {
+      "ticker": "AMGN",
+      "n_graveyard_events": 292,
+      "n_program_failures": 112,
+      "n_trial_withdrawals": 26,
+      "n_completed_no_results": 154,
+      "n_lead_program_failures": 22,
+      "last_failure_date": "2026-02-23",
+      "recency_days": 34,
+      "failure_mix": {
+        "UNKNOWN": 243,
+        "OPERATIONAL": 26,
+        "SAFETY": 23
+      },
+      "phase_mix": {
+        "phase1": 97,
+        "phase2": 91,
+        "phase3": 45,
+        "unknown": 37,
+        "phase4": 22
+      },
+      "graveyard_severity_score": 145.59,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "AMPH": {
+      "ticker": "AMPH",
+      "n_graveyard_events": 15,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 10,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2018-07-31",
+      "recency_days": 2798,
+      "failure_mix": {
+        "UNKNOWN": 13,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase3": 7,
+        "phase2": 6,
+        "phase1": 2
+      },
+      "graveyard_severity_score": 11.2,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "AMRX": {
+      "ticker": "AMRX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2013-01-29",
+      "recency_days": 4807,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase3": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ANAB": {
+      "ticker": "ANAB",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-02-14",
+      "recency_days": 408,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ANIP": {
+      "ticker": "ANIP",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2015-08-26",
+      "recency_days": 3868,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 2.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "ANNX": {
+      "ticker": "ANNX",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-08-20",
+      "recency_days": 2047,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 0.65,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ANRO": {
+      "ticker": "ANRO",
+      "n_graveyard_events": 2,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2020-10-19",
+      "recency_days": 1987,
+      "failure_mix": {
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase4": 2
+      },
+      "graveyard_severity_score": 0.36,
+      "graveyard_confidence": "HIGH"
+    },
+    "APLS": {
+      "ticker": "APLS",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-04-24",
+      "recency_days": 339,
+      "failure_mix": {
+        "UNKNOWN": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "AQST": {
+      "ticker": "AQST",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-08-18",
+      "recency_days": 2049,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 1.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "ARDX": {
+      "ticker": "ARDX",
+      "n_graveyard_events": 3,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2019-12-26",
+      "recency_days": 2285,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ARGX": {
+      "ticker": "ARGX",
+      "n_graveyard_events": 10,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 5,
+        "SAFETY": 3,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 4,
+        "phase3": 3,
+        "phase1": 3
+      },
+      "graveyard_severity_score": 8.55,
+      "graveyard_confidence": "HIGH"
+    },
+    "ARQT": {
+      "ticker": "ARQT",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-07-12",
+      "recency_days": 625,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ARTV": {
+      "ticker": "ARTV",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-08-20",
+      "recency_days": 221,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "ARWR": {
+      "ticker": "ARWR",
+      "n_graveyard_events": 19,
+      "n_program_failures": 10,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 6,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-13",
+      "recency_days": 75,
+      "failure_mix": {
+        "UNKNOWN": 15,
+        "OPERATIONAL": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 10,
+        "phase2": 9
+      },
+      "graveyard_severity_score": 10.55,
+      "graveyard_confidence": "HIGH"
+    },
+    "ASMB": {
+      "ticker": "ASMB",
+      "n_graveyard_events": 6,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 5,
+      "last_failure_date": "2023-11-14",
+      "recency_days": 866,
+      "failure_mix": {
+        "UNKNOWN": 6
+      },
+      "phase_mix": {
+        "phase2": 5,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 5.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "ASND": {
+      "ticker": "ASND",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-20",
+      "recency_days": 68,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "AUPH": {
+      "ticker": "AUPH",
+      "n_graveyard_events": 5,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 4,
+      "last_failure_date": "2026-02-10",
+      "recency_days": 47,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase3": 4,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 6.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "AURA": {
+      "ticker": "AURA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-08-09",
+      "recency_days": 963,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "AVIR": {
+      "ticker": "AVIR",
+      "n_graveyard_events": 6,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2024-03-05",
+      "recency_days": 754,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 2,
+        "unknown": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 5.1,
+      "graveyard_confidence": "HIGH"
+    },
+    "AVXL": {
+      "ticker": "AVXL",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2018-11-28",
+      "recency_days": 2678,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "AXSM": {
+      "ticker": "AXSM",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-19",
+      "recency_days": 38,
+      "failure_mix": {
+        "SAFETY": 2,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase4": 1,
+        "phase2": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 3.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "AZN": {
+      "ticker": "AZN",
+      "n_graveyard_events": 240,
+      "n_program_failures": 74,
+      "n_trial_withdrawals": 34,
+      "n_completed_no_results": 132,
+      "n_lead_program_failures": 28,
+      "last_failure_date": "2026-02-20",
+      "recency_days": 37,
+      "failure_mix": {
+        "UNKNOWN": 196,
+        "OPERATIONAL": 34,
+        "SAFETY": 10
+      },
+      "phase_mix": {
+        "phase1": 66,
+        "phase3": 60,
+        "phase2": 45,
+        "unknown": 41,
+        "phase4": 28
+      },
+      "graveyard_severity_score": 119.05,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "BBIO": {
+      "ticker": "BBIO",
+      "n_graveyard_events": 15,
+      "n_program_failures": 10,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 4,
+      "last_failure_date": "2026-02-12",
+      "recency_days": 45,
+      "failure_mix": {
+        "UNKNOWN": 11,
+        "OPERATIONAL": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 10,
+        "phase3": 4,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 11.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "BCRX": {
+      "ticker": "BCRX",
+      "n_graveyard_events": 20,
+      "n_program_failures": 11,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 7,
+      "n_lead_program_failures": 5,
+      "last_failure_date": "2025-10-24",
+      "recency_days": 156,
+      "failure_mix": {
+        "UNKNOWN": 11,
+        "SAFETY": 7,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 8,
+        "phase1": 6,
+        "phase3": 5,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 17.23,
+      "graveyard_confidence": "HIGH"
+    },
+    "BDTX": {
+      "ticker": "BDTX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-04-17",
+      "recency_days": 346,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "BHVN": {
+      "ticker": "BHVN",
+      "n_graveyard_events": 4,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 4.15,
+      "graveyard_confidence": "HIGH"
+    },
+    "BIIB": {
+      "ticker": "BIIB",
+      "n_graveyard_events": 275,
+      "n_program_failures": 110,
+      "n_trial_withdrawals": 24,
+      "n_completed_no_results": 141,
+      "n_lead_program_failures": 30,
+      "last_failure_date": "2025-12-15",
+      "recency_days": 104,
+      "failure_mix": {
+        "UNKNOWN": 214,
+        "SAFETY": 37,
+        "OPERATIONAL": 24
+      },
+      "phase_mix": {
+        "phase1": 101,
+        "phase2": 62,
+        "phase3": 46,
+        "unknown": 36,
+        "phase4": 30
+      },
+      "graveyard_severity_score": 150.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "BIOA": {
+      "ticker": "BIOA",
+      "n_graveyard_events": 4,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 4,
+      "last_failure_date": "2025-03-13",
+      "recency_days": 381,
+      "failure_mix": {
+        "OPERATIONAL": 2,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase2": 4
+      },
+      "graveyard_severity_score": 3.2,
+      "graveyard_confidence": "HIGH"
+    },
+    "BMEA": {
+      "ticker": "BMEA",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-09-10",
+      "recency_days": 200,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "BMRN": {
+      "ticker": "BMRN",
+      "n_graveyard_events": 45,
+      "n_program_failures": 26,
+      "n_trial_withdrawals": 5,
+      "n_completed_no_results": 14,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-08-22",
+      "recency_days": 219,
+      "failure_mix": {
+        "UNKNOWN": 35,
+        "OPERATIONAL": 5,
+        "SAFETY": 5
+      },
+      "phase_mix": {
+        "unknown": 18,
+        "phase1": 11,
+        "phase2": 10,
+        "phase3": 4,
+        "phase4": 2
+      },
+      "graveyard_severity_score": 22.09,
+      "graveyard_confidence": "HIGH"
+    },
+    "BNTX": {
+      "ticker": "BNTX",
+      "n_graveyard_events": 22,
+      "n_program_failures": 17,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-19",
+      "recency_days": 38,
+      "failure_mix": {
+        "UNKNOWN": 11,
+        "SAFETY": 8,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase1": 18,
+        "phase2": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 10.74,
+      "graveyard_confidence": "HIGH"
+    },
+    "CADL": {
+      "ticker": "CADL",
+      "n_graveyard_events": 4,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-08-25",
+      "recency_days": 947,
+      "failure_mix": {
+        "UNKNOWN": 4
+      },
+      "phase_mix": {
+        "phase1": 4
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "CAI": {
+      "ticker": "CAI",
+      "n_graveyard_events": 65,
+      "n_program_failures": 9,
+      "n_trial_withdrawals": 9,
+      "n_completed_no_results": 47,
+      "n_lead_program_failures": 9,
+      "last_failure_date": "2026-02-13",
+      "recency_days": 44,
+      "failure_mix": {
+        "UNKNOWN": 54,
+        "OPERATIONAL": 9,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "unknown": 30,
+        "phase2": 11,
+        "phase3": 10,
+        "phase4": 9,
+        "phase1": 5
+      },
+      "graveyard_severity_score": 22.92,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "CCCC": {
+      "ticker": "CCCC",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-12-17",
+      "recency_days": 467,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "CDNA": {
+      "ticker": "CDNA",
+      "n_graveyard_events": 80,
+      "n_program_failures": 26,
+      "n_trial_withdrawals": 12,
+      "n_completed_no_results": 42,
+      "n_lead_program_failures": 4,
+      "last_failure_date": "2025-12-30",
+      "recency_days": 89,
+      "failure_mix": {
+        "UNKNOWN": 62,
+        "OPERATIONAL": 12,
+        "SAFETY": 6
+      },
+      "phase_mix": {
+        "unknown": 39,
+        "phase1": 24,
+        "phase2": 11,
+        "phase4": 4,
+        "phase3": 2
+      },
+      "graveyard_severity_score": 23.51,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "CDTX": {
+      "ticker": "CDTX",
+      "n_graveyard_events": 2,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-05-22",
+      "recency_days": 676,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase2": 1,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.45,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "CELC": {
+      "ticker": "CELC",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-06-11",
+      "recency_days": 291,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 1.1,
+      "graveyard_confidence": "HIGH"
+    },
+    "CERS": {
+      "ticker": "CERS",
+      "n_graveyard_events": 10,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-01-29",
+      "recency_days": 424,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "OPERATIONAL": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "unknown": 5,
+        "phase2": 2,
+        "phase3": 1,
+        "phase1": 1,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 5.24,
+      "graveyard_confidence": "HIGH"
+    },
+    "CGEM": {
+      "ticker": "CGEM",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-08-15",
+      "recency_days": 957,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "CGON": {
+      "ticker": "CGON",
+      "n_graveyard_events": 3,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-04-14",
+      "recency_days": 1810,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 3
+      },
+      "graveyard_severity_score": 1.9,
+      "graveyard_confidence": "HIGH"
+    },
+    "CHRS": {
+      "ticker": "CHRS",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-05-08",
+      "recency_days": 325,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "CLDX": {
+      "ticker": "CLDX",
+      "n_graveyard_events": 27,
+      "n_program_failures": 16,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 10,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-07-14",
+      "recency_days": 258,
+      "failure_mix": {
+        "UNKNOWN": 24,
+        "SAFETY": 2,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 18,
+        "phase2": 9
+      },
+      "graveyard_severity_score": 12.9,
+      "graveyard_confidence": "HIGH"
+    },
+    "CLLS": {
+      "ticker": "CLLS",
+      "n_graveyard_events": 3,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-09-22",
+      "recency_days": 919,
+      "failure_mix": {
+        "SAFETY": 2,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 3
+      },
+      "graveyard_severity_score": 1.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "CMPS": {
+      "ticker": "CMPS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-01-24",
+      "recency_days": 795,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "CMPX": {
+      "ticker": "CMPX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-01-27",
+      "recency_days": 426,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "CNTA": {
+      "ticker": "CNTA",
+      "n_graveyard_events": 11,
+      "n_program_failures": 10,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 4,
+      "last_failure_date": "2025-09-25",
+      "recency_days": 185,
+      "failure_mix": {
+        "SAFETY": 6,
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase3": 4,
+        "phase2": 3,
+        "phase1": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 12.4,
+      "graveyard_confidence": "HIGH"
+    },
+    "CNTX": {
+      "ticker": "CNTX",
+      "n_graveyard_events": 4,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-05-09",
+      "recency_days": 324,
+      "failure_mix": {
+        "OPERATIONAL": 2,
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 3,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.1,
+      "graveyard_confidence": "HIGH"
+    },
+    "COGT": {
+      "ticker": "COGT",
+      "n_graveyard_events": 4,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-10-11",
+      "recency_days": 1630,
+      "failure_mix": {
+        "UNKNOWN": 4
+      },
+      "phase_mix": {
+        "phase1": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 1.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "COLL": {
+      "ticker": "COLL",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-11-06",
+      "recency_days": 143,
+      "failure_mix": {
+        "UNKNOWN": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase4": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "CRBU": {
+      "ticker": "CRBU",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-09-19",
+      "recency_days": 191,
+      "failure_mix": {
+        "UNKNOWN": 1,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 0.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "CRL": {
+      "ticker": "CRL",
+      "n_graveyard_events": 20,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 12,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-12-15",
+      "recency_days": 104,
+      "failure_mix": {
+        "UNKNOWN": 19,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "unknown": 11,
+        "phase1": 4,
+        "phase2": 4,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 6.76,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "CRMD": {
+      "ticker": "CRMD",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-08-24",
+      "recency_days": 2043,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase3": 1
+      },
+      "graveyard_severity_score": 1.2,
+      "graveyard_confidence": "HIGH"
+    },
+    "CRSP": {
+      "ticker": "CRSP",
+      "n_graveyard_events": 4,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-10-24",
+      "recency_days": 156,
+      "failure_mix": {
+        "SAFETY": 4
+      },
+      "phase_mix": {
+        "phase1": 4
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "CRVS": {
+      "ticker": "CRVS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2022-09-21",
+      "recency_days": 1285,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "CTMX": {
+      "ticker": "CTMX",
+      "n_graveyard_events": 5,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-12-26",
+      "recency_days": 93,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 4,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "CVAC": {
+      "ticker": "CVAC",
+      "n_graveyard_events": 9,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2022-05-13",
+      "recency_days": 1416,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "OPERATIONAL": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 5,
+        "phase3": 3,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 7.2,
+      "graveyard_confidence": "HIGH"
+    },
+    "CYTK": {
+      "ticker": "CYTK",
+      "n_graveyard_events": 18,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2025-01-24",
+      "recency_days": 429,
+      "failure_mix": {
+        "UNKNOWN": 15,
+        "OPERATIONAL": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 8,
+        "phase1": 7,
+        "phase3": 3
+      },
+      "graveyard_severity_score": 11.4,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "DAWN": {
+      "ticker": "DAWN",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-10-02",
+      "recency_days": 178,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "DNA": {
+      "ticker": "DNA",
+      "n_graveyard_events": 235,
+      "n_program_failures": 61,
+      "n_trial_withdrawals": 36,
+      "n_completed_no_results": 138,
+      "n_lead_program_failures": 6,
+      "last_failure_date": "2026-02-13",
+      "recency_days": 44,
+      "failure_mix": {
+        "UNKNOWN": 191,
+        "OPERATIONAL": 36,
+        "SAFETY": 8
+      },
+      "phase_mix": {
+        "unknown": 110,
+        "phase1": 69,
+        "phase2": 35,
+        "phase3": 15,
+        "phase4": 6
+      },
+      "graveyard_severity_score": 72.63,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "DNLI": {
+      "ticker": "DNLI",
+      "n_graveyard_events": 3,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-09-22",
+      "recency_days": 188,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.65,
+      "graveyard_confidence": "HIGH"
+    },
+    "DVAX": {
+      "ticker": "DVAX",
+      "n_graveyard_events": 14,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 8,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2021-08-03",
+      "recency_days": 1699,
+      "failure_mix": {
+        "UNKNOWN": 11,
+        "SAFETY": 2,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 8,
+        "phase2": 3,
+        "unknown": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 5.42,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "EBS": {
+      "ticker": "EBS",
+      "n_graveyard_events": 22,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 16,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-04-09",
+      "recency_days": 719,
+      "failure_mix": {
+        "UNKNOWN": 19,
+        "SAFETY": 3
+      },
+      "phase_mix": {
+        "phase1": 10,
+        "unknown": 7,
+        "phase2": 4,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 7.78,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ELDN": {
+      "ticker": "ELDN",
+      "n_graveyard_events": 3,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2024-03-26",
+      "recency_days": 733,
+      "failure_mix": {
+        "OPERATIONAL": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 1.9,
+      "graveyard_confidence": "HIGH"
+    },
+    "ENTA": {
+      "ticker": "ENTA",
+      "n_graveyard_events": 4,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2024-08-22",
+      "recency_days": 584,
+      "failure_mix": {
+        "SAFETY": 2,
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 2
+      },
+      "graveyard_severity_score": 3.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "EPRX": {
+      "ticker": "EPRX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-09-01",
+      "recency_days": 1670,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ERAS": {
+      "ticker": "ERAS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-06-15",
+      "recency_days": 1383,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "ESPR": {
+      "ticker": "ESPR",
+      "n_graveyard_events": 8,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 8,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2019-03-29",
+      "recency_days": 2557,
+      "failure_mix": {
+        "UNKNOWN": 8
+      },
+      "phase_mix": {
+        "phase2": 5,
+        "phase1": 3
+      },
+      "graveyard_severity_score": 1.95,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "EXEL": {
+      "ticker": "EXEL",
+      "n_graveyard_events": 36,
+      "n_program_failures": 28,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 5,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 30,
+        "SAFETY": 3,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase1": 22,
+        "phase2": 12,
+        "phase3": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 22.4,
+      "graveyard_confidence": "HIGH"
+    },
+    "EYPT": {
+      "ticker": "EYPT",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-08-11",
+      "recency_days": 230,
+      "failure_mix": {
+        "SAFETY": 2,
+        "OPERATIONAL": 2,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase3": 3,
+        "phase2": 1,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 5.49,
+      "graveyard_confidence": "HIGH"
+    },
+    "FATE": {
+      "ticker": "FATE",
+      "n_graveyard_events": 13,
+      "n_program_failures": 11,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2023-10-26",
+      "recency_days": 885,
+      "failure_mix": {
+        "UNKNOWN": 12,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 10,
+        "unknown": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 6.05,
+      "graveyard_confidence": "HIGH"
+    },
+    "FDMT": {
+      "ticker": "FDMT",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-01-06",
+      "recency_days": 1543,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "FHTX": {
+      "ticker": "FHTX",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-03-04",
+      "recency_days": 390,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "FOLD": {
+      "ticker": "FOLD",
+      "n_graveyard_events": 13,
+      "n_program_failures": 8,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 5,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-09-11",
+      "recency_days": 199,
+      "failure_mix": {
+        "UNKNOWN": 7,
+        "SAFETY": 6
+      },
+      "phase_mix": {
+        "phase1": 6,
+        "phase2": 3,
+        "unknown": 2,
+        "phase3": 2
+      },
+      "graveyard_severity_score": 8.99,
+      "graveyard_confidence": "HIGH"
+    },
+    "FULC": {
+      "ticker": "FULC",
+      "n_graveyard_events": 4,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-12-02",
+      "recency_days": 117,
+      "failure_mix": {
+        "SAFETY": 4
+      },
+      "phase_mix": {
+        "phase3": 2,
+        "phase2": 2
+      },
+      "graveyard_severity_score": 6.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "GERN": {
+      "ticker": "GERN",
+      "n_graveyard_events": 10,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-09-21",
+      "recency_days": 2015,
+      "failure_mix": {
+        "UNKNOWN": 9,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 7,
+        "phase2": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 1.89,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "GH": {
+      "ticker": "GH",
+      "n_graveyard_events": 194,
+      "n_program_failures": 68,
+      "n_trial_withdrawals": 17,
+      "n_completed_no_results": 109,
+      "n_lead_program_failures": 14,
+      "last_failure_date": "2026-02-18",
+      "recency_days": 39,
+      "failure_mix": {
+        "UNKNOWN": 162,
+        "OPERATIONAL": 17,
+        "SAFETY": 15
+      },
+      "phase_mix": {
+        "unknown": 81,
+        "phase3": 38,
+        "phase2": 38,
+        "phase1": 23,
+        "phase4": 14
+      },
+      "graveyard_severity_score": 97.54,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "GHRS": {
+      "ticker": "GHRS",
+      "n_graveyard_events": 3,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-02-18",
+      "recency_days": 404,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 2.15,
+      "graveyard_confidence": "HIGH"
+    },
+    "GILD": {
+      "ticker": "GILD",
+      "n_graveyard_events": 245,
+      "n_program_failures": 142,
+      "n_trial_withdrawals": 29,
+      "n_completed_no_results": 74,
+      "n_lead_program_failures": 31,
+      "last_failure_date": "2026-02-17",
+      "recency_days": 40,
+      "failure_mix": {
+        "UNKNOWN": 170,
+        "SAFETY": 46,
+        "OPERATIONAL": 29
+      },
+      "phase_mix": {
+        "phase2": 79,
+        "phase1": 64,
+        "phase3": 43,
+        "phase4": 31,
+        "unknown": 28
+      },
+      "graveyard_severity_score": 166.27,
+      "graveyard_confidence": "HIGH"
+    },
+    "GLPG": {
+      "ticker": "GLPG",
+      "n_graveyard_events": 29,
+      "n_program_failures": 18,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-10-09",
+      "recency_days": 536,
+      "failure_mix": {
+        "UNKNOWN": 18,
+        "SAFETY": 9,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 12,
+        "phase2": 9,
+        "phase3": 8
+      },
+      "graveyard_severity_score": 26.25,
+      "graveyard_confidence": "HIGH"
+    },
+    "GMAB": {
+      "ticker": "GMAB",
+      "n_graveyard_events": 20,
+      "n_program_failures": 16,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 12,
+        "SAFETY": 6,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 14,
+        "phase2": 6
+      },
+      "graveyard_severity_score": 10.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "GOSS": {
+      "ticker": "GOSS",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-08-01",
+      "recency_days": 971,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "GRFS": {
+      "ticker": "GRFS",
+      "n_graveyard_events": 12,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 4,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-24",
+      "recency_days": 33,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "OPERATIONAL": 4,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase2": 6,
+        "phase1": 3,
+        "phase3": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 9.9,
+      "graveyard_confidence": "HIGH"
+    },
+    "HALO": {
+      "ticker": "HALO",
+      "n_graveyard_events": 12,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2020-12-23",
+      "recency_days": 1922,
+      "failure_mix": {
+        "UNKNOWN": 10,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 7,
+        "phase4": 2,
+        "phase2": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 6.53,
+      "graveyard_confidence": "HIGH"
+    },
+    "HRTX": {
+      "ticker": "HRTX",
+      "n_graveyard_events": 4,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-12",
+      "recency_days": 45,
+      "failure_mix": {
+        "OPERATIONAL": 2,
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase2": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 2.29,
+      "graveyard_confidence": "HIGH"
+    },
+    "HUMA": {
+      "ticker": "HUMA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-08-19",
+      "recency_days": 1318,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "IBRX": {
+      "ticker": "IBRX",
+      "n_graveyard_events": 39,
+      "n_program_failures": 16,
+      "n_trial_withdrawals": 18,
+      "n_completed_no_results": 5,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-03-11",
+      "recency_days": 383,
+      "failure_mix": {
+        "UNKNOWN": 19,
+        "OPERATIONAL": 18,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase1": 32,
+        "phase2": 7
+      },
+      "graveyard_severity_score": 16.85,
+      "graveyard_confidence": "HIGH"
+    },
+    "IKT": {
+      "ticker": "IKT",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-06-13",
+      "recency_days": 289,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "IMCR": {
+      "ticker": "IMCR",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-10-18",
+      "recency_days": 527,
+      "failure_mix": {
+        "OPERATIONAL": 3,
+        "UNKNOWN": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 4,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.4,
+      "graveyard_confidence": "HIGH"
+    },
+    "IMMP": {
+      "ticker": "IMMP",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-03-22",
+      "recency_days": 1103,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 5
+      },
+      "graveyard_severity_score": 1.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "IMTX": {
+      "ticker": "IMTX",
+      "n_graveyard_events": 6,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-02-04",
+      "recency_days": 418,
+      "failure_mix": {
+        "UNKNOWN": 6
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 2,
+        "phase3": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 2.64,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "IMVT": {
+      "ticker": "IMVT",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-09-22",
+      "recency_days": 1284,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "INBX": {
+      "ticker": "INBX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-10-23",
+      "recency_days": 522,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "INCY": {
+      "ticker": "INCY",
+      "n_graveyard_events": 125,
+      "n_program_failures": 88,
+      "n_trial_withdrawals": 21,
+      "n_completed_no_results": 16,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-04",
+      "recency_days": 53,
+      "failure_mix": {
+        "UNKNOWN": 76,
+        "SAFETY": 28,
+        "OPERATIONAL": 21
+      },
+      "phase_mix": {
+        "phase1": 59,
+        "phase2": 46,
+        "phase3": 17,
+        "unknown": 2,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 93.81,
+      "graveyard_confidence": "HIGH"
+    },
+    "INDV": {
+      "ticker": "INDV",
+      "n_graveyard_events": 14,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 10,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-03-13",
+      "recency_days": 381,
+      "failure_mix": {
+        "UNKNOWN": 13,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 5,
+        "phase2": 3,
+        "phase4": 2,
+        "phase3": 2,
+        "unknown": 2
+      },
+      "graveyard_severity_score": 5.63,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "INSM": {
+      "ticker": "INSM",
+      "n_graveyard_events": 9,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 5,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2024-02-02",
+      "recency_days": 786,
+      "failure_mix": {
+        "UNKNOWN": 8,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 5,
+        "phase2": 3,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 4.95,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "IONS": {
+      "ticker": "IONS",
+      "n_graveyard_events": 40,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 4,
+      "n_completed_no_results": 29,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2026-02-20",
+      "recency_days": 37,
+      "failure_mix": {
+        "UNKNOWN": 33,
+        "OPERATIONAL": 4,
+        "SAFETY": 3
+      },
+      "phase_mix": {
+        "phase2": 19,
+        "phase1": 17,
+        "phase3": 2,
+        "unknown": 2
+      },
+      "graveyard_severity_score": 14.89,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "IOVA": {
+      "ticker": "IOVA",
+      "n_graveyard_events": 6,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-09-17",
+      "recency_days": 193,
+      "failure_mix": {
+        "OPERATIONAL": 3,
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase2": 4,
+        "phase1": 2
+      },
+      "graveyard_severity_score": 3.65,
+      "graveyard_confidence": "HIGH"
+    },
+    "IRWD": {
+      "ticker": "IRWD",
+      "n_graveyard_events": 8,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-02-28",
+      "recency_days": 394,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase2": 5,
+        "phase4": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 6.2,
+      "graveyard_confidence": "HIGH"
+    },
+    "IVVD": {
+      "ticker": "IVVD",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-08-20",
+      "recency_days": 586,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "JAZZ": {
+      "ticker": "JAZZ",
+      "n_graveyard_events": 78,
+      "n_program_failures": 35,
+      "n_trial_withdrawals": 19,
+      "n_completed_no_results": 24,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2026-01-26",
+      "recency_days": 62,
+      "failure_mix": {
+        "UNKNOWN": 50,
+        "OPERATIONAL": 19,
+        "SAFETY": 9
+      },
+      "phase_mix": {
+        "phase2": 36,
+        "phase1": 24,
+        "phase3": 11,
+        "unknown": 4,
+        "phase4": 3
+      },
+      "graveyard_severity_score": 53.19,
+      "graveyard_confidence": "HIGH"
+    },
+    "KALV": {
+      "ticker": "KALV",
+      "n_graveyard_events": 3,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-04-29",
+      "recency_days": 334,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "KMDA": {
+      "ticker": "KMDA",
+      "n_graveyard_events": 5,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-09-01",
+      "recency_days": 1670,
+      "failure_mix": {
+        "UNKNOWN": 5
+      },
+      "phase_mix": {
+        "phase2": 4,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 2.05,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "KNSA": {
+      "ticker": "KNSA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-05-21",
+      "recency_days": 312,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "KOD": {
+      "ticker": "KOD",
+      "n_graveyard_events": 5,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2024-09-05",
+      "recency_days": 570,
+      "failure_mix": {
+        "SAFETY": 5
+      },
+      "phase_mix": {
+        "phase3": 3,
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 7.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "KROS": {
+      "ticker": "KROS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2023-11-24",
+      "recency_days": 856,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "KRYS": {
+      "ticker": "KRYS",
+      "n_graveyard_events": 2,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-08-14",
+      "recency_days": 958,
+      "failure_mix": {
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "unknown": 1,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.48,
+      "graveyard_confidence": "HIGH"
+    },
+    "KURA": {
+      "ticker": "KURA",
+      "n_graveyard_events": 4,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-07-31",
+      "recency_days": 606,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 3,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "KYMR": {
+      "ticker": "KYMR",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-12-11",
+      "recency_days": 108,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "LAB": {
+      "ticker": "LAB",
+      "n_graveyard_events": 231,
+      "n_program_failures": 79,
+      "n_trial_withdrawals": 24,
+      "n_completed_no_results": 128,
+      "n_lead_program_failures": 8,
+      "last_failure_date": "2026-02-06",
+      "recency_days": 51,
+      "failure_mix": {
+        "UNKNOWN": 190,
+        "OPERATIONAL": 24,
+        "SAFETY": 17
+      },
+      "phase_mix": {
+        "phase1": 79,
+        "unknown": 69,
+        "phase2": 45,
+        "phase3": 30,
+        "phase4": 8
+      },
+      "graveyard_severity_score": 101.32,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "LCTX": {
+      "ticker": "LCTX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-06-18",
+      "recency_days": 2110,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "LEGN": {
+      "ticker": "LEGN",
+      "n_graveyard_events": 16,
+      "n_program_failures": 13,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-11",
+      "recency_days": 46,
+      "failure_mix": {
+        "UNKNOWN": 11,
+        "SAFETY": 3,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 14,
+        "unknown": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 7.69,
+      "graveyard_confidence": "HIGH"
+    },
+    "LQDA": {
+      "ticker": "LQDA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-09-13",
+      "recency_days": 1658,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "LRMR": {
+      "ticker": "LRMR",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-28",
+      "recency_days": 60,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "LYEL": {
+      "ticker": "LYEL",
+      "n_graveyard_events": 4,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-07-01",
+      "recency_days": 271,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 1.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "LYRA": {
+      "ticker": "LYRA",
+      "n_graveyard_events": 3,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-08-25",
+      "recency_days": 1677,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "unknown": 2,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.33,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MCRB": {
+      "ticker": "MCRB",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-02-06",
+      "recency_days": 1147,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 1.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MDGL": {
+      "ticker": "MDGL",
+      "n_graveyard_events": 3,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-10-05",
+      "recency_days": 906,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 3
+      },
+      "graveyard_severity_score": 0.45,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MESO": {
+      "ticker": "MESO",
+      "n_graveyard_events": 27,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 24,
+      "n_lead_program_failures": 7,
+      "last_failure_date": "2025-10-30",
+      "recency_days": 150,
+      "failure_mix": {
+        "UNKNOWN": 25,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 12,
+        "phase1": 8,
+        "phase3": 7
+      },
+      "graveyard_severity_score": 10.85,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MIRM": {
+      "ticker": "MIRM",
+      "n_graveyard_events": 7,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-08-06",
+      "recency_days": 600,
+      "failure_mix": {
+        "UNKNOWN": 5,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 3,
+        "phase1": 2,
+        "unknown": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 4.19,
+      "graveyard_confidence": "HIGH"
+    },
+    "MNKD": {
+      "ticker": "MNKD",
+      "n_graveyard_events": 29,
+      "n_program_failures": 8,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 20,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-11-12",
+      "recency_days": 137,
+      "failure_mix": {
+        "UNKNOWN": 22,
+        "SAFETY": 6,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 11,
+        "phase2": 8,
+        "phase3": 6,
+        "unknown": 4
+      },
+      "graveyard_severity_score": 16.71,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MRNA": {
+      "ticker": "MRNA",
+      "n_graveyard_events": 12,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 4,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-12-15",
+      "recency_days": 104,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "OPERATIONAL": 4,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase1": 8,
+        "phase2": 2,
+        "unknown": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 6.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "MRSN": {
+      "ticker": "MRSN",
+      "n_graveyard_events": 7,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2024-07-24",
+      "recency_days": 613,
+      "failure_mix": {
+        "UNKNOWN": 7
+      },
+      "phase_mix": {
+        "phase1": 6,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 3.6,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "MRUS": {
+      "ticker": "MRUS",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-09-18",
+      "recency_days": 192,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "NBIX": {
+      "ticker": "NBIX",
+      "n_graveyard_events": 17,
+      "n_program_failures": 9,
+      "n_trial_withdrawals": 4,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-13",
+      "recency_days": 44,
+      "failure_mix": {
+        "UNKNOWN": 9,
+        "OPERATIONAL": 4,
+        "SAFETY": 4
+      },
+      "phase_mix": {
+        "phase2": 8,
+        "phase1": 5,
+        "phase3": 3,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 13.38,
+      "graveyard_confidence": "HIGH"
+    },
+    "NGNE": {
+      "ticker": "NGNE",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-04-12",
+      "recency_days": 1447,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "unknown": 2
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "NRIX": {
+      "ticker": "NRIX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-05-03",
+      "recency_days": 695,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "NTLA": {
+      "ticker": "NTLA",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-01-17",
+      "recency_days": 436,
+      "failure_mix": {
+        "UNKNOWN": 1,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 0.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "NTRA": {
+      "ticker": "NTRA",
+      "n_graveyard_events": 18,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 12,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-11-19",
+      "recency_days": 130,
+      "failure_mix": {
+        "UNKNOWN": 17,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "unknown": 7,
+        "phase3": 6,
+        "phase4": 2,
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 8.48,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "NUVB": {
+      "ticker": "NUVB",
+      "n_graveyard_events": 8,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-21",
+      "recency_days": 67,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 7,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 3.05,
+      "graveyard_confidence": "HIGH"
+    },
+    "NVAX": {
+      "ticker": "NVAX",
+      "n_graveyard_events": 16,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 12,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-05-08",
+      "recency_days": 325,
+      "failure_mix": {
+        "UNKNOWN": 13,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase2": 11,
+        "phase1": 3,
+        "phase3": 2
+      },
+      "graveyard_severity_score": 6.4,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "NVCR": {
+      "ticker": "NVCR",
+      "n_graveyard_events": 21,
+      "n_program_failures": 15,
+      "n_trial_withdrawals": 5,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-01-02",
+      "recency_days": 86,
+      "failure_mix": {
+        "UNKNOWN": 16,
+        "OPERATIONAL": 5
+      },
+      "phase_mix": {
+        "phase2": 10,
+        "unknown": 6,
+        "phase1": 4,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 12.36,
+      "graveyard_confidence": "HIGH"
+    },
+    "OCGN": {
+      "ticker": "OCGN",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2022-07-06",
+      "recency_days": 1362,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "OCUL": {
+      "ticker": "OCUL",
+      "n_graveyard_events": 15,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 5,
+      "n_lead_program_failures": 8,
+      "last_failure_date": "2025-01-15",
+      "recency_days": 438,
+      "failure_mix": {
+        "UNKNOWN": 10,
+        "OPERATIONAL": 3,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase4": 8,
+        "phase1": 2,
+        "phase3": 2,
+        "unknown": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 4.79,
+      "graveyard_confidence": "HIGH"
+    },
+    "OMER": {
+      "ticker": "OMER",
+      "n_graveyard_events": 10,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-12-10",
+      "recency_days": 109,
+      "failure_mix": {
+        "UNKNOWN": 6,
+        "SAFETY": 3,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase3": 4,
+        "phase2": 3,
+        "phase1": 2,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 9.03,
+      "graveyard_confidence": "HIGH"
+    },
+    "ONC": {
+      "ticker": "ONC",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-20",
+      "recency_days": 37,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 3.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "OPK": {
+      "ticker": "OPK",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2015-12-28",
+      "recency_days": 3744,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 1.09,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ORIC": {
+      "ticker": "ORIC",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-12-15",
+      "recency_days": 835,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "PBYI": {
+      "ticker": "PBYI",
+      "n_graveyard_events": 17,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 10,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-22",
+      "recency_days": 66,
+      "failure_mix": {
+        "UNKNOWN": 14,
+        "OPERATIONAL": 3
+      },
+      "phase_mix": {
+        "phase1": 12,
+        "phase2": 4,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 5.8,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "PEPG": {
+      "ticker": "PEPG",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-12-02",
+      "recency_days": 117,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 1.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "PHAT": {
+      "ticker": "PHAT",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-03-02",
+      "recency_days": 1488,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "PRAX": {
+      "ticker": "PRAX",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-12-01",
+      "recency_days": 1214,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 1.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "PRLD": {
+      "ticker": "PRLD",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-02-02",
+      "recency_days": 55,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "PRQR": {
+      "ticker": "PRQR",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-05-11",
+      "recency_days": 1418,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "PRTA": {
+      "ticker": "PRTA",
+      "n_graveyard_events": 7,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-12-16",
+      "recency_days": 103,
+      "failure_mix": {
+        "UNKNOWN": 5,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase2": 2,
+        "phase3": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 6.74,
+      "graveyard_confidence": "HIGH"
+    },
+    "PTCT": {
+      "ticker": "PTCT",
+      "n_graveyard_events": 31,
+      "n_program_failures": 17,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 12,
+      "n_lead_program_failures": 5,
+      "last_failure_date": "2025-08-01",
+      "recency_days": 240,
+      "failure_mix": {
+        "UNKNOWN": 27,
+        "OPERATIONAL": 2,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase2": 16,
+        "phase1": 9,
+        "phase3": 5,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 23.79,
+      "graveyard_confidence": "HIGH"
+    },
+    "PTGX": {
+      "ticker": "PTGX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-08-21",
+      "recency_days": 220,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 1.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "PVLA": {
+      "ticker": "PVLA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-08-29",
+      "recency_days": 577,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "PYXS": {
+      "ticker": "PYXS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-11-21",
+      "recency_days": 128,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "QSI": {
+      "ticker": "QSI",
+      "n_graveyard_events": 10,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2024-07-05",
+      "recency_days": 632,
+      "failure_mix": {
+        "UNKNOWN": 10
+      },
+      "phase_mix": {
+        "unknown": 5,
+        "phase3": 2,
+        "phase2": 2,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 2.55,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "QURE": {
+      "ticker": "QURE",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2017-08-17",
+      "recency_days": 3146,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "RAPT": {
+      "ticker": "RAPT",
+      "n_graveyard_events": 4,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 3,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 3.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "RARE": {
+      "ticker": "RARE",
+      "n_graveyard_events": 24,
+      "n_program_failures": 13,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-10-03",
+      "recency_days": 177,
+      "failure_mix": {
+        "UNKNOWN": 16,
+        "SAFETY": 6,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 13,
+        "unknown": 6,
+        "phase1": 3,
+        "phase3": 2
+      },
+      "graveyard_severity_score": 13.69,
+      "graveyard_confidence": "HIGH"
+    },
+    "RCKT": {
+      "ticker": "RCKT",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-07-13",
+      "recency_days": 1355,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 0.8,
+      "graveyard_confidence": "HIGH"
+    },
+    "RCUS": {
+      "ticker": "RCUS",
+      "n_graveyard_events": 11,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 7,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-12-26",
+      "recency_days": 93,
+      "failure_mix": {
+        "UNKNOWN": 9,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 9,
+        "phase2": 2
+      },
+      "graveyard_severity_score": 3.45,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "REGN": {
+      "ticker": "REGN",
+      "n_graveyard_events": 127,
+      "n_program_failures": 63,
+      "n_trial_withdrawals": 25,
+      "n_completed_no_results": 39,
+      "n_lead_program_failures": 7,
+      "last_failure_date": "2026-02-23",
+      "recency_days": 34,
+      "failure_mix": {
+        "UNKNOWN": 81,
+        "OPERATIONAL": 25,
+        "SAFETY": 21
+      },
+      "phase_mix": {
+        "phase1": 61,
+        "phase2": 35,
+        "phase3": 13,
+        "unknown": 11,
+        "phase4": 7
+      },
+      "graveyard_severity_score": 77.05,
+      "graveyard_confidence": "HIGH"
+    },
+    "REPL": {
+      "ticker": "REPL",
+      "n_graveyard_events": 3,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-02",
+      "recency_days": 55,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 2.1,
+      "graveyard_confidence": "HIGH"
+    },
+    "RGNX": {
+      "ticker": "RGNX",
+      "n_graveyard_events": 4,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-07-13",
+      "recency_days": 990,
+      "failure_mix": {
+        "OPERATIONAL": 3,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 3,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 1.04,
+      "graveyard_confidence": "HIGH"
+    },
+    "RIGL": {
+      "ticker": "RIGL",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-11-18",
+      "recency_days": 131,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase2": 3,
+        "unknown": 1,
+        "phase1": 1
+      },
+      "graveyard_severity_score": 2.65,
+      "graveyard_confidence": "HIGH"
+    },
+    "RVMD": {
+      "ticker": "RVMD",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-05-29",
+      "recency_days": 304,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "RYTM": {
+      "ticker": "RYTM",
+      "n_graveyard_events": 3,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-11-15",
+      "recency_days": 1230,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase1": 1,
+        "phase2": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.54,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "SERA": {
+      "ticker": "SERA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2020-02-17",
+      "recency_days": 2232,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "SGMO": {
+      "ticker": "SGMO",
+      "n_graveyard_events": 14,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 10,
+      "n_lead_program_failures": 5,
+      "last_failure_date": "2024-07-19",
+      "recency_days": 618,
+      "failure_mix": {
+        "UNKNOWN": 14
+      },
+      "phase_mix": {
+        "phase1": 8,
+        "phase2": 5,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 4.05,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "SGMT": {
+      "ticker": "SGMT",
+      "n_graveyard_events": 2,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-05-15",
+      "recency_days": 318,
+      "failure_mix": {
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase3": 2
+      },
+      "graveyard_severity_score": 2.4,
+      "graveyard_confidence": "HIGH"
+    },
+    "SIGA": {
+      "ticker": "SIGA",
+      "n_graveyard_events": 2,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-10",
+      "recency_days": 47,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.18,
+      "graveyard_confidence": "HIGH"
+    },
+    "SLN": {
+      "ticker": "SLN",
+      "n_graveyard_events": 2,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2023-04-21",
+      "recency_days": 1073,
+      "failure_mix": {
+        "OPERATIONAL": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 2
+      },
+      "graveyard_severity_score": 0.45,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "SMMT": {
+      "ticker": "SMMT",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2023-08-21",
+      "recency_days": 951,
+      "failure_mix": {
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase2": 1,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 3.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "SNDX": {
+      "ticker": "SNDX",
+      "n_graveyard_events": 14,
+      "n_program_failures": 9,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 3,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-03-20",
+      "recency_days": 374,
+      "failure_mix": {
+        "UNKNOWN": 12,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 8,
+        "phase2": 6
+      },
+      "graveyard_severity_score": 8.35,
+      "graveyard_confidence": "HIGH"
+    },
+    "SNY": {
+      "ticker": "SNY",
+      "n_graveyard_events": 382,
+      "n_program_failures": 116,
+      "n_trial_withdrawals": 25,
+      "n_completed_no_results": 241,
+      "n_lead_program_failures": 47,
+      "last_failure_date": "2026-02-12",
+      "recency_days": 45,
+      "failure_mix": {
+        "UNKNOWN": 340,
+        "OPERATIONAL": 25,
+        "SAFETY": 17
+      },
+      "phase_mix": {
+        "phase2": 100,
+        "phase3": 99,
+        "phase1": 99,
+        "phase4": 47,
+        "unknown": 37
+      },
+      "graveyard_severity_score": 205.69,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "SRPT": {
+      "ticker": "SRPT",
+      "n_graveyard_events": 18,
+      "n_program_failures": 15,
+      "n_trial_withdrawals": 2,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2026-01-20",
+      "recency_days": 68,
+      "failure_mix": {
+        "UNKNOWN": 9,
+        "SAFETY": 7,
+        "OPERATIONAL": 2
+      },
+      "phase_mix": {
+        "phase1": 12,
+        "phase2": 3,
+        "phase3": 2,
+        "phase4": 1
+      },
+      "graveyard_severity_score": 11.95,
+      "graveyard_confidence": "HIGH"
+    },
+    "STRO": {
+      "ticker": "STRO",
+      "n_graveyard_events": 4,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-09-23",
+      "recency_days": 187,
+      "failure_mix": {
+        "UNKNOWN": 2,
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 2
+      },
+      "graveyard_severity_score": 2.6,
+      "graveyard_confidence": "HIGH"
+    },
+    "SUPN": {
+      "ticker": "SUPN",
+      "n_graveyard_events": 20,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 11,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2026-01-22",
+      "recency_days": 66,
+      "failure_mix": {
+        "UNKNOWN": 16,
+        "OPERATIONAL": 3,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase1": 9,
+        "phase3": 5,
+        "phase2": 4,
+        "phase4": 2
+      },
+      "graveyard_severity_score": 12.55,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "SVRA": {
+      "ticker": "SVRA",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 2,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2024-07-03",
+      "recency_days": 634,
+      "failure_mix": {
+        "UNKNOWN": 3,
+        "OPERATIONAL": 1,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase3": 3,
+        "phase2": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 4.38,
+      "graveyard_confidence": "HIGH"
+    },
+    "TARS": {
+      "ticker": "TARS",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-04-12",
+      "recency_days": 716,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "TBPH": {
+      "ticker": "TBPH",
+      "n_graveyard_events": 41,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 34,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-07-08",
+      "recency_days": 264,
+      "failure_mix": {
+        "UNKNOWN": 37,
+        "SAFETY": 4
+      },
+      "phase_mix": {
+        "phase1": 30,
+        "phase2": 9,
+        "phase3": 2
+      },
+      "graveyard_severity_score": 14.0,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "TCRX": {
+      "ticker": "TCRX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-08-25",
+      "recency_days": 1677,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.18,
+      "graveyard_confidence": "HIGH"
+    },
+    "TECH": {
+      "ticker": "TECH",
+      "n_graveyard_events": 215,
+      "n_program_failures": 74,
+      "n_trial_withdrawals": 27,
+      "n_completed_no_results": 114,
+      "n_lead_program_failures": 5,
+      "last_failure_date": "2026-02-25",
+      "recency_days": 32,
+      "failure_mix": {
+        "UNKNOWN": 176,
+        "OPERATIONAL": 27,
+        "SAFETY": 12
+      },
+      "phase_mix": {
+        "unknown": 102,
+        "phase2": 45,
+        "phase3": 43,
+        "phase1": 20,
+        "phase4": 5
+      },
+      "graveyard_severity_score": 105.7,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "TEM": {
+      "ticker": "TEM",
+      "n_graveyard_events": 42,
+      "n_program_failures": 13,
+      "n_trial_withdrawals": 5,
+      "n_completed_no_results": 24,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2026-02-11",
+      "recency_days": 46,
+      "failure_mix": {
+        "UNKNOWN": 36,
+        "OPERATIONAL": 5,
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "unknown": 24,
+        "phase1": 9,
+        "phase2": 4,
+        "phase3": 3,
+        "phase4": 2
+      },
+      "graveyard_severity_score": 11.75,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "TENX": {
+      "ticker": "TENX",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-02-24",
+      "recency_days": 33,
+      "failure_mix": {
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 2
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "TGTX": {
+      "ticker": "TGTX",
+      "n_graveyard_events": 22,
+      "n_program_failures": 18,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 4,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2026-01-06",
+      "recency_days": 82,
+      "failure_mix": {
+        "UNKNOWN": 17,
+        "SAFETY": 5
+      },
+      "phase_mix": {
+        "phase2": 12,
+        "phase1": 9,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 17.1,
+      "graveyard_confidence": "HIGH"
+    },
+    "TNGX": {
+      "ticker": "TNGX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2024-08-13",
+      "recency_days": 593,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "TRVI": {
+      "ticker": "TRVI",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-05-22",
+      "recency_days": 311,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "TSHA": {
+      "ticker": "TSHA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2022-05-20",
+      "recency_days": 1409,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.18,
+      "graveyard_confidence": "HIGH"
+    },
+    "TVTX": {
+      "ticker": "TVTX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-01-26",
+      "recency_days": 1888,
+      "failure_mix": {
+        "SAFETY": 1
+      },
+      "phase_mix": {
+        "phase3": 1
+      },
+      "graveyard_severity_score": 2.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "TWST": {
+      "ticker": "TWST",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-11-24",
+      "recency_days": 1586,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "unknown": 1
+      },
+      "graveyard_severity_score": 0.09,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "URGN": {
+      "ticker": "URGN",
+      "n_graveyard_events": 5,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 3,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2024-06-06",
+      "recency_days": 661,
+      "failure_mix": {
+        "OPERATIONAL": 3,
+        "SAFETY": 1,
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase3": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 4.18,
+      "graveyard_confidence": "HIGH"
+    },
+    "UTHR": {
+      "ticker": "UTHR",
+      "n_graveyard_events": 53,
+      "n_program_failures": 28,
+      "n_trial_withdrawals": 16,
+      "n_completed_no_results": 9,
+      "n_lead_program_failures": 8,
+      "last_failure_date": "2025-12-11",
+      "recency_days": 108,
+      "failure_mix": {
+        "UNKNOWN": 30,
+        "OPERATIONAL": 16,
+        "SAFETY": 7
+      },
+      "phase_mix": {
+        "phase2": 14,
+        "phase1": 12,
+        "phase3": 12,
+        "phase4": 8,
+        "unknown": 7
+      },
+      "graveyard_severity_score": 37.06,
+      "graveyard_confidence": "HIGH"
+    },
+    "VCEL": {
+      "ticker": "VCEL",
+      "n_graveyard_events": 10,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 8,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2021-05-27",
+      "recency_days": 1767,
+      "failure_mix": {
+        "UNKNOWN": 10
+      },
+      "phase_mix": {
+        "phase2": 4,
+        "phase3": 2,
+        "phase1": 2,
+        "phase4": 1,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 3.58,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "VERA": {
+      "ticker": "VERA",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-05-23",
+      "recency_days": 310,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase3": 1
+      },
+      "graveyard_severity_score": 1.2,
+      "graveyard_confidence": "HIGH"
+    },
+    "VIR": {
+      "ticker": "VIR",
+      "n_graveyard_events": 5,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-02-13",
+      "recency_days": 409,
+      "failure_mix": {
+        "SAFETY": 3,
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase2": 2,
+        "phase1": 2,
+        "phase3": 1
+      },
+      "graveyard_severity_score": 5.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "VKTX": {
+      "ticker": "VKTX",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-04-26",
+      "recency_days": 1798,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase2": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "VNDA": {
+      "ticker": "VNDA",
+      "n_graveyard_events": 14,
+      "n_program_failures": 5,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 8,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-10-09",
+      "recency_days": 171,
+      "failure_mix": {
+        "UNKNOWN": 10,
+        "SAFETY": 3,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 7,
+        "phase2": 3,
+        "phase3": 3,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 8.69,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "VOR": {
+      "ticker": "VOR",
+      "n_graveyard_events": 5,
+      "n_program_failures": 4,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2026-01-09",
+      "recency_days": 79,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 2,
+        "phase3": 2,
+        "unknown": 1
+      },
+      "graveyard_severity_score": 4.5,
+      "graveyard_confidence": "HIGH"
+    },
+    "VRTX": {
+      "ticker": "VRTX",
+      "n_graveyard_events": 37,
+      "n_program_failures": 21,
+      "n_trial_withdrawals": 4,
+      "n_completed_no_results": 12,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-09-08",
+      "recency_days": 202,
+      "failure_mix": {
+        "UNKNOWN": 25,
+        "SAFETY": 8,
+        "OPERATIONAL": 4
+      },
+      "phase_mix": {
+        "phase2": 19,
+        "phase1": 7,
+        "phase3": 6,
+        "unknown": 3,
+        "phase4": 2
+      },
+      "graveyard_severity_score": 28.31,
+      "graveyard_confidence": "HIGH"
+    },
+    "VTYX": {
+      "ticker": "VTYX",
+      "n_graveyard_events": 3,
+      "n_program_failures": 3,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2025-07-03",
+      "recency_days": 269,
+      "failure_mix": {
+        "UNKNOWN": 3
+      },
+      "phase_mix": {
+        "phase2": 3
+      },
+      "graveyard_severity_score": 3.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "VYGR": {
+      "ticker": "VYGR",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2021-08-16",
+      "recency_days": 1686,
+      "failure_mix": {
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.3,
+      "graveyard_confidence": "HIGH"
+    },
+    "WVE": {
+      "ticker": "WVE",
+      "n_graveyard_events": 7,
+      "n_program_failures": 7,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2023-10-23",
+      "recency_days": 888,
+      "failure_mix": {
+        "SAFETY": 5,
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase1": 6,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 4.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "XENE": {
+      "ticker": "XENE",
+      "n_graveyard_events": 2,
+      "n_program_failures": 2,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 2,
+      "last_failure_date": "2025-02-14",
+      "recency_days": 408,
+      "failure_mix": {
+        "UNKNOWN": 2
+      },
+      "phase_mix": {
+        "phase3": 2
+      },
+      "graveyard_severity_score": 4.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "XNCR": {
+      "ticker": "XNCR",
+      "n_graveyard_events": 10,
+      "n_program_failures": 8,
+      "n_trial_withdrawals": 1,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 3,
+      "last_failure_date": "2025-12-02",
+      "recency_days": 117,
+      "failure_mix": {
+        "UNKNOWN": 8,
+        "SAFETY": 1,
+        "OPERATIONAL": 1
+      },
+      "phase_mix": {
+        "phase1": 7,
+        "phase2": 3
+      },
+      "graveyard_severity_score": 5.75,
+      "graveyard_confidence": "HIGH"
+    },
+    "ZBIO": {
+      "ticker": "ZBIO",
+      "n_graveyard_events": 1,
+      "n_program_failures": 0,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 1,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-04-06",
+      "recency_days": 357,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.15,
+      "graveyard_confidence": "MEDIUM"
+    },
+    "ZLAB": {
+      "ticker": "ZLAB",
+      "n_graveyard_events": 6,
+      "n_program_failures": 6,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 1,
+      "last_failure_date": "2025-10-20",
+      "recency_days": 160,
+      "failure_mix": {
+        "UNKNOWN": 4,
+        "SAFETY": 2
+      },
+      "phase_mix": {
+        "phase1": 4,
+        "phase3": 1,
+        "phase2": 1
+      },
+      "graveyard_severity_score": 5.0,
+      "graveyard_confidence": "HIGH"
+    },
+    "ZYME": {
+      "ticker": "ZYME",
+      "n_graveyard_events": 1,
+      "n_program_failures": 1,
+      "n_trial_withdrawals": 0,
+      "n_completed_no_results": 0,
+      "n_lead_program_failures": 0,
+      "last_failure_date": "2025-10-21",
+      "recency_days": 159,
+      "failure_mix": {
+        "UNKNOWN": 1
+      },
+      "phase_mix": {
+        "phase1": 1
+      },
+      "graveyard_severity_score": 0.5,
+      "graveyard_confidence": "HIGH"
+    }
+  }
+}
