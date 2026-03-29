@@ -10586,6 +10586,25 @@ Module 3 Catalyst Detection:
                 except Exception as _exc:
                     logger.debug("Readiness scorecard skipped: %s", _exc)
 
+            # --- Bioshort watch (read-only hedge monitor) ---
+            try:
+                from tools.build_bioshort_watch import build_bioshort_watch
+
+                _bw = build_bioshort_watch(as_of_date=args.as_of_date)
+                if "error" not in _bw:
+                    logger.info(
+                        "[BIOSHORT_WATCH] %s — %d alerts (level=%s)",
+                        _bw.get("current_date", "?"),
+                        _bw.get("n_alerts", 0),
+                        _bw.get("alert_level", "?"),
+                    )
+                    for _alert in _bw.get("alerts", []):
+                        logger.info("[BIOSHORT_WATCH]   %s", _alert)
+                else:
+                    logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw["error"])
+            except Exception as _bw_exc:
+                logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw_exc)
+
         return 0
 
     except (PathTraversalError, SymlinkError) as e:
