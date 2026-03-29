@@ -1,0 +1,5699 @@
+{
+  "schema": "catalyst_history_rollup.v1",
+  "as_of_date": "2026-03-29",
+  "generated_at": "2026-03-29T18:32:52.719901+00:00",
+  "n_tickers": 305,
+  "n_events_total": 3880,
+  "tickers": {
+    "AARD": {
+      "ticker": "AARD",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ABCL": {
+      "ticker": "ABCL",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": null
+    },
+    "ABEO": {
+      "ticker": "ABEO",
+      "n_events_total": 28,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 28
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 21,
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 2,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2025-08-18",
+      "last_negative_reg_event_date": "2024-08-12"
+    },
+    "ABOS": {
+      "ticker": "ABOS",
+      "n_events_total": 11,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ABSI": {
+      "ticker": "ABSI",
+      "n_events_total": 8,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ABUS": {
+      "ticker": "ABUS",
+      "n_events_total": 1,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2024-11-15",
+      "last_negative_reg_event_date": null
+    },
+    "ACAD": {
+      "ticker": "ACAD",
+      "n_events_total": 14,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "CT_ACTIVITY_PROXY": 3,
+        "SAFETY_SIGNAL": 2,
+        "FDA_CRL": 2
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": "2021-05-05"
+    },
+    "ACLX": {
+      "ticker": "ACLX",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "FDA": 1,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_ADCOM": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-02-27",
+      "last_negative_reg_event_date": null
+    },
+    "ACRS": {
+      "ticker": "ACRS",
+      "n_events_total": 15,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 15
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "SAFETY_SIGNAL": 6
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ACRV": {
+      "ticker": "ACRV",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2025-12-22",
+      "last_negative_reg_event_date": null
+    },
+    "ADCT": {
+      "ticker": "ADCT",
+      "n_events_total": 11,
+      "n_events_365d": 10,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 4,
+        "CT_TIMELINE_PULLIN": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AGIO": {
+      "ticker": "AGIO",
+      "n_events_total": 10,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AKRO": {
+      "ticker": "AKRO",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "ALDX": {
+      "ticker": "ALDX",
+      "n_events_total": 57,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 1,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 12,
+      "source_mix": {
+        "SEC": 57
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 39,
+        "DATA_READOUT": 11,
+        "SAFETY_SIGNAL": 5,
+        "FDA_CRL": 2
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": "2025-06-17"
+    },
+    "ALGS": {
+      "ticker": "ALGS",
+      "n_events_total": 6,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ALKS": {
+      "ticker": "ALKS",
+      "n_events_total": 13,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 3,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 4,
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 1,
+        "FDA_APPROVAL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "ALLO": {
+      "ticker": "ALLO",
+      "n_events_total": 13,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 5,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ALMS": {
+      "ticker": "ALMS",
+      "n_events_total": 7,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 1,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ALNY": {
+      "ticker": "ALNY",
+      "n_events_total": 18,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 5,
+        "CT_STATUS_UPGRADE": 2,
+        "SAFETY_SIGNAL": 1,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-03-02",
+      "last_negative_reg_event_date": "2021-02-11"
+    },
+    "ALT": {
+      "ticker": "ALT",
+      "n_events_total": 12,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 12
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 5,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AMGN": {
+      "ticker": "AMGN",
+      "n_events_total": 34,
+      "n_events_365d": 28,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 13,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "FDA": 14,
+        "CTGOV": 11,
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "FDA_APPROVAL": 12,
+        "FDA_PDUFA_DATE": 5,
+        "CT_ACTIVITY_PROXY": 5,
+        "DATA_READOUT": 3,
+        "CT_STATUS_UPGRADE": 3
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "AMLX": {
+      "ticker": "AMLX",
+      "n_events_total": 12,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AMPH": {
+      "ticker": "AMPH",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-03-05",
+      "last_negative_reg_event_date": null
+    },
+    "AMRX": {
+      "ticker": "AMRX",
+      "n_events_total": 22,
+      "n_events_365d": 21,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 21,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "FDA": 22
+      },
+      "event_type_top5": {
+        "FDA_APPROVAL": 22
+      },
+      "last_event_date": "2026-02-09",
+      "last_negative_reg_event_date": null
+    },
+    "ANAB": {
+      "ticker": "ANAB",
+      "n_events_total": 48,
+      "n_events_365d": 17,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 17,
+      "source_mix": {
+        "SEC": 48
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 24,
+        "FDA_PDUFA_DATE": 13,
+        "SAFETY_SIGNAL": 11
+      },
+      "last_event_date": "2028-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "ANIP": {
+      "ticker": "ANIP",
+      "n_events_total": 5,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 4,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ANNX": {
+      "ticker": "ANNX",
+      "n_events_total": 21,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 21
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 11,
+        "DATA_READOUT": 7,
+        "SAFETY_SIGNAL": 3
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ANRO": {
+      "ticker": "ANRO",
+      "n_events_total": 8,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 8
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "APGE": {
+      "ticker": "APGE",
+      "n_events_total": 12,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 10,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 2
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "APLS": {
+      "ticker": "APLS",
+      "n_events_total": 7,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 4,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "DATA_READOUT": 2,
+        "CT_TIMELINE_PULLIN": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "AQST": {
+      "ticker": "AQST",
+      "n_events_total": 79,
+      "n_events_365d": 19,
+      "n_negative_reg_events_365d": 2,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 19,
+      "source_mix": {
+        "SEC": 79
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 54,
+        "SAFETY_SIGNAL": 10,
+        "FDA_CRL": 8,
+        "DATA_READOUT": 7
+      },
+      "last_event_date": "2027-06-30",
+      "last_negative_reg_event_date": "2026-03-04"
+    },
+    "ARCT": {
+      "ticker": "ARCT",
+      "n_events_total": 10,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 10
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ARDX": {
+      "ticker": "ARDX",
+      "n_events_total": 19,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 14,
+        "CTGOV": 3,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 10,
+        "FDA_CRL": 2,
+        "FDA_APPROVAL": 2,
+        "SAFETY_SIGNAL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": "2021-11-12"
+    },
+    "ARGX": {
+      "ticker": "ARGX",
+      "n_events_total": 14,
+      "n_events_365d": 14,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 13,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 6,
+        "CT_STATUS_UPGRADE": 2,
+        "CT_TIMELINE_PULLIN": 2,
+        "CT_TRIAL_WITHDRAWN": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-06-07",
+      "last_negative_reg_event_date": null
+    },
+    "ARQT": {
+      "ticker": "ARQT",
+      "n_events_total": 22,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 22
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 11,
+        "DATA_READOUT": 7,
+        "SAFETY_SIGNAL": 4
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ARTV": {
+      "ticker": "ARTV",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-11-12",
+      "last_negative_reg_event_date": null
+    },
+    "ARVN": {
+      "ticker": "ARVN",
+      "n_events_total": 11,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 2,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 3,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ARWR": {
+      "ticker": "ARWR",
+      "n_events_total": 4,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 3,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 2,
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-03",
+      "last_negative_reg_event_date": null
+    },
+    "ASMB": {
+      "ticker": "ASMB",
+      "n_events_total": 8,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 8
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 4
+      },
+      "last_event_date": "2025-12-08",
+      "last_negative_reg_event_date": null
+    },
+    "ASND": {
+      "ticker": "ASND",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-11",
+      "last_negative_reg_event_date": null
+    },
+    "ATAI": {
+      "ticker": "ATAI",
+      "n_events_total": 13,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 13
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 7,
+        "DATA_READOUT": 6
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ATXS": {
+      "ticker": "ATXS",
+      "n_events_total": 7,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AUPH": {
+      "ticker": "AUPH",
+      "n_events_total": 4,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2023-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "AURA": {
+      "ticker": "AURA",
+      "n_events_total": 20,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 18,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 10,
+        "DATA_READOUT": 7,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AUTL": {
+      "ticker": "AUTL",
+      "n_events_total": 9,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 4
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AVBP": {
+      "ticker": "AVBP",
+      "n_events_total": 6,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "FDA_PDUFA_DATE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AVIR": {
+      "ticker": "AVIR",
+      "n_events_total": 14,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 9,
+        "DATA_READOUT": 5
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AVXL": {
+      "ticker": "AVXL",
+      "n_events_total": 2,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "AXSM": {
+      "ticker": "AXSM",
+      "n_events_total": 69,
+      "n_events_365d": 10,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "SEC": 68,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 51,
+        "DATA_READOUT": 9,
+        "SAFETY_SIGNAL": 8,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2022-05-02"
+    },
+    "AZN": {
+      "ticker": "AZN",
+      "n_events_total": 23,
+      "n_events_365d": 22,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 11,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "FDA": 12,
+        "CTGOV": 11
+      },
+      "event_type_top5": {
+        "FDA_ADCOM": 8,
+        "CT_ACTIVITY_PROXY": 5,
+        "FDA_APPROVAL": 4,
+        "CT_STATUS_UPGRADE": 3,
+        "CT_TIMELINE_PULLIN": 3
+      },
+      "last_event_date": "2026-04-30",
+      "last_negative_reg_event_date": null
+    },
+    "BBIO": {
+      "ticker": "BBIO",
+      "n_events_total": 40,
+      "n_events_365d": 15,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "SEC": 34,
+        "CTGOV": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 13,
+        "FDA_PDUFA_DATE": 12,
+        "SAFETY_SIGNAL": 9,
+        "CT_ACTIVITY_PROXY": 4,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BBOT": {
+      "ticker": "BBOT",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "CTGOV": 2,
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-03-04",
+      "last_negative_reg_event_date": null
+    },
+    "BCAX": {
+      "ticker": "BCAX",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BCRX": {
+      "ticker": "BCRX",
+      "n_events_total": 6,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-10",
+      "last_negative_reg_event_date": null
+    },
+    "BCYC": {
+      "ticker": "BCYC",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BDTX": {
+      "ticker": "BDTX",
+      "n_events_total": 4,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BEAM": {
+      "ticker": "BEAM",
+      "n_events_total": 14,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "CLINICAL_HOLD": 3,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BHVN": {
+      "ticker": "BHVN",
+      "n_events_total": 22,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 15,
+        "CTGOV": 7
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 4,
+        "SAFETY_SIGNAL": 3,
+        "CT_TIMELINE_PUSHOUT": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BIIB": {
+      "ticker": "BIIB",
+      "n_events_total": 30,
+      "n_events_365d": 20,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 4,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "CTGOV": 13,
+        "SEC": 12,
+        "FDA": 5
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 12,
+        "CT_ACTIVITY_PROXY": 9,
+        "DATA_READOUT": 2,
+        "FDA_ADCOM": 2,
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2026-05-24",
+      "last_negative_reg_event_date": null
+    },
+    "BLTE": {
+      "ticker": "BLTE",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-12",
+      "last_negative_reg_event_date": null
+    },
+    "BMEA": {
+      "ticker": "BMEA",
+      "n_events_total": 12,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 6,
+        "CLINICAL_HOLD": 3,
+        "FDA_PDUFA_DATE": 1,
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-24",
+      "last_negative_reg_event_date": null
+    },
+    "BMRN": {
+      "ticker": "BMRN",
+      "n_events_total": 16,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 3,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 11,
+        "FDA": 3,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "FDA_APPROVAL": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "BNTX": {
+      "ticker": "BNTX",
+      "n_events_total": 11,
+      "n_events_365d": 11,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 10,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 8,
+        "CT_STATUS_UPGRADE": 2,
+        "FDA_ADCOM": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "CABA": {
+      "ticker": "CABA",
+      "n_events_total": 22,
+      "n_events_365d": 15,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 14,
+      "source_mix": {
+        "SEC": 21,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 12,
+        "DATA_READOUT": 9,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CADL": {
+      "ticker": "CADL",
+      "n_events_total": 21,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "SEC": 18,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 10,
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 2,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "CAI": {
+      "ticker": "CAI",
+      "n_events_total": 4,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "CATX": {
+      "ticker": "CATX",
+      "n_events_total": 12,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 10,
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "CCCC": {
+      "ticker": "CCCC",
+      "n_events_total": 6,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 4,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CDNA": {
+      "ticker": "CDNA",
+      "n_events_total": 6,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 6
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_STATUS_DOWNGRADE": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "CELC": {
+      "ticker": "CELC",
+      "n_events_total": 7,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2026-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "CERS": {
+      "ticker": "CERS",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CGEM": {
+      "ticker": "CGEM",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "CGON": {
+      "ticker": "CGON",
+      "n_events_total": 13,
+      "n_events_365d": 11,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 8,
+        "DATA_READOUT": 1,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PULLIN": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "CHRS": {
+      "ticker": "CHRS",
+      "n_events_total": 11,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 6,
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 3,
+        "CT_TIMELINE_PUSHOUT": 3,
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "CLDX": {
+      "ticker": "CLDX",
+      "n_events_total": 11,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 2,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_RESULTS_POSTED": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "CLYM": {
+      "ticker": "CLYM",
+      "n_events_total": 8,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "CMPS": {
+      "ticker": "CMPS",
+      "n_events_total": 10,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 10
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CMPX": {
+      "ticker": "CMPX",
+      "n_events_total": 11,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 10,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "CNTA": {
+      "ticker": "CNTA",
+      "n_events_total": 4,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CNTX": {
+      "ticker": "CNTX",
+      "n_events_total": 7,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "COGT": {
+      "ticker": "COGT",
+      "n_events_total": 19,
+      "n_events_365d": 11,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 16,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "FDA_PDUFA_DATE": 4,
+        "SAFETY_SIGNAL": 3,
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2026-03-09",
+      "last_negative_reg_event_date": null
+    },
+    "COLL": {
+      "ticker": "COLL",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2025-12-22",
+      "last_negative_reg_event_date": null
+    },
+    "CRBU": {
+      "ticker": "CRBU",
+      "n_events_total": 4,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 3,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-12",
+      "last_negative_reg_event_date": null
+    },
+    "CRL": {
+      "ticker": "CRL",
+      "n_events_total": 7,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 7
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 5,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "CRMD": {
+      "ticker": "CRMD",
+      "n_events_total": 23,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 23
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 13,
+        "FDA_CRL": 6,
+        "DATA_READOUT": 3,
+        "FDA_WARNING_LETTER": 1
+      },
+      "last_event_date": "2027-01-01",
+      "last_negative_reg_event_date": "2023-04-26"
+    },
+    "CRNX": {
+      "ticker": "CRNX",
+      "n_events_total": 39,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 33,
+        "CTGOV": 6
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 18,
+        "SAFETY_SIGNAL": 9,
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 4,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2026-03-11",
+      "last_negative_reg_event_date": null
+    },
+    "CRSP": {
+      "ticker": "CRSP",
+      "n_events_total": 7,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2,
+        "CT_STATUS_UPGRADE": 2
+      },
+      "last_event_date": "2026-03-09",
+      "last_negative_reg_event_date": null
+    },
+    "CRVS": {
+      "ticker": "CRVS",
+      "n_events_total": 8,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 3,
+        "DATA_READOUT": 2,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "CSTL": {
+      "ticker": "CSTL",
+      "n_events_total": 1,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2020-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "CTMX": {
+      "ticker": "CTMX",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "CTNM": {
+      "ticker": "CTNM",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2026-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "CVAC": {
+      "ticker": "CVAC",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-03-10",
+      "last_negative_reg_event_date": null
+    },
+    "CYTK": {
+      "ticker": "CYTK",
+      "n_events_total": 48,
+      "n_events_365d": 10,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "SEC": 47,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 24,
+        "SAFETY_SIGNAL": 13,
+        "DATA_READOUT": 9,
+        "FDA_CRL": 1,
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": "2023-08-03"
+    },
+    "DAWN": {
+      "ticker": "DAWN",
+      "n_events_total": 24,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 22,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 16,
+        "DATA_READOUT": 6,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "DFTX": {
+      "ticker": "DFTX",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-10-29",
+      "last_negative_reg_event_date": null
+    },
+    "DNA": {
+      "ticker": "DNA",
+      "n_events_total": 8,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 6,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 3,
+        "FDA_ADCOM": 2,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "DNLI": {
+      "ticker": "DNLI",
+      "n_events_total": 16,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 14,
+        "CTGOV": 1,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 5,
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 3,
+        "CLINICAL_HOLD": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "DNTH": {
+      "ticker": "DNTH",
+      "n_events_total": 13,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 13
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "SAFETY_SIGNAL": 5,
+        "FDA_RTF": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": "2023-09-21"
+    },
+    "DRMA": {
+      "ticker": "DRMA",
+      "n_events_total": 7,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2025-03-27",
+      "last_negative_reg_event_date": null
+    },
+    "DVAX": {
+      "ticker": "DVAX",
+      "n_events_total": 11,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "DYN": {
+      "ticker": "DYN",
+      "n_events_total": 13,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 12,
+      "source_mix": {
+        "SEC": 12,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 10,
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "EBS": {
+      "ticker": "EBS",
+      "n_events_total": 1,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2023-03-29",
+      "last_negative_reg_event_date": null
+    },
+    "EDIT": {
+      "ticker": "EDIT",
+      "n_events_total": 1,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2022-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ELDN": {
+      "ticker": "ELDN",
+      "n_events_total": 7,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 3
+      },
+      "last_event_date": "2023-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ELVN": {
+      "ticker": "ELVN",
+      "n_events_total": 5,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "FDA_PDUFA_DATE": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2023-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ENGN": {
+      "ticker": "ENGN",
+      "n_events_total": 4,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 2,
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ENTA": {
+      "ticker": "ENTA",
+      "n_events_total": 6,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "EOLS": {
+      "ticker": "EOLS",
+      "n_events_total": 2,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ERAS": {
+      "ticker": "ERAS",
+      "n_events_total": 9,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ESPR": {
+      "ticker": "ESPR",
+      "n_events_total": 3,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ETON": {
+      "ticker": "ETON",
+      "n_events_total": 14,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 10,
+        "DATA_READOUT": 2,
+        "FDA_CRL": 2
+      },
+      "last_event_date": "2026-02-25",
+      "last_negative_reg_event_date": "2020-08-12"
+    },
+    "EWTX": {
+      "ticker": "EWTX",
+      "n_events_total": 16,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 2,
+        "CT_STATUS_UPGRADE": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "EXEL": {
+      "ticker": "EXEL",
+      "n_events_total": 22,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 9
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 10,
+        "CT_ACTIVITY_PROXY": 7,
+        "FDA_PDUFA_DATE": 3,
+        "CT_STATUS_DOWNGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "EYPT": {
+      "ticker": "EYPT",
+      "n_events_total": 42,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 41,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 16,
+        "FDA_PDUFA_DATE": 13,
+        "DATA_READOUT": 12,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "FATE": {
+      "ticker": "FATE",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-09",
+      "last_negative_reg_event_date": null
+    },
+    "FDMT": {
+      "ticker": "FDMT",
+      "n_events_total": 27,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 26,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 12,
+        "FDA_PDUFA_DATE": 6,
+        "SAFETY_SIGNAL": 5,
+        "CLINICAL_HOLD": 3,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "FGEN": {
+      "ticker": "FGEN",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "FHTX": {
+      "ticker": "FHTX",
+      "n_events_total": 4,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-03",
+      "last_negative_reg_event_date": null
+    },
+    "FLGT": {
+      "ticker": "FLGT",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "FOLD": {
+      "ticker": "FOLD",
+      "n_events_total": 23,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 20,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 17,
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "FULC": {
+      "ticker": "FULC",
+      "n_events_total": 7,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "CLINICAL_HOLD": 3,
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-02-24",
+      "last_negative_reg_event_date": null
+    },
+    "GERN": {
+      "ticker": "GERN",
+      "n_events_total": 10,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 10
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "GH": {
+      "ticker": "GH",
+      "n_events_total": 14,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 14
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 7,
+        "CT_STATUS_UPGRADE": 4,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "GILD": {
+      "ticker": "GILD",
+      "n_events_total": 28,
+      "n_events_365d": 23,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 3,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "CTGOV": 18,
+        "SEC": 7,
+        "FDA": 3
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 9,
+        "FDA_PDUFA_DATE": 4,
+        "FDA_APPROVAL": 3,
+        "CT_TIMELINE_PULLIN": 3,
+        "CT_TIMELINE_PUSHOUT": 3
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "GLPG": {
+      "ticker": "GLPG",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "GLUE": {
+      "ticker": "GLUE",
+      "n_events_total": 9,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "CT_STATUS_UPGRADE": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "GMAB": {
+      "ticker": "GMAB",
+      "n_events_total": 12,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 12
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 7,
+        "CT_TIMELINE_PUSHOUT": 3,
+        "CT_TIMELINE_PULLIN": 2
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "GOSS": {
+      "ticker": "GOSS",
+      "n_events_total": 11,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 10,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "GPCR": {
+      "ticker": "GPCR",
+      "n_events_total": 15,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 9,
+        "DATA_READOUT": 4,
+        "CT_STATUS_DOWNGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "GRAL": {
+      "ticker": "GRAL",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-05",
+      "last_negative_reg_event_date": null
+    },
+    "GRFS": {
+      "ticker": "GRFS",
+      "n_events_total": 8,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 8
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 5,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "HALO": {
+      "ticker": "HALO",
+      "n_events_total": 9,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 8,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-02-28",
+      "last_negative_reg_event_date": null
+    },
+    "HOWL": {
+      "ticker": "HOWL",
+      "n_events_total": 7,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "HRMY": {
+      "ticker": "HRMY",
+      "n_events_total": 31,
+      "n_events_365d": 15,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 14,
+      "source_mix": {
+        "SEC": 30,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 17,
+        "DATA_READOUT": 13,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "HROW": {
+      "ticker": "HROW",
+      "n_events_total": 10,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 7,
+        "FDA": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 2,
+        "FDA_APPROVAL": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "HRTX": {
+      "ticker": "HRTX",
+      "n_events_total": 14,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 9,
+        "FDA_CRL": 4,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-02",
+      "last_negative_reg_event_date": "2021-05-10"
+    },
+    "HUMA": {
+      "ticker": "HUMA",
+      "n_events_total": 5,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 3,
+        "DATA_READOUT": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-03-27",
+      "last_negative_reg_event_date": null
+    },
+    "IBRX": {
+      "ticker": "IBRX",
+      "n_events_total": 16,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 3,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 12,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 8,
+        "FDA_RTF": 3,
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": "2025-08-05"
+    },
+    "IDYA": {
+      "ticker": "IDYA",
+      "n_events_total": 15,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 14,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 7,
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 2,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "IKT": {
+      "ticker": "IKT",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 2,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-12-31",
+      "last_negative_reg_event_date": null
+    },
+    "IMCR": {
+      "ticker": "IMCR",
+      "n_events_total": 11,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "CTGOV": 6,
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_STATUS_UPGRADE": 2,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "IMMP": {
+      "ticker": "IMMP",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-02-27",
+      "last_negative_reg_event_date": null
+    },
+    "IMRX": {
+      "ticker": "IMRX",
+      "n_events_total": 3,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "IMVT": {
+      "ticker": "IMVT",
+      "n_events_total": 17,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 12,
+        "CTGOV": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": null
+    },
+    "INBX": {
+      "ticker": "INBX",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "INCY": {
+      "ticker": "INCY",
+      "n_events_total": 30,
+      "n_events_365d": 22,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "CTGOV": 18,
+        "SEC": 11,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 9,
+        "CT_TIMELINE_PUSHOUT": 6,
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 5,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2021-08-03"
+    },
+    "INDV": {
+      "ticker": "INDV",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "INSM": {
+      "ticker": "INSM",
+      "n_events_total": 20,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 16,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 11,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "INVA": {
+      "ticker": "INVA",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2025-12-15",
+      "last_negative_reg_event_date": null
+    },
+    "IONS": {
+      "ticker": "IONS",
+      "n_events_total": 35,
+      "n_events_365d": 23,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 15,
+      "source_mix": {
+        "SEC": 27,
+        "CTGOV": 6,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 17,
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 5,
+        "CT_STATUS_UPGRADE": 2,
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "IOVA": {
+      "ticker": "IOVA",
+      "n_events_total": 20,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 18,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 13,
+        "DATA_READOUT": 3,
+        "CLINICAL_HOLD": 1,
+        "SAFETY_SIGNAL": 1,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-02-27",
+      "last_negative_reg_event_date": null
+    },
+    "IRON": {
+      "ticker": "IRON",
+      "n_events_total": 29,
+      "n_events_365d": 17,
+      "n_negative_reg_events_365d": 1,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 14,
+      "source_mix": {
+        "SEC": 26,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 12,
+        "FDA_PDUFA_DATE": 11,
+        "CT_ACTIVITY_PROXY": 3,
+        "SAFETY_SIGNAL": 2,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": "2026-02-26"
+    },
+    "IRWD": {
+      "ticker": "IRWD",
+      "n_events_total": 12,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 12
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 5
+      },
+      "last_event_date": "2025-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "IVVD": {
+      "ticker": "IVVD",
+      "n_events_total": 14,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "SAFETY_SIGNAL": 4,
+        "DATA_READOUT": 4,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "JANX": {
+      "ticker": "JANX",
+      "n_events_total": 3,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "JAZZ": {
+      "ticker": "JAZZ",
+      "n_events_total": 33,
+      "n_events_365d": 16,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 25,
+        "CTGOV": 8
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 16,
+        "DATA_READOUT": 8,
+        "CT_ACTIVITY_PROXY": 5,
+        "FDA_CRL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2023-03-01"
+    },
+    "JBIO": {
+      "ticker": "JBIO",
+      "n_events_total": 15,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 15
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 10,
+        "DATA_READOUT": 5
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KALA": {
+      "ticker": "KALA",
+      "n_events_total": 7,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-09-29",
+      "last_negative_reg_event_date": null
+    },
+    "KALV": {
+      "ticker": "KALV",
+      "n_events_total": 4,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 3,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KNSA": {
+      "ticker": "KNSA",
+      "n_events_total": 14,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 10,
+        "FDA_PDUFA_DATE": 2,
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KOD": {
+      "ticker": "KOD",
+      "n_events_total": 18,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 18
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 14,
+        "DATA_READOUT": 4
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KROS": {
+      "ticker": "KROS",
+      "n_events_total": 11,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 6,
+        "DATA_READOUT": 5
+      },
+      "last_event_date": "2025-09-08",
+      "last_negative_reg_event_date": null
+    },
+    "KRYS": {
+      "ticker": "KRYS",
+      "n_events_total": 14,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 12,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 4,
+        "FDA_PDUFA_DATE": 4,
+        "CT_TIMELINE_PUSHOUT": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KURA": {
+      "ticker": "KURA",
+      "n_events_total": 12,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "DATA_READOUT": 4,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "KYMR": {
+      "ticker": "KYMR",
+      "n_events_total": 13,
+      "n_events_365d": 10,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "SAFETY_SIGNAL": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "KYTX": {
+      "ticker": "KYTX",
+      "n_events_total": 17,
+      "n_events_365d": 16,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 13,
+      "source_mix": {
+        "SEC": 14,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 9,
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 1,
+        "CT_STATUS_DOWNGRADE": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "LAB": {
+      "ticker": "LAB",
+      "n_events_total": 8,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 8
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 4,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PULLIN": 1,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-03-10",
+      "last_negative_reg_event_date": null
+    },
+    "LBRX": {
+      "ticker": "LBRX",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3
+      },
+      "last_event_date": "2029-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "LCTX": {
+      "ticker": "LCTX",
+      "n_events_total": 4,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2023-06-30",
+      "last_negative_reg_event_date": null
+    },
+    "LENZ": {
+      "ticker": "LENZ",
+      "n_events_total": 6,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2025-08-08",
+      "last_negative_reg_event_date": null
+    },
+    "LGND": {
+      "ticker": "LGND",
+      "n_events_total": 25,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 25
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 12,
+        "FDA_PDUFA_DATE": 12,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "LQDA": {
+      "ticker": "LQDA",
+      "n_events_total": 7,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7
+      },
+      "last_event_date": "2025-05-24",
+      "last_negative_reg_event_date": null
+    },
+    "LRMR": {
+      "ticker": "LRMR",
+      "n_events_total": 41,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 41
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 19,
+        "DATA_READOUT": 10,
+        "SAFETY_SIGNAL": 7,
+        "CLINICAL_HOLD": 5
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "LXEO": {
+      "ticker": "LXEO",
+      "n_events_total": 11,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 7,
+        "DATA_READOUT": 2,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2026-01-12",
+      "last_negative_reg_event_date": null
+    },
+    "LYEL": {
+      "ticker": "LYEL",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-04",
+      "last_negative_reg_event_date": null
+    },
+    "LYRA": {
+      "ticker": "LYRA",
+      "n_events_total": 21,
+      "n_events_365d": 9,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "SEC": 21
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 7,
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 7
+      },
+      "last_event_date": "2025-09-04",
+      "last_negative_reg_event_date": null
+    },
+    "MAZE": {
+      "ticker": "MAZE",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-03-25",
+      "last_negative_reg_event_date": null
+    },
+    "MBX": {
+      "ticker": "MBX",
+      "n_events_total": 4,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 4
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "MCRB": {
+      "ticker": "MCRB",
+      "n_events_total": 22,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 22
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 9,
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 6
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "MDGL": {
+      "ticker": "MDGL",
+      "n_events_total": 4,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 3,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "FDA_PDUFA_DATE": 1,
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2025-12-19",
+      "last_negative_reg_event_date": null
+    },
+    "MESO": {
+      "ticker": "MESO",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-11",
+      "last_negative_reg_event_date": null
+    },
+    "MGTX": {
+      "ticker": "MGTX",
+      "n_events_total": 6,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 2,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2024-11-13",
+      "last_negative_reg_event_date": null
+    },
+    "MIRM": {
+      "ticker": "MIRM",
+      "n_events_total": 25,
+      "n_events_365d": 14,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 10,
+      "source_mix": {
+        "SEC": 21,
+        "CTGOV": 3,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 12,
+        "DATA_READOUT": 9,
+        "CT_ACTIVITY_PROXY": 3,
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "MLTX": {
+      "ticker": "MLTX",
+      "n_events_total": 11,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-03-11",
+      "last_negative_reg_event_date": null
+    },
+    "MLYS": {
+      "ticker": "MLYS",
+      "n_events_total": 35,
+      "n_events_365d": 11,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 11,
+      "source_mix": {
+        "SEC": 35
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 19,
+        "DATA_READOUT": 8,
+        "FDA_PDUFA_DATE": 8
+      },
+      "last_event_date": "2026-01-06",
+      "last_negative_reg_event_date": null
+    },
+    "MNKD": {
+      "ticker": "MNKD",
+      "n_events_total": 4,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 3,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 4
+      },
+      "last_event_date": "2026-05-29",
+      "last_negative_reg_event_date": null
+    },
+    "MNMD": {
+      "ticker": "MNMD",
+      "n_events_total": 14,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 10,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "MRNA": {
+      "ticker": "MRNA",
+      "n_events_total": 24,
+      "n_events_365d": 15,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 10,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 4,
+        "CT_ACTIVITY_PROXY": 4,
+        "SAFETY_SIGNAL": 3,
+        "CT_TIMELINE_PUSHOUT": 3
+      },
+      "last_event_date": "2026-08-05",
+      "last_negative_reg_event_date": null
+    },
+    "MRSN": {
+      "ticker": "MRSN",
+      "n_events_total": 19,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 19
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 6,
+        "CLINICAL_HOLD": 4,
+        "SAFETY_SIGNAL": 3
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "MRUS": {
+      "ticker": "MRUS",
+      "n_events_total": 2,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-04",
+      "last_negative_reg_event_date": null
+    },
+    "NAMS": {
+      "ticker": "NAMS",
+      "n_events_total": 9,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 5,
+        "DATA_READOUT": 3,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NBIX": {
+      "ticker": "NBIX",
+      "n_events_total": 8,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 3,
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": null
+    },
+    "NGNE": {
+      "ticker": "NGNE",
+      "n_events_total": 15,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 14,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 5,
+        "FDA_PDUFA_DATE": 3,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NKTX": {
+      "ticker": "NKTX",
+      "n_events_total": 2,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-09",
+      "last_negative_reg_event_date": null
+    },
+    "NMRA": {
+      "ticker": "NMRA",
+      "n_events_total": 5,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 4,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NRIX": {
+      "ticker": "NRIX",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "NTLA": {
+      "ticker": "NTLA",
+      "n_events_total": 18,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 18
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 7,
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 2,
+        "CLINICAL_HOLD": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NTRA": {
+      "ticker": "NTRA",
+      "n_events_total": 5,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 4,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 4,
+        "FDA_ADCOM": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "NUVB": {
+      "ticker": "NUVB",
+      "n_events_total": 7,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "FDA_PDUFA_DATE": 2,
+        "CLINICAL_HOLD": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NUVL": {
+      "ticker": "NUVL",
+      "n_events_total": 9,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 6,
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-09-18",
+      "last_negative_reg_event_date": null
+    },
+    "NVAX": {
+      "ticker": "NVAX",
+      "n_events_total": 13,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 13
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 5,
+        "SAFETY_SIGNAL": 1,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "NVCR": {
+      "ticker": "NVCR",
+      "n_events_total": 7,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 4,
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 3,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "OABI": {
+      "ticker": "OABI",
+      "n_events_total": 2,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "OBIO": {
+      "ticker": "OBIO",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2027-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "OCGN": {
+      "ticker": "OCGN",
+      "n_events_total": 40,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 12,
+      "source_mix": {
+        "SEC": 39,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 22,
+        "SAFETY_SIGNAL": 10,
+        "CLINICAL_HOLD": 4,
+        "DATA_READOUT": 3,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "OCUL": {
+      "ticker": "OCUL",
+      "n_events_total": 25,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 24,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 12,
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 5,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "OLMA": {
+      "ticker": "OLMA",
+      "n_events_total": 9,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "OMER": {
+      "ticker": "OMER",
+      "n_events_total": 11,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 10,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "DATA_READOUT": 2,
+        "FDA_CRL": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2021-10-18"
+    },
+    "ONC": {
+      "ticker": "ONC",
+      "n_events_total": 36,
+      "n_events_365d": 14,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 23,
+        "CTGOV": 12,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 15,
+        "DATA_READOUT": 8,
+        "CT_ACTIVITY_PROXY": 8,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_TIMELINE_PULLIN": 2
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "OPK": {
+      "ticker": "OPK",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1,
+        "DATA_READOUT": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "ORIC": {
+      "ticker": "ORIC",
+      "n_events_total": 6,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6
+      },
+      "last_event_date": "2024-01-01",
+      "last_negative_reg_event_date": null
+    },
+    "ORKA": {
+      "ticker": "ORKA",
+      "n_events_total": 9,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_STATUS_UPGRADE": 1,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "PBYI": {
+      "ticker": "PBYI",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1,
+        "FDA_PDUFA_DATE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-12",
+      "last_negative_reg_event_date": null
+    },
+    "PCVX": {
+      "ticker": "PCVX",
+      "n_events_total": 24,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 10,
+      "source_mix": {
+        "SEC": 21,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 11,
+        "SAFETY_SIGNAL": 6,
+        "FDA_PDUFA_DATE": 4,
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "PEPG": {
+      "ticker": "PEPG",
+      "n_events_total": 3,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "PGEN": {
+      "ticker": "PGEN",
+      "n_events_total": 8,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 8
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "FDA_PDUFA_DATE": 3,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2025-08-27",
+      "last_negative_reg_event_date": null
+    },
+    "PHAT": {
+      "ticker": "PHAT",
+      "n_events_total": 16,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 14,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 8,
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 3,
+        "FDA_APPROVAL": 2
+      },
+      "last_event_date": "2025-10-31",
+      "last_negative_reg_event_date": null
+    },
+    "PHVS": {
+      "ticker": "PHVS",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "PRAX": {
+      "ticker": "PRAX",
+      "n_events_total": 31,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 13,
+      "source_mix": {
+        "SEC": 31
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 15,
+        "SAFETY_SIGNAL": 9,
+        "FDA_PDUFA_DATE": 7
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "PRLD": {
+      "ticker": "PRLD",
+      "n_events_total": 7,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 3
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "PRME": {
+      "ticker": "PRME",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-10",
+      "last_negative_reg_event_date": null
+    },
+    "PRTA": {
+      "ticker": "PRTA",
+      "n_events_total": 8,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "PTCT": {
+      "ticker": "PTCT",
+      "n_events_total": 34,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 31,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 19,
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 3,
+        "CLINICAL_HOLD": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-10",
+      "last_negative_reg_event_date": null
+    },
+    "PTGX": {
+      "ticker": "PTGX",
+      "n_events_total": 9,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 2,
+        "FDA_PDUFA_DATE": 2,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2026-01-12",
+      "last_negative_reg_event_date": null
+    },
+    "PVLA": {
+      "ticker": "PVLA",
+      "n_events_total": 19,
+      "n_events_365d": 17,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 17,
+      "source_mix": {
+        "SEC": 19
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 11,
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 2,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "PYXS": {
+      "ticker": "PYXS",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": null
+    },
+    "QSI": {
+      "ticker": "QSI",
+      "n_events_total": 3,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-03-12",
+      "last_negative_reg_event_date": null
+    },
+    "QURE": {
+      "ticker": "QURE",
+      "n_events_total": 39,
+      "n_events_365d": 21,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 21,
+      "source_mix": {
+        "SEC": 39
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 16,
+        "DATA_READOUT": 11,
+        "SAFETY_SIGNAL": 10,
+        "CLINICAL_HOLD": 2
+      },
+      "last_event_date": "2029-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RANI": {
+      "ticker": "RANI",
+      "n_events_total": 9,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 6,
+        "DATA_READOUT": 3
+      },
+      "last_event_date": "2025-03-31",
+      "last_negative_reg_event_date": null
+    },
+    "RAPP": {
+      "ticker": "RAPP",
+      "n_events_total": 18,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 12,
+      "source_mix": {
+        "SEC": 17,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 7,
+        "CLINICAL_HOLD": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2029-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RAPT": {
+      "ticker": "RAPT",
+      "n_events_total": 9,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 7,
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RARE": {
+      "ticker": "RARE",
+      "n_events_total": 34,
+      "n_events_365d": 13,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 27,
+        "CTGOV": 7
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 9,
+        "FDA_PDUFA_DATE": 9,
+        "DATA_READOUT": 9,
+        "CT_ACTIVITY_PROXY": 5,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RCKT": {
+      "ticker": "RCKT",
+      "n_events_total": 24,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 22,
+        "CTGOV": 1,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 9,
+        "DATA_READOUT": 7,
+        "FDA_PDUFA_DATE": 4,
+        "CLINICAL_HOLD": 3,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-28",
+      "last_negative_reg_event_date": null
+    },
+    "RCUS": {
+      "ticker": "RCUS",
+      "n_events_total": 19,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 10,
+        "CTGOV": 9
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 9,
+        "CT_ACTIVITY_PROXY": 6,
+        "CT_STATUS_UPGRADE": 2,
+        "FDA_PDUFA_DATE": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "REGN": {
+      "ticker": "REGN",
+      "n_events_total": 51,
+      "n_events_365d": 46,
+      "n_negative_reg_events_365d": 2,
+      "n_fda_events_365d": 4,
+      "n_sec_events_365d": 9,
+      "source_mix": {
+        "CTGOV": 33,
+        "SEC": 14,
+        "FDA": 4
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 13,
+        "FDA_PDUFA_DATE": 8,
+        "CT_STATUS_UPGRADE": 6,
+        "CT_TIMELINE_PUSHOUT": 5,
+        "DATA_READOUT": 4
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2025-08-01"
+    },
+    "REPL": {
+      "ticker": "REPL",
+      "n_events_total": 34,
+      "n_events_365d": 18,
+      "n_negative_reg_events_365d": 2,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 11,
+      "source_mix": {
+        "SEC": 27,
+        "CTGOV": 6,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 21,
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 3,
+        "FDA_CRL": 2,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2025-11-06"
+    },
+    "RGNX": {
+      "ticker": "RGNX",
+      "n_events_total": 46,
+      "n_events_365d": 20,
+      "n_negative_reg_events_365d": 1,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 15,
+      "source_mix": {
+        "SEC": 41,
+        "CTGOV": 4,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 15,
+        "DATA_READOUT": 14,
+        "FDA_PDUFA_DATE": 10,
+        "CLINICAL_HOLD": 2,
+        "CT_TRIAL_SUSPENDED": 2
+      },
+      "last_event_date": "2027-04-30",
+      "last_negative_reg_event_date": "2026-03-05"
+    },
+    "RIGL": {
+      "ticker": "RIGL",
+      "n_events_total": 8,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 4,
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-04",
+      "last_negative_reg_event_date": null
+    },
+    "RLAY": {
+      "ticker": "RLAY",
+      "n_events_total": 7,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-03",
+      "last_negative_reg_event_date": null
+    },
+    "RNA": {
+      "ticker": "RNA",
+      "n_events_total": 22,
+      "n_events_365d": 14,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 13,
+      "source_mix": {
+        "SEC": 21,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 12,
+        "DATA_READOUT": 4,
+        "CLINICAL_HOLD": 3,
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ROIV": {
+      "ticker": "ROIV",
+      "n_events_total": 11,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-02-06",
+      "last_negative_reg_event_date": null
+    },
+    "RPRX": {
+      "ticker": "RPRX",
+      "n_events_total": 14,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 3,
+        "FDA_CRL": 2,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2021-08-11"
+    },
+    "RVMD": {
+      "ticker": "RVMD",
+      "n_events_total": 8,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RXRX": {
+      "ticker": "RXRX",
+      "n_events_total": 7,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "RYTM": {
+      "ticker": "RYTM",
+      "n_events_total": 22,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 22
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 12,
+        "FDA_PDUFA_DATE": 7,
+        "SAFETY_SIGNAL": 3
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SABS": {
+      "ticker": "SABS",
+      "n_events_total": 6,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 4,
+        "DATA_READOUT": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SEPN": {
+      "ticker": "SEPN",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SERA": {
+      "ticker": "SERA",
+      "n_events_total": 1,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2022-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "SGMO": {
+      "ticker": "SGMO",
+      "n_events_total": 9,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 9
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 5,
+        "DATA_READOUT": 2,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2026-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "SGMT": {
+      "ticker": "SGMT",
+      "n_events_total": 11,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 4,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SION": {
+      "ticker": "SION",
+      "n_events_total": 4,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 3,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SKYE": {
+      "ticker": "SKYE",
+      "n_events_total": 6,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "FDA_PDUFA_DATE": 1,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-02-02",
+      "last_negative_reg_event_date": null
+    },
+    "SLDB": {
+      "ticker": "SLDB",
+      "n_events_total": 11,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "SAFETY_SIGNAL": 4,
+        "CT_ACTIVITY_PROXY": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SLN": {
+      "ticker": "SLN",
+      "n_events_total": 1,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "SMMT": {
+      "ticker": "SMMT",
+      "n_events_total": 16,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 9,
+        "CTGOV": 6,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 7,
+        "CT_ACTIVITY_PROXY": 3,
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 1,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-11-14",
+      "last_negative_reg_event_date": null
+    },
+    "SNDX": {
+      "ticker": "SNDX",
+      "n_events_total": 20,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 16,
+        "CTGOV": 3,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 8,
+        "DATA_READOUT": 7,
+        "CT_ACTIVITY_PROXY": 2,
+        "SAFETY_SIGNAL": 1,
+        "FDA_APPROVAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "SNY": {
+      "ticker": "SNY",
+      "n_events_total": 7,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 3,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 4,
+        "FDA": 3
+      },
+      "event_type_top5": {
+        "FDA_APPROVAL": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_RESULTS_POSTED": 1,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "SPRY": {
+      "ticker": "SPRY",
+      "n_events_total": 15,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 15
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 11,
+        "DATA_READOUT": 3,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": "2023-11-09"
+    },
+    "SRPT": {
+      "ticker": "SRPT",
+      "n_events_total": 6,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 3,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 3,
+        "SAFETY_SIGNAL": 1,
+        "FDA_PDUFA_DATE": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2026-03-04",
+      "last_negative_reg_event_date": null
+    },
+    "SRRK": {
+      "ticker": "SRRK",
+      "n_events_total": 21,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 12,
+      "source_mix": {
+        "SEC": 21
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 11,
+        "FDA_PDUFA_DATE": 8,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "STOK": {
+      "ticker": "STOK",
+      "n_events_total": 12,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 11,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 6,
+        "FDA_PDUFA_DATE": 3,
+        "CLINICAL_HOLD": 1,
+        "SAFETY_SIGNAL": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "STRO": {
+      "ticker": "STRO",
+      "n_events_total": 4,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 3,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-05",
+      "last_negative_reg_event_date": null
+    },
+    "SUPN": {
+      "ticker": "SUPN",
+      "n_events_total": 26,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 21,
+        "CTGOV": 3,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 14,
+        "DATA_READOUT": 5,
+        "FDA_CRL": 2,
+        "FDA_APPROVAL": 2,
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": "2020-12-23"
+    },
+    "SVRA": {
+      "ticker": "SVRA",
+      "n_events_total": 8,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 8
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 2,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-01-09",
+      "last_negative_reg_event_date": null
+    },
+    "SYRE": {
+      "ticker": "SYRE",
+      "n_events_total": 25,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 24,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 12,
+        "DATA_READOUT": 9,
+        "SAFETY_SIGNAL": 3,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2028-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TARA": {
+      "ticker": "TARA",
+      "n_events_total": 6,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TARS": {
+      "ticker": "TARS",
+      "n_events_total": 17,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 17
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 10,
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TBPH": {
+      "ticker": "TBPH",
+      "n_events_total": 34,
+      "n_events_365d": 8,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 34
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 19,
+        "DATA_READOUT": 12,
+        "SAFETY_SIGNAL": 2,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-01-01",
+      "last_negative_reg_event_date": "2020-11-05"
+    },
+    "TCRX": {
+      "ticker": "TCRX",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TECH": {
+      "ticker": "TECH",
+      "n_events_total": 18,
+      "n_events_365d": 14,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 18
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 8,
+        "CT_STATUS_DOWNGRADE": 4,
+        "CT_TIMELINE_PUSHOUT": 3,
+        "CT_RESULTS_POSTED": 2,
+        "CT_TIMELINE_PULLIN": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "TECX": {
+      "ticker": "TECX",
+      "n_events_total": 14,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 14
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 3,
+        "FDA_PDUFA_DATE": 3
+      },
+      "last_event_date": "2028-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "TEM": {
+      "ticker": "TEM",
+      "n_events_total": 6,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 6
+      },
+      "event_type_top5": {
+        "CT_STATUS_DOWNGRADE": 2,
+        "CT_TIMELINE_PUSHOUT": 2,
+        "CT_RESULTS_POSTED": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-11",
+      "last_negative_reg_event_date": null
+    },
+    "TENX": {
+      "ticker": "TENX",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "TERN": {
+      "ticker": "TERN",
+      "n_events_total": 5,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TGTX": {
+      "ticker": "TGTX",
+      "n_events_total": 13,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 8,
+        "CTGOV": 5
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 6,
+        "CT_ACTIVITY_PROXY": 2,
+        "DATA_READOUT": 1,
+        "CLINICAL_HOLD": 1,
+        "CT_RESULTS_POSTED": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "TNGX": {
+      "ticker": "TNGX",
+      "n_events_total": 3,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": null
+    },
+    "TNYA": {
+      "ticker": "TNYA",
+      "n_events_total": 6,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 6
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CLINICAL_HOLD": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TRDA": {
+      "ticker": "TRDA",
+      "n_events_total": 3,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "CLINICAL_HOLD": 1,
+        "DATA_READOUT": 1,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-09",
+      "last_negative_reg_event_date": null
+    },
+    "TRVI": {
+      "ticker": "TRVI",
+      "n_events_total": 14,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "SAFETY_SIGNAL": 5,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "TSHA": {
+      "ticker": "TSHA",
+      "n_events_total": 11,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 6,
+      "source_mix": {
+        "SEC": 11
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-04-01",
+      "last_negative_reg_event_date": null
+    },
+    "TVTX": {
+      "ticker": "TVTX",
+      "n_events_total": 36,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 35,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 27,
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 2,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-02-27",
+      "last_negative_reg_event_date": null
+    },
+    "TYRA": {
+      "ticker": "TYRA",
+      "n_events_total": 3,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "UPB": {
+      "ticker": "UPB",
+      "n_events_total": 5,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 5
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "URGN": {
+      "ticker": "URGN",
+      "n_events_total": 10,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 10
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "DATA_READOUT": 4,
+        "FDA_ADCOM": 1
+      },
+      "last_event_date": "2025-06-13",
+      "last_negative_reg_event_date": null
+    },
+    "UTHR": {
+      "ticker": "UTHR",
+      "n_events_total": 7,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "CTGOV": 4,
+        "SEC": 3
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 3,
+        "DATA_READOUT": 1,
+        "FDA_PDUFA_DATE": 1,
+        "SAFETY_SIGNAL": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "VCEL": {
+      "ticker": "VCEL",
+      "n_events_total": 6,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "CT_ACTIVITY_PROXY": 1
+      },
+      "last_event_date": "2026-03-06",
+      "last_negative_reg_event_date": null
+    },
+    "VERA": {
+      "ticker": "VERA",
+      "n_events_total": 28,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 11,
+      "source_mix": {
+        "SEC": 27,
+        "FDA": 1
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 21,
+        "DATA_READOUT": 6,
+        "SAFETY_SIGNAL": 1
+      },
+      "last_event_date": "2026-07-07",
+      "last_negative_reg_event_date": null
+    },
+    "VERV": {
+      "ticker": "VERV",
+      "n_events_total": 2,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "VIR": {
+      "ticker": "VIR",
+      "n_events_total": 15,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 13,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 10,
+        "SAFETY_SIGNAL": 3,
+        "CT_ACTIVITY_PROXY": 2
+      },
+      "last_event_date": "2027-10-01",
+      "last_negative_reg_event_date": null
+    },
+    "VKTX": {
+      "ticker": "VKTX",
+      "n_events_total": 18,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 3,
+      "source_mix": {
+        "SEC": 18
+      },
+      "event_type_top5": {
+        "SAFETY_SIGNAL": 10,
+        "DATA_READOUT": 4,
+        "FDA_PDUFA_DATE": 4
+      },
+      "last_event_date": "2025-09-30",
+      "last_negative_reg_event_date": null
+    },
+    "VNDA": {
+      "ticker": "VNDA",
+      "n_events_total": 11,
+      "n_events_365d": 6,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 7,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 4,
+        "DATA_READOUT": 2,
+        "CT_ACTIVITY_PROXY": 2,
+        "FDA_CRL": 1,
+        "CT_TIMELINE_PUSHOUT": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": "2024-03-07"
+    },
+    "VOR": {
+      "ticker": "VOR",
+      "n_events_total": 4,
+      "n_events_365d": 4,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 2,
+        "CTGOV": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 2,
+        "CT_ACTIVITY_PROXY": 1,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2026-03-16",
+      "last_negative_reg_event_date": null
+    },
+    "VRDN": {
+      "ticker": "VRDN",
+      "n_events_total": 43,
+      "n_events_365d": 18,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 4,
+      "n_sec_events_365d": 14,
+      "source_mix": {
+        "SEC": 39,
+        "FDA": 4
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 22,
+        "DATA_READOUT": 11,
+        "SAFETY_SIGNAL": 7,
+        "FDA_APPROVAL": 3
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "VRTX": {
+      "ticker": "VRTX",
+      "n_events_total": 23,
+      "n_events_365d": 15,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 2,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "CTGOV": 12,
+        "SEC": 9,
+        "FDA": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 5,
+        "CT_STATUS_UPGRADE": 5,
+        "CT_ACTIVITY_PROXY": 5,
+        "DATA_READOUT": 4,
+        "FDA_APPROVAL": 2
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "VTRS": {
+      "ticker": "VTRS",
+      "n_events_total": 2,
+      "n_events_365d": 2,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 1,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "FDA": 1,
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "FDA_APPROVAL": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "VTYX": {
+      "ticker": "VTYX",
+      "n_events_total": 12,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 5,
+      "source_mix": {
+        "SEC": 12
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 10,
+        "SAFETY_SIGNAL": 2
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "VYGR": {
+      "ticker": "VYGR",
+      "n_events_total": 2,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "CLINICAL_HOLD": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2025-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "WVE": {
+      "ticker": "WVE",
+      "n_events_total": 6,
+      "n_events_365d": 3,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 2,
+      "source_mix": {
+        "SEC": 5,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 3,
+        "SAFETY_SIGNAL": 2,
+        "CT_STATUS_DOWNGRADE": 1
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "XENE": {
+      "ticker": "XENE",
+      "n_events_total": 21,
+      "n_events_365d": 12,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 8,
+      "source_mix": {
+        "SEC": 17,
+        "CTGOV": 4
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 8,
+        "FDA_PDUFA_DATE": 6,
+        "SAFETY_SIGNAL": 3,
+        "CT_ACTIVITY_PROXY": 2,
+        "CT_STATUS_UPGRADE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "XERS": {
+      "ticker": "XERS",
+      "n_events_total": 2,
+      "n_events_365d": 0,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "SEC": 2
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 1,
+        "DATA_READOUT": 1
+      },
+      "last_event_date": "2024-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "XNCR": {
+      "ticker": "XNCR",
+      "n_events_total": 6,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 0,
+      "source_mix": {
+        "CTGOV": 5,
+        "SEC": 1
+      },
+      "event_type_top5": {
+        "CT_ACTIVITY_PROXY": 2,
+        "DATA_READOUT": 1,
+        "CT_TIMELINE_PUSHOUT": 1,
+        "CT_TIMELINE_PULLIN": 1,
+        "CT_TRIAL_TERMINATED": 1
+      },
+      "last_event_date": "2026-03-17",
+      "last_negative_reg_event_date": null
+    },
+    "ZBIO": {
+      "ticker": "ZBIO",
+      "n_events_total": 7,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 7,
+      "source_mix": {
+        "SEC": 7
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "FDA_PDUFA_DATE": 2
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ZLAB": {
+      "ticker": "ZLAB",
+      "n_events_total": 25,
+      "n_events_365d": 7,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 22,
+        "CTGOV": 3
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 14,
+        "DATA_READOUT": 8,
+        "CT_ACTIVITY_PROXY": 3
+      },
+      "last_event_date": "2026-07-01",
+      "last_negative_reg_event_date": null
+    },
+    "ZVRA": {
+      "ticker": "ZVRA",
+      "n_events_total": 22,
+      "n_events_365d": 1,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 1,
+      "source_mix": {
+        "SEC": 22
+      },
+      "event_type_top5": {
+        "FDA_PDUFA_DATE": 16,
+        "DATA_READOUT": 4,
+        "SAFETY_SIGNAL": 1,
+        "FDA_CRL": 1
+      },
+      "last_event_date": "2026-03-13",
+      "last_negative_reg_event_date": "2022-05-16"
+    },
+    "ZYME": {
+      "ticker": "ZYME",
+      "n_events_total": 7,
+      "n_events_365d": 5,
+      "n_negative_reg_events_365d": 0,
+      "n_fda_events_365d": 0,
+      "n_sec_events_365d": 4,
+      "source_mix": {
+        "SEC": 6,
+        "CTGOV": 1
+      },
+      "event_type_top5": {
+        "DATA_READOUT": 5,
+        "CT_ACTIVITY_PROXY": 1,
+        "FDA_PDUFA_DATE": 1
+      },
+      "last_event_date": "2027-07-01",
+      "last_negative_reg_event_date": null
+    }
+  }
+}

@@ -68,8 +68,14 @@ def build_company_rollup(
     records: List[Dict],
     as_of_date: str,
     min_confidence: str = "MEDIUM",
+    ticker_trial_counts: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Dict]:
-    """Build per-ticker rollup from graveyard records."""
+    """Build per-ticker rollup from graveyard records.
+
+    Args:
+        ticker_trial_counts: total trials per ticker from clinical_history_catalog,
+            used to normalize severity by pipeline size. If None, raw severity only.
+    """
     conf_rank = {"LOW": 0, "MEDIUM": 1, "HIGH": 2}
     min_conf = conf_rank.get(min_confidence.upper(), 1)
 
@@ -102,9 +108,15 @@ def build_company_rollup(
         high_pct = sum(1 for r in recs if r.get("confidence") == "HIGH") / max(len(recs), 1)
         rollup_confidence = "HIGH" if high_pct > 0.5 else "MEDIUM"
 
+        # Normalized severity: per-trial burden
+        n_total_trials = (ticker_trial_counts or {}).get(ticker, 0)
+        severity_per_trial = round(severity / max(n_total_trials, 1), 4) if n_total_trials else None
+        graveyard_rate = round(len(recs) / max(n_total_trials, 1), 4) if n_total_trials else None
+
         rollup[ticker] = {
             "ticker": ticker,
             "n_graveyard_events": len(recs),
+            "n_total_trials": n_total_trials,
             "n_program_failures": event_types.get("PROGRAM_TERMINATED", 0),
             "n_trial_withdrawals": event_types.get("TRIAL_WITHDRAWN", 0),
             "n_completed_no_results": event_types.get("COMPLETED_NO_RESULTS", 0),
@@ -114,6 +126,8 @@ def build_company_rollup(
             "failure_mix": dict(reasons.most_common()),
             "phase_mix": dict(phases.most_common()),
             "graveyard_severity_score": round(severity, 2),
+            "graveyard_severity_per_trial": severity_per_trial,
+            "graveyard_rate": graveyard_rate,
             "graveyard_confidence": rollup_confidence,
         }
 
@@ -123,6 +137,7 @@ def build_company_rollup(
 def build_graveyard_rollup(
     *,
     catalog_path: Path = PROJECT_ROOT / "data" / "graveyard" / "graveyard_catalog.json",
+    clinical_catalog_path: Path = PROJECT_ROOT / "data" / "clinical" / "clinical_history_catalog.json",
     output_path: Path = PROJECT_ROOT / "data" / "graveyard" / "graveyard_company_rollup.json",
     min_confidence: str = "MEDIUM",
 ) -> Dict[str, Any]:
@@ -137,7 +152,15 @@ def build_graveyard_rollup(
     as_of = catalog.get("built_as_of", datetime.now(timezone.utc).strftime("%Y-%m-%d"))
     logger.info("Loaded catalog: %d records, as_of=%s", len(records), as_of)
 
-    rollup = build_company_rollup(records, as_of, min_confidence)
+    # Load trial counts for normalization
+    ticker_trial_counts: Optional[Dict[str, int]] = None
+    if clinical_catalog_path.exists():
+        with open(clinical_catalog_path) as f:
+            clin = json.load(f)
+        ticker_trial_counts = Counter(r.get("ticker", "") for r in clin.get("records", []))
+        logger.info("Loaded clinical catalog for normalization: %d tickers", len(ticker_trial_counts))
+
+    rollup = build_company_rollup(records, as_of, min_confidence, ticker_trial_counts)
 
     # Summary stats
     severities = [v["graveyard_severity_score"] for v in rollup.values()]
