@@ -266,16 +266,72 @@ def deduplicate_events(events: List[Dict]) -> List[Dict]:
     return list(by_key.values())
 
 
+def collect_archive_catalyst_events(archives_dir: Path, max_archives: int = 0) -> List[Dict]:
+    """Extract catalyst events from tar.gz archives."""
+    import tarfile
+
+    events = []
+    archives = sorted(archives_dir.glob("*.tar.gz"))
+    if max_archives > 0:
+        archives = archives[-max_archives:]
+
+    for archive_path in archives:
+        try:
+            with tarfile.open(archive_path, "r:gz") as tar:
+                # Find catalyst_events file inside archive
+                for member in tar.getmembers():
+                    if "catalyst_events" in member.name and member.name.endswith(".json"):
+                        f = tar.extractfile(member)
+                        if f is None:
+                            continue
+                        data = json.loads(f.read())
+                        summaries = data.get("summaries", [])
+                        if isinstance(summaries, dict):
+                            summaries = list(summaries.values())
+                        as_of = data.get("run_metadata", {}).get("as_of_date", "")
+
+                        for summary in summaries:
+                            if not isinstance(summary, dict):
+                                continue
+                            ticker = summary.get("ticker", "")
+                            for ev in summary.get("events", []):
+                                event_date = ev.get("event_date") or ev.get("actual_date") or ev.get("disclosed_at", "")
+                                event_type = ev.get("event_type", ev.get("type", ""))
+                                if not ticker or not event_date or not event_type:
+                                    continue
+                                events.append(
+                                    {
+                                        "ticker": ticker,
+                                        "event_type": event_type,
+                                        "event_date": event_date[:10],
+                                        "pit_available_at": (ev.get("disclosed_at") or as_of or event_date)[:10],
+                                        "source": ev.get("source", "CTGOV_CALENDAR"),
+                                        "confidence": str(ev.get("confidence", "MEDIUM")),
+                                        "event_name": ev.get("event_name", ev.get("description", "")),
+                                        "nct_id": ev.get("nct_id"),
+                                        "document_ref": ev.get("nct_id", ""),
+                                    }
+                                )
+                        break  # Only one catalyst_events per archive
+        except (tarfile.TarError, OSError, json.JSONDecodeError) as exc:
+            logger.debug("Skipping archive %s: %s", archive_path.name, exc)
+            continue
+
+    return events
+
+
 def build_catalyst_history_events(
     *,
     sec_cache_dir: Path = PROJECT_ROOT / "cache" / "sec" / "8k_catalysts",
     fda_cache_dir: Path = PROJECT_ROOT / "cache" / "fda",
     production_dir: Path = PROJECT_ROOT / "production_data",
+    archives_dir: Path = PROJECT_ROOT / "data" / "archives",
     output_path: Path = PROJECT_ROOT / "data" / "catalyst_history" / "catalyst_history_events.jsonl",
     as_of_date: Optional[str] = None,
-    max_ctgov_files: int = 50,
+    max_ctgov_files: int = 0,
+    max_archives: int = 0,
 ) -> Dict[str, Any]:
-    """Build catalyst history event ledger."""
+    """Build catalyst history event ledger from ALL available sources."""
     all_events: List[Dict] = []
 
     # Collect from all sources
@@ -292,8 +348,14 @@ def build_catalyst_history_events(
     all_events.extend(adcom_events)
 
     ctgov_events = collect_ctgov_catalyst_events(production_dir, max_ctgov_files)
-    logger.info("CTgov catalyst: %d raw events", len(ctgov_events))
+    logger.info("CTgov catalyst (production): %d raw events", len(ctgov_events))
     all_events.extend(ctgov_events)
+
+    # Archive catalyst events
+    if archives_dir.exists():
+        archive_events = collect_archive_catalyst_events(archives_dir, max_archives)
+        logger.info("Archive catalyst: %d raw events", len(archive_events))
+        all_events.extend(archive_events)
 
     openfda_events = collect_openfda_events(fda_cache_dir)
     logger.info("openFDA: %d events", len(openfda_events))
@@ -346,12 +408,15 @@ def build_catalyst_history_events(
 def main():
     parser = argparse.ArgumentParser(description="Build catalyst history event ledger (Spec 034)")
     parser.add_argument("--as-of-date", default=None)
-    parser.add_argument("--max-ctgov-files", type=int, default=50)
+    parser.add_argument("--max-ctgov-files", type=int, default=0, help="0=all production files")
+    parser.add_argument("--max-archives", type=int, default=0, help="0=all archives")
+    parser.add_argument("--full", action="store_true", help="Full reconstruction from all sources")
     args = parser.parse_args()
 
     result = build_catalyst_history_events(
         as_of_date=args.as_of_date,
         max_ctgov_files=args.max_ctgov_files,
+        max_archives=args.max_archives,
     )
     if "error" in result:
         logger.error(result["error"])
