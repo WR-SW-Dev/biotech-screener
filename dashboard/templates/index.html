@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Policy Control Tower</title>
+<style>
+:root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff; --purple: #bc8cff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 16px; }
+h1 { font-size: 1.4em; margin-bottom: 8px; }
+h2 { font-size: 1.1em; margin: 16px 0 8px; color: var(--blue); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+h3 { font-size: 0.95em; margin: 8px 0 4px; color: var(--muted); }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+.header select { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.stat { display: inline-block; margin-right: 16px; margin-bottom: 4px; }
+.stat-label { font-size: 0.75em; color: var(--muted); text-transform: uppercase; }
+.stat-value { font-size: 1.3em; font-weight: 600; }
+.pos { color: var(--green); } .neg { color: var(--red); } .warn { color: var(--yellow); }
+table { width: 100%; border-collapse: collapse; font-size: 0.82em; margin-top: 4px; }
+th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+td { padding: 3px 6px; border-bottom: 1px solid #21262d; }
+tr:hover { background: #1c2128; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.75em; font-weight: 600; }
+.badge-a { background: #238636; color: #fff; } .badge-b { background: #1f6feb; color: #fff; }
+.badge-c { background: #9e6a03; color: #fff; } .badge-d { background: #da3633; color: #fff; }
+.badge-high { background: #da3633; color: #fff; } .badge-medium { background: #9e6a03; color: #fff; }
+.badge-low { background: #1f6feb; color: #fff; } .badge-none { background: #30363d; color: #8b949e; }
+.alert-row { padding: 4px 8px; border-left: 3px solid var(--border); margin-bottom: 4px; font-size: 0.82em; }
+.alert-row.HIGH { border-color: var(--red); } .alert-row.MEDIUM { border-color: var(--yellow); }
+.alert-row.WARN { border-color: var(--yellow); } .alert-row.LOW { border-color: var(--blue); }
+.policy-path { font-family: monospace; font-size: 0.78em; }
+.footer { margin-top: 24px; font-size: 0.75em; color: var(--muted); text-align: center; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>Policy Control Tower</h1>
+  <div>
+    <select onchange="window.location='/?date='+this.value">
+      {% for d in dates %}
+      <option value="{{ d }}" {% if d == date %}selected{% endif %}>{{ d }}</option>
+      {% endfor %}
+    </select>
+    <span style="color: var(--muted); font-size: 0.8em; margin-left: 8px;">{{ now }}</span>
+  </div>
+</div>
+
+<!-- Status Cards -->
+<div class="grid">
+  <div class="card">
+    <h3>Shadow Portfolio</h3>
+    <div class="stat">
+      <div class="stat-label">Cumulative P&L</div>
+      <div class="stat-value {% if cum_pnl >= 0 %}pos{% else %}neg{% endif %}">${{ "{:,.0f}".format(cum_pnl) }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Return</div>
+      <div class="stat-value {% if cum_pnl_pct >= 0 %}pos{% else %}neg{% endif %}">{{ "{:+.1f}".format(cum_pnl_pct) }}%</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Positions</div>
+      <div class="stat-value">{{ n_positions }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Tier Distribution</h3>
+    {% for tier in ['A', 'B', 'C', 'D'] %}
+    {% if tier in tier_summary %}
+    <div class="stat">
+      <div class="stat-label">{{ tier }}-tier</div>
+      <div class="stat-value">{{ tier_summary[tier] }} <span style="font-size:0.7em; color:var(--muted)">({{ tier_weights.get(tier, 0) }}%)</span></div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h3>Policy Gap (cumulative)</h3>
+    <div class="stat">
+      <div class="stat-label">Tiered vs Current</div>
+      <div class="stat-value {% if policy_gap_tiered > 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(policy_gap_tiered) }}pp</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Exit vs Current</div>
+      <div class="stat-value {% if policy_gap_exit > 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(policy_gap_exit) }}pp</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Health</h3>
+    {% if phase2 %}
+    <div class="stat">
+      <div class="stat-label">Phase-2</div>
+      <div class="stat-value {% if phase2.status == 'PASS' %}pos{% elif phase2.status == 'FAIL' %}neg{% else %}warn{% endif %}">{{ phase2.status }}</div>
+    </div>
+    {% endif %}
+    {% if bioshort %}
+    <div class="stat">
+      <div class="stat-label">Bioshort</div>
+      <div class="stat-value">
+        <span class="badge badge-{{ bioshort.alert_level|lower }}">{{ bioshort.alert_level }}</span>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Alerts -->
+{% if alerts %}
+<h2>Alerts ({{ alerts|length }})</h2>
+<div class="card">
+  {% for a in alerts %}
+  <div class="alert-row {{ a.level }}">
+    <span class="badge badge-{{ a.level|lower }}">{{ a.level }}</span>
+    <strong>{{ a.source }}</strong>: {{ a.text }}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Risky Holds -->
+{% if risky_holds %}
+<h2>Risky Holds ({{ risky_holds|length }})</h2>
+<div class="card">
+<table>
+<tr><th>Ticker</th><th>Tier</th><th>Weight</th><th>Momentum</th><th>Risk</th><th>Catalyst</th></tr>
+{% for p in risky_holds %}
+<tr>
+  <td><strong>{{ p.ticker }}</strong></td>
+  <td><span class="badge badge-{{ p.tier|lower }}">{{ p.tier }}</span></td>
+  <td>{{ "%.1f"|format(p.weight) }}%</td>
+  <td>{% if p.mom == 'headwind' %}<span class="neg">{{ p.mom }}</span>{% else %}{{ p.mom }}{% endif %}</td>
+  <td>{{ p.risk }}</td>
+  <td>{{ p.catalyst_days }}d</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endif %}
+
+<div class="grid">
+<!-- Policy Compare -->
+{% if policy %}
+<div class="card">
+  <h2>Policy Compare — {{ date }}</h2>
+  {% if policy.daily_pnl_pct %}
+  <h3>Daily P&L</h3>
+  <table>
+  <tr><th>Policy</th><th>P&L</th></tr>
+  {% for p in ['current', 'tiered', 'tiered_exit'] %}
+  <tr><td>{{ p }}</td><td class="{% if policy.daily_pnl_pct[p] >= 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(policy.daily_pnl_pct[p]) }}%</td></tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+
+  {% if policy.excluded_by_exit %}
+  <h3>Excluded by Exit Overlay</h3>
+  <p>{{ policy.excluded_by_exit | join(', ') }}</p>
+  {% endif %}
+
+  {% if policy.weight_changes_top5 %}
+  <h3>Biggest Weight Changes</h3>
+  <table>
+  <tr><th>Ticker</th><th>Current</th><th>Tiered</th><th>Delta</th><th>Tier</th></tr>
+  {% for c in policy.weight_changes_top5[:8] %}
+  <tr>
+    <td>{{ c.ticker }}</td>
+    <td>{{ "%.1f"|format(c.current_wt) }}%</td>
+    <td>{{ "%.1f"|format(c.tiered_wt) }}%</td>
+    <td class="{% if c.delta > 0 %}pos{% else %}neg{% endif %}">{{ "{:+.1f}".format(c.delta) }}%</td>
+    <td><span class="badge badge-{{ c.tier|lower }}">{{ c.tier }}</span></td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- Attribution -->
+<div class="card">
+  <h2>Attribution — {{ date }}</h2>
+  {% if attr_top %}
+  <h3>Top Contributors</h3>
+  <table>
+  <tr><th>Ticker</th><th>P&L</th><th>Return</th><th>Bucket</th></tr>
+  {% for a in attr_top %}
+  <tr>
+    <td><strong>{{ a.ticker }}</strong></td>
+    <td class="pos">${{ "{:,.0f}".format(a.pnl_usd_realized or 0) }}</td>
+    <td class="pos">{{ "{:+.1f}".format(a.ret_pct_realized or 0) }}%</td>
+    <td>{{ a.bucket }}</td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+  {% if attr_bottom %}
+  <h3>Bottom Contributors</h3>
+  <table>
+  <tr><th>Ticker</th><th>P&L</th><th>Return</th><th>Bucket</th></tr>
+  {% for a in attr_bottom %}
+  <tr>
+    <td><strong>{{ a.ticker }}</strong></td>
+    <td class="neg">${{ "{:,.0f}".format(a.pnl_usd_realized or 0) }}</td>
+    <td class="neg">{{ "{:+.1f}".format(a.ret_pct_realized or 0) }}%</td>
+    <td>{{ a.bucket }}</td>
+  </tr>
+  {% endfor %}
+  </table>
+  {% endif %}
+  {% if not attr_top and not attr_bottom %}
+  <p style="color: var(--muted)">No attribution data for this date.</p>
+  {% endif %}
+</div>
+</div>
+
+<!-- Policy Cumulative Path -->
+{% if policy_path %}
+<h2>Policy Cumulative Path</h2>
+<div class="card">
+<table class="policy-path">
+<tr><th>Date</th><th>Current</th><th>Tiered</th><th>Tier+Exit</th></tr>
+{% for row in policy_path %}
+<tr>
+  <td>{{ row.date }}</td>
+  <td class="{% if row.current >= 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(row.current) }}%</td>
+  <td class="{% if row.tiered >= 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(row.tiered) }}%</td>
+  <td class="{% if row.exit >= 0 %}pos{% else %}neg{% endif %}">{{ "{:+.2f}".format(row.exit) }}%</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+{% endif %}
+
+<!-- Full Position Book -->
+<h2>Position Book ({{ n_positions }})</h2>
+<div class="card">
+<table>
+<tr><th>Ticker</th><th>Tier</th><th>Rank</th><th>Weight</th><th>Bucket</th><th>Momentum</th><th>Catalyst</th><th>Risk</th></tr>
+{% for p in positions %}
+<tr>
+  <td><strong>{{ p.ticker }}</strong></td>
+  <td><span class="badge badge-{{ p.tier|lower }}">{{ p.tier }}</span></td>
+  <td>{{ p.rank }}</td>
+  <td>{{ "%.1f"|format(p.weight) }}%</td>
+  <td>{{ p.bucket }}</td>
+  <td>{% if p.mom == 'headwind' %}<span class="neg">{{ p.mom }}</span>{% elif p.mom == 'tailwind' %}<span class="pos">{{ p.mom }}</span>{% else %}{{ p.mom }}{% endif %}</td>
+  <td>{{ p.catalyst_days }}d</td>
+  <td style="font-size:0.75em">{{ p.risk }}</td>
+</tr>
+{% endfor %}
+</table>
+</div>
+
+<div class="footer">
+  Biotech Screener — Policy Control Tower | Read-only | {{ now }}
+</div>
+
+</body>
+</html>
