@@ -10605,6 +10605,25 @@ Module 3 Catalyst Detection:
             except Exception as _bw_exc:
                 logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw_exc)
 
+            # --- Policy shadow compare (Spec 035) ---
+            try:
+                from tools.build_policy_shadow_compare import build_policy_shadow_compare
+
+                _ps = build_policy_shadow_compare(as_of_date=args.as_of_date)
+                if "error" not in _ps:
+                    _pnl = _ps.get("daily_pnl_pct", {})
+                    logger.info(
+                        "[POLICY_SHADOW] current=%.2f%% tiered=%.2f%% exit=%.2f%% | excluded=%s",
+                        _pnl.get("current", 0),
+                        _pnl.get("tiered", 0),
+                        _pnl.get("tiered_exit", 0),
+                        _ps.get("excluded_by_exit") or "none",
+                    )
+                else:
+                    logger.debug("[POLICY_SHADOW] skipped: %s", _ps["error"])
+            except Exception as _ps_exc:
+                logger.debug("[POLICY_SHADOW] skipped: %s", _ps_exc)
+
         return 0
 
     except (PathTraversalError, SymlinkError) as e:
