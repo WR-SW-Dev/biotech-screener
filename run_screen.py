@@ -1538,6 +1538,13 @@ SNAPSHOT_COLUMNS = [
     "competitive_intensity_z",
     "crowding_level",
     "sizing_multiplier_clinical",
+    # --- Morningstar research diagnostics (not in composite) ---
+    "ms_volatility_3yr",
+    "ms_volatility_5yr",
+    "ms_star_rating",
+    "ms_return_ytd",
+    "ms_return_annualized_3yr",
+    "ms_return_annualized_5yr",
     # --- Options verdict research features (Spec 038) ---
     "ovf_agreement_count",
     "ovf_severity_score",
@@ -5099,6 +5106,23 @@ def save_validation_snapshot(
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
         row.update(compute_options_quality_composite(row))
+
+    # --- Morningstar research diagnostics (from signal engine results) ---
+    _ms_scores = results.get("enhancement_result", {}).get("morningstar_scores", {})
+    _ms_ticker_scores = _ms_scores.get("scores", {}) if isinstance(_ms_scores, dict) else {}
+    _ms_enriched = 0
+    for row in csv_rows:
+        _tk = row.get("ticker", "")
+        _ms_result = _ms_ticker_scores.get(_tk, {})
+        if isinstance(_ms_result, dict) and _ms_result.get("status") == "SUCCESS":
+            for _field in ("ms_volatility_3yr", "ms_volatility_5yr", "ms_star_rating",
+                           "ms_return_ytd", "ms_return_annualized_3yr", "ms_return_annualized_5yr"):
+                row[_field] = _ms_result.get(_field, "")
+                if row[_field] is None:
+                    row[_field] = ""
+            _ms_enriched += 1
+    if _ms_enriched > 0:
+        logger.info("[MS] Morningstar research diagnostics enriched %d/%d tickers", _ms_enriched, len(csv_rows))
 
     # --- Options verdict research features (from fused 4-lens artifact) ---
     try:

@@ -425,6 +425,16 @@ class MorningstarSignalEngine:
         }
         self.audit_trail.append(audit_entry)
 
+        # --- Research diagnostics: unused-but-available Morningstar fields ---
+        # These are NOT included in the composite score. They are emitted as
+        # diagnostic features for signal evidence evaluation. Promote to
+        # composite via weight reallocation only after IC is proven.
+        record["_ticker"] = ticker_upper  # needed by _extract_research_diagnostics
+        ms_research = self._extract_research_diagnostics(record, regime)
+        for k, v in ms_research.items():
+            if v is not None:
+                flags.append(f"ms_research_{k}_available")
+
         return {
             "status": "SUCCESS",
             "ticker": ticker_upper,
@@ -441,6 +451,13 @@ class MorningstarSignalEngine:
             "flags": flags,
             "data_coverage_pct": data_coverage,
             "snapshot_date": self._snapshot_date,
+            # Research diagnostics (not in composite)
+            "ms_volatility_3yr": ms_research.get("volatility_3yr"),
+            "ms_volatility_5yr": ms_research.get("volatility_5yr"),
+            "ms_star_rating": ms_research.get("star_rating"),
+            "ms_return_ytd": ms_research.get("return_ytd"),
+            "ms_return_annualized_3yr": ms_research.get("return_annualized_3yr"),
+            "ms_return_annualized_5yr": ms_research.get("return_annualized_5yr"),
         }
 
     def score_universe(
@@ -874,6 +891,60 @@ class MorningstarSignalEngine:
             "return_1y": component_raw["return_1y"],
             "flags": flags,
         }
+
+    # =========================================================================
+    # RESEARCH DIAGNOSTICS (not in composite — evaluate via signal evidence)
+    # =========================================================================
+
+    def _extract_research_diagnostics(
+        self,
+        record: Dict[str, str],
+        regime: str,
+    ) -> Dict[str, Any]:
+        """Extract unused-but-available Morningstar fields as research features.
+
+        These fields exist in the pre-fetched data files but are not yet
+        scored or included in the composite. They are emitted as raw values
+        for signal evidence evaluation.
+
+        Sources:
+          morningstar_mcp_data.json: RR01Y (star rating)
+          morningstar_price_history.json: RR015, RR016 (volatility), PD00B/F/H (returns)
+        """
+        result: Dict[str, Any] = {}
+        ticker = record.get("_ticker", "")  # set by score_ticker
+
+        # Merge price_history fields if available
+        ph = {}
+        if hasattr(self, "_price_history") and self._price_history:
+            ph = self._price_history.get(ticker, {})
+
+        # Volatility metrics from price_history.json
+        vol_3yr = _to_decimal(ph.get("RR015"))
+        result["volatility_3yr"] = str(vol_3yr) if vol_3yr is not None else None
+
+        vol_5yr = _to_decimal(ph.get("RR016"))
+        result["volatility_5yr"] = str(vol_5yr) if vol_5yr is not None else None
+
+        # Morningstar star rating from mcp_data.json (1-5)
+        rating_raw = record.get("RR01Y")
+        if rating_raw is not None:
+            rating = _to_decimal(rating_raw)
+            result["star_rating"] = str(rating) if rating is not None else None
+        else:
+            result["star_rating"] = None
+
+        # Return metrics from price_history.json
+        ytd = _to_decimal(ph.get("PD00B"))
+        result["return_ytd"] = str(ytd) if ytd is not None else None
+
+        ann_3yr = _to_decimal(ph.get("PD00F"))
+        result["return_annualized_3yr"] = str(ann_3yr) if ann_3yr is not None else None
+
+        ann_5yr = _to_decimal(ph.get("PD00H"))
+        result["return_annualized_5yr"] = str(ann_5yr) if ann_5yr is not None else None
+
+        return result
 
     # =========================================================================
     # COMPOSITE COMPUTATION
