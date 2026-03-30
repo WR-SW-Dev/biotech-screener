@@ -3751,6 +3751,19 @@ def save_validation_snapshot(
         logger.warning("No ranked securities to snapshot")
         return None
 
+    # Validate critical fields before writing snapshot — catch corrupt module 5
+    # output early rather than producing CSV rows with empty fields.
+    _REQUIRED_SNAPSHOT_FIELDS = {"ticker", "composite_rank"}
+    _sample = ranked[0] if ranked else {}
+    _missing = _REQUIRED_SNAPSHOT_FIELDS - set(_sample.keys())
+    if _missing:
+        logger.error(
+            "Module 5 output missing required fields %s in first record — "
+            "aborting snapshot to prevent corrupt output.",
+            _missing,
+        )
+        return None
+
     ranked = sorted(ranked, key=lambda x: x.get("composite_rank", 999))
     archetypes = results.get("company_archetypes", {})
     industry_groups = results.get("industry_groups", {})

@@ -4399,10 +4399,19 @@ def run_daily(
     # Stamp governance mode
     manifest["governance_mode"] = _governance_mode
 
-    # Write manifest to staging dir
+    # Write manifest to staging dir (atomic: temp-file then rename)
     manifest_path = staging_date_dir / "run_manifest.json"
-    with open(manifest_path, "w") as f:
-        json.dump(manifest, f, indent=2, default=str)
+    _fd, _tmp = tempfile.mkstemp(dir=staging_date_dir, prefix=".tmp_manifest_", suffix=".json")
+    try:
+        with os.fdopen(_fd, "w") as f:
+            json.dump(manifest, f, indent=2, default=str)
+        Path(_tmp).replace(manifest_path)
+    except Exception:
+        try:
+            os.unlink(_tmp)
+        except OSError:
+            pass
+        raise
     print(f"  Manifest → {manifest_path}")
     _mark_step(staging_date_dir, "manifest_written", detail=f"overall={manifest['overall_status']}")
 
@@ -4995,8 +5004,17 @@ def main():
     output_dir = REPO_ROOT / "output"
     output_dir.mkdir(parents=True, exist_ok=True)
     fallback_manifest = output_dir / "run_manifest.json"
-    with open(fallback_manifest, "w") as f:
-        json.dump(manifest, f, indent=2, default=str)
+    _fd2, _tmp2 = tempfile.mkstemp(dir=output_dir, prefix=".tmp_manifest_", suffix=".json")
+    try:
+        with os.fdopen(_fd2, "w") as f:
+            json.dump(manifest, f, indent=2, default=str)
+        Path(_tmp2).replace(fallback_manifest)
+    except Exception:
+        try:
+            os.unlink(_tmp2)
+        except OSError:
+            pass
+        raise
 
     status = manifest.get("overall_status", "FAIL")
     if status == "FAIL":

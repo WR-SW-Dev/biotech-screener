@@ -11,12 +11,13 @@ Usage:
     python collect_market_data.py --test-connection  # Test if Yahoo Finance is reachable
 """
 
-import json
-import time
-from pathlib import Path
-from datetime import date, datetime, timedelta
-from typing import Dict, Optional, Tuple
 import argparse
+import json
+import os
+import time
+from datetime import date, datetime, timedelta
+from pathlib import Path
+from typing import Dict, Optional, Tuple
 
 
 def test_network_connectivity() -> Tuple[bool, str]:
@@ -26,6 +27,7 @@ def test_network_connectivity() -> Tuple[bool, str]:
     """
     try:
         import yfinance as yf
+
         # Try to fetch a well-known ticker
         stock = yf.Ticker("AAPL")
         hist = stock.history(period="1d")
@@ -33,7 +35,7 @@ def test_network_connectivity() -> Tuple[bool, str]:
             return True, ""
         # If no history, try info endpoint
         info = stock.info
-        if info and ('currentPrice' in info or 'regularMarketPrice' in info):
+        if info and ("currentPrice" in info or "regularMarketPrice" in info):
             return True, ""
         return False, "Yahoo Finance returned empty data - may be rate limited or blocked"
     except Exception as e:
@@ -86,22 +88,22 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
         end_date = datetime.combine(as_of_date, datetime.min.time()) if as_of_date else datetime.now()
         start_date = end_date - timedelta(days=90)
         hist = stock.history(start=start_date, end=end_date)
-        
+
         # Calculate metrics
         if not hist.empty and len(hist) > 0:
-            current_price = float(hist['Close'].iloc[-1])
-            avg_volume_90d = float(hist['Volume'].mean())
-            
+            current_price = float(hist["Close"].iloc[-1])
+            avg_volume_90d = float(hist["Volume"].mean())
+
             # Volatility (annualized)
-            returns = hist['Close'].pct_change()
-            volatility_90d = float(returns.std() * (252 ** 0.5)) if len(returns) > 1 else None
-            
+            returns = hist["Close"].pct_change()
+            volatility_90d = float(returns.std() * (252**0.5)) if len(returns) > 1 else None
+
             # Returns
-            returns_1m = float((hist['Close'].iloc[-1] / hist['Close'].iloc[-21]) - 1) if len(hist) >= 21 else None
-            returns_3m = float((hist['Close'].iloc[-1] / hist['Close'].iloc[0]) - 1) if len(hist) >= 63 else None
-            
-            high_90d = float(hist['High'].max())
-            low_90d = float(hist['Low'].min())
+            returns_1m = float((hist["Close"].iloc[-1] / hist["Close"].iloc[-21]) - 1) if len(hist) >= 21 else None
+            returns_3m = float((hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1) if len(hist) >= 63 else None
+
+            high_90d = float(hist["High"].max())
+            low_90d = float(hist["Low"].min())
         else:
             current_price = None
             avg_volume_90d = None
@@ -110,36 +112,42 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
             returns_3m = None
             high_90d = None
             low_90d = None
-        
+
         return {
             "ticker": ticker,
             "price": current_price,
-            "market_cap": info.get('marketCap'),
-            "enterprise_value": info.get('enterpriseValue'),
-            "shares_outstanding": info.get('sharesOutstanding'),
-            "float_shares": info.get('floatShares'),
-            "avg_volume": info.get('averageVolume'),
+            "market_cap": info.get("marketCap"),
+            "enterprise_value": info.get("enterpriseValue"),
+            "shares_outstanding": info.get("sharesOutstanding"),
+            "float_shares": info.get("floatShares"),
+            "avg_volume": info.get("averageVolume"),
             "avg_volume_90d": avg_volume_90d,
-            "beta": info.get('beta'),
-            "short_percent": info.get('shortPercentOfFloat'),
-            "short_ratio": info.get('shortRatio'),
-            "52w_high": info.get('fiftyTwoWeekHigh'),
-            "52w_low": info.get('fiftyTwoWeekLow'),
+            "beta": info.get("beta"),
+            "short_percent": info.get("shortPercentOfFloat"),
+            "short_ratio": info.get("shortRatio"),
+            "52w_high": info.get("fiftyTwoWeekHigh"),
+            "52w_low": info.get("fiftyTwoWeekLow"),
             "high_90d": high_90d,
             "low_90d": low_90d,
             "volatility_90d": volatility_90d,
             "returns_1m": returns_1m,
             "returns_3m": returns_3m,
-            "exchange": info.get('exchange'),
-            "sector": info.get('sector'),
-            "industry": info.get('industry'),
-            "collected_at": as_of_date.isoformat() if as_of_date else date.today().isoformat()
+            "exchange": info.get("exchange"),
+            "sector": info.get("sector"),
+            "industry": info.get("industry"),
+            "collected_at": as_of_date.isoformat() if as_of_date else date.today().isoformat(),
         }
     except Exception as e:
         return None
 
 
-def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: bool = False, force_refresh: bool = False, as_of_date: date = None):
+def collect_all_market_data(
+    universe_file: Path,
+    output_file: Path,
+    use_cache: bool = False,
+    force_refresh: bool = False,
+    as_of_date: date = None,
+):
     """Collect market data for all tickers with graceful fallback to cached data.
 
     Args:
@@ -148,15 +156,16 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
     """
     if as_of_date is None:
         import logging
+
         logging.getLogger(__name__).warning(
             "collect_all_market_data called without as_of_date; defaulting to date.today(). "
             "Pass as_of_date explicitly for determinism."
         )
         as_of_date = date.today()
 
-    print("="*80)
+    print("=" * 80)
     print("MARKET DATA COLLECTION (Yahoo Finance)")
-    print("="*80)
+    print("=" * 80)
     print(f"Date: {as_of_date}")
 
     # Check for cached data
@@ -181,6 +190,7 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
     # Check yfinance
     try:
         import yfinance as yf
+
         print("✅ yfinance library found")
     except ImportError:
         print("\n❌ yfinance not installed")
@@ -240,7 +250,7 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
     with open(universe_file) as f:
         universe = json.load(f)
 
-    tickers = [s['ticker'] for s in universe if s.get('ticker') and s['ticker'] != '_XBI_BENCHMARK_']
+    tickers = [s["ticker"] for s in universe if s.get("ticker") and s["ticker"] != "_XBI_BENCHMARK_"]
 
     print(f"\nUniverse: {len(tickers)} tickers")
     print(f"Output: {output_file}")
@@ -248,7 +258,7 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
 
     # Collect
     all_data = []
-    stats = {'total': len(tickers), 'successful': 0, 'failed': 0, 'no_data': [], 'network_errors': 0}
+    stats = {"total": len(tickers), "successful": 0, "failed": 0, "no_data": [], "network_errors": 0}
 
     print(f"\n{'='*80}")
     print("COLLECTING MARKET DATA")
@@ -259,43 +269,67 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
 
         data = get_market_data(ticker, as_of_date=as_of_date)
 
-        if data and data.get('price'):
+        if data and data.get("price"):
             all_data.append(data)
-            stats['successful'] += 1
+            stats["successful"] += 1
 
-            price = data['price']
-            mcap = data.get('market_cap', 0)
+            price = data["price"]
+            mcap = data.get("market_cap", 0)
             mcap_str = f"${mcap/1e9:.1f}B" if mcap and mcap > 1e9 else f"${mcap/1e6:.0f}M" if mcap else "N/A"
 
             print(f"✅ ${price:7.2f}  MCap: {mcap_str:>8s}")
         else:
-            stats['failed'] += 1
-            stats['no_data'].append(ticker)
+            stats["failed"] += 1
+            stats["no_data"].append(ticker)
             print("❌ No data")
 
         time.sleep(0.2)  # Rate limiting
 
         if i % 50 == 0:
-            print(f"\n  Progress: {i}/{len(tickers)} ({i/len(tickers)*100:.1f}%), Success: {stats['successful']/i*100:.1f}%\n")
+            print(
+                f"\n  Progress: {i}/{len(tickers)} ({i/len(tickers)*100:.1f}%), Success: {stats['successful']/i*100:.1f}%\n"
+            )
 
         # Check for network issues after first 5 tickers
-        if i == 5 and stats['successful'] == 0:
+        if i == 5 and stats["successful"] == 0:
             print("\n⚠️  First 5 tickers all failed - likely network issue")
             if cache_available:
                 print(f"   Falling back to cached data from {cache_date}")
                 return
 
     # Check if collection was mostly failures (likely network issue mid-run)
-    if stats['total'] > 0 and stats['successful'] / stats['total'] < 0.1:
+    if stats["total"] > 0 and stats["successful"] / stats["total"] < 0.1:
         print(f"\n⚠️  Very low success rate ({stats['successful']}/{stats['total']})")
         if cache_available and not force_refresh:
             print(f"   Using cached data from {cache_date} instead")
             return
 
-    # Save
+    # Guard: refuse to overwrite good cached data with a partial collection.
+    # The 10% gate above catches catastrophic failures, but a 50-of-322
+    # partial (15.5%) would slip through and destroy the good cache.
+    if cache_available and not force_refresh and len(all_data) < len(cached_data) * 0.5:
+        print(
+            f"\n⚠️  Partial collection: {len(all_data)} records vs "
+            f"{len(cached_data)} in cache ({len(all_data)/len(cached_data)*100:.0f}%). "
+            f"Refusing to overwrite. Use --force-refresh to override."
+        )
+        return
+
+    # Save (atomic: write to temp file, then rename)
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as f:
-        json.dump(all_data, f, indent=2)
+    import tempfile
+
+    fd, tmp_path = tempfile.mkstemp(dir=output_file.parent, prefix=".tmp_market_data_", suffix=".json")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(all_data, f, indent=2)
+        Path(tmp_path).replace(output_file)
+    except Exception:
+        try:
+            os.unlink(tmp_path)
+        except OSError:
+            pass
+        raise
 
     # Summary
     print(f"\n{'='*80}")
@@ -309,24 +343,26 @@ def collect_all_market_data(universe_file: Path, output_file: Path, use_cache: b
 
 def main():
     parser = argparse.ArgumentParser(description="Collect market data from Yahoo Finance")
-    parser.add_argument('--universe', type=Path, default=Path('production_data/universe.json'))
-    parser.add_argument('--output', type=Path, default=Path('production_data/market_data.json'))
-    parser.add_argument('--use-cache', action='store_true',
-                       help='Use existing cached data without attempting network fetch')
-    parser.add_argument('--force-refresh', action='store_true',
-                       help='Force refresh even if network appears unavailable')
-    parser.add_argument('--test-connection', action='store_true',
-                       help='Test Yahoo Finance connectivity and exit')
+    parser.add_argument("--universe", type=Path, default=Path("production_data/universe.json"))
+    parser.add_argument("--output", type=Path, default=Path("production_data/market_data.json"))
+    parser.add_argument(
+        "--use-cache", action="store_true", help="Use existing cached data without attempting network fetch"
+    )
+    parser.add_argument(
+        "--force-refresh", action="store_true", help="Force refresh even if network appears unavailable"
+    )
+    parser.add_argument("--test-connection", action="store_true", help="Test Yahoo Finance connectivity and exit")
     args = parser.parse_args()
 
     # Handle test-connection mode
     if args.test_connection:
-        print("="*80)
+        print("=" * 80)
         print("TESTING YAHOO FINANCE CONNECTIVITY")
-        print("="*80)
+        print("=" * 80)
 
         try:
             import yfinance as yf
+
             print("✅ yfinance library found")
         except ImportError:
             print("❌ yfinance not installed")
@@ -351,12 +387,7 @@ def main():
         return 1
 
     try:
-        collect_all_market_data(
-            args.universe,
-            args.output,
-            use_cache=args.use_cache,
-            force_refresh=args.force_refresh
-        )
+        collect_all_market_data(args.universe, args.output, use_cache=args.use_cache, force_refresh=args.force_refresh)
         return 0
     except KeyboardInterrupt:
         print("\n\n❌ Cancelled by user")
@@ -364,6 +395,7 @@ def main():
     except Exception as e:
         print(f"\n\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
