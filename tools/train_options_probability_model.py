@@ -155,12 +155,32 @@ def extract_features(row: Dict[str, str]) -> Optional[Dict[str, float]]:
     else:
         features["iv_vs_rv_ratio"] = 1.0
 
-    # Interactions
+    # Chain quality inputs (modulate conviction, not just gate)
+    features["chain_liquidity"] = 1.0 if row.get("opt_liquidity_ok") == "1" else 0.0
+    features["chain_usable"] = 1.0 if row.get("opt_use_for_judgment") == "YES" else 0.0
+    features["iv_regime_extreme"] = 1.0 if row.get("opt_iv_regime") == "EXTREME" else 0.0
+    features["iv_regime_elevated"] = 1.0 if row.get("opt_iv_regime") == "ELEVATED" else 0.0
+
+    # Skew and term structure as continuous quality signals
+    skew = _sf(row.get("opt_put_call_skew"))
+    features["abs_skew"] = abs(skew) if skew is not None else 0.0
+
+    term_slope = _sf(row.get("opt_term_slope"))
+    features["backwardation"] = 1.0 if term_slope is not None and term_slope < -0.05 else 0.0
+    features["abs_term_slope"] = abs(term_slope) if term_slope is not None else 0.0
+
+    # Vol classification
+    features["vol_rich"] = 1.0 if row.get("vol_classification") == "RICH" else 0.0
+    features["vol_cheap"] = 1.0 if row.get("vol_classification") == "CHEAP" else 0.0
+
+    # Interactions (dynamic surface x catalyst context)
     features["iv_x_event_window"] = features["atm_iv"] * features["event_window"]
     features["iv_change_x_hard"] = features["iv_change_5d"] * features["hard_catalyst"]
     features["rr_x_near_catalyst"] = abs(features["rr_25d"]) * features["near_catalyst"]
     features["move_pctile_x_event"] = features["move_pctile"] * features["event_window"]
     features["iv_rv_x_hard"] = features["iv_vs_rv_ratio"] * features["hard_catalyst"]
+    features["iv_change_x_backwd"] = features["iv_change_5d"] * features["backwardation"]
+    features["quality_x_score"] = features["chain_liquidity"] * features["oqc"]
 
     return features
 
@@ -547,6 +567,7 @@ def main():
     parser.add_argument("--min-observations", type=int, default=100)
     parser.add_argument("--cohort", choices=["clinical", "regulatory", "mixed"])
     parser.add_argument("--label", default="move_gt_implied", choices=["move_gt_implied", "big_move"])
+    parser.add_argument("--all-cohorts", action="store_true", help="Train per-cohort models + combined comparison")
     parser.add_argument(
         "--iv-history",
         type=Path,
@@ -573,65 +594,102 @@ def main():
             "Insufficient observations: %d < %d minimum",
             len(features_list), args.min_observations,
         )
-        return
+        if not args.all_cohorts:
+            return
 
-    model = train_logistic_model(features_list, labels_list, feature_names, label_key=args.label)
-    if model is None:
-        logger.error("Training failed")
-        return
-
-    # Write outputs
     args.out_dir.mkdir(parents=True, exist_ok=True)
 
-    cohort_suffix = f"_{args.cohort}" if args.cohort else ""
-    model_path = args.out_dir / f"trained_model_{args.label}{cohort_suffix}.json"
-    with open(model_path, "w", encoding="utf-8") as f:
-        json.dump(model, f, indent=2, sort_keys=True)
-    logger.info("Model saved: %s", model_path)
+    def _train_and_save(feats, labs, fnames, label, cohort_name, out_dir):
+        if len(feats) < 30:
+            logger.warning("  %s/%s: only %d observations — skipping", label, cohort_name, len(feats))
+            return None
+        model = train_logistic_model(feats, labs, fnames, label_key=label)
+        if model is None:
+            return None
+        suffix = f"_{cohort_name}" if cohort_name != "all" else ""
+        model_path = out_dir / f"trained_model_{label}{suffix}.json"
+        with open(model_path, "w", encoding="utf-8") as f:
+            json.dump(model, f, indent=2, sort_keys=True)
+        # Write markdown
+        md_lines = [
+            f"# Options Probability Model — {label} ({cohort_name})",
+            "",
+            f"**Observations**: {model['n_observations']}",
+            f"**Positive rate**: {model['pos_rate']:.1%}",
+            f"**AUC**: {model['metrics']['auc']:.3f}",
+            f"**Brier**: {model['metrics']['brier_score']:.4f}",
+            f"**IC**: {model['metrics'].get('ic_abs_ret_t1', 'N/A')}",
+            "",
+            "| Feature | Coefficient |",
+            "|---------|------------|",
+        ]
+        for name, imp in model["top_features"]:
+            md_lines.append(f"| {name} | {imp:.4f} |")
+        md_path = out_dir / f"training_report_{label}{suffix}.md"
+        md_path.write_text("\n".join(md_lines), encoding="utf-8")
+        return model
 
-    # Summary report
-    report = {
-        "schema": "om11_training_report.v1",
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "label": args.label,
-        "cohort": args.cohort or "all",
-        "date_range": {"start": args.start_date, "end": args.end_date},
-        "n_observations": model["n_observations"],
-        "pos_rate": model["pos_rate"],
-        "metrics": model["metrics"],
-        "top_features": model["top_features"],
-    }
-    report_path = args.out_dir / f"training_report_{args.label}{cohort_suffix}.json"
-    with open(report_path, "w", encoding="utf-8") as f:
-        json.dump(report, f, indent=2, sort_keys=True)
+    if args.all_cohorts:
+        # Train per-label, per-cohort matrix
+        labels_to_train = ["move_gt_implied", "big_move"]
+        cohorts = ["all", "clinical", "regulatory"]
+        comparison_rows = []
 
-    # Markdown summary
-    md_lines = [
-        f"# Options Probability Model — {args.label}",
-        "",
-        f"**Cohort**: {args.cohort or 'all'}",
-        f"**Date range**: {args.start_date} to {args.end_date}",
-        f"**Observations**: {model['n_observations']}",
-        f"**Positive rate**: {model['pos_rate']:.1%}",
-        "",
-        "## Metrics",
-        "",
-        f"- **AUC**: {model['metrics']['auc']:.3f}",
-        f"- **Brier score**: {model['metrics']['brier_score']:.4f}",
-        f"- **IC (abs_ret_t1)**: {model['metrics'].get('ic_abs_ret_t1', 'N/A')}",
-        "",
-        "## Top Features",
-        "",
-        "| Feature | Coefficient |",
-        "|---------|------------|",
-    ]
-    for name, imp in model["top_features"]:
-        md_lines.append(f"| {name} | {imp:.4f} |")
-    md_lines.append("")
+        for label in labels_to_train:
+            for cohort_name in cohorts:
+                logger.info("\n=== %s / %s ===", label, cohort_name)
+                if cohort_name == "all":
+                    c_feats, c_labs = features_list, labels_list
+                else:
+                    c_feats, c_labs = [], []
+                    for feat, lab in zip(features_list, labels_list):
+                        # Check catalyst family from one-hot features
+                        fam_key = f"fam_{cohort_name.upper()}"
+                        if feat.get(fam_key, 0) > 0.5:
+                            c_feats.append(feat)
+                            c_labs.append(lab)
+                    logger.info("  Cohort %s: %d observations", cohort_name, len(c_feats))
 
-    md_path = args.out_dir / f"training_report_{args.label}{cohort_suffix}.md"
-    md_path.write_text("\n".join(md_lines), encoding="utf-8")
-    logger.info("Report: %s", md_path)
+                model = _train_and_save(c_feats, c_labs, feature_names, label, cohort_name, args.out_dir)
+                if model:
+                    comparison_rows.append({
+                        "label": label,
+                        "cohort": cohort_name,
+                        "n": model["n_observations"],
+                        "pos_rate": model["pos_rate"],
+                        "auc": model["metrics"]["auc"],
+                        "brier": model["metrics"]["brier_score"],
+                        "ic": model["metrics"].get("ic_abs_ret_t1"),
+                        "top_feature": model["top_features"][0][0] if model["top_features"] else None,
+                    })
+
+        # Write comparison matrix
+        comp = {
+            "schema": "om11_cohort_comparison.v1",
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "n_features": len(feature_names),
+            "models": comparison_rows,
+        }
+        comp_path = args.out_dir / "cohort_comparison.json"
+        with open(comp_path, "w", encoding="utf-8") as f:
+            json.dump(comp, f, indent=2, sort_keys=True)
+
+        # Comparison markdown
+        md = ["# Options Probability Model — Cohort Comparison", ""]
+        md.append("| Label | Cohort | N | Pos% | AUC | Brier | IC | Top Feature |")
+        md.append("|-------|--------|---|------|-----|-------|-----|-------------|")
+        for r in comparison_rows:
+            ic_str = f"{r['ic']:.4f}" if r["ic"] is not None else "N/A"
+            md.append(f"| {r['label']} | {r['cohort']} | {r['n']} | {r['pos_rate']:.1%} | {r['auc']:.3f} | {r['brier']:.4f} | {ic_str} | {r['top_feature']} |")
+        md.append("")
+        (args.out_dir / "cohort_comparison.md").write_text("\n".join(md), encoding="utf-8")
+        logger.info("\nComparison: %s", comp_path)
+    else:
+        model = _train_and_save(features_list, labels_list, feature_names, args.label, args.cohort or "all", args.out_dir)
+        if model is None:
+            logger.error("Training failed")
+            return
+        logger.info("Model saved to %s", args.out_dir)
 
 
 if __name__ == "__main__":
