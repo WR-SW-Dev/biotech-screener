@@ -275,21 +275,14 @@ DateLike = Union[str, date]
 # =============================================================================
 
 def normalize_date_input(date_input: DateLike) -> date:
-    """
-    Normalize date input to date object.
+    """Normalize date input to date object.
 
-    Accepts:
-    - date object (returned as-is)
-    - ISO format string "YYYY-MM-DD"
-
-    Raises:
-        ValueError: If date format is invalid
+    DEPRECATED: Use common.date_utils.normalize_date instead.
+    This is a backward-compat re-export — identical behavior.
     """
-    if isinstance(date_input, date):
-        return date_input
-    if isinstance(date_input, str):
-        return date.fromisoformat(date_input)
-    raise ValueError(f"Invalid date type: {type(date_input)}. Expected date or str.")
+    from common.date_utils import normalize_date
+
+    return normalize_date(date_input)
 
 
 def normalize_date_string(date_input: DateLike) -> str:

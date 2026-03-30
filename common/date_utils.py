@@ -28,8 +28,12 @@ def normalize_date(value: DateLike) -> date:
     """
     Normalize a date-like value to a date object.
 
+    Handles datetime strings (e.g. "2024-01-15T12:00:00Z") by truncating
+    to the date portion. This covers the common case where callers pass
+    ISO datetime strings from JSON or API responses.
+
     Args:
-        value: Either a date object or ISO format string (YYYY-MM-DD)
+        value: Either a date object or ISO-like date/datetime string
 
     Returns:
         date object
@@ -41,9 +45,26 @@ def normalize_date(value: DateLike) -> date:
     if isinstance(value, date):
         return value
     elif isinstance(value, str):
-        return date.fromisoformat(value)
+        # Truncate datetime strings: "2024-01-15T12:00:00Z" → "2024-01-15"
+        return date.fromisoformat(value[:10])
     else:
         raise TypeError(f"Expected str or date, got {type(value).__name__}")
+
+
+def normalize_date_or_none(value) -> "date | None":
+    """Lenient date normalization — returns None instead of raising.
+
+    Use this for optional date fields where missing/malformed values should
+    be treated as absent rather than crashing the caller.
+    """
+    if value is None:
+        return None
+    try:
+        if isinstance(value, str) and value.strip() == "":
+            return None
+        return normalize_date(value)
+    except (ValueError, TypeError):
+        return None
 
 
 def to_date_string(value: DateLike) -> str:

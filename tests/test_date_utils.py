@@ -94,10 +94,44 @@ class TestNormalizeDate:
         result = normalize_date("2026-01-01")
         assert result == date(2026, 1, 1)
 
-    def test_normalize_date_with_time_suffix_raises(self):
-        """Date string with time suffix should raise ValueError."""
-        with pytest.raises(ValueError):
-            normalize_date("2026-01-15T00:00:00")
+    def test_normalize_date_with_time_suffix_truncates(self):
+        """Date string with time suffix should truncate to date portion."""
+        result = normalize_date("2026-01-15T00:00:00")
+        assert result == date(2026, 1, 15)
+
+    def test_normalize_date_with_utc_suffix(self):
+        """Datetime string with Z suffix should truncate to date."""
+        result = normalize_date("2026-01-15T12:30:00Z")
+        assert result == date(2026, 1, 15)
+
+
+class TestNormalizeDateOrNone:
+    """Tests for normalize_date_or_none function."""
+
+    def test_valid_date(self):
+        from common.date_utils import normalize_date_or_none
+
+        assert normalize_date_or_none("2026-01-15") == date(2026, 1, 15)
+
+    def test_none_returns_none(self):
+        from common.date_utils import normalize_date_or_none
+
+        assert normalize_date_or_none(None) is None
+
+    def test_empty_string_returns_none(self):
+        from common.date_utils import normalize_date_or_none
+
+        assert normalize_date_or_none("") is None
+
+    def test_invalid_returns_none(self):
+        from common.date_utils import normalize_date_or_none
+
+        assert normalize_date_or_none("not-a-date") is None
+
+    def test_datetime_string_truncates(self):
+        from common.date_utils import normalize_date_or_none
+
+        assert normalize_date_or_none("2026-01-15T12:00:00Z") == date(2026, 1, 15)
 
 
 class TestToDateString:
