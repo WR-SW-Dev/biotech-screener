@@ -116,6 +116,18 @@ else
     echo "[$(date -Iseconds)] FAIL: daily production failed (exit ${EXIT_CODE})" | tee -a "${LOG_FILE}"
 fi
 
+# --- Failure notification ---
+# Send alert on non-zero exit so pipeline failures don't go unnoticed.
+# Configure PIPELINE_ALERT_WEBHOOK in .env (e.g. Slack/Discord incoming webhook URL).
+if [ ${EXIT_CODE} -ne 0 ] && [ -n "${PIPELINE_ALERT_WEBHOOK:-}" ]; then
+    _STATUS="FAIL"
+    [ ${EXIT_CODE} -eq 2 ] && _STATUS="WARN"
+    curl -sf -X POST "${PIPELINE_ALERT_WEBHOOK}" \
+        -H "Content-Type: application/json" \
+        -d "{\"text\":\"[Wake Robin] ${_STATUS}: daily production ${AS_OF_DATE} exited ${EXIT_CODE}. Log: ${LOG_FILE}\"}" \
+        >> "${LOG_FILE}" 2>&1 || true
+fi
+
 # --- Housekeeping: prune pre-staging snapshots and old logs ---
 # Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
 # Regular snapshots are kept indefinitely (small, used for backtesting).

@@ -15,9 +15,10 @@
 # ----------------------------------------------------------------------------
 
 # ----------------------------------------------------------------------------
-# Configuration (Optional but recommended)
+# Configuration (Required by run_screen.py and run_daily_production.py)
 # ----------------------------------------------------------------------------
 PyYAML==6.0.1
+python-dotenv==1.0.1
 
 # ----------------------------------------------------------------------------
 # Testing
@@ -27,12 +28,12 @@ pytest-cov==4.1.0
 pytest-timeout==2.2.0
 
 # ----------------------------------------------------------------------------
-# Data Analysis (Optional - for extended features)
+# Data Analysis (Required by the screening pipeline)
 # ----------------------------------------------------------------------------
-# pandas/numpy are required by the screening pipeline (Module 5 defensive overlay)
 pandas==2.1.4
 numpy==1.26.3
 requests==2.32.4
+scipy==1.11.4
 
 # ----------------------------------------------------------------------------
 # Development Tools (Linting & Formatting)

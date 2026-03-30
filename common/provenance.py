@@ -15,6 +15,8 @@ HASH_EXCLUDED_FIELDS = frozenset(
     [
         "loaded_at",
         "generated_at",
+        "saved_at",
+        "created_at",
         "timestamp",
         "runtime_ms",
     ]

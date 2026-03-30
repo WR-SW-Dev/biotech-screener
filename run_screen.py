@@ -3304,7 +3304,8 @@ def load_cache_refresh_sidecar(path: Path) -> Dict[str, Any]:
             "summary": summary,
             "banner": banner,
         }
-    except Exception:
+    except Exception as exc:
+        logger.warning("Source reliability sidecar unreadable: %s", exc)
         return empty
 
 
@@ -3759,7 +3760,8 @@ def save_validation_snapshot(
             if _rel_dates:
                 _rel_path = _rel_root / _rel_dates[-1] / "source_reliability.json"
                 _reliability_table = load_reliability_table(_rel_path)
-    except Exception:
+    except Exception as exc:
+        logger.warning("Source reliability load failed: %s", exc)
         _reliability_table = []
 
     # Build the event ledger for direct regulatory event scanning.
@@ -4870,8 +4872,8 @@ def save_validation_snapshot(
                             _p = _rec.get("price") or _rec.get("regularMarketPrice") or _rec.get("previousClose") or 0
                             if _p:
                                 _chain_prices[_rec["ticker"].upper()] = float(_p)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.warning("market_data.json price parse failed for chain analytics: %s", exc)
 
             _chain_analytics = warm_chain_analytics(_chain_tickers, snap_path, as_of_date, _chain_prices)
 
@@ -5279,11 +5281,27 @@ def save_validation_snapshot(
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
     try:
-        with open(csv_path, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=SNAPSHOT_COLUMNS, extrasaction="ignore")
-            writer.writeheader()
-            for row in csv_rows:
-                writer.writerow(row)
+        import tempfile as _tf
+
+        _fd, _tmp = _tf.mkstemp(dir=snap_path, prefix=".tmp_rankings_", suffix=".csv")
+        try:
+            with os.fdopen(_fd, "w", newline="", encoding="utf-8") as f:
+                writer = csv.DictWriter(
+                    f,
+                    fieldnames=SNAPSHOT_COLUMNS,
+                    extrasaction="ignore",
+                    lineterminator="\n",
+                )
+                writer.writeheader()
+                for row in csv_rows:
+                    writer.writerow(row)
+            Path(_tmp).replace(csv_path)
+        except Exception:
+            try:
+                os.unlink(_tmp)
+            except OSError:
+                pass
+            raise
     except OSError as e:
         logger.warning(f"Could not write snapshot CSV: {e}")
         return None
@@ -5589,6 +5607,7 @@ def save_validation_snapshot(
                     f,
                     fieldnames=PHASE2_PORTFOLIO_COLUMNS,
                     extrasaction="ignore",
+                    lineterminator="\n",
                 )
                 writer.writeheader()
                 for row in portfolio_rows:
@@ -5659,6 +5678,7 @@ def save_validation_snapshot(
                     f,
                     fieldnames=PORTFOLIO_POSITIONS_COLUMNS,
                     extrasaction="ignore",
+                    lineterminator="\n",
                 )
                 writer.writeheader()
                 for row in position_rows:
@@ -6095,7 +6115,7 @@ def save_validation_snapshot(
     meta_path = snap_path / "metadata.json"
     try:
         with open(meta_path, "w", encoding="utf-8") as f:
-            json.dump(metadata, f, indent=2)
+            json.dump(metadata, f, indent=2, sort_keys=True)
             f.write("\n")
     except OSError as e:
         logger.warning(f"Could not write snapshot metadata: {e}")
@@ -6107,7 +6127,7 @@ def save_validation_snapshot(
         if manifest_data:
             try:
                 with open(snap_path / "inputs_manifest.json", "w", encoding="utf-8") as f:
-                    json.dump(manifest_data, f, indent=2)
+                    json.dump(manifest_data, f, indent=2, sort_keys=True)
                     f.write("\n")
             except OSError as e:
                 logger.warning(f"Could not write inputs_manifest.json: {e}")
@@ -6935,7 +6955,7 @@ def create_replay_bundle(
 
     with tarfile.open(output_path, "w:gz") as tar:
         # 1. Write inputs_manifest.json
-        manifest_bytes = json.dumps(manifest, indent=2).encode("utf-8")
+        manifest_bytes = json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8")
         import io
 
         ti = tarfile.TarInfo(name="inputs_manifest.json")
@@ -6974,7 +6994,7 @@ def create_replay_bundle(
             "created_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "files": sorted(index_entries, key=lambda e: e["key"]),
         }
-        idx_bytes = json.dumps(bundle_index, indent=2).encode("utf-8")
+        idx_bytes = json.dumps(bundle_index, indent=2, sort_keys=True).encode("utf-8")
         ti2 = tarfile.TarInfo(name="bundle_index.json")
         ti2.size = len(idx_bytes)
         tar.addfile(ti2, io.BytesIO(idx_bytes))

@@ -10,16 +10,12 @@ Covers:
 - Provenance record creation
 """
 
-import pytest
 from datetime import date, datetime
 from decimal import Decimal
 
-from common.provenance import (
-    compute_hash,
-    create_provenance,
-    _json_serializer,
-    HASH_EXCLUDED_FIELDS,
-)
+import pytest
+
+from common.provenance import HASH_EXCLUDED_FIELDS, _json_serializer, compute_hash, create_provenance
 
 
 class TestJsonSerializer:
@@ -145,12 +141,7 @@ class TestComputeHash:
 
     def test_hash_nested_dict(self):
         """Nested dicts should hash correctly."""
-        data = {
-            "outer": {
-                "inner": {"value": 42},
-                "timestamp": "excluded"  # Should be excluded at any level
-            }
-        }
+        data = {"outer": {"inner": {"value": 42}, "timestamp": "excluded"}}  # Should be excluded at any level
         result = compute_hash(data)
         assert result.startswith("sha256:")
 
@@ -197,6 +188,12 @@ class TestHashExcludedFields:
 
     def test_excluded_fields_contains_runtime_ms(self):
         assert "runtime_ms" in HASH_EXCLUDED_FIELDS
+
+    def test_excluded_fields_contains_saved_at(self):
+        assert "saved_at" in HASH_EXCLUDED_FIELDS
+
+    def test_excluded_fields_contains_created_at(self):
+        assert "created_at" in HASH_EXCLUDED_FIELDS
 
     def test_excluded_fields_is_frozenset(self):
         """Excluded fields should be immutable."""
