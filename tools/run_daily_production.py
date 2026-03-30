@@ -4189,93 +4189,75 @@ def run_daily(
     # --- Step 4: Hard gates ---
     _logger.info("\n[4/5] Evaluating gates ...")
 
-    missing_gate = check_missing_reason_fraction(staging_date_dir, config.missing_reason_max_frac)
+    def _safe_gate(name: str, fn, *args, **kwargs) -> "GateResult":
+        """Run a gate check with crash isolation. Returns WARN on exception."""
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            _logger.warning("Gate %s crashed: %s", name, exc)
+            return GateResult(name=name, status="WARN", detail=f"Crashed: {exc}")
+
+    missing_gate = _safe_gate("missing_reason", check_missing_reason_fraction, staging_date_dir, config.missing_reason_max_frac)
     gate_results.append(missing_gate)
     _logger.info(f"Missing-reason gate: {missing_gate.status} — {missing_gate.detail}")
 
-    turnover_gate = check_turnover(staging_date_dir, config.turnover_max_pct)
+    turnover_gate = _safe_gate("turnover", check_turnover, staging_date_dir, config.turnover_max_pct)
     gate_results.append(turnover_gate)
     _logger.info(f"Turnover gate: {turnover_gate.status} — {turnover_gate.detail}")
 
     # --- Gate: drift monitoring (WARN-only) ---
     if not skip_drift:
         _drift_th = drift_thresholds or DriftThresholds()
-        drift_gate = check_drift_monitoring(
-            staging_date_dir,
-            final_snapshots_dir,
-            as_of_date,
-            _drift_th,
-        )
+        drift_gate = _safe_gate("drift", check_drift_monitoring, staging_date_dir, final_snapshots_dir, as_of_date, _drift_th)
         gate_results.append(drift_gate)
         _logger.info(f"Drift gate: {drift_gate.status} — {drift_gate.detail}")
     else:
         _logger.info("Drift gate: skipped (--skip-drift)")
 
     # --- Gate: ruleset_health (WARN-only) ---
-    rh_gate = check_ruleset_health(staging_date_dir)
+    rh_gate = _safe_gate("ruleset_health", check_ruleset_health, staging_date_dir)
     gate_results.append(rh_gate)
     _logger.info(f"Ruleset health gate: {rh_gate.status} — {rh_gate.detail}")
 
     # --- Gate: canary_regression (BLOCK->FAIL, WARN->WARN, INFO->PASS) ---
-    canary_gate = check_canary_regression(staging_date_dir)
+    canary_gate = _safe_gate("canary_regression", check_canary_regression, staging_date_dir)
     gate_results.append(canary_gate)
     _logger.info(f"Canary regression gate: {canary_gate.status} — {canary_gate.detail}")
 
     # --- Gate: ctgov PIT dates (WARN-only) ---
-    pit_dates_gate = check_ctgov_pit_dates(_cache_dir, as_of_date)
+    pit_dates_gate = _safe_gate("ctgov_pit_dates", check_ctgov_pit_dates, _cache_dir, as_of_date)
     gate_results.append(pit_dates_gate)
     _logger.info(f"CTGov PIT dates gate: {pit_dates_gate.status} — {pit_dates_gate.detail}")
 
     # --- Gate: sec_13f_cache (WARN-only) ---
-    sec_13f_gate = check_sec_13f_cache(
-        as_of_date,
-        warn_coverage_pct=config.sec_13f_coverage_warn_pct,
-    )
+    sec_13f_gate = _safe_gate("sec_13f_cache", check_sec_13f_cache, as_of_date, warn_coverage_pct=config.sec_13f_coverage_warn_pct)
     gate_results.append(sec_13f_gate)
     _logger.info(f"13F cache gate: {sec_13f_gate.status} — {sec_13f_gate.detail}")
 
     # --- Gate: institutional_summary (WARN-only, post-screen) ---
-    inst_gate = check_institutional_summary(
-        staging_date_dir,
-        warn_coverage_pct=config.institutional_summary_warn_coverage_pct,
-    )
+    inst_gate = _safe_gate("institutional_summary", check_institutional_summary, staging_date_dir, warn_coverage_pct=config.institutional_summary_warn_coverage_pct)
     gate_results.append(inst_gate)
     _logger.info(f"Institutional summary gate: {inst_gate.status} — {inst_gate.detail}")
 
     # --- Gate: institutional_delta (WARN-only, post-screen) ---
-    inst_delta_gate = check_institutional_delta(
-        staging_date_dir,
-        final_snapshots_dir,
-        as_of_date,
-    )
+    inst_delta_gate = _safe_gate("institutional_delta", check_institutional_delta, staging_date_dir, final_snapshots_dir, as_of_date)
     gate_results.append(inst_delta_gate)
     _logger.info(f"Institutional delta gate: {inst_delta_gate.status} — {inst_delta_gate.detail}")
 
     # --- Gate: pnl_attribution (WARN-only, post-screen) ---
-    pnl_gate = check_pnl_attribution(
-        staging_date_dir,
-        final_snapshots_dir,
-        as_of_date,
-        price_csv,
-        min_coverage_pct=config.pnl_attribution_min_coverage_pct,
-    )
+    pnl_gate = _safe_gate("pnl_attribution", check_pnl_attribution, staging_date_dir, final_snapshots_dir, as_of_date, price_csv, min_coverage_pct=config.pnl_attribution_min_coverage_pct)
     gate_results.append(pnl_gate)
     _logger.info(f"PnL attribution gate: {pnl_gate.status} — {pnl_gate.detail}")
 
     # --- Gate: price_pit_cache (WARN-only) ---
     # _price_cache_base already set in step 2.5 above
-    pit_price_gate = check_price_pit_cache(_price_cache_base / as_of_date, as_of_date)
+    pit_price_gate = _safe_gate("price_pit_cache", check_price_pit_cache, _price_cache_base / as_of_date, as_of_date)
     gate_results.append(pit_price_gate)
     _logger.info(f"PIT price cache gate: {pit_price_gate.status} — {pit_price_gate.detail}")
 
     # --- Gate: forward_eval (WARN-only) ---
     if not skip_forward_eval:
-        fwd_gate = check_forward_eval(
-            final_snapshots_dir,
-            _price_cache_base,
-            as_of_date,
-            config,
-        )
+        fwd_gate = _safe_gate("forward_eval", check_forward_eval, final_snapshots_dir, _price_cache_base, as_of_date, config)
         gate_results.append(fwd_gate)
         _logger.info(f"Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
     else:
@@ -4305,41 +4287,32 @@ def run_daily(
     _logger.info(f"Optionality stability gate: {opt_gate.status} — {opt_gate.detail}")
 
     # --- Gate: pit_bundle_health (WARN-only) ---
-    pit_bundle_gate = check_pit_bundle_health(
-        as_of_date,
-        ctgov_cache_dir=ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov"),
-    )
+    pit_bundle_gate = _safe_gate("pit_bundle_health", check_pit_bundle_health, as_of_date, ctgov_cache_dir=ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov"))
     gate_results.append(pit_bundle_gate)
     _logger.info(f"PIT bundle health gate: {pit_bundle_gate.status} — {pit_bundle_gate.detail}")
 
     # --- Gate: decision_engine_schema (WARN-only) ---
-    de_schema_gate = check_decision_engine_schema(staging_date_dir)
+    de_schema_gate = _safe_gate("de_schema", check_decision_engine_schema, staging_date_dir)
     gate_results.append(de_schema_gate)
     _logger.info(f"DE schema gate: {de_schema_gate.status} — {de_schema_gate.detail}")
 
     # --- Gate: sort_contrib_sanity (WARN/FAIL) ---
-    sc_gate = check_sort_contrib_sanity(staging_date_dir, config)
+    sc_gate = _safe_gate("sort_contrib_sanity", check_sort_contrib_sanity, staging_date_dir, config)
     gate_results.append(sc_gate)
     _logger.info(f"Sort contrib sanity gate: {sc_gate.status} — {sc_gate.detail}")
 
     # --- Gate: portfolio_weights (WARN-only) ---
-    pw_gate = check_portfolio_weights(
-        staging_date_dir,
-        tolerance=config.portfolio_weight_sum_tolerance,
-    )
+    pw_gate = _safe_gate("portfolio_weights", check_portfolio_weights, staging_date_dir, tolerance=config.portfolio_weight_sum_tolerance)
     gate_results.append(pw_gate)
     _logger.info(f"Portfolio weights gate: {pw_gate.status} — {pw_gate.detail}")
 
     # --- Gate: eligibility_consistency (WARN-only) ---
-    elig_gate = check_eligibility_consistency(staging_date_dir)
+    elig_gate = _safe_gate("eligibility_consistency", check_eligibility_consistency, staging_date_dir)
     gate_results.append(elig_gate)
     _logger.info(f"Eligibility consistency gate: {elig_gate.status} — {elig_gate.detail}")
 
     # --- Gate: cache_health (WARN-only by default; FAIL with --fail-on-bad-cache) ---
-    ch_gate = check_cache_health(
-        staging_date_dir,
-        fail_on_bad=fail_on_bad_cache,
-    )
+    ch_gate = _safe_gate("cache_health", check_cache_health, staging_date_dir, fail_on_bad=fail_on_bad_cache)
     gate_results.append(ch_gate)
     _logger.info(f"Cache health gate: {ch_gate.status} — {ch_gate.detail}")
 

@@ -602,6 +602,28 @@ def validate_as_of_date_param(as_of_date: str) -> None:
     # Lookahead protection should be enforced via PIT filters and/or input snapshot dating.
 
 
+def _atomic_write_text(path: Path, content: str) -> None:
+    """Write text content atomically via temp-file-then-rename.
+
+    Used for diagnostic sidecars where partial writes could confuse
+    downstream consumers. Not needed for primary outputs (rankings.csv,
+    metadata.json) which already have their own atomic write patterns.
+    """
+    import tempfile as _tf
+
+    fd, tmp = _tf.mkstemp(dir=path.parent, prefix=".tmp_", suffix=path.suffix)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(content)
+        Path(tmp).replace(path)
+    except Exception:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def load_json_data(
     filepath: Path, description: str, max_size_mb: float = MAX_JSON_FILE_SIZE_MB, base_dir: Optional[Path] = None
 ) -> List[Dict[str, Any]]:
@@ -3530,7 +3552,7 @@ def _write_coverage_quality(
 
     # -- Write JSON --
     cq_json_path = snap_path / "coverage_quality.json"
-    with open(cq_json_path, "w", encoding="utf-8") as f:
+    with open(cq_json_path, "w", encoding="utf-8") as f:  # coverage_quality.json — read by collection health
         json.dump(cq, f, indent=2, default=str)
         f.write("\n")
 

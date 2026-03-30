@@ -128,12 +128,17 @@ if [ ${EXIT_CODE} -ne 0 ] && [ -n "${PIPELINE_ALERT_WEBHOOK:-}" ]; then
         >> "${LOG_FILE}" 2>&1 || true
 fi
 
-# --- Housekeeping: prune pre-staging snapshots and old logs ---
+# --- Housekeeping: prune pre-staging, old logs, and old caches ---
 # Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
-# Regular snapshots are kept indefinitely (small, used for backtesting).
+# Snapshots older than 18 months are compressed to tar.gz archives.
+# PIT cache anchors older than 12 months are removed (data/caches/price_pit/).
+# Artifact watch/digest dirs older than 6 months are removed.
 # Logs older than 60 days are removed.
 PRE_STAGING_DAYS=7
 LOG_RETENTION_DAYS=60
+SNAPSHOT_ARCHIVE_DAYS=548  # ~18 months
+CACHE_PRUNE_DAYS=365       # 12 months
+ARTIFACT_PRUNE_DAYS=180    # 6 months
 
 prune_count=0
 for dir in "${SNAPSHOT_DIR}"/*__pre_*; do
@@ -161,8 +166,53 @@ for logfile in "${LOG_DIR}"/daily_production_*.log; do
     fi
 done
 
+# Compress old snapshots to archives (>18 months, not already archived)
+ARCHIVE_DIR="${REPO_ROOT}/data/archives"
+mkdir -p "${ARCHIVE_DIR}"
+for dir in "${SNAPSHOT_DIR}"/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]; do
+    [ -d "${dir}" ] || continue
+    snap_date=$(basename "${dir}")
+    snap_epoch=$(date -d "${snap_date}" +%s 2>/dev/null || continue)
+    now_epoch=$(date +%s)
+    age_days=$(( (now_epoch - snap_epoch) / 86400 ))
+    if [ ${age_days} -gt ${SNAPSHOT_ARCHIVE_DAYS} ]; then
+        archive_path="${ARCHIVE_DIR}/${snap_date}.tar.gz"
+        if [ ! -f "${archive_path}" ]; then
+            tar -czf "${archive_path}" -C "${SNAPSHOT_DIR}" "${snap_date}" 2>/dev/null && \
+                rm -rf "${dir}" && prune_count=$((prune_count + 1))
+        else
+            # Archive exists, safe to remove snapshot
+            rm -rf "${dir}" && prune_count=$((prune_count + 1))
+        fi
+    fi
+done
+
+# Prune old PIT price cache anchors (>12 months)
+PRICE_CACHE="${REPO_ROOT}/data/caches/price_pit/PIT"
+if [ -d "${PRICE_CACHE}" ]; then
+    for dir in "${PRICE_CACHE}"/20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]; do
+        [ -d "${dir}" ] || continue
+        cache_date=$(basename "${dir}")
+        cache_epoch=$(date -d "${cache_date}" +%s 2>/dev/null || continue)
+        now_epoch=$(date +%s)
+        age_days=$(( (now_epoch - cache_epoch) / 86400 ))
+        if [ ${age_days} -gt ${CACHE_PRUNE_DAYS} ]; then
+            rm -rf "${dir}" && prune_count=$((prune_count + 1))
+        fi
+    done
+fi
+
+# Prune old artifact watch/digest dirs (>6 months)
+for artifact_type in grok_watch price_action_watch ops_digest shadow_monitor; do
+    artifact_dir="${REPO_ROOT}/artifacts/${artifact_type}"
+    [ -d "${artifact_dir}" ] || continue
+    find "${artifact_dir}" -name "20[0-9][0-9]-*" -mtime +${ARTIFACT_PRUNE_DAYS} -delete 2>/dev/null
+    _pruned=$?
+    [ ${_pruned} -eq 0 ] && prune_count=$((prune_count + 1))
+done
+
 if [ ${prune_count} -gt 0 ]; then
-    echo "[$(date -Iseconds)] Housekeeping: pruned ${prune_count} old pre-staging/log item(s)" | tee -a "${LOG_FILE}"
+    echo "[$(date -Iseconds)] Housekeeping: pruned ${prune_count} old item(s) (pre-staging, logs, snapshots, caches, artifacts)" | tee -a "${LOG_FILE}"
 fi
 
 # NOTE: OpenClaw agents (ops/sentinel/qa) run on their own cron schedule
