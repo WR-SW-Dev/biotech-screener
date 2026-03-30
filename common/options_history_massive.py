@@ -202,7 +202,12 @@ def fetch_chain_snapshot(
         query["contract_type"] = contract_type
 
     results = []
-    for snap in client.list_snapshot_options_chain(underlying_ticker.upper(), params=query):
+    try:
+        chain_iter = client.list_snapshot_options_chain(underlying_ticker.upper(), params=query)
+    except Exception as exc:
+        logger.warning("fetch_chain_snapshot failed for %s: %s", underlying_ticker, exc)
+        return []
+    for snap in chain_iter:
         rec: Dict[str, Any] = {}
         details = getattr(snap, "details", None)
         if details:

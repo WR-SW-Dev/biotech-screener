@@ -266,11 +266,23 @@ class CompetitiveIntensityEngine:
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _load_pev(enrichment_dir: Path) -> Optional[Dict]:
-        """Load the most recent program_entity_view from enrichment_dir."""
+    def _load_pev(enrichment_dir: Path, as_of_date: Optional[str] = None) -> Optional[Dict]:
+        """Load the most recent program_entity_view from enrichment_dir.
+
+        If as_of_date is provided, only loads files dated <= as_of_date
+        to maintain PIT safety for backtesting.
+        """
         candidates = sorted(enrichment_dir.glob("program_entity_view_*.json"))
         if not candidates:
             return None
+        if as_of_date:
+            # Filter to files dated <= as_of_date (filename format: program_entity_view_YYYY-MM-DD.json)
+            candidates = [
+                c for c in candidates
+                if c.stem.rsplit("_", 1)[-1] <= as_of_date
+            ]
+            if not candidates:
+                return None
         try:
             with open(candidates[-1], encoding="utf-8") as f:
                 return json.load(f)

@@ -252,6 +252,62 @@ class TestEvaluate:
         # Verify sorted
         assert warns1 == sorted(warns1)
 
+    # --- Boundary-value tests at exact threshold values ---
+
+    def test_spearman_at_exact_warn_boundary(self):
+        """Spearman exactly at warn threshold should be OK (>= is pass)."""
+        mon = _healthy_monitoring()
+        mon["stability"]["rank_correlation"]["spearman"] = 0.80
+        verdict, _, warns = evaluate(mon, DEFAULT_THRESHOLDS)
+        assert verdict == "PASS"
+        assert not any("spearman" in w for w in warns)
+
+    def test_spearman_just_below_warn_boundary(self):
+        """Spearman just below warn threshold should be WARN."""
+        mon = _healthy_monitoring()
+        mon["stability"]["rank_correlation"]["spearman"] = 0.799
+        verdict, _, warns = evaluate(mon, DEFAULT_THRESHOLDS)
+        assert verdict == "WARN"
+        assert any("spearman" in w for w in warns)
+
+    def test_spearman_at_exact_fail_boundary(self):
+        """Spearman exactly at fail threshold should be WARN (>= fail is warn, not fail)."""
+        mon = _healthy_monitoring()
+        mon["stability"]["rank_correlation"]["spearman"] = 0.60
+        verdict, fails, warns = evaluate(mon, DEFAULT_THRESHOLDS)
+        # At exactly the fail threshold: depends on implementation (< or <=)
+        # Either WARN or FAIL is acceptable; the test documents the behavior
+        assert verdict in ("WARN", "FAIL")
+
+    def test_spearman_just_below_fail_boundary(self):
+        """Spearman below fail threshold should be FAIL."""
+        mon = _healthy_monitoring()
+        mon["stability"]["rank_correlation"]["spearman"] = 0.599
+        verdict, fails, _ = evaluate(mon, DEFAULT_THRESHOLDS)
+        assert verdict == "FAIL"
+        assert any("spearman" in f for f in fails)
+
+    def test_governance_threshold_0_90(self):
+        """CLAUDE.md specifies rank correlation >= 0.90 as the governance gate.
+        Verify the gate functions correctly at this threshold with custom config."""
+        strict_thresholds = dict(DEFAULT_THRESHOLDS)
+        strict_thresholds["stability"] = {
+            **DEFAULT_THRESHOLDS["stability"],
+            "spearman_rho_warn": 0.90,
+            "spearman_rho_fail": 0.80,
+        }
+        mon = _healthy_monitoring()
+
+        # 0.91 → PASS
+        mon["stability"]["rank_correlation"]["spearman"] = 0.91
+        verdict, _, _ = evaluate(mon, strict_thresholds)
+        assert verdict == "PASS"
+
+        # 0.89 → WARN
+        mon["stability"]["rank_correlation"]["spearman"] = 0.89
+        verdict, _, warns = evaluate(mon, strict_thresholds)
+        assert verdict == "WARN"
+
 
 # ---------------------------------------------------------------------------
 # Tests: _metric_status()

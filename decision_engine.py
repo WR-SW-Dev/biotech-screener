@@ -502,6 +502,17 @@ class DecisionRuleset:
         """
         with open(path, "r", encoding="utf-8") as fh:
             d = json.load(fh)
+        # Schema version guard: log if the file has a version we don't recognize
+        _sv = d.get("schema_version", "")
+        if _sv and not _sv.startswith("v1."):
+            import logging as _lg
+
+            _lg.getLogger(__name__).warning(
+                "Ruleset %s has schema_version=%s (expected v1.x) — "
+                "unknown fields will be ignored but behavior may differ",
+                path,
+                _sv,
+            )
         # Compute stable hash from raw dict BEFORE type conversions.
         # Uses the same compact-separator format as _canonical_json.
         file_hash = hashlib.sha256(json.dumps(d, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
