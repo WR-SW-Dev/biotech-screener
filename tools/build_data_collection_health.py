@@ -155,7 +155,7 @@ def _check_catalyst_source_mix(snap_dir: Path, thresholds: Dict) -> Dict[str, An
     }
 
 
-def _check_coverage_quality(snap_dir: Path, thresholds: Dict) -> Dict[str, Any]:
+def _check_coverage_quality(snap_dir: Path, thresholds: Dict, as_of_date: str = "") -> Dict[str, Any]:
     cq = _load_json(snap_dir / "coverage_quality.json")
     if cq is None:
         return {"status": "WARN", "reason": "coverage_quality.json missing", "present": False}
@@ -173,6 +173,13 @@ def _check_coverage_quality(snap_dir: Path, thresholds: Dict) -> Dict[str, Any]:
         flags.append(
             f"options_coverage={options_pct:.1%} below floor {thresholds['options_universe_min_coverage_pct']:.0%}"
         )
+        if status != "FAIL":
+            status = "WARN"
+
+    # Options data staleness: check if freshness data is from the expected date
+    opts_collect_date = opts_fresh.get("collect_date", "")
+    if opts_collect_date and as_of_date and opts_collect_date < as_of_date:
+        flags.append(f"options_data_stale: collected={opts_collect_date}, expected={as_of_date}")
         if status != "FAIL":
             status = "WARN"
 
@@ -441,7 +448,7 @@ def build_health(
     sources = {
         "cache_health": _check_cache_health(snapshot_dir),
         "catalyst_source_mix": _check_catalyst_source_mix(snapshot_dir, thresholds),
-        "coverage_quality": _check_coverage_quality(snapshot_dir, thresholds),
+        "coverage_quality": _check_coverage_quality(snapshot_dir, thresholds, as_of_date),
         "market_data": _check_market_data(snapshot_dir, data_dir, as_of_date, thresholds),
         "ctgov": _check_ctgov(snapshot_dir, data_dir, as_of_date, thresholds),
         "sec": _check_sec(snapshot_dir, as_of_date),

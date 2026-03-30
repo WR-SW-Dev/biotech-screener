@@ -44,8 +44,8 @@ flake8==7.0.0
 mypy==1.8.0
 
 # ----------------------------------------------------------------------------
-# Data Collection (Optional - for SEC/market data scripts)
+# Data Collection (used by collect_market_data.py and collectors)
 # ----------------------------------------------------------------------------
-# yfinance==0.2.35
-# beautifulsoup4==4.12.3
-# lxml==5.1.0
+yfinance==0.2.35
+beautifulsoup4==4.12.3
+lxml==5.1.0

@@ -106,7 +106,7 @@ for i, company in enumerate(ranked[:5], 1):
 
 # Save ranked list
 output = {
-    'timestamp': datetime.now().isoformat(),
+    'timestamp': 'legacy_script',  # Removed datetime.now() for determinism
     'universe_size': len(ranked),
     'ranked_list': ranked
 }

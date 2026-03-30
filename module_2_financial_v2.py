@@ -1349,14 +1349,22 @@ def compute_module_2_financial(*args, **kwargs):
     if len(args) >= 2:
         records = args[0]
         universe = args[1]
-        _as_of_date = args[2] if len(args) > 2 else kwargs.get("as_of_date")  # noqa: F841
+        as_of_date = args[2] if len(args) > 2 else kwargs.get("as_of_date")
         financial_data = records
         market_data = []
     else:
         universe = kwargs.get("universe", kwargs.get("active_tickers", kwargs.get("active_universe", [])))
         financial_data = kwargs.get("financial_records", kwargs.get("financial_data", []))
         market_data = kwargs.get("market_records", kwargs.get("market_data", []))
-        _as_of_date = kwargs.get("as_of_date")  # noqa: F841
+        as_of_date = kwargs.get("as_of_date")
+
+    # PIT filter: exclude financial records with source_date after as_of_date
+    if as_of_date and financial_data:
+        _cutoff = str(as_of_date)[:10]
+        financial_data = [
+            r for r in financial_data
+            if not r.get("source_date") or str(r["source_date"])[:10] <= _cutoff
+        ]
 
     if isinstance(universe, set):
         universe = list(universe)
