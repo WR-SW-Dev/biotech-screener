@@ -10624,6 +10624,23 @@ Module 3 Catalyst Detection:
             except Exception as _ps_exc:
                 logger.debug("[POLICY_SHADOW] skipped: %s", _ps_exc)
 
+            # --- Policy candidate evaluation (Spec 035) ---
+            try:
+                from tools.eval_policy_candidate import evaluate_candidate, load_history
+
+                _hist_path = Path("artifacts/policy_shadow/tier_weighted/history.jsonl")
+                if _hist_path.exists():
+                    _hist = load_history(_hist_path)
+                    _eval = evaluate_candidate(_hist)
+                    logger.info(
+                        "[POLICY_CANDIDATE] %s — %s (%d days)",
+                        _eval.get("verdict", "?"),
+                        _eval.get("reason", ""),
+                        _eval.get("n_trading_days", 0),
+                    )
+            except Exception as _pc_exc:
+                logger.debug("[POLICY_CANDIDATE] skipped: %s", _pc_exc)
+
         return 0
 
     except (PathTraversalError, SymlinkError) as e:
