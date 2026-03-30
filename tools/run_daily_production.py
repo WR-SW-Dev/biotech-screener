@@ -4691,6 +4691,24 @@ def run_daily(
         except Exception as _ov_err:
             _logger.warning(f"Options verdict failed: {_ov_err}")
 
+        # --- Step 5k.5e: Options Monitor v1.1 verdict artifact (non-blocking) ---
+        try:
+            from tools.build_options_verdict_v11 import build_verdict_v11
+
+            _ov11_result = build_verdict_v11(
+                as_of_date,
+                snapshots_dir=final_snapshots_dir,
+            )
+            if "error" in _ov11_result:
+                _logger.info(f"Options v1.1 → skipped ({_ov11_result['error']})")
+            else:
+                _ov11_n = _ov11_result.get("n_active", 0)
+                _ov11_h = _ov11_result.get("n_high", 0)
+                _ov11_new = _ov11_result.get("n_new", 0)
+                _logger.info(f"Options v1.1 → {_ov11_n} active (H={_ov11_h}), {_ov11_new} new")
+        except Exception as _ov11_err:
+            _logger.warning(f"Options v1.1 failed: {_ov11_err}")
+
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
             from tools.build_shadow_monitor import build_shadow_monitor

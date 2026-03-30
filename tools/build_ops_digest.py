@@ -277,6 +277,39 @@ def _build_readiness_section(as_of_date: str) -> Dict[str, Any]:
     }
 
 
+def _build_om11_section(as_of_date: str) -> Dict[str, Any]:
+    """Options Monitor v1.1 verdict summary for ops digest."""
+    v11_path = REPO_ROOT / "artifacts" / "options_verdict" / f"{as_of_date}_verdict_v11.json"
+    data = _load_json(v11_path)
+    if not data:
+        return {"available": False}
+
+    verdicts = data.get("verdicts", [])
+    high = [v for v in verdicts if v.get("om11_monitor_verdict") == "HIGH"]
+    watch = [v for v in verdicts if v.get("om11_monitor_verdict") == "WATCH"]
+    new_v = [v for v in verdicts if v.get("state") == "NEW"]
+    resolved = [v for v in verdicts if v.get("state") == "RESOLVED"]
+
+    # Top trade biases
+    trade_biases = {}
+    for v in verdicts:
+        bias = v.get("om11_trade_bias", "NO_ACTION")
+        if bias != "NO_ACTION":
+            trade_biases[bias] = trade_biases.get(bias, 0) + 1
+
+    return {
+        "available": True,
+        "n_active": data.get("n_active", 0),
+        "n_high": len(high),
+        "n_watch": len(watch),
+        "n_new": len(new_v),
+        "n_resolved": len(resolved),
+        "high_tickers": [v["ticker"] for v in high[:5]],
+        "new_tickers": [v["ticker"] for v in new_v[:5]],
+        "trade_biases": trade_biases,
+    }
+
+
 def _build_surface_delta_section(snap_dir: Path) -> Dict[str, Any]:
     """Optional post-open surface delta briefing (linked sidecar).
 
@@ -347,6 +380,9 @@ def build_ops_digest(
     readiness = _build_readiness_section(as_of_date)
     catalysts = _build_nearest_catalysts(snap_dir)
     surface_delta = _build_surface_delta_section(snap_dir)
+
+    # Options Monitor v1.1 verdict summary
+    om11_summary = _build_om11_section(as_of_date)
 
     # Compute overall attention level
     n_fails = len([a for a in health["alerts"] if a["level"] == "FAIL"])
@@ -508,6 +544,7 @@ def build_ops_digest(
         "readiness": readiness,
         "nearest_catalysts": catalysts,
         "surface_delta": surface_delta,
+        "options_monitor_v11": om11_summary,
     }
 
 
