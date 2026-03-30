@@ -4155,8 +4155,8 @@ def run_daily(
         _prior = load_prior_positions(as_of_date)
         if _prior:
             _held_tickers = {p["ticker"] for p in _prior[1]}
-    except Exception:
-        pass  # No prior positions — fall back to all eligible
+    except Exception as exc:
+        print(f"  [WARN] Could not load prior positions for held-scoped gates: {exc}")
 
     # --- Step 3: Run integrity audit ---
     audit_proc = None

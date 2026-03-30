@@ -672,7 +672,8 @@ def _schema_major(version_val) -> int:
     s = str(version_val).strip()
     try:
         return int(s.split(".", 1)[0])
-    except Exception:
+    except Exception as exc:
+        logger.warning("Schema version parse failed for %r: %s", version_val, exc)
         return 0
 
 

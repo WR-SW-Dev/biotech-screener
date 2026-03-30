@@ -5,17 +5,21 @@ Uses morningstar_data.direct.portfolio API with data_set_id="2" for daily return
 Provides point-in-time safe price/return series with caching.
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from typing import List, Dict, Optional, Any
-from datetime import datetime, date, timedelta
-from pathlib import Path
-import json
 import hashlib
+import json
+import logging
 import math
+from datetime import date, datetime, timedelta
+from decimal import ROUND_HALF_UP, Decimal
+from pathlib import Path
+from typing import Any, Dict, List, Optional
+
+_logger = logging.getLogger(__name__)
 
 # Morningstar Data SDK
 try:
     import morningstar_data as md
+
     MORNINGSTAR_AVAILABLE = True
 except ImportError:
     md = None
@@ -24,6 +28,7 @@ except ImportError:
 # Fallback to yfinance if Morningstar unavailable
 try:
     import yfinance as yf
+
     YFINANCE_AVAILABLE = True
 except ImportError:
     yf = None
@@ -72,11 +77,11 @@ def _write_cache(cache_path: Path, data: Dict) -> None:
     cache_data = {
         "data": data,
         "cached_at": datetime.now().isoformat(),
-        "integrity": hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest()
+        "integrity": hashlib.sha256(json.dumps(data, sort_keys=True).encode()).hexdigest(),
     }
-    temp_path = cache_path.with_suffix('.tmp')
+    temp_path = cache_path.with_suffix(".tmp")
     try:
-        with open(temp_path, 'w') as f:
+        with open(temp_path, "w") as f:
             json.dump(cache_data, f, indent=2, sort_keys=True)
         temp_path.replace(cache_path)
     except Exception as e:
@@ -156,19 +161,12 @@ class MorningstarDataProvider:
             return None
 
         try:
-            return md.direct.portfolio.get_data_set_data_points(
-                data_set_id=MSTAR_DATA_SET_RETURNS_DAILY
-            )
+            return md.direct.portfolio.get_data_set_data_points(data_set_id=MSTAR_DATA_SET_RETURNS_DAILY)
         except Exception as e:
             print(f"ERROR: Failed to fetch daily returns data points: {e}")
             return None
 
-    def _get_morningstar_returns(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int
-    ) -> Optional[List[float]]:
+    def _get_morningstar_returns(self, ticker: str, as_of: date, lookback_days: int) -> Optional[List[float]]:
         """
         Fetch daily returns from Morningstar Direct.
 
@@ -192,82 +190,79 @@ class MorningstarDataProvider:
             returns_df = None
 
             # Method 1: Use md.direct.get_returns with Frequency enum (preferred)
-            if returns_df is None and hasattr(md.direct, 'get_returns'):
+            if returns_df is None and hasattr(md.direct, "get_returns"):
                 # Try Frequency enum first (avoids deprecation warning)
                 try:
                     returns_df = md.direct.get_returns(
                         investments=[ticker],
-                        start_date=start_date.strftime('%Y-%m-%d'),
-                        end_date=as_of.strftime('%Y-%m-%d'),
-                        freq=md.direct.Frequency.daily
+                        start_date=start_date.strftime("%Y-%m-%d"),
+                        end_date=as_of.strftime("%Y-%m-%d"),
+                        freq=md.direct.Frequency.daily,
                     )
-                except Exception:
+                except Exception as _e1:
+                    _logger.debug("Morningstar get_returns(Frequency.daily) failed for %s: %s", ticker, _e1)
                     # Fall back to string 'daily' if enum doesn't work
                     try:
                         returns_df = md.direct.get_returns(
                             investments=[ticker],
-                            start_date=start_date.strftime('%Y-%m-%d'),
-                            end_date=as_of.strftime('%Y-%m-%d'),
-                            freq='daily'
+                            start_date=start_date.strftime("%Y-%m-%d"),
+                            end_date=as_of.strftime("%Y-%m-%d"),
+                            freq="daily",
                         )
-                    except Exception:
-                        pass
+                    except Exception as _e2:
+                        _logger.debug("Morningstar get_returns('daily') failed for %s: %s", ticker, _e2)
 
             # Method 2: Use md.direct.get_investment_data with PD003 (Total Ret 1 Day Daily)
             # Note: data_points must be list of dicts, not strings
-            if returns_df is None and hasattr(md.direct, 'get_investment_data'):
+            if returns_df is None and hasattr(md.direct, "get_investment_data"):
                 try:
                     # PD003 = "Total Ret 1 Day (Daily)" from data_set_id=2
                     # data_points format: list of dicts with datapointId
                     returns_df = md.direct.get_investment_data(
-                        investments=[ticker],
-                        data_points=[{"datapointId": "PD003"}]
+                        investments=[ticker], data_points=[{"datapointId": "PD003"}]
                     )
                 except Exception as e2:
+                    _logger.debug("Morningstar get_investment_data(datapointId) failed for %s: %s", ticker, e2)
                     # Try with different dict key names
                     try:
-                        returns_df = md.direct.get_investment_data(
-                            investments=[ticker],
-                            data_points=[{"id": "PD003"}]
-                        )
-                    except Exception:
-                        pass
+                        returns_df = md.direct.get_investment_data(investments=[ticker], data_points=[{"id": "PD003"}])
+                    except Exception as _e3:
+                        _logger.debug("Morningstar get_investment_data(id) failed for %s: %s", ticker, _e3)
 
             # Method 3: Use md.direct.portfolio.get_data with data_set_id
-            if returns_df is None and hasattr(md.direct.portfolio, 'get_data'):
+            if returns_df is None and hasattr(md.direct.portfolio, "get_data"):
                 try:
                     returns_df = md.direct.portfolio.get_data(
                         investments=[ticker],
                         data_set_id=MSTAR_DATA_SET_RETURNS_DAILY,
                         data_points=["PD003"],
-                        start_date=start_date.strftime('%Y-%m-%d'),
-                        end_date=as_of.strftime('%Y-%m-%d')
+                        start_date=start_date.strftime("%Y-%m-%d"),
+                        end_date=as_of.strftime("%Y-%m-%d"),
                     )
                 except Exception as e3:
+                    _logger.debug("Morningstar portfolio.get_data(with dates) failed for %s: %s", ticker, e3)
                     try:
                         # Try without date filters
                         returns_df = md.direct.portfolio.get_data(
-                            investments=[ticker],
-                            data_set_id=MSTAR_DATA_SET_RETURNS_DAILY,
-                            data_points=["PD003"]
+                            investments=[ticker], data_set_id=MSTAR_DATA_SET_RETURNS_DAILY, data_points=["PD003"]
                         )
-                    except Exception:
-                        pass
+                    except Exception as _e4:
+                        _logger.debug("Morningstar portfolio.get_data(no dates) failed for %s: %s", ticker, _e4)
 
-            if returns_df is None or (hasattr(returns_df, 'empty') and returns_df.empty):
+            if returns_df is None or (hasattr(returns_df, "empty") and returns_df.empty):
                 return None
 
             # Extract returns, filtering for PIT compliance
             returns = []
             for idx, row in returns_df.iterrows():
                 # Handle various index types
-                if hasattr(idx, 'date'):
+                if hasattr(idx, "date"):
                     return_date = idx.date()
-                elif hasattr(idx, 'to_pydatetime'):
+                elif hasattr(idx, "to_pydatetime"):
                     return_date = idx.to_pydatetime().date()
                 elif isinstance(idx, str):
                     try:
-                        return_date = datetime.strptime(idx, '%Y-%m-%d').date()
+                        return_date = datetime.strptime(idx, "%Y-%m-%d").date()
                     except ValueError:
                         continue
                 else:
@@ -276,16 +271,24 @@ class MorningstarDataProvider:
                 if return_date <= as_of and return_date >= start_date:
                     # Try common column names for daily returns
                     ret_value = None
-                    for col_name in ['Daily Return', 'DailyReturn', 'daily_return',
-                                     'PD003', 'Total Ret 1 Day (Daily)',
-                                     'Return', 'return', 'value', ticker]:
+                    for col_name in [
+                        "Daily Return",
+                        "DailyReturn",
+                        "daily_return",
+                        "PD003",
+                        "Total Ret 1 Day (Daily)",
+                        "Return",
+                        "return",
+                        "value",
+                        ticker,
+                    ]:
                         if col_name in row.index:
                             ret_value = row[col_name]
                             break
                     # Also check columns case-insensitively
                     if ret_value is None:
                         for col in row.index:
-                            if 'return' in str(col).lower() and 'monthly' not in str(col).lower():
+                            if "return" in str(col).lower() and "monthly" not in str(col).lower():
                                 ret_value = row[col]
                                 break
                     if ret_value is None and len(row) > 0:
@@ -308,12 +311,7 @@ class MorningstarDataProvider:
             print(f"WARNING: Morningstar fetch failed for {ticker}: {e}")
             return None
 
-    def _get_yfinance_returns(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int
-    ) -> Optional[List[float]]:
+    def _get_yfinance_returns(self, ticker: str, as_of: date, lookback_days: int) -> Optional[List[float]]:
         """
         Fetch daily returns from yfinance as fallback.
 
@@ -336,23 +334,23 @@ class MorningstarDataProvider:
                 # Historical data: use start/end dates
                 start_date = as_of - timedelta(days=lookback_days)
                 hist = stock.history(
-                    start=start_date.strftime('%Y-%m-%d'),
-                    end=(as_of + timedelta(days=1)).strftime('%Y-%m-%d'),
+                    start=start_date.strftime("%Y-%m-%d"),
+                    end=(as_of + timedelta(days=1)).strftime("%Y-%m-%d"),
                     auto_adjust=True,
-                    actions=False
+                    actions=False,
                 )
             else:
                 # Current data: use period
                 if lookback_days <= 30:
-                    period = '1mo'
+                    period = "1mo"
                 elif lookback_days <= 90:
-                    period = '3mo'
+                    period = "3mo"
                 elif lookback_days <= 180:
-                    period = '6mo'
+                    period = "6mo"
                 elif lookback_days <= 365:
-                    period = '1y'
+                    period = "1y"
                 else:
-                    period = '2y'
+                    period = "2y"
                 hist = stock.history(period=period, auto_adjust=True, actions=False)
 
             if hist.empty:
@@ -361,13 +359,13 @@ class MorningstarDataProvider:
             # Calculate log returns from prices
             prices = []
             for idx, row in hist.iterrows():
-                if hasattr(idx, 'date'):
+                if hasattr(idx, "date"):
                     price_date = idx.date()
                 else:
                     price_date = idx.to_pydatetime().date()
 
                 if price_date <= as_of:
-                    close = row['Close']
+                    close = row["Close"]
                     if not math.isnan(close):
                         prices.append(close)
 
@@ -377,8 +375,8 @@ class MorningstarDataProvider:
             # Calculate log returns
             returns = []
             for i in range(1, len(prices)):
-                if prices[i-1] > 0 and prices[i] > 0:
-                    returns.append(math.log(prices[i] / prices[i-1]))
+                if prices[i - 1] > 0 and prices[i] > 0:
+                    returns.append(math.log(prices[i] / prices[i - 1]))
 
             return returns if returns else None
 
@@ -387,11 +385,7 @@ class MorningstarDataProvider:
             return None
 
     def get_daily_returns(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int = 365,
-        use_cache: bool = True
+        self, ticker: str, as_of: date, lookback_days: int = 365, use_cache: bool = True
     ) -> List[float]:
         """
         Get daily returns for a ticker with Morningstar as primary source.
@@ -448,13 +442,7 @@ class MorningstarDataProvider:
 
         return returns
 
-    def get_prices(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int = 365,
-        use_cache: bool = True
-    ) -> List[Decimal]:
+    def get_prices(self, ticker: str, as_of: date, lookback_days: int = 365, use_cache: bool = True) -> List[Decimal]:
         """
         Get daily closing prices for a ticker.
 
@@ -488,20 +476,20 @@ class MorningstarDataProvider:
             if as_of < today:
                 start_date = as_of - timedelta(days=lookback_days)
                 hist = stock.history(
-                    start=start_date.strftime('%Y-%m-%d'),
-                    end=(as_of + timedelta(days=1)).strftime('%Y-%m-%d'),
+                    start=start_date.strftime("%Y-%m-%d"),
+                    end=(as_of + timedelta(days=1)).strftime("%Y-%m-%d"),
                     auto_adjust=True,
-                    actions=False
+                    actions=False,
                 )
             else:
                 if lookback_days <= 30:
-                    period = '1mo'
+                    period = "1mo"
                 elif lookback_days <= 90:
-                    period = '3mo'
+                    period = "3mo"
                 elif lookback_days <= 365:
-                    period = '1y'
+                    period = "1y"
                 else:
-                    period = '2y'
+                    period = "2y"
                 hist = stock.history(period=period, auto_adjust=True, actions=False)
 
             if hist.empty:
@@ -509,13 +497,13 @@ class MorningstarDataProvider:
 
             prices = []
             for idx, row in hist.iterrows():
-                if hasattr(idx, 'date'):
+                if hasattr(idx, "date"):
                     price_date = idx.date()
                 else:
                     price_date = idx.to_pydatetime().date()
 
                 if price_date <= as_of:
-                    close = row['Close']
+                    close = row["Close"]
                     if not math.isnan(close):
                         prices.append(_quantize(close))
 
@@ -535,13 +523,7 @@ class MorningstarDataProvider:
             print(f"ERROR: Failed to fetch prices for {ticker}: {e}")
             return []
 
-    def get_volumes(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int = 365,
-        use_cache: bool = True
-    ) -> List[int]:
+    def get_volumes(self, ticker: str, as_of: date, lookback_days: int = 365, use_cache: bool = True) -> List[int]:
         """
         Get daily trading volumes for a ticker.
 
@@ -572,20 +554,20 @@ class MorningstarDataProvider:
             if as_of < today:
                 start_date = as_of - timedelta(days=lookback_days)
                 hist = stock.history(
-                    start=start_date.strftime('%Y-%m-%d'),
-                    end=(as_of + timedelta(days=1)).strftime('%Y-%m-%d'),
+                    start=start_date.strftime("%Y-%m-%d"),
+                    end=(as_of + timedelta(days=1)).strftime("%Y-%m-%d"),
                     auto_adjust=True,
-                    actions=False
+                    actions=False,
                 )
             else:
                 if lookback_days <= 30:
-                    period = '1mo'
+                    period = "1mo"
                 elif lookback_days <= 90:
-                    period = '3mo'
+                    period = "3mo"
                 elif lookback_days <= 365:
-                    period = '1y'
+                    period = "1y"
                 else:
-                    period = '2y'
+                    period = "2y"
                 hist = stock.history(period=period, auto_adjust=True, actions=False)
 
             if hist.empty:
@@ -593,13 +575,13 @@ class MorningstarDataProvider:
 
             volumes = []
             for idx, row in hist.iterrows():
-                if hasattr(idx, 'date'):
+                if hasattr(idx, "date"):
                     volume_date = idx.date()
                 else:
                     volume_date = idx.to_pydatetime().date()
 
                 if volume_date <= as_of:
-                    vol = row['Volume']
+                    vol = row["Volume"]
                     if not math.isnan(vol):
                         volumes.append(int(vol))
 
@@ -618,12 +600,7 @@ class MorningstarDataProvider:
             print(f"ERROR: Failed to fetch volumes for {ticker}: {e}")
             return []
 
-    def get_ticker_data(
-        self,
-        ticker: str,
-        as_of: date,
-        lookback_days: int = 365
-    ) -> Dict:
+    def get_ticker_data(self, ticker: str, as_of: date, lookback_days: int = 365) -> Dict:
         """
         Get complete data package for a ticker.
 
@@ -646,7 +623,7 @@ class MorningstarDataProvider:
             "returns": returns,
             "volumes": volumes,
             "num_days": len(prices),
-            "data_source": "morningstar" if (self.prefer_morningstar and MORNINGSTAR_AVAILABLE) else "yfinance"
+            "data_source": "morningstar" if (self.prefer_morningstar and MORNINGSTAR_AVAILABLE) else "yfinance",
         }
 
 
@@ -657,11 +634,7 @@ class BatchMorningstarProvider:
         self.provider = MorningstarDataProvider(cache_ttl_hours, prefer_morningstar)
 
     def get_batch_data(
-        self,
-        tickers: List[str],
-        as_of: date,
-        lookback_days: int = 365,
-        include_xbi: bool = True
+        self, tickers: List[str], as_of: date, lookback_days: int = 365, include_xbi: bool = True
     ) -> Dict[str, Dict]:
         """
         Get data for multiple tickers efficiently.
@@ -731,7 +704,7 @@ def check_morningstar_availability() -> Dict[str, bool]:
     return {
         "morningstar_available": MORNINGSTAR_AVAILABLE,
         "yfinance_available": YFINANCE_AVAILABLE,
-        "primary_source": "morningstar" if MORNINGSTAR_AVAILABLE else "yfinance"
+        "primary_source": "morningstar" if MORNINGSTAR_AVAILABLE else "yfinance",
     }
 
 
@@ -741,11 +714,7 @@ def diagnose_morningstar_api() -> Dict[str, Any]:
 
     Run this to discover what API methods are available for fetching data.
     """
-    result = {
-        "morningstar_available": MORNINGSTAR_AVAILABLE,
-        "modules": {},
-        "methods": {}
-    }
+    result = {"morningstar_available": MORNINGSTAR_AVAILABLE, "modules": {}, "methods": {}}
 
     if not MORNINGSTAR_AVAILABLE:
         print("morningstar_data not installed")
@@ -755,41 +724,51 @@ def diagnose_morningstar_api() -> Dict[str, Any]:
 
     # Check top-level modules
     print("Top-level modules in md:")
-    top_level = [x for x in dir(md) if not x.startswith('_')]
+    top_level = [x for x in dir(md) if not x.startswith("_")]
     print(f"  {top_level}")
     result["modules"]["top_level"] = top_level
 
     # Check md.direct
-    if hasattr(md, 'direct'):
+    if hasattr(md, "direct"):
         print("\nModules in md.direct:")
-        direct_modules = [x for x in dir(md.direct) if not x.startswith('_')]
+        direct_modules = [x for x in dir(md.direct) if not x.startswith("_")]
         print(f"  {direct_modules}")
         result["modules"]["md.direct"] = direct_modules
 
         # Check md.direct.portfolio
-        if hasattr(md.direct, 'portfolio'):
+        if hasattr(md.direct, "portfolio"):
             print("\nMethods in md.direct.portfolio:")
-            portfolio_methods = [x for x in dir(md.direct.portfolio) if not x.startswith('_') and callable(getattr(md.direct.portfolio, x, None))]
+            portfolio_methods = [
+                x
+                for x in dir(md.direct.portfolio)
+                if not x.startswith("_") and callable(getattr(md.direct.portfolio, x, None))
+            ]
             print(f"  {portfolio_methods}")
             result["methods"]["md.direct.portfolio"] = portfolio_methods
 
         # Check md.direct.investments (if exists)
-        if hasattr(md.direct, 'investments'):
+        if hasattr(md.direct, "investments"):
             print("\nMethods in md.direct.investments:")
-            inv_methods = [x for x in dir(md.direct.investments) if not x.startswith('_') and callable(getattr(md.direct.investments, x, None))]
+            inv_methods = [
+                x
+                for x in dir(md.direct.investments)
+                if not x.startswith("_") and callable(getattr(md.direct.investments, x, None))
+            ]
             print(f"  {inv_methods}")
             result["methods"]["md.direct.investments"] = inv_methods
 
         # Check md.direct for data fetching methods
         print("\nCallable methods in md.direct:")
-        direct_methods = [x for x in dir(md.direct) if not x.startswith('_') and callable(getattr(md.direct, x, None))]
+        direct_methods = [x for x in dir(md.direct) if not x.startswith("_") and callable(getattr(md.direct, x, None))]
         print(f"  {direct_methods}")
         result["methods"]["md.direct"] = direct_methods
 
     # Check md.time_series (if exists)
-    if hasattr(md, 'time_series'):
+    if hasattr(md, "time_series"):
         print("\nMethods in md.time_series:")
-        ts_methods = [x for x in dir(md.time_series) if not x.startswith('_') and callable(getattr(md.time_series, x, None))]
+        ts_methods = [
+            x for x in dir(md.time_series) if not x.startswith("_") and callable(getattr(md.time_series, x, None))
+        ]
         print(f"  {ts_methods}")
         result["methods"]["md.time_series"] = ts_methods
 
@@ -798,7 +777,7 @@ def diagnose_morningstar_api() -> Dict[str, Any]:
     try:
         data_sets = md.direct.portfolio.get_data_sets()
         print(data_sets)
-        result["data_sets"] = data_sets.to_dict() if hasattr(data_sets, 'to_dict') else str(data_sets)
+        result["data_sets"] = data_sets.to_dict() if hasattr(data_sets, "to_dict") else str(data_sets)
     except Exception as e:
         print(f"  Error: {e}")
 
@@ -807,7 +786,9 @@ def diagnose_morningstar_api() -> Dict[str, Any]:
     try:
         data_points = md.direct.portfolio.get_data_set_data_points(data_set_id="2")
         print(data_points)
-        result["daily_returns_data_points"] = data_points.to_dict() if hasattr(data_points, 'to_dict') else str(data_points)
+        result["daily_returns_data_points"] = (
+            data_points.to_dict() if hasattr(data_points, "to_dict") else str(data_points)
+        )
     except Exception as e:
         print(f"  Error: {e}")
 
