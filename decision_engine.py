@@ -24,6 +24,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from dataclasses import fields as dc_fields
+from decimal import Decimal, localcontext
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 from decision_engine_codes import canonicalize_reasons
@@ -587,6 +588,41 @@ def _safe_float(val, default=None):
         return v
     except (ValueError, TypeError):
         return default
+
+
+def _safe_decimal(val, default=Decimal("0")) -> Decimal:
+    """Convert a value to Decimal for scoring paths (CCFT determinism).
+
+    Uses str() intermediary to avoid float representation artifacts.
+    NaN and missing values return the default.
+    """
+    if val is None:
+        return default
+    if isinstance(val, Decimal):
+        return val
+    try:
+        if isinstance(val, str) and val.strip() == "":
+            return default
+        # Convert via str to avoid float→Decimal imprecision
+        v = float(val)
+        if v != v:  # NaN check
+            return default
+        return Decimal(str(v))
+    except (ValueError, TypeError, ArithmeticError):
+        return default
+
+
+_D = Decimal  # shorthand for literals in scoring paths
+_D0 = Decimal("0")
+_D1 = Decimal("1")
+_D2 = Decimal("2")
+_D_NEG2 = Decimal("-2")
+_D_HALF = Decimal("0.5")
+
+
+def _clamp_d(val: Decimal, lo: Decimal, hi: Decimal) -> Decimal:
+    """Clamp a Decimal to [lo, hi]."""
+    return max(lo, min(hi, val))
 
 
 def _logistic_decay(days: float | None, midpoint: float, scale: float) -> float:
@@ -1460,9 +1496,9 @@ class SortContribution(NamedTuple):
     """One signal's adjustment to the sort anchor."""
 
     name: str  # signal identifier ("clinical", "coinvest", etc.)
-    raw: float  # input z-score before clamp
-    weight: float  # effective weight applied
-    delta: float  # final adjustment (subtracted from anchor)
+    raw: Decimal  # input z-score before clamp
+    weight: Decimal  # effective weight applied
+    delta: Decimal  # final adjustment (subtracted from anchor)
 
 
 def _build_sort_contributions(
@@ -1476,172 +1512,160 @@ def _build_sort_contributions(
     """Compute all sort-anchor adjustments as structured contributions.
 
     Each contribution's ``delta`` is subtracted from the anchor value by the
-    caller.  The logic here is identical to the former inline blocks — same
-    clamp, positive-only gate, and weight multiplication.
+    caller.  Uses Decimal arithmetic for CCFT determinism.
 
     ``catalyst_bonus`` is non-zero only in blended mode (caller resolves from
     the priority map).  ``alpha_raw`` feeds the within_tier modifier only;
     the tiebreak mode lives in a separate tuple position and is NOT included.
     """
     contribs: List[SortContribution] = []
+    _ctm = _safe_decimal(catalyst_type_mult, _D1)
+
+    # Helper: convert ruleset float weights to Decimal at point of use
+    def _w(val) -> Decimal:
+        return _safe_decimal(val, _D0)
 
     # 1. Clinical sort signal
     if ruleset.enable_clinical_sort_signal:
-        cz_tier = _safe_float(decision_fields.get("clinical_score_z_tier"), default=0.0)
+        cz_tier = _safe_decimal(decision_fields.get("clinical_score_z_tier"))
         stage = str(decision_fields.get("stage_bucket", ""))
-        stage_mult = dict(ruleset.clinical_stage_mults).get(stage, 0.0)
+        stage_mult = _w(dict(ruleset.clinical_stage_mults).get(stage, 0.0))
         if ruleset.clinical_positive_only:
-            cz_eff = min(2.0, max(0.0, cz_tier))
+            cz_eff = _clamp_d(cz_tier, _D0, _D2)
         else:
-            cz_eff = max(-2.0, min(2.0, cz_tier))
-        delta = ruleset.clinical_sort_weight * cz_eff * stage_mult
-        contribs.append(SortContribution("clinical", cz_tier, ruleset.clinical_sort_weight, delta))
+            cz_eff = _clamp_d(cz_tier, _D_NEG2, _D2)
+        w = _w(ruleset.clinical_sort_weight)
+        delta = w * cz_eff * stage_mult
+        contribs.append(SortContribution("clinical", cz_tier, w, delta))
 
-    # 2. Coinvest sort tilt — RESEARCHED & REJECTED (look-ahead contaminated;
-    #    PIT-correct re-eval harmful at all weights).  Guard: coinvest_score_z
-    #    is never injected by run_screen.py, so the signal silently defaults
-    #    to 0.0 if this branch is ever enabled without wiring injection first.
+    # 2. Coinvest sort tilt — RESEARCHED & REJECTED
     if ruleset.enable_coinvest_sort_signal:
-        cz = _safe_float(decision_fields.get("coinvest_score_z"), default=0.0)
+        cz = _safe_decimal(decision_fields.get("coinvest_score_z"))
         if ruleset.coinvest_positive_only:
-            cz_eff = min(2.0, max(0.0, cz))
+            cz_eff = _clamp_d(cz, _D0, _D2)
         else:
-            cz_eff = max(-2.0, min(2.0, cz))
-        delta = ruleset.coinvest_sort_weight * cz_eff
-        contribs.append(SortContribution("coinvest", cz, ruleset.coinvest_sort_weight, delta))
+            cz_eff = _clamp_d(cz, _D_NEG2, _D2)
+        w = _w(ruleset.coinvest_sort_weight)
+        delta = w * cz_eff
+        contribs.append(SortContribution("coinvest", cz, w, delta))
 
     # 3. Institutional delta sort tilt
     if ruleset.enable_institutional_sort_signal:
-        iz = _safe_float(decision_fields.get("inst_delta_z"), default=0.0)
+        iz = _safe_decimal(decision_fields.get("inst_delta_z"))
         if ruleset.institutional_positive_only:
-            iz_eff = min(2.0, max(0.0, iz))
+            iz_eff = _clamp_d(iz, _D0, _D2)
         else:
-            iz_eff = max(-2.0, min(2.0, iz))
-        delta = ruleset.institutional_sort_weight * iz_eff
-        contribs.append(SortContribution("institutional", iz, ruleset.institutional_sort_weight, delta))
+            iz_eff = _clamp_d(iz, _D_NEG2, _D2)
+        w = _w(ruleset.institutional_sort_weight)
+        delta = w * iz_eff
+        contribs.append(SortContribution("institutional", iz, w, delta))
 
     # 4. Calendar Alpha v2 sort tilt
     if ruleset.enable_calendar_alpha_sort:
-        cv2_z = _safe_float(decision_fields.get("clinical_score_v2_z"), default=0.0)
-        cv2_eff = min(2.0, max(0.0, cv2_z))  # positive-only
-        delta = ruleset.calendar_alpha_sort_weight * cv2_eff
-        contribs.append(SortContribution("calendar_alpha", cv2_z, ruleset.calendar_alpha_sort_weight, delta))
+        cv2_z = _safe_decimal(decision_fields.get("clinical_score_v2_z"))
+        cv2_eff = _clamp_d(cv2_z, _D0, _D2)  # positive-only
+        w = _w(ruleset.calendar_alpha_sort_weight)
+        delta = w * cv2_eff
+        contribs.append(SortContribution("calendar_alpha", cv2_z, w, delta))
 
-    # 5. Alpha cohort percentile tiebreak — uses alpha_cohort_pct (unique per ticker;
-    #     no 0.1-ceiling ties that plague alpha_raw).  Higher pct → larger delta →
-    #     subtracted from effective_comp_rank → sorts earlier.  0 = disabled.
+    # 5. Alpha cohort percentile tiebreak
     if ruleset.alpha_cohort_tiebreak_weight > 0.0:
-        ac_pct = _safe_float(decision_fields.get("alpha_cohort_pct"), default=0.0)
-        delta = ruleset.alpha_cohort_tiebreak_weight * ac_pct
-        contribs.append(SortContribution("alpha_cohort_tb", ac_pct, ruleset.alpha_cohort_tiebreak_weight, delta))
+        ac_pct = _safe_decimal(decision_fields.get("alpha_cohort_pct"))
+        w = _w(ruleset.alpha_cohort_tiebreak_weight)
+        delta = w * ac_pct
+        contribs.append(SortContribution("alpha_cohort_tb", ac_pct, w, delta))
 
     # 6. Catalyst bonus (non-zero only in blended mode)
     if catalyst_bonus != 0.0:
-        scaled_bonus = catalyst_bonus * catalyst_type_mult
-        contribs.append(SortContribution("catalyst_bonus", catalyst_bonus, catalyst_type_mult, scaled_bonus))
+        _cb = _safe_decimal(catalyst_bonus)
+        scaled_bonus = _cb * _ctm
+        contribs.append(SortContribution("catalyst_bonus", _cb, _ctm, scaled_bonus))
 
     # 7. Binary 91-180 within-bucket quality re-ranking
-    # Only activates for less_binary names when sort_mode != "baseline".
-    # binary_quality_score is [0, 1]; we use it directly as the contribution
-    # (higher quality → larger delta → subtracted from anchor → sorts earlier).
     bucket = str(decision_fields.get("catalyst_bucket", ""))
     b91_mode = ruleset.binary_91_180_sort_mode
     if bucket == "less_binary" and b91_mode != "baseline":
-        bqs = _safe_float(decision_fields.get("binary_quality_score"), default=0.0)
-        bqs_w = ruleset.binary_91_180_quality_weight
-        delta = bqs_w * bqs * catalyst_type_mult
+        bqs = _safe_decimal(decision_fields.get("binary_quality_score"))
+        bqs_w = _w(ruleset.binary_91_180_quality_weight)
+        delta = bqs_w * bqs * _ctm
         contribs.append(SortContribution("binary_quality", bqs, bqs_w, delta))
 
-        # 8. Binary 91-180 institutional tilt (quality_plus_institutional only)
+        # 8. Binary 91-180 institutional tilt
         if b91_mode == "quality_plus_institutional":
-            iz = _safe_float(decision_fields.get("inst_delta_z"), default=0.0)
-            iz_eff = min(2.0, max(0.0, iz))  # positive-only
-            bi_w = ruleset.binary_91_180_institutional_weight
+            iz = _safe_decimal(decision_fields.get("inst_delta_z"))
+            iz_eff = _clamp_d(iz, _D0, _D2)
+            bi_w = _w(ruleset.binary_91_180_institutional_weight)
             delta_i = bi_w * iz_eff
             contribs.append(SortContribution("binary_institutional", iz, bi_w, delta_i))
 
-    # 9. Binary 91-180 clinical quality tilt (clinical_quality or clinical_plus_options mode)
-    # Only applies to CLINICAL family within less_binary bucket.
-    # clinical_quality_composite [0, 1] from event_quality_features.
+    # 9. Binary 91-180 clinical quality tilt
     if bucket == "less_binary" and b91_mode in ("clinical_quality", "clinical_plus_options"):
         family = str(decision_fields.get("catalyst_family", ""))
         if family == "CLINICAL":
-            cqc = _safe_float(decision_fields.get("clinical_quality_composite"), default=0.0)
-            cq_w = ruleset.binary_91_180_clinical_quality_weight
-            delta_cq = cq_w * cqc * catalyst_type_mult
+            cqc = _safe_decimal(decision_fields.get("clinical_quality_composite"))
+            cq_w = _w(ruleset.binary_91_180_clinical_quality_weight)
+            delta_cq = cq_w * cqc * _ctm
             contribs.append(SortContribution("clinical_quality_91_180", cqc, cq_w, delta_cq))
 
-    # 10. Binary 91-180 options quality tilt (options_quality or clinical_plus_options mode)
-    # Uses secondary regulatory path: a ticker qualifies if it has an upcoming
-    # regulatory event within the less_binary window (91-180d), regardless of
-    # what the primary catalyst is. This unblocks PDUFA names whose primary
-    # slot is occupied by a closer clinical event.
+    # 10. Binary 91-180 options quality tilt
     if b91_mode in ("options_quality", "clinical_plus_options"):
         _has_reg = str(decision_fields.get("has_regulatory_upcoming_180d", "")) == "1"
         _reg_days = _safe_float(decision_fields.get("regulatory_days"), default=None)
         _in_less_binary = (
             _reg_days is not None
-            and _reg_days > BUCKET_BUILD_WINDOW_MAX  # > 90
+            and _reg_days > BUCKET_BUILD_WINDOW_MAX
             and _reg_days <= BUCKET_LESS_BINARY_MAX
-        )  # <= 180
+        )
         if _has_reg and _in_less_binary:
-            oqc = _safe_float(decision_fields.get("options_quality_composite"), default=0.0)
-            oq_w = ruleset.binary_91_180_options_quality_weight
+            oqc = _safe_decimal(decision_fields.get("options_quality_composite"))
+            oq_w = _w(ruleset.binary_91_180_options_quality_weight)
             delta_oq = oq_w * oqc
             contribs.append(SortContribution("options_quality_91_180", oqc, oq_w, delta_oq))
 
-    # 11. Binary 0-90 within-bucket quality re-ranking (shadow)
-    # Same pattern as binary_91_180 but for binary_now and build_window.
-    # Only activates when binary_now_sort_mode != "baseline".
+    # 11. Binary 0-90 within-bucket quality re-ranking
     bn_mode = ruleset.binary_now_sort_mode
     if bucket in ("binary_now", "build_window") and bn_mode != "baseline":
-        bqs = _safe_float(decision_fields.get("binary_quality_score"), default=0.0)
-        bqs_w = ruleset.binary_now_quality_weight
+        bqs = _safe_decimal(decision_fields.get("binary_quality_score"))
+        bqs_w = _w(ruleset.binary_now_quality_weight)
         delta_bn = bqs_w * bqs
         contribs.append(SortContribution("binary_quality_now", bqs, bqs_w, delta_bn))
 
         if bn_mode == "quality_plus_institutional":
-            iz = _safe_float(decision_fields.get("inst_delta_z"), default=0.0)
-            iz_eff = min(2.0, max(0.0, iz))
-            bi_w = ruleset.binary_now_institutional_weight
+            iz = _safe_decimal(decision_fields.get("inst_delta_z"))
+            iz_eff = _clamp_d(iz, _D0, _D2)
+            bi_w = _w(ruleset.binary_now_institutional_weight)
             delta_i = bi_w * iz_eff
             contribs.append(SortContribution("binary_institutional_now", iz, bi_w, delta_i))
 
-    # 12. Build-window clinical sort tilt (shadow, bucket-gated)
+    # 12. Build-window clinical sort tilt
     bw_mode = ruleset.build_window_clinical_mode
     if bucket == "build_window" and bw_mode == "clinical_z":
-        cz_tier = _safe_float(decision_fields.get("clinical_score_z_tier"), default=0.0)
+        cz_tier = _safe_decimal(decision_fields.get("clinical_score_z_tier"))
         stage = str(decision_fields.get("stage_bucket", ""))
-        stage_mult = dict(ruleset.clinical_stage_mults).get(stage, 0.0)
-        cz_eff = min(2.0, max(0.0, cz_tier))  # positive-only
-        bw_w = ruleset.build_window_clinical_weight
+        stage_mult = _w(dict(ruleset.clinical_stage_mults).get(stage, 0.0))
+        cz_eff = _clamp_d(cz_tier, _D0, _D2)
+        bw_w = _w(ruleset.build_window_clinical_weight)
         delta_bw = bw_w * cz_eff * stage_mult
         contribs.append(SortContribution("clinical_build_window", cz_tier, bw_w, delta_bw))
 
-    # 13. Put/call ratio penalty (shadow, bucket + family gated)
-    # High put/call ratio in build_window CLINICAL → negative sort penalty.
-    # Signal: pre_event_put_call_ratio (0-1 scale, 0.5 = neutral).
-    # Penalty = weight * max(0, pcr - 0.5) * 2 → 0 when neutral, up to weight at pcr=1.
+    # 13. Put/call ratio penalty
     pcr_mode = ruleset.pcr_penalty_mode
     if pcr_mode == "tiebreak" and bucket == "build_window":
         cat_fam = str(decision_fields.get("catalyst_family", ""))
         if cat_fam == "CLINICAL":
-            pcr_raw = _safe_float(decision_fields.get("pre_event_put_call_ratio"), default=0.0)
-            # Only penalize above-neutral put/call ratio
-            pcr_excess = max(0.0, pcr_raw - 0.5) * 2.0  # scale to [0, 1]
-            pcr_w = ruleset.pcr_penalty_weight
-            delta_pcr = -(pcr_w * pcr_excess)  # negative = penalty
+            pcr_raw = _safe_decimal(decision_fields.get("pre_event_put_call_ratio"))
+            pcr_excess = max(_D0, pcr_raw - _D_HALF) * _D("2")
+            pcr_w = _w(ruleset.pcr_penalty_weight)
+            delta_pcr = -(pcr_w * pcr_excess)
             contribs.append(SortContribution("pcr_penalty_bw", pcr_raw, pcr_w, delta_pcr))
 
-    # 14. Oncology crowding penalty (Spec 033)
-    # Penalizes oncology names in crowded indications. Non-oncology unaffected.
-    # Higher competitive_intensity_z = more crowded → negative delta → sorts later.
+    # 14. Oncology crowding penalty
     if ruleset.enable_oncology_crowding_penalty:
         ta = str(decision_fields.get("therapeutic_area", ""))
         if ta == "oncology":
-            ci_z = _safe_float(decision_fields.get("competitive_intensity_z"), default=0.0)
-            oc_w = ruleset.oncology_crowding_weight
-            delta_oc = -(oc_w * ci_z)  # negative: crowded → sorts later
+            ci_z = _safe_decimal(decision_fields.get("competitive_intensity_z"))
+            oc_w = _w(ruleset.oncology_crowding_weight)
+            delta_oc = -(oc_w * ci_z)
             contribs.append(SortContribution("oncology_crowding", ci_z, oc_w, delta_oc))
 
     return contribs
@@ -1748,7 +1772,7 @@ def compute_actionable_sort_key(
     cat_days_raw = decision_fields.get("catalyst_days", "")
     cat_days = int(_safe_float(cat_days_raw, default=9999))
 
-    opt_neg = -(_safe_float(optionality, default=0.0))
+    opt_neg = -_safe_decimal(optionality)
 
     sponsor_val = _safe_float(decision_fields.get("sponsor_tier1_count"), default=0.0)
     sponsor_neg = -int(sponsor_val)
@@ -1759,11 +1783,11 @@ def compute_actionable_sort_key(
     _cr = _safe_float(composite_rank, default=None)
     comp_rank = int(_cr) if _cr is not None else 9999
 
-    # Resolve anchor value based on sort_anchor mode
+    # Resolve anchor value based on sort_anchor mode (Decimal for CCFT)
     if rs.sort_anchor in ("optionality_pct", "alpha_cohort"):
-        anchor = -(tiebreaker_pct if tiebreaker_pct is not None else 0.0)  # higher pct → more negative → sorts first
+        anchor = -_safe_decimal(tiebreaker_pct)  # higher pct → more negative → sorts first
     else:
-        anchor = float(comp_rank)  # existing behavior
+        anchor = _D(str(comp_rank))  # existing behavior
 
     # Missingness sort penalty: higher count sorts later (0 when disabled)
     missing_count = 0
@@ -1772,25 +1796,25 @@ def compute_actionable_sort_key(
 
     # --- Build structured contributions and compute total adjustment ---
     # Catalyst bonus is only non-zero in blended mode.
-    catalyst_bonus = 0.0
+    catalyst_bonus_f = 0.0
     if mode == "blended":
         bonus_map = dict(rs.catalyst_priority_rank_bonuses)
-        catalyst_bonus = bonus_map.get(cat_priority, 0.0)
+        catalyst_bonus_f = bonus_map.get(cat_priority, 0.0)
 
     # Resolve catalyst type multiplier for sort-key scaling (Spec 030)
-    _ctm = 1.0
+    _ctm_f = 1.0
     if rs.enable_catalyst_type_tilt:
         _ct_tier = classify_catalyst_type_tier(catalyst_event_type)
-        _ctm = dict(rs.catalyst_type_mults).get(_ct_tier, 1.0)
+        _ctm_f = dict(rs.catalyst_type_mults).get(_ct_tier, 1.0)
 
     contribs = _build_sort_contributions(
         decision_fields,
         rs,
         alpha_raw=_safe_float(alpha_raw, default=0.0),
-        catalyst_bonus=catalyst_bonus,
-        catalyst_type_mult=_ctm,
+        catalyst_bonus=catalyst_bonus_f,
+        catalyst_type_mult=_ctm_f,
     )
-    total_adj = sum(c.delta for c in contribs)
+    total_adj = sum((c.delta for c in contribs), _D0)
 
     # --- Mode dispatch ---
     # prefix is (is_eligible, is_dev, tier_ord) in dev_first mode
@@ -1827,7 +1851,7 @@ def compute_actionable_sort_key(
         )
 
     # mode == "off" (default)
-    effective_opt_neg = opt_neg - total_adj  # higher z → more negative → sorts earlier
+    effective_opt_neg = opt_neg - total_adj  # Decimal: higher z → more negative → sorts earlier
     return prefix + (
         cat_priority,  # 0 (neutral) — no effect on ordering
         cat_mode_ord,  # specific < blended < no_upcoming < missing
@@ -1885,12 +1909,12 @@ def compute_sort_contribs(
         catalyst_type_mult=_ctm,
     )
 
-    # Build the output map — every key present, 0.0 when inactive.
-    contrib_map: Dict[str, float] = {k: 0.0 for k in SORT_CONTRIB_KEYS}
+    # Build the output map — every key present, Decimal 0 when inactive.
+    contrib_map: Dict[str, Decimal] = {k: _D0 for k in SORT_CONTRIB_KEYS}
     for c in contribs:
         contrib_map[c.name] = c.delta
 
-    total_adj = sum(contrib_map.values())
+    total_adj = sum(contrib_map.values(), _D0)
     return total_adj, contrib_map
 
 
