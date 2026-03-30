@@ -392,7 +392,7 @@
       "engine_version": "v1.3.0",
       "created_at": "2026-03-20T00:00:00Z",
       "requires_replay": false,
-      "notes": "Derived from v1.11.0 (9f1f4587). enable_catalyst_type_tilt=true with T1=1.00/T2=0.90/T3=0.60/T4=0.40/T5=0.50. RERANK (87 dates, 2025-06..2026-03): top-60 overlap 99.2% (PASS >= 90%), mean rank shift 0.39 (PASS < 5). Effect localized to less_binary: T1/T2 move up (-0.75 signed), T3+ move down (+0.05). SIGNAL EVIDENCE (27 dates, catalyst_tilt_eval manifest): all deltas positive but effectively zero — +0.00pp hedged at 84d vs +0.20pp bar. VERDICT: NEEDS_MORE. Structurally valid (correct event-quality ordering) but economically immaterial — effect confined to mid-book less_binary names outside top-K portfolio. Do not widen scope or combine with catalyst tilt (a08749e4); revisit only if catalyst tilt clears weekly gate first.",
+      "notes": "Derived from v1.11.0 (9f1f4587). enable_catalyst_type_tilt=true with T1=1.00/T2=0.90/T3=0.60/T4=0.40/T5=0.50. RERANK (87 dates, 2025-06..2026-03): top-60 overlap 99.2% (PASS >= 90%), mean rank shift 0.39 (PASS < 5). Effect localized to less_binary: T1/T2 move up (-0.75 signed), T3+ move down (+0.05). SIGNAL EVIDENCE (27 dates, catalyst_tilt_eval manifest): all deltas positive but effectively zero \u2014 +0.00pp hedged at 84d vs +0.20pp bar. VERDICT: NEEDS_MORE. Structurally valid (correct event-quality ordering) but economically immaterial \u2014 effect confined to mid-book less_binary names outside top-K portfolio. Do not widen scope or combine with catalyst tilt (a08749e4); revisit only if catalyst tilt clears weekly gate first.",
       "updated_by": "run_signal_evidence.py",
       "updated_at": "2026-03-21T00:00:00Z"
     },
@@ -405,7 +405,7 @@
       "engine_version": "v1.3.0",
       "created_at": "2026-03-21T00:00:00Z",
       "requires_replay": false,
-      "notes": "Derived from v1.11.0 (9f1f4587). binary_now_sort_mode=quality_primary, binary_now_quality_weight=0.35. WEIGHT SWEEP (131 dates, 4 weights): w=0.35 selected — top-20 overlap 98.4% (min 85%), mean shift 3.46, BN+BW drift 5.60, separation +1.44. Structurally correct: FDA_PDUFA/DATA_READOUT promoted, CT_PRIMARY_COMPLETION demoted within top-K. SIGNAL EVIDENCE (27/34 dates): all hedged deltas zero, IC slightly negative (-0.0031 at 84d). Boundary test at w=0.50 also zero (+0.01pp hedged, IC -0.0041). VERDICT: NEEDS_MORE. Event quality does not discriminate forward returns within binary_now/build_window — optionality anchor already captures what matters. Do not pursue further mid-book or top-book quality tiebreaks with current signal set.",
+      "notes": "Derived from v1.11.0 (9f1f4587). binary_now_sort_mode=quality_primary, binary_now_quality_weight=0.35. WEIGHT SWEEP (131 dates, 4 weights): w=0.35 selected \u2014 top-20 overlap 98.4% (min 85%), mean shift 3.46, BN+BW drift 5.60, separation +1.44. Structurally correct: FDA_PDUFA/DATA_READOUT promoted, CT_PRIMARY_COMPLETION demoted within top-K. SIGNAL EVIDENCE (27/34 dates): all hedged deltas zero, IC slightly negative (-0.0031 at 84d). Boundary test at w=0.50 also zero (+0.01pp hedged, IC -0.0041). VERDICT: NEEDS_MORE. Event quality does not discriminate forward returns within binary_now/build_window \u2014 optionality anchor already captures what matters. Do not pursue further mid-book or top-book quality tiebreaks with current signal set.",
       "updated_by": "run_signal_evidence.py",
       "updated_at": "2026-03-21T00:00:00Z"
     },
@@ -418,9 +418,18 @@
       "engine_version": "v1.3.0",
       "created_at": "2026-03-21T00:00:00Z",
       "requires_replay": false,
-      "notes": "Boundary test for 846ae27b. Stronger separation (+1.94) but IC worse (-0.0041 at 84d). Hedged delta +0.01pp — noise, not signal. Confirms that BQS tiebreak ceiling is economically immaterial regardless of weight.",
+      "notes": "Boundary test for 846ae27b. Stronger separation (+1.94) but IC worse (-0.0041 at 84d). Hedged delta +0.01pp \u2014 noise, not signal. Confirms that BQS tiebreak ceiling is economically immaterial regardless of weight.",
       "updated_by": "run_signal_evidence.py",
       "updated_at": "2026-03-21T00:00:00Z"
+    },
+    {
+      "file": "v1.16.0_options_anchor_hybrid_shadow.json",
+      "id": "96d21667",
+      "version": "v1.16.0",
+      "status": "shadow",
+      "description": "Spec 039: hybrid options anchor (options_quality_composite with optionality_pct fallback)",
+      "parent": "9f1f4587",
+      "created": "2026-03-30"
     }
   ]
 }

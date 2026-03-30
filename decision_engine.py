@@ -173,7 +173,12 @@ class DecisionRuleset:
     far_window_decay_mult: float = 0.15  # catalyst_decay_w for far_window tickers
 
     # Sort anchor (default composite_rank = current behavior)
-    sort_anchor: str = "composite_rank"  # "composite_rank" | "optionality_pct" | "alpha_cohort"
+    sort_anchor: str = "composite_rank"  # "composite_rank" | "optionality_pct" | "alpha_cohort" | "options_anchor_hybrid"
+
+    # Options anchor hybrid (opt-in via sort_anchor="options_anchor_hybrid", Spec 039)
+    # Uses options_quality_composite when present, falls back to optionality_pct.
+    options_anchor_regulatory_boost: float = 1.10
+    options_anchor_near_catalyst_boost: float = 1.05
 
     # Alpha cohort scoring (opt-in via sort_anchor="alpha_cohort")
     alpha_cohort_table_path: str = "production_data/alpha_cohort_tables/v1.json"
@@ -374,9 +379,10 @@ class DecisionRuleset:
                 f"got '{self.catalyst_priority_mode}'"
             )
         # Validate sort_anchor
-        if self.sort_anchor not in ("composite_rank", "optionality_pct", "alpha_cohort"):
+        _VALID_ANCHORS = ("composite_rank", "optionality_pct", "alpha_cohort", "options_anchor_hybrid")
+        if self.sort_anchor not in _VALID_ANCHORS:
             raise ValueError(
-                f"sort_anchor must be 'composite_rank', 'optionality_pct', or 'alpha_cohort', "
+                f"sort_anchor must be one of {_VALID_ANCHORS}, "
                 f"got '{self.sort_anchor}'"
             )
         # Validate composite_engine
@@ -1802,7 +1808,23 @@ def compute_actionable_sort_key(
     comp_rank = int(_cr) if _cr is not None else 9999
 
     # Resolve anchor value based on sort_anchor mode (Decimal for CCFT)
-    if rs.sort_anchor in ("optionality_pct", "alpha_cohort"):
+    if rs.sort_anchor == "options_anchor_hybrid":
+        # Spec 039: use options_quality_composite when present, fallback to optionality_pct
+        _oqc = _safe_decimal(decision_fields.get("options_quality_composite"), default=_D0)
+        if _oqc > _D0:
+            anchor = -_oqc  # higher composite → more negative → sorts first
+            # Bounded modifiers for regulatory proximity and catalyst nearness
+            _has_reg = str(decision_fields.get("has_regulatory_upcoming_180d", "")) == "1"
+            _reg_days = _safe_float(decision_fields.get("regulatory_days"), default=None)
+            if _has_reg and _reg_days is not None and _reg_days > 90 and _reg_days <= 180:
+                anchor = anchor * _safe_decimal(rs.options_anchor_regulatory_boost, _D1)
+            _cat_days_raw = _safe_float(decision_fields.get("catalyst_days"), default=None)
+            if _cat_days_raw is not None and _cat_days_raw <= 30:
+                anchor = anchor * _safe_decimal(rs.options_anchor_near_catalyst_boost, _D1)
+        else:
+            # Fallback: use optionality_pct or comp_rank
+            anchor = -_safe_decimal(tiebreaker_pct) if tiebreaker_pct is not None else _D(str(comp_rank))
+    elif rs.sort_anchor in ("optionality_pct", "alpha_cohort"):
         anchor = -_safe_decimal(tiebreaker_pct)  # higher pct → more negative → sorts first
     else:
         anchor = _D(str(comp_rank))  # existing behavior
