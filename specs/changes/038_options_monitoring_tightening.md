@@ -1,6 +1,6 @@
 # Change Spec: Options Monitoring Tightening
 
-**Status**: PROPOSED
+**Status**: IN_PROGRESS (Step 1+2: typed schema + fused verdict)
 **Author**: dschulz
 **Date**: 2026-03-30
 **Ruleset impact**: NO (monitoring only, no scoring changes)

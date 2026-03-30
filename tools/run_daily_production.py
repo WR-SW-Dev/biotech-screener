@@ -4676,6 +4676,21 @@ def run_daily(
         except Exception as _paw_err:
             _logger.warning(f"Price action watch failed: {_paw_err}")
 
+        # --- Step 5k.5d: Options verdict — fused multi-lens (non-blocking) ---
+        try:
+            from tools.build_options_verdict import build_options_verdict
+
+            _ov_result = build_options_verdict(
+                as_of_date,
+                snapshots_dir=final_snapshots_dir,
+            )
+            _ov_n = _ov_result.get("n_tickers", 0)
+            _ov_h = _ov_result.get("n_high", 0)
+            _ov_new = _ov_result.get("n_new", 0)
+            _logger.info(f"Options verdict → {_ov_n} active (H={_ov_h}), {_ov_new} new")
+        except Exception as _ov_err:
+            _logger.warning(f"Options verdict failed: {_ov_err}")
+
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
             from tools.build_shadow_monitor import build_shadow_monitor
