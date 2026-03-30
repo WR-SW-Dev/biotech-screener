@@ -391,7 +391,7 @@ def _run_subprocess(
             (exc.stdout or "")[-500:] if exc.stdout else "<none>",
             (exc.stderr or "")[-500:] if exc.stderr else "<none>",
         )
-        print(f"  {label} TIMED OUT after {timeout}s")
+        _logger.error(f"{label} TIMED OUT after {timeout}s")
         raise
 
     if result.returncode != 0:
@@ -2618,7 +2618,7 @@ def check_regulatory_calendar(
                 except ValueError:
                     pass
     except Exception as exc:
-        print(f"  [WARN] Regulatory calendar freshness check failed: {exc}")
+        _logger.warning(f"Regulatory calendar freshness check failed: {exc}")
 
     if warnings:
         detail = (
@@ -3744,9 +3744,9 @@ def run_daily(
     # Capture git state BEFORE any artifacts are written
     git_pre_run = get_git_info(REPO_ROOT)
 
-    print(f"{'='*70}")
-    print(f"PHASE-2 DAILY RUN — {as_of_date}")
-    print(f"{'='*70}")
+    _logger.info(f"{'='*70}")
+    _logger.info(f"PHASE-2 DAILY RUN — {as_of_date}")
+    _logger.info(f"{'='*70}")
 
     # --- Python-level lock (complements the shell lock in cron_daily_production.sh) ---
     # Prevents concurrent manual + scheduled runs from clobbering artifacts.
@@ -3758,8 +3758,8 @@ def run_daily(
 
         fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except (OSError, BlockingIOError):
-        print("FATAL: Another run_daily_production.py is already running (lock held).")
-        print(f"  Lock file: {_lock_path}")
+        _logger.error("Another run_daily_production.py is already running (lock held).")
+        _logger.info(f"Lock file: {_lock_path}")
         sys.exit(1)
     except ImportError:
         pass  # fcntl not available on Windows — shell lock is the fallback
@@ -3767,9 +3767,9 @@ def run_daily(
     # --- Idempotent rerun check ---
     _final_snap = final_snapshots_dir / as_of_date
     if _step_done(_final_snap, "manifest_written"):
-        print(f"\n  Snapshot for {as_of_date} already has a completed manifest.")
-        print("  Skipping expensive steps (price, cache, screen, audit, gates).")
-        print(f"  To force a full rerun, delete: {_final_snap / _PROGRESS_FILE}")
+        _logger.info(f"\n  Snapshot for {as_of_date} already has a completed manifest.")
+        _logger.info("Skipping expensive steps (price, cache, screen, audit, gates).")
+        _logger.info(f"To force a full rerun, delete: {_final_snap / _PROGRESS_FILE}")
         _rm_path = _final_snap / "run_manifest.json"
         existing_manifest = json.loads(_rm_path.read_text(encoding="utf-8")) if _rm_path.exists() else None
         if existing_manifest:
@@ -3780,9 +3780,9 @@ def run_daily(
     _manifest_path = REPO_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
     gov_gate = check_ruleset_governance(ruleset_path, _manifest_path, allow_candidate=allow_candidate)
     gate_results.append(gov_gate)
-    print(f"  Ruleset governance: {gov_gate.status} — {gov_gate.detail}")
+    _logger.info(f"Ruleset governance: {gov_gate.status} — {gov_gate.detail}")
     if gov_gate.status == "FAIL":
-        print("\n  FATAL: Ruleset governance gate FAIL. Aborting before screen run.")
+        _logger.error("Ruleset governance gate FAIL. Aborting before screen run.")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3803,9 +3803,9 @@ def run_daily(
     # --- Gate: Trading day (reject weekends before expensive work) ---
     td_gate = check_trading_day(as_of_date)
     gate_results.append(td_gate)
-    print(f"  Trading day: {td_gate.status} — {td_gate.detail}")
+    _logger.info(f"Trading day: {td_gate.status} — {td_gate.detail}")
     if td_gate.status == "FAIL":
-        print("\n  FATAL: Not a trading day. Aborting to prevent degenerate data.")
+        _logger.error("Not a trading day. Aborting to prevent degenerate data.")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3822,26 +3822,26 @@ def run_daily(
     # --- Step 1: Price refresh ---
     price_stats: Dict[str, Any] = {}
     if not skip_price_refresh:
-        print("\n[1/5] Refreshing price_history.csv ...")
+        _logger.info("\n[1/5] Refreshing price_history.csv ...")
         universe_path = data_dir / "universe.json"
         price_stats = refresh_prices(price_csv, as_of_date, universe_path)
-        print(
+        _logger.info(
             f"  Extended {price_stats.get('n_extended', 0)} tickers, "
             f"{price_stats.get('n_rows_appended', 0)} rows appended, "
             f"{price_stats.get('n_failed', 0)} failures"
         )
         if price_stats.get("failed_tickers"):
-            print(f"  Failed: {', '.join(price_stats['failed_tickers'][:10])}")
+            _logger.info(f"Failed: {', '.join(price_stats['failed_tickers'][:10])}")
     else:
-        print("\n[1/5] Price refresh skipped (--skip-price-refresh)")
+        _logger.info("\n[1/5] Price refresh skipped (--skip-price-refresh)")
         price_stats["xbi_last_date"] = _get_ticker_last_date(price_csv, "XBI")
 
     # --- Gate: XBI staleness (check early, before expensive screen run) ---
     xbi_gate = check_xbi_staleness(price_csv, as_of_date, config.xbi_stale_days)
     gate_results.append(xbi_gate)
-    print(f"  XBI gate: {xbi_gate.status} — {xbi_gate.detail}")
+    _logger.info(f"XBI gate: {xbi_gate.status} — {xbi_gate.detail}")
     if xbi_gate.status == "FAIL":
-        print("\n  FATAL: XBI staleness gate FAIL. Aborting before screen run.")
+        _logger.error("XBI staleness gate FAIL. Aborting before screen run.")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3863,18 +3863,18 @@ def run_daily(
 
         _ctg_result = poll_ctgov_daily(as_of_date)
         if "error" in _ctg_result:
-            print(f"  CTgov daily poll → skipped ({_ctg_result['error']})")
+            _logger.info(f"CTgov daily poll → skipped ({_ctg_result['error']})")
         else:
             _ctg_n = _ctg_result.get("n_changes", 0)
-            print(f"  CTgov daily poll → {_ctg_n} trial changes detected")
+            _logger.info(f"CTgov daily poll → {_ctg_n} trial changes detected")
     except Exception as _ctg_err:
-        print(f"  [WARN] CTgov daily poll failed: {_ctg_err}")
+        _logger.warning(f"CTgov daily poll failed: {_ctg_err}")
 
     # --- Step 1.5: Pre-warm caches (sec_8k, ctgov, sec_13f) ---
     # Must run BEFORE the ctgov gate so the gate sees the freshly-warmed cache.
     # All three sources are idempotent (short-circuit if cache already exists).
     if not skip_pit_warm and warm_sources:
-        print(f"\n[1.5] Warming caches ({warm_sources}) for {as_of_date} ...")
+        _logger.info(f"\n[1.5] Warming caches ({warm_sources}) for {as_of_date} ...")
         _warm_proc = _run_subprocess(
             [
                 sys.executable,
@@ -3887,14 +3887,14 @@ def run_daily(
             label="warm_caches",
         )
         if _warm_proc.returncode == 0:
-            print("  Cache warm OK")
+            _logger.info("Cache warm OK")
         else:
-            print(f"  Cache warm FAILED (exit {_warm_proc.returncode}) — dependent gates may WARN")
+            _logger.info(f"Cache warm FAILED (exit {_warm_proc.returncode}) — dependent gates may WARN")
             if _warm_proc.stderr:
                 for _line in _warm_proc.stderr.strip().splitlines()[-5:]:
-                    print(f"    {_line}")
+                    _logger.info(f"  {_line}")
     elif skip_pit_warm:
-        print("\n[1.5] Cache warm skipped (--skip-pit-warm)")
+        _logger.info("\n[1.5] Cache warm skipped (--skip-pit-warm)")
 
     # --- Gate: ctgov PIT cache availability ---
     _cache_dir = ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov")
@@ -3904,10 +3904,10 @@ def run_daily(
         allow_fallback=allow_date_fallback,
     )
     gate_results.append(ctgov_gate)
-    print(f"  CTGov cache gate: {ctgov_gate.status} — {ctgov_gate.detail}")
+    _logger.info(f"CTGov cache gate: {ctgov_gate.status} — {ctgov_gate.detail}")
     if ctgov_gate.status == "FAIL":
-        print("\n  FATAL: CTGov PIT cache not found. Aborting before screen run.")
-        print(f"  Hint: run warm_caches.py --as-of-date {as_of_date} --sources ctgov")
+        _logger.error("CTGov PIT cache not found. Aborting before screen run.")
+        _logger.info(f"Hint: run warm_caches.py --as-of-date {as_of_date} --sources ctgov")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3922,16 +3922,16 @@ def run_daily(
         return manifest
 
     if effective_as_of_date != as_of_date:
-        print(f"  Date fallback: {as_of_date} → {effective_as_of_date}")
+        _logger.info(f"Date fallback: {as_of_date} → {effective_as_of_date}")
         as_of_date = effective_as_of_date
 
     # --- Gate: required inputs present ---
     inputs_gate = check_inputs_present(data_dir)
     gate_results.append(inputs_gate)
-    print(f"  Inputs gate: {inputs_gate.status} — {inputs_gate.detail}")
+    _logger.info(f"Inputs gate: {inputs_gate.status} — {inputs_gate.detail}")
     if inputs_gate.status == "FAIL":
-        print("\n  FATAL: Required input files missing. Aborting before screen run.")
-        print(f"  Hint: publish an inputs bundle or copy market_data.json to {data_dir}/")
+        _logger.error("Required input files missing. Aborting before screen run.")
+        _logger.info(f"Hint: publish an inputs bundle or copy market_data.json to {data_dir}/")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3948,9 +3948,9 @@ def run_daily(
     # --- Gate: market data schema ---
     schema_gate = check_market_data_schema(data_dir)
     gate_results.append(schema_gate)
-    print(f"  Market data schema gate: {schema_gate.status} — {schema_gate.detail}")
+    _logger.info(f"Market data schema gate: {schema_gate.status} — {schema_gate.detail}")
     if schema_gate.status == "FAIL":
-        print("\n  FATAL: Market data schema invalid. Aborting before screen run.")
+        _logger.error("Market data schema invalid. Aborting before screen run.")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -3967,7 +3967,7 @@ def run_daily(
     # --- Gate: market data staleness ---
     mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
     if mkt_gate.status == "FAIL" and auto_refresh_market_data:
-        print("  Market data stale — auto-refreshing ...")
+        _logger.info("Market data stale — auto-refreshing ...")
         _mkt_proc = _run_subprocess(
             [
                 sys.executable,
@@ -3980,18 +3980,18 @@ def run_daily(
             label="collect_market_data",
         )
         if _mkt_proc.returncode == 0:
-            print("  Market data refresh OK — re-checking staleness gate")
+            _logger.info("Market data refresh OK — re-checking staleness gate")
             mkt_gate = check_market_data_staleness(data_dir, as_of_date, config.market_data_max_age_days)
         else:
-            print(f"  Market data refresh FAILED (exit {_mkt_proc.returncode})")
+            _logger.info(f"Market data refresh FAILED (exit {_mkt_proc.returncode})")
             if _mkt_proc.stderr:
                 for _line in _mkt_proc.stderr.strip().splitlines()[-3:]:
-                    print(f"    {_line}")
+                    _logger.info(f"  {_line}")
     gate_results.append(mkt_gate)
-    print(f"  Market data staleness gate: {mkt_gate.status} — {mkt_gate.detail}")
+    _logger.info(f"Market data staleness gate: {mkt_gate.status} — {mkt_gate.detail}")
     if mkt_gate.status == "FAIL":
-        print("\n  FATAL: Market data too stale. Aborting before screen run.")
-        print(f"  Hint: python collect_market_data.py --universe {data_dir}/universe.json")
+        _logger.error("Market data too stale. Aborting before screen run.")
+        _logger.info(f"Hint: python collect_market_data.py --universe {data_dir}/universe.json")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -4008,9 +4008,9 @@ def run_daily(
     # --- Gate: market data coverage ---
     cov_gate = check_market_data_coverage(data_dir, config.market_data_min_coverage)
     gate_results.append(cov_gate)
-    print(f"  Market data coverage gate: {cov_gate.status} — {cov_gate.detail}")
+    _logger.info(f"Market data coverage gate: {cov_gate.status} — {cov_gate.detail}")
     if cov_gate.status == "FAIL":
-        print("\n  FATAL: Market data coverage too low. Aborting before screen run.")
+        _logger.error("Market data coverage too low. Aborting before screen run.")
         manifest = build_run_manifest(
             as_of_date,
             gate_results,
@@ -4025,7 +4025,7 @@ def run_daily(
         return manifest
 
     # --- Step 2: Run screen into staging dir ---
-    print("\n[2/5] Running screen (phase2, ranking_mode=decision) ...")
+    _logger.info("\n[2/5] Running screen (phase2, ranking_mode=decision) ...")
     staging_dir = Path(tempfile.mkdtemp(prefix=f"phase2_staging_{as_of_date}_"))
     screen_proc = run_screen(
         as_of_date,
@@ -4039,10 +4039,10 @@ def run_daily(
     staging_date_dir = staging_dir / as_of_date
 
     if screen_proc.returncode not in (0, 1, 2):
-        print(f"  Screen FAILED (exit {screen_proc.returncode})")
+        _logger.info(f"Screen FAILED (exit {screen_proc.returncode})")
         if screen_proc.stderr:
             for line in screen_proc.stderr.strip().splitlines()[-10:]:
-                print(f"    {line}")
+                _logger.info(f"  {line}")
         gate_results.append(
             GateResult(
                 name="screen",
@@ -4070,7 +4070,7 @@ def run_daily(
         # downstream artifacts but record the gate failure.
         _rankings_exists = (staging_date_dir / "rankings.csv").exists()
         if _rankings_exists:
-            print("  Screen exited 1 (Phase-2 health FAIL) but snapshot is complete — continuing")
+            _logger.info("Screen exited 1 (Phase-2 health FAIL) but snapshot is complete — continuing")
             gate_results.append(
                 GateResult(
                     name="phase2_health",
@@ -4080,7 +4080,7 @@ def run_daily(
                 )
             )
         else:
-            print("  Screen FAILED (exit 1) and no rankings.csv — aborting")
+            _logger.info("Screen FAILED (exit 1) and no rankings.csv — aborting")
             gate_results.append(
                 GateResult(
                     name="screen",
@@ -4103,12 +4103,12 @@ def run_daily(
             return manifest
 
     elif screen_proc.returncode == 2:
-        print("  Screen completed with WARN (exit 2)")
+        _logger.info("Screen completed with WARN (exit 2)")
     else:
-        print("  Screen completed OK")
+        _logger.info("Screen completed OK")
 
     if not staging_date_dir.exists():
-        print(f"  ERROR: Expected snapshot at {staging_date_dir} not found")
+        _logger.info(f"ERROR: Expected snapshot at {staging_date_dir} not found")
         gate_results.append(
             GateResult(
                 name="screen",
@@ -4136,7 +4136,7 @@ def run_daily(
     if not skip_pit_warm and warm_price_pit:
         _staging_rankings = staging_date_dir / "rankings.csv"
         if _staging_rankings.exists():
-            print(f"\n[2.5] Creating PIT price anchor for {as_of_date} ...")
+            _logger.info(f"\n[2.5] Creating PIT price anchor for {as_of_date} ...")
             _anchor_proc = _run_subprocess(
                 [
                     sys.executable,
@@ -4154,14 +4154,14 @@ def run_daily(
                 label="warm_price_cache_anchor",
             )
             if _anchor_proc.returncode == 0:
-                print("  PIT price anchor OK")
+                _logger.info("PIT price anchor OK")
             else:
-                print(f"  PIT price anchor FAILED (exit {_anchor_proc.returncode}) — price_pit_cache gate will WARN")
+                _logger.info(f"PIT price anchor FAILED (exit {_anchor_proc.returncode}) — price_pit_cache gate will WARN")
                 if _anchor_proc.stderr:
                     for _line in _anchor_proc.stderr.strip().splitlines()[-5:]:
-                        print(f"    {_line}")
+                        _logger.info(f"  {_line}")
         else:
-            print("\n[2.5] PIT price anchor skipped — rankings.csv not found in staging")
+            _logger.info("\n[2.5] PIT price anchor skipped — rankings.csv not found in staging")
 
     # --- Load held tickers for scoped gates (audit + exposure) ---
     _held_tickers: Optional[set] = None
@@ -4172,30 +4172,30 @@ def run_daily(
         if _prior:
             _held_tickers = {p["ticker"] for p in _prior[1]}
     except Exception as exc:
-        print(f"  [WARN] Could not load prior positions for held-scoped gates: {exc}")
+        _logger.warning(f"Could not load prior positions for held-scoped gates: {exc}")
 
     # --- Step 3: Run integrity audit ---
     audit_proc = None
     if not skip_audit:
-        print("\n[3/5] Running data integrity audit ...")
+        _logger.info("\n[3/5] Running data integrity audit ...")
         audit_output_dir = staging_date_dir / "audit"
         audit_proc = run_audit(staging_date_dir, price_csv, as_of_date, audit_output_dir)
         audit_gate = check_audit_result(audit_proc, config, audit_output_dir, held_tickers=_held_tickers)
         gate_results.append(audit_gate)
-        print(f"  Audit gate: {audit_gate.status} — {audit_gate.detail}")
+        _logger.info(f"Audit gate: {audit_gate.status} — {audit_gate.detail}")
     else:
-        print("\n[3/5] Audit skipped (--skip-audit)")
+        _logger.info("\n[3/5] Audit skipped (--skip-audit)")
 
     # --- Step 4: Hard gates ---
-    print("\n[4/5] Evaluating gates ...")
+    _logger.info("\n[4/5] Evaluating gates ...")
 
     missing_gate = check_missing_reason_fraction(staging_date_dir, config.missing_reason_max_frac)
     gate_results.append(missing_gate)
-    print(f"  Missing-reason gate: {missing_gate.status} — {missing_gate.detail}")
+    _logger.info(f"Missing-reason gate: {missing_gate.status} — {missing_gate.detail}")
 
     turnover_gate = check_turnover(staging_date_dir, config.turnover_max_pct)
     gate_results.append(turnover_gate)
-    print(f"  Turnover gate: {turnover_gate.status} — {turnover_gate.detail}")
+    _logger.info(f"Turnover gate: {turnover_gate.status} — {turnover_gate.detail}")
 
     # --- Gate: drift monitoring (WARN-only) ---
     if not skip_drift:
@@ -4207,24 +4207,24 @@ def run_daily(
             _drift_th,
         )
         gate_results.append(drift_gate)
-        print(f"  Drift gate: {drift_gate.status} — {drift_gate.detail}")
+        _logger.info(f"Drift gate: {drift_gate.status} — {drift_gate.detail}")
     else:
-        print("  Drift gate: skipped (--skip-drift)")
+        _logger.info("Drift gate: skipped (--skip-drift)")
 
     # --- Gate: ruleset_health (WARN-only) ---
     rh_gate = check_ruleset_health(staging_date_dir)
     gate_results.append(rh_gate)
-    print(f"  Ruleset health gate: {rh_gate.status} — {rh_gate.detail}")
+    _logger.info(f"Ruleset health gate: {rh_gate.status} — {rh_gate.detail}")
 
     # --- Gate: canary_regression (BLOCK->FAIL, WARN->WARN, INFO->PASS) ---
     canary_gate = check_canary_regression(staging_date_dir)
     gate_results.append(canary_gate)
-    print(f"  Canary regression gate: {canary_gate.status} — {canary_gate.detail}")
+    _logger.info(f"Canary regression gate: {canary_gate.status} — {canary_gate.detail}")
 
     # --- Gate: ctgov PIT dates (WARN-only) ---
     pit_dates_gate = check_ctgov_pit_dates(_cache_dir, as_of_date)
     gate_results.append(pit_dates_gate)
-    print(f"  CTGov PIT dates gate: {pit_dates_gate.status} — {pit_dates_gate.detail}")
+    _logger.info(f"CTGov PIT dates gate: {pit_dates_gate.status} — {pit_dates_gate.detail}")
 
     # --- Gate: sec_13f_cache (WARN-only) ---
     sec_13f_gate = check_sec_13f_cache(
@@ -4232,7 +4232,7 @@ def run_daily(
         warn_coverage_pct=config.sec_13f_coverage_warn_pct,
     )
     gate_results.append(sec_13f_gate)
-    print(f"  13F cache gate: {sec_13f_gate.status} — {sec_13f_gate.detail}")
+    _logger.info(f"13F cache gate: {sec_13f_gate.status} — {sec_13f_gate.detail}")
 
     # --- Gate: institutional_summary (WARN-only, post-screen) ---
     inst_gate = check_institutional_summary(
@@ -4240,7 +4240,7 @@ def run_daily(
         warn_coverage_pct=config.institutional_summary_warn_coverage_pct,
     )
     gate_results.append(inst_gate)
-    print(f"  Institutional summary gate: {inst_gate.status} — {inst_gate.detail}")
+    _logger.info(f"Institutional summary gate: {inst_gate.status} — {inst_gate.detail}")
 
     # --- Gate: institutional_delta (WARN-only, post-screen) ---
     inst_delta_gate = check_institutional_delta(
@@ -4249,7 +4249,7 @@ def run_daily(
         as_of_date,
     )
     gate_results.append(inst_delta_gate)
-    print(f"  Institutional delta gate: {inst_delta_gate.status} — {inst_delta_gate.detail}")
+    _logger.info(f"Institutional delta gate: {inst_delta_gate.status} — {inst_delta_gate.detail}")
 
     # --- Gate: pnl_attribution (WARN-only, post-screen) ---
     pnl_gate = check_pnl_attribution(
@@ -4260,13 +4260,13 @@ def run_daily(
         min_coverage_pct=config.pnl_attribution_min_coverage_pct,
     )
     gate_results.append(pnl_gate)
-    print(f"  PnL attribution gate: {pnl_gate.status} — {pnl_gate.detail}")
+    _logger.info(f"PnL attribution gate: {pnl_gate.status} — {pnl_gate.detail}")
 
     # --- Gate: price_pit_cache (WARN-only) ---
     # _price_cache_base already set in step 2.5 above
     pit_price_gate = check_price_pit_cache(_price_cache_base / as_of_date, as_of_date)
     gate_results.append(pit_price_gate)
-    print(f"  PIT price cache gate: {pit_price_gate.status} — {pit_price_gate.detail}")
+    _logger.info(f"PIT price cache gate: {pit_price_gate.status} — {pit_price_gate.detail}")
 
     # --- Gate: forward_eval (WARN-only) ---
     if not skip_forward_eval:
@@ -4277,9 +4277,9 @@ def run_daily(
             config,
         )
         gate_results.append(fwd_gate)
-        print(f"  Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
+        _logger.info(f"Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
     else:
-        print("  Forward eval gate: skipped (--skip-forward-eval)")
+        _logger.info("Forward eval gate: skipped (--skip-forward-eval)")
 
     # --- Gate: optionality_stability (WARN-only) ---
     try:
@@ -4302,7 +4302,7 @@ def run_daily(
             detail=f"Monitor unavailable: {e}",
         )
     gate_results.append(opt_gate)
-    print(f"  Optionality stability gate: {opt_gate.status} — {opt_gate.detail}")
+    _logger.info(f"Optionality stability gate: {opt_gate.status} — {opt_gate.detail}")
 
     # --- Gate: pit_bundle_health (WARN-only) ---
     pit_bundle_gate = check_pit_bundle_health(
@@ -4310,17 +4310,17 @@ def run_daily(
         ctgov_cache_dir=ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov"),
     )
     gate_results.append(pit_bundle_gate)
-    print(f"  PIT bundle health gate: {pit_bundle_gate.status} — {pit_bundle_gate.detail}")
+    _logger.info(f"PIT bundle health gate: {pit_bundle_gate.status} — {pit_bundle_gate.detail}")
 
     # --- Gate: decision_engine_schema (WARN-only) ---
     de_schema_gate = check_decision_engine_schema(staging_date_dir)
     gate_results.append(de_schema_gate)
-    print(f"  DE schema gate: {de_schema_gate.status} — {de_schema_gate.detail}")
+    _logger.info(f"DE schema gate: {de_schema_gate.status} — {de_schema_gate.detail}")
 
     # --- Gate: sort_contrib_sanity (WARN/FAIL) ---
     sc_gate = check_sort_contrib_sanity(staging_date_dir, config)
     gate_results.append(sc_gate)
-    print(f"  Sort contrib sanity gate: {sc_gate.status} — {sc_gate.detail}")
+    _logger.info(f"Sort contrib sanity gate: {sc_gate.status} — {sc_gate.detail}")
 
     # --- Gate: portfolio_weights (WARN-only) ---
     pw_gate = check_portfolio_weights(
@@ -4328,12 +4328,12 @@ def run_daily(
         tolerance=config.portfolio_weight_sum_tolerance,
     )
     gate_results.append(pw_gate)
-    print(f"  Portfolio weights gate: {pw_gate.status} — {pw_gate.detail}")
+    _logger.info(f"Portfolio weights gate: {pw_gate.status} — {pw_gate.detail}")
 
     # --- Gate: eligibility_consistency (WARN-only) ---
     elig_gate = check_eligibility_consistency(staging_date_dir)
     gate_results.append(elig_gate)
-    print(f"  Eligibility consistency gate: {elig_gate.status} — {elig_gate.detail}")
+    _logger.info(f"Eligibility consistency gate: {elig_gate.status} — {elig_gate.detail}")
 
     # --- Gate: cache_health (WARN-only by default; FAIL with --fail-on-bad-cache) ---
     ch_gate = check_cache_health(
@@ -4341,7 +4341,7 @@ def run_daily(
         fail_on_bad=fail_on_bad_cache,
     )
     gate_results.append(ch_gate)
-    print(f"  Cache health gate: {ch_gate.status} — {ch_gate.detail}")
+    _logger.info(f"Cache health gate: {ch_gate.status} — {ch_gate.detail}")
 
     # --- Gate: exposure_missingness (WARN/FAIL) ---
     exp_gate = check_exposure_missingness(
@@ -4351,7 +4351,7 @@ def run_daily(
         held_tickers=_held_tickers,
     )
     gate_results.append(exp_gate)
-    print(f"  Exposure missingness gate: {exp_gate.status} — {exp_gate.detail}")
+    _logger.info(f"Exposure missingness gate: {exp_gate.status} — {exp_gate.detail}")
 
     # --- Gate: risk_concentration (WARN/FAIL) ---
     rc_gate = check_risk_concentration(
@@ -4362,41 +4362,41 @@ def run_daily(
         stacked_warn=config.risk_conc_stacked_warn,
     )
     gate_results.append(rc_gate)
-    print(f"  Risk concentration gate: {rc_gate.status} — {rc_gate.detail}")
+    _logger.info(f"Risk concentration gate: {rc_gate.status} — {rc_gate.detail}")
 
     # --- Gate: regulatory_calendar (WARN-only) ---
     reg_cal_gate = check_regulatory_calendar(staging_date_dir, as_of_date, config)
     gate_results.append(reg_cal_gate)
-    print(f"  Regulatory calendar gate: {reg_cal_gate.status} — {reg_cal_gate.detail}")
+    _logger.info(f"Regulatory calendar gate: {reg_cal_gate.status} — {reg_cal_gate.detail}")
 
     # --- Gate: options_coverage (WARN-only, tracks TT diagnostics health) ---
     opt_cov_gate = check_options_coverage(staging_date_dir)
     gate_results.append(opt_cov_gate)
-    print(f"  Options coverage gate: {opt_cov_gate.status} — {opt_cov_gate.detail}")
+    _logger.info(f"Options coverage gate: {opt_cov_gate.status} — {opt_cov_gate.detail}")
 
     # --- Hard-catalyst production gates (Spec 018) ---
     hq_artifacts = check_hard_queue_artifacts(staging_date_dir)
     gate_results.append(hq_artifacts)
-    print(f"  Hard queue artifacts: {hq_artifacts.status} — {hq_artifacts.detail}")
+    _logger.info(f"Hard queue artifacts: {hq_artifacts.status} — {hq_artifacts.detail}")
 
     hq_supply = check_hard_catalyst_supply(staging_date_dir, config)
     gate_results.append(hq_supply)
-    print(f"  Hard catalyst supply: {hq_supply.status} — {hq_supply.detail}")
+    _logger.info(f"Hard catalyst supply: {hq_supply.status} — {hq_supply.detail}")
 
     hq_opts = check_hard_options_coverage(staging_date_dir, config)
     gate_results.append(hq_opts)
-    print(f"  Hard options coverage: {hq_opts.status} — {hq_opts.detail}")
+    _logger.info(f"Hard options coverage: {hq_opts.status} — {hq_opts.detail}")
 
     hq_carry = check_hard_carry_state(staging_date_dir, as_of_date)
     gate_results.append(hq_carry)
-    print(f"  Hard carry state: {hq_carry.status} — {hq_carry.detail}")
+    _logger.info(f"Hard carry state: {hq_carry.status} — {hq_carry.detail}")
 
     hq_action = check_hard_queue_actionability(staging_date_dir, config)
     gate_results.append(hq_action)
-    print(f"  Hard queue actionability: {hq_action.status} — {hq_action.detail}")
+    _logger.info(f"Hard queue actionability: {hq_action.status} — {hq_action.detail}")
 
     # --- Step 5: Build manifest ---
-    print("\n[5/5] Building run manifest ...")
+    _logger.info("\n[5/5] Building run manifest ...")
     git_post_run = get_git_info(REPO_ROOT)
     manifest = build_run_manifest(
         as_of_date,
@@ -4428,26 +4428,26 @@ def run_daily(
         except OSError:
             pass
         raise
-    print(f"  Manifest → {manifest_path}")
+    _logger.info(f"Manifest → {manifest_path}")
     _mark_step(staging_date_dir, "manifest_written", detail=f"overall={manifest['overall_status']}")
 
     # Append to gate verdict ledger (JSONL time-series for SLO tracking)
     try:
         append_gate_verdict(manifest)
-        print(f"  Gate ledger → {GATE_LEDGER_PATH}")
+        _logger.info(f"Gate ledger → {GATE_LEDGER_PATH}")
     except Exception as e:
-        print(f"  [WARN] Could not append gate ledger: {e}")
+        _logger.warning(f"Could not append gate ledger: {e}")
 
     # --- Promotion decision ---
     overall = manifest["overall_status"]
     if overall == "FAIL":
-        print(f"\n{'='*70}")
-        print("RESULT: FAIL — snapshot NOT promoted")
-        print(f"  Staging dir preserved at: {staging_date_dir}")
+        _logger.info(f"\n{'='*70}")
+        _logger.info("RESULT: FAIL — snapshot NOT promoted")
+        _logger.info(f"Staging dir preserved at: {staging_date_dir}")
         for g in gate_results:
             if g.status == "FAIL":
-                print(f"  [{g.status}] {g.name}: {g.detail}")
-        print(f"{'='*70}")
+                _logger.info(f"[{g.status}] {g.name}: {g.detail}")
+        _logger.info(f"{'='*70}")
     else:
         final_path = promote_snapshot(staging_date_dir, final_snapshots_dir, as_of_date)
         _mark_step(final_path, "manifest_written", detail=f"overall={overall}")
@@ -4456,13 +4456,13 @@ def run_daily(
         if staging_dir.exists() and not any(staging_dir.iterdir()):
             staging_dir.rmdir()
         label = "PASS" if overall == "PASS" else "WARN"
-        print(f"\n{'='*70}")
-        print(f"RESULT: {label} — snapshot promoted to {final_path}")
+        _logger.info(f"\n{'='*70}")
+        _logger.info(f"RESULT: {label} — snapshot promoted to {final_path}")
         if overall == "WARN":
             for g in gate_results:
                 if g.status == "WARN":
-                    print(f"  [{g.status}] {g.name}: {g.detail}")
-        print(f"{'='*70}")
+                    _logger.info(f"[{g.status}] {g.name}: {g.detail}")
+        _logger.info(f"{'='*70}")
 
         # --- Step 5b: Full drift report (optional, post-promotion) ---
         if not skip_drift:
@@ -4484,18 +4484,18 @@ def run_daily(
                     timeout=120,
                 )
                 if _drift_proc.returncode == 0:
-                    print(f"  Full drift report → {_drift_out}")
+                    _logger.info(f"Full drift report → {_drift_out}")
                 else:
-                    print(f"  [WARN] Full drift report failed (exit {_drift_proc.returncode})")
+                    _logger.warning(f"Full drift report failed (exit {_drift_proc.returncode})")
 
         # --- Step 5c: Action packet (non-blocking) ---
         try:
             from tools.action_packet import write_action_packet
 
             _action_path = write_action_packet(final_path)
-            print(f"  Action packet → {_action_path.parent}")
+            _logger.info(f"Action packet → {_action_path.parent}")
         except Exception as _ap_err:
-            print(f"  [WARN] Action packet generation failed: {_ap_err}")
+            _logger.warning(f"Action packet generation failed: {_ap_err}")
 
         # --- Step 5d: Action lists — per-bucket CSVs (non-blocking) ---
         try:
@@ -4505,9 +4505,9 @@ def run_daily(
             _al_out = final_path / "action_lists"
             write_action_lists(_al_buckets, _al_out, as_of_date=as_of_date)
             _al_total = sum(len(v) for v in _al_buckets.values())
-            print(f"  Action lists → {_al_out} ({_al_total} names)")
+            _logger.info(f"Action lists → {_al_out} ({_al_total} names)")
         except Exception as _al_err:
-            print(f"  [WARN] Action list generation failed: {_al_err}")
+            _logger.warning(f"Action list generation failed: {_al_err}")
 
         # --- Step 5e: Export action lists to output/ (non-blocking) ---
         try:
@@ -4515,9 +4515,9 @@ def run_daily(
 
             _exp_out = REPO_ROOT / "output" / "action_lists"
             export_action_lists(final_path, _exp_out, as_of_date)
-            print(f"  Exported action lists → {_exp_out}")
+            _logger.info(f"Exported action lists → {_exp_out}")
         except Exception as _exp_err:
-            print(f"  [WARN] Action list export failed: {_exp_err}")
+            _logger.warning(f"Action list export failed: {_exp_err}")
 
         # --- Step 5f: Live shadow portfolio (non-blocking) ---
         try:
@@ -4525,9 +4525,9 @@ def run_daily(
 
             _shadow_result = run_shadow_portfolio(final_path)
             _shadow_n = _shadow_result["summary"]["total_positions"]
-            print(f"  Shadow portfolio → {_shadow_result['positions_path']} ({_shadow_n} names)")
+            _logger.info(f"Shadow portfolio → {_shadow_result['positions_path']} ({_shadow_n} names)")
         except Exception as _sp_err:
-            print(f"  [WARN] Shadow portfolio generation failed: {_sp_err}")
+            _logger.warning(f"Shadow portfolio generation failed: {_sp_err}")
 
         # --- Step 5g: Weekly trade packet (rebalance day only, non-blocking) ---
         try:
@@ -4537,11 +4537,11 @@ def run_daily(
             _reb_decision = _reb_result["decision"]
             _reb_n = _reb_result.get("n_trades", 0)
             if _reb_decision in ("REBALANCE", "OFF_CYCLE"):
-                print(f"  Trade packet → {_reb_result.get('csv_path', '?')} ({_reb_n} trades)")
+                _logger.info(f"Trade packet → {_reb_result.get('csv_path', '?')} ({_reb_n} trades)")
             else:
-                print(f"  Trade packet → skipped ({_reb_decision})")
+                _logger.info(f"Trade packet → skipped ({_reb_decision})")
         except Exception as _reb_err:
-            print(f"  [WARN] Weekly rebalance check failed: {_reb_err}")
+            _logger.warning(f"Weekly rebalance check failed: {_reb_err}")
 
         # --- Step 5h: Portfolio alerts (non-blocking) ---
         try:
@@ -4550,11 +4550,11 @@ def run_daily(
             _alert_result = run_portfolio_alerts(as_of_date)
             _n_alerts = _alert_result["alert_count"]
             if _n_alerts > 0:
-                print(f"  Portfolio alerts → {_alert_result['alert_path']} ({_n_alerts} alerts)")
+                _logger.info(f"Portfolio alerts → {_alert_result['alert_path']} ({_n_alerts} alerts)")
             else:
-                print("  Portfolio alerts → none")
+                _logger.info("Portfolio alerts → none")
         except Exception as _alert_err:
-            print(f"  [WARN] Portfolio alerts failed: {_alert_err}")
+            _logger.warning(f"Portfolio alerts failed: {_alert_err}")
 
         # --- Step 5i: Trade plan (daily, non-blocking) ---
         try:
@@ -4562,13 +4562,13 @@ def run_daily(
 
             _tp_result = build_trade_plan(as_of_date, snap_dir=final_path)
             if "error" in _tp_result:
-                print(f"  Trade plan → skipped ({_tp_result['error']})")
+                _logger.info(f"Trade plan → skipped ({_tp_result['error']})")
             else:
                 _tp_n = len(_tp_result.get("trades", []))
                 _tp_path = _tp_result.get("csv_path", "?")
-                print(f"  Trade plan → {_tp_path} ({_tp_n} trades)")
+                _logger.info(f"Trade plan → {_tp_path} ({_tp_n} trades)")
         except Exception as _tp_err:
-            print(f"  [WARN] Trade plan failed: {_tp_err}")
+            _logger.warning(f"Trade plan failed: {_tp_err}")
 
         # --- Step 5i.5: Surface delta monitor (non-blocking) ---
         try:
@@ -4581,12 +4581,12 @@ def run_daily(
             )
             _sdm_n_alert = _sdm_result.get("n_alert", 0)
             _sdm_n_watch = _sdm_result.get("n_watch", 0)
-            print(
+            _logger.info(
                 f"  Surface delta → {_sdm_result.get('n_compared', 0)} compared, "
                 f"{_sdm_n_alert} alert / {_sdm_n_watch} watch"
             )
         except Exception as _sdm_err:
-            print(f"  [WARN] Surface delta monitor failed: {_sdm_err}")
+            _logger.warning(f"Surface delta monitor failed: {_sdm_err}")
 
         # --- Step 5i.6: Catalyst delta (non-blocking) ---
         try:
@@ -4597,21 +4597,21 @@ def run_daily(
                 snapshots_dir=final_snapshots_dir,
             )
             if "error" in _cd_result:
-                print(f"  Catalyst delta → skipped ({_cd_result['error']})")
+                _logger.info(f"Catalyst delta → skipped ({_cd_result['error']})")
             else:
                 _cd_n = _cd_result.get("n_filtered", 0)
-                print(f"  Catalyst delta → {_cd_n} changes surfaced")
+                _logger.info(f"Catalyst delta → {_cd_n} changes surfaced")
         except Exception as _cd_err:
-            print(f"  [WARN] Catalyst delta failed: {_cd_err}")
+            _logger.warning(f"Catalyst delta failed: {_cd_err}")
 
         # --- Step 5j: Portfolio metrics update (non-blocking) ---
         try:
             from tools.build_portfolio_report import build_portfolio_report
 
             _pr_result = build_portfolio_report()
-            print(f"  Portfolio report → {_pr_result['report_path']}")
+            _logger.info(f"Portfolio report → {_pr_result['report_path']}")
         except Exception as _pr_err:
-            print(f"  [WARN] Portfolio report failed: {_pr_err}")
+            _logger.warning(f"Portfolio report failed: {_pr_err}")
 
         # --- Step 5k: Readiness scorecard (daily history, non-blocking) ---
         try:
@@ -4640,9 +4640,9 @@ def run_daily(
             with open(_sc_out_dir / f"scorecard_{as_of_date}.json", "w", encoding="utf-8") as _scf:
                 json.dump(_sc_result, _scf, indent=2, default=str)
             append_history(_sc_out_dir / "history.jsonl", _sc_result)
-            print(f"  Readiness scorecard → {_sc_verdict}")
+            _logger.info(f"Readiness scorecard → {_sc_verdict}")
         except Exception as _sc_err:
-            print(f"  [WARN] Readiness scorecard failed: {_sc_err}")
+            _logger.warning(f"Readiness scorecard failed: {_sc_err}")
 
         # --- Step 5k.5a: Options watch (post-packet, non-blocking) ---
         try:
@@ -4654,13 +4654,13 @@ def run_daily(
                 snapshots_dir=final_snapshots_dir,
             )
             if "error" in _ow_result:
-                print(f"  Options watch → skipped ({_ow_result['error']})")
+                _logger.info(f"Options watch → skipped ({_ow_result['error']})")
             else:
                 _ow_n = _ow_result.get("watchlist_size", 0)
                 _ow_flagged = _ow_result.get("n_flagged", 0)
-                print(f"  Options watch → {_ow_n} names, {_ow_flagged} flagged")
+                _logger.info(f"Options watch → {_ow_n} names, {_ow_flagged} flagged")
         except Exception as _ow_err:
-            print(f"  [WARN] Options watch failed: {_ow_err}")
+            _logger.warning(f"Options watch failed: {_ow_err}")
 
         # --- Step 5k.5a-shadow: Options watch pre-open shadow (non-blocking) ---
         try:
@@ -4672,9 +4672,9 @@ def run_daily(
             if "error" not in _ow_pre:
                 _ow_pre_n = _ow_pre.get("watchlist_size", 0)
                 _ow_pre_flagged = _ow_pre.get("n_flagged", 0)
-                print(f"  Options watch (pre-open shadow) → {_ow_pre_n} names, {_ow_pre_flagged} flagged")
+                _logger.info(f"Options watch (pre-open shadow) → {_ow_pre_n} names, {_ow_pre_flagged} flagged")
         except Exception as _ow_pre_err:
-            print(f"  [WARN] Options watch pre-open shadow failed: {_ow_pre_err}")
+            _logger.warning(f"Options watch pre-open shadow failed: {_ow_pre_err}")
 
         # --- Step 5k.5b: Options chartbook (non-blocking) ---
         try:
@@ -4682,13 +4682,13 @@ def run_daily(
 
             _cb_result = build_chartbook(as_of_date, snapshots_dir=final_snapshots_dir)
             if "error" in _cb_result:
-                print(f"  Options chartbook → skipped ({_cb_result['error']})")
+                _logger.info(f"Options chartbook → skipped ({_cb_result['error']})")
             else:
                 _cb_n = _cb_result.get("scoreboard", {}).get("watchlist_size", 0)
                 _cb_path = _cb_result.get("_html_path", "?")
-                print(f"  Options chartbook → {_cb_path} ({_cb_n} names)")
+                _logger.info(f"Options chartbook → {_cb_path} ({_cb_n} names)")
         except Exception as _cb_err:
-            print(f"  [WARN] Options chartbook failed: {_cb_err}")
+            _logger.warning(f"Options chartbook failed: {_cb_err}")
 
         # --- Step 5k.5c: Price action watch (non-blocking) ---
         try:
@@ -4696,12 +4696,12 @@ def run_daily(
 
             _paw_result = build_price_action_watch(as_of_date, snapshots_dir=final_snapshots_dir)
             if "error" in _paw_result:
-                print(f"  Price action watch → skipped ({_paw_result['error']})")
+                _logger.info(f"Price action watch → skipped ({_paw_result['error']})")
             else:
                 _paw_n = _paw_result.get("n_alerted", 0)
-                print(f"  Price action watch → {_paw_result['watchlist_size']} names, {_paw_n} alerted")
+                _logger.info(f"Price action watch → {_paw_result['watchlist_size']} names, {_paw_n} alerted")
         except Exception as _paw_err:
-            print(f"  [WARN] Price action watch failed: {_paw_err}")
+            _logger.warning(f"Price action watch failed: {_paw_err}")
 
         # --- Step 5k.6: Shadow monitor (non-blocking) ---
         try:
@@ -4709,13 +4709,13 @@ def run_daily(
 
             _sm_result = build_shadow_monitor(as_of_date)
             if "error" in _sm_result:
-                print(f"  Shadow monitor → skipped ({_sm_result['error']})")
+                _logger.info(f"Shadow monitor → skipped ({_sm_result['error']})")
             else:
                 _sm_attn = _sm_result.get("attention", "?")
                 _sm_n_alerts = len(_sm_result.get("alerts", []))
-                print(f"  Shadow monitor → {_sm_attn} ({_sm_n_alerts} alerts)")
+                _logger.info(f"Shadow monitor → {_sm_attn} ({_sm_n_alerts} alerts)")
         except Exception as _sm_err:
-            print(f"  [WARN] Shadow monitor failed: {_sm_err}")
+            _logger.warning(f"Shadow monitor failed: {_sm_err}")
 
         # --- Step 5k.8: Competitive intelligence (non-blocking) ---
         try:
@@ -4723,11 +4723,11 @@ def run_daily(
 
             _ci_result = build_competitive_intel(as_of_date, snapshots_dir=final_snapshots_dir)
             if "error" in _ci_result:
-                print(f"  Competitive intel → skipped ({_ci_result['error']})")
+                _logger.info(f"Competitive intel → skipped ({_ci_result['error']})")
             else:
-                print(f"  Competitive intel → {_ci_result.get('n_competitive_events', 0)} events")
+                _logger.info(f"Competitive intel → {_ci_result.get('n_competitive_events', 0)} events")
         except Exception as _ci_err:
-            print(f"  [WARN] Competitive intel failed: {_ci_err}")
+            _logger.warning(f"Competitive intel failed: {_ci_err}")
 
         # --- Step 5k.9: Regulatory watch (non-blocking) ---
         try:
@@ -4735,11 +4735,11 @@ def run_daily(
 
             _rw_result = build_regulatory_watch(as_of_date, snapshots_dir=final_snapshots_dir)
             if "error" in _rw_result:
-                print(f"  Regulatory watch → skipped ({_rw_result['error']})")
+                _logger.info(f"Regulatory watch → skipped ({_rw_result['error']})")
             else:
-                print(f"  Regulatory watch → {_rw_result.get('n_near_term_90d', 0)} near-term")
+                _logger.info(f"Regulatory watch → {_rw_result.get('n_near_term_90d', 0)} near-term")
         except Exception as _rw_err:
-            print(f"  [WARN] Regulatory watch failed: {_rw_err}")
+            _logger.warning(f"Regulatory watch failed: {_rw_err}")
 
         # --- Step 5k.10: Filing watch (non-blocking) ---
         try:
@@ -4747,12 +4747,12 @@ def run_daily(
 
             _fw_result = build_filing_watch(as_of_date, snapshots_dir=final_snapshots_dir)
             if "error" in _fw_result:
-                print(f"  Filing watch → skipped ({_fw_result['error']})")
+                _logger.info(f"Filing watch → skipped ({_fw_result['error']})")
             else:
                 _fw_dil = len(_fw_result.get("dilution_alerts", []))
-                print(f"  Filing watch → {_fw_result.get('n_relevant', 0)} relevant, {_fw_dil} dilution alerts")
+                _logger.info(f"Filing watch → {_fw_result.get('n_relevant', 0)} relevant, {_fw_dil} dilution alerts")
         except Exception as _fw_err:
-            print(f"  [WARN] Filing watch failed: {_fw_err}")
+            _logger.warning(f"Filing watch failed: {_fw_err}")
 
         # --- Step 5k.7: IC dashboard (non-blocking) ---
         try:
@@ -4760,12 +4760,12 @@ def run_daily(
 
             _ic_result = build_ic_dashboard(as_of_date, lookback=60)
             if "error" in _ic_result:
-                print(f"  IC dashboard → skipped ({_ic_result['error']})")
+                _logger.info(f"IC dashboard → skipped ({_ic_result['error']})")
             else:
                 _ic_attn = _ic_result.get("attention", "?")
-                print(f"  IC dashboard → {_ic_attn}")
+                _logger.info(f"IC dashboard → {_ic_attn}")
         except Exception as _ic_err:
-            print(f"  [WARN] IC dashboard failed: {_ic_err}")
+            _logger.warning(f"IC dashboard failed: {_ic_err}")
 
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
@@ -4773,19 +4773,19 @@ def run_daily(
 
             _od_result = run_ops_digest(as_of_date)
             if "error" in _od_result:
-                print(f"  Ops digest → skipped ({_od_result['error']})")
+                _logger.info(f"Ops digest → skipped ({_od_result['error']})")
             else:
                 _od_attention = _od_result.get("attention", "?")
                 _od_path = _od_result.get("_paths", {}).get("md_path", "?")
-                print(f"  Ops digest → {_od_attention} ({_od_path})")
+                _logger.info(f"Ops digest → {_od_attention} ({_od_path})")
         except Exception as _od_err:
-            print(f"  [WARN] Ops digest failed: {_od_err}")
+            _logger.warning(f"Ops digest failed: {_od_err}")
 
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
         if not skip_pit_warm and price_pit_backfill:
-            print(f"\n[6] Backfilling PIT price forward returns through {as_of_date} ...")
+            _logger.info(f"\n[6] Backfilling PIT price forward returns through {as_of_date} ...")
             _backfill_proc = _run_subprocess(
                 [
                     sys.executable,
@@ -4801,12 +4801,12 @@ def run_daily(
                 label="warm_price_cache_backfill",
             )
             if _backfill_proc.returncode == 0:
-                print("  PIT price backfill OK")
+                _logger.info("PIT price backfill OK")
             else:
-                print(f"  PIT price backfill FAILED (exit {_backfill_proc.returncode})")
+                _logger.info(f"PIT price backfill FAILED (exit {_backfill_proc.returncode})")
                 if _backfill_proc.stderr:
                     for _line in _backfill_proc.stderr.strip().splitlines()[-5:]:
-                        print(f"    {_line}")
+                        _logger.info(f"  {_line}")
 
     return manifest
 
@@ -4997,7 +4997,7 @@ def main():
         import traceback
 
         _logger.error("Unhandled exception in run_daily: %s", exc, exc_info=True)
-        print(f"\nFATAL: {exc}")
+        _logger.error(f"\nFATAL: {exc}")
         traceback.print_exc()
         manifest = {
             "manifest_version": MANIFEST_VERSION,
