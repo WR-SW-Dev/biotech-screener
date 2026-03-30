@@ -1,179 +1,100 @@
 # Change Spec: Options Monitor v1.1 — From Surveillance to Alpha
 
-**Status**: PROPOSED
+**Status**: IN_PROGRESS (Sprint 1: feature plumbing)
 **Author**: dschulz
 **Date**: 2026-03-30
-**Ruleset impact**: NO (until outcome evaluation proves IC)
-**Type**: Research / signal quality
+**Ruleset impact**: NO (research-only until promotion gates pass)
+**Type**: Research / signal quality / feature engineering
 
 ---
 
-## Problem Statement
+## Objective
 
-The options monitoring stack is a solid surveillance system (4 lenses, fused
-verdict, state tracking) but a weak alpha feature. Too much rule-based alert
-logic, not enough calibrated outcome prediction. Overlapping alert codes,
-no catalyst-type awareness, no cross-sectional context.
-
-## Current State
-
-- 4 lenses: options_watch post/pre, surface_delta, price_action_watch
-- Fused verdict with 2-lens agreement escalation
-- 8 ovf_* research features in rankings.csv (not in sort key)
-- options_quality_composite as tiebreaker in one sleeve only
-- options_verdict sort contribution wired but OFF
-
-## Blunt Scorecard
-
-- As ops monitor: GOOD
-- As catalyst noise filter: PRETTY GOOD
-- As production rank feature: NOT READY
-- Best next step: calibrate on forward outcomes, compress alert taxonomy
-
----
-
-## 10 Upgrades (Priority Order)
-
-### 1. Outcome-Based Evaluation [NEEDS DATA]
-
-For each alert/verdict, score against forward biotech outcomes:
-- realized move vs implied move into catalyst
-- post-event IV crush
-- gap continuation vs fade
-- T+1 / T+3 / T+5 abnormal return
-- realized range expansion
-
-Evaluate each alert code for precision, recall, lift, calibration by
-catalyst type. **This is the single biggest upgrade.**
-
-Buildable after: April catalyst resolutions + 20+ events with T+5 returns.
-
-### 2. Collapse Alerts into 4 Orthogonal Buckets [BUILDABLE NOW]
-
-Replace overlapping codes with independent dimensions:
-
-| Bucket | Current Codes | New Feature |
-|--------|--------------|-------------|
-| Event premium | EVENT_PREMIUM, QUIET_BEFORE_CATALYST | event_premium_score (0-1) |
-| Surface repricing | IV_RAMP_HIGH/MED, SURFACE_MOVE_HIGH/MED, iv_jump_* | surface_repricing_score (0-1) |
-| Skew / tail stress | EXTREME_SKEW, SKEW_EXTREME, rr_flipped_*, skew_shift_* | skew_stress_score (0-1) |
-| Stock-options divergence | STOCK_DOWN_IV_UP, STOCK_UP_IV_DOWN, REACTION_MISMATCH | divergence_score (0-1) |
-
-Cap each bucket's contribution to the fused verdict. Prevents 3 IV-related
-alerts from overwhelming one genuinely different signal.
-
-### 3. Catalyst-Type Awareness [BUILDABLE NOW]
-
-Fusion rules should depend on event class + days-to-event:
-
-| Event Type | Expected Surface Behavior | Anomaly = |
-|-----------|--------------------------|-----------|
-| PDUFA / AdCom | IV build + event premium expected | Absence of build is the signal |
-| Phase 3 topline | Moderate IV build | Aggressive build or extreme skew |
-| Phase 1/2 safety | Minimal surface activity | Any premium = unusual |
-| Financing / shelf | Vol spike, skew bearish | Context-dependent |
-
-Add to verdict features:
-- event_type
-- catalyst_quality / confidence
-- phase_bucket
-- binary_event flag
-- historical realized/implied ratio for event class
-
-### 4. Cross-Sectional Context [BUILDABLE NOW]
-
-For every options signal, compare to:
-- stock's own 1yr history (per-name z-score)
-- same-day biotech peer median
-- XBI/IBB regime
-- same catalyst cohort
-
-SKEW_EXTREME already does per-name z-score in price_action_watch.
-Extend to all signals.
-
-### 5. Probability-Based Fusion [NEEDS DATA + #1]
-
-Replace heuristic severity with calibrated probabilities:
-- p_meaningful_move
-- p_move_exceeds_implied
-- p_post_event_iv_crush
-- p_false_positive
-
-Requires outcome evaluation (#1) to calibrate.
-
-### 6. Granular Data-Quality Penalty [BUILDABLE NOW]
-
-Beyond opt_liquidity_ok / opt_use_for_judgment, add:
-- spread_quality (bid-ask width relative to mid)
-- oi_concentration (top-3 strikes share of total OI)
-- quote_staleness (hours since last trade)
-- strike_continuity (gaps in the chain)
-- surface_fit_quality (residual from parametric fit)
-
-Feed into verdict confidence, not just a binary gate.
-
-### 7. Separate Monitor Verdict from Trade Verdict [BUILDABLE NOW]
-
-| Monitor Verdict | Trade Verdict |
-|----------------|---------------|
-| Something changed | Long gamma candidate |
-| Check chain manually | Avoid long premium |
-| Watch news | Consider debit vertical |
-| Avoid entering ahead of overbid vol | Post-event premium sale |
-| No action | Watch only |
-
-### 8. False Positive Tracking [NEEDS ACCUMULATION]
-
-Dashboard showing per alert code:
-- fire frequency
-- outcome prediction accuracy
-- dead weight in NORMAL/ELEVATED/EXTREME regimes
-- catalyst-only vs always-on performance
-
-Kill weak codes aggressively.
-
-### 9. Persistence and Acceleration Features [BUILDABLE NOW]
-
-Replace point-in-time triggers with temporal features:
-- 3-day IV acceleration
-- 5-day skew trend
-- event premium persistence (days held)
-- sudden reversal after prolonged build
-
-Biotech options tell the story in shape of change, not level.
-
-### 10. Keep Sort Weight OFF Until Proven [ALREADY DONE]
-
-ovf_* fields accumulating in snapshots. Options verdict tilt wired but OFF.
-Correct posture until IC is proven across enough catalyst cycles.
-
----
-
-## Implementation Order
-
-### Phase 1 — Buildable Now (no outcome data needed)
-- #2: Orthogonal bucket collapse
-- #3: Catalyst-type fields in verdict
-- #4: Cross-sectional z-scores for all signals
-- #6: Granular data-quality penalty
-- #7: Monitor vs trade verdict split
-- #9: Persistence/acceleration features
-
-### Phase 2 — After April Catalyst Resolutions (~20+ events)
-- #1: Outcome-based evaluation
-- #5: Probability-based fusion
-- #8: False positive tracking dashboard
-
-### Phase 3 — After Outcome Evaluation Proves IC
-- Promote orthogonal bucket scores to sort contributions
-- Calibrate per catalyst type
-- Turn on options_verdict_tilt in candidate ruleset
-
----
+Upgrade the current options monitor from a rule-heavy alert stack into a
+PIT-safe, catalyst-aware research layer with orthogonal factors, calibrated
+probabilities, separate monitor/trade verdicts, and a formal promotion path.
 
 ## Non-Goals
 
-- No change to current production ranking
-- No new data sources (uses existing options infrastructure)
-- No replacement of the 4-lens monitoring architecture (it works)
-- No sentiment analysis or NLP on options flow
+- No replacement of the 4-lens architecture (it works)
+- No standalone ranker on day one
+- No hard production weight without evidence
+- No discretionary chart reading
+
+## Architecture
+
+### 4 Orthogonal Factor Buckets
+
+| Bucket | Formula | Weight varies by catalyst_class |
+|--------|---------|-------------------------------|
+| Event Premium (F_EP) | 0.40*z_ep_ts + 0.25*z_ep_xs + 0.20*z_term_slope_ts + 0.15*persist | regulatory=0.35, clinical=0.25, financing=0.10 |
+| Surface Repricing (F_SR) | 0.35*z_iv3d_ts + 0.20*z_iv3d_xs + 0.25*z_surface_ts + 0.20*accel | clinical=0.35, regulatory=0.25 |
+| Skew/Tail Stress (F_SK) | 0.45*z_skew_ts + 0.25*z_skew_chg_ts + 0.15*persist + 0.15*backwd | financing=0.35, safety=0.30 |
+| Divergence (F_DV) | 0.30*stock_dn_iv_up + 0.20*stock_up_iv_dn + 0.30*quiet_before + 0.20*interaction | safety=0.25, financing=0.35 |
+
+### Chain Quality Score (Q)
+0.30*(1-spread/0.20) + 0.20*log(1+OI)/8 + 0.15*log(1+vol)/7 +
+0.15*strike_coverage + 0.10*surface_fit_r2 + 0.10*(1-stale_pct)
+
+### Confidence Modifier (C)
+Q * (0.7 + 0.3*event_window) * (0.8 + 0.2*hard_catalyst)
+
+### Composite
+S_raw = weighted factor sum (weights by catalyst_class)
+S_adj = S_raw * C
+S_final = 0.85*S_adj + 0.15*max(F_EP, F_SR, F_SK, F_DV)
+
+### Probability Outputs (Phase 2, after outcome data)
+- p_move_gt_implied: logistic + isotonic calibration
+- p_post_event_iv_crush: same
+- p_false_positive: same
+
+### Verdicts
+Monitor: NONE / WATCH / HIGH (based on S_final thresholds)
+Trade: LONG_GAMMA / SHORT_PREMIUM_AVOID / POST_EVENT_SHORT_VOL / NO_ACTION
+
+## Implementation Sprints
+
+### Sprint 1: Feature Plumbing [CURRENT]
+- Raw inputs (chain/surface, liquidity/quality, stock/realized, catalyst, cross-sectional)
+- Time-series z-scores (robust median/MAD, 252d lookback, 21d exclusion)
+- Cross-sectional z-scores (peer cohort)
+- Persistence and acceleration features
+- Divergence features
+- Factor scores (F_EP, F_SR, F_SK, F_DV)
+- Chain quality score (Q) and confidence (C)
+- Composite (S_final)
+- New artifact: options_verdict/{date}_verdict_v11.json
+
+### Sprint 2: Labeling + Backtest Harness
+- Event-window label generator (move_gt_implied, iv_crush, false_positive)
+- PIT walk-forward runner (6mo train, 2mo validate, monthly roll)
+- Cohort evaluation (by catalyst_class, cap size, liquidity, vol regime)
+- Ablation tests (each factor solo, all combined, vs v1.0)
+
+### Sprint 3: Verdict Separation
+- Monitor verdict (NONE/WATCH/HIGH)
+- Trade verdict (LONG_GAMMA/SHORT_PREMIUM_AVOID/POST_EVENT_SHORT_VOL/NO_ACTION)
+- Primary factor explanation
+- State transitions (NEW/ONGOING/RESOLVED)
+
+### Sprint 4: Shadow Production
+- ovf11_* fields into rankings.csv
+- Evidence collection manifests
+- Shadow candidate registration
+- Promotion gates: Brier improvement, top-decile lift >= 1.20x, IC positive 4/6 folds
+
+## Promotion Gates (all must pass)
+
+- Brier improvement vs v1.0 baseline
+- Top-decile p_move_gt_implied lift >= 1.20x
+- Positive IC in 4+ of 6 monthly walk-forward folds
+- HIGH verdict false-positive rate below v1.0
+- Alert count not more than 20% above v1.0 unless precision improves
+
+## Files
+
+- `common/options_monitor_v11_features.py` — factor computation
+- `common/options_monitor_v11_model.py` — probability model (Sprint 2)
+- `tools/backtest_options_monitor_v11.py` — backtest harness (Sprint 2)
+- `artifacts/options_verdict/{date}_verdict_v11.json` — daily artifact
