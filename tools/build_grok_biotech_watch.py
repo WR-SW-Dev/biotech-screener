@@ -39,6 +39,13 @@ from typing import Any, Dict, List, Optional, Set
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(REPO_ROOT / ".env")
+except ImportError:
+    pass
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("grok_biotech_watch")
 
@@ -250,26 +257,40 @@ def search_grok(
         "search": {"mode": "auto"},
     }
 
-    try:
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
-        data = resp.json()
-        content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+    import time
 
-        # Parse JSON from response (Grok may wrap in markdown code block)
-        content = content.strip()
-        if content.startswith("```"):
-            content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
-        results = json.loads(content)
-        if isinstance(results, list):
-            return results[:max_results]
-        return []
-    except requests.exceptions.RequestException as exc:
-        logger.warning("Grok API request failed for %r: %s", query, exc)
-        return []
-    except (json.JSONDecodeError, KeyError, IndexError) as exc:
-        logger.warning("Grok API response parse failed for %r: %s", query, exc)
-        return []
+    max_retries = 3
+    for attempt in range(max_retries):
+        try:
+            resp = requests.post(url, headers=headers, json=payload, timeout=60)
+            if resp.status_code == 429:
+                wait = 2 ** (attempt + 1)
+                logger.info("Rate limited, waiting %ds (attempt %d/%d)", wait, attempt + 1, max_retries)
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+
+            # Parse JSON from response (Grok may wrap in markdown code block)
+            content = content.strip()
+            if content.startswith("```"):
+                content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
+            results = json.loads(content)
+            if isinstance(results, list):
+                return results[:max_results]
+            return []
+        except requests.exceptions.RequestException as exc:
+            if attempt < max_retries - 1:
+                time.sleep(2 ** (attempt + 1))
+                continue
+            logger.warning("Grok API request failed for %r: %s", query, exc)
+            return []
+        except (json.JSONDecodeError, KeyError, IndexError) as exc:
+            logger.warning("Grok API response parse failed for %r: %s", query, exc)
+            return []
+    logger.warning("Grok API exhausted retries for %r", query)
+    return []
 
 
 # ---------------------------------------------------------------------------
@@ -514,9 +535,15 @@ def build_grok_biotech_watch(
     all_alerts: List[Dict[str, Any]] = []
     emails_sent_this_run = 0
 
-    for ticker, context in watchlist.items():
+    import time as _time
+
+    for i, (ticker, context) in enumerate(watchlist.items()):
         if digest_only:
             break
+
+        # Rate-limit: pause between requests to avoid 429s
+        if i > 0:
+            _time.sleep(2)
 
         # Build query: ticker + catalyst keywords
         cat_terms = "topline OR phase 3 OR FDA OR PDUFA OR adcom OR approval OR CRL"
