@@ -1545,6 +1545,16 @@ SNAPSHOT_COLUMNS = [
     "ms_return_ytd",
     "ms_return_annualized_3yr",
     "ms_return_annualized_5yr",
+    # --- Surface signal fields (Spec 020, were computed but not persisted) ---
+    "atm_iv_change_5d",
+    "actual_implied_move_pctile",
+    "surface_move_extreme",
+    "iv_ramp_flag",
+    "post_event_drift_risk",
+    "rr_25d_trend_7d",
+    "rr_trend_flag",
+    "surface_signal_quality",
+    "surface_validation_basis",
     # --- Options verdict research features (Spec 038) ---
     "ovf_agreement_count",
     "ovf_severity_score",

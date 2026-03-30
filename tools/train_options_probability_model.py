@@ -136,10 +136,31 @@ def extract_features(row: Dict[str, str]) -> Optional[Dict[str, float]]:
     for m in MOM_STATES:
         features[f"mom_{m or 'none'}"] = 1.0 if mom == m else 0.0
 
+    # Surface signals (Spec 020 — now persisted in rankings.csv)
+    features["iv_change_5d"] = _sf(row.get("atm_iv_change_5d")) or 0.0
+    features["move_pctile"] = _sf(row.get("actual_implied_move_pctile")) or 0.0
+    features["rr_trend_7d"] = _sf(row.get("rr_25d_trend_7d")) or 0.0
+
+    # Surface flags (binary)
+    features["surface_move_extreme"] = 1.0 if row.get("surface_move_extreme") == "YES" else 0.0
+    features["iv_ramp_active"] = 1.0 if row.get("iv_ramp_flag") in ("HIGH", "MEDIUM") else 0.0
+    features["drift_risk"] = 1.0 if row.get("post_event_drift_risk") == "YES" else 0.0
+    features["rr_trend_bullish"] = 1.0 if row.get("rr_trend_flag") == "BULLISH" else 0.0
+    features["rr_trend_bearish"] = 1.0 if row.get("rr_trend_flag") == "BEARISH" else 0.0
+
+    # Derived: event premium proxy (IV vs trailing realized)
+    realized_vol = _sf(row.get("de_vol_60d"))
+    if realized_vol is not None and realized_vol > 0 and atm_iv > 0:
+        features["iv_vs_rv_ratio"] = atm_iv / realized_vol
+    else:
+        features["iv_vs_rv_ratio"] = 1.0
+
     # Interactions
     features["iv_x_event_window"] = features["atm_iv"] * features["event_window"]
     features["iv_change_x_hard"] = features["iv_change_5d"] * features["hard_catalyst"]
     features["rr_x_near_catalyst"] = abs(features["rr_25d"]) * features["near_catalyst"]
+    features["move_pctile_x_event"] = features["move_pctile"] * features["event_window"]
+    features["iv_rv_x_hard"] = features["iv_vs_rv_ratio"] * features["hard_catalyst"]
 
     return features
 
@@ -188,17 +209,88 @@ def extract_label(
 # ---------------------------------------------------------------------------
 
 
+def _load_iv_history(iv_csv: Path) -> Dict[str, Dict[str, Dict[str, Any]]]:
+    """Load historical_iv_features.csv into {ticker: {date: {fields}}}.
+
+    This provides atm_iv, rr_25d, actual_implied_move, put_call_volume_ratio
+    for historical dates where the snapshot rankings.csv may not have
+    surface signal fields (they were computed but not persisted before).
+    """
+    result: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    if not iv_csv.exists():
+        return result
+    with open(iv_csv, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            t = row.get("ticker", "")
+            d = row.get("date", "")
+            if t and d:
+                result.setdefault(t, {})[d] = row
+    return result
+
+
+def _compute_iv_change_5d(ticker: str, snap_date: str, iv_history: Dict) -> Optional[float]:
+    """Compute 5-trading-day ATM IV change from historical IV features."""
+    ticker_hist = iv_history.get(ticker, {})
+    current = ticker_hist.get(snap_date)
+    if not current:
+        return None
+    current_iv = _sf(current.get("atm_iv"))
+    if current_iv is None:
+        return None
+
+    # Find the date ~5 trading days back
+    dates = sorted(d for d in ticker_hist if d < snap_date)
+    if len(dates) < 5:
+        return None
+    prior_date = dates[-5]
+    prior_iv = _sf(ticker_hist[prior_date].get("atm_iv"))
+    if prior_iv is None or prior_iv <= 0:
+        return None
+    return current_iv - prior_iv
+
+
+def _compute_rr_trend_7d(ticker: str, snap_date: str, iv_history: Dict) -> Optional[float]:
+    """Compute 7-trading-day RR trend from historical IV features."""
+    ticker_hist = iv_history.get(ticker, {})
+    current = ticker_hist.get(snap_date)
+    if not current:
+        return None
+    current_rr = _sf(current.get("rr_25d"))
+    if current_rr is None:
+        return None
+
+    dates = sorted(d for d in ticker_hist if d < snap_date)
+    if len(dates) < 7:
+        return None
+    prior_rr = _sf(ticker_hist[dates[-7]].get("rr_25d"))
+    if prior_rr is None:
+        return None
+    return current_rr - prior_rr
+
+
 def build_dataset(
     snapshot_root: Path,
     price_csv: Path,
     start_date: str = "2025-01-01",
     end_date: str = "2026-12-31",
     cohort: Optional[str] = None,
+    iv_history_csv: Optional[Path] = None,
 ) -> Tuple[List[Dict[str, float]], List[Dict[str, Any]], List[str]]:
     """Build feature matrix + labels from historical snapshots.
 
+    If iv_history_csv is provided, backfills atm_iv_change_5d and
+    rr_25d_trend_7d from the historical IV features file for snapshots
+    where these fields were not persisted.
+
     Returns (features_list, labels_list, feature_names).
     """
+    # Load IV history for backfill
+    iv_history: Dict[str, Dict[str, Dict]] = {}
+    if iv_history_csv:
+        logger.info("Loading IV history for backfill...")
+        iv_history = _load_iv_history(iv_history_csv)
+        logger.info("  %d tickers with IV history", len(iv_history))
+
     # Load price data
     logger.info("Loading price data...")
     prices_by_ticker: Dict[str, List[Tuple[str, float]]] = {}
@@ -242,6 +334,31 @@ def build_dataset(
                     fam = (row.get("catalyst_family", "") or "").lower()
                     if fam != cohort.lower():
                         continue
+
+                # Backfill surface signals from IV history if missing
+                if iv_history and not row.get("atm_iv_change_5d"):
+                    iv_chg = _compute_iv_change_5d(ticker, snap_date, iv_history)
+                    if iv_chg is not None:
+                        row["atm_iv_change_5d"] = str(iv_chg)
+                if iv_history and not row.get("rr_25d_trend_7d"):
+                    rr_tr = _compute_rr_trend_7d(ticker, snap_date, iv_history)
+                    if rr_tr is not None:
+                        row["rr_25d_trend_7d"] = str(rr_tr)
+                # Backfill actual_implied_move_pctile from IV history
+                if iv_history and not row.get("actual_implied_move_pctile"):
+                    ticker_hist = iv_history.get(ticker, {})
+                    current_rec = ticker_hist.get(snap_date, {})
+                    current_move = _sf(current_rec.get("actual_implied_move"))
+                    if current_move is not None:
+                        hist_moves = []
+                        for d in sorted(ticker_hist):
+                            if d < snap_date:
+                                m = _sf(ticker_hist[d].get("actual_implied_move"))
+                                if m is not None:
+                                    hist_moves.append(m)
+                        if len(hist_moves) >= 20:
+                            pctile = sum(1 for h in hist_moves if current_move > h) / len(hist_moves)
+                            row["actual_implied_move_pctile"] = str(pctile)
 
                 feats = extract_features(row)
                 if feats is None:
@@ -430,14 +547,25 @@ def main():
     parser.add_argument("--min-observations", type=int, default=100)
     parser.add_argument("--cohort", choices=["clinical", "regulatory", "mixed"])
     parser.add_argument("--label", default="move_gt_implied", choices=["move_gt_implied", "big_move"])
+    parser.add_argument(
+        "--iv-history",
+        type=Path,
+        default=REPO_ROOT / "data" / "research" / "historical_iv_features.csv",
+        help="Historical IV features CSV for backfilling surface signals",
+    )
     args = parser.parse_args()
 
     logger.info("=== Options Probability Model Training ===")
+
+    iv_csv = args.iv_history if args.iv_history.exists() else None
+    if iv_csv:
+        logger.info("IV history backfill: %s", iv_csv)
 
     features_list, labels_list, feature_names = build_dataset(
         args.snapshot_root, args.price_csv,
         start_date=args.start_date, end_date=args.end_date,
         cohort=args.cohort,
+        iv_history_csv=iv_csv,
     )
 
     if len(features_list) < args.min_observations:
