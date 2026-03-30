@@ -1554,6 +1554,19 @@ SNAPSHOT_COLUMNS = [
     "ovf_has_quiet_before",
     "ovf_surface_confirmed",
     "ovf_composite",
+    # --- Options Monitor v1.1 research features (Spec 040) ---
+    "ovf11_ep",
+    "ovf11_sr",
+    "ovf11_sk",
+    "ovf11_dv",
+    "ovf11_quality",
+    "ovf11_confidence",
+    "ovf11_score",
+    "ovf11_primary_factor",
+    "ovf11_monitor_verdict",
+    "ovf11_trade_bias",
+    "ovf11_event_window_flag",
+    "ovf11_catalyst_class",
     # --- Legacy Module 5 composite fields (far right) ---
     "composite_rank",
     "composite_score",
@@ -5139,6 +5152,40 @@ def save_validation_snapshot(
             logger.info("[OVF] Options verdict features enriched %d/%d tickers", _n_ovf, len(csv_rows))
     except Exception as _ovf_exc:
         logger.debug("Options verdict features skipped: %s", _ovf_exc)
+
+    # --- Options Monitor v1.1 research features (Spec 040) ---
+    try:
+        from common.options_monitor_v11_features import compute_v11_features
+        from common.options_monitor_v11_model import compute_full_verdict
+
+        _om11_n = 0
+        for row in csv_rows:
+            # Extract available inputs from row
+            _cat_days = row.get("catalyst_days", "")
+            _cat_days_f = float(_cat_days) if _cat_days and _cat_days != "" else None
+            _features = compute_v11_features(
+                event_window_flag=_cat_days_f is not None and _cat_days_f <= 14,
+                hard_catalyst_flag=row.get("is_hard_catalyst", "") == "1",
+                catalyst_class=(row.get("catalyst_family", "other") or "other").lower(),
+            )
+            _full = compute_full_verdict(_features)
+            # Map to ovf11_ prefix for CSV
+            row["ovf11_ep"] = _full.get("om11_factor_event_premium", "")
+            row["ovf11_sr"] = _full.get("om11_factor_surface_repricing", "")
+            row["ovf11_sk"] = _full.get("om11_factor_skew_tail", "")
+            row["ovf11_dv"] = _full.get("om11_factor_divergence", "")
+            row["ovf11_quality"] = _full.get("om11_chain_quality", "")
+            row["ovf11_confidence"] = _full.get("om11_confidence", "")
+            row["ovf11_score"] = _full.get("om11_score_final", "")
+            row["ovf11_primary_factor"] = _full.get("om11_primary_factor", "")
+            row["ovf11_monitor_verdict"] = _full.get("om11_monitor_verdict", "")
+            row["ovf11_trade_bias"] = _full.get("om11_trade_bias", "")
+            row["ovf11_event_window_flag"] = _full.get("om11_event_window_flag", "")
+            row["ovf11_catalyst_class"] = _full.get("om11_catalyst_class", "")
+            _om11_n += 1
+        logger.info("[OM11] Options Monitor v1.1 features computed for %d tickers", _om11_n)
+    except Exception as _om11_exc:
+        logger.debug("Options Monitor v1.1 features skipped: %s", _om11_exc)
 
     # --- Market-model disagreement overlay (shadow diagnostic) ---
     # Surfaces where model quality diverges from market-implied event magnitude.
