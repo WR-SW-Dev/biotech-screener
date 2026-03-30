@@ -270,7 +270,7 @@ def write_reliability_json(
         "n_slip_rows": n_slip_rows,
         "buckets": buckets,
     }
-    out_path.write_text(json.dumps(payload, indent=2, default=str), encoding="utf-8")
+    out_path.write_text(json.dumps(payload, indent=2, default=str, sort_keys=True), encoding="utf-8")
 
 
 def render_reliability_md(

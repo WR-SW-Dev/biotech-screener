@@ -7726,7 +7726,8 @@ def run_screening_pipeline(
     # Financial records staleness check
     _fin_path = data_dir / "financial_records.json"
     if _fin_path.exists():
-        _fin_age_days = (datetime.now().date() - datetime.fromtimestamp(_fin_path.stat().st_mtime).date()).days
+        _as_of = datetime.strptime(args.as_of_date, "%Y-%m-%d").date()
+        _fin_age_days = (_as_of - datetime.fromtimestamp(_fin_path.stat().st_mtime).date()).days
         if _fin_age_days > 30:
             logger.warning(
                 f"  financial_records.json is {_fin_age_days} days old — " f"cash/runway data may be outdated"

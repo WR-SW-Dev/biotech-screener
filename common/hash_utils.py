@@ -53,7 +53,7 @@ def stable_json_dumps(
         if isinstance(o, date):
             return o.isoformat()
         if isinstance(o, Decimal):
-            return str(o)
+            return str(o.normalize())
         if hasattr(o, "value"):  # Enum
             return str(o.value)
         if hasattr(o, "to_dict"):  # TrialRow and similar

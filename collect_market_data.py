@@ -13,6 +13,7 @@ Usage:
 
 import argparse
 import json
+import logging
 import os
 import time
 from datetime import date, datetime, timedelta
@@ -85,7 +86,9 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
 
         # Get 90-day history for volatility/returns
         # Use explicit as_of_date instead of datetime.now() for determinism
-        end_date = datetime.combine(as_of_date, datetime.min.time()) if as_of_date else datetime.now()
+        if as_of_date is None:
+            raise ValueError("as_of_date is required for deterministic collection")
+        end_date = datetime.combine(as_of_date, datetime.min.time())
         start_date = end_date - timedelta(days=90)
         hist = stock.history(start=start_date, end=end_date)
 
@@ -138,6 +141,7 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
             "collected_at": as_of_date.isoformat() if as_of_date else date.today().isoformat(),
         }
     except Exception as e:
+        logging.getLogger(__name__).debug("get_market_data failed for %s: %s", ticker, e)
         return None
 
 

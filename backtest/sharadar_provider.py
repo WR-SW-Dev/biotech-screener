@@ -462,11 +462,12 @@ class PolygonReturnsProvider:
         for ticker in tickers:
             url = (
                 f"https://api.polygon.io/v2/aggs/ticker/{ticker}/range/1/day/"
-                f"{start_date}/{end_date}?adjusted=true&apiKey={api_key}"
+                f"{start_date}/{end_date}?adjusted=true"
             )
-            
+
             try:
                 req = urllib.request.Request(url)
+                req.add_header("Authorization", f"Bearer {api_key}")
                 with urllib.request.urlopen(req, timeout=30) as response:
                     data = json.loads(response.read().decode("utf-8"))
                 

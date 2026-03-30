@@ -376,6 +376,7 @@ production_data/cusip_cache.json
 /WEEK_1_COMPLETE_SUMMARY.md
 /decision_engine_v1.md
 /institutional_validation_integration_plan.md
+/.openclaw/
 agents/*/.openclaw/
 agents/*/memory/
 agents/*/IDENTITY.md

@@ -232,6 +232,10 @@ def create_archive(
     archive_dir.mkdir(parents=True, exist_ok=True)
     archive_path = archive_dir / f"{snapshot_date}.tar.gz"
 
+    if archive_path.exists():
+        print(f"  WARNING: Archive already exists at {archive_path} — skipping to preserve original", file=sys.stderr)
+        return str(archive_path)
+
     # Build manifest (archive_size filled in after creation)
     manifest = build_manifest(snapshot_date, snapshot_path, data_dir, input_files)
 

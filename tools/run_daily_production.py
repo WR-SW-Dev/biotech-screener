@@ -2617,8 +2617,8 @@ def check_regulatory_calendar(
                         )
                 except ValueError:
                     pass
-    except Exception:
-        pass  # Freshness is best-effort
+    except Exception as exc:
+        print(f"  [WARN] Regulatory calendar freshness check failed: {exc}")
 
     if warnings:
         detail = (
@@ -3747,6 +3747,22 @@ def run_daily(
     print(f"{'='*70}")
     print(f"PHASE-2 DAILY RUN — {as_of_date}")
     print(f"{'='*70}")
+
+    # --- Python-level lock (complements the shell lock in cron_daily_production.sh) ---
+    # Prevents concurrent manual + scheduled runs from clobbering artifacts.
+    _lock_path = REPO_ROOT / "logs" / ".daily_production_py.lock"
+    _lock_path.parent.mkdir(parents=True, exist_ok=True)
+    _lock_fd = open(_lock_path, "w")
+    try:
+        import fcntl
+
+        fcntl.flock(_lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except (OSError, BlockingIOError):
+        print("FATAL: Another run_daily_production.py is already running (lock held).")
+        print(f"  Lock file: {_lock_path}")
+        sys.exit(1)
+    except ImportError:
+        pass  # fcntl not available on Windows — shell lock is the fallback
 
     # --- Idempotent rerun check ---
     _final_snap = final_snapshots_dir / as_of_date

@@ -185,7 +185,7 @@ def write_telemetry(
         telemetry = build_telemetry(csv_rows, as_of_date, snapshots_dir)
         out_path = Path(snap_path) / "regulatory_coverage.json"
         out_path.write_text(
-            json.dumps(telemetry, indent=2, ensure_ascii=False) + "\n",
+            json.dumps(telemetry, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
             encoding="utf-8",
         )
         logger.info(
