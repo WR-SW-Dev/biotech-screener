@@ -1,6 +1,6 @@
 # Change Spec: Use OpenClaw Cron as Wrapper Around Claude Jobs
 
-**Status**: IMPLEMENTED (Phase 1)
+**Status**: IMPLEMENTED (Phase 1 + Phase 2)
 **Author**: dschulz
 **Date**: 2026-03-30
 **Ruleset impact**: NO
