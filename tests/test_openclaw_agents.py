@@ -26,6 +26,7 @@ AGENTS_DIR = PROJECT_ROOT / "agents"
 AGENT_NAMES = [
     "calibration",
     "catalyst_delta",
+    "grok_biotech_watch",
     "ops",
     "options_watch",
     "qa",
