@@ -123,6 +123,12 @@ class DecisionRuleset:
     enable_oncology_crowding_penalty: bool = False
     oncology_crowding_weight: float = 0.3
 
+    # Options verdict agreement tilt (opt-in, default OFF — Spec 038)
+    # Uses fused 4-lens verdict composite as within-bucket tiebreaker.
+    # Only fires in less_binary/build_window buckets. Research-phase.
+    enable_options_verdict_tilt: bool = False
+    options_verdict_weight: float = 0.3
+
     # Missingness penalties (opt-in, default off — tracking always on)
     enable_missingness_sort_penalty: bool = False
     enable_missingness_size_penalty: bool = False
@@ -1489,6 +1495,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "clinical_build_window",
     "pcr_penalty_bw",
     "oncology_crowding",
+    "options_verdict",
 )
 
 
@@ -1667,6 +1674,17 @@ def _build_sort_contributions(
             oc_w = _w(ruleset.oncology_crowding_weight)
             delta_oc = -(oc_w * ci_z)
             contribs.append(SortContribution("oncology_crowding", ci_z, oc_w, delta_oc))
+
+    # 15. Options verdict agreement tilt (Spec 038, research-phase)
+    # Uses fused 4-lens verdict composite [0, 1] as within-bucket tiebreaker.
+    # Only activates in less_binary/build_window buckets where options data
+    # is most likely to carry alpha near secondary regulatory events.
+    if ruleset.enable_options_verdict_tilt:
+        if bucket in ("less_binary", "build_window"):
+            ovf = _safe_decimal(decision_fields.get("ovf_composite"))
+            ovf_w = _w(ruleset.options_verdict_weight)
+            delta_ovf = ovf_w * ovf
+            contribs.append(SortContribution("options_verdict", ovf, ovf_w, delta_ovf))
 
     return contribs
 

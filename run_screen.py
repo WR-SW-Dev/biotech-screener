@@ -1538,6 +1538,15 @@ SNAPSHOT_COLUMNS = [
     "competitive_intensity_z",
     "crowding_level",
     "sizing_multiplier_clinical",
+    # --- Options verdict research features (Spec 038) ---
+    "ovf_agreement_count",
+    "ovf_severity_score",
+    "ovf_near_catalyst",
+    "ovf_has_event_premium",
+    "ovf_has_iv_ramp",
+    "ovf_has_quiet_before",
+    "ovf_surface_confirmed",
+    "ovf_composite",
     # --- Legacy Module 5 composite fields (far right) ---
     "composite_rank",
     "composite_score",
@@ -5090,6 +5099,22 @@ def save_validation_snapshot(
     # --- Options quality composite (derived from diagnostics) ---
     for row in csv_rows:
         row.update(compute_options_quality_composite(row))
+
+    # --- Options verdict research features (from fused 4-lens artifact) ---
+    try:
+        from common.options_verdict_features import enrich_csv_rows_with_verdict
+
+        _verdict_path = Path("artifacts") / "options_verdict" / f"{as_of_date}_verdict.json"
+        _verdict_data = None
+        if _verdict_path.exists():
+            import json as _json_mod
+
+            _verdict_data = _json_mod.loads(_verdict_path.read_text(encoding="utf-8"))
+        _n_ovf = enrich_csv_rows_with_verdict(csv_rows, _verdict_data)
+        if _n_ovf > 0:
+            logger.info("[OVF] Options verdict features enriched %d/%d tickers", _n_ovf, len(csv_rows))
+    except Exception as _ovf_exc:
+        logger.debug("Options verdict features skipped: %s", _ovf_exc)
 
     # --- Market-model disagreement overlay (shadow diagnostic) ---
     # Surfaces where model quality diverges from market-implied event magnitude.
