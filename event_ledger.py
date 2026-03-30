@@ -282,7 +282,11 @@ def _load_ctgov_events(
         )
         records = json.loads(fallback.read_text())
         cutoff = as_of_date.isoformat()
-        records = [r for r in records if (r.get("last_update_posted") or "")[:10] <= cutoff]
+        records = [
+            r
+            for r in records
+            if (r.get("last_update_posted") or "")[:10] <= cutoff and (r.get("first_posted") or "")[:10] <= cutoff
+        ]
 
     entries: List[LedgerEntry] = []
     for rec in records:

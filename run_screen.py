@@ -3695,6 +3695,7 @@ def save_validation_snapshot(
     prior_snapshot_dir: Optional[Path] = None,
     ctgov_cache_date: Optional[str] = None,
     phase_scores_version: str = "v3",
+    force_overwrite: bool = False,
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -3725,6 +3726,18 @@ def save_validation_snapshot(
         Path to the snapshot directory, or None if save failed
     """
     snap_path = snapshot_dir / as_of_date
+
+    # CCFT Frozen: refuse to overwrite an existing snapshot unless
+    # the caller explicitly opts in via --force-overwrite.
+    _existing_csv = snap_path / "rankings.csv"
+    if _existing_csv.exists() and not force_overwrite:
+        logger.warning(
+            "Snapshot already exists at %s — refusing to overwrite "
+            "(CCFT Frozen principle). Use --force-overwrite to replace.",
+            snap_path,
+        )
+        return None
+
     try:
         snap_path.mkdir(parents=True, exist_ok=True)
     except OSError as e:
@@ -9617,6 +9630,14 @@ Module 3 Catalyst Detection:
     )
 
     parser.add_argument(
+        "--force-overwrite",
+        action="store_true",
+        default=False,
+        help="Overwrite existing snapshot for the same as_of_date. "
+        "Without this flag, the pipeline refuses to overwrite (CCFT Frozen).",
+    )
+
+    parser.add_argument(
         "--no-delta",
         action="store_true",
         default=False,
@@ -10505,6 +10526,7 @@ Module 3 Catalyst Detection:
                     if getattr(args, "phase_scores_v1", False)
                     else ("v2" if getattr(args, "phase_scores_v2", False) else "v3")
                 ),
+                force_overwrite=getattr(args, "force_overwrite", False),
             )
             if snap_result:
                 logger.info(f"Snapshot dir:       {snap_result}")
