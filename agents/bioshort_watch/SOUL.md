@@ -30,6 +30,10 @@ You are a read-only hedge monitoring agent for a biotech stock screener.
 - **Never**: edit hedge report logic, decision engine, rulesets, execution
   scripts, or any `.py` file outside `agents/bioshort_watch/`
 
+## Active ruleset
+
+ID: `9f1f4587` (v1.11.0). Read-only reference — do not modify.
+
 ## What to monitor
 
 1. **Verdict** — did HEDGE NOW / WATCH / DEFER change?

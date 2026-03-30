@@ -25,7 +25,6 @@ import csv
 import json
 import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -1724,13 +1723,13 @@ def save_positions(
     doc = {
         "schema": SCHEMA_VERSION,
         "as_of_date": as_of_date,
-        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_at": as_of_date + "T00:00:00Z",
         "ruleset_id": metadata.get("ruleset_id", ""),
         "engine_version": metadata.get("version", ""),
         **positions_data,
     }
-    with open(path, "w") as f:
-        json.dump(doc, f, indent=2)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(doc, f, indent=2, sort_keys=True)
     return path
 
 
@@ -2180,12 +2179,12 @@ def _write_diagnostics_json(
     payload = {
         "schema_version": "expected_vs_realized.v1",
         "as_of_date": as_of_date,
-        "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "generated_utc": as_of_date + "T00:00:00Z",
         **diag,
     }
     out_file = out_dir / f"{as_of_date}.json"
-    with open(out_file, "w") as f:
-        json.dump(payload, f, indent=2)
+    with open(out_file, "w", encoding="utf-8") as f:
+        json.dump(payload, f, indent=2, sort_keys=True)
     return out_file
 
 
@@ -2212,9 +2211,8 @@ def write_weekly_summary(
     lines = []
     lines.append("# Weekly Shadow Portfolio Summary")
     lines.append("")
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     lines.append(f"**As-of date**: {as_of_date}")
-    lines.append(f"**Generated**: {ts}")
+    lines.append(f"**Generated**: {as_of_date}")
     rs_id = metadata.get("ruleset_id", "?")
     lines.append(f"**Ruleset**: {rs_id}")
     acct = policy.get("account_usd", 500_000)

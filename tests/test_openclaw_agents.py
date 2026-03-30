@@ -21,7 +21,36 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 AGENTS_DIR = PROJECT_ROOT / "agents"
-AGENT_NAMES = ["ops", "sentinel", "qa", "calibration"]
+# Fully compliant agents: all 4 docs + well-structured SOUL.md that passes
+# all integrity checks (TestSoulIntegrity, TestToolsIntegrity, etc.)
+AGENT_NAMES = [
+    "calibration",
+    "catalyst_delta",
+    "ops",
+    "options_watch",
+    "qa",
+    "sentinel",
+]
+# Workspaces with all 4 docs but non-conforming content (AGENTS.md missing
+# "startup"/"SOUL.md" references, HEARTBEAT.md missing OK token, TOOLS.md
+# referencing no python script, etc.)
+# Tested for SOUL.md structure only via TestPartialAgents.
+PARTIAL_AGENTS = [
+    "bioshort_watch",
+    "policy_shadow_watch",
+    "postmortem",
+    "review_queue_steward",
+]
+# Known incomplete workspaces — missing docs or major SOUL.md gaps.
+# Tested for basic existence only via TestIncompleteAgents.
+INCOMPLETE_AGENTS = [
+    "calibration_evidence",
+    "ctgov_poller",
+    "event_analyst",
+    "price_action_watch",
+    "shadow_monitor",
+    "universe_maintenance",
+]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
 EXPECTED_RULESET_ID = "9f1f4587"
 EXPECTED_RULESET_VERSION = "v1.11.0"
@@ -89,9 +118,7 @@ class TestWorkspaceStructure:
     def test_no_unexpected_python_files(self, agent_dir):
         """Agent workspaces should not contain .py files — agents are doc-driven."""
         py_files = list(agent_dir.glob("*.py"))
-        assert py_files == [], (
-            f"Unexpected .py files in {agent_dir.name}/: {[f.name for f in py_files]}"
-        )
+        assert py_files == [], f"Unexpected .py files in {agent_dir.name}/: {[f.name for f in py_files]}"
 
 
 # ---------------------------------------------------------------------------
@@ -106,59 +133,47 @@ class TestSoulIntegrity:
         assert "## Identity" in soul_text, f"{agent_name} SOUL.md missing ## Identity"
 
     def test_has_name_field(self, soul_text, agent_name):
-        assert f"**Name**: {agent_name}" in soul_text, (
-            f"{agent_name} SOUL.md should declare Name: {agent_name}"
-        )
+        assert f"**Name**: {agent_name}" in soul_text, f"{agent_name} SOUL.md should declare Name: {agent_name}"
 
     def test_has_role_field(self, soul_text, agent_name):
         assert "**Role**:" in soul_text, f"{agent_name} SOUL.md missing Role field"
 
     def test_has_model_field(self, soul_text, agent_name):
-        assert f"**Model**: {EXPECTED_MODEL}" in soul_text, (
-            f"{agent_name} SOUL.md should reference model {EXPECTED_MODEL}"
-        )
+        assert (
+            f"**Model**: {EXPECTED_MODEL}" in soul_text
+        ), f"{agent_name} SOUL.md should reference model {EXPECTED_MODEL}"
 
     def test_has_core_principles(self, soul_text, agent_name):
-        assert "## Core principles" in soul_text, (
-            f"{agent_name} SOUL.md missing ## Core principles"
-        )
+        assert "## Core principles" in soul_text, f"{agent_name} SOUL.md missing ## Core principles"
 
     def test_has_boundaries(self, soul_text, agent_name):
-        assert "## Boundaries" in soul_text, (
-            f"{agent_name} SOUL.md missing ## Boundaries"
-        )
+        assert "## Boundaries" in soul_text, f"{agent_name} SOUL.md missing ## Boundaries"
 
     def test_has_active_ruleset(self, soul_text, agent_name):
-        assert "## Active ruleset" in soul_text, (
-            f"{agent_name} SOUL.md missing ## Active ruleset"
-        )
+        assert "## Active ruleset" in soul_text, f"{agent_name} SOUL.md missing ## Active ruleset"
 
     def test_ruleset_id_matches(self, soul_text, agent_name):
-        assert EXPECTED_RULESET_ID in soul_text, (
-            f"{agent_name} SOUL.md does not reference ruleset ID {EXPECTED_RULESET_ID}"
-        )
+        assert (
+            EXPECTED_RULESET_ID in soul_text
+        ), f"{agent_name} SOUL.md does not reference ruleset ID {EXPECTED_RULESET_ID}"
 
     def test_ruleset_version_matches(self, soul_text, agent_name):
-        assert EXPECTED_RULESET_VERSION in soul_text, (
-            f"{agent_name} SOUL.md does not reference ruleset version {EXPECTED_RULESET_VERSION}"
-        )
+        assert (
+            EXPECTED_RULESET_VERSION in soul_text
+        ), f"{agent_name} SOUL.md does not reference ruleset version {EXPECTED_RULESET_VERSION}"
 
     def test_never_clause_present(self, soul_text, agent_name):
         """Every agent must have at least one Never boundary."""
-        assert "**Never**:" in soul_text, (
-            f"{agent_name} SOUL.md missing **Never**: boundary clause"
-        )
+        assert "**Never**:" in soul_text, f"{agent_name} SOUL.md missing **Never**: boundary clause"
 
     def test_write_restricted_to_memory(self, soul_text, agent_name):
         """Write permissions should only target the agent's own memory dir."""
         write_match = re.search(r"\*\*Write\*\*:\s*only to\s+`([^`]+)`", soul_text)
-        assert write_match, (
-            f"{agent_name} SOUL.md should have a **Write**: only to `...` clause"
-        )
+        assert write_match, f"{agent_name} SOUL.md should have a **Write**: only to `...` clause"
         write_target = write_match.group(1)
-        assert f"agents/{agent_name}/memory/" in write_target, (
-            f"{agent_name} write target {write_target!r} should include agents/{agent_name}/memory/"
-        )
+        assert (
+            f"agents/{agent_name}/memory/" in write_target
+        ), f"{agent_name} write target {write_target!r} should include agents/{agent_name}/memory/"
 
 
 # ---------------------------------------------------------------------------
@@ -171,19 +186,15 @@ class TestToolsIntegrity:
 
     def test_references_python_scripts(self, tools_text, agent_name):
         """Each agent's TOOLS.md should reference at least one python script."""
-        scripts = re.findall(r"python3\s+([\w/._-]+\.py)", tools_text)
-        assert len(scripts) >= 1, (
-            f"{agent_name} TOOLS.md should reference at least one python script"
-        )
+        scripts = re.findall(r"python3?\s+([\w/._-]+\.py)", tools_text)
+        assert len(scripts) >= 1, f"{agent_name} TOOLS.md should reference at least one python script"
 
     def test_referenced_scripts_exist(self, tools_text, agent_name):
         """Python scripts mentioned in TOOLS.md should exist in the repo."""
-        scripts = re.findall(r"python3\s+([\w/._-]+\.py)", tools_text)
+        scripts = re.findall(r"python3?\s+([\w/._-]+\.py)", tools_text)
         for script in scripts:
             path = PROJECT_ROOT / script
-            assert path.is_file(), (
-                f"{agent_name} TOOLS.md references {script} but it doesn't exist"
-            )
+            assert path.is_file(), f"{agent_name} TOOLS.md references {script} but it doesn't exist"
 
 
 # ---------------------------------------------------------------------------
@@ -198,17 +209,13 @@ class TestHeartbeatIntegrity:
         # Should have numbered items (1. 2. etc.) or bullet checklist
         has_numbered = bool(re.search(r"^\d+\.", heartbeat_text, re.MULTILINE))
         has_bullets = bool(re.search(r"^[-*]\s", heartbeat_text, re.MULTILINE))
-        assert has_numbered or has_bullets, (
-            f"{agent_name} HEARTBEAT.md should have a numbered or bulleted checklist"
-        )
+        assert has_numbered or has_bullets, f"{agent_name} HEARTBEAT.md should have a numbered or bulleted checklist"
 
     def test_defines_ok_response(self, heartbeat_text, agent_name):
         """Should define a clear 'all OK' response token."""
         ok_patterns = ["HEARTBEAT_OK", "OK", "CLEAR", "PASS"]
         found = any(p in heartbeat_text for p in ok_patterns)
-        assert found, (
-            f"{agent_name} HEARTBEAT.md should define an OK/CLEAR response token"
-        )
+        assert found, f"{agent_name} HEARTBEAT.md should define an OK/CLEAR response token"
 
 
 # ---------------------------------------------------------------------------
@@ -220,22 +227,16 @@ class TestAgentsFileIntegrity:
     """AGENTS.md must define session startup, daily workflow, and red lines."""
 
     def test_has_session_startup(self, agents_text, agent_name):
-        assert "startup" in agents_text.lower() or "session" in agents_text.lower(), (
-            f"{agent_name} AGENTS.md should describe session startup"
-        )
+        assert (
+            "startup" in agents_text.lower() or "session" in agents_text.lower()
+        ), f"{agent_name} AGENTS.md should describe session startup"
 
     def test_references_soul_and_tools(self, agents_text, agent_name):
-        assert "SOUL.md" in agents_text, (
-            f"{agent_name} AGENTS.md should reference SOUL.md"
-        )
-        assert "TOOLS.md" in agents_text, (
-            f"{agent_name} AGENTS.md should reference TOOLS.md"
-        )
+        assert "SOUL.md" in agents_text, f"{agent_name} AGENTS.md should reference SOUL.md"
+        assert "TOOLS.md" in agents_text, f"{agent_name} AGENTS.md should reference TOOLS.md"
 
     def test_has_memory_section(self, agents_text, agent_name):
-        assert "memory" in agents_text.lower(), (
-            f"{agent_name} AGENTS.md should describe memory protocol"
-        )
+        assert "memory" in agents_text.lower(), f"{agent_name} AGENTS.md should describe memory protocol"
 
 
 # ---------------------------------------------------------------------------
@@ -250,36 +251,26 @@ class TestCrossAgentConsistency:
         """Every agent's SOUL.md must reference the same active ruleset ID."""
         for name in AGENT_NAMES:
             text = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
-            assert EXPECTED_RULESET_ID in text, (
-                f"Agent {name} does not reference ruleset {EXPECTED_RULESET_ID}"
-            )
+            assert EXPECTED_RULESET_ID in text, f"Agent {name} does not reference ruleset {EXPECTED_RULESET_ID}"
 
     def test_all_agents_share_model(self):
         """Every agent's SOUL.md must reference the same model."""
         for name in AGENT_NAMES:
             text = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
-            assert EXPECTED_MODEL in text, (
-                f"Agent {name} does not reference model {EXPECTED_MODEL}"
-            )
+            assert EXPECTED_MODEL in text, f"Agent {name} does not reference model {EXPECTED_MODEL}"
 
     def test_no_agent_claims_git_write(self):
         """No agent should have git push/commit in its allowed boundaries."""
         for name in AGENT_NAMES:
             soul = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
-            boundaries = soul[soul.find("## Boundaries"):] if "## Boundaries" in soul else ""
+            boundaries = soul[soul.find("## Boundaries") :] if "## Boundaries" in soul else ""
             # The boundaries should mention "never" with git operations
             # but should NOT list git push/commit as allowed actions
-            run_section = re.search(
-                r"\*\*Run\*\*:\s*(.+?)(?:\n-|\n##|\Z)", boundaries, re.DOTALL
-            )
+            run_section = re.search(r"\*\*Run\*\*:\s*(.+?)(?:\n-|\n##|\Z)", boundaries, re.DOTALL)
             if run_section:
                 run_text = run_section.group(1).lower()
-                assert "git push" not in run_text, (
-                    f"Agent {name} should not have git push in Run permissions"
-                )
-                assert "git commit" not in run_text, (
-                    f"Agent {name} should not have git commit in Run permissions"
-                )
+                assert "git push" not in run_text, f"Agent {name} should not have git push in Run permissions"
+                assert "git commit" not in run_text, f"Agent {name} should not have git commit in Run permissions"
 
     def test_no_agent_writes_outside_own_memory(self):
         """Each agent's write scope is limited to its own memory directory."""
@@ -291,23 +282,17 @@ class TestCrossAgentConsistency:
             # Should not write to another agent's workspace
             other_agents = [a for a in AGENT_NAMES if a != name]
             for other in other_agents:
-                assert f"agents/{other}/" not in write_targets, (
-                    f"Agent {name} should not write to agents/{other}/"
-                )
+                assert f"agents/{other}/" not in write_targets, f"Agent {name} should not write to agents/{other}/"
 
     def test_ruleset_id_matches_claude_md(self):
         """Active ruleset in CLAUDE.md must match what agents reference."""
         claude_md = (PROJECT_ROOT / "CLAUDE.md").read_text(encoding="utf-8")
-        assert EXPECTED_RULESET_ID in claude_md, (
-            f"CLAUDE.md does not contain expected ruleset ID {EXPECTED_RULESET_ID}"
-        )
+        assert EXPECTED_RULESET_ID in claude_md, f"CLAUDE.md does not contain expected ruleset ID {EXPECTED_RULESET_ID}"
 
     def test_ops_agent_has_extra_write_for_digest(self):
         """Ops agent uniquely has write access to artifacts/ops_digest/."""
         ops_soul = (AGENTS_DIR / "ops" / "SOUL.md").read_text(encoding="utf-8")
-        assert "artifacts/ops_digest/" in ops_soul, (
-            "Ops agent should have write access to artifacts/ops_digest/"
-        )
+        assert "artifacts/ops_digest/" in ops_soul, "Ops agent should have write access to artifacts/ops_digest/"
 
 
 # ---------------------------------------------------------------------------
@@ -348,15 +333,82 @@ class TestReferencedToolsExist:
     def test_active_ruleset_file_exists(self):
         """The active ruleset JSON file should exist."""
         ruleset_pattern = list(
-            (PROJECT_ROOT / "production_data" / "decision_rulesets").glob(
-                f"{EXPECTED_RULESET_VERSION}_*"
-            )
+            (PROJECT_ROOT / "production_data" / "decision_rulesets").glob(f"{EXPECTED_RULESET_VERSION}_*")
         )
         assert len(ruleset_pattern) >= 1, (
-            f"No ruleset file matching {EXPECTED_RULESET_VERSION}_* found in "
-            "production_data/decision_rulesets/"
+            f"No ruleset file matching {EXPECTED_RULESET_VERSION}_* found in " "production_data/decision_rulesets/"
         )
 
     def test_manifest_exists(self):
         manifest = PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
         assert manifest.is_file(), "Ruleset manifest.json missing"
+
+
+# ---------------------------------------------------------------------------
+# Incomplete agent workspaces — basic structure checks only
+# ---------------------------------------------------------------------------
+
+
+class TestPartialAgents:
+    """Agents with all 4 docs but non-conforming AGENTS.md/HEARTBEAT.md content.
+
+    SOUL.md structure passes, but AGENTS.md may lack "startup"/"SOUL.md" refs,
+    HEARTBEAT.md may lack OK token, etc. Test SOUL.md structure to catch drift.
+    """
+
+    @pytest.mark.parametrize("name", PARTIAL_AGENTS)
+    def test_has_required_docs(self, name):
+        for doc in REQUIRED_DOCS:
+            path = AGENTS_DIR / name / doc
+            assert path.is_file(), f"Partial agent {name} missing {doc}"
+
+    @pytest.mark.parametrize("name", PARTIAL_AGENTS)
+    def test_soul_has_identity(self, name):
+        soul = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
+        assert "## Identity" in soul
+        assert f"**Name**: {name}" in soul
+        assert f"**Model**: {EXPECTED_MODEL}" in soul
+
+    @pytest.mark.parametrize("name", PARTIAL_AGENTS)
+    def test_soul_has_boundaries(self, name):
+        soul = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
+        assert "## Boundaries" in soul
+        assert "**Never**:" in soul
+
+    @pytest.mark.parametrize("name", PARTIAL_AGENTS)
+    def test_soul_has_ruleset(self, name):
+        soul = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
+        assert EXPECTED_RULESET_ID in soul
+
+
+class TestIncompleteAgents:
+    """Agents known to have incomplete SOUL.md structure.
+
+    These need SOUL.md rework to add missing sections (Identity/Name,
+    Core principles, Boundaries, Active ruleset, Never clause, Write scope).
+    This test class ensures they at least exist and have a SOUL.md, and
+    tracks them so they don't silently disappear.
+    """
+
+    @pytest.mark.parametrize("name", INCOMPLETE_AGENTS)
+    def test_workspace_exists(self, name):
+        assert (AGENTS_DIR / name).is_dir(), f"Incomplete agent workspace missing: {name}"
+
+    @pytest.mark.parametrize("name", INCOMPLETE_AGENTS)
+    def test_soul_exists(self, name):
+        soul = AGENTS_DIR / name / "SOUL.md"
+        assert soul.is_file(), f"Incomplete agent {name} missing SOUL.md"
+        assert soul.stat().st_size > 30, f"Incomplete agent {name} SOUL.md is too small"
+
+    @pytest.mark.parametrize("name", INCOMPLETE_AGENTS)
+    def test_heartbeat_exists(self, name):
+        assert (AGENTS_DIR / name / "HEARTBEAT.md").is_file(), f"Incomplete agent {name} missing HEARTBEAT.md"
+
+    def test_total_agent_count(self):
+        """All 16 agent workspaces are accounted for (compliant + partial + incomplete)."""
+        all_agents = set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS)
+        actual = {d.name for d in AGENTS_DIR.iterdir() if d.is_dir()}
+        untracked = actual - all_agents
+        assert (
+            not untracked
+        ), f"Agent workspace(s) not in AGENT_NAMES, PARTIAL_AGENTS, or INCOMPLETE_AGENTS: {untracked}"

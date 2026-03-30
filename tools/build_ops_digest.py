@@ -96,6 +96,50 @@ def _severity(status: str) -> int:
 # ---------------------------------------------------------------------------
 
 
+def _build_pipeline_status(snap_dir: Path, as_of_date: str) -> Dict[str, Any]:
+    """Check run_manifest.json for pipeline completion status.
+
+    Without this, a crashed pipeline could leave stale health files from the
+    prior day, causing the digest to report CLEAR when production actually failed.
+    """
+    # Check snapshot-dir manifest first, then fallback output/ manifest
+    manifest = _load_json(snap_dir / "run_manifest.json")
+    if not manifest:
+        manifest = _load_json(REPO_ROOT / "output" / "run_manifest.json")
+
+    if not manifest:
+        return {
+            "available": False,
+            "detail": "run_manifest.json not found — pipeline may not have run",
+        }
+
+    manifest_date = manifest.get("as_of_date", "")
+    if manifest_date != as_of_date:
+        return {
+            "available": True,
+            "stale": True,
+            "overall_status": "UNKNOWN",
+            "manifest_date": manifest_date,
+            "detail": f"Manifest is for {manifest_date}, not {as_of_date} — possible stale data",
+        }
+
+    overall = manifest.get("overall_status", "UNKNOWN")
+    gate_results = manifest.get("gate_results", {})
+    n_pass = sum(1 for v in gate_results.values() if v == "PASS")
+    n_fail = sum(1 for v in gate_results.values() if v == "FAIL")
+    n_warn = sum(1 for v in gate_results.values() if v == "WARN")
+
+    return {
+        "available": True,
+        "stale": False,
+        "overall_status": overall,
+        "gates_pass": n_pass,
+        "gates_fail": n_fail,
+        "gates_warn": n_warn,
+        "generated_at": manifest.get("generated_at", ""),
+    }
+
+
 def _build_health_section(snap_dir: Path) -> Dict[str, Any]:
     """Phase-2 health + collection health + exposure checks."""
     phase2 = _load_json(snap_dir / "phase2_health.json") or {}
@@ -293,6 +337,9 @@ def build_ops_digest(
 
     prior_date = _find_prior_snapshot(snapshots_dir, as_of_date)
 
+    # Pipeline completion status — check run_manifest.json
+    pipeline_status = _build_pipeline_status(snap_dir, as_of_date)
+
     health = _build_health_section(snap_dir)
     coverage = _build_coverage_section(snap_dir)
     delta = _build_delta_section(snap_dir, prior_date)
@@ -305,16 +352,52 @@ def build_ops_digest(
     n_fails = len([a for a in health["alerts"] if a["level"] == "FAIL"])
     n_warns = len([a for a in health["alerts"] if a["level"] == "WARN"])
     readiness_verdict = readiness.get("verdict", "?") if readiness.get("available") else "?"
+    pipeline_failed = pipeline_status.get("overall_status") == "FAIL"
+    pipeline_missing = not pipeline_status.get("available", False)
 
-    if n_fails > 0 or readiness_verdict == "HOLD":
+    if pipeline_failed or n_fails > 0 or readiness_verdict == "HOLD":
         attention = "ACTION_REQUIRED"
-    elif n_warns > 0 or readiness_verdict == "REVIEW":
+    elif pipeline_missing or n_warns > 0 or readiness_verdict == "REVIEW":
         attention = "REVIEW"
     else:
         attention = "CLEAR"
 
     # Collect action items with root-cause codes and new/carried-over flags
     action_items: List[Dict[str, str]] = []
+
+    # Pipeline status action items
+    if pipeline_failed:
+        action_items.append(
+            {
+                "code": "pipeline:FAIL",
+                "level": "FAIL",
+                "source": "pipeline",
+                "detail": f"Pipeline status={pipeline_status.get('overall_status')} "
+                f"(fail={pipeline_status.get('gates_fail', 0)}, "
+                f"warn={pipeline_status.get('gates_warn', 0)})",
+                "new": True,
+            }
+        )
+    elif pipeline_missing:
+        action_items.append(
+            {
+                "code": "pipeline:MISSING",
+                "level": "WARN",
+                "source": "pipeline",
+                "detail": pipeline_status.get("detail", "run_manifest.json not found"),
+                "new": True,
+            }
+        )
+    elif pipeline_status.get("stale"):
+        action_items.append(
+            {
+                "code": "pipeline:STALE",
+                "level": "WARN",
+                "source": "pipeline",
+                "detail": pipeline_status.get("detail", "Manifest date mismatch"),
+                "new": True,
+            }
+        )
     prior_digest = _load_json(OUT_DIR / f"{prior_date}_digest.json") if prior_date else None
     prior_codes = set()
     if prior_digest:
@@ -416,6 +499,7 @@ def build_ops_digest(
         "action_items": action_items,
         "ruleset": {"id": ruleset_id, "version": ruleset_version},
         "receipt_provenance": receipt_provenance,
+        "pipeline_status": pipeline_status,
         "health": health,
         "coverage": coverage,
         "delta": delta,

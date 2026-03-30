@@ -21,7 +21,6 @@ import logging
 import math
 import statistics
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -211,14 +210,13 @@ def write_trade_plan_md(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     lines = []
 
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     if risk_permission == "NO_ADD_RISK":
         lines.append("> **NO_ADD_RISK: trailing alpha negative — BUY orders suppressed**")
         lines.append("")
     lines.append("# Weekly Trade Plan")
     lines.append("")
     lines.append(f"**Rebalance**: {prior_date or '(first)'} → {current_date}")
-    lines.append(f"**Generated**: {ts}")
+    lines.append(f"**Generated**: {current_date}")
     lines.append(f"**Execution**: NEXT_OPEN after {current_date}")
     lines.append("")
 
