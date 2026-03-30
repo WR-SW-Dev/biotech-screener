@@ -381,6 +381,8 @@ class TestOptionsQualityDEContribution:
             "binary_quality_score": "0.5",
             "catalyst_mode": "specific_days",
             "catalyst_days": "120",
+            "has_regulatory_upcoming_180d": "1",
+            "regulatory_days": "120",
             "stage_bucket": "mid",
             "clinical_score_z_tier": "0",
             "inst_delta_z": "0",
@@ -398,24 +400,33 @@ class TestOptionsQualityDEContribution:
         names = [c.name for c in contribs]
         assert "options_quality_91_180" in names
         oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
-        assert oq.delta == pytest.approx(0.70)
+        assert float(oq.delta) == pytest.approx(0.70)
 
-    def test_options_quality_contribution_clinical_ignored(self):
+    def test_options_quality_no_fire_without_regulatory_flag(self):
+        """Options quality requires has_regulatory_upcoming_180d=1.
+        Without it, the contribution does not fire regardless of family."""
         rs = DecisionRuleset(
             binary_91_180_sort_mode="options_quality",
             binary_91_180_options_quality_weight=1.0,
         )
         fields = self._make_fields(family="CLINICAL")
+        # Remove the regulatory fields — this is the actual gate
+        fields.pop("has_regulatory_upcoming_180d", None)
+        fields.pop("regulatory_days", None)
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         names = [c.name for c in contribs]
         assert "options_quality_91_180" not in names
 
-    def test_options_quality_contribution_wrong_bucket(self):
+    def test_options_quality_no_fire_reg_days_outside_window(self):
+        """Options quality requires regulatory_days in (90, 180].
+        Days outside the window should not fire."""
         rs = DecisionRuleset(
             binary_91_180_sort_mode="options_quality",
             binary_91_180_options_quality_weight=1.0,
         )
-        fields = self._make_fields(bucket="binary_0_30")
+        # regulatory_days=50 is within build_window (<=90), not less_binary
+        fields = self._make_fields()
+        fields["regulatory_days"] = "50"
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         names = [c.name for c in contribs]
         assert "options_quality_91_180" not in names
@@ -435,7 +446,7 @@ class TestOptionsQualityDEContribution:
         fields = self._make_fields(composite="0.80")
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
-        assert oq.delta == pytest.approx(0.40)
+        assert float(oq.delta) == pytest.approx(0.40)
 
     def test_sort_contrib_keys_includes_options_quality(self):
         assert "options_quality_91_180" in SORT_CONTRIB_KEYS
@@ -489,6 +500,8 @@ class TestClinicalPlusOptionsMode:
             "binary_quality_score": "0.5",
             "catalyst_mode": "specific_days",
             "catalyst_days": "120",
+            "has_regulatory_upcoming_180d": "1",
+            "regulatory_days": "120",
             "stage_bucket": "mid",
             "clinical_score_z_tier": "0",
             "inst_delta_z": "0",
