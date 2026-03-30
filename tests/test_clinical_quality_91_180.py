@@ -269,7 +269,7 @@ class TestDEContribution:
         names = [c.name for c in contribs]
         assert "clinical_quality_91_180" in names
         cq = [c for c in contribs if c.name == "clinical_quality_91_180"][0]
-        assert cq.delta == pytest.approx(0.70)
+        assert float(cq.delta) == pytest.approx(0.70)
 
     def test_baseline_mode_no_contribution(self):
         rs = DecisionRuleset(binary_91_180_sort_mode="baseline")
@@ -306,7 +306,7 @@ class TestDEContribution:
         fields = self._make_fields(composite="0.80")
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         cq = [c for c in contribs if c.name == "clinical_quality_91_180"][0]
-        assert cq.delta == pytest.approx(0.40)
+        assert float(cq.delta) == pytest.approx(0.40)
 
 
 # ---------------------------------------------------------------------------
@@ -329,7 +329,7 @@ class TestDegenerateNoop:
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         cq = [c for c in contribs if c.name == "clinical_quality_91_180"]
         assert len(cq) == 1
-        assert cq[0].delta == 0.0
+        assert float(cq[0].delta) == 0.0
 
     def test_missing_composite_zero_contribution(self):
         rs = DecisionRuleset(
@@ -345,7 +345,7 @@ class TestDegenerateNoop:
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         cq = [c for c in contribs if c.name == "clinical_quality_91_180"]
         assert len(cq) == 1
-        assert cq[0].delta == 0.0
+        assert float(cq[0].delta) == 0.0
 
     def test_zero_weight_zero_contribution(self):
         rs = DecisionRuleset(
@@ -361,7 +361,7 @@ class TestDegenerateNoop:
         contribs = _build_sort_contributions(fields, rs, alpha_raw=0.0, catalyst_bonus=0.0)
         cq = [c for c in contribs if c.name == "clinical_quality_91_180"]
         assert len(cq) == 1
-        assert cq[0].delta == 0.0
+        assert float(cq[0].delta) == 0.0
 
     def test_sort_contrib_keys_includes_clinical_quality(self):
         assert "clinical_quality_91_180" in SORT_CONTRIB_KEYS
@@ -500,7 +500,7 @@ class TestClinicalPlusOptionsMode:
         assert "options_quality_91_180" in names
         assert "clinical_quality_91_180" not in names  # REGULATORY family → no clinical contrib
         oq = [c for c in contribs if c.name == "options_quality_91_180"][0]
-        assert oq.delta == pytest.approx(0.35)  # 0.5 * 0.70
+        assert float(oq.delta) == pytest.approx(0.35)  # 0.5 * 0.70
 
     def test_combined_mode_wrong_bucket_no_fire(self):
         rs = DecisionRuleset(

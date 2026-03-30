@@ -24,6 +24,7 @@ import math
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
 
 __version__ = "2.0.0"
@@ -936,6 +937,8 @@ def compose_clinical_score_v2(
 ) -> Tuple[Optional[float], float, List[str]]:
     """Compose clinical_score_v2 from base score + feature z-scores.
 
+    Uses Decimal arithmetic for CCFT determinism.
+
     Args:
         clinical_score: Module 4 clinical_score (0-100) or None.
         features: Merged feature dict for this ticker (unused fields OK).
@@ -948,24 +951,31 @@ def compose_clinical_score_v2(
     if clinical_score is None:
         return (None, 1.0, [])
 
-    cap = config.max_adjustment
-    reason_tags = []
+    # Convert to Decimal for scoring arithmetic
+    _D = Decimal
+    _d = lambda v: _D(str(v))  # noqa: E731 — convert float→Decimal via str
+
+    cap = _d(config.max_adjustment)
+    reason_tags: List[str] = []
+
+    def _clamp_d(val: Decimal, lo: Decimal, hi: Decimal) -> Decimal:
+        return max(lo, min(hi, val))
 
     # Weighted adjustment (z-scores clamped per-component)
-    adjustment = 0.0
-    adjustment += config.w_readout_curve * _clamp(z_readout_curve, -cap, cap)
-    adjustment += config.w_readout_density * _clamp(z_readout_density, -cap, cap)
-    adjustment += config.w_momentum * _clamp(z_momentum, -cap, cap)
-    adjustment += config.w_design * _clamp(z_design, -cap, cap)
-    adjustment += config.w_endpoint * _clamp(z_endpoint, -cap, cap)
+    adjustment = _D("0")
+    adjustment += _d(config.w_readout_curve) * _clamp_d(_d(z_readout_curve), -cap, cap)
+    adjustment += _d(config.w_readout_density) * _clamp_d(_d(z_readout_density), -cap, cap)
+    adjustment += _d(config.w_momentum) * _clamp_d(_d(z_momentum), -cap, cap)
+    adjustment += _d(config.w_design) * _clamp_d(_d(z_design), -cap, cap)
+    adjustment += _d(config.w_endpoint) * _clamp_d(_d(z_endpoint), -cap, cap)
     # Competition weight is NEGATIVE (higher crowding → penalty)
-    adjustment -= config.w_competition * _clamp(z_competition, -cap, cap)
+    adjustment -= _d(config.w_competition) * _clamp_d(_d(z_competition), -cap, cap)
 
     # Scale to 0-100 range
-    score_v2 = clinical_score + adjustment * 10.0
-    score_v2 = _clamp(score_v2, 0.0, 100.0)
+    score_v2 = _d(clinical_score) + adjustment * _D("10")
+    score_v2 = _clamp_d(score_v2, _D("0"), _D("100"))
 
-    # Build reason tags
+    # Build reason tags (float comparisons fine for diagnostics)
     if z_readout_curve > 0.5:
         reason_tags.append("strong_readout_curve")
     if z_momentum > 0.5:
@@ -977,29 +987,32 @@ def compose_clinical_score_v2(
     if z_competition > 1.0:
         reason_tags.append("high_competition")
 
-    # Sizing multiplier
-    sizing = 1.0
+    # Sizing multiplier (Decimal)
+    sizing = _D("1")
     if config.enable_sizing:
         if z_competition > 1.0:
-            sizing *= config.sizing_competition_dampen
+            sizing *= _d(config.sizing_competition_dampen)
             reason_tags.append("sizing_competition_dampen")
         dqs = features.get("design_quality_score", 0.5)
         if isinstance(dqs, (int, float)) and dqs < 0.4:
-            sizing *= config.sizing_design_dampen
+            sizing *= _d(config.sizing_design_dampen)
             reason_tags.append("sizing_design_dampen")
         rcs = features.get("readout_curve_score", 0.0)
         eps = features.get("endpoint_strength_score", 0.5)
         if isinstance(rcs, (int, float)) and isinstance(eps, (int, float)):
             if rcs > 0.0 and eps >= 0.65:
-                sizing *= config.sizing_density_boost
+                sizing *= _d(config.sizing_density_boost)
                 reason_tags.append("sizing_density_boost")
 
         # Clamp total sizing deviation
-        lo = 1.0 - config.sizing_max_deviation
-        hi = 1.0 + config.sizing_max_deviation
-        sizing = _clamp(sizing, lo, hi)
+        lo = _D("1") - _d(config.sizing_max_deviation)
+        hi = _D("1") + _d(config.sizing_max_deviation)
+        sizing = _clamp_d(sizing, lo, hi)
 
-    return (round(score_v2, 4), round(sizing, 4), reason_tags)
+    # Quantize to 4 decimal places and return as float for CSV compatibility
+    score_v2_q = float(score_v2.quantize(_D("0.0001")))
+    sizing_q = float(sizing.quantize(_D("0.0001")))
+    return (score_v2_q, sizing_q, reason_tags)
 
 
 # ---------------------------------------------------------------------------
@@ -1012,16 +1025,18 @@ def z_score_dict(
 ) -> Dict[str, float]:
     """Z-score a dict of ticker → float values (ddof=0).
 
-    Returns dict of ticker → z-score.
+    Uses Decimal arithmetic internally for CCFT determinism.
+    Returns dict of ticker → float z-score (converted back for CSV compat).
     """
     if not values:
         return {}
-    vals = list(values.values())
-    n = len(vals)
-    mean_val = sum(vals) / n
-    var_val = sum((v - mean_val) ** 2 for v in vals) / n
-    std_val = var_val**0.5
+    _D = Decimal
+    d_vals = {k: _D(str(v)) for k, v in values.items()}
+    n = _D(str(len(d_vals)))
+    mean_val = sum(d_vals.values()) / n
+    var_val = sum((v - mean_val) ** 2 for v in d_vals.values()) / n
+    std_val = var_val.sqrt()
 
     if std_val == 0:
         return {k: 0.0 for k in values}
-    return {k: (v - mean_val) / std_val for k, v in values.items()}
+    return {k: float(((v - mean_val) / std_val).quantize(_D("0.000001"))) for k, v in d_vals.items()}
