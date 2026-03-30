@@ -70,6 +70,27 @@ Always use two-step query pattern for Open Targets API. The search endpoint does
 - Tags: api, open_targets, graphql, enrichment
 - Pattern-Key: ot_search_type_mismatch
 
+## [LRN-20260330-005] sec_8k_collapse_gate_works
+
+**Logged**: 2026-03-30T13:00:00Z
+**Priority**: medium
+**Status**: resolved
+**Area**: data_pipeline
+
+### Summary
+SEC 8-K cache refresh gate correctly rejected corrupted fetch (117 vs prior 473, ratio 0.25 < 0.3 threshold) when EDGAR returned 500 errors on several search queries. Prior cache preserved automatically.
+
+### Details
+CCFT data quality infrastructure validated in production. The collapse ratio gate in warm_caches.py detected the bad fetch and kept good data. No manual intervention needed.
+
+### Suggested Action
+No action needed — gate worked as designed. Good validation example of cache resilience.
+
+### Metadata
+- Source: production_ops
+- Related Files: warm_caches.py
+- Tags: data_quality, validation, positive_example
+
 ## [LRN-20260329-004] f_string_no_placeholder_flake8
 
 **Logged**: 2026-03-29T18:00:00Z

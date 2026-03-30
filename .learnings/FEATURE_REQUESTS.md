@@ -25,6 +25,29 @@ Add `--residualize-against` flag to backtest scripts. Regress feature against si
 - Frequency: recurring (3 signals hit same wall)
 - Related Features: backtest_graveyard_signal, backtest_catalyst_history_signal
 
+## [FEAT-20260330-003] production_branch_for_triggers
+
+**Logged**: 2026-03-30T13:00:00Z
+**Priority**: medium
+**Status**: pending
+**Area**: ops
+
+### Requested Capability
+Pin remote triggers to a `production` branch or commit SHA instead of `main`, so a bad push at 1:30pm doesn't break the 1:37pm automated run.
+
+### User Context
+Standard deployment pattern. Remote triggers clone from main — if broken code is pushed just before the scheduled run, the automation fails.
+
+### Complexity Estimate
+simple
+
+### Suggested Implementation
+Create `production` branch. Update trigger sources to use it. Only merge to `production` after local testing passes.
+
+### Metadata
+- Frequency: first_time
+- Related Features: remote_triggers
+
 ## [FEAT-20260329-002] dashboard_page2_research_evidence
 
 **Logged**: 2026-03-29T21:00:00Z
