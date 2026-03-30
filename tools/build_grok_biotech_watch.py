@@ -49,7 +49,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("grok_biotech_watch")
 
-SCHEMA_VERSION = "grok_watch.v1"
+SCHEMA_VERSION = "grok_watch.v2"
 WATCHLIST_MAX = 40
 DEDUP_WINDOW_HOURS = 4
 MAX_IMMEDIATE_EMAILS_PER_HOUR = 5
@@ -216,15 +216,37 @@ def build_watchlist(
 # ---------------------------------------------------------------------------
 
 
+_STRUCTURED_PROMPT = """\
+Search for the latest biotech/pharma news about: {query}
+
+Return ONLY a JSON array. Each element must have exactly these fields:
+- "title": string, headline text
+- "snippet": string, 1-2 sentence summary
+- "source": string, source name or domain (e.g. "reuters.com", "Fierce Biotech")
+- "source_type": string, one of: "official_company", "fda", "wire_service", "journalist", "analyst", "social", "unknown"
+- "official_confirmation": boolean, true if the source is a company PR, SEC filing, FDA notice, or ClinicalTrials.gov
+- "catalyst_keyword_hit": string or null, the specific catalyst term found (e.g. "topline", "PDUFA", "phase 3", "CRL", "approval") or null if none
+- "topic": string, brief topic label (e.g. "Phase 3 readout", "FDA approval", "enrollment update")
+- "date": string, publication date YYYY-MM-DD if known, or ""
+
+Rules:
+- Return at most 5 results. If no relevant results, return [].
+- Only include biotech/pharma/FDA/clinical trial news.
+- Exclude stock price commentary, market analysis, and general financial news.
+- official_confirmation must be true ONLY for verified primary sources, not journalist reports about company news.
+"""
+
+
 def search_grok(
     query: str,
     api_key: str,
     max_results: int = 10,
 ) -> List[Dict[str, Any]]:
-    """Search using xAI Grok API. Returns list of result dicts.
+    """Search using xAI Grok API. Returns list of typed result dicts.
 
     Uses the xAI chat completions endpoint with web search enabled.
-    The model searches the web and returns structured results.
+    Returns structured results with source_type, official_confirmation,
+    catalyst_keyword_hit, and topic fields for deterministic classification.
     """
     try:
         import requests
@@ -238,17 +260,7 @@ def search_grok(
         "Content-Type": "application/json",
     }
 
-    prompt = (
-        f"Search for the latest biotech news about: {query}\n\n"
-        "Return ONLY a JSON array of results. Each result must have:\n"
-        '- "title": headline text\n'
-        '- "snippet": 1-2 sentence summary\n'
-        '- "source": source name or URL\n'
-        '- "date": publication date if known (YYYY-MM-DD or empty)\n'
-        "\nReturn at most 5 results. If no relevant results, return [].\n"
-        "Only include biotech/pharma/FDA/clinical trial news. "
-        "Exclude stock price commentary and general market news."
-    )
+    prompt = _STRUCTURED_PROMPT.format(query=query)
 
     payload = {
         "model": "grok-3",
@@ -276,10 +288,27 @@ def search_grok(
             content = content.strip()
             if content.startswith("```"):
                 content = content.split("\n", 1)[-1].rsplit("```", 1)[0]
-            results = json.loads(content)
-            if isinstance(results, list):
-                return results[:max_results]
-            return []
+            raw = json.loads(content)
+            if not isinstance(raw, list):
+                return []
+            # Validate and normalize each result to the typed schema
+            results = []
+            for r in raw[:max_results]:
+                if not isinstance(r, dict) or not r.get("title"):
+                    continue
+                results.append(
+                    {
+                        "title": str(r.get("title", "")),
+                        "snippet": str(r.get("snippet", "")),
+                        "source": str(r.get("source", "")),
+                        "source_type": str(r.get("source_type", "unknown")),
+                        "official_confirmation": bool(r.get("official_confirmation", False)),
+                        "catalyst_keyword_hit": r.get("catalyst_keyword_hit") or None,
+                        "topic": str(r.get("topic", "")),
+                        "date": str(r.get("date", "")),
+                    }
+                )
+            return results
         except requests.exceptions.RequestException as exc:
             if attempt < max_retries - 1:
                 time.sleep(2 ** (attempt + 1))
@@ -302,19 +331,32 @@ def classify_severity(
     result: Dict[str, Any],
     ticker_context: Dict[str, Any],
 ) -> str:
-    """Classify alert severity: HIGH / MEDIUM / LOW."""
+    """Classify alert severity using structured fields from Grok response.
+
+    Uses the typed schema (source_type, official_confirmation,
+    catalyst_keyword_hit) for primary classification, with local
+    keyword/source fallback for robustness.
+    """
+    # Structured fields from Grok (preferred)
+    source_type = result.get("source_type", "unknown")
+    is_official = result.get("official_confirmation", False)
+    catalyst_hit = result.get("catalyst_keyword_hit")
+
+    # Local fallback: verify against our own keyword/source lists
     title = (result.get("title") or "").lower()
     snippet = (result.get("snippet") or "").lower()
     source = (result.get("source") or "").lower()
     text = f"{title} {snippet}"
 
+    has_catalyst_keyword = bool(catalyst_hit) or any(kw in text for kw in CATALYST_KEYWORDS)
+    is_credible_source = is_official or source_type in (
+        "official_company", "fda", "wire_service",
+    ) or any(s in source for s in HIGH_CREDIBILITY_PATTERNS)
+
     catalyst_days = ticker_context.get("catalyst_days")
     near_catalyst = catalyst_days is not None and catalyst_days <= 14
 
-    # HIGH: official source + catalyst language + near-term
-    has_catalyst_keyword = any(kw in text for kw in CATALYST_KEYWORDS)
-    is_credible_source = any(s in source for s in HIGH_CREDIBILITY_PATTERNS)
-
+    # HIGH: official/credible + catalyst language, or near-term + catalyst
     if is_credible_source and has_catalyst_keyword:
         return "HIGH"
     if near_catalyst and has_catalyst_keyword:
@@ -322,7 +364,7 @@ def classify_severity(
     if is_credible_source and near_catalyst:
         return "HIGH"
 
-    # MEDIUM: credible source OR catalyst keyword (not both)
+    # MEDIUM: credible source OR catalyst keyword
     if is_credible_source or has_catalyst_keyword:
         return "MEDIUM"
 
@@ -420,12 +462,20 @@ def format_alert_email(alert: Dict[str, Any]) -> tuple:
     cat_days = ctx.get("catalyst_days")
     cat_str = f"{cat_days}d to catalyst" if cat_days is not None else "no near catalyst"
 
-    subject = f"[{severity}] {ticker} — {title[:60]}"
+    topic = alert.get("topic", "")
+    subject = f"[{severity}] {ticker} — {topic or title[:60]}"
+
+    official = "YES" if alert.get("official_confirmation") else "no"
+    kw_hit = alert.get("catalyst_keyword_hit") or "-"
+    src_type = alert.get("source_type", "unknown")
 
     text_body = (
         f"Ticker: {ticker}\n"
         f"Alert: {severity}\n"
-        f"Source: {alert.get('source', '?')}\n"
+        f"Topic: {topic}\n"
+        f"Source: {alert.get('source', '?')} ({src_type})\n"
+        f"Official: {official}\n"
+        f"Catalyst keyword: {kw_hit}\n"
         f"Title: {title}\n"
         f"Snippet: {alert.get('snippet', '')}\n"
         f"\n"
@@ -438,10 +488,10 @@ def format_alert_email(alert: Dict[str, Any]) -> tuple:
         f"In review queue: {ctx.get('in_review_queue', False)}\n"
     )
 
-    html_body = f"""<h3>[{severity}] {ticker}</h3>
+    html_body = f"""<h3>[{severity}] {ticker} — {topic}</h3>
 <p><b>{title}</b></p>
 <p>{alert.get('snippet', '')}</p>
-<p><small>Source: {alert.get('source', '?')}</small></p>
+<p><small>Source: {alert.get('source', '?')} ({src_type}) | Official: {official} | Keyword: {kw_hit}</small></p>
 <hr>
 <table>
 <tr><td>Tier</td><td><b>{ctx.get('tier', '?')}</b></td></tr>
@@ -477,15 +527,19 @@ def format_digest_md(alerts: List[Dict[str, Any]], as_of_date: str) -> str:
             continue
         lines.append(f"## {sev}")
         lines.append("")
-        lines.append("| Ticker | Tier | Rank | Cat Days | Title | Source |")
-        lines.append("|--------|------|------|----------|-------|--------|")
+        lines.append("| Ticker | Tier | Rank | Cat | Topic | Source | Official | Keyword |")
+        lines.append("|--------|------|------|-----|-------|--------|----------|---------|")
         for a in sev_alerts:
             ctx = a["context"]
-            title = (a.get("title") or "")[:50]
-            source = (a.get("source") or "")[:20]
+            topic = (a.get("topic") or a.get("title", ""))[:40]
+            source = (a.get("source") or "")[:18]
             rank = ctx.get("actionable_rank", "?")
             cat = ctx.get("catalyst_days", "-")
-            lines.append(f"| {a['ticker']} | {ctx.get('tier', '?')} | {rank} | {cat} | {title} | {source} |")
+            official = "Y" if a.get("official_confirmation") else ""
+            kw = (a.get("catalyst_keyword_hit") or "")[:12]
+            lines.append(
+                f"| {a['ticker']} | {ctx.get('tier', '?')} | {rank} | {cat} | {topic} | {source} | {official} | {kw} |"
+            )
         lines.append("")
 
     return "\n".join(lines)
@@ -570,6 +624,10 @@ def build_grok_biotech_watch(
                 "title": title,
                 "snippet": snippet,
                 "source": source,
+                "source_type": result.get("source_type", "unknown"),
+                "official_confirmation": result.get("official_confirmation", False),
+                "catalyst_keyword_hit": result.get("catalyst_keyword_hit"),
+                "topic": result.get("topic", ""),
                 "date": result.get("date", ""),
                 "topic_hash": th,
                 "context": context,
