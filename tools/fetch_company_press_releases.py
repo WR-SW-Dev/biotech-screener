@@ -416,9 +416,11 @@ def main() -> int:
         ticker_state = state.get(ticker, {"seen_hashes": []})
         ticker_state["last_fetch_utc"] = datetime.now(timezone.utc).isoformat()
         if releases:
-            ticker_state["last_release_date"] = max(
-                r.published_at_utc for r in releases if r.published_at_utc
-            ) or ticker_state.get("last_release_date", "")
+            dated = [r.published_at_utc for r in releases if r.published_at_utc]
+            if dated:
+                ticker_state["last_release_date"] = max(dated)
+            elif "last_release_date" not in ticker_state:
+                ticker_state["last_release_date"] = ""
         new_hashes = [r.content_hash for r in releases]
         existing = set(ticker_state.get("seen_hashes", []))
         ticker_state["seen_hashes"] = list(existing | set(new_hashes))[-200:]  # keep last 200
