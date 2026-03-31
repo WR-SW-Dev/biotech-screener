@@ -24,7 +24,7 @@
     {
       "ticker": "FDMT",
       "company": "4D Molecular Therapeutics, Inc.",
-      "company_ir_url": "https://4dmt.gcs-web.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=FDMT"
@@ -84,7 +84,7 @@
     {
       "ticker": "CGON",
       "company": "CG Oncology, Inc.",
-      "company_ir_url": "https://ir.cgoncology.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CGON"
@@ -94,7 +94,7 @@
     {
       "ticker": "ARTV",
       "company": "Artiva Biotherapeutics, Inc.",
-      "company_ir_url": "https://ir.artivabio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARTV"
@@ -104,7 +104,7 @@
     {
       "ticker": "BCAX",
       "company": "Bicara Therapeutics Inc.",
-      "company_ir_url": "https://ir.bicaratx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BCAX"
@@ -114,7 +114,7 @@
     {
       "ticker": "CRSP",
       "company": "CRISPR Therapeutics AG",
-      "company_ir_url": "https://ir.celldex.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CRSP"
@@ -124,7 +124,7 @@
     {
       "ticker": "CLYM",
       "company": "Climb Bio, Inc.",
-      "company_ir_url": "https://ir.climbbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CLYM"
@@ -134,7 +134,7 @@
     {
       "ticker": "CCCC",
       "company": "C4 Therapeutics, Inc.",
-      "company_ir_url": "https://ir.c4therapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CCCC"
@@ -144,7 +144,7 @@
     {
       "ticker": "RVMD",
       "company": "Revolution Medicines, Inc.",
-      "company_ir_url": "https://ir.revmed.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RVMD"
@@ -154,7 +154,7 @@
     {
       "ticker": "PHVS",
       "company": "Pharvaris N.V.",
-      "company_ir_url": "https://ir.pharvaris.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PHVS"
@@ -164,7 +164,7 @@
     {
       "ticker": "PRAX",
       "company": "Praxis Precision Medicines, Inc",
-      "company_ir_url": "https://ir.praxismedicines.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PRAX"
@@ -194,7 +194,7 @@
     {
       "ticker": "NMRA",
       "company": "Neumora Therapeutics, Inc.",
-      "company_ir_url": "https://ir.neumoratx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NMRA"
@@ -214,7 +214,7 @@
     {
       "ticker": "ABUS",
       "company": "Arbutus Biopharma Corporation",
-      "company_ir_url": "https://ir.arbutusbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ABUS"
@@ -234,7 +234,7 @@
     {
       "ticker": "DNTH",
       "company": "Dianthus Therapeutics, Inc.",
-      "company_ir_url": "https://investor.dianthustx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DNTH"
@@ -254,7 +254,7 @@
     {
       "ticker": "PEPG",
       "company": "PepGen Inc.",
-      "company_ir_url": "https://ir.pepgen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PEPG"
@@ -274,7 +274,7 @@
     {
       "ticker": "VERA",
       "company": "Vera Therapeutics, Inc.",
-      "company_ir_url": "https://ir.veratx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VERA"
@@ -284,7 +284,7 @@
     {
       "ticker": "KURA",
       "company": "Kura Oncology, Inc.",
-      "company_ir_url": "https://ir.kuraoncology.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=KURA"
@@ -294,7 +294,7 @@
     {
       "ticker": "IMVT",
       "company": "Immunovant, Inc.",
-      "company_ir_url": "https://investors.immunovant.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=IMVT"
@@ -304,7 +304,7 @@
     {
       "ticker": "APGE",
       "company": "Apogee Therapeutics, Inc.",
-      "company_ir_url": "https://ir.apogeetherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=APGE"
@@ -314,7 +314,7 @@
     {
       "ticker": "ALMS",
       "company": "Alumis Inc.",
-      "company_ir_url": "https://ir.alumis.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALMS"
@@ -334,7 +334,7 @@
     {
       "ticker": "NAMS",
       "company": "NewAmsterdam Pharma Company N.V",
-      "company_ir_url": "https://ir.newamsterdampharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NAMS"
@@ -344,7 +344,7 @@
     {
       "ticker": "EYPT",
       "company": "EyePoint, Inc.",
-      "company_ir_url": "https://ir.eyepointpharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=EYPT"
@@ -354,7 +354,7 @@
     {
       "ticker": "SLN",
       "company": "Silence Therapeutics Plc - Amer",
-      "company_ir_url": "https://ir.silencetherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SLN"
@@ -364,7 +364,7 @@
     {
       "ticker": "MAZE",
       "company": "Maze Therapeutics, Inc.",
-      "company_ir_url": "https://ir.mazetx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MAZE"
@@ -384,7 +384,7 @@
     {
       "ticker": "DSGN",
       "company": "Design Therapeutics, Inc.",
-      "company_ir_url": "https://investors.designtx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DSGN"
@@ -394,7 +394,7 @@
     {
       "ticker": "ANRO",
       "company": "Alto Neuroscience, Inc.",
-      "company_ir_url": "https://ir.altoneuroscience.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ANRO"
@@ -404,7 +404,7 @@
     {
       "ticker": "DYN",
       "company": "Dyne Therapeutics, Inc.",
-      "company_ir_url": "https://investors.dyne-tx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DYN"
@@ -414,7 +414,7 @@
     {
       "ticker": "CLLS",
       "company": "Cellectis S.A.",
-      "company_ir_url": "https://www.cellectis.com/en/press/press-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CLLS"
@@ -424,7 +424,7 @@
     {
       "ticker": "LRMR",
       "company": "Larimar Therapeutics, Inc.",
-      "company_ir_url": "https://investors.larimartx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=LRMR"
@@ -434,7 +434,7 @@
     {
       "ticker": "ELVN",
       "company": "Enliven Therapeutics, Inc.",
-      "company_ir_url": "https://ir.enliventx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ELVN"
@@ -454,7 +454,7 @@
     {
       "ticker": "ACLX",
       "company": "Arcellx, Inc.",
-      "company_ir_url": "https://ir.arcellx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ACLX"
@@ -464,7 +464,7 @@
     {
       "ticker": "TECX",
       "company": "Tectonic Therapeutic, Inc.",
-      "company_ir_url": "https://ir.tectonictx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TECX"
@@ -474,7 +474,7 @@
     {
       "ticker": "AVBP",
       "company": "ArriVent BioPharma, Inc.",
-      "company_ir_url": "https://ir.arriventbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AVBP"
@@ -484,7 +484,7 @@
     {
       "ticker": "ERAS",
       "company": "Erasca, Inc.",
-      "company_ir_url": "https://investors.erasca.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ERAS"
@@ -494,7 +494,7 @@
     {
       "ticker": "PCVX",
       "company": "Vaxcyte, Inc.",
-      "company_ir_url": "https://investors.vaxcyte.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PCVX"
@@ -504,7 +504,7 @@
     {
       "ticker": "AURA",
       "company": "Aura Biosciences, Inc.",
-      "company_ir_url": "https://ir.aurabiosciences.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AURA"
@@ -514,7 +514,7 @@
     {
       "ticker": "CNTX",
       "company": "Context Therapeutics Inc.",
-      "company_ir_url": "https://ir.contexttherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CNTX"
@@ -534,7 +534,7 @@
     {
       "ticker": "TENX",
       "company": "Tenax Therapeutics, Inc.",
-      "company_ir_url": "https://ir.tenaxthera.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TENX"
@@ -544,7 +544,7 @@
     {
       "ticker": "PRTA",
       "company": "Prothena Corporation plc",
-      "company_ir_url": "https://ir.prothena.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PRTA"
@@ -554,7 +554,7 @@
     {
       "ticker": "STRO",
       "company": "Sutro Biopharma, Inc.",
-      "company_ir_url": "https://ir.sutrobio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=STRO"
@@ -564,7 +564,7 @@
     {
       "ticker": "ELDN",
       "company": "Eledon Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.eledon.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ELDN"
@@ -574,7 +574,7 @@
     {
       "ticker": "VIR",
       "company": "Vir Biotechnology, Inc.",
-      "company_ir_url": "https://investors.vir.bio/news",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VIR"
@@ -584,7 +584,7 @@
     {
       "ticker": "CLDX",
       "company": "Celldex Therapeutics, Inc.",
-      "company_ir_url": "https://ir.celldex.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CLDX"
@@ -594,7 +594,7 @@
     {
       "ticker": "XENE",
       "company": "Xenon Pharmaceuticals Inc.",
-      "company_ir_url": "https://investor.xenon-pharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=XENE"
@@ -604,7 +604,7 @@
     {
       "ticker": "AARD",
       "company": "Aardvark Therapeutics, Inc.",
-      "company_ir_url": "https://ir.aardvarktherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AARD"
@@ -614,7 +614,7 @@
     {
       "ticker": "ABCL",
       "company": "AbCellera Biologics Inc.",
-      "company_ir_url": "https://investors.abcellera.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ABCL"
@@ -634,7 +634,7 @@
     {
       "ticker": "ABSI",
       "company": "Absci Corporation",
-      "company_ir_url": "https://investors.absci.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ABSI"
@@ -654,7 +654,7 @@
     {
       "ticker": "ACAD",
       "company": "ACADIA Pharmaceuticals Inc.",
-      "company_ir_url": "https://ir.acadia-pharm.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ACAD"
@@ -694,7 +694,7 @@
     {
       "ticker": "ADMA",
       "company": "ADMA Biologics Inc",
-      "company_ir_url": "https://ir.admabiologics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ADMA"
@@ -704,7 +704,7 @@
     {
       "ticker": "ADPT",
       "company": "Adaptive Biotechnologies Corpor",
-      "company_ir_url": "https://ir.adaptivebiotech.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ADPT"
@@ -714,7 +714,7 @@
     {
       "ticker": "AGIO",
       "company": "",
-      "company_ir_url": "https://investor.agios.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AGIO"
@@ -724,7 +724,7 @@
     {
       "ticker": "AKTX",
       "company": "",
-      "company_ir_url": "https://ir.akaritx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AKTX"
@@ -734,7 +734,7 @@
     {
       "ticker": "ALDX",
       "company": "Aldeyra Therapeutics, Inc.",
-      "company_ir_url": "https://ir.aldeyra.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALDX"
@@ -744,7 +744,7 @@
     {
       "ticker": "ALGS",
       "company": "",
-      "company_ir_url": "https://ir.algorapharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALGS"
@@ -764,7 +764,7 @@
     {
       "ticker": "ALLO",
       "company": "",
-      "company_ir_url": "https://ir.allogene.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALLO"
@@ -774,7 +774,7 @@
     {
       "ticker": "ALNY",
       "company": "Alnylam Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.alnylam.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALNY"
@@ -784,7 +784,7 @@
     {
       "ticker": "ALT",
       "company": "Altimmune, Inc.",
-      "company_ir_url": "https://ir.altimmune.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALT"
@@ -794,7 +794,7 @@
     {
       "ticker": "ALVO",
       "company": "Alvotech",
-      "company_ir_url": "https://ir.alvotech.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ALVO"
@@ -814,7 +814,7 @@
     {
       "ticker": "AMLX",
       "company": "Amylyx Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.amylyx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AMLX"
@@ -834,7 +834,7 @@
     {
       "ticker": "AMRX",
       "company": "Amneal Pharmaceuticals, Inc.",
-      "company_ir_url": "https://investor.amneal.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AMRX"
@@ -844,7 +844,7 @@
     {
       "ticker": "ANAB",
       "company": "AnaptysBio, Inc.",
-      "company_ir_url": "https://ir.anaptysbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ANAB"
@@ -854,7 +854,7 @@
     {
       "ticker": "ANIP",
       "company": "ANI Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.anipharmaceuticals.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ANIP"
@@ -874,7 +874,7 @@
     {
       "ticker": "APLS",
       "company": "Apellis Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.apellis.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=APLS"
@@ -884,7 +884,7 @@
     {
       "ticker": "AQST",
       "company": "Aquestive Therapeutics, Inc.",
-      "company_ir_url": "https://ir.aquestive.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AQST"
@@ -894,7 +894,7 @@
     {
       "ticker": "ARCT",
       "company": "",
-      "company_ir_url": "https://ir.arcturus-therapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARCT"
@@ -904,7 +904,7 @@
     {
       "ticker": "ARDX",
       "company": "Ardelyx, Inc.",
-      "company_ir_url": "https://ir.ardelyxinc.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARDX"
@@ -914,7 +914,7 @@
     {
       "ticker": "ARGX",
       "company": "argenx SE",
-      "company_ir_url": "https://ir.argenx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARGX"
@@ -924,7 +924,7 @@
     {
       "ticker": "ARQT",
       "company": "Arcutis Biotherapeutics, Inc.",
-      "company_ir_url": "https://ir.arcusmed.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARQT"
@@ -934,7 +934,7 @@
     {
       "ticker": "ARVN",
       "company": "Arvinas, Inc.",
-      "company_ir_url": "https://ir.arvinas.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARVN"
@@ -944,7 +944,7 @@
     {
       "ticker": "ARWR",
       "company": "Arrowhead Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.arrowheadpharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ARWR"
@@ -954,7 +954,7 @@
     {
       "ticker": "ASMB",
       "company": "",
-      "company_ir_url": "https://ir.assemblybio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ASMB"
@@ -974,7 +974,7 @@
     {
       "ticker": "ATAI",
       "company": "",
-      "company_ir_url": "https://ir.ataitherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ATAI"
@@ -984,7 +984,7 @@
     {
       "ticker": "AUPH",
       "company": "Aurinia Pharmaceuticals Inc",
-      "company_ir_url": "https://ir.auriniapharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AUPH"
@@ -1004,7 +1004,7 @@
     {
       "ticker": "AVIR",
       "company": "Atea Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.ateapharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AVIR"
@@ -1034,7 +1034,7 @@
     {
       "ticker": "AXSM",
       "company": "Axsome Therapeutics, Inc.",
-      "company_ir_url": "https://ir.axsome.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=AXSM"
@@ -1054,7 +1054,7 @@
     {
       "ticker": "BBIO",
       "company": "BridgeBio Pharma, Inc.",
-      "company_ir_url": "https://ir.bridgebio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BBIO"
@@ -1074,7 +1074,7 @@
     {
       "ticker": "BCRX",
       "company": "BioCryst Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.biocryst.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BCRX"
@@ -1084,7 +1084,7 @@
     {
       "ticker": "BCYC",
       "company": "Bicycle Therapeutics plc",
-      "company_ir_url": "https://ir.bicycletherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BCYC"
@@ -1094,7 +1094,7 @@
     {
       "ticker": "BDTX",
       "company": "Black Diamond Therapeutics, Inc.",
-      "company_ir_url": "https://ir.blackdiamondtherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BDTX"
@@ -1104,7 +1104,7 @@
     {
       "ticker": "BEAM",
       "company": "Beam Therapeutics Inc.",
-      "company_ir_url": "https://investor.beamtx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BEAM"
@@ -1114,7 +1114,7 @@
     {
       "ticker": "BHVN",
       "company": "Biohaven Ltd.",
-      "company_ir_url": "https://ir.biohaven.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BHVN"
@@ -1124,7 +1124,7 @@
     {
       "ticker": "BIIB",
       "company": "Biogen Inc.",
-      "company_ir_url": "https://investors.biogen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BIIB"
@@ -1134,7 +1134,7 @@
     {
       "ticker": "BIOA",
       "company": "BioAge Labs, Inc.",
-      "company_ir_url": "https://ir.bioagelabs.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BIOA"
@@ -1154,7 +1154,7 @@
     {
       "ticker": "BMEA",
       "company": "Biomea Fusion, Inc.",
-      "company_ir_url": "https://ir.biomeafusion.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BMEA"
@@ -1164,7 +1164,7 @@
     {
       "ticker": "BMRN",
       "company": "BioMarin Pharmaceutical Inc.",
-      "company_ir_url": "https://investors.biomarin.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BMRN"
@@ -1174,7 +1174,7 @@
     {
       "ticker": "BNTX",
       "company": "BioNTech SE",
-      "company_ir_url": "https://investors.biontech.de/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=BNTX"
@@ -1194,7 +1194,7 @@
     {
       "ticker": "CABA",
       "company": "Cabaletta Bio, Inc.",
-      "company_ir_url": "https://ir.caaborx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CABA"
@@ -1204,7 +1204,7 @@
     {
       "ticker": "CADL",
       "company": "Candel Therapeutics, Inc.",
-      "company_ir_url": "https://ir.candeltherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CADL"
@@ -1224,7 +1224,7 @@
     {
       "ticker": "CATX",
       "company": "Perspective Therapeutics, Inc.",
-      "company_ir_url": "https://ir.perspectivetherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CATX"
@@ -1234,7 +1234,7 @@
     {
       "ticker": "CDNA",
       "company": "CareDx, Inc.",
-      "company_ir_url": "https://ir.caredx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CDNA"
@@ -1254,7 +1254,7 @@
     {
       "ticker": "CERS",
       "company": "Cerus Corporation",
-      "company_ir_url": "https://ir.cerevel.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CERS"
@@ -1284,7 +1284,7 @@
     {
       "ticker": "CMPS",
       "company": "COMPASS Pathways Plc - American",
-      "company_ir_url": "https://ir.compasspathways.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CMPS"
@@ -1344,7 +1344,7 @@
     {
       "ticker": "CRNX",
       "company": "Crinetics Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.crinetics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CRNX"
@@ -1404,7 +1404,7 @@
     {
       "ticker": "CYTK",
       "company": "",
-      "company_ir_url": "https://ir.cytokinetics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=CYTK"
@@ -1414,7 +1414,7 @@
     {
       "ticker": "DAWN",
       "company": "Day One Biopharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.dawntherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DAWN"
@@ -1464,7 +1464,7 @@
     {
       "ticker": "DVAX",
       "company": "Dynavax Technologies Corporation",
-      "company_ir_url": "https://ir.dynavax.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DVAX"
@@ -1484,7 +1484,7 @@
     {
       "ticker": "EDIT",
       "company": "Editas Medicine, Inc.",
-      "company_ir_url": "https://ir.editasmedicine.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=EDIT"
@@ -1534,7 +1534,7 @@
     {
       "ticker": "ESPR",
       "company": "Esperion Therapeutics, Inc.",
-      "company_ir_url": "https://ir.esperion.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ESPR"
@@ -1564,7 +1564,7 @@
     {
       "ticker": "EXEL",
       "company": "Exelixis, Inc.",
-      "company_ir_url": "https://ir.exelixis.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=EXEL"
@@ -1574,7 +1574,7 @@
     {
       "ticker": "FATE",
       "company": "Fate Therapeutics, Inc.",
-      "company_ir_url": "https://ir.fatetherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=FATE"
@@ -1604,7 +1604,7 @@
     {
       "ticker": "FOLD",
       "company": "Amicus Therapeutics, Inc.",
-      "company_ir_url": "https://ir.amicusrx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=FOLD"
@@ -1634,7 +1634,7 @@
     {
       "ticker": "GERN",
       "company": "Geron Corporation",
-      "company_ir_url": "https://ir.geron.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=GERN"
@@ -1654,7 +1654,7 @@
     {
       "ticker": "GHRS",
       "company": "GH Research PLC",
-      "company_ir_url": "https://ir.ghr.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=GHRS"
@@ -1664,7 +1664,7 @@
     {
       "ticker": "GILD",
       "company": "Gilead Sciences, Inc.",
-      "company_ir_url": "https://investors.gilead.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=GILD"
@@ -1694,7 +1694,7 @@
     {
       "ticker": "GMAB",
       "company": "Genmab A/S",
-      "company_ir_url": "https://ir.genmab.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=GMAB"
@@ -1734,7 +1734,7 @@
     {
       "ticker": "GRFS",
       "company": "Grifols, S.A.",
-      "company_ir_url": "https://ir.grifols.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=GRFS"
@@ -1744,7 +1744,7 @@
     {
       "ticker": "HALO",
       "company": "Halozyme Therapeutics, Inc.",
-      "company_ir_url": "https://investor.halozyme.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=HALO"
@@ -1764,7 +1764,7 @@
     {
       "ticker": "HRMY",
       "company": "Harmony Biosciences Holdings, I",
-      "company_ir_url": "https://ir.harmonybiosciences.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=HRMY"
@@ -1804,7 +1804,7 @@
     {
       "ticker": "IBRX",
       "company": "ImmunityBio, Inc.",
-      "company_ir_url": "https://ir.immaticsus.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=IBRX"
@@ -1814,7 +1814,7 @@
     {
       "ticker": "IDYA",
       "company": "IDEAYA Biosciences, Inc.",
-      "company_ir_url": "https://ir.ideayabiosciences.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=IDYA"
@@ -1834,7 +1834,7 @@
     {
       "ticker": "IMCR",
       "company": "Immunocore Holdings plc",
-      "company_ir_url": "https://ir.immunocore.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=IMCR"
@@ -1844,7 +1844,7 @@
     {
       "ticker": "IMMP",
       "company": "Immutep Limited",
-      "company_ir_url": "https://ir.immp.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=IMMP"
@@ -1884,7 +1884,7 @@
     {
       "ticker": "INCY",
       "company": "Incyte Corporation",
-      "company_ir_url": "https://investor.incyte.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=INCY"
@@ -1904,7 +1904,7 @@
     {
       "ticker": "INSM",
       "company": "Insmed Incorporated",
-      "company_ir_url": "https://investor.insmed.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=INSM"
@@ -1964,7 +1964,7 @@
     {
       "ticker": "JANX",
       "company": "Janux Therapeutics, Inc.",
-      "company_ir_url": "https://ir.janux.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=JANX"
@@ -1984,7 +1984,7 @@
     {
       "ticker": "JBIO",
       "company": "Jade Biosciences, Inc.",
-      "company_ir_url": "https://ir.jounce.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=JBIO"
@@ -2024,7 +2024,7 @@
     {
       "ticker": "KROS",
       "company": "Keros Therapeutics, Inc.",
-      "company_ir_url": "https://ir.kfrpharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=KROS"
@@ -2074,7 +2074,7 @@
     {
       "ticker": "LBRX",
       "company": "LB Pharmaceuticals Inc",
-      "company_ir_url": "https://ir.liberaxbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=LBRX"
@@ -2094,7 +2094,7 @@
     {
       "ticker": "LEGN",
       "company": "Legend Biotech Corporation",
-      "company_ir_url": "https://ir.legendbiotech.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=LEGN"
@@ -2124,7 +2124,7 @@
     {
       "ticker": "LGND",
       "company": "Ligand Pharmaceuticals Incorporated",
-      "company_ir_url": "https://investor.ligand.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=LGND"
@@ -2174,7 +2174,7 @@
     {
       "ticker": "MCRB",
       "company": "Seres Therapeutics, Inc.",
-      "company_ir_url": "https://ir.serestherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MCRB"
@@ -2244,7 +2244,7 @@
     {
       "ticker": "MLTX",
       "company": "MoonLake Immunotherapeutics",
-      "company_ir_url": "https://ir.mlkltx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MLTX"
@@ -2264,7 +2264,7 @@
     {
       "ticker": "MNKD",
       "company": "MannKind Corporation",
-      "company_ir_url": "https://investor.mannkindcorp.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MNKD"
@@ -2284,7 +2284,7 @@
     {
       "ticker": "MRNA",
       "company": "Moderna, Inc.",
-      "company_ir_url": "https://investors.modernatx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MRNA"
@@ -2294,7 +2294,7 @@
     {
       "ticker": "MRVI",
       "company": "Maravai LifeSciences Holdings, Inc.",
-      "company_ir_url": "https://ir.maravai.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=MRVI"
@@ -2324,7 +2324,7 @@
     {
       "ticker": "NBIX",
       "company": "Neurocrine Biosciences, Inc.",
-      "company_ir_url": "https://ir.neurocrine.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NBIX"
@@ -2384,7 +2384,7 @@
     {
       "ticker": "NTRA",
       "company": "Natera, Inc.",
-      "company_ir_url": "https://ir.natera.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NTRA"
@@ -2394,7 +2394,7 @@
     {
       "ticker": "NUVB",
       "company": "Nuvation Bio Inc.",
-      "company_ir_url": "https://ir.nuvation.bio/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NUVB"
@@ -2404,7 +2404,7 @@
     {
       "ticker": "NVAX",
       "company": "Novavax, Inc.",
-      "company_ir_url": "https://ir.novavax.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=NVAX"
@@ -2424,7 +2424,7 @@
     {
       "ticker": "OABI",
       "company": "OmniAb, Inc.",
-      "company_ir_url": "https://ir.omeros.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=OABI"
@@ -2444,7 +2444,7 @@
     {
       "ticker": "OCGN",
       "company": "Ocugen, Inc.",
-      "company_ir_url": "https://ir.ocugen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=OCGN"
@@ -2474,7 +2474,7 @@
     {
       "ticker": "OLMA",
       "company": "Olema Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.olmesartan.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=OLMA"
@@ -2554,7 +2554,7 @@
     {
       "ticker": "PBYI",
       "company": "Puma Biotechnology Inc",
-      "company_ir_url": "https://ir.puma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PBYI"
@@ -2564,7 +2564,7 @@
     {
       "ticker": "PCRX",
       "company": "Pacira BioSciences, Inc.",
-      "company_ir_url": "https://ir.pacira.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PCRX"
@@ -2574,7 +2574,7 @@
     {
       "ticker": "PGEN",
       "company": "Precigen, Inc.",
-      "company_ir_url": "https://ir.precigen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PGEN"
@@ -2644,7 +2644,7 @@
     {
       "ticker": "PTCT",
       "company": "PTC Therapeutics, Inc.",
-      "company_ir_url": "https://ir.ptcbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PTCT"
@@ -2654,7 +2654,7 @@
     {
       "ticker": "PTGX",
       "company": "Protagonist Therapeutics, Inc.",
-      "company_ir_url": "https://ir.protagonist.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=PTGX"
@@ -2694,7 +2694,7 @@
     {
       "ticker": "QURE",
       "company": "",
-      "company_ir_url": "https://ir.uniqure.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=QURE"
@@ -2714,7 +2714,7 @@
     {
       "ticker": "RAPP",
       "company": "Rapport Therapeutics, Inc.",
-      "company_ir_url": "https://ir.rapptx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RAPP"
@@ -2724,7 +2724,7 @@
     {
       "ticker": "RARE",
       "company": "Ultragenyx Pharmaceutical Inc.",
-      "company_ir_url": "https://investor.ultragenyx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RARE"
@@ -2744,7 +2744,7 @@
     {
       "ticker": "RCUS",
       "company": "",
-      "company_ir_url": "https://ir.arcusbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RCUS"
@@ -2754,7 +2754,7 @@
     {
       "ticker": "REGN",
       "company": "Regeneron Pharmaceuticals, Inc.",
-      "company_ir_url": "https://investor.regeneron.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=REGN"
@@ -2764,7 +2764,7 @@
     {
       "ticker": "RGEN",
       "company": "Repligen Corporation",
-      "company_ir_url": "https://ir.repligen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RGEN"
@@ -2784,7 +2784,7 @@
     {
       "ticker": "RIGL",
       "company": "Rigel Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.rigel.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RIGL"
@@ -2804,7 +2804,7 @@
     {
       "ticker": "RNA",
       "company": "Avidity Biosciences, Inc.",
-      "company_ir_url": "https://ir.aviditybiosciences.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RNA"
@@ -2854,7 +2854,7 @@
     {
       "ticker": "SABS",
       "company": "SAB Biotherapeutics, Inc.",
-      "company_ir_url": "https://ir.sabbiotherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SABS"
@@ -2874,7 +2874,7 @@
     {
       "ticker": "SEPN",
       "company": "Septerna, Inc.",
-      "company_ir_url": "https://ir.septodont.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SEPN"
@@ -2904,7 +2904,7 @@
     {
       "ticker": "SGMT",
       "company": "Sagimet Biosciences Inc. - Seri",
-      "company_ir_url": "https://ir.sagimetbiosciences.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SGMT"
@@ -2944,7 +2944,7 @@
     {
       "ticker": "SMMT",
       "company": "Summit Therapeutics Inc.",
-      "company_ir_url": "https://ir.summittherapeutics.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SMMT"
@@ -2974,7 +2974,7 @@
     {
       "ticker": "SPRY",
       "company": "ARS Pharmaceuticals, Inc.",
-      "company_ir_url": "https://ir.spryngbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SPRY"
@@ -2984,7 +2984,7 @@
     {
       "ticker": "SRPT",
       "company": "Sarepta Therapeutics, Inc.",
-      "company_ir_url": "https://investorrelations.sarepta.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SRPT"
@@ -3044,7 +3044,7 @@
     {
       "ticker": "SYRE",
       "company": "Spyre Therapeutics, Inc.",
-      "company_ir_url": "https://ir.syros.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=SYRE"
@@ -3054,7 +3054,7 @@
     {
       "ticker": "TARA",
       "company": "Protara Therapeutics, Inc.",
-      "company_ir_url": "https://ir.protaratx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TARA"
@@ -3124,7 +3124,7 @@
     {
       "ticker": "TGTX",
       "company": "TG Therapeutics, Inc.",
-      "company_ir_url": "https://ir.tgtxbio.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TGTX"
@@ -3174,7 +3174,7 @@
     {
       "ticker": "TRVI",
       "company": "Trevi Therapeutics, Inc.",
-      "company_ir_url": "https://ir.trevi.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TRVI"
@@ -3214,7 +3214,7 @@
     {
       "ticker": "UPB",
       "company": "Upstream Bio, Inc.",
-      "company_ir_url": "https://ir.upbhealthcare.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=UPB"
@@ -3234,7 +3234,7 @@
     {
       "ticker": "UTHR",
       "company": "United Therapeutics Corporation",
-      "company_ir_url": "https://ir.unither.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=UTHR"
@@ -3254,7 +3254,7 @@
     {
       "ticker": "VCYT",
       "company": "Veracyte, Inc.",
-      "company_ir_url": "https://ir.veracyte.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VCYT"
@@ -3294,7 +3294,7 @@
     {
       "ticker": "VRDN",
       "company": "Viridian Therapeutics, Inc.",
-      "company_ir_url": "https://ir.viridiantx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VRDN"
@@ -3304,7 +3304,7 @@
     {
       "ticker": "VRTX",
       "company": "Vertex Pharmaceuticals Incorporated",
-      "company_ir_url": "https://investors.vrtx.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VRTX"
@@ -3354,7 +3354,7 @@
     {
       "ticker": "XNCR",
       "company": "",
-      "company_ir_url": "https://ir.xencor.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=XNCR"
@@ -3384,7 +3384,7 @@
     {
       "ticker": "ZVRA",
       "company": "Zevra Therapeutics, Inc.",
-      "company_ir_url": "https://ir.zafgen.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=ZVRA"
