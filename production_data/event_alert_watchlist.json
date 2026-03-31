@@ -1,0 +1,268 @@
+{
+  "watchlist": [
+    {
+      "ticker": "SION",
+      "company": "Sionna Therapeutics, Inc.",
+      "aliases": [
+        "Sionna"
+      ]
+    },
+    {
+      "ticker": "CNTA",
+      "company": "Centessa Pharmaceuticals plc",
+      "aliases": [
+        "Centessa"
+      ]
+    },
+    {
+      "ticker": "FDMT",
+      "company": "4D Molecular Therapeutics, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "ADCT",
+      "company": "ADC Therapeutics SA",
+      "aliases": []
+    },
+    {
+      "ticker": "REPL",
+      "company": "Replimune Group, Inc.",
+      "aliases": [
+        "Replimune"
+      ]
+    },
+    {
+      "ticker": "ORKA",
+      "company": "Oruka Therapeutics, Inc.",
+      "aliases": [
+        "Oruka"
+      ]
+    },
+    {
+      "ticker": "CELC",
+      "company": "Celcuity Inc.",
+      "aliases": [
+        "Celcuity"
+      ]
+    },
+    {
+      "ticker": "COGT",
+      "company": "Cogent Biosciences, Inc.",
+      "aliases": [
+        "Cogent"
+      ]
+    },
+    {
+      "ticker": "CGON",
+      "company": "CG Oncology, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "ARTV",
+      "company": "Artiva Biotherapeutics, Inc.",
+      "aliases": [
+        "Artiva"
+      ]
+    },
+    {
+      "ticker": "BCAX",
+      "company": "Bicara Therapeutics Inc.",
+      "aliases": [
+        "Bicara"
+      ]
+    },
+    {
+      "ticker": "CRSP",
+      "company": "CRISPR Therapeutics AG",
+      "aliases": [
+        "CRISPR"
+      ]
+    },
+    {
+      "ticker": "CLYM",
+      "company": "Climb Bio, Inc.",
+      "aliases": [
+        "Climb"
+      ]
+    },
+    {
+      "ticker": "CCCC",
+      "company": "C4 Therapeutics, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "RVMD",
+      "company": "Revolution Medicines, Inc.",
+      "aliases": [
+        "Revolution"
+      ]
+    },
+    {
+      "ticker": "PHVS",
+      "company": "Pharvaris N.V.",
+      "aliases": [
+        "Pharvaris"
+      ]
+    },
+    {
+      "ticker": "PRAX",
+      "company": "Praxis Precision Medicines, Inc",
+      "aliases": [
+        "Praxis"
+      ]
+    },
+    {
+      "ticker": "PVLA",
+      "company": "Palvella Therapeutics, Inc.",
+      "aliases": [
+        "Palvella"
+      ]
+    },
+    {
+      "ticker": "SRRK",
+      "company": "Scholar Rock Holding Corporatio",
+      "aliases": [
+        "Scholar"
+      ]
+    },
+    {
+      "ticker": "NMRA",
+      "company": "Neumora Therapeutics, Inc.",
+      "aliases": [
+        "Neumora"
+      ]
+    },
+    {
+      "ticker": "IRON",
+      "company": "Disc Medicine, Inc.",
+      "aliases": [
+        "Disc"
+      ]
+    },
+    {
+      "ticker": "ABUS",
+      "company": "Arbutus Biopharma Corporation",
+      "aliases": [
+        "Arbutus"
+      ]
+    },
+    {
+      "ticker": "KOD",
+      "company": "Kodiak Sciences Inc",
+      "aliases": [
+        "Kodiak"
+      ]
+    },
+    {
+      "ticker": "DNTH",
+      "company": "Dianthus Therapeutics, Inc.",
+      "aliases": [
+        "Dianthus"
+      ]
+    },
+    {
+      "ticker": "TSHA",
+      "company": "Taysha Gene Therapies, Inc.",
+      "aliases": [
+        "Taysha"
+      ]
+    },
+    {
+      "ticker": "PEPG",
+      "company": "PepGen Inc.",
+      "aliases": [
+        "PepGen"
+      ]
+    },
+    {
+      "ticker": "NUVL",
+      "company": "Nuvalent, Inc.",
+      "aliases": [
+        "Nuvalent"
+      ]
+    },
+    {
+      "ticker": "VERA",
+      "company": "Vera Therapeutics, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "KURA",
+      "company": "Kura Oncology, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "IMVT",
+      "company": "Immunovant, Inc.",
+      "aliases": [
+        "Immunovant"
+      ]
+    },
+    {
+      "ticker": "APGE",
+      "company": "Apogee Therapeutics, Inc.",
+      "aliases": [
+        "Apogee"
+      ]
+    },
+    {
+      "ticker": "ALMS",
+      "company": "Alumis Inc.",
+      "aliases": [
+        "Alumis"
+      ]
+    },
+    {
+      "ticker": "KALV",
+      "company": "KalVista Pharmaceuticals, Inc.",
+      "aliases": [
+        "KalVista"
+      ]
+    },
+    {
+      "ticker": "NAMS",
+      "company": "NewAmsterdam Pharma Company N.V",
+      "aliases": [
+        "NewAmsterdam"
+      ]
+    },
+    {
+      "ticker": "EYPT",
+      "company": "EyePoint, Inc.",
+      "aliases": [
+        "EyePoint"
+      ]
+    },
+    {
+      "ticker": "SLN",
+      "company": "Silence Therapeutics Plc - Amer",
+      "aliases": [
+        "Silence"
+      ]
+    },
+    {
+      "ticker": "MAZE",
+      "company": "Maze Therapeutics, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "TYRA",
+      "company": "Tyra Biosciences, Inc.",
+      "aliases": []
+    },
+    {
+      "ticker": "DSGN",
+      "company": "Design Therapeutics, Inc.",
+      "aliases": [
+        "Design"
+      ]
+    },
+    {
+      "ticker": "ANRO",
+      "company": "Alto Neuroscience, Inc.",
+      "aliases": [
+        "Alto"
+      ]
+    }
+  ]
+}
