@@ -41,6 +41,11 @@ export async function fetchBioshortWatch(): Promise<any> {
   return res.json();
 }
 
+export async function fetchTierBucketHeatmap(date: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/tier_bucket_heatmap/${date}`);
+  return res.json();
+}
+
 export async function fetchPositions(date: string): Promise<any[]> {
   const res = await fetch(`${BASE}/api/positions/${date}`);
   const data = await res.json();

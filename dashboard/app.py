@@ -481,6 +481,29 @@ async def api_crt_calibration():
     return _load_json(path) or {"error": "No calibration summary"}
 
 
+@app.get("/api/tier_bucket_heatmap/{date}")
+async def api_tier_bucket_heatmap(date: str):
+    """Tier x bucket counts for heatmap."""
+    rankings = _load_rankings(date)
+    if not rankings:
+        return {"error": f"No rankings for {date}"}
+    from collections import Counter
+
+    grid = Counter()
+    for r in rankings.values():
+        tier = r.get("tier_any", "")
+        bucket = r.get("catalyst_bucket", "")
+        if tier and bucket:
+            grid[(tier, bucket)] += 1
+    buckets = sorted(set(b for _, b in grid.keys()))
+    tiers = ["A", "B", "C", "D"]
+    return {
+        "tiers": tiers,
+        "buckets": buckets,
+        "counts": {f"{t}|{b}": grid.get((t, b), 0) for t in tiers for b in buckets},
+    }
+
+
 @app.get("/api/shadow_performance")
 async def api_shadow_performance():
     """Shadow portfolio performance timeseries."""

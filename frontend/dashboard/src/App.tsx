@@ -4,6 +4,8 @@ import TickerDetail from './TickerDetail';
 import BioshortPanel from './BioshortPanel';
 import CRTCalibration from './CRTCalibration';
 import CatalystTimeline from './CatalystTimeline';
+import TierBucketHeatmap from './TierBucketHeatmap';
+import RankChangeStrip from './RankChangeStrip';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
@@ -84,12 +86,22 @@ export default function App() {
           <div className="flex items-center justify-center h-96 text-slate-400">Loading...</div>
         ) : (
           <div className="grid grid-cols-[minmax(520px,1fr)_minmax(380px,0.7fr)] h-[calc(100vh-57px)]">
-            <div className="border-r overflow-hidden">
+            <div className="border-r overflow-hidden flex flex-col">
+              <div className="flex gap-3 p-3 overflow-auto shrink-0">
+                <div className="flex-1 min-w-[250px]">
+                  <TierBucketHeatmap date={selectedDate} />
+                </div>
+                <div className="flex-1 min-w-[250px]">
+                  <RankChangeStrip rows={rows} onSelectTicker={setSelectedTicker} />
+                </div>
+              </div>
+              <div className="flex-1 overflow-hidden">
               <RankingsTable
                 rows={rows}
                 onSelectTicker={setSelectedTicker}
                 selectedTicker={selectedTicker}
               />
+              </div>
             </div>
             <div className="overflow-hidden">
               <TickerDetail ticker={selectedTicker} date={selectedDate} />

@@ -109,6 +109,38 @@ export default function CRTCalibration() {
         </div>
       </div>
 
+      {/* Outcome × Price Direction cross-tab */}
+      <div className="rounded-xl border p-4">
+        <div className="text-sm font-medium mb-1">Outcome × Price Direction</div>
+        <div className="text-xs text-slate-400 mb-3">AQST lives in MISS + UP. Motivates separating event outcome from price reaction.</div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="bg-slate-50">
+              <th className="text-left px-3 py-2 text-xs font-medium text-slate-500"></th>
+              <th className="text-center px-3 py-2 text-xs font-medium text-emerald-600">Price UP</th>
+              <th className="text-center px-3 py-2 text-xs font-medium text-rose-600">Price DOWN</th>
+              <th className="text-center px-3 py-2 text-xs font-medium text-slate-500">FLAT/—</th>
+            </tr>
+          </thead>
+          <tbody>
+            {['HIT', 'MISS'].map(outcome => {
+              const sub = records.filter(r => r.outcome === outcome);
+              const up = sub.filter(r => r.price_direction === 'up').length;
+              const down = sub.filter(r => r.price_direction === 'down').length;
+              const flat = sub.length - up - down;
+              return (
+                <tr key={outcome} className="border-t">
+                  <td className={`px-3 py-2 font-semibold ${outcome === 'HIT' ? 'text-emerald-600' : 'text-rose-600'}`}>{outcome}</td>
+                  <td className={`text-center px-3 py-2 font-mono ${outcome === 'MISS' && up > 0 ? 'bg-amber-50 font-bold text-amber-700' : ''}`}>{up}</td>
+                  <td className="text-center px-3 py-2 font-mono">{down}</td>
+                  <td className="text-center px-3 py-2 font-mono">{flat}</td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
       {/* Resolution table */}
       <div className="rounded-xl border overflow-hidden">
         <table className="w-full text-sm">
