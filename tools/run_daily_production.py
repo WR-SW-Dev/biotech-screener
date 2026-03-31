@@ -4819,6 +4819,50 @@ def run_daily(
         except Exception as _od_err:
             _logger.warning(f"Ops digest failed: {_od_err}")
 
+        # --- Step 5m: Catalyst Resolution Tracker (non-blocking, Spec 042) ---
+        try:
+            from datetime import date as _date_cls
+
+            from tools.catalyst_resolution_tracker import run_crt
+
+            _crt_as_of = _date_cls.fromisoformat(as_of_date)
+            _crt_resolutions_dir = REPO_ROOT / "data" / "snapshots" / "resolutions"
+            _crt_result = run_crt(
+                as_of_date=_crt_as_of,
+                snapshots_dir=final_snapshots_dir,
+                resolutions_dir=_crt_resolutions_dir,
+                sec_8k_cache_dir=REPO_ROOT / "cache" / "sec" / "8k_catalysts",
+                ctgov_cache_dir=REPO_ROOT / "cache" / "ctgov",
+                pdufa_path=REPO_ROOT / "production_data" / "pdufa_dates.json",
+            )
+            _crt_n_wl = _crt_result.get("n_watchlist", 0)
+            _crt_n_new = _crt_result.get("n_new_records", 0)
+            _logger.info(f"CRT → {_crt_n_wl} watchlist, {_crt_n_new} new resolutions")
+
+            # Run calibration if first of month
+            if _crt_as_of.day == 1:
+                from datetime import timedelta as _td
+
+                from tools.crt_calibration import build_calibration_summary, evaluate_governance_triggers
+
+                _cal_period = (_crt_as_of - _td(days=1)).strftime("%Y-%m")
+                _cal_summary = build_calibration_summary(_crt_resolutions_dir, _cal_period)
+                _cal_path = _crt_resolutions_dir / "calibration_summary.json"
+                with open(_cal_path, "w") as _cal_f:
+                    import json as _json_mod
+
+                    _json_mod.dump(_cal_summary, _cal_f, indent=2, default=str)
+                    _cal_f.write("\n")
+                _logger.info(f"CRT calibration → {_cal_summary['total_resolutions']} resolutions for {_cal_period}")
+
+                _triggers = evaluate_governance_triggers(_crt_resolutions_dir, _cal_period)
+                _met = [t for t in _triggers if t["status"] == "MET"]
+                if _met:
+                    for _t in _met:
+                        _logger.info(f"CRT GOVERNANCE TRIGGER MET: {_t['trigger']}")
+        except Exception as _crt_err:
+            _logger.warning(f"CRT failed: {_crt_err}")
+
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
         # Backfill is opt-in (--price-pit-backfill) since it can be slow.
