@@ -1,0 +1,26 @@
+[
+  {
+    "ticker": "PVLA",
+    "catalyst_date": "2026-03-31",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 SELVA met primary endpoint (mLM-IGA, p<0.001); 86% much/very much improved; NDA planned H2 2026",
+    "resolution_date": "2026-03-31",
+    "source": "https://www.stocktitan.net/sec-filings/PVLA/8-k-palvella-therapeutics-inc-reports-material-event-e06f2b173bd2.html"
+  },
+  {
+    "ticker": "TBPH",
+    "catalyst_date": "2026-03-30",
+    "outcome": "MISS",
+    "outcome_detail": "Phase 3 CYPRESS did not meet primary OHSA composite endpoint for ampreloxetine in nOH; program wound down, R&D org eliminated, strategic alternatives",
+    "resolution_date": "2026-03-30",
+    "source": "https://www.stocktitan.net/sec-filings/TBPH/8-k-theravance-biopharma-inc-reports-material-event-5941432becdf.html"
+  },
+  {
+    "ticker": "CELC",
+    "catalyst_date": "2026-03-25",
+    "outcome": "HIT",
+    "outcome_detail": "NDA accepted with Priority Review; PDUFA July 17, 2026; VIKTORIA-1 PIK3CA wild-type Phase 3 data published in JCO (gedatolisib triplet PFS 9.3 vs 2.0 months, HR=0.24, p<0.0001)",
+    "resolution_date": "2026-03-25",
+    "source": "https://www.stocktitan.net/sec-filings/CELC/8-k-celcuity-inc-reports-material-event-4c332a9d76ab.html"
+  }
+]

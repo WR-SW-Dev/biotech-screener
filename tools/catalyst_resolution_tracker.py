@@ -300,21 +300,26 @@ def load_existing_resolutions(resolutions_dir: Path) -> Set[Tuple[str, str]]:
 
 
 def load_manual_overrides(resolutions_dir: Path) -> Dict[Tuple[str, str], Dict]:
-    """Load manual override entries."""
-    path = resolutions_dir / "manual_overrides.json"
-    if not path.exists():
-        return {}
-    try:
-        with open(path) as f:
-            data = json.load(f)
-        overrides = {}
-        entries = data if isinstance(data, list) else data.get("overrides", [])
-        for entry in entries:
-            key = (entry.get("ticker", ""), entry.get("catalyst_date", "")[:10])
-            overrides[key] = entry
-        return overrides
-    except Exception:
-        return {}
+    """Load manual override entries from resolutions dir and production_data."""
+    overrides: Dict[Tuple[str, str], Dict] = {}
+    # Check both locations: resolutions dir and production_data (tracked in git)
+    candidates = [
+        resolutions_dir / "manual_overrides.json",
+        PROJECT_ROOT / "production_data" / "crt_manual_overrides.json",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            entries = data if isinstance(data, list) else data.get("overrides", [])
+            for entry in entries:
+                key = (entry.get("ticker", ""), entry.get("catalyst_date", "")[:10])
+                overrides[key] = entry
+        except Exception:
+            continue
+    return overrides
 
 
 def get_prediction_snapshot(
@@ -540,6 +545,59 @@ def run_crt(
     logger.info("Watchlist: %d catalysts in window", len(watchlist))
 
     new_records: List[ResolutionRecord] = []
+
+    # Process manual overrides first — these bypass the watchlist entirely.
+    # Human-curated outcomes for events the automated calendar may not cover.
+    _override_keys_used: Set[Tuple[str, str]] = set()
+    for key, ov in overrides.items():
+        if key in existing:
+            continue
+        ticker, cat_date_str = key
+        outcome = ov.get("outcome", "")
+        if outcome not in OUTCOMES:
+            continue
+        cat_type = ov.get("catalyst_type", "PHASE_3_READOUT")
+        if cat_type not in CATALYST_TYPES:
+            cat_type = "PHASE_3_READOUT"
+
+        snap = get_prediction_snapshot(ticker, date.fromisoformat(cat_date_str), snapshots_dir)
+        dem_rank = None
+        if snap.get("dem_rank"):
+            try:
+                dem_rank = int(snap["dem_rank"])
+            except (ValueError, TypeError):
+                pass
+
+        prices_data: Dict[str, Optional[float]] = {
+            "price_t_minus_1": None,
+            "price_t_0": None,
+            "price_t_plus_5": None,
+        }
+        if price_series:
+            prices_data = get_price_reaction(ticker, date.fromisoformat(cat_date_str), price_series, as_of_date)
+
+        new_records.append(
+            ResolutionRecord(
+                ticker=ticker,
+                catalyst_date=cat_date_str,
+                catalyst_type=cat_type,
+                catalyst_description=ov.get("outcome_detail", ""),
+                resolution_date=ov.get("resolution_date", cat_date_str),
+                outcome=outcome,
+                outcome_detail=ov.get("outcome_detail", "manual override"),
+                source_type="MANUAL",
+                source_id=ov.get("source", "manual_override"),
+                prediction_snapshot_date=snap.get("snapshot_date"),
+                prediction_dem_rank=dem_rank,
+                price_t_minus_1=prices_data.get("price_t_minus_1"),
+                price_t_0=prices_data.get("price_t_0"),
+                price_t_plus_5=prices_data.get("price_t_plus_5"),
+                as_of_date=as_of_date.isoformat(),
+            )
+        )
+        _override_keys_used.add(key)
+    if _override_keys_used:
+        logger.info("Manual overrides: %d processed", len(_override_keys_used))
 
     for event in watchlist:
         ticker = event["ticker"]
