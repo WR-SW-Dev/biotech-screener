@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "AQST",
+  "catalyst_date": "2026-03-04",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "FDA issued CRL; NDA resubmission planned Q3 2026; price +6.1% (market liked resubmission path despite CRL); DEM rank unranked",
+  "resolution_date": "2026-03-04",
+  "outcome": "MISS",
+  "outcome_detail": "FDA issued CRL; NDA resubmission planned Q3 2026; price +6.1% (market liked resubmission path despite CRL); DEM rank unranked",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-03",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 4.119999885559082,
+  "price_t_0": 4.369999885559082,
+  "price_t_plus_5": 4.269999980926514,
+  "price_direction": "up",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31"
+}

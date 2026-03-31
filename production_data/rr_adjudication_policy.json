@@ -1,0 +1,44 @@
+{
+  "schema": "rr_adjudication_policy.v1",
+  "description": "Formal scoring rule for RR directional predictions in CRT calibration",
+  "effective_date": "2026-03-31",
+
+  "scoring_target": "event_outcome",
+  "scoring_target_rationale": "RR predictions are made about specific catalyst events, not general price direction. Score against whether the predicted catalyst outcome (bullish=HIT, bearish=MISS) matched the actual event resolution.",
+
+  "exogenous_event_rule": {
+    "policy": "exclude",
+    "label": "EXOGENOUS",
+    "description": "If the observed price move is driven by an unrelated event (e.g., M&A announcement, unrelated safety signal, macro shock) rather than the predicted catalyst, mark as EXOGENOUS and exclude from the weight-lock gate count.",
+    "example": "BIIB bearish RR prediction was about PDUFA. Stock fell 4% on Apellis acquisition instead. Mark EXOGENOUS — do not count as correct bearish call."
+  },
+
+  "outcome_mapping": {
+    "bullish_prediction + HIT": "CORRECT",
+    "bullish_prediction + MISS": "INCORRECT",
+    "bearish_prediction + HIT": "INCORRECT",
+    "bearish_prediction + MISS": "CORRECT",
+    "any_prediction + EXOGENOUS": "EXCLUDED",
+    "any_prediction + DELAYED": "PENDING",
+    "any_prediction + NEEDS_REVIEW": "PENDING"
+  },
+
+  "weight_lock_gate": {
+    "threshold": ">=2 of 4 predictions CORRECT (excluding EXOGENOUS/PENDING)",
+    "current_status": {
+      "CELC": {"prediction": "bearish", "outcome": "HIT", "result": "INCORRECT"},
+      "TBPH": {"prediction": "bullish_extreme", "outcome": "MISS", "result": "INCORRECT"},
+      "BIIB": {"prediction": "bearish", "outcome": "EXOGENOUS", "result": "EXCLUDED", "note": "Apellis M&A, not PDUFA. PDUFA May 24 is the clean observation."},
+      "PVLA": {"prediction": "bullish", "outcome": "HIT", "result": "CORRECT"}
+    },
+    "score": "1 correct (PVLA) / 2 incorrect (CELC, TBPH) / 1 excluded (BIIB M&A) / BIIB PDUFA May 24 pending",
+    "verdict": "PENDING — 1/3 scorable so far. If BIIB PDUFA bearish=CORRECT → 2/3 (67%) provisional pass. If INCORRECT → 1/3 signal not ready."
+  },
+
+  "fallback_rules": {
+    "if_all_4_resolved_and_less_than_2_correct": "Signal not ready. Reduce mean_rr weight to 0.0 in next candidate.",
+    "if_2_correct_out_of_4": "Provisional pass. Extend observation to next 4-6 predictions before weight-lock.",
+    "if_3_or_4_correct": "Lock weight. Proceed with promotion evaluation.",
+    "re_enable_threshold": "6/10 correct over next 10 predictions minimum"
+  }
+}
