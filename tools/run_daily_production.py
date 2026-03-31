@@ -4248,7 +4248,7 @@ def run_daily(
     if not skip_drift:
         _drift_th = drift_thresholds or DriftThresholds()
         drift_gate = _safe_gate(
-            "drift", check_drift_monitoring, staging_date_dir, final_snapshots_dir, as_of_date, _drift_th
+            "drift_monitoring", check_drift_monitoring, staging_date_dir, final_snapshots_dir, as_of_date, _drift_th
         )
         gate_results.append(drift_gate)
         _logger.info(f"Drift gate: {drift_gate.status} — {drift_gate.detail}")
