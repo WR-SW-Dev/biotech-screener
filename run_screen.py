@@ -5138,8 +5138,14 @@ def save_validation_snapshot(
         _tk = row.get("ticker", "")
         _ms_result = _ms_ticker_scores.get(_tk, {})
         if isinstance(_ms_result, dict) and _ms_result.get("status") == "SUCCESS":
-            for _field in ("ms_volatility_3yr", "ms_volatility_5yr", "ms_star_rating",
-                           "ms_return_ytd", "ms_return_annualized_3yr", "ms_return_annualized_5yr"):
+            for _field in (
+                "ms_volatility_3yr",
+                "ms_volatility_5yr",
+                "ms_star_rating",
+                "ms_return_ytd",
+                "ms_return_annualized_3yr",
+                "ms_return_annualized_5yr",
+            ):
                 row[_field] = _ms_result.get(_field, "")
                 if row[_field] is None:
                     row[_field] = ""
@@ -7883,6 +7889,26 @@ def run_screening_pipeline(
             )
 
     trial_records = load_json_data(trial_records_path, "Trials")
+
+    # PIT safety net: if we fell back to unfiltered trial_records.json, apply
+    # a runtime PIT filter so that trials with last_update_posted > as_of_date
+    # are excluded. This prevents status leakage from future updates.
+    if _ctgov_cache is None and ctgov_cache_dir is not False and trial_records:
+        _pit_cutoff = as_of_date  # inclusive same-day
+        _pre_count = len(trial_records)
+        trial_records = [
+            r
+            for r in trial_records
+            if (r.get("last_update_posted") or "9999")[:10] <= _pit_cutoff
+            and (r.get("first_posted") or "9999")[:10] <= _pit_cutoff
+        ]
+        _post_count = len(trial_records)
+        if _pre_count != _post_count:
+            logger.info(
+                f"  PIT fallback filter: {_pre_count} → {_post_count} trials "
+                f"(removed {_pre_count - _post_count} with posting date > {as_of_date})"
+            )
+
     market_records = load_json_data(data_dir / "market_data.json", "Market data")
 
     # --- Ingestion schema validation (advisory, non-blocking) ---
