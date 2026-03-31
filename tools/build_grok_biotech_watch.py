@@ -81,6 +81,14 @@ CATALYST_KEYWORDS = [
     "readout",
     "interim",
     "futility",
+    "acquire",
+    "acquisition",
+    "merger",
+    "tender offer",
+    "buyout",
+    "cvr",
+    "contingent value",
+    "definitive agreement",
 ]
 
 # Source patterns that indicate high credibility
@@ -349,9 +357,16 @@ def classify_severity(
     text = f"{title} {snippet}"
 
     has_catalyst_keyword = bool(catalyst_hit) or any(kw in text for kw in CATALYST_KEYWORDS)
-    is_credible_source = is_official or source_type in (
-        "official_company", "fda", "wire_service",
-    ) or any(s in source for s in HIGH_CREDIBILITY_PATTERNS)
+    is_credible_source = (
+        is_official
+        or source_type
+        in (
+            "official_company",
+            "fda",
+            "wire_service",
+        )
+        or any(s in source for s in HIGH_CREDIBILITY_PATTERNS)
+    )
 
     catalyst_days = ticker_context.get("catalyst_days")
     near_catalyst = catalyst_days is not None and catalyst_days <= 14
@@ -600,7 +615,7 @@ def build_grok_biotech_watch(
             _time.sleep(2)
 
         # Build query: ticker + catalyst keywords
-        cat_terms = "topline OR phase 3 OR FDA OR PDUFA OR adcom OR approval OR CRL"
+        cat_terms = "topline OR phase 3 OR FDA OR PDUFA OR adcom OR approval OR CRL OR acquisition OR merger OR buyout"
         query = f"{ticker} biotech ({cat_terms})"
 
         results = search_grok(query, api_key, max_results=5)
