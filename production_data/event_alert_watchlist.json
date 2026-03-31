@@ -11,13 +11,21 @@
       "ticker": "CNTA",
       "company": "Centessa Pharmaceuticals plc",
       "aliases": [
-        "Centessa"
+        "Centessa",
+        "ORX142",
+        "ORX750",
+        "cleminorexton"
       ]
     },
     {
       "ticker": "FDMT",
       "company": "4D Molecular Therapeutics, Inc.",
-      "aliases": []
+      "aliases": [
+        "4D Molecular",
+        "4D-150",
+        "DME",
+        "wet AMD"
+      ]
     },
     {
       "ticker": "ADCT",
@@ -28,13 +36,16 @@
       "ticker": "REPL",
       "company": "Replimune Group, Inc.",
       "aliases": [
-        "Replimune"
+        "RP1",
+        "Replimune",
+        "vusolimogene"
       ]
     },
     {
       "ticker": "ORKA",
       "company": "Oruka Therapeutics, Inc.",
       "aliases": [
+        "ORKA-001",
         "Oruka"
       ]
     },
@@ -42,25 +53,36 @@
       "ticker": "CELC",
       "company": "Celcuity Inc.",
       "aliases": [
-        "Celcuity"
+        "Celcuity",
+        "VIKTORIA",
+        "gedatolisib"
       ]
     },
     {
       "ticker": "COGT",
       "company": "Cogent Biosciences, Inc.",
       "aliases": [
-        "Cogent"
+        "Cogent",
+        "GIST",
+        "PEAK",
+        "bezuclastinib"
       ]
     },
     {
       "ticker": "CGON",
       "company": "CG Oncology, Inc.",
-      "aliases": []
+      "aliases": [
+        "CG Oncology",
+        "bladder cancer",
+        "cretostimogene"
+      ]
     },
     {
       "ticker": "ARTV",
       "company": "Artiva Biotherapeutics, Inc.",
       "aliases": [
+        "AB-101",
+        "AlloNK",
         "Artiva"
       ]
     },
@@ -75,7 +97,11 @@
       "ticker": "CRSP",
       "company": "CRISPR Therapeutics AG",
       "aliases": [
-        "CRISPR"
+        "CASGEVY",
+        "CRISPR",
+        "CRISPR Therapeutics",
+        "CTX001",
+        "exa-cel"
       ]
     },
     {
@@ -94,35 +120,49 @@
       "ticker": "RVMD",
       "company": "Revolution Medicines, Inc.",
       "aliases": [
-        "Revolution"
+        "RAS",
+        "Revolution",
+        "Revolution Medicines",
+        "daraxonrasib",
+        "zoldonrasib"
       ]
     },
     {
       "ticker": "PHVS",
       "company": "Pharvaris N.V.",
       "aliases": [
-        "Pharvaris"
+        "HAE",
+        "Pharvaris",
+        "deucrictibant"
       ]
     },
     {
       "ticker": "PRAX",
       "company": "Praxis Precision Medicines, Inc",
       "aliases": [
-        "Praxis"
+        "Praxis",
+        "essential tremor",
+        "ulixacaltamide"
       ]
     },
     {
       "ticker": "PVLA",
       "company": "Palvella Therapeutics, Inc.",
       "aliases": [
-        "Palvella"
+        "Palvella",
+        "QTORIN",
+        "SELVA",
+        "rapamycin"
       ]
     },
     {
       "ticker": "SRRK",
       "company": "Scholar Rock Holding Corporatio",
       "aliases": [
-        "Scholar"
+        "SMA",
+        "Scholar",
+        "Scholar Rock",
+        "apitegromab"
       ]
     },
     {
@@ -136,7 +176,11 @@
       "ticker": "IRON",
       "company": "Disc Medicine, Inc.",
       "aliases": [
-        "Disc"
+        "9MW3011",
+        "Disc",
+        "Disc Medicine",
+        "bitopertin",
+        "polycythemia vera"
       ]
     },
     {
@@ -150,7 +194,10 @@
       "ticker": "KOD",
       "company": "Kodiak Sciences Inc",
       "aliases": [
-        "Kodiak"
+        "GLOW2",
+        "KSI-301",
+        "Kodiak",
+        "tarcocimab"
       ]
     },
     {
@@ -164,6 +211,8 @@
       "ticker": "TSHA",
       "company": "Taysha Gene Therapies, Inc.",
       "aliases": [
+        "Rett syndrome",
+        "TSHA-102",
         "Taysha"
       ]
     },
@@ -178,18 +227,28 @@
       "ticker": "NUVL",
       "company": "Nuvalent, Inc.",
       "aliases": [
+        "ALK",
+        "NVL-655",
         "Nuvalent"
       ]
     },
     {
       "ticker": "VERA",
       "company": "Vera Therapeutics, Inc.",
-      "aliases": []
+      "aliases": [
+        "IgA nephropathy",
+        "Vera Therapeutics",
+        "atacicept"
+      ]
     },
     {
       "ticker": "KURA",
       "company": "Kura Oncology, Inc.",
-      "aliases": []
+      "aliases": [
+        "AML",
+        "Kura Oncology",
+        "ziftomenib"
+      ]
     },
     {
       "ticker": "IMVT",
