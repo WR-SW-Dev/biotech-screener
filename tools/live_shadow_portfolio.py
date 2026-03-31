@@ -936,6 +936,72 @@ def build_positions(
                     )
                 )
 
+    # --- Partial reflow: redistribute underfilled family budget ---
+    # When a family deploys less than half its allocated budget (e.g., 1
+    # REGULATORY name in a bucket with 70% REGULATORY target), the unused
+    # portion is redistributed to other families in the same bucket by
+    # scaling up their existing positions proportionally.
+    _MIN_FILL_FRACTION = 0.50  # reflow triggers below 50% fill
+    for bucket_name in BUCKET_NAMES:
+        fam_tgt = policy.get("family_targets", {}).get(bucket_name)
+        if not fam_tgt:
+            continue
+        target_frac = bucket_targets.get(bucket_name, 0)
+        if target_frac <= 0:
+            continue
+        bucket_budget_pct = target_frac * 100.0
+
+        b_pos = [p for p in positions if p["bucket"] == bucket_name]
+        if not b_pos:
+            continue
+
+        # Measure deployed weight per family
+        deployed_by_fam: Dict[str, float] = {}
+        budget_by_fam: Dict[str, float] = {}
+        for fam_name, fam_share in fam_tgt.items():
+            fam_pos = [p for p in b_pos if p.get("effective_family") == fam_name]
+            deployed = sum(p["weight_pct"] for p in fam_pos)
+            budget = bucket_budget_pct * fam_share
+            deployed_by_fam[fam_name] = deployed
+            budget_by_fam[fam_name] = budget
+
+        # Find underfilled families and compute reflow amount
+        reflow_available = 0.0
+        for fam_name, budget in budget_by_fam.items():
+            deployed = deployed_by_fam.get(fam_name, 0)
+            if budget > 0 and deployed < budget * _MIN_FILL_FRACTION:
+                reflow_available += budget - deployed
+
+        if reflow_available < 0.01:
+            continue
+
+        # Find recipient families (those that deployed >= 50% of budget)
+        recipient_fams = [
+            f for f, b in budget_by_fam.items() if b > 0 and deployed_by_fam.get(f, 0) >= b * _MIN_FILL_FRACTION
+        ]
+        if not recipient_fams:
+            continue
+
+        # Scale up recipient positions proportionally
+        recipient_pos = [
+            p for p in positions if p["bucket"] == bucket_name and p.get("effective_family") in recipient_fams
+        ]
+        if not recipient_pos:
+            continue
+
+        current_recipient_wt = sum(p["weight_pct"] for p in recipient_pos)
+        if current_recipient_wt < 0.01:
+            continue
+
+        scale = 1.0 + (reflow_available / current_recipient_wt)
+        bucket_cap = bucket_name_caps.get(bucket_name, 3.0)
+        for p in recipient_pos:
+            fam_cap_cfg = policy.get("family_overrides", {}).get(bucket_name, {})
+            fam_cap = fam_cap_cfg.get(p.get("effective_family", ""), {}).get("name_cap_pct", bucket_cap)
+            new_wt = min(p["weight_pct"] * scale, fam_cap)
+            p["weight_pct"] = round(new_wt, 4)
+            p["target_dollars"] = round(new_wt / 100.0 * acct, 2)
+
     # Trim overage if total > account
     total = sum(p["target_dollars"] for p in positions)
     if total > acct and positions:
