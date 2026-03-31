@@ -114,23 +114,25 @@ def _fetch_url(url: str) -> Optional[str]:
 def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease]:
     """Extract press releases from GlobeNewswire search results."""
     releases = []
-    # Simple pattern matching for GlobeNewswire result pages
-    # Look for result links with dates
+    seen_urls: set = set()
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Pattern: <a href="/news-release/YYYY/MM/DD/...">Headline text</a>
+    # GlobeNewswire uses class="mainLink" wrapping these links
     pattern = re.compile(
-        r'href="(/news-release/\d{4}/\d{2}/\d{2}/\d+/\d+/en/[^"]+)"[^>]*>' r"[^<]*<[^>]*>([^<]+)",
+        r'href="(/news-release/(\d{4})/(\d{2})/(\d{2})/\d+/\d+/en/([^"]+))"[^>]*>([^<]+)',
         re.IGNORECASE,
     )
     for match in pattern.finditer(html):
-        path, headline = match.groups()
+        path, year, month, day, slug, headline = match.groups()
         headline = headline.strip()
         if not headline or len(headline) < 10:
             continue
         url = urljoin("https://www.globenewswire.com", path)
-        # Extract date from URL path
-        date_match = re.search(r"/(\d{4})/(\d{2})/(\d{2})/", path)
-        pub_date = ""
-        if date_match:
-            pub_date = f"{date_match.group(1)}-{date_match.group(2)}-{date_match.group(3)}"
+        if url in seen_urls:
+            continue
+        seen_urls.add(url)
+        pub_date = f"{year}-{month}-{day}"
 
         releases.append(
             PressRelease(
@@ -139,10 +141,10 @@ def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease
                 published_at_utc=pub_date,
                 source_url=url,
                 source_type="globenewswire",
-                fetched_at_utc=datetime.now(timezone.utc).isoformat(),
+                fetched_at_utc=now,
             )
         )
-    return releases[:20]  # Cap at 20 most recent
+    return releases[:20]
 
 
 def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[PressRelease]:
