@@ -5,14 +5,28 @@ Closes the prediction -> resolution -> calibration loop by detecting
 when binary catalysts resolve and recording structured outcomes.
 
 Phase 1: schemas, watchlist construction, deterministic outcome classification.
+Phase 2: source adapters, prediction snapshots, price capture, main runner.
+
+Usage:
+    python tools/catalyst_resolution_tracker.py --as-of-date 2026-03-31
+    python tools/catalyst_resolution_tracker.py --as-of-date 2026-03-31 --dry-run
 """
 from __future__ import annotations
 
+import argparse
+import csv
 import hashlib
 import json
+import logging
+import sys
 from dataclasses import dataclass
 from datetime import date, timedelta
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+logger = logging.getLogger(__name__)
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 SCHEMA_VERSION = "1.0.0"
 
@@ -220,3 +234,495 @@ def classify_outcome(
         return "NEEDS_REVIEW"
 
     return "NEEDS_REVIEW"
+
+
+# ---------------------------------------------------------------------------
+# Phase 2: Source adapters
+# ---------------------------------------------------------------------------
+
+
+def load_8k_events(cache_dir: Path, as_of_date: date) -> List[Dict[str, Any]]:
+    """Load 8-K catalyst events from the SEC cache."""
+    candidates = sorted(cache_dir.glob("8k_catalysts_*.json"), reverse=True)
+    for f in candidates:
+        parts = f.stem.split("_")
+        if len(parts) >= 3:
+            file_date = parts[2]
+            if file_date <= as_of_date.isoformat():
+                with open(f) as fh:
+                    data = json.load(fh)
+                if isinstance(data, list):
+                    return data
+    return []
+
+
+def load_ctgov_trials(cache_dir: Path, as_of_date: date) -> List[Dict[str, Any]]:
+    """Load CTGov trial records from cache."""
+    trial_path = cache_dir / f"trial_records_{as_of_date.isoformat()}.json"
+    if not trial_path.exists():
+        candidates = sorted(cache_dir.glob("trial_records_*.json"), reverse=True)
+        candidates = [c for c in candidates if c.stem.split("_")[-1] <= as_of_date.isoformat()]
+        trial_path = candidates[0] if candidates else None
+    if trial_path and trial_path.exists():
+        with open(trial_path) as f:
+            data = json.load(f)
+        if isinstance(data, list):
+            return data
+    return []
+
+
+def load_pdufa_dates(path: Path) -> List[Dict[str, Any]]:
+    """Load PDUFA dates from production data."""
+    if not path.exists():
+        return []
+    with open(path) as f:
+        return json.load(f)
+
+
+def load_existing_resolutions(resolutions_dir: Path) -> Set[Tuple[str, str]]:
+    """Load set of (ticker, catalyst_date) from existing resolution records."""
+    resolved: Set[Tuple[str, str]] = set()
+    if not resolutions_dir.exists():
+        return resolved
+    for f in resolutions_dir.glob("**/*.json"):
+        if f.name in ("calibration_summary.json", "manual_overrides.json", "watchlist_current.json"):
+            continue
+        try:
+            with open(f) as fh:
+                rec = json.load(fh)
+            ticker = rec.get("ticker", "")
+            cat_date = rec.get("catalyst_date", "")
+            if ticker and cat_date:
+                resolved.add((ticker, cat_date[:10]))
+        except Exception:
+            continue
+    return resolved
+
+
+def load_manual_overrides(resolutions_dir: Path) -> Dict[Tuple[str, str], Dict]:
+    """Load manual override entries."""
+    path = resolutions_dir / "manual_overrides.json"
+    if not path.exists():
+        return {}
+    try:
+        with open(path) as f:
+            data = json.load(f)
+        overrides = {}
+        entries = data if isinstance(data, list) else data.get("overrides", [])
+        for entry in entries:
+            key = (entry.get("ticker", ""), entry.get("catalyst_date", "")[:10])
+            overrides[key] = entry
+        return overrides
+    except Exception:
+        return {}
+
+
+def get_prediction_snapshot(
+    ticker: str,
+    catalyst_date: date,
+    snapshots_dir: Path,
+) -> Dict[str, Any]:
+    """Find the most recent rankings snapshot before catalyst_date."""
+    snap_dates = sorted(
+        [
+            d.name
+            for d in snapshots_dir.iterdir()
+            if d.is_dir() and not d.name.startswith("_") and "__pre" not in d.name and (d / "rankings.csv").exists()
+        ],
+        reverse=True,
+    )
+
+    target = catalyst_date.isoformat()
+    snapshot_date = None
+    for sd in snap_dates:
+        if sd < target:
+            snapshot_date = sd
+            break
+
+    if snapshot_date is None:
+        return {"status": "MISSING_SNAPSHOT"}
+
+    rankings_path = snapshots_dir / snapshot_date / "rankings.csv"
+    with open(rankings_path) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            if row.get("ticker") == ticker:
+                return {
+                    "status": "OK",
+                    "snapshot_date": snapshot_date,
+                    "dem_rank": row.get("actionable_rank", ""),
+                    "tier": row.get("tier_any", ""),
+                    "composite_score": row.get("composite_score", ""),
+                }
+    return {"status": "TICKER_NOT_IN_SNAPSHOT", "snapshot_date": snapshot_date}
+
+
+def get_price_reaction(
+    ticker: str,
+    resolution_date: date,
+    prices: Dict[str, Dict[str, float]],
+    as_of_date: date,
+) -> Dict[str, Optional[float]]:
+    """Capture T-1, T+0, T+5 prices around resolution date."""
+    tp = prices.get(ticker, {})
+    sorted_dates = sorted(tp.keys())
+    if not sorted_dates:
+        return {"price_t_minus_1": None, "price_t_0": None, "price_t_plus_5": None}
+
+    def _closest(target_date: date, offset: int) -> Optional[float]:
+        t = (target_date + timedelta(days=offset)).isoformat()
+        if t > as_of_date.isoformat():
+            return None
+        candidates = [d for d in sorted_dates if d <= t]
+        return tp[candidates[-1]] if candidates else None
+
+    return {
+        "price_t_minus_1": _closest(resolution_date, -1),
+        "price_t_0": _closest(resolution_date, 0),
+        "price_t_plus_5": _closest(resolution_date, 7),
+    }
+
+
+def build_catalyst_calendar(
+    pdufa_entries: List[Dict[str, Any]],
+    sec_8k_events: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Build unified catalyst calendar from PDUFA + 8-K sources."""
+    calendar: List[Dict[str, Any]] = []
+    seen: Set[Tuple[str, str]] = set()
+
+    type_map = {
+        "DATA_READOUT": "PHASE_3_READOUT",
+        "FDA_PDUFA_DATE": "PDUFA_ACTION",
+        "FDA_ADVISORY_COMMITTEE": "ADVISORY_COMMITTEE",
+        "NDA_BLA_FILING": "NDA_BLA_FILING",
+        "REGULATORY_DESIGNATION": "REGULATORY_DESIGNATION",
+    }
+
+    for p in pdufa_entries:
+        ticker = p.get("ticker", "")
+        pdufa_date = p.get("pdufa_date", "")
+        if ticker and pdufa_date:
+            key = (ticker, pdufa_date[:10])
+            if key not in seen:
+                calendar.append(
+                    {
+                        "ticker": ticker,
+                        "catalyst_date": pdufa_date[:10],
+                        "catalyst_type": "PDUFA_ACTION",
+                        "description": f"PDUFA: {p.get('drug_name', '')} — {p.get('indication', '')}",
+                        "source": "PDUFA",
+                        "is_hard": True,
+                    }
+                )
+                seen.add(key)
+
+    for ev in sec_8k_events:
+        ticker = ev.get("ticker", "")
+        ev_date = ev.get("event_date", "")
+        ev_type = ev.get("event_type", "")
+        if not ticker or not ev_date:
+            continue
+        key = (ticker, ev_date[:10])
+        if key in seen:
+            continue
+        cat_type = type_map.get(ev_type, "CORPORATE_UPDATE")
+        if cat_type not in CATALYST_TYPES:
+            cat_type = "CORPORATE_UPDATE"
+        calendar.append(
+            {
+                "ticker": ticker,
+                "catalyst_date": ev_date[:10],
+                "catalyst_type": cat_type,
+                "description": ev.get("event_name", ""),
+                "source": "SEC_8K",
+                "is_hard": ev.get("confidence", "") == "HIGH",
+            }
+        )
+        seen.add(key)
+
+    return calendar
+
+
+def check_8k_for_resolution(
+    ticker: str,
+    sec_8k_events: List[Dict[str, Any]],
+    catalyst_date: date,
+    as_of_date: date,
+) -> Optional[Dict[str, Any]]:
+    """Check 8-K events for a resolution signal near the catalyst date."""
+    window_start = catalyst_date - timedelta(days=7)
+    window_end = min(catalyst_date + timedelta(days=30), as_of_date)
+
+    for ev in sec_8k_events:
+        if ev.get("ticker") != ticker:
+            continue
+        ev_date_str = ev.get("disclosed_at", ev.get("event_date", ""))
+        if not ev_date_str:
+            continue
+        try:
+            ev_date = date.fromisoformat(ev_date_str[:10])
+        except ValueError:
+            continue
+        if window_start <= ev_date <= window_end:
+            return {
+                "headline": ev.get("event_name", ""),
+                "source_type": "SEC_8K",
+                "source_id": f"8K_{ev_date_str[:10]}_{ticker}",
+                "resolution_date": ev_date_str[:10],
+            }
+    return None
+
+
+def check_ctgov_for_resolution(
+    ticker: str,
+    trial_records: List[Dict[str, Any]],
+    catalyst_date: date,
+) -> Optional[Dict[str, Any]]:
+    """Check CTGov trial status for resolution signals."""
+    for tr in trial_records:
+        if tr.get("ticker") != ticker:
+            continue
+        status = tr.get("status", "")
+        pcd = tr.get("primary_completion_date", "")
+        if not pcd:
+            continue
+        try:
+            pcd_date = date.fromisoformat(pcd[:10])
+        except ValueError:
+            continue
+        if abs((pcd_date - catalyst_date).days) > 30:
+            continue
+        if status in ("TERMINATED", "WITHDRAWN", "SUSPENDED", "COMPLETED"):
+            return {
+                "ctgov_status_to": status,
+                "source_type": "CTGOV_STATUS",
+                "source_id": tr.get("nct_id", ""),
+                "resolution_date": catalyst_date.isoformat(),
+            }
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Main runner
+# ---------------------------------------------------------------------------
+
+
+def run_crt(
+    as_of_date: date,
+    snapshots_dir: Path,
+    resolutions_dir: Path,
+    sec_8k_cache_dir: Path,
+    ctgov_cache_dir: Path,
+    pdufa_path: Path,
+    price_series: Optional[Dict[str, Dict[str, float]]] = None,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Run the CRT for a given date. Returns summary dict."""
+    resolutions_dir.mkdir(parents=True, exist_ok=True)
+
+    sec_8k_events = load_8k_events(sec_8k_cache_dir, as_of_date)
+    trial_records = load_ctgov_trials(ctgov_cache_dir, as_of_date)
+    pdufa_entries = load_pdufa_dates(pdufa_path)
+    existing = load_existing_resolutions(resolutions_dir)
+    overrides = load_manual_overrides(resolutions_dir)
+
+    logger.info(
+        "CRT sources: %d 8K events, %d trials, %d PDUFA, %d existing",
+        len(sec_8k_events),
+        len(trial_records),
+        len(pdufa_entries),
+        len(existing),
+    )
+
+    calendar = build_catalyst_calendar(pdufa_entries, sec_8k_events)
+    watchlist = build_watchlist(calendar, as_of_date, existing)
+    logger.info("Watchlist: %d catalysts in window", len(watchlist))
+
+    new_records: List[ResolutionRecord] = []
+
+    for event in watchlist:
+        ticker = event["ticker"]
+        cat_date_str = event["catalyst_date"]
+        cat_date = date.fromisoformat(cat_date_str[:10])
+        cat_type = event.get("catalyst_type", "CORPORATE_UPDATE")
+
+        override_key = (ticker, cat_date_str[:10])
+        if override_key in overrides:
+            ov = overrides[override_key]
+            outcome = ov.get("outcome", "NEEDS_REVIEW")
+            if outcome in OUTCOMES:
+                new_records.append(
+                    ResolutionRecord(
+                        ticker=ticker,
+                        catalyst_date=cat_date_str[:10],
+                        catalyst_type=cat_type,
+                        catalyst_description=event.get("description", ""),
+                        resolution_date=ov.get("resolution_date", cat_date_str[:10]),
+                        outcome=outcome,
+                        outcome_detail=ov.get("outcome_detail", "manual override"),
+                        source_type="MANUAL",
+                        source_id="manual_override",
+                        as_of_date=as_of_date.isoformat(),
+                    )
+                )
+                continue
+
+        _8k = check_8k_for_resolution(ticker, sec_8k_events, cat_date, as_of_date)
+        _ctgov = check_ctgov_for_resolution(ticker, trial_records, cat_date)
+
+        if not _8k and not _ctgov:
+            if (as_of_date - cat_date).days > 7:
+                outcome = "DELAYED"
+            else:
+                continue
+        else:
+            headline = _8k.get("headline", "") if _8k else ""
+            ctgov_to = _ctgov.get("ctgov_status_to") if _ctgov else None
+            outcome = classify_outcome(cat_type, headline=headline, ctgov_status_to=ctgov_to)
+
+        source_type = "SEC_8K"
+        source_id = ""
+        resolution_date = cat_date_str[:10]
+        if _8k:
+            source_type = _8k["source_type"]
+            source_id = _8k["source_id"]
+            resolution_date = _8k.get("resolution_date", cat_date_str[:10])
+        elif _ctgov:
+            source_type = _ctgov["source_type"]
+            source_id = _ctgov["source_id"]
+
+        snap = get_prediction_snapshot(ticker, cat_date, snapshots_dir)
+        dem_rank = None
+        if snap.get("dem_rank"):
+            try:
+                dem_rank = int(snap["dem_rank"])
+            except (ValueError, TypeError):
+                pass
+
+        prices_data: Dict[str, Optional[float]] = {
+            "price_t_minus_1": None,
+            "price_t_0": None,
+            "price_t_plus_5": None,
+        }
+        if price_series:
+            prices_data = get_price_reaction(ticker, cat_date, price_series, as_of_date)
+
+        new_records.append(
+            ResolutionRecord(
+                ticker=ticker,
+                catalyst_date=cat_date_str[:10],
+                catalyst_type=cat_type,
+                catalyst_description=event.get("description", ""),
+                resolution_date=resolution_date,
+                outcome=outcome,
+                outcome_detail=(_8k.get("headline", "") if _8k else "")[:200],
+                source_type=source_type,
+                source_id=source_id,
+                prediction_snapshot_date=snap.get("snapshot_date"),
+                prediction_dem_rank=dem_rank,
+                price_t_minus_1=prices_data.get("price_t_minus_1"),
+                price_t_0=prices_data.get("price_t_0"),
+                price_t_plus_5=prices_data.get("price_t_plus_5"),
+                days_from_expected=(as_of_date - cat_date).days if _8k or _ctgov else None,
+                as_of_date=as_of_date.isoformat(),
+            )
+        )
+
+    written = 0
+    for record in new_records:
+        record_hash = compute_record_hash(record)
+        month_dir = resolutions_dir / record.catalyst_date[:7]
+        month_dir.mkdir(parents=True, exist_ok=True)
+        out_path = month_dir / f"{record.ticker}_{record.catalyst_date}.json"
+
+        if out_path.exists():
+            logger.info("  SKIP (exists): %s", out_path.name)
+            continue
+
+        out_data = record.to_dict()
+        out_data["record_hash"] = record_hash
+
+        if dry_run:
+            logger.info("  DRY-RUN: %s [%s]", out_path.name, record.outcome)
+        else:
+            with open(out_path, "w") as f:
+                json.dump(out_data, f, indent=2, default=str)
+                f.write("\n")
+            logger.info("  WROTE: %s [%s]", out_path.name, record.outcome)
+        written += 1
+
+    wl_path = resolutions_dir / "watchlist_current.json"
+    wl_data = {
+        "as_of_date": as_of_date.isoformat(),
+        "n_watchlist": len(watchlist),
+        "n_resolved_today": written,
+        "n_existing": len(existing),
+        "watchlist": [
+            {"ticker": w["ticker"], "catalyst_date": w["catalyst_date"], "catalyst_type": w.get("catalyst_type", "")}
+            for w in watchlist
+        ],
+    }
+    if not dry_run:
+        with open(wl_path, "w") as f:
+            json.dump(wl_data, f, indent=2)
+            f.write("\n")
+
+    return {
+        "as_of_date": as_of_date.isoformat(),
+        "n_watchlist": len(watchlist),
+        "n_new_records": written,
+        "n_existing": len(existing),
+        "records": [r.to_dict() for r in new_records],
+    }
+
+
+def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+    parser = argparse.ArgumentParser(description="Catalyst Resolution Tracker (Spec 042)")
+    parser.add_argument("--as-of-date", required=True, help="Snapshot date (YYYY-MM-DD)")
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--resolutions-dir",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "snapshots" / "resolutions",
+    )
+    args = parser.parse_args()
+
+    as_of = date.fromisoformat(args.as_of_date)
+
+    price_series: Dict[str, Dict[str, float]] = {}
+    price_path = PROJECT_ROOT / "production_data" / "price_history.csv"
+    if price_path.exists():
+        with open(price_path) as f:
+            for row in csv.DictReader(f):
+                t = row.get("ticker") or row.get("symbol", "")
+                d = row.get("date", "")
+                c = row.get("close", "")
+                if t and d and c:
+                    try:
+                        price_series.setdefault(t, {})[d] = float(c)
+                    except ValueError:
+                        pass
+
+    result = run_crt(
+        as_of_date=as_of,
+        snapshots_dir=PROJECT_ROOT / "data" / "snapshots",
+        resolutions_dir=args.resolutions_dir,
+        sec_8k_cache_dir=PROJECT_ROOT / "cache" / "sec" / "8k_catalysts",
+        ctgov_cache_dir=PROJECT_ROOT / "cache" / "ctgov",
+        pdufa_path=PROJECT_ROOT / "production_data" / "pdufa_dates.json",
+        price_series=price_series,
+        dry_run=args.dry_run,
+    )
+
+    print(f"CRT: {result['n_watchlist']} in watchlist, {result['n_new_records']} new resolutions")
+    for rec in result["records"]:
+        print(f"  {rec['ticker']} {rec['catalyst_type']} -> {rec['outcome']} ({rec['source_type']})")
+
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
