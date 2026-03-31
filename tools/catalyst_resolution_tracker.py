@@ -97,6 +97,7 @@ class ResolutionRecord:
     price_t_minus_1: Optional[float] = None
     price_t_0: Optional[float] = None
     price_t_plus_5: Optional[float] = None
+    price_direction: Optional[str] = None  # up / down / flat (separate from outcome)
     days_from_expected: Optional[int] = None
     as_of_date: str = ""
     schema_version: str = SCHEMA_VERSION
@@ -127,6 +128,7 @@ class ResolutionRecord:
         d["price_t_minus_1"] = self.price_t_minus_1
         d["price_t_0"] = self.price_t_0
         d["price_t_plus_5"] = self.price_t_plus_5
+        d["price_direction"] = self.price_direction
         d["days_from_expected"] = self.days_from_expected
         d["as_of_date"] = self.as_of_date
         return d
@@ -239,6 +241,20 @@ def classify_outcome(
 # ---------------------------------------------------------------------------
 # Phase 2: Source adapters
 # ---------------------------------------------------------------------------
+
+
+def _compute_price_direction(
+    t_minus_1: Optional[float], t_0: Optional[float], threshold: float = 0.02
+) -> Optional[str]:
+    """Classify price direction from T-1 to T0. Separate from event outcome."""
+    if t_minus_1 is None or t_0 is None or t_minus_1 <= 0:
+        return None
+    ret = (t_0 - t_minus_1) / t_minus_1
+    if ret > threshold:
+        return "up"
+    if ret < -threshold:
+        return "down"
+    return "flat"
 
 
 def load_8k_events(cache_dir: Path, as_of_date: date) -> List[Dict[str, Any]]:
@@ -592,6 +608,9 @@ def run_crt(
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),
+                price_direction=_compute_price_direction(
+                    prices_data.get("price_t_minus_1"), prices_data.get("price_t_0")
+                ),
                 as_of_date=as_of_date.isoformat(),
             )
         )
@@ -682,6 +701,9 @@ def run_crt(
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),
+                price_direction=_compute_price_direction(
+                    prices_data.get("price_t_minus_1"), prices_data.get("price_t_0")
+                ),
                 days_from_expected=(as_of_date - cat_date).days if _8k or _ctgov else None,
                 as_of_date=as_of_date.isoformat(),
             )
