@@ -2,10 +2,11 @@ import { useEffect, useState } from 'react';
 import RankingsTable from './RankingsTable';
 import TickerDetail from './TickerDetail';
 import BioshortPanel from './BioshortPanel';
+import CRTCalibration from './CRTCalibration';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
-type View = 'screener' | 'bioshort';
+type View = 'screener' | 'bioshort' | 'calibration';
 
 export default function App() {
   const [view, setView] = useState<View>('screener');
@@ -34,9 +35,14 @@ export default function App() {
     });
   }, [selectedDate]);
 
+  const tabs: { key: View; label: string }[] = [
+    { key: 'screener', label: 'Screener' },
+    { key: 'bioshort', label: 'Bioshort' },
+    { key: 'calibration', label: 'Calibration' },
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50">
-      {/* Header */}
       <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <div>
@@ -44,22 +50,17 @@ export default function App() {
             <h1 className="text-lg font-semibold">Biotech Screener</h1>
           </div>
           <nav className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setView('screener')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
-                view === 'screener' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Screener
-            </button>
-            <button
-              onClick={() => setView('bioshort')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
-                view === 'bioshort' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Bioshort
-            </button>
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setView(t.key)}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                  view === t.key ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
           </nav>
         </div>
         <div className="flex items-center gap-3">
@@ -76,7 +77,6 @@ export default function App() {
         </div>
       </header>
 
-      {/* Screener view */}
       {view === 'screener' && (
         loading ? (
           <div className="flex items-center justify-center h-96 text-slate-400">Loading...</div>
@@ -96,11 +96,14 @@ export default function App() {
         )
       )}
 
-      {/* Bioshort view */}
       {view === 'bioshort' && (
         <div className="max-w-3xl mx-auto py-6">
           <BioshortPanel />
         </div>
+      )}
+
+      {view === 'calibration' && (
+        <CRTCalibration />
       )}
     </div>
   );
