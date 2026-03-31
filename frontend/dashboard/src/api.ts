@@ -40,3 +40,9 @@ export async function fetchBioshortWatch(): Promise<any> {
   const res = await fetch(`${BASE}/api/bioshort/watch`);
   return res.json();
 }
+
+export async function fetchPositions(date: string): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/positions/${date}`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}

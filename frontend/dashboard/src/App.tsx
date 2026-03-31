@@ -3,10 +3,11 @@ import RankingsTable from './RankingsTable';
 import TickerDetail from './TickerDetail';
 import BioshortPanel from './BioshortPanel';
 import CRTCalibration from './CRTCalibration';
+import CatalystTimeline from './CatalystTimeline';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
-type View = 'screener' | 'bioshort' | 'calibration';
+type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts';
 
 export default function App() {
   const [view, setView] = useState<View>('screener');
@@ -39,6 +40,7 @@ export default function App() {
     { key: 'screener', label: 'Screener' },
     { key: 'bioshort', label: 'Bioshort' },
     { key: 'calibration', label: 'Calibration' },
+    { key: 'catalysts', label: 'Catalysts' },
   ];
 
   return (
@@ -104,6 +106,10 @@ export default function App() {
 
       {view === 'calibration' && (
         <CRTCalibration />
+      )}
+
+      {view === 'catalysts' && (
+        <CatalystTimeline rows={rows} onSelectTicker={(t) => { setSelectedTicker(t); setView('screener'); }} />
       )}
     </div>
   );
