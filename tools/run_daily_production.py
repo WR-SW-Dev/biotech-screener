@@ -4854,6 +4854,47 @@ def run_daily(
         except Exception as _od_err:
             _logger.warning(f"Ops digest failed: {_od_err}")
 
+        # --- Step 5l.5: Company News Ingest (Herald agent, non-blocking, Spec 044) ---
+        try:
+            import subprocess as _sp_herald
+
+            _herald_result = _sp_herald.run(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "fetch_company_press_releases.py"),
+                    "--as-of-date",
+                    as_of_date,
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
+                cwd=str(REPO_ROOT),
+            )
+            _herald_lines = (_herald_result.stdout or "").strip().split("\n")
+            _herald_summary = _herald_lines[-1] if _herald_lines else "no output"
+            _logger.info(f"Herald (PR ingest) → {_herald_summary}")
+
+            # Classify if releases were found
+            _releases_path = REPO_ROOT / "data" / "press_releases" / f"releases_{as_of_date}.jsonl"
+            if _releases_path.exists() and _releases_path.stat().st_size > 0:
+                _classify_result = _sp_herald.run(
+                    [
+                        sys.executable,
+                        str(REPO_ROOT / "tools" / "classify_press_releases.py"),
+                        "--input",
+                        str(_releases_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    cwd=str(REPO_ROOT),
+                )
+                _classify_lines = (_classify_result.stdout or "").strip().split("\n")
+                _classify_summary = _classify_lines[-1] if _classify_lines else "no output"
+                _logger.info(f"Herald (classify) → {_classify_summary}")
+        except Exception as _herald_err:
+            _logger.warning(f"Herald failed: {_herald_err}")
+
         # --- Step 5m: Catalyst Resolution Tracker (non-blocking, Spec 042) ---
         try:
             from datetime import date as _date_cls
