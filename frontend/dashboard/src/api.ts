@@ -25,3 +25,18 @@ export async function fetchShadowPerformance(): Promise<any[]> {
   const res = await fetch(`${BASE}/api/shadow_performance`);
   return res.json();
 }
+
+export async function fetchBioshortVerdict(): Promise<any> {
+  const res = await fetch(`${BASE}/api/bioshort/verdict`);
+  return res.json();
+}
+
+export async function fetchBioshortReport(): Promise<any> {
+  const res = await fetch(`${BASE}/api/bioshort/report`);
+  return res.json();
+}
+
+export async function fetchBioshortWatch(): Promise<any> {
+  const res = await fetch(`${BASE}/api/bioshort/watch`);
+  return res.json();
+}

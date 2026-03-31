@@ -487,6 +487,51 @@ async def api_shadow_performance():
     return _load_shadow_performance()
 
 
+@app.get("/api/bioshort/verdict")
+async def api_bioshort_verdict():
+    """Latest bioshort verdict."""
+    path = REPO_ROOT / "output" / "hedge_report" / "BIOSHORT_VERDICT.json"
+    return _load_json(path) or {"error": "No bioshort verdict"}
+
+
+@app.get("/api/bioshort/report")
+async def api_bioshort_report():
+    """Latest bioshort hedge report detail."""
+    report_dir = REPO_ROOT / "output" / "hedge_report"
+    if not report_dir.exists():
+        return {"error": "No hedge reports"}
+    files = sorted(report_dir.glob("hedge_report_*.json"), reverse=True)
+    if not files:
+        return {"error": "No hedge report files"}
+    return _load_json(files[0]) or {"error": "Failed to load report"}
+
+
+@app.get("/api/bioshort/watch")
+async def api_bioshort_watch():
+    """Latest bioshort watch alerts."""
+    return _load_bioshort_watch() or {"error": "No bioshort watch"}
+
+
+@app.get("/api/bioshort/archive")
+async def api_bioshort_archive():
+    """List of archived bioshort reports."""
+    report_dir = REPO_ROOT / "output" / "hedge_report"
+    if not report_dir.exists():
+        return []
+    files = sorted(report_dir.glob("hedge_report_*.json"), reverse=True)
+    archive = []
+    for f in files[:20]:
+        data = _load_json(f)
+        if data:
+            archive.append(
+                {
+                    "date": data.get("as_of_date", f.stem.split("_")[-1]),
+                    "file": f.name,
+                }
+            )
+    return archive
+
+
 if __name__ == "__main__":
     import argparse
 

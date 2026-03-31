@@ -1,17 +1,20 @@
 import { useEffect, useState } from 'react';
 import RankingsTable from './RankingsTable';
 import TickerDetail from './TickerDetail';
+import BioshortPanel from './BioshortPanel';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
+type View = 'screener' | 'bioshort';
+
 export default function App() {
+  const [view, setView] = useState<View>('screener');
   const [dates, setDates] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
   const [rows, setRows] = useState<any[]>([]);
   const [selectedTicker, setSelectedTicker] = useState('');
   const [loading, setLoading] = useState(true);
 
-  // Load dates on mount
   useEffect(() => {
     fetchDates().then((d) => {
       setDates(d);
@@ -19,7 +22,6 @@ export default function App() {
     });
   }, []);
 
-  // Load rankings when date changes
   useEffect(() => {
     if (!selectedDate) return;
     setLoading(true);
@@ -36,9 +38,29 @@ export default function App() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="bg-white border-b px-6 py-3 flex items-center justify-between">
-        <div>
-          <div className="text-xs font-medium uppercase tracking-widest text-slate-400">Wake Robin</div>
-          <h1 className="text-lg font-semibold">Biotech Screener</h1>
+        <div className="flex items-center gap-6">
+          <div>
+            <div className="text-xs font-medium uppercase tracking-widest text-slate-400">Wake Robin</div>
+            <h1 className="text-lg font-semibold">Biotech Screener</h1>
+          </div>
+          <nav className="flex gap-1 bg-slate-100 rounded-lg p-0.5">
+            <button
+              onClick={() => setView('screener')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                view === 'screener' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Screener
+            </button>
+            <button
+              onClick={() => setView('bioshort')}
+              className={`px-4 py-1.5 text-sm font-medium rounded-md transition ${
+                view === 'bioshort' ? 'bg-white shadow-sm text-slate-900' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Bioshort
+            </button>
+          </nav>
         </div>
         <div className="flex items-center gap-3">
           <select
@@ -54,21 +76,30 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main layout */}
-      {loading ? (
-        <div className="flex items-center justify-center h-96 text-slate-400">Loading...</div>
-      ) : (
-        <div className="grid grid-cols-[minmax(520px,1fr)_minmax(380px,0.7fr)] h-[calc(100vh-57px)]">
-          <div className="border-r overflow-hidden">
-            <RankingsTable
-              rows={rows}
-              onSelectTicker={setSelectedTicker}
-              selectedTicker={selectedTicker}
-            />
+      {/* Screener view */}
+      {view === 'screener' && (
+        loading ? (
+          <div className="flex items-center justify-center h-96 text-slate-400">Loading...</div>
+        ) : (
+          <div className="grid grid-cols-[minmax(520px,1fr)_minmax(380px,0.7fr)] h-[calc(100vh-57px)]">
+            <div className="border-r overflow-hidden">
+              <RankingsTable
+                rows={rows}
+                onSelectTicker={setSelectedTicker}
+                selectedTicker={selectedTicker}
+              />
+            </div>
+            <div className="overflow-hidden">
+              <TickerDetail ticker={selectedTicker} date={selectedDate} />
+            </div>
           </div>
-          <div className="overflow-hidden">
-            <TickerDetail ticker={selectedTicker} date={selectedDate} />
-          </div>
+        )
+      )}
+
+      {/* Bioshort view */}
+      {view === 'bioshort' && (
+        <div className="max-w-3xl mx-auto py-6">
+          <BioshortPanel />
         </div>
       )}
     </div>
