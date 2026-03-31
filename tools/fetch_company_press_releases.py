@@ -440,6 +440,38 @@ def main() -> int:
     print(f"\nPR Fetch: {len(all_releases)} new releases from {len(sources)} tickers")
     print(f"  Sources polled: {len(all_results)} ({success} ok, {failed} failed)")
 
+    # Write health artifact
+    if not args.dry_run:
+        health = {
+            "schema": "herald_health.v1",
+            "as_of_date": date_label,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "tickers_attempted": len(sources),
+            "sources_polled": len(all_results),
+            "sources_succeeded": success,
+            "sources_failed": failed,
+            "new_releases": len(all_releases),
+            "direct_ir_hits": sum(1 for r in all_results if r.success and r.source_type == "company_ir"),
+            "backup_hits": sum(1 for r in all_results if r.success and r.source_type == "backup"),
+            "failures": [
+                {"ticker": r.ticker, "source_type": r.source_type, "url": r.source_url, "error": r.error}
+                for r in all_results
+                if not r.success
+            ],
+            "stale_tickers": [
+                t
+                for t, ts in state.items()
+                if isinstance(ts, dict)
+                and ts.get("last_fetch_utc", "never") != "never"
+                and len(ts.get("seen_hashes", [])) == 0
+            ],
+        }
+        health_path = OUTPUT_DIR / f"health_{date_label}.json"
+        with open(health_path, "w") as f:
+            json.dump(health, f, indent=2, default=str)
+            f.write("\n")
+        logger.info("Health artifact → %s", health_path.name)
+
     return 0
 
 

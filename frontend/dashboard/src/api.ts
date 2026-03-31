@@ -46,6 +46,21 @@ export async function fetchTierBucketHeatmap(date: string): Promise<any> {
   return res.json();
 }
 
+export async function fetchHeraldHealth(): Promise<any> {
+  const res = await fetch(`${BASE}/api/herald/health`);
+  return res.json();
+}
+
+export async function fetchHeraldReleases(date: string): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/herald/releases/${date}`);
+  return res.json();
+}
+
+export async function fetchHeraldClassified(date: string): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/herald/classified/${date}`);
+  return res.json();
+}
+
 export async function fetchPositions(date: string): Promise<any[]> {
   const res = await fetch(`${BASE}/api/positions/${date}`);
   const data = await res.json();

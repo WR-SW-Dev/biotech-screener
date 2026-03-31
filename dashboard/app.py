@@ -555,6 +555,54 @@ async def api_bioshort_archive():
     return archive
 
 
+@app.get("/api/herald/health")
+async def api_herald_health():
+    """Latest Herald health artifact."""
+    health_dir = REPO_ROOT / "data" / "press_releases"
+    if not health_dir.exists():
+        return {"error": "No Herald data"}
+    files = sorted(health_dir.glob("health_*.json"), reverse=True)
+    if not files:
+        return {"error": "No health reports"}
+    return _load_json(files[0]) or {"error": "Failed to load health"}
+
+
+@app.get("/api/herald/releases/{date}")
+async def api_herald_releases(date: str, limit: int = 50):
+    """Company press releases for a given date."""
+    path = REPO_ROOT / "data" / "press_releases" / f"releases_{date}.jsonl"
+    if not path.exists():
+        return []
+    records = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    records.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+    return records[:limit]
+
+
+@app.get("/api/herald/classified/{date}")
+async def api_herald_classified(date: str, limit: int = 50):
+    """Classified press releases for a given date."""
+    path = REPO_ROOT / "data" / "press_releases" / "classified" / f"classified_{date}.jsonl"
+    if not path.exists():
+        return []
+    records = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                try:
+                    records.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
+    return records[:limit]
+
+
 if __name__ == "__main__":
     import argparse
 
