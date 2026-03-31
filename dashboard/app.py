@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -29,7 +30,13 @@ logger = logging.getLogger("dashboard")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
-app = FastAPI(title="Biotech Screener — Policy Control Tower", version="1.0")
+app = FastAPI(title="Biotech Screener — Policy Control Tower", version="2.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000", "http://localhost:5173", "http://127.0.0.1:3000"],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 
@@ -311,6 +318,173 @@ async def api_policy_history():
 @app.get("/api/bioshort")
 async def api_bioshort():
     return _load_bioshort_watch() or {"error": "not found"}
+
+
+# --- New endpoints for React dashboard (v2) ---
+
+
+@app.get("/api/dates")
+async def api_dates():
+    """List available snapshot dates, newest first."""
+    return _available_snapshot_dates()
+
+
+@app.get("/api/rankings/{date}")
+async def api_rankings(date: str, top_n: int = 200):
+    """Full rankings table for a given date. Returns list of row dicts."""
+    rpath = REPO_ROOT / "data" / "snapshots" / date / "rankings.csv"
+    if not rpath.exists():
+        return {"error": f"No rankings for {date}"}
+    with open(rpath, encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    # Sort by actionable_rank, filter to ranked names
+    ranked = []
+    for r in rows:
+        ar = r.get("actionable_rank", "").strip()
+        if ar:
+            try:
+                r["_rank_int"] = int(ar)
+                ranked.append(r)
+            except ValueError:
+                pass
+    ranked.sort(key=lambda r: r["_rank_int"])
+    for r in ranked:
+        r.pop("_rank_int", None)
+    return ranked[:top_n]
+
+
+@app.get("/api/decision_portfolio/{date}")
+async def api_decision_portfolio(date: str):
+    """DEM decision_portfolio.csv for a given date."""
+    # Check output snapshots first (produced by daily production)
+    for base in [REPO_ROOT / "output" / "snapshots", REPO_ROOT / "data" / "snapshots"]:
+        path = base / date / "decision_portfolio.csv"
+        if path.exists():
+            with open(path, encoding="utf-8") as f:
+                rows = list(csv.DictReader(f))
+            ranked = [r for r in rows if r.get("actionable_rank", "").strip()]
+            ranked.sort(key=lambda r: int(r["actionable_rank"]))
+            return ranked
+    return {"error": f"No decision_portfolio for {date}"}
+
+
+@app.get("/api/ticker/{ticker}")
+async def api_ticker_detail(ticker: str, date: str = ""):
+    """Merged ticker detail: ranking row + position + options + CRT."""
+    if not date:
+        dates = _available_snapshot_dates()
+        date = dates[0] if dates else ""
+    if not date:
+        return {"error": "No snapshots available"}
+
+    # Rankings row
+    rankings = _load_rankings(date)
+    ranking_row = rankings.get(ticker.upper(), {})
+
+    # Shadow position
+    positions = _load_positions(date)
+    position = next((p for p in positions if p.get("ticker") == ticker.upper()), {})
+
+    # Options diagnostics from rankings row
+    options = {
+        "atm_iv_change_5d": ranking_row.get("atm_iv_change_5d", ""),
+        "opt_rr_25d": ranking_row.get("opt_rr_25d", ""),
+        "actual_implied_move_pctile": ranking_row.get("actual_implied_move_pctile", ""),
+        "iv_percentile_30d": ranking_row.get("iv_percentile_30d", ""),
+    }
+
+    # CRT resolutions
+    crt = []
+    crt_dir = REPO_ROOT / "data" / "snapshots" / "resolutions"
+    if crt_dir.exists():
+        import glob
+
+        for f in glob.glob(str(crt_dir / "**" / f"{ticker.upper()}_*.json"), recursive=True):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    rec = json.load(fh)
+                if rec.get("outcome") and rec.get("outcome") != "INFORMATIONAL":
+                    crt.append(rec)
+            except (json.JSONDecodeError, OSError):
+                pass
+
+    return {
+        "ticker": ticker.upper(),
+        "date": date,
+        "ranking": ranking_row,
+        "position": position,
+        "options": options,
+        "crt_resolutions": crt,
+    }
+
+
+@app.get("/api/options_diagnostics/{date}")
+async def api_options_diagnostics(date: str, top_n: int = 60):
+    """Options fields extracted from rankings for the top-N names."""
+    rankings = _load_rankings(date)
+    if not rankings:
+        return {"error": f"No rankings for {date}"}
+
+    opts_fields = [
+        "atm_iv_change_5d",
+        "opt_rr_25d",
+        "actual_implied_move_pctile",
+        "iv_percentile_30d",
+        "options_quality_composite",
+    ]
+
+    rows = []
+    for ticker, r in rankings.items():
+        ar = r.get("actionable_rank", "").strip()
+        if not ar:
+            continue
+        try:
+            rank = int(ar)
+        except ValueError:
+            continue
+        if rank > top_n:
+            continue
+        row = {"ticker": ticker, "actionable_rank": rank}
+        for field in opts_fields:
+            row[field] = r.get(field, "")
+        rows.append(row)
+
+    rows.sort(key=lambda r: r["actionable_rank"])
+    return rows
+
+
+@app.get("/api/crt/resolutions")
+async def api_crt_resolutions():
+    """All CRT resolution records."""
+    crt_dir = REPO_ROOT / "data" / "snapshots" / "resolutions"
+    records = []
+    if not crt_dir.exists():
+        return records
+    for month_dir in sorted(crt_dir.iterdir()):
+        if not month_dir.is_dir() or not month_dir.name[:4].isdigit():
+            continue
+        for f in sorted(month_dir.glob("*.json")):
+            try:
+                with open(f, encoding="utf-8") as fh:
+                    rec = json.load(fh)
+                if rec.get("outcome") and rec.get("outcome") != "INFORMATIONAL":
+                    records.append(rec)
+            except (json.JSONDecodeError, OSError):
+                pass
+    return records
+
+
+@app.get("/api/crt/calibration")
+async def api_crt_calibration():
+    """Latest CRT calibration summary."""
+    path = REPO_ROOT / "data" / "snapshots" / "resolutions" / "calibration_summary.json"
+    return _load_json(path) or {"error": "No calibration summary"}
+
+
+@app.get("/api/shadow_performance")
+async def api_shadow_performance():
+    """Shadow portfolio performance timeseries."""
+    return _load_shadow_performance()
 
 
 if __name__ == "__main__":
