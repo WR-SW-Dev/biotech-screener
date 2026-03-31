@@ -218,13 +218,14 @@ class TestClassifyOutcome:
             == "MISS"
         )
 
-    def test_ambiguous_headline(self):
+    def test_ambiguous_headline_now_informational(self):
+        # "business update" and "financial results" are informational keywords
         assert (
             classify_outcome(
                 "PHASE_3_READOUT",
                 headline="Company provides business update and financial results",
             )
-            == "NEEDS_REVIEW"
+            == "INFORMATIONAL"
         )
 
     def test_ctgov_completed(self):
@@ -254,6 +255,73 @@ class TestClassifyOutcome:
                 "PHASE_2_READOUT",
                 ctgov_status_from="NOT_YET_RECRUITING",
                 ctgov_status_to="WITHDRAWN",
+            )
+            == "MISS"
+        )
+
+
+class TestClassifyInformational:
+    def test_data_expected_is_informational(self):
+        assert (
+            classify_outcome(
+                "PHASE_3_READOUT",
+                headline="8-K: data expected in the second quarter of 2026",
+            )
+            == "INFORMATIONAL"
+        )
+
+    def test_enrollment_continuing(self):
+        assert (
+            classify_outcome(
+                "PHASE_3_READOUT",
+                headline="Phase 3 LUCIDITY trial underway. Enrollment continuing",
+            )
+            == "INFORMATIONAL"
+        )
+
+    def test_bla_submission_anticipated(self):
+        assert (
+            classify_outcome(
+                "PDUFA_ACTION",
+                headline="BLA submission anticipated in 1H 2026",
+            )
+            == "INFORMATIONAL"
+        )
+
+    def test_corporate_update(self):
+        assert (
+            classify_outcome(
+                "CORPORATE_UPDATE",
+                headline="Company provides business update and financial results",
+            )
+            == "INFORMATIONAL"
+        )
+
+    def test_regulatory_options_discussion(self):
+        assert (
+            classify_outcome(
+                "PHASE_2_READOUT",
+                headline="Type C meeting to discuss regulatory options to accelerate the development program",
+            )
+            == "INFORMATIONAL"
+        )
+
+
+class TestClassifySafetyMiss:
+    def test_serious_adverse_event(self):
+        assert (
+            classify_outcome(
+                "PHASE_2_READOUT",
+                headline="Company reports serious adverse event in Phase 2 trial",
+            )
+            == "MISS"
+        )
+
+    def test_clinical_hold(self):
+        assert (
+            classify_outcome(
+                "PHASE_3_READOUT",
+                headline="FDA places clinical hold on Phase 3 program",
             )
             == "MISS"
         )

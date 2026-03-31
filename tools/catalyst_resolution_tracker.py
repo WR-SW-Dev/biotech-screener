@@ -30,7 +30,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 SCHEMA_VERSION = "1.0.0"
 
-OUTCOMES = frozenset({"HIT", "MISS", "MIXED", "DELAYED", "WITHDRAWN", "NEEDS_REVIEW"})
+OUTCOMES = frozenset({"HIT", "MISS", "MIXED", "DELAYED", "WITHDRAWN", "NEEDS_REVIEW", "INFORMATIONAL"})
 
 CATALYST_TYPES = frozenset(
     {
@@ -75,6 +75,39 @@ _MISS_KEYWORDS = [
     "complete response letter",
     "did not achieve",
     "negative topline",
+    "clinical hold",
+    "partial clinical hold",
+    "serious adverse event",
+    "safety signal",
+    "dose-limiting toxicit",
+    "voluntary pause",
+    "fatal",
+]
+
+# Keywords indicating an informational update, NOT a catalyst resolution.
+# These suppress NEEDS_REVIEW in favor of skipping the record entirely.
+_INFORMATIONAL_KEYWORDS = [
+    "data expected",
+    "enrollment continu",
+    "enrollment underway",
+    "on track to",
+    "anticipated in",
+    "submission anticipated",
+    "submission in",
+    "resubmission in",
+    "initiating phase",
+    "initiated phase",
+    "expects to report",
+    "expects to initiate",
+    "conference call",
+    "financial results",
+    "quarterly report",
+    "annual report",
+    "corporate update",
+    "investor presentation",
+    "business update",
+    "regulatory options",
+    "development program",
 ]
 
 
@@ -222,6 +255,10 @@ def classify_outcome(
     # Headline keyword matching
     if headline:
         headline_lower = headline.lower()
+
+        # Check informational first — these are NOT resolutions
+        if any(kw in headline_lower for kw in _INFORMATIONAL_KEYWORDS):
+            return "INFORMATIONAL"
 
         for kw in _HIT_KEYWORDS:
             if kw in headline_lower:
@@ -710,7 +747,13 @@ def run_crt(
         )
 
     written = 0
+    skipped_informational = 0
     for record in new_records:
+        # Skip INFORMATIONAL records — these are pipeline updates, not resolutions
+        if record.outcome == "INFORMATIONAL":
+            skipped_informational += 1
+            continue
+
         record_hash = compute_record_hash(record)
         month_dir = resolutions_dir / record.catalyst_date[:7]
         month_dir.mkdir(parents=True, exist_ok=True)
@@ -752,6 +795,7 @@ def run_crt(
         "as_of_date": as_of_date.isoformat(),
         "n_watchlist": len(watchlist),
         "n_new_records": written,
+        "n_informational_skipped": skipped_informational,
         "n_existing": len(existing),
         "records": [r.to_dict() for r in new_records],
     }
