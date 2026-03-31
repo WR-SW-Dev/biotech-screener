@@ -3661,14 +3661,49 @@ def promote_snapshot(
 ) -> Path:
     """Atomically move staging snapshot to final location.
 
+    Idempotency guard: if a snapshot already exists for this date with a
+    rankings.csv that has the same content hash as the staging snapshot,
+    skip promotion entirely (preserves the original clean snapshot for CRT
+    prediction recording and April holdout integrity).
+
     Uses rename when on same filesystem, falls back to copy+delete.
     Returns the final path.
     """
     final_date_dir = final_snapshots_dir / as_of_date
+
+    # --- Snapshot overwrite protection ---
+    # If final snapshot already exists with rankings.csv, compare content hashes.
+    # If identical, this is an idempotent rerun — skip to preserve the original.
+    if final_date_dir.exists():
+        existing_rankings = final_date_dir / "rankings.csv"
+        staging_rankings = staging_date_dir / "rankings.csv"
+        if existing_rankings.exists() and staging_rankings.exists():
+            existing_hash = hashlib.sha256(existing_rankings.read_bytes()).hexdigest()[:16]
+            staging_hash = hashlib.sha256(staging_rankings.read_bytes()).hexdigest()[:16]
+            if existing_hash == staging_hash:
+                import logging
+
+                logging.getLogger(__name__).info(
+                    "SNAPSHOT OVERWRITE PROTECTION: %s already exists with identical "
+                    "rankings (hash=%s). Skipping promotion (idempotent rerun).",
+                    as_of_date,
+                    existing_hash,
+                )
+                # Clean up staging
+                shutil.rmtree(str(staging_date_dir), ignore_errors=True)
+                return final_date_dir
+
     if final_date_dir.exists():
         # Archive existing by renaming with timestamp
         ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         backup = final_snapshots_dir / f"{as_of_date}__pre_{ts}"
+        import logging
+
+        logging.getLogger(__name__).info(
+            "SNAPSHOT OVERWRITE: %s exists with different content. " "Archiving to %s before replacing.",
+            as_of_date,
+            backup.name,
+        )
         try:
             shutil.move(str(final_date_dir), str(backup))
         except (OSError, PermissionError):
