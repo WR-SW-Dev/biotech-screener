@@ -102,5 +102,13 @@
     "outcome_detail": "Phase 2 FREEDOM2 low-dose (5mg/kg) MAD data miss; splicing correction 7.3% vs 6.8% placebo (barely above); -57% price move ($4.23 to $1.65); 24M volume vs 750K normal; DEM tier D unranked",
     "resolution_date": "2026-03-31",
     "source": "price_action_evidence"
+  },
+  {
+    "ticker": "UTHR",
+    "catalyst_date": "2026-03-30",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 TETON-1 Tyvaso in IPF met primary endpoint; FVC +130.1mL vs placebo (p<0.0001); +13% price move ($520 to $590); sNDA priority review planned summer 2026; DEM rank 114 tier A commercial_pharma",
+    "resolution_date": "2026-03-30",
+    "source": "price_action_evidence"
   }
 ]
