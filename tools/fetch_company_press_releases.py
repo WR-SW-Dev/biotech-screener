@@ -146,31 +146,117 @@ def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease
 
 
 def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[PressRelease]:
-    """Best-effort extraction from company IR pages."""
+    """Best-effort extraction from company IR pages.
+
+    Handles multiple common IR platform patterns:
+    1. Notified/GlobeNewswire IR: /news-releases/news-release-details/...
+    2. Business Wire IR: /press-releases/press-release-details/...
+    3. Generic link patterns with news/press/release in the path
+    """
     releases = []
-    # Look for links that look like press releases
-    link_pattern = re.compile(
-        r'href="([^"]*(?:news|press|release|announcement)[^"]*)"[^>]*>\s*([^<]{15,200})',
+    seen_urls: set = set()
+    now = datetime.now(timezone.utc).isoformat()
+
+    # Pattern 1: Notified IR platform (most common for biotech)
+    # Links like /news-releases/news-release-details/company-announces-something
+    notified_pattern = re.compile(
+        r'href="(/news-releases/news-release-details/[^"]+)"',
         re.IGNORECASE,
     )
-    for match in link_pattern.finditer(html):
-        path, headline = match.groups()
-        headline = headline.strip()
-        if not headline:
+    for match in notified_pattern.finditer(html):
+        path = match.group(1)
+        url = urljoin(base_url, path)
+        if url in seen_urls:
             continue
-        url = urljoin(base_url, path) if not path.startswith("http") else path
+        seen_urls.add(url)
+
+        # Extract headline from the slug
+        slug = path.split("/")[-1]
+        headline = slug.replace("-", " ").strip().title()
+
+        # Try to find the actual headline text near this link
+        # Look for text content after the link tag
+        idx = match.end()
+        text_match = re.search(r">([^<]{20,300})<", html[idx : idx + 500])
+        if text_match:
+            candidate = text_match.group(1).strip()
+            # Filter out navigation text
+            if len(candidate) > 20 and not candidate.startswith(("News", "Events", "SEC", "Stock")):
+                headline = candidate
+
+        # Try to extract date from nearby context
+        pub_date = ""
+        date_match = re.search(
+            r"(\w+ \d{1,2},? \d{4}|\d{4}-\d{2}-\d{2})",
+            html[max(0, match.start() - 200) : match.end() + 200],
+        )
+        if date_match:
+            pub_date = date_match.group(1)
 
         releases.append(
             PressRelease(
                 ticker=ticker,
                 headline=headline,
-                published_at_utc="",
+                published_at_utc=pub_date,
                 source_url=url,
                 source_type="company_ir",
-                fetched_at_utc=datetime.now(timezone.utc).isoformat(),
+                fetched_at_utc=now,
             )
         )
-    return releases[:10]
+
+    # Pattern 2: Business Wire / other platforms
+    # Links with press-release-details or similar
+    if not releases:
+        bw_pattern = re.compile(
+            r'href="([^"]*(?:press-release|news-release)[^"]*details[^"]*)"',
+            re.IGNORECASE,
+        )
+        for match in bw_pattern.finditer(html):
+            path = match.group(1)
+            url = urljoin(base_url, path) if not path.startswith("http") else path
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            slug = path.split("/")[-1]
+            headline = slug.replace("-", " ").strip().title()
+            releases.append(
+                PressRelease(
+                    ticker=ticker,
+                    headline=headline,
+                    published_at_utc="",
+                    source_url=url,
+                    source_type="company_ir",
+                    fetched_at_utc=now,
+                )
+            )
+
+    # Pattern 3: Generic fallback
+    if not releases:
+        fallback_pattern = re.compile(
+            r'href="([^"]*(?:news|press|release|announcement)[^"]*)"[^>]*>\s*([^<]{20,300})',
+            re.IGNORECASE,
+        )
+        for match in fallback_pattern.finditer(html):
+            path, headline = match.groups()
+            headline = headline.strip()
+            if not headline or headline.startswith(("News", "Events", "SEC", "Stock", "IR ")):
+                continue
+            url = urljoin(base_url, path) if not path.startswith("http") else path
+            if url in seen_urls:
+                continue
+            seen_urls.add(url)
+            releases.append(
+                PressRelease(
+                    ticker=ticker,
+                    headline=headline,
+                    published_at_utc="",
+                    source_url=url,
+                    source_type="company_ir",
+                    fetched_at_utc=now,
+                )
+            )
+
+    return releases[:20]
 
 
 def fetch_ticker_releases(
