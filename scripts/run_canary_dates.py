@@ -377,11 +377,18 @@ def run_canary_classified(
             )
             continue
 
-        # Load baseline from archive
+        # Load baseline — prefer rebased CSV (current engine on historical data)
+        # over stale archive rankings (engine version at archive time).
+        rebased_path = FIXTURE_DIR / f"{canary_date}_baseline.csv"
         try:
-            baseline = load_rankings(str(archive_path))
-            baseline.attrs["source"] = str(archive_path)
-            print(f"  Baseline: {len(baseline)} rows from archive")
+            if rebased_path.exists():
+                baseline = pd.read_csv(rebased_path, dtype=str)
+                baseline.attrs["source"] = str(rebased_path)
+                print(f"  Baseline: {len(baseline)} rows from rebased fixture")
+            else:
+                baseline = load_rankings(str(archive_path))
+                baseline.attrs["source"] = str(archive_path)
+                print(f"  Baseline: {len(baseline)} rows from archive")
         except Exception as exc:
             print(f"  ERROR loading baseline: {exc}")
             per_date[canary_date] = CanaryDateResult(

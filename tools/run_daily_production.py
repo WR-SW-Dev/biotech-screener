@@ -2016,16 +2016,16 @@ def check_decision_engine_schema(
 # Sort contribution sanity gate (WARN/FAIL)
 # ---------------------------------------------------------------------------
 
+
 # Column names expected in rankings.csv for sort contribution diagnostics.
-_SORT_CONTRIB_COLUMNS = (
-    "de_sort_total_adj",
-    "de_sort_contrib_clinical",
-    "de_sort_contrib_coinvest",
-    "de_sort_contrib_institutional",
-    "de_sort_contrib_calendar_alpha",
-    "de_sort_contrib_alpha_cohort_tb",
-    "de_sort_contrib_catalyst_bonus",
-)
+# Derive from engine's canonical list to prevent drift when new contributions are added.
+def _get_sort_contrib_columns() -> tuple:
+    from decision_engine import SORT_CONTRIB_KEYS
+
+    return ("de_sort_total_adj",) + tuple(f"de_sort_contrib_{k}" for k in SORT_CONTRIB_KEYS)
+
+
+_SORT_CONTRIB_COLUMNS = _get_sort_contrib_columns()
 
 
 def check_sort_contrib_sanity(
@@ -4156,7 +4156,9 @@ def run_daily(
             if _anchor_proc.returncode == 0:
                 _logger.info("PIT price anchor OK")
             else:
-                _logger.info(f"PIT price anchor FAILED (exit {_anchor_proc.returncode}) — price_pit_cache gate will WARN")
+                _logger.info(
+                    f"PIT price anchor FAILED (exit {_anchor_proc.returncode}) — price_pit_cache gate will WARN"
+                )
                 if _anchor_proc.stderr:
                     for _line in _anchor_proc.stderr.strip().splitlines()[-5:]:
                         _logger.info(f"  {_line}")
@@ -4197,7 +4199,9 @@ def run_daily(
             _logger.warning("Gate %s crashed: %s", name, exc)
             return GateResult(name=name, status="WARN", detail=f"Crashed: {exc}")
 
-    missing_gate = _safe_gate("missing_reason", check_missing_reason_fraction, staging_date_dir, config.missing_reason_max_frac)
+    missing_gate = _safe_gate(
+        "missing_reason", check_missing_reason_fraction, staging_date_dir, config.missing_reason_max_frac
+    )
     gate_results.append(missing_gate)
     _logger.info(f"Missing-reason gate: {missing_gate.status} — {missing_gate.detail}")
 
@@ -4208,7 +4212,9 @@ def run_daily(
     # --- Gate: drift monitoring (WARN-only) ---
     if not skip_drift:
         _drift_th = drift_thresholds or DriftThresholds()
-        drift_gate = _safe_gate("drift", check_drift_monitoring, staging_date_dir, final_snapshots_dir, as_of_date, _drift_th)
+        drift_gate = _safe_gate(
+            "drift", check_drift_monitoring, staging_date_dir, final_snapshots_dir, as_of_date, _drift_th
+        )
         gate_results.append(drift_gate)
         _logger.info(f"Drift gate: {drift_gate.status} — {drift_gate.detail}")
     else:
@@ -4230,22 +4236,39 @@ def run_daily(
     _logger.info(f"CTGov PIT dates gate: {pit_dates_gate.status} — {pit_dates_gate.detail}")
 
     # --- Gate: sec_13f_cache (WARN-only) ---
-    sec_13f_gate = _safe_gate("sec_13f_cache", check_sec_13f_cache, as_of_date, warn_coverage_pct=config.sec_13f_coverage_warn_pct)
+    sec_13f_gate = _safe_gate(
+        "sec_13f_cache", check_sec_13f_cache, as_of_date, warn_coverage_pct=config.sec_13f_coverage_warn_pct
+    )
     gate_results.append(sec_13f_gate)
     _logger.info(f"13F cache gate: {sec_13f_gate.status} — {sec_13f_gate.detail}")
 
     # --- Gate: institutional_summary (WARN-only, post-screen) ---
-    inst_gate = _safe_gate("institutional_summary", check_institutional_summary, staging_date_dir, warn_coverage_pct=config.institutional_summary_warn_coverage_pct)
+    inst_gate = _safe_gate(
+        "institutional_summary",
+        check_institutional_summary,
+        staging_date_dir,
+        warn_coverage_pct=config.institutional_summary_warn_coverage_pct,
+    )
     gate_results.append(inst_gate)
     _logger.info(f"Institutional summary gate: {inst_gate.status} — {inst_gate.detail}")
 
     # --- Gate: institutional_delta (WARN-only, post-screen) ---
-    inst_delta_gate = _safe_gate("institutional_delta", check_institutional_delta, staging_date_dir, final_snapshots_dir, as_of_date)
+    inst_delta_gate = _safe_gate(
+        "institutional_delta", check_institutional_delta, staging_date_dir, final_snapshots_dir, as_of_date
+    )
     gate_results.append(inst_delta_gate)
     _logger.info(f"Institutional delta gate: {inst_delta_gate.status} — {inst_delta_gate.detail}")
 
     # --- Gate: pnl_attribution (WARN-only, post-screen) ---
-    pnl_gate = _safe_gate("pnl_attribution", check_pnl_attribution, staging_date_dir, final_snapshots_dir, as_of_date, price_csv, min_coverage_pct=config.pnl_attribution_min_coverage_pct)
+    pnl_gate = _safe_gate(
+        "pnl_attribution",
+        check_pnl_attribution,
+        staging_date_dir,
+        final_snapshots_dir,
+        as_of_date,
+        price_csv,
+        min_coverage_pct=config.pnl_attribution_min_coverage_pct,
+    )
     gate_results.append(pnl_gate)
     _logger.info(f"PnL attribution gate: {pnl_gate.status} — {pnl_gate.detail}")
 
@@ -4257,7 +4280,9 @@ def run_daily(
 
     # --- Gate: forward_eval (WARN-only) ---
     if not skip_forward_eval:
-        fwd_gate = _safe_gate("forward_eval", check_forward_eval, final_snapshots_dir, _price_cache_base, as_of_date, config)
+        fwd_gate = _safe_gate(
+            "forward_eval", check_forward_eval, final_snapshots_dir, _price_cache_base, as_of_date, config
+        )
         gate_results.append(fwd_gate)
         _logger.info(f"Forward eval gate: {fwd_gate.status} — {fwd_gate.detail}")
     else:
@@ -4287,7 +4312,12 @@ def run_daily(
     _logger.info(f"Optionality stability gate: {opt_gate.status} — {opt_gate.detail}")
 
     # --- Gate: pit_bundle_health (WARN-only) ---
-    pit_bundle_gate = _safe_gate("pit_bundle_health", check_pit_bundle_health, as_of_date, ctgov_cache_dir=ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov"))
+    pit_bundle_gate = _safe_gate(
+        "pit_bundle_health",
+        check_pit_bundle_health,
+        as_of_date,
+        ctgov_cache_dir=ctgov_cache_dir or (REPO_ROOT / "cache" / "ctgov"),
+    )
     gate_results.append(pit_bundle_gate)
     _logger.info(f"PIT bundle health gate: {pit_bundle_gate.status} — {pit_bundle_gate.detail}")
 
@@ -4302,7 +4332,9 @@ def run_daily(
     _logger.info(f"Sort contrib sanity gate: {sc_gate.status} — {sc_gate.detail}")
 
     # --- Gate: portfolio_weights (WARN-only) ---
-    pw_gate = _safe_gate("portfolio_weights", check_portfolio_weights, staging_date_dir, tolerance=config.portfolio_weight_sum_tolerance)
+    pw_gate = _safe_gate(
+        "portfolio_weights", check_portfolio_weights, staging_date_dir, tolerance=config.portfolio_weight_sum_tolerance
+    )
     gate_results.append(pw_gate)
     _logger.info(f"Portfolio weights gate: {pw_gate.status} — {pw_gate.detail}")
 
