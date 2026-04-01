@@ -7,6 +7,7 @@ import CatalystTimeline from './CatalystTimeline';
 import CompanyNewsPanel from './CompanyNewsPanel';
 import TierBucketHeatmap from './TierBucketHeatmap';
 import RankChangeStrip from './RankChangeStrip';
+import ShadowPnLStrip from './ShadowPnLStrip';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
@@ -89,9 +90,12 @@ export default function App() {
         ) : (
           <div className="grid grid-cols-[minmax(520px,1fr)_minmax(380px,0.7fr)] h-[calc(100vh-57px)]">
             <div className="border-r overflow-auto">
-              <div className="grid grid-cols-2 gap-2 p-2">
-                <TierBucketHeatmap date={selectedDate} />
-                <RankChangeStrip rows={rows} onSelectTicker={setSelectedTicker} />
+              <div className="p-2 space-y-0">
+                <ShadowPnLStrip />
+                <div className="grid grid-cols-2 gap-2">
+                  <TierBucketHeatmap date={selectedDate} />
+                  <RankChangeStrip rows={rows} onSelectTicker={setSelectedTicker} />
+                </div>
               </div>
               <RankingsTable
                 rows={rows}

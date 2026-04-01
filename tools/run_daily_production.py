@@ -4874,15 +4874,35 @@ def run_daily(
             _herald_summary = _herald_lines[-1] if _herald_lines else "no output"
             _logger.info(f"Herald (PR ingest) → {_herald_summary}")
 
-            # Classify if releases were found
+            # Dedupe then classify
             _releases_path = REPO_ROOT / "data" / "press_releases" / f"releases_{as_of_date}.jsonl"
             if _releases_path.exists() and _releases_path.stat().st_size > 0:
+                # Dedupe first
+                _dedupe_result = _sp_herald.run(
+                    [
+                        sys.executable,
+                        str(REPO_ROOT / "tools" / "dedupe_press_releases.py"),
+                        "--input",
+                        str(_releases_path),
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=120,
+                    cwd=str(REPO_ROOT),
+                )
+                _dedupe_lines = (_dedupe_result.stdout or "").strip().split("\n")
+                _dedupe_summary = _dedupe_lines[-1] if _dedupe_lines else "no output"
+                _logger.info(f"Herald (dedupe) → {_dedupe_summary}")
+
+                # Classify deduped output
+                _deduped_path = REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of_date}.jsonl"
+                _classify_input = _deduped_path if _deduped_path.exists() else _releases_path
                 _classify_result = _sp_herald.run(
                     [
                         sys.executable,
                         str(REPO_ROOT / "tools" / "classify_press_releases.py"),
                         "--input",
-                        str(_releases_path),
+                        str(_classify_input),
                     ],
                     capture_output=True,
                     text=True,
