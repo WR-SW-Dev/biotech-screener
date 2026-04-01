@@ -1658,10 +1658,7 @@ PORTFOLIO_POSITIONS_COLUMNS = [
 
 # Phase-2 operational defaults
 PHASE2_DEFAULT_RULESET_PATH = (
-    Path(__file__).resolve().parent
-    / "production_data"
-    / "decision_rulesets"
-    / "v1.11.0_b91_clinical_quality_w05_candidate.json"
+    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.12.0_cal_alpha_off_candidate.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
