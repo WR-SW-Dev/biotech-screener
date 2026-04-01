@@ -156,19 +156,6 @@
     "notes": "From CatalystAlert calendar. ARGX has multiple VYVGART line extensions under review. Exact PDUFA date needs company IR verification."
   },
   {
-    "ticker": "RCKT",
-    "drug_name": "KRESLADI (RP-L201)",
-    "indication": "Leukocyte Adhesion Deficiency Type I",
-    "pdufa_date": "2026-03-28",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "HIGH",
-    "source": "MANUAL",
-    "source_url": "",
-    "as_of_disclosed_at": "2026-03-14",
-    "notes": "Resubmitted BLA. PDUFA March 28, 2026. Confirmed from RTTNews FDA calendar."
-  },
-  {
     "ticker": "ARVN",
     "drug_name": "ARV-471 (vepdegestrant)",
     "indication": "ER+/HER2- Breast Cancer",
