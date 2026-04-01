@@ -4854,6 +4854,38 @@ def run_daily(
         except Exception as _od_err:
             _logger.warning(f"Ops digest failed: {_od_err}")
 
+        # --- Step 5l.4: Options Quality Manifest (non-blocking, Spec 045) ---
+        try:
+            import csv as _oq_csv
+            from datetime import datetime as _oq_dt
+            from datetime import timezone as _oq_tz
+
+            from common.options_quality import build_options_quality_manifest
+
+            _oq_rankings_path = staging_date_dir / "rankings.csv"
+            if not _oq_rankings_path.exists():
+                _oq_rankings_path = final_snapshots_dir / as_of_date / "rankings.csv"
+            if _oq_rankings_path.exists():
+                with open(_oq_rankings_path, encoding="utf-8") as _oq_f:
+                    _oq_rows = list(_oq_csv.DictReader(_oq_f))
+                _oq_manifest = build_options_quality_manifest(_oq_rows, _oq_dt.now(_oq_tz.utc))
+                _oq_out = final_snapshots_dir / as_of_date / "options_quality_manifest.json"
+                _oq_out.parent.mkdir(parents=True, exist_ok=True)
+                import json as _oq_json
+
+                with open(_oq_out, "w") as _oq_wf:
+                    _oq_json.dump(_oq_manifest, _oq_wf, indent=2, default=str)
+                    _oq_wf.write("\n")
+                _logger.info(
+                    "Options quality → full=%d partial=%d absent=%d (%.1f%% coverage)",
+                    _oq_manifest["state_distribution"]["full"],
+                    _oq_manifest["state_distribution"]["partial"],
+                    _oq_manifest["state_distribution"]["absent"],
+                    _oq_manifest["coverage_pct"],
+                )
+        except Exception as _oq_err:
+            _logger.warning(f"Options quality manifest failed: {_oq_err}")
+
         # --- Step 5l.5: Company News Ingest (Herald agent, non-blocking, Spec 044) ---
         try:
             import subprocess as _sp_herald

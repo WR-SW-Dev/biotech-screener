@@ -555,6 +555,13 @@ async def api_bioshort_archive():
     return archive
 
 
+@app.get("/api/options_quality/{date}")
+async def api_options_quality(date: str):
+    """Options quality manifest for a given date."""
+    path = REPO_ROOT / "data" / "snapshots" / date / "options_quality_manifest.json"
+    return _load_json(path) or {"error": f"No options quality manifest for {date}"}
+
+
 @app.get("/api/herald/health")
 async def api_herald_health():
     """Latest Herald health artifact."""
