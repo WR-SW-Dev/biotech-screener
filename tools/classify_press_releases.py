@@ -25,6 +25,14 @@ from typing import Any, Dict, List
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+# Load .env for API keys
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(PROJECT_ROOT / ".env")
+except ImportError:
+    pass
+
 logger = logging.getLogger(__name__)
 
 SCHEMA_VERSION = "dem_grok_news_feed.v1"
@@ -288,7 +296,7 @@ def _is_noise(headline: str) -> bool:
 def classify_releases(
     raw_records: List[Dict[str, Any]],
     use_grok: bool = False,
-    model: str = "grok-4-1-fast",
+    model: str = "grok-3-mini-fast",
 ) -> List[Dict[str, Any]]:
     """Classify a batch of raw PR records.
 
