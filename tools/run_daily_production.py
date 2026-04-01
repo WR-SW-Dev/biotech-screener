@@ -4886,6 +4886,67 @@ def run_daily(
         except Exception as _oq_err:
             _logger.warning(f"Options quality manifest failed: {_oq_err}")
 
+        # --- Step 5l.4b: Event Premium Decomposition (non-blocking) ---
+        try:
+            import csv as _epd_csv
+
+            from common.event_premium_decomp import compute_universe_decomp
+            from common.options_surface_signals import load_historical_iv_feature_history
+
+            _epd_rankings_path = staging_date_dir / "rankings.csv"
+            if not _epd_rankings_path.exists():
+                _epd_rankings_path = final_snapshots_dir / as_of_date / "rankings.csv"
+            _epd_iv_hist_path = REPO_ROOT / "data" / "research" / "historical_iv_features.csv"
+
+            if _epd_rankings_path.exists():
+                with open(_epd_rankings_path, encoding="utf-8") as _epd_f:
+                    _epd_all_rows = list(_epd_csv.DictReader(_epd_f))
+                # Top-30 only
+                _epd_ranked = [r for r in _epd_all_rows if r.get("actionable_rank", "").strip()]
+                _epd_ranked.sort(key=lambda r: int(r["actionable_rank"]))
+                _epd_top30 = _epd_ranked[:30]
+
+                # Load IV history if available
+                _epd_iv_histories = {}
+                _epd_rr_histories = {}
+                if _epd_iv_hist_path.exists():
+                    _epd_iv_raw = load_historical_iv_feature_history(_epd_iv_hist_path)
+                    for _tk, _hist in _epd_iv_raw.items():
+                        _epd_iv_histories[_tk] = _hist
+                        _epd_rr_histories[_tk] = [
+                            r.get("rr_25d", 0)
+                            for r in _hist
+                            if r.get("rr_25d") is not None
+                            and not __import__("math").isnan(r.get("rr_25d", float("nan")))
+                        ]
+
+                _epd_results = compute_universe_decomp(
+                    _epd_top30,
+                    iv_histories=_epd_iv_histories,
+                    rr_histories=_epd_rr_histories,
+                )
+                _epd_out = final_snapshots_dir / as_of_date / "event_premium_decomp.json"
+                _epd_out.parent.mkdir(parents=True, exist_ok=True)
+                import json as _epd_json
+
+                with open(_epd_out, "w") as _epd_wf:
+                    _epd_json.dump(
+                        {
+                            "schema": "event_premium_decomp.v1",
+                            "as_of_date": as_of_date,
+                            "n_names": len(_epd_results),
+                            "n_full": sum(1 for r in _epd_results if r.get("epd_quality") == "full"),
+                            "n_partial": sum(1 for r in _epd_results if r.get("epd_quality") == "partial"),
+                            "names": _epd_results,
+                        },
+                        _epd_wf,
+                        indent=2,
+                    )
+                _n_eventloaded = sum(1 for r in _epd_results if "event_loaded" in (r.get("epd_surface_regime") or ""))
+                _logger.info("Event premium decomp → %d names, %d event_loaded", len(_epd_results), _n_eventloaded)
+        except Exception as _epd_err:
+            _logger.warning(f"Event premium decomp failed (non-blocking): {_epd_err}")
+
         # --- Step 5l.5: Company News Ingest (Herald agent, non-blocking, Spec 044) ---
         try:
             import subprocess as _sp_herald
@@ -4929,13 +4990,15 @@ def run_daily(
                 # Classify deduped output
                 _deduped_path = REPO_ROOT / "data" / "press_releases" / "deduped" / f"deduped_{as_of_date}.jsonl"
                 _classify_input = _deduped_path if _deduped_path.exists() else _releases_path
+                _grok_flag = ["--use-grok"] if os.getenv("XAI_API_KEY") else []
                 _classify_result = _sp_herald.run(
                     [
                         sys.executable,
                         str(REPO_ROOT / "tools" / "classify_press_releases.py"),
                         "--input",
                         str(_classify_input),
-                    ],
+                    ]
+                    + _grok_flag,
                     capture_output=True,
                     text=True,
                     timeout=300,
@@ -4990,6 +5053,85 @@ def run_daily(
                         _logger.info(f"CRT GOVERNANCE TRIGGER MET: {_t['trigger']}")
         except Exception as _crt_err:
             _logger.warning(f"CRT failed: {_crt_err}")
+
+        # --- Step 5n: AACT trial warehouse refresh (non-blocking) ---
+        try:
+            _aact_snapshot_dir = REPO_ROOT / "data" / "aact" / "snapshots" / as_of_date
+            if _aact_snapshot_dir.exists() and (_aact_snapshot_dir / "aact_health.json").exists():
+                _logger.info("AACT snapshot already exists for %s — skipping", as_of_date)
+            else:
+                _logger.info("\n[5n] AACT trial warehouse refresh ...")
+                # Only run if a prior snapshot exists (delta computation needs baseline)
+                pass  # _aact_prior reserved for future delta computation
+                _aact_snap_root = REPO_ROOT / "data" / "aact" / "snapshots"
+                if _aact_snap_root.exists():
+                    _priors = sorted(
+                        (d for d in _aact_snap_root.iterdir() if d.is_dir() and d.name < as_of_date),
+                        reverse=True,
+                    )
+                    if _priors:
+                        _aact_prior = _priors[0]
+                _aact_result = _run_subprocess(
+                    [
+                        sys.executable,
+                        str(REPO_ROOT / "tools" / "fetch_aact_snapshot.py"),
+                        "--download",
+                        "--as-of-date",
+                        as_of_date,
+                    ],
+                    timeout=1800,  # 30 min — AACT download is large
+                )
+                if _aact_result.returncode == 0:
+                    _logger.info("AACT → refresh complete")
+                else:
+                    _logger.warning("AACT → exit %d", _aact_result.returncode)
+        except Exception as _aact_err:
+            _logger.warning(f"AACT refresh failed (non-blocking): {_aact_err}")
+
+        # --- Step 5o: Construction v2 shadow (non-blocking) ---
+        try:
+            _v2_result = _run_subprocess(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "construction_v2_shadow.py"),
+                    "--as-of-date",
+                    as_of_date,
+                ],
+                timeout=120,
+            )
+            if _v2_result.returncode == 0:
+                _logger.info("Construction v2 shadow → updated")
+            else:
+                _logger.warning("Construction v2 shadow → exit %d", _v2_result.returncode)
+        except Exception as _v2_err:
+            _logger.warning(f"Construction v2 shadow failed (non-blocking): {_v2_err}")
+
+        # --- Step 5p: Construction v2 daily compare (non-blocking) ---
+        try:
+            _compare_result = _run_subprocess(
+                [
+                    sys.executable,
+                    str(REPO_ROOT / "tools" / "build_daily_v2_compare.py"),
+                    "--as-of-date",
+                    as_of_date,
+                ],
+                timeout=60,
+            )
+            if _compare_result.returncode == 0:
+                _logger.info("V2 compare → updated")
+        except Exception as _compare_err:
+            _logger.warning(f"V2 compare failed (non-blocking): {_compare_err}")
+
+        # --- Step 5q: Rolling options EV summary (non-blocking) ---
+        try:
+            _ev_result = _run_subprocess(
+                [sys.executable, str(REPO_ROOT / "scripts" / "research" / "rolling_options_ev_summary.py")],
+                timeout=120,
+            )
+            if _ev_result.returncode == 0:
+                _logger.info("Options EV summary → updated")
+        except Exception as _ev_err:
+            _logger.warning(f"Options EV summary failed (non-blocking): {_ev_err}")
 
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).

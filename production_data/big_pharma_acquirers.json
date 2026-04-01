@@ -1,0 +1,27 @@
+{
+  "schema": "big_pharma_acquirers.v1",
+  "updated": "2026-04-01",
+  "description": "Top-20 pharma acquirers by biopharma revenue. Used by DealForma big_pharma_interest_flag. Update annually.",
+  "names": [
+    "Pfizer",
+    "Merck",
+    "Johnson & Johnson",
+    "Roche",
+    "Novartis",
+    "AbbVie",
+    "AstraZeneca",
+    "Eli Lilly",
+    "Bristol-Myers Squibb",
+    "Sanofi",
+    "GSK",
+    "Amgen",
+    "Gilead Sciences",
+    "Regeneron",
+    "Vertex",
+    "Biogen",
+    "Takeda",
+    "Bayer",
+    "Novo Nordisk",
+    "Daiichi Sankyo"
+  ]
+}

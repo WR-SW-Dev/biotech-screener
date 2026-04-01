@@ -1,0 +1,4 @@
+{
+  "_comment": "Manual NCT ID -> ticker overrides for AACT trial linkage. Use when automatic sponsor mapping fails for important trials.",
+  "_updated": "2026-04-01"
+}

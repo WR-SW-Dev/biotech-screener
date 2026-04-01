@@ -333,14 +333,21 @@ async def _fetch_metrics_batch(
 
     result = {}
     # Batch in chunks
+    n_batches = (len(symbols) + _METRICS_BATCH_SIZE - 1) // _METRICS_BATCH_SIZE
     for i in range(0, len(symbols), _METRICS_BATCH_SIZE):
         batch = symbols[i : i + _METRICS_BATCH_SIZE]
+        batch_num = i // _METRICS_BATCH_SIZE + 1
         try:
             metrics = await get_market_metrics(session, batch)
             for m in metrics:
                 result[m.symbol] = m
+            if batch_num < n_batches:
+                await asyncio.sleep(0.5)  # rate-limit courtesy between batches
         except Exception as exc:
-            logger.warning("tastytrade metrics batch failed for %d symbols: %s", len(batch), exc)
+            logger.warning(
+                "tastytrade metrics batch %d/%d failed for %d symbols: %s", batch_num, n_batches, len(batch), exc
+            )
+    logger.info("Fetched metrics for %d/%d symbols in %d batches", len(result), len(symbols), n_batches)
     return result
 
 
@@ -717,14 +724,17 @@ def fetch_options_diagnostics(
 
 def select_catalyst_tickers(
     rankings: List[Dict[str, Any]],
-    max_tickers: int = 200,
+    max_tickers: int = 400,
 ) -> List[str]:
     """Select tickers eligible for options diagnostics from rankings.
 
-    Criteria (in priority order):
-    1. Has an actionable_rank (in action list)
+    Fetches ALL ranked tickers to maximize options coverage. Priority ordering
+    ensures the most important names are fetched first if the API cap is hit.
+
+    Priority (lower = fetched first):
+    1. Has an actionable_rank (ranked names)
     2. Has catalyst_days <= 180 (upcoming catalyst)
-    3. Cap at max_tickers (soft safety limit; API batches at 50/request)
+    3. All remaining universe tickers
 
     Returns sorted list of uppercase ticker symbols.
     """
@@ -748,11 +758,7 @@ def select_catalyst_tickers(
         except (ValueError, TypeError):
             cd_val = 999
 
-        # Skip tickers with no catalyst relevance
-        if ar_val >= 999 and cd_val > 180:
-            continue
-
-        # Score: actionable names first, then by catalyst proximity
+        # Score: actionable names first, then by catalyst proximity, then everyone else
         priority = ar_val * 0.1 + cd_val * 0.01
         scored.append((priority, ticker))
 

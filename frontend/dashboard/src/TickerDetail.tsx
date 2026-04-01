@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine } from 'recharts';
-import { fetchTickerDetail } from './api';
+import { fetchTickerDetail, fetchDealComps, fetchPurpleBook, fetchAACTTrials } from './api';
 
 interface Props { ticker: string; date: string; }
 
@@ -23,6 +23,9 @@ function Stat({ label, value, accent }: { label: string; value: string; accent?:
 
 export default function TickerDetail({ ticker, date }: Props) {
   const [data, setData] = useState<any>(null);
+  const [dealComps, setDealComps] = useState<any>(null);
+  const [purpleBook, setPurpleBook] = useState<any>(null);
+  const [aactTrials, setAactTrials] = useState<any>(null);
   const [tab, setTab] = useState<string>('overview');
   const [err, setErr] = useState('');
 
@@ -32,6 +35,15 @@ export default function TickerDetail({ ticker, date }: Props) {
     fetchTickerDetail(ticker, date)
       .then(d => { setData(d); setTab('overview'); })
       .catch(e => setErr(String(e)));
+    fetchDealComps(ticker, date)
+      .then(setDealComps)
+      .catch(() => setDealComps(null));
+    fetchPurpleBook(ticker, date)
+      .then(setPurpleBook)
+      .catch(() => setPurpleBook(null));
+    fetchAACTTrials(ticker)
+      .then(setAactTrials)
+      .catch(() => setAactTrials(null));
   }, [ticker, date]);
 
   if (err) return <div className="p-6 text-rose-500 text-sm">{err}</div>;
@@ -88,9 +100,9 @@ export default function TickerDetail({ ticker, date }: Props) {
 
       {/* Tabs */}
       <div className="flex border-b bg-white sticky top-[76px] z-10 text-xs">
-        {['overview', 'options', 'portfolio', 'crt'].map(t => (
+        {['overview', 'options', 'portfolio', 'trials', 'deals', 'bio', 'crt'].map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`flex-1 py-2 font-medium capitalize ${tab === t ? 'border-b-2 border-emerald-600 text-emerald-700' : 'text-slate-400'}`}>
+            className={`flex-1 py-2 font-medium capitalize text-[11px] ${tab === t ? 'border-b-2 border-emerald-600 text-emerald-700' : 'text-slate-400'}`}>
             {t === 'crt' ? 'CRT' : t}
           </button>
         ))}
@@ -206,6 +218,243 @@ export default function TickerDetail({ ticker, date }: Props) {
           ) : (
             <div className="rounded-lg border border-dashed p-4 text-slate-400 text-center">Not in shadow portfolio</div>
           )}
+        </>}
+
+        {/* TRIALS */}
+        {tab === 'trials' && <>
+          {!aactTrials || aactTrials.n_trials === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-slate-400 text-center text-xs">
+              {aactTrials?.status === 'no_data'
+                ? 'No AACT data loaded. Run tools/fetch_aact_snapshot.py first.'
+                : `No clinical trials found for ${ticker}`}
+            </div>
+          ) : <>
+            <div className="grid grid-cols-3 gap-1.5">
+              <Stat label="total trials" value={String(aactTrials.n_trials)} />
+              <Stat label="recruiting" value={String(aactTrials.status_distribution?.['Recruiting'] || 0)} accent="#0f766e" />
+              <Stat label="completed" value={String(aactTrials.status_distribution?.['Completed'] || 0)} />
+            </div>
+
+            {/* Phase distribution */}
+            {aactTrials.phase_distribution && (
+              <div className="flex gap-2 flex-wrap text-xs">
+                {Object.entries(aactTrials.phase_distribution as Record<string, number>)
+                  .filter(([p]) => p && p !== 'Not Applicable' && p !== '')
+                  .map(([phase, count]) => (
+                    <span key={phase} className={`px-2 py-0.5 rounded ${
+                      phase.includes('3') ? 'bg-emerald-50 text-emerald-700' :
+                      phase.includes('2') ? 'bg-blue-50 text-blue-700' :
+                      'bg-slate-50 text-slate-600'
+                    }`}>
+                      {phase}: {count}
+                    </span>
+                  ))}
+              </div>
+            )}
+
+            {/* Trial list */}
+            <div className="rounded-lg border overflow-hidden">
+              <div className="bg-slate-50 px-3 py-1.5 text-xs font-medium">
+                Trials ({aactTrials.n_trials}) — snapshot {aactTrials.snapshot_date}
+              </div>
+              <div className="divide-y max-h-[350px] overflow-auto">
+                {aactTrials.trials?.map((t: any, i: number) => {
+                  const isActive = ['Recruiting', 'Active, not recruiting', 'Enrolling by invitation', 'Not yet recruiting'].includes(t.overall_status);
+                  return (
+                    <div key={i} className="px-3 py-2 text-xs">
+                      <div className="flex justify-between items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <span className="font-mono text-[10px] text-slate-400">{t.nct_id}</span>
+                          {t.phase && <span className={`ml-1.5 text-[10px] px-1 rounded ${
+                            t.phase.includes('3') ? 'bg-emerald-50 text-emerald-700' :
+                            t.phase.includes('2') ? 'bg-blue-50 text-blue-700' :
+                            'bg-slate-100 text-slate-600'
+                          }`}>{t.phase}</span>}
+                          {t.has_results && <span className="ml-1 text-[10px] px-1 rounded bg-violet-50 text-violet-600">results</span>}
+                        </div>
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded whitespace-nowrap ${
+                          isActive ? 'bg-emerald-50 text-emerald-700' :
+                          t.overall_status === 'Completed' ? 'bg-blue-50 text-blue-600' :
+                          t.overall_status === 'Terminated' ? 'bg-rose-50 text-rose-600' :
+                          'bg-slate-50 text-slate-500'
+                        }`}>{t.overall_status}</span>
+                      </div>
+                      <div className="text-slate-600 mt-0.5 line-clamp-2">{t.brief_title}</div>
+                      <div className="flex gap-3 mt-0.5 text-[10px] text-slate-400">
+                        {t.enrollment && <span>n={t.enrollment}</span>}
+                        {t.primary_completion_date && <span>PCD: {t.primary_completion_date}</span>}
+                        {t.condition_names?.length > 0 && <span className="truncate">{t.condition_names.join(', ')}</span>}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </>}
+        </>}
+
+        {/* DEALS */}
+        {tab === 'deals' && <>
+          {!dealComps || dealComps.n_comps === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-slate-400 text-center text-xs">
+              {dealComps?.status === 'no_data'
+                ? 'No DealForma data loaded. Run scripts/ingest_dealforma.py first.'
+                : `No deal comps found for ${ticker} in ${dealComps?.bucket || 'any bucket'}`}
+            </div>
+          ) : <>
+            {/* Summary stats */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <Stat label="comps found" value={String(dealComps.n_comps)} />
+              <Stat label="median upfront" value={dealComps.median_upfront_mm != null ? `$${dealComps.median_upfront_mm}M` : '—'} accent="#0f766e" />
+              <Stat label="median total" value={dealComps.median_total_mm != null ? `$${dealComps.median_total_mm}M` : '—'} accent="#3b82f6" />
+            </div>
+            <div className="rounded-lg bg-slate-50 px-3 py-2 text-xs">
+              <div><span className="font-medium">Bucket:</span> {dealComps.bucket}</div>
+              <div><span className="font-medium">Lookback:</span> {dealComps.lookback_months} months</div>
+              {dealComps.cvr_prevalence != null && (
+                <div><span className="font-medium">CVR prevalence:</span> {(dealComps.cvr_prevalence * 100).toFixed(1)}%</div>
+              )}
+            </div>
+
+            {/* Deal type split */}
+            {dealComps.deal_type_split && (
+              <div className="flex gap-3 text-xs">
+                {Object.entries(dealComps.deal_type_split as Record<string, number>).map(([type, count]) => (
+                  <span key={type} className="px-2 py-1 rounded bg-slate-100">
+                    <span className="font-medium">{type}:</span> {count}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            {/* Top acquirers */}
+            {dealComps.top_acquirers?.length > 0 && (
+              <div className="rounded-lg border p-2">
+                <div className="text-xs font-medium mb-1">Top acquirers in bucket</div>
+                <div className="space-y-0.5">
+                  {dealComps.top_acquirers.map((a: any, i: number) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span className="text-slate-600">{a.name}</span>
+                      <span className="font-mono text-slate-400">{a.count} deals</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Recent deals table */}
+            {dealComps.recent_deals?.length > 0 && (
+              <div className="rounded-lg border overflow-hidden">
+                <div className="bg-slate-50 px-3 py-1.5 text-xs font-medium">Recent deals</div>
+                <div className="divide-y max-h-[250px] overflow-auto">
+                  {dealComps.recent_deals.map((d: any, i: number) => (
+                    <div key={i} className="px-3 py-1.5 text-xs grid grid-cols-[5rem_1fr_4rem_4rem] gap-2 items-center">
+                      <span className="text-slate-400">{d.announcement_date}</span>
+                      <div className="truncate">
+                        <span className={`font-medium ${d.deal_type === 'M&A' ? 'text-violet-600' : d.deal_type === 'licensing' ? 'text-blue-600' : 'text-slate-600'}`}>
+                          {d.deal_type}
+                        </span>
+                        {d.acquirer && <span className="text-slate-400 ml-1">by {d.acquirer}</span>}
+                        {d.target && <span className="text-slate-400 ml-1">({d.target})</span>}
+                      </div>
+                      <span className="text-right font-mono text-slate-500">
+                        {d.upfront_value_mm != null ? `$${d.upfront_value_mm}M` : '—'}
+                      </span>
+                      <span className="text-right font-mono text-slate-400">
+                        {d.total_value_mm != null ? `$${d.total_value_mm}M` : '—'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>}
+        </>}
+
+        {/* BIOLOGICS */}
+        {tab === 'bio' && <>
+          {!purpleBook || !purpleBook.is_biologic_company ? (
+            <div className="rounded-lg border border-dashed p-4 text-slate-400 text-center text-xs">
+              {purpleBook?.status === 'no_data'
+                ? 'No Purple Book data loaded. Run scripts/ingest_purple_book.py first.'
+                : `No FDA-licensed biologics found for ${ticker}`}
+            </div>
+          ) : <>
+            {/* Summary */}
+            <div className="grid grid-cols-3 gap-1.5">
+              <Stat label="products" value={String(purpleBook.n_products)} />
+              <Stat label="reference" value={String(purpleBook.n_reference_products || 0)} />
+              <Stat label="own biosimilars" value={String(purpleBook.n_own_biosimilars || 0)} />
+              <Stat label="biosimilar threats" value={String(purpleBook.total_biosimilar_count)}
+                accent={purpleBook.total_biosimilar_count > 0 ? '#ef4444' : '#22c55e'} />
+              <Stat label="interchangeable" value={String(purpleBook.total_interchangeable_count)}
+                accent={purpleBook.total_interchangeable_count > 0 ? '#ef4444' : '#22c55e'} />
+              <Stat label="exclusivity expired" value={
+                purpleBook.exclusivity_status?.some((e: any) => e.expired) ? 'YES' : 'NO'
+              } accent={purpleBook.exclusivity_status?.some((e: any) => e.expired) ? '#ef4444' : '#22c55e'} />
+            </div>
+
+            {/* Biosimilar exposure */}
+            {purpleBook.biosimilar_exposure?.length > 0 && (
+              <div className="rounded-lg border overflow-hidden">
+                <div className="bg-rose-50 px-3 py-1.5 text-xs font-medium text-rose-700">
+                  Biosimilar competition ({purpleBook.biosimilar_exposure.length} products exposed)
+                </div>
+                <div className="divide-y">
+                  {purpleBook.biosimilar_exposure.map((exp: any, i: number) => (
+                    <div key={i} className="px-3 py-2 text-xs">
+                      <div className="font-medium">{exp.product_name || exp.bla_number}</div>
+                      <div className="text-slate-500 mt-0.5">
+                        {exp.biosimilar_count} biosimilar{exp.biosimilar_count !== 1 ? 's' : ''}
+                        {exp.interchangeable_count > 0 && ` + ${exp.interchangeable_count} interchangeable`}
+                      </div>
+                      {exp.biosimilar_names?.length > 0 && (
+                        <div className="text-slate-400 mt-0.5 text-[10px]">
+                          {exp.biosimilar_names.filter(Boolean).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Exclusivity */}
+            {purpleBook.exclusivity_status?.length > 0 && (
+              <div className="rounded-lg border p-2">
+                <div className="text-xs font-medium mb-1">Exclusivity status</div>
+                <div className="space-y-0.5">
+                  {purpleBook.exclusivity_status.map((ex: any, i: number) => (
+                    <div key={i} className="flex justify-between text-xs">
+                      <span className="text-slate-600">{ex.product_name}</span>
+                      <span className={`font-mono ${ex.expired ? 'text-rose-500' : 'text-emerald-500'}`}>
+                        {ex.exclusivity_expiry_date} {ex.expired ? '(expired)' : '(active)'}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Product list */}
+            {purpleBook.products?.length > 0 && (
+              <div className="rounded-lg border overflow-hidden">
+                <div className="bg-slate-50 px-3 py-1.5 text-xs font-medium">Licensed products</div>
+                <div className="divide-y max-h-[200px] overflow-auto">
+                  {purpleBook.products.map((p: any, i: number) => (
+                    <div key={i} className="px-3 py-1.5 text-xs flex justify-between items-center">
+                      <div className="truncate">
+                        <span className="font-medium">{p.product_name || p.nonproprietary_name || p.bla_number}</span>
+                        {p.is_biosimilar && <span className="ml-1 text-[10px] px-1 rounded bg-blue-50 text-blue-600">biosimilar</span>}
+                        {p.is_interchangeable && <span className="ml-1 text-[10px] px-1 rounded bg-violet-50 text-violet-600">interchangeable</span>}
+                      </div>
+                      <span className="text-slate-400 font-mono text-[10px]">{p.licensing_date || '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>}
         </>}
 
         {/* CRT */}

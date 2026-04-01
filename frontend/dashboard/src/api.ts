@@ -61,6 +61,21 @@ export async function fetchHeraldClassified(date: string): Promise<any[]> {
   return res.json();
 }
 
+export async function fetchAACTTrials(ticker: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/aact/${ticker}`);
+  return res.json();
+}
+
+export async function fetchPurpleBook(ticker: string, date: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/purple_book/${ticker}?date=${date}`);
+  return res.json();
+}
+
+export async function fetchDealComps(ticker: string, date: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/deal_comps/${ticker}?date=${date}`);
+  return res.json();
+}
+
 export async function fetchPositions(date: string): Promise<any[]> {
   const res = await fetch(`${BASE}/api/positions/${date}`);
   const data = await res.json();

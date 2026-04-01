@@ -562,6 +562,194 @@ async def api_options_quality(date: str):
     return _load_json(path) or {"error": f"No options quality manifest for {date}"}
 
 
+@app.get("/api/construction_v2/performance")
+async def api_construction_v2_performance():
+    """Construction v2 shadow performance timeseries."""
+    perf_path = REPO_ROOT / "artifacts" / "construction_v2" / "performance.csv"
+    if not perf_path.exists():
+        return {"error": "No construction v2 data"}
+    rows = []
+    with open(perf_path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            rows.append(row)
+    # Add cumulative columns
+    cum_ew30 = 0.0
+    cum_regime = 0.0
+    cum_xbi = 0.0
+    for r in rows:
+        cum_ew30 += float(r.get("ew30_pnl_pct", 0))
+        cum_regime += float(r.get("regime_pnl_pct", 0))
+        cum_xbi += float(r.get("xbi_pct", 0))
+        r["cum_ew30"] = round(cum_ew30, 4)
+        r["cum_regime"] = round(cum_regime, 4)
+        r["cum_xbi"] = round(cum_xbi, 4)
+        r["cum_ew30_excess"] = round(cum_ew30 - cum_xbi, 4)
+        r["cum_regime_excess"] = round(cum_regime - cum_xbi, 4)
+    return rows
+
+
+@app.get("/api/event_premium_decomp/{date}")
+async def api_event_premium_decomp(date: str):
+    """Event premium decomposition for top-30 names."""
+    path = REPO_ROOT / "data" / "snapshots" / date / "event_premium_decomp.json"
+    return _load_json(path) or {"error": f"No event premium decomp for {date}"}
+
+
+@app.get("/api/construction_v2/positions/{date}")
+async def api_construction_v2_positions(date: str):
+    """Construction v2 positions for a given date."""
+    pos_path = REPO_ROOT / "artifacts" / "construction_v2" / "positions" / f"{date}.json"
+    return _load_json(pos_path) or {"error": f"No v2 positions for {date}"}
+
+
+@app.get("/api/aact/{ticker}")
+async def api_aact_trials(ticker: str, limit: int = 50):
+    """Trial records linked to a ticker from AACT warehouse."""
+    # Find latest AACT snapshot
+    aact_dir = REPO_ROOT / "data" / "aact" / "snapshots"
+    if not aact_dir.exists():
+        return {
+            "ticker": ticker.upper(),
+            "n_trials": 0,
+            "status": "no_data",
+            "message": "No AACT data. Run tools/fetch_aact_snapshot.py first.",
+        }
+    snapshot_dirs = sorted(
+        (d for d in aact_dir.iterdir() if d.is_dir() and d.name[:4].isdigit()),
+        reverse=True,
+    )
+    if not snapshot_dirs:
+        return {"ticker": ticker.upper(), "n_trials": 0, "status": "no_data"}
+
+    master_path = snapshot_dirs[0] / "trial_master.json"
+    if not master_path.exists():
+        return {"ticker": ticker.upper(), "n_trials": 0, "status": "no_data"}
+
+    data = _load_json(master_path)
+    if not data:
+        return {"ticker": ticker.upper(), "n_trials": 0, "status": "load_error"}
+
+    ticker_upper = ticker.upper()
+    matched = [t for t in data.get("trials", []) if (t.get("mapped_ticker") or "").upper() == ticker_upper]
+
+    # Sort: active/recruiting first, then by phase desc
+    phase_order = {"Phase 3": 0, "Phase 2/3": 1, "Phase 2": 2, "Phase 1/2": 3, "Phase 1": 4}
+    active_statuses = {"Recruiting", "Active, not recruiting", "Enrolling by invitation", "Not yet recruiting"}
+    matched.sort(
+        key=lambda t: (
+            0 if t.get("overall_status") in active_statuses else 1,
+            phase_order.get(t.get("phase", ""), 9),
+        )
+    )
+
+    # Summary stats
+    status_counts: Dict[str, int] = {}
+    phase_counts: Dict[str, int] = {}
+    for t in matched:
+        s = t.get("overall_status", "Unknown")
+        p = t.get("phase", "Unknown")
+        status_counts[s] = status_counts.get(s, 0) + 1
+        phase_counts[p] = phase_counts.get(p, 0) + 1
+
+    return {
+        "ticker": ticker_upper,
+        "snapshot_date": data.get("snapshot_date"),
+        "n_trials": len(matched),
+        "status_distribution": dict(sorted(status_counts.items(), key=lambda x: -x[1])),
+        "phase_distribution": dict(sorted(phase_counts.items(), key=lambda x: -x[1])),
+        "trials": [
+            {
+                "nct_id": t.get("nct_id"),
+                "brief_title": t.get("brief_title"),
+                "phase": t.get("phase"),
+                "overall_status": t.get("overall_status"),
+                "enrollment": t.get("enrollment"),
+                "primary_completion_date": t.get("primary_completion_date"),
+                "start_date": t.get("start_date"),
+                "has_results": t.get("has_results", False),
+                "condition_names": t.get("condition_names", [])[:3],
+                "intervention_names": t.get("intervention_names", [])[:3],
+                "mapping_confidence": t.get("mapping_confidence"),
+            }
+            for t in matched[:limit]
+        ],
+    }
+
+
+@app.get("/api/aact/health")
+async def api_aact_health():
+    """Latest AACT ingest health report."""
+    aact_dir = REPO_ROOT / "data" / "aact" / "snapshots"
+    if not aact_dir.exists():
+        return {"error": "No AACT data"}
+    snapshot_dirs = sorted(
+        (d for d in aact_dir.iterdir() if d.is_dir() and d.name[:4].isdigit()),
+        reverse=True,
+    )
+    if not snapshot_dirs:
+        return {"error": "No AACT snapshots"}
+    health_path = snapshot_dirs[0] / "aact_health.json"
+    return _load_json(health_path) or {"error": "No health report"}
+
+
+@app.get("/api/purple_book/{ticker}")
+async def api_purple_book(ticker: str, date: str = ""):
+    """Biologic competition context from FDA Purple Book."""
+    if not date:
+        dates = _available_snapshot_dates()
+        date = dates[0] if dates else ""
+
+    pb_path = REPO_ROOT / "production_data" / "purple_book.json"
+    pb_data = _load_json(pb_path)
+    if not pb_data or not pb_data.get("products"):
+        return {
+            "ticker": ticker.upper(),
+            "is_biologic_company": False,
+            "status": "no_data",
+            "message": "No Purple Book data loaded. Run scripts/ingest_purple_book.py first.",
+        }
+
+    from common.purple_book_features import get_biologic_competition
+
+    return get_biologic_competition(ticker=ticker.upper(), as_of_date=date, pb_data=pb_data)
+
+
+@app.get("/api/deal_comps/{ticker}")
+async def api_deal_comps(ticker: str, date: str = ""):
+    """Deal comp context from DealForma for a single ticker."""
+    if not date:
+        dates = _available_snapshot_dates()
+        date = dates[0] if dates else ""
+
+    comps_path = REPO_ROOT / "production_data" / "dealforma_comps.json"
+    comps_data = _load_json(comps_path)
+    if not comps_data or not comps_data.get("deals"):
+        return {
+            "ticker": ticker.upper(),
+            "n_comps": 0,
+            "status": "no_data",
+            "message": "No DealForma data loaded. Run scripts/ingest_dealforma.py first.",
+        }
+
+    # Get ticker's TA and stage from rankings
+    rankings = _load_rankings(date)
+    row = rankings.get(ticker.upper(), {})
+    ta = row.get("therapeutic_area", "")
+    stage = row.get("lead_program_phase", "")
+    modality = row.get("modality", "")
+
+    from common.dealforma_features import get_deal_comps
+
+    return get_deal_comps(
+        ticker=ticker.upper(),
+        therapeutic_area=ta or None,
+        stage=stage or None,
+        modality=modality or None,
+        as_of_date=date,
+        comps_data=comps_data,
+    )
+
+
 @app.get("/api/herald/health")
 async def api_herald_health():
     """Latest Herald health artifact."""

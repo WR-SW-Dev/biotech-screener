@@ -73,10 +73,18 @@ trap 'rm -f "${LOCK_FILE}"' EXIT
 # Load environment
 cd "${REPO_ROOT}"
 if [ -f "${REPO_ROOT}/.env" ]; then
-    set -a
-    # shellcheck disable=SC1091
-    source "${REPO_ROOT}/.env"
-    set +a
+    # Use python-dotenv style parsing to avoid bash expansion of $ in values.
+    # `source .env` breaks on values like passwords containing $, backticks, etc.
+    while IFS= read -r line || [ -n "${line}" ]; do
+        # Skip comments and blank lines
+        [[ -z "${line}" || "${line}" =~ ^[[:space:]]*# ]] && continue
+        # Strip surrounding quotes from value
+        key="${line%%=*}"
+        val="${line#*=}"
+        val="${val#\"}" ; val="${val%\"}"
+        val="${val#\'}" ; val="${val%\'}"
+        export "${key}=${val}"
+    done < "${REPO_ROOT}/.env"
 fi
 
 LOG_FILE="${LOG_DIR}/daily_production_${AS_OF_DATE}.log"
