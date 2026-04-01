@@ -6,7 +6,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from tools.build_price_action_watch import classify_alerts
+from tools.build_price_action_watch import classify_alerts, compute_alert_confidence
 
 
 class TestStockMoveAlerts:
@@ -109,6 +109,47 @@ class TestCombinedAlerts:
         assert "MOVE_INTENSITY_SPIKE" in alerts
         assert "IV_RAMP_HIGH" in alerts
         assert len(alerts) == 3
+
+
+class TestAlertConfidence:
+    def test_no_alerts(self):
+        c = compute_alert_confidence([], {})
+        assert c["alert_confidence"] == 0.0
+        assert c["trigger_mode"] == "none"
+
+    def test_stock_only_alerts(self):
+        c = compute_alert_confidence(["STOCK_BIG_MOVE_UP"], {})
+        assert c["trigger_mode"] == "stock_only"
+        assert c["alert_confidence"] > 0.5
+
+    def test_history_based_high_confidence(self):
+        opts = {"opt_has_data": "1", "opt_liquidity_ok": "1", "opt_use_for_judgment": "YES"}
+        rr_hist = [0.05, 0.04, 0.06, 0.03, 0.05, 0.04]
+        c = compute_alert_confidence(["SKEW_EXTREME"], opts, rr_history=rr_hist)
+        assert c["trigger_mode"] == "history_based"
+        assert c["alert_confidence"] >= 0.7
+
+    def test_abs_fallback_lower_confidence(self):
+        opts = {"opt_has_data": "1", "opt_liquidity_ok": "0"}
+        c = compute_alert_confidence(["SKEW_EXTREME"], opts, rr_history=[])
+        assert c["trigger_mode"] == "low_liquidity_fallback"
+        assert c["alert_confidence"] < 0.5
+
+    def test_chain_quality_gate(self):
+        opts_good = {"opt_has_data": "1", "opt_liquidity_ok": "1"}
+        opts_bad = {"opt_has_data": "1", "opt_liquidity_ok": "0"}
+        c_good = compute_alert_confidence(["IV_RAMP_HIGH"], opts_good)
+        c_bad = compute_alert_confidence(["IV_RAMP_HIGH"], opts_bad)
+        assert c_good["chain_quality_gate_pass"] is True
+        assert c_bad["chain_quality_gate_pass"] is False
+
+    def test_has_required_fields(self):
+        c = compute_alert_confidence(["STOCK_MOVE_UP"], {})
+        assert "alert_confidence" in c
+        assert "trigger_mode" in c
+        assert "history_depth" in c
+        assert "chain_quality_gate_pass" in c
+        assert "spread_gate_pass" in c
 
 
 class TestOutputSchema:

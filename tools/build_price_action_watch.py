@@ -280,6 +280,82 @@ def classify_alerts(
     return alerts
 
 
+def compute_alert_confidence(
+    alerts: List[str],
+    options: Dict[str, str],
+    rr_history: Optional[List[float]] = None,
+) -> Dict[str, Any]:
+    """Compute alert confidence metadata for a set of alerts.
+
+    Returns dict with:
+      - alert_confidence: float 0-1
+      - trigger_mode: history_based | abs_fallback | low_liquidity_fallback | stock_only
+      - history_depth: int (days of usable RR history)
+      - chain_quality_gate_pass: bool
+      - spread_gate_pass: bool
+    """
+    if not alerts:
+        return {
+            "alert_confidence": 0.0,
+            "trigger_mode": "none",
+            "history_depth": 0,
+            "chain_quality_gate_pass": False,
+            "spread_gate_pass": False,
+        }
+
+    has_options_data = options.get("opt_has_data", "0") == "1"
+    liquidity_ok = options.get("opt_liquidity_ok", "0") == "1"
+    use_for_judgment = options.get("opt_use_for_judgment", "") == "YES"
+    history_depth = len(rr_history) if rr_history else 0
+
+    # Stock-only alerts don't need options quality
+    stock_alerts = {
+        "STOCK_BIG_MOVE_UP",
+        "STOCK_BIG_MOVE_DOWN",
+        "STOCK_MOVE_UP",
+        "STOCK_MOVE_DOWN",
+        "MOVE_INTENSITY_SPIKE",
+    }
+    options_alerts = {"IV_RAMP_HIGH", "IV_CRUSH", "OPTIONS_SURFACE_MOVE_HIGH", "SKEW_EXTREME", "QUIET_BEFORE_CATALYST"}
+    has_stock_alert = bool(set(alerts) & stock_alerts)
+    has_options_alert = bool(set(alerts) & options_alerts)
+
+    # Determine trigger mode
+    if not has_options_alert:
+        trigger_mode = "stock_only"
+    elif history_depth >= THRESHOLDS["skew_min_obs"] and liquidity_ok:
+        trigger_mode = "history_based"
+    elif has_options_data and not liquidity_ok:
+        trigger_mode = "low_liquidity_fallback"
+    else:
+        trigger_mode = "abs_fallback"
+
+    # Compute confidence
+    confidence = 0.5  # baseline
+    if has_stock_alert:
+        confidence += 0.2  # stock moves are directly observable
+    if trigger_mode == "history_based":
+        confidence += 0.25
+    elif trigger_mode == "abs_fallback":
+        confidence -= 0.1
+    elif trigger_mode == "low_liquidity_fallback":
+        confidence -= 0.2
+    if use_for_judgment:
+        confidence += 0.1
+    if liquidity_ok:
+        confidence += 0.05
+
+    confidence = max(0.0, min(1.0, confidence))
+
+    return {
+        "alert_confidence": round(confidence, 2),
+        "trigger_mode": trigger_mode,
+        "history_depth": history_depth,
+        "chain_quality_gate_pass": liquidity_ok and has_options_data,
+        "spread_gate_pass": liquidity_ok,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Builder
 # ---------------------------------------------------------------------------
