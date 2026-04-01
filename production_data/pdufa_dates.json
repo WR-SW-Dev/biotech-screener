@@ -193,5 +193,18 @@
     "source_url": "",
     "as_of_disclosed_at": "2026-03-14",
     "notes": "From CatalystAlert calendar. Priority Review BLA. Exact date needs company IR verification."
+  },
+  {
+    "ticker": "TVTX",
+    "drug_name": "FILSPARI (sparsentan)",
+    "indication": "Focal Segmental Glomerulosclerosis (FSGS)",
+    "pdufa_date": "2026-04-13",
+    "event_type": "PDUFA",
+    "submission_type": "sNDA",
+    "confidence": "HIGH",
+    "source": "company_ir",
+    "source_url": "",
+    "as_of_disclosed_at": "2026-04-01",
+    "notes": "sNDA for full approval in FSGS. Extended from Jan due to major amendment. Already approved for IgAN. DUPLEX/DUET studies support kidney function benefit. Probability ~68%."
   }
 ]
