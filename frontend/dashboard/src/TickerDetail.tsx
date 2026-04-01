@@ -134,6 +134,25 @@ export default function TickerDetail({ ticker, date }: Props) {
 
         {/* OPTIONS */}
         {tab === 'options' && <>
+          {/* Quality assessment banner */}
+          {(() => {
+            const hasData = r.opt_has_data === '1';
+            const liquid = r.opt_liquidity_ok === '1';
+            const judgment = r.opt_use_for_judgment === 'YES';
+            const featureCount = [r.opt_atm_iv, r.opt_front_iv, r.opt_back_iv, r.opt_term_slope, r.opt_put_call_skew, r.opt_rr_25d, r.opt_event_premium, r.actual_implied_move_pctile, r.implied_event_move].filter(v => v && v.trim()).length;
+            const state = !hasData ? 'absent' : (featureCount >= 7 && liquid) ? 'full' : featureCount >= 3 ? 'partial' : 'absent';
+            const stateColor = state === 'full' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : state === 'partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200';
+            const tierMode = state === 'full' ? 'Full chain' : state === 'partial' ? 'Reduced chain' : 'No options data';
+            return (
+              <div className={`rounded-lg border px-3 py-2 text-xs flex items-center justify-between ${stateColor}`}>
+                <div>
+                  <span className="font-semibold">{tierMode}</span>
+                  <span className="ml-2 opacity-70">{featureCount}/9 features · {liquid ? 'Liquid' : 'Illiquid'} · {judgment ? 'Use for judgment' : 'Diagnostic only'}</span>
+                </div>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/50">{state.toUpperCase()}</span>
+              </div>
+            );
+          })()}
           <div className="grid grid-cols-3 gap-1.5">
             <Stat label="opt_atm_iv" value={fmt(n(r.opt_atm_iv) * 100, '%')} />
             <Stat label="opt_front_iv" value={fmt(n(r.opt_front_iv) * 100, '%')} />

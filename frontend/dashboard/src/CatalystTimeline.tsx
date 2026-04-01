@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ZAxis } from 'recharts';
+import { ResponsiveContainer, ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ZAxis, BarChart, Bar } from 'recharts';
 
 interface Props {
   rows: any[];
@@ -36,9 +36,40 @@ export default function CatalystTimeline({ rows, onSelectTicker }: Props) {
     catalyst_family: r.catalyst_family || '—',
   }));
 
+  // Catalyst density by week (next 90 days)
+  const densityData = useMemo(() => {
+    const weeks: Record<number, { week: string; count: number; hard: number }> = {};
+    for (let w = 0; w < 13; w++) {
+      const lo = w * 7;
+      const hi = lo + 6;
+      const label = `${lo}-${hi}d`;
+      const inWeek = events.filter(r => r.catalyst_days >= lo && r.catalyst_days <= hi);
+      weeks[w] = { week: label, count: inWeek.length, hard: inWeek.filter(r => r.is_hard_catalyst === '1').length };
+    }
+    return Object.values(weeks);
+  }, [events]);
+
   return (
     <div className="p-6 space-y-6 max-w-5xl mx-auto">
       <h2 className="text-xl font-semibold">Catalyst Timeline</h2>
+
+      {/* Density histogram */}
+      <div className="rounded-xl border p-4">
+        <div className="text-sm font-medium mb-1">Catalyst density by week (next 90 days)</div>
+        <div className="text-xs text-slate-400 mb-3">Weeks with 3+ events are crowded catalyst windows.</div>
+        <div className="h-36">
+          <ResponsiveContainer>
+            <BarChart data={densityData} margin={{ left: 5, right: 5, top: 2, bottom: 2 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="week" tick={{ fontSize: 9 }} />
+              <YAxis tick={{ fontSize: 9 }} />
+              <Tooltip formatter={(v: any, name: string) => [v, name === 'hard' ? 'Hard' : 'Total']} />
+              <Bar dataKey="count" fill="#94a3b8" radius={[3, 3, 0, 0]} name="Total" />
+              <Bar dataKey="hard" fill="#ef4444" radius={[3, 3, 0, 0]} name="Hard" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
 
       {/* Scatter: RR vs catalyst proximity */}
       <div className="rounded-xl border p-4">

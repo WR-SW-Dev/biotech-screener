@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine } from 'recharts';
+import { useEffect, useMemo, useState } from 'react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine, LineChart, Line, Area, AreaChart } from 'recharts';
 import { fetchCRTResolutions } from './api';
 
 const GREEN = '#22c55e';
@@ -108,6 +108,43 @@ export default function CRTCalibration() {
           </div>
         </div>
       </div>
+
+      {/* Calibration reliability curve */}
+      {records.length > 0 && (() => {
+        // Cumulative hit rate as resolutions accumulate
+        let hits = 0;
+        const curve = records.map((r, i) => {
+          if (r.outcome === 'HIT') hits++;
+          const n = i + 1;
+          const rate = hits / n;
+          // Simple 95% Wilson CI approximation
+          const z = 1.96;
+          const p = rate;
+          const lo = Math.max(0, (p + z*z/(2*n) - z*Math.sqrt((p*(1-p) + z*z/(4*n))/n)) / (1 + z*z/n));
+          const hi = Math.min(1, (p + z*z/(2*n) + z*Math.sqrt((p*(1-p) + z*z/(4*n))/n)) / (1 + z*z/n));
+          return { n, rate: +(rate * 100).toFixed(1), lo: +(lo * 100).toFixed(1), hi: +(hi * 100).toFixed(1) };
+        });
+        return (
+          <div className="rounded-xl border p-4">
+            <div className="text-sm font-medium mb-1">Calibration reliability</div>
+            <div className="text-xs text-slate-400 mb-3">Cumulative hit rate with 95% confidence band. Band narrows as n grows.</div>
+            <div className="h-48">
+              <ResponsiveContainer>
+                <AreaChart data={curve} margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="n" tick={{ fontSize: 10 }} label={{ value: 'Resolutions', fontSize: 10, position: 'bottom', offset: -5 }} />
+                  <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip formatter={(v: any, name: string) => [`${v}%`, name === 'rate' ? 'Hit rate' : name === 'hi' ? 'Upper 95%' : 'Lower 95%']} />
+                  <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: '50%', fontSize: 9, fill: '#94a3b8' }} />
+                  <Area type="monotone" dataKey="hi" stroke="none" fill="#22c55e" fillOpacity={0.1} name="hi" />
+                  <Area type="monotone" dataKey="lo" stroke="none" fill="#ffffff" fillOpacity={1} name="lo" />
+                  <Line type="monotone" dataKey="rate" stroke="#22c55e" strokeWidth={2} dot={{ r: 3 }} name="rate" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Outcome × Price Direction cross-tab */}
       <div className="rounded-xl border p-4">
