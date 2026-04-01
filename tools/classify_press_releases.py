@@ -264,12 +264,39 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
     }
 
 
+def _is_noise(headline: str) -> bool:
+    """Detect non-company PR noise from GlobeNewswire (lawsuits, analyst notes)."""
+    hl = headline.lower()
+    noise_patterns = [
+        "investor alert",
+        "pomerantz law",
+        "johnson fistel",
+        "class action",
+        "securities fraud",
+        "shareholders are encouraged",
+        "investigation on behalf",
+        "reminds investors",
+        "reminds shareholders",
+        "deadline reminder",
+        "loss notice",
+        "stock alert",
+        "buy or sell",
+    ]
+    return any(p in hl for p in noise_patterns)
+
+
 def classify_releases(
     raw_records: List[Dict[str, Any]],
     use_grok: bool = False,
     model: str = "grok-4-1-fast",
 ) -> List[Dict[str, Any]]:
-    """Classify a batch of raw PR records."""
+    """Classify a batch of raw PR records.
+
+    Tiered strategy:
+    1. Filter noise (lawsuits, stock alerts) — skip entirely
+    2. Local keyword classification for clear cases
+    3. Grok only for ambiguous records (if enabled)
+    """
     client = None
     if use_grok and HAS_OPENAI:
         api_key = os.getenv("XAI_API_KEY")
@@ -279,13 +306,25 @@ def classify_releases(
             logger.warning("XAI_API_KEY not set, falling back to local classification")
 
     classified = []
+    noise_skipped = 0
+    grok_calls = 0
+
     for rec in raw_records:
         ticker = rec.get("ticker", "")
         headline = rec.get("headline", "")
         if not ticker or not headline:
             continue
 
-        if client:
+        # Tier 1: skip noise
+        if _is_noise(headline):
+            noise_skipped += 1
+            continue
+
+        # Tier 2: local classification
+        result = _classify_locally(headline)
+
+        # Tier 3: escalate to Grok if ambiguous and Grok is available
+        if client and result.get("needs_review") and not result.get("informational_only"):
             try:
                 result = _classify_with_grok(
                     ticker=ticker,
@@ -296,20 +335,18 @@ def classify_releases(
                     client=client,
                     model=model,
                 )
+                grok_calls += 1
             except Exception as e:
-                logger.warning("Grok classification failed for %s: %s, using local", ticker, e)
-                result = _classify_locally(headline)
-        else:
-            result = _classify_locally(headline)
+                logger.warning("Grok failed for %s: %s", ticker, e)
 
         # Build normalized event record
         event_id = str(uuid.uuid4())
         dedupe_raw = f"{ticker}|{result.get('event_category', '')}|{result.get('event_subtype', '')}|{rec.get('published_at_utc', '')}|{rec.get('source_url', '')}"
-        dedupe_key = hashlib.sha256(dedupe_raw.encode()).hexdigest()[:16]
+        dk = hashlib.sha256(dedupe_raw.encode()).hexdigest()[:16]
 
         normalized = {
             "event_id": event_id,
-            "dedupe_key": dedupe_key,
+            "dedupe_key": dk,
             "ticker": ticker,
             "company": rec.get("company", ""),
             "headline": headline,
@@ -317,10 +354,17 @@ def classify_releases(
             "source_type": rec.get("source_type", "company_ir"),
             "published_at_utc": rec.get("published_at_utc", ""),
             "classified_at_utc": datetime.now(timezone.utc).isoformat(),
-            "classification_method": "grok" if client else "local_keywords",
+            "classification_method": (
+                "grok" if (client and grok_calls > 0 and result.get("needs_review") is False) else "local_keywords"
+            ),
             **result,
         }
         classified.append(normalized)
+
+    if noise_skipped:
+        logger.info("Noise filtered: %d records (lawsuits, stock alerts)", noise_skipped)
+    if grok_calls:
+        logger.info("Grok API calls: %d (ambiguous records only)", grok_calls)
 
     return classified
 
