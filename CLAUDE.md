@@ -18,13 +18,135 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `9f1f4587` (v1.11.0)
-- **File**: `production_data/decision_rulesets/v1.11.0_b91_clinical_quality_w05_candidate.json`
-- **Key settings**: clinical_quality sort for b91 CLINICAL w=0.5, flatten_tier_91_180, optionality anchor, cal_alpha w=0.3, inst_sort w=0.3, clinical OFF, coinvest OFF, buffer=30
+- **ID**: `69a0c7f8` (v1.12.0)
+- **File**: `production_data/decision_rulesets/v1.12.0_cal_alpha_off_candidate.json`
+- **Key settings**: optionality anchor, inst_sort w=0.3, buffer=30, cal_alpha OFF, clinical OFF, coinvest OFF
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
-- **Shadow candidate**: `a08749e4` (catalyst tilt) — weekly gate failed, shadowing 3-5 more weeks
-- **Dormant**: catalyst type mult (`b7511c92`), top-book BQS (`846ae27b`/`7956312c`), oncology crowding (`v1.15.0`)
 - **Manifest**: 35+ entries, no dup IDs
+
+---
+
+## Current Operating Truths
+
+Use survivorship-cleaned pseudo-PIT v2 as the current benchmark baseline; treat full PIT
+financial regeneration as the next evidentiary upgrade; do not reopen dead lanes or superseded
+Top-20/pruner narratives without new rerun evidence.
+
+1. **DEM is a selector, not a ranker.** Within-top-30 IC is zero. EW is the correct weighting.
+2. **Survivorship-cleaned pseudo-PIT v2 is the current baseline.** Top-30 beats Top-20 by +16.8pp on cleaned full history.
+3. **Recent window (Oct 2025+) is unchanged by survivorship cleanup.** The contamination lived in 2020-2024 early snapshots.
+4. **Full PIT financial regeneration is in progress / pending for stronger evidence.** On a sample date, only 12/30 names overlap between original and PIT-financial-corrected rankings. 67.8% of top-30 had >25% cash delta. This is large enough to overturn the Top-20 vs Top-30 conclusion.
+5. **The selector's edge is regime-dependent.** Bear IR 3.35, bull IR -0.21. The model is a downside-protection engine, not an all-weather strategy.
+6. **Construction v2 (EW Top-30) is promoted.** Fixed sleeve budgets (55/25/10/10) are retired. Bucket labels survive as metadata only.
+7. **Forward monitor is the only true PIT evidence.** Everything historical is pseudo-PIT (today's code applied retroactively).
+
+---
+
+## Trust Buckets
+
+### Safe to use now
+- Snapshot overwrite protection
+- CTGov fallback PIT safety net
+- Production data archiver (SHA-256 manifests)
+- PIT validation audit framework
+- Live risk / rebalance / execution controls
+- Recent operational artifacts (Oct 2025+) that do not depend on long contaminated histories
+- Forward monitor results (true PIT)
+
+### Provisional (directionally useful, not promotion-grade)
+- Survivorship-cleaned long-history benchmarks (Top-20 vs Top-30, Top-N vs XBI)
+- Claims about "Top-30 is the sweet spot" (pending PIT-financials rerun)
+- Construction conclusions that depend on 2020+ regenerated snapshots
+- Full-history regime decomposition based on the pseudo-PIT v2 snapshot set
+
+### Invalid until PIT-financials rerun
+- Any benchmark that still uses current-state financial_records.json for historical dates
+- Any long-history comparison that mixes contaminated financial features with current claims
+- Any promotion memo that cites long-history alpha as if it were clean PIT
+
+---
+
+## Do Not Reopen Without New Evidence
+
+These lanes have been tested and either died or were superseded. Do not spend research
+hours here unless genuinely new data or a structural model change creates a reason to revisit.
+
+| Lane | Status | Why closed |
+|------|--------|-----------|
+| Options surface-shape as systematic ranker | DEAD | 50-month backtest IC negative at all horizons |
+| `total_volume_z` | DEAD | IC=-0.10 on PIT-native data (109 obs), original +0.134 was retro-classified look-ahead bias |
+| Always-on rank-weighting (Top-20 or Top-30) | NOT PROMOTED | RW does not beat EW net of costs; within-top-30 IC is zero |
+| Top-20 / pruner promotion story | SUPERSEDED | Survivorship-cleaned v2 shows Top-30 > Top-20; pending PIT-financials confirmation |
+| `cal_alpha` | REMOVED in v1.12.0 | Confirmed no-op, zero deltas at all horizons |
+| Clinical sort signal | OFF | Insufficient IC |
+| Coinvest signal | REJECTED | IC below promotion bar |
+| Quality tiebreaks (Specs 030/031) | EXHAUSTED | All economically immaterial |
+| 91-180d drawdown gate | DEAD | Counterproductive at all thresholds |
+| Dynamic caps | DEAD | Identical to plain EW |
+| Fixed sleeve budgets | RETIRED | Primary construction damage mechanism (+153.6pp drag) |
+
+---
+
+## Current Promotion Story
+
+1. DEM is a **proven selector** generating +93-110pp excess vs XBI on cleaned full history.
+2. Current cleaned benchmark says **EW Top-30 is the active comparison baseline**.
+3. Anything more complex must **beat EW Top-30 net of costs** to earn promotion.
+4. Do not promote off contaminated or superseded results.
+5. `inst_delta_z` has PROMOTE verdict at 63d (+0.68pp/mo net) — the only confirmed within-top-30 signal.
+6. All promotion decisions are **paused until PIT-financials rerun lands**.
+
+---
+
+## PIT Rules
+
+1. **Never call the historical set "true PIT"** unless archived raw inputs, archived code, AND archived derived artifacts all exist as-of each date.
+2. Historical benchmark outputs must carry `pseudo_pit_version` (1=contaminated, 2=cleaned).
+3. Benchmark reruns must use the PIT-aware paths: `--pit-mode survivorship` or `--pit-mode full`.
+4. Long-history conclusions are **provisional** until PIT-v2 financial rerun lands.
+5. The forward monitor is the only true out-of-sample evidence. Accumulate it.
+
+---
+
+## Canonical Benchmark Commands
+
+```bash
+# Survivorship-cleaned selection benchmark (current baseline)
+python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --top-n 20 --also-top30
+
+# Monthly IC / selection benchmark
+python3 scripts/research/selection_benchmark.py --pit-mode survivorship
+
+# Ranker evaluation (inst_delta_z within top-30)
+python3 scripts/research/ranker_evaluation_harness.py --signal inst_delta_z --pit-mode survivorship
+
+# Construction v2 benchmark (all variants)
+python3 scripts/research/construction_v2_benchmark.py --pit-mode survivorship
+
+# PIT-financials snapshot regeneration (heavy lift, ~2h)
+python3 scripts/research/regenerate_pit_v2_snapshots.py
+
+# Run benchmarks on PIT-financial-corrected snapshots
+python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --top-n 20 --also-top30 --snapshot-dir data/snapshots_pit_v2
+```
+
+---
+
+## Heavy-Lift Jobs
+
+- **Survivorship-cleaned reruns** are fast (minutes) — use for benchmark hygiene anytime.
+- **Full PIT financial regeneration** (`regenerate_pit_v2_snapshots.py`) is the next compute-heavy job when stronger evidence is needed. 76 monthly dates × ~90s each ≈ 2 hours. Output: `data/snapshots_pit_v2/`.
+- **Do not finalize committee claims** until that rerun finishes and benchmarks are re-run on the corrected snapshots.
+
+---
+
+## What to Update After Every Session
+
+- [ ] Current benchmark winner (Top-20 vs Top-30, any new candidate)
+- [ ] Trust bucket changes (provisional → safe, or new invalid entries)
+- [ ] Dead-lane list (add any newly killed signals/lanes)
+- [ ] PIT version / contamination status
+- [ ] Active heavy-lift job status
 
 ## Decision Engine Architecture
 **File**: `decision_engine.py` (~620 lines, pure post-processing)
