@@ -4898,6 +4898,43 @@ def run_daily(
         except Exception as _aact_err:
             _logger.warning(f"AACT deltas failed: {_aact_err}")
 
+        # --- Step 5k.14: Rebalance plan (non-blocking) ---
+        try:
+            from tools.build_rebalance_plan import build_plan
+
+            _rp_result = build_plan(as_of_date)
+            if "error" not in _rp_result:
+                _rp_dir = REPO_ROOT / "artifacts" / "rebalance_plan"
+                _rp_dir.mkdir(parents=True, exist_ok=True)
+                _rp_path = _rp_dir / f"{as_of_date}_plan.json"
+                with open(_rp_path, "w") as _rp_f:
+                    json.dump(_rp_result, _rp_f, indent=2, default=str)
+                _rp_skip = "SKIP" if _rp_result.get("skip_rebalance") else "EXECUTE"
+                _rp_buys = _rp_result.get("n_buys", 0)
+                _logger.info(f"Rebalance plan → {_rp_skip}, {_rp_buys} buys")
+            else:
+                _logger.info(f"Rebalance plan → skipped ({_rp_result['error']})")
+        except Exception as _rp_err:
+            _logger.warning(f"Rebalance plan failed: {_rp_err}")
+
+        # --- Step 5k.15: Risk monitor (non-blocking) ---
+        try:
+            from tools.build_risk_monitor import build_risk_report
+
+            _rm_result = build_risk_report(as_of_date)
+            if "error" not in _rm_result:
+                _rm_dir = REPO_ROOT / "artifacts" / "risk_monitor"
+                _rm_dir.mkdir(parents=True, exist_ok=True)
+                _rm_path = _rm_dir / f"{as_of_date}_risk.json"
+                with open(_rm_path, "w") as _rm_f:
+                    json.dump(_rm_result, _rm_f, indent=2, default=str)
+                _rm_level = _rm_result.get("risk_level", "?")
+                _logger.info(f"Risk monitor → {_rm_level}")
+            else:
+                _logger.info(f"Risk monitor → skipped ({_rm_result['error']})")
+        except Exception as _rm_err:
+            _logger.warning(f"Risk monitor failed: {_rm_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
