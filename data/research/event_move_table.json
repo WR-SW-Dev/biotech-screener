@@ -1,0 +1,171 @@
+{
+  "schema": "event_move_table.v1",
+  "built_as_of": "2026-04-02T14:55:58.729196+00:00",
+  "source": "crt_resolutions",
+  "n_outcomes": 18,
+  "n_crt_types": 3,
+  "min_obs": 3,
+  "table": {
+    "CLINICAL|any|any": {
+      "n": 12,
+      "p25": 0.037448,
+      "p50": 0.201979,
+      "p75": 0.388443,
+      "p90": 0.656473,
+      "mean": 0.260348,
+      "confidence": "moderate"
+    },
+    "CLINICAL|early|any": {
+      "n": 8,
+      "p25": 0.012713,
+      "p50": 0.027674,
+      "p75": 0.047367,
+      "p90": 0.062709,
+      "confidence": "low_confidence"
+    },
+    "CLINICAL|early|oncology": {
+      "n": 6,
+      "p25": 0.019241,
+      "p50": 0.042254,
+      "p75": 0.057595,
+      "p90": 0.062709,
+      "confidence": "low_confidence"
+    },
+    "CLINICAL|early|other": {
+      "n": 2,
+      "p25": 0.013094,
+      "p50": 0.013094,
+      "p75": 0.013094,
+      "p90": 0.013094,
+      "confidence": "insufficient"
+    },
+    "CLINICAL|phase2|any": {
+      "n": 12,
+      "p25": 0.017313,
+      "p50": 0.027171,
+      "p75": 0.036541,
+      "p90": 0.075953,
+      "confidence": "ok"
+    },
+    "CLINICAL|phase2|oncology": {
+      "n": 4,
+      "p25": 0.008746,
+      "p50": 0.044539,
+      "p75": 0.080332,
+      "p90": 0.080332,
+      "confidence": "insufficient"
+    },
+    "CLINICAL|phase2|other": {
+      "n": 8,
+      "p25": 0.020317,
+      "p50": 0.027171,
+      "p75": 0.033904,
+      "p90": 0.036541,
+      "confidence": "low_confidence"
+    },
+    "CLINICAL|phase3|any": {
+      "n": 12,
+      "p25": 0.037448,
+      "p50": 0.201979,
+      "p75": 0.388443,
+      "p90": 0.656473,
+      "mean": 0.260348,
+      "confidence": "moderate"
+    },
+    "CLINICAL|phase3|oncology": {
+      "n": 48,
+      "p25": 0.008176,
+      "p50": 0.017649,
+      "p75": 0.031097,
+      "p90": 0.051919,
+      "confidence": "ok"
+    },
+    "CLINICAL|phase3|other": {
+      "n": 31,
+      "p25": 0.00857,
+      "p50": 0.01446,
+      "p75": 0.025646,
+      "p90": 0.058849,
+      "confidence": "ok"
+    },
+    "CLINICAL|phase3|rare": {
+      "n": 2,
+      "p25": 0.06449,
+      "p50": 0.06449,
+      "p75": 0.06449,
+      "p90": 0.06449,
+      "confidence": "insufficient"
+    },
+    "UNKNOWN|any|any": {
+      "n": 8,
+      "p25": 0.019709,
+      "p50": 0.038468,
+      "p75": 0.059767,
+      "p90": 0.077778,
+      "mean": 0.041007,
+      "confidence": "low_confidence"
+    },
+    "UNKNOWN|phase2|any": {
+      "n": 4,
+      "p25": 0.047619,
+      "p50": 0.055836,
+      "p75": 0.064052,
+      "p90": 0.064052,
+      "confidence": "insufficient"
+    },
+    "UNKNOWN|phase2|oncology": {
+      "n": 4,
+      "p25": 0.047619,
+      "p50": 0.055836,
+      "p75": 0.064052,
+      "p90": 0.064052,
+      "confidence": "insufficient"
+    },
+    "UNKNOWN|phase3|any": {
+      "n": 6,
+      "p25": 0.021626,
+      "p50": 0.0316,
+      "p75": 0.06294,
+      "p90": 0.073387,
+      "confidence": "low_confidence"
+    },
+    "UNKNOWN|phase3|oncology": {
+      "n": 6,
+      "p25": 0.021626,
+      "p50": 0.0316,
+      "p75": 0.06294,
+      "p90": 0.073387,
+      "confidence": "low_confidence"
+    },
+    "any|any|any": {
+      "n": 18,
+      "p25": 0.014745,
+      "p50": 0.058595,
+      "p75": 0.32703,
+      "p90": 0.549773,
+      "mean": 0.186103,
+      "confidence": "moderate"
+    }
+  },
+  "crt_native_table": {
+    "CORPORATE_UPDATE": {
+      "n": 4,
+      "p25": 0.019709,
+      "p50": 0.038468,
+      "p75": 0.059767,
+      "p90": 0.070574,
+      "mean": 0.041007,
+      "confidence": "very_low"
+    },
+    "PHASE_3_READOUT": {
+      "n": 12,
+      "p25": 0.037448,
+      "p50": 0.201979,
+      "p75": 0.388443,
+      "p90": 0.656473,
+      "mean": 0.260348,
+      "confidence": "moderate"
+    }
+  },
+  "merged_with_existing": true
+}
