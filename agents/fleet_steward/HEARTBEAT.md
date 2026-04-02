@@ -4,6 +4,12 @@ On heartbeat, produce a compact fleet health receipt.
 
 ## Checklist
 
+### 0. Fleet discovery
+- List all agents: `ls -d agents/*/SOUL.md | sed 's|agents/||;s|/SOUL.md||'`
+- Compare to last known list in `memory/`
+- If new agents found → report as NEW in receipt
+- If agents removed → report as REMOVED
+
 ### 1. Production pipeline
 - Check `data/snapshots/{today}/` exists and has rankings.csv
 - Check `artifacts/ops_digest/{today}_digest.json` exists

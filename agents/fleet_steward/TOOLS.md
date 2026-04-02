@@ -70,10 +70,20 @@ print(f'{n} snapshot_native hard events')
 openclaw gateway status 2>&1 | head -5
 ```
 
-## List agents
+## Discover agents (dynamic — picks up new agents automatically)
 
 ```bash
-openclaw agents list 2>&1 | grep "^-" | head -25
+# Filesystem source of truth
+for d in agents/*/SOUL.md; do
+  agent=$(echo "$d" | sed 's|agents/||;s|/SOUL.md||')
+  nick=$(grep -m1 "Name:" "agents/$agent/IDENTITY.md" 2>/dev/null | sed 's/.*: *//')
+  echo "$agent ($nick)"
+done
+```
+
+```bash
+# OpenClaw registry (may lag filesystem)
+openclaw agents list 2>&1 | grep "^-"
 ```
 
 ## Cadence
