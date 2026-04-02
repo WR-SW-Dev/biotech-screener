@@ -4622,7 +4622,7 @@ def save_validation_snapshot(
                     as_of_date,
                     cross_quarter=True,
                     current_filing_period=_cur_filing,
-                    max_candidates=60,
+                    max_candidates=200,
                 )
                 if prior_inst:
                     inst_delta = compute_institutional_delta(inst_summary, prior_inst)
