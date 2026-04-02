@@ -4846,7 +4846,7 @@ def run_daily(
         except Exception as _ic_err:
             _logger.warning(f"IC dashboard failed: {_ic_err}")
 
-        # --- Step 5k.8: Post-promotion monitor (non-blocking) ---
+        # --- Step 5k.11: Post-promotion monitor (non-blocking) ---
         try:
             from tools.post_promotion_monitor import compute_monitor
 
@@ -4862,7 +4862,7 @@ def run_daily(
         except Exception as _pm_err:
             _logger.warning(f"Post-promotion monitor failed: {_pm_err}")
 
-        # --- Step 5k.9: Asymmetry score (non-blocking, accumulates EPD history) ---
+        # --- Step 5k.12: Asymmetry score (non-blocking, accumulates EPD history) ---
         try:
             from scripts.research.top30_asymmetry_score import score_snapshot
 
