@@ -1,0 +1,1427 @@
+{
+  "generated_at": "2026-04-02T19:41:17.626777+00:00",
+  "source": "price_history.csv first-price-date proxy",
+  "ticker_count": 355,
+  "tickers": {
+    "AARD": {
+      "first_price_date": "2025-02-13",
+      "last_price_date": "2026-04-02"
+    },
+    "ABCL": {
+      "first_price_date": "2020-12-11",
+      "last_price_date": "2026-04-02"
+    },
+    "ABEO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ABOS": {
+      "first_price_date": "2021-07-01",
+      "last_price_date": "2026-04-02"
+    },
+    "ABSI": {
+      "first_price_date": "2021-07-22",
+      "last_price_date": "2026-04-02"
+    },
+    "ABUS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ABVX": {
+      "first_price_date": "2023-10-20",
+      "last_price_date": "2026-04-02"
+    },
+    "ACAD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ACIU": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ACLX": {
+      "first_price_date": "2022-02-04",
+      "last_price_date": "2026-04-02"
+    },
+    "ACRS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ACRV": {
+      "first_price_date": "2022-11-15",
+      "last_price_date": "2026-04-02"
+    },
+    "ADCT": {
+      "first_price_date": "2020-05-18",
+      "last_price_date": "2026-04-02"
+    },
+    "ADMA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ADPT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AGIO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AKRO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2025-12-09"
+    },
+    "AKTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALDX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALGS": {
+      "first_price_date": "2020-10-16",
+      "last_price_date": "2026-04-02"
+    },
+    "ALKS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALLO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALMS": {
+      "first_price_date": "2024-06-28",
+      "last_price_date": "2026-04-02"
+    },
+    "ALNY": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ALVO": {
+      "first_price_date": "2022-06-16",
+      "last_price_date": "2026-04-02"
+    },
+    "AMGN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AMLX": {
+      "first_price_date": "2022-01-07",
+      "last_price_date": "2026-04-02"
+    },
+    "AMPH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AMRX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ANAB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ANIP": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ANNX": {
+      "first_price_date": "2020-07-24",
+      "last_price_date": "2026-04-02"
+    },
+    "ANRO": {
+      "first_price_date": "2024-02-02",
+      "last_price_date": "2026-04-02"
+    },
+    "APGE": {
+      "first_price_date": "2023-07-14",
+      "last_price_date": "2026-04-02"
+    },
+    "APLS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AQST": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ARCT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ARDX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ARGX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ARQT": {
+      "first_price_date": "2020-01-31",
+      "last_price_date": "2026-04-02"
+    },
+    "ARTV": {
+      "first_price_date": "2024-07-19",
+      "last_price_date": "2026-04-02"
+    },
+    "ARVN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ARWR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ASMB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ASND": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ATAI": {
+      "first_price_date": "2021-06-18",
+      "last_price_date": "2026-04-02"
+    },
+    "ATXS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-01-23"
+    },
+    "AUPH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AURA": {
+      "first_price_date": "2021-10-29",
+      "last_price_date": "2026-04-02"
+    },
+    "AUTL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AVBP": {
+      "first_price_date": "2024-01-26",
+      "last_price_date": "2026-04-02"
+    },
+    "AVIR": {
+      "first_price_date": "2020-10-30",
+      "last_price_date": "2026-04-02"
+    },
+    "AVTR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AVXL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AXSM": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "AZN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BBIO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BBOT": {
+      "first_price_date": "2024-02-09",
+      "last_price_date": "2026-04-02"
+    },
+    "BCAX": {
+      "first_price_date": "2024-09-13",
+      "last_price_date": "2026-04-02"
+    },
+    "BCRX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BCYC": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BDTX": {
+      "first_price_date": "2020-01-31",
+      "last_price_date": "2026-04-02"
+    },
+    "BEAM": {
+      "first_price_date": "2020-02-06",
+      "last_price_date": "2026-04-02"
+    },
+    "BHVN": {
+      "first_price_date": "2022-09-23",
+      "last_price_date": "2026-04-02"
+    },
+    "BIIB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BIOA": {
+      "first_price_date": "2024-09-26",
+      "last_price_date": "2026-04-02"
+    },
+    "BLTE": {
+      "first_price_date": "2022-04-29",
+      "last_price_date": "2026-04-02"
+    },
+    "BMEA": {
+      "first_price_date": "2021-04-16",
+      "last_price_date": "2026-04-02"
+    },
+    "BMRN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BNTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "BRKR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CABA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CADL": {
+      "first_price_date": "2021-07-27",
+      "last_price_date": "2026-04-02"
+    },
+    "CAI": {
+      "first_price_date": "2025-06-18",
+      "last_price_date": "2026-04-02"
+    },
+    "CATX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CCCC": {
+      "first_price_date": "2020-10-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CDNA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CDTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-01-08"
+    },
+    "CDXS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CELC": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CERS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CGEM": {
+      "first_price_date": "2021-01-08",
+      "last_price_date": "2026-04-02"
+    },
+    "CGON": {
+      "first_price_date": "2024-01-25",
+      "last_price_date": "2026-04-02"
+    },
+    "CHRS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CLDX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CLLS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CLYM": {
+      "first_price_date": "2021-08-10",
+      "last_price_date": "2026-04-02"
+    },
+    "CMPS": {
+      "first_price_date": "2020-09-18",
+      "last_price_date": "2026-04-02"
+    },
+    "CMPX": {
+      "first_price_date": "2021-04-05",
+      "last_price_date": "2026-04-02"
+    },
+    "CNTA": {
+      "first_price_date": "2021-05-28",
+      "last_price_date": "2026-04-02"
+    },
+    "CNTX": {
+      "first_price_date": "2021-10-20",
+      "last_price_date": "2026-04-02"
+    },
+    "COGT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "COLL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CRBU": {
+      "first_price_date": "2021-07-23",
+      "last_price_date": "2026-04-02"
+    },
+    "CRL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CRMD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CRNX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CRSP": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CRVS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CSTL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CTKB": {
+      "first_price_date": "2021-07-23",
+      "last_price_date": "2026-04-02"
+    },
+    "CTMX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "CTNM": {
+      "first_price_date": "2024-04-05",
+      "last_price_date": "2026-04-02"
+    },
+    "CVAC": {
+      "first_price_date": "2020-08-14",
+      "last_price_date": "2026-01-06"
+    },
+    "CYTK": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "DAWN": {
+      "first_price_date": "2021-05-27",
+      "last_price_date": "2026-04-02"
+    },
+    "DFTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "DNA": {
+      "first_price_date": "2021-04-19",
+      "last_price_date": "2026-04-02"
+    },
+    "DNLI": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "DNTH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "DRMA": {
+      "first_price_date": "2021-08-13",
+      "last_price_date": "2026-04-02"
+    },
+    "DRUG": {
+      "first_price_date": "2021-03-22",
+      "last_price_date": "2026-04-02"
+    },
+    "DSGN": {
+      "first_price_date": "2021-03-29",
+      "last_price_date": "2026-04-02"
+    },
+    "DVAX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-02-10"
+    },
+    "DYN": {
+      "first_price_date": "2020-09-17",
+      "last_price_date": "2026-04-02"
+    },
+    "EBS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "EDIT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ELDN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ELVN": {
+      "first_price_date": "2020-03-12",
+      "last_price_date": "2026-04-02"
+    },
+    "ENGN": {
+      "first_price_date": "2022-02-01",
+      "last_price_date": "2026-04-02"
+    },
+    "ENTA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "EOLS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "EPRX": {
+      "first_price_date": "2024-04-05",
+      "last_price_date": "2026-04-02"
+    },
+    "ERAS": {
+      "first_price_date": "2021-07-16",
+      "last_price_date": "2026-04-02"
+    },
+    "ESPR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ETON": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "EWTX": {
+      "first_price_date": "2021-03-26",
+      "last_price_date": "2026-04-02"
+    },
+    "EXEL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "EYPT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "FATE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "FDMT": {
+      "first_price_date": "2020-12-11",
+      "last_price_date": "2026-04-02"
+    },
+    "FGEN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-03-09"
+    },
+    "FHTX": {
+      "first_price_date": "2020-10-23",
+      "last_price_date": "2026-04-02"
+    },
+    "FLGT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "FOLD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "FTRE": {
+      "first_price_date": "2023-06-16",
+      "last_price_date": "2026-04-02"
+    },
+    "FULC": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GBIO": {
+      "first_price_date": "2020-06-12",
+      "last_price_date": "2026-02-10"
+    },
+    "GERN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GHRS": {
+      "first_price_date": "2021-06-25",
+      "last_price_date": "2026-04-02"
+    },
+    "GILD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GLPG": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GLUE": {
+      "first_price_date": "2021-06-24",
+      "last_price_date": "2026-04-02"
+    },
+    "GMAB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GOSS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "GPCR": {
+      "first_price_date": "2023-02-03",
+      "last_price_date": "2026-04-02"
+    },
+    "GRAL": {
+      "first_price_date": "2024-06-12",
+      "last_price_date": "2026-04-02"
+    },
+    "GRFS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "HALO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "HOWL": {
+      "first_price_date": "2021-04-30",
+      "last_price_date": "2026-04-02"
+    },
+    "HRMY": {
+      "first_price_date": "2020-08-19",
+      "last_price_date": "2026-04-02"
+    },
+    "HROW": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "HRTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "HUMA": {
+      "first_price_date": "2020-12-01",
+      "last_price_date": "2026-04-02"
+    },
+    "IBB": {
+      "first_price_date": "2025-02-11",
+      "last_price_date": "2026-03-24"
+    },
+    "IBRX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IDYA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IKT": {
+      "first_price_date": "2020-12-23",
+      "last_price_date": "2026-04-02"
+    },
+    "ILMN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IMCR": {
+      "first_price_date": "2021-02-05",
+      "last_price_date": "2026-04-02"
+    },
+    "IMMP": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IMRX": {
+      "first_price_date": "2021-07-30",
+      "last_price_date": "2026-04-02"
+    },
+    "IMTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IMVT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "INBX": {
+      "first_price_date": "2024-05-29",
+      "last_price_date": "2026-04-02"
+    },
+    "INCY": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "INDV": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "INSM": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "INVA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IONS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IOVA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IRON": {
+      "first_price_date": "2020-08-12",
+      "last_price_date": "2026-04-02"
+    },
+    "IRWD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "IVVD": {
+      "first_price_date": "2021-08-06",
+      "last_price_date": "2026-04-02"
+    },
+    "JANX": {
+      "first_price_date": "2021-06-11",
+      "last_price_date": "2026-04-02"
+    },
+    "JAZZ": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "JBIO": {
+      "first_price_date": "2021-06-30",
+      "last_price_date": "2026-04-02"
+    },
+    "KALA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KALV": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KMDA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KNSA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KOD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KROS": {
+      "first_price_date": "2020-04-08",
+      "last_price_date": "2026-04-02"
+    },
+    "KRYS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KURA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "KYMR": {
+      "first_price_date": "2020-08-21",
+      "last_price_date": "2026-04-02"
+    },
+    "KYTX": {
+      "first_price_date": "2024-02-09",
+      "last_price_date": "2026-04-02"
+    },
+    "LAB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LBRX": {
+      "first_price_date": "2025-09-11",
+      "last_price_date": "2026-04-02"
+    },
+    "LCTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LEGN": {
+      "first_price_date": "2020-06-05",
+      "last_price_date": "2026-04-02"
+    },
+    "LENZ": {
+      "first_price_date": "2021-06-25",
+      "last_price_date": "2026-04-02"
+    },
+    "LFCR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LGND": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LQDA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LRMR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "LXEO": {
+      "first_price_date": "2023-11-03",
+      "last_price_date": "2026-04-02"
+    },
+    "LYEL": {
+      "first_price_date": "2021-06-17",
+      "last_price_date": "2026-04-02"
+    },
+    "LYRA": {
+      "first_price_date": "2020-05-01",
+      "last_price_date": "2026-03-24"
+    },
+    "MAZE": {
+      "first_price_date": "2025-01-31",
+      "last_price_date": "2026-04-02"
+    },
+    "MBX": {
+      "first_price_date": "2024-09-13",
+      "last_price_date": "2026-04-02"
+    },
+    "MCRB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MDGL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MEDP": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MENS": {
+      "first_price_date": "2025-06-17",
+      "last_price_date": "2026-04-02"
+    },
+    "MESO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MGTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MIRM": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MLTX": {
+      "first_price_date": "2020-10-20",
+      "last_price_date": "2026-04-02"
+    },
+    "MLYS": {
+      "first_price_date": "2023-02-10",
+      "last_price_date": "2026-04-02"
+    },
+    "MNKD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MNMD": {
+      "first_price_date": "2020-03-04",
+      "last_price_date": "2026-03-17"
+    },
+    "MRNA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "MRSN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-01-06"
+    },
+    "MRUS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-01-02"
+    },
+    "MRVI": {
+      "first_price_date": "2020-11-20",
+      "last_price_date": "2026-04-02"
+    },
+    "MYGN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NAMS": {
+      "first_price_date": "2021-02-09",
+      "last_price_date": "2026-04-02"
+    },
+    "NAUT": {
+      "first_price_date": "2020-08-07",
+      "last_price_date": "2026-04-02"
+    },
+    "NBIX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NBP": {
+      "first_price_date": "2020-01-17",
+      "last_price_date": "2026-04-02"
+    },
+    "NGNE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NKTX": {
+      "first_price_date": "2020-07-10",
+      "last_price_date": "2026-04-02"
+    },
+    "NMRA": {
+      "first_price_date": "2023-09-14",
+      "last_price_date": "2026-04-02"
+    },
+    "NRIX": {
+      "first_price_date": "2020-07-24",
+      "last_price_date": "2026-04-02"
+    },
+    "NTLA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NTRA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NUVB": {
+      "first_price_date": "2020-08-26",
+      "last_price_date": "2026-04-02"
+    },
+    "NUVL": {
+      "first_price_date": "2021-07-29",
+      "last_price_date": "2026-04-02"
+    },
+    "NVAX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "NVCR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "OABI": {
+      "first_price_date": "2021-09-30",
+      "last_price_date": "2026-04-02"
+    },
+    "OBIO": {
+      "first_price_date": "2020-08-04",
+      "last_price_date": "2026-04-02"
+    },
+    "OCGN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "OCS": {
+      "first_price_date": "2021-05-18",
+      "last_price_date": "2026-04-02"
+    },
+    "OCUL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "OLMA": {
+      "first_price_date": "2020-11-19",
+      "last_price_date": "2026-04-02"
+    },
+    "OMER": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ONC": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "OPCH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "OPK": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ORIC": {
+      "first_price_date": "2020-04-24",
+      "last_price_date": "2026-04-02"
+    },
+    "ORKA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PACB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PAHC": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PBYI": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PCRX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PCVX": {
+      "first_price_date": "2020-06-12",
+      "last_price_date": "2026-04-02"
+    },
+    "PEPG": {
+      "first_price_date": "2022-05-06",
+      "last_price_date": "2026-04-02"
+    },
+    "PGEN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PHAT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PHVS": {
+      "first_price_date": "2021-02-05",
+      "last_price_date": "2026-04-02"
+    },
+    "PRAX": {
+      "first_price_date": "2020-10-16",
+      "last_price_date": "2026-04-02"
+    },
+    "PRLD": {
+      "first_price_date": "2020-09-25",
+      "last_price_date": "2026-04-02"
+    },
+    "PRME": {
+      "first_price_date": "2022-10-20",
+      "last_price_date": "2026-04-02"
+    },
+    "PRQR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PRTA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PRVA": {
+      "first_price_date": "2021-04-28",
+      "last_price_date": "2026-04-02"
+    },
+    "PSNL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PTCT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PTGX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PVLA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "PYXS": {
+      "first_price_date": "2021-10-08",
+      "last_price_date": "2026-04-02"
+    },
+    "QSI": {
+      "first_price_date": "2020-11-13",
+      "last_price_date": "2026-04-02"
+    },
+    "QTRX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "QURE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RANI": {
+      "first_price_date": "2021-07-30",
+      "last_price_date": "2026-04-02"
+    },
+    "RAPP": {
+      "first_price_date": "2024-06-07",
+      "last_price_date": "2026-04-02"
+    },
+    "RAPT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-03-06"
+    },
+    "RARE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RCKT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RCUS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "REGN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "REPL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RGEN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RGNX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RIGL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "RLAY": {
+      "first_price_date": "2020-07-16",
+      "last_price_date": "2026-04-02"
+    },
+    "RNA": {
+      "first_price_date": "2020-06-12",
+      "last_price_date": "2026-04-02"
+    },
+    "ROIV": {
+      "first_price_date": "2020-12-08",
+      "last_price_date": "2026-04-02"
+    },
+    "RPRX": {
+      "first_price_date": "2020-06-16",
+      "last_price_date": "2026-04-02"
+    },
+    "RVMD": {
+      "first_price_date": "2020-02-13",
+      "last_price_date": "2026-04-02"
+    },
+    "RXRX": {
+      "first_price_date": "2021-04-16",
+      "last_price_date": "2026-04-02"
+    },
+    "RYTM": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SABS": {
+      "first_price_date": "2021-02-09",
+      "last_price_date": "2026-04-02"
+    },
+    "SANA": {
+      "first_price_date": "2021-02-04",
+      "last_price_date": "2026-04-02"
+    },
+    "SEPN": {
+      "first_price_date": "2024-10-25",
+      "last_price_date": "2026-04-02"
+    },
+    "SERA": {
+      "first_price_date": "2021-07-15",
+      "last_price_date": "2026-04-02"
+    },
+    "SGMO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SGMT": {
+      "first_price_date": "2023-07-14",
+      "last_price_date": "2026-04-02"
+    },
+    "SIGA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SION": {
+      "first_price_date": "2025-02-07",
+      "last_price_date": "2026-04-02"
+    },
+    "SKYE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SLDB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SLN": {
+      "first_price_date": "2020-09-08",
+      "last_price_date": "2026-04-02"
+    },
+    "SMMT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SNDX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SNY": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SPRY": {
+      "first_price_date": "2020-12-04",
+      "last_price_date": "2026-04-02"
+    },
+    "SRPT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SRRK": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SRZN": {
+      "first_price_date": "2021-01-11",
+      "last_price_date": "2026-04-02"
+    },
+    "STOK": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "STRO": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "STVN": {
+      "first_price_date": "2021-07-16",
+      "last_price_date": "2026-04-02"
+    },
+    "SUPN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SVRA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "SYRE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TARA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TARS": {
+      "first_price_date": "2020-10-16",
+      "last_price_date": "2026-04-02"
+    },
+    "TBPH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TCRX": {
+      "first_price_date": "2021-07-16",
+      "last_price_date": "2026-04-02"
+    },
+    "TECH": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TECX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TEM": {
+      "first_price_date": "2024-06-14",
+      "last_price_date": "2026-04-02"
+    },
+    "TENX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TERN": {
+      "first_price_date": "2021-02-05",
+      "last_price_date": "2026-04-02"
+    },
+    "TGTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TKNO": {
+      "first_price_date": "2021-06-25",
+      "last_price_date": "2026-04-02"
+    },
+    "TNGX": {
+      "first_price_date": "2020-09-03",
+      "last_price_date": "2026-04-02"
+    },
+    "TNYA": {
+      "first_price_date": "2021-07-30",
+      "last_price_date": "2026-04-02"
+    },
+    "TRDA": {
+      "first_price_date": "2021-10-29",
+      "last_price_date": "2026-04-02"
+    },
+    "TRVI": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TSHA": {
+      "first_price_date": "2020-09-24",
+      "last_price_date": "2026-04-02"
+    },
+    "TVTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TWST": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TXG": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "TYRA": {
+      "first_price_date": "2021-09-15",
+      "last_price_date": "2026-04-02"
+    },
+    "UPB": {
+      "first_price_date": "2024-10-11",
+      "last_price_date": "2026-04-02"
+    },
+    "URGN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "USD": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-03-24"
+    },
+    "UTHR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VCEL": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VCYT": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VERA": {
+      "first_price_date": "2021-05-14",
+      "last_price_date": "2026-04-02"
+    },
+    "VIR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VKTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VNDA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VOR": {
+      "first_price_date": "2021-02-05",
+      "last_price_date": "2026-04-02"
+    },
+    "VRDN": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VRTX": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VTRS": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "VTYX": {
+      "first_price_date": "2021-10-21",
+      "last_price_date": "2026-03-06"
+    },
+    "VYGR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "WVE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "XBI": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "XENE": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "XERS": {
+      "first_price_date": "2025-07-03",
+      "last_price_date": "2026-04-02"
+    },
+    "XNCR": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ZBIO": {
+      "first_price_date": "2024-09-13",
+      "last_price_date": "2026-04-02"
+    },
+    "ZLAB": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ZVRA": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    },
+    "ZYME": {
+      "first_price_date": "2020-01-02",
+      "last_price_date": "2026-04-02"
+    }
+  }
+}

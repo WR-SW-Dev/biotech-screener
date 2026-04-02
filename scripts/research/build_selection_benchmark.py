@@ -31,9 +31,43 @@ SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 PRICE_PATH = REPO_ROOT / "production_data" / "price_history.csv"
 SHADOW_PERF_PATH = REPO_ROOT / "artifacts" / "live_shadow" / "performance.csv"
 OUTPUT_DIR = REPO_ROOT / "output" / "benchmarks"
+IPO_DATES_PATH = REPO_ROOT / "production_data" / "ipo_dates.json"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger("selection_benchmark")
+
+# Module-level PIT state (set from CLI args)
+_ipo_dates: dict[str, str] | None = None
+_pit_mode: str = "off"
+
+
+def load_ipo_dates() -> dict[str, str]:
+    """Load ipo_dates.json → {ticker: first_price_date}.
+
+    File format: {tickers: {TICKER: {first_price_date, last_price_date}}}
+    Returns flat {TICKER: first_price_date} for easy lookup.
+    """
+    if not IPO_DATES_PATH.exists():
+        log.warning("ipo_dates.json not found — PIT survivorship filter disabled")
+        return {}
+    with open(IPO_DATES_PATH, encoding="utf-8") as f:
+        raw = json.load(f)
+    tickers = raw.get("tickers", {})
+    return {t: v.get("first_price_date", "") for t, v in tickers.items()}
+
+
+def filter_rankings_pit(rankings: list[dict], snapshot_date: str) -> list[dict]:
+    """Remove tickers that hadn't IPO'd by snapshot_date (survivorship filter)."""
+    if _pit_mode == "off" or not _ipo_dates:
+        return rankings
+    filtered = []
+    for r in rankings:
+        ticker = r.get("ticker", "").upper()
+        ipo = _ipo_dates.get(ticker)
+        if ipo and ipo > snapshot_date:
+            continue  # pre-IPO: exclude
+        filtered.append(r)
+    return filtered
 
 
 def load_price_map(price_path: Path) -> dict[str, dict[str, float]]:
@@ -54,12 +88,17 @@ def load_price_map(price_path: Path) -> dict[str, dict[str, float]]:
 
 
 def load_rankings(snapshot_date: str) -> list[dict]:
-    """Load rankings.csv for a given snapshot date, sorted by actionable_rank."""
+    """Load rankings.csv for a given snapshot date, sorted by actionable_rank.
+
+    When PIT mode is active, pre-IPO tickers are excluded before ranking.
+    """
     rpath = SNAPSHOT_DIR / snapshot_date / "rankings.csv"
     if not rpath.exists():
         return []
     with open(rpath, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    # PIT survivorship filter: remove tickers not yet listed on snapshot_date
+    rows = filter_rankings_pit(rows, snapshot_date)
     ranked = []
     for r in rows:
         ar = r.get("actionable_rank", "").strip()
@@ -267,6 +306,8 @@ def run_benchmark(top_n: int = 20, start_date: str = "2000-01-01") -> dict:
     summary = {
         "schema": "selection_benchmark.v1",
         "generated_at": datetime.utcnow().isoformat() + "Z",
+        "pseudo_pit_version": 2 if _pit_mode != "off" else 1,
+        "pit_mode": _pit_mode,
         "top_n": top_n,
         "n_periods": n_periods,
         "date_range": f"{periods[0]['prior_date']} to {periods[-1]['date']}" if periods else "",
@@ -306,7 +347,29 @@ def main():
     parser.add_argument("--top-n", type=int, default=20)
     parser.add_argument("--start-date", default="2000-01-01")
     parser.add_argument("--also-top30", action="store_true", help="Also run top-30 benchmark")
+    parser.add_argument(
+        "--snapshot-dir", type=Path, default=None, help="Override snapshot directory (default: data/snapshots)"
+    )
+    parser.add_argument(
+        "--pit-mode",
+        choices=["off", "survivorship", "full"],
+        default="off",
+        help="PIT filtering mode: off=no filter, survivorship=IPO date filter, "
+        "full=survivorship + PIT financials (default: off)",
+    )
     args = parser.parse_args()
+
+    # Initialize PIT state
+    global _pit_mode, _ipo_dates, SNAPSHOT_DIR
+    _pit_mode = args.pit_mode
+    if _pit_mode != "off":
+        _ipo_dates = load_ipo_dates()
+        log.info("PIT mode: %s (%d IPO dates loaded)", _pit_mode, len(_ipo_dates))
+
+    # Allow overriding the snapshot directory for PIT-fixed runs etc.
+    if args.snapshot_dir is not None:
+        SNAPSHOT_DIR = args.snapshot_dir.resolve()
+        log.info("Using snapshot dir: %s", SNAPSHOT_DIR)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -319,7 +382,8 @@ def main():
             continue
 
         s = result["summary"]
-        output_path = OUTPUT_DIR / f"selection_only_top{n}.json"
+        pit_suffix = f"_pseudo_pit_v{s['pseudo_pit_version']}" if s.get("pseudo_pit_version", 1) > 1 else ""
+        output_path = OUTPUT_DIR / f"selection_only_top{n}{pit_suffix}.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2)
         log.info("Wrote %s", output_path)
@@ -335,16 +399,16 @@ def main():
         print(f"{'-'*35} {'-'*15} {'-'*15} {'-'*15}")
         print(
             f"{'Cumulative return':<35} {s['ew_cumulative_pct']:>+.2f}%{'':<9} "
-            f"{(str(round(s['shadow_cumulative_pct'],2))+'%') if s['shadow_cumulative_pct'] is not None else 'N/A':<15} "
+            f"{(str(round(s['shadow_cumulative_pct'], 2))+'%') if s['shadow_cumulative_pct'] is not None else 'N/A':<15} "
             f"{s['xbi_cumulative_pct']:>+.2f}%"
         )
         print(
             f"{'Cumulative excess vs XBI':<35} {s['ew_cumulative_excess_pct']:>+.2f}%{'':<9} "
-            f"{(str(round(s['shadow_cumulative_excess_pct'],2))+'%') if s['shadow_cumulative_excess_pct'] is not None else 'N/A':<15}"
+            f"{(str(round(s['shadow_cumulative_excess_pct'], 2))+'%') if s['shadow_cumulative_excess_pct'] is not None else 'N/A':<15}"
         )
         print(
             f"{'Win rate (excess > 0)':<35} {s['ew_win_rate']:.1%}{'':<10} "
-            f"{(str(round(s['shadow_win_rate']*100,1))+'%') if s['shadow_win_rate'] is not None else 'N/A':<15}"
+            f"{(str(round(s['shadow_win_rate']*100, 1))+'%') if s['shadow_win_rate'] is not None else 'N/A':<15}"
         )
         if s["construction_drag_pct"] is not None:
             print(f"\n{'Construction drag (EW - Shadow)':<35} {s['construction_drag_pct']:>+.2f}%")

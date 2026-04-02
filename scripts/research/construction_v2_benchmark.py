@@ -35,9 +35,31 @@ SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 PRICE_PATH = REPO_ROOT / "production_data" / "price_history.csv"
 SHADOW_PERF_PATH = REPO_ROOT / "artifacts" / "live_shadow" / "performance.csv"
 OUTPUT_DIR = REPO_ROOT / "output" / "benchmarks"
+IPO_DATES_PATH = REPO_ROOT / "production_data" / "ipo_dates.json"
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 log = logging.getLogger("construction_v2")
+
+# Module-level PIT state
+_ipo_dates: dict[str, str] = {}
+_pit_mode: str = "off"
+
+
+def _load_ipo_dates() -> dict[str, str]:
+    """Load ipo_dates.json → flat {ticker: first_price_date}."""
+    if not IPO_DATES_PATH.exists():
+        return {}
+    with open(IPO_DATES_PATH) as f:
+        raw = json.load(f)
+    tickers = raw.get("tickers", {})
+    return {t: v.get("first_price_date", "") for t, v in tickers.items()}
+
+
+def _filter_pit(rows: list[dict], snap_date: str) -> list[dict]:
+    """Remove pre-IPO tickers when PIT mode is active."""
+    if _pit_mode == "off" or not _ipo_dates:
+        return rows
+    return [r for r in rows if _ipo_dates.get(r.get("ticker", "").upper(), "0000") <= snap_date]
 
 
 def load_price_map(price_path: Path) -> dict[str, dict[str, float]]:
@@ -61,6 +83,7 @@ def load_rankings(snapshot_date: str) -> list[dict]:
         return []
     with open(rpath, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
+    rows = _filter_pit(rows, snapshot_date)
     ranked = []
     for r in rows:
         ar = r.get("actionable_rank", "").strip()
@@ -326,6 +349,8 @@ def run_benchmarks() -> dict:
     return {
         "schema": "construction_v2_benchmark.v1",
         "generated_at": datetime.now().isoformat(),
+        "pseudo_pit_version": 2 if _pit_mode != "off" else 1,
+        "pit_mode": _pit_mode,
         "candidates": {cid: label for cid, (label, _) in CANDIDATES.items()},
         "summaries": summaries,
         "turnover": turnover_stats,
@@ -367,10 +392,27 @@ def print_summary(result: dict):
     print(f"{'='*75}")
     for cid, label in candidates.items():
         ts = result["turnover"].get(cid, {})
-        print(f"  {label:<28} mean={ts.get('mean_turnover',0):.1%}  max={ts.get('max_turnover',0):.1%}")
+        print(f"  {label:<28} mean={ts.get('mean_turnover', 0):.1%}  max={ts.get('max_turnover', 0):.1%}")
 
 
 def main():
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Construction v2 benchmark")
+    parser.add_argument(
+        "--pit-mode",
+        choices=["off", "survivorship", "full"],
+        default="off",
+        help="PIT filtering: off/survivorship/full (default: off)",
+    )
+    args = parser.parse_args()
+
+    global _pit_mode, _ipo_dates
+    _pit_mode = args.pit_mode
+    if _pit_mode != "off":
+        _ipo_dates = _load_ipo_dates()
+        log.info("PIT mode: %s (%d IPO dates loaded)", _pit_mode, len(_ipo_dates))
+
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     result = run_benchmarks()
 

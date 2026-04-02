@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.12.0 (ruleset `69a0c7f8`)
-**Last updated:** 2026-04-01
+**Last updated:** 2026-04-02
 **Status:** Production — daily automated runs, shadow portfolio tracking
 
 ---
@@ -144,29 +144,181 @@ Size bands: XS (0.15), S (0.30), M (0.60), L (1.00).
 
 ---
 
-## 4. Data Sources
+## 4. Data Sources & Architecture
 
-### Production Pipeline Inputs
+### Data Architecture Overview
 
-| Source | Coverage | Refresh | Path |
-|--------|----------|---------|------|
-| Price history | 341 tickers, daily | Daily | `production_data/price_history.csv` |
-| Market data | 340 tickers (100%) | Every 2-3 days | `production_data/market_data.json` |
-| Universe | 341 tickers | Manual | `production_data/universe.json` |
-| 13F institutional | 29 managers, 58.2% ticker coverage | Quarterly (~May 15 next) | `production_data/institutional_summary.json` |
-| ClinicalTrials.gov | 18,703 trials (PIT cached) | Daily | `cache/ctgov/trial_records_{date}.json` |
-| FDA designations | 207 entries, 84 tickers, 58.3% top-60 | Manual | `production_data/fda_designations.json` |
-| Catalyst calendar | Manual + CTgov + regulatory | Daily + manual | `production_data/regulatory_calendar.json` |
-| Options surface | 65.6% coverage (193/294) | Daily | Via Tastytrade API |
+```
+                              EXTERNAL APIS
+   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+   │  SEC EDGAR    │  │ClinicalTrials│  │  Tastytrade   │  │  Yahoo/MS    │
+   │  (XBRL,13F,  │  │    .gov      │  │ Options API   │  │  Prices &    │
+   │   8-K)        │  │  + AACT DB   │  │  (OAuth2)     │  │  Fundamentals│
+   └──────┬───────┘  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘
+          │                 │                  │                  │
+          ▼                 ▼                  ▼                  ▼
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │                    DATA COLLECTION LAYER                             │
+   │  sec_collector    trials_collector   options_diagnostics  yahoo_coll │
+   │  sec_8k_catalyst  poll_ctgov_daily   options_history      warm_price │
+   │  warm_13f_cache   fetch_aact_snap    massive_api          refresh_ms │
+   │  build_pit_fin    fda_adcom_coll     event_quality        macro_coll │
+   └──────────────────────────┬──────────────────────────────────────────┘
+                              │
+                              ▼
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │                    PERSISTENCE LAYER                                 │
+   │                                                                      │
+   │  production_data/          cache/                data/                │
+   │  ├── universe.json         ├── ctgov/            ├── snapshots/       │
+   │  ├── market_data.json      ├── sec/              ├── snapshots_pit_v2/│
+   │  ├── financial_records.json├── fda/              ├── pit_archives/    │
+   │  ├── price_history.csv     ├── morningstar_data/ ├── aact/snapshots/  │
+   │  ├── pit_financials/       ├── press/            ├── press_releases/  │
+   │  ├── ipo_dates.json        ├── market_data/      ├── 13f_cache/       │
+   │  ├── institutional_*.json  └── clinical/         ├── short_interest/  │
+   │  ├── fda_designations.json                       └── condition_aliases│
+   │  ├── regulatory_calendar*.json                                       │
+   │  ├── purple_book.json                                                │
+   │  ├── manager_registry.json                                           │
+   │  └── adcom_outcomes.json                                             │
+   └──────────────────────────┬──────────────────────────────────────────┘
+                              │
+                              ▼
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │                    SCREENING PIPELINE (run_screen.py)                │
+   │                                                                      │
+   │  M1 Universe ─► M2 Financial ─► M3 Catalyst ─► M4 Clinical          │
+   │       │              │               │              │                │
+   │       ▼              ▼               ▼              ▼                │
+   │                M5 Composite Scoring                                  │
+   │                       │                                              │
+   │                       ▼                                              │
+   │          Decision Engine (L0→L2→L4→L4b→L3)                          │
+   │                       │                                              │
+   │                       ▼                                              │
+   │              rankings.csv + metadata.json                            │
+   └──────────────────────────┬──────────────────────────────────────────┘
+                              │
+                              ▼
+   ┌──────────────────────────────────────────────────────────────────────┐
+   │                    CONSUMPTION LAYER                                  │
+   │                                                                      │
+   │  Portfolio Construction    Benchmarking        Dashboard (React)     │
+   │  Shadow Portfolio          CRT Calibration     Agent Fleet (18)      │
+   │  Bioshort Hedge Report     Signal Research     Email Alerts          │
+   └──────────────────────────────────────────────────────────────────────┘
+```
+
+### External API Sources
+
+| Source | Data Provided | Auth | Refresh | Pipeline Entry |
+|--------|--------------|------|---------|----------------|
+| **SEC EDGAR** (data.sec.gov) | XBRL company facts, 13F-HR filings, 8-K filings | Public (rate-limited 10 req/s) | Daily (8-K, XBRL) / Quarterly (13F) | M2 financials, institutional signal |
+| **ClinicalTrials.gov** | Trial registry (status, phases, dates, endpoints) | Public | Daily | M4 clinical development |
+| **AACT** (ctti-clinicaltrials.org) | Bulk clinical trial mirror (578K trials) | Public (pipe files) | Daily | M4 enrichment, AACT delta features |
+| **Tastytrade** | Options IV, Greeks, skew, term structure | OAuth2 (`TT_SECRET`, `TT_REFRESH`) | Daily (intraday capable) | Options diagnostics, EPD |
+| **Massive** | Historical options chains, quotes | API key (`MASSIVE_API_KEY`) + S3 | Daily | Options history backfill |
+| **Yahoo Finance** | Stock prices, balance sheets, income statements | Public (rate-limited) | Daily | Price history, market data |
+| **Morningstar Direct** | Fundamental data, volatility, star ratings | JWT (`MD_AUTH_TOKEN`) | Daily | M2 enhancements, vol enrichment |
+| **FRED** (St. Louis Fed) | VIX, TNX, IRX, fed rate, HYG, SPY | API key (`FRED_API_KEY`) | Daily | Regime classifier (7 feeds) |
+| **OpenFDA** | Drug approvals, recalls, labels | Public | Weekly | Regulatory enrichment |
+| **EMA** | European drug approvals (CHMP decisions) | Public | Monthly | Regulatory tracking |
+| **xAI (Grok)** | LLM biotech news analysis, X Search | API key (`XAI_API_KEY`) | Ad-hoc | Event alerts, news triage |
+
+### Production Data Files
+
+Core inputs loaded by `run_screen.py` every run:
+
+| File | Contents | Records | Refresh | Module |
+|------|----------|---------|---------|--------|
+| `production_data/universe.json` | Tracked biotech universe | 341 tickers | Manual (universe changes) | M1 |
+| `production_data/price_history.csv` | Daily OHLCV prices | ~1,571 dates × 355 tickers | Daily | M2 (drawdown, beta, RSI), benchmarks |
+| `production_data/market_data.json` | Market caps, volume, sector | 340 tickers | Daily | M1 filters, M2 sizing |
+| `production_data/financial_records.json` | Balance sheet, income, cash flow | 340 tickers | Every 2-3 days | M2 (current-state fallback) |
+| `production_data/pit_financials/{TICKER}.json` | EDGAR XBRL facts with filing dates | 339 tickers, all historical filings | Daily rebuild | M2 (PIT mode) |
+| `production_data/ipo_dates.json` | First/last price dates per ticker | 355 tickers | From price_history.csv | PIT survivorship filter |
+| `production_data/institutional_summary.json` | 13F holdings, delta signals | 29 managers, 58.2% coverage | Quarterly (~May 15 next) | inst_delta_z sort signal |
+| `production_data/manager_registry.json` | Institutional manager metadata | ~100 managers | Quarterly | 13F processing |
+| `production_data/fda_designations.json` | Fast Track, Breakthrough, Orphan, Priority | 207 entries, 84 tickers | Manual | M4 regulatory scoring |
+| `production_data/regulatory_calendar_manual.json` | Hand-curated PDUFA/ADCOM dates | 20-50 events | Manual | M3 catalyst detection |
+| `production_data/adcom_outcomes.json` | FDA advisory committee voting history | 100+ decisions | Ad-hoc | M4 adcom vote scoring |
+| `production_data/purple_book.json` | Biologics competition/exclusivity | 2,013 products, 49 tickers | Manual | Commercial-stage context |
+| `production_data/portfolio_policy.json` | Construction rules (v3) | — | Manual | Portfolio construction |
+| `production_data/decision_rulesets/v1.12.0_*.json` | Active decision engine config | — | Governed promotion | Decision engine |
+
+### Cache Layer
+
+Date-stamped caches for PIT-safe historical reruns:
+
+| Cache | Contents | Path Pattern | Refresh | Size |
+|-------|----------|-------------|---------|------|
+| CTgov trial records | PIT-filtered clinical trials | `cache/ctgov/trial_records_{date}.json` | Daily | ~15 MB each |
+| SEC 8-K catalysts | Corporate event filings | `cache/sec/8k_catalysts_{date}*.json` | Daily | ~2 MB each |
+| FDA ADCOM calendar | Advisory committee schedule | `cache/fda/adcom_calendar_{date}.json` | Monthly | ~1 MB |
+| Morningstar data | Fundamentals, vol, ratings | `cache/morningstar_data/` | Daily | ~40 MB total |
+| Clinical features | Pre-computed M4 features | `cache/clinical/clinical_features_{date}.json` | Daily | ~5 MB each |
+| Press releases | Company PR text + classification | `cache/press/` | Daily | ~50 MB total |
+| Market data | Price/volume warm cache | `cache/market_data/` | Daily | ~30 MB total |
 
 ### Supplementary Data Sources
 
-| Source | Records | Tickers Linked | Status |
-|--------|---------|---------------|--------|
-| AACT clinical trials | 578,527 trials | 21,752 (49 tickers) | Live — `data/aact/snapshots/` |
-| Purple Book biologics | 2,013 products | 530 (49 tickers) | Live — `production_data/purple_book.json` |
-| Herald press releases | 3,312 classified | 336 tickers | Live — `data/press_releases/` |
-| DealForma deal comps | — | — | Spec 046 ready, awaiting CSV export |
+| Source | Records | Tickers Linked | Path | Status |
+|--------|---------|---------------|------|--------|
+| AACT clinical trials | 578,527 trials | 21,752 (49 tickers) | `data/aact/snapshots/` | Live — daily ingest |
+| Purple Book biologics | 2,013 products | 530 (49 tickers) | `production_data/purple_book.json` | Live |
+| Herald press releases | 3,312 classified | 336 tickers | `data/press_releases/` | Live — daily collection |
+| Short interest (FINRA) | 300+ tickers | 300+ | `data/short_interest.json` | Weekly |
+| DealForma deal comps | — | — | Spec 046 ready | Awaiting CSV export |
+| Conference programs | ASCO, AACR, etc. | — | `cache/conferences/` | Quarterly scrape |
+| EU trial registries | EUCTR, CTIS, ISRCTN | — | `cache/ema/` | Monthly |
+
+### PIT (Point-in-Time) Data Architecture
+
+Historical backtests require data as-known-on each snapshot date. The PIT stack:
+
+```
+Current-state files          PIT-corrected path
+─────────────────           ──────────────────
+financial_records.json  ──►  pit_financials/{TICKER}.json (filed <= as_of_date)
+universe.json           ──►  ipo_dates.json filter (first_price_date <= as_of_date)
+trial_records.json      ──►  cache/ctgov/trial_records_{date}.json + posting filter
+catalyst_events.json    ──►  CTgov fallback PIT safety net (posting_date <= as_of_date)
+```
+
+| PIT Component | Status | Notes |
+|---------------|--------|-------|
+| Survivorship filter (ipo_dates.json) | **Shipped** | 8,556 violations fixed |
+| EDGAR PIT financials (filing-date gated) | **Shipped** | 339 tickers, all historical filings |
+| CTgov PIT safety net | **Shipped** | Runtime filter on posting dates |
+| Production data archiver | **Shipped** | SHA-256 manifests in `data/pit_archives/` |
+| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py` |
+| Catalyst look-ahead audit | Inconclusive | Retroactive generation makes this hard to clean |
+
+### Data Refresh Pipeline
+
+Daily production run (`tools/run_daily_production.py`, cron 5:30 PM ET):
+
+```
+Step 1: Archive production inputs (SHA-256 manifest)
+Step 2: Refresh prices (Yahoo/Morningstar → price_history.csv)
+Step 3: Refresh market data (→ market_data.json)
+Step 4: Poll CTgov (→ cache/ctgov/trial_records_{date}.json)
+Step 5: Run full screen (run_screen.py → data/snapshots/{date}/)
+        ├── 5a-5d: Modules 1-4
+        ├── 5e: Module 5 composite
+        ├── 5f: Decision engine
+        ├── 5g: Institutional momentum
+        ├── 5h: Options diagnostics (Tastytrade)
+        ├── 5i: Event premium decomposition
+        ├── 5j: AACT delta pipeline
+        ├── 5k: Construction overlays
+        ├── 5l: Shadow portfolio
+        ├── 5m: CRT pipeline
+        └── 5o: Construction v2 shadow
+Step 6: Gate validation (29 production checks)
+Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
+```
 
 ### Data Quality Summary
 
@@ -174,10 +326,23 @@ Size bands: XS (0.15), S (0.30), M (0.60), L (1.00).
 |-----------|----------|-------|
 | Tier/momentum/archetype | 100% | Core fields always populated |
 | Catalyst fields | ~85% | Some names lack dated catalysts |
-| Options (ATM IV) | 65.6% | Weakest production lane; fix deployed (expanded request set) |
-| RR 25d | 39.8% | Gated by options chain availability |
-| Implied move | 38.8% | Same gate |
-| clinical_lead_phase | 0% | Field not populated (use lead_program_phase) |
+| Options (ATM IV) | 96% eligible | Liquidity (~42% liquid chains) is the real gate |
+| RR 25d / implied move | ~39% | Gated by options chain liquidity |
+| 13F institutional | 58.2% ticker coverage | Next refresh ~May 15 (Q1 2026 filings) |
+| FDA designations | 58.3% top-60 | 207 entries, 84 tickers |
+| PIT financials | 99.4% universe | 339/341 tickers with EDGAR facts |
+| AACT trial linkage | 49 tickers | Expanding via NPI/company name matching |
+
+### Environment Variables
+
+| Variable | Service | Purpose |
+|----------|---------|---------|
+| `TT_SECRET`, `TT_REFRESH` | Tastytrade | Options surface data (OAuth2) |
+| `MASSIVE_API_KEY`, `MASSIVE_S3_*` | Massive | Historical options chains |
+| `MD_AUTH_TOKEN` | Morningstar Direct | Fundamentals, vol, ratings |
+| `FRED_API_KEY` | FRED (St. Louis Fed) | Macro regime feeds (VIX, rates) |
+| `XAI_API_KEY` | xAI (Grok) | News analysis, X Search |
+| `SMTP_USER`, `SMTP_PASSWORD` | Email | Alert delivery |
 
 ---
 
@@ -629,4 +794,4 @@ currently untestable on the available historical data. Readiness gate at
 
 ---
 
-*Document generated 2026-04-01. Active ruleset: 69a0c7f8 (v1.12.0).*
+*Document updated 2026-04-02. Active ruleset: 69a0c7f8 (v1.12.0).*

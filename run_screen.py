@@ -6207,6 +6207,7 @@ def save_validation_snapshot(
         "cache_refresh_had_rejections": _cr["had_rejections"],
         "cache_refresh_rejected_sources": _cr["rejected_sources"],
         "cache_refresh_summary": _cr["summary"] or None,
+        "pseudo_pit_version": 2 if results.get("run_metadata", {}).get("pit_mode", "off") != "off" else 1,
     }
 
     # --- data_sources provenance (for anti-lookahead validation) ---
@@ -7904,6 +7905,65 @@ def run_screening_pipeline(
     universe_hash = hashlib.sha256(json.dumps(sorted(full_universe_tickers)).encode()).hexdigest()[:8]
     logger.info(f"  Full universe: {len(full_universe_tickers)} tickers (hash: {universe_hash})")
 
+    # --- PIT survivorship filter: exclude tickers that hadn't IPO'd or had delisted ---
+    # Only applies when pit_mode is active (not "off")
+    if pit_mode != "off":
+        _ipo_dates_path = data_dir / "ipo_dates.json"
+        if _ipo_dates_path.exists():
+            with open(_ipo_dates_path, "r") as _f:
+                _ipo_data = json.load(_f)
+            _ipo_tickers = _ipo_data.get("tickers", {})
+            _as_of = as_of_date  # already a string "YYYY-MM-DD"
+            _pre_count = len(raw_universe)
+            _excluded_ipo = []
+            _excluded_delist = []
+            _DELIST_BUFFER_DAYS = 45  # ~30 trading days ≈ 45 calendar days
+
+            _delist_cutoff = (datetime.strptime(_as_of, "%Y-%m-%d") - timedelta(days=_DELIST_BUFFER_DAYS)).strftime(
+                "%Y-%m-%d"
+            )
+
+            def _survivorship_ok(rec):
+                """Return True if ticker passes PIT survivorship checks."""
+                t = rec.get("ticker", "")
+                if t not in _ipo_tickers:
+                    return True  # No data — keep (conservative)
+                dates = _ipo_tickers[t]
+                first_date = dates.get("first_price_date", "")
+                last_date = dates.get("last_price_date", "")
+                # IPO check: first price date must be on or before as_of_date
+                if first_date and first_date > _as_of:
+                    _excluded_ipo.append(t)
+                    return False
+                # Delist check: last price date must not be too far before as_of_date
+                if last_date and last_date < _delist_cutoff:
+                    _excluded_delist.append(t)
+                    return False
+                return True
+
+            raw_universe = [r for r in raw_universe if _survivorship_ok(r)]
+            _post_count = len(raw_universe)
+
+            if _excluded_ipo:
+                logger.info(
+                    f"  PIT survivorship: excluded {len(_excluded_ipo)} pre-IPO tickers "
+                    f"(first price after {_as_of}): {sorted(_excluded_ipo)}"
+                )
+            if _excluded_delist:
+                logger.info(
+                    f"  PIT survivorship: excluded {len(_excluded_delist)} delisted tickers "
+                    f"(last price before {_delist_cutoff}): {sorted(_excluded_delist)}"
+                )
+            if _pre_count != _post_count:
+                logger.info(
+                    f"  PIT survivorship filter: {_pre_count} → {_post_count} tickers "
+                    f"(removed {_pre_count - _post_count})"
+                )
+                # Recompute full_universe_tickers after filtering
+                full_universe_tickers = frozenset(r.get("ticker") for r in raw_universe if r.get("ticker"))
+        else:
+            logger.info("  PIT survivorship: ipo_dates.json not found — skipping filter")
+
     # Validate tickers in universe (fail-loud on contamination)
     if HAS_TICKER_VALIDATION:
         universe_tickers_to_validate = [r.get("ticker") for r in raw_universe if r.get("ticker")]
@@ -7928,6 +7988,39 @@ def run_screening_pipeline(
             logger.warning(
                 f"  financial_records.json is {_fin_age_days} days old — " f"cash/runway data may be outdated"
             )
+
+    # --- PIT financial override: replace static financial records with point-in-time data ---
+    # When pit_mode is active and PIT fact stores exist, use EDGAR filing dates
+    # to reconstruct financial snapshots as they were known on as_of_date.
+    _pit_fin_dir = data_dir / "pit_financials"
+    if pit_mode != "off" and _pit_fin_dir.is_dir():
+        from pit_financials import pit_financial_snapshot
+
+        # Index existing static records by ticker for in-place replacement
+        _fin_by_ticker = {}
+        for _idx, _rec in enumerate(financial_records):
+            _t = _rec.get("ticker")
+            if _t:
+                _fin_by_ticker[_t] = _idx
+
+        _pit_overridden = 0
+        _pit_fallback = 0
+        _pit_total = len(_fin_by_ticker)
+
+        for _ticker, _idx in _fin_by_ticker.items():
+            _pit_snap = pit_financial_snapshot(_ticker, as_of_date, _pit_fin_dir)
+            if _pit_snap is not None:
+                financial_records[_idx] = _pit_snap
+                _pit_overridden += 1
+            else:
+                _pit_fallback += 1
+
+        logger.info(
+            f"  PIT financials: {_pit_overridden}/{_pit_total} tickers overridden, "
+            f"{_pit_fallback} fallback to static"
+        )
+    elif pit_mode != "off":
+        logger.debug("  PIT financials: pit_financials/ directory not found — using static financial_records.json")
 
     # Resolve trial_records: prefer PIT-filtered cache if available
     # ctgov_cache_dir=False disables cache lookup (used by tests)

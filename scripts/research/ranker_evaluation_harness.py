@@ -40,8 +40,31 @@ sys.path.insert(0, str(PROJECT_ROOT))
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
 PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
 OUTPUT_DIR = PROJECT_ROOT / "output" / "ranker_eval"
+IPO_DATES_PATH = PROJECT_ROOT / "production_data" / "ipo_dates.json"
 
 SCHEMA = "ranker_eval.v1"
+
+# Module-level PIT state
+_ipo_dates: Dict[str, str] = {}
+_pit_mode: str = "off"
+
+
+def _load_ipo_dates() -> Dict[str, str]:
+    """Load ipo_dates.json → flat {ticker: first_price_date}."""
+    if not IPO_DATES_PATH.exists():
+        return {}
+    with open(IPO_DATES_PATH) as f:
+        raw = json.load(f)
+    tickers = raw.get("tickers", {})
+    return {t: v.get("first_price_date", "") for t, v in tickers.items()}
+
+
+def _filter_pit(rows: List[Dict[str, str]], snap_date: str) -> List[Dict[str, str]]:
+    """Remove pre-IPO tickers when PIT mode is active."""
+    if _pit_mode == "off" or not _ipo_dates:
+        return rows
+    return [r for r in rows if _ipo_dates.get(r.get("ticker", ""), "0000") <= snap_date]
+
 
 # Cost parameters (from txn_cost_model.py calibration)
 ACCOUNT_USD = 500_000
@@ -113,7 +136,8 @@ def dedupe_monthly(dates: List[str]) -> List[str]:
 def load_rankings(snap_date: str) -> List[Dict[str, str]]:
     path = SNAPSHOTS_DIR / snap_date / "rankings.csv"
     with open(path) as f:
-        return list(csv.DictReader(f))
+        rows = list(csv.DictReader(f))
+    return _filter_pit(rows, snap_date)
 
 
 def spearman_ic(x: List[float], y: List[float]) -> Optional[float]:
@@ -346,6 +370,8 @@ def evaluate_signal(
     result = {
         "schema": SCHEMA,
         "run_date": datetime.now(timezone.utc).isoformat(),
+        "pseudo_pit_version": 2 if _pit_mode != "off" else 1,
+        "pit_mode": _pit_mode,
         "signal": signal,
         "top_n": top_n,
         "higher_is_better": higher_is_better,
@@ -482,7 +508,19 @@ def main():
         action="store_true",
         help="Signal where lower values indicate higher upside (e.g. composite_rank)",
     )
+    parser.add_argument(
+        "--pit-mode",
+        choices=["off", "survivorship", "full"],
+        default="off",
+        help="PIT filtering: off/survivorship/full (default: off)",
+    )
     args = parser.parse_args()
+
+    global _pit_mode, _ipo_dates
+    _pit_mode = args.pit_mode
+    if _pit_mode != "off":
+        _ipo_dates = _load_ipo_dates()
+        print(f"PIT mode: {_pit_mode} ({len(_ipo_dates)} IPO dates loaded)")
 
     horizons = [int(h) for h in args.horizons.split(",")]
     higher_is_better = not args.lower_is_better
