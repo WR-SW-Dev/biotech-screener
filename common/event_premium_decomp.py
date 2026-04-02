@@ -223,17 +223,55 @@ def _lookup_historical_move(
     catalyst_type: str,
     phase: str,
 ) -> float | None:
-    """Look up median historical realized move for this catalyst type + phase."""
-    # Try exact match
+    """Look up median historical realized move for this catalyst type + phase.
+
+    Handles two table formats:
+      1. Flat: table[catalyst_type] = {p50: float, ...}
+      2. Composite-key: table["CLINICAL|phase2|oncology"] = {p50: float, ...}
+    """
+    # Map catalyst_event_type to family for composite-key tables
+    _FAMILY_MAP = {
+        "DATA_READOUT": "CLINICAL",
+        "CT_PRIMARY_COMPLETION": "CLINICAL",
+        "CT_STUDY_COMPLETION": "CLINICAL",
+        "CT_RESULTS_POSTED": "CLINICAL",
+        "CLINICAL_HOLD": "CLINICAL",
+        "SAFETY_SIGNAL": "CLINICAL",
+        "FDA_PDUFA_DATE": "REGULATORY",
+        "FDA_ADCOM": "REGULATORY",
+        "FDA_CRL": "REGULATORY",
+    }
+
+    # Try exact match first (flat format: table[type] = {p50: ...})
     key = catalyst_type.upper()
-    entry = event_move_table.get(key, {})
+    entry = event_move_table.get(key)
     if isinstance(entry, dict):
-        # Try phase-specific
-        phase_key = _phase_bucket(phase)
-        phase_entry = entry.get(phase_key, entry.get("all", {}))
-        if isinstance(phase_entry, dict):
-            return phase_entry.get("p50")  # median realized move
-        return None
+        if "p50" in entry:
+            return entry.get("p50")
+        # Nested flat: table[type][phase_bucket] = {p50: ...}
+        phase_sub = entry.get(_phase_bucket(phase), entry.get("all", {}))
+        if isinstance(phase_sub, dict) and "p50" in phase_sub:
+            return phase_sub.get("p50")
+
+    # Try composite-key format: FAMILY|phase|any
+    family = _FAMILY_MAP.get(key, "UNKNOWN")
+    phase_key = _phase_bucket(phase)
+
+    # Try specific: CLINICAL|phase2|any
+    specific = event_move_table.get(f"{family}|{phase_key}|any")
+    if isinstance(specific, dict) and "p50" in specific:
+        return specific.get("p50")
+
+    # Try family-wide: CLINICAL|any|any
+    fallback = event_move_table.get(f"{family}|any|any")
+    if isinstance(fallback, dict) and "p50" in fallback:
+        return fallback.get("p50")
+
+    # Last resort: any|any|any
+    universal = event_move_table.get("any|any|any")
+    if isinstance(universal, dict) and "p50" in universal:
+        return universal.get("p50")
+
     return None
 
 

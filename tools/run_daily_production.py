@@ -4862,6 +4862,24 @@ def run_daily(
         except Exception as _pm_err:
             _logger.warning(f"Post-promotion monitor failed: {_pm_err}")
 
+        # --- Step 5k.9: Asymmetry score (non-blocking, accumulates EPD history) ---
+        try:
+            from scripts.research.top30_asymmetry_score import score_snapshot
+
+            _as_result = score_snapshot(as_of_date, top_n=30)
+            if "error" not in _as_result:
+                _as_dir = REPO_ROOT / "output" / "ranker_eval"
+                _as_dir.mkdir(parents=True, exist_ok=True)
+                _as_path = _as_dir / f"asymmetry_score_{as_of_date}.json"
+                with open(_as_path, "w") as _as_f:
+                    json.dump(_as_result, _as_f, indent=2, default=str)
+                _as_n = _as_result.get("n_scored", 0)
+                _logger.info(f"Asymmetry score → {_as_n} names scored")
+            else:
+                _logger.info(f"Asymmetry score → skipped ({_as_result['error']})")
+        except Exception as _as_err:
+            _logger.warning(f"Asymmetry score failed: {_as_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
@@ -4942,10 +4960,19 @@ def run_daily(
                             and not __import__("math").isnan(r.get("rr_25d", float("nan")))
                         ]
 
+                # Load event move table for implied-vs-realized mispricing
+                _epd_emt = None
+                _epd_emt_path = REPO_ROOT / "data" / "research" / "event_move_table.json"
+                if _epd_emt_path.exists():
+                    with open(_epd_emt_path) as _emt_f:
+                        _epd_emt_raw = json.load(_emt_f)
+                        _epd_emt = _epd_emt_raw.get("table", _epd_emt_raw)
+
                 _epd_results = compute_universe_decomp(
                     _epd_top30,
                     iv_histories=_epd_iv_histories,
                     rr_histories=_epd_rr_histories,
+                    event_move_table=_epd_emt,
                 )
                 _epd_out = final_snapshots_dir / as_of_date / "event_premium_decomp.json"
                 _epd_out.parent.mkdir(parents=True, exist_ok=True)
