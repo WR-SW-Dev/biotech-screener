@@ -28,41 +28,43 @@ All data fixtures must be:
 
 ## Current Operating Truths
 
-Use survivorship-cleaned pseudo-PIT v2 as the current benchmark baseline; treat full PIT
-financial regeneration as the next evidentiary upgrade; do not reopen dead lanes or superseded
-Top-20/pruner narratives without new rerun evidence.
+After correcting PIT financial leakage, historical selector performance materially deteriorates.
+Top-20 and Top-30 portfolios now underperform XBI cumulatively, and monthly excess returns are
+weak and statistically insignificant. This strongly suggests prior alpha was inflated by financial
+look-ahead contamination. Forward true-PIT monitoring is now the only credible performance evidence.
 
-1. **DEM is a selector, not a ranker.** Within-top-30 IC is zero. EW is the correct weighting.
-2. **Survivorship-cleaned pseudo-PIT v2 is the current baseline.** Top-30 beats Top-20 by +16.8pp on cleaned full history.
-3. **Recent window (Oct 2025+) is unchanged by survivorship cleanup.** The contamination lived in 2020-2024 early snapshots.
-4. **Full PIT financial regeneration is in progress / pending for stronger evidence.** On a sample date, only 12/30 names overlap between original and PIT-financial-corrected rankings. 67.8% of top-30 had >25% cash delta. This is large enough to overturn the Top-20 vs Top-30 conclusion.
-5. **The selector's edge is regime-dependent.** Bear IR 3.35, bull IR -0.21. The model is a downside-protection engine, not an all-weather strategy.
-6. **Construction v2 (EW Top-30) is promoted.** Fixed sleeve budgets (55/25/10/10) are retired. Bucket labels survive as metadata only.
-7. **Forward monitor is the only true PIT evidence.** Everything historical is pseudo-PIT (today's code applied retroactively).
+1. **Historical alpha story has collapsed.** PIT-financial-corrected benchmarks show Top-20 at -28.2pp and Top-30 at -25.1pp excess vs XBI (was +93.7pp / +110.5pp on survivorship-only). Monthly excess is +0.58pp/mo with t-stat 0.65 (not significant).
+2. **All pre-correction benchmark claims are deprecated.** Do not cite survivorship-only numbers for any purpose.
+3. **DEM is a selector, not a ranker.** Within-top-30 IC is zero. EW is the correct weighting. But the selector itself now lacks historical evidence of alpha.
+4. **Forward monitor is the only credible evidence.** Everything historical is pseudo-PIT (today's code applied retroactively with corrected financials). True PIT accumulates daily.
+5. **The governance hold worked.** It prevented a false positive from being institutionalized.
+6. **Construction v2 (EW Top-30) remains the active construction** — fixed sleeve budgets are retired. But the selector feeding it is unproven on corrected data.
+7. **The selector may still have real alpha** — but the historical evidence no longer supports the claim. Only forward monitoring can re-establish confidence.
 
 ---
 
 ## Trust Buckets
 
 ### Safe to use now
-- Snapshot overwrite protection
-- CTGov fallback PIT safety net
-- Production data archiver (SHA-256 manifests)
-- PIT validation audit framework
+- Snapshot overwrite protection, CTGov fallback PIT safety net, production data archiver
+- PIT validation audit framework, PIT financial regeneration infrastructure
 - Live risk / rebalance / execution controls
-- Recent operational artifacts (Oct 2025+) that do not depend on long contaminated histories
-- Forward monitor results (true PIT)
+- Forward monitor results (true PIT) — the only credible performance evidence
+- EW Top-30 as active construction (construction choice is separate from selector alpha)
 
-### Provisional (directionally useful, not promotion-grade)
-- Survivorship-cleaned long-history benchmarks (Top-20 vs Top-30, Top-N vs XBI)
-- Claims about "Top-30 is the sweet spot" (pending PIT-financials rerun)
-- Construction conclusions that depend on 2020+ regenerated snapshots
-- Full-history regime decomposition based on the pseudo-PIT v2 snapshot set
+### Deprecated (contaminated — do not cite)
+- **All survivorship-only benchmark numbers** (+93.7pp, +110.5pp, etc.)
+- **All pre-PIT-financial historical alpha claims**
+- "Top-30 is the sweet spot" narrative from contaminated data
+- "Bear IR 3.35" regime story from contaminated data
+- Any construction conclusion based on long-history regenerated snapshots
+- Any promotion memo that cites the contaminated 2020+ history
 
-### Invalid until PIT-financials rerun
-- Any benchmark that still uses current-state financial_records.json for historical dates
-- Any long-history comparison that mixes contaminated financial features with current claims
-- Any promotion memo that cites long-history alpha as if it were clean PIT
+### Current corrected evidence (weak, not promotion-grade)
+- PIT-financial-corrected benchmarks: Top-20 -28.2pp, Top-30 -25.1pp excess vs XBI
+- Monthly excess +0.58pp/mo (t=0.65, not significant)
+- Top-30 still beats Top-20 by +3.1pp but both underwater
+- Regime split: bear flat (IR 0.00), bull weak (IR +0.15)
 
 ---
 
@@ -76,7 +78,8 @@ hours here unless genuinely new data or a structural model change creates a reas
 | Options surface-shape as systematic ranker | DEAD | 50-month backtest IC negative at all horizons |
 | `total_volume_z` | DEAD | IC=-0.10 on PIT-native data (109 obs), original +0.134 was retro-classified look-ahead bias |
 | Always-on rank-weighting (Top-20 or Top-30) | NOT PROMOTED | RW does not beat EW net of costs; within-top-30 IC is zero |
-| Top-20 / pruner promotion story | SUPERSEDED | Survivorship-cleaned v2 shows Top-30 > Top-20; pending PIT-financials confirmation |
+| Top-20 / pruner promotion story | DEPRECATED | PIT-financial correction shows both Top-20 and Top-30 underwater vs XBI |
+| Historical alpha narrative (+93pp / +110pp) | DEPRECATED | Inflated by financial look-ahead contamination; corrected numbers are -28pp / -25pp |
 | `cal_alpha` | REMOVED in v1.12.0 | Confirmed no-op, zero deltas at all horizons |
 | Clinical sort signal | OFF | Insufficient IC |
 | Coinvest signal | REJECTED | IC below promotion bar |
@@ -89,12 +92,12 @@ hours here unless genuinely new data or a structural model change creates a reas
 
 ## Current Promotion Story
 
-1. DEM is a **proven selector** generating +93-110pp excess vs XBI on cleaned full history.
-2. Current cleaned benchmark says **EW Top-30 is the active comparison baseline**.
-3. Anything more complex must **beat EW Top-30 net of costs** to earn promotion.
-4. Do not promote off contaminated or superseded results.
-5. `inst_delta_z` has PROMOTE verdict at 63d (+0.68pp/mo net) — the only confirmed within-top-30 signal.
-6. All promotion decisions are **paused until PIT-financials rerun lands**.
+1. DEM's historical alpha is **unproven** after PIT financial correction. Prior claims were inflated by look-ahead.
+2. **EW Top-30 remains the active construction** — the construction choice is still sound even if the selector feeding it lacks historical proof.
+3. **Forward true-PIT monitor is the only credible evidence source.** Accumulate daily. Evaluate after 30+ trading days.
+4. Do not promote any model changes based on historical benchmarks until forward evidence accumulates.
+5. `inst_delta_z` PROMOTE verdict was based on survivorship-only data — **requires re-evaluation** on PIT-financial snapshots.
+6. The governance hold **succeeded**: it prevented institutionalizing a false positive.
 
 ---
 
@@ -134,9 +137,11 @@ python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --
 
 ## Heavy-Lift Jobs
 
-- **Survivorship-cleaned reruns** are fast (minutes) — use for benchmark hygiene anytime.
-- **Full PIT financial regeneration** (`regenerate_pit_v2_snapshots.py`) is the next compute-heavy job when stronger evidence is needed. 76 monthly dates × ~90s each ≈ 2 hours. Output: `data/snapshots_pit_v2/`.
-- **Do not finalize committee claims** until that rerun finishes and benchmarks are re-run on the corrected snapshots.
+- **PIT financial regeneration is COMPLETE.** 76 monthly dates in `data/snapshots_pit_v2/`, 72/72 OK, 0 errors.
+- **Result: historical alpha collapsed.** All pre-correction claims are deprecated.
+- **Next heavy lift: forward monitor accumulation.** No compute needed — just time. Evaluate after 30+ trading days of true-PIT daily production.
+- **If forward evidence is positive:** re-establish selector thesis from clean data. Do not backfill from historical.
+- **If forward evidence is negative:** the selector needs structural re-examination.
 
 ---
 

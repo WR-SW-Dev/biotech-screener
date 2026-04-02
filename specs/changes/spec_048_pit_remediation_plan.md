@@ -1,39 +1,67 @@
 # PIT Remediation Plan
 
-**Status:** PHASES 0-4 COMPLETE (survivorship layer); PIT FINANCIALS REGENERATION IN PROGRESS
+**Status:** ALL PHASES COMPLETE — PIT financial correction landed, historical alpha story collapsed
 **Author:** operator / Claude
-**Date:** 2026-04-02 (updated 2026-04-02)
-**Ruleset impact:** NO immediate scoring change; YES for historical benchmark validity and any promotion claims
+**Date:** 2026-04-02 (final update 2026-04-02)
+**Ruleset impact:** NO scoring change; YES — all historical benchmark claims are now deprecated
 
-## !! GOVERNANCE HOLD — do not finalize committee narrative until PIT-financials rerun lands
+## Executive Finding
 
-The survivorship-cleaned results below are **provisional**. Full PIT-financial regeneration
-(76 monthly dates via `regenerate_pit_v2_snapshots.py`) is running. Impact assessment showed
-**only 12/30 top-30 names overlap** between old and PIT-financial-corrected rankings on a sample
-date (2024-06-28), and 67.8% of top-30 names have >25% cash delta. This is large enough to
-overturn the Top-20 vs Top-30 conclusion.
+> After correcting PIT financial leakage, historical selector performance materially
+> deteriorates. Top-20 and Top-30 portfolios now underperform XBI cumulatively, and
+> monthly excess returns are weak and statistically insignificant. This strongly suggests
+> prior alpha was inflated by financial look-ahead contamination. Forward true-PIT
+> monitoring is now the only credible performance evidence.
 
-**Decision tree after rerun:**
-- If Top-30 still beats Top-20 → committee story gets stronger
-- If Top-20 re-emerges → concentration story comes back
-- If both weaken materially → selector itself needs re-baselining
+## Results: PIT-Financial-Corrected (final)
 
-## Results summary (survivorship-only pseudo-PIT v2 — PROVISIONAL)
+76 monthly snapshots regenerated with EDGAR filing-date-gated financials + survivorship filter.
 
-| Metric | EW Top-20 v2 | EW Top-30 v2 | XBI |
-|--------|-------------|-------------|-----|
-| Cum return (full history) | +152.6% | +169.4% | +58.9% |
-| Cum excess vs XBI | +93.7pp | +110.5pp | — |
-| Top-30 minus Top-20 excess | — | +16.8pp | — |
+| Metric | Survivorship-only (deprecated) | **PIT-Financial-Corrected (final)** |
+|--------|-------------------------------|-------------------------------------|
+| EW Top-20 cum excess vs XBI | +93.7pp | **-28.2pp** |
+| EW Top-30 cum excess vs XBI | +110.5pp | **-25.1pp** |
+| Top-30 minus Top-20 | +16.8pp | +3.1pp |
+| Diagnosis | CONSTRUCTION_DRAG | **SIGNAL_COLD_PLUS_DRAG** |
 
-**Key findings (PROVISIONAL — awaiting PIT financials rerun):**
-- Top-30 beats Top-20 by +16.8pp on survivorship-cleaned full history
-- Recent window (Oct 2025+) is **unaffected** by survivorship cleanup — identical to v1
-- Long-history alpha is **larger** after survivorship cleanup
-- Monthly IC benchmark (63d): mean excess +2.15pp/mo vs eligible, +4.27pp/mo vs XBI, hit rate 67%, IR 0.39, t-stat 3.20
-- Regime: bull IR +0.79, bear IR -0.06 (bear is flat, not destructive)
-- **Construction drag persists:** +158pp (top-20) / +175pp (top-30) gap vs shadow
-- **PIT financials impact:** 12/30 overlap on sample date; 67.8% of top-30 have >25% cash delta — rankings are materially different
+### Monthly IC (63d horizon)
+
+| Metric | Survivorship-only (deprecated) | **PIT-Financial-Corrected** |
+|--------|-------------------------------|---------------------------|
+| Mean excess vs XBI | +4.27pp/mo | **+0.58pp/mo** |
+| Hit rate vs XBI | 67% | **52%** |
+| IR vs XBI | 0.39 | **0.08** |
+| t-stat vs XBI | 3.20 | **0.65** |
+| Mean excess vs eligible | +2.15pp/mo | **+0.11pp/mo** |
+
+### Regime split (63d, vs XBI)
+
+| Regime | Survivorship-only (deprecated) | **PIT-Financial-Corrected** |
+|--------|-------------------------------|---------------------------|
+| Bear | -0.43pp, IR -0.06 | **+0.01pp, IR 0.00** |
+| Bull | +9.40pp, IR +0.79 | **+1.21pp, IR +0.15** |
+
+### What happened
+
+Financial look-ahead contamination in historical snapshots inflated alpha by allowing the model to
+"see" future financial filings (cash balances, burn rates, runway) when scoring historical dates.
+On a sample date (2024-06-28), only 12/30 top-30 names overlapped between original and
+PIT-financial-corrected rankings. 67.8% of top-30 names had >25% cash delta. The correction
+reshuffled rankings severely enough to eliminate the cumulative excess.
+
+### Governance outcome
+
+The governance hold (established earlier in this spec) **prevented a false positive from being
+institutionalized**. All survivorship-only claims are now deprecated. The forward monitor under
+true PIT is the only credible evidence source going forward.
+
+## Operational status
+
+All pre-correction benchmark claims are **DEPRECATED / CONTAMINATED**:
+- Do not cite survivorship-only v2 numbers (+93.7pp, +110.5pp) for any purpose
+- Do not cite the "Top-30 is the sweet spot" narrative from contaminated data
+- The selector may still have real alpha — but the historical evidence no longer supports the claim
+- Forward true-PIT monitoring is the only path to re-establishing confidence
 
 ## Objective
 

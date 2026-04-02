@@ -159,14 +159,23 @@ def main():
         default="off",
         help="PIT filtering: off/survivorship/full (default: off)",
     )
+    parser.add_argument(
+        "--snapshot-dir",
+        type=Path,
+        default=None,
+        help="Override snapshot directory (default: data/snapshots)",
+    )
     args = parser.parse_args()
 
     # Initialize PIT state
-    global _pit_mode, _ipo_dates
+    global _pit_mode, _ipo_dates, SNAPSHOTS_DIR
     _pit_mode = args.pit_mode
     if _pit_mode != "off":
         _ipo_dates = _load_ipo_dates()
         print(f"PIT mode: {_pit_mode} ({len(_ipo_dates)} IPO dates loaded)")
+    if args.snapshot_dir is not None:
+        SNAPSHOTS_DIR = args.snapshot_dir.resolve()
+        print(f"Using snapshot dir: {SNAPSHOTS_DIR}")
 
     horizons = [20, 63]
     top_n = 30
