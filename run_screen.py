@@ -4606,6 +4606,7 @@ def save_validation_snapshot(
         try:
             from institutional_summary import (
                 _find_prior_institutional_summary,
+                _get_filing_period,
                 build_institutional_summary,
                 compute_institutional_delta,
             )
@@ -4613,7 +4614,16 @@ def save_validation_snapshot(
             _uni_tickers = {r.get("ticker", "") for r in csv_rows if r.get("ticker")}
             inst_summary = build_institutional_summary(as_of_date, _uni_tickers)
             if inst_summary:
-                prior_inst = _find_prior_institutional_summary(_prior_dir, as_of_date)
+                # Use cross-quarter comparison to get real filing-period deltas
+                _cache_base = Path(__file__).resolve().parent / "data" / "caches" / "sec_13f" / "PIT"
+                _cur_filing = _get_filing_period(_cache_base, as_of_date)
+                prior_inst = _find_prior_institutional_summary(
+                    _prior_dir,
+                    as_of_date,
+                    cross_quarter=True,
+                    current_filing_period=_cur_filing,
+                    max_candidates=60,
+                )
                 if prior_inst:
                     inst_delta = compute_institutional_delta(inst_summary, prior_inst)
         except Exception as e:

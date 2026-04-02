@@ -60,10 +60,9 @@ def build_institutional_summary(
     # Build CIK → short_name map from elite_managers (lazy import)
     try:
         from elite_managers import get_elite_managers
+
         _mgrs = get_elite_managers()
-        cik_to_short: Dict[str, str] = {
-            _pad_cik(m["cik"]): m["short_name"] for m in _mgrs
-        }
+        cik_to_short: Dict[str, str] = {_pad_cik(m["cik"]): m["short_name"] for m in _mgrs}
     except Exception:
         cik_to_short = {}
 
@@ -107,9 +106,7 @@ def build_institutional_summary(
     for tk in sorted(universe_tickers):
         acc = ticker_accum.get(tk)
         if acc:
-            holders_by_shares: List[tuple] = sorted(
-                acc["holders"].items(), key=lambda x: (-x[1], x[0])
-            )
+            holders_by_shares: List[tuple] = sorted(acc["holders"].items(), key=lambda x: (-x[1], x[0]))
             top_names = [name for name, _ in holders_by_shares[:10]]
             tickers_out[tk] = {
                 "elite_holders_count": len(acc["holders"]),
@@ -140,15 +137,11 @@ def build_institutional_summary(
         std = math.sqrt(var) if var > 0 else 0.0
         for tk in tickers_out:
             if std > 0:
-                tickers_out[tk]["inst_score_z"] = round(
-                    (tickers_out[tk]["inst_score_raw"] - mean) / std, 4
-                )
+                tickers_out[tk]["inst_score_z"] = round((tickers_out[tk]["inst_score_raw"] - mean) / std, 4)
             else:
                 tickers_out[tk]["inst_score_z"] = 0.0
 
-    tickers_with_signal = sum(
-        1 for v in tickers_out.values() if v["elite_holders_count"] > 0
-    )
+    tickers_with_signal = sum(1 for v in tickers_out.values() if v["elite_holders_count"] > 0)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -161,9 +154,7 @@ def build_institutional_summary(
         "elite_managers_with_filing": index.get("managers_with_filing", 0),
         "tickers_with_signal": tickers_with_signal,
         "tickers_in_universe": len(universe_tickers),
-        "signal_coverage_pct": round(
-            tickers_with_signal / len(universe_tickers) * 100, 2
-        ) if universe_tickers else 0.0,
+        "signal_coverage_pct": round(tickers_with_signal / len(universe_tickers) * 100, 2) if universe_tickers else 0.0,
         "tickers": tickers_out,
     }
 
@@ -172,30 +163,60 @@ def build_institutional_summary(
 # SCHEMA VALIDATORS — pure functions, no I/O
 # =============================================================================
 
-_SUMMARY_REQUIRED_TOP_LEVEL = frozenset({
-    "schema_version", "version", "created_at", "as_of_date",
-    "cache_as_of_date", "cache_schema_version",
-    "elite_managers_total", "elite_managers_with_filing",
-    "tickers_with_signal", "tickers_in_universe", "signal_coverage_pct",
-    "tickers",
-})
+_SUMMARY_REQUIRED_TOP_LEVEL = frozenset(
+    {
+        "schema_version",
+        "version",
+        "created_at",
+        "as_of_date",
+        "cache_as_of_date",
+        "cache_schema_version",
+        "elite_managers_total",
+        "elite_managers_with_filing",
+        "tickers_with_signal",
+        "tickers_in_universe",
+        "signal_coverage_pct",
+        "tickers",
+    }
+)
 
-_SUMMARY_REQUIRED_PER_TICKER = frozenset({
-    "elite_holders_count", "elite_holder_names", "elite_holder_shares",
-    "elite_total_shares", "elite_total_value_usd_thousands",
-    "inst_score_raw", "inst_score_z",
-})
+_SUMMARY_REQUIRED_PER_TICKER = frozenset(
+    {
+        "elite_holders_count",
+        "elite_holder_names",
+        "elite_holder_shares",
+        "elite_total_shares",
+        "elite_total_value_usd_thousands",
+        "inst_score_raw",
+        "inst_score_z",
+    }
+)
 
-_DELTA_REQUIRED_TOP_LEVEL = frozenset({
-    "schema_version", "version", "created_at", "as_of_date", "prior_date",
-    "tickers_in_current", "tickers_in_prior", "tickers_common",
-    "tickers",
-})
+_DELTA_REQUIRED_TOP_LEVEL = frozenset(
+    {
+        "schema_version",
+        "version",
+        "created_at",
+        "as_of_date",
+        "prior_date",
+        "tickers_in_current",
+        "tickers_in_prior",
+        "tickers_common",
+        "tickers",
+    }
+)
 
-_DELTA_REQUIRED_PER_TICKER = frozenset({
-    "elite_new_count", "elite_exit_count", "elite_add_count", "elite_trim_count",
-    "net_elite_holders_delta", "shares_delta_total", "value_delta_total",
-})
+_DELTA_REQUIRED_PER_TICKER = frozenset(
+    {
+        "elite_new_count",
+        "elite_exit_count",
+        "elite_add_count",
+        "elite_trim_count",
+        "net_elite_holders_delta",
+        "shares_delta_total",
+        "value_delta_total",
+    }
+)
 
 
 def validate_institutional_summary_schema_v1(
@@ -256,10 +277,7 @@ def validate_institutional_summary_schema_v1(
     if tiu > 0:
         expected_cov = round(tws / tiu * 100, 2)
         if abs(cov - expected_cov) > 0.1:
-            return False, (
-                f"signal_coverage_pct inconsistent: {cov} vs expected "
-                f"{expected_cov:.2f} ({tws}/{tiu})"
-            )
+            return False, (f"signal_coverage_pct inconsistent: {cov} vs expected " f"{expected_cov:.2f} ({tws}/{tiu})")
 
     # 7. Tickers must be a dict
     tickers = data["tickers"]
@@ -305,9 +323,7 @@ def validate_institutional_summary_schema_v1(
     # 11. tickers_with_signal consistency
     actual_with = sum(1 for v in tickers.values() if v.get("elite_holders_count", 0) > 0)
     if actual_with != tws:
-        return False, (
-            f"tickers_with_signal ({tws}) != actual count of held tickers ({actual_with})"
-        )
+        return False, (f"tickers_with_signal ({tws}) != actual count of held tickers ({actual_with})")
 
     return True, "ok"
 
@@ -481,13 +497,21 @@ def _find_prior_institutional_summary(
     current_date: str,
     *,
     max_candidates: int = 10,
+    cross_quarter: bool = False,
+    current_filing_period: str = "",
 ) -> Optional[Dict[str, Any]]:
     """Find most recent prior institutional_summary.json with elite_holder_shares.
 
     Walks backward from ``current_date`` through date-named subdirectories
     under ``snapshot_dir``. Returns the parsed dict or None.
+
+    If ``cross_quarter=True``, skips summaries whose 13F cache has the same
+    filing period as ``current_filing_period``. This ensures the delta captures
+    actual portfolio changes between 13F filing periods, not day-over-day
+    noise within the same quarter.
     """
     import re
+
     date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
     if not snapshot_dir.exists():
@@ -519,9 +543,39 @@ def _find_prior_institutional_summary(
         if cache_date and cache_date != date_str:
             logger.warning(
                 "[INST] Prior %s has cache_as_of_date=%s (expected %s) — skipping (PIT mismatch)",
-                date_str, cache_date, date_str,
+                date_str,
+                cache_date,
+                date_str,
             )
             continue
+
+        # Cross-quarter guard: skip if same filing period
+        if cross_quarter and current_filing_period:
+            prior_filing = _get_filing_period(snapshot_dir.parent / "caches" / "sec_13f" / "PIT", date_str)
+            if prior_filing == current_filing_period:
+                continue  # same quarter, keep looking
+            logger.info(
+                "[INST] Cross-quarter prior found: %s (filing %s vs current %s)",
+                date_str,
+                prior_filing,
+                current_filing_period,
+            )
+
         return data
 
     return None
+
+
+def _get_filing_period(cache_base: Path, cache_date: str) -> str:
+    """Get the 13F filing period_of_report for a given cache date."""
+    index_path = cache_base / cache_date / "index.json"
+    if not index_path.exists():
+        return ""
+    idx = _load_json(index_path)
+    if not idx:
+        return ""
+    for mgr in idx.get("managers", []):
+        por = mgr.get("period_of_report", "")
+        if por:
+            return por
+    return ""
