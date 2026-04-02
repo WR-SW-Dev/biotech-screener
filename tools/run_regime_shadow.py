@@ -185,8 +185,12 @@ def _run_rich_classifier(
         except ValueError:
             pass
 
+    # Optional macro inputs
+    yield_curve_bps = market_snapshot.get("yield_curve_slope_bps")
+    credit_change = market_snapshot.get("credit_spread_change")
+
     try:
-        result = engine.detect_regime(
+        kwargs = dict(
             vix_current=Decimal(str(vix)),
             xbi_vs_spy_30d=Decimal(str(xbi_30d)),
             fed_rate_change_3m=Decimal(str(fed_rate)),
@@ -195,6 +199,12 @@ def _run_rich_classifier(
             data_as_of_date=data_as_of,
             use_ensemble=False,
         )
+        if yield_curve_bps and yield_curve_bps != "0":
+            kwargs["yield_curve_slope"] = Decimal(str(yield_curve_bps))
+        if credit_change and credit_change != "0":
+            kwargs["credit_spread_change"] = Decimal(str(credit_change))
+
+        result = engine.detect_regime(**kwargs)
 
         # Serialize Decimals for JSON
         def _dec(v):
@@ -226,6 +236,19 @@ def _run_rich_classifier(
 # ---------------------------------------------------------------------------
 
 
+def _load_prior_shadow(as_of_date: str) -> Dict[str, Any]:
+    """Load the most recent regime shadow artifact before as_of_date."""
+    if not OUTPUT_DIR.exists():
+        return {}
+    prior_files = sorted(f for f in OUTPUT_DIR.glob("*.json") if f.stem < as_of_date and f.stem[:4].isdigit())
+    if not prior_files:
+        return {}
+    try:
+        return json.loads(prior_files[-1].read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
 def run_regime_shadow(as_of_date: str) -> Dict[str, Any]:
     """Run both regime classifiers and produce comparison artifact."""
     log.info("Running regime shadow for %s", as_of_date)
@@ -245,16 +268,73 @@ def run_regime_shadow(as_of_date: str) -> Dict[str, Any]:
     # Compare
     simple_regime = simple.get("regime", "UNKNOWN")
     rich_regime = rich.get("regime", "UNKNOWN")
+    rich_conf = rich.get("confidence", 0)
 
-    # Map to common labels for agreement check
-    simple_mapped = simple_regime  # Already BULL/BEAR
-    rich_mapped = rich_regime  # Could be BULL/BEAR/VOLATILITY_SPIKE/etc
+    # Agreement: both say bull, or both say non-bull (risk-off)
+    agree = (simple_regime == "BULL" and rich_regime == "BULL") or (simple_regime != "BULL" and rich_regime != "BULL")
 
-    # Agreement: both say bull, or both say non-bull
-    agree = (simple_mapped == "BULL" and rich_mapped == "BULL") or (simple_mapped != "BULL" and rich_mapped != "BULL")
+    # --- Switching policy ---
+    # Load prior artifact for persistence tracking
+    prior = _load_prior_shadow(as_of_date)
+    prior_recommendation = prior.get("switching_policy", {}).get("recommendation", "ew30")
+
+    # Count consecutive days of agreement/disagreement
+    disagree_streak = prior.get("switching_policy", {}).get("disagree_streak", 0)
+    if not agree:
+        disagree_streak += 1
+    else:
+        disagree_streak = 0
+
+    # Count consecutive days rich engine says bear/stress
+    rich_bear_streak = prior.get("switching_policy", {}).get("rich_bear_streak", 0)
+    if rich_regime in ("BEAR", "VOLATILITY_SPIKE", "CREDIT_CRISIS", "RECESSION_RISK"):
+        rich_bear_streak += 1
+    else:
+        rich_bear_streak = 0
+
+    # Switching rules (conservative):
+    # 1. Default = EW Top-30 (no regime adjustment)
+    # 2. Switch to Top-20 concentration only if:
+    #    a. BOTH classifiers agree on non-bull AND
+    #    b. Rich confidence >= 0.60 AND
+    #    c. Rich has said bear/stress for >= 3 consecutive days
+    # 3. If classifiers disagree, always default to EW Top-30
+    # 4. If rich confidence < 0.50, always default to EW Top-30
+
+    MIN_BEAR_PERSISTENCE = 3  # days
+    MIN_SWITCH_CONFIDENCE = 0.60
+
+    recommendation = "ew30"
+    switch_reasons = []
+
+    if not agree:
+        recommendation = "ew30"
+        switch_reasons.append(f"classifiers_disagree(simple={simple_regime},rich={rich_regime})")
+    elif rich_conf < MIN_SWITCH_CONFIDENCE:
+        recommendation = "ew30"
+        switch_reasons.append(f"low_confidence({rich_conf:.2f}<{MIN_SWITCH_CONFIDENCE})")
+    elif rich_regime in ("BEAR", "VOLATILITY_SPIKE", "CREDIT_CRISIS", "RECESSION_RISK"):
+        if rich_bear_streak >= MIN_BEAR_PERSISTENCE:
+            recommendation = "top20_concentrate"
+            switch_reasons.append(f"confirmed_bear(rich={rich_regime},streak={rich_bear_streak}d,conf={rich_conf:.2f})")
+        else:
+            recommendation = "ew30"
+            switch_reasons.append(f"bear_not_confirmed(streak={rich_bear_streak}d<{MIN_BEAR_PERSISTENCE}d)")
+    else:
+        recommendation = "ew30"
+        switch_reasons.append("default_ew30")
+
+    # Would-switch flag: what would change if we followed the recommendation
+    would_switch = recommendation != prior_recommendation
+
+    # Estimated turnover if we switched today
+    if recommendation == "top20_concentrate":
+        estimated_turnover_names = 10  # dropping 10 of 30 names
+    else:
+        estimated_turnover_names = 0
 
     return {
-        "schema": "regime_shadow.v1",
+        "schema": "regime_shadow.v2",
         "as_of_date": as_of_date,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "xbi_metrics": xbi_metrics,
@@ -262,7 +342,18 @@ def run_regime_shadow(as_of_date: str) -> Dict[str, Any]:
         "simple_classifier": simple,
         "rich_classifier": rich,
         "agreement": agree,
-        "disagreement_note": (f"simple={simple_mapped}, rich={rich_mapped}" if not agree else ""),
+        "disagreement_note": (f"simple={simple_regime}, rich={rich_regime}" if not agree else ""),
+        "switching_policy": {
+            "recommendation": recommendation,
+            "reasons": switch_reasons,
+            "would_switch": would_switch,
+            "prior_recommendation": prior_recommendation,
+            "disagree_streak": disagree_streak,
+            "rich_bear_streak": rich_bear_streak,
+            "estimated_turnover_names": estimated_turnover_names,
+            "min_bear_persistence": MIN_BEAR_PERSISTENCE,
+            "min_switch_confidence": MIN_SWITCH_CONFIDENCE,
+        },
     }
 
 
@@ -290,6 +381,15 @@ def print_report(result: Dict):
 
     agree = result["agreement"]
     print(f"\n  Agreement: {'YES' if agree else 'NO — ' + result.get('disagreement_note', '')}")
+
+    sp = result.get("switching_policy", {})
+    if sp:
+        print("\n  Switching policy:")
+        print(f"    Recommendation:  {sp.get('recommendation', '?')}")
+        print(f"    Reasons:         {', '.join(sp.get('reasons', []))}")
+        print(f"    Would switch:    {sp.get('would_switch', False)}")
+        print(f"    Bear streak:     {sp.get('rich_bear_streak', 0)}d")
+        print(f"    Disagree streak: {sp.get('disagree_streak', 0)}d")
 
 
 def main():
