@@ -647,6 +647,100 @@ def _allocate_regulatory_ladder(
     return result
 
 
+def _build_ew_top_n(
+    rankings: List[Dict[str, str]],
+    policy: Dict[str, Any],
+    account_usd: float,
+) -> Dict[str, Any]:
+    """EW Top-N construction: equal-weight the top N ranked names.
+
+    No sleeves, no family splits, no quality tilt. Pure EW on the selector output.
+    This is the promoted v2 construction (2026-04-01).
+    """
+    n = policy.get("ew_top_n", 30)
+    # Select top-N eligible names (already sorted by actionable_rank)
+    selected = []
+    for row in rankings:
+        try:
+            rank = int(float(row.get("actionable_rank", "9999")))
+        except (ValueError, TypeError):
+            continue
+        if rank <= n:
+            selected.append(row)
+        if len(selected) >= n:
+            break
+
+    if not selected:
+        return {"positions": [], "summary": {"total_positions": 0, "total_allocated": 0, "residual_cash": account_usd}}
+
+    wt = 100.0 / len(selected)
+    positions = []
+    for row in selected:
+        bucket = classify_action_bucket(row)
+        cat_family = (row.get("catalyst_family") or "").upper()
+        positions.append(
+            {
+                "ticker": row.get("ticker", ""),
+                "weight_pct": round(wt, 4),
+                "target_dollars": round(account_usd * wt / 100, 2),
+                "bucket": bucket,
+                "tier": row.get("tier_dev", ""),
+                "actionable_rank": int(float(row.get("actionable_rank", "0"))),
+                "catalyst_days": row.get("catalyst_days", ""),
+                "catalyst_family": cat_family,
+                "effective_family": cat_family,
+                "is_hard_catalyst": row.get("is_hard_catalyst", "") == "1",
+                "mom_state": row.get("mom_state", ""),
+                "gap_risk": (
+                    "MODERATE"
+                    if row.get("catalyst_days", "999") != "" and int(float(row.get("catalyst_days", "999"))) <= 7
+                    else "LOW"
+                ),
+                "size_band": "EW",
+                "price_coverage": "OK",
+                "entry_price": None,
+                "entry_price_source": "CLOSE",
+                "options_overlay_multiplier": 1.0,
+                "options_overlay_reasons": "ew_mode",
+                "opt_liquidity_state": row.get("opt_liquidity_state", "absent"),
+                "regulatory_days": row.get("regulatory_days", ""),
+                "regulatory_event_type": row.get("regulatory_event_type", ""),
+                "regulatory_quality": row.get("regulatory_quality", ""),
+                "regulatory_confidence": row.get("regulatory_confidence", ""),
+                "regulatory_is_secondary": False,
+                "reg_sub_bucket": "",
+                "fill_qty": None,
+                "fill_vwap": None,
+                "fill_notional": None,
+            }
+        )
+
+    total = sum(p["target_dollars"] for p in positions)
+    per_bucket: Dict[str, Dict[str, Any]] = {}
+    for b in BUCKET_NAMES:
+        b_pos = [p for p in positions if p["bucket"] == b]
+        per_bucket[b] = {
+            "count": len(b_pos),
+            "total_dollars": sum(p["target_dollars"] for p in b_pos),
+            "weight_pct": sum(p["weight_pct"] for p in b_pos),
+        }
+
+    return {
+        "positions": positions,
+        "summary": {
+            "construction_mode": "ew_top_n",
+            "ew_n": len(selected),
+            "total_positions": len(positions),
+            "total_allocated": round(total, 2),
+            "residual_cash": round(account_usd - total, 2),
+            "per_bucket": per_bucket,
+            "gap_risk_high": [],
+            "missing_price": [],
+            "resolved_regulatory": [],
+        },
+    }
+
+
 def build_positions(
     rankings: List[Dict[str, str]],
     policy: Dict[str, Any],
@@ -654,17 +748,22 @@ def build_positions(
 ) -> Dict[str, Any]:
     """Select top-K per bucket, apply caps, compute $ sizing.
 
-    Supports family-targeted allocation via ``family_targets`` in policy:
-    each bucket can specify a dollar-weight split by family (e.g.
-    ``{"REGULATORY": 0.70, "CLINICAL": 0.30}``).  When a family has
-    fewer names than its allocation allows, unused dollars reflow to
-    other families in the same bucket (no cash drag).
+    Supports two construction modes via ``construction_mode`` in policy:
+      - ``ew_top_n`` (default): Equal-weight top N names. Promoted 2026-04-01.
+      - ``sleeve``: Legacy sleeve-based construction with bucket targets.
 
     Returns a dict with:
         positions: list of position dicts
         summary: allocation summary
     """
     acct = account_usd or policy.get("account_usd", 500_000)
+
+    # Dispatch by construction mode (default: sleeve for backward compat)
+    mode = policy.get("construction_mode", "sleeve")
+    if mode == "ew_top_n":
+        return _build_ew_top_n(rankings, policy, acct)
+
+    # Legacy sleeve-based construction below
     bucket_targets = policy.get("bucket_targets", {})
     bucket_top_k = policy.get("bucket_top_k", {})
     bucket_name_caps = policy.get("bucket_name_caps", {})

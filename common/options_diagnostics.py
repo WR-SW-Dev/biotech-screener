@@ -32,6 +32,7 @@ Operator flags (derived from raw diagnostics + catalyst context):
     opt_iv_regime         — NORMAL / ELEVATED / EXTREME / "" based on ATM IV
     opt_event_premium     — YES / NO / "" — front > back by > 10% (backwardation)
     opt_liquidity_ok      — 1 / 0 — chain quality sufficient for judgment
+    opt_liquidity_state   — liquid / thin / absent — canonical three-state liquidity gate
     opt_use_for_judgment  — YES / NO / "" — composite: has data + liquid + not extreme junk
 """
 
@@ -65,12 +66,14 @@ OPTIONS_DIAGNOSTIC_COLUMNS = [
     "opt_iv_regime",
     "opt_event_premium",
     "opt_liquidity_ok",
+    "opt_liquidity_state",
     "opt_use_for_judgment",
 ]
 
 _EMPTY_DIAGNOSTICS: Dict[str, Any] = {col: "" for col in OPTIONS_DIAGNOSTIC_COLUMNS}
 _EMPTY_DIAGNOSTICS["opt_has_data"] = "0"
 _EMPTY_DIAGNOSTICS["opt_liquidity_ok"] = "0"
+_EMPTY_DIAGNOSTICS["opt_liquidity_state"] = "absent"
 
 
 def empty_diagnostics(reason: str = "") -> Dict[str, Any]:
@@ -213,6 +216,33 @@ def classify_liquidity_ok(liquidity_rating: Optional[int]) -> str:
     return "1" if liquidity_rating >= _LIQUIDITY_OK_THRESHOLD else "0"
 
 
+def classify_liquidity_state(has_data: bool, liquidity_ok: bool) -> str:
+    """Three-state liquidity gate: liquid / thin / absent.
+
+    liquid  — chain data present with acceptable spreads and OI.
+    thin    — chain data present but illiquid (wide spreads or low OI).
+    absent  — no options chain data at all.
+    """
+    if not has_data:
+        return "absent"
+    return "liquid" if liquidity_ok else "thin"
+
+
+def get_liquidity_state(row: Dict[str, Any]) -> str:
+    """Read opt_liquidity_state from a row, inferring from legacy fields if absent.
+
+    Use this instead of raw row.get("opt_liquidity_state", "absent") when
+    reading from snapshots that may predate the field.
+    """
+    explicit = row.get("opt_liquidity_state", "")
+    if explicit in ("liquid", "thin", "absent"):
+        return explicit
+    # Infer from legacy binary fields
+    has_data = row.get("opt_has_data", "0") == "1"
+    liq_ok = row.get("opt_liquidity_ok", "0") == "1"
+    return classify_liquidity_state(has_data, liq_ok)
+
+
 def classify_use_for_judgment(
     has_data: bool,
     liquidity_ok: bool,
@@ -254,11 +284,13 @@ def compute_operator_flags(
         term_slope = float(term_slope)
 
     liq_ok = classify_liquidity_ok(liquidity_rating)
+    liq_state = classify_liquidity_state(has_data, liq_ok == "1")
 
     return {
         "opt_iv_regime": classify_iv_regime(atm_iv),
         "opt_event_premium": classify_event_premium(term_slope),
         "opt_liquidity_ok": liq_ok,
+        "opt_liquidity_state": liq_state,
         "opt_use_for_judgment": classify_use_for_judgment(has_data, liq_ok == "1", atm_iv),
     }
 

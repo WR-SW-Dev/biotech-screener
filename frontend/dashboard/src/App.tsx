@@ -8,10 +8,11 @@ import CompanyNewsPanel from './CompanyNewsPanel';
 import TierBucketHeatmap from './TierBucketHeatmap';
 import RankChangeStrip from './RankChangeStrip';
 import ShadowPnLStrip from './ShadowPnLStrip';
+import EventPremiumPanel from './EventPremiumPanel';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
-type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'news';
+type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'options' | 'news';
 
 export default function App() {
   const [view, setView] = useState<View>('screener');
@@ -45,6 +46,7 @@ export default function App() {
     { key: 'bioshort', label: 'Bioshort' },
     { key: 'calibration', label: 'Calibration' },
     { key: 'catalysts', label: 'Catalysts' },
+    { key: 'options', label: 'Options' },
     { key: 'news', label: 'News' },
   ];
 
@@ -122,6 +124,10 @@ export default function App() {
 
       {view === 'catalysts' && (
         <CatalystTimeline rows={rows} onSelectTicker={(t) => { setSelectedTicker(t); setView('screener'); }} />
+      )}
+
+      {view === 'options' && (
+        <EventPremiumPanel date={selectedDate} onSelectTicker={(t) => { setSelectedTicker(t); setView('screener'); }} />
       )}
 
       {view === 'news' && (

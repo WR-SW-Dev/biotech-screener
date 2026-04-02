@@ -16,6 +16,7 @@ def _make_row(
     opt_event_premium="YES",
     opt_iv_regime="ELEVATED",
     opt_liquidity_ok="1",
+    opt_liquidity_state="liquid",
     opt_use_for_judgment="YES",
     catalyst_days="30",
     catalyst_bucket="reg_0_14",
@@ -33,6 +34,7 @@ def _make_row(
             "opt_event_premium": opt_event_premium,
             "opt_iv_regime": opt_iv_regime,
             "opt_liquidity_ok": opt_liquidity_ok,
+            "opt_liquidity_state": opt_liquidity_state,
             "opt_use_for_judgment": opt_use_for_judgment,
         }
     )
@@ -125,6 +127,21 @@ class TestWriteOptionsSnapshot:
         iv_dist = summary["flag_distributions"]["iv_regime"]
         assert iv_dist["ELEVATED"] == 2
         assert iv_dist["NORMAL"] == 1
+
+    def test_summary_liquidity_state_distribution(self, tmp_path):
+        snap = tmp_path / "2026-03-11"
+        snap.mkdir()
+        rows = [
+            _make_row(ticker="A", opt_liquidity_state="liquid"),
+            _make_row(ticker="B", opt_liquidity_state="thin"),
+            _make_row(ticker="C", opt_has_data="0", opt_liquidity_state="absent"),
+        ]
+        write_options_snapshot(snap, rows, "2026-03-11")
+        summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
+        liq_dist = summary["flag_distributions"]["liquidity_state"]
+        assert liq_dist["liquid"] == 1
+        assert liq_dist["thin"] == 1
+        assert liq_dist["absent"] == 1
 
     def test_summary_top_backwardation(self, tmp_path):
         snap = tmp_path / "2026-03-11"

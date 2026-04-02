@@ -393,7 +393,7 @@ def compute_options_quality_composite(row: Dict[str, Any]) -> Dict[str, Any]:
         score += 0.40
 
     # Liquidity (+0.20): baseline chain quality
-    if str(row.get("opt_liquidity_ok", "")) == "1":
+    if str(row.get("opt_liquidity_state", "")) == "liquid":
         score += 0.20
 
     # IV regime penalty (-0.20): EXTREME chains are noise

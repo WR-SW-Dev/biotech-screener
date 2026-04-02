@@ -1,6 +1,10 @@
 {
-  "schema": "portfolio_policy.v3",
-  "description": "Weekly rebalance policy for $500k biotech portfolio (90-180d holding target)",
+  "schema": "portfolio_policy.v4",
+  "description": "EW Top-30 construction for $500k biotech portfolio. Promoted 2026-04-01.",
+  "construction_mode": "ew_top_n",
+  "ew_top_n": 30,
+  "promotion_date": "2026-04-01",
+  "promotion_evidence": "construction_v2_promotion_report.json",
   "rebalance_cadence": "weekly",
   "rebalance_day": "FRIDAY",
   "execution": "NEXT_OPEN",

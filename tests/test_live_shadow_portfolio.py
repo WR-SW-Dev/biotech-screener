@@ -1546,7 +1546,9 @@ class TestEdgeCasesCoverageGap:
     def test_ladder_reflow_priority_order(self):
         """When multiple sub-buckets are empty, reflow should go to the
         first active sub-bucket in priority order:
-        reg_15_45 → reg_46_90 → reg_91_180 → reg_0_14."""
+        reg_15_45 → reg_46_90 → reg_91_180 → reg_0_14.
+
+        NOTE: This test uses the legacy sleeve construction path."""
         # Only reg_46_90 has names; reg_0_14, reg_15_45, reg_91_180 are empty
         rows = [
             self._make_row(
@@ -1585,3 +1587,102 @@ class TestEdgeCasesCoverageGap:
         # 60% * 70% * 100k = $42k
         reg_dollars = sum(p["target_dollars"] for p in reg_pos)
         assert reg_dollars > 40_000, f"Expected full REGULATORY reflow to reg_46_90, got ${reg_dollars:.0f}"
+
+
+# ---------------------------------------------------------------------------
+# EW Top-30 construction mode
+# ---------------------------------------------------------------------------
+
+
+class TestEWTopN:
+    """Tests for the promoted EW Top-N construction path (_build_ew_top_n)."""
+
+    EW_POLICY = {
+        "schema": "portfolio_policy.v4",
+        "construction_mode": "ew_top_n",
+        "ew_top_n": 5,
+        "account_usd": 100_000,
+    }
+
+    def _make_rows(self, n: int = 10) -> List[Dict[str, str]]:
+        return [_make_ranking_row(f"T{i:02d}", rank=i, catalyst_days=str(30 + i * 10)) for i in range(1, n + 1)]
+
+    def test_selects_top_n(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        assert len(result["positions"]) == 5
+        tickers = [p["ticker"] for p in result["positions"]]
+        assert tickers == ["T01", "T02", "T03", "T04", "T05"]
+
+    def test_equal_weights(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        for p in result["positions"]:
+            assert abs(p["weight_pct"] - 20.0) < 0.01  # 100% / 5
+
+    def test_total_weight_100(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        total = sum(p["weight_pct"] for p in result["positions"])
+        assert abs(total - 100.0) < 0.01
+
+    def test_total_dollars_matches_account(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        total = sum(p["target_dollars"] for p in result["positions"])
+        assert abs(total - 100_000) < 1.0
+
+    def test_fewer_names_than_n(self):
+        """When universe has fewer names than ew_top_n, use all available."""
+        rows = self._make_rows(3)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        assert len(result["positions"]) == 3
+        for p in result["positions"]:
+            assert abs(p["weight_pct"] - 100.0 / 3) < 0.01
+
+    def test_empty_rankings(self):
+        result = build_positions([], self.EW_POLICY, 100_000)
+        assert len(result["positions"]) == 0
+        assert result["summary"]["residual_cash"] == 100_000
+
+    def test_summary_has_construction_mode(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        assert result["summary"]["construction_mode"] == "ew_top_n"
+        assert result["summary"]["ew_n"] == 5
+
+    def test_positions_have_required_fields(self):
+        rows = self._make_rows(10)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        required = {
+            "ticker",
+            "weight_pct",
+            "target_dollars",
+            "bucket",
+            "tier",
+            "actionable_rank",
+            "catalyst_days",
+            "size_band",
+            "opt_liquidity_state",
+        }
+        for p in result["positions"]:
+            for field in required:
+                assert field in p, f"Missing field {field} in position {p['ticker']}"
+
+    def test_size_band_is_ew(self):
+        rows = self._make_rows(5)
+        result = build_positions(rows, self.EW_POLICY, 100_000)
+        for p in result["positions"]:
+            assert p["size_band"] == "EW"
+
+    def test_default_mode_is_sleeve(self):
+        """Policy without construction_mode should use sleeve (backward compat)."""
+        result = build_positions(self._make_rows(5), POLICY, 100_000)
+        # Should NOT have construction_mode in summary (sleeve path)
+        assert result["summary"].get("construction_mode") != "ew_top_n"
+
+    def test_account_override(self):
+        rows = self._make_rows(5)
+        result = build_positions(rows, self.EW_POLICY, 200_000)
+        total = sum(p["target_dollars"] for p in result["positions"])
+        assert abs(total - 200_000) < 1.0

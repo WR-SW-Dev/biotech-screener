@@ -110,6 +110,7 @@ def _build_summary(
     iv_regime_counts = Counter(r.get("opt_iv_regime", "") for r in opt_rows)
     event_premium_counts = Counter(r.get("opt_event_premium", "") for r in opt_rows)
     liquidity_ok_counts = Counter(str(r.get("opt_liquidity_ok", "")) for r in opt_rows)
+    liquidity_state_counts = Counter(r.get("opt_liquidity_state", "absent") for r in all_rows)
     judgment_counts = Counter(r.get("opt_use_for_judgment", "") for r in opt_rows)
 
     # Top backwardation names (event_premium == YES, sorted by term_slope ascending)
@@ -167,6 +168,7 @@ def _build_summary(
             "iv_regime": dict(sorted(iv_regime_counts.items())),
             "event_premium": dict(sorted(event_premium_counts.items())),
             "liquidity_ok": dict(sorted(liquidity_ok_counts.items())),
+            "liquidity_state": dict(sorted(liquidity_state_counts.items())),
             "use_for_judgment": dict(sorted(judgment_counts.items())),
         },
         "top_backwardation": top_backwardation,

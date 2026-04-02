@@ -123,21 +123,26 @@ class TestAlertConfidence:
         assert c["alert_confidence"] > 0.5
 
     def test_history_based_high_confidence(self):
-        opts = {"opt_has_data": "1", "opt_liquidity_ok": "1", "opt_use_for_judgment": "YES"}
+        opts = {
+            "opt_has_data": "1",
+            "opt_liquidity_ok": "1",
+            "opt_liquidity_state": "liquid",
+            "opt_use_for_judgment": "YES",
+        }
         rr_hist = [0.05, 0.04, 0.06, 0.03, 0.05, 0.04]
         c = compute_alert_confidence(["SKEW_EXTREME"], opts, rr_history=rr_hist)
         assert c["trigger_mode"] == "history_based"
         assert c["alert_confidence"] >= 0.7
 
     def test_abs_fallback_lower_confidence(self):
-        opts = {"opt_has_data": "1", "opt_liquidity_ok": "0"}
+        opts = {"opt_has_data": "1", "opt_liquidity_ok": "0", "opt_liquidity_state": "thin"}
         c = compute_alert_confidence(["SKEW_EXTREME"], opts, rr_history=[])
         assert c["trigger_mode"] == "low_liquidity_fallback"
         assert c["alert_confidence"] < 0.5
 
     def test_chain_quality_gate(self):
-        opts_good = {"opt_has_data": "1", "opt_liquidity_ok": "1"}
-        opts_bad = {"opt_has_data": "1", "opt_liquidity_ok": "0"}
+        opts_good = {"opt_has_data": "1", "opt_liquidity_ok": "1", "opt_liquidity_state": "liquid"}
+        opts_bad = {"opt_has_data": "1", "opt_liquidity_ok": "0", "opt_liquidity_state": "thin"}
         c_good = compute_alert_confidence(["IV_RAMP_HIGH"], opts_good)
         c_bad = compute_alert_confidence(["IV_RAMP_HIGH"], opts_bad)
         assert c_good["chain_quality_gate_pass"] is True

@@ -26,6 +26,8 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT))
 
+from common.options_diagnostics import get_liquidity_state
+
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 PIT_CACHE_DIR = REPO_ROOT / "data" / "caches" / "price_pit" / "PIT"
 OUTPUT_DIR = REPO_ROOT / "output" / "options"
@@ -97,6 +99,7 @@ def load_snapshot_with_returns(snapshot_date: str) -> list[dict]:
                 # Options
                 "opt_has_data": r.get("opt_has_data") == "1",
                 "opt_liquidity_ok": r.get("opt_liquidity_ok") == "1",
+                "opt_liquidity_state": get_liquidity_state(r),
                 "opt_atm_iv": _sf(r.get("opt_atm_iv")),
                 "opt_rr_25d": _sf(r.get("opt_rr_25d")),
                 "opt_term_slope": _sf(r.get("opt_term_slope")),
@@ -138,8 +141,13 @@ def run_pilot() -> dict:
         all_names.extend(names)
     log.info("Total name-date observations: %d", len(all_names))
 
-    # Filter to liquid options names
-    liquid = [n for n in all_names if n["opt_has_data"] and n["opt_liquidity_ok"]]
+    # Filter to liquid options names (prefer opt_liquidity_state, fallback to binary fields)
+    liquid = [
+        n
+        for n in all_names
+        if n.get("opt_liquidity_state", "absent") == "liquid"
+        or (n["opt_has_data"] and n["opt_liquidity_ok"])  # fallback for old snapshots
+    ]
     log.info("Liquid chain observations: %d", len(liquid))
 
     # --- Study 1: Event-loaded vs flat surfaces ---
@@ -242,7 +250,7 @@ def run_pilot() -> dict:
         study6 = {"question": "Does actual_implied_move_pctile predict returns?", "n": 0}
 
     return {
-        "schema": "options_ev_pilot.v1",
+        "schema": "options_ev_pilot.v2",
         "n_total": len(all_names),
         "n_liquid": len(liquid),
         "n_dates": len(cache_dates),
@@ -259,7 +267,7 @@ def run_pilot() -> dict:
 
 def print_results(result: dict):
     print(f"\n{'='*70}")
-    print(f"OPTIONS EV PILOT — Liquid Chain Names Only")
+    print("OPTIONS EV PILOT — Liquid Chain Names Only")
     print(f"{'='*70}")
     print(f"Dates: {result['n_dates']}, Total obs: {result['n_total']}, Liquid: {result['n_liquid']}")
 

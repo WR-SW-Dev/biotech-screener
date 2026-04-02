@@ -191,6 +191,7 @@ def build_options_quality_manifest(
     assessments = {}
     state_counts = {"full": 0, "partial": 0, "stale": 0, "absent": 0}
     tier_counts = {"full": 0, "reduced": 0, "absent": 0}
+    liq_state_counts = {"liquid": 0, "thin": 0, "absent": 0}
 
     for row in ranking_rows:
         ticker = row.get("ticker", "")
@@ -200,6 +201,11 @@ def build_options_quality_manifest(
         assessments[ticker] = q.to_dict()
         state_counts[q.data_state] = state_counts.get(q.data_state, 0) + 1
         tier_counts[q.tier_mode] = tier_counts.get(q.tier_mode, 0) + 1
+        liq = row.get("opt_liquidity_state", "absent")
+        if liq in liq_state_counts:
+            liq_state_counts[liq] += 1
+        else:
+            liq_state_counts["absent"] += 1
 
     total = len(assessments)
     return {
@@ -208,6 +214,7 @@ def build_options_quality_manifest(
         "total_tickers": total,
         "state_distribution": state_counts,
         "tier_distribution": tier_counts,
+        "liquidity_state_distribution": liq_state_counts,
         "coverage_pct": round((state_counts.get("full", 0) + state_counts.get("partial", 0)) / max(total, 1) * 100, 1),
         "full_pct": round(state_counts.get("full", 0) / max(total, 1) * 100, 1),
         "assessments": assessments,

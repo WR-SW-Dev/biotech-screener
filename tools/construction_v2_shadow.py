@@ -125,22 +125,28 @@ def _days_between(d1: str, d2: str) -> int:
 
 
 def load_rankings(snapshot_date: str) -> list[dict]:
-    rpath = SNAPSHOT_DIR / snapshot_date / "rankings.csv"
-    if not rpath.exists():
+    """Load ranked names from a snapshot.
+
+    Delegates to live_shadow_portfolio.load_rankings for consistency
+    (same eligibility filter, same sort order), then adds _rank for
+    v2-shadow compat.
+    """
+    from tools.live_shadow_portfolio import load_rankings as _lsp_load
+
+    snap_dir = SNAPSHOT_DIR / snapshot_date
+    try:
+        rows = _lsp_load(snap_dir)
+    except FileNotFoundError:
         return []
-    with open(rpath, encoding="utf-8") as f:
-        rows = list(csv.DictReader(f))
-    ranked = []
+
+    # Add _rank field for v2 shadow position builder
     for r in rows:
         ar = r.get("actionable_rank", "").strip()
-        if ar:
-            try:
-                r["_rank"] = int(ar)
-                ranked.append(r)
-            except ValueError:
-                pass
-    ranked.sort(key=lambda r: r["_rank"])
-    return ranked
+        try:
+            r["_rank"] = int(ar) if ar else 9999
+        except (ValueError, TypeError):
+            r["_rank"] = 9999
+    return rows
 
 
 def classify_bucket(row: dict) -> str:
@@ -160,7 +166,13 @@ def classify_bucket(row: dict) -> str:
     return "less_binary"
 
 
-def build_ew_positions(rankings: list[dict], n: int) -> list[dict]:
+def build_ew_positions(rankings: list[dict], n: int, account_usd: float | None = None) -> list[dict]:
+    """Build equal-weight positions from top-N ranked names.
+
+    Delegates selection logic to the same pattern used by
+    live_shadow_portfolio._build_ew_top_n to prevent drift.
+    """
+    acct = account_usd or ACCOUNT_USD
     sel = rankings[:n]
     if not sel:
         return []
@@ -169,7 +181,7 @@ def build_ew_positions(rankings: list[dict], n: int) -> list[dict]:
         {
             "ticker": r["ticker"].upper(),
             "weight_pct": round(w, 4),
-            "target_dollars": round(ACCOUNT_USD * w / 100, 2),
+            "target_dollars": round(acct * w / 100, 2),
             "rank": r["_rank"],
             "tier": r.get("tier_any", ""),
             "bucket": classify_bucket(r),

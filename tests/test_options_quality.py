@@ -24,6 +24,7 @@ def _make_row(**overrides):
         "implied_event_move": "0.25",
         "opt_quote_ts": "2026-04-01T12:00:00+00:00",
         "opt_liquidity_ok": "1",
+        "opt_liquidity_state": "liquid",
         "opt_use_for_judgment": "YES",
         "opt_iv_regime": "NORMAL",
         "opt_dte": "30",
@@ -135,9 +136,20 @@ class TestManifest:
         assert m["total_tickers"] == 0
 
     def test_with_rows(self):
-        rows = [_make_row(ticker="A"), _make_row(ticker="B", opt_has_data="0")]
+        rows = [_make_row(ticker="A"), _make_row(ticker="B", opt_has_data="0", opt_liquidity_state="absent")]
         m = build_options_quality_manifest(rows, datetime(2026, 4, 1, 14, tzinfo=timezone.utc))
         assert m["total_tickers"] == 2
         assert m["state_distribution"]["full"] == 1
         assert m["state_distribution"]["absent"] == 1
         assert m["coverage_pct"] == 50.0
+
+    def test_manifest_liquidity_state_distribution(self):
+        rows = [
+            _make_row(ticker="A", opt_liquidity_state="liquid"),
+            _make_row(ticker="B", opt_liquidity_state="thin"),
+            _make_row(ticker="C", opt_has_data="0", opt_liquidity_state="absent"),
+        ]
+        m = build_options_quality_manifest(rows, datetime(2026, 4, 1, 14, tzinfo=timezone.utc))
+        assert m["liquidity_state_distribution"]["liquid"] == 1
+        assert m["liquidity_state_distribution"]["thin"] == 1
+        assert m["liquidity_state_distribution"]["absent"] == 1

@@ -1458,6 +1458,8 @@ SNAPSHOT_COLUMNS = [
     "de_vol_60d",
     "de_drawdown_xbi",
     "de_drawdown_rel_xbi",
+    # --- Earnings calendar ---
+    "next_earnings_date",
     # --- Context / provenance ---
     "stage_bucket",
     "market_cap_bucket",

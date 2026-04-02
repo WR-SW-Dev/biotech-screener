@@ -12,11 +12,22 @@ function Stat({ label, value, accent }: { label: string; value: string | number;
   );
 }
 
+const CAT_COLORS: Record<string, string> = {
+  clinical: 'bg-emerald-100 text-emerald-800',
+  regulatory: 'bg-blue-100 text-blue-800',
+  mna: 'bg-violet-100 text-violet-800',
+  financing: 'bg-amber-100 text-amber-800',
+  safety: 'bg-rose-100 text-rose-800',
+  other: 'bg-slate-100 text-slate-600',
+};
+
 export default function CompanyNewsPanel({ date }: Props) {
   const [health, setHealth] = useState<any>(null);
   const [releases, setReleases] = useState<any[]>([]);
   const [classified, setClassified] = useState<any[]>([]);
   const [tab, setTab] = useState<'releases' | 'classified' | 'health'>('releases');
+  const [catFilter, setCatFilter] = useState<string>('all');
+  const [hideInfo, setHideInfo] = useState(true);
 
   useEffect(() => {
     fetchHeraldHealth().then(setHealth);
@@ -92,49 +103,84 @@ export default function CompanyNewsPanel({ date }: Props) {
       )}
 
       {/* Classified */}
-      {tab === 'classified' && (
-        classified.length === 0 ? (
+      {tab === 'classified' && (() => {
+        const cats = classified.reduce((acc, r) => { acc[r.event_category] = (acc[r.event_category] || 0) + 1; return acc; }, {} as Record<string, number>);
+        const filtered = classified.filter(r => {
+          if (hideInfo && r.informational_only) return false;
+          if (catFilter !== 'all' && r.event_category !== catFilter) return false;
+          return true;
+        });
+        const materialCount = classified.filter(r => !r.informational_only && r.event_category !== 'other').length;
+
+        return classified.length === 0 ? (
           <div className="text-sm text-slate-400 text-center p-4">No classified releases for {date}</div>
         ) : (
-          <div className="rounded-lg border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Ticker</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Headline</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Category</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Severity</th>
-                  <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Info?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {classified.map((r, i) => (
-                  <tr key={i} className="border-t hover:bg-slate-50">
-                    <td className="px-3 py-2 font-semibold text-indigo-600">{r.ticker}</td>
-                    <td className="px-3 py-2 text-slate-700 max-w-md truncate">{r.headline}</td>
-                    <td className="px-3 py-2">
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        r.event_category === 'clinical' ? 'bg-emerald-100 text-emerald-800' :
-                        r.event_category === 'regulatory' ? 'bg-blue-100 text-blue-800' :
-                        r.event_category === 'mna' ? 'bg-violet-100 text-violet-800' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>{r.event_category}</span>
-                    </td>
-                    <td className="px-3 py-2">
-                      <span className={`text-xs px-1.5 py-0.5 rounded ${
-                        r.severity === 'critical' ? 'bg-rose-100 text-rose-800' :
-                        r.severity === 'high' ? 'bg-amber-100 text-amber-800' :
-                        'bg-slate-100 text-slate-600'
-                      }`}>{r.severity}</span>
-                    </td>
-                    <td className="px-3 py-2 text-xs">{r.informational_only ? 'Yes' : '—'}</td>
+          <div className="space-y-2">
+            {/* Category summary */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <button onClick={() => setCatFilter('all')}
+                className={`text-xs px-2 py-1 rounded font-medium ${catFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
+                All ({classified.length})
+              </button>
+              {Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([cat, n]) => (
+                <button key={cat} onClick={() => setCatFilter(catFilter === cat ? 'all' : cat)}
+                  className={`text-xs px-2 py-1 rounded font-medium ${catFilter === cat ? 'ring-2 ring-indigo-400 ' : ''}${CAT_COLORS[cat] || CAT_COLORS.other}`}>
+                  {cat} ({n})
+                </button>
+              ))}
+              <label className="ml-auto flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">
+                <input type="checkbox" checked={hideInfo} onChange={() => setHideInfo(!hideInfo)} className="rounded" />
+                Hide informational
+              </label>
+            </div>
+            <div className="text-xs text-slate-400">
+              Material events: {materialCount} | Showing: {filtered.length}
+            </div>
+
+            <div className="rounded-lg border overflow-hidden">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Ticker</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Headline</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Category</th>
+                    <th className="text-left px-3 py-2 text-xs font-medium text-slate-500">Severity</th>
+                    <th className="text-right px-3 py-2 text-xs font-medium text-slate-500">Conf</th>
+                    <th className="text-center px-3 py-2 text-xs font-medium text-slate-500">Flags</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filtered.map((r, i) => (
+                    <tr key={i} className="border-t hover:bg-slate-50">
+                      <td className="px-3 py-2 font-semibold text-indigo-600">{r.ticker}</td>
+                      <td className="px-3 py-2 text-slate-700 max-w-md truncate" title={r.headline}>{r.headline}</td>
+                      <td className="px-3 py-2">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${CAT_COLORS[r.event_category] || CAT_COLORS.other}`}>
+                          {r.event_category}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className={`text-xs px-1.5 py-0.5 rounded ${
+                          r.severity === 'critical' ? 'bg-rose-100 text-rose-800' :
+                          r.severity === 'high' ? 'bg-amber-100 text-amber-800' :
+                          'bg-slate-100 text-slate-600'
+                        }`}>{r.severity}</span>
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono text-xs">{typeof r.confidence === 'number' ? r.confidence.toFixed(1) : '\u2014'}</td>
+                      <td className="px-3 py-1.5 text-center space-x-0.5">
+                        {r.mna_signal_flag && <span className="text-[10px] bg-violet-100 text-violet-700 px-1 rounded">M&A</span>}
+                        {r.financing_signal_flag && <span className="text-[10px] bg-amber-100 text-amber-700 px-1 rounded">$</span>}
+                        {r.safety_signal_flag && <span className="text-[10px] bg-rose-100 text-rose-700 px-1 rounded">SAFETY</span>}
+                        {r.thesis_change_flag && !r.mna_signal_flag && !r.safety_signal_flag && <span className="text-[10px] bg-indigo-100 text-indigo-700 px-1 rounded">THESIS</span>}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
-        )
-      )}
+        );
+      })()}
 
       {/* Health detail */}
       {tab === 'health' && hasData && (

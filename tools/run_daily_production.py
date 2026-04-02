@@ -2660,6 +2660,8 @@ def check_options_coverage(
         return GateResult(name=name, status="PASS", detail="empty rankings")
 
     n_has_data = sum(1 for r in rows if str(r.get("opt_has_data", "0")).strip() == "1")
+    n_liquid = sum(1 for r in rows if r.get("opt_liquidity_state") == "liquid")
+    n_thin = sum(1 for r in rows if r.get("opt_liquidity_state") == "thin")
     n_oqc = sum(1 for r in rows if r.get("options_quality_composite", "").strip() not in ("", "0", "0.0"))
     # Step-10 eligible: secondary regulatory path (91-180d) with nonzero OQC.
     # Mirrors decision_engine.py Step 10: has_regulatory_upcoming_180d=1,
@@ -2681,6 +2683,8 @@ def check_options_coverage(
     value = {
         "n_total": n_total,
         "n_has_data": n_has_data,
+        "n_liquid": n_liquid,
+        "n_thin": n_thin,
         "n_oqc_nonzero": n_oqc,
         "n_step10_eligible_oqc": n_step10_oqc,
         "ab_ready": n_oqc > 0,
@@ -2689,6 +2693,8 @@ def check_options_coverage(
 
     detail_parts = [
         f"opt_has_data={n_has_data}/{n_total}",
+        f"liquid={n_liquid}",
+        f"thin={n_thin}",
         f"oqc_nonzero={n_oqc}",
         f"step10_oqc={n_step10_oqc}",
     ]
@@ -5070,7 +5076,7 @@ def run_daily(
                         reverse=True,
                     )
                     if _priors:
-                        _aact_prior = _priors[0]
+                        _aact_prior = _priors[0]  # noqa: F841 — used in future AACT diff step
                 _aact_result = _run_subprocess(
                     [
                         sys.executable,

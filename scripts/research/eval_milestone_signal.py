@@ -116,7 +116,7 @@ def main() -> int:
 
     # --- Find snapshot dates ---
     # Limit to 2024+ where we have decent price coverage for forward returns
-    snap_dates = sorted(
+    all_snap_dates = sorted(
         [
             d.name
             for d in snapshots_dir.iterdir()
@@ -127,6 +127,11 @@ def main() -> int:
             and d.name >= "2024-01-01"
         ]
     )
+    # Monthly sampling — one per calendar month (last available) to keep runtime sane
+    by_month: Dict[str, str] = {}
+    for d in all_snap_dates:
+        by_month[d[:7]] = d
+    snap_dates = sorted(by_month.values())
     print(f"Snapshots: {len(snap_dates)} dates ({snap_dates[0]} to {snap_dates[-1]})")
 
     # --- Load trial records per snapshot date ---

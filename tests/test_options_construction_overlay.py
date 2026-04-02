@@ -15,6 +15,7 @@ def _row(**kwargs):
         "vol_classification": "",
         "market_model_disagreement": "",
         "opt_iv_regime": "",
+        "opt_liquidity_state": "liquid",
         "catalyst_days": "60",
     }
     defaults.update(kwargs)
@@ -87,3 +88,45 @@ class TestCompute3190WeightMultiplier:
         r = _row(vol_classification="RICH", catalyst_days="80")
         result = compute_31_90_weight_multiplier(r, options_fresh=True)
         assert result["weight_multiplier"] == 1.0
+
+    def test_absent_chain_suppressed(self):
+        r = _row(opt_liquidity_state="absent", options_quality_composite="0.5")
+        result = compute_31_90_weight_multiplier(r, options_fresh=True)
+        assert result["weight_multiplier"] == 1.0
+        assert not result["overlay_applied"]
+
+    def test_thin_chain_no_boost(self):
+        """Thin chains should not get boosts even with good signals."""
+        r = _row(
+            opt_liquidity_state="thin",
+            options_quality_composite="0.5",
+            opt_iv_regime="NORMAL",
+            vol_classification="CHEAP",
+        )
+        result = compute_31_90_weight_multiplier(r, options_fresh=True)
+        assert result["weight_multiplier"] <= 1.0  # no boost
+
+    def test_thin_chain_penalty_applies(self):
+        """Thin chains still get penalties."""
+        r = _row(opt_liquidity_state="thin", vol_classification="RICH", catalyst_days="50")
+        result = compute_31_90_weight_multiplier(r, options_fresh=True)
+        assert result["weight_multiplier"] == 0.80
+
+    def test_extreme_iv_thin_chain_penalty(self):
+        r = _row(opt_liquidity_state="thin", opt_iv_regime="EXTREME", catalyst_days="50")
+        result = compute_31_90_weight_multiplier(r, options_fresh=True)
+        assert result["weight_multiplier"] <= 0.70
+        assert result["overlay_applied"]
+
+    def test_extreme_iv_thin_stale_still_penalizes(self):
+        """EXTREME IV + thin chain penalizes even when data is stale."""
+        r = _row(opt_liquidity_state="thin", opt_iv_regime="EXTREME")
+        result = compute_31_90_weight_multiplier(r, options_fresh=False)
+        assert result["weight_multiplier"] == 0.70
+        assert result["overlay_applied"]
+
+    def test_implied_pctile_fallback_for_vol_class(self):
+        """When vol_classification is absent, use actual_implied_move_pctile."""
+        r = _row(actual_implied_move_pctile="0.90", catalyst_days="50")
+        result = compute_31_90_weight_multiplier(r, options_fresh=True)
+        assert result["weight_multiplier"] == 0.80  # rich fallback

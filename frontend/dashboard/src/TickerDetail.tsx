@@ -148,20 +148,18 @@ export default function TickerDetail({ ticker, date }: Props) {
         {tab === 'options' && <>
           {/* Quality assessment banner */}
           {(() => {
-            const hasData = r.opt_has_data === '1';
-            const liquid = r.opt_liquidity_ok === '1';
+            const liqState = (r.opt_liquidity_state || 'absent') as 'liquid' | 'thin' | 'absent';
             const judgment = r.opt_use_for_judgment === 'YES';
             const featureCount = [r.opt_atm_iv, r.opt_front_iv, r.opt_back_iv, r.opt_term_slope, r.opt_put_call_skew, r.opt_rr_25d, r.opt_event_premium, r.actual_implied_move_pctile, r.implied_event_move].filter(v => v && v.trim()).length;
-            const state = !hasData ? 'absent' : (featureCount >= 7 && liquid) ? 'full' : featureCount >= 3 ? 'partial' : 'absent';
-            const stateColor = state === 'full' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : state === 'partial' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200';
-            const tierMode = state === 'full' ? 'Full chain' : state === 'partial' ? 'Reduced chain' : 'No options data';
+            const stateColor = liqState === 'liquid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : liqState === 'thin' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-slate-50 text-slate-500 border-slate-200';
+            const label = liqState === 'liquid' ? 'Liquid chain' : liqState === 'thin' ? 'Thin chain' : 'No options data';
             return (
               <div className={`rounded-lg border px-3 py-2 text-xs flex items-center justify-between ${stateColor}`}>
                 <div>
-                  <span className="font-semibold">{tierMode}</span>
-                  <span className="ml-2 opacity-70">{featureCount}/9 features · {liquid ? 'Liquid' : 'Illiquid'} · {judgment ? 'Use for judgment' : 'Diagnostic only'}</span>
+                  <span className="font-semibold">{label}</span>
+                  <span className="ml-2 opacity-70">{featureCount}/9 features · {judgment ? 'Use for judgment' : 'Diagnostic only'}</span>
                 </div>
-                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/50">{state.toUpperCase()}</span>
+                <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-white/50">{liqState.toUpperCase()}</span>
               </div>
             );
           })()}
@@ -200,7 +198,7 @@ export default function TickerDetail({ ticker, date }: Props) {
           <div className="rounded-lg bg-slate-50 p-2 text-xs space-y-1">
             <div><span className="font-medium">Basis:</span> {fmtRaw(r.opt_diagnostic_basis)}</div>
             <div><span className="font-medium">Use for judgment:</span> <span className={r.opt_use_for_judgment === 'YES' ? 'text-emerald-600 font-semibold' : ''}>{fmtRaw(r.opt_use_for_judgment)}</span></div>
-            <div><span className="font-medium">Liquidity:</span> <span className={r.opt_liquidity_ok === '1' ? 'text-emerald-600' : 'text-rose-600'}>{r.opt_liquidity_ok === '1' ? 'OK' : 'Poor'}</span></div>
+            <div><span className="font-medium">Liquidity:</span> <span className={r.opt_liquidity_state === 'liquid' ? 'text-emerald-600' : r.opt_liquidity_state === 'thin' ? 'text-amber-600' : 'text-rose-600'}>{(r.opt_liquidity_state || 'absent').toUpperCase()}</span></div>
           </div>
         </>}
 

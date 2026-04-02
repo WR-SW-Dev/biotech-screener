@@ -147,6 +147,80 @@ def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease
     return releases[:20]
 
 
+def _extract_date_from_context(html: str, anchor_pos: int, window: int = 500) -> str:
+    """Extract a publication date from HTML context around a link.
+
+    Searches for dates in multiple formats:
+      1. <time datetime="YYYY-MM-DD"> or <time datetime="YYYY-MM-DDT...">
+      2. ISO dates: YYYY-MM-DD
+      3. US dates: Month DD, YYYY or Month DD YYYY
+      4. datetime= or data-date= attributes
+
+    Returns ISO date string (YYYY-MM-DD) or empty string.
+    """
+    MONTHS = {
+        "january": "01",
+        "february": "02",
+        "march": "03",
+        "april": "04",
+        "may": "05",
+        "june": "06",
+        "july": "07",
+        "august": "08",
+        "september": "09",
+        "october": "10",
+        "november": "11",
+        "december": "12",
+        "jan": "01",
+        "feb": "02",
+        "mar": "03",
+        "apr": "04",
+        "jun": "06",
+        "jul": "07",
+        "aug": "08",
+        "sep": "09",
+        "oct": "10",
+        "nov": "11",
+        "dec": "12",
+    }
+
+    start = max(0, anchor_pos - window)
+    end = min(len(html), anchor_pos + window)
+    context = html[start:end]
+
+    # Priority 1: <time datetime="YYYY-MM-DD"> or datetime attribute
+    time_match = re.search(r'datetime="(\d{4}-\d{2}-\d{2})', context, re.IGNORECASE)
+    if time_match:
+        return time_match.group(1)
+
+    # Priority 2: data-date or data-publish-date attribute
+    data_date_match = re.search(r'data-(?:publish-)?date="(\d{4}-\d{2}-\d{2})', context, re.IGNORECASE)
+    if data_date_match:
+        return data_date_match.group(1)
+
+    # Priority 3: ISO date in text
+    iso_match = re.search(r"(\d{4}-\d{2}-\d{2})", context)
+    if iso_match:
+        candidate = iso_match.group(1)
+        # Sanity check: year should be recent
+        if candidate[:4] in ("2024", "2025", "2026", "2027"):
+            return candidate
+
+    # Priority 4: US date format "Month DD, YYYY" or "Month DD YYYY"
+    us_match = re.search(
+        r"(\w+)\s+(\d{1,2}),?\s+(\d{4})",
+        context,
+    )
+    if us_match:
+        month_name = us_match.group(1).lower()
+        day = us_match.group(2).zfill(2)
+        year = us_match.group(3)
+        if month_name in MONTHS and year in ("2024", "2025", "2026", "2027"):
+            return f"{year}-{MONTHS[month_name]}-{day}"
+
+    return ""
+
+
 def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[PressRelease]:
     """Best-effort extraction from company IR pages.
 
@@ -186,14 +260,8 @@ def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[
             if len(candidate) > 20 and not candidate.startswith(("News", "Events", "SEC", "Stock")):
                 headline = candidate
 
-        # Try to extract date from nearby context
-        pub_date = ""
-        date_match = re.search(
-            r"(\w+ \d{1,2},? \d{4}|\d{4}-\d{2}-\d{2})",
-            html[max(0, match.start() - 200) : match.end() + 200],
-        )
-        if date_match:
-            pub_date = date_match.group(1)
+        # Extract date from nearby context (time tags, datetime attrs, text patterns)
+        pub_date = _extract_date_from_context(html, match.start())
 
         releases.append(
             PressRelease(
@@ -221,11 +289,12 @@ def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[
             seen_urls.add(url)
             slug = path.split("/")[-1]
             headline = slug.replace("-", " ").strip().title()
+            pub_date = _extract_date_from_context(html, match.start())
             releases.append(
                 PressRelease(
                     ticker=ticker,
                     headline=headline,
-                    published_at_utc="",
+                    published_at_utc=pub_date,
                     source_url=url,
                     source_type="company_ir",
                     fetched_at_utc=now,
@@ -247,11 +316,12 @@ def _extract_generic_ir_releases(html: str, ticker: str, base_url: str) -> List[
             if url in seen_urls:
                 continue
             seen_urls.add(url)
+            pub_date = _extract_date_from_context(html, match.start())
             releases.append(
                 PressRelease(
                     ticker=ticker,
                     headline=headline,
-                    published_at_utc="",
+                    published_at_utc=pub_date,
                     source_url=url,
                     source_type="company_ir",
                     fetched_at_utc=now,

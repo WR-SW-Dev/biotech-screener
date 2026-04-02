@@ -188,7 +188,10 @@ def compute_delta(
     import math
 
     # Both must have data
-    if prior.get("opt_has_data") != "1" or current.get("opt_has_data") != "1":
+    if (
+        prior.get("opt_liquidity_state", "absent") == "absent"
+        or current.get("opt_liquidity_state", "absent") == "absent"
+    ):
         return None
 
     # Gate: at least one snapshot must be judgment-grade
@@ -500,7 +503,7 @@ def run(
     # --- Get current diagnostics ---
     if live:
         # Fetch live data for tickers that had data in prior snapshot
-        live_tickers = sorted(t for t, d in prior_diag.items() if d.get("opt_has_data") == "1")
+        live_tickers = sorted(t for t, d in prior_diag.items() if d.get("opt_liquidity_state", "absent") != "absent")
         current_diag = fetch_live_diagnostics(live_tickers, as_of_date)
         # Carry forward catalyst context from prior snapshot for briefing display
         for ticker, diag in current_diag.items():

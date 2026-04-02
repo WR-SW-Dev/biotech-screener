@@ -34,6 +34,7 @@ def _ranking_row(
     is_hard_catalyst="1",
     opt_has_data="1",
     opt_liquidity_ok="1",
+    opt_liquidity_state="liquid",
     opt_use_for_judgment="YES",
     opt_atm_iv="0.50",
     opt_term_slope="-0.12",
@@ -52,6 +53,7 @@ def _ranking_row(
         "is_hard_catalyst": is_hard_catalyst,
         "opt_has_data": opt_has_data,
         "opt_liquidity_ok": opt_liquidity_ok,
+        "opt_liquidity_state": opt_liquidity_state,
         "opt_use_for_judgment": opt_use_for_judgment,
         "opt_atm_iv": opt_atm_iv,
         "opt_term_slope": opt_term_slope,
@@ -102,16 +104,19 @@ class TestEligibility:
         assert _check_eligibility(_ranking_row()) is True
 
     def test_no_data(self):
-        assert _check_eligibility(_ranking_row(opt_has_data="0")) is False
+        assert _check_eligibility(_ranking_row(opt_has_data="0", opt_liquidity_state="absent")) is False
 
     def test_no_liquidity(self):
-        assert _check_eligibility(_ranking_row(opt_liquidity_ok="0")) is False
+        assert _check_eligibility(_ranking_row(opt_liquidity_ok="0", opt_liquidity_state="thin")) is False
+
+    def test_thin_state_rejected(self):
+        assert _check_eligibility(_ranking_row(opt_liquidity_state="thin")) is False
 
     def test_no_judgment(self):
         assert _check_eligibility(_ranking_row(opt_use_for_judgment="NO")) is False
 
     def test_empty_fields(self):
-        assert _check_eligibility(_ranking_row(opt_has_data="")) is False
+        assert _check_eligibility(_ranking_row(opt_has_data="", opt_liquidity_state="absent")) is False
 
 
 # ---------------------------------------------------------------------------
@@ -307,7 +312,13 @@ class TestBuildOptionsWatch:
 
         rows = [
             _ranking_row(ticker="GOOD", opt_has_data="1", opt_liquidity_ok="1", opt_use_for_judgment="YES"),
-            _ranking_row(ticker="BAD", opt_has_data="0", opt_liquidity_ok="1", opt_use_for_judgment="YES"),
+            _ranking_row(
+                ticker="BAD",
+                opt_has_data="0",
+                opt_liquidity_ok="1",
+                opt_liquidity_state="absent",
+                opt_use_for_judgment="YES",
+            ),
         ]
         _write_rankings(snap_dir, rows)
 

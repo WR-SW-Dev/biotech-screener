@@ -173,6 +173,46 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
             "needs_review": False,
         }
 
+    # Safety signal patterns (checked before clinical — "clinical hold on Phase 2"
+    # should classify as safety, not clinical)
+    safety_keywords = [
+        "clinical hold",
+        "partial hold",
+        "adverse event",
+        "serious adverse",
+        "death",
+        "fatality",
+        "safety signal",
+        "voluntary recall",
+        "dose-limiting",
+        "dose limiting",
+        "hepatotoxicity",
+        "black box warning",
+    ]
+    if any(kw in hl for kw in safety_keywords):
+        return {
+            "event_category": "safety",
+            "event_subtype": "safety_signal",
+            "severity": "critical",
+            "materiality": "high",
+            "new_or_stale": "new",
+            "informational_only": False,
+            "informational_reason": "",
+            "event_outcome_guess": "miss",
+            "event_outcome_reason": headline[:100],
+            "price_direction_guess": "down",
+            "price_direction_reason": "Safety events typically negative for stock",
+            "exogenous_to_primary_catalyst": False,
+            "exogenous_reason": "",
+            "safety_signal_flag": True,
+            "financing_signal_flag": False,
+            "mna_signal_flag": False,
+            "thesis_change_flag": True,
+            "why_it_matters": headline[:150],
+            "confidence": 0.6,
+            "needs_review": True,
+        }
+
     # Clinical patterns
     clinical_keywords = [
         "phase 3",
@@ -247,6 +287,83 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
             "needs_review": True,
         }
 
+    # M&A patterns
+    mna_keywords = [
+        "acquire",
+        "acquisition",
+        "merger",
+        "merge",
+        "buyout",
+        "takeover",
+        "tender offer",
+        "definitive agreement",
+        "strategic combination",
+        "to be acquired",
+    ]
+    if any(kw in hl for kw in mna_keywords):
+        return {
+            "event_category": "mna",
+            "event_subtype": "mna_announcement",
+            "severity": "critical",
+            "materiality": "high",
+            "new_or_stale": "new",
+            "informational_only": False,
+            "informational_reason": "",
+            "event_outcome_guess": "unclear",
+            "event_outcome_reason": headline[:100],
+            "price_direction_guess": "unclear",
+            "price_direction_reason": "",
+            "exogenous_to_primary_catalyst": True,
+            "exogenous_reason": "M&A event supersedes catalyst thesis",
+            "safety_signal_flag": False,
+            "financing_signal_flag": False,
+            "mna_signal_flag": True,
+            "thesis_change_flag": True,
+            "why_it_matters": headline[:150],
+            "confidence": 0.7,
+            "needs_review": True,
+        }
+
+    # Financing patterns
+    financing_keywords = [
+        "public offering",
+        "private placement",
+        "registered direct",
+        "at-the-market",
+        "pricing of",
+        "priced its",
+        "raises $",
+        "million offering",
+        "billion offering",
+        "common stock offering",
+        "secondary offering",
+        "shelf registration",
+        "underwritten",
+    ]
+    if any(kw in hl for kw in financing_keywords):
+        return {
+            "event_category": "financing",
+            "event_subtype": "capital_raise",
+            "severity": "medium",
+            "materiality": "medium",
+            "new_or_stale": "new",
+            "informational_only": False,
+            "informational_reason": "",
+            "event_outcome_guess": "not_applicable",
+            "event_outcome_reason": "",
+            "price_direction_guess": "down",
+            "price_direction_reason": "Dilutive financing typically pressures stock",
+            "exogenous_to_primary_catalyst": False,
+            "exogenous_reason": "",
+            "safety_signal_flag": False,
+            "financing_signal_flag": True,
+            "mna_signal_flag": False,
+            "thesis_change_flag": False,
+            "why_it_matters": headline[:150],
+            "confidence": 0.6,
+            "needs_review": False,
+        }
+
     # Default
     return {
         "event_category": "other",
@@ -273,9 +390,10 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
 
 
 def _is_noise(headline: str) -> bool:
-    """Detect non-company PR noise from GlobeNewswire (lawsuits, analyst notes)."""
+    """Detect non-company PR noise from GlobeNewswire (lawsuits, analyst notes, market reports)."""
     hl = headline.lower()
     noise_patterns = [
+        # Legal noise
         "investor alert",
         "pomerantz law",
         "johnson fistel",
@@ -289,8 +407,174 @@ def _is_noise(headline: str) -> bool:
         "loss notice",
         "stock alert",
         "buy or sell",
+        "hagens berman",
+        "bernstein liebhard",
+        "schall law",
+        "rosen law",
+        "glancy prongay",
+        "kessler topaz",
+        "levi & korsinsky",
+        "faruqi & faruqi",
+        "bronstein, gewirtz",
+        # Market reports / industry analysis (ticker collision noise)
+        "market size",
+        "market volume",
+        "market worth",
+        "market forecast",
+        "market report",
+        "market analysis",
+        "market growth",
+        "industry report",
+        "industry analysis",
+        "market research",
+        "research report",
+        "global market",
+        "regional market",
+        "market trends",
+        "market share",
+        "competitive landscape",
+        "swot analysis",
+        "joint venture terms",
+        "joint venture agreements",
+        "partnership agreements analysis",
+        # Job postings
+        "employment inducement",
+        "inducement grants",
     ]
     return any(p in hl for p in noise_patterns)
+
+
+def _load_company_names() -> Dict[str, List[str]]:
+    """Load company name keywords from the IR source registry.
+
+    Returns {TICKER: [significant_words]} where significant words are
+    lowercase, length > 3, stripped of common suffixes (Inc, Corp, etc).
+    """
+    sources_path = PROJECT_ROOT / "production_data" / "company_ir_sources.json"
+    if not sources_path.exists():
+        return {}
+    try:
+        data = json.loads(sources_path.read_text())
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+    stop_words = frozenset(
+        {
+            "inc",
+            "inc.",
+            "corp",
+            "corp.",
+            "corporation",
+            "ltd",
+            "ltd.",
+            "plc",
+            "llc",
+            "sa",
+            "nv",
+            "n.v.",
+            "ag",
+            "se",
+            "therapeutics",
+            "pharmaceuticals",
+            "biosciences",
+            "biotech",
+            "biopharma",
+            "holdings",
+            "holding",
+            "company",
+            "group",
+            "the",
+        }
+    )
+
+    result: Dict[str, List[str]] = {}
+    for entry in data.get("sources", []):
+        ticker = entry.get("ticker", "").upper()
+        company = entry.get("company", "")
+        if not ticker or not company:
+            continue
+        words = [
+            w.lower().rstrip(".,")
+            for w in company.replace(",", " ").split()
+            if len(w.rstrip(".,")) > 3 and w.lower().rstrip(".,") not in stop_words
+        ]
+        if words:
+            result[ticker] = words
+    return result
+
+
+def _is_ticker_collision(headline: str, ticker: str, company_names: Dict[str, List[str]]) -> bool:
+    """Check if a headline likely belongs to a different company than the ticker.
+
+    Returns True (collision) only if ALL of these hold:
+      1. None of the company's significant name words appear in the headline
+      2. The ticker symbol itself doesn't appear as a word in the headline
+      3. The headline doesn't come from a company_ir source (those are pre-filtered by ticker)
+
+    Conservative: prefers false negatives (letting a collision through) over
+    false positives (suppressing a real company event).
+    """
+    words = company_names.get(ticker)
+    if not words:
+        return False  # no name to check against — assume OK
+
+    hl_lower = headline.lower()
+
+    # Check 1: any company name word in headline
+    if any(w in hl_lower for w in words):
+        return False
+
+    # Check 2: ticker symbol appears as a standalone word (not substring of another word)
+    # e.g., "BIIB Reports..." matches, but "Academy" containing "ACAD" does not
+    import re as _re
+
+    ticker_lower = ticker.lower()
+    if _re.search(r"\b" + _re.escape(ticker_lower) + r"\b", hl_lower):
+        return False
+
+    # Check 3: first word of headline might be a ticker-related brand
+    # Many biotech PRs start with the company's trade name which may differ
+    # from the registered name. If the headline starts with a capitalized
+    # word that's 3-8 chars, it might be the brand. Don't flag these.
+    first_word = headline.split()[0] if headline else ""
+    if first_word and 3 <= len(first_word) <= 12 and (first_word[0].isupper() or first_word[0].isdigit()):
+        # Could be brand name — only flag if first word looks like
+        # a completely unrelated company (contains common non-biotech words)
+        non_biotech_indicators = [
+            "market",
+            "report",
+            "global",
+            "analysis",
+            "research",
+            "battery",
+            "mining",
+            "energy",
+            "solar",
+            "lithium",
+            "academy",
+            "foundation",
+            "gold",
+            "steel",
+            "oil",
+            "incubation",
+            "accelerator",
+            "blockchain",
+            "crypto",
+            "real estate",
+            "mortgage",
+            "insurance",
+            "banking",
+            "rich list",
+            "award",
+            "honor",
+            "gala",
+        ]
+        if not any(ind in hl_lower for ind in non_biotech_indicators):
+            return False
+
+    # If we get here, none of the company words match, ticker doesn't match,
+    # and the headline looks non-biotech — likely a collision
+    return True
 
 
 def classify_releases(
@@ -302,6 +586,7 @@ def classify_releases(
 
     Tiered strategy:
     1. Filter noise (lawsuits, stock alerts) — skip entirely
+    1.5. Flag ticker collisions (headline doesn't match registered company)
     2. Local keyword classification for clear cases
     3. Grok only for ambiguous records (if enabled)
     """
@@ -313,8 +598,11 @@ def classify_releases(
         else:
             logger.warning("XAI_API_KEY not set, falling back to local classification")
 
+    company_names = _load_company_names()
+
     classified = []
     noise_skipped = 0
+    collision_flagged = 0
     grok_calls = 0
 
     for rec in raw_records:
@@ -328,8 +616,22 @@ def classify_releases(
             noise_skipped += 1
             continue
 
+        # Tier 1.5: detect ticker collisions
+        is_collision = _is_ticker_collision(headline, ticker.upper(), company_names)
+        if is_collision:
+            collision_flagged += 1
+
         # Tier 2: local classification
         result = _classify_locally(headline)
+
+        # If collision detected, suppress to informational and reduce confidence
+        if is_collision and not result.get("informational_only"):
+            result["ticker_collision_flag"] = True
+            result["confidence"] = min(result.get("confidence", 0.3), 0.2)
+            result["informational_only"] = True
+            result["informational_reason"] = f"ticker_collision: headline does not match {ticker} company name"
+        else:
+            result["ticker_collision_flag"] = False
 
         # Tier 3: escalate to Grok if ambiguous and Grok is available
         if client and result.get("needs_review") and not result.get("informational_only"):
@@ -371,6 +673,8 @@ def classify_releases(
 
     if noise_skipped:
         logger.info("Noise filtered: %d records (lawsuits, stock alerts)", noise_skipped)
+    if collision_flagged:
+        logger.info("Ticker collisions flagged: %d records (headline ≠ company name)", collision_flagged)
     if grok_calls:
         logger.info("Grok API calls: %d (ambiguous records only)", grok_calls)
 

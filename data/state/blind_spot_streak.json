@@ -1,4 +1,17 @@
 {
-  "PSNL": 5,
-  "ADPT": 2
+  "ETON": 2,
+  "BCYC": 2,
+  "ADPT": 4,
+  "STVN": 2,
+  "XERS": 2,
+  "SIGA": 2,
+  "FTRE": 2,
+  "EOLS": 2,
+  "CSTL": 2,
+  "EDIT": 2,
+  "AVXL": 2,
+  "SERA": 2,
+  "MYGN": 2,
+  "TKNO": 2,
+  "HRTX": 2
 }

@@ -182,11 +182,7 @@ def _build_candidate_set(
 
 def _check_eligibility(row: Dict[str, str]) -> bool:
     """Check options eligibility gates."""
-    return (
-        row.get("opt_has_data") == "1"
-        and row.get("opt_liquidity_ok") == "1"
-        and row.get("opt_use_for_judgment") == "YES"
-    )
+    return row.get("opt_liquidity_state", "absent") == "liquid" and row.get("opt_use_for_judgment") == "YES"
 
 
 def _compute_flags(row: Dict[str, str]) -> List[str]:

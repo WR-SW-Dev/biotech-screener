@@ -31,7 +31,7 @@ sys.path.insert(0, str(REPO_ROOT))
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("price_action_watch")
 
-SCHEMA_VERSION = "price_action_watch.v1"
+SCHEMA_VERSION = "price_action_watch.v2"
 WATCHLIST_MAX = 40
 
 # ---------------------------------------------------------------------------
@@ -303,8 +303,9 @@ def compute_alert_confidence(
             "spread_gate_pass": False,
         }
 
-    has_options_data = options.get("opt_has_data", "0") == "1"
-    liquidity_ok = options.get("opt_liquidity_ok", "0") == "1"
+    liq_state = options.get("opt_liquidity_state", "absent")
+    has_options_data = liq_state != "absent"
+    liquidity_ok = liq_state == "liquid"
     use_for_judgment = options.get("opt_use_for_judgment", "") == "YES"
     history_depth = len(rr_history) if rr_history else 0
 
@@ -431,6 +432,9 @@ def build_price_action_watch(
 
         alerts = classify_alerts(ticker, stock_metrics, options_data, trailing_rr.get(ticker))
 
+        # Confidence assessment
+        confidence = compute_alert_confidence(alerts, options_data, rr_history=trailing_rr.get(ticker))
+
         r = rankings.get(ticker, {})
         entry = {
             "ticker": ticker,
@@ -449,11 +453,18 @@ def build_price_action_watch(
             "opt_rr_25d": round(_sf(r.get("opt_rr_25d", "")), 4) if r.get("opt_rr_25d") else None,
             "alerts": alerts,
             "n_alerts": len(alerts),
+            # Confidence fields
+            "alert_confidence": confidence["alert_confidence"],
+            "trigger_mode": confidence["trigger_mode"],
+            "history_depth": confidence["history_depth"],
+            "chain_quality_gate_pass": confidence["chain_quality_gate_pass"],
+            "spread_gate_pass": confidence["spread_gate_pass"],
+            "opt_liquidity_state": r.get("opt_liquidity_state", "absent"),
         }
         rows.append(entry)
 
-    # Sort: most alerts first, then by return magnitude
-    rows.sort(key=lambda r: (-r["n_alerts"], -abs(r.get("return_1d_pct") or 0)))
+    # Sort: most alerts first, then by confidence, then by return magnitude
+    rows.sort(key=lambda r: (-r["n_alerts"], -r.get("alert_confidence", 0), -abs(r.get("return_1d_pct") or 0)))
 
     n_alerted = sum(1 for r in rows if r["alerts"])
 
@@ -511,16 +522,19 @@ def format_watch_md(d: Dict[str, Any]) -> str:
     if alerted:
         lines.append("## Alerts")
         lines.append("")
-        lines.append("| Ticker | Tier | Rank | 1d | 5d | Move Int. | IV 5d | Alerts |")
-        lines.append("|--------|------|------|----|----|-----------|-------|--------|")
+        lines.append("| Ticker | Tier | Rank | 1d | 5d | Conf | Mode | Liq | Alerts |")
+        lines.append("|--------|------|------|----|----|------|------|-----|--------|")
         for r in alerted:
             ret1 = f"{r['return_1d_pct']:+.1f}%" if r.get("return_1d_pct") is not None else "-"
             ret5 = f"{r['return_5d_pct']:+.1f}%" if r.get("return_5d_pct") is not None else "-"
-            mi = f"{r['move_intensity']:.1f}x" if r.get("move_intensity") is not None else "-"
-            iv5d = f"{r['atm_iv_change_5d']:+.3f}" if r.get("atm_iv_change_5d") is not None else "-"
+            conf = f"{r['alert_confidence']:.0%}" if r.get("alert_confidence") is not None else "-"
+            mode = r.get("trigger_mode", "-")[:6]
+            liq = (r.get("opt_liquidity_state") or "absent")[:4]
             alerts_str = ", ".join(r["alerts"])
             rank = r.get("actionable_rank", "?")
-            lines.append(f"| {r['ticker']} | {r['tier']} | {rank} | {ret1} | {ret5} | {mi} | {iv5d} | {alerts_str} |")
+            lines.append(
+                f"| {r['ticker']} | {r['tier']} | {rank} | {ret1} | {ret5} | {conf} | {mode} | {liq} | {alerts_str} |"
+            )
         lines.append("")
     else:
         lines.append("No alerts triggered.")

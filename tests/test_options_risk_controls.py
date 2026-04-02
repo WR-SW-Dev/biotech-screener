@@ -14,6 +14,7 @@ def _row(**kwargs):
         "catalyst_days": "15",
         "catalyst_family": "REGULATORY",
         "opt_atm_iv": "0.50",
+        "opt_liquidity_state": "liquid",
         "pos_divergence": "0.3",
         "options_volume_ratio": "",
         "near_term_volume_share": "",
@@ -95,6 +96,38 @@ class TestGapRiskControl:
         r = _row(catalyst_days="20", pos_divergence="1.5")
         result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=True)
         assert result["gap_risk_cap_reduction"] == 0.0
+
+
+class TestCheapSurfaceControl:
+    def test_cheap_surface_fires(self):
+        r = _row(catalyst_days="15", actual_implied_move_pctile="0.10")
+        result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=True)
+        assert result["cheap_surface_flag"] is True
+        assert result["review_required"] is True
+
+    def test_cheap_surface_not_on_thin(self):
+        r = _row(catalyst_days="15", actual_implied_move_pctile="0.10", opt_liquidity_state="thin")
+        result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=True)
+        assert result["cheap_surface_flag"] is False
+
+    def test_cheap_surface_not_far(self):
+        """Cheap surface only fires within 30d."""
+        r = _row(catalyst_days="45", actual_implied_move_pctile="0.10")
+        result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=True)
+        assert result["cheap_surface_flag"] is False
+
+
+class TestLiquidityStateGating:
+    def test_absent_suppresses_all(self):
+        r = _row(opt_liquidity_state="absent", catalyst_days="10", pos_divergence="2.0")
+        result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=True)
+        assert result["hard_cap_multiplier"] == 1.0
+        assert "absent_options_data" in result["control_reasons"]
+
+    def test_extreme_iv_thin_stale_penalizes(self):
+        r = _row(opt_liquidity_state="thin", opt_iv_regime="EXTREME")
+        result = compute_0_30_risk_controls(r, rv_30d=0.5, options_fresh=False)
+        assert result["hard_cap_multiplier"] == 0.75
 
 
 class TestStaleDataSuppression:

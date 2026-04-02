@@ -13,6 +13,7 @@ from common.options_diagnostics import (
     classify_event_premium,
     classify_iv_regime,
     classify_liquidity_ok,
+    classify_liquidity_state,
     classify_use_for_judgment,
     compute_operator_flags,
     compute_put_call_skew,
@@ -20,6 +21,7 @@ from common.options_diagnostics import (
     compute_term_slope,
     empty_diagnostics,
     fetch_options_diagnostics,
+    get_liquidity_state,
     select_atm_strike,
     select_catalyst_tickers,
     select_front_back_expiries,
@@ -34,6 +36,7 @@ class TestEmptyDiagnostics:
     def test_default_reason(self):
         d = empty_diagnostics()
         assert d["opt_has_data"] == "0"
+        assert d["opt_liquidity_state"] == "absent"
         assert d["opt_diagnostic_basis"] == ""
         assert set(d.keys()) == set(OPTIONS_DIAGNOSTIC_COLUMNS)
 
@@ -224,6 +227,52 @@ class TestClassifyLiquidityOk:
         assert classify_liquidity_ok(None) == "0"
 
 
+class TestClassifyLiquidityState:
+    def test_liquid(self):
+        assert classify_liquidity_state(True, True) == "liquid"
+
+    def test_thin(self):
+        assert classify_liquidity_state(True, False) == "thin"
+
+    def test_absent_no_data(self):
+        assert classify_liquidity_state(False, False) == "absent"
+
+    def test_absent_dominates_liquidity(self):
+        assert classify_liquidity_state(False, True) == "absent"
+
+
+class TestGetLiquidityState:
+    """Test the backward-compat shim that infers state from legacy fields."""
+
+    def test_explicit_liquid(self):
+        assert get_liquidity_state({"opt_liquidity_state": "liquid"}) == "liquid"
+
+    def test_explicit_thin(self):
+        assert get_liquidity_state({"opt_liquidity_state": "thin"}) == "thin"
+
+    def test_explicit_absent(self):
+        assert get_liquidity_state({"opt_liquidity_state": "absent"}) == "absent"
+
+    def test_missing_field_infers_liquid(self):
+        row = {"opt_has_data": "1", "opt_liquidity_ok": "1"}
+        assert get_liquidity_state(row) == "liquid"
+
+    def test_missing_field_infers_thin(self):
+        row = {"opt_has_data": "1", "opt_liquidity_ok": "0"}
+        assert get_liquidity_state(row) == "thin"
+
+    def test_missing_field_infers_absent(self):
+        row = {"opt_has_data": "0", "opt_liquidity_ok": "0"}
+        assert get_liquidity_state(row) == "absent"
+
+    def test_empty_string_field_infers(self):
+        row = {"opt_liquidity_state": "", "opt_has_data": "1", "opt_liquidity_ok": "1"}
+        assert get_liquidity_state(row) == "liquid"
+
+    def test_empty_row(self):
+        assert get_liquidity_state({}) == "absent"
+
+
 class TestClassifyUseForJudgment:
     def test_good_data(self):
         assert classify_use_for_judgment(True, True, 0.50) == "YES"
@@ -252,6 +301,7 @@ class TestComputeOperatorFlags:
         assert flags["opt_iv_regime"] == "NORMAL"
         assert flags["opt_event_premium"] == "YES"
         assert flags["opt_liquidity_ok"] == "1"
+        assert flags["opt_liquidity_state"] == "liquid"
         assert flags["opt_use_for_judgment"] == "YES"
 
     def test_extreme_illiquid(self):
@@ -260,6 +310,7 @@ class TestComputeOperatorFlags:
         assert flags["opt_iv_regime"] == "EXTREME"
         assert flags["opt_event_premium"] == "YES"
         assert flags["opt_liquidity_ok"] == "0"
+        assert flags["opt_liquidity_state"] == "thin"
         assert flags["opt_use_for_judgment"] == "NO"
 
     def test_no_data(self):
@@ -268,6 +319,7 @@ class TestComputeOperatorFlags:
         assert flags["opt_iv_regime"] == ""
         assert flags["opt_event_premium"] == ""
         assert flags["opt_liquidity_ok"] == "0"
+        assert flags["opt_liquidity_state"] == "absent"
         assert flags["opt_use_for_judgment"] == "NO"
 
     def test_elevated_contango_liquid(self):
@@ -275,6 +327,7 @@ class TestComputeOperatorFlags:
         flags = compute_operator_flags(diag, liquidity_rating=3)
         assert flags["opt_iv_regime"] == "ELEVATED"
         assert flags["opt_event_premium"] == "NO"
+        assert flags["opt_liquidity_state"] == "liquid"
         assert flags["opt_use_for_judgment"] == "YES"
 
 
@@ -483,12 +536,13 @@ class TestSelectCatalystTickers:
         assert "B" in result
         assert "C" in result
 
-    def test_skips_no_catalyst(self):
+    def test_includes_unranked_with_far_catalyst(self):
+        """Unranked names with far catalysts are included (low priority, not filtered)."""
         rows = [
             {"ticker": "A", "actionable_rank": "", "catalyst_days": "300"},
         ]
         result = select_catalyst_tickers(rows, max_tickers=10)
-        assert result == []
+        assert result == ["A"]
 
     def test_respects_max_tickers(self):
         rows = [{"ticker": f"T{i}", "actionable_rank": str(i), "catalyst_days": "90"} for i in range(20)]
@@ -525,6 +579,8 @@ class TestNoRankingEffect:
                 assert d[col] == "test"
             elif col == "opt_liquidity_ok":
                 assert d[col] == "0"  # explicit zero, not empty
+            elif col == "opt_liquidity_state":
+                assert d[col] == "absent"  # explicit absent, not empty
             else:
                 assert d[col] == "", f"{col} should be empty string, got {d[col]}"
 
