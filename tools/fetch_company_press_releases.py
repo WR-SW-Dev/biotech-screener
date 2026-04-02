@@ -95,20 +95,39 @@ def _save_state(state: Dict[str, Any]) -> None:
         f.write("\n")
 
 
-def _fetch_url(url: str) -> Optional[str]:
-    """Fetch URL content with rate limiting and error handling."""
-    try:
-        resp = requests.get(
-            url,
-            headers={"User-Agent": USER_AGENT},
-            timeout=REQUEST_TIMEOUT,
-            allow_redirects=True,
-        )
-        resp.raise_for_status()
-        return resp.text
-    except requests.RequestException as e:
-        logger.warning("Fetch failed for %s: %s", url, e)
-        return None
+def _fetch_url(url: str, max_retries: int = 3) -> Optional[str]:
+    """Fetch URL content with retry, backoff, and error handling."""
+    for attempt in range(max_retries):
+        try:
+            resp = requests.get(
+                url,
+                headers={"User-Agent": USER_AGENT},
+                timeout=REQUEST_TIMEOUT,
+                allow_redirects=True,
+            )
+            if resp.status_code == 429:
+                wait = min(30, 5 * (attempt + 1))
+                logger.info("Rate limited on %s, waiting %ds (attempt %d/%d)", url, wait, attempt + 1, max_retries)
+                time.sleep(wait)
+                continue
+            resp.raise_for_status()
+            return resp.text
+        except requests.ConnectionError:
+            if attempt < max_retries - 1:
+                time.sleep(3 * (attempt + 1))
+                continue
+            logger.warning("Connection failed for %s after %d attempts", url, max_retries)
+            return None
+        except requests.Timeout:
+            if attempt < max_retries - 1:
+                time.sleep(2)
+                continue
+            logger.warning("Timeout for %s after %d attempts", url, max_retries)
+            return None
+        except requests.RequestException as e:
+            logger.warning("Fetch failed for %s: %s", url, e)
+            return None
+    return None
 
 
 def _extract_globenewswire_releases(html: str, ticker: str) -> List[PressRelease]:
