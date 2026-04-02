@@ -349,6 +349,84 @@ def _build_nearest_catalysts(snap_dir: Path, n: int = 10) -> List[Dict[str, Any]
 
 
 # ---------------------------------------------------------------------------
+# Asymmetry outliers — implied_vs_realized mispricing flags
+# ---------------------------------------------------------------------------
+
+_UNDERPRICED_THRESHOLD = 0.7  # implied < 70% of historical realized
+_OVERPRICED_THRESHOLD = 2.0  # implied > 2x historical realized
+
+
+def _build_asymmetry_outliers(snap_dir: Path) -> Dict[str, Any]:
+    """Flag top-30 names where implied move diverges from historical realized.
+
+    Uses event_premium_decomp.json (if available) or the asymmetry score output.
+    Returns underpriced (market not pricing enough) and overpriced lists.
+    """
+    epd_path = snap_dir / "event_premium_decomp.json"
+    if not epd_path.exists():
+        return {"available": False}
+
+    epd = _load_json(epd_path)
+    if not epd or not epd.get("names"):
+        return {"available": False}
+
+    # Also load asymmetry score if available
+    as_of = snap_dir.name
+    asym_path = REPO_ROOT / "output" / "ranker_eval" / f"asymmetry_score_{as_of}.json"
+    asym_lookup: Dict[str, Dict] = {}
+    if asym_path.exists():
+        asym_data = _load_json(asym_path)
+        if asym_data:
+            for entry in asym_data.get("names", []):
+                asym_lookup[entry.get("ticker", "")] = entry
+
+    underpriced: List[Dict[str, Any]] = []
+    overpriced: List[Dict[str, Any]] = []
+
+    for name in epd.get("names", []):
+        ticker = name.get("ticker", "")
+        ivr = name.get("epd_implied_vs_realized_ratio")
+        if ivr is None:
+            continue
+
+        regime = name.get("epd_surface_regime", "")
+        quality = name.get("epd_quality", "")
+        asym = asym_lookup.get(ticker, {})
+        asym_score = asym.get("asymmetry_score")
+        asym_rank = asym.get("asymmetry_rank")
+        liq = asym.get("opt_liquidity_state", "")
+
+        entry = {
+            "ticker": ticker,
+            "implied_vs_realized": round(ivr, 2),
+            "surface_regime": regime,
+            "epd_quality": quality,
+            "asymmetry_score": asym_score,
+            "asymmetry_rank": asym_rank,
+            "liquidity": liq,
+        }
+
+        if ivr < _UNDERPRICED_THRESHOLD:
+            entry["flag"] = "UNDERPRICED"
+            underpriced.append(entry)
+        elif ivr > _OVERPRICED_THRESHOLD:
+            entry["flag"] = "OVERPRICED"
+            overpriced.append(entry)
+
+    # Sort: underpriced by ratio ascending (cheapest first), overpriced by ratio descending
+    underpriced.sort(key=lambda x: x["implied_vs_realized"])
+    overpriced.sort(key=lambda x: -x["implied_vs_realized"])
+
+    return {
+        "available": True,
+        "n_underpriced": len(underpriced),
+        "n_overpriced": len(overpriced),
+        "underpriced": underpriced,
+        "overpriced": overpriced[:5],  # cap overpriced to top 5 (most are overpriced)
+    }
+
+
+# ---------------------------------------------------------------------------
 # Main builder
 # ---------------------------------------------------------------------------
 
@@ -526,6 +604,9 @@ def build_ops_digest(
             "mean_rank_delta_top60": dm.get("mean_abs_rank_delta_top60"),
         }
 
+    # Asymmetry outliers — implied_vs_realized flags for discretionary review
+    asymmetry_outliers = _build_asymmetry_outliers(snap_dir)
+
     return {
         "schema": SCHEMA_VERSION,
         "as_of_date": as_of_date,
@@ -545,6 +626,7 @@ def build_ops_digest(
         "nearest_catalysts": catalysts,
         "surface_delta": surface_delta,
         "options_monitor_v11": om11_summary,
+        "asymmetry_outliers": asymmetry_outliers,
     }
 
 
@@ -730,6 +812,40 @@ def format_digest_md(d: Dict[str, Any]) -> str:
         if watch_names:
             lines.append(f"Watch names: {', '.join(watch_names)}")
         lines.append("")
+
+    # Asymmetry outliers
+    ao = d.get("asymmetry_outliers", {})
+    if ao.get("available"):
+        lines.append("## Asymmetry Outliers")
+        lines.append("")
+        under = ao.get("underpriced", [])
+        over = ao.get("overpriced", [])
+        if under:
+            lines.append(f"**Underpriced ({len(under)})** — market not pricing enough vs historical:")
+            lines.append("")
+            lines.append("| Ticker | Impl/Real | Regime | Liq | Asym Rank |")
+            lines.append("|--------|-----------|--------|-----|-----------|")
+            for u in under:
+                ar = u.get("asymmetry_rank", "—")
+                lines.append(
+                    f"| {u['ticker']} | {u['implied_vs_realized']:.2f} | "
+                    f"{u.get('surface_regime', '?')[:20]} | {u.get('liquidity', '?')} | {ar} |"
+                )
+            lines.append("")
+        if over:
+            lines.append(f"**Overpriced ({len(over)})** — market pricing larger move than historical:")
+            lines.append("")
+            lines.append("| Ticker | Impl/Real | Regime | Liq |")
+            lines.append("|--------|-----------|--------|-----|")
+            for o in over[:5]:
+                lines.append(
+                    f"| {o['ticker']} | {o['implied_vs_realized']:.1f}x | "
+                    f"{o.get('surface_regime', '?')[:20]} | {o.get('liquidity', '?')} |"
+                )
+            lines.append("")
+        if not under and not over:
+            lines.append("No outliers (all within 0.7x–2.0x implied/realized range).")
+            lines.append("")
 
     return "\n".join(lines) + "\n"
 
