@@ -39,7 +39,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
 OUTPUT_DIR = PROJECT_ROOT / "output" / "ranker_eval"
-SCHEMA = "top30_asymmetry.v1"
+SCHEMA = "top30_asymmetry.v2"
 
 
 def _sf(v, default=float("nan")):
@@ -53,15 +53,16 @@ def _sf(v, default=float("nan")):
 
 
 # ---------------------------------------------------------------------------
-# Score computation
+# Score computation v2 — pricing-aware EV model
 # ---------------------------------------------------------------------------
 
-# Component weights (tunable — start conservative)
-W_CHEAP_SURFACE = 0.35  # primary: market underpricing
-W_EVENT_LOADING = 0.20  # large event premium = more optionality
-W_SKEW_LEAN = 0.20  # directional mispricing via skew
-W_IV_MOMENTUM = 0.15  # pre-event IV ramp
-W_HARD_CATALYST = 0.10  # hard catalyst bonus
+# Component weights
+W_MISPRICING = 0.30  # implied vs realized: is the market wrong?
+W_CHEAP_SURFACE = 0.20  # cheap_vol_score z-scored within top-30
+W_EVENT_LOADING = 0.15  # event premium ratio (optionality)
+W_SKEW_LEAN = 0.15  # directional skew mispricing
+W_IV_MOMENTUM = 0.10  # pre-event IV ramp
+W_CATALYST_PRIOR = 0.10  # catalyst type × hard bonus
 
 # Liquidity penalties
 LIQ_MULT = {
@@ -71,124 +72,194 @@ LIQ_MULT = {
     "": 0.0,
 }
 
-# Quality gates
-QUALITY_FULL_REQUIRED = True
+# Catalyst type EV priors: (hit_rate, median_abs_move)
+# From CRT resolutions + historical calibration
+CATALYST_PRIORS = {
+    "FDA_PDUFA_DATE": (0.65, 0.20),  # regulatory: higher hit rate, large moves
+    "FDA_ADCOM": (0.55, 0.25),
+    "FDA_CRL": (0.30, 0.15),
+    "DATA_READOUT": (0.50, 0.20),  # clinical phase 3: coin flip, big moves
+    "CT_PRIMARY_COMPLETION": (0.45, 0.10),  # softer signal, smaller moves
+    "CT_STUDY_COMPLETION": (0.40, 0.08),
+    "CT_RESULTS_POSTED": (0.45, 0.10),
+    "SAFETY_SIGNAL": (0.20, 0.12),
+    "CLINICAL_HOLD": (0.15, 0.15),
+}
+DEFAULT_PRIOR = (0.40, 0.10)
+
+# Cohort labels
+REGULATORY_TYPES = frozenset({"FDA_PDUFA_DATE", "FDA_ADCOM", "FDA_CRL"})
+
+
+def _cross_sectional_z(values: List[float]) -> List[float]:
+    """Z-score a list of values, returning NaN for NaN inputs."""
+    valid = [v for v in values if not math.isnan(v)]
+    if len(valid) < 3:
+        return [0.0 if not math.isnan(v) else float("nan") for v in values]
+    mu = statistics.mean(valid)
+    sd = statistics.stdev(valid)
+    if sd < 1e-9:
+        return [0.0 if not math.isnan(v) else float("nan") for v in values]
+    return [(v - mu) / sd if not math.isnan(v) else float("nan") for v in values]
+
+
+def compute_asymmetry_scores(
+    ranking_rows: List[Dict[str, str]],
+    epd_lookup: Dict[str, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Score a batch of top-30 names with cross-sectional normalization.
+
+    Takes the full batch so cheap_vol_score can be z-scored within top-30.
+    """
+    # --- Cross-sectional z-score cheap_vol_score ---
+    raw_cheap = [_sf(r.get("cheap_vol_score")) for r in ranking_rows]
+    cheap_z = _cross_sectional_z(raw_cheap)
+
+    results = []
+    for i, ranking_row in enumerate(ranking_rows):
+        result = _score_single(ranking_row, epd_lookup.get(ranking_row.get("ticker", ""), {}), cheap_z[i])
+        results.append(result)
+    return results
 
 
 def compute_asymmetry_score(
     ranking_row: Dict[str, str],
     epd_row: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Any]:
-    """Compute asymmetry score for a single top-30 name.
+    """Score a single name (backward-compatible entry point)."""
+    return _score_single(ranking_row, epd_row or {}, 0.0)
 
-    Returns dict with component scores and final asymmetry_score.
-    """
+
+def _score_single(
+    ranking_row: Dict[str, str],
+    epd_row: Dict[str, Any],
+    cheap_vol_z: float,
+) -> Dict[str, Any]:
     ticker = ranking_row.get("ticker", "")
     result: Dict[str, Any] = {"ticker": ticker}
 
     # --- Extract fields ---
-    cheap_vol = _sf(ranking_row.get("cheap_vol_score"))
     liq_state = ranking_row.get("opt_liquidity_state", "")
     is_hard = str(ranking_row.get("is_hard_catalyst", "0")).strip() == "1"
     catalyst_days = _sf(ranking_row.get("catalyst_days"))
+    catalyst_type = ranking_row.get("catalyst_event_type", "")
 
-    # EPD fields (from separate EPD json or merged)
-    if epd_row:
-        epr_z = _sf(epd_row.get("epd_event_premium_ratio_z"))
-        skew_z = _sf(epd_row.get("epd_skew_richness_z"))
-        iv_mom_z = _sf(epd_row.get("epd_iv_momentum_z"))
-        regime = epd_row.get("epd_surface_regime", "")
-        quality = epd_row.get("epd_quality", "")
-    else:
-        epr_z = float("nan")
-        skew_z = float("nan")
-        iv_mom_z = float("nan")
-        regime = ""
-        quality = ""
+    # EPD fields
+    epr_z = _sf(epd_row.get("epd_event_premium_ratio_z"))
+    skew_z = _sf(epd_row.get("epd_skew_richness_z"))
+    iv_mom_z = _sf(epd_row.get("epd_iv_momentum_z"))
+    ivr = _sf(epd_row.get("epd_implied_vs_realized_ratio"))
+    regime = epd_row.get("epd_surface_regime", "")
+    quality = epd_row.get("epd_quality", "")
+
+    # Cohort classification
+    is_regulatory = catalyst_type in REGULATORY_TYPES
+    cohort = (
+        "hard_liquid"
+        if is_hard and liq_state == "liquid"
+        else ("regulatory" if is_regulatory else ("hard" if is_hard else "clinical"))
+    )
 
     result["opt_liquidity_state"] = liq_state
     result["is_hard_catalyst"] = is_hard
+    result["catalyst_type"] = catalyst_type
+    result["cohort"] = cohort
     result["catalyst_days"] = catalyst_days if not math.isnan(catalyst_days) else None
     result["epd_quality"] = quality
     result["epd_surface_regime"] = regime
+    result["implied_vs_realized"] = round(ivr, 2) if not math.isnan(ivr) else None
 
     # --- Liquidity gate ---
     liq_mult = LIQ_MULT.get(liq_state, 0.0)
     result["liquidity_mult"] = liq_mult
 
     # --- Quality gate ---
-    quality_ok = quality == "full" or not QUALITY_FULL_REQUIRED
+    quality_ok = quality in ("full", "partial") or not quality
     result["quality_ok"] = quality_ok
 
-    if liq_mult == 0.0 or not quality_ok:
+    if liq_mult == 0.0:
         result["asymmetry_score"] = None
         result["score_components"] = {}
         result["gated_out"] = True
-        result["gate_reason"] = "absent_chain" if liq_mult == 0 else "quality_partial"
+        result["gate_reason"] = "absent_chain"
         return result
 
     result["gated_out"] = False
     result["gate_reason"] = None
 
-    # --- Component 1: Cheap surface (higher cheap_vol_score = more underpriced) ---
-    # cheap_vol_score is 0-1 where higher = market underpricing the event
-    # Z-score within cross-section would be ideal but we don't have it here,
-    # so use raw value clamped to [0, 1]
-    if not math.isnan(cheap_vol):
-        c_cheap = max(0.0, min(1.0, cheap_vol))
+    # --- Component 1: MISPRICING (implied_vs_realized) ---
+    # ivr < 1.0 = market underpricing (good), ivr > 1.0 = overpricing (bad)
+    # Score: 1.0 when ivr=0 (max underpriced), 0.5 at ivr=1.0, 0.0 at ivr>=2.0
+    if not math.isnan(ivr) and ivr > 0:
+        c_mispricing = max(0.0, min(1.0, 1.0 - 0.5 * ivr))
     else:
-        c_cheap = 0.5  # neutral if missing
+        c_mispricing = 0.5  # neutral when missing
 
-    # --- Component 2: Event loading (high EPR = large event premium = more optionality) ---
-    # EPR z-score: positive means more event premium than cross-section average
-    # We want names with real event premium but NOT the extremes (which invert)
-    # Use a tent function: peaks at z=1.0, falls off above z=2.0
+    # --- Component 2: CHEAP SURFACE (z-scored within top-30) ---
+    if not math.isnan(cheap_vol_z):
+        c_cheap = max(0.0, min(1.0, 0.5 + 0.2 * cheap_vol_z))
+    else:
+        c_cheap = 0.5
+
+    # --- Component 3: EVENT LOADING (tent function on EPR z) ---
     if not math.isnan(epr_z):
         if epr_z <= 0:
-            c_event = max(0.0, 0.3 + 0.2 * epr_z)  # low premium → low but not zero
+            c_event = max(0.0, 0.3 + 0.2 * epr_z)
         elif epr_z <= 1.5:
-            c_event = 0.3 + 0.47 * epr_z  # rising
+            c_event = 0.3 + 0.47 * epr_z
         else:
-            c_event = max(0.3, 1.0 - 0.2 * (epr_z - 1.5))  # taper above 1.5z
+            c_event = max(0.3, 1.0 - 0.2 * (epr_z - 1.5))
         c_event = max(0.0, min(1.0, c_event))
     else:
         c_event = 0.5
 
-    # --- Component 3: Skew lean (negative skew_richness_z = puts cheap = upside signal) ---
-    # Negative skew_z means the market is NOT pricing puts heavily → bullish lean
-    # We want contrarian: cheap puts (low skew) on names DEM likes
+    # --- Component 4: SKEW LEAN (contrarian: low skew = upside) ---
     if not math.isnan(skew_z):
         c_skew = max(0.0, min(1.0, 0.5 - 0.25 * skew_z))
     else:
         c_skew = 0.5
 
-    # --- Component 4: IV momentum (positive = IV building into catalyst) ---
+    # --- Component 5: IV MOMENTUM ---
     if not math.isnan(iv_mom_z):
         c_iv_mom = max(0.0, min(1.0, 0.5 + 0.25 * iv_mom_z))
     else:
         c_iv_mom = 0.5
 
-    # --- Component 5: Hard catalyst bonus ---
-    c_hard = 1.0 if is_hard else 0.3
+    # --- Component 6: CATALYST PRIOR (type-specific hit rate × move) ---
+    hit_rate, med_move = CATALYST_PRIORS.get(catalyst_type, DEFAULT_PRIOR)
+    # EV prior = hit_rate * med_move (normalized to [0, 1])
+    ev_prior = hit_rate * med_move
+    # Scale: FDA_PDUFA at 0.65*0.20=0.13 is high, SAFETY_SIGNAL at 0.20*0.12=0.024 is low
+    c_prior = max(0.0, min(1.0, ev_prior / 0.15))  # normalize so ~0.15 = 1.0
+    # Hard catalyst gets extra boost
+    if is_hard:
+        c_prior = min(1.0, c_prior * 1.3)
 
     # --- Composite ---
     raw_score = (
-        W_CHEAP_SURFACE * c_cheap
+        W_MISPRICING * c_mispricing
+        + W_CHEAP_SURFACE * c_cheap
         + W_EVENT_LOADING * c_event
         + W_SKEW_LEAN * c_skew
         + W_IV_MOMENTUM * c_iv_mom
-        + W_HARD_CATALYST * c_hard
+        + W_CATALYST_PRIOR * c_prior
     )
 
     # Apply liquidity multiplier
     final_score = round(raw_score * liq_mult, 4)
 
     result["score_components"] = {
+        "mispricing": round(c_mispricing, 4),
         "cheap_surface": round(c_cheap, 4),
         "event_loading": round(c_event, 4),
         "skew_lean": round(c_skew, 4),
         "iv_momentum": round(c_iv_mom, 4),
-        "hard_catalyst": round(c_hard, 4),
+        "catalyst_prior": round(c_prior, 4),
+    }
+    result["catalyst_prior_detail"] = {
+        "hit_rate": hit_rate,
+        "med_move": med_move,
+        "ev_prior": round(ev_prior, 4),
     }
     result["raw_score"] = round(raw_score, 4)
     result["asymmetry_score"] = final_score
@@ -231,13 +302,8 @@ def score_snapshot(snap_date: str, top_n: int = 30) -> Dict[str, Any]:
             if t:
                 epd_lookup[t] = entry
 
-    # Score each name
-    scored = []
-    for r in top_rows:
-        ticker = r.get("ticker", "")
-        epd_row = epd_lookup.get(ticker)
-        score = compute_asymmetry_score(r, epd_row)
-        scored.append(score)
+    # Score batch (cross-sectional z-scoring for cheap_vol)
+    scored = compute_asymmetry_scores(top_rows, epd_lookup)
 
     # Sort by asymmetry_score descending (None at bottom)
     scored.sort(key=lambda x: x.get("asymmetry_score") or -999, reverse=True)
@@ -441,26 +507,25 @@ def main():
     )
 
     print(
-        f"\n  {'Rank':>4s}  {'Ticker':6s}  {'Score':>6s}  {'Cheap':>5s}  {'Event':>5s}  "
-        f"{'Skew':>5s}  {'IVmom':>5s}  {'Hard':>4s}  {'Liq':>6s}  {'Regime'}"
+        f"\n  {'Rk':>3s}  {'Ticker':6s}  {'Score':>6s}  {'Mispr':>5s}  {'Cheap':>5s}  {'Event':>5s}  "
+        f"{'Skew':>5s}  {'IVmo':>4s}  {'Prior':>5s}  {'IvR':>5s}  {'Coh':7s}  {'Liq':>6s}"
     )
-    print(
-        f"  {'----':>4s}  {'------':6s}  {'-----':>6s}  {'-----':>5s}  {'-----':>5s}  "
-        f"{'----':>5s}  {'-----':>5s}  {'----':>4s}  {'---':>6s}  {'------'}"
-    )
+    print("  " + "-" * 85)
 
     for s in result["names"]:
         sc = s.get("score_components", {})
         r = s.get("asymmetry_rank")
-        rank_str = f"{r:4d}" if r else "   -"
+        rank_str = f"{r:3d}" if r else "  -"
         score_str = f"{s['asymmetry_score']:.3f}" if s.get("asymmetry_score") is not None else "gated"
+        ivr = s.get("implied_vs_realized")
+        ivr_str = f"{ivr:.1f}" if ivr is not None else "—"
         print(
             f"  {rank_str}  {s['ticker']:6s}  {score_str:>6s}  "
-            f"{sc.get('cheap_surface', 0):5.2f}  {sc.get('event_loading', 0):5.2f}  "
-            f"{sc.get('skew_lean', 0):5.2f}  {sc.get('iv_momentum', 0):5.2f}  "
-            f"{'Y' if s.get('is_hard_catalyst') else 'N':>4s}  "
-            f"{s.get('opt_liquidity_state', '?'):>6s}  "
-            f"{s.get('epd_surface_regime', '')[:25]}"
+            f"{sc.get('mispricing', 0):5.2f}  {sc.get('cheap_surface', 0):5.2f}  "
+            f"{sc.get('event_loading', 0):5.2f}  {sc.get('skew_lean', 0):5.2f}  "
+            f"{sc.get('iv_momentum', 0):4.2f}  {sc.get('catalyst_prior', 0):5.2f}  "
+            f"{ivr_str:>5s}  {s.get('cohort', '?'):7s}  "
+            f"{s.get('opt_liquidity_state', '?'):>6s}"
         )
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
