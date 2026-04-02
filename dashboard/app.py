@@ -95,6 +95,27 @@ def _load_rankings(date: str) -> Dict[str, Dict]:
         return {r["ticker"]: r for r in csv.DictReader(f)}
 
 
+def _load_earnings_lookup() -> Dict[str, str]:
+    """Load most recent earnings raw file into a ticker -> date lookup."""
+    edir = REPO_ROOT / "artifacts" / "earnings_sync"
+    if not edir.is_dir():
+        return {}
+    raw_files = sorted(edir.glob("earnings_raw_*.json"), reverse=True)
+    if not raw_files:
+        return {}
+    data = _load_json(raw_files[0])
+    if not data:
+        return {}
+    lookup: Dict[str, str] = {}
+    for row in data.get("rows", []):
+        t = row.get("symbol", "")
+        d = row.get("earnings_date", "")
+        if t and d:
+            if t not in lookup or d < lookup[t]:
+                lookup[t] = d
+    return lookup
+
+
 def _load_policy_comparison(date: str) -> Optional[Dict]:
     path = REPO_ROOT / "artifacts" / "policy_shadow" / "tier_weighted" / f"{date}_comparison.json"
     return _load_json(path)
@@ -176,6 +197,7 @@ async def index(request: Request, date: str = ""):
     # Load all data for this date
     positions = _load_positions(date)
     rankings = _load_rankings(date)
+    earnings_lookup = _load_earnings_lookup()
     policy = _load_policy_comparison(date)
     policy_history = _load_policy_history()
     bioshort = _load_bioshort_watch()
@@ -199,6 +221,7 @@ async def index(request: Request, date: str = ""):
                 "risk": r.get("risk_flags", ""),
                 "catalyst_days": r.get("catalyst_days", ""),
                 "catalyst_family": r.get("catalyst_family", ""),
+                "next_earnings_date": r.get("next_earnings_date", "") or earnings_lookup.get(t, ""),
             }
         )
     enriched_positions.sort(key=lambda p: ({"A": 0, "B": 1, "C": 2, "D": 3}.get(p["tier"], 4), -p["weight"]))

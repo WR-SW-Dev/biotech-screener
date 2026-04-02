@@ -128,7 +128,7 @@ tr:hover { background: #1c2128; }
 <h2>Risky Holds ({{ risky_holds|length }})</h2>
 <div class="card">
 <table>
-<tr><th>Ticker</th><th>Tier</th><th>Weight</th><th>Momentum</th><th>Risk</th><th>Catalyst</th></tr>
+<tr><th>Ticker</th><th>Tier</th><th>Weight</th><th>Momentum</th><th>Risk</th><th>Catalyst</th><th>Earnings</th></tr>
 {% for p in risky_holds %}
 <tr>
   <td><strong>{{ p.ticker }}</strong></td>
@@ -137,6 +137,7 @@ tr:hover { background: #1c2128; }
   <td>{% if p.mom == 'headwind' %}<span class="neg">{{ p.mom }}</span>{% else %}{{ p.mom }}{% endif %}</td>
   <td>{{ p.risk }}</td>
   <td>{{ p.catalyst_days }}d</td>
+  <td>{{ p.next_earnings_date or '—' }}</td>
 </tr>
 {% endfor %}
 </table>
@@ -240,7 +241,7 @@ tr:hover { background: #1c2128; }
 <h2>Position Book ({{ n_positions }})</h2>
 <div class="card">
 <table>
-<tr><th>Ticker</th><th>Tier</th><th>Rank</th><th>Weight</th><th>Bucket</th><th>Momentum</th><th>Catalyst</th><th>Risk</th></tr>
+<tr><th>Ticker</th><th>Tier</th><th>Rank</th><th>Weight</th><th>Bucket</th><th>Momentum</th><th>Catalyst</th><th>Earnings</th><th>Risk</th></tr>
 {% for p in positions %}
 <tr>
   <td><strong>{{ p.ticker }}</strong></td>
@@ -250,6 +251,7 @@ tr:hover { background: #1c2128; }
   <td>{{ p.bucket }}</td>
   <td>{% if p.mom == 'headwind' %}<span class="neg">{{ p.mom }}</span>{% elif p.mom == 'tailwind' %}<span class="pos">{{ p.mom }}</span>{% else %}{{ p.mom }}{% endif %}</td>
   <td>{{ p.catalyst_days }}d</td>
+  <td>{{ p.next_earnings_date or '—' }}</td>
   <td style="font-size:0.75em">{{ p.risk }}</td>
 </tr>
 {% endfor %}

@@ -1615,6 +1615,8 @@ PHASE2_PORTFOLIO_COLUMNS = [
     "risk_flags",
     "size_band",
     "size_reasons",
+    # Earnings
+    "next_earnings_date",
     # Metadata + missingness
     "decision_engine_version",
     "decision_engine_ruleset_id",
@@ -1648,6 +1650,8 @@ PORTFOLIO_POSITIONS_COLUMNS = [
     "risk_flags",
     "size_band",
     "size_reasons",
+    # Earnings
+    "next_earnings_date",
     # Metadata
     "archetype",
     "eligible",
@@ -3969,6 +3973,27 @@ def save_validation_snapshot(
                 return c.get("normalized")
         return None
 
+    # --- Load earnings calendar (best-effort, non-blocking) ---
+    _earnings_by_ticker: Dict[str, str] = {}
+    try:
+        import glob as _glob_mod
+
+        _earnings_dir = Path(__file__).resolve().parent / "artifacts" / "earnings_sync"
+        _raw_files = sorted(_earnings_dir.glob("earnings_raw_*.json"), reverse=True)
+        if _raw_files:
+            with open(_raw_files[0]) as _ef:
+                _earnings_raw = json.load(_ef)
+            for _er in _earnings_raw.get("rows", []):
+                _et = _er.get("symbol", "")
+                _ed = _er.get("earnings_date", "")
+                if _et and _ed:
+                    # Keep earliest upcoming date per ticker
+                    if _et not in _earnings_by_ticker or _ed < _earnings_by_ticker[_et]:
+                        _earnings_by_ticker[_et] = _ed
+            logger.info("Snapshot: loaded %d earnings dates from %s", len(_earnings_by_ticker), _raw_files[0].name)
+    except Exception as exc:
+        logger.debug("Snapshot: earnings calendar not available (%s)", exc)
+
     # --- Build ranking rows ---
     csv_rows = []
     for rec in ranked:
@@ -4000,6 +4025,7 @@ def save_validation_snapshot(
             "clinical_score": _component_score(rec, "clinical"),
             "financial_score": _component_score(rec, "financial"),
             "confidence_overall": rec.get("confidence_overall"),
+            "next_earnings_date": _earnings_by_ticker.get(ticker, ""),
         }
         csv_rows.append(row)
 
@@ -5808,6 +5834,7 @@ def save_validation_snapshot(
                         "eligible": r.get("eligible", ""),
                         "composite_rank": r.get("composite_rank", ""),
                         "composite_score": r.get("composite_score", ""),
+                        "next_earnings_date": r.get("next_earnings_date", ""),
                     }
                     for r in portfolio_rows
                 ],
@@ -6251,6 +6278,8 @@ def save_validation_snapshot(
     _n_opt_has_data = sum(1 for r in csv_rows if str(r.get("opt_has_data", "0")) == "1")
     _n_opt_usable = sum(1 for r in csv_rows if r.get("opt_use_for_judgment") == "YES")
     _n_opt_composite = sum(1 for r in csv_rows if r.get("options_quality_composite", "") != "")
+    _n_opt_liquid = sum(1 for r in csv_rows if r.get("opt_liquidity_state") == "liquid")
+    _n_opt_thin = sum(1 for r in csv_rows if r.get("opt_liquidity_state") == "thin")
     _opt_basis_counts: Dict[str, int] = {}
     for r in csv_rows:
         basis = r.get("opt_diagnostic_basis", "")
@@ -6263,6 +6292,8 @@ def save_validation_snapshot(
         "has_credentials": _opt_has_credentials,
         "n_candidates": _n_opt_candidates,
         "n_with_data": _n_opt_has_data,
+        "n_liquid": _n_opt_liquid,
+        "n_thin": _n_opt_thin,
         "n_use_for_judgment": _n_opt_usable,
         "n_options_quality_composite": _n_opt_composite,
         "coverage_pct": round(_n_opt_has_data / max(_n_opt_candidates, 1) * 100, 1),
