@@ -4846,6 +4846,22 @@ def run_daily(
         except Exception as _ic_err:
             _logger.warning(f"IC dashboard failed: {_ic_err}")
 
+        # --- Step 5k.8: Post-promotion monitor (non-blocking) ---
+        try:
+            from tools.post_promotion_monitor import compute_monitor
+
+            _pm_result = compute_monitor(as_of_date)
+            _pm_dir = REPO_ROOT / "artifacts" / "post_promotion_monitor"
+            _pm_dir.mkdir(parents=True, exist_ok=True)
+            _pm_path = _pm_dir / f"{as_of_date}_monitor.json"
+            with open(_pm_path, "w") as _pm_f:
+                json.dump(_pm_result, _pm_f, indent=2)
+            _pm_day = _pm_result.get("days_since_promotion", "?")
+            _pm_alerts = len(_pm_result.get("alerts", []))
+            _logger.info(f"Post-promotion monitor → day {_pm_day}, {_pm_alerts} alerts")
+        except Exception as _pm_err:
+            _logger.warning(f"Post-promotion monitor failed: {_pm_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
