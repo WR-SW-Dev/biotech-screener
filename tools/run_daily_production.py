@@ -4880,6 +4880,24 @@ def run_daily(
         except Exception as _as_err:
             _logger.warning(f"Asymmetry score failed: {_as_err}")
 
+        # --- Step 5k.13: AACT trial deltas (non-blocking) ---
+        try:
+            from tools.build_aact_trial_deltas import build_deltas
+
+            _aact_result = build_deltas(as_of_date)
+            if "error" not in _aact_result:
+                _aact_dir = REPO_ROOT / "artifacts" / "aact_deltas"
+                _aact_dir.mkdir(parents=True, exist_ok=True)
+                _aact_path = _aact_dir / f"aact_deltas_{as_of_date}.json"
+                with open(_aact_path, "w") as _aact_f:
+                    json.dump(_aact_result, _aact_f, indent=2, default=str)
+                _aact_n = _aact_result.get("n_with_activity", 0)
+                _logger.info(f"AACT deltas → {_aact_n} tickers with activity")
+            else:
+                _logger.info(f"AACT deltas → skipped ({_aact_result['error']})")
+        except Exception as _aact_err:
+            _logger.warning(f"AACT deltas failed: {_aact_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest

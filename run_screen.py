@@ -1460,6 +1460,8 @@ SNAPSHOT_COLUMNS = [
     "de_drawdown_rel_xbi",
     # --- Earnings calendar ---
     "next_earnings_date",
+    # --- AACT execution score ---
+    "aact_execution_score",
     # --- Context / provenance ---
     "stage_bucket",
     "market_cap_bucket",
@@ -3996,6 +3998,25 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.debug("Snapshot: earnings calendar not available (%s)", exc)
 
+    # --- Load AACT execution scores (best-effort, non-blocking) ---
+    _aact_exec_by_ticker: Dict[str, float] = {}
+    try:
+        _aact_dir = Path(__file__).resolve().parent / "artifacts" / "aact_deltas"
+        _aact_files = sorted(_aact_dir.glob("aact_deltas_*.json"), reverse=True)
+        if _aact_files:
+            with open(_aact_files[0]) as _af:
+                _aact_data = json.load(_af)
+            for _at in _aact_data.get("tickers", []):
+                _atk = _at.get("ticker", "")
+                _aes = _at.get("execution_score", 0)
+                if _atk:
+                    _aact_exec_by_ticker[_atk] = _aes
+            logger.info(
+                "Snapshot: loaded %d AACT execution scores from %s", len(_aact_exec_by_ticker), _aact_files[0].name
+            )
+    except Exception as exc:
+        logger.debug("Snapshot: AACT deltas not available (%s)", exc)
+
     # --- Build ranking rows ---
     csv_rows = []
     for rec in ranked:
@@ -4028,6 +4049,7 @@ def save_validation_snapshot(
             "financial_score": _component_score(rec, "financial"),
             "confidence_overall": rec.get("confidence_overall"),
             "next_earnings_date": _earnings_by_ticker.get(ticker, ""),
+            "aact_execution_score": _aact_exec_by_ticker.get(ticker, ""),
         }
         csv_rows.append(row)
 
