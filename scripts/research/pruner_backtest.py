@@ -168,7 +168,7 @@ def run_backtest(start: str, include_aact: bool, horizons: list[int]):
             joint_valid = [
                 r for r in top30 if not math.isnan(r["_idz"]) and not math.isnan(r["_aact"]) and r["_aact"] != 0
             ]
-            if len(joint_valid) >= 20:
+            if len(joint_valid) >= 15:
                 idz_vals = [r["_idz"] for r in joint_valid]
                 aact_vals = [r["_aact"] for r in joint_valid]
                 idz_mu, idz_sd = statistics.mean(idz_vals), (statistics.stdev(idz_vals) if len(idz_vals) > 1 else 1)
