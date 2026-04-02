@@ -4935,6 +4935,23 @@ def run_daily(
         except Exception as _rm_err:
             _logger.warning(f"Risk monitor failed: {_rm_err}")
 
+        # --- Step 5k.16: Regime pruner recommendation (non-blocking) ---
+        try:
+            from tools.build_regime_pruner_recommendation import build_recommendation
+
+            _rpr_result = build_recommendation(as_of_date)
+            _rpr_dir = REPO_ROOT / "artifacts" / "regime_pruner"
+            _rpr_dir.mkdir(parents=True, exist_ok=True)
+            _rpr_path = _rpr_dir / f"{as_of_date}_recommendation.json"
+            with open(_rpr_path, "w") as _rpr_f:
+                json.dump(_rpr_result, _rpr_f, indent=2, default=str)
+            _rpr_rec = _rpr_result.get("recommendation", "?")
+            _rpr_regime = _rpr_result.get("regime", "?")
+            _rpr_override = " [RISK OVERRIDE]" if _rpr_result.get("risk_override") else ""
+            _logger.info(f"Regime pruner → {_rpr_rec} ({_rpr_regime}){_rpr_override}")
+        except Exception as _rpr_err:
+            _logger.warning(f"Regime pruner failed: {_rpr_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
