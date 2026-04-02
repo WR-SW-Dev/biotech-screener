@@ -16,6 +16,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import statistics
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -288,6 +289,67 @@ def main():
         horizons=[5, 21],
     )
     print(f"  Dataset: {len(dataset)} observations")
+
+    # Enrich total_volume_z via nearest-date IV matching (within 5 days)
+    # build_dataset uses exact date match which misses many observations
+    import csv as _csv
+    from collections import defaultdict as _dd
+
+    _iv_vol: Dict[str, Dict[str, float]] = _dd(dict)
+    with open(args.iv_features, newline="", encoding="utf-8-sig") as _f:
+        for _row in _csv.DictReader(_f):
+            _t = (_row.get("ticker") or "").strip().upper()
+            _d = (_row.get("date") or "").strip()
+            _v = _row.get("total_volume", "")
+            if _t and _d and _v:
+                try:
+                    _iv_vol[_t][_d] = float(_v)
+                except ValueError:
+                    pass
+
+    _enriched = 0
+    for _r in dataset:
+        if not math.isnan(_r.get("total_volume_z", float("nan"))):
+            continue  # already has exact match
+        _tk = _r.get("ticker", "")
+        _sd = _r.get("date", "")
+        if _tk not in _iv_vol:
+            continue
+        _dates = sorted(_iv_vol[_tk].keys())
+        _best = None
+        for _dd_str in reversed(_dates):
+            if _dd_str <= _sd:
+                try:
+                    gap = abs(int(_sd.replace("-", "")) - int(_dd_str.replace("-", "")))
+                    if gap <= 7:
+                        _best = _dd_str
+                        break
+                except ValueError:
+                    pass
+        if _best:
+            _r["total_volume"] = _iv_vol[_tk][_best]
+            _enriched += 1
+
+    # Re-compute z-scores for enriched total_volume within each date
+    _by_date: Dict[str, List[int]] = _dd(list)
+    for _i, _r in enumerate(dataset):
+        _by_date[_r["date"]].append(_i)
+    for _dt, _indices in _by_date.items():
+        _vols = [(dataset[_i].get("total_volume", float("nan")), _i) for _i in _indices]
+        _valid = [(_v, _i) for _v, _i in _vols if not math.isnan(_v) and _v > 0]
+        if len(_valid) < 3:
+            continue
+        _vals = [_v for _v, _ in _valid]
+        _mu = statistics.mean(_vals)
+        _sd_v = statistics.stdev(_vals) if len(_vals) > 1 else 1
+        if _sd_v < 1:
+            continue
+        for _v, _i in _valid:
+            dataset[_i]["total_volume_z"] = (_v - _mu) / _sd_v
+
+    _n_vz = sum(1 for _r in dataset if not math.isnan(_r.get("total_volume_z", float("nan"))))
+    print(f"  Enriched {_enriched} rows via nearest-date IV matching")
+    print(f"  total_volume_z available: {_n_vz}/{len(dataset)}")
 
     if len(dataset) < args.min_obs:
         print(f"\n  INSUFFICIENT DATA ({len(dataset)} < {args.min_obs})")
