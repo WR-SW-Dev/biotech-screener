@@ -4954,7 +4954,21 @@ def save_validation_snapshot(
     # then ineligible rows sorted deterministically by composite_rank + ticker.
     # In composite ranking mode (legacy): re-sort all rows by composite_rank.
     if ranking_mode == "decision":
-        # eligible_rows already in DE sort order from the sort above.
+        # Re-sort eligible rows for the rankings report:
+        #   1. target_weight_pct descending (highest weight first)
+        #   2. tier_any ascending by quality (A=0, B=1, C=2, D/blank=3)
+        #   3. actionable_rank ascending (lower rank first as tiebreaker)
+        _TIER_REPORT_ORDER = {"A": 0, "B": 1, "C": 2, "D": 3}
+
+        def _report_sort_key(r):
+            # Weight: negate for descending sort (higher weight → more negative → first)
+            w = _safe_float(r.get("target_weight_pct"), default=0.0)
+            tier = _TIER_REPORT_ORDER.get(r.get("tier_any", ""), 3)
+            rank = _safe_float(r.get("actionable_rank"), default=9999)
+            return (-w, tier, rank)
+
+        eligible_rows.sort(key=_report_sort_key)
+
         # Sort ineligible rows deterministically: composite_rank asc, ticker asc.
         def _inelig_sort_key(r):
             cr = r.get("composite_rank")
