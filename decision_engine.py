@@ -1783,8 +1783,13 @@ def compute_actionable_sort_key(
         if bucket == "less_binary" and is_eligible == 0:
             tier_ord = 1  # treat as tier A for sort purposes only
 
-    # Build prefix: tier_first puts tier before archetype
-    if rs.tiering_priority_mode == "tier_first":
+    # Build prefix: tier_first puts tier before archetype.
+    # When sort_anchor=selector_score (Spec 050), flatten tier so the selector
+    # score is the primary ordering — tier is preserved as metadata but does
+    # not gate rank order.
+    if rs.sort_anchor == "selector_score":
+        prefix = (is_eligible, 0, 0)  # tier and archetype flattened
+    elif rs.tiering_priority_mode == "tier_first":
         prefix = (is_eligible, tier_ord, is_dev)
     else:
         prefix = (is_eligible, is_dev, tier_ord)
@@ -1880,6 +1885,16 @@ def compute_actionable_sort_key(
     # prefix is (is_eligible, is_dev, tier_ord) in dev_first mode
     # or (is_eligible, tier_ord, is_dev) in tier_first mode
 
+    # Spec 050: when sort_anchor=selector_score, the score IS the primary
+    # ordering signal regardless of catalyst_priority_mode. All other sort
+    # elements are tiebreakers only.
+    if rs.sort_anchor == "selector_score":
+        return prefix + (
+            anchor,  # -final_score: primary ordering
+            missing_count,
+            ticker,
+        )
+
     if mode == "tiebreaker":
         # anchor dominates after tier; priority only breaks ties
         effective_comp_rank = anchor - total_adj
@@ -1912,6 +1927,7 @@ def compute_actionable_sort_key(
 
     # mode == "off" (default)
     effective_opt_neg = opt_neg - total_adj  # Decimal: higher z → more negative → sorts earlier
+
     return prefix + (
         cat_priority,  # 0 (neutral) — no effect on ordering
         cat_mode_ord,  # specific < blended < no_upcoming < missing

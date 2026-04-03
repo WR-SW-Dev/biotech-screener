@@ -4884,6 +4884,9 @@ def save_validation_snapshot(
         )
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
+    logger.info(
+        f"  Sort anchor: {ruleset.sort_anchor}, catalyst_priority_mode: {ruleset.catalyst_priority_mode}, ruleset_id: {ruleset.ruleset_id}"
+    )
     csv_rows.sort(
         key=lambda r: compute_actionable_sort_key(
             decision_fields=r,
