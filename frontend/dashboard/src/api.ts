@@ -86,3 +86,42 @@ export async function fetchPositions(date: string): Promise<any[]> {
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
+
+export async function fetchCoinvestShadowHistory(): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/coinvest_shadow/history`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchCoinvestShadowLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/coinvest_shadow/latest`);
+  return res.json();
+}
+
+export async function fetchPostPromotionMonitorLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/post_promotion_monitor/latest`);
+  return res.json();
+}
+
+export async function fetchPostPromotionMonitor(): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/post_promotion_monitor`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchRegimeShadowHistory(): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/regime_shadow/history`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchRegimeShadowLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/regime_shadow/latest`);
+  return res.json();
+}
+
+export async function fetchConstructionV2Performance(): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/construction_v2/performance`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}

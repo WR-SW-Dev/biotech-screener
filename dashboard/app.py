@@ -821,6 +821,101 @@ async def api_herald_classified(date: str, limit: int = 50):
     return records[:limit]
 
 
+# --- Coinvest shadow ---
+
+
+@app.get("/api/coinvest_shadow/history")
+async def api_coinvest_shadow_history():
+    """Coinvest anchor shadow history (CSV ledger)."""
+    path = REPO_ROOT / "artifacts" / "coinvest_shadow" / "history.csv"
+    if not path.exists():
+        return []
+    rows = []
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            rows.append(row)
+    return rows
+
+
+@app.get("/api/coinvest_shadow/latest")
+async def api_coinvest_shadow_latest():
+    """Latest coinvest shadow snapshot."""
+    shadow_dir = REPO_ROOT / "artifacts" / "coinvest_shadow"
+    if not shadow_dir.exists():
+        return {"error": "No coinvest shadow data"}
+    files = sorted(shadow_dir.glob("20*.json"), reverse=True)
+    if not files:
+        return {"error": "No coinvest shadow snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load snapshot"}
+
+
+# --- Post-promotion monitor ---
+
+
+@app.get("/api/post_promotion_monitor")
+async def api_post_promotion_monitor():
+    """Post-promotion monitor history (all daily snapshots)."""
+    pm_dir = REPO_ROOT / "artifacts" / "post_promotion_monitor"
+    if not pm_dir.exists():
+        return []
+    rows = []
+    for f in sorted(pm_dir.glob("*_monitor.json")):
+        data = _load_json(f)
+        if data:
+            rows.append(data)
+    return rows
+
+
+@app.get("/api/post_promotion_monitor/latest")
+async def api_post_promotion_monitor_latest():
+    """Latest post-promotion monitor snapshot."""
+    pm_dir = REPO_ROOT / "artifacts" / "post_promotion_monitor"
+    if not pm_dir.exists():
+        return {"error": "No post-promotion monitor data"}
+    files = sorted(pm_dir.glob("*_monitor.json"), reverse=True)
+    if not files:
+        return {"error": "No monitor snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+# --- Regime shadow ---
+
+
+@app.get("/api/regime_shadow/history")
+async def api_regime_shadow_history():
+    """Regime shadow history (all daily snapshots)."""
+    rs_dir = REPO_ROOT / "artifacts" / "regime_shadow"
+    if not rs_dir.exists():
+        return []
+    rows = []
+    for f in sorted(rs_dir.glob("20*.json")):
+        data = _load_json(f)
+        if data:
+            rows.append(
+                {
+                    "date": data.get("as_of_date", f.stem),
+                    "simple_regime": (data.get("simple_classifier") or {}).get("regime"),
+                    "rich_regime": (data.get("rich_classifier") or {}).get("regime"),
+                    "rich_confidence": (data.get("rich_classifier") or {}).get("confidence"),
+                    "agreement": data.get("agreement"),
+                    "recommendation": (data.get("switching_policy") or {}).get("recommendation"),
+                }
+            )
+    return rows
+
+
+@app.get("/api/regime_shadow/latest")
+async def api_regime_shadow_latest():
+    """Latest regime shadow snapshot."""
+    rs_dir = REPO_ROOT / "artifacts" / "regime_shadow"
+    if not rs_dir.exists():
+        return {"error": "No regime shadow data"}
+    files = sorted(rs_dir.glob("20*.json"), reverse=True)
+    if not files:
+        return {"error": "No regime shadow snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
 if __name__ == "__main__":
     import argparse
 

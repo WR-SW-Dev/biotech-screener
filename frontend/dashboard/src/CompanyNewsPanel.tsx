@@ -122,10 +122,10 @@ export default function CompanyNewsPanel({ date }: Props) {
                 className={`text-xs px-2 py-1 rounded font-medium ${catFilter === 'all' ? 'bg-slate-800 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'}`}>
                 All ({classified.length})
               </button>
-              {Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([cat, n]) => (
+              {Object.entries(cats).sort((a, b) => (b[1] as number) - (a[1] as number)).map(([cat, n]) => (
                 <button key={cat} onClick={() => setCatFilter(catFilter === cat ? 'all' : cat)}
                   className={`text-xs px-2 py-1 rounded font-medium ${catFilter === cat ? 'ring-2 ring-indigo-400 ' : ''}${CAT_COLORS[cat] || CAT_COLORS.other}`}>
-                  {cat} ({n})
+                  {cat} ({n as number})
                 </button>
               ))}
               <label className="ml-auto flex items-center gap-1.5 text-xs text-slate-500 cursor-pointer select-none">

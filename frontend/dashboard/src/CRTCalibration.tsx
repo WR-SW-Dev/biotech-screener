@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine, LineChart, Line, Area, AreaChart } from 'recharts';
+import { useEffect, useState } from 'react';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Cell, ReferenceLine, Line, Area, AreaChart } from 'recharts';
 import { fetchCRTResolutions } from './api';
 
 const GREEN = '#22c55e';
@@ -134,7 +134,7 @@ export default function CRTCalibration() {
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                   <XAxis dataKey="n" tick={{ fontSize: 10 }} label={{ value: 'Resolutions', fontSize: 10, position: 'bottom', offset: -5 }} />
                   <YAxis tick={{ fontSize: 10 }} domain={[0, 100]} tickFormatter={(v) => `${v}%`} />
-                  <Tooltip formatter={(v: any, name: string) => [`${v}%`, name === 'rate' ? 'Hit rate' : name === 'hi' ? 'Upper 95%' : 'Lower 95%']} />
+                  <Tooltip formatter={(v: any, name: any) => [`${v}%`, name === 'rate' ? 'Hit rate' : name === 'hi' ? 'Upper 95%' : 'Lower 95%']} />
                   <ReferenceLine y={50} stroke="#94a3b8" strokeDasharray="4 4" label={{ value: '50%', fontSize: 9, fill: '#94a3b8' }} />
                   <Area type="monotone" dataKey="hi" stroke="none" fill="#22c55e" fillOpacity={0.1} name="hi" />
                   <Area type="monotone" dataKey="lo" stroke="none" fill="#ffffff" fillOpacity={1} name="lo" />

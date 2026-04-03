@@ -9,10 +9,12 @@ import TierBucketHeatmap from './TierBucketHeatmap';
 import RankChangeStrip from './RankChangeStrip';
 import ShadowPnLStrip from './ShadowPnLStrip';
 import EventPremiumPanel from './EventPremiumPanel';
+import ShadowsPanel from './ShadowsPanel';
+import MonitorStrip from './MonitorStrip';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
-type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'options' | 'news';
+type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'options' | 'news' | 'shadows';
 
 export default function App() {
   const [view, setView] = useState<View>('screener');
@@ -47,6 +49,7 @@ export default function App() {
     { key: 'calibration', label: 'Calibration' },
     { key: 'catalysts', label: 'Catalysts' },
     { key: 'options', label: 'Options' },
+    { key: 'shadows', label: 'Shadows' },
     { key: 'news', label: 'News' },
   ];
 
@@ -93,6 +96,7 @@ export default function App() {
           <div className="grid grid-cols-[minmax(520px,1fr)_minmax(380px,0.7fr)] h-[calc(100vh-57px)]">
             <div className="border-r overflow-auto">
               <div className="p-2 space-y-0">
+                <MonitorStrip />
                 <ShadowPnLStrip />
                 <div className="grid grid-cols-2 gap-2">
                   <TierBucketHeatmap date={selectedDate} />
@@ -128,6 +132,10 @@ export default function App() {
 
       {view === 'options' && (
         <EventPremiumPanel date={selectedDate} onSelectTicker={(t) => { setSelectedTicker(t); setView('screener'); }} />
+      )}
+
+      {view === 'shadows' && (
+        <ShadowsPanel />
       )}
 
       {view === 'news' && (

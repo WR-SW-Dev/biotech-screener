@@ -50,7 +50,7 @@ export default function ShadowPnLStrip() {
             <YAxis tick={{ fontSize: 9 }} tickFormatter={(v) => `${v}%`} width={35} />
             <Tooltip
               contentStyle={{ fontSize: 11, borderRadius: 8, border: '0.5px solid #e2e8f0' }}
-              formatter={(v: any, name: string) => [`${v}%`, name === 'dem' ? 'DEM' : name === 'xbi' ? 'XBI' : 'Excess']}
+              formatter={(v: any, name: any) => [`${v}%`, name === 'dem' ? 'DEM' : name === 'xbi' ? 'XBI' : 'Excess']}
             />
             <Line type="monotone" dataKey="dem" stroke="#6366f1" strokeWidth={2} dot={false} name="dem" />
             <Line type="monotone" dataKey="xbi" stroke="#94a3b8" strokeWidth={1.5} dot={false} strokeDasharray="4 4" name="xbi" />

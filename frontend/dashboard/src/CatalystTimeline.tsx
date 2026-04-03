@@ -63,7 +63,7 @@ export default function CatalystTimeline({ rows, onSelectTicker }: Props) {
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="week" tick={{ fontSize: 9 }} />
               <YAxis tick={{ fontSize: 9 }} />
-              <Tooltip formatter={(v: any, name: string) => [v, name === 'hard' ? 'Hard' : 'Total']} />
+              <Tooltip formatter={(v: any, name: any) => [v, name === 'hard' ? 'Hard' : 'Total']} />
               <Bar dataKey="count" fill="#94a3b8" radius={[3, 3, 0, 0]} name="Total" />
               <Bar dataKey="hard" fill="#ef4444" radius={[3, 3, 0, 0]} name="Hard" />
             </BarChart>
