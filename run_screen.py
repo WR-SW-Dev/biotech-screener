@@ -5984,10 +5984,12 @@ def save_validation_snapshot(
             logger.warning(f"Could not write decision_portfolio.json: {e}")
 
         # --- Portfolio positions (top-K weighted subset for operations/health/delta) ---
-        tier_filter = PHASE2_DEFAULT_TIER_FILTER
-        top_k = PHASE2_DEFAULT_TOP_K
-
-        position_rows = [dict(r) for r in eligible_rows if r.get("tier_any") in tier_filter][:top_k]
+        # Spec 050: top-30 by final_score (selector + ranker), no tier filter.
+        # eligible_rows is already sorted by the report sort key (weight→tier→rank),
+        # so re-sort by final_score descending to get the correct top-K.
+        top_k = 30
+        _pos_by_score = sorted(eligible_rows, key=lambda r: -_safe_float(r.get("final_score"), default=0.0))
+        position_rows = [dict(r) for r in _pos_by_score[:top_k]]
 
         # Recompute weights for this subset (normalizes to 100%)
         compute_target_weights(position_rows, ruleset=ruleset)
@@ -6028,7 +6030,7 @@ def save_validation_snapshot(
                 "decision_engine_version": DE_VERSION,
                 "ruleset_id": rs.ruleset_id,
                 "top_k": top_k,
-                "tier_filter": tier_filter,
+                "tier_filter": "all",  # Spec 050: no tier filter, top-K by final_score
                 "n_positions": len(position_rows),
                 "total_weight_pct": total_wt,
                 "positions": [
