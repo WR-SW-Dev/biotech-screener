@@ -4862,6 +4862,29 @@ def run_daily(
         except Exception as _pm_err:
             _logger.warning(f"Post-promotion monitor failed: {_pm_err}")
 
+        # --- Step 5k.11b: Coinvest anchor shadow (non-blocking, 30-day validation) ---
+        try:
+            from tools.coinvest_shadow_tracker import compute_shadow
+
+            _cs_result = compute_shadow(as_of_date)
+            if "error" not in _cs_result:
+                _cs_dir = REPO_ROOT / "artifacts" / "coinvest_shadow"
+                _cs_dir.mkdir(parents=True, exist_ok=True)
+                _cs_path = _cs_dir / f"{as_of_date}.json"
+                with open(_cs_path, "w") as _cs_f:
+                    json.dump(_cs_result, _cs_f, indent=2, default=str)
+                from tools.coinvest_shadow_tracker import append_history, write_summary
+
+                append_history(_cs_result)
+                write_summary()
+                _cs_day = _cs_result.get("days_since_start", "?")
+                _cs_ci = _cs_result.get("strategies", {}).get("coinvest_inst", {}).get("overlap_pct", "?")
+                _logger.info(f"Coinvest shadow → day {_cs_day}, CI overlap={_cs_ci}%")
+            else:
+                _logger.info(f"Coinvest shadow → skipped ({_cs_result.get('error', '?')})")
+        except Exception as _cs_err:
+            _logger.warning(f"Coinvest shadow failed: {_cs_err}")
+
         # --- Step 5k.12: Asymmetry score (non-blocking, accumulates EPD history) ---
         try:
             from scripts.research.top30_asymmetry_score import score_snapshot
