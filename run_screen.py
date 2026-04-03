@@ -5026,6 +5026,13 @@ def save_validation_snapshot(
         _carry_file = _carry_state_dir / "hard_catalyst_carry.json"
         _as_of = date.fromisoformat(as_of_date) if isinstance(as_of_date, str) else as_of_date
         forward_carry_hard_catalysts(csv_rows, _as_of, _carry_file)
+        # Re-classify catalyst_type_tier after carry may have changed event_type
+        from decision_engine import classify_catalyst_type_tier as _classify_ctt
+
+        for _row in csv_rows:
+            _evt = _row.get("catalyst_event_type", "")
+            if _evt:
+                _row["catalyst_type_tier"] = _classify_ctt(_evt)
     except Exception as _carry_exc:
         logger.debug("Hard catalyst forward-carry skipped: %s", _carry_exc)
 
