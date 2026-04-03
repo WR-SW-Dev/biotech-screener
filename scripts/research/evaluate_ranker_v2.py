@@ -27,7 +27,9 @@ from typing import Any, Dict, List
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from ranker_engine import DEFAULT_RANKER_CONFIG, compute_ranker_adjustments
 from ranker_v2_pairwise import RankerV2Config, config_id, train_and_evaluate
+from selector_engine import DEFAULT_SELECTOR_CONFIG, compute_selector_scores
 
 PANEL_CSV = PROJECT_ROOT / "output" / "signals" / "research_panel.csv"
 OUTPUT_DIR = PROJECT_ROOT / "output" / "signals"
@@ -123,6 +125,214 @@ def load_panel(path: Path) -> Dict[str, List[Dict[str, str]]]:
             if date:
                 snapshots[date].append(row)
     return dict(snapshots)
+
+
+# ---------------------------------------------------------------------------
+# Production comparator: A4 selector + clinical_50 ranker
+# ---------------------------------------------------------------------------
+
+
+def evaluate_production_stack(
+    snapshots: Dict[str, List[Dict[str, Any]]],
+    forward_horizon: str = "fwd_ret_63d",
+    portfolio_top_n: int = 30,
+) -> List[Dict[str, Any]]:
+    """Run the actual A4 selector + clinical_50 ranker on each snapshot.
+
+    Returns per-date OOS results in the same format as train_and_evaluate.
+    """
+    oos_results: List[Dict[str, Any]] = []
+
+    for snap_date in sorted(snapshots.keys()):
+        rows = snapshots[snap_date]
+
+        # Filter to eligible
+        eligible_rows = [r for r in rows if _sf(r.get("eligible"), 0.0) == 1.0]
+        if len(eligible_rows) < 10:
+            continue
+
+        # Run A4 selector
+        selector_results = compute_selector_scores(eligible_rows, DEFAULT_SELECTOR_CONFIG)
+
+        # Extract scores and buckets
+        sel_scores = [sr.selector_score for sr in selector_results]
+        sel_buckets = [sr.selector_rank_bucket for sr in selector_results]
+
+        # Run clinical_50 ranker
+        ranker_results = compute_ranker_adjustments(eligible_rows, sel_scores, sel_buckets, DEFAULT_RANKER_CONFIG)
+
+        # Sort by final_score descending
+        indexed = sorted(
+            range(len(eligible_rows)),
+            key=lambda i: -ranker_results[i].final_score,
+        )
+
+        top_n = min(portfolio_top_n, len(indexed))
+        top_indices = indexed[:top_n]
+
+        # Forward returns
+        fwd_col = forward_horizon
+        xbi_col = fwd_col.replace("fwd_ret_", "fwd_excess_xbi_")
+
+        top_rets = []
+        top_xbi = []
+        for i in top_indices:
+            r = _sf(eligible_rows[i].get(fwd_col))
+            if r == r:
+                top_rets.append(r)
+            x = _sf(eligible_rows[i].get(xbi_col))
+            if x == x:
+                top_xbi.append(x)
+
+        ew_ret = sum(top_rets) / len(top_rets) if top_rets else float("nan")
+        ew_excess = sum(top_xbi) / len(top_xbi) if top_xbi else float("nan")
+
+        # Pairwise accuracy (production rank order vs returns)
+        pw_correct = 0
+        pw_total = 0
+        for a_pos in range(len(top_indices)):
+            for b_pos in range(a_pos + 1, len(top_indices)):
+                i, j = top_indices[a_pos], top_indices[b_pos]
+                ri = _sf(eligible_rows[i].get(fwd_col))
+                rj = _sf(eligible_rows[j].get(fwd_col))
+                if ri != ri or rj != rj or abs(ri - rj) < 1e-10:
+                    continue
+                pw_total += 1
+                if ri > rj:
+                    pw_correct += 1
+        pw_acc = pw_correct / pw_total if pw_total > 0 else float("nan")
+
+        # Spearman IC: final_score vs forward return
+        valid_scores = []
+        valid_rets = []
+        for i in range(len(eligible_rows)):
+            r = _sf(eligible_rows[i].get(fwd_col))
+            if r == r:
+                valid_scores.append(ranker_results[i].final_score)
+                valid_rets.append(r)
+        ic = _spearman_ic(valid_scores, valid_rets)
+
+        # Regime
+        regime = None
+        for row in rows:
+            r = row.get("regime_63d")
+            if r:
+                regime = r
+                break
+
+        # Top-N tickers
+        top_tickers = [eligible_rows[i].get("ticker", "") for i in top_indices]
+
+        oos_results.append(
+            {
+                "model": "production_a4_clinical50",
+                "date": snap_date,
+                "cohort_size": len(eligible_rows),
+                "portfolio_size": len(top_rets),
+                "ew_ret": _r(ew_ret, 6),
+                "ew_excess_xbi": _r(ew_excess, 6),
+                "pairwise_accuracy_top": _r(pw_acc, 6),
+                "pairwise_accuracy_full": _r(pw_acc, 6),
+                "rank_ic": _r(ic, 6),
+                "quintile_spread": None,
+                "cutoff_swaps": 0,
+                "cutoff_improvements": 0,
+                "regime": regime,
+                "top_tickers": top_tickers,
+            }
+        )
+
+    return oos_results
+
+
+def _spearman_ic(x: List[float], y: List[float]) -> float:
+    """Spearman rank correlation (local copy for this module)."""
+    n = len(x)
+    if n < 5:
+        return float("nan")
+
+    def _rank(vals):
+        indexed = sorted(range(n), key=lambda i: vals[i])
+        ranks = [0.0] * n
+        i = 0
+        while i < n:
+            j = i
+            while j < n - 1 and vals[indexed[j + 1]] == vals[indexed[j]]:
+                j += 1
+            avg = (i + j) / 2.0 + 1.0
+            for k in range(i, j + 1):
+                ranks[indexed[k]] = avg
+            i = j + 1
+        return ranks
+
+    rx, ry = _rank(x), _rank(y)
+    mx, my = sum(rx) / n, sum(ry) / n
+    num = sum((rx[i] - mx) * (ry[i] - my) for i in range(n))
+    dx = sum((rx[i] - mx) ** 2 for i in range(n)) ** 0.5
+    dy = sum((ry[i] - my) ** 2 for i in range(n)) ** 0.5
+    if dx < 1e-9 or dy < 1e-9:
+        return float("nan")
+    return num / (dx * dy)
+
+
+# ---------------------------------------------------------------------------
+# Cutoff-zone swap analysis (ranks 20-40)
+# ---------------------------------------------------------------------------
+
+
+def compute_cutoff_swaps(
+    prod_tickers: List[str],
+    challenger_tickers: List[str],
+    rows: List[Dict[str, Any]],
+    fwd_col: str,
+) -> Dict[str, Any]:
+    """Compare name choices in the cutoff zone (positions 20-40).
+
+    Returns swap count, improvement count, and specific swap details.
+    """
+    # Build return lookup
+    ret_map = {}
+    for r in rows:
+        ticker = r.get("ticker", "")
+        ret = _sf(r.get(fwd_col))
+        if ret == ret:
+            ret_map[ticker] = ret
+
+    # Names in challenger top-30 but not production top-30
+    prod_30 = set(prod_tickers[:30])
+    chal_30 = set(challenger_tickers[:30])
+    added = chal_30 - prod_30
+    dropped = prod_30 - chal_30
+
+    # For each swap: did the added name outperform the dropped name?
+    swap_details = []
+    improvements = 0
+    for a in sorted(added):
+        for d in sorted(dropped):
+            r_add = ret_map.get(a, float("nan"))
+            r_drop = ret_map.get(d, float("nan"))
+            if r_add == r_add and r_drop == r_drop:
+                improved = r_add > r_drop
+                if improved:
+                    improvements += 1
+                swap_details.append(
+                    {
+                        "added": a,
+                        "dropped": d,
+                        "ret_added": _r(r_add, 4),
+                        "ret_dropped": _r(r_drop, 4),
+                        "improved": improved,
+                    }
+                )
+
+    return {
+        "n_swaps": len(added),
+        "n_swap_pairs": len(swap_details),
+        "n_improvements": improvements,
+        "improvement_rate": _r(improvements / len(swap_details)) if swap_details else None,
+        "overlap_30": len(prod_30 & chal_30),
+        "overlap_pct": _r(len(prod_30 & chal_30) / max(len(prod_30), 1)),
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -388,6 +598,12 @@ def main():
     parser.add_argument("--horizon", default="fwd_ret_63d", help="Forward return column")
     parser.add_argument("--epochs", type=int, default=200, help="Training epochs")
     parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--feature-set", default="expanded", help="Feature set: minimal, expanded, ablation_drop_*")
+    parser.add_argument("--max-pairs", type=int, default=200, help="Max pairs per date")
+    parser.add_argument("--train-window", type=int, default=24, help="Rolling training window (0=expanding)")
+    parser.add_argument(
+        "--benchmark", action="store_true", help="Run production benchmark: A4+clinical_50 vs pairwise challenger"
+    )
     args = parser.parse_args()
 
     print("=" * 60)
@@ -428,11 +644,14 @@ def main():
 
             config = RankerV2Config(
                 model_variant=variant,
+                feature_set=args.feature_set,
                 cohort_top_n=cohort_cfg["cohort_top_n"],
                 require_catalyst_window=cohort_cfg["require_catalyst_window"],
                 forward_horizon=args.horizon,
                 n_epochs=args.epochs,
                 learning_rate=args.lr,
+                max_pairs_per_date=args.max_pairs,
+                train_window=args.train_window,
             )
 
             result = train_and_evaluate(snapshots, config)
@@ -517,6 +736,162 @@ def main():
         n = agg.get("n_periods", 0)
         excess = agg.get("ew_excess_xbi_mean_pp")
         print(f"{n} periods, excess={_fmt(excess)}pp")
+
+    # --- Production benchmark ---
+    if args.benchmark:
+        print("\n" + "=" * 60)
+        print("Production Benchmark: A4+clinical_50 vs Pairwise Challenger")
+        print("=" * 60)
+
+        # 1. Run production stack
+        print("\n  Production (A4 + clinical_50) ...", end=" ", flush=True)
+        prod_oos = evaluate_production_stack(snapshots, args.horizon)
+        prod_agg = aggregate_results(prod_oos)
+        all_results["benchmark_production"] = {"aggregate": prod_agg}
+        print(
+            f"{prod_agg.get('n_periods', 0)} periods, "
+            f"excess={_fmt(prod_agg.get('ew_excess_xbi_mean_pp'))}pp, "
+            f"t={_fmt(prod_agg.get('ew_excess_xbi_tstat'))}"
+        )
+
+        # 2. Run challenger: pairwise C1 minimal
+        print("  Challenger (pairwise C1 minimal) ...", end=" ", flush=True)
+        chal_config = RankerV2Config(
+            model_variant="pairwise_logistic",
+            feature_set="minimal",
+            cohort_top_n=60,
+            require_catalyst_window=False,
+            forward_horizon=args.horizon,
+            n_epochs=args.epochs,
+            learning_rate=args.lr,
+            max_pairs_per_date=args.max_pairs,
+            train_window=args.train_window,
+        )
+        chal_result = train_and_evaluate(snapshots, chal_config)
+        chal_agg = aggregate_results(chal_result.oos_results)
+        all_results["benchmark_challenger"] = {
+            "config_id": config_id(chal_config),
+            "aggregate": chal_agg,
+        }
+        print(
+            f"{chal_agg.get('n_periods', 0)} periods, "
+            f"excess={_fmt(chal_agg.get('ew_excess_xbi_mean_pp'))}pp, "
+            f"t={_fmt(chal_agg.get('ew_excess_xbi_tstat'))}"
+        )
+
+        # 3. Head-to-head comparison: cutoff swaps, overlap, roster diffs
+        print("\n  Computing head-to-head ...", flush=True)
+        prod_by_date = {r["date"]: r for r in prod_oos}
+        chal_by_date = {r["date"]: r for r in chal_result.oos_results}
+        common_dates = sorted(set(prod_by_date.keys()) & set(chal_by_date.keys()))
+
+        overlap_vals = []
+        swap_totals = {"n_swaps": 0, "n_improvements": 0, "n_pairs": 0}
+        per_date_diffs = []
+        for date in common_dates:
+            p = prod_by_date[date]
+            c = chal_by_date[date]
+            pt = p.get("top_tickers", [])
+            ct = c.get("top_tickers", [])
+
+            # Overlap
+            p30 = set(pt[:30])
+            c30 = set(ct[:30])
+            if p30 and c30:
+                overlap_vals.append(len(p30 & c30) / 30.0)
+
+            # Cutoff swaps
+            fwd_col = args.horizon
+            all_rows = snapshots.get(date, [])
+            swaps = compute_cutoff_swaps(pt, ct, all_rows, fwd_col)
+            swap_totals["n_swaps"] += swaps["n_swaps"]
+            swap_totals["n_improvements"] += swaps["n_improvements"]
+            swap_totals["n_pairs"] += swaps["n_swap_pairs"]
+
+            # Per-date excess diff
+            pe = _sf(str(p.get("ew_excess_xbi", "")))
+            ce = _sf(str(c.get("ew_excess_xbi", "")))
+            if pe == pe and ce == ce:
+                per_date_diffs.append(ce - pe)
+
+        h2h = {
+            "common_dates": len(common_dates),
+            "overlap_mean": _r(_safe_mean(overlap_vals)),
+            "overlap_min": _r(min(overlap_vals)) if overlap_vals else None,
+            "overlap_max": _r(max(overlap_vals)) if overlap_vals else None,
+            "total_swaps": swap_totals["n_swaps"],
+            "total_improvements": swap_totals["n_improvements"],
+            "total_swap_pairs": swap_totals["n_pairs"],
+            "swap_improvement_rate": (
+                _r(swap_totals["n_improvements"] / swap_totals["n_pairs"]) if swap_totals["n_pairs"] > 0 else None
+            ),
+            "challenger_minus_prod_mean_pp": _r(_pp(_safe_mean(per_date_diffs))),
+            "challenger_minus_prod_tstat": _r(_safe_tstat(per_date_diffs)),
+            "challenger_wins": sum(1 for d in per_date_diffs if d > 0),
+            "prod_wins": sum(1 for d in per_date_diffs if d < 0),
+        }
+        all_results["benchmark_h2h"] = h2h
+
+        # 4. Print benchmark summary
+        print("\n  === HEAD-TO-HEAD RESULTS ===")
+        print(f"  Common dates: {h2h['common_dates']}")
+        print(
+            f"  Roster overlap (30): {_fmt_pct(h2h['overlap_mean'])} avg "
+            f"(min {_fmt_pct(h2h['overlap_min'])}, max {_fmt_pct(h2h['overlap_max'])})"
+        )
+        print(
+            f"  Cutoff swaps: {h2h['total_swaps']} names swapped, "
+            f"{h2h['total_improvements']}/{h2h['total_swap_pairs']} improved "
+            f"({_fmt_pct(h2h['swap_improvement_rate'])})"
+        )
+        print(
+            f"  Challenger - Production excess: {_fmt(h2h['challenger_minus_prod_mean_pp'])}pp/mo "
+            f"(t={_fmt(h2h['challenger_minus_prod_tstat'])})"
+        )
+        print(f"  Challenger wins: {h2h['challenger_wins']}, Production wins: {h2h['prod_wins']}")
+
+        print("\n  --- Production ---")
+        print(
+            f"  Excess XBI: {_fmt(prod_agg.get('ew_excess_xbi_mean_pp'))}pp/mo "
+            f"(t={_fmt(prod_agg.get('ew_excess_xbi_tstat'))})"
+        )
+        print(f"  Hit rate: {_fmt_pct(prod_agg.get('hit_rate'))}")
+        print(f"  Turnover: {_fmt(prod_agg.get('turnover_mean'))}")
+        pr = prod_agg.get("regime", {})
+        print(
+            f"  Regime: bear={_fmt(pr.get('bear', {}).get('mean_excess_pp'))}pp, "
+            f"neutral={_fmt(pr.get('neutral', {}).get('mean_excess_pp'))}pp, "
+            f"bull={_fmt(pr.get('bull', {}).get('mean_excess_pp'))}pp"
+        )
+
+        print("\n  --- Challenger (pairwise minimal) ---")
+        print(
+            f"  Excess XBI: {_fmt(chal_agg.get('ew_excess_xbi_mean_pp'))}pp/mo "
+            f"(t={_fmt(chal_agg.get('ew_excess_xbi_tstat'))})"
+        )
+        print(f"  Hit rate: {_fmt_pct(chal_agg.get('hit_rate'))}")
+        print(f"  Turnover: {_fmt(chal_agg.get('turnover_mean'))}")
+        cr = chal_agg.get("regime", {})
+        print(
+            f"  Regime: bear={_fmt(cr.get('bear', {}).get('mean_excess_pp'))}pp, "
+            f"neutral={_fmt(cr.get('neutral', {}).get('mean_excess_pp'))}pp, "
+            f"bull={_fmt(cr.get('bull', {}).get('mean_excess_pp'))}pp"
+        )
+
+        # Year-by-year comparison
+        print("\n  --- Year-by-Year ---")
+        print("  Year  | Production | Challenger | Delta")
+        print("  ------|------------|------------|------")
+        prod_yy = prod_agg.get("by_year", {})
+        chal_yy = chal_agg.get("by_year", {})
+        all_years = sorted(set(list(prod_yy.keys()) + list(chal_yy.keys())))
+        for yr in all_years:
+            pe = prod_yy.get(yr, {}).get("mean_excess_pp")
+            ce = chal_yy.get(yr, {}).get("mean_excess_pp")
+            delta = None
+            if pe is not None and ce is not None:
+                delta = round(ce - pe, 2)
+            print(f"  {yr}  | {_fmt(pe):>8}pp | {_fmt(ce):>8}pp | {_fmt(delta):>5}pp")
 
     # --- Save results ---
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
