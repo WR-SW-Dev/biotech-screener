@@ -256,11 +256,27 @@ def pit_financial_snapshot(
     lt_debt, debt_date = _get_instant("long_term_debt")
 
     # --- Duration metrics (TTM) ---
-    revenue_ttm = _get_ttm("revenue")
-    opex_ttm = _get_ttm("operating_expenses")
-    rd_ttm = _get_ttm("research_and_development")
-    net_income_ttm = _get_ttm("net_income")
-    ocf_ttm = _get_ttm("operating_cash_flow")
+    # Each TTM field needs its end date so downstream consumers (Module 2)
+    # can determine the period length for burn rate calculation.
+    def _get_ttm_with_date(field_name: str):
+        """Get TTM value and the latest fact's end date."""
+        field_facts = facts.get(field_name)
+        if not field_facts:
+            return None, None
+        recent = _latest_n_facts(field_facts, as_of_date, n=8)
+        if not recent:
+            return None, None
+        ttm_val = _compute_ttm(field_facts, as_of_date)
+        # Use the latest fact's end date as the period end
+        latest_end = recent[0].get("end") if recent else None
+        # Determine if TTM was computed from annual (12mo) or quarterly data
+        return ttm_val, latest_end
+
+    revenue_ttm, revenue_date = _get_ttm_with_date("revenue")
+    opex_ttm, opex_date = _get_ttm_with_date("operating_expenses")
+    rd_ttm, rd_date = _get_ttm_with_date("research_and_development")
+    net_income_ttm, ni_date = _get_ttm_with_date("net_income")
+    ocf_ttm, ocf_date = _get_ttm_with_date("operating_cash_flow")
 
     # --- Derived metrics ---
     cash_total = (cash or 0) + (short_term_inv or 0)
@@ -311,12 +327,17 @@ def pit_financial_snapshot(
         "LongTermDebt_date": debt_date,
         "CommonStockSharesOutstanding": shares,
         "CommonStockSharesOutstanding_date": shares_date,
-        # Income / cash flow (TTM)
+        # Income / cash flow (TTM) — dates enable Module 2 period detection
         "Revenue": revenue_ttm,
+        "Revenue_date": revenue_date,
         "OperatingExpenses": opex_ttm,
+        "OperatingExpenses_date": opex_date,
         "R&D": rd_ttm,
+        "R&D_date": rd_date,
         "NetIncome": net_income_ttm,
+        "NetIncome_date": ni_date,
         "CFO": ocf_ttm,
+        "CFO_date": ocf_date,
         # Derived
         "cash_total": cash_total,
         "burn_ttm": burn_ttm,
