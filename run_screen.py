@@ -148,6 +148,19 @@ A4_SELECTOR_CONFIG = SelectorConfig(
     ),
 )
 
+# Spec 051: Production pairwise ranker config (winning full-strength settings)
+# Validated: +2.52pp/mo excess XBI, t=2.37, 59 periods, 62.7% win rate vs clinical_50
+# Cohort=C1 (top-60, no catalyst gate), feature_set=minimal (6 signals)
+# DO NOT use reduced-speed research defaults (epochs=100, pairs=200, window=24)
+PRODUCTION_RANKER_V2_CONFIG = RankerV2Config(
+    feature_set="minimal",
+    cohort_top_n=60,
+    require_catalyst_window=False,
+    n_epochs=200,
+    max_pairs_per_date=400,
+    train_window=36,
+)
+
 # Module 3A specific imports
 from event_detector import SimpleMarketCalendar
 from event_ledger import REGULATORY_EVENT_TYPES, classify_catalyst_family
@@ -3428,6 +3441,7 @@ def _compute_config_fingerprint(
     alpha_schema_mode,
     ruleset_id,
     reliability_table,
+    ranker_mode="pairwise_minimal",
 ) -> str:
     """SHA256[:8] of deterministic config subset."""
     import hashlib
@@ -3436,6 +3450,7 @@ def _compute_config_fingerprint(
     obj = {
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
+        "ranker_mode": ranker_mode,
         "tier_filter": sorted(tier_filter) if tier_filter else [],
         "top_k": top_k,
         "alpha_schema_mode": alpha_schema_mode,
@@ -3808,6 +3823,7 @@ def save_validation_snapshot(
     phase_scores_version: str = "v3",
     force_overwrite: bool = False,
     regime_result: Optional[Dict[str, Any]] = None,
+    ranker_mode: str = "pairwise_minimal",
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -4847,7 +4863,7 @@ def save_validation_snapshot(
         _r["has_commercial_quality"] = 1 if _arch != "drug_developer" else 0
         _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
 
-    # --- Spec 050: Selector + Ranker scoring ---
+    # --- Spec 050/051: Selector + Ranker scoring (mode-dispatched) ---
     _eligible_for_selector = [r for r in csv_rows if r.get("eligible") == "1"]
     if _eligible_for_selector:
         _sel_results = compute_selector_scores(_eligible_for_selector, config=A4_SELECTOR_CONFIG)
@@ -4860,17 +4876,27 @@ def save_validation_snapshot(
             _row["selector_institutional_block"] = _sr.institutional_block
             _row["selector_market_block"] = _sr.market_structure_block
 
-        # Ranker: bounded adjustment for catalyst-window names
         _sel_scores = [_sr.selector_score for _sr in _sel_results]
         _sel_buckets = [_sr.selector_rank_bucket for _sr in _sel_results]
 
-        # Apply regime modulation to ranker max_adjustment if regime is available
+        # Pre-assign temporary actionable_rank by selector_score descending.
+        # Needed by filter_cohort in score_snapshot (real rank assigned after sort).
+        _sel_ranked = sorted(
+            enumerate(_eligible_for_selector),
+            key=lambda x: -_safe_float(x[1].get("selector_score"), default=0.0),
+        )
+        for _tmp_rank, (_idx, _row) in enumerate(_sel_ranked, start=1):
+            _row["actionable_rank"] = _tmp_rank
+
+        # Regime modulation (used by clinical_50 path; persisted for all modes)
         _regime_label = (regime_result or {}).get("regime", "UNKNOWN")
         _regime_mod = get_regime_modulation(_regime_label)
-        # Persist regime label on all rows for transparency
         for _row in csv_rows:
             _row["regime_label"] = _regime_label
 
+        # ------------------------------------------------------------------
+        # Clinical_50 ranker (production or shadow depending on ranker_mode)
+        # ------------------------------------------------------------------
         from ranker_engine import DEFAULT_RANKER_CONFIG, RankerConfig
 
         _ranker_cfg = DEFAULT_RANKER_CONFIG
@@ -4878,54 +4904,180 @@ def save_validation_snapshot(
             _ranker_cfg = RankerConfig(
                 max_adjustment_pct=DEFAULT_RANKER_CONFIG.max_adjustment_pct * _regime_mod.ranker_max_adj_mult
             )
-
         _rnk_results = compute_ranker_adjustments(_eligible_for_selector, _sel_scores, _sel_buckets, config=_ranker_cfg)
-        for _row, _rr in zip(_eligible_for_selector, _rnk_results):
-            _row["ranker_active"] = "1" if _rr.ranker_active else "0"
-            _row["ranker_adjustment"] = _rr.ranker_adjustment
-            _row["final_score"] = _rr.final_score
-            _row["ranker_options_block"] = _rr.options_block
-            _row["ranker_inst_block"] = _rr.inst_block
-            _row["ranker_aact_block"] = _rr.aact_block
-
         _n_ranker_active = sum(1 for _rr in _rnk_results if _rr.ranker_active)
-        logger.info(
-            f"  Selector: {len(_sel_results)} scored, Ranker: {_n_ranker_active} active (regime={_regime_label})"
-        )
 
-    # --- Ranker v2 shadow scoring (Spec 051) ---
-    _rv2_model_path = Path("production_data/ranker_v2_model.json")
-    if _rv2_model_path.exists():
-        try:
-            _rv2_artifact = json.loads(_rv2_model_path.read_text(encoding="utf-8"))
-            _rv2_model = model_from_dict(_rv2_artifact["model"])
-            _rv2_config = RankerV2Config(
-                feature_set="minimal",
-                cohort_top_n=60,
-                require_catalyst_window=False,
+        # ------------------------------------------------------------------
+        # Pairwise v2 ranker (production or shadow depending on ranker_mode)
+        # ------------------------------------------------------------------
+        _rv2_model_path = Path("production_data/ranker_v2_model.json")
+        _rv2_scored = 0
+        _rv2_by_ticker: Dict[str, Dict[str, Any]] = {}
+        _rv2_config_id = "?"
+        _rv2_ok = False
+        if _rv2_model_path.exists():
+            try:
+                _rv2_artifact = json.loads(_rv2_model_path.read_text(encoding="utf-8"))
+                _rv2_model = model_from_dict(_rv2_artifact["model"])
+                _rv2_config_id = _rv2_artifact.get("config_id", "?")
+                _rv2_results = score_snapshot(csv_rows, _rv2_model, PRODUCTION_RANKER_V2_CONFIG)
+                _rv2_by_ticker = {r["ticker"]: r for r in _rv2_results}
+                _rv2_scored = sum(1 for r in _rv2_results if r["ranker_v2_score"] is not None)
+                _rv2_ok = True
+            except Exception as _rv2_err:
+                logger.warning(f"  Ranker v2 scoring failed: {_rv2_err}")
+        else:
+            if ranker_mode == "pairwise_minimal":
+                logger.error("  FATAL: ranker_mode=pairwise_minimal but ranker_v2_model.json not found")
+
+        # ------------------------------------------------------------------
+        # Mode dispatch: wire production ranker into final_score
+        # ------------------------------------------------------------------
+        if ranker_mode == "pairwise_minimal" and _rv2_ok:
+            # --- PRODUCTION: pairwise v2 ---
+            # final_score = ranker_v2_score for cohort members;
+            # non-cohort eligible get selector_score scaled down so they sort below cohort.
+            for _row in _eligible_for_selector:
+                _tk = _row.get("ticker", "")
+                _rv2 = _rv2_by_ticker.get(_tk)
+                if _rv2 and _rv2["ranker_v2_score"] is not None:
+                    _row["ranker_active"] = "1"
+                    _row["ranker_adjustment"] = 0.0
+                    _row["final_score"] = _rv2["ranker_v2_score"]
+                    _row["ranker_v2_score"] = _rv2["ranker_v2_score"]
+                    _row["ranker_v2_rank"] = _rv2["ranker_v2_rank"]
+                    # Block scores not applicable for pairwise mode
+                    _row["ranker_options_block"] = ""
+                    _row["ranker_inst_block"] = ""
+                    _row["ranker_aact_block"] = ""
+                else:
+                    # Non-cohort eligible: use selector_score * small factor
+                    # so they sort below all cohort members but maintain
+                    # relative ordering among themselves.
+                    _row["ranker_active"] = "0"
+                    _row["ranker_adjustment"] = 0.0
+                    _sel = _safe_float(_row.get("selector_score"), default=0.0)
+                    _row["final_score"] = _sel * 0.0001
+                    _row["ranker_v2_score"] = ""
+                    _row["ranker_v2_rank"] = ""
+                    _row["ranker_options_block"] = ""
+                    _row["ranker_inst_block"] = ""
+                    _row["ranker_aact_block"] = ""
+
+            # Shadow: clinical_50 results (for forward comparison logging)
+            _shadow_clinical50 = {}
+            for _row, _rr in zip(_eligible_for_selector, _rnk_results):
+                _tk = _row.get("ticker", "")
+                _shadow_clinical50[_tk] = {
+                    "ranker_active": _rr.ranker_active,
+                    "final_score": _rr.final_score,
+                }
+
+            logger.info(
+                f"  Selector: {len(_sel_results)} scored | "
+                f"Ranker [PROD]: pairwise_minimal, {_rv2_scored} scored (model {_rv2_config_id}) | "
+                f"Ranker [SHADOW]: clinical_50, {_n_ranker_active} active (regime={_regime_label})"
             )
-            _rv2_results = score_snapshot(csv_rows, _rv2_model, _rv2_config)
-            _rv2_by_ticker = {r["ticker"]: r for r in _rv2_results}
-            _rv2_scored = 0
+
+        else:
+            # --- PRODUCTION: clinical_50 (legacy / fallback) ---
+            for _row, _rr in zip(_eligible_for_selector, _rnk_results):
+                _row["ranker_active"] = "1" if _rr.ranker_active else "0"
+                _row["ranker_adjustment"] = _rr.ranker_adjustment
+                _row["final_score"] = _rr.final_score
+                _row["ranker_options_block"] = _rr.options_block
+                _row["ranker_inst_block"] = _rr.inst_block
+                _row["ranker_aact_block"] = _rr.aact_block
+
+            # Populate ranker_v2 shadow columns
             for _row in csv_rows:
                 _tk = _row.get("ticker", "")
                 _rv2 = _rv2_by_ticker.get(_tk)
                 if _rv2 and _rv2["ranker_v2_score"] is not None:
                     _row["ranker_v2_score"] = _rv2["ranker_v2_score"]
                     _row["ranker_v2_rank"] = _rv2["ranker_v2_rank"]
-                    _rv2_scored += 1
                 else:
                     _row["ranker_v2_score"] = ""
                     _row["ranker_v2_rank"] = ""
-            logger.info(f"  Ranker v2 shadow: {_rv2_scored} scored (model {_rv2_artifact.get('config_id', '?')})")
-        except Exception as _rv2_err:
-            logger.warning(f"  Ranker v2 shadow failed: {_rv2_err}")
-            for _row in csv_rows:
-                _row["ranker_v2_score"] = ""
-                _row["ranker_v2_rank"] = ""
-    else:
-        for _row in csv_rows:
+
+            _shadow_clinical50 = {}  # no shadow needed when clinical_50 IS production
+
+            if ranker_mode == "pairwise_minimal" and not _rv2_ok:
+                logger.warning("  Ranker mode pairwise_minimal requested but model failed; fell back to clinical_50")
+            logger.info(
+                f"  Selector: {len(_sel_results)} scored | "
+                f"Ranker [PROD]: clinical_50, {_n_ranker_active} active (regime={_regime_label})"
+                + (f" | Ranker [SHADOW]: pairwise_minimal, {_rv2_scored} scored" if _rv2_ok else "")
+            )
+
+        # ------------------------------------------------------------------
+        # Shadow comparison: compute overlap and log to snapshot dir
+        # ------------------------------------------------------------------
+        if _rv2_ok and _eligible_for_selector:
+            # Build top-30 lists for production and shadow
+            _prod_top30_tickers = sorted(
+                _eligible_for_selector,
+                key=lambda r: -_safe_float(r.get("final_score"), default=0.0),
+            )[:30]
+            _prod_top30_set = {r.get("ticker") for r in _prod_top30_tickers}
+
+            if ranker_mode == "pairwise_minimal":
+                # Shadow is clinical_50: build its top-30 from shadow results
+                _shadow_scored = []
+                for _row in _eligible_for_selector:
+                    _tk = _row.get("ticker", "")
+                    _sh = _shadow_clinical50.get(_tk)
+                    _shadow_scored.append((_tk, _sh["final_score"] if _sh else 0.0))
+                _shadow_scored.sort(key=lambda x: -x[1])
+                _shadow_top30_set = {t for t, _ in _shadow_scored[:30]}
+                _shadow_ranker_name = "clinical_50"
+            else:
+                # Shadow is pairwise: build its top-30 from v2 scores
+                _shadow_scored = []
+                for _row in _eligible_for_selector:
+                    _tk = _row.get("ticker", "")
+                    _rv2 = _rv2_by_ticker.get(_tk)
+                    _sc = _rv2["ranker_v2_score"] if (_rv2 and _rv2["ranker_v2_score"] is not None) else 0.0
+                    _shadow_scored.append((_tk, _sc))
+                _shadow_scored.sort(key=lambda x: -x[1])
+                _shadow_top30_set = {t for t, _ in _shadow_scored[:30]}
+                _shadow_ranker_name = "pairwise_minimal"
+
+            _overlap = _prod_top30_set & _shadow_top30_set
+            _prod_only = sorted(_prod_top30_set - _shadow_top30_set)
+            _shadow_only = sorted(_shadow_top30_set - _prod_top30_set)
+
+            _shadow_comparison = {
+                "snapshot_date": as_of_date,
+                "production_ranker": ranker_mode,
+                "shadow_ranker": _shadow_ranker_name,
+                "production_top30": sorted(_prod_top30_set),
+                "shadow_top30": sorted(_shadow_top30_set),
+                "overlap_count": len(_overlap),
+                "overlap_pct": round(len(_overlap) / 30 * 100, 1),
+                "production_only": _prod_only,
+                "shadow_only": _shadow_only,
+                "n_swaps": len(_prod_only),
+            }
+
+            # Write comparison to snapshot dir (non-blocking)
+            try:
+                _comp_path = snap_path / "ranker_shadow_comparison.json"
+                with open(_comp_path, "w", encoding="utf-8") as f:
+                    json.dump(_shadow_comparison, f, indent=2, default=str)
+                    f.write("\n")
+                logger.info(
+                    f"  Ranker shadow: {len(_overlap)}/30 overlap ({_shadow_comparison['overlap_pct']}%), "
+                    f"{len(_prod_only)} swaps -> ranker_shadow_comparison.json"
+                )
+            except OSError as _cmp_err:
+                logger.warning(f"  Could not write ranker_shadow_comparison.json: {_cmp_err}")
+
+    # Ensure ranker_v2 columns exist on all rows (including ineligible)
+    for _row in csv_rows:
+        if "ranker_v2_score" not in _row:
             _row["ranker_v2_score"] = ""
+        if "ranker_v2_rank" not in _row:
             _row["ranker_v2_rank"] = ""
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
@@ -6261,6 +6413,7 @@ def save_validation_snapshot(
         alpha_schema_mode=alpha_schema_mode,
         ruleset_id=_rs.ruleset_id,
         reliability_table=_reliability_table,
+        ranker_mode=ranker_mode,
     )
 
     _phase_scores_version = phase_scores_version
@@ -6273,6 +6426,7 @@ def save_validation_snapshot(
         "saved_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "decision_mode": decision_mode,
         "ranking_mode": ranking_mode,
+        "ranker_mode": ranker_mode,
         "version": version,
         "ruleset_id": _rs.ruleset_id,
         "ruleset_file": getattr(_rs, "_source_path", None),
@@ -10117,6 +10271,16 @@ Module 3 Catalyst Detection:
     )
 
     parser.add_argument(
+        "--ranker-mode",
+        type=str,
+        default="pairwise_minimal",
+        choices=["clinical_50", "pairwise_minimal"],
+        help="Production ranker: 'clinical_50' (bounded adjustment, legacy) or "
+        "'pairwise_minimal' (v2 pairwise logistic, Spec 051 winner). "
+        "Default: pairwise_minimal. Rollback: --ranker-mode clinical_50.",
+    )
+
+    parser.add_argument(
         "--ruleset",
         type=Path,
         default=None,
@@ -11022,6 +11186,7 @@ Module 3 Catalyst Detection:
                     else ("v2" if getattr(args, "phase_scores_v2", False) else "v3")
                 ),
                 force_overwrite=getattr(args, "force_overwrite", False),
+                ranker_mode=getattr(args, "ranker_mode", "pairwise_minimal"),
             )
             if snap_result:
                 logger.info(f"Snapshot dir:       {snap_result}")
