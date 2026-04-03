@@ -147,15 +147,15 @@
   "catalyst_tilt_mults": [
     [
       "NEAR",
-      1.1
+      1.2
     ],
     [
       "MID",
-      1.05
+      1.1
     ],
     [
       "FAR",
-      0.95
+      1.0
     ],
     [
       "MISSING",
@@ -211,7 +211,7 @@
   "enable_bucket_hysteresis": false,
   "enable_calendar_alpha_sort": false,
   "enable_catalyst_priority": false,
-  "enable_catalyst_tilt": false,
+  "enable_catalyst_tilt": true,
   "enable_clinical_sizing": false,
   "enable_clinical_sort_signal": false,
   "enable_coinvest_sort_signal": false,
