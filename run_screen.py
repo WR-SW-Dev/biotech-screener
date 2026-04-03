@@ -4448,6 +4448,11 @@ def save_validation_snapshot(
         row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker, as_of_date=as_of_date)
         row["is_hard_catalyst"] = "1" if _is_hard_catalyst(row["catalyst_event_type"], row["catalyst_source"]) else "0"
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
+        # Fix catalyst_type_tier: DE computes it from overlays which lack event_type.
+        # Override with the correct tier now that event_type is known.
+        from decision_engine import classify_catalyst_type_tier
+
+        row["catalyst_type_tier"] = classify_catalyst_type_tier(row["catalyst_event_type"])
         # Corroboration check: noisy clinical sources need independent confirmation
         _corr = _check_catalyst_corroboration(m3_summaries, ticker, row["catalyst_source"], row["catalyst_family"])
         row["catalyst_corroborated"] = "1" if _corr["corroborated"] else "0"
