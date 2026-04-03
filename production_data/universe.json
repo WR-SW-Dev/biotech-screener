@@ -12267,6 +12267,64 @@
     "NetIncome": -86044000
   },
   {
+    "ticker": "DFTX",
+    "name": "MNMD (was MNMD)",
+    "exchange": "NASDAQ",
+    "sector": "Biotechnology",
+    "status": "active",
+    "added_from_etf": true,
+    "added_date": "2026-01-07",
+    "etf_sources": [
+      "IBB"
+    ],
+    "market_cap": null,
+    "description": "Added from ETF holdings (IBB)",
+    "cik": "0001813814",
+    "market_data": {
+      "price": 15.02,
+      "market_cap": 1460232320,
+      "shares_outstanding": 97219193,
+      "volume_avg_30d": 2091413,
+      "52_week_high": 18.12,
+      "52_week_low": 4.7,
+      "pe_ratio": null,
+      "company_name": "Mind Medicine (MindMed) Inc.",
+      "sector": "Healthcare",
+      "industry": "Biotechnology"
+    },
+    "financial_data": {
+      "cash": 209070000,
+      "debt": 40985000,
+      "net_debt": -168085000,
+      "revenue_ttm": null,
+      "assets": null,
+      "liabilities": 40985000,
+      "equity": null,
+      "currency": "USD",
+      "cik": "0001813814"
+    },
+    "defensive_features": {
+      "vol_60d": 0.6415,
+      "vol_20d": 0.6476,
+      "ret_21d": 0.2411,
+      "corr_xbi": "0.3220"
+    },
+    "Cash": 19959000,
+    "MarketableSecurities": null,
+    "ShortTermInvestments": 189111000,
+    "AvailableForSaleSecurities": null,
+    "LongTermDebt": null,
+    "LongTermDebtCurrent": null,
+    "ConvertibleDebt": null,
+    "Assets": 236916000,
+    "CurrentAssets": 215848000,
+    "Liabilities": 106320000,
+    "CurrentLiabilities": 65416000,
+    "ShareholdersEquity": 130596000,
+    "R&D": 84144000,
+    "NetIncome": -133357000
+  },
+  {
     "ticker": "DNA",
     "name": "DNA",
     "exchange": "NASDAQ",
@@ -26843,64 +26901,6 @@
     "Revenue": 237011000
   },
   {
-    "ticker": "DFTX",
-    "name": "MNMD (was MNMD)",
-    "exchange": "NASDAQ",
-    "sector": "Biotechnology",
-    "status": "active",
-    "added_from_etf": true,
-    "added_date": "2026-01-07",
-    "etf_sources": [
-      "IBB"
-    ],
-    "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
-    "cik": "0001813814",
-    "market_data": {
-      "price": 15.02,
-      "market_cap": 1460232320,
-      "shares_outstanding": 97219193,
-      "volume_avg_30d": 2091413,
-      "52_week_high": 18.12,
-      "52_week_low": 4.7,
-      "pe_ratio": null,
-      "company_name": "Mind Medicine (MindMed) Inc.",
-      "sector": "Healthcare",
-      "industry": "Biotechnology"
-    },
-    "financial_data": {
-      "cash": 209070000,
-      "debt": 40985000,
-      "net_debt": -168085000,
-      "revenue_ttm": null,
-      "assets": null,
-      "liabilities": 40985000,
-      "equity": null,
-      "currency": "USD",
-      "cik": "0001813814"
-    },
-    "defensive_features": {
-      "vol_60d": 0.6415,
-      "vol_20d": 0.6476,
-      "ret_21d": 0.2411,
-      "corr_xbi": "0.3220"
-    },
-    "Cash": 19959000,
-    "MarketableSecurities": null,
-    "ShortTermInvestments": 189111000,
-    "AvailableForSaleSecurities": null,
-    "LongTermDebt": null,
-    "LongTermDebtCurrent": null,
-    "ConvertibleDebt": null,
-    "Assets": 236916000,
-    "CurrentAssets": 215848000,
-    "Liabilities": 106320000,
-    "CurrentLiabilities": 65416000,
-    "ShareholdersEquity": 130596000,
-    "R&D": 84144000,
-    "NetIncome": -133357000
-  },
-  {
     "ticker": "MRNA",
     "name": "Moderna, Inc.",
     "status": "active",
@@ -37715,6 +37715,31 @@
     "ShareholdersEquity": 284066000,
     "NetIncome": -24635000,
     "Revenue": 0
+  },
+  {
+    "ticker": "TEVA",
+    "name": "Teva Pharmaceutical Industries",
+    "exchange": "NYSE",
+    "sector": "Pharmaceuticals",
+    "status": "active",
+    "added_from_etf": false,
+    "added_date": "2026-04-03",
+    "etf_sources": [],
+    "market_cap": 35000000000,
+    "description": "Large-cap generic/specialty pharma. Added manually.",
+    "cik": "0000818686",
+    "market_data": {
+      "price": 30.08,
+      "market_cap": 35000000000,
+      "shares_outstanding": 1163000000,
+      "volume_avg_30d": 16000000,
+      "52_week_high": 31.98,
+      "52_week_low": 13.24,
+      "pe_ratio": 49.3,
+      "company_name": "Teva Pharmaceutical Industries Ltd",
+      "sector": "Healthcare",
+      "industry": "Drug Manufacturers - Specialty & Generic"
+    }
   },
   {
     "ticker": "TGTX",

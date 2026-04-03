@@ -8,14 +8,14 @@ Usage:
     python collect_ctgov_data.py --output production_data/trial_records.json
 """
 
-import json
-import requests
-import time
-from pathlib import Path
-from datetime import date
-from typing import List, Dict
 import argparse
+import json
+import time
+from datetime import date
+from pathlib import Path
+from typing import Dict, List
 
+import requests
 
 # =============================================================================
 # SPONSOR NAME MAPPING
@@ -309,6 +309,7 @@ TICKER_TO_SPONSORS = {
     "TECX": ["Tectonic Therapeutic", "Tectonic Therapeutic, Inc."],
     "TENX": ["Tenax Therapeutics", "Tenax Therapeutics, Inc."],
     "TERN": ["Terns Pharmaceuticals", "Terns Pharmaceuticals, Inc."],
+    "TEVA": ["Teva Pharmaceutical", "Teva Pharmaceutical Industries"],
     "TGTX": ["TG Therapeutics", "TG Therapeutics, Inc."],
     "TNGX": ["Tango Therapeutics", "Tango Therapeutics, Inc."],
     "TNYA": ["Tenaya Therapeutics", "Tenaya Therapeutics, Inc."],
@@ -355,12 +356,12 @@ def _normalize_date(raw: str | None) -> str | None:
         return None
     raw = raw.strip()
     try:
-        if len(raw) == 4:      # "2024"
+        if len(raw) == 4:  # "2024"
             return f"{raw}-01-01"
-        elif len(raw) == 7:    # "2024-06"
+        elif len(raw) == 7:  # "2024-06"
             return f"{raw}-01"
         else:
-            return raw[:10]    # "2024-06-15" or longer
+            return raw[:10]  # "2024-06-15" or longer
     except (TypeError, AttributeError):
         return None
 
@@ -373,8 +374,8 @@ def _fetch_trials_page(base_url: str, params: dict, max_retries: int = 3) -> tup
 
             if response.status_code == 200:
                 data = response.json()
-                studies = data.get('studies', [])
-                next_token = data.get('nextPageToken')
+                studies = data.get("studies", [])
+                next_token = data.get("nextPageToken")
                 return studies, next_token, True
 
             elif response.status_code == 429:
@@ -395,44 +396,32 @@ def _fetch_trials_page(base_url: str, params: dict, max_retries: int = 3) -> tup
 
 def _parse_study(study: dict, ticker: str) -> dict:
     """Parse a CT.gov study into our trial record format."""
-    protocol = study.get('protocolSection', {})
-    id_module = protocol.get('identificationModule', {})
-    status_module = protocol.get('statusModule', {})
-    design_module = protocol.get('designModule', {})
-    sponsor_module = protocol.get('sponsorCollaboratorsModule', {})
-    conditions_module = protocol.get('conditionsModule', {})
-    arms_module = protocol.get('armsInterventionsModule', {})
+    protocol = study.get("protocolSection", {})
+    id_module = protocol.get("identificationModule", {})
+    status_module = protocol.get("statusModule", {})
+    design_module = protocol.get("designModule", {})
+    sponsor_module = protocol.get("sponsorCollaboratorsModule", {})
+    conditions_module = protocol.get("conditionsModule", {})
+    arms_module = protocol.get("armsInterventionsModule", {})
 
     return {
         "ticker": ticker,
-        "nct_id": id_module.get('nctId'),
-        "title": id_module.get('briefTitle'),
-        "status": status_module.get('overallStatus'),
-        "phase": design_module.get('phases', ['N/A'])[0] if design_module.get('phases') else 'N/A',
-        "study_type": design_module.get('studyType'),
-        "conditions": conditions_module.get('conditions', []),
-        "interventions": [i.get('name') for i in arms_module.get('interventions', [])],
-        "first_posted": _normalize_date(
-            status_module.get('studyFirstPostDateStruct', {}).get('date')
-        ),
-        "start_date": _normalize_date(
-            status_module.get('startDateStruct', {}).get('date')
-        ),
-        "primary_completion_date": _normalize_date(
-            status_module.get('primaryCompletionDateStruct', {}).get('date')
-        ),
-        "completion_date": _normalize_date(
-            status_module.get('completionDateStruct', {}).get('date')
-        ),
-        "results_first_posted": _normalize_date(
-            status_module.get('resultsFirstPostDateStruct', {}).get('date')
-        ),
-        "last_update_posted": _normalize_date(
-            status_module.get('lastUpdatePostDateStruct', {}).get('date')
-        ),
-        "enrollment": status_module.get('enrollmentInfo', {}).get('count'),
-        "sponsor": sponsor_module.get('leadSponsor', {}).get('name'),
-        "collected_at": date.today().isoformat()
+        "nct_id": id_module.get("nctId"),
+        "title": id_module.get("briefTitle"),
+        "status": status_module.get("overallStatus"),
+        "phase": design_module.get("phases", ["N/A"])[0] if design_module.get("phases") else "N/A",
+        "study_type": design_module.get("studyType"),
+        "conditions": conditions_module.get("conditions", []),
+        "interventions": [i.get("name") for i in arms_module.get("interventions", [])],
+        "first_posted": _normalize_date(status_module.get("studyFirstPostDateStruct", {}).get("date")),
+        "start_date": _normalize_date(status_module.get("startDateStruct", {}).get("date")),
+        "primary_completion_date": _normalize_date(status_module.get("primaryCompletionDateStruct", {}).get("date")),
+        "completion_date": _normalize_date(status_module.get("completionDateStruct", {}).get("date")),
+        "results_first_posted": _normalize_date(status_module.get("resultsFirstPostDateStruct", {}).get("date")),
+        "last_update_posted": _normalize_date(status_module.get("lastUpdatePostDateStruct", {}).get("date")),
+        "enrollment": status_module.get("enrollmentInfo", {}).get("count"),
+        "sponsor": sponsor_module.get("leadSponsor", {}).get("name"),
+        "collected_at": date.today().isoformat(),
     }
 
 
@@ -498,54 +487,54 @@ def get_trials_for_ticker(ticker: str, max_retries: int = 3, max_results: int = 
 
 def collect_all_trials(universe_file: Path, output_file: Path):
     """Collect trials for all tickers"""
-    
-    print("="*80)
+
+    print("=" * 80)
     print("CLINICAL TRIALS DATA COLLECTION (ClinicalTrials.gov)")
-    print("="*80)
+    print("=" * 80)
     print(f"Date: {date.today()}")
-    
+
     # Load universe
     with open(universe_file) as f:
         universe = json.load(f)
-    
-    tickers = [s['ticker'] for s in universe if s.get('ticker') and s['ticker'] != '_XBI_BENCHMARK_']
-    
+
+    tickers = [s["ticker"] for s in universe if s.get("ticker") and s["ticker"] != "_XBI_BENCHMARK_"]
+
     print(f"\nUniverse: {len(tickers)} tickers")
     print(f"Output: {output_file}")
     print(f"Estimated time: {len(tickers) * 0.6 / 60:.1f} minutes")
-    
+
     # Collect
     all_trials = []
-    stats = {'total': len(tickers), 'with_trials': 0, 'total_trials': 0}
-    
+    stats = {"total": len(tickers), "with_trials": 0, "total_trials": 0}
+
     print(f"\n{'='*80}")
     print("COLLECTING TRIALS")
     print(f"{'='*80}\n")
-    
+
     for i, ticker in enumerate(tickers, 1):
         print(f"[{i:3d}/{len(tickers)}] {ticker:6s}", end=" ", flush=True)
-        
+
         trials = get_trials_for_ticker(ticker)
-        
+
         if trials:
             all_trials.extend(trials)
-            stats['with_trials'] += 1
-            stats['total_trials'] += len(trials)
+            stats["with_trials"] += 1
+            stats["total_trials"] += len(trials)
             print(f"✅ {len(trials):2d} trials")
         else:
             print("   No trials")
-        
+
         time.sleep(0.5)  # Be nice to API
-        
+
         if i % 50 == 0:
             print(f"\n  Progress: {i}/{len(tickers)} ({i/len(tickers)*100:.1f}%)")
             print(f"  Trials found: {stats['total_trials']}\n")
-    
+
     # Save
     output_file.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_file, 'w') as f:
+    with open(output_file, "w") as f:
         json.dump(all_trials, f, indent=2)
-    
+
     # Summary
     print(f"\n{'='*80}")
     print("SUMMARY")
@@ -561,14 +550,14 @@ def collect_all_trials(universe_file: Path, output_file: Path):
 
 def main():
     parser = argparse.ArgumentParser(description="Collect clinical trials from ClinicalTrials.gov")
-    parser.add_argument('--universe', type=Path, default=Path('production_data/universe.json'))
-    parser.add_argument('--output', type=Path, default=Path('production_data/trial_records.json'))
+    parser.add_argument("--universe", type=Path, default=Path("production_data/universe.json"))
+    parser.add_argument("--output", type=Path, default=Path("production_data/trial_records.json"))
     args = parser.parse_args()
-    
+
     if not args.universe.exists():
         print(f"❌ Universe file not found: {args.universe}")
         return 1
-    
+
     try:
         collect_all_trials(args.universe, args.output)
         return 0
@@ -578,6 +567,7 @@ def main():
     except Exception as e:
         print(f"\n\n❌ Error: {e}")
         import traceback
+
         traceback.print_exc()
         return 1
 
