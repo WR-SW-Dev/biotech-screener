@@ -514,6 +514,64 @@ def build_panel(
     return panel_rows
 
 
+def forward_fill_quarterly_signals(
+    panel_rows: List[Dict[str, Any]],
+    signals: List[str] = ("inst_delta_z",),
+    max_stale_months: int = 3,
+) -> int:
+    """Forward-fill quarterly signals (e.g. inst_delta_z from 13F filings).
+
+    For each ticker, carry forward the most recent non-zero value into
+    subsequent snapshots where the signal is zero/missing. PIT-safe:
+    only uses values from earlier snapshot dates.
+
+    Args:
+        panel_rows: panel rows sorted by (snapshot_date, ticker)
+        signals: column names to forward-fill
+        max_stale_months: maximum months to carry forward (default 3 = one quarter)
+
+    Returns:
+        Number of values filled.
+    """
+    from datetime import date
+
+    # Group by ticker, sorted by date
+    by_ticker: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    for row in panel_rows:
+        by_ticker[row.get("ticker", "")].append(row)
+
+    n_filled = 0
+    for ticker, rows in by_ticker.items():
+        rows.sort(key=lambda r: r.get("snapshot_date", ""))
+        for sig in signals:
+            last_nonzero_val = None
+            last_nonzero_date = None
+            for row in rows:
+                snap_date = row.get("snapshot_date", "")
+                val = row.get(sig)
+                # Check if this row has a real (non-zero) value
+                try:
+                    fv = float(val) if val is not None else 0.0
+                except (ValueError, TypeError):
+                    fv = 0.0
+                if abs(fv) > 1e-9:
+                    last_nonzero_val = fv
+                    last_nonzero_date = snap_date
+                elif last_nonzero_val is not None and last_nonzero_date:
+                    # Fill if within staleness window
+                    try:
+                        d_now = date.fromisoformat(snap_date)
+                        d_last = date.fromisoformat(last_nonzero_date)
+                        months_stale = (d_now.year - d_last.year) * 12 + (d_now.month - d_last.month)
+                        if months_stale <= max_stale_months:
+                            row[sig] = last_nonzero_val
+                            n_filled += 1
+                    except (ValueError, TypeError):
+                        pass
+
+    return n_filled
+
+
 def compute_coverage(panel_rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Compute per-column coverage statistics."""
     if not panel_rows:
@@ -677,6 +735,11 @@ def main():
     if not panel_rows:
         print("ERROR: No panel rows generated")
         sys.exit(1)
+
+    # Forward-fill quarterly signals (inst_delta_z from 13F filings)
+    print("\nForward-filling quarterly signals...")
+    n_filled = forward_fill_quarterly_signals(panel_rows, signals=["inst_delta_z"])
+    print(f"  inst_delta_z: {n_filled} values forward-filled (max 3 months)")
 
     print("\nComputing coverage...")
     coverage = compute_coverage(panel_rows)

@@ -12,8 +12,8 @@ v1.0.0: Original version with hardcoded thresholds
 """
 
 import logging
-from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from dataclasses import dataclass
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ WQ = Decimal("0.0001")  # Weight quantization
 # CONFIGURATION
 # =============================================================================
 
+
 @dataclass
 class DefensiveConfig:
     """
@@ -32,70 +33,72 @@ class DefensiveConfig:
     All thresholds are configurable for backtesting and regime adaptation.
     Default values are conservative starting points for biotech universe.
     """
+
     # Config identity (for provenance)
     config_id: str = "default"
     config_version: str = "2.0.0"
 
     # Multiplier bounds (clamp to prevent extreme values from stacking)
-    mult_floor: Decimal = Decimal("0.75")                # Minimum multiplier
-    mult_ceiling: Decimal = Decimal("1.60")              # Maximum multiplier
+    mult_floor: Decimal = Decimal("0.75")  # Minimum multiplier
+    mult_ceiling: Decimal = Decimal("1.60")  # Maximum multiplier
 
     # Correlation thresholds
-    corr_elite_threshold: Decimal = Decimal("0.30")      # Below = elite diversifier
-    corr_good_threshold: Decimal = Decimal("0.40")       # Below = good diversifier
-    corr_high_threshold: Decimal = Decimal("0.80")       # Above = penalty
+    corr_elite_threshold: Decimal = Decimal("0.30")  # Below = elite diversifier
+    corr_good_threshold: Decimal = Decimal("0.40")  # Below = good diversifier
+    corr_high_threshold: Decimal = Decimal("0.80")  # Above = penalty
 
     # Volatility thresholds
-    vol_elite_threshold: Decimal = Decimal("0.40")       # Below = elite (40% ann)
-    vol_good_threshold: Decimal = Decimal("0.50")        # Below = good (50% ann)
-    vol_high_threshold: Decimal = Decimal("0.80")        # Above = high vol penalty
+    vol_elite_threshold: Decimal = Decimal("0.40")  # Below = elite (40% ann)
+    vol_good_threshold: Decimal = Decimal("0.50")  # Below = good (50% ann)
+    vol_high_threshold: Decimal = Decimal("0.80")  # Above = high vol penalty
 
     # Multiplier values
-    mult_elite: Decimal = Decimal("1.40")                # Elite diversifier bonus
-    mult_good: Decimal = Decimal("1.10")                 # Good diversifier bonus
-    mult_high_corr_penalty: Decimal = Decimal("0.95")    # High correlation penalty
-    mult_high_vol_penalty: Decimal = Decimal("0.97")     # High volatility penalty
+    mult_elite: Decimal = Decimal("1.40")  # Elite diversifier bonus
+    mult_good: Decimal = Decimal("1.10")  # Good diversifier bonus
+    mult_high_corr_penalty: Decimal = Decimal("0.95")  # High correlation penalty
+    mult_high_vol_penalty: Decimal = Decimal("0.97")  # High volatility penalty
 
     # Momentum thresholds (ret_21d)
     momentum_bonus_threshold: Decimal = Decimal("0.10")  # >10% 21d return = bonus
     momentum_penalty_threshold: Decimal = Decimal("-0.20")  # <-20% = penalty
-    mult_momentum_bonus: Decimal = Decimal("1.05")       # Momentum bonus
-    mult_momentum_penalty: Decimal = Decimal("0.95")     # Momentum penalty
-    enable_momentum: bool = True                         # Feature flag
+    mult_momentum_bonus: Decimal = Decimal("1.05")  # Momentum bonus
+    mult_momentum_penalty: Decimal = Decimal("0.95")  # Momentum penalty
+    enable_momentum: bool = True  # Feature flag
 
     # RSI thresholds (regime detection)
-    rsi_oversold_threshold: Decimal = Decimal("30")      # RSI < 30 = oversold
-    rsi_overbought_threshold: Decimal = Decimal("70")    # RSI > 70 = overbought
-    mult_rsi_oversold_bonus: Decimal = Decimal("1.03")   # Mean reversion opportunity
+    rsi_oversold_threshold: Decimal = Decimal("30")  # RSI < 30 = oversold
+    rsi_overbought_threshold: Decimal = Decimal("70")  # RSI > 70 = overbought
+    mult_rsi_oversold_bonus: Decimal = Decimal("1.03")  # Mean reversion opportunity
     mult_rsi_overbought_penalty: Decimal = Decimal("0.98")  # Crowded trade
-    enable_rsi: bool = True                              # Feature flag
+    enable_rsi: bool = True  # Feature flag
 
     # Drawdown thresholds
     drawdown_warning_threshold: Decimal = Decimal("-0.30")  # -30% = warning
     drawdown_penalty_threshold: Decimal = Decimal("-0.40")  # -40% = penalty
-    mult_drawdown_penalty: Decimal = Decimal("0.92")     # Deep drawdown penalty
-    enable_drawdown_penalty: bool = True                 # Feature flag
+    mult_drawdown_penalty: Decimal = Decimal("0.92")  # Deep drawdown penalty
+    enable_drawdown_penalty: bool = True  # Feature flag
 
     # Vol ratio (regime indicator: vol_20d / vol_60d)
     vol_ratio_expanding_threshold: Decimal = Decimal("1.30")  # >1.3 = expanding vol
     mult_vol_expanding_penalty: Decimal = Decimal("0.97")  # Expanding vol penalty
-    enable_vol_ratio: bool = False                       # Disabled by default (experimental)
+    enable_vol_ratio: bool = False  # Disabled by default (experimental)
 
     # Boost eligibility gate (prevents weak names from getting elite boosts)
     # Uses percentile-within-cluster + absolute floor for robust calibration
     # Gate threshold = max(floor, P{percentile} within cluster)
     # V4: Raised from 49 to 51 to gate OPK (50.0) after slope reduction
-    boost_eligibility_floor: Decimal = Decimal("51")      # Absolute minimum score for boost
-    boost_eligibility_percentile: int = 60                # Must be in top X% within cluster (P60 = top 40%)
-    enable_boost_eligibility_gate: bool = True            # Feature flag
+    boost_eligibility_floor: Decimal = Decimal("51")  # Absolute minimum score for boost
+    boost_eligibility_percentile: int = 60  # Must be in top X% within cluster (P60 = top 40%)
+    enable_boost_eligibility_gate: bool = True  # Feature flag
 
     # Position sizing
-    max_position: Decimal = Decimal("0.07")              # 7% max position
-    inv_vol_power: Decimal = Decimal("2.0")              # Inverse vol exponent
+    max_position: Decimal = Decimal("0.07")  # 7% max position
+    inv_vol_power: Decimal = Decimal("2.0")  # Inverse vol exponent
 
     def config_hash(self) -> str:
         """Compute short hash of config for provenance tracking."""
         import hashlib
+
         # Hash key threshold values (not metadata like id/version)
         key_values = (
             str(self.corr_elite_threshold),
@@ -120,7 +123,7 @@ class DefensiveConfig:
             "mult_bounds": [str(self.mult_floor), str(self.mult_ceiling)],
             "enabled_factors": {
                 "correlation": True,  # Always enabled
-                "volatility": True,   # Always enabled
+                "volatility": True,  # Always enabled
                 "momentum": self.enable_momentum,
                 "rsi": self.enable_rsi,
                 "drawdown": self.enable_drawdown_penalty,
@@ -177,16 +180,18 @@ def _safe_decimal(value, default: Optional[Decimal] = None) -> Optional[Decimal]
     except (ValueError, TypeError, InvalidOperation):
         return default
 
+
 def _q(x: Decimal) -> Decimal:
     """Quantize weight to 4 decimal places."""
     return x.quantize(WQ, rounding=ROUND_HALF_UP)
 
+
 def sanitize_corr(defensive_features: Dict[str, str]) -> Tuple[Optional[Decimal], List[str]]:
     """
     Sanitize correlation data, treating placeholders and invalid values as missing.
-    
+
     Returns: (correlation_value or None, list_of_flags)
-    
+
     Common issues:
     - Placeholder 0.50 when correlation calculation failed
     - Missing field entirely
@@ -195,7 +200,7 @@ def sanitize_corr(defensive_features: Dict[str, str]) -> Tuple[Optional[Decimal]
     """
     flags: List[str] = []
     PLACEHOLDER_CORR = Decimal("0.50")
-    
+
     # Try both field names
     corr_s = defensive_features.get("corr_xbi")
     if corr_s is None:
@@ -204,30 +209,30 @@ def sanitize_corr(defensive_features: Dict[str, str]) -> Tuple[Optional[Decimal]
     if corr_s is None:
         flags.append("def_corr_missing")
         return None, flags
-    
+
     try:
         corr = Decimal(str(corr_s))
     except (InvalidOperation, ValueError, TypeError) as e:
         logger.debug(f"Failed to parse correlation value '{corr_s}': {type(e).__name__}: {e}")
         flags.append(f"def_corr_parse_fail:{type(e).__name__}")
         return None, flags
-    
+
     # CRITICAL: Check if Decimal is NaN or Inf BEFORE doing comparisons
     # This prevents InvalidOperation errors
     if not corr.is_finite():
         flags.append("def_corr_not_finite")
         return None, flags
-    
+
     # Treat placeholder as missing
     if corr == PLACEHOLDER_CORR:
         flags.append("def_corr_placeholder_0.50")
         return None, flags
-    
+
     # Validate range (safe now that we know it's finite)
     if corr < Decimal("-1") or corr > Decimal("1"):
         flags.append("def_corr_out_of_range")
         return None, flags
-    
+
     return corr, flags
 
 
@@ -287,6 +292,7 @@ def _derive_defensive_bucket(mult: Decimal) -> str:
 # FUNDAMENTAL RED-FLAG SUPPRESSOR (v1.0)
 # =============================================================================
 
+
 def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
     """
     Detect fundamental red flags that should suppress a security's rank.
@@ -328,10 +334,7 @@ def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
                 # going-concern risk (e.g. FTRE — $2B revenue CRO).
                 burn_ttm = metrics.get("burn_ttm") or 0
                 cash_total = metrics.get("cash_total") or 0
-                _debt_driven = (
-                    burn_ttm > 0 and cash_total > 0
-                    and (cash_total / burn_ttm) >= 5.0
-                )
+                _debt_driven = burn_ttm > 0 and cash_total > 0 and (cash_total / burn_ttm) >= 5.0
                 if not _debt_driven:
                     reasons.append("survivability_critical")
             # Moderate survivability concern + high debt = distress
@@ -344,7 +347,7 @@ def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
     # --- Capital Structure / Dilution ---
     # Check dilution risk from enhancement layer
     score_breakdown = record.get("score_breakdown") or {}
-    enhancements = score_breakdown.get("enhancements") or {}
+    _ = score_breakdown.get("enhancements") or {}  # reserved for future dilution checks
 
     # Also check top-level dilution fields
     dilution = record.get("dilution_risk_signal") or {}
@@ -361,13 +364,11 @@ def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
         reasons.append("no_revenue_late_stage")
 
     # --- Sponsor absence for late-stage ---
-    # Late-stage company with zero tier-1 sponsors = institutional skepticism.
-    # Missingness-safe: only fire when tier1_count is explicitly present and == 0
-    # (missing/None won't trigger).
-    coinvest = record.get("coinvest") or {}
-    tier1_count = coinvest.get("tier1_count")
-    if tier1_count is not None and int(tier1_count) == 0 and stage.lower() in ["late"]:
-        reasons.append("sponsor_absent_late_stage")
+    # REMOVED (Spec 050, 2026-04-03): Zero tier-1 sponsors does not indicate
+    # fundamental problems. Many profitable specialty pharma names are not held
+    # by tracked biotech-specialist 13F managers. The A4 selector already
+    # penalizes low-sponsorship names via coinvest_score_z — a hard gate here
+    # is redundant and unnecessarily exclusionary.
 
     # --- Clinical Credibility ---
     # Single asset risk profile + early stage = high binary risk
@@ -396,9 +397,7 @@ def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
                 surv_metrics = (record.get("survivability_signal") or {}).get("metrics") or {}
                 burn_ttm = surv_metrics.get("burn_ttm")
                 cash_total = surv_metrics.get("cash_total") or 0
-                _is_self_sustaining = (
-                    burn_ttm is not None and burn_ttm <= 0 and cash_total >= 500_000_000
-                )
+                _is_self_sustaining = burn_ttm is not None and burn_ttm <= 0 and cash_total >= 500_000_000
                 if not _is_self_sustaining:
                     reasons.append("single_asset_early_stage")
 
@@ -417,10 +416,12 @@ def detect_fundamental_red_flags(record: Dict) -> Tuple[bool, List[str]]:
     # Confidence guard: only fire if signal was actually computed
     # (competitor_count > 0 proves real data, not template defaults)
     competitor_count = comp_signal.get("competitor_count")
-    if (crowding == "intense"
-            and position in ["weak", "disadvantaged"]
-            and competitor_count is not None
-            and int(competitor_count) > 0):
+    if (
+        crowding == "intense"
+        and position in ["weak", "disadvantaged"]
+        and competitor_count is not None
+        and int(competitor_count) > 0
+    ):
         reasons.append("weak_competitive_position")
 
     return (len(reasons) > 0, reasons)
@@ -605,10 +606,17 @@ def _extract_audit_features(defensive_features: Dict[str, str]) -> Dict[str, Opt
 
     # V2 multi-horizon fields (pass through when present)
     v2_keys = (
-        "vol_blended", "vol_63d", "vol_252d",
-        "max_drawdown_blended", "max_drawdown_252d", "max_drawdown_2y",
-        "risk_data_state_vol", "risk_data_state_drawdown", "risk_data_state_beta",
-        "beta_xbi_shrunk", "corr_xbi_shrunk",
+        "vol_blended",
+        "vol_63d",
+        "vol_252d",
+        "max_drawdown_blended",
+        "max_drawdown_252d",
+        "max_drawdown_2y",
+        "risk_data_state_vol",
+        "risk_data_state_drawdown",
+        "risk_data_state_beta",
+        "beta_xbi_shrunk",
+        "corr_xbi_shrunk",
         "confidence_risk",
     )
     for k in v2_keys:
@@ -645,8 +653,9 @@ def compute_cluster_percentile_thresholds(
         - thresholds: cluster_id -> threshold (Decimal)
         - diagnostics: exclusion counts and threshold sources
     """
-    import numpy as np
     from collections import defaultdict
+
+    import numpy as np
 
     # Diagnostics for audit trail
     diagnostics = {
@@ -685,9 +694,7 @@ def compute_cluster_percentile_thresholds(
 
     # Convert set to list for JSON serialization
     diagnostics["clusters_seen"] = sorted(diagnostics["clusters_seen"], key=str)
-    diagnostics["members_per_cluster"] = {
-        str(k): len(v) for k, v in cluster_scores.items()
-    }
+    diagnostics["members_per_cluster"] = {str(k): len(v) for k, v in cluster_scores.items()}
 
     # Compute threshold for each cluster
     thresholds = {}
@@ -765,10 +772,7 @@ def defensive_multiplier(
     vol = _safe_decimal(defensive_features.get("vol_60d"))
     momentum = _safe_decimal(defensive_features.get("ret_21d"))
     rsi = _safe_decimal(defensive_features.get("rsi_14d"))
-    drawdown = _safe_decimal(
-        defensive_features.get("drawdown_current") or
-        defensive_features.get("drawdown_60d")
-    )
+    drawdown = _safe_decimal(defensive_features.get("drawdown_current") or defensive_features.get("drawdown_60d"))
     vol_ratio = _safe_decimal(defensive_features.get("vol_ratio"))
 
     # Sanitize correlation (handle placeholders)
@@ -942,17 +946,17 @@ def compute_position_weights_v2(
 def raw_inv_vol_weight(defensive_features: Dict[str, str], power: Decimal = Decimal("2.0")) -> Optional[Decimal]:
     """
     Calculate raw inverse-volatility weight with exponential scaling.
-    
+
     ENHANCED: Uses vol^2.0 (default) for maximum differentiation.
     This creates very strong spread between low-vol and high-vol stocks.
-    
+
     Examples (vol^2.0):
     - 20% vol: 1/(0.20^2.0) = 25.0  (very large weight)
     - 25% vol: 1/(0.25^2.0) = 16.0  (large weight)
     - 40% vol: 1/(0.40^2.0) = 6.25  (medium weight)
     - 100% vol: 1/(1.00^2.0) = 1.0  (small weight)
     - 200% vol: 1/(2.00^2.0) = 0.25 (tiny weight)
-    
+
     Args:
         power: Exponent for volatility (2.0 = maximum, 1.8 = aggressive, 1.5 = moderate)
     """
@@ -963,7 +967,7 @@ def raw_inv_vol_weight(defensive_features: Dict[str, str], power: Decimal = Deci
         vol = Decimal(vol_s)
         if vol <= 0:
             return None
-        return Decimal("1") / (vol ** power)
+        return Decimal("1") / (vol**power)
     except (ValueError, TypeError, InvalidOperation, ZeroDivisionError):
         return None  # Invalid volatility - cannot compute inverse weight
 
@@ -971,13 +975,13 @@ def raw_inv_vol_weight(defensive_features: Dict[str, str], power: Decimal = Deci
 def calculate_dynamic_floor(n_securities: int) -> Decimal:
     """
     Calculate dynamic position floor based on universe size.
-    
+
     Logic:
     - 20-50 stocks: 1.0% floor (traditional focused portfolio)
     - 51-100 stocks: 0.5% floor (allows proper differentiation)
     - 101-200 stocks: 0.3% floor (maximum diversification)
     - 201+ stocks: 0.2% floor (ultra-diversified)
-    
+
     This ensures the floor is always well below the average weight,
     allowing inverse-volatility weighting to work properly.
     """
@@ -1001,12 +1005,12 @@ def apply_caps_and_renormalize(
     """
     Apply position caps and renormalize weights.
     Mutates records in-place, setting record["position_weight"].
-    
-    ENHANCED: 
+
+    ENHANCED:
     - Automatically calculates appropriate floor based on universe size
     - Max position reduced to 7% for better risk management at scale
     - NEW: Top-N selection for conviction-based portfolios
-    
+
     Args:
         top_n: If provided, only size the top N includable names post-ranking.
                All others get zero weight and "NOT_IN_TOP_N" flag.
@@ -1017,17 +1021,17 @@ def apply_caps_and_renormalize(
 
     # Get all potentially includable securities (before top-N cut)
     included_all = [r for r in records if r.get("rankable", True)]
-    
+
     # Apply top-N selection if specified
     if top_n is not None and len(included_all) > top_n:
         # Records should already be sorted by composite_rank
         # (or if not, sort them now by rank ascending)
         included_all_sorted = sorted(included_all, key=lambda x: x.get("composite_rank", 999))
-        
+
         # Select top N
         included = included_all_sorted[:top_n]
         excluded_by_topn = included_all_sorted[top_n:]
-        
+
         # Mark excluded securities
         for r in excluded_by_topn:
             r["rankable"] = False  # Mark as non-rankable
@@ -1040,7 +1044,7 @@ def apply_caps_and_renormalize(
             r["position_weight"] = "0.0000"
     else:
         included = included_all
-    
+
     # Excluded get zero weight
     for r in records:
         if not r.get("rankable", True):
@@ -1060,7 +1064,7 @@ def apply_caps_and_renormalize(
         raw.append(w if isinstance(w, Decimal) else Decimal("0"))
 
     total_raw = sum(raw)
-    
+
     # Fallback to equal-weight if no valid weights
     if total_raw <= 0:
         n = Decimal(str(max(1, len(included))))
@@ -1190,8 +1194,8 @@ def enrich_with_defensive_overlays(
     }
     # Track alias fields separately for diagnostics
     alias_coverage = {
-        "corr_xbi": 0,       # Alias for corr_xbi_120d
-        "drawdown_60d": 0,   # Alias for drawdown_current
+        "corr_xbi": 0,  # Alias for corr_xbi_120d
+        "drawdown_60d": 0,  # Alias for drawdown_current
     }
 
     for rec in ranked:
@@ -1224,9 +1228,13 @@ def enrich_with_defensive_overlays(
                 _corr_val = def_features.get("corr_xbi_120d")
             has_corr = _safe_decimal(_corr_val) is not None
             has_vol = _safe_decimal(def_features.get("vol_60d")) is not None
-            has_any_factor = has_corr or has_vol or any(
-                _safe_decimal(def_features.get(f)) is not None
-                for f in ["ret_21d", "rsi_14d", "drawdown_current", "drawdown_60d"]
+            has_any_factor = (
+                has_corr
+                or has_vol
+                or any(
+                    _safe_decimal(def_features.get(f)) is not None
+                    for f in ["ret_21d", "rsi_14d", "drawdown_current", "drawdown_60d"]
+                )
             )
             if has_any_factor:
                 n_with_sufficient += 1
@@ -1416,7 +1424,9 @@ def enrich_with_defensive_overlays(
 
     # Step 3: Compute risk_adjusted_rank (always, for audit clarity)
     # This ranking is by risk_adjusted_score, independent of whether multiplier is applied
-    risk_sorted = sorted(ranked, key=lambda x: (-Decimal(x.get("risk_adjusted_score", x["composite_score"])), x["ticker"]))
+    risk_sorted = sorted(
+        ranked, key=lambda x: (-Decimal(x.get("risk_adjusted_score", x["composite_score"])), x["ticker"])
+    )
     risk_rank_map = {r["ticker"]: i + 1 for i, r in enumerate(risk_sorted)}
     for rec in ranked:
         rec["risk_adjusted_rank"] = risk_rank_map.get(rec["ticker"])
@@ -1433,17 +1443,17 @@ def enrich_with_defensive_overlays(
     if apply_position_sizing and not v2_detected:
         # V1 path: v2 already called apply_caps_and_renormalize in compute_position_weights_v2
         apply_caps_and_renormalize(ranked, top_n=top_n)  # Pass top_n parameter
-        
+
         # Add position sizing diagnostics
         total_weight = sum(Decimal(r["position_weight"]) for r in ranked)
         nonzero = sum(1 for r in ranked if Decimal(r["position_weight"]) > 0)
-        
+
         if "diagnostic_counts" not in output:
             output["diagnostic_counts"] = {}
-        
+
         output["diagnostic_counts"]["with_nonzero_weight"] = nonzero
         output["diagnostic_counts"]["total_allocated_weight"] = str(total_weight.quantize(Decimal("0.0001")))
-        
+
         # Add top-N diagnostic if applied
         if top_n is not None:
             output["diagnostic_counts"]["top_n_cutoff"] = top_n
@@ -1455,7 +1465,7 @@ def enrich_with_defensive_overlays(
         # Remove internal _position_weight_raw field (not needed in output)
         if "_position_weight_raw" in rec:
             del rec["_position_weight_raw"]
-    
+
     return output
 
 
@@ -1466,9 +1476,9 @@ def validate_defensive_integration(output: Dict) -> None:
     """
     ranked = output.get("ranked_securities", [])
 
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("DEFENSIVE OVERLAY VALIDATION")
-    print("="*60)
+    print("=" * 60)
 
     # 1. Check weights sum (only if position sizing is enabled)
     def_config = output.get("defensive_overlay_config", {})
@@ -1487,8 +1497,7 @@ def validate_defensive_integration(output: Dict) -> None:
 
     # 2. Check excluded have zero weight
     excluded_with_weight = [
-        r["ticker"] for r in ranked
-        if not r.get("rankable", True) and Decimal(r.get("position_weight", "0")) != 0
+        r["ticker"] for r in ranked if not r.get("rankable", True) and Decimal(r.get("position_weight", "0")) != 0
     ]
     if excluded_with_weight:
         print(f"[WARN] {len(excluded_with_weight)} excluded securities have non-zero weight: {excluded_with_weight}")
@@ -1524,8 +1533,7 @@ def validate_defensive_integration(output: Dict) -> None:
         # Multiplier was applied - count meaningful adjustments
         with_def_notes = sum(1 for r in ranked if r.get("defensive_notes"))
         non_neutral = sum(
-            1 for r in ranked
-            if r.get("defensive_multiplier") and Decimal(r["defensive_multiplier"]) != Decimal("1.00")
+            1 for r in ranked if r.get("defensive_multiplier") and Decimal(r["defensive_multiplier"]) != Decimal("1.00")
         )
         elite = sum(1 for r in ranked if "def_mult_elite_1.40" in (r.get("defensive_notes") or []))
         good_div = sum(1 for r in ranked if "def_mult_good_diversifier_1.10" in (r.get("defensive_notes") or []))
@@ -1533,18 +1541,20 @@ def validate_defensive_integration(output: Dict) -> None:
         corr_missing = sum(1 for r in ranked if "def_corr_missing" in (r.get("defensive_notes") or []))
         corr_placeholder = sum(1 for r in ranked if "def_corr_placeholder_0.50" in (r.get("defensive_notes") or []))
 
-        print(f"[OK] Defensive multiplier: ENABLED")
+        print("[OK] Defensive multiplier: ENABLED")
         print(f"[OK] {with_def_notes}/{len(ranked)} securities have defensive notes")
         print(f"[OK] {non_neutral}/{len(ranked)} securities have non-neutral multiplier")
         if elite > 0 or good_div > 0 or high_corr > 0:
-            print(f"     Breakdown: {elite} elite (1.40x), {good_div} good diversifier (1.10x), {high_corr} high-corr penalty (0.95x)")
+            print(
+                f"     Breakdown: {elite} elite (1.40x), {good_div} good diversifier (1.10x), {high_corr} high-corr penalty (0.95x)"
+            )
         if corr_missing > 0 or corr_placeholder > 0:
             print(f"     Data gaps: {corr_missing} missing corr, {corr_placeholder} placeholder corr")
     else:
         # Multiplier was not applied
-        print(f"[INFO] Defensive multiplier: DISABLED (apply_defensive_multiplier=False)")
-        print(f"[OK] Position sizing applied without score adjustment")
-    
+        print("[INFO] Defensive multiplier: DISABLED (apply_defensive_multiplier=False)")
+        print("[OK] Position sizing applied without score adjustment")
+
     # 5. Weight distribution
     nonzero_weights = [r for r in ranked if Decimal(r.get("position_weight", "0")) > 0]
     if nonzero_weights:
@@ -1560,26 +1570,37 @@ def validate_defensive_integration(output: Dict) -> None:
         n = len(nonzero_weights)
         floor = calculate_dynamic_floor(n)
         print(f"  - Dynamic floor: {floor:.4f} ({floor*100:.2f}%) for {n} securities")
-    
+
     # 6. Top 10 holdings
     print("\nTop 10 holdings:")
     print(f"{'Rank':<6}{'Ticker':<8}{'Score':<10}{'Weight':<10}{'Def Notes'}")
     print("-" * 60)
     for r in ranked[:10]:
         notes_str = ", ".join(r.get("defensive_notes", [])) if r.get("defensive_notes") else "-"
-        print(f"{r['composite_rank']:<6}{r['ticker']:<8}{r['composite_score']:<10}{r.get('position_weight', '0.0000'):<10}{notes_str}")
-    
-    print("="*60)
+        print(
+            f"{r['composite_rank']:<6}{r['ticker']:<8}{r['composite_score']:<10}{r.get('position_weight', '0.0000'):<10}{notes_str}"
+        )
+
+    print("=" * 60)
 
 
 # =============================================================================
 # OUTPUT SCHEMA EXTENSION
 # =============================================================================
 
-OUTPUT_SCHEMA_VERSION = "2.1.0"  # Guaranteed columns: composite_score, z_score, expected_excess_return, volatility, drawdown, cluster_id
+OUTPUT_SCHEMA_VERSION = (
+    "2.1.0"  # Guaranteed columns: composite_score, z_score, expected_excess_return, volatility, drawdown, cluster_id
+)
 
 # Required output columns (always present, null if unavailable)
-REQUIRED_OUTPUT_COLUMNS = ["composite_score", "z_score", "expected_excess_return", "volatility", "drawdown", "cluster_id"]
+REQUIRED_OUTPUT_COLUMNS = [
+    "composite_score",
+    "z_score",
+    "expected_excess_return",
+    "volatility",
+    "drawdown",
+    "cluster_id",
+]
 
 
 def attach_output_schema_columns(output: Dict) -> Dict[str, int]:
@@ -1667,8 +1688,9 @@ def attach_output_schema_columns(output: Dict) -> Dict[str, int]:
         # module_scores: from component_scores if present (scalars only)
         comp_scores = rec.get("component_scores")
         if comp_scores and isinstance(comp_scores, dict):
-            lean_scores = {k: v for k, v in comp_scores.items()
-                          if v is None or isinstance(v, (str, int, float, Decimal))}
+            lean_scores = {
+                k: v for k, v in comp_scores.items() if v is None or isinstance(v, (str, int, float, Decimal))
+            }
             if lean_scores:
                 rec["module_scores"] = lean_scores
                 coverage["module_scores"] += 1
@@ -1681,10 +1703,12 @@ def attach_output_schema_columns(output: Dict) -> Dict[str, int]:
 # CACHE MERGE HELPERS
 # =============================================================================
 
+
 def load_defensive_cache(cache_path: str) -> Dict[str, Dict[str, str]]:
     """Load defensive features from cache file. Returns ticker -> features dict."""
     import json
     from pathlib import Path
+
     path = Path(cache_path)
     if not path.exists():
         raise FileNotFoundError(f"Cache file not found: {cache_path}")
@@ -1783,8 +1807,12 @@ if __name__ == "__main__":
     # Show config
     print("\n\n=== Default Config ===")
     cfg = DEFAULT_DEFENSIVE_CONFIG
-    print(f"  Enabled features: momentum={cfg.enable_momentum}, rsi={cfg.enable_rsi}, drawdown={cfg.enable_drawdown_penalty}, vol_ratio={cfg.enable_vol_ratio}")
+    print(
+        f"  Enabled features: momentum={cfg.enable_momentum}, rsi={cfg.enable_rsi}, drawdown={cfg.enable_drawdown_penalty}, vol_ratio={cfg.enable_vol_ratio}"
+    )
     print(f"  Elite thresholds: corr<{cfg.corr_elite_threshold}, vol<{cfg.vol_elite_threshold} → {cfg.mult_elite}x")
-    print(f"  Momentum: >{cfg.momentum_bonus_threshold} → {cfg.mult_momentum_bonus}x, <{cfg.momentum_penalty_threshold} → {cfg.mult_momentum_penalty}x")
+    print(
+        f"  Momentum: >{cfg.momentum_bonus_threshold} → {cfg.mult_momentum_bonus}x, <{cfg.momentum_penalty_threshold} → {cfg.mult_momentum_penalty}x"
+    )
 
     print("\n[OK] Test complete!")

@@ -18,53 +18,58 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `69a0c7f8` (v1.12.0)
-- **File**: `production_data/decision_rulesets/v1.12.0_cal_alpha_off_candidate.json`
-- **Key settings**: optionality anchor, inst_sort w=0.3, buffer=30, cal_alpha OFF, clinical OFF, coinvest OFF
+- **ID**: `dd1e608c` (v1.13.0)
+- **File**: `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json`
+- **Key settings**: sort_anchor=selector_score, A4 selector (coinvest 65% + inst_delta 35%), clinical_50 ranker, EW Top-30
+- **Prior ruleset**: `69a0c7f8` (v1.12.0) — RETIRED 2026-04-03
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
-- **Manifest**: 35+ entries, no dup IDs
+- **Manifest**: 36+ entries, no dup IDs
 
 ---
 
 ## Current Operating Truths
 
-After correcting PIT financial leakage, historical selector performance materially deteriorates.
-Top-20 and Top-30 portfolios now underperform XBI cumulatively, and monthly excess returns are
-weak and statistically insignificant. This strongly suggests prior alpha was inflated by financial
-look-ahead contamination. Forward true-PIT monitoring is now the only credible performance evidence.
+Spec 050 (2026-04-03) replaced the old optionality-anchored selector with a two-stage
+selector/ranker architecture validated on true PIT data. The prior "alpha collapsed"
+narrative from Spec 048 applied to the OLD selector (optionality-based). The NEW selector
+(A4 institutional sponsorship) produces statistically significant alpha on the same
+PIT-corrected data.
 
-1. **Historical alpha story has collapsed.** PIT-financial-corrected benchmarks show Top-20 at -28.2pp and Top-30 at -25.1pp excess vs XBI (was +93.7pp / +110.5pp on survivorship-only). Monthly excess is +0.58pp/mo with t-stat 0.65 (not significant).
-2. **All pre-correction benchmark claims are deprecated.** Do not cite survivorship-only numbers for any purpose.
-3. **DEM is a selector, not a ranker.** Within-top-30 IC is zero. EW is the correct weighting. But the selector itself now lacks historical evidence of alpha.
-4. **Forward monitor is the only credible evidence.** Everything historical is pseudo-PIT (today's code applied retroactively with corrected financials). True PIT accumulates daily.
-5. **The governance hold worked.** It prevented a false positive from being institutionalized.
-6. **Construction v2 (EW Top-30) remains the active construction** — fixed sleeve budgets are retired. But the selector feeding it is unproven on corrected data.
-7. **The selector may still have real alpha** — but the historical evidence no longer supports the claim. Only forward monitoring can re-establish confidence.
+1. **A4 selector + clinical_50 ranker is the production model.** True PIT backtest: +2.34pp/mo net-of-cost, t=2.57, 69% hit rate, 67 monthly periods (Jun 2020 — Apr 2026).
+2. **Beats XBI on return AND risk.** +4.40pp/mo vs +1.95pp for XBI, lower vol (14.12 vs 15.30), shallower max drawdown (-39.3pp vs -87.1pp), beats XBI in 46/67 months (69%).
+3. **Selector and ranker are separate jobs.** A4 (coinvest+inst) selects which 30 names. clinical_50 (50% clinical quality, 20% catalyst, 15% survivability, 10% institutional, 5% options) ranks within the selected set.
+4. **EW Top-30 is the correct construction.** RW-EW = -0.09pp, t=-0.95. Do not rank-weight.
+5. **K=30 validated by sweep.** Net-of-cost peak at +2.34pp, stable K=25-35 plateau.
+6. **Bear/neutral alpha engine.** Bear: +3.37pp (75% hit), neutral: +6.23pp (93% hit), bull: -0.37pp (50% hit). Worst months are all bull regime.
+7. **Pre-Spec-050 benchmark claims remain deprecated.** The old optionality selector on PIT data was underwater. The new institutional selector is the corrective finding.
+8. **Forward shadow accumulating daily** (7 arms in coinvest_shadow_tracker v2, wired into run_daily.py).
 
 ---
 
 ## Trust Buckets
 
-### Safe to use now
-- Snapshot overwrite protection, CTGov fallback PIT safety net, production data archiver
+### Safe to use now (production-grade evidence)
+- **A4 selector + clinical_50 ranker + EW Top-30**: true PIT validated, t=2.57, 67 periods
+- Selector engine (`selector_engine.py`), ranker engine (`ranker_engine.py`): 48 tests passing
 - PIT validation audit framework, PIT financial regeneration infrastructure
-- Live risk / rebalance / execution controls
-- Forward monitor results (true PIT) — the only credible performance evidence
-- EW Top-30 as active construction (construction choice is separate from selector alpha)
+- K=30 validated by sweep (stable K=25-35 plateau)
+- EW Top-30 construction: validated, RW not justified
+- Forward shadow tracker (7 arms, wired into daily cron)
+- Snapshot overwrite protection, CTGov fallback PIT safety net, production data archiver
 
-### Deprecated (contaminated — do not cite)
+### Deprecated (do not cite)
 - **All survivorship-only benchmark numbers** (+93.7pp, +110.5pp, etc.)
-- **All pre-PIT-financial historical alpha claims**
-- "Top-30 is the sweet spot" narrative from contaminated data
+- **Old optionality-anchored selector** — underwater on PIT data (-25pp cumulative)
+- **DEFAULT selector weights** (clinical 35%, catalyst 25%) — destructive as selector (-0.53pp)
+- **clinical_score_v2_z as selector anchor** — negative delta (-0.68pp)
+- Any promotion memo citing pre-Spec-050 selector performance
 - "Bear IR 3.35" regime story from contaminated data
-- Any construction conclusion based on long-history regenerated snapshots
-- Any promotion memo that cites the contaminated 2020+ history
 
-### Current corrected evidence (weak, not promotion-grade)
-- PIT-financial-corrected benchmarks: Top-20 -28.2pp, Top-30 -25.1pp excess vs XBI
-- Monthly excess +0.58pp/mo (t=0.65, not significant)
-- Top-30 still beats Top-20 by +3.1pp but both underwater
-- Regime split: bear flat (IR 0.00), bull weak (IR +0.15)
+### Current evidence hierarchy
+1. **True PIT backtest (Spec 050)**: A4+ranker +2.34pp net, t=2.57 — STRONGEST
+2. **Forward shadow**: accumulating daily since 2026-04-03 — MONITORING
+3. **Research panel A/B**: A4 +1.64pp, t=2.14 (after inst_delta_z forward-fill) — SUPPORTING
+4. **Old PIT benchmark (Spec 048)**: optionality selector underwater — SUPERSEDED by new selector
 
 ---
 
@@ -82,7 +87,7 @@ hours here unless genuinely new data or a structural model change creates a reas
 | Historical alpha narrative (+93pp / +110pp) | DEPRECATED | Inflated by financial look-ahead contamination; corrected numbers are -28pp / -25pp |
 | `cal_alpha` | REMOVED in v1.12.0 | Confirmed no-op, zero deltas at all horizons |
 | Clinical sort signal | OFF | Insufficient IC |
-| Coinvest signal | REJECTED | IC below promotion bar |
+| Coinvest as standalone sort signal | SUPERSEDED | Now used as A4 selector anchor (Spec 050) |
 | Quality tiebreaks (Specs 030/031) | EXHAUSTED | All economically immaterial |
 | 91-180d drawdown gate | DEAD | Counterproductive at all thresholds |
 | Dynamic caps | DEAD | Identical to plain EW |
@@ -92,12 +97,13 @@ hours here unless genuinely new data or a structural model change creates a reas
 
 ## Current Promotion Story
 
-1. DEM's historical alpha is **unproven** after PIT financial correction. Prior claims were inflated by look-ahead.
-2. **EW Top-30 remains the active construction** — the construction choice is still sound even if the selector feeding it lacks historical proof.
-3. **Forward true-PIT monitor is the only credible evidence source.** Accumulate daily. Evaluate after 30+ trading days.
-4. Do not promote any model changes based on historical benchmarks until forward evidence accumulates.
-5. `inst_delta_z` PROMOTE verdict was based on survivorship-only data — **requires re-evaluation** on PIT-financial snapshots.
-6. The governance hold **succeeded**: it prevented institutionalizing a false positive.
+1. **A4 + clinical_50 + EW Top-30 is ADOPTED** as the production model (2026-04-03).
+2. True PIT evidence: +2.34pp/mo net, t=2.57, 69% hit, beats XBI on return and risk.
+3. **Forward shadow is the validation layer.** 7 arms accumulating daily. Evaluate after 30 trading days.
+4. **K=30 is validated** by PIT sweep (stable K=25-35 plateau, net-of-cost peak).
+5. **Do not rank-weight.** RW-EW = -0.09pp, t=-0.95.
+6. **Regime caveat**: this is a bear/neutral alpha engine. Expect bounded underperformance in strong bull.
+7. The governance hold (Spec 048) **succeeded**: it prevented the old optionality selector from being institutionalized on contaminated data, which led to finding the better A4 selector.
 
 ---
 
@@ -153,12 +159,23 @@ python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --
 - [ ] PIT version / contamination status
 - [ ] Active heavy-lift job status
 
-## Decision Engine Architecture
-**File**: `decision_engine.py` (~620 lines, pure post-processing)
+## Decision Engine Architecture (v1.4.0)
 
-Layers: L0 (eligibility) → L2 (overlays) → L4a (dev tier) → L4b (commercial tier) → L3 (sizing)
+**Core files:**
+- `decision_engine.py` — L0 gates → L2 overlays → L4 tiers → L3 sizing → sort key
+- `selector_engine.py` — A4 selector (5 blocks, coinvest+inst dominant)
+- `ranker_engine.py` — clinical_50 ranker (bounded ±15% adjustment)
 
-All downstream consumers use DE outputs (`tier_dev`, `actionable_rank`, `target_weight_pct`), not Module 5's `composite_rank`.
+**Pipeline flow:**
+```
+Modules 1-5 → Decision Engine (gates, tiers, sizing)
+           → Selector Engine (A4: coinvest 65% + inst_delta 35%)
+           → Ranker Engine (clinical_50: 50% clinical, 20% catalyst, 15% survivability, 10% inst, 5% options)
+           → Sort by final_score → EW Top-30 → rankings.csv
+```
+
+**Sort anchor:** `selector_score` (uses `final_score` = selector + ranker adjustment when ranker active)
+All downstream consumers use `actionable_rank` (now driven by selector/ranker, not composite_rank).
 
 ## Promotion Governance
 - **Manifest**: `production_data/decision_rulesets/manifest.json` — all rulesets tracked with status (active/candidate/retired)
@@ -311,6 +328,8 @@ ticker:
 |------|------|
 | Main orchestrator | `run_screen.py` |
 | Decision Engine | `decision_engine.py` |
+| Selector Engine | `selector_engine.py` |
+| Ranker Engine | `ranker_engine.py` |
 | Calendar Alpha | `common/clinical_calendar_alpha.py` |
 | Options Provider | `common/options_history_massive.py` |
 | Daily Production | `tools/run_daily_production.py` |

@@ -437,10 +437,24 @@
       "created_at": "2026-04-01",
       "engine_version": "v1.3.0",
       "description": "cal_alpha OFF; confirmed no-op removal. Zero deltas across all horizons.",
-      "status": "active",
+      "status": "retired",
       "requires_replay": false,
-      "notes": "Derived from v1.11.0 (9f1f4587). enable_calendar_alpha_sort=false, weight=0.0. Signal evidence: +0.00pp at all horizons, byte-identical rankings. Cal_alpha was confirmed noise in March 27 IC audit. This is a dead-parameter removal, not a signal change.",
-      "parent": "9f1f4587"
+      "notes": "Derived from v1.11.0 (9f1f4587). enable_calendar_alpha_sort=false, weight=0.0. Signal evidence: +0.00pp at all horizons, byte-identical rankings. Cal_alpha was confirmed noise in March 27 IC audit. This is a dead-parameter removal, not a signal change. Superseded by v1.13.0 A4 selector+ranker (Spec 050).",
+      "parent": "9f1f4587",
+      "updated_by": "spec_050_promotion",
+      "updated_at": "2026-04-03T15:26:58Z"
+    },
+    {
+      "id": "dd1e608c",
+      "file": "v1.13.0_a4_selector_ranker.json",
+      "created_at": "2026-04-03",
+      "engine_version": "v1.4.0",
+      "description": "Spec 050: A4 selector (coinvest+inst 65/35) + ranker overlay, sort_anchor=selector_score. True PIT: +2.34pp/mo net, t=2.60, 67 periods.",
+      "status": "active",
+      "requires_replay": true,
+      "notes": "Promoted from PIT backtest. Selector: institutional block 65% (coinvest 65%, inst_delta 35%). Ranker: bounded \u00b115% adjustment. Construction: EW Top-30 unchanged.",
+      "updated_by": "spec_050_promotion",
+      "updated_at": "2026-04-03T15:26:58Z"
     }
   ]
 }

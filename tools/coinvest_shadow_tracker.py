@@ -41,13 +41,16 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from ranker_engine import compute_ranker_adjustments
+from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores
+
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
 PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
 SHADOW_DIR = PROJECT_ROOT / "artifacts" / "coinvest_shadow"
 HISTORY_CSV = SHADOW_DIR / "history.csv"
 SUMMARY_MD = SHADOW_DIR / "summary.md"
 
-SCHEMA_VERSION = "coinvest_shadow.v1"
+SCHEMA_VERSION = "coinvest_shadow.v2"  # v2: added s050_a4 + s050_a4_ranker arms
 TOP_N = 30
 SHADOW_WINDOW_DAYS = 30
 START_DATE = "2026-04-03"
@@ -85,6 +88,52 @@ STRATEGIES = {
         "description": "resid 65% + inst_delta_z 35%",
         "type": "signal",
         "signals": {"coinvest_z_size_resid": 0.65, "inst_delta_z": 0.35},
+    },
+    "s050_a4": {
+        "description": "Spec 050 SelectorEngine with A4 coinvest+inst weights",
+        "type": "selector_engine",
+        "config": SelectorConfig(
+            block_weights=(
+                BlockWeight("clinical", 0.05),
+                BlockWeight("catalyst", 0.10),
+                BlockWeight("survivability", 0.10),
+                BlockWeight("institutional", 0.65),
+                BlockWeight("market_structure", 0.10),
+            ),
+            institutional_signals=(
+                SignalSpec("coinvest_score_z", 0.65),
+                SignalSpec("inst_delta_z", 0.35),
+                SignalSpec(
+                    "coinvest_recency_state",
+                    0.00,
+                    categorical=True,
+                    value_map=(("fresh", 1.0), ("stale", 0.3), ("", 0.0)),
+                ),
+            ),
+        ),
+    },
+    "s050_a4_ranker": {
+        "description": "Spec 050 A4 selector + DEFAULT-block ranker overlay",
+        "type": "selector_engine_with_ranker",
+        "config": SelectorConfig(
+            block_weights=(
+                BlockWeight("clinical", 0.05),
+                BlockWeight("catalyst", 0.10),
+                BlockWeight("survivability", 0.10),
+                BlockWeight("institutional", 0.65),
+                BlockWeight("market_structure", 0.10),
+            ),
+            institutional_signals=(
+                SignalSpec("coinvest_score_z", 0.65),
+                SignalSpec("inst_delta_z", 0.35),
+                SignalSpec(
+                    "coinvest_recency_state",
+                    0.00,
+                    categorical=True,
+                    value_map=(("fresh", 1.0), ("stale", 0.3), ("", 0.0)),
+                ),
+            ),
+        ),
     },
 }
 
@@ -204,6 +253,26 @@ def select_top_n(
         col = strategy["sort_col"]
         asc = strategy.get("ascending", True)
         eligible.sort(key=lambda x: _sf(x["row"].get(col), default=9999), reverse=not asc)
+
+    elif strategy["type"] in ("selector_engine", "selector_engine_with_ranker"):
+        # Spec 050: use SelectorEngine (and optionally RankerEngine)
+        config = strategy["config"]
+        eligible_rows = [e["row"] for e in eligible]
+        sel_results = compute_selector_scores(eligible_rows, config=config)
+
+        if strategy["type"] == "selector_engine_with_ranker":
+            # Apply ranker overlay: selector score + bounded adjustment
+            sel_scores = [sr.selector_score for sr in sel_results]
+            sel_buckets = [sr.selector_rank_bucket for sr in sel_results]
+            rnk_results = compute_ranker_adjustments(eligible_rows, sel_scores, sel_buckets)
+            for e, rr in zip(eligible, rnk_results):
+                e["score"] = rr.final_score
+        else:
+            for e, sr in zip(eligible, sel_results):
+                e["score"] = sr.selector_score
+
+        eligible.sort(key=lambda x: -x.get("score", 0))
+
     else:
         # Signal bundle
         signals = strategy["signals"]
@@ -393,32 +462,34 @@ def compute_shadow(as_of_date: str, prices: Optional[Dict] = None) -> Dict[str, 
 
 # ── History ledger ───────────────────────────────────────────────────
 
-HISTORY_COLUMNS = [
-    "date",
-    "days",
-    "regime",
-    "n_eligible",
-    "baseline_overlap_pct",
-    "coinvest_orig_overlap_pct",
-    "coinvest_resid_overlap_pct",
-    "coinvest_inst_overlap_pct",
-    "resid_inst_overlap_pct",
-    "baseline_turnover",
-    "coinvest_orig_turnover",
-    "coinvest_resid_turnover",
-    "coinvest_inst_turnover",
-    "resid_inst_turnover",
-    "baseline_fwd_5d",
-    "coinvest_orig_fwd_5d",
-    "coinvest_inst_fwd_5d",
-    "resid_inst_fwd_5d",
-    "xbi_fwd_5d",
-    "baseline_fwd_20d",
-    "coinvest_orig_fwd_20d",
-    "coinvest_inst_fwd_20d",
-    "resid_inst_fwd_20d",
-    "xbi_fwd_20d",
+_ALL_STRATEGY_NAMES = [
+    "baseline",
+    "coinvest_orig",
+    "coinvest_resid",
+    "coinvest_inst",
+    "resid_inst",
+    "s050_a4",
+    "s050_a4_ranker",
 ]
+
+HISTORY_COLUMNS = (
+    [
+        "date",
+        "days",
+        "regime",
+        "n_eligible",
+    ]
+    + [f"{s}_overlap_pct" for s in _ALL_STRATEGY_NAMES]
+    + [f"{s}_turnover" for s in _ALL_STRATEGY_NAMES]
+    + [f"{s}_fwd_5d" for s in _ALL_STRATEGY_NAMES]
+    + [
+        "xbi_fwd_5d",
+    ]
+    + [f"{s}_fwd_20d" for s in _ALL_STRATEGY_NAMES]
+    + [
+        "xbi_fwd_20d",
+    ]
+)
 
 
 def append_history(result: Dict[str, Any]):
@@ -445,7 +516,7 @@ def append_history(result: Dict[str, Any]):
         "regime": result.get("regime", ""),
         "n_eligible": result.get("n_eligible", ""),
     }
-    for sname in ["baseline", "coinvest_orig", "coinvest_resid", "coinvest_inst", "resid_inst"]:
+    for sname in _ALL_STRATEGY_NAMES:
         row[f"{sname}_overlap_pct"] = _get(sname, "overlap_pct", "")
         row[f"{sname}_turnover"] = _get(sname, "turnover_vs_prior", "")
         row[f"{sname}_fwd_5d"] = _get(sname, "fwd_ret_5d", "")
@@ -483,8 +554,8 @@ def write_summary():
         "",
         "## Daily Log",
         "",
-        "| Date | Day | Regime | Baseline overlap | CI overlap | RI overlap | CI turnover | RI turnover |",
-        "|------|-----|--------|-----------------|------------|------------|-------------|-------------|",
+        "| Date | Day | Regime | CI overlap | RI overlap | S050_A4 overlap | S050_A4R overlap | CI turnover | S050_A4 turnover |",
+        "|------|-----|--------|------------|------------|----------------|-----------------|-------------|-----------------|",
     ]
 
     for r in rows:
@@ -492,11 +563,12 @@ def write_summary():
             f"| {r.get('date', '')} "
             f"| {r.get('days', '')} "
             f"| {r.get('regime', '')} "
-            f"| — "
             f"| {r.get('coinvest_inst_overlap_pct', '')}% "
             f"| {r.get('resid_inst_overlap_pct', '')}% "
+            f"| {r.get('s050_a4_overlap_pct', '')}% "
+            f"| {r.get('s050_a4_ranker_overlap_pct', '')}% "
             f"| {r.get('coinvest_inst_turnover', '')} "
-            f"| {r.get('resid_inst_turnover', '')} |"
+            f"| {r.get('s050_a4_turnover', '')} |"
         )
 
     # Forward returns (once they mature)
@@ -534,6 +606,8 @@ def write_summary():
         for sname, label in [
             ("coinvest_inst", "Coinvest+Inst (65/35)"),
             ("resid_inst", "Resid+Inst (65/35)"),
+            ("s050_a4", "S050 A4 Selector"),
+            ("s050_a4_ranker", "S050 A4 Selector + Ranker"),
         ]:
             overlaps = [
                 float(r[f"{sname}_overlap_pct"]) for r in rows if r.get(f"{sname}_overlap_pct", "") not in ("", "None")

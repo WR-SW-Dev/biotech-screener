@@ -72,6 +72,17 @@ def _find_8k_cache(date_str: str, cache_dir: Path) -> Path | None:
 # ── command builders ────────────────────────────────────────────────────
 
 
+def build_archive_cmd(date_str: str, args: argparse.Namespace) -> list[str]:
+    return [
+        sys.executable,
+        str(SCRIPT_DIR / "scripts" / "archive_production_inputs.py"),
+        "--as-of-date",
+        date_str,
+        "--data-dir",
+        str(args.data_dir),
+    ]
+
+
 def build_warm_cmd(
     date_str: str,
     args: argparse.Namespace,
@@ -81,9 +92,12 @@ def build_warm_cmd(
     cmd = [
         sys.executable,
         str(SCRIPT_DIR / "warm_caches.py"),
-        "--as-of-date", date_str,
-        "--sources", args.sources,
-        "--data-dir", str(args.data_dir),
+        "--as-of-date",
+        date_str,
+        "--sources",
+        args.sources,
+        "--data-dir",
+        str(args.data_dir),
     ]
     if seed_cache is not None:
         cmd += ["--seed-cache", str(seed_cache)]
@@ -98,9 +112,12 @@ def build_screen_cmd(
     cmd = [
         sys.executable,
         str(SCRIPT_DIR / "run_phase2_daily.py"),
-        "--as-of-date", date_str,
-        "--data-dir", str(args.data_dir),
-        "--snapshot-dir", str(args.snapshot_dir),
+        "--as-of-date",
+        date_str,
+        "--data-dir",
+        str(args.data_dir),
+        "--snapshot-dir",
+        str(args.snapshot_dir),
     ]
     if args.health_thresholds is not None:
         cmd += ["--health-thresholds", str(args.health_thresholds)]
@@ -117,7 +134,17 @@ def build_onepager_cmd(date_str: str, args: argparse.Namespace) -> list[str]:
     return [
         sys.executable,
         str(SCRIPT_DIR / "scripts" / "make_ic_onepager.py"),
-        "--snapshot-dir", str(args.snapshot_dir / date_str),
+        "--snapshot-dir",
+        str(args.snapshot_dir / date_str),
+    ]
+
+
+def build_shadow_tracker_cmd(date_str: str) -> list[str]:
+    return [
+        sys.executable,
+        str(SCRIPT_DIR / "tools" / "coinvest_shadow_tracker.py"),
+        "--as-of-date",
+        date_str,
     ]
 
 
@@ -125,7 +152,8 @@ def build_rollup_cmd(args: argparse.Namespace) -> list[str]:
     return [
         sys.executable,
         str(SCRIPT_DIR / "scripts" / "rollup_shadow_metrics.py"),
-        "--snapshot-dir", str(args.snapshot_dir),
+        "--snapshot-dir",
+        str(args.snapshot_dir),
     ]
 
 
@@ -161,6 +189,7 @@ def build_parser() -> argparse.ArgumentParser:
     rng.add_argument("--to-date", default=None, help="End date (inclusive)")
 
     # Step control
+    p.add_argument("--no-archive", action="store_true", help="Skip input archiving")
     p.add_argument("--no-warm", action="store_true", help="Skip cache warming")
     p.add_argument("--no-rollup", action="store_true", help="Skip rollup step")
     p.add_argument("--dry-run", action="store_true", help="Print commands only")
@@ -173,8 +202,7 @@ def build_parser() -> argparse.ArgumentParser:
         "--skip-existing",
         action=argparse.BooleanOptionalAction,
         default=True,
-        help="Skip dates where snapshot rankings.csv already exists "
-        "(use --no-skip-existing to force rerun)",
+        help="Skip dates where snapshot rankings.csv already exists " "(use --no-skip-existing to force rerun)",
     )
 
     # Pass-through
@@ -238,6 +266,11 @@ def main(argv: list[str] | None = None) -> int:
             prev_date = d  # skipped dates still seed the next (cache exists)
             continue
 
+        # ── archive inputs ──
+        if not args.no_archive:
+            archive_cmd = build_archive_cmd(d, args)
+            run_step(archive_cmd, f"{d}  archive", dry_run=args.dry_run)
+
         # ── warm ──
         warm_rc = 0
         if not args.no_warm:
@@ -256,10 +289,22 @@ def main(argv: list[str] | None = None) -> int:
         # ── one-pager (non-fatal) ──
         if screen_rc in (_EXIT_OK, _EXIT_WARN):
             op_rc = run_step(
-                build_onepager_cmd(d, args), f"{d}  onepager", dry_run=args.dry_run,
+                build_onepager_cmd(d, args),
+                f"{d}  onepager",
+                dry_run=args.dry_run,
             )
             if op_rc != 0:
                 print(f"[DAILY] {d}  onepager: WARNING (exit {op_rc})", file=sys.stderr)
+
+        # ── coinvest shadow tracker (non-fatal) ──
+        if screen_rc in (_EXIT_OK, _EXIT_WARN):
+            shadow_rc = run_step(
+                build_shadow_tracker_cmd(d),
+                f"{d}  shadow_tracker",
+                dry_run=args.dry_run,
+            )
+            if shadow_rc != 0:
+                print(f"[DAILY] {d}  shadow_tracker: WARNING (exit {shadow_rc})", file=sys.stderr)
 
         warm_lbl = "SKIP" if args.no_warm else _STATUS_LABELS.get(warm_rc, f"ERR({warm_rc})")
         screen_lbl = _STATUS_LABELS.get(screen_rc, f"ERR({screen_rc})")
@@ -289,10 +334,7 @@ def main(argv: list[str] | None = None) -> int:
         parts.append(f"{n_skipped} skipped")
     if not args.no_rollup:
         parts.append(f"rollup={'OK' if rollup_rc == 0 else f'ERR({rollup_rc})'}")
-    print(
-        f"\n[DAILY] Summary: {len(results) + n_skipped} dates — "
-        + ", ".join(parts)
-    )
+    print(f"\n[DAILY] Summary: {len(results) + n_skipped} dates — " + ", ".join(parts))
 
     if n_fail > 0 or n_err > 0:
         return 1

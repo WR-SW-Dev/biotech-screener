@@ -24,7 +24,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from dataclasses import fields as dc_fields
-from decimal import Decimal, localcontext
+from decimal import Decimal
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
 from decision_engine_codes import canonicalize_reasons
@@ -173,7 +173,9 @@ class DecisionRuleset:
     far_window_decay_mult: float = 0.15  # catalyst_decay_w for far_window tickers
 
     # Sort anchor (default composite_rank = current behavior)
-    sort_anchor: str = "composite_rank"  # "composite_rank" | "optionality_pct" | "alpha_cohort" | "options_anchor_hybrid"
+    sort_anchor: str = (
+        "composite_rank"  # "composite_rank" | "optionality_pct" | "alpha_cohort" | "options_anchor_hybrid" | "selector_score"
+    )
 
     # Options anchor hybrid (opt-in via sort_anchor="options_anchor_hybrid", Spec 039)
     # Uses options_quality_composite when present, falls back to optionality_pct.
@@ -310,6 +312,14 @@ class DecisionRuleset:
     # Reduces turnover from small rank oscillations.  0 = disabled.
     rebalance_buffer_ranks: int = 0  # 0 = off; range [0, 50]
 
+    # Construction risk controls (Spec 050, all opt-in / disabled by default)
+    # Per-name weight cap as % of portfolio. 100.0 = disabled.
+    construction_name_cap_pct: float = 100.0
+    # Weight cap for names with liquidity risk flags. 100.0 = disabled.
+    construction_liquidity_cap_pct: float = 100.0
+    # Exclude names with est_cost_bps above this threshold. 0.0 = disabled.
+    construction_cost_gate_bps: float = 0.0
+
     # Actionable ordering — catalyst priority mode (supersedes enable_catalyst_priority)
     catalyst_priority_mode: str = "off"  # "off" | "tiebreaker" | "blended"
     catalyst_priority_rank_bonuses: tuple = (  # blended mode: priority → rank bonus
@@ -379,12 +389,15 @@ class DecisionRuleset:
                 f"got '{self.catalyst_priority_mode}'"
             )
         # Validate sort_anchor
-        _VALID_ANCHORS = ("composite_rank", "optionality_pct", "alpha_cohort", "options_anchor_hybrid")
+        _VALID_ANCHORS = (
+            "composite_rank",
+            "optionality_pct",
+            "alpha_cohort",
+            "options_anchor_hybrid",
+            "selector_score",
+        )
         if self.sort_anchor not in _VALID_ANCHORS:
-            raise ValueError(
-                f"sort_anchor must be one of {_VALID_ANCHORS}, "
-                f"got '{self.sort_anchor}'"
-            )
+            raise ValueError(f"sort_anchor must be one of {_VALID_ANCHORS}, " f"got '{self.sort_anchor}'")
         # Validate composite_engine
         if self.composite_engine not in ("legacy", "alpha_cohort"):
             raise ValueError(f"composite_engine must be 'legacy' or 'alpha_cohort', " f"got '{self.composite_engine}'")
@@ -572,7 +585,7 @@ class DecisionRuleset:
 # VERSIONING
 # =============================================================================
 
-VERSION = "v1.3.0"
+VERSION = "v1.4.0"  # Spec 050: A4 selector + ranker promoted
 
 DEFAULT_RULESET = DecisionRuleset()
 
@@ -1625,9 +1638,7 @@ def _build_sort_contributions(
         _has_reg = str(decision_fields.get("has_regulatory_upcoming_180d", "")) == "1"
         _reg_days = _safe_float(decision_fields.get("regulatory_days"), default=None)
         _in_less_binary = (
-            _reg_days is not None
-            and _reg_days > BUCKET_BUILD_WINDOW_MAX
-            and _reg_days <= BUCKET_LESS_BINARY_MAX
+            _reg_days is not None and _reg_days > BUCKET_BUILD_WINDOW_MAX and _reg_days <= BUCKET_LESS_BINARY_MAX
         )
         if _has_reg and _in_less_binary:
             oqc = _safe_decimal(decision_fields.get("options_quality_composite"))
@@ -1824,6 +1835,15 @@ def compute_actionable_sort_key(
         else:
             # Fallback: use optionality_pct or comp_rank
             anchor = -_safe_decimal(tiebreaker_pct) if tiebreaker_pct is not None else _D(str(comp_rank))
+    elif rs.sort_anchor == "selector_score":
+        # Spec 050: use final_score (selector + ranker) as anchor.
+        # Falls back to selector_score if ranker inactive.
+        _final = _safe_decimal(decision_fields.get("final_score"), default=_D0)
+        if _final > _D0:
+            anchor = -_final
+        else:
+            _sel = _safe_decimal(decision_fields.get("selector_score"), default=_D0)
+            anchor = -_sel  # higher score → more negative → sorts first
     elif rs.sort_anchor in ("optionality_pct", "alpha_cohort"):
         anchor = -_safe_decimal(tiebreaker_pct)  # higher pct → more negative → sorts first
     else:
@@ -2146,7 +2166,79 @@ def compute_target_weights(
     # Less-binary construction mode
     _apply_less_binary_construction(rows, rs)
 
+    # Spec 050: construction risk controls (all no-op when defaults)
+    _apply_construction_risk_controls(rows, rs)
+
     return rows
+
+
+def _apply_construction_risk_controls(
+    rows: List[Dict[str, Any]],
+    ruleset: DecisionRuleset,
+) -> None:
+    """Apply Spec 050 construction risk controls in-place.
+
+    Controls:
+      - construction_name_cap_pct: per-name weight cap
+      - construction_liquidity_cap_pct: cap for names with liquidity flags
+      - construction_cost_gate_bps: exclude names above cost threshold
+
+    Excess weight is redistributed proportionally to uncapped names.
+    All controls are no-op at default values (100.0 / 100.0 / 0.0).
+    """
+    name_cap = ruleset.construction_name_cap_pct
+    liq_cap = ruleset.construction_liquidity_cap_pct
+    cost_gate = ruleset.construction_cost_gate_bps
+
+    # Early exit: all controls disabled
+    if name_cap >= 100.0 and liq_cap >= 100.0 and cost_gate <= 0.0:
+        return
+
+    # --- Cost gate: zero-out names above cost threshold ---
+    if cost_gate > 0.0:
+        for row in rows:
+            cost_bps = _safe_float(row.get("est_cost_bps"), default=0.0)
+            if cost_bps > cost_gate:
+                row["target_weight_pct"] = 0.0
+
+    # --- Per-name cap ---
+    if name_cap < 100.0:
+        _apply_weight_cap(rows, name_cap, lambda _row: True)
+
+    # --- Liquidity cap: tighter cap for names with liquidity risk ---
+    if liq_cap < 100.0:
+
+        def _has_liq_risk(row):
+            flags = str(row.get("risk_flags", ""))
+            return "low_adv" in flags or "liquidity_fail" in flags
+
+        _apply_weight_cap(rows, liq_cap, _has_liq_risk)
+
+
+def _apply_weight_cap(
+    rows: List[Dict[str, Any]],
+    cap_pct: float,
+    predicate,
+) -> None:
+    """Cap target_weight_pct for rows matching predicate, redistribute excess."""
+    excess = 0.0
+    uncapped_total = 0.0
+    for row in rows:
+        w = _safe_float(row.get("target_weight_pct"), default=0.0)
+        if w <= 0:
+            continue
+        if predicate(row) and w > cap_pct:
+            excess += w - cap_pct
+            row["target_weight_pct"] = round(cap_pct, 2)
+        else:
+            uncapped_total += w
+
+    # Redistribute excess proportionally to uncapped names
+    if excess > 0 and uncapped_total > 0:
+        for row in rows:
+            w = _safe_float(row.get("target_weight_pct"), default=0.0)
+            if w > 0 and w <= cap_pct and not (predicate(row) and w == cap_pct):
+                row["target_weight_pct"] = round(w + excess * (w / uncapped_total), 2)
 
 
 def _apply_less_binary_construction(
@@ -2252,6 +2344,20 @@ DECISION_COLUMNS = [
     "tier_any_reason",
     "missing_components",
     "missingness_penalty",
+    # --- Spec 050: Selector/Ranker columns (populated by run_screen.py) ---
+    "selector_score",
+    "selector_rank_bucket",
+    "selector_clinical_block",
+    "selector_catalyst_block",
+    "selector_survivability_block",
+    "selector_institutional_block",
+    "selector_market_block",
+    "ranker_active",
+    "ranker_adjustment",
+    "final_score",
+    "ranker_options_block",
+    "ranker_inst_block",
+    "ranker_aact_block",
 ]
 
 
@@ -2395,6 +2501,21 @@ def compute_decision_fields(
     missing = _compute_missing_components(fields)
     fields["missing_components"] = "|".join(missing) if missing else ""
     fields["missingness_penalty"] = len(missing)
+
+    # Spec 050: selector/ranker placeholders (populated later by run_screen.py)
+    fields["selector_score"] = ""
+    fields["selector_rank_bucket"] = ""
+    fields["selector_clinical_block"] = ""
+    fields["selector_catalyst_block"] = ""
+    fields["selector_survivability_block"] = ""
+    fields["selector_institutional_block"] = ""
+    fields["selector_market_block"] = ""
+    fields["ranker_active"] = ""
+    fields["ranker_adjustment"] = ""
+    fields["final_score"] = ""
+    fields["ranker_options_block"] = ""
+    fields["ranker_inst_block"] = ""
+    fields["ranker_aact_block"] = ""
 
     return fields
 

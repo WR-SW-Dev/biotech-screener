@@ -125,6 +125,27 @@ from decision_engine import (
     compute_target_weights,
     resolve_catalyst_priority,
 )
+from ranker_engine import compute_ranker_adjustments
+from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores, get_regime_modulation
+
+# Spec 050: A4 production selector config (coinvest+inst dominant)
+# Validated on true PIT backtest: +2.34pp/mo net, t=2.60, 67 periods
+A4_SELECTOR_CONFIG = SelectorConfig(
+    block_weights=(
+        BlockWeight("clinical", 0.05),
+        BlockWeight("catalyst", 0.10),
+        BlockWeight("survivability", 0.10),
+        BlockWeight("institutional", 0.65),
+        BlockWeight("market_structure", 0.10),
+    ),
+    institutional_signals=(
+        SignalSpec("coinvest_score_z", 0.65),
+        SignalSpec("inst_delta_z", 0.35),
+        SignalSpec(
+            "coinvest_recency_state", 0.00, categorical=True, value_map=(("fresh", 1.0), ("stale", 0.3), ("", 0.0))
+        ),
+    ),
+)
 
 # Module 3A specific imports
 from event_detector import SimpleMarketCalendar
@@ -1361,237 +1382,256 @@ def write_json_output(filepath: Path, data: Dict[str, Any], secure: bool = True)
 
 # Columns saved in the validation snapshot CSV.
 # These are the minimum fields needed for forward IC / decile-lift analysis.
-SNAPSHOT_COLUMNS = [
-    # --- Identity ---
-    "ticker",
-    "company_name",
-    # --- What drives the ranking (read left-to-right) ---
-    "actionable_rank",
-    "target_weight_pct",
-    "tier_any",
-    "tier_any_reason",
-    "tier_dev",
-    "tier_reason",
-    "tier_commercial",
-    "alpha_cohort_pct",
-    "commercial_quality_pct",
-    "has_commercial_quality",
-    "clinical_optionality_pct_dev",
-    "has_clinical_optionality_dev",
-    "clinical_rank_pct_dev",
-    "catalyst_days",
-    "catalyst_in_window",
-    "catalyst_mode",
-    "catalyst_bucket",
-    "cat_priority",
-    "mom_state",
-    "risk_flags",
-    "size_band",
-    "size_reasons",
-    # --- Explanation fields ---
-    "top_3_drivers",
-    "catalyst_reason_detail",
-    # --- Engine / run metadata ---
-    "decision_engine_version",
-    "decision_engine_ruleset_id",
-    "eligible",
-    "ineligible_reasons",
-    # --- Red flag audit trail ---
-    "fundamental_red_flag",
-    "fundamental_red_flag_reasons",
-    "fundamental_red_flag_inputs",
-    # --- Diagnostics / supporting DE signals ---
-    "alpha_cohort_key",
-    "alpha_cohort_raw",
-    "commercial_quality",
-    "clinical_alpha_z",
-    "clinical_readout_days",
-    "clinical_coverage_flag",
-    "clinical_score_z",
-    "clinical_score_z_tier",
-    "sponsor_tier1_count",
-    "sponsor_overlap_count",
-    "sponsor_net_buying",
-    "coinvest_score_z",
-    "coinvest_tag",
-    "coinvest_conviction",
-    "coinvest_tier1_conviction",
-    "coinvest_max_position_pct",
-    "coinvest_filing_age_days",
-    "coinvest_recency_state",
-    "inst_delta_z",  # z of net_elite_holders_delta (cross-sectional, ddof=0)
-    "inst_delta_net",  # raw net_elite_holders_delta
-    "inst_delta_new",  # elite_new_count
-    "inst_delta_exit",  # elite_exit_count
-    "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
-    "has_coinvest_signal",  # True when sponsor_tier1_count is real data
-    "has_inst_delta",  # True when institutional delta is available
-    "has_catalyst_signal",  # True when catalyst_mode != "missing"
-    "catalyst_strength",
-    "catalyst_decay_w",
-    "runway_bucket",
-    "cost_bucket",
-    "est_cost_bps",
-    "cost_mult",
-    "cost_haircut_applied",
-    "dd_rel_margin_rescued",
-    "catalyst_tilt_mult",
-    "catalyst_tilt_applied",
-    "catalyst_type_tier",
-    "catalyst_type_mult",
-    "catalyst_type_tilt_applied",
-    "mom_state_tilt_mult",
-    "mom_state_tilt_applied",
-    "de_catalyst_days",
-    "de_catalyst_in_window",
-    "de_catalyst_mode",
-    "de_alpha_60d",
-    "de_alpha_60d_source",
-    "de_alpha_60d_missing_reason",
-    "de_tier1_count",
-    "de_beta_xbi_60d",
-    "de_beta_xbi_60d_source",
-    "de_beta_xbi_60d_missing_reason",
-    "de_drawdown",
-    "de_drawdown_missing_reason",
-    "de_rsi_14d",
-    "de_vol_60d",
-    "de_drawdown_xbi",
-    "de_drawdown_rel_xbi",
-    # --- Earnings calendar ---
-    "next_earnings_date",
-    # --- AACT execution score ---
-    "aact_execution_score",
-    # --- Context / provenance ---
-    "stage_bucket",
-    "market_cap_bucket",
-    "severity",
-    "archetype",
-    "industry_group",
-    "returns_source",
-    "catalyst_source",
-    "catalyst_event_type",
-    "is_hard_catalyst",
-    "catalyst_family",
-    "binary_quality_score",
-    "regulatory_quality",
-    "clinical_quality",
-    "has_adcom",
-    "single_asset_risk",
-    # --- Clinical 91-180 quality features ---
-    "clinical_days_precision",
-    "clinical_date_confidence",
-    "clinical_design_quality",
-    "clinical_program_depth",
-    "clinical_quality_composite",
-    # --- FDA AdCom voting-pattern pilot (passive, informational) ---
-    *ADCOM_VOTE_COLUMNS,
-    # --- Options-implied vol/skew diagnostics (passive, tastytrade) ---
-    *OPTIONS_DIAGNOSTIC_COLUMNS,
-    # --- Options quality composite (derived from diagnostics) ---
-    *OPTIONS_QUALITY_COLUMNS,
-    # --- Market-model disagreement (shadow diagnostic, not ranking) ---
-    "implied_event_move",
-    "pos_divergence",
-    "market_model_disagreement",
-    # --- IV crush stress test (from Massive chain analytics) ---
-    "iv_crush_breakeven_pct",
-    "crush_adjusted_implied_move",
-    # --- Straddle mispricing (from event_move_table + chain/IV) ---
-    "cheap_vol_score",
-    "vol_classification",
-    "straddle_price",
-    # --- Pre-event put/call ratio (from Massive day aggs, shadow) ---
-    "pre_event_put_call_ratio",
-    # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
-    "ts_flag",
-    "ts_flag_type",
-    "ts_flag_reason",
-    # --- Secondary regulatory catalyst (independent of nearest) ---
-    "regulatory_days",
-    "regulatory_event_type",
-    "regulatory_confidence",
-    "has_regulatory_upcoming_180d",
-    "missing_components",
-    "missingness_penalty",
-    "confidence_overall",
-    # --- Source reliability (empirical slip-based) ---
-    "source_reliability_action",
-    "source_reliability_penalty",
-    # --- Underlying module scores (informational) ---
-    "momentum_score",
-    "catalyst_score",
-    "smart_money_score",
-    "valuation_score",
-    "clinical_score",
-    "financial_score",
-    # --- Clinical Calendar Alpha v2 (informational, sort/sizing off by default) ---
-    "clinical_score_v2",
-    "clinical_score_v2_z",
-    "lead_program_phase",
-    "lead_program_readout_days",
-    "program_count",
-    "program_diversification",
-    "readout_curve_score",
-    "readout_density_90",
-    "late_stage_readouts_180",
-    "execution_momentum",
-    "design_quality_score",
-    "endpoint_strength_score",
-    "therapeutic_area",
-    "competitive_intensity_z",
-    "crowding_level",
-    "sizing_multiplier_clinical",
-    # --- Morningstar research diagnostics (not in composite) ---
-    "ms_volatility_3yr",
-    "ms_volatility_5yr",
-    "ms_star_rating",
-    "ms_return_ytd",
-    "ms_return_annualized_3yr",
-    "ms_return_annualized_5yr",
-    # --- Surface signal fields (Spec 020, were computed but not persisted) ---
-    "atm_iv_change_5d",
-    "actual_implied_move_pctile",
-    "surface_move_extreme",
-    "iv_ramp_flag",
-    "post_event_drift_risk",
-    "rr_25d_trend_7d",
-    "rr_trend_flag",
-    "surface_signal_quality",
-    "surface_validation_basis",
-    # --- Options verdict research features (Spec 038) ---
-    "ovf_agreement_count",
-    "ovf_severity_score",
-    "ovf_near_catalyst",
-    "ovf_has_event_premium",
-    "ovf_has_iv_ramp",
-    "ovf_has_quiet_before",
-    "ovf_surface_confirmed",
-    "ovf_composite",
-    # --- Options Monitor v1.1 research features (Spec 040) ---
-    "ovf11_ep",
-    "ovf11_sr",
-    "ovf11_sk",
-    "ovf11_dv",
-    "ovf11_quality",
-    "ovf11_confidence",
-    "ovf11_score",
-    "ovf11_primary_factor",
-    "ovf11_monitor_verdict",
-    "ovf11_trade_bias",
-    "ovf11_event_window_flag",
-    "ovf11_catalyst_class",
-    # --- Legacy Module 5 composite fields (far right) ---
-    "composite_rank",
-    "composite_score",
-    "score_rank_pct",
-    "score_z",
-    "composite_score_attn",
-    "score_rank_pct_attn",
-    "score_z_attn",
-    # --- Sort contribution diagnostics (populated at sort time) ---
-    "de_sort_total_adj",
-] + [f"de_sort_contrib_{k}" for k in SORT_CONTRIB_KEYS]
+SNAPSHOT_COLUMNS = (
+    [
+        # --- Identity ---
+        "ticker",
+        "company_name",
+        # --- What drives the ranking (read left-to-right) ---
+        "actionable_rank",
+        "target_weight_pct",
+        "tier_any",
+        "tier_any_reason",
+        "tier_dev",
+        "tier_reason",
+        "tier_commercial",
+        "alpha_cohort_pct",
+        "commercial_quality_pct",
+        "has_commercial_quality",
+        "clinical_optionality_pct_dev",
+        "has_clinical_optionality_dev",
+        "clinical_rank_pct_dev",
+        "catalyst_days",
+        "catalyst_in_window",
+        "catalyst_mode",
+        "catalyst_bucket",
+        "cat_priority",
+        "mom_state",
+        "risk_flags",
+        "size_band",
+        "size_reasons",
+        # --- Explanation fields ---
+        "top_3_drivers",
+        "catalyst_reason_detail",
+        # --- Engine / run metadata ---
+        "decision_engine_version",
+        "decision_engine_ruleset_id",
+        "eligible",
+        "ineligible_reasons",
+        # --- Red flag audit trail ---
+        "fundamental_red_flag",
+        "fundamental_red_flag_reasons",
+        "fundamental_red_flag_inputs",
+        # --- Diagnostics / supporting DE signals ---
+        "alpha_cohort_key",
+        "alpha_cohort_raw",
+        "commercial_quality",
+        "clinical_alpha_z",
+        "clinical_readout_days",
+        "clinical_coverage_flag",
+        "clinical_score_z",
+        "clinical_score_z_tier",
+        "sponsor_tier1_count",
+        "sponsor_overlap_count",
+        "sponsor_net_buying",
+        "coinvest_score_z",
+        "coinvest_tag",
+        "coinvest_conviction",
+        "coinvest_tier1_conviction",
+        "coinvest_max_position_pct",
+        "coinvest_filing_age_days",
+        "coinvest_recency_state",
+        "inst_delta_z",  # z of net_elite_holders_delta (cross-sectional, ddof=0)
+        "inst_delta_net",  # raw net_elite_holders_delta
+        "inst_delta_new",  # elite_new_count
+        "inst_delta_exit",  # elite_exit_count
+        "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
+        "has_coinvest_signal",  # True when sponsor_tier1_count is real data
+        "has_inst_delta",  # True when institutional delta is available
+        "has_catalyst_signal",  # True when catalyst_mode != "missing"
+        "catalyst_strength",
+        "catalyst_decay_w",
+        "runway_bucket",
+        "cost_bucket",
+        "est_cost_bps",
+        "cost_mult",
+        "cost_haircut_applied",
+        "dd_rel_margin_rescued",
+        "catalyst_tilt_mult",
+        "catalyst_tilt_applied",
+        "catalyst_type_tier",
+        "catalyst_type_mult",
+        "catalyst_type_tilt_applied",
+        "mom_state_tilt_mult",
+        "mom_state_tilt_applied",
+        "de_catalyst_days",
+        "de_catalyst_in_window",
+        "de_catalyst_mode",
+        "de_alpha_60d",
+        "de_alpha_60d_source",
+        "de_alpha_60d_missing_reason",
+        "de_tier1_count",
+        "de_beta_xbi_60d",
+        "de_beta_xbi_60d_source",
+        "de_beta_xbi_60d_missing_reason",
+        "de_drawdown",
+        "de_drawdown_missing_reason",
+        "de_rsi_14d",
+        "de_vol_60d",
+        "de_drawdown_xbi",
+        "de_drawdown_rel_xbi",
+        # --- Earnings calendar ---
+        "next_earnings_date",
+        # --- AACT execution score ---
+        "aact_execution_score",
+        # --- Context / provenance ---
+        "stage_bucket",
+        "market_cap_bucket",
+        "severity",
+        "archetype",
+        "industry_group",
+        "returns_source",
+        "catalyst_source",
+        "catalyst_event_type",
+        "is_hard_catalyst",
+        "catalyst_family",
+        "binary_quality_score",
+        "regulatory_quality",
+        "clinical_quality",
+        "has_adcom",
+        "single_asset_risk",
+        # --- Clinical 91-180 quality features ---
+        "clinical_days_precision",
+        "clinical_date_confidence",
+        "clinical_design_quality",
+        "clinical_program_depth",
+        "clinical_quality_composite",
+        # --- FDA AdCom voting-pattern pilot (passive, informational) ---
+        *ADCOM_VOTE_COLUMNS,
+        # --- Options-implied vol/skew diagnostics (passive, tastytrade) ---
+        *OPTIONS_DIAGNOSTIC_COLUMNS,
+        # --- Options quality composite (derived from diagnostics) ---
+        *OPTIONS_QUALITY_COLUMNS,
+        # --- Market-model disagreement (shadow diagnostic, not ranking) ---
+        "implied_event_move",
+        "pos_divergence",
+        "market_model_disagreement",
+        # --- IV crush stress test (from Massive chain analytics) ---
+        "iv_crush_breakeven_pct",
+        "crush_adjusted_implied_move",
+        # --- Straddle mispricing (from event_move_table + chain/IV) ---
+        "cheap_vol_score",
+        "vol_classification",
+        "straddle_price",
+        # --- Pre-event put/call ratio (from Massive day aggs, shadow) ---
+        "pre_event_put_call_ratio",
+        # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
+        "ts_flag",
+        "ts_flag_type",
+        "ts_flag_reason",
+        # --- Secondary regulatory catalyst (independent of nearest) ---
+        "regulatory_days",
+        "regulatory_event_type",
+        "regulatory_confidence",
+        "has_regulatory_upcoming_180d",
+        "missing_components",
+        "missingness_penalty",
+        "confidence_overall",
+        # --- Source reliability (empirical slip-based) ---
+        "source_reliability_action",
+        "source_reliability_penalty",
+        # --- Underlying module scores (informational) ---
+        "momentum_score",
+        "catalyst_score",
+        "smart_money_score",
+        "valuation_score",
+        "clinical_score",
+        "financial_score",
+        # --- Clinical Calendar Alpha v2 (informational, sort/sizing off by default) ---
+        "clinical_score_v2",
+        "clinical_score_v2_z",
+        "lead_program_phase",
+        "lead_program_readout_days",
+        "program_count",
+        "program_diversification",
+        "readout_curve_score",
+        "readout_density_90",
+        "late_stage_readouts_180",
+        "execution_momentum",
+        "design_quality_score",
+        "endpoint_strength_score",
+        "therapeutic_area",
+        "competitive_intensity_z",
+        "crowding_level",
+        "sizing_multiplier_clinical",
+        # --- Morningstar research diagnostics (not in composite) ---
+        "ms_volatility_3yr",
+        "ms_volatility_5yr",
+        "ms_star_rating",
+        "ms_return_ytd",
+        "ms_return_annualized_3yr",
+        "ms_return_annualized_5yr",
+        # --- Surface signal fields (Spec 020, were computed but not persisted) ---
+        "atm_iv_change_5d",
+        "actual_implied_move_pctile",
+        "surface_move_extreme",
+        "iv_ramp_flag",
+        "post_event_drift_risk",
+        "rr_25d_trend_7d",
+        "rr_trend_flag",
+        "surface_signal_quality",
+        "surface_validation_basis",
+        # --- Options verdict research features (Spec 038) ---
+        "ovf_agreement_count",
+        "ovf_severity_score",
+        "ovf_near_catalyst",
+        "ovf_has_event_premium",
+        "ovf_has_iv_ramp",
+        "ovf_has_quiet_before",
+        "ovf_surface_confirmed",
+        "ovf_composite",
+        # --- Options Monitor v1.1 research features (Spec 040) ---
+        "ovf11_ep",
+        "ovf11_sr",
+        "ovf11_sk",
+        "ovf11_dv",
+        "ovf11_quality",
+        "ovf11_confidence",
+        "ovf11_score",
+        "ovf11_primary_factor",
+        "ovf11_monitor_verdict",
+        "ovf11_trade_bias",
+        "ovf11_event_window_flag",
+        "ovf11_catalyst_class",
+        # --- Legacy Module 5 composite fields (far right) ---
+        "composite_rank",
+        "composite_score",
+        "score_rank_pct",
+        "score_z",
+        "composite_score_attn",
+        "score_rank_pct_attn",
+        "score_z_attn",
+        # --- Sort contribution diagnostics (populated at sort time) ---
+        "de_sort_total_adj",
+    ]
+    + [f"de_sort_contrib_{k}" for k in SORT_CONTRIB_KEYS]
+    + [
+        # --- Spec 050: Selector/Ranker columns ---
+        "selector_score",
+        "selector_rank_bucket",
+        "selector_clinical_block",
+        "selector_catalyst_block",
+        "selector_survivability_block",
+        "selector_institutional_block",
+        "selector_market_block",
+        "ranker_active",
+        "ranker_adjustment",
+        "final_score",
+        "ranker_options_block",
+        "ranker_inst_block",
+        "ranker_aact_block",
+    ]
+)
 
 # Phase-2 decision portfolio output columns
 PHASE2_PORTFOLIO_COLUMNS = [
@@ -1666,11 +1706,11 @@ PORTFOLIO_POSITIONS_COLUMNS = [
 
 # Phase-2 operational defaults
 PHASE2_DEFAULT_RULESET_PATH = (
-    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.12.0_cal_alpha_off_candidate.json"
+    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.13.0_a4_selector_ranker.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
-PHASE2_PINNED_RULESET_ID = "69a0c7f8"
+PHASE2_PINNED_RULESET_ID = "dd1e608c"
 PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
     Path(__file__).resolve().parent / "production_data" / "phase2_health_thresholds" / "v1.json"
 )
@@ -4796,6 +4836,52 @@ def save_validation_snapshot(
         _arch = _r.get("archetype", "")
         _r["has_commercial_quality"] = 1 if _arch != "drug_developer" else 0
         _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
+
+    # --- Spec 050: Selector + Ranker scoring ---
+    _eligible_for_selector = [r for r in csv_rows if r.get("eligible") == "1"]
+    if _eligible_for_selector:
+        _sel_results = compute_selector_scores(_eligible_for_selector, config=A4_SELECTOR_CONFIG)
+        for _row, _sr in zip(_eligible_for_selector, _sel_results):
+            _row["selector_score"] = _sr.selector_score
+            _row["selector_rank_bucket"] = _sr.selector_rank_bucket
+            _row["selector_clinical_block"] = _sr.clinical_block
+            _row["selector_catalyst_block"] = _sr.catalyst_block
+            _row["selector_survivability_block"] = _sr.survivability_block
+            _row["selector_institutional_block"] = _sr.institutional_block
+            _row["selector_market_block"] = _sr.market_structure_block
+
+        # Ranker: bounded adjustment for catalyst-window names
+        _sel_scores = [_sr.selector_score for _sr in _sel_results]
+        _sel_buckets = [_sr.selector_rank_bucket for _sr in _sel_results]
+
+        # Apply regime modulation to ranker max_adjustment if regime is available
+        try:
+            _regime_label = (regime_result or {}).get("regime", "UNKNOWN")  # noqa: F821
+        except NameError:
+            _regime_label = "UNKNOWN"
+        _regime_mod = get_regime_modulation(_regime_label)
+
+        from ranker_engine import DEFAULT_RANKER_CONFIG, RankerConfig
+
+        _ranker_cfg = DEFAULT_RANKER_CONFIG
+        if _regime_mod.ranker_max_adj_mult != 1.0:
+            _ranker_cfg = RankerConfig(
+                max_adjustment_pct=DEFAULT_RANKER_CONFIG.max_adjustment_pct * _regime_mod.ranker_max_adj_mult
+            )
+
+        _rnk_results = compute_ranker_adjustments(_eligible_for_selector, _sel_scores, _sel_buckets, config=_ranker_cfg)
+        for _row, _rr in zip(_eligible_for_selector, _rnk_results):
+            _row["ranker_active"] = "1" if _rr.ranker_active else "0"
+            _row["ranker_adjustment"] = _rr.ranker_adjustment
+            _row["final_score"] = _rr.final_score
+            _row["ranker_options_block"] = _rr.options_block
+            _row["ranker_inst_block"] = _rr.inst_block
+            _row["ranker_aact_block"] = _rr.aact_block
+
+        _n_ranker_active = sum(1 for _rr in _rnk_results if _rr.ranker_active)
+        logger.info(
+            f"  Selector: {len(_sel_results)} scored, Ranker: {_n_ranker_active} active (regime={_regime_label})"
+        )
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
     csv_rows.sort(

@@ -1,8 +1,8 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.12.0 (ruleset `69a0c7f8`)
-**Last updated:** 2026-04-02
-**Status:** Production — daily automated runs, shadow portfolio tracking
+**Version:** 1.4.0 (ruleset `dd1e608c`, v1.13.0)
+**Last updated:** 2026-04-03
+**Status:** Production — A4 selector + clinical_50 ranker adopted, EW Top-30
 
 ---
 
@@ -17,9 +17,31 @@ favorable risk/reward ahead of binary outcomes.
 
 ```
 Universe (M1) → Financial Health (M2) → Catalyst Events (M3) → Clinical Dev (M4)
-→ Composite Scoring (M5) → Decision Engine (L0→L2→L4→L4b→L3) → Portfolio Construction
+→ Composite Scoring (M5) → Decision Engine (L0→L2→L4→L4b→L3)
+→ Selector Engine (A4: coinvest 65% + inst_delta 35%)
+→ Ranker Engine (clinical_50: clinical 50%, catalyst 20%, survivability 15%, inst 10%, options 5%)
+→ Sort by final_score → EW Top-30 → Portfolio Construction
 → Shadow Portfolio → Performance Attribution → Governance Gates
 ```
+
+### Two-Stage Scoring (Spec 050, adopted 2026-04-03)
+
+The model uses a **selector/ranker split**: one score to choose the shortlist, a different
+score to rank within it. This was validated on true PIT data (67 monthly periods, Jun 2020 —
+Apr 2026) at +2.34pp/mo net-of-cost, t=2.57.
+
+**Stage 1 — Selector (A4):** Institutional sponsorship determines which 30 names belong
+in the book. 65% coinvest_score_z + 35% inst_delta_z. Clinical quality was destructive
+as a selector (-0.53pp). The selector's edge is that institutional sponsorship predicts
+which biotech names hold value through catalyst events.
+
+**Stage 2 — Ranker (clinical_50):** Clinical quality, catalyst timing, and survivability
+determine ordering within the selected set. 50% clinical quality, 20% catalyst timing,
+15% survivability, 10% institutional confirmation, 5% options overlay. The ranker works
+by selection perturbation at the Top-30 boundary (adding +0.22pp/mo vs selector alone),
+not by creating a precise ordinal ranking — which is why EW construction is correct.
+
+**Construction:** Equal-weight Top-30. Rank-weighting is not justified (RW-EW = -0.09pp, t=-0.95).
 
 ### Core Invariants
 
@@ -97,50 +119,58 @@ Size bands: XS (0.15), S (0.30), M (0.60), L (1.00).
 - Catalyst type tilt: disabled
 - Momentum tilt: disabled
 
-### Sort Key
+### Sort Key (v1.13.0)
 
-12-element tuple determining final rank order:
+12-element tuple determining final rank order. The sort anchor is now `selector_score`
+which uses `final_score` (selector + ranker adjustment) when the ranker is active.
 
 ```
 (eligible, is_dev, tier_ord, catalyst_priority, catalyst_mode,
- catalyst_days, missing_count, -optionality_pct + signal_adjustments,
+ catalyst_days, missing_count, -final_score,
  -sponsor_count, momentum_ord, anchor, ticker)
 ```
 
-**Sort anchor:** `optionality_pct` (negated — higher optionality sorts first)
+**Sort anchor:** `selector_score` → reads `final_score` (selector + ranker bounded adjustment)
 
-**Active sort signal:** `inst_delta_z` (weight 0.3, positive-only, clamped ±2.0)
+**Selector:** A4 config in `run_screen.py` → `selector_engine.py` (`compute_selector_scores()`)
 
-**Disabled sort signals:** clinical, coinvest, calendar_alpha, catalyst_type, momentum
+**Ranker:** clinical_50 config in `ranker_engine.py` → `compute_ranker_adjustments()`
+- Activates for names with catalyst ≤ 120d in selector top-60
+- Bounded at ±15% of selector_score
+- Does NOT require options data (analyst rank model)
+
+**Legacy sort signals:** Still computed but superseded by selector/ranker. The tier system
+(A/B/C/D) is still emitted for backward compatibility but no longer drives ordering.
 
 ---
 
 ## 3. Signal Inventory
 
-### Confirmed Signals
+### Production Signals (Spec 050)
 
-| Signal | IC | Horizon | Status | Notes |
-|--------|-----|---------|--------|-------|
-| **Optionality anchor** | Stable (IC ~0.14 at 20d) | Primary | **ACTIVE** — sort anchor | Drives tier assignment and ranking |
-| **inst_delta_z** | +0.077 | 60d | **ACTIVE** — sort contributor w=0.3 | Only confirmed sort signal beyond anchor |
-| **actual_implied_move_pctile** | +0.202 | — | Diagnostic only | Highest raw IC but narrow coverage (39.8%) |
+| Signal | Role | Weight | Evidence |
+|--------|------|--------|----------|
+| **coinvest_score_z** | Selector (A4) | 65% of selector | Dominant signal: t=3.56 in bundle B6, survives size decomposition (79% retained) |
+| **inst_delta_z** | Selector (A4) | 35% of selector | Best complement: IC=+0.077, Δ=+0.80pp |
+| **endpoint_strength_score** | Ranker (clinical_50) | 25% of clinical block | Within-top-30 IC contributor |
+| **design_quality_score** | Ranker (clinical_50) | 25% of clinical block | Within-top-30 IC contributor |
+| **clinical_optionality_pct_dev** | Ranker (clinical_50) | 20% of clinical block | Drives tier assignment (legacy) + ranker ordering |
+| **catalyst_decay_w** | Ranker (clinical_50) | 25% of catalyst block | Catalyst proximity weighting |
+| **binary_quality_score** | Ranker (clinical_50) | 25% of catalyst block | Event quality composite |
+| **financial_score** | Ranker (clinical_50) | 30% of survivability block | Financing risk signal |
 
 ### Rejected / Disabled Signals
 
-| Signal | IC | Reason | Status |
-|--------|-----|--------|--------|
-| cal_alpha | ~0 | Confirmed noise at all horizons | REMOVED in v1.12.0 |
-| clinical_sort | — | Insufficient IC | OFF |
-| coinvest | — | IC below bar | REJECTED |
-| oncology_crowding | +0.020pp | 10x below promotion bar | NEEDS_MORE |
-| milestone_optionality | +0.026 at 84d | t=2.60, positive 77%, narrow | NEEDS_MORE |
-| quality_tiebreaks (Specs 030/031) | — | Economically immaterial | Lane EXHAUSTED |
-
-### Pending Validation
-
-| Signal | Expected IC | Validation Date | Notes |
-|--------|-------------|----------------|-------|
-| total_volume_z | 0.134 | April 7, 2026 | Script queued |
+| Signal | Reason | Status |
+|--------|--------|--------|
+| **clinical_score_v2_z as selector** | Δ=-0.68pp, negative IC | REJECTED as selector anchor |
+| **DEFAULT selector weights** | -0.53pp as selector | REJECTED (clinical 35%/catalyst 25% mix) |
+| cal_alpha | Confirmed noise at all horizons | REMOVED in v1.12.0 |
+| optionality as sort anchor | Underwater on PIT data | SUPERSEDED by A4 selector |
+| coinvest_binary | Δ=+0.25pp, t=1.25 | WORTHLESS — count granularity matters |
+| total_volume_z | IC=-0.10 on PIT-native data | DEAD |
+| quality_tiebreaks (Specs 030/031) | Economically immaterial | Lane EXHAUSTED |
+| rank-weighting (any signal) | RW-EW = -0.09pp, t=-0.95 | NOT JUSTIFIED |
 
 ---
 
@@ -348,31 +378,31 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 
 ## 5. Portfolio Construction
 
-### Current Architecture (v3 Policy)
+### Current Architecture (Spec 050, adopted 2026-04-03)
 
+**Model:** A4 selector + clinical_50 ranker
+**Construction:** Equal-weight Top-30
 **Account:** $500,000 notional
 **Rebalance:** Weekly (Friday)
+**Cost budget:** 25 bps round-trip per turnover event
 
-**Sleeve budget allocation:**
+| Parameter | Value | Evidence |
+|-----------|-------|----------|
+| K (portfolio size) | **30** | K-sweep peak: +2.34pp net, t=2.60, stable K=25-35 |
+| Weighting | **Equal-weight** | RW-EW = -0.09pp, t=-0.95 — do not rank-weight |
+| Turnover | **~22%** monthly | Lower than old baseline (29%) |
+| Rebalance buffer | 30 ranks | Existing, reduces churn |
 
-| Sleeve | Target | Top-K | Per-Name Cap |
-|--------|--------|-------|-------------|
-| binary_91_180 (91-180d catalyst) | 55% | 20 | 3.0% |
-| binary_31_90 (31-90d catalyst) | 25% | 15 | 2.0% |
-| binary_0_30 (0-30d catalyst) | 10% | 10 | 1.0% |
-| less_binary (no dated catalyst) | 10% | 15 | 2.0% |
+**Sleeve budgets are RETIRED.** The fixed 55/25/10/10 allocation was the primary
+construction damage mechanism (+153.6pp drag). Bucket labels survive as metadata only.
 
-**Additional rules:**
-- Family splits (REGULATORY / CLINICAL) within sleeves
-- Regulatory time-ladder sub-buckets (0-14d, 15-45d, 46-90d, 91-180d)
-- Quality tilt within regulatory sub-buckets
-- Gap risk cap (≤ 7 days to catalyst → 0.5% cap)
-- Rebalance buffer: 30 ranks
-- Global per-name cap: 3.0%
+### Construction Diagnosis (2026-04-01, updated 2026-04-03)
 
-### Construction Diagnosis (2026-04-01)
+**Original finding (2026-04-01):** The selection layer generates alpha but fixed sleeve
+budgets destroy it. This remains true for the old optionality selector.
 
-**Finding: The selection layer generates real alpha. The construction layer destroys it.**
+**Updated finding (2026-04-03):** The A4 institutional selector generates statistically
+significant alpha on true PIT data, and EW Top-30 construction preserves it.
 
 #### Selection-Only Benchmark (EW Top-20, PIT, 2020-2026)
 
@@ -454,14 +484,18 @@ cost aggregation, rebalance threshold gate (only trade if expected alpha >
 
 #### Operating Conclusion
 
-> The DEM is a good stock picker being badly monetized by the portfolio
-> construction layer. The main failure is not "risk controls are too tight."
-> It is that the portfolio is organized around fixed sleeve budgets that
-> destroy concentration in the best ideas.
+> The DEM now uses a two-stage scoring architecture: institutional sponsorship
+> selects the book, clinical quality ranks within it, and the portfolio is held
+> equal-weight. This design was validated on true PIT data at +2.34pp/mo net,
+> t=2.57, with lower volatility and drawdown than both the old baseline and XBI.
 
-> Fixed sleeve budgeting is the leak. Bucket labels are fine as metadata.
-> Top-30 equal weight is the strongest simple replacement candidate.
-> The selector's edge is regime-dependent, strongest in bear biotech.
+> The model is a **bear/neutral alpha engine**: strong in distress and consolidation
+> (+3.37pp bear, +6.23pp neutral), with bounded underperformance in sharp biotech
+> rallies (-0.37pp bull). This is structural — institutional sponsorship is a quality
+> signal, and quality lags beta in risk-on environments.
+
+> Fixed sleeve budgeting has been retired. Rank-weighting is not justified.
+> The correct construction is EW Top-30.
 
 #### Construction v2 Shadow (live since 2026-04-01)
 
