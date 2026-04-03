@@ -4947,6 +4947,17 @@ def save_validation_snapshot(
     # Compute target weights for eligible rows
     compute_target_weights(eligible_rows, ruleset=ruleset)
 
+    # --- Output contract: weights only for portfolio names ---
+    # Determine top-30 portfolio set by final_score. Only these names
+    # get target_weight_pct in rankings.csv. All other eligible names
+    # get blank weight (they appear in the research list but not the buy list).
+    # portfolio_positions.csv recomputes weights for just this subset later.
+    _top30_by_score = sorted(eligible_rows, key=lambda r: -_safe_float(r.get("final_score"), default=0.0))
+    _portfolio_tickers = {r.get("ticker") for r in _top30_by_score[:30]}
+    for row in eligible_rows:
+        if row.get("ticker") not in _portfolio_tickers:
+            row["target_weight_pct"] = ""
+
     # Alpha modifier A/B diagnostics removed (alpha_modifier deprecated & inert).
 
     # --- Final CSV row ordering ---
