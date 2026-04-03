@@ -1630,6 +1630,7 @@ SNAPSHOT_COLUMNS = (
         "ranker_options_block",
         "ranker_inst_block",
         "ranker_aact_block",
+        "regime_label",
     ]
 )
 
@@ -3803,6 +3804,7 @@ def save_validation_snapshot(
     ctgov_cache_date: Optional[str] = None,
     phase_scores_version: str = "v3",
     force_overwrite: bool = False,
+    regime_result: Optional[Dict[str, Any]] = None,
 ) -> Optional[Path]:
     """
     Save a lightweight validation snapshot for future forward-looking backtests.
@@ -4860,11 +4862,11 @@ def save_validation_snapshot(
         _sel_buckets = [_sr.selector_rank_bucket for _sr in _sel_results]
 
         # Apply regime modulation to ranker max_adjustment if regime is available
-        try:
-            _regime_label = (regime_result or {}).get("regime", "UNKNOWN")  # noqa: F821
-        except NameError:
-            _regime_label = "UNKNOWN"
+        _regime_label = (regime_result or {}).get("regime", "UNKNOWN")
         _regime_mod = get_regime_modulation(_regime_label)
+        # Persist regime label on all rows for transparency
+        for _row in csv_rows:
+            _row["regime_label"] = _regime_label
 
         from ranker_engine import DEFAULT_RANKER_CONFIG, RankerConfig
 
@@ -8372,6 +8374,7 @@ def run_screening_pipeline(
     # Enhancement data (optional)
     market_snapshot = None
     short_interest_data = None
+    regime_result = None  # Default; set by regime engine if enhancements enabled
 
     if enable_enhancements or enable_short_interest:
         if not HAS_ENHANCEMENTS:
@@ -9734,6 +9737,7 @@ def add_bootstrap_analysis(
     )
 
     results["bootstrap_analysis"] = bootstrap_result
+    results["regime_result"] = regime_result  # noqa: F821 — defined at line 8377
     return results
 
 
@@ -10973,6 +10977,7 @@ Module 3 Catalyst Detection:
                 ranking_mode=args.ranking_mode,
                 prior_snapshot_dir=prior_snapshot_dir,
                 ctgov_cache_date=_ctgov_cache_date,
+                regime_result=results.get("regime_result"),
                 phase_scores_version=(
                     "v1"
                     if getattr(args, "phase_scores_v1", False)
