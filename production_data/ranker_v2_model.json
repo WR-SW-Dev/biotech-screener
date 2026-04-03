@@ -1,0 +1,41 @@
+{
+  "type": "ranker_v2_pairwise",
+  "version": "1.0.0",
+  "trained": "2026-04-03T20:45:10.140774+00:00",
+  "config_id": "49f9c2b0",
+  "config": {
+    "feature_set": "minimal",
+    "cohort_top_n": 60,
+    "require_catalyst_window": false,
+    "n_epochs": 200,
+    "max_pairs_per_date": 400,
+    "train_window": 36,
+    "forward_horizon": "fwd_ret_63d"
+  },
+  "train_dates": 36,
+  "train_pairs": 12800,
+  "model": {
+    "type": "pairwise_logistic",
+    "weights": [
+      0.05225377374697033,
+      0.009570537872039039,
+      -0.015335491641931457,
+      -0.011389751278132071,
+      0.011022789920337615,
+      -0.03141082338521094
+    ],
+    "bias": -0.009676803638988322,
+    "n_features": 6,
+    "feature_names": [
+      "coinvest_score_z",
+      "inst_delta_z",
+      "clinical_score_v2_z",
+      "catalyst_decay_w",
+      "binary_quality_score",
+      "financial_score"
+    ],
+    "trained": true,
+    "train_loss": 0.4065481637379154,
+    "train_accuracy": 0.54125
+  }
+}

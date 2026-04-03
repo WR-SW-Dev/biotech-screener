@@ -126,6 +126,7 @@ from decision_engine import (
     resolve_catalyst_priority,
 )
 from ranker_engine import compute_ranker_adjustments
+from ranker_v2_pairwise import RankerV2Config, model_from_dict, score_snapshot
 from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores, get_regime_modulation
 
 # Spec 050: A4 production selector config (coinvest+inst dominant)
@@ -1631,6 +1632,8 @@ SNAPSHOT_COLUMNS = (
         "ranker_inst_block",
         "ranker_aact_block",
         "regime_label",
+        "ranker_v2_score",
+        "ranker_v2_rank",
     ]
 )
 
@@ -4889,6 +4892,41 @@ def save_validation_snapshot(
         logger.info(
             f"  Selector: {len(_sel_results)} scored, Ranker: {_n_ranker_active} active (regime={_regime_label})"
         )
+
+    # --- Ranker v2 shadow scoring (Spec 051) ---
+    _rv2_model_path = Path("production_data/ranker_v2_model.json")
+    if _rv2_model_path.exists():
+        try:
+            _rv2_artifact = json.loads(_rv2_model_path.read_text(encoding="utf-8"))
+            _rv2_model = model_from_dict(_rv2_artifact["model"])
+            _rv2_config = RankerV2Config(
+                feature_set="minimal",
+                cohort_top_n=60,
+                require_catalyst_window=False,
+            )
+            _rv2_results = score_snapshot(csv_rows, _rv2_model, _rv2_config)
+            _rv2_by_ticker = {r["ticker"]: r for r in _rv2_results}
+            _rv2_scored = 0
+            for _row in csv_rows:
+                _tk = _row.get("ticker", "")
+                _rv2 = _rv2_by_ticker.get(_tk)
+                if _rv2 and _rv2["ranker_v2_score"] is not None:
+                    _row["ranker_v2_score"] = _rv2["ranker_v2_score"]
+                    _row["ranker_v2_rank"] = _rv2["ranker_v2_rank"]
+                    _rv2_scored += 1
+                else:
+                    _row["ranker_v2_score"] = ""
+                    _row["ranker_v2_rank"] = ""
+            logger.info(f"  Ranker v2 shadow: {_rv2_scored} scored (model {_rv2_artifact.get('config_id', '?')})")
+        except Exception as _rv2_err:
+            logger.warning(f"  Ranker v2 shadow failed: {_rv2_err}")
+            for _row in csv_rows:
+                _row["ranker_v2_score"] = ""
+                _row["ranker_v2_rank"] = ""
+    else:
+        for _row in csv_rows:
+            _row["ranker_v2_score"] = ""
+            _row["ranker_v2_rank"] = ""
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
     logger.info(
