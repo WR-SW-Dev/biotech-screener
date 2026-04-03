@@ -1362,8 +1362,7 @@ def compute_module_2_financial(*args, **kwargs):
     if as_of_date and financial_data:
         _cutoff = str(as_of_date)[:10]
         financial_data = [
-            r for r in financial_data
-            if not r.get("source_date") or str(r["source_date"])[:10] <= _cutoff
+            r for r in financial_data if not r.get("source_date") or str(r["source_date"])[:10] <= _cutoff
         ]
 
     if isinstance(universe, set):
@@ -1396,16 +1395,29 @@ def compute_module_2_financial(*args, **kwargs):
         elif "R&D" in rec:
             fin_rec["R&D"] = rec["R&D"]
 
-        # Pass through other fields
+        # Pass through other fields (including PIT snapshot fields)
         for field in [
             "CFO",
+            "CFO_date",
             "CFO_quarterly",
             "CFO_YTD",
             "FCF",
             "FCF_quarterly",
             "MarketableSecurities",
+            "ShortTermInvestments",
+            "CashAndSecurities",
+            "Assets",
+            "Liabilities",
+            "ShareholdersEquity",
+            "LongTermDebt",
+            "OperatingExpenses",
+            "Revenue",
             "Debt",
             "shares_outstanding",
+            "NetIncome_date",
+            "R&D_date",
+            "Revenue_date",
+            "OperatingExpenses_date",
         ]:
             if field in rec:
                 fin_rec[field] = rec[field]

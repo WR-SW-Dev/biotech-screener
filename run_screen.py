@@ -153,7 +153,7 @@ from event_ledger import REGULATORY_EVENT_TYPES, classify_catalyst_family
 
 # Module imports
 from module_1_universe import compute_module_1_universe
-from module_2_financial import compute_module_2_financial
+from module_2_financial_v2 import compute_module_2_financial
 from module_3_catalyst import Module3Config, compute_module_3_catalyst
 from module_4_clinical_dev import compute_module_4_clinical_dev
 from module_5_composite_with_defensive import compute_module_5_composite_with_defensive
