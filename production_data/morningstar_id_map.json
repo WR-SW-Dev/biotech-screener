@@ -138,7 +138,6 @@
     "EYPT": "0P0000063R",
     "FATE": "0P0000ZFE6",
     "FDMT": "0P0001LAN6",
-    "FGEN": "0P0000DHEC",
     "FHTX": "0P0001KY20",
     "FLGT": "0P00018ORK",
     "FOLD": "0P00008X4Q",
@@ -354,7 +353,8 @@
     "ZBIO": "0P0001TK1G",
     "ZLAB": "0P0001BKK5",
     "ZVRA": "0P00015JL3",
-    "ZYME": "0P0001ABIH"
+    "ZYME": "0P0001ABIH",
+    "KYNB": "0P0000DHEC"
   },
   "wrong_matches": {
     "AKRO": "Got Keros, not Akero",
