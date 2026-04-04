@@ -1,5 +1,5 @@
 {
-  "schema": "portfolio_policy.v4",
+  "schema": "portfolio_policy.v5",
   "description": "EW Top-30 construction for $500k biotech portfolio. Promoted 2026-04-01.",
   "construction_mode": "ew_top_n",
   "ew_top_n": 30,
@@ -102,6 +102,21 @@
     "xbi_weekly_ret_floor": -0.05,
     "dd_change_floor_pp": -5.0,
     "multiplier": 0.8,
-    "comment": "Optional: tighten global cap by multiplier when XBI weekly return <= floor AND drawdown deepens by >= floor_pp. Default disabled."
+    "comment": "DEPRECATED: replaced by risk_layer drawdown_breaker in v5."
+  },
+
+  "risk_layer_enabled": true,
+  "therapeutic_area_cap_pct": 0.40,
+  "liquidity_max_adv_pct": 0.05,
+  "drawdown_breaker": {
+    "enabled": true,
+    "portfolio_dd_threshold": 0.15,
+    "portfolio_dd_cap_multiplier": 0.75,
+    "single_name_dd_threshold": 0.40,
+    "single_name_action": "WARN"
+  },
+  "correlated_pair_limit": {
+    "enabled": true,
+    "max_same_indication_phase": 2
   }
 }

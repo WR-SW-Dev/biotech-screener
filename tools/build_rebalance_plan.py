@@ -73,6 +73,52 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
 
     target_weight = 1.0 / len(target_tickers) if target_tickers else 0
 
+    # Apply risk layer constraints
+    from portfolio_risk_layer import MarketSnapshot, PortfolioPolicy
+    from portfolio_risk_layer import Position as RiskPosition
+    from portfolio_risk_layer import apply_risk_layer
+
+    policy_path = REPO_ROOT / "production_data" / "portfolio_policy.json"
+    policy_data = json.loads(policy_path.read_text()) if policy_path.exists() else {}
+
+    risk_positions = []
+    for r in top30:
+        if r["ticker"] not in target_tickers:
+            continue
+        risk_positions.append(
+            RiskPosition(
+                ticker=r["ticker"],
+                rank=int(float(r["actionable_rank"])),
+                weight=target_weight,
+                therapeutic_area=r.get("therapeutic_area"),
+                primary_indication=r.get("primary_indication"),
+                lead_program_phase=r.get("lead_program_phase"),
+                adv_usd_20d=_sf(r.get("adv_usd_20d"), default=None),
+            )
+        )
+
+    risk_policy = PortfolioPolicy(
+        risk_layer_enabled=policy_data.get("risk_layer_enabled", True),
+        global_name_cap_pct=policy_data.get("global_name_cap", {}).get("cap_pct", 0.03),
+        therapeutic_area_cap_pct=policy_data.get("therapeutic_area_cap_pct", 0.40),
+        liquidity_max_adv_pct=policy_data.get("liquidity_max_adv_pct", 0.05),
+        account_usd=policy_data.get("account_usd", 500_000),
+        drawdown_breaker_enabled=policy_data.get("drawdown_breaker", {}).get("enabled", True),
+        portfolio_dd_threshold=policy_data.get("drawdown_breaker", {}).get("portfolio_dd_threshold", 0.15),
+        portfolio_dd_cap_multiplier=policy_data.get("drawdown_breaker", {}).get("portfolio_dd_cap_multiplier", 0.75),
+        single_name_dd_threshold=policy_data.get("drawdown_breaker", {}).get("single_name_dd_threshold", 0.40),
+        correlated_pair_enabled=policy_data.get("correlated_pair_limit", {}).get("enabled", True),
+        max_same_indication_phase=policy_data.get("correlated_pair_limit", {}).get("max_same_indication_phase", 2),
+    )
+
+    risk_result = apply_risk_layer(risk_positions, risk_policy, MarketSnapshot())
+    risk_weights = {p.ticker: p.weight for p in risk_result.positions}
+    risk_breaches = risk_result.breaches
+    risk_flags = risk_result.flags
+
+    # Update target_tickers to reflect any positions dropped by C5
+    target_tickers = {p.ticker for p in risk_result.positions}
+
     # Load current shadow positions
     pos_path = SHADOW_POS_DIR / f"{as_of_date}.json"
     current_holdings: set[str] = set()
@@ -128,7 +174,7 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
                     "ticker": r["ticker"],
                     "dem_rank": int(float(r["actionable_rank"])),
                     "inst_delta_z": round(r["_idz"], 4) if not math.isnan(r["_idz"]) else None,
-                    "target_weight_pct": round(target_weight * 100, 2),
+                    "target_weight_pct": round(risk_weights.get(r["ticker"], target_weight) * 100, 2),
                     "action": "HOLD" if r["ticker"] in current_holdings else "BUY",
                     "next_earnings_date": r.get("next_earnings_date", ""),
                 }
@@ -168,6 +214,12 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
         "est_trade_cost_usd": round(total_trade_cost, 2),
         "target_book": target_book,
         "dropped": dropped,
+        "risk_layer": {
+            "effective_cap_pct": risk_result.effective_cap_pct,
+            "n_breaches": len(risk_breaches),
+            "breaches": risk_breaches,
+            "flags": risk_flags,
+        },
     }
 
 

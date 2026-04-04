@@ -4935,6 +4935,16 @@ def run_daily(
                 _rp_skip = "SKIP" if _rp_result.get("skip_rebalance") else "EXECUTE"
                 _rp_buys = _rp_result.get("n_buys", 0)
                 _logger.info(f"Rebalance plan → {_rp_skip}, {_rp_buys} buys")
+                # Write standalone risk_layer artifact (Spec 052)
+                _rl_data = _rp_result.get("risk_layer")
+                if _rl_data:
+                    _rl_dir = REPO_ROOT / "artifacts" / "risk_layer"
+                    _rl_dir.mkdir(parents=True, exist_ok=True)
+                    _rl_path = _rl_dir / f"{as_of_date}.json"
+                    with open(_rl_path, "w") as _rl_f:
+                        json.dump(_rl_data, _rl_f, indent=2, default=str)
+                    _rl_nb = _rl_data.get("n_breaches", 0)
+                    _logger.info(f"Risk layer artifact → {_rl_nb} breaches")
             else:
                 _logger.info(f"Rebalance plan → skipped ({_rp_result['error']})")
         except Exception as _rp_err:
