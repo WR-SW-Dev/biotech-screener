@@ -22,21 +22,20 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from defensive_overlay_adapter import (
-    sanitize_corr,
-    defensive_multiplier,
-    raw_inv_vol_weight,
-    calculate_dynamic_floor,
-    apply_caps_and_renormalize,
-    compute_cluster_percentile_thresholds,
-    detect_fundamental_red_flags,
-    apply_red_flag_suppression,
     _q,
+    apply_caps_and_renormalize,
+    apply_red_flag_suppression,
+    calculate_dynamic_floor,
+    defensive_multiplier,
+    detect_fundamental_red_flags,
+    raw_inv_vol_weight,
+    sanitize_corr,
 )
-
 
 # ============================================================================
 # CORRELATION SANITIZATION TESTS
 # ============================================================================
+
 
 class TestSanitizeCorrelation:
     """Tests for correlation data sanitization."""
@@ -106,6 +105,7 @@ class TestSanitizeCorrelation:
 # DEFENSIVE MULTIPLIER TESTS
 # ============================================================================
 
+
 class TestDefensiveMultiplier:
     """Tests for defensive multiplier calculation."""
 
@@ -127,7 +127,7 @@ class TestDefensiveMultiplier:
         """Good diversifier (moderate low corr + moderate vol) should get 1.10x bonus."""
         features = {
             "corr_xbi": "0.35",  # Below 0.40
-            "vol_60d": "0.45",   # Below 0.50
+            "vol_60d": "0.45",  # Below 0.50
         }
         mult, notes = defensive_multiplier(features)
 
@@ -177,6 +177,7 @@ class TestDefensiveMultiplier:
 # ============================================================================
 # MULTI-FACTOR FEATURE TESTS (v2.0)
 # ============================================================================
+
 
 class TestMultiFactorFeatures:
     """Tests for multi-factor defensive multiplier (momentum, RSI, drawdown)."""
@@ -245,9 +246,9 @@ class TestMultiFactorFeatures:
         """Multiple factors should stack multiplicatively."""
         features = {
             "corr_xbi": "0.25",  # Elite corr
-            "vol_60d": "0.35",   # Elite vol
-            "ret_21d": "0.15",   # Momentum bonus
-            "rsi_14d": "28",     # Oversold bonus
+            "vol_60d": "0.35",  # Elite vol
+            "ret_21d": "0.15",  # Momentum bonus
+            "rsi_14d": "28",  # Oversold bonus
         }
         mult, notes = defensive_multiplier(features)
 
@@ -280,7 +281,7 @@ class TestMultiFactorFeatures:
             "corr_xbi": "0.50",
             "vol_60d": "0.50",
             "ret_21d": "0.20",  # Would trigger momentum bonus
-            "rsi_14d": "25",    # Would trigger RSI bonus
+            "rsi_14d": "25",  # Would trigger RSI bonus
         }
         mult, notes = defensive_multiplier(features, config=config)
 
@@ -298,8 +299,8 @@ class TestMultiFactorFeatures:
 
         features = {
             "corr_xbi": "0.25",  # Elite corr
-            "vol_60d": "0.35",   # Elite vol → 1.40x
-            "ret_21d": "0.15",   # Momentum → 1.05x
+            "vol_60d": "0.35",  # Elite vol → 1.40x
+            "ret_21d": "0.15",  # Momentum → 1.05x
         }
         mult, notes = defensive_multiplier(features, config=config)
 
@@ -315,8 +316,8 @@ class TestMultiFactorFeatures:
         config = DefensiveConfig(mult_floor=Decimal("0.90"))
 
         features = {
-            "corr_xbi": "0.85",       # High corr penalty → 0.95x
-            "ret_21d": "-0.25",       # Momentum penalty → 0.95x
+            "corr_xbi": "0.85",  # High corr penalty → 0.95x
+            "ret_21d": "-0.25",  # Momentum penalty → 0.95x
             "drawdown_current": "-0.45",  # Drawdown penalty → 0.92x
         }
         mult, notes = defensive_multiplier(features, config=config)
@@ -327,7 +328,7 @@ class TestMultiFactorFeatures:
 
     def test_config_provenance(self):
         """Config should provide provenance for audit trail."""
-        from defensive_overlay_adapter import DefensiveConfig, DEFAULT_DEFENSIVE_CONFIG
+        from defensive_overlay_adapter import DEFAULT_DEFENSIVE_CONFIG
 
         prov = DEFAULT_DEFENSIVE_CONFIG.to_provenance()
 
@@ -343,6 +344,7 @@ class TestMultiFactorFeatures:
 # ============================================================================
 # INVERSE VOLATILITY WEIGHT TESTS
 # ============================================================================
+
 
 class TestInverseVolWeight:
     """Tests for inverse-volatility weight calculation."""
@@ -388,6 +390,7 @@ class TestInverseVolWeight:
 # DYNAMIC FLOOR TESTS
 # ============================================================================
 
+
 class TestDynamicFloor:
     """Tests for dynamic position floor calculation."""
 
@@ -415,6 +418,7 @@ class TestDynamicFloor:
 # ============================================================================
 # CAPS AND RENORMALIZATION TESTS
 # ============================================================================
+
 
 class TestCapsAndRenormalize:
     """Tests for position caps and renormalization."""
@@ -527,6 +531,7 @@ class TestCapsAndRenormalize:
 # QUANTIZATION TESTS
 # ============================================================================
 
+
 class TestQuantization:
     """Tests for weight quantization helper."""
 
@@ -545,6 +550,7 @@ class TestQuantization:
 # ============================================================================
 # EDGE CASES
 # ============================================================================
+
 
 class TestEdgeCases:
     """Tests for edge cases and error handling."""
@@ -584,6 +590,7 @@ class TestEdgeCases:
 # ============================================================================
 # COVERAGE DIAGNOSTICS TESTS
 # ============================================================================
+
 
 class TestCoverageDiagnostics:
     """Tests for defensive feature coverage diagnostics."""
@@ -670,6 +677,7 @@ class TestCoverageDiagnostics:
 # ============================================================================
 # STRUCTURED TAGS AND AUDIT FEATURES TESTS
 # ============================================================================
+
 
 class TestStructuredTags:
     """Tests for machine-safe defensive tags extraction."""
@@ -803,9 +811,7 @@ class TestEnrichOutputFields:
             "AAA": {"defensive_features": {"corr_xbi": "0.25", "vol_60d": "0.35"}},
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=True
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=True)
 
         rec = result["ranked_securities"][0]
         assert "defensive_tags" in rec
@@ -825,9 +831,7 @@ class TestEnrichOutputFields:
             "AAA": {"defensive_features": {"corr_xbi": "0.28", "vol_60d": "0.32", "ret_21d": "0.05"}},
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=True
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=True)
 
         rec = result["ranked_securities"][0]
         assert "defensive_features" in rec
@@ -839,6 +843,7 @@ class TestEnrichOutputFields:
 # ============================================================================
 # NEW: FIELDS ALWAYS PRESENT TESTS
 # ============================================================================
+
 
 class TestFieldsAlwaysPresent:
     """Tests for fields present even when apply_multiplier=False."""
@@ -857,9 +862,7 @@ class TestFieldsAlwaysPresent:
             "AAA": {"defensive_features": {"corr_xbi": "0.25", "vol_60d": "0.35"}},
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         rec = result["ranked_securities"][0]
         # All fields present
@@ -892,9 +895,7 @@ class TestFieldsAlwaysPresent:
             "BBB": {"defensive_features": {"corr_xbi": "0.85", "vol_60d": "0.90"}},  # Would be penalty
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         # Ranks unchanged
         assert result["ranked_securities"][0]["composite_rank"] == 1
@@ -908,8 +909,9 @@ class TestFieldsAlwaysPresent:
 
         V4: boost_eligibility_floor=51, so score must be >= 51 to get elite boost.
         """
-        from defensive_overlay_adapter import enrich_with_defensive_overlays
         from decimal import Decimal
+
+        from defensive_overlay_adapter import enrich_with_defensive_overlays
 
         output = {
             "ranked_securities": [
@@ -922,9 +924,7 @@ class TestFieldsAlwaysPresent:
             "AAA": {"defensive_features": {"corr_xbi": "0.25", "vol_60d": "0.35"}},  # Elite = 1.40x
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         rec = result["ranked_securities"][0]
         # risk_adjusted_score = 55 * 1.40 = 77
@@ -938,16 +938,18 @@ class TestDefensiveBucket:
 
     def test_elite_bucket(self):
         """Multiplier > 1.20 should be 'elite' bucket."""
-        from defensive_overlay_adapter import _derive_defensive_bucket
         from decimal import Decimal
+
+        from defensive_overlay_adapter import _derive_defensive_bucket
 
         assert _derive_defensive_bucket(Decimal("1.40")) == "elite"
         assert _derive_defensive_bucket(Decimal("1.21")) == "elite"
 
     def test_good_bucket(self):
         """Multiplier 1.05 < m <= 1.20 should be 'good' bucket."""
-        from defensive_overlay_adapter import _derive_defensive_bucket
         from decimal import Decimal
+
+        from defensive_overlay_adapter import _derive_defensive_bucket
 
         assert _derive_defensive_bucket(Decimal("1.10")) == "good"
         assert _derive_defensive_bucket(Decimal("1.20")) == "good"
@@ -955,8 +957,9 @@ class TestDefensiveBucket:
 
     def test_penalty_bucket(self):
         """Multiplier < 0.98 should be 'penalty' bucket."""
-        from defensive_overlay_adapter import _derive_defensive_bucket
         from decimal import Decimal
+
+        from defensive_overlay_adapter import _derive_defensive_bucket
 
         assert _derive_defensive_bucket(Decimal("0.95")) == "penalty"
         assert _derive_defensive_bucket(Decimal("0.75")) == "penalty"
@@ -964,8 +967,9 @@ class TestDefensiveBucket:
 
     def test_neutral_bucket(self):
         """Multiplier 0.98 <= m <= 1.05 should be 'neutral' bucket."""
-        from defensive_overlay_adapter import _derive_defensive_bucket
         from decimal import Decimal
+
+        from defensive_overlay_adapter import _derive_defensive_bucket
 
         assert _derive_defensive_bucket(Decimal("1.00")) == "neutral"
         assert _derive_defensive_bucket(Decimal("0.98")) == "neutral"
@@ -1022,12 +1026,10 @@ class TestNullEquivalentDetection:
 
         scores_by_ticker = {
             "AAA": {"defensive_features": {"vol_60d": "0.30", "corr_xbi": "N/A"}},  # corr is null-eq
-            "BBB": {"defensive_features": {"vol_60d": "", "corr_xbi": "0.40"}},     # vol is null-eq
+            "BBB": {"defensive_features": {"vol_60d": "", "corr_xbi": "0.40"}},  # vol is null-eq
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         coverage = result["diagnostic_counts"]["defensive_features_coverage"]
         by_feature = coverage["by_feature"]
@@ -1056,9 +1058,7 @@ class TestAliasCoverage:
             "BBB": {"defensive_features": {"corr_xbi_120d": "0.40", "drawdown_current": "-0.15"}},
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         coverage = result["diagnostic_counts"]["defensive_features_coverage"]
 
@@ -1089,9 +1089,7 @@ class TestAliasCoverage:
             "CCC": {"defensive_features": {}},  # No features
         }
 
-        result = enrich_with_defensive_overlays(
-            output, scores_by_ticker, apply_multiplier=False
-        )
+        result = enrich_with_defensive_overlays(output, scores_by_ticker, apply_multiplier=False)
 
         coverage = result["diagnostic_counts"]["defensive_features_coverage"]
         # AAA and BBB have sufficient, CCC does not
@@ -1103,33 +1101,35 @@ class TestOutputSchemaColumns:
 
     def test_output_schema_extension(self):
         """Output schema extension should add all required columns."""
-        from defensive_overlay_adapter import attach_output_schema_columns, OUTPUT_SCHEMA_VERSION
+        from defensive_overlay_adapter import OUTPUT_SCHEMA_VERSION, attach_output_schema_columns
 
         output = {
-            "ranked_securities": [{
-                "ticker": "AAA",
-                "composite_score": "75.0",
-                "score_z": 1.2,
-                "expected_excess_return_annual": 0.096,
-                "defensive_features": {"vol_60d": "0.40", "drawdown_current": "-0.15"},
-                "cluster_id": 2,
-                "component_scores": {"clinical": "70.0", "nested": {"skip": "me"}},
-            }]
+            "ranked_securities": [
+                {
+                    "ticker": "AAA",
+                    "composite_score": "75.0",
+                    "score_z": 1.2,
+                    "expected_excess_return_annual": 0.096,
+                    "defensive_features": {"vol_60d": "0.40", "drawdown_current": "-0.15"},
+                    "cluster_id": 2,
+                    "component_scores": {"clinical": "70.0", "nested": {"skip": "me"}},
+                }
+            ]
         }
         coverage = attach_output_schema_columns(output)
 
         assert output["output_schema_version"] == OUTPUT_SCHEMA_VERSION
         rec = output["ranked_securities"][0]
-        assert rec["z_score"] == 1.2                   # Alias for score_z
+        assert rec["z_score"] == 1.2  # Alias for score_z
         assert rec["expected_excess_return"] == 0.096  # Alias created
-        assert rec["volatility"] == "0.40"             # Extracted from defensive_features
-        assert rec["drawdown"] == "-0.15"              # Extracted from defensive_features
+        assert rec["volatility"] == "0.40"  # Extracted from defensive_features
+        assert rec["drawdown"] == "-0.15"  # Extracted from defensive_features
         assert rec["module_scores"] == {"clinical": "70.0"}  # Scalars only
         assert coverage["z_score"] == 1
 
     def test_required_columns_always_present(self):
         """All 6 required columns must exist even when data is missing (null)."""
-        from defensive_overlay_adapter import attach_output_schema_columns, REQUIRED_OUTPUT_COLUMNS
+        from defensive_overlay_adapter import REQUIRED_OUTPUT_COLUMNS, attach_output_schema_columns
 
         # Minimal record with NO source data
         output = {"ranked_securities": [{"ticker": "BBB"}]}
@@ -1159,6 +1159,7 @@ class TestOutputSchemaColumns:
         """Default argparse should enable defensive multiplier (--no-defensive-multiplier to disable)."""
         import argparse
         import sys
+
         sys.path.insert(0, str(Path(__file__).parent.parent))
 
         # Simulate argparse with no defensive flags
@@ -1181,20 +1182,29 @@ class TestOutputSchemaColumns:
 # CACHE MERGE HELPERS TESTS
 # ============================================================================
 
+
 class TestCacheMergeHelpers:
     """Tests for load_defensive_cache() and merge_cache_into_scores()."""
 
     def test_load_and_merge_fills_gaps(self, tmp_path):
         """Load cache file and merge should fill missing features."""
         import json
+
         from defensive_overlay_adapter import load_defensive_cache, merge_cache_into_scores
 
         # Create cache file
         cache_file = tmp_path / "cache.json"
         with open(cache_file, "w") as f:
-            json.dump({"data": {"features_by_ticker": {
-                "AMGN": {"vol_60d": "0.35", "corr_xbi_120d": "0.25"},
-            }}}, f)
+            json.dump(
+                {
+                    "data": {
+                        "features_by_ticker": {
+                            "AMGN": {"vol_60d": "0.35", "corr_xbi_120d": "0.25"},
+                        }
+                    }
+                },
+                f,
+            )
 
         # Load and merge
         cache = load_defensive_cache(str(cache_file))
@@ -1209,6 +1219,7 @@ class TestCacheMergeHelpers:
     def test_load_missing_file_raises(self, tmp_path):
         """Should raise FileNotFoundError for missing file."""
         from defensive_overlay_adapter import load_defensive_cache
+
         with pytest.raises(FileNotFoundError):
             load_defensive_cache(str(tmp_path / "nonexistent.json"))
 
@@ -1216,6 +1227,7 @@ class TestCacheMergeHelpers:
 # ============================================================================
 # BOOST ELIGIBILITY GATE TESTS (Percentile-within-cluster + Floor)
 # ============================================================================
+
 
 class TestBoostEligibilityGate:
     """Tests for the boost eligibility gate that prevents weak names from getting boosts.
@@ -1226,16 +1238,18 @@ class TestBoostEligibilityGate:
 
     def test_low_score_cannot_get_elite_boost_below_floor(self):
         """Score below absolute floor should not get elite boost."""
-        from defensive_overlay_adapter import enrich_with_defensive_overlays, DefensiveConfig
+        from defensive_overlay_adapter import DefensiveConfig, enrich_with_defensive_overlays
 
         # Single-member cluster: threshold = max(floor, score) = max(49, 35) = 49
         output = {
-            "ranked_securities": [{
-                "ticker": "WEAK",
-                "composite_score": "35.00",  # Below floor of 49
-                "composite_rank": 1,
-                "cluster_id": "oncology_phase2_small",
-            }],
+            "ranked_securities": [
+                {
+                    "ticker": "WEAK",
+                    "composite_score": "35.00",  # Below floor of 49
+                    "composite_rank": 1,
+                    "cluster_id": "oncology_phase2_small",
+                }
+            ],
             "diagnostic_counts": {},
         }
 
@@ -1243,7 +1257,7 @@ class TestBoostEligibilityGate:
             "WEAK": {
                 "defensive_features": {
                     "corr_xbi": "0.25",  # Low corr -> would normally get elite 1.40x
-                    "vol_60d": "0.35",   # Low vol -> also qualifies for elite
+                    "vol_60d": "0.35",  # Low vol -> also qualifies for elite
                 }
             }
         }
@@ -1270,15 +1284,17 @@ class TestBoostEligibilityGate:
 
     def test_high_score_still_gets_elite_boost(self):
         """Above-threshold score should still receive elite boost."""
-        from defensive_overlay_adapter import enrich_with_defensive_overlays, DefensiveConfig
+        from defensive_overlay_adapter import DefensiveConfig, enrich_with_defensive_overlays
 
         output = {
-            "ranked_securities": [{
-                "ticker": "STRONG",
-                "composite_score": "65.00",  # Above floor
-                "composite_rank": 1,
-                "cluster_id": "oncology_phase2_small",
-            }],
+            "ranked_securities": [
+                {
+                    "ticker": "STRONG",
+                    "composite_score": "65.00",  # Above floor
+                    "composite_rank": 1,
+                    "cluster_id": "oncology_phase2_small",
+                }
+            ],
             "diagnostic_counts": {},
         }
 
@@ -1286,7 +1302,7 @@ class TestBoostEligibilityGate:
             "STRONG": {
                 "defensive_features": {
                     "corr_xbi": "0.25",  # Low corr -> elite
-                    "vol_60d": "0.35",   # Low vol -> elite
+                    "vol_60d": "0.35",  # Low vol -> elite
                 }
             }
         }
@@ -1313,23 +1329,25 @@ class TestBoostEligibilityGate:
 
     def test_penalties_still_apply_to_low_score(self):
         """Penalties (<1.0) should still apply even to low base scores."""
-        from defensive_overlay_adapter import enrich_with_defensive_overlays, DefensiveConfig
+        from defensive_overlay_adapter import DefensiveConfig, enrich_with_defensive_overlays
 
         output = {
-            "ranked_securities": [{
-                "ticker": "WEAK_RISKY",
-                "composite_score": "30.00",  # Below floor
-                "composite_rank": 1,
-                "cluster_id": "oncology_phase2_small",
-            }],
+            "ranked_securities": [
+                {
+                    "ticker": "WEAK_RISKY",
+                    "composite_score": "30.00",  # Below floor
+                    "composite_rank": 1,
+                    "cluster_id": "oncology_phase2_small",
+                }
+            ],
             "diagnostic_counts": {},
         }
 
         scores_by_ticker = {
             "WEAK_RISKY": {
                 "defensive_features": {
-                    "corr_xbi": "0.85",       # High corr -> penalty
-                    "vol_60d": "0.90",        # High vol -> penalty
+                    "corr_xbi": "0.85",  # High corr -> penalty
+                    "vol_60d": "0.90",  # High vol -> penalty
                     "drawdown_current": "-0.45",  # Deep drawdown -> penalty
                 }
             }
@@ -1358,7 +1376,7 @@ class TestBoostEligibilityGate:
 
     def test_percentile_within_cluster_gate(self):
         """Percentile gate should apply within each cluster."""
-        from defensive_overlay_adapter import enrich_with_defensive_overlays, DefensiveConfig
+        from defensive_overlay_adapter import DefensiveConfig, enrich_with_defensive_overlays
 
         # Cluster with 5 members: P60 threshold = 60th percentile
         # Scores: 30, 40, 50, 60, 70 -> P60 = 54
@@ -1376,8 +1394,9 @@ class TestBoostEligibilityGate:
 
         # All have elite-qualifying defensive features
         elite_features = {"corr_xbi": "0.25", "vol_60d": "0.35"}
-        scores_by_ticker = {t["ticker"]: {"defensive_features": elite_features.copy()}
-                           for t in output["ranked_securities"]}
+        scores_by_ticker = {
+            t["ticker"]: {"defensive_features": elite_features.copy()} for t in output["ranked_securities"]
+        }
 
         cfg = DefensiveConfig(
             boost_eligibility_floor=Decimal("49"),
@@ -1404,7 +1423,7 @@ class TestBoostEligibilityGate:
 
     def test_different_clusters_independent_thresholds(self):
         """Each cluster should have independent threshold calculation."""
-        from defensive_overlay_adapter import enrich_with_defensive_overlays, DefensiveConfig
+        from defensive_overlay_adapter import DefensiveConfig, enrich_with_defensive_overlays
 
         output = {
             "ranked_securities": [
@@ -1419,8 +1438,9 @@ class TestBoostEligibilityGate:
         }
 
         elite_features = {"corr_xbi": "0.25", "vol_60d": "0.35"}
-        scores_by_ticker = {t["ticker"]: {"defensive_features": elite_features.copy()}
-                           for t in output["ranked_securities"]}
+        scores_by_ticker = {
+            t["ticker"]: {"defensive_features": elite_features.copy()} for t in output["ranked_securities"]
+        }
 
         cfg = DefensiveConfig(
             boost_eligibility_floor=Decimal("49"),
@@ -1440,8 +1460,8 @@ class TestBoostEligibilityGate:
         # High cluster P60 ≈ 74, so HIGH1(80) passes, HIGH2(70) gated
         # Low cluster P60 ≈ 47, so LOW1(50) passes, LOW2(45) gated
         # (Both above floor of 40)
-        assert results["HIGH1"] == Decimal("1.40"), f"HIGH1 should get elite"
-        assert results["LOW1"] == Decimal("1.40"), f"LOW1 should get elite (top of its cluster)"
+        assert results["HIGH1"] == Decimal("1.40"), "HIGH1 should get elite"
+        assert results["LOW1"] == Decimal("1.40"), "LOW1 should get elite (top of its cluster)"
 
 
 class TestComputeClusterPercentileThresholds:
@@ -1538,9 +1558,7 @@ class TestComputeClusterPercentileThresholds:
             {"cluster_id": "A", "composite_score": "90", "composite_score_before_defensive": "70"},
         ]
 
-        thresholds, diag = compute_cluster_percentile_thresholds(
-            records, percentile=60, floor=Decimal("30")
-        )
+        thresholds, diag = compute_cluster_percentile_thresholds(records, percentile=60, floor=Decimal("30"))
 
         # P60 of [50, 60, 70] = 62, not P60 of [70, 80, 90] = 82
         # Should use pre-defensive scores
@@ -1558,15 +1576,13 @@ class TestComputeClusterPercentileThresholds:
             {"cluster_id": "B", "composite_score": "28"},
         ]
 
-        thresholds, diag = compute_cluster_percentile_thresholds(
-            records, percentile=60, floor=Decimal("50")
-        )
+        thresholds, diag = compute_cluster_percentile_thresholds(records, percentile=60, floor=Decimal("50"))
 
         # Both clusters should be floor_dominated
         assert diag["threshold_sources"]["A"] == "floor_dominated"
         assert diag["threshold_sources"]["B"] == "floor_dominated"
         # P0: Flag that percentile gating is inactive
-        assert diag.get("all_clusters_floor_dominated") == True
+        assert diag.get("all_clusters_floor_dominated") is True
 
     def test_partial_floor_dominated_no_warning(self):
         """Should NOT flag when only some clusters are floor_dominated."""
@@ -1579,9 +1595,7 @@ class TestComputeClusterPercentileThresholds:
             {"cluster_id": "B", "composite_score": "70"},  # Above floor
         ]
 
-        thresholds, diag = compute_cluster_percentile_thresholds(
-            records, percentile=60, floor=Decimal("50")
-        )
+        thresholds, diag = compute_cluster_percentile_thresholds(records, percentile=60, floor=Decimal("50"))
 
         # A should be floor_dominated, B should not
         assert diag["threshold_sources"]["A"] == "floor_dominated"
@@ -1594,6 +1608,7 @@ class TestComputeClusterPercentileThresholds:
 # FUNDAMENTAL RED-FLAG SUPPRESSOR TESTS
 # ============================================================================
 
+
 class TestFundamentalRedFlagDetection:
     """Tests for detect_fundamental_red_flags()."""
 
@@ -1601,10 +1616,7 @@ class TestFundamentalRedFlagDetection:
         """Healthy company should have no red flags."""
         record = {
             "ticker": "HEALTHY",
-            "survivability_signal": {
-                "score": "2.0",
-                "metrics": {"effective_runway_months": 24, "debt_to_cash": 0.5}
-            },
+            "survivability_signal": {"score": "2.0", "metrics": {"effective_runway_months": 24, "debt_to_cash": 0.5}},
             "stage_bucket": "late",
             "pipeline_diversity_signal": {"risk_profile": "diversified"},
         }
@@ -1615,9 +1627,7 @@ class TestFundamentalRedFlagDetection:
     def test_cash_runway_flag(self):
         """Should flag company with < 6 months runway."""
         record = {
-            "survivability_signal": {
-                "metrics": {"effective_runway_months": 4}
-            },
+            "survivability_signal": {"metrics": {"effective_runway_months": 4}},
         }
         is_flagged, reasons = detect_fundamental_red_flags(record)
         assert is_flagged
@@ -1805,7 +1815,6 @@ class TestFundamentalRedFlagDetection:
         assert is_flagged
         assert "weak_competitive_position" in reasons
 
-
     def test_no_revenue_late_stage_missing_has_revenue_skips(self):
         """has_revenue=None (missing) should NOT trigger no_revenue_late_stage."""
         record = {
@@ -1869,9 +1878,7 @@ class TestFundamentalRedFlagDetection:
     def test_reasons_always_emitted_when_flagged(self):
         """When fundamental_red_flag=True, reasons list must be non-empty."""
         record = {
-            "survivability_signal": {
-                "metrics": {"effective_runway_months": 4}
-            },
+            "survivability_signal": {"metrics": {"effective_runway_months": 4}},
         }
         is_flagged, reasons = detect_fundamental_red_flags(record)
         assert is_flagged
@@ -1880,10 +1887,7 @@ class TestFundamentalRedFlagDetection:
     def test_reasons_deterministic_order(self):
         """Reason codes are in stable (identical across calls) order."""
         record = {
-            "survivability_signal": {
-                "score": "-5.0",
-                "metrics": {"effective_runway_months": 3}
-            },
+            "survivability_signal": {"score": "-5.0", "metrics": {"effective_runway_months": 3}},
         }
         _, reasons1 = detect_fundamental_red_flags(record)
         _, reasons2 = detect_fundamental_red_flags(record)
@@ -1896,12 +1900,24 @@ class TestRedFlagSuppression:
     def test_suppression_caps_at_median(self):
         """Flagged securities above median should be penalized (continuous multiplier)."""
         records = [
-            {"ticker": "HIGH", "composite_score": "80", "rankable": True,
-             "survivability_signal": {"score": "-5.0", "metrics": {}}},  # Will be flagged
-            {"ticker": "MED", "composite_score": "50", "rankable": True,
-             "survivability_signal": {"score": "1.0", "metrics": {}}},  # Not flagged
-            {"ticker": "LOW", "composite_score": "20", "rankable": True,
-             "survivability_signal": {"score": "1.0", "metrics": {}}},  # Not flagged
+            {
+                "ticker": "HIGH",
+                "composite_score": "80",
+                "rankable": True,
+                "survivability_signal": {"score": "-5.0", "metrics": {}},
+            },  # Will be flagged
+            {
+                "ticker": "MED",
+                "composite_score": "50",
+                "rankable": True,
+                "survivability_signal": {"score": "1.0", "metrics": {}},
+            },  # Not flagged
+            {
+                "ticker": "LOW",
+                "composite_score": "20",
+                "rankable": True,
+                "survivability_signal": {"score": "1.0", "metrics": {}},
+            },  # Not flagged
         ]
 
         provenance = apply_red_flag_suppression(records, enable_suppression=True)
@@ -1913,28 +1929,40 @@ class TestRedFlagSuppression:
         high_rec = next(r for r in records if r["ticker"] == "HIGH")
         assert float(high_rec["composite_score"]) < 80.0, "Flagged should be penalized"
         assert high_rec["composite_score_pre_suppression"] == "80"
-        assert high_rec["fundamental_red_flag"] == True
+        assert high_rec["fundamental_red_flag"] is True
         assert provenance["suppression_mode"] == "continuous_multiplier"
 
     def test_suppression_disabled(self):
         """When disabled, no suppression should occur."""
         records = [
-            {"ticker": "BAD", "composite_score": "80", "rankable": True,
-             "survivability_signal": {"score": "-5.0", "metrics": {}}},
+            {
+                "ticker": "BAD",
+                "composite_score": "80",
+                "rankable": True,
+                "survivability_signal": {"score": "-5.0", "metrics": {}},
+            },
         ]
 
         provenance = apply_red_flag_suppression(records, enable_suppression=False)
 
-        assert provenance["suppressor_enabled"] == False
+        assert provenance["suppressor_enabled"] is False
         assert records[0]["composite_score"] == "80"  # Unchanged
 
     def test_flagged_below_median_not_suppressed(self):
         """Flagged securities below median should not be suppressed."""
         records = [
-            {"ticker": "HIGH", "composite_score": "80", "rankable": True,
-             "survivability_signal": {"score": "1.0", "metrics": {}}},
-            {"ticker": "LOW_BAD", "composite_score": "20", "rankable": True,
-             "survivability_signal": {"score": "-5.0", "metrics": {}}},  # Flagged but below median
+            {
+                "ticker": "HIGH",
+                "composite_score": "80",
+                "rankable": True,
+                "survivability_signal": {"score": "1.0", "metrics": {}},
+            },
+            {
+                "ticker": "LOW_BAD",
+                "composite_score": "20",
+                "rankable": True,
+                "survivability_signal": {"score": "-5.0", "metrics": {}},
+            },  # Flagged but below median
         ]
 
         provenance = apply_red_flag_suppression(records, enable_suppression=True)
@@ -1944,4 +1972,4 @@ class TestRedFlagSuppression:
 
         low_rec = next(r for r in records if r["ticker"] == "LOW_BAD")
         assert low_rec["composite_score"] == "20"  # Unchanged
-        assert low_rec["fundamental_red_flag"] == True
+        assert low_rec["fundamental_red_flag"] is True

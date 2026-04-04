@@ -34,20 +34,17 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from decision_engine import DecisionRuleset
 from warm_caches import warm_ctgov
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def discover_dates(snapshot_source: Path, date_from: str, date_to: str) -> list[str]:
     """Return sorted YYYY-MM-DD dirs that contain rankings.csv."""
     dates = sorted(
         p.name
         for p in snapshot_source.iterdir()
-        if p.is_dir()
-        and len(p.name) == 10
-        and p.name[4] == "-"
-        and (p / "rankings.csv").exists()
+        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "rankings.csv").exists()
     )
     if date_from:
         dates = [d for d in dates if d >= date_from]
@@ -117,17 +114,27 @@ def run_one_date(
     output_json = out_dir / "screen_output.json"
 
     cmd = [
-        sys.executable, str(PROJECT_ROOT / "run_screen.py"),
-        "--as-of-date", snap_date,
-        "--data-dir", str(args.data_dir),
-        "--output", str(output_json),
-        "--decision-mode", "phase2",
-        "--ranking-mode", "decision",
-        "--ruleset", str(args.ruleset),
-        "--snapshot-dir", str(args.out_dir),
-        "--prior-snapshot-dir", str(args.out_dir),
+        sys.executable,
+        str(PROJECT_ROOT / "run_screen.py"),
+        "--as-of-date",
+        snap_date,
+        "--data-dir",
+        str(args.data_dir),
+        "--output",
+        str(output_json),
+        "--decision-mode",
+        "phase2",
+        "--ranking-mode",
+        "decision",
+        "--ruleset",
+        str(args.ruleset),
+        "--snapshot-dir",
+        str(args.out_dir),
+        "--prior-snapshot-dir",
+        str(args.out_dir),
         "--no-delta",
-        "--pit-mode", "degrade",
+        "--pit-mode",
+        "degrade",
     ]
 
     t0 = time.monotonic()
@@ -161,36 +168,51 @@ def run_one_date(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Batch-regenerate historical snapshots using current model.",
     )
     parser.add_argument(
-        "--ruleset", type=Path, required=True,
+        "--ruleset",
+        type=Path,
+        required=True,
         help="Path to target ruleset JSON",
     )
     parser.add_argument(
-        "--date-from", type=str, default="2026-01-15",
+        "--date-from",
+        type=str,
+        default="2026-01-15",
         help="Earliest date to regenerate (default: 2026-01-15)",
     )
     parser.add_argument(
-        "--date-to", type=str, default="2026-02-21",
+        "--date-to",
+        type=str,
+        default="2026-02-21",
         help="Latest date to regenerate (default: 2026-02-21)",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=PROJECT_ROOT / "data" / "snapshots_regenerated",
+        "--out-dir",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "snapshots_regenerated",
         help="Output directory (default: data/snapshots_regenerated)",
     )
     parser.add_argument(
-        "--data-dir", type=Path, default=PROJECT_ROOT / "production_data",
+        "--data-dir",
+        type=Path,
+        default=PROJECT_ROOT / "production_data",
         help="Production data directory (default: production_data)",
     )
     parser.add_argument(
-        "--snapshot-source", type=Path, default=PROJECT_ROOT / "data" / "snapshots",
+        "--snapshot-source",
+        type=Path,
+        default=PROJECT_ROOT / "data" / "snapshots",
         help="Source directory to discover which dates exist (default: data/snapshots)",
     )
     parser.add_argument(
-        "--force", action="store_true", default=False,
+        "--force",
+        action="store_true",
+        default=False,
         help="Re-run even if output already exists",
     )
     args = parser.parse_args()
@@ -224,7 +246,7 @@ def main() -> None:
     elapsed_total = time.monotonic() - t_total
 
     # Phase 3: Summary
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"  OK:   {ok}")
     print(f"  SKIP: {skip}")
     print(f"  FAIL: {fail}")
