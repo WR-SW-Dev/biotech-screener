@@ -5024,6 +5024,20 @@ def run_daily(
         except Exception as _th_err:
             _logger.warning(f"Timing hazard failed: {_th_err}")
 
+        # --- Step 5k.19: Production monitor (non-blocking) ---
+        try:
+            from tools.build_production_monitor import build_production_monitor
+
+            _pm_result = build_production_monitor(as_of_date)
+            if "error" not in _pm_result:
+                _pm_attn = _pm_result.get("attention", "?")
+                _pm_nalerts = len(_pm_result.get("alerts", []))
+                _logger.info(f"Production monitor → {_pm_attn} attention, {_pm_nalerts} alerts")
+            else:
+                _logger.info(f"Production monitor → skipped ({_pm_result.get('error', '?')})")
+        except Exception as _pm_err:
+            _logger.warning(f"Production monitor failed: {_pm_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest

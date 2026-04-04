@@ -30,6 +30,9 @@ logger = logging.getLogger("dashboard")
 REPO_ROOT = Path(__file__).resolve().parent.parent
 TEMPLATES_DIR = Path(__file__).resolve().parent / "templates"
 
+# Event type score → human-readable label (Spec 056)
+EVENT_TYPE_LABELS = {3: "PDUFA", 2: "Data Readout", 1: "Clinical Milestone", 0: "Low/None"}
+
 app = FastAPI(title="Biotech Screener — Policy Control Tower", version="2.0")
 app.add_middleware(
     CORSMiddleware,
@@ -160,6 +163,16 @@ def _load_phase2_health(date: str) -> Optional[Dict]:
     return _load_json(path)
 
 
+def _load_timing_hazard(date: str) -> Optional[Dict]:
+    path = REPO_ROOT / "artifacts" / "timing_hazard" / f"timing_hazard_{date}.json"
+    return _load_json(path)
+
+
+def _load_production_monitor(date: str) -> Optional[Dict]:
+    path = REPO_ROOT / "artifacts" / "production_monitor" / f"{date}_monitor.json"
+    return _load_json(path)
+
+
 def _load_shadow_performance() -> List[Dict]:
     path = REPO_ROOT / "artifacts" / "live_shadow" / "performance.csv"
     if not path.exists():
@@ -204,12 +217,21 @@ async def index(request: Request, date: str = ""):
     phase2 = _load_phase2_health(date)
     attribution = _load_attribution(date)
     perf = _load_shadow_performance()
+    timing_hazard = _load_timing_hazard(date)
+    production_monitor = _load_production_monitor(date)
 
     # Enrich positions with rankings data
     enriched_positions = []
     for p in positions:
         t = p.get("ticker", "")
         r = rankings.get(t, {})
+        # Event type score from rankings (Spec 056 overlay)
+        ets_raw = r.get("event_type_score", "")
+        try:
+            ets_val = int(float(ets_raw)) if ets_raw != "" else None
+        except (ValueError, TypeError):
+            ets_val = None
+
         enriched_positions.append(
             {
                 "ticker": t,
@@ -221,10 +243,18 @@ async def index(request: Request, date: str = ""):
                 "risk": r.get("risk_flags", ""),
                 "catalyst_days": r.get("catalyst_days", ""),
                 "catalyst_family": r.get("catalyst_family", ""),
+                "event_type_score": ets_val,
+                "event_type_label": EVENT_TYPE_LABELS.get(ets_val, "—") if ets_val is not None else "—",
                 "next_earnings_date": r.get("next_earnings_date", "") or earnings_lookup.get(t, ""),
             }
         )
     enriched_positions.sort(key=lambda p: ({"A": 0, "B": 1, "C": 2, "D": 3}.get(p["tier"], 4), -p["weight"]))
+
+    # Catalyst quality summary (event type distribution)
+    catalyst_quality = Counter()
+    for p in enriched_positions:
+        label = p.get("event_type_label", "—")
+        catalyst_quality[label] += 1
 
     # Tier summary
     tier_summary = Counter(p["tier"] for p in enriched_positions)
@@ -295,6 +325,66 @@ async def index(request: Request, date: str = ""):
             }
         )
 
+    # Timing hazard overlay
+    timing_warnings = []
+    timing_summary = {"n_catalysts": 0, "n_warnings": 0, "mean_on_time": None, "confidence_dist": {}}
+    timing_by_ticker: Dict[str, Dict] = {}
+    if timing_hazard and "catalysts" in timing_hazard:
+        timing_summary = {
+            "n_catalysts": timing_hazard.get("n_catalysts", 0),
+            "n_warnings": timing_hazard.get("n_warnings", 0),
+            "mean_on_time": timing_hazard.get("mean_on_time_prob"),
+            "confidence_dist": timing_hazard.get("confidence_dist", {}),
+        }
+        for cat in timing_hazard["catalysts"]:
+            timing_by_ticker[cat["ticker"]] = cat
+            if cat.get("execution_warning_flag"):
+                timing_warnings.append(cat)
+        # Feed timing warnings into alerts
+        if timing_warnings:
+            alerts.append(
+                {
+                    "source": "timing",
+                    "level": "MEDIUM" if len(timing_warnings) >= 3 else "LOW",
+                    "text": f"{len(timing_warnings)} catalyst(s) with execution warnings",
+                }
+            )
+        for tw in timing_warnings:
+            reasons = ", ".join(tw.get("warning_reasons", []))
+            alerts.append(
+                {
+                    "source": "timing",
+                    "level": "LOW",
+                    "text": f"{tw['ticker']} P(on_time)={tw['on_time_prob']:.0%} [{reasons}]",
+                }
+            )
+
+    # Production monitor alerts
+    prod_health = {}
+    if production_monitor and "alerts" in production_monitor:
+        prod_health = {
+            "attention": production_monitor.get("attention", "?"),
+            "hhi": production_monitor.get("hhi"),
+            "jaccard": (production_monitor.get("overlap") or {}).get("jaccard"),
+            "rank_corr": production_monitor.get("rank_correlation"),
+            "ranker_divergent": (production_monitor.get("ranker_drift") or {}).get("n_divergent"),
+            "catalyst_quality": production_monitor.get("catalyst_quality", {}),
+        }
+        for pa in production_monitor["alerts"]:
+            alerts.append(
+                {
+                    "source": "production",
+                    "level": pa.get("level", "WARN"),
+                    "text": f"[{pa.get('code', '?')}] {pa.get('detail', '')}",
+                }
+            )
+
+    # Enrich positions with timing confidence
+    for p in enriched_positions:
+        th = timing_by_ticker.get(p["ticker"], {})
+        p["timing_confidence"] = th.get("timing_confidence_bucket", "")
+        p["on_time_prob"] = th.get("on_time_prob")
+
     return templates.TemplateResponse(
         "index.html",
         {
@@ -318,6 +408,10 @@ async def index(request: Request, date: str = ""):
             "cum_pnl": round(cum_pnl, 0),
             "cum_pnl_pct": round(cum_pnl_pct, 2),
             "perf_trading": perf_trading[-10:],
+            "timing_summary": timing_summary,
+            "timing_warnings": timing_warnings,
+            "catalyst_quality": dict(catalyst_quality),
+            "prod_health": prod_health,
             "now": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
         },
     )
@@ -902,6 +996,18 @@ async def api_regime_shadow_history():
                 }
             )
     return rows
+
+
+@app.get("/api/production_monitor/latest")
+async def api_production_monitor_latest():
+    """Latest production health monitor."""
+    pm_dir = REPO_ROOT / "artifacts" / "production_monitor"
+    if not pm_dir.exists():
+        return {"error": "No production monitor data"}
+    files = sorted(pm_dir.glob("*_monitor.json"), reverse=True)
+    if not files:
+        return {"error": "No production monitor snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
 
 
 @app.get("/api/regime_shadow/latest")

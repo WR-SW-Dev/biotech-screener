@@ -229,6 +229,7 @@ def write_receipt(
     receipts_dir: Optional[Path] = None,
     action: str = "promote",
     reason: str = "",
+    checklist_v2: Optional[Dict[str, Any]] = None,
 ) -> Path:
     """Write a promotion receipt JSON. Returns the receipt path."""
     if receipts_dir is None:
@@ -268,6 +269,11 @@ def write_receipt(
     }
     if reason:
         receipt["reason"] = reason
+    if checklist_v2:
+        receipt["checklist_v2"] = {
+            "valid": checklist_v2.get("valid", False),
+            "reason": checklist_v2.get("reason", ""),
+        }
 
     receipt_path.write_text(
         json.dumps(receipt, indent=2, sort_keys=True) + "\n",
@@ -554,6 +560,30 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print("Use --force to bypass gate validation.", file=sys.stderr)
                 return 1
             print(f"Gate: {gate_msg}")
+        # --- Checklist v2 validation (signal-level, non-blocking for rulesets) ---
+        if not args.rollback:
+            try:
+                from common.promotion_gate import validate_promotion_packet
+
+                # Look for checklist results near the gate summary
+                if args.gate_summary:
+                    checklist_v2 = validate_promotion_packet(args.gate_summary)
+                    if checklist_v2.get("valid"):
+                        print("Checklist v2: ALL PASS")
+                    elif checklist_v2.get("reason", "").startswith("Missing"):
+                        print(
+                            "Checklist v2: not found (optional for ruleset promotions, "
+                            "required for signal promotions)",
+                            file=sys.stderr,
+                        )
+                    else:
+                        print(
+                            f"WARNING: Checklist v2 failed: {checklist_v2.get('reason', '?')}",
+                            file=sys.stderr,
+                        )
+            except ImportError:
+                pass  # promotion_gate not available, skip
+
     else:
         print("WARNING: --force specified, skipping gate validation.", file=sys.stderr)
         if args.gate_summary and args.gate_summary.exists():

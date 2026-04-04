@@ -92,6 +92,42 @@ tr:hover { background: #1c2128; }
   </div>
 
   <div class="card">
+    <h3>Timing Hazard</h3>
+    <div class="stat">
+      <div class="stat-label">Catalysts</div>
+      <div class="stat-value">{{ timing_summary.n_catalysts }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Warnings</div>
+      <div class="stat-value {% if timing_summary.n_warnings > 0 %}warn{% else %}pos{% endif %}">{{ timing_summary.n_warnings }}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Mean P(on_time)</div>
+      <div class="stat-value">{% if timing_summary.mean_on_time %}{{ "%.0f"|format(timing_summary.mean_on_time * 100) }}%{% else %}—{% endif %}</div>
+    </div>
+    {% if timing_summary.confidence_dist %}
+    <div style="font-size:0.78em; color:var(--muted); margin-top:4px;">
+      H:{{ timing_summary.confidence_dist.get('HIGH', 0) }}
+      M:{{ timing_summary.confidence_dist.get('MEDIUM', 0) }}
+      L:{{ timing_summary.confidence_dist.get('LOW', 0) }}
+      S:{{ timing_summary.confidence_dist.get('STALE', 0) }}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>Catalyst Quality</h3>
+    {% for label in ['PDUFA', 'Data Readout', 'Clinical Milestone', 'Low/None'] %}
+    {% if catalyst_quality.get(label, 0) > 0 %}
+    <div class="stat">
+      <div class="stat-label">{{ label }}</div>
+      <div class="stat-value">{{ catalyst_quality.get(label, 0) }}</div>
+    </div>
+    {% endif %}
+    {% endfor %}
+  </div>
+
+  <div class="card">
     <h3>Health</h3>
     {% if phase2 %}
     <div class="stat">
@@ -110,6 +146,39 @@ tr:hover { background: #1c2128; }
   </div>
 </div>
 
+<!-- Production Health -->
+{% if prod_health %}
+<h2>Production Health</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Position Stability</h3>
+    <div class="stat">
+      <div class="stat-label">Overlap (Jaccard)</div>
+      <div class="stat-value {% if prod_health.jaccard and prod_health.jaccard < 0.80 %}warn{% elif prod_health.jaccard %}pos{% endif %}">{% if prod_health.jaccard %}{{ "%.2f"|format(prod_health.jaccard) }}{% else %}—{% endif %}</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Rank Corr</div>
+      <div class="stat-value">{% if prod_health.rank_corr %}{{ "%.2f"|format(prod_health.rank_corr) }}{% else %}—{% endif %}</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Weight Dispersion</h3>
+    <div class="stat">
+      <div class="stat-label">HHI</div>
+      <div class="stat-value {% if prod_health.hhi and prod_health.hhi > 500 %}warn{% else %}pos{% endif %}">{% if prod_health.hhi %}{{ "%.0f"|format(prod_health.hhi) }}{% else %}—{% endif %}</div>
+    </div>
+    <div style="font-size:0.78em; color:var(--muted)">EW30 baseline = 333</div>
+  </div>
+  <div class="card">
+    <h3>Ranker Drift</h3>
+    <div class="stat">
+      <div class="stat-label">Divergent Names</div>
+      <div class="stat-value {% if prod_health.ranker_divergent and prod_health.ranker_divergent > 5 %}warn{% else %}pos{% endif %}">{% if prod_health.ranker_divergent is not none %}{{ prod_health.ranker_divergent }}{% else %}—{% endif %}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Alerts -->
 {% if alerts %}
 <h2>Alerts ({{ alerts|length }})</h2>
@@ -120,6 +189,27 @@ tr:hover { background: #1c2128; }
     <strong>{{ a.source }}</strong>: {{ a.text }}
   </div>
   {% endfor %}
+</div>
+{% endif %}
+
+<!-- Timing Warnings -->
+{% if timing_warnings %}
+<h2>Timing Warnings ({{ timing_warnings|length }})</h2>
+<div class="card">
+<table>
+<tr><th>Ticker</th><th>Rank</th><th>P(on_time)</th><th>Confidence</th><th>Days</th><th>Warnings</th><th>Top Driver</th></tr>
+{% for tw in timing_warnings %}
+<tr>
+  <td><strong>{{ tw.ticker }}</strong></td>
+  <td>{{ tw.rank }}</td>
+  <td class="{% if tw.on_time_prob < 0.4 %}neg{% elif tw.on_time_prob < 0.6 %}warn{% else %}pos{% endif %}">{{ "%.0f"|format(tw.on_time_prob * 100) }}%</td>
+  <td><span class="badge badge-{% if tw.timing_confidence_bucket == 'HIGH' %}low{% elif tw.timing_confidence_bucket == 'STALE' %}high{% elif tw.timing_confidence_bucket == 'LOW' %}high{% else %}medium{% endif %}">{{ tw.timing_confidence_bucket }}</span></td>
+  <td>{{ tw.catalyst_days }}d</td>
+  <td style="font-size:0.78em">{{ tw.warning_reasons | join(', ') }}</td>
+  <td style="font-size:0.78em">{% if tw.top_driver_1 %}{{ tw.top_driver_1.feature }} {{ tw.top_driver_1.direction }}{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
 </div>
 {% endif %}
 
@@ -241,7 +331,7 @@ tr:hover { background: #1c2128; }
 <h2>Position Book ({{ n_positions }})</h2>
 <div class="card">
 <table>
-<tr><th>Ticker</th><th>Tier</th><th>Rank</th><th>Weight</th><th>Bucket</th><th>Momentum</th><th>Catalyst</th><th>Earnings</th><th>Risk</th></tr>
+<tr><th>Ticker</th><th>Tier</th><th>Rank</th><th>Weight</th><th>Bucket</th><th>Event Type</th><th>Momentum</th><th>Catalyst</th><th>Timing</th><th>Earnings</th><th>Risk</th></tr>
 {% for p in positions %}
 <tr>
   <td><strong>{{ p.ticker }}</strong></td>
@@ -249,8 +339,10 @@ tr:hover { background: #1c2128; }
   <td>{{ p.rank }}</td>
   <td>{{ "%.1f"|format(p.weight) }}%</td>
   <td>{{ p.bucket }}</td>
+  <td>{% if p.event_type_label == 'PDUFA' %}<span style="color:var(--green); font-weight:600; font-size:0.82em">PDUFA</span>{% elif p.event_type_label == 'Data Readout' %}<span style="color:var(--blue); font-size:0.82em">Data RO</span>{% elif p.event_type_label == 'Clinical Milestone' %}<span style="color:var(--muted); font-size:0.82em">ClinMile</span>{% else %}<span style="color:#30363d; font-size:0.82em">—</span>{% endif %}</td>
   <td>{% if p.mom == 'headwind' %}<span class="neg">{{ p.mom }}</span>{% elif p.mom == 'tailwind' %}<span class="pos">{{ p.mom }}</span>{% else %}{{ p.mom }}{% endif %}</td>
   <td>{{ p.catalyst_days }}d</td>
+  <td>{% if p.timing_confidence %}<span class="badge badge-{% if p.timing_confidence == 'HIGH' %}low{% elif p.timing_confidence == 'STALE' %}high{% elif p.timing_confidence == 'LOW' %}high{% else %}medium{% endif %}">{{ p.timing_confidence }}</span>{% if p.on_time_prob is not none %} <span style="font-size:0.78em; color:var(--muted)">{{ "%.0f"|format(p.on_time_prob * 100) }}%</span>{% endif %}{% else %}—{% endif %}</td>
   <td>{{ p.next_earnings_date or '—' }}</td>
   <td style="font-size:0.75em">{{ p.risk }}</td>
 </tr>

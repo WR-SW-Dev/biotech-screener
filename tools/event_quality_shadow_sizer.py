@@ -35,6 +35,17 @@ SOFT_LOW_COINVEST_TILT = 0.85
 SEC_NEAR_CATALYST_TILT = 1.15
 DEFAULT_TILT = 1.00
 
+# Event type score mapping (Spec 056 — diagnostic overlay, not tilt)
+EVENT_TYPE_SCORE_MAP = {
+    "FDA_PDUFA_DATE": 3,
+    "DATA_READOUT": 2,
+    "CT_PRIMARY_COMPLETION": 1,
+    "CT_STUDY_COMPLETION": 1,
+    "CT_RESULTS_POSTED": 0,
+    "CT_TRIAL_SUSPENDED": 0,
+    "IR_EVENT": 0,
+}
+
 
 def _sf(v, default=None):
     if v is None or v == "":
@@ -112,6 +123,10 @@ def run_shadow(snapshot_date: str | None = None) -> dict:
         prod_weight = _sf(r.get("target_weight_pct"), 0)
         tilt, reason = compute_event_quality_tilt(r)
 
+        # Event type score (diagnostic, Spec 056)
+        evt = r.get("catalyst_event_type", "")
+        ets = EVENT_TYPE_SCORE_MAP.get(evt, 0) if evt else None
+
         results.append(
             {
                 "ticker": ticker,
@@ -124,6 +139,8 @@ def run_shadow(snapshot_date: str | None = None) -> dict:
                 "catalyst_days": _sf(r.get("catalyst_days")),
                 "catalyst_source": r.get("catalyst_source", ""),
                 "coinvest_score_z": _sf(r.get("coinvest_score_z"), 0),
+                "event_type_score": ets,
+                "catalyst_event_type": evt,
             }
         )
 
@@ -150,6 +167,13 @@ def run_shadow(snapshot_date: str | None = None) -> dict:
         reason = r["tilt_reason"]
         tilt_counts[reason] = tilt_counts.get(reason, 0) + 1
 
+    # Event type distribution (diagnostic)
+    event_type_dist = {}
+    for r in results:
+        ets = r.get("event_type_score")
+        key = str(ets) if ets is not None else "none"
+        event_type_dist[key] = event_type_dist.get(key, 0) + 1
+
     return {
         "schema": "event_quality_shadow.v1",
         "snapshot_date": snapshot_date,
@@ -160,6 +184,7 @@ def run_shadow(snapshot_date: str | None = None) -> dict:
         "n_unchanged": len(unchanged),
         "tilt_counts": tilt_counts,
         "max_weight_delta": max((abs(r["weight_delta_pct"]) for r in results), default=0),
+        "event_type_dist": event_type_dist,
         "positions": results,
     }
 

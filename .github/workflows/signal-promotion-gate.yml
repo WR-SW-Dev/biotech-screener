@@ -1,0 +1,86 @@
+name: signal-promotion-gate
+
+on:
+  workflow_dispatch:
+    inputs:
+      signal_name:
+        description: "Signal to evaluate (e.g. coinvest_score_z)"
+        required: true
+        type: string
+      queue:
+        description: "Checklist queue: A (standalone), B (pairwise), C (B6 bundle), or ALL"
+        required: false
+        default: "ALL"
+        type: choice
+        options:
+          - A
+          - B
+          - C
+          - ALL
+
+jobs:
+  checklist-v2:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Run Checklist v2
+        env:
+          PYTHONHASHSEED: "0"
+        run: |
+          python scripts/research/checklist_v2_rerun.py \
+            --queue ${{ inputs.queue }}
+
+      - name: Validate results
+        run: |
+          python -c "
+          import json, sys
+          from pathlib import Path
+          from common.promotion_gate import validate_checklist_v2
+
+          results_dir = Path('output/checklist_v2_rerun')
+          results_files = sorted(results_dir.glob('checklist_v2_results*.json'), reverse=True)
+          if not results_files:
+              print('ERROR: No checklist results found')
+              sys.exit(1)
+
+          data = json.loads(results_files[0].read_text())
+          signal = '${{ inputs.signal_name }}'
+          signals = data.get('signals', {})
+          if signal not in signals:
+              print(f'Signal {signal} not found in results. Available: {list(signals.keys())}')
+              sys.exit(1)
+
+          result = validate_checklist_v2(data, signal)
+          print(result.summary)
+          for g in result.gates:
+              tag = 'PASS' if g.passed else 'FAIL'
+              print(f'  {g.gate_id}: {tag} — {g.gate_name}')
+              if g.reason and not g.passed:
+                  print(f'    Reason: {g.reason}')
+
+          if not result.overall_pass:
+              print(f'VERDICT: BLOCK — {signal} does not pass Checklist v2')
+              sys.exit(1)
+          else:
+              print(f'VERDICT: PROMOTE — {signal} passes all 5 gates')
+          "
+
+      - name: Upload checklist artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checklist-v2-${{ inputs.signal_name }}
+          path: output/checklist_v2_rerun/
+          retention-days: 90

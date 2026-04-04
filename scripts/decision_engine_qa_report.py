@@ -31,9 +31,7 @@ from run_phase2_snapshot_delta import (
     SnapshotData,
     _catalyst_coverage,
     _count_risk_flags,
-    _parse_risk_flags,
     _safe_float,
-    _safe_int,
     _size_band_counts,
     _tier_counts,
     load_snapshot,
@@ -224,9 +222,7 @@ def _section_score_dispersion(snap: SnapshotData) -> SectionResult:
     dev = snap.rankings[snap.rankings["archetype"] == "drug_developer"]
 
     # Optionality std
-    opt_vals = dev["clinical_optionality_pct_dev"].apply(
-        lambda v: _safe_float(v, default=float("nan"))
-    ).dropna()
+    opt_vals = dev["clinical_optionality_pct_dev"].apply(lambda v: _safe_float(v, default=float("nan"))).dropna()
     opt_std = round(float(opt_vals.std()), 4) if len(opt_vals) > 1 else 0.0
 
     # Tier dispersion: number of distinct tiers present
@@ -238,9 +234,7 @@ def _section_score_dispersion(snap: SnapshotData) -> SectionResult:
     band_distinct = band_vals[band_vals.isin(["L", "M", "S", "XS"])].nunique()
 
     # Composite score IQR
-    comp = snap.rankings["composite_score"].apply(
-        lambda v: _safe_float(v, default=float("nan"))
-    ).dropna()
+    comp = snap.rankings["composite_score"].apply(lambda v: _safe_float(v, default=float("nan"))).dropna()
     if len(comp) > 3:
         q25 = float(comp.quantile(0.25))
         q75 = float(comp.quantile(0.75))
@@ -267,8 +261,7 @@ def _section_portfolio(snap: SnapshotData) -> SectionResult:
 
     empty_tiers = {"A": 0, "B": 0, "C": 0, "D": 0}
     empty_bands = {"L": 0, "M": 0, "S": 0, "XS": 0}
-    empty_flags = {f: 0 for f in ["deep_drawdown", "high_vol", "high_beta",
-                                   "overbought_rsi", "low_confidence"]}
+    empty_flags = {f: 0 for f in ["deep_drawdown", "high_vol", "high_beta", "overbought_rsi", "low_confidence"]}
 
     if n_positions == 0:
         return "FAIL", {
@@ -380,7 +373,9 @@ def _get_git_sha() -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
         )
         if result.returncode == 0:
             return result.stdout.strip()
@@ -392,6 +387,44 @@ def _get_git_sha() -> str:
 # ---------------------------------------------------------------------------
 # Report generation
 # ---------------------------------------------------------------------------
+
+
+def _load_checklist_v2_status() -> Optional[Dict[str, Any]]:
+    """Load latest Checklist v2 results if available."""
+    checklist_dir = Path(__file__).resolve().parent.parent / "output" / "checklist_v2_rerun"
+    if not checklist_dir.exists():
+        return None
+    # Find the latest results JSON
+    results_files = sorted(checklist_dir.glob("checklist_v2_results*.json"), reverse=True)
+    if not results_files:
+        return None
+    try:
+        with open(results_files[0], encoding="utf-8") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+    # Summarize per-signal pass/fail
+    signals = data.get("signals", {})
+    if not signals:
+        return None
+
+    summary = {}
+    for sig_name, sig_data in signals.items():
+        gates_passed = sum(
+            1 for g in ["gate1_pass", "gate2_pass", "gate3_pass", "gate4_pass", "gate5_pass"] if sig_data.get(g, False)
+        )
+        summary[sig_name] = {
+            "gates_passed": gates_passed,
+            "gates_total": 5,
+            "status": "PASS" if gates_passed == 5 else f"{gates_passed}/5",
+        }
+
+    return {
+        "source": str(results_files[0].name),
+        "signals": summary,
+    }
+
 
 def generate_report(snap: SnapshotData) -> Dict[str, Any]:
     """Run all section evaluators and assemble the QA report dict."""
@@ -409,6 +442,9 @@ def generate_report(snap: SnapshotData) -> Dict[str, Any]:
         if vals:
             engine_version = str(vals[0]).strip()
 
+    # Checklist v2 status (if results exist)
+    checklist_v2_status = _load_checklist_v2_status()
+
     report = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "snapshot_date": snap.date,
@@ -418,6 +454,8 @@ def generate_report(snap: SnapshotData) -> Dict[str, Any]:
         "git_sha": _get_git_sha(),
         "sections": sections,
     }
+    if checklist_v2_status:
+        report["checklist_v2"] = checklist_v2_status
     return report
 
 
@@ -435,10 +473,10 @@ def format_markdown(report: Dict[str, Any]) -> str:
     """Format the QA report as Markdown."""
     lines: List[str] = []
     overall = report["overall_status"]
-    lines.append(f"# Decision Engine QA Report")
+    lines.append("# Decision Engine QA Report")
     lines.append("")
-    lines.append(f"| Field | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Field | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Snapshot date | {report['snapshot_date']} |")
     lines.append(f"| Overall status | {_status_badge(overall)} |")
     lines.append(f"| Engine version | {report['engine_version']} |")
@@ -454,8 +492,8 @@ def format_markdown(report: Dict[str, Any]) -> str:
     m = sec["metrics"]
     lines.append(f"## Universe {_status_badge(sec['status'])}")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Ranked securities | {m['ranked']} |")
     lines.append(f"| Drug developers | {m['dev_count']} |")
     for arch, cnt in sorted(m["archetype_breakdown"].items()):
@@ -467,41 +505,37 @@ def format_markdown(report: Dict[str, Any]) -> str:
     m = sec["metrics"]
     lines.append(f"## Eligibility {_status_badge(sec['status'])}")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Eligible count | {m['eligible_count']} |")
     lines.append(f"| Eligible % | {m['eligible_pct']}% |")
     lines.append(f"| Dev eligible % | {m['dev_eligible_pct']}% |")
     if m["ineligible_reason_breakdown"]:
-        lines.append(f"| | |")
-        lines.append(f"| **Ineligible reasons** | |")
-        for reason, cnt in sorted(m["ineligible_reason_breakdown"].items(),
-                                   key=lambda x: -x[1]):
+        lines.append("| | |")
+        lines.append("| **Ineligible reasons** | |")
+        for reason, cnt in sorted(m["ineligible_reason_breakdown"].items(), key=lambda x: -x[1]):
             lines.append(f"| {reason} | {cnt} |")
     lines.append("")
 
     # Gate pass rates sub-table
     if m.get("gate_pass_rates"):
-        lines.append(f"### Gate Pass Rates")
+        lines.append("### Gate Pass Rates")
         lines.append("")
-        lines.append(f"| Gate | Tested | Failed | Pass % |")
-        lines.append(f"|---|---|---|---|")
+        lines.append("| Gate | Tested | Failed | Pass % |")
+        lines.append("|---|---|---|---|")
         for gate, info in m["gate_pass_rates"].items():
             extra = ""
             if "data_missing" in info:
                 extra = f" ({info['data_missing']} missing)"
-            lines.append(
-                f"| {gate} | {info['tested']}{extra} | {info['failed']}"
-                f" | {info['pass_pct']}% |"
-            )
+            lines.append(f"| {gate} | {info['tested']}{extra} | {info['failed']}" f" | {info['pass_pct']}% |")
         dd_cov = m.get("drawdown_data_coverage_pct", "N/A")
         lines.append("")
         lines.append(f"Drawdown data coverage: {dd_cov}%")
         mr = m.get("missing_reason_counts", {})
         if mr:
             lines.append("")
-            lines.append(f"| Missing reason | Count |")
-            lines.append(f"|---|---|")
+            lines.append("| Missing reason | Count |")
+            lines.append("|---|---|")
             for reason, cnt in sorted(mr.items(), key=lambda x: -x[1]):
                 lines.append(f"| {reason} | {cnt} |")
         lines.append("")
@@ -511,8 +545,8 @@ def format_markdown(report: Dict[str, Any]) -> str:
     m = sec["metrics"]
     lines.append(f"## Tier Distribution (Dev-Stage) {_status_badge(sec['status'])}")
     lines.append("")
-    lines.append(f"| Tier | Count | % |")
-    lines.append(f"|---|---|---|")
+    lines.append("| Tier | Count | % |")
+    lines.append("|---|---|---|")
     for tier in ["A", "B", "C", "D"]:
         lines.append(f"| {tier} | {m['tier_counts'][tier]} | {m['tier_pcts'][tier]}% |")
     lines.append(f"| **Total** | **{m['dev_total']}** | |")
@@ -523,16 +557,15 @@ def format_markdown(report: Dict[str, Any]) -> str:
     m = sec["metrics"]
     lines.append(f"## Data Coverage {_status_badge(sec['status'])}")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Catalyst specific_days % | {m['catalyst_specific_pct']}% |")
     lines.append(f"| Sponsor coverage % | {m['sponsor_coverage_pct']}% |")
     lines.append(f"| Momentum coverage % | {m['momentum_coverage_pct']}% |")
     if m["catalyst_mode_breakdown"]:
-        lines.append(f"| | |")
-        lines.append(f"| **Catalyst modes** | |")
-        for mode, cnt in sorted(m["catalyst_mode_breakdown"].items(),
-                                 key=lambda x: -x[1]):
+        lines.append("| | |")
+        lines.append("| **Catalyst modes** | |")
+        for mode, cnt in sorted(m["catalyst_mode_breakdown"].items(), key=lambda x: -x[1]):
             lines.append(f"| {mode} | {cnt} |")
     lines.append("")
 
@@ -541,8 +574,8 @@ def format_markdown(report: Dict[str, Any]) -> str:
     m = sec["metrics"]
     lines.append(f"## Score Dispersion {_status_badge(sec['status'])}")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Optionality std | {m['optionality_std']} |")
     lines.append(f"| Tier distinct count | {m['tier_distinct_count']} |")
     lines.append(f"| Band distinct count | {m['band_distinct_count']} |")
@@ -555,8 +588,8 @@ def format_markdown(report: Dict[str, Any]) -> str:
     lines.append(f"## Portfolio {_status_badge(sec['status'])}")
     lines.append("")
     src = "native" if m["has_native_portfolio"] else "reconstructed"
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Positions | {m['n_positions']} ({src}) |")
     lines.append(f"| Top-5 weight % | {m['top5_weight_pct']}% |")
     for tier in ["A", "B", "C", "D"]:
@@ -564,8 +597,8 @@ def format_markdown(report: Dict[str, Any]) -> str:
     for band in ["L", "M", "S", "XS"]:
         lines.append(f"| Band {band} | {m['band_split'][band]} |")
     if any(v > 0 for v in m["risk_flag_counts"].values()):
-        lines.append(f"| | |")
-        lines.append(f"| **Risk flags** | |")
+        lines.append("| | |")
+        lines.append("| **Risk flags** | |")
         for flag, cnt in sorted(m["risk_flag_counts"].items()):
             if cnt > 0:
                 lines.append(f"| {flag} | {cnt} |")
@@ -579,12 +612,29 @@ def format_markdown(report: Dict[str, Any]) -> str:
     if not m.get("available", False):
         lines.append(f"*{m.get('note', 'Not available')}*")
     else:
-        lines.append(f"| Metric | Value |")
-        lines.append(f"|---|---|")
+        lines.append("| Metric | Value |")
+        lines.append("|---|---|")
         lines.append(f"| Status | {m['health_status']} |")
         if m.get("health_reasons"):
             lines.append(f"| Reasons | {', '.join(m['health_reasons'])} |")
     lines.append("")
+
+    # Checklist v2 (if available)
+    if "checklist_v2" in report:
+        cv2 = report["checklist_v2"]
+        lines.append("## Checklist v2 — Signal Promotion Status")
+        lines.append("")
+        lines.append(f"*Source: {cv2.get('source', '?')}*")
+        lines.append("")
+        lines.append("| Signal | Gates Passed | Status |")
+        lines.append("|--------|-------------|--------|")
+        for sig_name, sig_info in (cv2.get("signals") or {}).items():
+            gp = sig_info.get("gates_passed", 0)
+            gt = sig_info.get("gates_total", 5)
+            status = sig_info.get("status", "?")
+            badge = "PASS" if status == "PASS" else f"**{status}**"
+            lines.append(f"| {sig_name} | {gp}/{gt} | {badge} |")
+        lines.append("")
 
     return "\n".join(lines)
 
@@ -593,16 +643,17 @@ def format_markdown(report: Dict[str, Any]) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate Decision Engine QA report from a snapshot."
-    )
+    parser = argparse.ArgumentParser(description="Generate Decision Engine QA report from a snapshot.")
     parser.add_argument(
-        "--snapshot-dir", required=True,
+        "--snapshot-dir",
+        required=True,
         help="Path to the snapshot directory (e.g. data/snapshots/2026-02-09)",
     )
     parser.add_argument(
-        "--output-dir", default="output",
+        "--output-dir",
+        default="output",
         help="Directory for output files (default: output)",
     )
     args = parser.parse_args()
