@@ -173,6 +173,11 @@ def _load_production_monitor(date: str) -> Optional[Dict]:
     return _load_json(path)
 
 
+def _load_timing_hazard_review() -> Optional[Dict]:
+    path = REPO_ROOT / "output" / "timing_hazard_review" / "timing_hazard_review.json"
+    return _load_json(path)
+
+
 def _load_shadow_performance() -> List[Dict]:
     path = REPO_ROOT / "artifacts" / "live_shadow" / "performance.csv"
     if not path.exists():
@@ -327,7 +332,14 @@ async def index(request: Request, date: str = ""):
 
     # Timing hazard overlay
     timing_warnings = []
+    timing_review = _load_timing_hazard_review()
     timing_summary = {"n_catalysts": 0, "n_warnings": 0, "mean_on_time": None, "confidence_dist": {}}
+    if timing_review:
+        cal = timing_review.get("calibration", {})
+        timing_summary["brier"] = cal.get("brier_score")
+        timing_summary["ece"] = cal.get("ece")
+        timing_summary["cal_verdict"] = cal.get("verdict", "")
+        timing_summary["overconfidence"] = cal.get("overconfidence")
     timing_by_ticker: Dict[str, Dict] = {}
     if timing_hazard and "catalysts" in timing_hazard:
         timing_summary = {
@@ -1035,6 +1047,12 @@ async def api_timing_hazard_latest():
     if not files:
         return {"error": "No timing hazard snapshots"}
     return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/timing_hazard/review")
+async def api_timing_hazard_review():
+    """Latest timing hazard calibration review results."""
+    return _load_timing_hazard_review() or {"error": "No review data — run timing_hazard_review.py"}
 
 
 @app.get("/api/timing_hazard/calibration")

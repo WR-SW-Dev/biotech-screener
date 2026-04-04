@@ -113,6 +113,13 @@ tr:hover { background: #1c2128; }
       S:{{ timing_summary.confidence_dist.get('STALE', 0) }}
     </div>
     {% endif %}
+    {% if timing_summary.get('cal_verdict') %}
+    <div style="font-size:0.78em; margin-top:6px; padding-top:4px; border-top:1px solid var(--border);">
+      <span style="color:var(--muted)">Calibration:</span>
+      <span style="color:{% if 'GOOD' in timing_summary.cal_verdict %}var(--green){% elif 'FAIR' in timing_summary.cal_verdict %}var(--blue){% elif 'MARGINAL' in timing_summary.cal_verdict %}var(--yellow){% else %}var(--red){% endif %}">{{ timing_summary.cal_verdict.split(' — ')[0] }}</span>
+      <span style="color:var(--muted)">(Brier={{ timing_summary.brier }}, ECE={{ timing_summary.ece }})</span>
+    </div>
+    {% endif %}
   </div>
 
   <div class="card">
