@@ -10531,6 +10531,14 @@
     "collected_at": "2026-03-19"
   },
   {
+    "ticker": "TEVA",
+    "cash_total": 3556000000.0,
+    "total_debt": 17094000000.0,
+    "total_assets": 40748000000.0,
+    "total_liabilities": 32834000000.0,
+    "shareholders_equity": 7910000000.0
+  },
+  {
     "ticker": "TGTX",
     "cik": "0001001316",
     "Assets": 1063253000,

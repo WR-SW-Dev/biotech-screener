@@ -13,7 +13,7 @@
     },
     {
       "path": "universe.json",
-      "sha256": "92134e828c805ecba672a586956e71777eba3839d0d640c10b496c3e4b300698"
+      "sha256": "bd03908b1534c5fb5ada6cf0d4aa2a2f054e61aab490c2145ffad58d88851d2c"
     }
   ],
   "params": {
@@ -21,29 +21,20 @@
     "manager_registry_hash": "f76ba4f3c4cad4f94393e7106694bb44bc9d19b88aaea481d960ae84c8c7a0c7",
     "mode": "live",
     "quarter_end": "2025-12-31",
-    "quarters": 2,
-    "universe_hash": "92134e828c805ecba672a586956e71777eba3839d0d640c10b496c3e4b300698"
+    "quarters": 1,
+    "universe_hash": "bd03908b1534c5fb5ada6cf0d4aa2a2f054e61aab490c2145ffad58d88851d2c"
   },
   "quarters": [
     {
       "filename": "holdings_2025-12-31.json",
-      "managers_count": 4,
+      "managers_count": 26,
       "prior_quarter_end": "2025-09-30",
       "quarter_end": "2025-12-31",
-      "sha256": "73ea0f2222dc1a509854e5b1db8e1536aabcbecd81a0404b9b90f5933318004c",
-      "tickers_count": 284,
-      "warnings_count": 25
-    },
-    {
-      "filename": "holdings_2025-09-30.json",
-      "managers_count": 26,
-      "prior_quarter_end": "2025-06-30",
-      "quarter_end": "2025-09-30",
-      "sha256": "530ed7fee22b875a896f35fe9965e726a78b20b8a6e44351bae1b7cc639cd97b",
-      "tickers_count": 292,
-      "warnings_count": 0
+      "sha256": "147ac968e0b05b533a890f8101d58aeecc58031eafae7712f5bae6a7c1b5b92e",
+      "tickers_count": 282,
+      "warnings_count": 3
     }
   ],
-  "run_id": "1f63fe8a90c9a640",
-  "warnings_total": 25
+  "run_id": "2dafbbb00ebfd54a",
+  "warnings_total": 3
 }

@@ -40,7 +40,7 @@ You are the post-packet options surface monitor for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `9f1f4587` (v1.11.0). Reference only — do not modify.
+ID: `dd1e608c` (v1.13.0). Reference only — do not modify.
 
 ## Phase 2 scope
 

@@ -31,4 +31,4 @@ The human decides what to do. You surface what to look at.
 
 ## Active ruleset
 
-`9f1f4587` (v1.11.0) — read-only reference, do not modify.
+`dd1e608c` (v1.13.0) — read-only reference, do not modify.

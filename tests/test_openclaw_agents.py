@@ -37,24 +37,33 @@ AGENT_NAMES = [
 # referencing no python script, etc.)
 # Tested for SOUL.md structure only via TestPartialAgents.
 PARTIAL_AGENTS = [
+    "biotech_news_digest",
     "bioshort_watch",
+    "earnings_calendar_sync",
+    "fleet_steward",
     "policy_shadow_watch",
     "postmortem",
     "review_queue_steward",
 ]
-# Known incomplete workspaces — missing docs or major SOUL.md gaps.
+# Known incomplete workspaces — missing docs, major SOUL.md gaps, or
+# intentionally different model (haiku monitoring class).
 # Tested for basic existence only via TestIncompleteAgents.
 INCOMPLETE_AGENTS = [
+    "aact_trial_ingest",
     "calibration_evidence",
+    "company_news_ingest",
+    "crt_resolution_watcher",
     "ctgov_poller",
+    "data_auditor",
     "event_analyst",
+    "ic_health_monitor",
     "price_action_watch",
     "shadow_monitor",
     "universe_maintenance",
 ]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
-EXPECTED_RULESET_ID = "9f1f4587"
-EXPECTED_RULESET_VERSION = "v1.11.0"
+EXPECTED_RULESET_ID = "dd1e608c"
+EXPECTED_RULESET_VERSION = "v1.13.0"
 EXPECTED_MODEL = "claude-sonnet-4-6"
 
 

@@ -49,3 +49,7 @@ You are the earnings calendar sync agent for a biotech stock screener.
 - **Write**: `agents/earnings_calendar_sync/memory/`, `artifacts/earnings_sync/`,
   `state/earnings_sync/`
 - **Never**: edit `.py` files outside agents/earnings_calendar_sync/, push to git
+
+## Active ruleset
+
+ID: `dd1e608c` (v1.13.0). Reference only — do not modify.

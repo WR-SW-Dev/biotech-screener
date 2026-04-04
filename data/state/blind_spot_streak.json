@@ -1,17 +1,13 @@
 {
-  "ETON": 4,
-  "BCYC": 4,
-  "ADPT": 6,
-  "SIGA": 4,
-  "XERS": 4,
-  "EOLS": 4,
-  "TKNO": 4,
-  "CSTL": 4,
-  "FTRE": 4,
-  "EDIT": 4,
-  "HRTX": 4,
-  "STVN": 4,
-  "AVXL": 4,
-  "SERA": 4,
-  "MYGN": 4
+  "FLGT": 8,
+  "EDIT": 8,
+  "PRQR": 8,
+  "GHRS": 38,
+  "STVN": 79,
+  "HRTX": 29,
+  "KROS": 28,
+  "ASMB": 26,
+  "RANI": 25,
+  "TKNO": 8,
+  "MYGN": 30
 }

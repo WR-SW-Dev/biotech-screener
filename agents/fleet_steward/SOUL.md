@@ -67,3 +67,7 @@ report them as `NEW` in the fleet receipt.
 - **Message**: can send heartbeat messages to other agents
 - **Write**: only `agents/fleet_steward/memory/`
 - **Never**: edit other agents' config, cron, code, or permissions
+
+## Active ruleset
+
+ID: `dd1e608c` (v1.13.0). Reference only — do not modify.

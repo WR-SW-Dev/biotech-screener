@@ -269,6 +269,38 @@ def compute_alert_level(diffs: Dict[str, Dict]) -> str:
     return "NONE"
 
 
+def _extract_recommended_hedges(report: Dict[str, Any], top_n: int = 3) -> List[Dict[str, Any]]:
+    """Extract top-N ranked hedge structures with actionable details."""
+    ranked = report.get("ranked_structures", [])
+    greeks_by_rank = report.get("structure_greeks", {})
+    hedges = []
+    for i, s in enumerate(ranked[:top_n]):
+        hedge = {
+            "rank": i + 1,
+            "vehicle": s.get("vehicle", "—"),
+            "structure": s.get("structure", "—"),
+            "strike_1": s.get("strike_1"),
+            "strike_2": s.get("strike_2"),
+            "ref_price": s.get("_ref_price"),
+            "expiry": s.get("expiry", "—"),
+            "dte": s.get("dte"),
+            "contracts": s.get("contracts"),
+            "total_cost": s.get("total_cost"),
+            "ann_cost_bps": s.get("ann_cost_bps"),
+            "protection_start_pct": s.get("protection_start_pct"),
+            "breakeven": s.get("breakeven"),
+            "hedge_score": s.get("hedge_score"),
+        }
+        # Attach position-level greeks if available
+        g = greeks_by_rank.get(str(i + 1), {})
+        pos_g = g.get("hedge_position_greeks", {})
+        if pos_g:
+            hedge["position_delta"] = pos_g.get("position_delta")
+            hedge["theta_per_day"] = pos_g.get("theta_per_day_dollars")
+        hedges.append(hedge)
+    return hedges
+
+
 def build_bioshort_watch(
     *,
     as_of_date: Optional[str] = None,
@@ -323,6 +355,7 @@ def build_bioshort_watch(
         "greeks": diff_greeks(current, prior),
         "source": diff_source(current, prior),
         "coverage": diff_coverage(current, prior),
+        "recommended_hedges": _extract_recommended_hedges(current),
     }
 
     alert_level = compute_alert_level(diffs)
@@ -448,6 +481,46 @@ def format_watch_md(d: Dict[str, Any]) -> str:
         lines.append(
             f"| Ann cost (bps) | {dt.get('current_ann_cost_bps', '—')} | {dt.get('prior_ann_cost_bps', '—')} |"
         )
+        lines.append("")
+
+    # Recommended hedges
+    hedges = diffs.get("recommended_hedges", [])
+    if hedges:
+        lines.append("## Recommended Hedges")
+        lines.append("")
+        lines.append("| # | Vehicle | Structure | Strike | Ref | Expiry | Contracts | Cost ($) | Carry (bps) | Score |")
+        lines.append("|---|---------|-----------|--------|-----|--------|-----------|----------|-------------|-------|")
+        for h in hedges:
+            strike_str = str(h.get("strike_1", "—"))
+            if h.get("strike_2"):
+                strike_str += f" / {h['strike_2']}"
+            lines.append(
+                f"| {h['rank']} "
+                f"| {h.get('vehicle', '—')} "
+                f"| {h.get('structure', '—')} "
+                f"| {strike_str} "
+                f"| {h.get('ref_price', '—')} "
+                f"| {h.get('expiry', '—')} "
+                f"| {h.get('contracts', '—')} "
+                f"| {h.get('total_cost', '—')} "
+                f"| {h.get('ann_cost_bps', '—')} "
+                f"| {h.get('hedge_score', '—')} |"
+            )
+        lines.append("")
+        # Detail block for top pick
+        top = hedges[0]
+        lines.append(
+            f"**Top pick**: {top.get('contracts', '?')}x {top.get('vehicle', '?')} "
+            f"{top.get('structure', '?')} @ {top.get('strike_1', '?')} "
+            f"exp {top.get('expiry', '?')} — "
+            f"${top.get('total_cost', '?')} entry, "
+            f"{top.get('ann_cost_bps', '?')} bps carry, "
+            f"protection starts at {top.get('protection_start_pct', '?')}%"
+        )
+        if top.get("theta_per_day") is not None:
+            lines.append(
+                f"  theta bleed: ${top['theta_per_day']:.1f}/day, " f"position delta: {top.get('position_delta', '—')}"
+            )
         lines.append("")
 
     # Greeks

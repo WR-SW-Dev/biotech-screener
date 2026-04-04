@@ -74,3 +74,7 @@ Each item normalizes to:
 - **Write**: `artifacts/news_digest/`, `agents/biotech_news_digest/memory/`
 - **Send**: email to configured recipient (dschulz@wakerobin.co)
 - **Never**: edit `.py` files, rulesets, or other agents' data
+
+## Active ruleset
+
+ID: `dd1e608c` (v1.13.0). Reference only — do not modify.
