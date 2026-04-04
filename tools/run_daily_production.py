@@ -4985,6 +4985,25 @@ def run_daily(
         except Exception as _rpr_err:
             _logger.warning(f"Regime pruner failed: {_rpr_err}")
 
+        # --- Step 5k.17: Event quality shadow sizer (non-blocking, Spec 056) ---
+        try:
+            from tools.event_quality_shadow_sizer import run_shadow as _eq_run_shadow
+
+            _eq_result = _eq_run_shadow(as_of_date)
+            if "error" not in _eq_result:
+                _eq_dir = REPO_ROOT / "artifacts" / "event_quality_shadow"
+                _eq_dir.mkdir(parents=True, exist_ok=True)
+                _eq_path = _eq_dir / f"event_quality_shadow_{as_of_date}.json"
+                with open(_eq_path, "w") as _eq_f:
+                    json.dump(_eq_result, _eq_f, indent=2, default=str)
+                _eq_up = _eq_result.get("n_upweighted", 0)
+                _eq_down = _eq_result.get("n_downweighted", 0)
+                _logger.info(f"Event quality shadow → {_eq_up} up, {_eq_down} down")
+            else:
+                _logger.info(f"Event quality shadow → skipped ({_eq_result.get('error', '?')})")
+        except Exception as _eq_err:
+            _logger.warning(f"Event quality shadow failed: {_eq_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
