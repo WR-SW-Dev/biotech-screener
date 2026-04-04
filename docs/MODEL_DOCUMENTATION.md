@@ -1,8 +1,13 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.12.0 (ruleset `69a0c7f8`)
+> **SUPERSEDED**: This file reflects v1.12.0 (ruleset `69a0c7f8`, retired 2026-04-03).
+> The canonical model documentation is now `/model_documentation.md` (v1.5.0, ruleset
+> `dd1e608c`, v1.13.0). See that file for current B6 selector, pairwise_minimal ranker,
+> Checklist v2 QA results, and within-cohort feature audit findings.
+
+**Version:** 1.12.0 (ruleset `69a0c7f8`) — **RETIRED**
 **Last updated:** 2026-04-02
-**Status:** Production — daily automated runs, shadow portfolio tracking
+**Status:** SUPERSEDED by `/model_documentation.md` v1.5.0 (2026-04-04)
 
 ---
 

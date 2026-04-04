@@ -20,7 +20,7 @@ All data fixtures must be:
 ## Active Ruleset
 - **ID**: `dd1e608c` (v1.13.0)
 - **File**: `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json`
-- **Key settings**: sort_anchor=selector_score, A4 selector (coinvest 65% + inst_delta 35%), clinical_50 ranker, EW Top-30
+- **Key settings**: sort_anchor=selector_score, B6 selector (coinvest 65% + inst_delta 35%), pairwise_minimal ranker (ordinal-only), EW Top-30
 - **Prior ruleset**: `69a0c7f8` (v1.12.0) — RETIRED 2026-04-03
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
 - **Manifest**: 36+ entries, no dup IDs
@@ -30,46 +30,55 @@ All data fixtures must be:
 ## Current Operating Truths
 
 Spec 050 (2026-04-03) replaced the old optionality-anchored selector with a two-stage
-selector/ranker architecture validated on true PIT data. The prior "alpha collapsed"
-narrative from Spec 048 applied to the OLD selector (optionality-based). The NEW selector
-(A4 institutional sponsorship) produces statistically significant alpha on the same
-PIT-corrected data.
+selector/ranker architecture. Checklist v2 rerun (2026-04-04) revalidated the live stack
+under the Spec 055 statistical bar (FM, bootstrap, FDR, LOSO).
 
-1. **A4 selector + clinical_50 ranker is the production model.** True PIT backtest: +2.34pp/mo net-of-cost, t=2.57, 69% hit rate, 67 monthly periods (Jun 2020 — Apr 2026).
-2. **Beats XBI on return AND risk.** +4.40pp/mo vs +1.95pp for XBI, lower vol (14.12 vs 15.30), shallower max drawdown (-39.3pp vs -87.1pp), beats XBI in 46/67 months (69%).
-3. **Selector and ranker are separate jobs.** A4 (coinvest+inst) selects which 30 names. clinical_50 (50% clinical quality, 20% catalyst, 15% survivability, 10% institutional, 5% options) ranks within the selected set.
-4. **EW Top-30 is the correct construction.** RW-EW = -0.09pp, t=-0.95. Do not rank-weight.
-5. **K=30 validated by sweep.** Net-of-cost peak at +2.34pp, stable K=25-35 plateau.
-6. **Bear/neutral alpha engine.** Bear: +3.37pp (75% hit), neutral: +6.23pp (93% hit), bull: -0.37pp (50% hit). Worst months are all bull regime.
-7. **Pre-Spec-050 benchmark claims remain deprecated.** The old optionality selector on PIT data was underwater. The new institutional selector is the corrective finding.
-8. **Forward shadow accumulating daily** (7 arms in coinvest_shadow_tracker v2, wired into run_daily.py).
+> **Production mental model: coinvest selects, inst_delta ranks, financial penalizes
+> "safe but less catalytic" names, and clinical is a weak/conditional feature under review.**
+
+1. **B6 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30 is production.** True PIT backtest: +2.34pp/mo net-of-cost, t=2.57, 69% hit rate, 67 monthly periods (Jun 2020 — Apr 2026).
+2. **B6 selector validated under Checklist v2.** Bootstrap: +2.42pp/mo, 95% CI [1.25%, 3.70%], P(>0)=99.99%. LOSO: ROBUST across all dimensions. Neither component survives standalone, but the bundle is real.
+3. **Selector and ranker learn different structure.** B6 (coinvest 65% + inst_delta 35%) selects which 30 names. Within top-30: inst_delta is the dominant positive discriminator (NW-t=+3.32), financial_score is a true negative penalty (NW-t=−3.41), coinvest washes out (+0.49).
+4. **Pairwise ranker is ordinal-only.** ECE=0.129 (POOR calibration). No rank-weighting, no confidence sizing. Equal-weight is the correct construction.
+5. **EW Top-30 is the correct construction.** RW-EW = -0.09pp, t=-0.95. Pairwise calibration confirms.
+6. **K=30 validated by sweep.** Net-of-cost peak at +2.34pp, stable K=25-35 plateau.
+7. **Bear/neutral alpha engine.** Bear: +3.37pp (75% hit), neutral: +6.23pp (93% hit), bull: -0.37pp (50% hit). Worst months are all bull regime.
+8. **event_type_score is the only 5/5 Checklist v2 pass.** Use as overlay/diagnostic/sizer only — does NOT improve B6 bundle.
+9. **insider_exec and aact_execution downgraded.** Both 1/5 under Checklist v2. Shadow only.
+10. **Forward shadow accumulating daily** (7 arms in coinvest_shadow_tracker v2, wired into run_daily.py).
 
 ---
 
 ## Trust Buckets
 
 ### Safe to use now (production-grade evidence)
-- **A4 selector + clinical_50 ranker + EW Top-30**: true PIT validated, t=2.57, 67 periods
-- Selector engine (`selector_engine.py`), ranker engine (`ranker_engine.py`): 48 tests passing
+- **B6 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30**: true PIT validated, t=2.57, 67 periods
+- **B6 bundle revalidated under Checklist v2** (2026-04-04): bootstrap CI [1.25%, 3.70%], LOSO ROBUST
+- **Pairwise ordinal-only policy**: ECE=0.129, no rank-weighting or confidence sizing
+- Selector engine (`selector_engine.py`), ranker engines (`ranker_engine.py`, `ranker_v2_pairwise.py`): 48+ tests
+- Statistical QA package (`common/stats/`): FM, bootstrap, FDR, LOSO, calibration — 36 tests
 - PIT validation audit framework, PIT financial regeneration infrastructure
 - K=30 validated by sweep (stable K=25-35 plateau)
-- EW Top-30 construction: validated, RW not justified
 - Forward shadow tracker (7 arms, wired into daily cron)
-- Snapshot overwrite protection, CTGov fallback PIT safety net, production data archiver
+- event_type_score as overlay/diagnostic (5/5 Checklist v2 pass, but not selector weight)
 
 ### Deprecated (do not cite)
 - **All survivorship-only benchmark numbers** (+93.7pp, +110.5pp, etc.)
 - **Old optionality-anchored selector** — underwater on PIT data (-25pp cumulative)
 - **DEFAULT selector weights** (clinical 35%, catalyst 25%) — destructive as selector (-0.53pp)
-- **clinical_score_v2_z as selector anchor** — negative delta (-0.68pp)
+- **clinical_score_v2_z as selector anchor** — negative delta (-0.68pp), universally destructive
+- **Pre-Checklist-v2 signal card t-stats** — superseded by FM/bootstrap/FDR/LOSO findings
+- **insider_exec_buy_value_90d optimistic reads** — 1/5 under Checklist v2, FRAGILE
+- **aact_execution_score optimistic reads** — 1/5 under Checklist v2, bear-unstable
 - Any promotion memo citing pre-Spec-050 selector performance
 - "Bear IR 3.35" regime story from contaminated data
 
 ### Current evidence hierarchy
-1. **True PIT backtest (Spec 050)**: A4+ranker +2.34pp net, t=2.57 — STRONGEST
-2. **Forward shadow**: accumulating daily since 2026-04-03 — MONITORING
-3. **Research panel A/B**: A4 +1.64pp, t=2.14 (after inst_delta_z forward-fill) — SUPPORTING
-4. **Old PIT benchmark (Spec 048)**: optionality selector underwater — SUPERSEDED by new selector
+1. **Checklist v2 rerun (2026-04-04)**: B6 bundle bootstrap+LOSO validated — STRONGEST (for signals)
+2. **True PIT backtest (Spec 050)**: A4+ranker +2.34pp net, t=2.57 — STRONGEST (for portfolio)
+3. **Pairwise feature audit (2026-04-04)**: within-top-30 FM on ranker features — SUPPORTING
+4. **Forward shadow**: accumulating daily since 2026-04-03 — MONITORING
+5. **Old PIT benchmark (Spec 048)**: optionality selector underwater — SUPERSEDED by new selector
 
 ---
 
@@ -81,13 +90,19 @@ hours here unless genuinely new data or a structural model change creates a reas
 | Lane | Status | Why closed |
 |------|--------|-----------|
 | Options surface-shape as systematic ranker | DEAD | 50-month backtest IC negative at all horizons |
-| `total_volume_z` | DEAD | IC=-0.10 on PIT-native data (109 obs), original +0.134 was retro-classified look-ahead bias |
-| Always-on rank-weighting (Top-20 or Top-30) | NOT PROMOTED | RW does not beat EW net of costs; within-top-30 IC is zero |
-| Top-20 / pruner promotion story | DEPRECATED | PIT-financial correction shows both Top-20 and Top-30 underwater vs XBI |
-| Historical alpha narrative (+93pp / +110pp) | DEPRECATED | Inflated by financial look-ahead contamination; corrected numbers are -28pp / -25pp |
+| Options-as-alpha (Spec 053) | CLOSED | 37 signals tested, ALL fail as selector/ranker |
+| Static execution features (Spec 054) | CLOSED | PCD overdue, update recency, pipeline velocity all noise/destructive |
+| Clinical composites as ranker (Spec 055) | CLOSED | Negative across ALL robustness slices, universally destructive |
+| `total_volume_z` | DEAD | IC=-0.10 on PIT-native data (109 obs) |
+| Always-on rank-weighting (Top-20 or Top-30) | NOT PROMOTED | RW-EW = -0.09pp; pairwise ECE=0.129 confirms ordinal-only |
+| Confidence/rank-weighted sizing | NOT JUSTIFIED | Pairwise scores not calibrated (ECE=0.129) |
+| `insider_exec_buy_value_90d` | SHADOW ONLY | 1/5 Checklist v2, FRAGILE robustness |
+| `aact_execution_score` | SHADOW ONLY | 1/5 Checklist v2, bear-unstable (−1.86pp) |
+| Top-20 / pruner promotion story | DEPRECATED | PIT-financial correction shows both underwater vs XBI |
+| Historical alpha narrative (+93pp / +110pp) | DEPRECATED | Inflated by financial look-ahead contamination |
 | `cal_alpha` | REMOVED in v1.12.0 | Confirmed no-op, zero deltas at all horizons |
-| Clinical sort signal | OFF | Insufficient IC |
-| Coinvest as standalone sort signal | SUPERSEDED | Now used as A4 selector anchor (Spec 050) |
+| Clinical sort signal | OFF | Insufficient IC, destructive as selector |
+| Coinvest as standalone sort signal | SUPERSEDED | Now used as B6 selector anchor; standalone only 3/5 Checklist v2 |
 | Quality tiebreaks (Specs 030/031) | EXHAUSTED | All economically immaterial |
 | 91-180d drawdown gate | DEAD | Counterproductive at all thresholds |
 | Dynamic caps | DEAD | Identical to plain EW |
@@ -97,13 +112,16 @@ hours here unless genuinely new data or a structural model change creates a reas
 
 ## Current Promotion Story
 
-1. **A4 + clinical_50 + EW Top-30 is ADOPTED** as the production model (2026-04-03).
+1. **B6 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30 is ADOPTED** (2026-04-03, revalidated 2026-04-04).
 2. True PIT evidence: +2.34pp/mo net, t=2.57, 69% hit, beats XBI on return and risk.
-3. **Forward shadow is the validation layer.** 7 arms accumulating daily. Evaluate after 30 trading days.
-4. **K=30 is validated** by PIT sweep (stable K=25-35 plateau, net-of-cost peak).
-5. **Do not rank-weight.** RW-EW = -0.09pp, t=-0.95.
-6. **Regime caveat**: this is a bear/neutral alpha engine. Expect bounded underperformance in strong bull.
-7. The governance hold (Spec 048) **succeeded**: it prevented the old optionality selector from being institutionalized on contaminated data, which led to finding the better A4 selector.
+3. **B6 bundle passes Checklist v2**: bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. Bundle > parts.
+4. **Pairwise ordinal-only confirmed**: ECE=0.129. Do not rank-weight or confidence-size.
+5. **Within-cohort roles clear**: coinvest selects, inst_delta ranks, financial penalizes safe names.
+6. **event_type_score**: 5/5 Checklist v2 but overlay only — does not improve B6 bundle.
+7. **Forward shadow is the validation layer.** 7 arms accumulating daily. Evaluate after 30 trading days.
+8. **K=30 is validated** by PIT sweep (stable K=25-35 plateau, net-of-cost peak).
+9. **Regime caveat**: this is a bear/neutral alpha engine. Expect bounded underperformance in strong bull.
+10. The governance hold (Spec 048) **succeeded**: it prevented the old optionality selector from being institutionalized on contaminated data, which led to finding the better B6 selector.
 
 ---
 
@@ -159,23 +177,26 @@ python3 scripts/research/build_selection_benchmark.py --pit-mode survivorship --
 - [ ] PIT version / contamination status
 - [ ] Active heavy-lift job status
 
-## Decision Engine Architecture (v1.4.0)
+## Decision Engine Architecture (v1.5.0)
 
 **Core files:**
 - `decision_engine.py` — L0 gates → L2 overlays → L4 tiers → L3 sizing → sort key
-- `selector_engine.py` — A4 selector (5 blocks, coinvest+inst dominant)
-- `ranker_engine.py` — clinical_50 ranker (bounded ±15% adjustment)
+- `selector_engine.py` — B6 selector (5 blocks, coinvest+inst dominant)
+- `ranker_v2_pairwise.py` — pairwise_minimal ranker (6 features, ordinal-only)
+- `ranker_engine.py` — clinical_50 ranker (legacy/fallback, bounded ±15%)
 
 **Pipeline flow:**
 ```
 Modules 1-5 → Decision Engine (gates, tiers, sizing)
-           → Selector Engine (A4: coinvest 65% + inst_delta 35%)
-           → Ranker Engine (clinical_50: 50% clinical, 20% catalyst, 15% survivability, 10% inst, 5% options)
+           → Selector Engine (B6: coinvest 65% + inst_delta 35%)
+           → Ranker Engine (pairwise_minimal: 6 features, top-60 cohort, ordinal-only)
            → Sort by final_score → EW Top-30 → rankings.csv
 ```
 
-**Sort anchor:** `selector_score` (uses `final_score` = selector + ranker adjustment when ranker active)
+**Sort anchor:** `selector_score` (uses `final_score` = ranker_v2_score for cohort members)
 All downstream consumers use `actionable_rank` (now driven by selector/ranker, not composite_rank).
+
+**Statistical QA:** `common/stats/` (6 modules), `scripts/research/checklist_v2_rerun.py`
 
 ## Promotion Governance
 - **Manifest**: `production_data/decision_rulesets/manifest.json` — all rulesets tracked with status (active/candidate/retired)

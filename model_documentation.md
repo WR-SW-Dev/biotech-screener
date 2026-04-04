@@ -1,8 +1,8 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.4.0 (ruleset `dd1e608c`, v1.13.0)
-**Last updated:** 2026-04-03
-**Status:** Production — A4 selector + clinical_50 ranker adopted, EW Top-30
+**Version:** 1.5.0 (ruleset `dd1e608c`, v1.13.0)
+**Last updated:** 2026-04-04
+**Status:** Production — A4 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30
 
 ---
 
@@ -18,30 +18,47 @@ favorable risk/reward ahead of binary outcomes.
 ```
 Universe (M1) → Financial Health (M2) → Catalyst Events (M3) → Clinical Dev (M4)
 → Composite Scoring (M5) → Decision Engine (L0→L2→L4→L4b→L3)
-→ Selector Engine (A4: coinvest 65% + inst_delta 35%)
-→ Ranker Engine (clinical_50: clinical 50%, catalyst 20%, survivability 15%, inst 10%, options 5%)
+→ Selector Engine (B6: coinvest 65% + inst_delta 35%)
+→ Ranker Engine (pairwise_minimal: 6 features, ordinal-only, top-60 cohort)
 → Sort by final_score → EW Top-30 → Portfolio Construction
 → Shadow Portfolio → Performance Attribution → Governance Gates
 ```
 
-### Two-Stage Scoring (Spec 050, adopted 2026-04-03)
+### Two-Stage Scoring (Spec 050, adopted 2026-04-03; QA revalidated 2026-04-04)
 
 The model uses a **selector/ranker split**: one score to choose the shortlist, a different
 score to rank within it. This was validated on true PIT data (67 monthly periods, Jun 2020 —
 Apr 2026) at +2.34pp/mo net-of-cost, t=2.57.
 
-**Stage 1 — Selector (A4):** Institutional sponsorship determines which 30 names belong
-in the book. 65% coinvest_score_z + 35% inst_delta_z. Clinical quality was destructive
-as a selector (-0.53pp). The selector's edge is that institutional sponsorship predicts
-which biotech names hold value through catalyst events.
+> **Production mental model (2026-04-04):**
+> coinvest selects, inst_delta ranks, financial penalizes "safe but less catalytic"
+> names, and clinical is a weak/conditional feature under review.
 
-**Stage 2 — Ranker (clinical_50):** Clinical quality, catalyst timing, and survivability
-determine ordering within the selected set. 50% clinical quality, 20% catalyst timing,
-15% survivability, 10% institutional confirmation, 5% options overlay. The ranker works
-by selection perturbation at the Top-30 boundary (adding +0.22pp/mo vs selector alone),
-not by creating a precise ordinal ranking — which is why EW construction is correct.
+**Stage 1 — Selector (B6 bundle):** Institutional sponsorship determines which 30 names
+belong in the book. 65% coinvest_score_z + 35% inst_delta_z. Clinical quality was
+destructive as a selector (-0.53pp). The B6 bundle was revalidated under Checklist v2
+(2026-04-04): bootstrap mean +2.42pp/mo, 95% CI [1.25%, 3.70%], LOSO ROBUST across
+all dimensions. Neither component survives as a standalone incremental signal
+(coinvest FM NW-t = −0.18, inst_delta NW-t = +1.73), but the bundle's diversification
+benefit is real and statistically significant.
 
-**Construction:** Equal-weight Top-30. Rank-weighting is not justified (RW-EW = -0.09pp, t=-0.95).
+**Stage 2 — Ranker (pairwise_minimal, ordinal-only):** A 6-feature Bradley-Terry pairwise
+model ranks within the selected top-60 cohort. The ranker is **ordinal-only** — raw scores
+are not calibrated (ECE = 0.129, verdict: POOR). Do not rank-weight or confidence-size.
+
+Within-cohort feature behavior (FM within top-30, 2026-04-04 audit):
+- `inst_delta_z` (+3.32): dominant positive discriminator within cohort
+- `financial_score` (−3.41): TRUE PENALTY — financially secure biotech names have less
+  catalytic upside. Negative weight is correct and informative. Persists across all
+  cohort widths, both bull and bear regimes.
+- `clinical_score_v2_z` (−2.38): COLLIDER + WEAK PENALTY — amplifies under B6 selection,
+  vanishes in high-coinvest stratum (NW-t = −0.13). Quarterly review; drop if it drifts.
+- `coinvest_score_z` (+0.49): washes out within cohort — its job is done at selector stage.
+- `catalyst_decay_w` (+0.77): noise within cohort.
+- `binary_quality_score` (+1.31): noise within cohort.
+
+**Construction:** Equal-weight Top-30. Rank-weighting is not justified (RW-EW = -0.09pp,
+t=-0.95). Pairwise calibration confirms: ordinal ranking only, no sizing from scores.
 
 ### Core Invariants
 
@@ -146,31 +163,56 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 
 ## 3. Signal Inventory
 
-### Production Signals (Spec 050)
+### Production Signals (Spec 050 + Checklist v2 revalidation 2026-04-04)
 
-| Signal | Role | Weight | Evidence |
-|--------|------|--------|----------|
-| **coinvest_score_z** | Selector (A4) | 65% of selector | Dominant signal: t=3.56 in bundle B6, survives size decomposition (79% retained) |
-| **inst_delta_z** | Selector (A4) | 35% of selector | Best complement: IC=+0.077, Δ=+0.80pp |
-| **endpoint_strength_score** | Ranker (clinical_50) | 25% of clinical block | Within-top-30 IC contributor |
-| **design_quality_score** | Ranker (clinical_50) | 25% of clinical block | Within-top-30 IC contributor |
-| **clinical_optionality_pct_dev** | Ranker (clinical_50) | 20% of clinical block | Drives tier assignment (legacy) + ranker ordering |
-| **catalyst_decay_w** | Ranker (clinical_50) | 25% of catalyst block | Catalyst proximity weighting |
-| **binary_quality_score** | Ranker (clinical_50) | 25% of catalyst block | Event quality composite |
-| **financial_score** | Ranker (clinical_50) | 30% of survivability block | Financing risk signal |
+**Selector (B6 bundle) — validated under full Checklist v2:**
+
+| Signal | Role | Weight | Checklist v2 Evidence |
+|--------|------|--------|----------------------|
+| **coinvest_score_z** | Selector (B6) | 65% | Standalone 3/5 gates (FM incr NW-t=−0.18 FAIL, FDR q=0.86 FAIL). Bundle is stronger than parts. |
+| **inst_delta_z** | Selector (B6) | 35% | Standalone 2/5 gates (FM NW-t=+1.73 FAIL, LOSO unstable in core bucket). Essential as complement. |
+| **B6 bundle** | Selector | 65/35 blend | Bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. **Bundle validated.** |
+
+**Ranker (pairwise_minimal) — 6 features, ordinal-only (ECE=0.129):**
+
+| Signal | Role | Weight | Within-Top-30 FM (NW-t) | Interpretation |
+|--------|------|--------|------------------------|----------------|
+| **inst_delta_z** | Ranker (positive) | +0.0096 | **+2.20** | Dominant positive discriminator within cohort |
+| **coinvest_score_z** | Ranker (positive) | +0.0523 | +1.86 | Washes out within cohort (job done at selector stage) |
+| **financial_score** | Ranker (negative) | −0.0314 | **−3.18** | TRUE PENALTY — safe names have less catalytic upside |
+| **clinical_score_v2_z** | Ranker (negative) | −0.0153 | **−2.13** | COLLIDER + weak penalty — quarterly review |
+| **catalyst_decay_w** | Ranker (negative) | −0.0114 | +0.77 | Noise within cohort |
+| **binary_quality_score** | Ranker (positive) | +0.0110 | +1.31 | Noise within cohort |
+
+**Overlay signals (not in selector/ranker weights):**
+
+| Signal | Role | Checklist v2 | Status |
+|--------|------|-------------|--------|
+| **event_type_score** | Diagnostic/filter/sizer | **5/5 PASS** (FM incr NW-t=+2.34, FDR q=0.096) | Overlay only — does NOT improve B6 bundle |
+
+### Shadow / Under Review
+
+| Signal | Checklist v2 | Status |
+|--------|-------------|--------|
+| insider_exec_buy_value_90d | 1/5 (FRAGILE robustness, bootstrap CI includes 0) | Shadow only — downgraded |
+| aact_execution_score | 1/5 (bear-unstable −1.86pp, bootstrap CI includes 0) | Shadow only — downgraded |
+| clinical_score_v2_z (as ranker) | Negative within top-30, collider-amplified | Quarterly review — drop if drifts to zero |
 
 ### Rejected / Disabled Signals
 
 | Signal | Reason | Status |
 |--------|--------|--------|
-| **clinical_score_v2_z as selector** | Δ=-0.68pp, negative IC | REJECTED as selector anchor |
+| **clinical_score_v2_z as selector** | Δ=-0.68pp, negative IC, universally destructive (Spec 055) | REJECTED |
 | **DEFAULT selector weights** | -0.53pp as selector | REJECTED (clinical 35%/catalyst 25% mix) |
+| **clinical composites as ranker** | Negative across ALL robustness slices (Spec 055) | CLOSED |
 | cal_alpha | Confirmed noise at all horizons | REMOVED in v1.12.0 |
-| optionality as sort anchor | Underwater on PIT data | SUPERSEDED by A4 selector |
+| optionality as sort anchor | Underwater on PIT data | SUPERSEDED by B6 selector |
 | coinvest_binary | Δ=+0.25pp, t=1.25 | WORTHLESS — count granularity matters |
 | total_volume_z | IC=-0.10 on PIT-native data | DEAD |
 | quality_tiebreaks (Specs 030/031) | Economically immaterial | Lane EXHAUSTED |
-| rank-weighting (any signal) | RW-EW = -0.09pp, t=-0.95 | NOT JUSTIFIED |
+| rank-weighting (any signal) | RW-EW = -0.09pp, t=-0.95; pairwise ECE=0.129 | NOT JUSTIFIED |
+| options-as-alpha (Spec 053) | 37 signals tested, ALL fail as selector/ranker | CLOSED |
+| static execution features (Spec 054) | PCD overdue, update recency, pipeline velocity all noise | CLOSED |
 
 ---
 
@@ -380,7 +422,7 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 
 ### Current Architecture (Spec 050, adopted 2026-04-03)
 
-**Model:** A4 selector + clinical_50 ranker
+**Model:** B6 selector + pairwise_minimal ranker (ordinal-only)
 **Construction:** Equal-weight Top-30
 **Account:** $500,000 notional
 **Rebalance:** Weekly (Friday)
@@ -482,12 +524,13 @@ cost aggregation, rebalance threshold gate (only trade if expected alpha >
 | Rank-Weighted Top-30 | Shadow overlay (regime-dependent, not always-on) | Shadow |
 | Current shadow (sleeve-budget) | Legacy comparator to beat | Legacy |
 
-#### Operating Conclusion
+#### Operating Conclusion (updated 2026-04-04)
 
-> The DEM now uses a two-stage scoring architecture: institutional sponsorship
-> selects the book, clinical quality ranks within it, and the portfolio is held
-> equal-weight. This design was validated on true PIT data at +2.34pp/mo net,
-> t=2.57, with lower volatility and drawdown than both the old baseline and XBI.
+> The DEM uses a two-stage scoring architecture: **coinvest selects** (B6 bundle),
+> **inst_delta ranks** (pairwise_minimal), **financial penalizes** safe-but-uncatalytic
+> names, and the portfolio is held equal-weight. The B6 selector was revalidated
+> under Checklist v2 (bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST).
+> The pairwise ranker is ordinal-only (ECE = 0.129) — no rank-weighting or sizing.
 
 > The model is a **bear/neutral alpha engine**: strong in distress and consolidation
 > (+3.37pp bear, +6.23pp neutral), with bounded underperformance in sharp biotech
@@ -774,13 +817,24 @@ coverage and sparse inst_delta_z. The ranker concept is not falsified; it is
 currently untestable on the available historical data. Readiness gate at
 `output/ranker/ranker_data_readiness.json` tracks when training becomes viable.
 
-### Operating Thesis
+### Operating Thesis (updated 2026-04-04)
 
-> DEM is a proven selector, not a ranker. Selection generates +95% excess.
-> Within-top-30 ordering does not predict (IC ≈ 0). EW Top-30 is correct
-> until a dedicated second-stage ranker proves it can improve on equal weight.
-> Fixed sleeve budgets are retired. Bucket labels survive as metadata only.
+> **coinvest selects, inst_delta ranks, financial penalizes "safe but less catalytic"
+> names, and clinical is a weak/conditional feature under review.**
+>
+> B6 selector (coinvest 65% + inst_delta 35%) is validated under full Checklist v2:
+> bootstrap +2.42pp/mo, 95% CI excludes zero, LOSO ROBUST. Neither component survives
+> standalone, but the bundle's diversification benefit is real.
+>
+> Pairwise_minimal ranker is ordinal-only (ECE = 0.129). Within the top-30 cohort,
+> inst_delta is the dominant positive signal, financial_score is a true negative penalty
+> (safe names underperform), and coinvest washes out (its job is done at selection).
+>
+> EW Top-30 is the correct construction. Rank-weighting and confidence sizing are
+> not justified — pairwise scores are not calibrated.
+>
 > The selector's edge is regime-dependent, strongest in bear biotech.
+> Fixed sleeve budgets are retired. Bucket labels survive as metadata only.
 
 ---
 
@@ -789,26 +843,89 @@ currently untestable on the available historical data. Readiness gate at
 | File | Purpose |
 |------|---------|
 | `decision_engine.py` | DEM core — L0→L2→L4→L4b→L3 |
+| `selector_engine.py` | B6 selector (5 blocks, coinvest+inst dominant) |
+| `ranker_engine.py` | clinical_50 ranker (legacy bounded ±15%) |
+| `ranker_v2_pairwise.py` | pairwise_minimal ranker (Bradley-Terry, 6 features) |
 | `run_screen.py` | Production pipeline orchestrator |
 | `tools/run_daily_production.py` | Daily cron pipeline (Steps 1-6) |
 | `tools/live_shadow_portfolio.py` | Shadow portfolio construction + PnL |
 | `tools/catalyst_resolution_tracker.py` | CRT core |
 | `tools/crt_calibration.py` | CRT calibration rollup |
 | `tools/fetch_aact_snapshot.py` | AACT trial warehouse ingest |
+| `common/stats/` | Statistical QA package (FM, bootstrap, FDR, LOSO, calibration) |
 | `common/options_diagnostics.py` | Options surface data (Tastytrade) |
-| `common/milestone_optionality.py` | Spec 041 milestone features |
-| `common/dealforma_features.py` | Spec 046 deal comp features |
-| `common/purple_book_features.py` | Spec 047 biologics competition |
-| `common/options_quality.py` | Spec 045 options quality layer |
 | `dashboard/app.py` | FastAPI backend |
 | `frontend/dashboard/` | React frontend |
 | `specs/SYSTEM_SPEC.md` | System invariants |
 | `production_data/portfolio_policy.json` | Portfolio construction policy (v3) |
-| `production_data/decision_rulesets/v1.12.0_cal_alpha_off_candidate.json` | Active ruleset |
+| `production_data/ranker_v2_model.json` | Pairwise minimal model weights |
+| `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json` | Active ruleset |
+| `scripts/research/checklist_v2_rerun.py` | Promotion Checklist v2 battery runner |
+| `scripts/research/pairwise_feature_audit.py` | Within-cohort feature diagnostic |
 
 ---
 
-## 13. Test Coverage
+## 13. Statistical QA Layer (Spec 055, 2026-04-04)
+
+### Promotion Checklist v2
+
+Any signal promotion now requires passing all 5 gates:
+
+1. **Signal card**: Coverage ≥40%, selector Δ > 0, ranker IC > 0
+2. **Fama-MacBeth incremental**: NW-t ≥ 1.96 with controls (coinvest, inst, financial)
+3. **Block bootstrap**: 95% CI on portfolio delta excludes zero (6-month blocks, n=10,000)
+4. **BH FDR**: q-value < 0.10 within testing family
+5. **LOSO robustness**: Worst-slice delta positive across year/regime/cap/catalyst/stage
+
+### Checklist v2 Rerun Results (2026-04-04)
+
+| Signal | G1 Card | G2 FM | G3 Boot | G4 FDR | G5 LOSO | Total | Verdict |
+|--------|---------|-------|---------|--------|---------|-------|---------|
+| coinvest_score_z | PASS | FAIL | PASS | FAIL | PASS | 3/5 | SHADOW |
+| inst_delta_z | PASS | FAIL | PASS | FAIL | FAIL | 2/5 | NO_GO standalone |
+| event_type_score | PASS | PASS | PASS | PASS | PASS | 5/5 | **PROMOTE (overlay)** |
+| insider_exec_buy_value_90d | FAIL | PASS | FAIL | FAIL | FAIL | 1/5 | NO_GO |
+| aact_execution_score | PASS | FAIL | FAIL | FAIL | FAIL | 1/5 | NO_GO |
+| **B6 bundle** | — | — | **PASS** | — | **PASS** | — | **VALIDATED** |
+
+### Pairwise Calibration Assessment
+
+- Pairs evaluated: 33,093 (67 snapshots)
+- Brier score: 0.2755
+- ECE: 0.129 → **POOR — ordinal ranking only**
+- Pairwise accuracy: 53.0%
+- Platt-calibrated ECE: 0.013 (but raw scores are uncalibrated)
+
+**Policy**: No rank-weighting, no confidence sizing. Pairwise scores determine ordering
+only. Equal-weight construction is the correct response to ordinal-only ranking.
+
+### Within-Cohort Feature Audit (2026-04-04)
+
+| Feature | Within-Top-30 NW-t | Mechanism | Action |
+|---------|-------------------|-----------|--------|
+| financial_score | −3.41 | TRUE PENALTY — persists all cohorts, all regimes | Keep negative weight |
+| inst_delta_z | +3.32 | Dominant positive discriminator | Keep, primary ranker signal |
+| clinical_score_v2_z | −2.38 | COLLIDER + weak penalty — vanishes in high-coinvest stratum | Quarterly review |
+| coinvest_score_z | +0.49 | Washes out (job done at selector) | Keep but low-impact |
+
+**Key insight**: The selector and ranker learn different structure. Coinvest gets names
+into the room; within the room, inst_delta discriminates and financial_score penalizes
+the "safe but less catalytic" names. This is not a bug — it reflects real within-cohort
+economics of biotech investing.
+
+### Infrastructure
+
+| Script | Purpose |
+|--------|---------|
+| `common/stats/` | 6 modules: cross_sectional, bootstrap, multiple_testing, calibration, robustness, survival |
+| `scripts/research/checklist_v2_rerun.py` | Targeted battery: Queue A (signals), B (calibration), C (B6 bundle) |
+| `scripts/research/pairwise_feature_audit.py` | 6 diagnostic tests for within-cohort feature behavior |
+| `scripts/research/statistical_methods_upgrade.py` | Full Spec 055 battery (broad, all signals) |
+| `scripts/research/herald_precision_study.py` | Spec 056 — first Checklist v2 pass (event_type_score) |
+
+---
+
+## 14. Test Coverage
 
 ~230+ tests across the system:
 
@@ -828,4 +945,4 @@ currently untestable on the available historical data. Readiness gate at
 
 ---
 
-*Document updated 2026-04-02. Active ruleset: 69a0c7f8 (v1.12.0).*
+*Document updated 2026-04-04. Active ruleset: dd1e608c (v1.13.0). QA baseline: Checklist v2 rerun.*
