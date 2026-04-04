@@ -101,6 +101,33 @@ BUNDLES = {
         "inst_delta_z": (0.20, True),
         "momentum_score": (0.20, True),
     },
+    # --- Insider signal bundles ---
+    "B13_insider_only": {
+        "insider_net_buy_value_90d": (1.0, True),
+    },
+    "B14_coinvest_insider": {
+        "coinvest_score_z": (0.55, True),
+        "inst_delta_z": (0.25, True),
+        "insider_net_buy_value_90d": (0.20, True),
+    },
+    "B15_coinvest_inst_insider": {
+        "coinvest_score_z": (0.50, True),
+        "inst_delta_z": (0.30, True),
+        "insider_net_buy_value_90d": (0.20, True),
+    },
+    "B16_coinvest_insider_heavy": {
+        "coinvest_score_z": (0.45, True),
+        "insider_net_buy_value_90d": (0.35, True),
+        "inst_delta_z": (0.20, True),
+    },
+    "B17_insider_exec_buy": {
+        "insider_exec_buy_value_90d": (1.0, True),
+    },
+    "B18_coinvest_exec_insider": {
+        "coinvest_score_z": (0.55, True),
+        "inst_delta_z": (0.25, True),
+        "insider_exec_buy_value_90d": (0.20, True),
+    },
 }
 
 
