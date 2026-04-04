@@ -12,79 +12,57 @@ These tests verify the security and reliability features including:
 
 import json
 import os
-import tempfile
 import time
 from datetime import date
 from decimal import Decimal
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from common.production_hardening import (
-    # Exceptions
+    DateParseError,
+    FileReadError,
     FileSizeError,
     IntegrityError,
+    ModuleLogger,
     OperationTimeoutError,
     PathTraversalError,
-    SecurityError,
     SymlinkError,
-    DateParseError,
-    FileOperationError,
-    FileReadError,
-    FileWriteError,
-    DirectoryError,
-    # Path validation
-    safe_join_path,
-    validate_checkpoint_path,
-    validate_path_within_base,
-    # Timeouts
-    operation_timeout,
-    with_timeout,
-    # Integrity
+    check_available_memory_mb,
+    clamp_decimal,
     compute_content_hash,
     compute_file_hash,
-    load_with_integrity_check,
-    save_with_integrity,
-    verify_integrity,
-    # File operations
-    safe_mkdir,
-    safe_read_json,
-    safe_write_json,
-    validate_file_size,
-    # File I/O with error handling
-    safe_mkdir_with_error,
-    safe_file_write,
-    safe_file_read,
-    safe_json_write,
-    safe_json_read,
-    # Logging
-    sanitize_for_logging,
-    ModuleLogger,
     get_module_logger,
-    # Validation
-    validate_date_format,
-    validate_numeric_bounds,
-    validate_ticker_format,
-    # Safe date parsing
-    safe_parse_date,
-    safe_parse_date_or_none,
-    # Safe dict access
-    safe_get_nested,
+    load_with_integrity_check,
+    operation_timeout,
+    safe_decimal_divide,
+    safe_file_read,
+    safe_file_write,
     safe_get_decimal,
     safe_get_int,
+    safe_get_nested,
     safe_get_str,
-    # Decimal safety
-    DECIMAL_BOUNDS,
-    clamp_decimal,
-    safe_decimal_divide,
+    safe_join_path,
+    safe_json_read,
+    safe_json_write,
+    safe_mkdir,
+    safe_mkdir_with_error,
+    safe_parse_date,
+    safe_parse_date_or_none,
+    safe_read_json,
+    safe_write_json,
+    sanitize_for_logging,
+    save_with_integrity,
+    validate_checkpoint_path,
+    validate_date_format,
     validate_decimal_field,
-    # Resources
-    check_available_memory_mb,
-    # Constants
-    MAX_JSON_FILE_SIZE_MB,
+    validate_file_size,
+    validate_numeric_bounds,
+    validate_path_within_base,
+    validate_ticker_format,
+    verify_integrity,
+    with_timeout,
 )
-
 
 # =============================================================================
 # Path Traversal Protection Tests
@@ -194,7 +172,7 @@ class TestOperationTimeout:
         """Operations exceeding timeout should raise error."""
         with pytest.raises(OperationTimeoutError) as exc_info:
             with operation_timeout(1, "Slow operation"):
-                time.sleep(5)  # Should timeout
+                time.sleep(2)  # Should timeout
 
         assert "Slow operation" in str(exc_info.value)
         assert "1s timeout" in str(exc_info.value)
@@ -205,7 +183,7 @@ class TestOperationTimeout:
 
         @with_timeout(1, "Test function")
         def slow_function():
-            time.sleep(5)
+            time.sleep(2)
 
         with pytest.raises(OperationTimeoutError):
             slow_function()
@@ -420,8 +398,8 @@ class TestLoggingSanitization:
     def test_sanitize_for_logging_redacts_sensitive_keys(self):
         """Sensitive keys should be redacted."""
         data = {
-            "api_key": "secret123",
-            "password": "hunter2",
+            "api_key": "secret123",  # pragma: allowlist secret
+            "password": "hunter2",  # pragma: allowlist secret
             "username": "admin",
             "count": 42,
         }
@@ -441,7 +419,7 @@ class TestLoggingSanitization:
         """Nested dicts should be sanitized recursively when no whitelist."""
         data = {
             "outer": {
-                "api_key": "secret",
+                "api_key": "secret",  # pragma: allowlist secret
                 "data": {"count": 5},
             }
         }
@@ -841,9 +819,7 @@ class TestDecimalSafety:
 
     def test_clamp_decimal_non_finite(self):
         """Non-finite values should return default."""
-        result = clamp_decimal(
-            Decimal("inf"), Decimal("0"), Decimal("100"), default=Decimal("0")
-        )
+        result = clamp_decimal(Decimal("inf"), Decimal("0"), Decimal("100"), default=Decimal("0"))
         assert result == Decimal("0")
 
     def test_safe_decimal_divide_normal(self):
@@ -866,11 +842,7 @@ class TestDecimalSafety:
 
     def test_safe_decimal_divide_with_max(self):
         """Result exceeding max should be clamped."""
-        result = safe_decimal_divide(
-            Decimal("1000000"),
-            Decimal("0.001"),
-            max_result=Decimal("1000000")
-        )
+        result = safe_decimal_divide(Decimal("1000000"), Decimal("0.001"), max_result=Decimal("1000000"))
         assert result == Decimal("1000000")
 
     def test_validate_decimal_field_valid(self):

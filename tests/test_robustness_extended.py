@@ -10,58 +10,50 @@ Tests cover:
 - Module health checks
 - Operation watchdog
 """
+
 import threading
 import time
 from datetime import date
 from decimal import Decimal
-from typing import Tuple
 
 import pytest
 
 from common.robustness_extended import (
-    # Timeout
-    TimeoutConfig,
-    TimeoutError,
-    with_timeout,
-    run_with_timeout,
-    # Circuit breaker
     CircuitState,
+    HealthCheckResult,
+    HealthStatus,
+    IdempotencyStore,
+    IntegrityConfig,
+    ModuleHealthChecker,
+    OperationWatchdog,
     StatefulCircuitBreaker,
     StatefulCircuitBreakerConfig,
-    # Throttling
     ThrottleConfig,
     Throttler,
-    with_throttle,
-    # Integrity
-    IntegrityConfig,
-    compute_data_hash,
-    verify_data_integrity,
-    IntegrityResult,
-    # Idempotency
-    IdempotencyStore,
-    idempotent,
-    # Health checks
-    HealthStatus,
-    HealthCheckResult,
-    ModuleHealthChecker,
-    # Watchdog
+    TimeoutConfig,
+    TimeoutError,
     WatchdogConfig,
-    OperationWatchdog,
     WatchdogTimeoutError,
-    # Utilities
+    compute_data_hash,
     create_robust_pipeline_context,
+    idempotent,
+    run_with_timeout,
+    verify_data_integrity,
+    with_throttle,
+    with_timeout,
 )
-
 
 # ============================================================================
 # TIMEOUT PROTECTION TESTS
 # ============================================================================
+
 
 class TestTimeoutProtection:
     """Tests for timeout protection utilities."""
 
     def test_timeout_success(self):
         """Function completes within timeout."""
+
         @with_timeout(TimeoutConfig(timeout_seconds=1.0))
         def quick_operation():
             return "success"
@@ -71,9 +63,10 @@ class TestTimeoutProtection:
 
     def test_timeout_exceeded_raises(self):
         """Function exceeding timeout raises TimeoutError."""
+
         @with_timeout(TimeoutConfig(timeout_seconds=0.1))
         def slow_operation():
-            time.sleep(1.0)
+            time.sleep(0.3)
             return "never reached"
 
         with pytest.raises(TimeoutError) as exc_info:
@@ -84,13 +77,16 @@ class TestTimeoutProtection:
 
     def test_timeout_returns_default(self):
         """Timeout returns default value when raise_on_timeout is False."""
-        @with_timeout(TimeoutConfig(
-            timeout_seconds=0.1,
-            raise_on_timeout=False,
-            default_value="fallback",
-        ))
+
+        @with_timeout(
+            TimeoutConfig(
+                timeout_seconds=0.1,
+                raise_on_timeout=False,
+                default_value="fallback",
+            )
+        )
         def slow_operation():
-            time.sleep(1.0)
+            time.sleep(0.3)
             return "never reached"
 
         result = slow_operation()
@@ -98,6 +94,7 @@ class TestTimeoutProtection:
 
     def test_run_with_timeout_helper(self):
         """Helper function works correctly."""
+
         def add(a, b):
             return a + b
 
@@ -106,6 +103,7 @@ class TestTimeoutProtection:
 
     def test_timeout_propagates_exception(self):
         """Exceptions from function are propagated."""
+
         @with_timeout(TimeoutConfig(timeout_seconds=1.0))
         def error_operation():
             raise ValueError("intentional error")
@@ -117,6 +115,7 @@ class TestTimeoutProtection:
 # ============================================================================
 # STATEFUL CIRCUIT BREAKER TESTS
 # ============================================================================
+
 
 class TestStatefulCircuitBreaker:
     """Tests for stateful circuit breaker."""
@@ -248,26 +247,33 @@ class TestStatefulCircuitBreaker:
 # THROTTLING TESTS
 # ============================================================================
 
+
 class TestThrottler:
     """Tests for operation throttling."""
 
     def test_throttle_allows_within_limit(self):
         """Requests within limit are allowed."""
-        throttler = Throttler("test", ThrottleConfig(
-            max_calls=5,
-            period_seconds=1.0,
-        ))
+        throttler = Throttler(
+            "test",
+            ThrottleConfig(
+                max_calls=5,
+                period_seconds=1.0,
+            ),
+        )
 
         for _ in range(5):
             assert throttler.acquire()
 
     def test_throttle_blocks_over_limit(self):
         """Requests over limit are blocked/rejected."""
-        throttler = Throttler("test", ThrottleConfig(
-            max_calls=2,
-            period_seconds=10.0,  # Long period so tokens don't refill
-            wait_on_limit=False,
-        ))
+        throttler = Throttler(
+            "test",
+            ThrottleConfig(
+                max_calls=2,
+                period_seconds=10.0,  # Long period so tokens don't refill
+                wait_on_limit=False,
+            ),
+        )
 
         assert throttler.acquire()
         assert throttler.acquire()
@@ -277,10 +283,13 @@ class TestThrottler:
 
     def test_throttle_refills_over_time(self):
         """Tokens refill over time."""
-        throttler = Throttler("test", ThrottleConfig(
-            max_calls=10,
-            period_seconds=0.1,
-        ))
+        throttler = Throttler(
+            "test",
+            ThrottleConfig(
+                max_calls=10,
+                period_seconds=0.1,
+            ),
+        )
 
         # Exhaust tokens
         for _ in range(10):
@@ -322,6 +331,7 @@ class TestThrottler:
 # ============================================================================
 # DATA INTEGRITY TESTS
 # ============================================================================
+
 
 class TestDataIntegrity:
     """Tests for data integrity verification."""
@@ -399,6 +409,7 @@ class TestDataIntegrity:
 # ============================================================================
 # IDEMPOTENCY TESTS
 # ============================================================================
+
 
 class TestIdempotency:
     """Tests for idempotency tracking."""
@@ -479,6 +490,7 @@ class TestIdempotency:
 # HEALTH CHECK TESTS
 # ============================================================================
 
+
 class TestHealthChecks:
     """Tests for module health checks."""
 
@@ -503,12 +515,8 @@ class TestHealthChecks:
         """Overall status is HEALTHY when all checks pass."""
         checker = ModuleHealthChecker("test")
 
-        checker.add_check("check1", lambda: HealthCheckResult(
-            name="check1", status=HealthStatus.HEALTHY, message="OK"
-        ))
-        checker.add_check("check2", lambda: HealthCheckResult(
-            name="check2", status=HealthStatus.HEALTHY, message="OK"
-        ))
+        checker.add_check("check1", lambda: HealthCheckResult(name="check1", status=HealthStatus.HEALTHY, message="OK"))
+        checker.add_check("check2", lambda: HealthCheckResult(name="check2", status=HealthStatus.HEALTHY, message="OK"))
 
         checker.run_all_checks()
         assert checker.get_overall_status() == HealthStatus.HEALTHY
@@ -517,12 +525,10 @@ class TestHealthChecks:
         """Overall status is DEGRADED when any check is degraded."""
         checker = ModuleHealthChecker("test")
 
-        checker.add_check("check1", lambda: HealthCheckResult(
-            name="check1", status=HealthStatus.HEALTHY, message="OK"
-        ))
-        checker.add_check("check2", lambda: HealthCheckResult(
-            name="check2", status=HealthStatus.DEGRADED, message="Slow"
-        ))
+        checker.add_check("check1", lambda: HealthCheckResult(name="check1", status=HealthStatus.HEALTHY, message="OK"))
+        checker.add_check(
+            "check2", lambda: HealthCheckResult(name="check2", status=HealthStatus.DEGRADED, message="Slow")
+        )
 
         checker.run_all_checks()
         assert checker.get_overall_status() == HealthStatus.DEGRADED
@@ -531,12 +537,10 @@ class TestHealthChecks:
         """Overall status is UNHEALTHY when any check fails."""
         checker = ModuleHealthChecker("test")
 
-        checker.add_check("check1", lambda: HealthCheckResult(
-            name="check1", status=HealthStatus.HEALTHY, message="OK"
-        ))
-        checker.add_check("check2", lambda: HealthCheckResult(
-            name="check2", status=HealthStatus.UNHEALTHY, message="Down"
-        ))
+        checker.add_check("check1", lambda: HealthCheckResult(name="check1", status=HealthStatus.HEALTHY, message="OK"))
+        checker.add_check(
+            "check2", lambda: HealthCheckResult(name="check2", status=HealthStatus.UNHEALTHY, message="Down")
+        )
 
         checker.run_all_checks()
         assert checker.get_overall_status() == HealthStatus.UNHEALTHY
@@ -575,6 +579,7 @@ class TestHealthChecks:
 # ============================================================================
 # WATCHDOG TESTS
 # ============================================================================
+
 
 class TestWatchdog:
     """Tests for operation watchdog."""
@@ -685,6 +690,7 @@ class TestWatchdog:
 # INTEGRATION TESTS
 # ============================================================================
 
+
 class TestRobustnessIntegration:
     """Integration tests for robustness utilities."""
 
@@ -704,11 +710,14 @@ class TestRobustnessIntegration:
         ctx = create_robust_pipeline_context("test-123")
 
         # Setup health checker
-        ctx["health_checker"].add_check("test", lambda: HealthCheckResult(
-            name="test",
-            status=HealthStatus.HEALTHY,
-            message="OK",
-        ))
+        ctx["health_checker"].add_check(
+            "test",
+            lambda: HealthCheckResult(
+                name="test",
+                status=HealthStatus.HEALTHY,
+                message="OK",
+            ),
+        )
 
         # Start watchdog
         ctx["watchdog"].start_operation("combined_test")
