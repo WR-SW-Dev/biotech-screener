@@ -242,7 +242,7 @@ KNOWN_CUSIP_MAPPINGS = {
     "G76279101": "ROIV",  # Roivant Sciences
     "04272N102": "AVBP",  # ArriVent BioPharma
     "37045V100": "GERN",  # Geron Corporation
-    "31573A105": "FGEN",  # FibroGen
+    "31573A105": "KYNB",  # Kyntra Bio (formerly FibroGen)
     "742718109": "PRCT",  # Procept BioRobotics
     "825690100": "SI",  # Silvergate (placeholder)
     "74587W107": "PTCT",  # PTC Therapeutics (alt)
@@ -279,7 +279,7 @@ KNOWN_CUSIP_MAPPINGS = {
     "83422E204": "SLDB",  # Solid Biosciences
     "64125C109": "NBIX",  # Neurocrine Biosciences
     "925050106": "VRNA",  # Verona Pharma
-    "31573A105": "FGEN",  # FibroGen
+    "31573A105": "KYNB",  # Kyntra Bio (formerly FibroGen)
     "74587V207": "QURE",  # uniQure (alt)
     "89214P109": "TSVT",  # 2seventy bio
     "74587V305": "PTCT",  # PTC Therapeutics (alt2)

@@ -147,7 +147,7 @@ TICKER_TO_SPONSORS = {
     "EYPT": ["EyePoint Pharmaceuticals"],
     "FATE": ["Fate Therapeutics"],
     "FDMT": ["4D Molecular Therapeutics", "4D Molecular Therapeutics, Inc."],
-    "FGEN": ["FibroGen", "FibroGen, Inc."],
+    "KYNB": ["Kyntra Bio", "Kyntra Biosciences", "FibroGen", "FibroGen, Inc."],
     "FHTX": ["Foghorn Therapeutics", "Foghorn Therapeutics Inc."],
     "FOLD": ["Amicus Therapeutics"],
     "FULC": ["Fulcrum Therapeutics", "Fulcrum Therapeutics, Inc."],
@@ -385,7 +385,7 @@ def _fetch_trials_page(base_url: str, params: dict, max_retries: int = 3) -> tup
             else:
                 return [], None, False
 
-        except Exception as e:
+        except Exception:
             if attempt < max_retries - 1:
                 time.sleep(2)
                 continue
