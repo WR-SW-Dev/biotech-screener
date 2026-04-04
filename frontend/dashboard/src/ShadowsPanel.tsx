@@ -9,6 +9,7 @@ import {
   fetchConstructionV2Performance,
   fetchPostPromotionMonitor,
 } from './api';
+import TimingHazardPanel from './TimingHazardPanel';
 
 /* ── Regime badge ─────────────────────────────────────────────── */
 
@@ -345,6 +346,8 @@ export default function ShadowsPanel() {
         <ConstructionV2Shadow />
         <RegimeShadow />
       </div>
+
+      <TimingHazardPanel />
     </div>
   );
 }

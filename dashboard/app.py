@@ -916,6 +916,42 @@ async def api_regime_shadow_latest():
     return _load_json(files[0]) or {"error": "Failed to load"}
 
 
+# ── Timing Hazard & Event Quality Endpoints ──────────────────────────
+
+
+@app.get("/api/timing_hazard/latest")
+async def api_timing_hazard_latest():
+    """Latest timing hazard overlay."""
+    th_dir = REPO_ROOT / "artifacts" / "timing_hazard"
+    if not th_dir.exists():
+        return {"error": "No timing hazard data"}
+    files = sorted(th_dir.glob("timing_hazard_*.json"), reverse=True)
+    if not files:
+        return {"error": "No timing hazard snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/timing_hazard/calibration")
+async def api_timing_hazard_calibration():
+    """Timing hazard calibration ledger (JSONL → list)."""
+    path = REPO_ROOT / "artifacts" / "timing_hazard" / "calibration_ledger.jsonl"
+    if not path.exists():
+        return []
+    return _load_jsonl(path)
+
+
+@app.get("/api/event_quality_shadow/latest")
+async def api_event_quality_shadow_latest():
+    """Latest event quality shadow sizing comparison."""
+    eq_dir = REPO_ROOT / "artifacts" / "event_quality_shadow"
+    if not eq_dir.exists():
+        return {"error": "No event quality shadow data"}
+    files = sorted(eq_dir.glob("event_quality_shadow_*.json"), reverse=True)
+    if not files:
+        return {"error": "No event quality shadow snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
 if __name__ == "__main__":
     import argparse
 

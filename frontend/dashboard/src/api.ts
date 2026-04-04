@@ -125,3 +125,19 @@ export async function fetchConstructionV2Performance(): Promise<any[]> {
   const data = await res.json();
   return Array.isArray(data) ? data : [];
 }
+
+export async function fetchTimingHazardLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/timing_hazard/latest`);
+  return res.json();
+}
+
+export async function fetchTimingHazardCalibration(): Promise<any[]> {
+  const res = await fetch(`${BASE}/api/timing_hazard/calibration`);
+  const data = await res.json();
+  return Array.isArray(data) ? data : [];
+}
+
+export async function fetchEventQualityShadowLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/event_quality_shadow/latest`);
+  return res.json();
+}
