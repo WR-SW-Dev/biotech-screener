@@ -5004,6 +5004,26 @@ def run_daily(
         except Exception as _eq_err:
             _logger.warning(f"Event quality shadow failed: {_eq_err}")
 
+        # --- Step 5k.18: Timing hazard overlay (non-blocking, Spec 057 pilot) ---
+        try:
+            from tools.compute_timing_hazard import append_calibration_ledger, compute_timing_hazard
+
+            _th_result = compute_timing_hazard(as_of_date)
+            if "error" not in _th_result:
+                _th_dir = REPO_ROOT / "artifacts" / "timing_hazard"
+                _th_dir.mkdir(parents=True, exist_ok=True)
+                _th_path = _th_dir / f"timing_hazard_{as_of_date}.json"
+                with open(_th_path, "w") as _th_f:
+                    json.dump(_th_result, _th_f, indent=2, default=str)
+                append_calibration_ledger(_th_result)
+                _th_n = _th_result.get("n_catalysts", 0)
+                _th_w = _th_result.get("n_warnings", 0)
+                _logger.info(f"Timing hazard → {_th_n} catalysts, {_th_w} warnings")
+            else:
+                _logger.info(f"Timing hazard → skipped ({_th_result.get('error', '?')})")
+        except Exception as _th_err:
+            _logger.warning(f"Timing hazard failed: {_th_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
