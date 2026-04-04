@@ -189,7 +189,49 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
         "hepatotoxicity",
         "black box warning",
     ]
-    if any(kw in hl for kw in safety_keywords):
+    # Negation patterns that reverse safety interpretation (Spec 053)
+    safety_negation = [
+        "lifts clinical hold",
+        "lift clinical hold",
+        "lifted clinical hold",
+        "clinical hold lifted",
+        "clinical hold has been lifted",
+        "removes clinical hold",
+        "removal of clinical hold",
+        "clinical hold removed",
+        "resolves clinical hold",
+        "hold has been resolved",
+        "partial hold lifted",
+        "partial hold removed",
+        "removes partial clinical hold",
+    ]
+    has_safety = any(kw in hl for kw in safety_keywords)
+    has_negation = any(neg in hl for neg in safety_negation)
+    if has_safety and has_negation:
+        # Safety resolution — positive regulatory event
+        return {
+            "event_category": "regulatory",
+            "event_subtype": "safety_resolution",
+            "severity": "high",
+            "materiality": "high",
+            "new_or_stale": "new",
+            "informational_only": False,
+            "informational_reason": "",
+            "event_outcome_guess": "hit",
+            "event_outcome_reason": headline[:100],
+            "price_direction_guess": "up",
+            "price_direction_reason": "Clinical hold lift is positive for stock",
+            "exogenous_to_primary_catalyst": False,
+            "exogenous_reason": "",
+            "safety_signal_flag": False,
+            "financing_signal_flag": False,
+            "mna_signal_flag": False,
+            "thesis_change_flag": True,
+            "why_it_matters": headline[:150],
+            "confidence": 0.7,
+            "needs_review": False,
+        }
+    if has_safety:
         return {
             "event_category": "safety",
             "event_subtype": "safety_signal",
@@ -440,6 +482,29 @@ def _is_noise(headline: str) -> bool:
         # Job postings
         "employment inducement",
         "inducement grants",
+        # Market research / analyst expanded (Spec 053)
+        "market valuation",
+        "market opportunity",
+        "market outlook",
+        "market segmentation",
+        "market dynamics",
+        "market overview",
+        "cagr",
+        "forecast period",
+        "billion by 20",
+        "million by 20",
+        "price target",
+        "initiates coverage",
+        "maintains buy",
+        "maintains sell",
+        "maintains hold",
+        "analyst report",
+        "equity research",
+        "masterbatch",
+        "downgrades to",
+        "upgrades to",
+        "value chain analysis",
+        "supply chain analysis",
     ]
     return any(p in hl for p in noise_patterns)
 
@@ -532,48 +597,52 @@ def _is_ticker_collision(headline: str, ticker: str, company_names: Dict[str, Li
     if _re.search(r"\b" + _re.escape(ticker_lower) + r"\b", hl_lower):
         return False
 
-    # Check 3: first word of headline might be a ticker-related brand
-    # Many biotech PRs start with the company's trade name which may differ
-    # from the registered name. If the headline starts with a capitalized
-    # word that's 3-8 chars, it might be the brand. Don't flag these.
-    first_word = headline.split()[0] if headline else ""
-    if first_word and 3 <= len(first_word) <= 12 and (first_word[0].isupper() or first_word[0].isdigit()):
-        # Could be brand name — only flag if first word looks like
-        # a completely unrelated company (contains common non-biotech words)
-        non_biotech_indicators = [
-            "market",
-            "report",
-            "global",
-            "analysis",
-            "research",
-            "battery",
-            "mining",
-            "energy",
-            "solar",
-            "lithium",
-            "academy",
-            "foundation",
-            "gold",
-            "steel",
-            "oil",
-            "incubation",
-            "accelerator",
-            "blockchain",
-            "crypto",
-            "real estate",
-            "mortgage",
-            "insurance",
-            "banking",
-            "rich list",
-            "award",
-            "honor",
-            "gala",
-        ]
-        if not any(ind in hl_lower for ind in non_biotech_indicators):
-            return False
+    # Check 3 (Spec 053): No company name, no ticker — assume collision UNLESS
+    # headline contains biotech-relevant terms suggesting it really is about
+    # a biotech company with unusual branding.
+    biotech_indicators = [
+        "phase",
+        "trial",
+        "fda",
+        "clinical",
+        "drug",
+        "therapy",
+        "therapeutic",
+        "oncology",
+        "patient",
+        "dose",
+        "efficacy",
+        "endpoint",
+        "enrollment",
+        "pipeline",
+        "regulatory",
+        "approval",
+        "nda",
+        "bla",
+        "biologic",
+        "molecule",
+        "antibody",
+        "gene",
+        "cell therapy",
+        "mrna",
+        "protein",
+        "receptor",
+        "inhibitor",
+        "immuno",
+        "orphan",
+        "pdufa",
+        "ema",
+        "preclinical",
+        "ind ",
+        "sNDA",
+        "sBLA",
+        "designation",
+        "breakthrough",
+    ]
+    if any(ind in hl_lower for ind in biotech_indicators):
+        return False  # likely a real biotech PR with unusual branding
 
-    # If we get here, none of the company words match, ticker doesn't match,
-    # and the headline looks non-biotech — likely a collision
+    # No company name, no ticker, no biotech terms — likely a collision
     return True
 
 

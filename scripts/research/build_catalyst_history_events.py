@@ -31,7 +31,74 @@ sys.path.insert(0, str(PROJECT_ROOT))
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("catalyst_history")
 
-SCHEMA_VERSION = "catalyst_history_event.v1"
+SCHEMA_VERSION = "catalyst_history_event.v2"
+
+# ── Spec 053 enrichments ────────────────────────────────────────────
+
+_QUARTER_STARTS = frozenset({"01-01", "04-01", "07-01", "10-01"})
+
+_GUIDANCE_LANGUAGE = [
+    "expect",
+    "anticipat",
+    "guidance",
+    "projected",
+    "planned",
+    "estimated",
+    "target",
+    "intend",
+    "aim",
+    "goal",
+    "upcoming",
+]
+
+_CONFIDENCE_MAP = {
+    "HIGH": 0.9,
+    "MED": 0.6,
+    "MEDIUM": 0.6,
+    "LOW": 0.3,
+}
+
+
+def _classify_date_type(event_date: str, pit_available_at: str, event_name: str) -> str:
+    """Classify event date as 'actual', 'guidance', or 'placeholder'."""
+    if len(event_date) >= 10 and event_date[5:] in _QUARTER_STARTS:
+        name_lower = (event_name or "").lower()
+        if any(g in name_lower for g in _GUIDANCE_LANGUAGE):
+            return "placeholder"
+    if event_date > pit_available_at:
+        return "guidance"
+    return "actual"
+
+
+def _normalize_confidence(raw) -> float:
+    """Normalize confidence to 0-1 float scale."""
+    upper = str(raw).strip().upper()
+    if upper in _CONFIDENCE_MAP:
+        return _CONFIDENCE_MAP[upper]
+    try:
+        val = float(raw)
+        return max(0.0, min(1.0, val))
+    except (ValueError, TypeError):
+        logger.warning("Unparseable confidence: %s, defaulting to 0.5", raw)
+        return 0.5
+
+
+def _load_ipo_dates() -> Dict[str, str]:
+    """Load {ticker: first_price_date} from ipo_dates.json."""
+    path = PROJECT_ROOT / "production_data" / "ipo_dates.json"
+    if not path.exists():
+        logger.warning("ipo_dates.json not found, skipping ticker recycling gate")
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    tickers = data.get("tickers", data) if isinstance(data, dict) else {}
+    return {
+        t: info.get("first_price_date", "")
+        for t, info in tickers.items()
+        if isinstance(info, dict) and info.get("first_price_date")
+    }
 
 
 def _event_id(ticker: str, event_type: str, event_date: str, source: str) -> str:
@@ -367,13 +434,38 @@ def build_catalyst_history_events(
         all_events = [e for e in all_events if e.get("pit_available_at", "9999") <= as_of_date]
         logger.info("PIT filter (%s): %d → %d events", as_of_date, before, len(all_events))
 
-    # Assign event IDs and dedupe keys
+    # Assign event IDs, dedupe keys, and Spec 053 enrichments
+    ipo_dates = _load_ipo_dates()
+    n_recycling = 0
     for ev in all_events:
         ev["event_id"] = _event_id(ev["ticker"], ev["event_type"], ev["event_date"], ev.get("source", ""))
         sf = _source_family(ev.get("source", ""))
         ev["dedupe_key"] = _dedupe_key(ev["ticker"], ev["event_type"], ev["event_date"], sf)
         ev["source_family"] = sf
         ev["schema_version"] = SCHEMA_VERSION
+
+        # Spec 053: date_type classification
+        ev["date_type"] = _classify_date_type(
+            ev.get("event_date", ""),
+            ev.get("pit_available_at", ""),
+            ev.get("event_name", ""),
+        )
+
+        # Spec 053: confidence normalization
+        ev["confidence_raw"] = ev.get("confidence", "MEDIUM")
+        ev["confidence"] = _normalize_confidence(ev["confidence_raw"])
+
+        # Spec 053: ticker recycling flag
+        fpd = ipo_dates.get(ev.get("ticker", ""), "")
+        if fpd and ev.get("event_date", "")[:10] < fpd:
+            ev["ticker_recycling_flag"] = True
+            ev["ticker_first_price_date"] = fpd
+            n_recycling += 1
+        else:
+            ev["ticker_recycling_flag"] = False
+
+    if n_recycling:
+        logger.info("Ticker recycling flagged: %d events (pre-IPO date)", n_recycling)
 
     # Deduplicate
     before_dedup = len(all_events)
