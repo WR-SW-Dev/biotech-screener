@@ -137,8 +137,8 @@ class TestMain:
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-skip-existing"])
         assert rc == 0
-        # archive + warm + screen + onepager + shadow_tracker + rollup = 6 calls
-        assert mock_run.call_count == 6
+        # archive + warm + screen + onepager + shadow_tracker + rollup + split_repair = 7
+        assert mock_run.call_count == 7
         cmds = [call.args[0] for call in mock_run.call_args_list]
         assert "archive_production_inputs.py" in cmds[0][1]
         assert "warm_caches.py" in cmds[1][1]
@@ -146,14 +146,15 @@ class TestMain:
         assert "make_ic_onepager.py" in cmds[3][1]
         assert "coinvest_shadow_tracker.py" in cmds[4][1]
         assert "rollup_shadow_metrics.py" in cmds[5][1]
+        assert "repair_price_history_splits.py" in cmds[6][1]
 
     @mock.patch("run_daily.subprocess.run")
     def test_no_warm_skips_warm(self, mock_run):
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-warm", "--no-skip-existing"])
         assert rc == 0
-        # archive + screen + onepager + shadow_tracker + rollup = 5 calls
-        assert mock_run.call_count == 5
+        # archive + screen + onepager + shadow_tracker + rollup + split_repair = 6
+        assert mock_run.call_count == 6
         cmds = [call.args[0] for call in mock_run.call_args_list]
         assert all("warm_caches.py" not in c[1] for c in cmds)
 
@@ -162,8 +163,8 @@ class TestMain:
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-rollup", "--no-skip-existing"])
         assert rc == 0
-        # archive + warm + screen + onepager + shadow_tracker = 5 calls
-        assert mock_run.call_count == 5
+        # archive + warm + screen + onepager + shadow_tracker + split_repair = 6
+        assert mock_run.call_count == 6
         cmds = [call.args[0] for call in mock_run.call_args_list]
         assert all("rollup_shadow_metrics.py" not in c[1] for c in cmds)
 
@@ -175,6 +176,7 @@ class TestMain:
             mock.Mock(returncode=0),  # warm
             mock.Mock(returncode=1),  # screen FAIL
             mock.Mock(returncode=0),  # rollup
+            mock.Mock(returncode=0),  # split_repair
         ]
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-skip-existing"])
         assert rc == 1
@@ -187,6 +189,7 @@ class TestMain:
             mock.Mock(returncode=0),  # warm date-1
             mock.Mock(returncode=1),  # screen date-1 FAIL
             mock.Mock(returncode=0),  # rollup (still runs)
+            mock.Mock(returncode=0),  # split_repair
         ]
         rc = run_daily.main(
             [
@@ -199,8 +202,8 @@ class TestMain:
             ]
         )
         assert rc == 1
-        # archive(1) + warm(1) + screen(1) + rollup = 4
-        assert mock_run.call_count == 4
+        # archive(1) + warm(1) + screen(1) + rollup + split_repair = 5
+        assert mock_run.call_count == 5
 
     def test_dry_run_no_subprocess(self, capsys):
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--dry-run"])
@@ -233,9 +236,10 @@ class TestSkipExisting:
         assert rc == 0
         out = capsys.readouterr().out
         assert "snapshot exists" in out
-        # Only rollup should run (warm+screen skipped)
-        assert mock_run.call_count == 1
+        # Only rollup + split_repair should run (warm+screen skipped)
+        assert mock_run.call_count == 2
         assert "rollup_shadow_metrics.py" in mock_run.call_args_list[0].args[0][1]
+        assert "repair_price_history_splits.py" in mock_run.call_args_list[1].args[0][1]
 
     @mock.patch("run_daily.subprocess.run")
     def test_no_skip_existing_forces_rerun(self, mock_run, tmp_path):
@@ -253,8 +257,8 @@ class TestSkipExisting:
             ]
         )
         assert rc == 0
-        # archive + warm + screen + onepager + shadow_tracker + rollup = 6
-        assert mock_run.call_count == 6
+        # archive + warm + screen + onepager + shadow_tracker + rollup + split_repair = 7
+        assert mock_run.call_count == 7
 
     @mock.patch("run_daily.subprocess.run")
     def test_range_skips_only_completed_dates(self, mock_run, tmp_path, capsys):
@@ -276,8 +280,8 @@ class TestSkipExisting:
         assert rc == 0
         out = capsys.readouterr().out
         assert "2026-02-09" in out and "snapshot exists" in out
-        # archive(10) + warm(10) + screen(10) + onepager(10) + shadow_tracker(10) + rollup = 6
-        assert mock_run.call_count == 6
+        # archive(10) + warm(10) + screen(10) + onepager(10) + shadow_tracker(10) + rollup + split_repair = 7
+        assert mock_run.call_count == 7
 
 
 # ── TestValidation ──────────────────────────────────────────────────────

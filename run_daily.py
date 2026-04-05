@@ -157,6 +157,17 @@ def build_rollup_cmd(args: argparse.Namespace) -> list[str]:
     ]
 
 
+def build_split_repair_cmd(args: argparse.Namespace) -> list[str]:
+    return [
+        sys.executable,
+        str(SCRIPT_DIR / "scripts" / "repair_price_history_splits.py"),
+        "--prices",
+        str(args.data_dir / "price_history.csv"),
+        "--out",
+        str(args.data_dir / "price_history_split_adj.csv"),
+    ]
+
+
 # ── execution ───────────────────────────────────────────────────────────
 
 
@@ -321,6 +332,15 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_rollup:
         rollup_cmd = build_rollup_cmd(args)
         rollup_rc = run_step(rollup_cmd, "rollup", dry_run=args.dry_run)
+
+    # ── split repair (once at end, non-fatal) ──
+    split_rc = run_step(
+        build_split_repair_cmd(args),
+        "split_repair",
+        dry_run=args.dry_run,
+    )
+    if split_rc != 0:
+        print(f"[DAILY] split_repair: WARNING (exit {split_rc})", file=sys.stderr)
 
     # ── summary ──
     n_ok = sum(1 for _, _, rc in results if rc == _EXIT_OK)
