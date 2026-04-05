@@ -4985,8 +4985,9 @@ def run_daily(
         except Exception as _rpr_err:
             _logger.warning(f"Regime pruner failed: {_rpr_err}")
 
-        # --- Step 5k.17: Event quality shadow sizer (non-blocking, Spec 056) ---
+        # --- Step 5k.17: Event quality shadow sizer + review priority (non-blocking, Spec 056/058+) ---
         try:
+            from tools.event_quality_shadow_sizer import prioritize_reviews
             from tools.event_quality_shadow_sizer import run_shadow as _eq_run_shadow
 
             _eq_result = _eq_run_shadow(as_of_date)
@@ -5001,12 +5002,27 @@ def run_daily(
                 _logger.info(f"Event quality shadow → {_eq_up} up, {_eq_down} down")
             else:
                 _logger.info(f"Event quality shadow → skipped ({_eq_result.get('error', '?')})")
+            # Review prioritization
+            _rp_result = prioritize_reviews(as_of_date)
+            if "error" not in _rp_result:
+                _rp_dir = REPO_ROOT / "artifacts" / "review"
+                _rp_dir.mkdir(parents=True, exist_ok=True)
+                _rp_path = _rp_dir / f"review_priority_{as_of_date}.json"
+                with open(_rp_path, "w") as _rp_f:
+                    json.dump(_rp_result, _rp_f, indent=2, default=str)
+                _rp_n = _rp_result.get("n_reviewed", 0)
+                _logger.info(f"Review priority → {_rp_n} flagged")
         except Exception as _eq_err:
             _logger.warning(f"Event quality shadow failed: {_eq_err}")
 
-        # --- Step 5k.18: Timing hazard overlay (non-blocking, Spec 057 pilot) ---
+        # --- Step 5k.18: Timing hazard overlay + calibration dashboard (non-blocking, Spec 058+) ---
         try:
-            from tools.compute_timing_hazard import append_calibration_ledger, compute_timing_hazard
+            from tools.compute_timing_hazard import (
+                append_calibration_ledger,
+                build_calibration_dashboard,
+                compute_calibration_by_slice,
+                compute_timing_hazard,
+            )
 
             _th_result = compute_timing_hazard(as_of_date)
             if "error" not in _th_result:
@@ -5016,9 +5032,23 @@ def run_daily(
                 with open(_th_path, "w") as _th_f:
                     json.dump(_th_result, _th_f, indent=2, default=str)
                 append_calibration_ledger(_th_result)
+                # Calibration-by-slice
+                _cal_slices = compute_calibration_by_slice(as_of_date)
+                if _cal_slices["n_resolved"] > 0:
+                    _cal_path = _th_dir / "calibration_by_slice.json"
+                    with open(_cal_path, "w") as _cal_f:
+                        json.dump(_cal_slices, _cal_f, indent=2, default=str)
+                # Calibration dashboard (extended views)
+                _cal_dash = build_calibration_dashboard(as_of_date)
+                if _cal_dash["n_resolved"] > 0:
+                    _cal_dash_path = _th_dir / "calibration_dashboard.json"
+                    with open(_cal_dash_path, "w") as _cd_f:
+                        json.dump(_cal_dash, _cd_f, indent=2, default=str)
                 _th_n = _th_result.get("n_catalysts", 0)
                 _th_w = _th_result.get("n_warnings", 0)
-                _logger.info(f"Timing hazard → {_th_n} catalysts, {_th_w} warnings")
+                _th_trend = _th_result.get("base_rate_trend")
+                _trend_str = f", trend={_th_trend:+.3f}" if _th_trend is not None else ""
+                _logger.info(f"Timing hazard → {_th_n} catalysts, {_th_w} warnings{_trend_str}")
             else:
                 _logger.info(f"Timing hazard → skipped ({_th_result.get('error', '?')})")
         except Exception as _th_err:
@@ -5353,6 +5383,44 @@ def run_daily(
                 _logger.info("Options EV summary → updated")
         except Exception as _ev_err:
             _logger.warning(f"Options EV summary failed (non-blocking): {_ev_err}")
+
+        # --- Step 5r: Event quality confusion dashboard (non-blocking, Spec 058+) ---
+        try:
+            from tools.build_event_quality_confusion import build_confusion_dashboard
+
+            _ec_result = build_confusion_dashboard(as_of_date)
+            if _ec_result.get("n_labeled", 0) > 0:
+                _ec_dir = REPO_ROOT / "artifacts" / "event_quality"
+                _ec_dir.mkdir(parents=True, exist_ok=True)
+                _ec_path = _ec_dir / "confusion_dashboard.json"
+                with open(_ec_path, "w") as _ec_f:
+                    json.dump(_ec_result, _ec_f, indent=2, default=str)
+                _ec_acc = _ec_result.get("overall", {}).get("accuracy", "?")
+                _logger.info(f"Confusion dashboard → {_ec_result['n_labeled']} labeled, accuracy={_ec_acc}")
+            else:
+                _logger.info("Confusion dashboard → no labeled data yet")
+        except Exception as _ec_err:
+            _logger.warning(f"Confusion dashboard failed: {_ec_err}")
+
+        # --- Step 5s: Unified review packet (non-blocking, Spec 058+) ---
+        try:
+            from tools.build_review_packet import build_review_packet
+
+            _rv_result = build_review_packet(as_of_date)
+            if "error" not in _rv_result:
+                _rv_dir = REPO_ROOT / "artifacts" / "review"
+                _rv_dir.mkdir(parents=True, exist_ok=True)
+                _rv_path = _rv_dir / f"{as_of_date}_review_packet.json"
+                with open(_rv_path, "w") as _rv_f:
+                    json.dump(_rv_result, _rv_f, indent=2, default=str)
+                _rv_loaded = sum(_rv_result.get("artifacts_loaded", {}).values())
+                _rv_total = len(_rv_result.get("artifacts_loaded", {}))
+                _rv_warns = len(_rv_result.get("timing", {}).get("warnings", []))
+                _logger.info(f"Review packet → {_rv_loaded}/{_rv_total} artifacts, {_rv_warns} timing warnings")
+            else:
+                _logger.info(f"Review packet → skipped ({_rv_result.get('error', '?')})")
+        except Exception as _rv_err:
+            _logger.warning(f"Review packet failed: {_rv_err}")
 
         # --- Step 6: Backfill matured PIT price forward returns (optional) ---
         # The price anchor was already created in step 2.5 (before gates).
