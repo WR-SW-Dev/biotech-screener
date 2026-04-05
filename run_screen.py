@@ -372,6 +372,12 @@ CLINICAL_GATE_EXEMPT_ARCHETYPES = frozenset(
 )
 
 
+def _is_eligible(row: Dict[str, Any]) -> bool:
+    """Robust eligibility check — handles '1', '1.0', 'true', 'yes'."""
+    v = str(row.get("eligible", "")).strip().lower()
+    return v in ("1", "1.0", "true", "yes")
+
+
 def classify_company_archetype(
     ticker: str,
     industry: str,
@@ -3483,7 +3489,7 @@ def _write_coverage_quality(
     Consolidates the key coverage and rescue metrics into a single artifact
     so that every screen run produces an observable record of data health.
     """
-    n_eligible = sum(1 for r in csv_rows if r.get("eligible") == "1")
+    n_eligible = sum(1 for r in csv_rows if _is_eligible(r))
     n_total = len(csv_rows)
     dev_rows = [r for r in csv_rows if r.get("archetype") == "drug_developer"]
     n_dev = len(dev_rows)
@@ -3514,7 +3520,7 @@ def _write_coverage_quality(
         fam = r.get("catalyst_family", "")
         if fam:
             family_dist[fam] = family_dist.get(fam, 0) + 1
-        elif r.get("eligible") == "1":
+        elif _is_eligible(r):
             family_missing.append(r.get("ticker", "?"))
     n_with_family = sum(family_dist.values())
     catalyst_family_coverage_pct = round(n_with_family / max(n_total, 1) * 100, 1)
@@ -3591,7 +3597,7 @@ def _write_coverage_quality(
         d = r.get("market_model_disagreement", "")
         if d:
             disagree_dist[d] = disagree_dist.get(d, 0) + 1
-        if d == "high" and r.get("eligible") == "1":
+        if d == "high" and _is_eligible(r):
             disagree_high_names.append(r.get("ticker", "?"))
 
     # -- Build JSON --
@@ -4947,7 +4953,7 @@ def save_validation_snapshot(
         _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
 
     # --- Spec 050/051: Selector + Ranker scoring (mode-dispatched) ---
-    _eligible_for_selector = [r for r in csv_rows if r.get("eligible") == "1"]
+    _eligible_for_selector = [r for r in csv_rows if _is_eligible(r)]
     if _eligible_for_selector:
         _sel_results = compute_selector_scores(_eligible_for_selector, config=A4_SELECTOR_CONFIG)
         for _row, _sr in zip(_eligible_for_selector, _sel_results):
@@ -5215,8 +5221,8 @@ def save_validation_snapshot(
             r[f"de_sort_contrib_{k}"] = round(cmap[k], 6)
 
     # Assign actionable_rank: eligible rows get 1..N, ineligible get blank
-    eligible_rows = [r for r in csv_rows if r.get("eligible") == "1"]
-    ineligible_rows = [r for r in csv_rows if r.get("eligible") != "1"]
+    eligible_rows = [r for r in csv_rows if _is_eligible(r)]
+    ineligible_rows = [r for r in csv_rows if not _is_eligible(r)]
     _n_eligible = len(eligible_rows)
     _alpha_present = sum(1 for r in eligible_rows if (_safe_float(r.get("alpha_cohort_raw")) or 0.0) != 0.0)
     for i, row in enumerate(eligible_rows, start=1):
@@ -6240,7 +6246,7 @@ def save_validation_snapshot(
         # Write decision_portfolio.json (structured payload)
         portfolio_json_path = snap_path / "decision_portfolio.json"
         try:
-            n_eligible = sum(1 for r in portfolio_rows if r.get("eligible") == "1")
+            n_eligible = sum(1 for r in portfolio_rows if _is_eligible(r))
             portfolio_payload = {
                 "schema_version": SCHEMA_DECISION_PORTFOLIO,
                 "generator_version": VERSION,
@@ -6633,7 +6639,7 @@ def save_validation_snapshot(
     # Regulatory coverage telemetry (all sources: M3, event ledger, manual calendar)
     _n_pdufa_events = len(_pdufa_manual)
     _n_reg_flagged = sum(1 for r in csv_rows if r.get("has_regulatory_upcoming_180d") == "1")
-    _eligible_count = sum(1 for r in csv_rows if r.get("eligible") == "1")
+    _eligible_count = sum(1 for r in csv_rows if _is_eligible(r))
     _reg_type_counts: Dict[str, int] = {}
     for r in csv_rows:
         et = r.get("regulatory_event_type", "")

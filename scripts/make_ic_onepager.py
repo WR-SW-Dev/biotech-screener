@@ -280,7 +280,9 @@ def _exceptions_section(
 
     # Ineligible count + reasons
     if rankings_rows:
-        ineligible = [r for r in rankings_rows if r.get("eligible", "1") == "0"]
+        ineligible = [
+            r for r in rankings_rows if str(r.get("eligible", "1")).strip().lower() not in ("1", "1.0", "true", "yes")
+        ]
         if ineligible:
             reason_counts: Dict[str, int] = {}
             for r in ineligible:
@@ -473,7 +475,7 @@ def _factor_exposure_section(
 
     # Use numeric fields from rankings
     port_rows = [r for r in rankings_rows if r.get("ticker", "") in port_tickers]
-    univ_rows = [r for r in rankings_rows if r.get("eligible") == "1"]
+    univ_rows = [r for r in rankings_rows if str(r.get("eligible", "")).strip().lower() in ("1", "1.0", "true", "yes")]
 
     lines = [
         "## Factor Exposures (portfolio vs universe)",
@@ -516,6 +518,50 @@ def _factor_exposure_section(
 
 
 # ---------------------------------------------------------------------------
+# Factor drift alerts
+# ---------------------------------------------------------------------------
+
+
+def _factor_drift_section(snap_dir: Path) -> str:
+    """## Factor Drift — alerts from the two-baseline drift monitor."""
+    date_str = snap_dir.name
+    drift_path = PROJECT_ROOT / "artifacts" / "factor_drift" / f"{date_str}_factor_drift.json"
+    drift_data = _load_json(drift_path)
+
+    if drift_data is None:
+        return "## Factor Drift\n*No drift artifact for this date.*\n"
+
+    alerts = drift_data.get("alerts", [])
+    attention = drift_data.get("attention", "GREEN")
+
+    lines = [f"## Factor Drift: {attention}"]
+
+    if not alerts:
+        lines.append("All metrics within thresholds.")
+    else:
+        for a in alerts:
+            lines.append(f"- **{a['level']}** [{a['code']}]: {a['detail']}")
+
+    # Key metrics summary
+    jaccard = drift_data.get("jaccard_prev")
+    hhi = drift_data.get("hhi")
+    univ_size = drift_data.get("universe_size")
+    lines.append("")
+    parts = []
+    if jaccard is not None:
+        parts.append(f"Jaccard={jaccard:.2f}")
+    if hhi is not None:
+        parts.append(f"HHI={hhi:.0f}")
+    if univ_size is not None:
+        parts.append(f"Eligible={univ_size}")
+    if parts:
+        lines.append(f"Metrics: {' | '.join(parts)}")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Main assembler
 # ---------------------------------------------------------------------------
 
@@ -538,6 +584,7 @@ def generate_ic_onepager(snap_dir: Path) -> str:
         "",
         _health_section(health_data),
         _regime_section(snap_dir),
+        _factor_drift_section(snap_dir),
         _factor_exposure_section(rankings_rows, portfolio_rows),
         _portfolio_section(portfolio_rows, rankings_rows),
         _delta_section(delta_data),

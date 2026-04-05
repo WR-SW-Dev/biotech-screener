@@ -139,6 +139,15 @@ def build_onepager_cmd(date_str: str, args: argparse.Namespace) -> list[str]:
     ]
 
 
+def build_factor_drift_cmd(date_str: str) -> list[str]:
+    return [
+        sys.executable,
+        str(SCRIPT_DIR / "tools" / "build_factor_drift.py"),
+        "--as-of-date",
+        date_str,
+    ]
+
+
 def build_shadow_tracker_cmd(date_str: str) -> list[str]:
     return [
         sys.executable,
@@ -306,6 +315,16 @@ def main(argv: list[str] | None = None) -> int:
             )
             if op_rc != 0:
                 print(f"[DAILY] {d}  onepager: WARNING (exit {op_rc})", file=sys.stderr)
+
+        # ── factor drift monitor (non-fatal) ──
+        if screen_rc in (_EXIT_OK, _EXIT_WARN):
+            fd_rc = run_step(
+                build_factor_drift_cmd(d),
+                f"{d}  factor_drift",
+                dry_run=args.dry_run,
+            )
+            if fd_rc != 0:
+                print(f"[DAILY] {d}  factor_drift: WARNING (exit {fd_rc})", file=sys.stderr)
 
         # ── coinvest shadow tracker (non-fatal) ──
         if screen_rc in (_EXIT_OK, _EXIT_WARN):

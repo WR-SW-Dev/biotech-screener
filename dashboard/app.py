@@ -173,6 +173,11 @@ def _load_production_monitor(date: str) -> Optional[Dict]:
     return _load_json(path)
 
 
+def _load_factor_drift(date: str) -> Optional[Dict]:
+    path = REPO_ROOT / "artifacts" / "factor_drift" / f"{date}_factor_drift.json"
+    return _load_json(path)
+
+
 def _load_timing_hazard_review() -> Optional[Dict]:
     path = REPO_ROOT / "output" / "timing_hazard_review" / "timing_hazard_review.json"
     return _load_json(path)
@@ -224,6 +229,7 @@ async def index(request: Request, date: str = ""):
     perf = _load_shadow_performance()
     timing_hazard = _load_timing_hazard(date)
     production_monitor = _load_production_monitor(date)
+    factor_drift = _load_factor_drift(date)
 
     # Enrich positions with rankings data
     enriched_positions = []
@@ -395,6 +401,24 @@ async def index(request: Request, date: str = ""):
                 }
             )
 
+    # Factor drift alerts
+    factor_drift_health = {}
+    if factor_drift and "alerts" in factor_drift:
+        factor_drift_health = {
+            "attention": factor_drift.get("attention", "?"),
+            "jaccard": factor_drift.get("jaccard_prev"),
+            "hhi": factor_drift.get("hhi"),
+            "universe_size": factor_drift.get("universe_size"),
+        }
+        for fa in factor_drift["alerts"]:
+            alerts.append(
+                {
+                    "source": "factor_drift",
+                    "level": fa.get("level", "YELLOW"),
+                    "text": f"[{fa.get('code', '?')}] {fa.get('detail', '')}",
+                }
+            )
+
     # Enrich positions with timing confidence
     for p in enriched_positions:
         th = timing_by_ticker.get(p["ticker"], {})
@@ -428,6 +452,7 @@ async def index(request: Request, date: str = ""):
             "timing_warnings": timing_warnings,
             "catalyst_quality": dict(catalyst_quality),
             "prod_health": prod_health,
+            "factor_drift_health": factor_drift_health,
             "now": datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         },
     )

@@ -5038,6 +5038,20 @@ def run_daily(
         except Exception as _pm_err:
             _logger.warning(f"Production monitor failed: {_pm_err}")
 
+        # --- Step 5k.20: Factor drift monitor (non-blocking) ---
+        try:
+            from tools.build_factor_drift import build_factor_drift
+
+            _fd_result = build_factor_drift(as_of_date)
+            if "error" not in _fd_result:
+                _fd_attn = _fd_result.get("attention", "?")
+                _fd_nalerts = len(_fd_result.get("alerts", []))
+                _logger.info(f"Factor drift → {_fd_attn} ({_fd_nalerts} alerts)")
+            else:
+                _logger.info(f"Factor drift → skipped ({_fd_result.get('error', '?')})")
+        except Exception as _fd_err:
+            _logger.warning(f"Factor drift failed: {_fd_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
