@@ -37,6 +37,7 @@ TRIAL_RECORDS = REPO_ROOT / "production_data" / "trial_records.json"
 AACT_DELTAS_DIR = REPO_ROOT / "artifacts" / "aact_deltas"
 OUTPUT_DIR = REPO_ROOT / "artifacts" / "timing_hazard"
 CALIBRATION_LEDGER = OUTPUT_DIR / "calibration_ledger.jsonl"
+CALIBRATION_BY_SLICE = OUTPUT_DIR / "calibration_by_slice.json"
 
 # Rolling base rate parameters (OOS-validated, v2)
 ROLLING_WINDOW_RECORDS = 200  # ~90 days of weekly-deduped outcomes
@@ -92,6 +93,312 @@ PRECISION_MAP = {
     "YEAR": "YEAR",
     "UNKNOWN": "UNKNOWN",
 }
+
+# ---------------------------------------------------------------------------
+# Timing bucket classification (Spec 058)
+# ---------------------------------------------------------------------------
+
+HORIZON_NEAR_DAYS = 30
+HORIZON_MEDIUM_DAYS = 90
+
+
+def classify_horizon_bucket(catalyst_days: float) -> str:
+    """Classify catalyst into NEAR / MEDIUM / FAR horizon bucket."""
+    if catalyst_days <= HORIZON_NEAR_DAYS:
+        return "NEAR"
+    if catalyst_days <= HORIZON_MEDIUM_DAYS:
+        return "MEDIUM"
+    return "FAR"
+
+
+def classify_hardness(is_hard_catalyst: bool, source: str) -> str:
+    """Classify catalyst as HARD or SOFT based on source and hard flag."""
+    if is_hard_catalyst:
+        return "HARD"
+    hard_sources = {"SEC_8K_FILING", "FDA_CALENDAR", "PDUFA_MANUAL"}
+    if source in hard_sources:
+        return "HARD"
+    return "SOFT"
+
+
+def classify_family_bucket(catalyst_family: str) -> str:
+    """Normalize catalyst family to REGULATORY / CLINICAL / SAFETY / UNKNOWN."""
+    if catalyst_family in ("REGULATORY", "CLINICAL", "SAFETY"):
+        return catalyst_family
+    return "UNKNOWN"
+
+
+# ---------------------------------------------------------------------------
+# Calibration-by-slice (Spec 058)
+# ---------------------------------------------------------------------------
+
+
+def compute_calibration_by_slice(
+    as_of_date: str,
+    trailing_days: int = 90,
+) -> dict:
+    """Compute calibration metrics grouped by family x horizon x hardness.
+
+    Only uses resolved entries from the calibration ledger (actual_outcome != null)
+    within the trailing window.
+    """
+    if not CALIBRATION_LEDGER.exists():
+        return {"slices": [], "n_resolved": 0, "trailing_days": trailing_days}
+
+    from datetime import date as _date
+
+    cutoff = _date.fromisoformat(as_of_date[:10]) - timedelta(days=trailing_days)
+    cutoff_str = cutoff.isoformat()
+
+    # Read resolved entries
+    resolved = []
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            outcome = entry.get("actual_outcome")
+            pred_date = entry.get("prediction_date", "")
+            if outcome and pred_date >= cutoff_str and pred_date < as_of_date:
+                resolved.append(entry)
+
+    if not resolved:
+        return {"slices": [], "n_resolved": 0, "trailing_days": trailing_days}
+
+    # Group by (family_bucket, horizon_bucket, hardness)
+    from collections import defaultdict
+
+    buckets = defaultdict(list)
+    for entry in resolved:
+        family = classify_family_bucket(entry.get("catalyst_family", ""))
+        horizon = entry.get("horizon_bucket", "UNKNOWN")
+        hardness = entry.get("hardness", "UNKNOWN")
+        on_time = 1 if entry["actual_outcome"] == "ON_TIME" else 0
+        prob = entry.get("on_time_prob", 0.5)
+        buckets[(family, horizon, hardness)].append((prob, on_time))
+
+    slices = []
+    for (family, horizon, hardness), records in sorted(buckets.items()):
+        n = len(records)
+        if n == 0:
+            continue
+        probs, actuals = zip(*records)
+        mean_prob = sum(probs) / n
+        actual_rate = sum(actuals) / n
+        # Brier score
+        brier = sum((p - a) ** 2 for p, a in records) / n
+        slices.append(
+            {
+                "family": family,
+                "horizon": horizon,
+                "hardness": hardness,
+                "n": n,
+                "mean_predicted_prob": round(mean_prob, 3),
+                "actual_on_time_rate": round(actual_rate, 3),
+                "brier_score": round(brier, 4),
+                "overconfidence": round(mean_prob - actual_rate, 3),
+            }
+        )
+
+    return {
+        "slices": slices,
+        "n_resolved": len(resolved),
+        "trailing_days": trailing_days,
+        "as_of_date": as_of_date,
+    }
+
+
+def _compute_calibration_curve(records, n_bins=10):
+    """Compute calibration curve: predicted prob bins vs actual on-time rate."""
+    if not records:
+        return []
+    from collections import defaultdict
+
+    bins = defaultdict(list)
+    for prob, actual in records:
+        b = min(int(prob * n_bins), n_bins - 1)
+        bins[b].append((prob, actual))
+
+    curve = []
+    for b in range(n_bins):
+        items = bins.get(b, [])
+        if not items:
+            continue
+        probs, actuals = zip(*items)
+        curve.append(
+            {
+                "bin_lower": round(b / n_bins, 2),
+                "bin_upper": round((b + 1) / n_bins, 2),
+                "mean_predicted": round(sum(probs) / len(probs), 3),
+                "actual_rate": round(sum(actuals) / len(actuals), 3),
+                "n": len(items),
+            }
+        )
+    return curve
+
+
+def build_calibration_dashboard(as_of_date: str, trailing_days: int = 90) -> dict:
+    """Build extended calibration dashboard with per-horizon curves and source breakdown.
+
+    Extends compute_calibration_by_slice with:
+    - Per-horizon calibration curves (decile bins)
+    - Source provenance breakdown
+    - Overall summary
+    """
+    if not CALIBRATION_LEDGER.exists():
+        return {
+            "slices": [],
+            "horizons": {},
+            "sources": {},
+            "overall": {},
+            "n_resolved": 0,
+            "trailing_days": trailing_days,
+            "as_of_date": as_of_date,
+        }
+
+    cutoff = (date.fromisoformat(as_of_date[:10]) - timedelta(days=trailing_days)).isoformat()
+
+    resolved = []
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            outcome = entry.get("actual_outcome")
+            pred_date = entry.get("prediction_date", "")
+            if outcome and pred_date >= cutoff and pred_date < as_of_date:
+                resolved.append(entry)
+
+    if not resolved:
+        return {
+            "slices": [],
+            "horizons": {},
+            "sources": {},
+            "overall": {},
+            "n_resolved": 0,
+            "trailing_days": trailing_days,
+            "as_of_date": as_of_date,
+        }
+
+    from collections import defaultdict
+
+    # Slice-level (reuse existing logic)
+    slice_buckets = defaultdict(list)
+    horizon_buckets = defaultdict(list)
+    source_buckets = defaultdict(list)
+    all_records = []
+
+    for entry in resolved:
+        family = classify_family_bucket(entry.get("catalyst_family", ""))
+        horizon = entry.get("horizon_bucket", "UNKNOWN")
+        hardness = entry.get("hardness", "UNKNOWN")
+        source = entry.get("source_provenance", "UNKNOWN")
+        on_time = 1 if entry["actual_outcome"] == "ON_TIME" else 0
+        prob = entry.get("on_time_prob", 0.5)
+
+        rec = (prob, on_time)
+        slice_buckets[(family, horizon, hardness)].append(rec)
+        horizon_buckets[horizon].append(rec)
+        source_buckets[source].append(rec)
+        all_records.append(rec)
+
+    def _summarize(records):
+        n = len(records)
+        if n == 0:
+            return {"n": 0}
+        probs, actuals = zip(*records)
+        return {
+            "n": n,
+            "mean_predicted": round(sum(probs) / n, 3),
+            "actual_rate": round(sum(actuals) / n, 3),
+            "brier": round(sum((p - a) ** 2 for p, a in records) / n, 4),
+            "overconfidence": round(sum(probs) / n - sum(actuals) / n, 3),
+        }
+
+    # Slices
+    slices = []
+    for (family, horizon, hardness), recs in sorted(slice_buckets.items()):
+        s = _summarize(recs)
+        s.update(family=family, horizon=horizon, hardness=hardness)
+        slices.append(s)
+
+    # Horizons with calibration curves
+    horizons = {}
+    for hz, recs in sorted(horizon_buckets.items()):
+        summary = _summarize(recs)
+        summary["calibration_curve"] = _compute_calibration_curve(recs)
+        horizons[hz] = summary
+
+    # Sources
+    sources = {}
+    for src, recs in sorted(source_buckets.items()):
+        sources[src] = _summarize(recs)
+
+    overall = _summarize(all_records)
+    overall["calibration_curve"] = _compute_calibration_curve(all_records)
+
+    return {
+        "schema": "calibration_dashboard.v1",
+        "as_of_date": as_of_date,
+        "trailing_days": trailing_days,
+        "n_resolved": len(resolved),
+        "slices": slices,
+        "horizons": horizons,
+        "sources": sources,
+        "overall": overall,
+    }
+
+
+def _load_rolling_base_rate_with_trend(as_of_date: str):
+    """Compute rolling base rate AND trend vs prior window.
+
+    Returns (current_rate, prior_rate, trend_delta).
+    trend_delta = current - prior (positive = improving).
+    """
+    if not CALIBRATION_LEDGER.exists():
+        return ROLLING_FALLBACK, None, None
+
+    resolved = []
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            outcome = entry.get("actual_outcome")
+            pred_date = entry.get("prediction_date", "")
+            if outcome and pred_date < as_of_date:
+                on_time = 1 if outcome == "ON_TIME" else 0
+                resolved.append(on_time)
+
+    if len(resolved) < 20:
+        return ROLLING_FALLBACK, None, None
+
+    w = ROLLING_WINDOW_RECORDS
+    recent = resolved[-w:]
+    current_rate = sum(recent) / len(recent)
+
+    # Prior window: the w records before the current window
+    if len(resolved) >= 2 * w:
+        prior = resolved[-2 * w : -w]
+        prior_rate = sum(prior) / len(prior)
+        trend = round(current_rate - prior_rate, 4)
+    else:
+        prior_rate = None
+        trend = None
+
+    return current_rate, prior_rate, trend
 
 
 def _sf(v, default=None):
@@ -270,29 +577,108 @@ def _compute_execution_warning(
     aact_delta,
     is_hard,
     logistic_prob=None,
+    *,
+    catalyst_family="",
+    catalyst_days=None,
+    precision="UNKNOWN",
+    date_confidence=0.5,
+    source="",
+    n_revisions=0,
+    last_revision_pushout=False,
+    source_action="ALLOW",
 ):
-    """Flag positions that need operator attention.
+    """Flag positions that need operator attention (Spec 058 enhanced).
 
-    With rolling base rate, on_time_prob is the same for all catalysts.
-    Warnings now use logistic_prob (per-ticker model estimate) and
-    non-probability signals (stale update, PCD delays, status downgrades).
+    Returns (has_warning, list_of_warning_dicts) where each dict has:
+      - label: structured warning label
+      - reason: plain-text explanation
+      - drivers: top 1-2 features contributing
     """
     warnings = []
 
-    # Logistic model flags this as high-risk (below 0.50 — per-ticker signal)
-    if logistic_prob is not None and logistic_prob < 0.50:
-        warnings.append("low_logistic_prob")
+    # SHORT_DATED_REVISION_RISK — near-term + recent pushout
+    if catalyst_days is not None and catalyst_days <= 30 and last_revision_pushout:
+        warnings.append(
+            {
+                "label": "SHORT_DATED_REVISION_RISK",
+                "reason": f"Near-term catalyst ({catalyst_days}d) with recent date pushout",
+                "drivers": ["last_revision_pushout", "days_to_expected_near"],
+            }
+        )
 
+    # LOW_CONFIDENCE_DATE — vague precision or low model confidence
+    low_precision = precision in ("MONTH", "QUARTER", "HALF_YEAR", "YEAR", "UNKNOWN")
+    low_model_conf = logistic_prob is not None and logistic_prob < 0.50
+    if low_precision or date_confidence < 0.50 or low_model_conf:
+        drivers = []
+        parts = []
+        if low_precision:
+            drivers.append("precision_month_or_worse")
+            parts.append(f"precision={precision}")
+        if date_confidence < 0.50:
+            drivers.append("date_confidence")
+            parts.append(f"confidence={date_confidence:.2f}")
+        if low_model_conf:
+            drivers.append("logistic_prob")
+            parts.append(f"model_prob={logistic_prob:.2f}")
+        warnings.append(
+            {
+                "label": "LOW_CONFIDENCE_DATE",
+                "reason": f"Low date confidence: {', '.join(parts)}",
+                "drivers": drivers[:2],
+            }
+        )
+
+    # STALE_EVENT_RECORD — no recent AACT/CTgov update
     if last_update_age is not None and last_update_age > 120:
-        warnings.append("stale_update")
+        warnings.append(
+            {
+                "label": "STALE_EVENT_RECORD",
+                "reason": f"Last AACT/CTgov update {last_update_age}d ago (>120d threshold)",
+                "drivers": ["last_update_age"],
+            }
+        )
 
+    # FAMILY_MISSING — empty or NO_CATALYST after all carry steps
+    if not catalyst_family or catalyst_family == "NO_CATALYST":
+        warnings.append(
+            {
+                "label": "FAMILY_MISSING",
+                "reason": "No catalyst family assigned — timing bucket unknown",
+                "drivers": ["catalyst_family"],
+            }
+        )
+
+    # SOURCE_UNRELIABLE — source reliability policy flags this source
+    if source_action in ("DEMOTE", "SUPPRESS"):
+        warnings.append(
+            {
+                "label": "SOURCE_UNRELIABLE",
+                "reason": f"Source '{source}' has reliability action={source_action}",
+                "drivers": ["source_reliability"],
+            }
+        )
+
+    # PCD_DELAYED / STATUS_DOWNGRADE from AACT deltas
     if aact_delta:
         n_delayed = aact_delta.get("n_pcd_delayed", 0)
         n_downgrades = aact_delta.get("n_status_downgrades", 0)
         if n_delayed > 0:
-            warnings.append("pcd_delayed")
+            warnings.append(
+                {
+                    "label": "PCD_DELAYED",
+                    "reason": f"{n_delayed} trial(s) with PCD delayed in latest AACT delta",
+                    "drivers": ["pcd_delayed"],
+                }
+            )
         if n_downgrades > 0:
-            warnings.append("status_downgrade")
+            warnings.append(
+                {
+                    "label": "STATUS_DOWNGRADE",
+                    "reason": f"{n_downgrades} trial status downgrade(s) in latest AACT delta",
+                    "drivers": ["status_downgrade"],
+                }
+            )
 
     return bool(warnings), warnings
 
@@ -329,7 +715,7 @@ def compute_timing_hazard(snapshot_date=None):
     model = TimingHazardModel()
 
     # Load rolling base rate (OOS-validated adaptive anchor)
-    rolling_base = _load_rolling_base_rate(snapshot_date)
+    rolling_base, prior_base, base_rate_trend = _load_rolling_base_rate_with_trend(snapshot_date)
 
     # Process each position with a catalyst
     results = []
@@ -364,6 +750,12 @@ def compute_timing_hazard(snapshot_date=None):
         logistic_prob = estimate.prob_on_time
         catalyst_family = row.get("catalyst_family", "")
         is_hard = _sf(row.get("is_hard_catalyst"), 0) == 1.0
+        source = row.get("catalyst_source", "")
+
+        # Timing bucket classification (Spec 058)
+        horizon_bucket = classify_horizon_bucket(catalyst_days)
+        hardness = classify_hardness(is_hard, source)
+        family_bucket = classify_family_bucket(catalyst_family)
 
         if catalyst_days <= NEAR_TERM_DAYS:
             # Near-term: rule-based by catalyst type
@@ -400,6 +792,14 @@ def compute_timing_hazard(snapshot_date=None):
             aact_delta,
             _sf(row.get("is_hard_catalyst"), 0) == 1.0,
             logistic_prob=logistic_prob,
+            catalyst_family=catalyst_family,
+            catalyst_days=catalyst_days,
+            precision=row.get("clinical_days_precision", "UNKNOWN"),
+            date_confidence=_sf(row.get("clinical_date_confidence"), 0.5),
+            source=source,
+            n_revisions=int(estimate.features_used.get("n_revisions", 0)),
+            last_revision_pushout=estimate.features_used.get("last_revision_pushout", 0) > 0,
+            source_action=row.get("source_reliability_action", "ALLOW"),
         )
 
         results.append(
@@ -409,8 +809,12 @@ def compute_timing_hazard(snapshot_date=None):
                 "catalyst_days": int(catalyst_days),
                 "catalyst_event_type": row.get("catalyst_event_type", ""),
                 "catalyst_family": row.get("catalyst_family", ""),
-                "catalyst_source": row.get("catalyst_source", ""),
-                "is_hard_catalyst": _sf(row.get("is_hard_catalyst"), 0) == 1.0,
+                "catalyst_source": source,
+                "is_hard_catalyst": is_hard,
+                # Timing buckets (Spec 058)
+                "family_bucket": family_bucket,
+                "horizon_bucket": horizon_bucket,
+                "hardness": hardness,
                 # Timing estimates (v2.1: hybrid — near-term rule + rolling base)
                 "on_time_prob": round(on_time_prob, 3),
                 "on_time_prob_logistic": round(logistic_prob, 3),  # legacy logistic for comparison
@@ -451,6 +855,8 @@ def compute_timing_hazard(snapshot_date=None):
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "probability_method": "rolling_base_rate_90d",
         "rolling_base_rate": round(rolling_base, 3),
+        "prior_base_rate": round(prior_base, 3) if prior_base is not None else None,
+        "base_rate_trend": base_rate_trend,
         "n_catalysts": len(results),
         "n_warnings": n_warnings,
         "confidence_dist": {
@@ -497,6 +903,12 @@ def append_calibration_ledger(result: dict):
                 "catalyst_event_type": cat["catalyst_event_type"],
                 "catalyst_family": cat["catalyst_family"],
                 "is_hard_catalyst": cat["is_hard_catalyst"],
+                # Timing buckets (Spec 058)
+                "family_bucket": cat.get("family_bucket", "UNKNOWN"),
+                "horizon_bucket": cat.get("horizon_bucket", "UNKNOWN"),
+                "hardness": cat.get("hardness", "UNKNOWN"),
+                "source_provenance": cat.get("catalyst_source", ""),
+                # Probabilities
                 "on_time_prob": cat["on_time_prob"],
                 "on_time_prob_logistic": cat.get("on_time_prob_logistic"),
                 "probability_method": result.get("probability_method", "rolling_base_rate_90d"),
@@ -504,6 +916,7 @@ def append_calibration_ledger(result: dict):
                 "slip_prob_60d_plus": cat["slip_prob_60d_plus"],
                 "timing_confidence_bucket": cat["timing_confidence_bucket"],
                 "execution_warning_flag": cat["execution_warning_flag"],
+                "warning_labels": [w["label"] for w in cat.get("warning_reasons", [])],
                 # Outcome fields — filled later by calibration scorer
                 "actual_outcome": None,  # ON_TIME, SLIP_30D, SLIP_60D_PLUS, EARLY
                 "actual_delay_days": None,
@@ -543,16 +956,45 @@ def main():
         append_calibration_ledger(result)
         print(f"  Calibration ledger: {CALIBRATION_LEDGER}")
 
+    # Calibration-by-slice (Spec 058)
+    cal_slices = compute_calibration_by_slice(snap)
+    if cal_slices["n_resolved"] > 0:
+        CALIBRATION_BY_SLICE.write_text(json.dumps(cal_slices, indent=2, default=str))
+        print(f"  Calibration by slice: {cal_slices['n_resolved']} resolved, {len(cal_slices['slices'])} slices")
+    else:
+        print("  Calibration by slice: no resolved outcomes yet")
+
+    # Calibration dashboard (extended views with curves + source breakdown)
+    cal_dashboard = build_calibration_dashboard(snap)
+    cal_dash_path = OUTPUT_DIR / "calibration_dashboard.json"
+    if cal_dashboard["n_resolved"] > 0:
+        cal_dash_path.write_text(json.dumps(cal_dashboard, indent=2, default=str))
+        print(
+            f"  Calibration dashboard: {cal_dashboard['n_resolved']} resolved, "
+            f"{len(cal_dashboard['horizons'])} horizons, {len(cal_dashboard['sources'])} sources"
+        )
+    else:
+        print("  Calibration dashboard: no resolved outcomes yet")
+
     print(f"TIMING HAZARD OVERLAY — {snap}")
     print(f"  Catalysts: {result['n_catalysts']}")
     print(f"  Warnings: {result['n_warnings']}")
     print(f"  Confidence: {result['confidence_dist']}")
     print(f"  Mean P(on_time): {result['mean_on_time_prob']}")
+    if result.get("base_rate_trend") is not None:
+        trend_str = (
+            f"+{result['base_rate_trend']:.3f}"
+            if result["base_rate_trend"] >= 0
+            else f"{result['base_rate_trend']:.3f}"
+        )
+        print(
+            f"  Base rate trend: {trend_str} (current={result['rolling_base_rate']:.3f}, prior={result['prior_base_rate']:.3f})"
+        )
 
     # Print warnings first, then all
     for cat in result["catalysts"]:
         if cat["execution_warning_flag"]:
-            reasons = ", ".join(cat["warning_reasons"])
+            reasons = ", ".join(w["label"] for w in cat["warning_reasons"])
             print(
                 f"  ⚠ {cat['ticker']:6s} rank={cat['rank']:2d} "
                 f"P(on_time)={cat['on_time_prob']:.2f} "

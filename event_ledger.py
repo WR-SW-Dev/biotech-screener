@@ -153,10 +153,10 @@ REGULATORY_EVENT_TYPES: frozenset = frozenset(k for k, v in CATALYST_FAMILY_MAP.
 def classify_catalyst_family(event_type: str) -> str:
     """Classify an event_type into a catalyst family.
 
-    Returns one of: REGULATORY, CLINICAL, SAFETY, or empty string for
+    Returns one of: REGULATORY, CLINICAL, SAFETY, or NO_CATALYST for
     unknown/unmapped event types (e.g. corporate events, earnings).
     """
-    return CATALYST_FAMILY_MAP.get(event_type, "")
+    return CATALYST_FAMILY_MAP.get(event_type, "NO_CATALYST")
 
 
 def compute_event_id(

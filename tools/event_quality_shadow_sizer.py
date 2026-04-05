@@ -189,6 +189,105 @@ def run_shadow(snapshot_date: str | None = None) -> dict:
     }
 
 
+REVIEW_OUTPUT_DIR = REPO_ROOT / "artifacts" / "review"
+
+
+def prioritize_reviews(snapshot_date=None):
+    """Rank positions by review urgency based on event quality signals.
+
+    Criteria (any triggers "needs review"):
+    - event_type_score < 1 (low quality event backing the position)
+    - last_update_age > 90 (stale data on the catalyst)
+    - source_reliability_action in (DEMOTE, SUPPRESS)
+    - catalyst_family is NO_CATALYST or empty
+
+    Returns list sorted by urgency (most urgent first), plus summary.
+    """
+    if not snapshot_date:
+        available = sorted(
+            d.name
+            for d in SNAPSHOTS_DIR.iterdir()
+            if d.is_dir() and (d / "rankings.csv").exists() and "__pre_" not in d.name and not d.name.startswith("_")
+        )
+        if not available:
+            return {"error": "no snapshots found"}
+        snapshot_date = available[-1]
+
+    rankings_path = SNAPSHOTS_DIR / snapshot_date / "rankings.csv"
+    if not rankings_path.exists():
+        return {"error": f"no rankings.csv for {snapshot_date}"}
+
+    with open(rankings_path, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+
+    # Filter to top-60 (actionable universe)
+    candidates = []
+    for r in rows:
+        rank = _sf(r.get("actionable_rank"))
+        if rank is not None and rank <= 60:
+            candidates.append(r)
+
+    priorities = []
+    for r in candidates:
+        ticker = r.get("ticker", "")
+        rank = int(_sf(r.get("actionable_rank"), 999))
+        evt = r.get("catalyst_event_type", "")
+        ets = EVENT_TYPE_SCORE_MAP.get(evt, 0) if evt else 0
+        family = r.get("catalyst_family", "")
+        source_action = r.get("source_reliability_action", "ALLOW")
+        catalyst_days = _sf(r.get("catalyst_days"))
+
+        # Compute reasons for review
+        reasons = []
+        urgency = 0
+
+        if ets < 1:
+            reasons.append("LOW_EVENT_TYPE_SCORE")
+            urgency += 3
+
+        if source_action in ("DEMOTE", "SUPPRESS"):
+            reasons.append(f"SOURCE_{source_action}")
+            urgency += 2 if source_action == "SUPPRESS" else 1
+
+        if not family or family == "NO_CATALYST":
+            reasons.append("NO_CATALYST_FAMILY")
+            urgency += 2
+
+        # Near-term + soft → higher urgency
+        if catalyst_days is not None and catalyst_days <= 30 and ets < 2:
+            reasons.append("NEAR_TERM_LOW_QUALITY")
+            urgency += 2
+
+        if not reasons:
+            continue  # no review needed
+
+        priorities.append(
+            {
+                "ticker": ticker,
+                "rank": rank,
+                "event_type_score": ets,
+                "catalyst_event_type": evt,
+                "catalyst_family": family,
+                "catalyst_days": int(catalyst_days) if catalyst_days else None,
+                "source_reliability_action": source_action,
+                "reasons": reasons,
+                "urgency": urgency,
+            }
+        )
+
+    # Sort by urgency descending, then rank ascending
+    priorities.sort(key=lambda x: (-x["urgency"], x["rank"]))
+
+    return {
+        "schema": "review_priority.v1",
+        "snapshot_date": snapshot_date,
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_reviewed": len(priorities),
+        "n_candidates": len(candidates),
+        "priorities": priorities,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description="Event quality shadow sizing comparison")
     parser.add_argument(
@@ -230,6 +329,17 @@ def main():
         )
 
     print(f"\n  Saved: {out_path}")
+
+    # Review prioritization
+    review = prioritize_reviews(args.snapshot_date)
+    if "error" not in review:
+        REVIEW_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+        review_path = REVIEW_OUTPUT_DIR / f"review_priority_{snap}.json"
+        review_path.write_text(json.dumps(review, indent=2, default=str))
+        print(f"\n  REVIEW PRIORITY — {review['n_reviewed']}/{review['n_candidates']} need review")
+        for p in review["priorities"][:10]:
+            print(f"    {p['ticker']:6s} rank={p['rank']:2d} urgency={p['urgency']} [{', '.join(p['reasons'])}]")
+        print(f"  Saved: {review_path}")
 
 
 if __name__ == "__main__":

@@ -82,18 +82,18 @@ class TestCatalystFamilyMap:
         for et in safety:
             assert classify_catalyst_family(et) == "SAFETY", f"{et} should be SAFETY"
 
-    def test_unknown_returns_empty(self):
+    def test_unknown_returns_no_catalyst(self):
         from event_ledger import classify_catalyst_family
 
-        assert classify_catalyst_family("") == ""
-        assert classify_catalyst_family("EARNINGS_RELEASE") == ""
-        assert classify_catalyst_family("CONFERENCE_PRESENTATION") == ""
-        assert classify_catalyst_family("UNKNOWN") == ""
+        assert classify_catalyst_family("") == "NO_CATALYST"
+        assert classify_catalyst_family("EARNINGS_RELEASE") == "NO_CATALYST"
+        assert classify_catalyst_family("CONFERENCE_PRESENTATION") == "NO_CATALYST"
+        assert classify_catalyst_family("UNKNOWN") == "NO_CATALYST"
 
     def test_empty_event_type(self):
         from event_ledger import classify_catalyst_family
 
-        assert classify_catalyst_family("") == ""
+        assert classify_catalyst_family("") == "NO_CATALYST"
 
 
 # ---------------------------------------------------------------------------
@@ -247,7 +247,7 @@ class TestBackfillCatalystFamily:
         assert rows[0]["catalyst_family"] == "CLINICAL"
         assert rows[1]["catalyst_family"] == "REGULATORY"
         assert rows[2]["catalyst_family"] == "CLINICAL"
-        assert rows[3]["catalyst_family"] == ""
+        assert rows[3]["catalyst_family"] == "NO_CATALYST"
 
     def test_existing_family_not_overwritten(self):
         from common.ranking_utils import backfill_columns

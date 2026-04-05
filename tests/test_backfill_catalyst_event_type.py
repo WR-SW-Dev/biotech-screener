@@ -124,7 +124,7 @@ class TestBackfillSnapshot:
         assert rows[0]["catalyst_event_type"] == "DATA_READOUT"  # Fallback
         assert rows[0]["catalyst_family"] == "CLINICAL"
         assert rows[1]["catalyst_event_type"] == ""
-        assert rows[1]["catalyst_family"] == ""
+        assert rows[1]["catalyst_family"] == "NO_CATALYST"
 
     def test_skips_existing_event_type(self):
         rows = [

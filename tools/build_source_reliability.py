@@ -26,6 +26,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from common.source_reliability import (
     aggregate_reliability,
     apply_reliability_policy,
+    enrich_with_reliability_scores,
     render_reliability_md,
     write_reliability_json,
 )
@@ -135,6 +136,7 @@ def run_build_reliability(
     # Aggregate and apply policy
     buckets = aggregate_reliability(slip_rows)
     apply_reliability_policy(buckets)
+    enrich_with_reliability_scores(buckets)
 
     # Write artifacts
     out_dir = out_root / as_of_date

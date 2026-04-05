@@ -1093,6 +1093,15 @@ async def api_timing_hazard_calibration():
     return _load_jsonl(path)
 
 
+@app.get("/api/timing_hazard/calibration_dashboard")
+async def api_timing_hazard_calibration_dashboard():
+    """Extended calibration dashboard with per-horizon curves and source breakdown."""
+    path = REPO_ROOT / "artifacts" / "timing_hazard" / "calibration_dashboard.json"
+    if not path.exists():
+        return {"error": "No calibration dashboard data"}
+    return _load_json(path) or {"error": "Failed to load"}
+
+
 @app.get("/api/event_quality_shadow/latest")
 async def api_event_quality_shadow_latest():
     """Latest event quality shadow sizing comparison."""
@@ -1102,6 +1111,39 @@ async def api_event_quality_shadow_latest():
     files = sorted(eq_dir.glob("event_quality_shadow_*.json"), reverse=True)
     if not files:
         return {"error": "No event quality shadow snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/event_quality/confusion")
+async def api_event_quality_confusion():
+    """Event quality confusion dashboard (P/R/F1, confusion matrix, drift)."""
+    path = REPO_ROOT / "artifacts" / "event_quality" / "confusion_dashboard.json"
+    if not path.exists():
+        return {"error": "No confusion dashboard data"}
+    return _load_json(path) or {"error": "Failed to load"}
+
+
+@app.get("/api/review/packets")
+async def api_review_packets():
+    """Latest review packet (unified timing + event quality)."""
+    review_dir = REPO_ROOT / "artifacts" / "review"
+    if not review_dir.exists():
+        return {"error": "No review packet data"}
+    files = sorted(review_dir.glob("*_review_packet.json"), reverse=True)
+    if not files:
+        return {"error": "No review packets found"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/review/priority")
+async def api_review_priority():
+    """Latest review priority queue."""
+    review_dir = REPO_ROOT / "artifacts" / "review"
+    if not review_dir.exists():
+        return {"error": "No review priority data"}
+    files = sorted(review_dir.glob("review_priority_*.json"), reverse=True)
+    if not files:
+        return {"error": "No review priority data"}
     return _load_json(files[0]) or {"error": "Failed to load"}
 
 

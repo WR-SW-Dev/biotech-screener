@@ -83,8 +83,15 @@ def stratified_sample(
     n_total: int = 100,
     min_per_category: int = 5,
     seed: int = 42,
+    oversample_confused: bool = False,
+    oversample_sec_near: bool = False,
 ) -> list[dict]:
-    """Stratified sample by event_category with minimum representation."""
+    """Stratified sample by event_category with minimum representation.
+
+    Oversampling modes (fill from special pools before proportional fill):
+    - oversample_confused: records tagged informational but with large price moves
+    - oversample_sec_near: SEC-sourced records with catalyst <= 30d
+    """
     rng = random.Random(seed)
 
     # Group by category
@@ -95,6 +102,7 @@ def stratified_sample(
 
     # Ensure minimum per non-empty category
     sampled: list[dict] = []
+    sampled_ids: set = set()
     remaining_budget = n_total
     categories = sorted(by_cat.keys())
 
@@ -105,21 +113,71 @@ def stratified_sample(
         if take > 0:
             chosen = rng.sample(pool, take)
             sampled.extend(chosen)
+            for c in chosen:
+                sampled_ids.add(c.get("event_id"))
             remaining_budget -= take
-            # Remove chosen from pool
-            chosen_ids = {r.get("event_id") for r in chosen}
-            by_cat[cat] = [r for r in pool if r.get("event_id") not in chosen_ids]
+            by_cat[cat] = [r for r in pool if r.get("event_id") not in sampled_ids]
 
-    # Second pass: fill proportionally
+    # Oversampling pass: confused records (informational with large moves)
+    if oversample_confused and remaining_budget > 0:
+        confused = [
+            r
+            for r in records
+            if r.get("event_id") not in sampled_ids and r.get("informational_only") is True and _has_large_move(r)
+        ]
+        take = min(remaining_budget // 4, len(confused))  # up to 25% budget
+        if take > 0:
+            chosen = rng.sample(confused, take)
+            sampled.extend(chosen)
+            for c in chosen:
+                sampled_ids.add(c.get("event_id"))
+            remaining_budget -= take
+            logger.info("Oversampled %d confused (informational+large-move) records", take)
+
+    # Oversampling pass: SEC-sourced near-catalyst
+    if oversample_sec_near and remaining_budget > 0:
+        sec_near = [
+            r
+            for r in records
+            if r.get("event_id") not in sampled_ids
+            and "SEC" in (r.get("source_type", "") or "").upper()
+            and _is_near_catalyst(r)
+        ]
+        take = min(remaining_budget // 4, len(sec_near))  # up to 25% budget
+        if take > 0:
+            chosen = rng.sample(sec_near, take)
+            sampled.extend(chosen)
+            for c in chosen:
+                sampled_ids.add(c.get("event_id"))
+            remaining_budget -= take
+            logger.info("Oversampled %d SEC near-catalyst records", take)
+
+    # Second pass: fill proportionally from remaining pool
     if remaining_budget > 0:
-        remaining_pool = []
-        for cat in categories:
-            remaining_pool.extend(by_cat[cat])
+        remaining_pool = [r for r in records if r.get("event_id") not in sampled_ids]
         if remaining_pool:
             take = min(remaining_budget, len(remaining_pool))
             sampled.extend(rng.sample(remaining_pool, take))
 
     return sampled
+
+
+def _has_large_move(record: dict) -> bool:
+    """Check if a record had a large price move (>5% abs return)."""
+    try:
+        ret = abs(float(record.get("price_reaction_1d", 0) or 0))
+        return ret > 0.05
+    except (ValueError, TypeError):
+        return False
+
+
+def _is_near_catalyst(record: dict) -> bool:
+    """Check if a record has a near-term catalyst (<=30d)."""
+    try:
+        days = float(record.get("catalyst_days", 999) or 999)
+        return days <= 30
+    except (ValueError, TypeError):
+        return False
 
 
 def auto_label_from_crt(
@@ -242,9 +300,17 @@ def main():
     parser.add_argument("--classified-dir", type=Path, default=CLASSIFIED_DIR)
     parser.add_argument("--resolutions-dir", type=Path, default=RESOLUTIONS_DIR)
     parser.add_argument("--output-dir", type=Path, default=OUTPUT_DIR)
-    parser.add_argument("--n-samples", type=int, default=100)
+    parser.add_argument(
+        "--n-samples", "--target-n", type=int, default=100, help="Target number of samples (default: 100)"
+    )
     parser.add_argument("--min-per-category", type=int, default=5)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument(
+        "--oversample-confused", action="store_true", help="Oversample informational records with large price moves"
+    )
+    parser.add_argument(
+        "--oversample-sec-near", action="store_true", help="Oversample SEC-sourced near-catalyst records"
+    )
     parser.add_argument("--as-of-date", default=date.today().isoformat())
     args = parser.parse_args()
 
@@ -255,7 +321,14 @@ def main():
         logger.error("No classified records found in %s", args.classified_dir)
         sys.exit(1)
 
-    sample = stratified_sample(records, args.n_samples, args.min_per_category, args.seed)
+    sample = stratified_sample(
+        records,
+        args.n_samples,
+        args.min_per_category,
+        args.seed,
+        oversample_confused=args.oversample_confused,
+        oversample_sec_near=args.oversample_sec_near,
+    )
     logger.info("Sampled %d records", len(sample))
 
     resolutions = load_crt_resolutions(args.resolutions_dir)
@@ -264,7 +337,16 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
     as_of = args.as_of_date
 
-    # Write JSONL
+    # Write JSONL (batch format for accumulation)
+    gt_batch_dir = PROJECT_ROOT / "data" / "ground_truth"
+    gt_batch_dir.mkdir(parents=True, exist_ok=True)
+    batch_path = gt_batch_dir / f"batch_{as_of}.jsonl"
+    with open(batch_path, "w") as f:
+        for rec in sample:
+            f.write(json.dumps(rec, default=str) + "\n")
+    logger.info("Batch JSONL: %s", batch_path)
+
+    # Also write to legacy output dir
     jsonl_path = args.output_dir / f"sample_{as_of}.jsonl"
     with open(jsonl_path, "w") as f:
         for rec in sample:

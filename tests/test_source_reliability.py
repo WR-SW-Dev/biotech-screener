@@ -12,6 +12,8 @@ from common.source_reliability import (
     aggregate_reliability,
     apply_reliability_policy,
     compute_priority_penalty,
+    compute_reliability_score,
+    enrich_with_reliability_scores,
     get_source_action,
     load_reliability_table,
     render_reliability_md,
@@ -565,3 +567,44 @@ class TestBuildSourceReliability:
             out_root=tmp_path / "out",
         )
         assert result["status"] == "SKIP"
+
+
+# ---------------------------------------------------------------------------
+# Reliability score tests
+# ---------------------------------------------------------------------------
+
+
+class TestReliabilityScore:
+    def test_perfect_source(self):
+        bucket = {"sample_count": 20, "large_slip_rate": 0.0, "mean_abs_slip_days": 0.0}
+        score = compute_reliability_score(bucket)
+        assert score == 1.0
+
+    def test_terrible_source(self):
+        bucket = {"sample_count": 20, "large_slip_rate": 1.0, "mean_abs_slip_days": 90.0}
+        score = compute_reliability_score(bucket)
+        assert score == 0.0
+
+    def test_zero_events(self):
+        bucket = {"sample_count": 0, "large_slip_rate": 0.0, "mean_abs_slip_days": 0.0}
+        assert compute_reliability_score(bucket) == 0.0
+
+    def test_small_sample_penalty(self):
+        full = {"sample_count": 20, "large_slip_rate": 0.1, "mean_abs_slip_days": 5.0}
+        small = {"sample_count": 5, "large_slip_rate": 0.1, "mean_abs_slip_days": 5.0}
+        assert compute_reliability_score(full) > compute_reliability_score(small)
+
+    def test_score_between_zero_and_one(self):
+        bucket = {"sample_count": 8, "large_slip_rate": 0.25, "mean_abs_slip_days": 10.0}
+        score = compute_reliability_score(bucket)
+        assert 0.0 <= score <= 1.0
+
+    def test_enrich_adds_field(self):
+        buckets = [
+            {"sample_count": 10, "large_slip_rate": 0.1, "mean_abs_slip_days": 5.0},
+            {"sample_count": 3, "large_slip_rate": 0.5, "mean_abs_slip_days": 30.0},
+        ]
+        result = enrich_with_reliability_scores(buckets)
+        assert result is buckets  # mutates in-place
+        assert all("reliability_score" in b for b in buckets)
+        assert buckets[0]["reliability_score"] > buckets[1]["reliability_score"]

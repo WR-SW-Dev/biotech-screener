@@ -20,13 +20,13 @@ def test_classify_known_event_types():
         assert family in ("REGULATORY", "CLINICAL", "SAFETY")
 
 
-def test_classify_empty_returns_empty():
-    assert classify_catalyst_family("") == ""
+def test_classify_empty_returns_no_catalyst():
+    assert classify_catalyst_family("") == "NO_CATALYST"
 
 
-def test_classify_unknown_returns_empty():
-    assert classify_catalyst_family("UNKNOWN_TYPE") == ""
-    assert classify_catalyst_family("IR_EVENT") == ""
+def test_classify_unknown_returns_no_catalyst():
+    assert classify_catalyst_family("UNKNOWN_TYPE") == "NO_CATALYST"
+    assert classify_catalyst_family("IR_EVENT") == "NO_CATALYST"
 
 
 def test_carry_populates_family(tmp_path):

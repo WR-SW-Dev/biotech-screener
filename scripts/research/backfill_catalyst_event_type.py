@@ -181,7 +181,7 @@ def backfill_snapshot(
             # Set empty for non-catalyst rows
             r.setdefault("catalyst_event_type", "")
             r.setdefault("catalyst_source", "")
-            r.setdefault("catalyst_family", "")
+            r.setdefault("catalyst_family", "NO_CATALYST")
             continue
 
         ticker = r.get("ticker", "")
@@ -189,7 +189,7 @@ def backfill_snapshot(
         if not ticker or cat_days is None:
             r.setdefault("catalyst_event_type", "")
             r.setdefault("catalyst_source", "")
-            r.setdefault("catalyst_family", "")
+            r.setdefault("catalyst_family", "NO_CATALYST")
             continue
 
         event_type, source, _confidence = infer_event_type(

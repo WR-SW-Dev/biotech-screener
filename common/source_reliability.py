@@ -387,6 +387,37 @@ def _worst_action(buckets: List[Dict[str, Any]]) -> Tuple[str, str]:
     return worst.get("action", "UNKNOWN"), worst.get("reason", "")
 
 
+def compute_reliability_score(bucket: Dict[str, Any]) -> float:
+    """Compute a continuous [0, 1] reliability score for a source bucket.
+
+    Formula: on_time_rate * (1 - clip(mean_abs_slip / 90, 0, 1)) * min(1, n / 10)
+
+    The third term is a small-sample penalty — sources with < 10 observations
+    get proportionally discounted.
+    """
+    n = bucket.get("sample_count", 0)
+    if n == 0:
+        return 0.0
+
+    large_rate = bucket.get("large_slip_rate", 0.0)
+    on_time_rate = 1.0 - large_rate  # approximate: non-large-slip ≈ on-time
+    mean_abs = bucket.get("mean_abs_slip_days", 0.0)
+
+    slip_penalty = 1.0 - min(mean_abs / 90.0, 1.0)
+    sample_factor = min(n / 10.0, 1.0)
+
+    return round(on_time_rate * slip_penalty * sample_factor, 3)
+
+
+def enrich_with_reliability_scores(
+    buckets: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    """Add reliability_score to each bucket dict (in-place). Returns same list."""
+    for b in buckets:
+        b["reliability_score"] = compute_reliability_score(b)
+    return buckets
+
+
 def compute_priority_penalty(action: str) -> float:
     """Return priority penalty for a reliability action.
 
