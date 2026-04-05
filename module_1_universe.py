@@ -7,17 +7,16 @@ Filters shell companies, delisted, acquired, etc.
 Input: Raw ticker list with metadata
 Output: Filtered universe with status classifications
 """
+
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
 from typing import Any, Dict, List, Optional
 
+from common.corporate_actions import CorporateActionRegistry, is_dead, load_actions
+from common.integration_contracts import is_validation_enabled, validate_module_1_output
 from common.provenance import create_provenance
 from common.types import StatusGate
-from common.integration_contracts import (
-    validate_module_1_output,
-    is_validation_enabled,
-)
 
 RULESET_VERSION = "1.1.0"
 
@@ -25,9 +24,14 @@ RULESET_VERSION = "1.1.0"
 MIN_MARKET_CAP_MM = Decimal("50")
 
 # Shell company indicators
-SHELL_KEYWORDS = frozenset([
-    "acquisition corp", "spac", "blank check", "shell company",
-])
+SHELL_KEYWORDS = frozenset(
+    [
+        "acquisition corp",
+        "spac",
+        "blank check",
+        "shell company",
+    ]
+)
 
 
 def _extract_market_cap_mm(record: Dict[str, Any]) -> Optional[Decimal]:
@@ -123,15 +127,18 @@ def compute_module_1_universe(
     raw_records: List[Dict[str, Any]],
     as_of_date: str,
     universe_tickers: Optional[List[str]] = None,
+    corporate_actions: Optional[CorporateActionRegistry] = None,
 ) -> Dict[str, Any]:
     """
     Compute universe with status classifications.
-    
+
     Args:
         raw_records: List of dicts with ticker, company_name, status, market_cap_mm, etc.
         as_of_date: Analysis date (YYYY-MM-DD)
         universe_tickers: Optional whitelist of tickers to include
-    
+        corporate_actions: Optional registry for PIT-safe death checks.
+            If None, loads from default path (fail-open if missing).
+
     Returns:
         {
             "as_of_date": str,
@@ -141,6 +148,8 @@ def compute_module_1_universe(
             "provenance": {...}
         }
     """
+    ca_reg = corporate_actions if corporate_actions is not None else load_actions()
+
     active = []
     excluded = []
     reason_counts = {}
@@ -156,6 +165,11 @@ def compute_module_1_universe(
 
         status, reason_detail = _classify_status(record)
 
+        # Corporate actions gate: PIT-safe check for acquired/delisted tickers
+        if status == StatusGate.ACTIVE and is_dead(ticker, as_of_date, ca_reg):
+            status = StatusGate.EXCLUDED_ACQUIRED
+            reason_detail = "corporate_actions_registry"
+
         if status == StatusGate.ACTIVE:
             # Extract market cap for output (already validated if we're here)
             market_cap_mm = _extract_market_cap_mm(record)
@@ -167,21 +181,25 @@ def compute_module_1_universe(
                 if isinstance(market_data, dict):
                     company_name = market_data.get("company_name")
 
-            active.append({
-                "ticker": ticker,
-                "status": status.value,
-                "market_cap_mm": str(market_cap_mm) if market_cap_mm else None,
-                "company_name": company_name,
-            })
+            active.append(
+                {
+                    "ticker": ticker,
+                    "status": status.value,
+                    "market_cap_mm": str(market_cap_mm) if market_cap_mm else None,
+                    "company_name": company_name,
+                }
+            )
         else:
             reason = status.value
-            excluded.append({
-                "ticker": ticker,
-                "reason": reason,
-                "reason_detail": reason_detail,
-            })
+            excluded.append(
+                {
+                    "ticker": ticker,
+                    "reason": reason,
+                    "reason_detail": reason_detail,
+                }
+            )
             reason_counts[reason] = reason_counts.get(reason, 0) + 1
-    
+
     output = {
         "as_of_date": as_of_date,
         "active_securities": sorted(active, key=lambda x: x["ticker"]),

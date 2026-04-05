@@ -11,18 +11,18 @@ These tests cover:
 - Various data structure formats
 """
 
-import pytest
 from decimal import Decimal
-from datetime import date
 
+import pytest
+
+from common.types import StatusGate
 from module_1_universe import (
-    compute_module_1_universe,
-    _extract_market_cap_mm,
-    _classify_status,
     MIN_MARKET_CAP_MM,
     SHELL_KEYWORDS,
+    _classify_status,
+    _extract_market_cap_mm,
+    compute_module_1_universe,
 )
-from common.types import StatusGate
 
 
 class TestExtractMarketCapMm:
@@ -476,3 +476,49 @@ class TestShellKeywords:
         result = compute_module_1_universe(raw_records, "2026-01-15")
         assert len(result["excluded_securities"]) == 1
         assert result["excluded_securities"][0]["reason"] == "excluded_shell"
+
+
+class TestCorporateActionsGate:
+    """Tests for PIT-safe corporate actions exclusion."""
+
+    def _make_record(self, ticker, mcap=500):
+        return {
+            "ticker": ticker,
+            "company_name": f"{ticker} Inc",
+            "market_cap_mm": mcap,
+        }
+
+    def test_acquired_ticker_excluded(self):
+        """CNTA was acquired 2026-03-31 — excluded after that date."""
+        records = [self._make_record("CNTA")]
+        result = compute_module_1_universe(records, "2026-04-01")
+        assert len(result["active_securities"]) == 0
+        assert len(result["excluded_securities"]) == 1
+        assert result["excluded_securities"][0]["reason"] == "excluded_acquired"
+        assert "corporate_actions" in result["excluded_securities"][0]["reason_detail"]
+
+    def test_acquired_ticker_active_before_deal(self):
+        """CNTA was alive before 2026-03-31 — should be active."""
+        records = [self._make_record("CNTA")]
+        result = compute_module_1_universe(records, "2026-03-01")
+        assert len(result["active_securities"]) == 1
+        assert result["active_securities"][0]["ticker"] == "CNTA"
+
+    def test_delisted_ticker_excluded(self):
+        """FGEN was delisted 2026-03-09."""
+        records = [self._make_record("FGEN")]
+        result = compute_module_1_universe(records, "2026-04-01")
+        assert len(result["active_securities"]) == 0
+
+    def test_normal_ticker_unaffected(self):
+        """Tickers with no corporate actions pass through normally."""
+        records = [self._make_record("VRTX")]
+        result = compute_module_1_universe(records, "2026-04-01")
+        assert len(result["active_securities"]) == 1
+
+    def test_pit_safety_future_action_invisible(self):
+        """An acquisition dated in the future should not exclude the ticker."""
+        records = [self._make_record("CNTA")]
+        # 2026-03-15 is before CNTA deal date of 2026-03-31
+        result = compute_module_1_universe(records, "2026-03-15")
+        assert len(result["active_securities"]) == 1
