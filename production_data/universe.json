@@ -7131,11 +7131,13 @@
     "R&D": 335536000,
     "NetIncome": -69000,
     "Revenue": 347898000,
-    "status": "active"
+    "status": "active",
+    "name": "BridgeBio Pharma",
+    "description": "Genetic disease platform. Commercial: acoramidis (ATTR-CM). Subsidiaries spun out BBOT (oncology) in 2025. Large-cap commercial stage."
   },
   {
     "ticker": "BBOT",
-    "name": "BBOT",
+    "name": "BridgeBio Oncology Therapeutics",
     "exchange": "NASDAQ",
     "sector": "Biotechnology",
     "status": "active",
@@ -7145,7 +7147,7 @@
       "IBB"
     ],
     "market_cap": null,
-    "description": "Added from ETF holdings (IBB)",
+    "description": "RAS/PI3Ka-targeted oncology. Spun out of BridgeBio (BBIO) via Helix SPAC Aug 2025. Clinical stage: BBO-8520, BBO-10203, BBO-11818.",
     "cik": "0001869105",
     "market_data": {
       "price": 12.62,
