@@ -66,6 +66,15 @@ def build_institutional_summary(
     except Exception:
         cik_to_short = {}
 
+    # Corporate actions: resolve renamed tickers to current names
+    try:
+        from common.corporate_actions import load_actions
+        from common.corporate_actions import resolve_ticker as _ca_resolve
+
+        _ca_reg = load_actions()
+    except Exception:
+        _ca_reg = None
+
     # Accumulate per-ticker holdings across selected managers
     # Per-ticker: {holders: set(short_name), total_shares: int, total_value: int}
     ticker_accum: Dict[str, Dict[str, Any]] = {}
@@ -82,6 +91,9 @@ def build_institutional_summary(
 
         for h in mgr_data.get("holdings", []):
             tk = h.get("ticker", "")
+            # Resolve renamed tickers (e.g. BGNE → ONC)
+            if tk and _ca_reg:
+                tk = _ca_resolve(tk, as_of_date, _ca_reg)
             if not tk or tk not in universe_tickers:
                 continue
 

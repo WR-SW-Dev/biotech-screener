@@ -151,7 +151,7 @@ def find_13f_filing_via_submissions_api(cik: str, quarter_end: date) -> Optional
         recent = data.get("filings", {}).get("recent", {})
 
         if not recent:
-            print(f"    No recent filings found")
+            print("    No recent filings found")
             return None
 
         accession_list = recent.get("accessionNumber", [])
@@ -221,13 +221,13 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
     Returns:
         (xml_content, document_url) or None
     """
-    print(f"    Fetching information table XML...")
+    print("    Fetching information table XML...")
 
     # Try 1: Primary document (often the information table)
     content = fetch_url_with_rate_limit(primary_doc_url)
 
     if content and ("<informationTable" in content or "<ns1:informationTable" in content):
-        print(f"      Found information table in primary document")
+        print("      Found information table in primary document")
         return content, primary_doc_url
 
     # Try 2: Look for informationTable.xml in filing directory
@@ -275,7 +275,7 @@ def fetch_information_table_xml(cik: str, accession: str, primary_doc_url: str) 
         except Exception:
             pass
 
-    print(f"      Could not locate information table XML")
+    print("      Could not locate information table XML")
     return None
 
 
@@ -414,33 +414,6 @@ def map_cusip_to_ticker(cusip: str, cusip_map: Dict[str, object]) -> Optional[st
                     return t.strip().upper()
         return None
 
-    # Try 3: Fallback - fetch index.json and try ALL XML files
-    index_url = f"{base_dir}/index.json"  # noqa: F821
-    index_content = fetch_url_with_rate_limit(index_url)
-    if index_content:
-        try:
-            import json as json_mod
-
-            data = json_mod.loads(index_content)
-            items = data.get("directory", {}).get("item", [])
-
-            # Get ALL XML files (including numeric names like 36656.xml)
-            xml_files = [
-                item.get("name", "")
-                for item in items
-                if isinstance(item, dict) and item.get("name", "").lower().endswith(".xml")
-            ]
-
-            # Try each XML until we find informationTable
-            for xml_fname in xml_files:
-                xml_url = f"{base_dir}/{xml_fname}"
-                content = fetch_url_with_rate_limit(xml_url)
-                if content and ("<informationTable" in content or "<ns1:informationTable" in content):
-                    print(f"      Found information table via index.json: {xml_fname}")
-                    return content, xml_url
-        except Exception:
-            pass
-
     return None
 
 
@@ -492,8 +465,22 @@ def extract_manager_holdings(
     # Step 4: Map CUSIPs to tickers and filter to universe
     ticker_holdings = {}
 
+    # Corporate actions: resolve renamed tickers to current names
+    try:
+        from common.corporate_actions import load_actions
+        from common.corporate_actions import resolve_ticker as _ca_resolve
+
+        _ca_reg = load_actions()
+        _as_of = quarter_end.isoformat() if hasattr(quarter_end, "isoformat") else str(quarter_end)
+    except Exception:
+        _ca_reg = None
+        _as_of = ""
+
     for holding in raw_holdings:
         ticker = map_cusip_to_ticker(holding.cusip, cusip_map)
+        # Resolve renamed tickers (e.g. BGNE → ONC)
+        if ticker and _ca_reg and _as_of:
+            ticker = _ca_resolve(ticker, _as_of, _ca_reg)
 
         if ticker and ticker in universe_tickers:
             ticker_holdings[ticker] = holding

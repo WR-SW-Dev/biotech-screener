@@ -42,6 +42,7 @@ RECENCY_FRESH_DAYS = 90
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _load_json(path: Path) -> Optional[dict]:
     """Graceful JSON load; returns None on any error."""
     try:
@@ -57,15 +58,30 @@ def _load_cusip_map(path: Path) -> Dict[str, str]:
     return data if isinstance(data, dict) else {}
 
 
-def _resolve_ticker(holding: dict, cusip_map: Dict[str, str]) -> str:
-    """Resolve ticker from holding, with CUSIP fallback."""
+def _resolve_ticker(
+    holding: dict,
+    cusip_map: Dict[str, str],
+    ca_registry: Any = None,
+    as_of: str = "",
+) -> str:
+    """Resolve ticker from holding, with CUSIP fallback and rename resolution.
+
+    If a corporate actions registry is provided, old ticker symbols (e.g.
+    BGNE) are resolved to their current name (e.g. ONC) as of the given date.
+    """
     tk = (holding.get("ticker") or "").strip().upper()
-    if tk:
-        return tk
-    cusip = (holding.get("cusip") or "").strip()
-    if cusip and cusip in cusip_map:
-        return cusip_map[cusip].upper()
-    return ""
+    if not tk:
+        cusip = (holding.get("cusip") or "").strip()
+        if cusip and cusip in cusip_map:
+            tk = cusip_map[cusip].upper()
+    if not tk:
+        return ""
+    # Rename resolution: map old tickers to current names (PIT-safe)
+    if ca_registry and as_of:
+        from common.corporate_actions import resolve_ticker as _ca_resolve
+
+        tk = _ca_resolve(tk, as_of, ca_registry)
+    return tk
 
 
 def _pad_cik(cik: str) -> str:
@@ -142,6 +158,7 @@ def _find_prior_cache_dir(
 # Position-change classification
 # ---------------------------------------------------------------------------
 
+
 def _classify_position_change(
     current_val: float,
     prior_val: float,
@@ -168,6 +185,7 @@ def _classify_position_change(
 # ---------------------------------------------------------------------------
 # Core builder
 # ---------------------------------------------------------------------------
+
 
 def _new_ticker_accum() -> Dict[str, Any]:
     """Fresh per-ticker accumulator."""
@@ -226,6 +244,14 @@ def build_coinvest_features(
     cusip_map = cusip_map or {}
     date_dir = cache_root / as_of_date
 
+    # Corporate actions registry for ticker rename resolution
+    try:
+        from common.corporate_actions import load_actions as _load_ca
+
+        _ca_registry = _load_ca()
+    except Exception:
+        _ca_registry = None
+
     # -- Load current cache ------------------------------------------------
     index = _load_json(date_dir / "index.json")
     if index is None:
@@ -250,10 +276,7 @@ def build_coinvest_features(
 
         if prior_date_dir is not None:
             prior_index = _load_json(prior_date_dir / "index.json")
-            if (
-                prior_index
-                and prior_index.get("schema_version") == "sec_13f_pit_index.v1"
-            ):
+            if prior_index and prior_index.get("schema_version") == "sec_13f_pit_index.v1":
                 prior_por = _get_dominant_period_of_report(prior_index)
                 prior_cache_as_of = prior_index.get("as_of_date")
             else:
@@ -273,7 +296,7 @@ def build_coinvest_features(
                 continue
             tkr_vals: Dict[str, float] = {}
             for h in mgr_data.get("holdings", []):
-                tk = _resolve_ticker(h, cusip_map)
+                tk = _resolve_ticker(h, cusip_map, _ca_registry, as_of_date)
                 if not tk:
                     continue
                 val = h.get("value_usd_thousands", 0) or 0
@@ -282,36 +305,36 @@ def build_coinvest_features(
 
     # -- Per-ticker accumulation -------------------------------------------
     ticker_data: Dict[str, Dict[str, Any]] = {}
-    selected_managers = [
-        m for m in index.get("managers", []) if m.get("selected")
-    ]
+    selected_managers = [m for m in index.get("managers", []) if m.get("selected")]
     managers_used: List[dict] = []
     change_summary: Dict[str, int] = {
-        "NEW": 0, "INCREASE": 0, "HOLD": 0, "DECREASE": 0, "EXIT": 0,
+        "NEW": 0,
+        "INCREASE": 0,
+        "HOLD": 0,
+        "DECREASE": 0,
+        "EXIT": 0,
     }
     unresolved_count = 0
 
     for mgr_entry in selected_managers:
         cik = mgr_entry["manager_cik"]
         json_path = mgr_entry.get(
-            "manager_json_path", f"managers/{cik}.json",
+            "manager_json_path",
+            f"managers/{cik}.json",
         )
         mgr_data = _load_json(date_dir / json_path)
         if mgr_data is None:
             continue
 
         short_name = manager_names.get(
-            cik, mgr_entry.get("manager_name", cik),
+            cik,
+            mgr_entry.get("manager_name", cik),
         )
         tier = manager_tiers.get(cik, 0)
-        filed_at_str = (
-            mgr_data.get("filed_at") or mgr_entry.get("filed_at", "")
-        )
+        filed_at_str = mgr_data.get("filed_at") or mgr_entry.get("filed_at", "")
 
         try:
-            filed_at: Optional[date] = (
-                date.fromisoformat(filed_at_str) if filed_at_str else None
-            )
+            filed_at: Optional[date] = date.fromisoformat(filed_at_str) if filed_at_str else None
         except (ValueError, TypeError):
             filed_at = None
 
@@ -325,7 +348,7 @@ def build_coinvest_features(
         for h in mgr_data.get("holdings", []):
             val = h.get("value_usd_thousands", 0) or 0
             total_value += val
-            tk = _resolve_ticker(h, cusip_map)
+            tk = _resolve_ticker(h, cusip_map, _ca_registry, as_of_date)
             if not tk:
                 unresolved_count += 1
                 continue
@@ -333,12 +356,14 @@ def build_coinvest_features(
 
         prior_tkr_vals = prior_holdings_by_mgr.get(cik, {})
 
-        managers_used.append({
-            "cik": cik,
-            "name": short_name,
-            "period_of_report": mgr_entry.get("period_of_report", ""),
-            "filed_at": filed_at_str,
-        })
+        managers_used.append(
+            {
+                "cik": cik,
+                "name": short_name,
+                "period_of_report": mgr_entry.get("period_of_report", ""),
+                "filed_at": filed_at_str,
+            }
+        )
 
         # Union of current + prior tickers (to detect EXIT).
         all_tickers = set(holdings_by_ticker.keys())
@@ -353,22 +378,21 @@ def build_coinvest_features(
             prior_val = prior_tkr_vals.get(tk, 0) if prior_tkr_vals else 0
 
             # Classify position change.
-            is_new = current_val > 0 and (
-                not prior_tkr_vals or tk not in prior_tkr_vals
-            )
+            is_new = current_val > 0 and (not prior_tkr_vals or tk not in prior_tkr_vals)
             is_exit = current_val == 0 and prior_val > 0
 
             if prior_tkr_vals:
                 chg_type = _classify_position_change(
-                    current_val, prior_val, is_new, is_exit,
+                    current_val,
+                    prior_val,
+                    is_new,
+                    is_exit,
                 )
             else:
                 chg_type = ""  # No prior -> no classification
 
             if chg_type:
-                change_summary[chg_type] = (
-                    change_summary.get(chg_type, 0) + 1
-                )
+                change_summary[chg_type] = change_summary.get(chg_type, 0) + 1
 
             # EXIT positions: manager no longer holds the ticker.
             # Track in change_summary but exclude from per-ticker features.
@@ -415,7 +439,8 @@ def build_coinvest_features(
                 td["sponsor_tier1_count"] += 1
                 td["tier1_conviction_overlap"] += holder_conviction
                 td["max_tier1_position_pct"] = max(
-                    td["max_tier1_position_pct"], position_pct,
+                    td["max_tier1_position_pct"],
+                    position_pct,
                 )
 
             if days_since is not None:
@@ -427,14 +452,12 @@ def build_coinvest_features(
     for td in ticker_data.values():
         td["conviction_overlap"] = round(td["conviction_overlap"], 4)
         td["tier1_conviction_overlap"] = round(
-            td["tier1_conviction_overlap"], 4,
+            td["tier1_conviction_overlap"],
+            4,
         )
         td["max_tier1_position_pct"] = round(td["max_tier1_position_pct"], 2)
         dsf = td["days_since_latest_filing"]
-        td["coinvest_recency_state"] = (
-            "fresh" if dsf is not None and dsf <= RECENCY_FRESH_DAYS
-            else "stale"
-        )
+        td["coinvest_recency_state"] = "fresh" if dsf is not None and dsf <= RECENCY_FRESH_DAYS else "stale"
 
     # -- Assemble output ---------------------------------------------------
     tickers_with_signal = len(ticker_data)
@@ -454,8 +477,7 @@ def build_coinvest_features(
         "tickers_in_universe": tickers_in_universe,
         "tickers_with_signal": tickers_with_signal,
         "signal_coverage_pct": (
-            round(tickers_with_signal / tickers_in_universe * 100, 1)
-            if tickers_in_universe > 0 else 0.0
+            round(tickers_with_signal / tickers_in_universe * 100, 1) if tickers_in_universe > 0 else 0.0
         ),
         "tickers": dict(sorted(ticker_data.items())),
         "provenance": {
@@ -477,6 +499,7 @@ def build_coinvest_features(
 # Schema validation
 # ---------------------------------------------------------------------------
 
+
 def validate_coinvest_features_schema(
     features: dict,
 ) -> Tuple[bool, str]:
@@ -488,36 +511,37 @@ def validate_coinvest_features_schema(
         return False, "features must be a dict"
 
     required_top = [
-        "schema_version", "version", "created_at", "as_of_date",
-        "tickers_in_universe", "tickers_with_signal", "signal_coverage_pct",
-        "tickers", "provenance",
+        "schema_version",
+        "version",
+        "created_at",
+        "as_of_date",
+        "tickers_in_universe",
+        "tickers_with_signal",
+        "signal_coverage_pct",
+        "tickers",
+        "provenance",
     ]
     for k in required_top:
         if k not in features:
             return False, f"missing required field: {k}"
 
     if features["schema_version"] != SCHEMA_VERSION:
-        return False, (
-            f"expected schema {SCHEMA_VERSION}, "
-            f"got {features['schema_version']}"
-        )
+        return False, (f"expected schema {SCHEMA_VERSION}, " f"got {features['schema_version']}")
 
     # Coverage consistency.
     n_uni = features["tickers_in_universe"]
     n_sig = features["tickers_with_signal"]
-    expected_pct = (
-        round(n_sig / n_uni * 100, 1) if n_uni > 0 else 0.0
-    )
+    expected_pct = round(n_sig / n_uni * 100, 1) if n_uni > 0 else 0.0
     if abs(features["signal_coverage_pct"] - expected_pct) > 0.2:
-        return False, (
-            f"coverage inconsistent: {features['signal_coverage_pct']} "
-            f"vs expected {expected_pct}"
-        )
+        return False, (f"coverage inconsistent: {features['signal_coverage_pct']} " f"vs expected {expected_pct}")
 
     # Per-ticker required fields.
     required_ticker = [
-        "tier1_count", "coinvest_overlap_count", "conviction_overlap",
-        "coinvest_holders", "holder_tiers",
+        "tier1_count",
+        "coinvest_overlap_count",
+        "conviction_overlap",
+        "coinvest_holders",
+        "holder_tiers",
     ]
     for tk, td in features.get("tickers", {}).items():
         for f in required_ticker:
@@ -527,7 +551,10 @@ def validate_coinvest_features_schema(
     # Provenance required fields.
     prov = features.get("provenance", {})
     prov_required = [
-        "builder", "builder_version", "prior_available", "managers_used",
+        "builder",
+        "builder_version",
+        "prior_available",
+        "managers_used",
     ]
     for k in prov_required:
         if k not in prov:
@@ -539,6 +566,7 @@ def validate_coinvest_features_schema(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _load_universe(path: Path) -> Set[str]:
     """Load universe tickers from JSON (list-of-dicts or list-of-strings)."""
@@ -565,27 +593,34 @@ def main(argv: Optional[List[str]] = None) -> int:
         description="Build PIT-safe coinvest features from 13F cache",
     )
     parser.add_argument(
-        "--as-of-date", required=True, help="As-of date (ISO format)",
+        "--as-of-date",
+        required=True,
+        help="As-of date (ISO format)",
     )
     parser.add_argument(
-        "--cache-root", default="data/caches/sec_13f/PIT",
+        "--cache-root",
+        default="data/caches/sec_13f/PIT",
         help="13F cache root directory",
     )
     parser.add_argument("--out", required=True, help="Output JSON path")
     parser.add_argument(
-        "--universe", default="production_data/universe.json",
+        "--universe",
+        default="production_data/universe.json",
         help="Universe JSON path",
     )
     parser.add_argument(
-        "--cusip-map", default="production_data/cusip_static_map.json",
+        "--cusip-map",
+        default="production_data/cusip_static_map.json",
         help="CUSIP->ticker static map",
     )
     parser.add_argument(
-        "--prior-cache-dir", default=None,
+        "--prior-cache-dir",
+        default=None,
         help="Explicit prior-quarter cache directory",
     )
     parser.add_argument(
-        "--no-prior", action="store_true",
+        "--no-prior",
+        action="store_true",
         help="Skip prior-quarter comparison entirely",
     )
     args = parser.parse_args(argv)
@@ -601,7 +636,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     universe_tickers = _load_universe(Path(args.universe))
     if not universe_tickers:
         print(
-            f"ERROR: empty universe from {args.universe}", file=sys.stderr,
+            f"ERROR: empty universe from {args.universe}",
+            file=sys.stderr,
         )
         return 1
 
@@ -616,9 +652,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         manager_tiers[padded] = m.get("tier", 0)
         manager_names[padded] = m.get("short_name", m.get("name", padded))
 
-    prior_dir = (
-        Path(args.prior_cache_dir) if args.prior_cache_dir else None
-    )
+    prior_dir = Path(args.prior_cache_dir) if args.prior_cache_dir else None
 
     result = build_coinvest_features(
         as_of_date=args.as_of_date,
