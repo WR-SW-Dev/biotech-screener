@@ -12,6 +12,7 @@ Exercises:
   - deterministic tiebreak for identical decision profiles
   - decision_portfolio.csv always uses decision engine sort
 """
+
 from __future__ import annotations
 
 import csv

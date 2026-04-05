@@ -4,6 +4,7 @@ test_pit_discipline.py - Regression Tests for Point-in-Time Discipline
 
 Verifies that Module 4 correctly rejects future trial data to prevent lookahead bias.
 """
+
 from __future__ import annotations
 
 import sys
