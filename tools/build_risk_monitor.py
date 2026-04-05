@@ -29,7 +29,7 @@ SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 SHADOW_PERF = REPO_ROOT / "artifacts" / "live_shadow" / "performance.csv"
 OUTPUT_DIR = REPO_ROOT / "artifacts" / "risk_monitor"
 
-SCHEMA = "risk_monitor.v1"
+SCHEMA = "risk_monitor.v2"
 
 # Thresholds
 DD_ABS_WARN = -0.10  # -10% absolute drawdown
@@ -38,6 +38,12 @@ DD_REL_WARN = -0.05  # -5% vs XBI
 CORR_HIGH = 0.85  # portfolio too correlated to XBI
 EARNINGS_CLUSTER_WARN = 5  # >5 names reporting same week
 BULL_XBI_THRESHOLD = 0.02  # XBI > +2% = bull regime (model weakness)
+
+# C6/C7 thresholds
+VOL_TARGET = 0.50  # 50% annualized portfolio vol target
+VOL_ALERT_BUFFER = 1.10  # alert when vol > target * 1.10
+CORR_CLUSTER_THRESHOLD = 0.70
+CORR_CLUSTER_MAX = 3
 
 
 def load_prices(lookback_days: int = 63) -> dict[str, list[tuple[str, float]]]:
@@ -202,6 +208,54 @@ def build_risk_report(as_of_date: str) -> dict[str, Any]:
             }
         )
 
+    # 6. Portfolio vol estimate + correlation clusters (v2)
+    vol_metrics: dict[str, Any] = {}
+    try:
+        from portfolio_vol_corr_layer import build_vol_corr_snapshot
+
+        ew_weight = 1.0 / max(len(portfolio_tickers), 1)
+        weights = {t: ew_weight for t in portfolio_tickers}
+        vcs = build_vol_corr_snapshot(
+            PRICE_CSV,
+            portfolio_tickers,
+            weights,
+            vol_target=VOL_TARGET,
+            corr_threshold=CORR_CLUSTER_THRESHOLD,
+            lookback_days=60,
+            as_of_date=as_of_date,
+        )
+        vol_metrics = {
+            "portfolio_vol_60d_annualized": vcs.portfolio_vol_annualized,
+            "vol_target": vcs.vol_target,
+            "vol_breach": vcs.vol_breach,
+            "gross_exposure_scalar": vcs.gross_exposure_scalar,
+            "avg_pairwise_corr_60d": vcs.avg_pairwise_corr,
+            "max_cluster_size": vcs.max_cluster_size,
+            "n_high_corr_pairs": len(vcs.high_corr_pairs),
+            "top_high_corr_pairs": [(a, b, round(c, 3)) for a, b, c in vcs.high_corr_pairs[:5]],
+            "n_tickers_imputed": vcs.n_tickers_imputed,
+        }
+
+        if vcs.portfolio_vol_annualized > VOL_TARGET * VOL_ALERT_BUFFER:
+            alerts.append(
+                {
+                    "level": "WARN",
+                    "type": "vol_breach",
+                    "detail": f"Portfolio vol {vcs.portfolio_vol_annualized:.0%} > target {VOL_TARGET:.0%}",
+                }
+            )
+
+        if vcs.max_cluster_size > CORR_CLUSTER_MAX:
+            alerts.append(
+                {
+                    "level": "WARN",
+                    "type": "corr_concentration",
+                    "detail": f"Correlation cluster of {vcs.max_cluster_size} names (limit {CORR_CLUSTER_MAX})",
+                }
+            )
+    except Exception as e:
+        vol_metrics = {"error": str(e)}
+
     # Overall risk level
     n_crit = sum(1 for a in alerts if a["level"] == "CRITICAL")
     n_warn = sum(1 for a in alerts if a["level"] == "WARN")
@@ -225,6 +279,7 @@ def build_risk_report(as_of_date: str) -> dict[str, Any]:
             "xbi_30d_return": round(xbi_30d_ret, 4),
             "regime": regime,
             "earnings_this_week": earnings_this_week,
+            **vol_metrics,
         },
     }
 

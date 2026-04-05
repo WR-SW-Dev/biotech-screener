@@ -5361,11 +5361,11 @@ def save_validation_snapshot(
     # Restricted to catalyst-relevant names only to limit API latency.
     # Non-blocking: degrades gracefully if credentials missing or API unavailable.
     try:
-        from common.options_diagnostics import fetch_options_diagnostics, select_catalyst_tickers
+        from common.options_diagnostics import fetch_options_with_fallback, select_catalyst_tickers
 
         _opt_tickers = select_catalyst_tickers(csv_rows)
         if _opt_tickers:
-            _opt_lookup = fetch_options_diagnostics(_opt_tickers, as_of_date)
+            _opt_lookup = fetch_options_with_fallback(_opt_tickers, as_of_date)
             _opt_with_data = sum(1 for v in _opt_lookup.values() if str(v.get("opt_has_data", "0")) == "1")
             # Update freshness based on actual fetch result
             if _opt_with_data > 0:

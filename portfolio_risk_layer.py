@@ -1,13 +1,15 @@
-"""Portfolio risk layer — Spec 052.
+"""Portfolio risk layer — Spec 052 + Phase 2 upgrade.
 
 Enforceable portfolio-level risk controls applied post-ranking, pre-trade.
-Five controls:
+Seven controls:
 
     C1: Single-name concentration cap
     C2: Therapeutic-area concentration limit
     C3: Liquidity-aware position ceiling
     C4: Drawdown circuit breaker (tightens C1)
     C5: Correlated-pair limit (drops positions)
+    C6: Portfolio vol target (scales gross exposure)
+    C7: Correlation cluster limit (drops positions from same-tape clusters)
 
 Deterministic and stateless. Missing data → skip with WARN (fail-open).
 Missing policy → hard failure.
@@ -46,12 +48,20 @@ class PortfolioPolicy:
     single_name_dd_threshold: float = 0.40
     correlated_pair_enabled: bool = True
     max_same_indication_phase: int = 2
+    # C6: Portfolio vol target
+    vol_target_enabled: bool = False
+    vol_target_annualized: float = 0.50
+    vol_target_action: str = "WARN"  # "WARN" or "ENFORCE"
+    # C7: Correlation cluster limit
+    corr_cluster_enabled: bool = False
+    corr_cluster_max_names: int = 3
 
 
 @dataclass
 class MarketSnapshot:
     portfolio_dd_from_high: float = 0.0
     single_name_dds: Dict[str, float] = field(default_factory=dict)
+    vol_corr_snapshot: Optional[Any] = None  # VolCorrSnapshot from portfolio_vol_corr_layer
 
 
 @dataclass
@@ -60,6 +70,8 @@ class RiskLayerResult:
     breaches: List[Dict[str, Any]] = field(default_factory=list)
     flags: List[Dict[str, Any]] = field(default_factory=list)
     effective_cap_pct: float = 0.030
+    gross_exposure_scalar: float = 1.0
+    portfolio_vol_annualized: Optional[float] = None
 
 
 def _apply_drawdown_breaker(
@@ -121,6 +133,107 @@ def _apply_correlated_pair_limit(positions, policy, breaches):
     return [p for p in positions if p.ticker not in dropped]
 
 
+def _apply_corr_cluster_limit(positions, policy, snapshot, breaches, flags):
+    """C7: Correlation cluster limit — drop excess names from same-tape clusters.
+
+    Uses VolCorrSnapshot.correlation_clusters (return-based connected components).
+    If any cluster has more names than corr_cluster_max_names, drop lowest-ranked.
+    """
+    if not policy.corr_cluster_enabled:
+        return list(positions)
+
+    vcs = snapshot.vol_corr_snapshot
+    if vcs is None:
+        flags.append(
+            {
+                "flag_type": "C7_SKIPPED_NO_DATA",
+                "ticker": "_portfolio",
+                "severity": "WARN",
+                "detail": "vol_corr_snapshot not provided, skipping C7",
+            }
+        )
+        return list(positions)
+
+    cluster_map = vcs.correlation_clusters
+    if not cluster_map:
+        return list(positions)
+
+    limit = policy.corr_cluster_max_names
+
+    # Group portfolio positions by cluster
+    cluster_groups: Dict[int, List[Position]] = defaultdict(list)
+    for p in positions:
+        cid = cluster_map.get(p.ticker)
+        if cid is not None:
+            cluster_groups[cid].append(p)
+
+    dropped = set()
+    for cid, group in cluster_groups.items():
+        if len(group) <= limit:
+            continue
+        # Keep highest-ranked (lowest rank number)
+        group.sort(key=lambda p: p.rank)
+        to_drop = group[limit:]
+        breaches.append(
+            {
+                "control": "C7_corr_cluster_limit",
+                "ticker": ",".join(p.ticker for p in to_drop),
+                "detail": (
+                    f"cluster {cid}: {len(group)} names > limit {limit} " f"(tickers: {[p.ticker for p in group]})"
+                ),
+                "action": f"dropping {len(to_drop)} lowest-ranked: {[p.ticker for p in to_drop]}",
+            }
+        )
+        for p in to_drop:
+            dropped.add(p.ticker)
+
+    return [p for p in positions if p.ticker not in dropped]
+
+
+def _apply_vol_target(positions, policy, snapshot, breaches, flags):
+    """C6: Portfolio vol target — scale gross exposure or warn.
+
+    Returns (gross_exposure_scalar, portfolio_vol_annualized).
+    """
+    if not policy.vol_target_enabled:
+        return 1.0, None
+
+    vcs = snapshot.vol_corr_snapshot
+    if vcs is None:
+        flags.append(
+            {
+                "flag_type": "C6_SKIPPED_NO_DATA",
+                "ticker": "_portfolio",
+                "severity": "WARN",
+                "detail": "vol_corr_snapshot not provided, skipping C6",
+            }
+        )
+        return 1.0, None
+
+    port_vol = vcs.portfolio_vol_annualized
+    scalar = vcs.gross_exposure_scalar
+
+    if vcs.vol_breach:
+        breaches.append(
+            {
+                "control": "C6_vol_target",
+                "ticker": "_portfolio",
+                "detail": (f"portfolio vol {port_vol:.1%} > target {policy.vol_target_annualized:.1%}"),
+                "action": (
+                    f"scalar={scalar:.3f}" if policy.vol_target_action == "ENFORCE" else "WARN only, no weight scaling"
+                ),
+            }
+        )
+
+    if policy.vol_target_action == "ENFORCE" and scalar < 1.0:
+        for p in positions:
+            p.weight *= scalar
+    else:
+        scalar = 1.0  # WARN mode: don't scale
+
+    return scalar, port_vol
+
+
 def apply_risk_layer(
     positions: List[Position],
     policy: Optional[PortfolioPolicy],
@@ -144,8 +257,11 @@ def apply_risk_layer(
     # C4: Drawdown breaker
     effective_cap = _apply_drawdown_breaker(pos, policy, snapshot, breaches, flags)
 
-    # C5: Correlated-pair limit (drops positions)
+    # C5: Correlated-pair limit (drops positions — indication+phase proxy)
     pos = _apply_correlated_pair_limit(pos, policy, breaches)
+
+    # C7: Correlation cluster limit (drops positions — return-based)
+    pos = _apply_corr_cluster_limit(pos, policy, snapshot, breaches, flags)
 
     # Flag missing data
     missing_area = [p for p in pos if not p.therapeutic_area]
@@ -310,9 +426,14 @@ def apply_risk_layer(
                 p.weight /= total
         # else: accept total < 1.0 (unallocated = cash)
 
+    # C6: Vol target — applied LAST (scales whole portfolio)
+    scalar, port_vol = _apply_vol_target(pos, policy, snapshot, breaches, flags)
+
     return RiskLayerResult(
         positions=pos,
         breaches=breaches,
         flags=flags,
         effective_cap_pct=effective_cap,
+        gross_exposure_scalar=scalar,
+        portfolio_vol_annualized=port_vol,
     )

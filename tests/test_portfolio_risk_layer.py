@@ -398,3 +398,234 @@ class TestPolicyMissingFails:
         # Should pass through unchanged
         for i, p in enumerate(result.positions):
             assert abs(p.weight - positions[i].weight) < 0.001
+
+
+# ── C6: Vol target ──────────────────────────────────────────────────
+
+
+def _make_vol_corr_snapshot(**overrides):
+    """Helper to build a minimal VolCorrSnapshot-like object."""
+    from portfolio_vol_corr_layer import VolCorrSnapshot
+
+    defaults = dict(
+        portfolio_vol_annualized=0.55,
+        gross_exposure_scalar=0.909,
+        vol_target=0.50,
+        vol_breach=True,
+        correlation_clusters={},
+        cluster_sizes={},
+        max_cluster_size=0,
+        avg_pairwise_corr=0.35,
+        high_corr_pairs=[],
+        lookback_days=60,
+        n_tickers_with_data=30,
+        n_tickers_imputed=0,
+    )
+    defaults.update(overrides)
+    return VolCorrSnapshot(**defaults)
+
+
+class TestVolTarget:
+    """C6: Portfolio vol target."""
+
+    def test_c6_warn_mode_does_not_scale_weights(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(vol_target_enabled=True, vol_target_action="WARN")
+        vcs = _make_vol_corr_snapshot(
+            portfolio_vol_annualized=0.60,
+            vol_breach=True,
+            gross_exposure_scalar=0.833,
+            vol_target=0.50,
+        )
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        # WARN mode: weights NOT scaled, scalar should be 1.0
+        assert result.gross_exposure_scalar == 1.0
+        assert abs(_total_weight(result.positions) - 1.0) < 0.01
+        # But breach logged
+        assert any(b["control"] == "C6_vol_target" for b in result.breaches)
+
+    def test_c6_enforce_mode_scales_weights(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(vol_target_enabled=True, vol_target_action="ENFORCE")
+        vcs = _make_vol_corr_snapshot(
+            portfolio_vol_annualized=0.60,
+            vol_breach=True,
+            gross_exposure_scalar=0.833,
+            vol_target=0.50,
+        )
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        # ENFORCE: weights scaled down
+        total = _total_weight(result.positions)
+        assert total < 0.90  # Should be ~0.833
+        assert result.gross_exposure_scalar < 1.0
+
+    def test_c6_no_breach_scalar_is_one(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(vol_target_enabled=True, vol_target_action="ENFORCE")
+        vcs = _make_vol_corr_snapshot(
+            portfolio_vol_annualized=0.40,
+            vol_breach=False,
+            gross_exposure_scalar=1.0,
+            vol_target=0.50,
+        )
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        assert result.gross_exposure_scalar == 1.0
+        assert abs(_total_weight(result.positions) - 1.0) < 0.01
+
+    def test_c6_skipped_when_no_snapshot(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(vol_target_enabled=True)
+        snapshot = _make_snapshot()
+        # No vol_corr_snapshot attached
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        assert result.gross_exposure_scalar == 1.0
+        assert any(f["flag_type"] == "C6_SKIPPED_NO_DATA" for f in result.flags)
+
+    def test_c6_disabled_does_nothing(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(vol_target_enabled=False)
+        vcs = _make_vol_corr_snapshot(vol_breach=True)
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        assert result.gross_exposure_scalar == 1.0
+        assert not any(b["control"] == "C6_vol_target" for b in result.breaches)
+
+
+# ── C7: Correlation cluster limit ───────────────────────────────────
+
+
+class TestCorrClusterLimit:
+    """C7: Return-based correlation cluster limit."""
+
+    def test_c7_drops_excess_cluster_members(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(corr_cluster_enabled=True, corr_cluster_max_names=2)
+
+        # Put 4 names in cluster 1, rest in singletons
+        clusters = {}
+        for i in range(4):
+            clusters[f"T{i:03d}"] = 1
+        for i in range(4, 10):
+            clusters[f"T{i:03d}"] = i + 1
+
+        vcs = _make_vol_corr_snapshot(
+            correlation_clusters=clusters,
+            cluster_sizes={1: 4, **{i + 1: 1 for i in range(4, 10)}},
+            max_cluster_size=4,
+        )
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        # Cluster 1 had 4, limit 2 → 2 dropped
+        cluster1_tickers = [p.ticker for p in result.positions if clusters.get(p.ticker) == 1]
+        assert len(cluster1_tickers) <= 2
+        assert any(b["control"] == "C7_corr_cluster_limit" for b in result.breaches)
+
+    def test_c7_keeps_highest_ranked(self):
+        positions = _make_positions(6)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 3}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(corr_cluster_enabled=True, corr_cluster_max_names=2)
+
+        # T000 (rank 1), T001 (rank 2), T002 (rank 3) all in cluster 1
+        clusters = {"T000": 1, "T001": 1, "T002": 1, "T003": 2, "T004": 3, "T005": 4}
+        vcs = _make_vol_corr_snapshot(correlation_clusters=clusters)
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        kept = [p.ticker for p in result.positions if clusters.get(p.ticker) == 1]
+        assert "T000" in kept
+        assert "T001" in kept
+        assert "T002" not in kept
+
+    def test_c7_disabled_does_nothing(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(corr_cluster_enabled=False)
+        clusters = {f"T{i:03d}": 1 for i in range(10)}
+        vcs = _make_vol_corr_snapshot(correlation_clusters=clusters, max_cluster_size=10)
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        assert len(result.positions) == 10
+        assert not any(b["control"] == "C7_corr_cluster_limit" for b in result.breaches)
+
+    def test_c7_skipped_no_snapshot(self):
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+        policy = _make_policy(corr_cluster_enabled=True)
+        snapshot = _make_snapshot()
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        assert any(f["flag_type"] == "C7_SKIPPED_NO_DATA" for f in result.flags)
+
+    def test_c7_composes_with_c5(self):
+        """Both C5 (indication) and C7 (return-corr) apply independently."""
+        positions = _make_positions(10)
+        for i, p in enumerate(positions):
+            p.therapeutic_area = f"area_{i % 5}"
+            p.primary_indication = f"ind_{i}"
+
+        # C5 trigger: 3 names share indication+phase
+        for i in range(3):
+            positions[i].primary_indication = "NASH"
+            positions[i].lead_program_phase = "Phase 3"
+
+        # C7 trigger: 4 names in one return cluster (different from C5 group)
+        clusters = {}
+        for i in range(4, 8):  # T004-T007 in cluster 1
+            clusters[f"T{i:03d}"] = 1
+        for i in list(range(4)) + list(range(8, 10)):
+            clusters[f"T{i:03d}"] = i + 10
+
+        policy = _make_policy(
+            corr_cluster_enabled=True,
+            corr_cluster_max_names=2,
+            max_same_indication_phase=2,
+        )
+        vcs = _make_vol_corr_snapshot(correlation_clusters=clusters)
+        snapshot = _make_snapshot()
+        snapshot.vol_corr_snapshot = vcs
+
+        result = apply_risk_layer(positions, policy, snapshot)
+        controls = {b["control"] for b in result.breaches}
+        assert "C5_correlated_pair_limit" in controls
+        assert "C7_corr_cluster_limit" in controls

@@ -97,6 +97,8 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
             )
         )
 
+    vt = policy_data.get("vol_target", {})
+    ccl = policy_data.get("corr_cluster_limit", {})
     risk_policy = PortfolioPolicy(
         risk_layer_enabled=policy_data.get("risk_layer_enabled", True),
         global_name_cap_pct=policy_data.get("global_name_cap", {}).get("cap_pct", 0.03),
@@ -109,9 +111,35 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
         single_name_dd_threshold=policy_data.get("drawdown_breaker", {}).get("single_name_dd_threshold", 0.40),
         correlated_pair_enabled=policy_data.get("correlated_pair_limit", {}).get("enabled", True),
         max_same_indication_phase=policy_data.get("correlated_pair_limit", {}).get("max_same_indication_phase", 2),
+        vol_target_enabled=vt.get("enabled", False),
+        vol_target_annualized=vt.get("target_annualized", 0.50),
+        vol_target_action=vt.get("action", "WARN"),
+        corr_cluster_enabled=ccl.get("enabled", False),
+        corr_cluster_max_names=ccl.get("max_names_per_cluster", 3),
     )
 
-    risk_result = apply_risk_layer(risk_positions, risk_policy, MarketSnapshot())
+    # Build vol/corr snapshot for C6/C7
+    snapshot = MarketSnapshot()
+    try:
+        from portfolio_vol_corr_layer import build_vol_corr_snapshot
+
+        price_csv = REPO_ROOT / "production_data" / "price_history.csv"
+        if price_csv.exists() and (risk_policy.vol_target_enabled or risk_policy.corr_cluster_enabled):
+            portfolio_tks = [p.ticker for p in risk_positions]
+            ew_w = 1.0 / max(len(portfolio_tks), 1)
+            snapshot.vol_corr_snapshot = build_vol_corr_snapshot(
+                price_csv,
+                portfolio_tks,
+                {t: ew_w for t in portfolio_tks},
+                vol_target=risk_policy.vol_target_annualized,
+                corr_threshold=0.70,
+                lookback_days=ccl.get("lookback_days", 60),
+                as_of_date=as_of_date,
+            )
+    except Exception:
+        pass  # graceful degradation -- C6/C7 skip with WARN flags
+
+    risk_result = apply_risk_layer(risk_positions, risk_policy, snapshot)
     risk_weights = {p.ticker: p.weight for p in risk_result.positions}
     risk_breaches = risk_result.breaches
     risk_flags = risk_result.flags

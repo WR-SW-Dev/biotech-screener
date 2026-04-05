@@ -119,11 +119,11 @@ async def _create_session(is_test: bool = False):
 def select_front_back_expiries(
     expiry_ivs: List[Dict[str, Any]],
     as_of_date: _date,
+    min_dte: int = 7,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     """Select front and back expiry from a list of {expiration_date, iv} dicts.
 
-    Front = nearest future expiry with IV data and DTE >= 7 (skip weeklies
-    expiring within a week — too noisy).
+    Front = nearest future expiry with IV data and DTE >= min_dte.
     Back = next expiry after front with IV data.
 
     Returns (front, back) — either may be None.
@@ -141,7 +141,7 @@ def select_front_back_expiries(
             except (ValueError, TypeError):
                 continue
         dte = (exp_date - as_of_date).days
-        if dte < 7:
+        if dte < min_dte:
             continue
         candidates.append({"expiration_date": exp_date, "implied_volatility": iv, "dte": dte})
 
@@ -660,7 +660,14 @@ async def _fetch_diagnostics_async(
                             }
                         )
 
-            front, back = select_front_back_expiries(expiry_ivs, ref_date)
+            front, back = select_front_back_expiries(expiry_ivs, ref_date, min_dte=7)
+
+            # DTE relaxation: retry with min_dte=3 for weekly-only names
+            basis = "tt_market_metrics"
+            if not front and expiry_ivs:
+                front, back = select_front_back_expiries(expiry_ivs, ref_date, min_dte=3)
+                if front:
+                    basis = "tt_weekly_fallback"
 
             if not front:
                 result[symbol] = empty_diagnostics("no_liquid_expiry")
@@ -688,7 +695,7 @@ async def _fetch_diagnostics_async(
                 "opt_term_slope": term_slope if term_slope is not None else "",
                 "opt_put_call_skew": "",  # populated by streaming pass if liquid
                 "opt_rr_25d": "",  # populated by streaming pass if liquid
-                "opt_diagnostic_basis": "tt_market_metrics",
+                "opt_diagnostic_basis": basis,
             }
             # Derive operator flags
             diag.update(compute_operator_flags(diag, liquidity_rating=liq))
@@ -797,3 +804,149 @@ def select_catalyst_tickers(
     scored.sort()
     tickers = [t for _, t in scored[:max_tickers]]
     return sorted(set(tickers))
+
+
+# ---------------------------------------------------------------------------
+# Massive/Polygon fallback chain
+# ---------------------------------------------------------------------------
+
+
+def _massive_fallback_batch(
+    symbols: List[str],
+    as_of_date: str,
+) -> Dict[str, Dict[str, Any]]:
+    """Fetch diagnostics from Massive/Polygon for tickers TT doesn't cover.
+
+    Returns diagnostic dicts with opt_diagnostic_basis="massive_chain_snapshot".
+    Gracefully degrades to empty diagnostics if Massive is unavailable.
+    """
+    results: Dict[str, Dict[str, Any]] = {}
+
+    try:
+
+        from common.options_history_massive import fetch_chain_snapshot
+    except ImportError:
+        logger.info("Massive/Polygon modules not available -- fallback disabled")
+        return {s: empty_diagnostics("no_massive_module") for s in symbols}
+
+    ref_date = _date.fromisoformat(as_of_date)
+
+    for symbol in symbols:
+        try:
+            chain = fetch_chain_snapshot(symbol)
+            if not chain:
+                results[symbol] = empty_diagnostics("no_chain_any_source")
+                continue
+
+            # Extract expiry IVs from chain
+            expiry_ivs = []
+            total_oi = 0
+            for contract in chain:
+                exp = contract.get("expiration_date", "")
+                iv = contract.get("implied_volatility")
+                oi = contract.get("open_interest", 0) or 0
+                total_oi += oi
+                if exp and iv is not None:
+                    expiry_ivs.append({"expiration_date": exp, "implied_volatility": float(iv)})
+
+            front, back = select_front_back_expiries(expiry_ivs, ref_date, min_dte=3)
+            if not front:
+                results[symbol] = empty_diagnostics("no_chain_any_source")
+                continue
+
+            # Compute ATM IV from front expiry
+            front_iv = front["implied_volatility"]
+            back_iv = back["implied_volatility"] if back else None
+            term_slope = None
+            if back_iv and front_iv and front_iv > 0:
+                term_slope = round((back_iv - front_iv) / front_iv, 4)
+
+            # Synthetic liquidity from total OI
+            if total_oi > 5000:
+                liq_state = "liquid"
+                liq_ok = "1"
+            elif total_oi > 500:
+                liq_state = "thin"
+                liq_ok = "0"
+            else:
+                liq_state = "absent"
+                liq_ok = "0"
+
+            diag: Dict[str, Any] = {
+                "opt_has_data": "1",
+                "opt_quote_ts": "",
+                "opt_nearest_expiry": (
+                    front["expiration_date"].isoformat()
+                    if isinstance(front["expiration_date"], _date)
+                    else str(front["expiration_date"])
+                ),
+                "opt_dte": front["dte"],
+                "opt_atm_iv": round(front_iv, 4),
+                "opt_front_iv": round(front_iv, 4),
+                "opt_back_iv": round(back_iv, 4) if back_iv is not None else "",
+                "opt_term_slope": term_slope if term_slope is not None else "",
+                "opt_put_call_skew": "",
+                "opt_rr_25d": "",
+                "opt_diagnostic_basis": "massive_chain_snapshot",
+                "opt_iv_regime": _classify_iv_regime(front_iv),
+                "opt_event_premium": "YES" if (term_slope is not None and term_slope < -0.10) else "NO",
+                "opt_liquidity_ok": liq_ok,
+                "opt_liquidity_state": liq_state,
+                "opt_use_for_judgment": "YES" if liq_ok == "1" and front_iv < 5.0 else "NO",
+            }
+            results[symbol] = diag
+
+        except Exception as exc:
+            logger.warning("Massive fallback failed for %s: %s", symbol, exc)
+            results[symbol] = empty_diagnostics(f"massive_error: {exc}")
+
+    n_filled = sum(1 for d in results.values() if d.get("opt_has_data") == "1")
+    logger.info("Massive fallback: %d/%d symbols got data", n_filled, len(symbols))
+    return results
+
+
+def _classify_iv_regime(iv: float) -> str:
+    """Classify IV into regime bucket."""
+    if iv >= 2.00:
+        return "EXTREME"
+    if iv >= 0.60:
+        return "ELEVATED"
+    return "NORMAL"
+
+
+def fetch_options_with_fallback(
+    symbols: List[str],
+    as_of_date: str,
+    is_test: bool = False,
+) -> Dict[str, Dict[str, Any]]:
+    """Fetch options diagnostics with Massive/Polygon fallback.
+
+    1. Call fetch_options_diagnostics (Tastytrade)
+    2. For absent tickers (no_metrics, no_credentials), try Massive
+    3. Merge results
+
+    Returns same schema as fetch_options_diagnostics.
+    """
+    # Primary: Tastytrade
+    result = fetch_options_diagnostics(symbols, as_of_date, is_test)
+
+    # Identify absent tickers
+    absent = [
+        s
+        for s in symbols
+        if result.get(s, {}).get("opt_has_data") != "1"
+        and result.get(s, {}).get("opt_diagnostic_basis", "") in ("no_metrics", "no_credentials", "")
+    ]
+
+    if not absent:
+        return result
+
+    logger.info("Attempting Massive fallback for %d absent tickers", len(absent))
+    fallback = _massive_fallback_batch(absent, as_of_date)
+
+    # Merge: only replace if fallback got data
+    for s, diag in fallback.items():
+        if diag.get("opt_has_data") == "1":
+            result[s] = diag
+
+    return result

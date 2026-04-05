@@ -1,5 +1,5 @@
 {
-  "schema": "portfolio_policy.v5",
+  "schema": "portfolio_policy.v6",
   "description": "EW Top-30 construction for $500k biotech portfolio. Promoted 2026-04-01.",
   "construction_mode": "ew_top_n",
   "ew_top_n": 30,
@@ -118,5 +118,19 @@
   "correlated_pair_limit": {
     "enabled": true,
     "max_same_indication_phase": 2
+  },
+  "vol_target": {
+    "enabled": true,
+    "target_annualized": 0.50,
+    "action": "WARN",
+    "lookback_days": 60,
+    "comment": "50% annualized vol target. WARN-only initially; switch to ENFORCE after 4 weeks of monitoring."
+  },
+  "corr_cluster_limit": {
+    "enabled": true,
+    "threshold": 0.70,
+    "max_names_per_cluster": 3,
+    "lookback_days": 60,
+    "comment": "Return-based correlation clustering. Complements C5 indication+phase proxy."
   }
 }
