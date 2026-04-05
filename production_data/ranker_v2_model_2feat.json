@@ -1,0 +1,34 @@
+{
+  "schema": "ranker_v2_model.v1",
+  "model": {
+    "type": "pairwise_logistic",
+    "weights": [
+      0.061286441555547966,
+      -0.05332037006884376
+    ],
+    "bias": 0.5019276351788997,
+    "n_features": 2,
+    "feature_names": [
+      "coinvest_score_z",
+      "financial_score"
+    ],
+    "trained": true,
+    "train_loss": 0.2721,
+    "train_accuracy": 1.0
+  },
+  "config": {
+    "feature_set": "minimal_v2",
+    "cohort_top_n": 60,
+    "require_catalyst_window": false,
+    "n_epochs": 200,
+    "max_pairs_per_date": 400,
+    "train_window": 36,
+    "l2_reg": 0.01,
+    "recency_halflife_months": 24
+  },
+  "training": {
+    "n_dates": 36,
+    "n_pairs": 12400
+  },
+  "audit_note": "2-feature model from scoring_logic_audit_2026_04_05. L2=0.01, recency decay."
+}
