@@ -1,0 +1,45 @@
+{
+  "signal": "actionable_rank",
+  "horizon": 20,
+  "top_k": 30,
+  "cost_bps": 47.0,
+  "anchor_mode": "next_trading_day",
+  "is_long_short": false,
+  "n_dates": 426,
+  "n_evaluated": 392,
+  "n_skipped": 34,
+  "long": {
+    "mean_gross": 0.024096,
+    "mean_net": 0.023017,
+    "cumulative_gross": 1300.42575,
+    "cumulative_net": 856.811543,
+    "mean_turnover": 0.1148,
+    "median_turnover": 0.0667
+  },
+  "regime_slices": {
+    "BEAR": {
+      "n_dates": 86,
+      "mean_gross": 0.015365,
+      "mean_net": 0.01433,
+      "cumulative_gross": 1.011562,
+      "cumulative_net": 0.841189,
+      "mean_turnover": 0.1101
+    },
+    "BULL": {
+      "n_dates": 117,
+      "mean_gross": 0.033151,
+      "mean_net": 0.031962,
+      "cumulative_gross": 25.814315,
+      "cumulative_net": 22.441042,
+      "mean_turnover": 0.1265
+    },
+    "CHOP": {
+      "n_dates": 189,
+      "mean_gross": 0.022463,
+      "mean_net": 0.021432,
+      "cumulative_gross": 23.127839,
+      "cumulative_net": 18.875422,
+      "mean_turnover": 0.1097
+    }
+  }
+}

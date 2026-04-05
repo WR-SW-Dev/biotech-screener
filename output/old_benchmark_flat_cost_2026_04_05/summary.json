@@ -1,0 +1,45 @@
+{
+  "signal": "actionable_rank",
+  "horizon": 20,
+  "top_k": 30,
+  "cost_bps": 30.0,
+  "anchor_mode": "exact",
+  "is_long_short": false,
+  "n_dates": 426,
+  "n_evaluated": 386,
+  "n_skipped": 40,
+  "long": {
+    "mean_gross": 0.023974,
+    "mean_net": 0.023296,
+    "cumulative_gross": 977.808676,
+    "cumulative_net": 755.29042,
+    "mean_turnover": 0.113,
+    "median_turnover": 0.0667
+  },
+  "regime_slices": {
+    "BEAR": {
+      "n_dates": 86,
+      "mean_gross": 0.012315,
+      "mean_net": 0.011654,
+      "cumulative_gross": 0.525304,
+      "cumulative_net": 0.441297,
+      "mean_turnover": 0.1101
+    },
+    "BULL": {
+      "n_dates": 116,
+      "mean_gross": 0.037192,
+      "mean_net": 0.03643,
+      "cumulative_gross": 39.218453,
+      "cumulative_net": 35.935339,
+      "mean_turnover": 0.127
+    },
+    "CHOP": {
+      "n_dates": 184,
+      "mean_gross": 0.021091,
+      "mean_net": 0.020458,
+      "cumulative_gross": 14.955811,
+      "cumulative_net": 13.206787,
+      "mean_turnover": 0.1056
+    }
+  }
+}
