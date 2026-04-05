@@ -136,6 +136,14 @@ def load_ipo_dates() -> Dict[str, str]:
     return {t: v.get("first_price_date", "") for t, v in raw.get("tickers", {}).items()}
 
 
+def _dedupe_monthly(dates: List[str]) -> List[str]:
+    """Keep one snapshot per calendar month (last available)."""
+    by_month: Dict[str, str] = {}
+    for d in dates:
+        by_month[d[:7]] = d
+    return sorted(by_month.values())
+
+
 def get_pit_dates(start: str) -> List[str]:
     dates = []
     for d in sorted(SNAPSHOTS_DIR.iterdir()):
@@ -145,7 +153,7 @@ def get_pit_dates(start: str) -> List[str]:
             continue
         if (d / "rankings.csv").exists():
             dates.append(d.name)
-    return dates
+    return _dedupe_monthly(dates)
 
 
 def load_snapshot(snap_date: str, ipo_dates: Dict[str, str]) -> List[Dict[str, str]]:

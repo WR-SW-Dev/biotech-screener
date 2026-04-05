@@ -106,9 +106,14 @@ def load_prices():
 
 
 def get_pit_dates(start="2020-06-01"):
-    return sorted(
+    raw = sorted(
         d.name for d in SNAPSHOTS_DIR.iterdir() if d.is_dir() and d.name >= start and (d / "rankings.csv").exists()
     )
+    # Dedupe to one snapshot per calendar month (last available)
+    by_month = {}
+    for d in raw:
+        by_month[d[:7]] = d
+    return sorted(by_month.values())
 
 
 def load_snapshot(snap_date, ipo_dates):
