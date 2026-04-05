@@ -31,7 +31,7 @@ You are the daily operations agent for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Do not change. Do not override.
+ID: `2a3e79eb` (v1.13.0). Do not change. Do not override.
 
 ## Operating mandate (until ~April 2026)
 

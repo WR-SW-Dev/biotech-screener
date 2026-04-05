@@ -84,7 +84,7 @@
       "updated_at": "2026-02-14T00:00:00Z"
     },
     {
-      "id": "c24dea5d",
+      "id": "dee91797",
       "file": "v1.json",
       "created_at": "2026-03-03",
       "engine_version": "v1.3.0",
@@ -384,7 +384,7 @@
       "updated_at": "2026-03-19T00:00:00Z"
     },
     {
-      "id": "b7511c92",
+      "id": "80f2e122",
       "file": "v1.12.0_catalyst_type_tilt_candidate.json",
       "status": "dormant",
       "description": "catalyst_type_tilt ON (Spec 030): T1-T5 quality ladder scales catalyst sort contributions + L3 sizing",
@@ -397,7 +397,7 @@
       "updated_at": "2026-03-21T00:00:00Z"
     },
     {
-      "id": "846ae27b",
+      "id": "b7213a1b",
       "file": "v1.14.0_top_book_quality_035_candidate.json",
       "status": "dormant",
       "description": "binary_now quality_primary w=0.35 (Spec 031): BQS tiebreak in binary_now + build_window",
@@ -410,7 +410,7 @@
       "updated_at": "2026-03-21T00:00:00Z"
     },
     {
-      "id": "7956312c",
+      "id": "5413f763",
       "file": "v1.14.0_top_book_quality_050_boundary.json",
       "status": "dormant",
       "description": "binary_now quality_primary w=0.50 (Spec 031 boundary): upper-bound sensitivity test",
@@ -429,7 +429,10 @@
       "status": "shadow",
       "description": "Spec 039: hybrid options anchor (options_quality_composite with optionality_pct fallback)",
       "parent": "9f1f4587",
-      "created": "2026-03-30"
+      "created_at": "2026-03-30T00:00:00Z",
+      "engine_version": "v1.3.0",
+      "requires_replay": false,
+      "notes": "Shadow-only candidate for options-anchored sort. Not evaluated against Checklist v2."
     },
     {
       "id": "69a0c7f8",
@@ -445,7 +448,7 @@
       "updated_at": "2026-04-03T15:26:58Z"
     },
     {
-      "id": "dd1e608c",
+      "id": "2a3e79eb",
       "file": "v1.13.0_a4_selector_ranker.json",
       "created_at": "2026-04-03",
       "engine_version": "v1.4.0",

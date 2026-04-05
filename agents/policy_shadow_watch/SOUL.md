@@ -53,7 +53,7 @@ You are a read-only portfolio construction monitor for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Read-only reference — do not modify.
+ID: `2a3e79eb` (v1.13.0). Read-only reference — do not modify.
 
 ## Alert levels
 

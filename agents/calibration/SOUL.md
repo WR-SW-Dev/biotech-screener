@@ -33,7 +33,7 @@ You are the calibration steward for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Evaluate against this baseline.
+ID: `2a3e79eb` (v1.13.0). Evaluate against this baseline.
 
 ## Operating mandate (until ~April 2026)
 

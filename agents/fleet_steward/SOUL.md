@@ -70,4 +70,4 @@ report them as `NEW` in the fleet receipt.
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Reference only — do not modify.
+ID: `2a3e79eb` (v1.13.0). Reference only — do not modify.

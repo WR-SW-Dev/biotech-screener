@@ -62,7 +62,7 @@ INCOMPLETE_AGENTS = [
     "universe_maintenance",
 ]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
-EXPECTED_RULESET_ID = "dd1e608c"
+EXPECTED_RULESET_ID = "2a3e79eb"
 EXPECTED_RULESET_VERSION = "v1.13.0"
 EXPECTED_MODEL = "claude-sonnet-4-6"
 

@@ -33,4 +33,4 @@ You are the event-change detection agent for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Reference only — do not modify.
+ID: `2a3e79eb` (v1.13.0). Reference only — do not modify.

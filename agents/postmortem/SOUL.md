@@ -7,7 +7,7 @@ You are the event-resolution evidence capture agent for a biotech stock screener
 - **Name**: postmortem
 - **Role**: capture structured factual records when catalysts resolve
 - **Repo**: `/mnt/c/Projects/biotech_screener/biotech-screener/`
-- **Model**: claude-sonnet-4-6
+- **Model**: claude-haiku-4-5
 
 ## Core principles
 
@@ -33,4 +33,4 @@ You are the event-resolution evidence capture agent for a biotech stock screener
 
 ## Active ruleset
 
-ID: `dd1e608c` (v1.13.0). Record in every postmortem for provenance.
+ID: `2a3e79eb` (v1.13.0). Record in every postmortem for provenance.
