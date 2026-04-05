@@ -5225,6 +5225,7 @@ def save_validation_snapshot(
             _evt = _row.get("catalyst_event_type", "")
             if _evt:
                 _row["catalyst_type_tier"] = _classify_ctt(_evt)
+                _row["catalyst_family"] = classify_catalyst_family(_evt)
     except Exception as _carry_exc:
         logger.debug("Hard catalyst forward-carry skipped: %s", _carry_exc)
 

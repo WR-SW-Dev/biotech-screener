@@ -43,6 +43,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 import numpy as np
 
 from common.stats.calibration import brier_score, expected_calibration_error, reliability_curve
+from event_ledger import classify_catalyst_family
 from tools.compute_timing_hazard import compute_timing_hazard
 
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
@@ -117,6 +118,10 @@ def backfill_predictions(
             continue
 
         for cat in result.get("catalysts", []):
+            # Backfill catalyst_family from event_type if missing (historical data quality gap)
+            family = cat["catalyst_family"]
+            if not family and cat.get("catalyst_event_type"):
+                family = classify_catalyst_family(cat["catalyst_event_type"])
             predictions.append(
                 {
                     "prediction_date": snap_date,
@@ -124,7 +129,7 @@ def backfill_predictions(
                     "rank": cat["rank"],
                     "catalyst_days": cat["catalyst_days"],
                     "catalyst_event_type": cat["catalyst_event_type"],
-                    "catalyst_family": cat["catalyst_family"],
+                    "catalyst_family": family,
                     "is_hard_catalyst": cat["is_hard_catalyst"],
                     "on_time_prob": cat["on_time_prob"],
                     "slip_prob_30d": cat["slip_prob_30d"],

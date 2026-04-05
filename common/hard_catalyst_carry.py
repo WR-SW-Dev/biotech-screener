@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 from common.hard_catalyst import classify_hard_catalyst
+from event_ledger import classify_catalyst_family
 
 logger = logging.getLogger(__name__)
 
@@ -125,9 +126,10 @@ def forward_carry_hard_catalysts(
         if current_source not in _SOFT_SOURCES:
             continue
 
-        # Apply carry — source, event type, and catalyst_days from estimated date
+        # Apply carry — source, event type, family, and catalyst_days from estimated date
         row["catalyst_source"] = carried_source
         row["catalyst_event_type"] = carried_event_type
+        row["catalyst_family"] = classify_catalyst_family(carried_event_type)
         row["is_hard_catalyst"] = "1"
 
         # Override catalyst_days if the carry has a better estimate
