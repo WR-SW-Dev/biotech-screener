@@ -139,6 +139,26 @@ def _safe_tstat(vals):
     return m / (s / len(vals) ** 0.5) if s > 1e-9 else None
 
 
+def _newey_west_tstat(vals, lags=3):
+    """Newey-West corrected t-stat for overlapping return series."""
+    n = len(vals)
+    if n < 4:
+        return None
+    m = statistics.mean(vals)
+    demeaned = [v - m for v in vals]
+    gamma_0 = sum(d * d for d in demeaned) / n
+    nw_sum = 0.0
+    for lag in range(1, min(lags + 1, n)):
+        weight = 1.0 - lag / (lags + 1)
+        gamma_lag = sum(demeaned[i] * demeaned[i - lag] for i in range(lag, n)) / n
+        nw_sum += 2 * weight * gamma_lag
+    nw_var = gamma_0 + nw_sum
+    if nw_var <= 0:
+        return None
+    nw_se = (nw_var / n) ** 0.5
+    return m / nw_se if nw_se > 1e-9 else None
+
+
 def spearman_ic(x, y):
     n = len(x)
     if n < 5:
@@ -244,17 +264,20 @@ def run_gate1_signal_cards(snapshots):
                 if ic is not None:
                     ranker_ics.append(ic)
 
+        imp_pp = [v * 100 for v in sel_improvements]
         sel_pp = _r(_pp(_safe_mean(sel_improvements)))
-        sel_t = _r(_safe_tstat([v * 100 for v in sel_improvements]))
+        sel_t = _r(_safe_tstat(imp_pp))
+        sel_t_nw = _r(_newey_west_tstat(imp_pp, lags=3))
         ic_mean = _r(_safe_mean(ranker_ics))
         ic_t = _r(_safe_tstat(ranker_ics))
         n_periods = len(sel_improvements)
 
-        # Pass/fail
-        passes = (sel_t or 0) >= 1.64 and (sel_pp or 0) > 0
+        # Pass/fail — use NW t-stat as the binding test (overlap-corrected)
+        passes = (sel_t_nw or 0) >= 1.64 and (sel_pp or 0) > 0
         results[signal] = {
             "selector_delta_pp": sel_pp,
             "selector_tstat": sel_t,
+            "selector_tstat_nw": sel_t_nw,
             "ranker_ic": ic_mean,
             "ranker_ic_tstat": ic_t,
             "n_periods": n_periods,
@@ -263,7 +286,7 @@ def run_gate1_signal_cards(snapshots):
         tag = "PASS" if passes else "FAIL"
         print(
             f"  {signal:35s} Δ={sel_pp or 0:+.2f}pp  t={sel_t or 0:+.2f}  "
-            f"IC={ic_mean or 0:+.3f}  (n={n_periods})  → {tag}"
+            f"NW-t={sel_t_nw or 0:+.2f}  IC={ic_mean or 0:+.3f}  (n={n_periods})  → {tag}"
         )
 
     return results

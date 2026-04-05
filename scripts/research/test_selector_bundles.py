@@ -170,6 +170,38 @@ def _safe_tstat(vals: List[float]) -> Optional[float]:
     return m / (s / len(vals) ** 0.5)
 
 
+def _newey_west_tstat(vals: List[float], lags: int = 3) -> Optional[float]:
+    """Newey-West corrected t-statistic for a return series.
+
+    Accounts for autocorrelation in overlapping forward return windows.
+    With monthly observations and 63d forward returns, ~2 months of overlap
+    means the naive t-stat overstates significance by ~40-70%.
+    """
+    n = len(vals)
+    if n < 4:
+        return None
+    m = statistics.mean(vals)
+    demeaned = [v - m for v in vals]
+
+    # Variance (gamma_0)
+    gamma_0 = sum(d * d for d in demeaned) / n
+
+    # Autocovariance with Bartlett kernel
+    nw_sum = 0.0
+    for lag in range(1, min(lags + 1, n)):
+        weight = 1.0 - lag / (lags + 1)
+        gamma_lag = sum(demeaned[i] * demeaned[i - lag] for i in range(lag, n)) / n
+        nw_sum += 2 * weight * gamma_lag
+
+    nw_var = gamma_0 + nw_sum
+    if nw_var <= 0:
+        return None
+    nw_se = (nw_var / n) ** 0.5
+    if nw_se < 1e-9:
+        return None
+    return m / nw_se
+
+
 def _hit_rate(vals: List[float]) -> Optional[float]:
     if not vals:
         return None
@@ -368,14 +400,19 @@ def evaluate_bundle(
                     turnover_vals.append(turnover)
                 prev_bundle_tickers = curr_tickers
 
+            # NW lag = ceil(horizon / ~21 trading days per month) for overlap correction
+            nw_lags = max(3, (h + 20) // 21)
+            imp_pp = [v * 100 for v in improvement] if improvement else []
+
             result["top_ns"][str(top_n)]["horizons"][str(h)] = {
                 "baseline_mean_excess_xbi_pp": _r(_pp(_safe_mean(baseline_excess))),
                 "bundle_mean_excess_xbi_pp": _r(_pp(_safe_mean(bundle_excess))),
                 "improvement_pp": _r(_pp(_safe_mean(improvement))),
                 "improvement_cum_pp": _r(_pp(sum(improvement)) if improvement else None),
                 "improvement_hit_rate": _r(_hit_rate(improvement)),
-                "improvement_ir": _r(_safe_ir([v * 100 for v in improvement] if improvement else [])),
-                "improvement_tstat": _r(_safe_tstat([v * 100 for v in improvement] if improvement else [])),
+                "improvement_ir": _r(_safe_ir(imp_pp)),
+                "improvement_tstat": _r(_safe_tstat(imp_pp)),
+                "improvement_tstat_nw": _r(_newey_west_tstat(imp_pp, lags=nw_lags)),
                 "baseline_vs_elig_pp": _r(_pp(_safe_mean(baseline_vs_elig))),
                 "bundle_vs_elig_pp": _r(_pp(_safe_mean(bundle_vs_elig))),
                 "mean_turnover": _r(_safe_mean(turnover_vals)),

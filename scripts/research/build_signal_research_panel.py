@@ -304,13 +304,23 @@ def dedupe_monthly(dates: List[str]) -> List[str]:
 
 
 def load_rankings(snap_date: str, ipo_dates: Dict[str, str]) -> List[Dict[str, str]]:
-    """Load rankings.csv with IPO-date survivorship filter."""
+    """Load rankings.csv with IPO-date survivorship filter and deduplication."""
     path = SNAPSHOTS_DIR / snap_date / "rankings.csv"
     with open(path) as f:
         rows = list(csv.DictReader(f))
     if ipo_dates:
         rows = [r for r in rows if ipo_dates.get(r.get("ticker", ""), "0000") <= snap_date]
-    return rows
+    # Guard against duplicate tickers in a single snapshot
+    seen = set()
+    deduped = []
+    for r in rows:
+        t = r.get("ticker", "")
+        if t and t not in seen:
+            seen.add(t)
+            deduped.append(r)
+        elif t in seen:
+            print(f"  WARNING: duplicate ticker {t} in {snap_date}, keeping first")
+    return deduped
 
 
 def forward_return(
@@ -320,6 +330,11 @@ def forward_return(
     horizon: int,
 ) -> Optional[float]:
     """Forward return from snap_date over horizon trading days.
+
+    NOTE: Return window starts at snap_date close (first date >= snap_date).
+    This differs from backtest/metrics.py which starts at next_trading_day.
+    For selector delta comparisons (bundle vs baseline) the difference cancels,
+    but absolute return levels will differ slightly from the metrics suite.
 
     Uses pre-sorted date list to avoid re-sorting per call.
     """
