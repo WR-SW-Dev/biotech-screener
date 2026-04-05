@@ -151,6 +151,20 @@ All construction_risk_controls defaults are at 100%/0 — the early-exit conditi
 ### What single simplification would buy the most clarity?
 **Reduce the ranker to 2 features (coinvest_score_z + financial_score) and retrain.** This removes 3 dead features, simplifies the model, and makes explicit what the ranker actually does: re-order the top-60 by re-weighting coinvest against financial health.
 
+## Ranker Simplification Study Results (2026-04-05)
+
+Walk-forward comparison (24-month rolling train, 45 test months, top-60 cohort):
+
+| Config | Spread | Top excess | IC | IC t-stat |
+|--------|--------|-----------|-----|-----------|
+| 5-feature (production) | +1.66% | +0.83% | +0.128 | +2.66 |
+| 3-feature (drop inst_delta, catalyst_decay) | +1.91% | +0.95% | +0.133 | +2.73 |
+| **2-feature (coinvest + financial only)** | **+2.95%** | **+1.48%** | **+0.143** | **+2.98** |
+
+The dead features weren't just useless — they added noise. The 2-feature ranker beats production on every metric. Top-30 overlap between 5-feature and 2-feature: 78%.
+
+**Recommendation**: Retrain the production ranker with 2 features (coinvest_score_z + financial_score). This is a strict improvement, not a simplification trade-off.
+
 ### What must not be changed?
 - Institutional block composition and weights
 - coinvest_score_z size residualization
