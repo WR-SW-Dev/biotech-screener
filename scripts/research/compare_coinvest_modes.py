@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -48,7 +48,7 @@ def run_comparison(
     out_dir: Path,
     *,
     universe_mode: str = "current",
-    anchor_mode: str = "exact",
+    anchor_mode: str = "next_trading_day",
     benchmark: str = "none",
     min_price_coverage: float = DEFAULT_MIN_PRICE_COVERAGE,
     component_eval: bool = False,
@@ -111,12 +111,8 @@ def write_diagnosis(
     for h in horizons:
         lines.append(f"## Horizon {h}d")
         lines.append("")
-        lines.append(
-            "| Metric | default | off | contra |"
-        )
-        lines.append(
-            "|--------|---------|-----|--------|"
-        )
+        lines.append("| Metric | default | off | contra |")
+        lines.append("|--------|---------|-----|--------|")
 
         metrics = [
             ("Mean IC", "mean_ic", _fmt),
@@ -150,6 +146,7 @@ def write_diagnosis(
     total_horizons = len(horizons)
 
     for h in horizons:
+
         def _get_ic(mode: str) -> Optional[float]:
             return results[mode].by_horizon.get(h, {}).get("mean_ic")
 
@@ -206,18 +203,21 @@ def main() -> None:
         description="Three-way coinvest mode comparison",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots_reranked",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
     )
     parser.add_argument("--horizons", type=str, default="5,20,63")
     parser.add_argument("--top-k", type=int, default=DEFAULT_TOP_K)
     parser.add_argument("--cost-bps", type=float, default=DEFAULT_COST_BPS)
     parser.add_argument(
-        "--out-dir", type=Path,
+        "--out-dir",
+        type=Path,
         default=PROJECT_ROOT / "output" / "coinvest_diagnosis",
     )
     parser.add_argument(
@@ -232,13 +232,17 @@ def main() -> None:
     )
     parser.add_argument("--benchmark", default="none")
     parser.add_argument(
-        "--min-price-coverage", type=float, default=DEFAULT_MIN_PRICE_COVERAGE,
+        "--min-price-coverage",
+        type=float,
+        default=DEFAULT_MIN_PRICE_COVERAGE,
     )
     parser.add_argument("--component-eval", action="store_true", default=False)
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help="DecisionRuleset JSON for faithful rescore (required for off/contra modes)",
     )
     args = parser.parse_args()
@@ -249,8 +253,7 @@ def main() -> None:
     # Load ruleset if provided
     rs = DecisionRuleset.from_json(str(args.ruleset)) if args.ruleset else None
     if rs is None:
-        print("WARNING: No --ruleset provided. Off/contra modes will skip rescore.",
-              file=sys.stderr)
+        print("WARNING: No --ruleset provided. Off/contra modes will skip rescore.", file=sys.stderr)
 
     results = run_comparison(
         snapshot_root=args.snapshot_root,

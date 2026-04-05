@@ -1012,7 +1012,7 @@ class EvalSummary:
     n_skipped: int = 0
     by_horizon: Dict[int, Dict[str, Any]] = field(default_factory=dict)
     use_positions: bool = False
-    anchor_mode: str = "exact"
+    anchor_mode: str = "next_trading_day"
     benchmark: str = "none"
     split_mode: str = "none"
     universe_mode: str = "current"
@@ -1059,7 +1059,7 @@ def evaluate(
     pit_mode: str = "strict",
     use_positions: bool = False,
     min_price_coverage: float = DEFAULT_MIN_PRICE_COVERAGE,
-    anchor_mode: str = "exact",
+    anchor_mode: str = "next_trading_day",
     benchmark: str = "none",
     long_short_deciles: bool = False,
     split_mode: str = "none",
@@ -2640,8 +2640,8 @@ def main() -> None:
     parser.add_argument(
         "--anchor-mode",
         choices=["exact", "next_trading_day", "prev_trading_day"],
-        default="exact",
-        help="How to resolve non-trading as-of dates to trade dates",
+        default="next_trading_day",
+        help="How to resolve non-trading as-of dates to trade dates (default: next_trading_day for realistic execution lag)",
     )
     parser.add_argument(
         "--benchmark",

@@ -11,11 +11,13 @@ Conventions
   Multiply by 2 for round-trip.
 - ``participation_pct`` = trade_value / adv_dollars.
 """
+
 from __future__ import annotations
 
 import hashlib
 import math
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
+from dataclasses import fields as dc_fields
 from typing import Dict, List, Tuple
 
 
@@ -29,11 +31,11 @@ class CostSchedule:
     """
 
     spread_schedule: Tuple[Tuple[int, int], ...] = (
-        (10_000_000, 3),    # ADV >= $10M
-        (5_000_000, 5),     # ADV >= $5M
-        (1_000_000, 10),    # ADV >= $1M
-        (500_000, 18),      # ADV >= $500K
-        (0, 25),            # ADV < $500K
+        (10_000_000, 3),  # ADV >= $10M
+        (5_000_000, 5),  # ADV >= $5M
+        (1_000_000, 10),  # ADV >= $1M
+        (500_000, 18),  # ADV >= $500K
+        (0, 25),  # ADV < $500K
     )
     impact_coeff: float = 0.10
     impact_cap_bps: float = 200.0
@@ -126,6 +128,45 @@ def estimate_trade_cost(
     )
 
 
+def estimate_portfolio_cost_bps(
+    adv_dollars_list: List[float],
+    n_positions: int,
+    schedule: CostSchedule = DEFAULT_SCHEDULE,
+) -> float:
+    """Estimate average one-way cost in bps for an equal-weight portfolio.
+
+    Uses per-name ADV to compute spread + impact for each position,
+    then returns the value-weighted average one-way cost.
+
+    Parameters
+    ----------
+    adv_dollars_list : list of float
+        ADV in dollars for each position (may be shorter than n_positions
+        if some names lack volume data — missing names get the worst-tier cost).
+    n_positions : int
+        Total positions (used for weight_pct = 100/n).
+    schedule : CostSchedule
+        Cost parameters.
+
+    Returns
+    -------
+    float
+        Average one-way cost in bps.
+    """
+    if n_positions <= 0:
+        return 0.0
+    weight_pct = 100.0 / n_positions
+    costs = []
+    for adv in adv_dollars_list:
+        est = estimate_trade_cost(weight_pct, adv, schedule)
+        costs.append(est.one_way_bps)
+    # Fill missing names with worst-tier cost
+    if len(costs) < n_positions:
+        worst = estimate_trade_cost(weight_pct, 1.0, schedule)
+        costs.extend([worst.one_way_bps] * (n_positions - len(costs)))
+    return sum(costs) / len(costs) if costs else 0.0
+
+
 def compute_cost_telemetry(
     n_positions: int,
     estimates: List[CostEstimate],
@@ -148,9 +189,7 @@ def compute_cost_telemetry(
     """
     n_costed = len(estimates)
     coverage = n_costed / n_positions * 100 if n_positions > 0 else 0.0
-    cap_binding = sum(
-        1 for e in estimates if e.impact_bps >= schedule.impact_cap_bps - 0.01
-    )
+    cap_binding = sum(1 for e in estimates if e.impact_bps >= schedule.impact_cap_bps - 0.01)
     cap_pct = cap_binding / n_costed * 100 if n_costed > 0 else 0.0
     return {
         "cost_coverage_pct": round(coverage, 1),

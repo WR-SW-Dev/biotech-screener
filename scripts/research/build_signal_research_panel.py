@@ -328,13 +328,15 @@ def forward_return(
     sorted_dates: List[str],
     snap_date: str,
     horizon: int,
+    execution_lag: int = 1,
 ) -> Optional[float]:
     """Forward return from snap_date over horizon trading days.
 
-    NOTE: Return window starts at snap_date close (first date >= snap_date).
-    This differs from backtest/metrics.py which starts at next_trading_day.
-    For selector delta comparisons (bundle vs baseline) the difference cancels,
-    but absolute return levels will differ slightly from the metrics suite.
+    With ``execution_lag=1`` (default), the return window starts at the
+    **next trading day** after snap_date — matching realistic execution
+    where signals are computed at close and trades execute next day.
+
+    With ``execution_lag=0``, starts at snap_date close (legacy behavior).
 
     Uses pre-sorted date list to avoid re-sorting per call.
     """
@@ -348,9 +350,10 @@ def forward_return(
             hi = mid
     if lo >= len(sorted_dates):
         return None
-    idx = lo
+    # Apply execution lag: skip N trading days from snap_date
+    idx = lo + execution_lag
     target_idx = idx + horizon
-    if target_idx >= len(sorted_dates):
+    if target_idx >= len(sorted_dates) or idx >= len(sorted_dates):
         return None
     p0 = prices.get(sorted_dates[idx])
     p1 = prices.get(sorted_dates[target_idx])
