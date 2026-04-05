@@ -5149,15 +5149,59 @@ def save_validation_snapshot(
                 "n_swaps": len(_prod_only),
             }
 
+            # --- 2-feature ranker shadow (scoring audit candidate) ---
+            try:
+                _2feat_model_path = Path("production_data/ranker_v2_model_2feat.json")
+                if _2feat_model_path.exists():
+                    _2feat_model = json.loads(_2feat_model_path.read_text())
+                    _2f_feats = _2feat_model["model"]["feature_names"]
+                    _2f_weights = _2feat_model["model"]["weights"]
+                    _2f_bias = _2feat_model["model"]["bias"]
+
+                    # Z-score within top-60 (same as production ranker)
+                    _2f_top60 = sorted(
+                        _eligible_for_selector,
+                        key=lambda r: -_safe_float(r.get("selector_score"), default=0.0),
+                    )[:60]
+                    _2f_means = {}
+                    _2f_stds = {}
+                    for _f in _2f_feats:
+                        _vals = [_safe_float(r.get(_f), default=0.0) for r in _2f_top60]
+                        _2f_means[_f] = sum(_vals) / max(len(_vals), 1)
+                        _var = sum((_v - _2f_means[_f]) ** 2 for _v in _vals) / max(len(_vals), 1)
+                        _2f_stds[_f] = _var**0.5 if _var > 0 else 1.0
+
+                    _2f_scored = []
+                    for _row in _2f_top60:
+                        _s = _2f_bias
+                        for _k, _f in enumerate(_2f_feats):
+                            _raw = _safe_float(_row.get(_f), default=0.0)
+                            _z = (_raw - _2f_means[_f]) / _2f_stds[_f]
+                            _s += _2f_weights[_k] * _z
+                        _2f_scored.append((_row.get("ticker", ""), _s))
+                    _2f_scored.sort(key=lambda x: -x[1])
+                    _2f_top30 = {t for t, _ in _2f_scored[:30]}
+
+                    _2f_overlap = _prod_top30_set & _2f_top30
+                    _shadow_comparison["shadow_2feat_top30"] = sorted(_2f_top30)
+                    _shadow_comparison["shadow_2feat_overlap"] = len(_2f_overlap)
+                    _shadow_comparison["shadow_2feat_overlap_pct"] = round(len(_2f_overlap) / 30 * 100, 1)
+                    _shadow_comparison["shadow_2feat_swaps"] = sorted(_prod_top30_set - _2f_top30)
+            except Exception as _2f_err:
+                logger.debug("2-feature shadow failed: %s", _2f_err)
+
             # Write comparison to snapshot dir (non-blocking)
             try:
                 _comp_path = snap_path / "ranker_shadow_comparison.json"
                 with open(_comp_path, "w", encoding="utf-8") as f:
                     json.dump(_shadow_comparison, f, indent=2, default=str)
                     f.write("\n")
+                _2f_info = ""
+                if "shadow_2feat_overlap" in _shadow_comparison:
+                    _2f_info = f", 2feat: {_shadow_comparison['shadow_2feat_overlap']}/30"
                 logger.info(
                     f"  Ranker shadow: {len(_overlap)}/30 overlap ({_shadow_comparison['overlap_pct']}%), "
-                    f"{len(_prod_only)} swaps -> ranker_shadow_comparison.json"
+                    f"{len(_prod_only)} swaps{_2f_info} -> ranker_shadow_comparison.json"
                 )
             except OSError as _cmp_err:
                 logger.warning(f"  Could not write ranker_shadow_comparison.json: {_cmp_err}")

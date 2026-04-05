@@ -352,28 +352,29 @@ def compute_selector_scores(
         return []
 
     # --- Step 1: Precompute cohort statistics for numeric signals ---
-    all_signal_specs = (
-        list(config.clinical_signals)
-        + list(config.catalyst_signals)
-        + list(config.survivability_signals)
-        + list(config.institutional_signals)
-        + list(config.market_structure_signals)
-    )
-    cohort_stats: Dict[str, _CohortStats] = {}
-    for spec in all_signal_specs:
-        if not spec.categorical and spec.name not in cohort_stats:
-            cohort_stats[spec.name] = _compute_cohort_stats(eligible_rows, spec.name)
-
-    # --- Step 2: Compute raw block scores per row ---
-    block_specs = {
+    # Skip blocks with zero weight (e.g. clinical=0% in production)
+    block_specs: Dict[str, Tuple[SignalSpec, ...]] = {
         "clinical": config.clinical_signals,
         "catalyst": config.catalyst_signals,
         "survivability": config.survivability_signals,
         "institutional": config.institutional_signals,
         "market_structure": config.market_structure_signals,
     }
-
     block_weight_map = {bw.name: bw.weight for bw in config.block_weights}
+
+    active_block_specs = {name: signals for name, signals in block_specs.items() if block_weight_map.get(name, 0) > 0}
+
+    all_signal_specs: list[SignalSpec] = []
+    for signals in active_block_specs.values():
+        all_signal_specs.extend(signals)
+
+    cohort_stats: Dict[str, _CohortStats] = {}
+    for spec in all_signal_specs:
+        if not spec.categorical and spec.name not in cohort_stats:
+            cohort_stats[spec.name] = _compute_cohort_stats(eligible_rows, spec.name)
+
+    # --- Step 2: Compute raw block scores per row ---
+
     total_block_weight = sum(bw.weight for bw in config.block_weights)
     if total_block_weight <= 0:
         total_block_weight = 1.0
@@ -387,10 +388,13 @@ def compute_selector_scores(
         total_missing = 0
 
         for block_name, signals in block_specs.items():
+            bw = block_weight_map.get(block_name, 0.0)
+            if bw <= 0:
+                row_blocks[block_name] = 0.5  # neutral placeholder for zero-weight blocks
+                continue
             bscore, bmissing = _compute_block_score(row, signals, cohort_stats, config.missing_signal_penalty)
             row_blocks[block_name] = round(bscore, 6)
             total_missing += bmissing
-            bw = block_weight_map.get(block_name, 0.0)
             weighted_sum += bw * bscore
 
         raw_score = weighted_sum / total_block_weight
