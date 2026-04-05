@@ -14,9 +14,8 @@ import argparse
 import csv
 import json
 import sys
-from io import StringIO
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -25,6 +24,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_json(path: Path) -> Optional[dict]:
     """Return parsed JSON or None if file missing / malformed."""
@@ -69,6 +69,7 @@ _NOT_AVAILABLE = "*Not available (file missing)*"
 # Section builders
 # ---------------------------------------------------------------------------
 
+
 def _health_section(health_data: Optional[dict]) -> str:
     """## Health Gate"""
     if health_data is None:
@@ -84,8 +85,7 @@ def _health_section(health_data: Optional[dict]) -> str:
 
     lines = [
         f"## Health Gate: {status}",
-        f"A-tier: {a_count} | Catalyst coverage: {cat_cov}"
-        f" | Turnover: {turnover} | Weight L1: {weight_l1}",
+        f"A-tier: {a_count} | Catalyst coverage: {cat_cov}" f" | Turnover: {turnover} | Weight L1: {weight_l1}",
     ]
 
     reasons = health_data.get("reasons", [])
@@ -114,9 +114,7 @@ def _portfolio_section(
                 driver_map[row.get("ticker", "")] = first
 
     # Check if any non-dev names are in portfolio
-    has_commercial = any(
-        r.get("archetype", "") != "drug_developer" for r in portfolio_rows
-    )
+    has_commercial = any(r.get("archetype", "") != "drug_developer" for r in portfolio_rows)
 
     n = len(portfolio_rows)
     if has_commercial:
@@ -143,7 +141,7 @@ def _portfolio_section(
         risk = row.get("risk_flags", "")
         driver = driver_map.get(ticker, "")
         if has_commercial:
-            is_dev = (row.get("archetype", "") == "drug_developer")
+            is_dev = row.get("archetype", "") == "drug_developer"
             arch_label = "D" if is_dev else "C"
             lines.append(
                 f"| {rank} | {ticker} | {arch_label} | {tier} | {wt} | {cat_days} "
@@ -151,8 +149,7 @@ def _portfolio_section(
             )
         else:
             lines.append(
-                f"| {rank} | {ticker} | {tier} | {wt} | {cat_days} "
-                f"| {strength} | {mom} | {risk} | {driver} |"
+                f"| {rank} | {ticker} | {tier} | {wt} | {cat_days} " f"| {strength} | {mom} | {risk} | {driver} |"
             )
 
     return "\n".join(lines) + "\n"
@@ -205,10 +202,7 @@ def _catalyst_section(
         top_cats = delta_data.get("top_catalysts", {}).get("current", [])
         if top_cats:
             nearest = top_cats[:5]
-            parts = [
-                f"{c['ticker']} ({c['catalyst_days']}d, {c.get('tier_dev', '?')})"
-                for c in nearest
-            ]
+            parts = [f"{c['ticker']} ({c['catalyst_days']}d, {c.get('tier_dev', '?')})" for c in nearest]
             lines.append(f"Nearest 5: {', '.join(parts)}")
         has_content = True
 
@@ -286,17 +280,13 @@ def _exceptions_section(
 
     # Ineligible count + reasons
     if rankings_rows:
-        ineligible = [
-            r for r in rankings_rows if r.get("eligible", "1") == "0"
-        ]
+        ineligible = [r for r in rankings_rows if r.get("eligible", "1") == "0"]
         if ineligible:
             reason_counts: Dict[str, int] = {}
             for r in ineligible:
                 reason = r.get("ineligible_reasons", "unknown") or "unknown"
                 reason_counts[reason] = reason_counts.get(reason, 0) + 1
-            top_reasons = sorted(
-                reason_counts.items(), key=lambda x: -x[1]
-            )[:3]
+            top_reasons = sorted(reason_counts.items(), key=lambda x: -x[1])[:3]
             reason_str = ", ".join(f"{k} ({v})" for k, v in top_reasons)
             lines.append(f"Ineligible: {len(ineligible)} ({reason_str})")
         else:
@@ -314,10 +304,7 @@ def _exceptions_section(
                 risk_count += 1
                 risk_details.append(f"{r.get('ticker', '?')}: {rf}")
         if risk_count:
-            lines.append(
-                f"Risk flags in portfolio: {risk_count}"
-                f" ({'; '.join(risk_details)})"
-            )
+            lines.append(f"Risk flags in portfolio: {risk_count}" f" ({'; '.join(risk_details)})")
         else:
             lines.append("Risk flags in portfolio: 0")
     else:
@@ -336,9 +323,7 @@ def _exceptions_section(
                     if c.strip():
                         comp_counts[c.strip()] = comp_counts.get(c.strip(), 0) + 1
             parts = [f"{k}: {v}" for k, v in sorted(comp_counts.items())]
-            lines.append(
-                f"Missing data in portfolio: {mc_count}/{len(port_rankings)} ({', '.join(parts)})"
-            )
+            lines.append(f"Missing data in portfolio: {mc_count}/{len(port_rankings)} ({', '.join(parts)})")
         else:
             lines.append("Missing data in portfolio: 0")
 
@@ -367,8 +352,173 @@ def _exceptions_section(
 
 
 # ---------------------------------------------------------------------------
+# Regime decomposition — first-class bear/bull reporting
+# ---------------------------------------------------------------------------
+
+
+def _regime_section(snap_dir: Path) -> str:
+    """## Regime Performance — bear/bull/neutral decomposition.
+
+    Reads shadow performance CSV and computes cumulative excess by regime.
+    This is the "truth-in-advertising" section: if the strategy is primarily
+    a bear-regime alpha source, that must be visible at a glance.
+    """
+    perf_csv = PROJECT_ROOT / "artifacts" / "live_shadow" / "performance.csv"
+    if not perf_csv.exists():
+        return "## Regime Performance\n*Shadow performance data not available.*\n"
+
+    rows = _load_csv_rows(perf_csv)
+    if not rows:
+        return "## Regime Performance\n*No performance rows.*\n"
+
+    # Classify each row by XBI regime (trailing 63d XBI return)
+    # Accumulate per-regime
+    regime_data: Dict[str, List[float]] = {"bear": [], "neutral": [], "bull": []}
+    cum_excess = 0.0
+    cum_bear = 0.0
+    cum_bull = 0.0
+    cum_neutral = 0.0
+
+    for row in rows:
+        xbi_pct = _safe_float(row.get("xbi_return_pct"), 0)
+        excess = _safe_float(row.get("excess_vs_xbi_pct"), 0)
+
+        # Simple regime: based on XBI daily return
+        if xbi_pct < -1.0:
+            regime = "bear"
+            cum_bear += excess
+        elif xbi_pct > 1.0:
+            regime = "bull"
+            cum_bull += excess
+        else:
+            regime = "neutral"
+            cum_neutral += excess
+        cum_excess += excess
+        regime_data[regime].append(excess)
+
+    n_bear = len(regime_data["bear"])
+    n_bull = len(regime_data["bull"])
+    n_neutral = len(regime_data["neutral"])
+    n_total = n_bear + n_bull + n_neutral
+
+    def _mean(vals: List[float]) -> str:
+        if not vals:
+            return "—"
+        return f"{sum(vals) / len(vals):+.2f}%"
+
+    lines = [
+        "## Regime Performance",
+        "",
+        "| Regime | Days | Mean Excess | Cum Excess | Share |",
+        "|--------|------|-------------|------------|-------|",
+        f"| **All** | {n_total} | {_mean(regime_data['bear'] + regime_data['bull'] + regime_data['neutral'])} | {cum_excess:+.1f}% | 100% |",
+        f"| Bear (XBI<-1%) | {n_bear} | {_mean(regime_data['bear'])} | {cum_bear:+.1f}% | {n_bear / max(n_total, 1) * 100:.0f}% |",
+        f"| Neutral | {n_neutral} | {_mean(regime_data['neutral'])} | {cum_neutral:+.1f}% | {n_neutral / max(n_total, 1) * 100:.0f}% |",
+        f"| Bull (XBI>+1%) | {n_bull} | {_mean(regime_data['bull'])} | {cum_bull:+.1f}% | {n_bull / max(n_total, 1) * 100:.0f}% |",
+        "",
+    ]
+
+    # Flag if bear-dominated
+    if n_bear > 0 and cum_bear > 0 and cum_bull < 0:
+        lines.append(
+            "> **Bear-regime alpha source**: cumulative excess is positive in bear "
+            "markets and negative in bull markets. The strategy harvests biotech "
+            "stress, not broad stock selection."
+        )
+    elif n_bear > 0 and cum_bear > 0 and cum_bull > 0:
+        lines.append("> Alpha positive across regimes.")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
+# Factor exposure monitoring
+# ---------------------------------------------------------------------------
+
+
+def _factor_exposure_section(
+    rankings_rows: Optional[List[dict]],
+    portfolio_rows: Optional[List[dict]],
+) -> str:
+    """## Factor Exposures — size, beta, momentum, liquidity.
+
+    Compares portfolio vs universe median to surface unintended factor bets.
+    Monitoring only — no neutralization.
+    """
+    if not rankings_rows or not portfolio_rows:
+        return "## Factor Exposures\n*Data not available.*\n"
+
+    port_tickers = {r.get("ticker", "") for r in portfolio_rows}
+
+    def _extract(rows: List[dict], field: str) -> List[float]:
+        vals = []
+        for r in rows:
+            v = _safe_float(r.get(field), None)
+            if v is not None:
+                vals.append(v)
+        return vals
+
+    def _median(vals: List[float]) -> Optional[float]:
+        if not vals:
+            return None
+        s = sorted(vals)
+        n = len(s)
+        return s[n // 2] if n % 2 else (s[n // 2 - 1] + s[n // 2]) / 2
+
+    def _mean_vals(vals: List[float]) -> Optional[float]:
+        return sum(vals) / len(vals) if vals else None
+
+    # Compute for portfolio vs universe
+
+    # Use numeric fields from rankings
+    port_rows = [r for r in rankings_rows if r.get("ticker", "") in port_tickers]
+    univ_rows = [r for r in rankings_rows if r.get("eligible") == "1"]
+
+    lines = [
+        "## Factor Exposures (portfolio vs universe)",
+        "",
+        "| Factor | Portfolio Mean | Universe Mean | Tilt |",
+        "|--------|---------------|---------------|------|",
+    ]
+
+    for label, field, _ in [
+        ("Beta XBI 60d", "de_beta_xbi_60d", None),
+        ("Volatility 60d", "de_vol_60d", None),
+        ("Drawdown", "de_drawdown", None),
+        ("RSI 14d", "de_rsi_14d", None),
+    ]:
+        port_vals = _extract(port_rows, field)
+        univ_vals = _extract(univ_rows, field)
+        p_mean = _mean_vals(port_vals)
+        u_mean = _mean_vals(univ_vals)
+        if p_mean is not None and u_mean is not None and u_mean != 0:
+            tilt = (p_mean - u_mean) / abs(u_mean)
+            tilt_str = f"{tilt:+.1%}"
+        else:
+            tilt_str = "—"
+        p_str = f"{p_mean:.3f}" if p_mean is not None else "—"
+        u_str = f"{u_mean:.3f}" if u_mean is not None else "—"
+        lines.append(f"| {label} | {p_str} | {u_str} | {tilt_str} |")
+
+    # Momentum state distribution
+    port_moms = [r.get("mom_state", "") for r in port_rows]
+    univ_moms = [r.get("mom_state", "") for r in univ_rows]
+    lines.append("")
+    lines.append("**Momentum distribution** (portfolio / universe):")
+    for state in ["tailwind", "neutral", "headwind"]:
+        p_pct = port_moms.count(state) / max(len(port_moms), 1) * 100
+        u_pct = univ_moms.count(state) / max(len(univ_moms), 1) * 100
+        lines.append(f"  - {state}: {p_pct:.0f}% / {u_pct:.0f}%")
+
+    lines.append("")
+    return "\n".join(lines)
+
+
+# ---------------------------------------------------------------------------
 # Main assembler
 # ---------------------------------------------------------------------------
+
 
 def generate_ic_onepager(snap_dir: Path) -> str:
     """Return IC one-pager markdown from a snapshot directory.
@@ -387,6 +537,8 @@ def generate_ic_onepager(snap_dir: Path) -> str:
         f"# IC Run Summary — {date_str}",
         "",
         _health_section(health_data),
+        _regime_section(snap_dir),
+        _factor_exposure_section(rankings_rows, portfolio_rows),
         _portfolio_section(portfolio_rows, rankings_rows),
         _delta_section(delta_data),
         _catalyst_section(delta_data, source_mix),
@@ -401,10 +553,9 @@ def generate_ic_onepager(snap_dir: Path) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate IC one-pager from a snapshot directory."
-    )
+    parser = argparse.ArgumentParser(description="Generate IC one-pager from a snapshot directory.")
     parser.add_argument(
         "--snapshot-dir",
         type=Path,
