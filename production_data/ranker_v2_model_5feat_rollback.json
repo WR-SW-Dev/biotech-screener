@@ -1,0 +1,37 @@
+{
+  "schema": "ranker_v2_model.v1",
+  "model": {
+    "type": "pairwise_logistic",
+    "weights": [
+      0.03664755491014626,
+      0.0022052335901958917,
+      -0.003939753924429076,
+      0.012465841924018398,
+      -0.0370964783408135
+    ],
+    "bias": -0.009482328491005962,
+    "n_features": 5,
+    "feature_names": [
+      "coinvest_score_z",
+      "inst_delta_z",
+      "catalyst_decay_w",
+      "binary_quality_score",
+      "financial_score"
+    ],
+    "trained": true,
+    "train_loss": 0.4023309205409132,
+    "train_accuracy": 0.5337121212121212
+  },
+  "config": {
+    "feature_set": "minimal",
+    "cohort_top_n": 60,
+    "require_catalyst_window": false,
+    "n_epochs": 200,
+    "max_pairs_per_date": 400,
+    "train_window": 36
+  },
+  "training": {
+    "n_dates": 36,
+    "n_pairs": 727200
+  }
+}

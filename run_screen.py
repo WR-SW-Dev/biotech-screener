@@ -152,11 +152,13 @@ A4_SELECTOR_CONFIG = SelectorConfig(
 )
 
 # Spec 051: Production pairwise ranker config (winning full-strength settings)
-# Validated: +2.52pp/mo excess XBI, t=2.37, 59 periods, 62.7% win rate vs clinical_50
-# Cohort=C1 (top-60, no catalyst gate), feature_set=minimal (6 signals)
-# DO NOT use reduced-speed research defaults (epochs=100, pairs=200, window=24)
+# Promoted 2026-04-05: 2-feature model (coinvest_score_z + financial_score)
+# Walk-forward: spread +2.95%, IC +0.143 (t=2.98) — beats prior 5-feature on all metrics
+# Scoring audit: dead features (inst_delta_z, catalyst_decay_w, binary_quality_score) added noise
+# Rollback: swap ranker_v2_model.json with ranker_v2_model_5feat_rollback.json,
+#           change feature_set back to "minimal"
 PRODUCTION_RANKER_V2_CONFIG = RankerV2Config(
-    feature_set="minimal",
+    feature_set="minimal_v2",
     cohort_top_n=60,
     require_catalyst_window=False,
     n_epochs=200,

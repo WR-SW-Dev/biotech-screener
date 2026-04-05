@@ -123,6 +123,12 @@ FEATURES_MINIMAL = (
     FeatureSpec("financial_score"),
 )
 
+# 2-feature minimal set (promoted 2026-04-05, scoring audit)
+FEATURES_MINIMAL_V2 = (
+    FeatureSpec("coinvest_score_z"),
+    FeatureSpec("financial_score"),
+)
+
 
 @dataclass(frozen=True)
 class RankerV2Config:
@@ -197,6 +203,9 @@ def _sigmoid(x: float) -> float:
 
 def get_feature_specs(config: RankerV2Config) -> List[FeatureSpec]:
     """Return the feature list for the given config."""
+    if config.feature_set == "minimal_v2":
+        return list(FEATURES_MINIMAL_V2)
+
     if config.feature_set == "minimal":
         return list(FEATURES_MINIMAL)
 
