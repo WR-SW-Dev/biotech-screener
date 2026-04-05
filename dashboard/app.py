@@ -342,12 +342,14 @@ async def index(request: Request, date: str = ""):
         timing_summary["overconfidence"] = cal.get("overconfidence")
     timing_by_ticker: Dict[str, Dict] = {}
     if timing_hazard and "catalysts" in timing_hazard:
-        timing_summary = {
-            "n_catalysts": timing_hazard.get("n_catalysts", 0),
-            "n_warnings": timing_hazard.get("n_warnings", 0),
-            "mean_on_time": timing_hazard.get("mean_on_time_prob"),
-            "confidence_dist": timing_hazard.get("confidence_dist", {}),
-        }
+        timing_summary.update(
+            {
+                "n_catalysts": timing_hazard.get("n_catalysts", 0),
+                "n_warnings": timing_hazard.get("n_warnings", 0),
+                "mean_on_time": timing_hazard.get("mean_on_time_prob"),
+                "confidence_dist": timing_hazard.get("confidence_dist", {}),
+            }
+        )
         for cat in timing_hazard["catalysts"]:
             timing_by_ticker[cat["ticker"]] = cat
             if cat.get("execution_warning_flag"):

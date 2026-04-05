@@ -13,6 +13,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "tools"))
 
+scipy = pytest.importorskip("scipy", reason="scipy not installed")
+
 from tools.biotech_hedge_report import (
     _simulate_structure_pnl,
     bucket_expiries_by_dte,

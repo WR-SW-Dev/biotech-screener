@@ -211,7 +211,7 @@ class TestOutputEquivalence:
         from tests.test_decision_engine_contract import _compute_golden_output_fingerprint
 
         actual = _compute_golden_output_fingerprint()
-        assert actual == "5e9d98013c1d"  # pragma: allowlist secret
+        assert actual == "33f6a0c728bc"  # pragma: allowlist secret
 
 
 # =============================================================================
@@ -390,8 +390,8 @@ class TestContributionSum:
         )
         # In tiebreaker mode, element at index 3 (after 3 prefix elements) is effective_comp_rank
         anchor = 5.0  # composite_rank
-        effective_rank = sort_tuple[3]
-        assert abs(effective_rank - (anchor - total_adj)) < 1e-12
+        effective_rank = float(sort_tuple[3])
+        assert abs(effective_rank - (anchor - float(total_adj))) < 1e-12
 
     def test_sum_matches_effective_rank_blended(self):
         """In blended mode, effective_rank = anchor - total_adj (bonus in contribs)."""
@@ -451,8 +451,8 @@ class TestContributionSum:
         )
         # In off mode: prefix(3) + cat_priority, cat_mode_ord, cat_days, missing_count, effective_opt_neg, ...
         opt_neg = -0.6
-        effective_opt_neg = sort_tuple[7]  # index 7: prefix(3) + 4 elements before it
-        assert abs(effective_opt_neg - (opt_neg - total_adj)) < 1e-12
+        effective_opt_neg = float(sort_tuple[7])  # index 7: prefix(3) + 4 elements before it
+        assert abs(effective_opt_neg - (opt_neg - float(total_adj))) < 1e-12
 
 
 # =============================================================================

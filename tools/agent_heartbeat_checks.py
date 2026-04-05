@@ -514,9 +514,9 @@ AGENTS = {
     "ic_health_monitor": check_ic_health,
     "fleet_steward": check_fleet_steward,
     "calibration": check_calibration,
-    "shadow_monitor": check_shadow_monitor,
+    "shadow_watch": check_shadow_monitor,
     "aact_trial_ingest": check_aact_ingest,
-    "biotech_news_digest": check_news_digest,
+    "herald": check_news_digest,
     "calibration_evidence": check_calibration_evidence,
     "data_auditor": check_data_auditor,
 }

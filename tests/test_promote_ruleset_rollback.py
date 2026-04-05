@@ -1,38 +1,27 @@
 """Tests for first-class rollback in scripts/promote_ruleset.py."""
+
 from __future__ import annotations
 
 import hashlib
 import json
 from pathlib import Path
 
-import pytest
-
-from scripts.promote_ruleset import (
-    _find_active,
-    _find_last_known_good,
-    main,
-    write_receipt,
-)
-
+from scripts.promote_ruleset import _find_active, _find_last_known_good, main
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
 
 _CANDIDATE_DATA = {"test_param": "value", "version": "candidate"}
-_CANDIDATE_ID = hashlib.sha256(
-    json.dumps(_CANDIDATE_DATA, sort_keys=True, separators=(",", ":")).encode()
-).hexdigest()[:8]
+_CANDIDATE_ID = hashlib.sha256(json.dumps(_CANDIDATE_DATA, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[
+    :8
+]
 
 _ACTIVE_DATA = {"test_param": "old", "version": "active"}
-_ACTIVE_ID = hashlib.sha256(
-    json.dumps(_ACTIVE_DATA, sort_keys=True, separators=(",", ":")).encode()
-).hexdigest()[:8]
+_ACTIVE_ID = hashlib.sha256(json.dumps(_ACTIVE_DATA, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 _RETIRED_DATA = {"test_param": "ancient", "version": "retired"}
-_RETIRED_ID = hashlib.sha256(
-    json.dumps(_RETIRED_DATA, sort_keys=True, separators=(",", ":")).encode()
-).hexdigest()[:8]
+_RETIRED_ID = hashlib.sha256(json.dumps(_RETIRED_DATA, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:8]
 
 
 def _make_repo_with_retired(tmp_path: Path) -> dict:
@@ -95,10 +84,10 @@ def _make_repo_with_retired(tmp_path: Path) -> dict:
     run_screen = tmp_path / "run_screen.py"
     run_screen.write_text(
         f'PHASE2_PINNED_RULESET_ID = "{_ACTIVE_ID}"\n'
-        f'PHASE2_DEFAULT_RULESET_PATH = (\n'
-        f'    Path(__file__).resolve().parent\n'
+        f"PHASE2_DEFAULT_RULESET_PATH = (\n"
+        f"    Path(__file__).resolve().parent\n"
         f'    / "production_data" / "decision_rulesets" / "v2_active.json"\n'
-        f')\n',
+        f")\n",
         encoding="utf-8",
     )
 
@@ -121,6 +110,7 @@ def _make_repo_with_retired(tmp_path: Path) -> dict:
 def _patch_module(monkeypatch, repo):
     """Monkeypatch promote_ruleset module-level paths."""
     import scripts.promote_ruleset as mod
+
     monkeypatch.setattr(mod, "RULESETS_DIR", repo["rulesets_dir"])
     monkeypatch.setattr(mod, "MANIFEST_PATH", repo["manifest"])
     monkeypatch.setattr(mod, "CHANGELOG_PATH", repo["changelog"])
@@ -165,11 +155,18 @@ class TestRollbackWithoutForce:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback", "--reason", "drift spike detected",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--reason",
+                "drift spike detected",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         m = json.loads(repo["manifest"].read_text())
@@ -180,10 +177,14 @@ class TestRollbackWithoutForce:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback",
-            "--manifest", str(repo["manifest"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--manifest",
+                str(repo["manifest"]),
+            ]
+        )
         assert rc == 1
 
         # Manifest unchanged
@@ -197,11 +198,17 @@ class TestRollbackAutoDiscover:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            "--rollback", "--reason", "auto rollback test",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                "--rollback",
+                "--reason",
+                "auto rollback test",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         m = json.loads(repo["manifest"].read_text())
@@ -237,11 +244,18 @@ class TestRollbackReceipt:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback", "--reason", "testing receipt",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--reason",
+                "testing receipt",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         receipts = list((repo["root"] / "receipts").glob("rollback_*.json"))
@@ -256,11 +270,18 @@ class TestRollbackReceipt:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback", "--reason", "pin test",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--reason",
+                "pin test",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         assert _RETIRED_ID in repo["run_screen"].read_text()
@@ -272,11 +293,18 @@ class TestRollbackReceipt:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback", "--reason", "specific target",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--reason",
+                "specific target",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         m = json.loads(repo["manifest"].read_text())
@@ -294,11 +322,18 @@ class TestForwardPromotionReceipt:
         _patch_module(monkeypatch, repo)
         gate = _make_gate_json(tmp_path, _CANDIDATE_ID)
 
-        rc = main([
-            _CANDIDATE_ID, "--gate-summary", str(gate),
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _CANDIDATE_ID,
+                "--gate-summary",
+                str(gate),
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+                "--force",
+            ]
+        )
         assert rc == 0
 
         receipts = list((repo["root"] / "receipts").glob("promotion_*.json"))
@@ -314,11 +349,17 @@ class TestForceRollbackBackwardCompat:
         repo = _make_repo_with_retired(tmp_path)
         _patch_module(monkeypatch, repo)
 
-        rc = main([
-            _RETIRED_ID, "--rollback", "--force",
-            "--manifest", str(repo["manifest"]),
-            "--changelog", str(repo["changelog"]),
-        ])
+        rc = main(
+            [
+                _RETIRED_ID,
+                "--rollback",
+                "--force",
+                "--manifest",
+                str(repo["manifest"]),
+                "--changelog",
+                str(repo["changelog"]),
+            ]
+        )
         assert rc == 0
 
         m = json.loads(repo["manifest"].read_text())

@@ -1,9 +1,8 @@
 """Tests for run_daily.py — cache-complete daily orchestrator."""
+
 from __future__ import annotations
 
-import subprocess
 import sys
-from io import StringIO
 from pathlib import Path
 from unittest import mock
 
@@ -13,7 +12,6 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import run_daily
 
-
 # ── TestResolveDates ────────────────────────────────────────────────────
 
 
@@ -21,6 +19,7 @@ class TestResolveDates:
     def _ns(self, **kw):
         """Build a minimal Namespace for resolve_dates."""
         import argparse
+
         defaults = {"as_of_date": "2026-02-15", "from_date": None, "to_date": None}
         defaults.update(kw)
         return argparse.Namespace(**defaults)
@@ -31,30 +30,22 @@ class TestResolveDates:
 
     def test_range_skips_weekends(self):
         # 2026-02-13 Fri, 2026-02-14 Sat, 2026-02-15 Sun, 2026-02-16 Mon
-        dates = run_daily.resolve_dates(
-            self._ns(from_date="2026-02-13", to_date="2026-02-16")
-        )
+        dates = run_daily.resolve_dates(self._ns(from_date="2026-02-13", to_date="2026-02-16"))
         assert dates == ["2026-02-13", "2026-02-16"]
 
     def test_range_same_day_business(self):
         # Wednesday
-        dates = run_daily.resolve_dates(
-            self._ns(from_date="2026-02-11", to_date="2026-02-11")
-        )
+        dates = run_daily.resolve_dates(self._ns(from_date="2026-02-11", to_date="2026-02-11"))
         assert dates == ["2026-02-11"]
 
     def test_range_same_day_weekend(self):
         # Saturday → empty
-        dates = run_daily.resolve_dates(
-            self._ns(from_date="2026-02-14", to_date="2026-02-14")
-        )
+        dates = run_daily.resolve_dates(self._ns(from_date="2026-02-14", to_date="2026-02-14"))
         assert dates == []
 
     def test_range_full_week(self):
         # Mon 2026-02-09 through Fri 2026-02-13
-        dates = run_daily.resolve_dates(
-            self._ns(from_date="2026-02-09", to_date="2026-02-13")
-        )
+        dates = run_daily.resolve_dates(self._ns(from_date="2026-02-09", to_date="2026-02-13"))
         assert len(dates) == 5
         assert dates[0] == "2026-02-09"
         assert dates[-1] == "2026-02-13"
@@ -66,6 +57,7 @@ class TestResolveDates:
 class TestBuildCommands:
     def _ns(self, **overrides):
         import argparse
+
         defaults = {
             "as_of_date": "2026-02-15",
             "sources": "fda_adcom,sec_8k,ctgov",
@@ -99,9 +91,7 @@ class TestBuildCommands:
         assert "degrade" in cmd
 
     def test_screen_cmd_with_health_thresholds(self):
-        cmd = run_daily.build_screen_cmd(
-            "2026-02-15", self._ns(health_thresholds=Path("custom.json"))
-        )
+        cmd = run_daily.build_screen_cmd("2026-02-15", self._ns(health_thresholds=Path("custom.json")))
         assert "--health-thresholds" in cmd
         assert "custom.json" in cmd
 
@@ -110,9 +100,7 @@ class TestBuildCommands:
         assert "--dry-run" in cmd
 
     def test_screen_cmd_with_extras(self):
-        cmd = run_daily.build_screen_cmd(
-            "2026-02-15", self._ns(), extra=["--some-flag", "val"]
-        )
+        cmd = run_daily.build_screen_cmd("2026-02-15", self._ns(), extra=["--some-flag", "val"])
         assert cmd[-2:] == ["--some-flag", "val"]
 
     def test_rollup_cmd(self):
@@ -149,21 +137,23 @@ class TestMain:
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-skip-existing"])
         assert rc == 0
-        # warm + screen + onepager + rollup = 4 calls
-        assert mock_run.call_count == 4
+        # archive + warm + screen + onepager + shadow_tracker + rollup = 6 calls
+        assert mock_run.call_count == 6
         cmds = [call.args[0] for call in mock_run.call_args_list]
-        assert "warm_caches.py" in cmds[0][1]
-        assert "run_phase2_daily.py" in cmds[1][1]
-        assert "make_ic_onepager.py" in cmds[2][1]
-        assert "rollup_shadow_metrics.py" in cmds[3][1]
+        assert "archive_production_inputs.py" in cmds[0][1]
+        assert "warm_caches.py" in cmds[1][1]
+        assert "run_phase2_daily.py" in cmds[2][1]
+        assert "make_ic_onepager.py" in cmds[3][1]
+        assert "coinvest_shadow_tracker.py" in cmds[4][1]
+        assert "rollup_shadow_metrics.py" in cmds[5][1]
 
     @mock.patch("run_daily.subprocess.run")
     def test_no_warm_skips_warm(self, mock_run):
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-warm", "--no-skip-existing"])
         assert rc == 0
-        # screen + onepager + rollup = 3 calls
-        assert mock_run.call_count == 3
+        # archive + screen + onepager + shadow_tracker + rollup = 5 calls
+        assert mock_run.call_count == 5
         cmds = [call.args[0] for call in mock_run.call_args_list]
         assert all("warm_caches.py" not in c[1] for c in cmds)
 
@@ -172,15 +162,16 @@ class TestMain:
         mock_run.return_value = mock.Mock(returncode=0)
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--no-rollup", "--no-skip-existing"])
         assert rc == 0
-        # warm + screen + onepager = 3 calls
-        assert mock_run.call_count == 3
+        # archive + warm + screen + onepager + shadow_tracker = 5 calls
+        assert mock_run.call_count == 5
         cmds = [call.args[0] for call in mock_run.call_args_list]
         assert all("rollup_shadow_metrics.py" not in c[1] for c in cmds)
 
     @mock.patch("run_daily.subprocess.run")
     def test_fail_returns_nonzero(self, mock_run):
-        # screen returns FAIL
+        # screen returns FAIL — onepager+shadow_tracker skipped on FAIL
         mock_run.side_effect = [
+            mock.Mock(returncode=0),  # archive
             mock.Mock(returncode=0),  # warm
             mock.Mock(returncode=1),  # screen FAIL
             mock.Mock(returncode=0),  # rollup
@@ -190,21 +181,26 @@ class TestMain:
 
     @mock.patch("run_daily.subprocess.run")
     def test_stop_on_fail_halts_backfill(self, mock_run):
-        # First date: warm OK, screen FAIL → stop, no second date
+        # First date: archive+warm OK, screen FAIL → stop, no second date
         mock_run.side_effect = [
+            mock.Mock(returncode=0),  # archive date-1
             mock.Mock(returncode=0),  # warm date-1
             mock.Mock(returncode=1),  # screen date-1 FAIL
             mock.Mock(returncode=0),  # rollup (still runs)
         ]
-        rc = run_daily.main([
-            "--from-date", "2026-02-09",  # Mon
-            "--to-date", "2026-02-10",    # Tue
-            "--stop-on-fail",
-            "--no-skip-existing",
-        ])
+        rc = run_daily.main(
+            [
+                "--from-date",
+                "2026-02-09",  # Mon
+                "--to-date",
+                "2026-02-10",  # Tue
+                "--stop-on-fail",
+                "--no-skip-existing",
+            ]
+        )
         assert rc == 1
-        # warm(1) + screen(1) + rollup = 3, NOT warm(2)+screen(2)+rollup=5
-        assert mock_run.call_count == 3
+        # archive(1) + warm(1) + screen(1) + rollup = 4
+        assert mock_run.call_count == 4
 
     def test_dry_run_no_subprocess(self, capsys):
         rc = run_daily.main(["--as-of-date", "2026-02-15", "--dry-run"])
@@ -226,10 +222,14 @@ class TestSkipExisting:
         snap.mkdir()
         (snap / "rankings.csv").write_text("ticker\nAAPL\n")
         mock_run.return_value = mock.Mock(returncode=0)
-        rc = run_daily.main([
-            "--as-of-date", "2026-02-15",
-            "--snapshot-dir", str(tmp_path),
-        ])
+        rc = run_daily.main(
+            [
+                "--as-of-date",
+                "2026-02-15",
+                "--snapshot-dir",
+                str(tmp_path),
+            ]
+        )
         assert rc == 0
         out = capsys.readouterr().out
         assert "snapshot exists" in out
@@ -243,14 +243,18 @@ class TestSkipExisting:
         snap.mkdir()
         (snap / "rankings.csv").write_text("ticker\nAAPL\n")
         mock_run.return_value = mock.Mock(returncode=0)
-        rc = run_daily.main([
-            "--as-of-date", "2026-02-15",
-            "--snapshot-dir", str(tmp_path),
-            "--no-skip-existing",
-        ])
+        rc = run_daily.main(
+            [
+                "--as-of-date",
+                "2026-02-15",
+                "--snapshot-dir",
+                str(tmp_path),
+                "--no-skip-existing",
+            ]
+        )
         assert rc == 0
-        # warm + screen + onepager + rollup = 4
-        assert mock_run.call_count == 4
+        # archive + warm + screen + onepager + shadow_tracker + rollup = 6
+        assert mock_run.call_count == 6
 
     @mock.patch("run_daily.subprocess.run")
     def test_range_skips_only_completed_dates(self, mock_run, tmp_path, capsys):
@@ -259,16 +263,21 @@ class TestSkipExisting:
         snap_09.mkdir()
         (snap_09 / "rankings.csv").write_text("ticker\nAAPL\n")
         mock_run.return_value = mock.Mock(returncode=0)
-        rc = run_daily.main([
-            "--from-date", "2026-02-09",
-            "--to-date", "2026-02-10",
-            "--snapshot-dir", str(tmp_path),
-        ])
+        rc = run_daily.main(
+            [
+                "--from-date",
+                "2026-02-09",
+                "--to-date",
+                "2026-02-10",
+                "--snapshot-dir",
+                str(tmp_path),
+            ]
+        )
         assert rc == 0
         out = capsys.readouterr().out
         assert "2026-02-09" in out and "snapshot exists" in out
-        # warm(10) + screen(10) + onepager(10) + rollup = 4 (only date-10 processed)
-        assert mock_run.call_count == 4
+        # archive(10) + warm(10) + screen(10) + onepager(10) + shadow_tracker(10) + rollup = 6
+        assert mock_run.call_count == 6
 
 
 # ── TestValidation ──────────────────────────────────────────────────────
@@ -320,12 +329,16 @@ class TestDeltaSeedThreading:
 
         monkeypatch.setattr("run_daily.run_step", fake_run_step)
 
-        run_daily.main([
-            "--from-date", "2026-02-12",
-            "--to-date", "2026-02-13",
-            "--no-rollup",
-            "--no-skip-existing",
-        ])
+        run_daily.main(
+            [
+                "--from-date",
+                "2026-02-12",
+                "--to-date",
+                "2026-02-13",
+                "--no-rollup",
+                "--no-skip-existing",
+            ]
+        )
 
         warm_cmds = [c for c in captured_cmds if any("warm_caches.py" in s for s in c)]
         assert len(warm_cmds) == 2
@@ -350,11 +363,14 @@ class TestDeltaSeedThreading:
 
         monkeypatch.setattr("run_daily.run_step", fake_run_step)
 
-        run_daily.main([
-            "--as-of-date", "2026-02-15",
-            "--no-rollup",
-            "--no-skip-existing",
-        ])
+        run_daily.main(
+            [
+                "--as-of-date",
+                "2026-02-15",
+                "--no-rollup",
+                "--no-skip-existing",
+            ]
+        )
 
         warm_cmds = [c for c in captured_cmds if any("warm_caches.py" in s for s in c)]
         assert len(warm_cmds) == 1

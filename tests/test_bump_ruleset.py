@@ -1,4 +1,5 @@
 """Tests for scripts/bump_ruleset.py — CLI parsers and end-to-end dry-run."""
+
 import subprocess
 import sys
 from pathlib import Path
@@ -9,12 +10,12 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from bump_ruleset import _parse_buckets, _parse_bool, _parse_tilt_mults
-
+from bump_ruleset import _parse_bool, _parse_buckets, _parse_tilt_mults
 
 # =============================================================================
 # _parse_buckets
 # =============================================================================
+
 
 class TestParseBuckets:
     def test_valid_string(self):
@@ -47,24 +48,28 @@ class TestParseBuckets:
     def test_missing_colon_rejected(self):
         """Token without ':' raises ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="threshold:mult"):
             _parse_buckets("400-1.0,1000:0.85")
 
     def test_non_numeric_rejected(self):
         """Non-numeric values raise ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="Non-numeric"):
             _parse_buckets("abc:1.0,1000:0.85")
 
     def test_descending_thresholds_rejected(self):
         """Descending thresholds raise ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="strictly ascending"):
             _parse_buckets("1000:1.0,400:0.85,2000:0.70")
 
     def test_mult_out_of_range_rejected(self):
         """Multiplier outside (0, 1] raises ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="Multiplier must be in"):
             _parse_buckets("400:1.5,1000:0.85")
         with pytest.raises(ArgumentTypeError, match="Multiplier must be in"):
@@ -74,6 +79,7 @@ class TestParseBuckets:
 # =============================================================================
 # _parse_bool
 # =============================================================================
+
 
 class TestParseBool:
     @pytest.mark.parametrize("val", ["true", "True", "TRUE", "1", "yes"])
@@ -86,6 +92,7 @@ class TestParseBool:
 
     def test_invalid_rejected(self):
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError):
             _parse_bool("maybe")
 
@@ -94,13 +101,16 @@ class TestParseBool:
 # End-to-end: --cost-haircut-buckets --dry-run
 # =============================================================================
 
+
 class TestBumpRulesetCLI:
     def test_cost_haircut_buckets_dry_run(self):
         """bump_ruleset.py --cost-haircut-buckets ... --dry-run produces expected output."""
         result = subprocess.run(
             [
-                sys.executable, str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
-                "--cost-haircut-buckets", "50:1.0,100:0.85,150:0.70",
+                sys.executable,
+                str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
+                "--cost-haircut-buckets",
+                "50:1.0,100:0.85,150:0.70",
                 "--dry-run",
             ],
             capture_output=True,
@@ -115,8 +125,10 @@ class TestBumpRulesetCLI:
         """bump_ruleset.py with bad bucket format exits non-zero."""
         result = subprocess.run(
             [
-                sys.executable, str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
-                "--cost-haircut-buckets", "bad_format",
+                sys.executable,
+                str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
+                "--cost-haircut-buckets",
+                "bad_format",
                 "--dry-run",
             ],
             capture_output=True,
@@ -129,6 +141,7 @@ class TestBumpRulesetCLI:
 # =============================================================================
 # _parse_tilt_mults
 # =============================================================================
+
 
 class TestParseTiltMults:
     def test_valid_string(self):
@@ -144,27 +157,36 @@ class TestParseTiltMults:
     def test_unknown_band_rejected(self):
         """Unknown band name raises ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="Unknown band"):
             _parse_tilt_mults("NEAR:1.10,BOGUS:0.90")
 
     def test_non_positive_mult_rejected(self):
         """Multiplier <= 0 raises ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="must be > 0"):
             _parse_tilt_mults("NEAR:0.0,MID:1.05")
 
     def test_missing_colon_rejected(self):
         """Token without ':' raises ArgumentTypeError."""
         from argparse import ArgumentTypeError
+
         with pytest.raises(ArgumentTypeError, match="BAND:mult"):
             _parse_tilt_mults("NEAR-1.10")
 
     def test_catalyst_tilt_dry_run(self):
-        """bump_ruleset.py --enable-catalyst-tilt true --dry-run works."""
+        """bump_ruleset.py --enable-catalyst-tilt false --dry-run works.
+
+        Note: active ruleset (v1.13.0) already has enable_catalyst_tilt=True,
+        so we flip to false to ensure there is a parameter change to display.
+        """
         result = subprocess.run(
             [
-                sys.executable, str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
-                "--enable-catalyst-tilt", "true",
+                sys.executable,
+                str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
+                "--enable-catalyst-tilt",
+                "false",
                 "--dry-run",
             ],
             capture_output=True,
@@ -179,8 +201,10 @@ class TestParseTiltMults:
         """bump_ruleset.py --catalyst-tilt-mults ... --dry-run works."""
         result = subprocess.run(
             [
-                sys.executable, str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
-                "--catalyst-tilt-mults", "NEAR:1.20,MID:1.10,FAR:0.90,MISSING:0.80",
+                sys.executable,
+                str(PROJECT_ROOT / "scripts" / "bump_ruleset.py"),
+                "--catalyst-tilt-mults",
+                "NEAR:1.20,MID:1.10,FAR:0.90,MISSING:0.80",
                 "--dry-run",
             ],
             capture_output=True,

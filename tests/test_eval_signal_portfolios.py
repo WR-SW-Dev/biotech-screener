@@ -1,4 +1,5 @@
 """Tests for scripts/eval_signal_portfolios.py — portfolio-realistic backtest."""
+
 from __future__ import annotations
 
 import json
@@ -12,8 +13,8 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from eval_forward_returns import compute_turnover, net_return
 from eval_signal_portfolios import (
-    DEFAULT_COST_BPS,
     SIGNAL_COLUMNS,
     DateRow,
     _build_summary,
@@ -27,12 +28,11 @@ from eval_signal_portfolios import (
     write_summary_json,
     write_timeseries_csv,
 )
-from eval_forward_returns import compute_turnover, net_return
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _row(ticker: str, eligible: str = "1", **fields) -> Dict[str, str]:
     """Build a synthetic rankings row."""
@@ -45,6 +45,7 @@ def _row(ticker: str, eligible: str = "1", **fields) -> Dict[str, str]:
 # ---------------------------------------------------------------------------
 # _safe_float
 # ---------------------------------------------------------------------------
+
 
 class TestSafeFloat:
     def test_normal(self):
@@ -66,6 +67,7 @@ class TestSafeFloat:
 # ---------------------------------------------------------------------------
 # extract_signal
 # ---------------------------------------------------------------------------
+
 
 class TestExtractSignal:
 
@@ -118,6 +120,7 @@ class TestExtractSignal:
 # select_top_k / select_bottom_k
 # ---------------------------------------------------------------------------
 
+
 class TestSelectTopBottom:
 
     def test_top_k_basic(self):
@@ -149,6 +152,7 @@ class TestSelectTopBottom:
 # Turnover formula (reuses eval_forward_returns.compute_turnover)
 # ---------------------------------------------------------------------------
 
+
 class TestTurnover:
 
     def test_identical_sets(self):
@@ -175,6 +179,7 @@ class TestTurnover:
 # ---------------------------------------------------------------------------
 # Net return formula
 # ---------------------------------------------------------------------------
+
 
 class TestNetReturn:
 
@@ -223,6 +228,7 @@ class TestNetReturn:
 # _portfolio_gross
 # ---------------------------------------------------------------------------
 
+
 class TestPortfolioGross:
 
     def test_equal_weight(self):
@@ -247,6 +253,7 @@ class TestPortfolioGross:
 # _cumulative
 # ---------------------------------------------------------------------------
 
+
 class TestCumulative:
 
     def test_basic(self):
@@ -267,6 +274,7 @@ class TestCumulative:
 # ---------------------------------------------------------------------------
 # _build_summary
 # ---------------------------------------------------------------------------
+
 
 class TestBuildSummary:
 
@@ -326,12 +334,30 @@ class TestBuildSummary:
 
     def test_regime_slices(self):
         rows = [
-            DateRow(date="2026-01-01", trade_date="2026-01-02", regime="BULL",
-                    long_gross=0.05, long_net=0.048, long_turnover=0.3),
-            DateRow(date="2026-01-15", trade_date="2026-01-16", regime="BEAR",
-                    long_gross=-0.02, long_net=-0.022, long_turnover=0.4),
-            DateRow(date="2026-02-01", trade_date="2026-02-03", regime="BULL",
-                    long_gross=0.03, long_net=0.028, long_turnover=0.2),
+            DateRow(
+                date="2026-01-01",
+                trade_date="2026-01-02",
+                regime="BULL",
+                long_gross=0.05,
+                long_net=0.048,
+                long_turnover=0.3,
+            ),
+            DateRow(
+                date="2026-01-15",
+                trade_date="2026-01-16",
+                regime="BEAR",
+                long_gross=-0.02,
+                long_net=-0.022,
+                long_turnover=0.4,
+            ),
+            DateRow(
+                date="2026-02-01",
+                trade_date="2026-02-03",
+                regime="BULL",
+                long_gross=0.03,
+                long_net=0.028,
+                long_turnover=0.2,
+            ),
         ]
         regime_map = {
             "2026-01-01": "BULL",
@@ -339,15 +365,25 @@ class TestBuildSummary:
             "2026-02-01": "BULL",
         }
         s = _build_summary(
-            signal="catalyst", horizon=20, top_k=5, cost_bps=30,
-            anchor_mode="next_trading_day", long_short=False,
-            n_dates=3, n_evaluated=3, n_skipped=0,
+            signal="catalyst",
+            horizon=20,
+            top_k=5,
+            cost_bps=30,
+            anchor_mode="next_trading_day",
+            long_short=False,
+            n_dates=3,
+            n_evaluated=3,
+            n_skipped=0,
             long_gross_list=[0.05, -0.02, 0.03],
             long_net_list=[0.048, -0.022, 0.028],
             long_turn_list=[0.3, 0.4, 0.2],
-            short_gross_list=[], short_net_list=[], short_turn_list=[],
-            ls_gross_list=[], ls_net_list=[],
-            date_rows=rows, regime_map=regime_map,
+            short_gross_list=[],
+            short_net_list=[],
+            short_turn_list=[],
+            ls_gross_list=[],
+            ls_net_list=[],
+            date_rows=rows,
+            regime_map=regime_map,
         )
         assert "regime_slices" in s
         assert "BULL" in s["regime_slices"]
@@ -359,6 +395,7 @@ class TestBuildSummary:
 # ---------------------------------------------------------------------------
 # Integration: evaluate_signal_portfolio with synthetic data
 # ---------------------------------------------------------------------------
+
 
 def _write_price_csv(path: Path, data: Dict[str, Dict[str, float]]) -> None:
     """Write a minimal price_history.csv."""
@@ -378,9 +415,7 @@ def _write_snapshot(snap_dir: Path, rows: List[Dict[str, str]]) -> None:
     snap_dir.mkdir(parents=True, exist_ok=True)
 
     # Compute fieldnames from all rows
-    fieldnames = list(dict.fromkeys(
-        k for r in rows for k in r.keys()
-    ))
+    fieldnames = list(dict.fromkeys(k for r in rows for k in r.keys()))
 
     with open(snap_dir / "rankings.csv", "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fieldnames)
@@ -422,12 +457,30 @@ class TestIntegrationLongOnly:
         prices: Dict[str, Dict[str, float]] = {}
         # Simple: all start at 100, AAA goes to 110, BBB 105, CCC 95, DDD 90
         trade_dates = [
-            "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10",
-            "2026-01-13", "2026-01-14", "2026-01-15", "2026-01-16",
-            "2026-01-20", "2026-01-21", "2026-01-22", "2026-01-23",
-            "2026-01-27", "2026-01-28", "2026-01-29", "2026-01-30",
-            "2026-02-03", "2026-02-04", "2026-02-05", "2026-02-06",
-            "2026-02-10", "2026-02-11", "2026-02-12", "2026-02-13",
+            "2026-01-07",
+            "2026-01-08",
+            "2026-01-09",
+            "2026-01-10",
+            "2026-01-13",
+            "2026-01-14",
+            "2026-01-15",
+            "2026-01-16",
+            "2026-01-20",
+            "2026-01-21",
+            "2026-01-22",
+            "2026-01-23",
+            "2026-01-27",
+            "2026-01-28",
+            "2026-01-29",
+            "2026-01-30",
+            "2026-02-03",
+            "2026-02-04",
+            "2026-02-05",
+            "2026-02-06",
+            "2026-02-10",
+            "2026-02-11",
+            "2026-02-12",
+            "2026-02-13",
         ]
         for t in ["AAA", "BBB", "CCC", "DDD"]:
             prices[t] = {}
@@ -548,8 +601,12 @@ class TestIntegrationLongShort:
 
         # AAA/BBB go up, CCC/DDD go down → L/S should profit
         trade_dates = [
-            "2026-01-07", "2026-01-08", "2026-01-09", "2026-01-10",
-            "2026-01-13", "2026-01-14",
+            "2026-01-07",
+            "2026-01-08",
+            "2026-01-09",
+            "2026-01-10",
+            "2026-01-13",
+            "2026-01-14",
         ]
         prices: Dict[str, Dict[str, float]] = {
             "AAA": {d: 100 + i * 2 for i, d in enumerate(trade_dates)},
@@ -597,13 +654,21 @@ class TestIntegrationLongShort:
 # Output writers
 # ---------------------------------------------------------------------------
 
+
 class TestOutputWriters:
 
     def test_timeseries_csv(self, tmp_path):
         rows = [
-            DateRow(date="2026-01-06", trade_date="2026-01-07",
-                    long_gross=0.03, long_net=0.028, long_turnover=0.5,
-                    long_n_held=5, n_signal=20, coverage=0.90),
+            DateRow(
+                date="2026-01-06",
+                trade_date="2026-01-07",
+                long_gross=0.03,
+                long_net=0.028,
+                long_turnover=0.5,
+                long_n_held=5,
+                n_signal=20,
+                coverage=0.90,
+            ),
         ]
         path = write_timeseries_csv(rows, tmp_path)
         assert path.exists()
@@ -623,11 +688,20 @@ class TestOutputWriters:
 # Signal column registry
 # ---------------------------------------------------------------------------
 
+
 class TestSignalColumns:
 
     def test_all_signals_have_entries(self):
-        expected = {"catalyst", "clinical", "alpha", "composite",
-                    "actionable_rank", "alpha_incr"}
+        expected = {
+            "catalyst",
+            "clinical",
+            "alpha",
+            "composite",
+            "actionable_rank",
+            "alpha_incr",
+            "opt_term_slope",
+            "opt_atm_iv",
+        }
         assert set(SIGNAL_COLUMNS.keys()) == expected
 
     def test_unknown_signal_raises(self):

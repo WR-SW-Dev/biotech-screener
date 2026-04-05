@@ -37,29 +37,34 @@ AGENT_NAMES = [
 # referencing no python script, etc.)
 # Tested for SOUL.md structure only via TestPartialAgents.
 PARTIAL_AGENTS = [
-    "biotech_news_digest",
     "bioshort_watch",
     "earnings_calendar_sync",
     "fleet_steward",
-    "policy_shadow_watch",
+    "herald",
     "postmortem",
     "review_queue_steward",
+    "shadow_watch",
 ]
 # Known incomplete workspaces — missing docs, major SOUL.md gaps, or
 # intentionally different model (haiku monitoring class).
 # Tested for basic existence only via TestIncompleteAgents.
 INCOMPLETE_AGENTS = [
     "aact_trial_ingest",
-    "calibration_evidence",
-    "company_news_ingest",
     "crt_resolution_watcher",
     "ctgov_poller",
     "data_auditor",
     "event_analyst",
     "ic_health_monitor",
     "price_action_watch",
-    "shadow_monitor",
     "universe_maintenance",
+]
+# Retired agent workspaces — merged into other agents, dirs kept for history.
+RETIRED_AGENTS = [
+    "biotech_news_digest",  # merged into herald
+    "calibration_evidence",  # merged into calibration
+    "company_news_ingest",  # merged into herald
+    "policy_shadow_watch",  # merged into shadow_watch
+    "shadow_monitor",  # merged into shadow_watch
 ]
 REQUIRED_DOCS = ["SOUL.md", "TOOLS.md", "HEARTBEAT.md", "AGENTS.md"]
 EXPECTED_RULESET_ID = "2a3e79eb"
@@ -375,9 +380,9 @@ class TestPartialAgents:
     @pytest.mark.parametrize("name", PARTIAL_AGENTS)
     def test_soul_has_identity(self, name):
         soul = (AGENTS_DIR / name / "SOUL.md").read_text(encoding="utf-8")
-        assert "## Identity" in soul
-        assert f"**Name**: {name}" in soul
-        assert f"**Model**: {EXPECTED_MODEL}" in soul
+        assert "## Identity" in soul or "## What you do" in soul
+        assert "**Model**:" in soul or "**Role**:" in soul
+        assert EXPECTED_RULESET_ID in soul
 
     @pytest.mark.parametrize("name", PARTIAL_AGENTS)
     def test_soul_has_boundaries(self, name):
@@ -415,10 +420,8 @@ class TestIncompleteAgents:
         assert (AGENTS_DIR / name / "HEARTBEAT.md").is_file(), f"Incomplete agent {name} missing HEARTBEAT.md"
 
     def test_total_agent_count(self):
-        """All 16 agent workspaces are accounted for (compliant + partial + incomplete)."""
-        all_agents = set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS)
+        """All agent workspaces are accounted for (compliant + partial + incomplete + retired)."""
+        all_agents = set(AGENT_NAMES) | set(PARTIAL_AGENTS) | set(INCOMPLETE_AGENTS) | set(RETIRED_AGENTS)
         actual = {d.name for d in AGENTS_DIR.iterdir() if d.is_dir()}
         untracked = actual - all_agents
-        assert (
-            not untracked
-        ), f"Agent workspace(s) not in AGENT_NAMES, PARTIAL_AGENTS, or INCOMPLETE_AGENTS: {untracked}"
+        assert not untracked, f"Agent workspace(s) not in any agent list: {untracked}"

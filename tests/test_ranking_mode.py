@@ -26,18 +26,17 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from run_screen import (
-    SNAPSHOT_COLUMNS,
     PHASE2_PORTFOLIO_COLUMNS,
     PORTFOLIO_POSITIONS_COLUMNS,
-    PHASE2_DEFAULT_TOP_K,
+    POSITIONS_TOP_K,
+    SNAPSHOT_COLUMNS,
     save_validation_snapshot,
 )
-from decision_engine import DEFAULT_RULESET
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_ranked_security(
     ticker: str,
@@ -135,6 +134,7 @@ def _read_csv(snap_path: Path, filename: str = "rankings.csv") -> List[Dict[str,
 # Tests: company_name in column schemas
 # ---------------------------------------------------------------------------
 
+
 class TestCompanyNameSchema:
     """Verify company_name placement in column lists."""
 
@@ -155,9 +155,12 @@ class TestColumnLayout:
     def test_snapshot_de_first(self):
         """rankings.csv: DE ranking fields immediately after identity."""
         assert SNAPSHOT_COLUMNS[:6] == [
-            "ticker", "company_name",
-            "actionable_rank", "target_weight_pct",
-            "tier_any", "tier_any_reason",
+            "ticker",
+            "company_name",
+            "actionable_rank",
+            "target_weight_pct",
+            "tier_any",
+            "tier_any_reason",
         ]
 
     def test_snapshot_composite_last(self):
@@ -165,25 +168,30 @@ class TestColumnLayout:
         (only sort contribution diagnostics may follow)."""
         # Find the composite block — must be contiguous and near the end.
         comp_start = SNAPSHOT_COLUMNS.index("composite_rank")
-        comp_block = SNAPSHOT_COLUMNS[comp_start:comp_start + 7]
+        comp_block = SNAPSHOT_COLUMNS[comp_start : comp_start + 7]
         assert comp_block == [
-            "composite_rank", "composite_score",
-            "score_rank_pct", "score_z",
-            "composite_score_attn", "score_rank_pct_attn", "score_z_attn",
+            "composite_rank",
+            "composite_score",
+            "score_rank_pct",
+            "score_z",
+            "composite_score_attn",
+            "score_rank_pct_attn",
+            "score_z_attn",
         ]
         # Only sort contribution diagnostics (de_sort_*) may follow.
-        trailing = SNAPSHOT_COLUMNS[comp_start + 7:]
+        trailing = SNAPSHOT_COLUMNS[comp_start + 7 :]
         assert all(c.startswith("de_sort_") for c in trailing), (
-            f"unexpected columns after composite block: "
-            f"{[c for c in trailing if not c.startswith('de_sort_')]}"
+            f"unexpected columns after composite block: " f"{[c for c in trailing if not c.startswith('de_sort_')]}"
         )
 
     def test_portfolio_de_first(self):
         """decision_portfolio.csv: DE output immediately after identity (no weights)."""
         assert PHASE2_PORTFOLIO_COLUMNS[:5] == [
-            "ticker", "company_name",
+            "ticker",
+            "company_name",
             "actionable_rank",
-            "tier_any", "tier_any_reason",
+            "tier_any",
+            "tier_any_reason",
         ]
 
     def test_portfolio_no_weight_column(self):
@@ -193,7 +201,8 @@ class TestColumnLayout:
     def test_portfolio_composite_last(self):
         """decision_portfolio.csv: legacy composite at far right."""
         assert PHASE2_PORTFOLIO_COLUMNS[-2:] == [
-            "composite_rank", "composite_score",
+            "composite_rank",
+            "composite_score",
         ]
 
 
@@ -324,6 +333,7 @@ class TestCompanyNamePopulated:
 # Tests: decision ranking mode — eligible-first + monotonic actionable_rank
 # ---------------------------------------------------------------------------
 
+
 class TestDecisionRankingEligibleFirst:
     """The core test that would have caught the uploaded-CSV bug.
 
@@ -424,17 +434,13 @@ class TestDecisionRankingEligibleFirst:
         # actionable_rank in the eligible block must be monotonically increasing
         act_elig = act[eligible].dropna()
         assert len(act_elig) == eligible.sum()
-        assert act_elig.is_monotonic_increasing, (
-            f"actionable_rank not monotonic: {act_elig.tolist()}"
-        )
+        assert act_elig.is_monotonic_increasing, f"actionable_rank not monotonic: {act_elig.tolist()}"
         # Must be exactly 1..N
         assert act_elig.tolist() == list(range(1, len(act_elig) + 1))
 
         # Ineligible rows should have blank/NaN actionable_rank
         act_inelig = act[~eligible]
-        assert act_inelig.isna().all(), (
-            f"Ineligible rows have non-blank actionable_rank: {act_inelig.tolist()}"
-        )
+        assert act_inelig.isna().all(), f"Ineligible rows have non-blank actionable_rank: {act_inelig.tolist()}"
 
     def test_decision_mode_ignores_composite_order(self, tmp_path):
         """When ranking_mode=decision, tier A row before tier B even if composite_rank disagrees."""
@@ -463,7 +469,7 @@ class TestDecisionRankingEligibleFirst:
         # First row in CSV should have actionable_rank=1
         assert rows[0]["actionable_rank"] == "1"
         # Composite_rank should NOT be monotonic (proves it's not M5-sorted)
-        comp_ranks = [int(r["composite_rank"]) for r in rows]
+        _comp_ranks = [int(r["composite_rank"]) for r in rows]  # noqa: F841
         # If first row has actionable_rank=1 but NOT composite_rank=1,
         # that proves DE ordering, not M5 ordering
         if rows[0]["composite_rank"] != "1":
@@ -522,7 +528,10 @@ class TestCompositeRankingMode:
         rows = _read_csv(snap)
         # In composite mode, order is by composite_rank (1,2,3,4)
         assert [r["ticker"] for r in rows] == [
-            "INELIG_A", "ELIG_X", "INELIG_B", "ELIG_Y",
+            "INELIG_A",
+            "ELIG_X",
+            "INELIG_B",
+            "ELIG_Y",
         ]
 
 
@@ -557,9 +566,7 @@ class TestActionableRankStability:
         ranks_dec = {r["ticker"]: r["actionable_rank"] for r in rows_dec}
         ranks_comp = {r["ticker"]: r["actionable_rank"] for r in rows_comp}
 
-        assert ranks_dec == ranks_comp, (
-            f"actionable_rank differs: decision={ranks_dec}, composite={ranks_comp}"
-        )
+        assert ranks_dec == ranks_comp, f"actionable_rank differs: decision={ranks_dec}, composite={ranks_comp}"
 
 
 class TestDeterministicTiebreak:
@@ -586,9 +593,7 @@ class TestDeterministicTiebreak:
             rows = _read_csv(snap)
             orders.append([r["ticker"] for r in rows])
 
-        assert orders[0] == orders[1], (
-            f"Non-deterministic: run1={orders[0]}, run2={orders[1]}"
-        )
+        assert orders[0] == orders[1], f"Non-deterministic: run1={orders[0]}, run2={orders[1]}"
         # Both should have distinct actionable_rank
         rows = _read_csv(tmp_path / "snap_0" / "2026-01-01")
         ranks = [r["actionable_rank"] for r in rows if r["actionable_rank"] != ""]
@@ -707,6 +712,7 @@ class TestMetadataRankingMode:
 # Tests: decision_portfolio is full research list (no Top-N, no weights)
 # ---------------------------------------------------------------------------
 
+
 class TestPortfolioFullResearchList:
     """decision_portfolio.csv must include all ranked securities, not top-N."""
 
@@ -819,8 +825,7 @@ class TestPortfolioNoWeights:
 
         portfolio = _read_csv(snap, "decision_portfolio.csv")
         assert len(portfolio) > 0
-        assert "target_weight_pct" not in portfolio[0], \
-            "target_weight_pct should not appear in decision_portfolio.csv"
+        assert "target_weight_pct" not in portfolio[0], "target_weight_pct should not appear in decision_portfolio.csv"
 
     def test_json_no_weight_field(self, tmp_path):
         """decision_portfolio.json positions do not include target_weight_pct."""
@@ -840,15 +845,11 @@ class TestPortfolioNoWeights:
         assert snap is not None
 
         payload = json.loads((snap / "decision_portfolio.json").read_text())
-        assert "target_weight_pct" not in payload, \
-            "top-level target_weight_pct should not be in JSON"
-        assert "total_weight_pct" not in payload, \
-            "total_weight_pct should not be in JSON"
-        assert "top_k" not in payload, \
-            "top_k should not be in JSON (no longer top-N)"
+        assert "target_weight_pct" not in payload, "top-level target_weight_pct should not be in JSON"
+        assert "total_weight_pct" not in payload, "total_weight_pct should not be in JSON"
+        assert "top_k" not in payload, "top_k should not be in JSON (no longer top-N)"
         for pos in payload["positions"]:
-            assert "target_weight_pct" not in pos, \
-                f"target_weight_pct found in position {pos.get('ticker')}"
+            assert "target_weight_pct" not in pos, f"target_weight_pct found in position {pos.get('ticker')}"
 
     def test_json_has_n_securities_and_n_eligible(self, tmp_path):
         """decision_portfolio.json has n_securities and n_eligible instead of top_k."""
@@ -877,6 +878,7 @@ class TestPortfolioNoWeights:
 # Tests: portfolio_positions (top-K weighted subset)
 # ---------------------------------------------------------------------------
 
+
 class TestPortfolioPositionsSchema:
     """Verify PORTFOLIO_POSITIONS_COLUMNS schema."""
 
@@ -892,7 +894,8 @@ class TestPortfolioPositionsSchema:
     def test_composite_last(self):
         """Legacy composite columns at far right."""
         assert PORTFOLIO_POSITIONS_COLUMNS[-2:] == [
-            "composite_rank", "composite_score",
+            "composite_rank",
+            "composite_score",
         ]
 
 
@@ -907,8 +910,11 @@ class TestPortfolioPositionsOutput:
         """
         return [
             _make_ranked_security(
-                f"T{i:03d}", i, 95.0 - i * 0.5,
-                catalyst_days=30 + (i % 5), catalyst_in_window=True,
+                f"T{i:03d}",
+                i,
+                95.0 - i * 0.5,
+                catalyst_days=30 + (i % 5),
+                catalyst_in_window=True,
                 clinical_normalized=0.95 - 0.005 * i,
             )
             for i in range(1, n + 1)
@@ -946,7 +952,7 @@ class TestPortfolioPositionsOutput:
         assert not (snap / "portfolio_positions.csv").exists()
 
     def test_positions_row_count_capped_at_top_k(self, tmp_path):
-        """portfolio_positions has at most PHASE2_DEFAULT_TOP_K rows."""
+        """portfolio_positions has at most POSITIONS_TOP_K rows."""
         # Create many more than top_k to ensure the cap binds
         secs = self._make_many_eligible(40)
         results = _make_results(secs)
@@ -960,21 +966,16 @@ class TestPortfolioPositionsOutput:
         )
         assert snap is not None
 
-        # Count actual A/B eligible in rankings
+        # Count eligible in rankings (Spec 050: all eligible, no tier filter)
         rankings = _read_csv(snap, "rankings.csv")
-        n_ab = sum(
-            1 for r in rankings
-            if r.get("eligible") == "1" and r.get("tier_any") in ("A", "B")
-        )
-        assert n_ab > PHASE2_DEFAULT_TOP_K, (
-            f"Need >20 tier A/B to test cap, got {n_ab}"
-        )
+        n_eligible = sum(1 for r in rankings if r.get("eligible") == "1")
+        assert n_eligible > POSITIONS_TOP_K, f"Need >{POSITIONS_TOP_K} eligible to test cap, got {n_eligible}"
 
         rows = _read_csv(snap, "portfolio_positions.csv")
-        assert len(rows) == PHASE2_DEFAULT_TOP_K
+        assert len(rows) == POSITIONS_TOP_K
 
     def test_positions_fewer_than_top_k(self, tmp_path):
-        """When fewer eligible A/B than top_k, all are included."""
+        """When fewer eligible than top_k, all are included."""
         secs = self._make_many_eligible(5)
         results = _make_results(secs)
 
@@ -987,16 +988,13 @@ class TestPortfolioPositionsOutput:
         )
         assert snap is not None
 
-        # Count actual A/B eligible
+        # Count eligible (Spec 050: all eligible, no tier filter)
         rankings = _read_csv(snap, "rankings.csv")
-        n_ab = sum(
-            1 for r in rankings
-            if r.get("eligible") == "1" and r.get("tier_any") in ("A", "B")
-        )
-        assert n_ab < PHASE2_DEFAULT_TOP_K, "Need < top_k A/B for this test"
+        n_eligible = sum(1 for r in rankings if r.get("eligible") == "1")
+        assert n_eligible < POSITIONS_TOP_K, "Need < top_k eligible for this test"
 
         rows = _read_csv(snap, "portfolio_positions.csv")
-        assert len(rows) == n_ab
+        assert len(rows) == n_eligible
 
     def test_positions_have_weights(self, tmp_path):
         """Every position row has a non-empty target_weight_pct."""
@@ -1014,9 +1012,7 @@ class TestPortfolioPositionsOutput:
 
         rows = _read_csv(snap, "portfolio_positions.csv")
         for r in rows:
-            assert r["target_weight_pct"] not in ("", None), (
-                f"Missing weight for {r['ticker']}"
-            )
+            assert r["target_weight_pct"] not in ("", None), f"Missing weight for {r['ticker']}"
             assert float(r["target_weight_pct"]) > 0
 
     def test_positions_weights_sum_to_100(self, tmp_path):
@@ -1038,7 +1034,7 @@ class TestPortfolioPositionsOutput:
         assert abs(total - 100.0) < 0.5, f"Weights sum to {total}, expected ~100"
 
     def test_positions_only_eligible_tier_ab(self, tmp_path):
-        """All position rows are eligible with tier_any in [A, B]."""
+        """All position rows are eligible (Spec 050: no tier filter, top-K by final_score)."""
         secs = [
             # Eligible with catalyst -> tier A or B
             _make_ranked_security("ELIG_A", 4, 70.0, catalyst_days=30, catalyst_in_window=True),
@@ -1060,20 +1056,17 @@ class TestPortfolioPositionsOutput:
         rows = _read_csv(snap, "portfolio_positions.csv")
         for r in rows:
             assert r["eligible"] == "1", f"{r['ticker']} not eligible"
-            assert r["tier_any"] in ("A", "B"), (
-                f"{r['ticker']} has tier_any={r['tier_any']}"
-            )
         # Ineligible ticker must not appear
         tickers = {r["ticker"] for r in rows}
         assert "INELIG" not in tickers
 
-    def test_positions_excludes_tier_cd(self, tmp_path):
-        """Tier C/D rows are excluded from portfolio_positions."""
+    def test_positions_excludes_ineligible(self, tmp_path):
+        """Ineligible rows are excluded from portfolio_positions (Spec 050: no tier filter)."""
         secs = [
-            # Has catalyst -> A tier
+            # Eligible with catalyst
             _make_ranked_security("TIER_A", 1, 80.0, catalyst_days=30, catalyst_in_window=True),
-            # No catalyst, low confidence -> lower tier
-            _make_ranked_security("LOW_T", 2, 30.0, catalyst_days=None, confidence_overall=0.30),
+            # Ineligible (fundamental red flag)
+            _make_ranked_security("INELIG", 2, 30.0, fundamental_red_flag=True),
         ]
         results = _make_results(secs)
 
@@ -1087,9 +1080,11 @@ class TestPortfolioPositionsOutput:
         assert snap is not None
 
         rows = _read_csv(snap, "portfolio_positions.csv")
-        tiers = {r["tier_any"] for r in rows}
-        assert "C" not in tiers
-        assert "D" not in tiers
+        tickers = {r["ticker"] for r in rows}
+        assert "INELIG" not in tickers
+        # All positions must be eligible
+        for r in rows:
+            assert r["eligible"] == "1"
 
     def test_positions_json_structure(self, tmp_path):
         """portfolio_positions.json has expected top-level fields."""
@@ -1111,8 +1106,8 @@ class TestPortfolioPositionsOutput:
 
         payload = json.loads((snap / "portfolio_positions.json").read_text())
         assert payload["snapshot_date"] == "2026-01-01"
-        assert payload["top_k"] == PHASE2_DEFAULT_TOP_K
-        assert payload["tier_filter"] == ["A", "B"]
+        assert payload["top_k"] == POSITIONS_TOP_K
+        assert payload["tier_filter"] == "all"  # Spec 050: no tier filter
         assert payload["n_positions"] == n_pos
         assert payload["total_weight_pct"] == pytest.approx(100.0, abs=0.5)
         assert len(payload["positions"]) == n_pos
@@ -1162,7 +1157,7 @@ class TestPortfolioPositionsOutput:
         dp_rows = _read_csv(snap, "decision_portfolio.csv")
         assert len(dp_rows) == 27
 
-        # portfolio_positions has only top-K eligible A/B
+        # portfolio_positions has only top-K eligible (Spec 050: no tier filter)
         pp_rows = _read_csv(snap, "portfolio_positions.csv")
-        assert len(pp_rows) <= PHASE2_DEFAULT_TOP_K
+        assert len(pp_rows) <= POSITIONS_TOP_K
         assert len(pp_rows) < len(dp_rows)

@@ -4,7 +4,11 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+pydantic = pytest.importorskip("pydantic", reason="pydantic not installed")
 
 from common.news_feed_features import compute_competitor_features, compute_ticker_features
 from common.news_feed_schema import (

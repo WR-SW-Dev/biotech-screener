@@ -18,7 +18,7 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `dd1e608c` (v1.13.0)
+- **ID**: `2a3e79eb` (v1.13.0)
 - **File**: `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json`
 - **Key settings**: sort_anchor=selector_score, B6 selector (coinvest 65% + inst_delta 35%), pairwise_minimal ranker (ordinal-only), EW Top-30
 - **Prior ruleset**: `69a0c7f8` (v1.12.0) — RETIRED 2026-04-03

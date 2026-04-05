@@ -5,10 +5,21 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from dashboard.app import EVENT_TYPE_LABELS
+try:
+    from dashboard.app import EVENT_TYPE_LABELS
+
+    HAS_FASTAPI = True
+except ImportError:
+    HAS_FASTAPI = False
+    EVENT_TYPE_LABELS = {}
+
 from tools.event_quality_shadow_sizer import EVENT_TYPE_SCORE_MAP
+
+pytestmark = pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 
 
 def test_event_type_score_map_complete():

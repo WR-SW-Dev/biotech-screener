@@ -171,6 +171,28 @@
     ]
   ],
   "catalyst_time_decay_mode": "hard",
+  "catalyst_type_mults": [
+    [
+      "T1",
+      1.0
+    ],
+    [
+      "T2",
+      0.9
+    ],
+    [
+      "T3",
+      0.6
+    ],
+    [
+      "T4",
+      0.4
+    ],
+    [
+      "T5",
+      0.5
+    ]
+  ],
   "clinical_positive_only": true,
   "clinical_sort_weight": 1.0,
   "clinical_stage_mults": [
@@ -192,6 +214,9 @@
   "coinvest_sort_weight": 0.5,
   "composite_engine": "legacy",
   "confidence_low_threshold": 0.3,
+  "construction_cost_gate_bps": 0.0,
+  "construction_liquidity_cap_pct": 100.0,
+  "construction_name_cap_pct": 100.0,
   "cost_haircut_buckets": [
     [
       400,
@@ -220,6 +245,7 @@
   "enable_calendar_alpha_sort": false,
   "enable_catalyst_priority": false,
   "enable_catalyst_tilt": false,
+  "enable_catalyst_type_tilt": false,
   "enable_clinical_sizing": false,
   "enable_clinical_sort_signal": false,
   "enable_coinvest_sort_signal": false,
@@ -229,6 +255,8 @@
   "enable_missingness_size_penalty": false,
   "enable_missingness_sort_penalty": false,
   "enable_mom_state_tilt": false,
+  "enable_oncology_crowding_penalty": false,
+  "enable_options_verdict_tilt": false,
   "far_window_days": 0,
   "far_window_decay_mult": 0.15,
   "financials_missing_bypass_market_cap": 0.0,
@@ -250,6 +278,10 @@
       1.0
     ]
   ],
+  "oncology_crowding_weight": 0.3,
+  "options_anchor_near_catalyst_boost": 1.05,
+  "options_anchor_regulatory_boost": 1.1,
+  "options_verdict_weight": 0.3,
   "pcr_penalty_mode": "off",
   "pcr_penalty_weight": 0.25,
   "rebalance_buffer_ranks": 0,

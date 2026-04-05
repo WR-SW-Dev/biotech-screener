@@ -9,9 +9,19 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from dashboard.app import _load_timing_hazard
+try:
+    from dashboard.app import _load_timing_hazard
+
+    HAS_FASTAPI = True
+except ImportError:
+    HAS_FASTAPI = False
+    _load_timing_hazard = None
+
+pytestmark = pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 
 SAMPLE_TIMING_HAZARD = {
     "schema": "timing_hazard_overlay.v1",

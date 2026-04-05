@@ -43,6 +43,7 @@ def _diag(
     use_for_judgment="YES",
     catalyst_days="30",
     catalyst_bucket="build_window",
+    liquidity_state="active",
 ):
     """Build a minimal diagnostics row."""
     return {
@@ -52,6 +53,7 @@ def _diag(
         "opt_put_call_skew": skew,
         "opt_term_slope": term_slope,
         "opt_use_for_judgment": use_for_judgment,
+        "opt_liquidity_state": liquidity_state,
         "catalyst_days": catalyst_days,
         "catalyst_bucket": catalyst_bucket,
     }
@@ -432,6 +434,7 @@ class TestRunIntegration:
                 "opt_put_call_skew": "0.01",
                 "opt_term_slope": "0.05",
                 "opt_use_for_judgment": "YES",
+                "opt_liquidity_state": "active",
                 "catalyst_days": "30",
                 "catalyst_bucket": "build_window",
             },
@@ -443,6 +446,7 @@ class TestRunIntegration:
                 "opt_put_call_skew": "-0.02",
                 "opt_term_slope": "0.08",
                 "opt_use_for_judgment": "YES",
+                "opt_liquidity_state": "active",
                 "catalyst_days": "10",
                 "catalyst_bucket": "binary_now",
             },
@@ -456,6 +460,7 @@ class TestRunIntegration:
                 "opt_put_call_skew": "0.15",
                 "opt_term_slope": "-0.05",
                 "opt_use_for_judgment": "YES",
+                "opt_liquidity_state": "active",
                 "catalyst_days": "30",
                 "catalyst_bucket": "build_window",
             },
@@ -467,6 +472,7 @@ class TestRunIntegration:
                 "opt_put_call_skew": "-0.01",
                 "opt_term_slope": "0.07",
                 "opt_use_for_judgment": "YES",
+                "opt_liquidity_state": "active",
                 "catalyst_days": "10",
                 "catalyst_bucket": "binary_now",
             },

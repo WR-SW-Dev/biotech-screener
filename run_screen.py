@@ -1727,6 +1727,8 @@ PHASE2_DEFAULT_RULESET_PATH = (
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
+# Spec 050: EW Top-30 positions (all eligible, no tier filter)
+POSITIONS_TOP_K = 30
 PHASE2_PINNED_RULESET_ID = "2a3e79eb"
 PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
     Path(__file__).resolve().parent / "production_data" / "phase2_health_thresholds" / "v1.json"
@@ -5081,8 +5083,9 @@ def save_validation_snapshot(
             _row["ranker_v2_rank"] = ""
 
     # --- Actionable ordering: sort + assign rank + compute weights ---
+    _rs = ruleset or DEFAULT_RULESET
     logger.info(
-        f"  Sort anchor: {ruleset.sort_anchor}, catalyst_priority_mode: {ruleset.catalyst_priority_mode}, ruleset_id: {ruleset.ruleset_id}"
+        f"  Sort anchor: {_rs.sort_anchor}, catalyst_priority_mode: {_rs.catalyst_priority_mode}, ruleset_id: {_rs.ruleset_id}"
     )
     csv_rows.sort(
         key=lambda r: compute_actionable_sort_key(
@@ -6203,7 +6206,7 @@ def save_validation_snapshot(
         # Spec 050: top-30 by final_score (selector + ranker), no tier filter.
         # eligible_rows is already sorted by the report sort key (weight→tier→rank),
         # so re-sort by final_score descending to get the correct top-K.
-        top_k = 30
+        top_k = POSITIONS_TOP_K
         _pos_by_score = sorted(eligible_rows, key=lambda r: -_safe_float(r.get("final_score"), default=0.0))
         position_rows = [dict(r) for r in _pos_by_score[:top_k]]
 
