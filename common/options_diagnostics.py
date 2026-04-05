@@ -881,6 +881,15 @@ def _massive_fallback_batch(
                 liq_state = "absent"
                 liq_ok = "0"
 
+            # Polygon median IV runs ~1.5-2x higher than TT IVx for same name.
+            # Apply source-aware regime thresholds and cap extreme IVs.
+            capped_iv = min(front_iv, 8.0)  # Cap at 800% for display
+            iv_regime = "EXTREME" if capped_iv >= 4.0 else "ELEVATED" if capped_iv >= 1.20 else "NORMAL"
+            # Event premium: Polygon median-IV term slopes are systematically
+            # more negative than TT IVx (~80% < -0.20 vs TT's 28%). Calibrate
+            # to match TT's event premium rate: -0.50 threshold gives ~28%.
+            has_event_premium = term_slope is not None and term_slope < -0.50
+
             diag: Dict[str, Any] = {
                 "opt_has_data": "1",
                 "opt_quote_ts": "",
@@ -890,18 +899,19 @@ def _massive_fallback_batch(
                     else str(front["expiration_date"])
                 ),
                 "opt_dte": front["dte"],
-                "opt_atm_iv": round(front_iv, 4),
-                "opt_front_iv": round(front_iv, 4),
-                "opt_back_iv": round(back_iv, 4) if back_iv is not None else "",
+                "opt_atm_iv": round(capped_iv, 4),
+                "opt_front_iv": round(capped_iv, 4),
+                "opt_back_iv": round(min(back_iv, 8.0), 4) if back_iv is not None else "",
                 "opt_term_slope": term_slope if term_slope is not None else "",
                 "opt_put_call_skew": "",
                 "opt_rr_25d": "",
                 "opt_diagnostic_basis": "massive_chain_snapshot",
-                "opt_iv_regime": _classify_iv_regime(front_iv),
-                "opt_event_premium": "YES" if (term_slope is not None and term_slope < -0.10) else "NO",
+                "opt_iv_regime": iv_regime,
+                "opt_event_premium": "YES" if has_event_premium else "NO",
                 "opt_liquidity_ok": liq_ok,
                 "opt_liquidity_state": liq_state,
-                "opt_use_for_judgment": "YES" if liq_ok == "1" and front_iv < 5.0 else "NO",
+                "opt_use_for_judgment": "YES" if liq_ok == "1" and capped_iv < 5.0 else "NO",
+                "opt_dte_warning": "short_dated" if front["dte"] < 7 else "",
             }
             results[symbol] = diag
 
