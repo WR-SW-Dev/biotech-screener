@@ -131,10 +131,13 @@ from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_sel
 
 # Spec 050: A4 production selector config (coinvest+inst dominant)
 # Validated on true PIT backtest: +2.34pp/mo net, t=2.60, 67 periods
+# v1.1: clinical weight zeroed (confirmed destructive, Spec 055);
+#        coinvest now size-residualized (removes 21% size confound).
+#        Freed 5% redistributed to catalyst (10→15%).
 A4_SELECTOR_CONFIG = SelectorConfig(
     block_weights=(
-        BlockWeight("clinical", 0.05),
-        BlockWeight("catalyst", 0.10),
+        BlockWeight("clinical", 0.00),
+        BlockWeight("catalyst", 0.15),
         BlockWeight("survivability", 0.10),
         BlockWeight("institutional", 0.65),
         BlockWeight("market_structure", 0.10),
@@ -4629,41 +4632,95 @@ def save_validation_snapshot(
         if "clinical_score_v2_z" not in _cr:
             _cr["clinical_score_v2_z"] = 0.0
 
-    # --- Coinvest z-score: cross-sectional z of sponsor_tier1_count ---
-    # Computed over all eligible tickers (all archetypes).
-    # When coinvest_score_mode != "tier1_count", this block is skipped.
+    # --- Coinvest z-score: size-residualized cross-sectional z ---
+    # Regresses sponsor_tier1_count on log(market_cap) to remove the mechanical
+    # size confound (~21% attribution to size, per Spec 049 audit), then z-scores
+    # the residual. The residualized version retains ~79% of the raw signal's
+    # discriminative power while removing market-cap-driven overlap counting.
     _coinvest_mode = ruleset.coinvest_score_mode if ruleset else "tier1_count"
     _sparse_mode = ruleset.sparse_signal_mode if ruleset else "legacy"
     if _coinvest_mode == "tier1_count":
-        _cz_pairs = []  # [(index, raw_value, has_signal)]
+        _cz_pairs = []  # [(index, raw_value, has_signal, log_mcap_or_None)]
         for _ci, _cr in enumerate(csv_rows):
             _t1 = _cr.get("sponsor_tier1_count")
-            if isinstance(_t1, (int, float)):
-                _cz_pairs.append((_ci, float(_t1), True))
-            else:
-                _cz_pairs.append((_ci, 0.0, False))
-            # Set has_coinvest_signal flag
-            csv_rows[_ci]["has_coinvest_signal"] = str(isinstance(_t1, (int, float)))
+            _has = isinstance(_t1, (int, float))
+            _raw = float(_t1) if _has else 0.0
+            # Get market cap for size residualization
+            _tk = _cr.get("ticker", "")
+            _md = market_data_by_ticker.get(_tk, {}) if market_data_by_ticker else {}
+            _mcap = _md.get("market_cap")
+            _log_mcap = math.log(float(_mcap)) if _mcap and float(_mcap) > 0 else None
+            _cz_pairs.append((_ci, _raw, _has, _log_mcap))
+            csv_rows[_ci]["has_coinvest_signal"] = str(_has)
+
         if _cz_pairs:
-            # Compute mean/std: in exclude_missing mode, only tickers with real data
-            if _sparse_mode == "exclude_missing":
-                _cz_real = [v for _, v, has in _cz_pairs if has]
+            # --- Size residualization via OLS: coinvest = a + b*log(mcap) + residual ---
+            # Use only tickers with both coinvest data and market cap
+            _ols_pairs = [
+                (v, lm) for _, v, has, lm in _cz_pairs if (has or _sparse_mode != "exclude_missing") and lm is not None
+            ]
+            _resid_by_idx = {}
+            if len(_ols_pairs) >= 10:
+                # OLS: b = cov(x,y)/var(x), a = mean(y) - b*mean(x)
+                _n = len(_ols_pairs)
+                _y_vals = [p[0] for p in _ols_pairs]
+                _x_vals = [p[1] for p in _ols_pairs]
+                _y_mean = sum(_y_vals) / _n
+                _x_mean = sum(_x_vals) / _n
+                _cov_xy = sum((_y_vals[i] - _y_mean) * (_x_vals[i] - _x_mean) for i in range(_n)) / _n
+                _var_x = sum((_x_vals[i] - _x_mean) ** 2 for i in range(_n)) / _n
+                if _var_x > 1e-12:
+                    _beta = _cov_xy / _var_x
+                    _alpha = _y_mean - _beta * _x_mean
+                else:
+                    _beta, _alpha = 0.0, _y_mean
+                # Compute residuals for ALL tickers (including those without mcap → use raw)
+                for _ci, _cv, _has, _lm in _cz_pairs:
+                    if _lm is not None:
+                        _predicted = _alpha + _beta * _lm
+                        _resid_by_idx[_ci] = _cv - _predicted
+                    else:
+                        # No market cap → use demeaned raw (no size adjustment possible)
+                        _resid_by_idx[_ci] = _cv - _y_mean
+                logger.info(
+                    "  Coinvest size residualization: beta=%.3f (log_mcap), n=%d, " "R²=%.3f",
+                    _beta,
+                    _n,
+                    (
+                        (_cov_xy**2 / (_var_x * (sum((_y_vals[i] - _y_mean) ** 2 for i in range(_n)) / _n)))
+                        if _var_x > 1e-12
+                        else 0.0
+                    ),
+                )
             else:
-                _cz_real = [v for _, v, _ in _cz_pairs]
-            if _cz_real:
-                _cz_mean = sum(_cz_real) / len(_cz_real)
-                _cz_var = sum((v - _cz_mean) ** 2 for v in _cz_real) / len(_cz_real)
-                _cz_std = _cz_var**0.5
+                # Too few observations for OLS — fall back to raw demeaning
+                _cz_real = [v for _, v, has, _ in _cz_pairs if has or _sparse_mode != "exclude_missing"]
+                _cz_mean = sum(_cz_real) / len(_cz_real) if _cz_real else 0.0
+                for _ci, _cv, _has, _ in _cz_pairs:
+                    _resid_by_idx[_ci] = _cv - _cz_mean
+                logger.info("  Coinvest size residualization: skipped (<%d obs), using demeaned raw", 10)
+
+            # Z-score the residuals
+            _resid_vals = [
+                _resid_by_idx[_ci]
+                for _ci, _, _has, _ in _cz_pairs
+                if (_has or _sparse_mode != "exclude_missing") and _ci in _resid_by_idx
+            ]
+            if _resid_vals:
+                _rz_mean = sum(_resid_vals) / len(_resid_vals)
+                _rz_var = sum((v - _rz_mean) ** 2 for v in _resid_vals) / len(_resid_vals)
+                _rz_std = _rz_var**0.5
             else:
-                _cz_mean, _cz_std = 0.0, 0.0
-            for _ci, _cv, _has in _cz_pairs:
+                _rz_mean, _rz_std = 0.0, 0.0
+
+            for _ci, _cv, _has, _ in _cz_pairs:
                 if _sparse_mode == "exclude_missing" and not _has:
                     csv_rows[_ci]["coinvest_score_z"] = 0.0
-                elif _cz_std > 0:
-                    csv_rows[_ci]["coinvest_score_z"] = round((_cv - _cz_mean) / _cz_std, 4)
+                elif _rz_std > 0 and _ci in _resid_by_idx:
+                    csv_rows[_ci]["coinvest_score_z"] = round((_resid_by_idx[_ci] - _rz_mean) / _rz_std, 4)
                 else:
                     csv_rows[_ci]["coinvest_score_z"] = 0.0
-                # Human-readable tag
+                # Human-readable tag (still based on raw count for operator visibility)
                 _t1_int = int(_cv) if _cv == _cv else 0
                 csv_rows[_ci]["coinvest_tag"] = f"elite_{_t1_int}" if _t1_int > 0 else ""
 
