@@ -838,16 +838,25 @@ def _massive_fallback_batch(
                 results[symbol] = empty_diagnostics("no_chain_any_source")
                 continue
 
-            # Extract expiry IVs from chain
-            expiry_ivs = []
+            # Aggregate per-expiry: use median IV weighted toward ATM as proxy
+            from collections import defaultdict as _ddict
+
+            expiry_contracts: Dict[str, List[float]] = _ddict(list)
             total_oi = 0
             for contract in chain:
                 exp = contract.get("expiration_date", "")
                 iv = contract.get("implied_volatility")
                 oi = contract.get("open_interest", 0) or 0
                 total_oi += oi
-                if exp and iv is not None:
-                    expiry_ivs.append({"expiration_date": exp, "implied_volatility": float(iv)})
+                if exp and iv is not None and 0.01 < float(iv) < 10.0:
+                    expiry_contracts[exp].append(float(iv))
+
+            # Per-expiry median IV (robust to OTM extremes)
+            expiry_ivs = []
+            for exp, ivs in expiry_contracts.items():
+                ivs_sorted = sorted(ivs)
+                median_iv = ivs_sorted[len(ivs_sorted) // 2]
+                expiry_ivs.append({"expiration_date": exp, "implied_volatility": median_iv})
 
             front, back = select_front_back_expiries(expiry_ivs, ref_date, min_dte=3)
             if not front:
