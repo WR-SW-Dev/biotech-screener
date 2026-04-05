@@ -38,6 +38,10 @@ AACT_DELTAS_DIR = REPO_ROOT / "artifacts" / "aact_deltas"
 OUTPUT_DIR = REPO_ROOT / "artifacts" / "timing_hazard"
 CALIBRATION_LEDGER = OUTPUT_DIR / "calibration_ledger.jsonl"
 
+# Rolling base rate parameters (OOS-validated, v2)
+ROLLING_WINDOW_RECORDS = 200  # ~90 days of weekly-deduped outcomes
+ROLLING_FALLBACK = 0.70  # fallback when ledger has insufficient data
+
 # Source quality hierarchy for catalyst sources
 SOURCE_QUALITY = {
     "SEC_8K_FILING": 0.90,
@@ -144,6 +148,40 @@ def _load_aact_delta_for_ticker(ticker, snap_date_str):
     return None
 
 
+def _load_rolling_base_rate(as_of_date: str) -> float:
+    """Compute trailing on-time rate from calibration ledger.
+
+    Uses resolved predictions (actual_outcome != null) up to as_of_date.
+    Returns the rolling base rate, or ROLLING_FALLBACK if insufficient data.
+    """
+    if not CALIBRATION_LEDGER.exists():
+        return ROLLING_FALLBACK
+
+    resolved = []
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            # Only use resolved entries with a known outcome
+            outcome = entry.get("actual_outcome")
+            pred_date = entry.get("prediction_date", "")
+            if outcome and pred_date < as_of_date:
+                on_time = 1 if outcome == "ON_TIME" else 0
+                resolved.append(on_time)
+
+    if len(resolved) < 20:
+        return ROLLING_FALLBACK
+
+    # Use the most recent ROLLING_WINDOW_RECORDS
+    recent = resolved[-ROLLING_WINDOW_RECORDS:]
+    return sum(recent) / len(recent)
+
+
 def _build_catalyst_node(row, snap_date, trial_update_dates, aact_delta):
     """Convert a rankings.csv row into a CatalystNode for timing estimation."""
     ticker = row.get("ticker", "")
@@ -187,13 +225,19 @@ def _build_catalyst_node(row, snap_date, trial_update_dates, aact_delta):
     return node
 
 
-def _compute_confidence_bucket(on_time_prob, slip_prob, last_update_age):
-    """Assign a timing confidence bucket."""
+def _compute_confidence_bucket(on_time_prob, slip_prob, last_update_age, logistic_prob=None):
+    """Assign a timing confidence bucket.
+
+    With rolling base rate, on_time_prob is the same for all catalysts.
+    Confidence is now driven by the per-ticker logistic estimate + data quality.
+    """
     if last_update_age is not None and last_update_age > 180:
         return "STALE"
-    if on_time_prob >= 0.70:
+    # Use logistic prob for per-ticker differentiation when available
+    p = logistic_prob if logistic_prob is not None else on_time_prob
+    if p >= 0.70:
         return "HIGH"
-    if on_time_prob >= 0.45:
+    if p >= 0.45:
         return "MEDIUM"
     return "LOW"
 
@@ -217,12 +261,19 @@ def _compute_execution_warning(
     last_update_age,
     aact_delta,
     is_hard,
+    logistic_prob=None,
 ):
-    """Flag positions that need operator attention."""
+    """Flag positions that need operator attention.
+
+    With rolling base rate, on_time_prob is the same for all catalysts.
+    Warnings now use logistic_prob (per-ticker model estimate) and
+    non-probability signals (stale update, PCD delays, status downgrades).
+    """
     warnings = []
 
-    if on_time_prob < 0.40:
-        warnings.append("low_on_time_prob")
+    # Logistic model flags this as high-risk (below 0.50 — per-ticker signal)
+    if logistic_prob is not None and logistic_prob < 0.50:
+        warnings.append("low_logistic_prob")
 
     if last_update_age is not None and last_update_age > 120:
         warnings.append("stale_update")
@@ -269,6 +320,9 @@ def compute_timing_hazard(snapshot_date=None):
     trial_update_dates = _load_trial_update_dates()
     model = TimingHazardModel()
 
+    # Load rolling base rate (OOS-validated adaptive anchor)
+    rolling_base = _load_rolling_base_rate(snapshot_date)
+
     # Process each position with a catalyst
     results = []
     for row in rows:
@@ -296,17 +350,19 @@ def compute_timing_hazard(snapshot_date=None):
         last_lup = trial_update_dates.get(ticker)
         last_update_age = (snap_date - last_lup).days if last_lup else None
 
-        # Derived fields
-        on_time_prob = estimate.prob_on_time
-        slip_prob = estimate.prob_slip
+        # Derived fields — rolling base rate is the displayed probability (OOS-validated)
+        logistic_prob = estimate.prob_on_time
+        on_time_prob = rolling_base  # adaptive anchor, updated daily from calibration ledger
+        slip_prob = 1.0 - on_time_prob
         # Split slip into 30d and 60d+
-        slip_prob_30d = slip_prob * 0.55  # ~55% of slips are modest
-        slip_prob_60d_plus = slip_prob * 0.45  # ~45% are material
+        slip_prob_30d = slip_prob * 0.55
+        slip_prob_60d_plus = slip_prob * 0.45
 
         confidence_bucket = _compute_confidence_bucket(
             on_time_prob,
             slip_prob,
             last_update_age,
+            logistic_prob=logistic_prob,
         )
         top_drivers = _compute_top_drivers(
             estimate.features_used,
@@ -317,6 +373,7 @@ def compute_timing_hazard(snapshot_date=None):
             last_update_age,
             aact_delta,
             _sf(row.get("is_hard_catalyst"), 0) == 1.0,
+            logistic_prob=logistic_prob,
         )
 
         results.append(
@@ -328,8 +385,9 @@ def compute_timing_hazard(snapshot_date=None):
                 "catalyst_family": row.get("catalyst_family", ""),
                 "catalyst_source": row.get("catalyst_source", ""),
                 "is_hard_catalyst": _sf(row.get("is_hard_catalyst"), 0) == 1.0,
-                # Timing estimates
+                # Timing estimates (v2: rolling base rate anchor)
                 "on_time_prob": round(on_time_prob, 3),
+                "on_time_prob_logistic": round(logistic_prob, 3),  # legacy logistic for comparison
                 "slip_prob_30d": round(slip_prob_30d, 3),
                 "slip_prob_60d_plus": round(slip_prob_60d_plus, 3),
                 "expected_delay_days": estimate.expected_delay_days,
@@ -361,9 +419,11 @@ def compute_timing_hazard(snapshot_date=None):
     n_stale = sum(1 for r in results if r["timing_confidence_bucket"] == "STALE")
 
     return {
-        "schema": "timing_hazard_overlay.v1",
+        "schema": "timing_hazard_overlay.v2",
         "snapshot_date": snapshot_date,
         "generated_at": datetime.now(timezone.utc).isoformat(),
+        "probability_method": "rolling_base_rate_90d",
+        "rolling_base_rate": round(rolling_base, 3),
         "n_catalysts": len(results),
         "n_warnings": n_warnings,
         "confidence_dist": {
@@ -396,6 +456,8 @@ def append_calibration_ledger(result: dict):
                 "catalyst_family": cat["catalyst_family"],
                 "is_hard_catalyst": cat["is_hard_catalyst"],
                 "on_time_prob": cat["on_time_prob"],
+                "on_time_prob_logistic": cat.get("on_time_prob_logistic"),
+                "probability_method": result.get("probability_method", "rolling_base_rate_90d"),
                 "slip_prob_30d": cat["slip_prob_30d"],
                 "slip_prob_60d_plus": cat["slip_prob_60d_plus"],
                 "timing_confidence_bucket": cat["timing_confidence_bucket"],
