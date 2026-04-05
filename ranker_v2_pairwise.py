@@ -112,11 +112,12 @@ ALL_BLOCKS = {
     "risk": BLOCK_RISK,
 }
 
-# Minimal core feature set (6 signals)
+# Minimal core feature set (5 signals)
+# clinical_score_v2_z removed: confirmed destructive at -0.35pp ablation
+# (Spec 055 / ranker ablation study). Institutional + risk carry the signal.
 FEATURES_MINIMAL = (
     FeatureSpec("coinvest_score_z"),
     FeatureSpec("inst_delta_z"),
-    FeatureSpec("clinical_score_v2_z"),
     FeatureSpec("catalyst_decay_w"),
     FeatureSpec("binary_quality_score"),
     FeatureSpec("financial_score"),

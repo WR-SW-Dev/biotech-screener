@@ -224,7 +224,7 @@ class TestFeatureExtraction:
         row = _make_row()
         specs = list(FEATURES_MINIMAL)
         vec = extract_features(row, specs)
-        assert len(vec) == 6
+        assert len(vec) == len(FEATURES_MINIMAL)
         assert all(isinstance(v, float) for v in vec)
 
 
@@ -548,9 +548,9 @@ class TestConfigId:
 class TestScoreSnapshot:
     def test_basic(self):
         model = PairwiseLogisticModel(
-            weights=[1.0] * 6,
+            weights=[1.0] * 5,
             bias=0.0,
-            n_features=6,
+            n_features=5,
             trained=True,
         )
         rows = _make_cohort(20)

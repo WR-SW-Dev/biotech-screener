@@ -75,15 +75,14 @@ def _make_cohort(n: int = 80) -> list:
 
 
 def _make_trained_model() -> PairwiseLogisticModel:
-    """Build a simple trained model matching minimal feature set."""
+    """Build a simple trained model matching minimal feature set (5 signals)."""
     return PairwiseLogisticModel(
-        weights=[0.05, 0.01, -0.015, -0.011, 0.011, -0.031],
+        weights=[0.05, 0.01, -0.011, 0.011, -0.031],
         bias=-0.01,
-        n_features=6,
+        n_features=5,
         feature_names=[
             "coinvest_score_z",
             "inst_delta_z",
-            "clinical_score_v2_z",
             "catalyst_decay_w",
             "binary_quality_score",
             "financial_score",
@@ -124,13 +123,12 @@ class TestProductionConfig:
             or default.max_pairs_per_date == 400
         )
 
-    def test_minimal_feature_set_has_six_signals(self):
-        assert len(FEATURES_MINIMAL) == 6
+    def test_minimal_feature_set_has_five_signals(self):
+        assert len(FEATURES_MINIMAL) == 5
         names = {f.name for f in FEATURES_MINIMAL}
         assert names == {
             "coinvest_score_z",
             "inst_delta_z",
-            "clinical_score_v2_z",
             "catalyst_decay_w",
             "binary_quality_score",
             "financial_score",
@@ -150,8 +148,10 @@ class TestProductionModelArtifact:
         artifact = json.loads(PRODUCTION_MODEL_PATH.read_text(encoding="utf-8"))
         model = model_from_dict(artifact["model"])
         assert model.trained is True
-        assert model.n_features == 6
-        assert len(model.weights) == 6
+        # Production model may still be trained with 6 features (pre-clinical-drop)
+        # or 5 features (post-clinical-drop). Both are valid until retrained.
+        assert model.n_features in (5, 6)
+        assert len(model.weights) == model.n_features
 
     @pytest.mark.skipif(not PRODUCTION_MODEL_PATH.exists(), reason="No production model artifact")
     def test_model_config_matches_production(self):

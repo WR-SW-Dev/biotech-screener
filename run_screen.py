@@ -4724,6 +4724,30 @@ def save_validation_snapshot(
                 _t1_int = int(_cv) if _cv == _cv else 0
                 csv_rows[_ci]["coinvest_tag"] = f"elite_{_t1_int}" if _t1_int > 0 else ""
 
+            # --- Filing-age decay: exponential downweight of stale 13F data ---
+            # 13F filings arrive ~45 days after quarter-end. By month 4+, the
+            # information is increasingly stale. Apply exp(-age/half_life) so that
+            # a 2-month-old filing has full weight but a 6-month-old filing is
+            # attenuated. Half-life of 90 days means: 45d→0.71x, 90d→0.50x,
+            # 180d→0.25x. This is a continuous replacement for the binary
+            # fresh/stale recency gate.
+            _DECAY_HALF_LIFE_DAYS = 90
+            _decay_applied = 0
+            for _ci, _, _, _ in _cz_pairs:
+                _age_raw = csv_rows[_ci].get("coinvest_filing_age_days")
+                _z_raw = csv_rows[_ci].get("coinvest_score_z", 0.0)
+                if _age_raw and isinstance(_age_raw, (int, float)) and _age_raw > 0 and _z_raw != 0:
+                    _decay = math.exp(-_age_raw / _DECAY_HALF_LIFE_DAYS * math.log(2))
+                    csv_rows[_ci]["coinvest_score_z"] = round(_z_raw * _decay, 4)
+                    _decay_applied += 1
+            if _decay_applied:
+                logger.info(
+                    "  Coinvest filing-age decay: half_life=%dd, applied to %d/%d tickers",
+                    _DECAY_HALF_LIFE_DAYS,
+                    _decay_applied,
+                    len(_cz_pairs),
+                )
+
     # --- Compute institutional summary + delta (for z-score, written as sidecar later) ---
     inst_summary = None
     inst_delta = None
