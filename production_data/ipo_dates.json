@@ -1,7 +1,7 @@
 {
   "generated_at": "2026-04-02T19:41:17.626777+00:00",
   "source": "price_history.csv first-price-date proxy",
-  "ticker_count": 355,
+  "ticker_count": 356,
   "tickers": {
     "AARD": {
       "first_price_date": "2025-02-13",
@@ -1425,8 +1425,7 @@
     },
     "KYNB": {
       "first_price_date": "2020-01-02",
-      "last_price_date": "2026-03-09",
-      "note": "Renamed from FGEN (FibroGen\u2192Kyntra Bio) Jan 2026"
+      "last_price_date": "2026-04-02"
     }
   }
 }
