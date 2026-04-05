@@ -20,14 +20,40 @@ def _write_positions(tmp_path: Path, as_of_date: str, positions: list) -> None:
 
 
 def _write_perf_csv(tmp_path: Path, rows: list[dict]) -> None:
+    import csv as _csv
+
     perf_path = tmp_path / "performance.csv"
-    with open(perf_path, "w") as f:
+    fieldnames = [
+        "schema_version",
+        "date",
+        "prior_date",
+        "total_pnl",
+        "pnl_pct",
+        "xbi_return_pct",
+        "excess_vs_xbi_pct",
+        "n_held",
+        "turnover",
+        "gap_risk_high_count",
+        "n_missing_price",
+    ]
+    with open(perf_path, "w", newline="") as f:
+        w = _csv.DictWriter(f, fieldnames=fieldnames)
+        w.writeheader()
         for r in rows:
-            # Format: schema,date,prior,pnl,$,pnl%,xbi%,excess%,n_held,turnover,...
-            f.write(
-                f"live_shadow_perf.v1,{r['date']},,"
-                f"{r.get('pnl', 0)},{r.get('pnl_pct', 0)},{r.get('xbi_pct', 0)},"
-                f"{r.get('excess', 0)},{r.get('n_held', 30)},{r.get('turnover', 0)},,\n"
+            w.writerow(
+                {
+                    "schema_version": "live_shadow_perf.v1",
+                    "date": r["date"],
+                    "prior_date": "",
+                    "total_pnl": r.get("pnl", 0),
+                    "pnl_pct": r.get("pnl_pct", 0),
+                    "xbi_return_pct": r.get("xbi_pct", 0),
+                    "excess_vs_xbi_pct": r.get("excess", 0),
+                    "n_held": r.get("n_held", 30),
+                    "turnover": r.get("turnover", 0),
+                    "gap_risk_high_count": "",
+                    "n_missing_price": "",
+                }
             )
 
 

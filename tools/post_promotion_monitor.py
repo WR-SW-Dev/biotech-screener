@@ -51,23 +51,22 @@ def load_perf_csv(path: Path, since: str) -> List[Dict]:
     if not path.exists():
         return []
     rows = []
-    with open(path) as f:
-        for line in csv.reader(f):
-            if not line or line[0].startswith("#"):
-                continue
-            if len(line) >= 10 and line[1] >= since:
+    with open(path, encoding="utf-8") as f:
+        for row in csv.DictReader(f):
+            d = row.get("date", "")
+            if d >= since:
                 try:
                     rows.append(
                         {
-                            "date": line[1],
-                            "pnl_pct": float(line[4]) if line[4] else 0,
-                            "xbi_pct": float(line[5]) if line[5] else 0,
-                            "excess": float(line[6]) if line[6] else 0,
-                            "n_held": int(line[7]) if line[7] else 0,
-                            "turnover": float(line[8]) if line[8] else 0,
+                            "date": d,
+                            "pnl_pct": float(row.get("pnl_pct") or 0),
+                            "xbi_pct": float(row.get("xbi_return_pct") or 0),
+                            "excess": float(row.get("excess_vs_xbi_pct") or 0),
+                            "n_held": int(float(row.get("n_held") or 0)),
+                            "turnover": float(row.get("turnover") or 0),
                         }
                     )
-                except (ValueError, IndexError):
+                except (ValueError, TypeError):
                     pass
     return rows
 

@@ -184,12 +184,23 @@ def compute_catalyst_quality(rankings: Dict[str, Dict], tickers: set) -> Dict[st
     }
 
 
-def load_ranker_shadow(date: str, artifacts_dir: Path) -> Optional[Dict]:
-    """Load ranker shadow comparison for this date."""
+def load_ranker_shadow(
+    date: str, artifacts_dir: Path, snapshots_dir: Path = REPO_ROOT / "data" / "snapshots"
+) -> Optional[Dict]:
+    """Load ranker shadow comparison for this date.
+
+    Checks both the snapshot directory (where run_screen.py writes it)
+    and the artifacts directory (legacy path).
+    """
+    # Primary: snapshot directory (where run_screen.py actually writes it)
+    path = snapshots_dir / date / "ranker_shadow_comparison.json"
+    if path.exists():
+        return _load_json(path)
+    # Fallback: artifacts directory (legacy paths)
     path = artifacts_dir / "ranker_shadow_comparison.json"
-    if not path.exists():
-        # Try date-stamped
-        path = artifacts_dir / f"ranker_shadow_comparison_{date}.json"
+    if path.exists():
+        return _load_json(path)
+    path = artifacts_dir / f"ranker_shadow_comparison_{date}.json"
     return _load_json(path)
 
 
@@ -324,7 +335,7 @@ def build_production_monitor(
     rank_corr = compute_rank_correlation(today_ranks, prior_ranks)
     hhi = compute_hhi(today_weights)
     catalyst_quality = compute_catalyst_quality(rankings, today_tickers)
-    ranker_shadow = load_ranker_shadow(as_of_date, artifacts_dir)
+    ranker_shadow = load_ranker_shadow(as_of_date, artifacts_dir, snapshots_dir)
     ranker_drift = compute_ranker_drift(ranker_shadow)
 
     # Alerts

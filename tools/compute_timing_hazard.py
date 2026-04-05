@@ -469,9 +469,24 @@ def append_calibration_ledger(result: dict):
 
     Each entry records the prediction at the time it was made. When the catalyst
     resolves, a separate process will match predictions to outcomes for Brier scoring.
+
+    Dedup guard: skips append if any entry for this prediction_date already exists.
     """
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     snap_date = result.get("snapshot_date", "")
+
+    # Dedup: check if this prediction_date is already in the ledger
+    if CALIBRATION_LEDGER.exists():
+        with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    if json.loads(line).get("prediction_date") == snap_date:
+                        return  # already recorded
+                except json.JSONDecodeError:
+                    continue
 
     with open(CALIBRATION_LEDGER, "a") as f:
         for cat in result.get("catalysts", []):

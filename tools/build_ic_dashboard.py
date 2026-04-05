@@ -291,17 +291,31 @@ def build_ic_dashboard(
     md_path.write_text(format_dashboard_md(result), encoding="utf-8")
     logger.info("Wrote %s", md_path)
 
-    # Append to history
+    # Append to history (with dedup guard — skip if date already present)
     history_path = out_dir / "history.jsonl"
-    summary = {
-        "date": as_of_date,
-        "attention": attention,
-    }
-    for sig, data in signal_results.items():
-        summary[f"{sig}_ic"] = data["mean_ic"]
-        summary[f"{sig}_health"] = data["health"]
-    with open(history_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(summary, default=str) + "\n")
+    existing_dates: set = set()
+    if history_path.exists():
+        with open(history_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        existing_dates.add(json.loads(line).get("date"))
+                    except json.JSONDecodeError:
+                        pass
+
+    if as_of_date not in existing_dates:
+        summary = {
+            "date": as_of_date,
+            "attention": attention,
+        }
+        for sig, data in signal_results.items():
+            summary[f"{sig}_ic"] = data["mean_ic"]
+            summary[f"{sig}_health"] = data["health"]
+        with open(history_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(summary, default=str) + "\n")
+    else:
+        logger.info("IC dashboard history: %s already present, skipping append", as_of_date)
 
     result["_json_path"] = str(json_path)
     result["_md_path"] = str(md_path)
