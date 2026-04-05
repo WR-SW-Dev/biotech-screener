@@ -162,16 +162,46 @@ class TestInformationalPriceCheck:
     def test_no_move_passes(self):
         records = [{"informational_only": True, "ticker": "A", "published_at_utc": "2026-01-03"}]
         prices = {"A": {"2026-01-02": 10.0, "2026-01-03": 10.1}}  # 1% move
-        result = informational_price_check(records, prices, threshold_pct=5.0)
+        result = informational_price_check(records, prices, vol_adjusted=False, threshold_pct=5.0)
         assert result["n_checked"] == 1
         assert result["n_surprised"] == 0
 
     def test_big_move_flagged(self):
         records = [{"informational_only": True, "ticker": "A", "published_at_utc": "2026-01-03"}]
         prices = {"A": {"2026-01-02": 10.0, "2026-01-03": 11.0}}  # 10% move
-        result = informational_price_check(records, prices, threshold_pct=5.0)
+        result = informational_price_check(records, prices, vol_adjusted=False, threshold_pct=5.0)
         assert result["n_surprised"] == 1
         assert result["false_informational_rate"] == 1.0
+
+    def test_vol_adjusted_ignores_normal_volatility(self):
+        """A 6% move on a ticker that routinely moves 5% should NOT flag."""
+        # Build 60 days of prices with ~5% daily moves
+        base = 10.0
+        price_series = {}
+        for i in range(61):
+            d = f"2026-01-{i+1:02d}" if i < 28 else f"2026-02-{i-27:02d}"
+            price_series[d] = base
+            base *= 1.05 if i % 2 == 0 else 0.95  # alternating +5%/-5%
+        prices = {"A": price_series}
+        records = [{"informational_only": True, "ticker": "A", "published_at_utc": "2026-02-02"}]
+        result = informational_price_check(records, prices, vol_adjusted=True, vol_floor_pct=10.0)
+        # 6% move on a 5%-daily-vol ticker should NOT flag (threshold > 10%)
+        assert result["n_surprised"] == 0
+
+    def test_vol_adjusted_flags_true_outlier(self):
+        """A 25% move should flag even on a volatile ticker."""
+        price_series = {}
+        base = 10.0
+        for i in range(61):
+            d = f"2026-01-{i+1:02d}" if i < 28 else f"2026-02-{i-27:02d}"
+            price_series[d] = base
+            base *= 1.03 if i % 2 == 0 else 0.97
+        # Spike on the test date
+        price_series["2026-02-03"] = price_series.get("2026-02-02", 10.0) * 1.25
+        prices = {"A": price_series}
+        records = [{"informational_only": True, "ticker": "A", "published_at_utc": "2026-02-03"}]
+        result = informational_price_check(records, prices, vol_adjusted=True, vol_floor_pct=10.0)
+        assert result["n_surprised"] == 1
 
     def test_missing_price_skipped(self):
         records = [{"informational_only": True, "ticker": "A", "published_at_utc": "2026-01-03"}]

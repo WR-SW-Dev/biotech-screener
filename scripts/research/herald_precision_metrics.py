@@ -198,12 +198,57 @@ def _get_return(prices: dict[str, dict[str, float]], ticker: str, dt_str: str) -
     return None
 
 
+def _compute_ticker_vol_thresholds(
+    prices: dict[str, dict[str, float]],
+    multiplier: float = 2.0,
+    floor_pct: float = 10.0,
+) -> dict[str, float]:
+    """Compute per-ticker threshold = max(floor, multiplier * median |daily ret|).
+
+    Biotech small-caps routinely move 5%+ on random days. A fixed 5% threshold
+    produces ~25% false rate matching the base rate. Vol-adjusted thresholds
+    flag only moves that are unusual *for that ticker*.
+    """
+    thresholds: dict[str, float] = {}
+    for tk, tk_prices in prices.items():
+        sorted_dates = sorted(tk_prices.keys())
+        if len(sorted_dates) < 20:
+            thresholds[tk] = floor_pct
+            continue
+        abs_rets = []
+        for i in range(1, len(sorted_dates)):
+            p0 = tk_prices[sorted_dates[i - 1]]
+            p1 = tk_prices[sorted_dates[i]]
+            if p0 > 0:
+                abs_rets.append(abs((p1 / p0) - 1) * 100)
+        if not abs_rets:
+            thresholds[tk] = floor_pct
+            continue
+        abs_rets.sort()
+        median = abs_rets[len(abs_rets) // 2]
+        thresholds[tk] = max(floor_pct, median * multiplier)
+    return thresholds
+
+
 def informational_price_check(
     classified: list[dict],
     prices: dict[str, dict[str, float]],
-    threshold_pct: float = 5.0,
+    threshold_pct: float = 10.0,
+    vol_adjusted: bool = True,
+    vol_multiplier: float = 2.0,
+    vol_floor_pct: float = 10.0,
 ) -> dict[str, Any]:
-    """Check informational_only records for surprise price moves."""
+    """Check informational_only records for surprise price moves.
+
+    Default uses vol-adjusted thresholds: flag only when the move exceeds
+    max(floor, 2x median |daily return|) for that ticker. This avoids
+    false-flagging normal biotech volatility (~25% of days have >5% moves).
+    """
+    if vol_adjusted:
+        ticker_thresholds = _compute_ticker_vol_thresholds(prices, vol_multiplier, vol_floor_pct)
+    else:
+        ticker_thresholds = {}
+
     checked = 0
     surprised = 0
     examples: list[dict] = []
@@ -217,7 +262,8 @@ def informational_price_check(
         if ret is None:
             continue
         checked += 1
-        if abs(ret) * 100 > threshold_pct:
+        thresh = ticker_thresholds.get(tk, threshold_pct) if vol_adjusted else threshold_pct
+        if abs(ret) * 100 > thresh:
             surprised += 1
             if len(examples) < 10:
                 examples.append(
@@ -226,6 +272,7 @@ def informational_price_check(
                         "date": dt,
                         "headline": rec.get("headline", "")[:80],
                         "return_pct": round(ret * 100, 2),
+                        "threshold_pct": round(thresh, 1),
                     }
                 )
 
@@ -233,7 +280,10 @@ def informational_price_check(
         "n_checked": checked,
         "n_surprised": surprised,
         "false_informational_rate": round(surprised / max(checked, 1), 3),
+        "threshold_mode": "vol_adjusted" if vol_adjusted else "fixed",
         "threshold_pct": threshold_pct,
+        "vol_multiplier": vol_multiplier if vol_adjusted else None,
+        "vol_floor_pct": vol_floor_pct if vol_adjusted else None,
         "examples": examples,
     }
 

@@ -47,41 +47,39 @@ def load_diagnostics_summary(snapshot_dir: Path) -> dict:
     return json.loads(path.read_text())
 
 
-def identify_absent_tickers(summary: dict, universe: list[str]) -> tuple[list[str], list[str], list[str]]:
-    """Classify tickers into: has_data, absent, no_liquid_expiry.
+def identify_absent_tickers(snapshot_dir: Path, universe: list[str]) -> tuple[list[str], list[str], list[str]]:
+    """Classify tickers by reading rankings.csv for opt_has_data.
 
     Returns (has_data, absent, no_liquid_expiry).
     """
-    coverage = summary.get("coverage", {})
+    import csv as _csv
 
-    # Build ticker -> basis mapping from per-ticker data if available
-    per_ticker = summary.get("per_ticker", {})
+    rankings_path = snapshot_dir / "rankings.csv"
+    if not rankings_path.exists():
+        logger.warning("No rankings.csv in %s", snapshot_dir)
+        return [], list(universe), []
 
-    has_data = []
-    absent = []
-    no_liquid = []
+    has_data: list[str] = []
+    absent: list[str] = []
+    no_liquid: list[str] = []
+    seen: set[str] = set()
 
-    if per_ticker:
-        for tk in universe:
-            info = per_ticker.get(tk, {})
-            basis = info.get("opt_diagnostic_basis", "")
-            has = info.get("opt_has_data", "0")
-            if str(has) == "1":
+    with open(rankings_path) as f:
+        for row in _csv.DictReader(f):
+            tk = row.get("ticker", "").strip()
+            if not tk or tk in seen:
+                continue
+            seen.add(tk)
+            if str(row.get("opt_has_data", "0")) == "1":
                 has_data.append(tk)
-            elif basis == "no_liquid_expiry":
+            elif row.get("opt_diagnostic_basis", "") == "no_liquid_expiry":
                 no_liquid.append(tk)
             else:
                 absent.append(tk)
-    else:
-        # Fallback: use summary counts only, can't identify individual tickers
-        n_with = coverage.get("n_with_options_data", 0)
-        logger.warning(
-            "No per-ticker data in summary. " "Can only report aggregate: %d with data out of %d universe.",
-            n_with,
-            len(universe),
-        )
-        # All tickers treated as unknown
-        absent = list(universe)
+
+    for tk in universe:
+        if tk not in seen:
+            absent.append(tk)
 
     return has_data, absent, no_liquid
 
@@ -192,9 +190,13 @@ def main():
     if not args.universe_path.exists():
         logger.error("Universe file not found: %s", args.universe_path)
         sys.exit(1)
-    universe = json.loads(args.universe_path.read_text())
-    if isinstance(universe, dict):
-        universe = universe.get("tickers", list(universe.keys()))
+    raw = json.loads(args.universe_path.read_text())
+    if isinstance(raw, list) and raw and isinstance(raw[0], dict):
+        universe = [r.get("ticker", r.get("name", "")) for r in raw if r.get("ticker") or r.get("name")]
+    elif isinstance(raw, dict):
+        universe = raw.get("tickers", list(raw.keys()))
+    else:
+        universe = raw
     logger.info("Universe: %d tickers", len(universe))
 
     # Find latest snapshot
@@ -205,10 +207,8 @@ def main():
     logger.info("Using snapshot: %s", snap_dir.name)
 
     summary = load_diagnostics_summary(snap_dir)
-    if not summary:
-        logger.warning("No options_diagnostics_summary.json in %s", snap_dir)
 
-    has_data, absent, no_liquid = identify_absent_tickers(summary, universe)
+    has_data, absent, no_liquid = identify_absent_tickers(snap_dir, universe)
     logger.info(
         "Coverage: %d with data, %d absent, %d no liquid expiry",
         len(has_data),
