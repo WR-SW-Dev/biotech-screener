@@ -141,3 +141,18 @@ export async function fetchEventQualityShadowLatest(): Promise<any> {
   const res = await fetch(`${BASE}/api/event_quality_shadow/latest`);
   return res.json();
 }
+
+export async function fetchRiskLayerLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/risk_monitor/latest`);
+  return res.json();
+}
+
+export async function fetchRebalancePlanLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/rebalance_plan/latest`);
+  return res.json();
+}
+
+export async function fetchHeraldPrecisionLatest(): Promise<any> {
+  const res = await fetch(`${BASE}/api/herald_precision/latest`);
+  return res.json();
+}

@@ -11,10 +11,12 @@ import ShadowPnLStrip from './ShadowPnLStrip';
 import EventPremiumPanel from './EventPremiumPanel';
 import ShadowsPanel from './ShadowsPanel';
 import MonitorStrip from './MonitorStrip';
+import RiskLayerPanel from './RiskLayerPanel';
+import TimingHazardPanel from './TimingHazardPanel';
 import { fetchDates, fetchRankings } from './api';
 import './index.css';
 
-type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'options' | 'news' | 'shadows';
+type View = 'screener' | 'bioshort' | 'calibration' | 'catalysts' | 'options' | 'news' | 'shadows' | 'risk' | 'timing';
 
 export default function App() {
   const [view, setView] = useState<View>('screener');
@@ -50,6 +52,8 @@ export default function App() {
     { key: 'catalysts', label: 'Catalysts' },
     { key: 'options', label: 'Options' },
     { key: 'shadows', label: 'Shadows' },
+    { key: 'risk', label: 'Risk' },
+    { key: 'timing', label: 'Timing' },
     { key: 'news', label: 'News' },
   ];
 
@@ -136,6 +140,18 @@ export default function App() {
 
       {view === 'shadows' && (
         <ShadowsPanel />
+      )}
+
+      {view === 'risk' && (
+        <div className="max-w-3xl mx-auto py-6">
+          <RiskLayerPanel />
+        </div>
+      )}
+
+      {view === 'timing' && (
+        <div className="max-w-4xl mx-auto py-6">
+          <TimingHazardPanel />
+        </div>
       )}
 
       {view === 'news' && (

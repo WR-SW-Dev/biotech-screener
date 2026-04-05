@@ -1105,6 +1105,57 @@ async def api_event_quality_shadow_latest():
     return _load_json(files[0]) or {"error": "Failed to load"}
 
 
+@app.get("/api/risk_monitor/latest")
+async def api_risk_monitor_latest():
+    """Latest risk monitor report (v2: includes vol/corr metrics)."""
+    rm_dir = REPO_ROOT / "artifacts" / "risk_monitor"
+    if not rm_dir.exists():
+        return {"error": "No risk monitor data"}
+    files = sorted(rm_dir.glob("*_risk.json"), reverse=True)
+    if not files:
+        return {"error": "No risk monitor snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/risk_monitor/history")
+async def api_risk_monitor_history():
+    """Risk monitor history (last 30 reports)."""
+    rm_dir = REPO_ROOT / "artifacts" / "risk_monitor"
+    if not rm_dir.exists():
+        return []
+    files = sorted(rm_dir.glob("*_risk.json"), reverse=True)[:30]
+    result = []
+    for f in files:
+        data = _load_json(f)
+        if data:
+            result.append(data)
+    return result
+
+
+@app.get("/api/rebalance_plan/latest")
+async def api_rebalance_plan_latest():
+    """Latest rebalance plan."""
+    rp_dir = REPO_ROOT / "artifacts" / "rebalance_plan"
+    if not rp_dir.exists():
+        return {"error": "No rebalance plan data"}
+    files = sorted(rp_dir.glob("*.json"), reverse=True)
+    if not files:
+        return {"error": "No rebalance plans"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+@app.get("/api/herald_precision/latest")
+async def api_herald_precision_latest():
+    """Latest Herald precision metrics."""
+    hp_dir = REPO_ROOT / "artifacts" / "herald_precision"
+    if not hp_dir.exists():
+        return {"error": "No Herald precision data"}
+    files = sorted(hp_dir.glob("metrics_*.json"), reverse=True)
+    if not files:
+        return {"error": "No Herald precision snapshots"}
+    return _load_json(files[0]) or {"error": "Failed to load"}
+
+
 if __name__ == "__main__":
     import argparse
 
