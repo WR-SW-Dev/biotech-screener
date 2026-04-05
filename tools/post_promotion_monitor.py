@@ -28,7 +28,6 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 SHADOW_POSITIONS_DIR = PROJECT_ROOT / "artifacts" / "live_shadow" / "positions"
 SHADOW_PERF_CSV = PROJECT_ROOT / "artifacts" / "live_shadow" / "performance.csv"
-V2_PERF_CSV = PROJECT_ROOT / "artifacts" / "construction_v2" / "performance.csv"
 PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
 OUTPUT_DIR = PROJECT_ROOT / "artifacts" / "post_promotion_monitor"
 
@@ -105,8 +104,6 @@ def compute_monitor(as_of_date: str) -> Dict[str, Any]:
         regime = "bull"
     else:
         regime = "neutral"
-
-    # Load v2 performance for comparison
 
     # Alerts
     alerts = []

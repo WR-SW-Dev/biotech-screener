@@ -21,6 +21,8 @@ from unittest.mock import patch
 
 import pytest
 
+pytestmark = pytest.mark.network
+
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
 from data_integrity_audit import (
     SANITY_RANGES,

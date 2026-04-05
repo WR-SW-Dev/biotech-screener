@@ -15,7 +15,7 @@ import csv
 import json
 import logging
 from collections import Counter, defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -290,7 +290,7 @@ async def index(request: Request, date: str = ""):
         if abs(pc) > 0.001:
             policy_path.append(
                 {
-                    "date": row["date"],
+                    "date": row.get("date", ""),
                     "current": round(cum_current, 2),
                     "tiered": round(cum_tiered, 2),
                     "exit": round(cum_exit, 2),
@@ -351,7 +351,9 @@ async def index(request: Request, date: str = ""):
             }
         )
         for cat in timing_hazard["catalysts"]:
-            timing_by_ticker[cat["ticker"]] = cat
+            t = cat.get("ticker", "")
+            if t:
+                timing_by_ticker[t] = cat
             if cat.get("execution_warning_flag"):
                 timing_warnings.append(cat)
         # Feed timing warnings into alerts
@@ -369,7 +371,7 @@ async def index(request: Request, date: str = ""):
                 {
                     "source": "timing",
                     "level": "LOW",
-                    "text": f"{tw['ticker']} P(on_time)={tw['on_time_prob']:.0%} [{reasons}]",
+                    "text": f"{tw.get('ticker', '?')} P(on_time)={tw.get('on_time_prob', 0):.0%} [{reasons}]",
                 }
             )
 
@@ -426,7 +428,7 @@ async def index(request: Request, date: str = ""):
             "timing_warnings": timing_warnings,
             "catalyst_quality": dict(catalyst_quality),
             "prod_health": prod_health,
-            "now": datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC"),
+            "now": datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         },
     )
 
