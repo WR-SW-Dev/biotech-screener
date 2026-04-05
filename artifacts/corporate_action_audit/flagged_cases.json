@@ -1,0 +1,479 @@
+[
+  {
+    "ticker": "ABVX",
+    "issue_type": "price_reverse_split",
+    "date": "2025-07-23",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:7 on 2025-07-23. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "ACRS",
+    "issue_type": "price_forward_split",
+    "date": "2023-11-13",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "7:1 on 2023-11-13. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "AKTX",
+    "issue_type": "price_reverse_split",
+    "date": "2026-03-31",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:40 on 2026-03-31. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "AMLX",
+    "issue_type": "price_forward_split",
+    "date": "2024-03-08",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "6:1 on 2024-03-08. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "BIOA",
+    "issue_type": "price_forward_split",
+    "date": "2024-12-09",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "4:1 on 2024-12-09. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "COGT",
+    "issue_type": "price_reverse_split",
+    "date": "2020-07-06",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2020-07-06. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "DFTX",
+    "issue_type": "price_reverse_split",
+    "date": "2020-03-03",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2020-03-03. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "DRUG",
+    "issue_type": "price_reverse_split",
+    "date": "2024-10-15",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:15 on 2024-10-15. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "FGEN",
+    "issue_type": "price_forward_split",
+    "date": "2023-06-26",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "6:1 on 2023-06-26. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "GOSS",
+    "issue_type": "price_forward_split",
+    "date": "2026-02-23",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2026-02-23. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "IMMP",
+    "issue_type": "price_forward_split",
+    "date": "2026-03-13",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2026-03-13. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "INDV",
+    "issue_type": "price_reverse_split",
+    "date": "2022-11-28",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:7 on 2022-11-28. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "IVVD",
+    "issue_type": "price_forward_split",
+    "date": "2021-12-14",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2021-12-14. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "JBIO",
+    "issue_type": "price_forward_split",
+    "date": "2025-04-29",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "9:1 (2nd) on 2025-04-29. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "KALA",
+    "issue_type": "price_forward_split",
+    "date": "2025-09-29",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "9:1 on 2025-09-29. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "KOD",
+    "issue_type": "price_forward_split",
+    "date": "2022-02-23",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2022-02-23. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "LYRA",
+    "issue_type": "price_reverse_split",
+    "date": "2025-06-02",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:4 on 2025-06-02. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "MCRB",
+    "issue_type": "price_reverse_split",
+    "date": "2020-08-10",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2020-08-10. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "MENS",
+    "issue_type": "price_forward_split",
+    "date": "2025-12-17",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2025-12-17. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "MLTX",
+    "issue_type": "price_forward_split",
+    "date": "2025-09-29",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "10:1 on 2025-09-29. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "NMRA",
+    "issue_type": "price_forward_split",
+    "date": "2025-01-02",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2025-01-02. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "ORKA",
+    "issue_type": "price_reverse_split",
+    "date": "2020-05-28",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2020-05-28. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "PHVS",
+    "issue_type": "price_reverse_split",
+    "date": "2022-12-08",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2022-12-08. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "PRAX",
+    "issue_type": "price_forward_split",
+    "date": "2022-06-06",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2022-06-06. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "PRQR",
+    "issue_type": "price_forward_split",
+    "date": "2022-02-11",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "4:1 on 2022-02-11. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "REPL",
+    "issue_type": "price_forward_split",
+    "date": "2025-07-22",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "4:1 on 2025-07-22. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "RNA",
+    "issue_type": "price_forward_split",
+    "date": "2026-02-27",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2026-02-27. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "SRRK",
+    "issue_type": "price_reverse_split",
+    "date": "2024-10-07",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:5 on 2024-10-07. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "SYRE",
+    "issue_type": "price_reverse_split",
+    "date": "2023-06-22",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:4 on 2023-06-22. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "TECX",
+    "issue_type": "price_reverse_split",
+    "date": "2024-06-24",
+    "severity": "HIGH",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "1:12 on 2024-06-24. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "VTYX",
+    "issue_type": "price_forward_split",
+    "date": "2023-11-07",
+    "severity": "MODERATE",
+    "status": "MITIGATED",
+    "fix": "run_screen truncates pre-split history; split_adj.csv regenerated",
+    "notes": "5:1 on 2023-11-07. Raw prices in price_history.csv; adjusted in split_adj.csv"
+  },
+  {
+    "ticker": "CNTA",
+    "issue_type": "acquired_in_universe",
+    "date": "2026-03",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Acquired by Eli Lilly. Still trading at acquisition price."
+  },
+  {
+    "ticker": "IMVT",
+    "issue_type": "acquired_in_universe",
+    "date": "2024",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Acquired by Roche. Still trading as CVR/stub."
+  },
+  {
+    "ticker": "BHVN",
+    "issue_type": "acquired_in_universe",
+    "date": "2024-10",
+    "severity": "HIGH",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Acquired by AbbVie. Trading as CVR/transition."
+  },
+  {
+    "ticker": "MULTIPLE",
+    "issue_type": "stale_cusip_map",
+    "date": "ongoing",
+    "severity": "MODERATE",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "58 tickers in cusip_static_map.json not in universe. Includes defunct (CDTX, CVAC, FGEN, MRSN, RAPT, etc.) and renamed tickers. Stale entries don't cause errors but waste lookup cycles."
+  },
+  {
+    "ticker": "MULTIPLE",
+    "issue_type": "missing_cusip",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "12 universe tickers lack CUSIP mapping: AKTX, CADL, CRL, DFTX, DRMA, LBRX, MENS, NBP, OABI, QSI, TEVA, TKNO. These tickers get zero 13F holdings data."
+  },
+  {
+    "ticker": "BEAM",
+    "issue_type": "multi_cusip",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Maps to CUSIPs ['07373V105', '07400F101']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+  },
+  {
+    "ticker": "GH",
+    "issue_type": "multi_cusip",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Maps to CUSIPs ['40131M109', '40131MAB5']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+  },
+  {
+    "ticker": "IMCR",
+    "issue_type": "multi_cusip",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Maps to CUSIPs ['45258D105', '45258DAB1']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+  },
+  {
+    "ticker": "ZVRA",
+    "issue_type": "multi_cusip",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "OPEN",
+    "fix": "no_fix",
+    "notes": "Maps to CUSIPs ['488445206', '98989K200']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+  },
+  {
+    "ticker": "AKRO",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "ATXS",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "CDTX",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "CVAC",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "DVAX",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "FGEN",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "GBIO",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "LYRA",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "MNMD",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "MRSN",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "MRUS",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "RAPT",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  },
+  {
+    "ticker": "VTYX",
+    "issue_type": "orphan_price_series",
+    "date": "ongoing",
+    "severity": "LOW",
+    "status": "BENIGN",
+    "fix": "no_fix",
+    "notes": "Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research."
+  }
+]

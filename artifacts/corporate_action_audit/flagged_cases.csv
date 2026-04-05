@@ -1,0 +1,54 @@
+ticker,issue_type,date,severity,status,fix,notes
+ABVX,price_reverse_split,2025-07-23,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:7 on 2025-07-23. Raw prices in price_history.csv; adjusted in split_adj.csv
+ACRS,price_forward_split,2023-11-13,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,7:1 on 2023-11-13. Raw prices in price_history.csv; adjusted in split_adj.csv
+AKTX,price_reverse_split,2026-03-31,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:40 on 2026-03-31. Raw prices in price_history.csv; adjusted in split_adj.csv
+AMLX,price_forward_split,2024-03-08,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,6:1 on 2024-03-08. Raw prices in price_history.csv; adjusted in split_adj.csv
+BIOA,price_forward_split,2024-12-09,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,4:1 on 2024-12-09. Raw prices in price_history.csv; adjusted in split_adj.csv
+COGT,price_reverse_split,2020-07-06,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2020-07-06. Raw prices in price_history.csv; adjusted in split_adj.csv
+DFTX,price_reverse_split,2020-03-03,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2020-03-03. Raw prices in price_history.csv; adjusted in split_adj.csv
+DRUG,price_reverse_split,2024-10-15,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:15 on 2024-10-15. Raw prices in price_history.csv; adjusted in split_adj.csv
+FGEN,price_forward_split,2023-06-26,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,6:1 on 2023-06-26. Raw prices in price_history.csv; adjusted in split_adj.csv
+GOSS,price_forward_split,2026-02-23,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2026-02-23. Raw prices in price_history.csv; adjusted in split_adj.csv
+IMMP,price_forward_split,2026-03-13,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2026-03-13. Raw prices in price_history.csv; adjusted in split_adj.csv
+INDV,price_reverse_split,2022-11-28,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:7 on 2022-11-28. Raw prices in price_history.csv; adjusted in split_adj.csv
+IVVD,price_forward_split,2021-12-14,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2021-12-14. Raw prices in price_history.csv; adjusted in split_adj.csv
+JBIO,price_forward_split,2025-04-29,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,9:1 (2nd) on 2025-04-29. Raw prices in price_history.csv; adjusted in split_adj.csv
+KALA,price_forward_split,2025-09-29,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,9:1 on 2025-09-29. Raw prices in price_history.csv; adjusted in split_adj.csv
+KOD,price_forward_split,2022-02-23,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2022-02-23. Raw prices in price_history.csv; adjusted in split_adj.csv
+LYRA,price_reverse_split,2025-06-02,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:4 on 2025-06-02. Raw prices in price_history.csv; adjusted in split_adj.csv
+MCRB,price_reverse_split,2020-08-10,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2020-08-10. Raw prices in price_history.csv; adjusted in split_adj.csv
+MENS,price_forward_split,2025-12-17,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2025-12-17. Raw prices in price_history.csv; adjusted in split_adj.csv
+MLTX,price_forward_split,2025-09-29,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,10:1 on 2025-09-29. Raw prices in price_history.csv; adjusted in split_adj.csv
+NMRA,price_forward_split,2025-01-02,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2025-01-02. Raw prices in price_history.csv; adjusted in split_adj.csv
+ORKA,price_reverse_split,2020-05-28,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2020-05-28. Raw prices in price_history.csv; adjusted in split_adj.csv
+PHVS,price_reverse_split,2022-12-08,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2022-12-08. Raw prices in price_history.csv; adjusted in split_adj.csv
+PRAX,price_forward_split,2022-06-06,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2022-06-06. Raw prices in price_history.csv; adjusted in split_adj.csv
+PRQR,price_forward_split,2022-02-11,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,4:1 on 2022-02-11. Raw prices in price_history.csv; adjusted in split_adj.csv
+REPL,price_forward_split,2025-07-22,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,4:1 on 2025-07-22. Raw prices in price_history.csv; adjusted in split_adj.csv
+RNA,price_forward_split,2026-02-27,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2026-02-27. Raw prices in price_history.csv; adjusted in split_adj.csv
+SRRK,price_reverse_split,2024-10-07,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:5 on 2024-10-07. Raw prices in price_history.csv; adjusted in split_adj.csv
+SYRE,price_reverse_split,2023-06-22,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:4 on 2023-06-22. Raw prices in price_history.csv; adjusted in split_adj.csv
+TECX,price_reverse_split,2024-06-24,HIGH,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,1:12 on 2024-06-24. Raw prices in price_history.csv; adjusted in split_adj.csv
+VTYX,price_forward_split,2023-11-07,MODERATE,MITIGATED,run_screen truncates pre-split history; split_adj.csv regenerated,5:1 on 2023-11-07. Raw prices in price_history.csv; adjusted in split_adj.csv
+CNTA,acquired_in_universe,2026-03,HIGH,OPEN,no_fix,Acquired by Eli Lilly. Still trading at acquisition price.
+IMVT,acquired_in_universe,2024,HIGH,OPEN,no_fix,Acquired by Roche. Still trading as CVR/stub.
+BHVN,acquired_in_universe,2024-10,HIGH,OPEN,no_fix,Acquired by AbbVie. Trading as CVR/transition.
+MULTIPLE,stale_cusip_map,ongoing,MODERATE,OPEN,no_fix,"58 tickers in cusip_static_map.json not in universe. Includes defunct (CDTX, CVAC, FGEN, MRSN, RAPT, etc.) and renamed tickers. Stale entries don't cause errors but waste lookup cycles."
+MULTIPLE,missing_cusip,ongoing,LOW,OPEN,no_fix,"12 universe tickers lack CUSIP mapping: AKTX, CADL, CRL, DFTX, DRMA, LBRX, MENS, NBP, OABI, QSI, TEVA, TKNO. These tickers get zero 13F holdings data."
+BEAM,multi_cusip,ongoing,LOW,OPEN,no_fix,"Maps to CUSIPs ['07373V105', '07400F101']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+GH,multi_cusip,ongoing,LOW,OPEN,no_fix,"Maps to CUSIPs ['40131M109', '40131MAB5']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+IMCR,multi_cusip,ongoing,LOW,OPEN,no_fix,"Maps to CUSIPs ['45258D105', '45258DAB1']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+ZVRA,multi_cusip,ongoing,LOW,OPEN,no_fix,"Maps to CUSIPs ['488445206', '98989K200']. Second CUSIP may be convertible/warrant. Holdings may be double-counted if both CUSIPs report positions."
+AKRO,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+ATXS,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+CDTX,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+CVAC,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+DVAX,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+FGEN,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+GBIO,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+LYRA,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+MNMD,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+MRSN,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+MRUS,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+RAPT,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
+VTYX,orphan_price_series,ongoing,LOW,BENIGN,no_fix,Price data exists for removed/excluded ticker. Causes no production harm; used only in historical research.
