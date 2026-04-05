@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { fetchEventPremiumDecomp } from './api';
+import { fetchEventPremiumDecomp, fetchOptionsQCSummary } from './api';
 
 interface EPDName {
   ticker: string;
@@ -57,12 +57,14 @@ function qualityBadge(q: string): string {
 
 export default function EventPremiumPanel({ date, onSelectTicker }: { date: string; onSelectTicker?: (t: string) => void }) {
   const [data, setData] = useState<EPDData | null>(null);
+  const [qc, setQc] = useState<any>(null);
   const [sortKey, setSortKey] = useState<string>('epd_event_premium_ratio');
   const [sortDesc, setSortDesc] = useState(true);
 
   useEffect(() => {
     if (!date) return;
     fetchEventPremiumDecomp(date).then(setData);
+    fetchOptionsQCSummary(date).then(d => setQc(d?.error ? null : d));
   }, [date]);
 
   if (!data || data.error) {
@@ -82,8 +84,45 @@ export default function EventPremiumPanel({ date, onSelectTicker }: { date: stri
 
   const arrow = (key: string) => sortKey === key ? (sortDesc ? ' \u25BC' : ' \u25B2') : '';
 
+  const cov = qc?.coverage;
+  const sq = qc?.source_quality;
+  const noOpt = qc?.no_options_tickers || [];
+
   return (
     <div className="p-4">
+      {/* Source quality strip */}
+      {cov && (
+        <div className="mb-3 rounded-lg border border-slate-200 bg-white px-4 py-2">
+          <div className="flex items-center gap-6 text-[11px]">
+            <div>
+              <span className="text-slate-400">Coverage</span>{' '}
+              <span className="font-semibold text-slate-700">{cov.n_with_options_data}/{cov.n_universe} ({cov.coverage_pct}%)</span>
+            </div>
+            {sq && Object.entries(sq).map(([src, info]: [string, any]) => (
+              <div key={src} className="flex items-center gap-2">
+                <span className={`px-1.5 py-0.5 rounded font-semibold ${
+                  src === 'tastytrade' ? 'bg-sky-100 text-sky-700' :
+                  src === 'polygon' ? 'bg-violet-100 text-violet-700' :
+                  'bg-slate-100 text-slate-600'
+                }`}>{src}</span>
+                <span className="text-slate-600">{info.n_tickers}</span>
+                <span className="text-slate-400">iv={info.iv_median ? (info.iv_median * 100).toFixed(0) + '%' : '-'}</span>
+                <span className="text-slate-400">ep={(info.event_premium_rate * 100).toFixed(0)}%</span>
+                <span className="text-slate-400">judge={info.use_for_judgment_pct.toFixed(0)}%</span>
+                {info.n_short_dated > 0 && (
+                  <span className="text-amber-600">{info.n_short_dated} short</span>
+                )}
+              </div>
+            ))}
+            {noOpt.length > 0 && (
+              <div className="text-slate-400">
+                No options: {noOpt.length} ({noOpt.slice(0, 5).join(', ')}{noOpt.length > 5 ? '...' : ''})
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-3">
         <div>
           <h2 className="text-lg font-semibold">Event Premium Decomposition</h2>

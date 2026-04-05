@@ -1144,6 +1144,20 @@ async def api_rebalance_plan_latest():
     return _load_json(files[0]) or {"error": "Failed to load"}
 
 
+@app.get("/api/options_qc/{date}")
+async def api_options_qc(date: str):
+    """Options QC summary with source-separated quality metrics."""
+    snap_dir = REPO_ROOT / "data" / "snapshots"
+    path = snap_dir / date / "options_diagnostics_summary.json"
+    if not path.exists():
+        # Try latest snapshot
+        candidates = sorted(snap_dir.glob("*/options_diagnostics_summary.json"), reverse=True)
+        if not candidates:
+            return {"error": "No options diagnostics summary found"}
+        path = candidates[0]
+    return _load_json(path) or {"error": "Failed to load"}
+
+
 @app.get("/api/herald_precision/latest")
 async def api_herald_precision_latest():
     """Latest Herald precision metrics."""

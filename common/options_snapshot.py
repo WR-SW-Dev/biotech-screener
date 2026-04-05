@@ -152,8 +152,47 @@ def _build_summary(
     # Options quality composite coverage
     n_oqc = sum(1 for r in all_rows if r.get("options_quality_composite", "") != "")
 
+    # Source-separated quality metrics (TT vs Polygon)
+    source_quality: Dict[str, Any] = {}
+    for source_label, source_basis in [
+        ("tastytrade", "tt_market_metrics"),
+        ("tastytrade_weekly", "tt_weekly_fallback"),
+        ("polygon", "massive_chain_snapshot"),
+    ]:
+        src_rows = [r for r in opt_rows if r.get("opt_diagnostic_basis") == source_basis]
+        if not src_rows:
+            continue
+        src_ivs = []
+        for r in src_rows:
+            try:
+                src_ivs.append(float(r.get("opt_atm_iv", 0)))
+            except (ValueError, TypeError):
+                pass
+        src_ivs.sort()
+        n_src = len(src_rows)
+        source_quality[source_label] = {
+            "n_tickers": n_src,
+            "iv_regime": dict(Counter(r.get("opt_iv_regime", "") for r in src_rows)),
+            "event_premium_rate": round(
+                sum(1 for r in src_rows if r.get("opt_event_premium") == "YES") / max(n_src, 1), 3
+            ),
+            "use_for_judgment_pct": round(
+                sum(1 for r in src_rows if r.get("opt_use_for_judgment") == "YES") / max(n_src, 1) * 100, 1
+            ),
+            "iv_median": round(src_ivs[len(src_ivs) // 2], 4) if src_ivs else None,
+            "iv_p90": round(src_ivs[int(len(src_ivs) * 0.9)], 4) if src_ivs else None,
+            "n_short_dated": sum(1 for r in src_rows if r.get("opt_dte_warning") == "short_dated"),
+        }
+
+    # No-options tickers
+    no_options = sorted(
+        r.get("ticker", "")
+        for r in all_rows
+        if str(r.get("opt_has_data", "0")) != "1" and r.get("opt_diagnostic_basis", "") not in ("no_credentials",)
+    )
+
     return {
-        "schema": "options_diagnostics_summary.v2",
+        "schema": "options_diagnostics_summary.v3",
         "as_of_date": as_of_date,
         "coverage": {
             "n_universe": n_total,
@@ -164,6 +203,8 @@ def _build_summary(
             "ab_ready": n_oqc > 0,
         },
         "diagnostic_basis": dict(sorted(basis_counts.items())),
+        "source_quality": source_quality,
+        "no_options_tickers": no_options,
         "flag_distributions": {
             "iv_regime": dict(sorted(iv_regime_counts.items())),
             "event_premium": dict(sorted(event_premium_counts.items())),
@@ -207,6 +248,30 @@ def _format_summary_md(summary: Dict[str, Any]) -> str:
         lines.append("|--------|-------|")
         for reason, cnt in sorted(basis.items()):
             lines.append(f"| {reason or '(empty)'} | {cnt} |")
+        lines.append("")
+
+    # Source quality
+    sq = summary.get("source_quality", {})
+    if sq:
+        lines.append("## Source Quality")
+        lines.append("")
+        lines.append("| Source | Tickers | IV Median | EP Rate | Judgment % | Short DTE |")
+        lines.append("|--------|---------|-----------|---------|------------|-----------|")
+        for src, info in sq.items():
+            iv_med = f"{info['iv_median']*100:.0f}%" if info.get("iv_median") else "-"
+            lines.append(
+                f"| {src} | {info['n_tickers']} | {iv_med} "
+                f"| {info['event_premium_rate']:.0%} | {info['use_for_judgment_pct']:.0f}% "
+                f"| {info['n_short_dated']} |"
+            )
+        lines.append("")
+
+    # No-options tickers
+    no_opt = summary.get("no_options_tickers", [])
+    if no_opt:
+        lines.append(f"## No Options ({len(no_opt)} tickers)")
+        lines.append("")
+        lines.append(", ".join(no_opt))
         lines.append("")
 
     lines.extend(

@@ -156,3 +156,8 @@ export async function fetchHeraldPrecisionLatest(): Promise<any> {
   const res = await fetch(`${BASE}/api/herald_precision/latest`);
   return res.json();
 }
+
+export async function fetchOptionsQCSummary(date: string): Promise<any> {
+  const res = await fetch(`${BASE}/api/options_qc/${date}`);
+  return res.json();
+}
