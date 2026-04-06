@@ -186,10 +186,13 @@ class ExpectationModel:
             v = float(raw["short_interest_pct"])
             normalized["short_interest_inv"] = _clamp(1.0 - v / 30, 0, 1)
 
-        # opt_event_premium: typically [0, 2+]
+        # opt_event_premium: YES/NO flag (1.0/0.0) or continuous [0, 2+]
         if "opt_event_premium" in raw and raw["opt_event_premium"] is not None:
             v = float(raw["opt_event_premium"])
-            normalized["opt_event_premium"] = _clamp(v / 2.0, 0, 1)
+            if v <= 1.0:
+                normalized["opt_event_premium"] = _clamp(v, 0, 1)
+            else:
+                normalized["opt_event_premium"] = _clamp(v / 2.0, 0, 1)
 
         # priced_move_pct: pass-through (not part of belief score, used as diagnostic)
         if "priced_move_pct" in raw and raw["priced_move_pct"] is not None:

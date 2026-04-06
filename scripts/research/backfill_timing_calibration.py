@@ -155,6 +155,58 @@ def _resolve_outcome(
     return None, None
 
 
+def _resolve_outcome_multi(
+    ticker: str,
+    pred: dict,
+    snap_date: date,
+    future_snapshots: list[tuple[date, dict[str, dict]]],
+) -> tuple[str | None, int | None, str | None]:
+    """Multi-snapshot look-ahead resolution.
+
+    Scans future snapshots until the expected event date has passed.
+    Returns (outcome, delay_days, resolution_date) or (None, None, None).
+    """
+    cat_days = pred["catalyst_days"]
+    expected_date = snap_date + timedelta(days=int(cat_days))
+
+    for future_date, future_map in future_snapshots:
+        # Only check snapshots after the expected date
+        if future_date < expected_date - timedelta(days=7):
+            # Check for early slip detection: date pushed out before expected
+            future_entry = future_map.get(ticker)
+            if future_entry is not None:
+                future_days = future_entry["catalyst_days"]
+                future_expected = future_date + timedelta(days=int(future_days))
+                slip_days = (future_expected - expected_date).days
+                if slip_days > 14:
+                    return "SLIP", slip_days, str(future_date)
+            continue
+
+        future_entry = future_map.get(ticker)
+
+        # Ticker gone from universe after expected date → ON_TIME
+        if future_entry is None:
+            return "ON_TIME", 0, str(future_date)
+
+        future_days = future_entry["catalyst_days"]
+        future_expected = future_date + timedelta(days=int(future_days))
+        slip_days = (future_expected - expected_date).days
+
+        # Date pushed out significantly → SLIP
+        if slip_days > 14:
+            return "SLIP", slip_days, str(future_date)
+
+        # Expected date passed, ticker has a new far-out catalyst → old event resolved
+        if expected_date <= future_date and future_days > 14:
+            return "ON_TIME", 0, str(future_date)
+
+        # Expected date passed and catalyst_days is small → still tracking, ON_TIME
+        if expected_date <= future_date + timedelta(days=7):
+            return "ON_TIME", max(0, slip_days), str(future_date)
+
+    return None, None, None
+
+
 def _compute_on_time_prob(pred: dict) -> tuple[float, str]:
     """Compute the probability that would have been assigned."""
     cat_days = pred["catalyst_days"]
@@ -171,32 +223,50 @@ def _compute_on_time_prob(pred: dict) -> tuple[float, str]:
     return ROLLING_FALLBACK, "rolling_base_rate"
 
 
-def backfill_calibration(min_date: str = "2025-01-01") -> dict:
-    """Backfill the calibration ledger from historical snapshot pairs."""
+def backfill_calibration(min_date: str = "2025-01-01", max_lookahead: int = 12) -> dict:
+    """Backfill the calibration ledger from historical snapshots.
+
+    Args:
+        min_date: Earliest snapshot date to include.
+        max_lookahead: Max number of future snapshots to check for resolution.
+            Higher = more resolutions but slower. 12 ≈ ~3 months of weekly snapshots.
+    """
     snapshots = _get_clean_snapshots(min_date)
     if len(snapshots) < 2:
         return {"error": "Need at least 2 snapshots", "n_resolved": 0}
 
+    # Pre-load all catalyst maps (memory OK for ~400 snapshots × ~60 tickers)
+    logger.info("Loading %d snapshots...", len(snapshots))
+    snap_maps: dict[str, dict[str, dict]] = {}
+    for s in snapshots:
+        snap_maps[s] = _load_catalyst_map(s)
+
     entries = []
-    n_pairs = 0
+    seen_keys: set[tuple[str, str]] = set()  # (prediction_date, ticker) dedup
     n_unresolvable = 0
 
     for i in range(len(snapshots) - 1):
         snap_date_str = snapshots[i]
-        next_date_str = snapshots[i + 1]
         snap_date = date.fromisoformat(snap_date_str)
-        next_snap_date = date.fromisoformat(next_date_str)
+        current_map = snap_maps[snap_date_str]
 
-        current_map = _load_catalyst_map(snap_date_str)
-        next_map = _load_catalyst_map(next_date_str)
-        n_pairs += 1
+        # Build future snapshot list for multi-look-ahead
+        future_end = min(i + 1 + max_lookahead, len(snapshots))
+        future_snapshots = [
+            (date.fromisoformat(snapshots[j]), snap_maps[snapshots[j]]) for j in range(i + 1, future_end)
+        ]
 
         for ticker, pred in current_map.items():
-            outcome, delay = _resolve_outcome(ticker, pred, snap_date, next_snap_date, next_map)
+            key = (snap_date_str, ticker)
+            if key in seen_keys:
+                continue
+
+            outcome, delay, resolution_date = _resolve_outcome_multi(ticker, pred, snap_date, future_snapshots)
             if outcome is None:
                 n_unresolvable += 1
                 continue
 
+            seen_keys.add(key)
             on_time_prob, prob_method = _compute_on_time_prob(pred)
             family = pred["catalyst_family"]
             hardness = classify_hardness(pred["is_hard_catalyst"], pred["catalyst_source"])
@@ -226,12 +296,12 @@ def backfill_calibration(min_date: str = "2025-01-01") -> dict:
                     "warning_labels": [],
                     "actual_outcome": outcome,
                     "actual_delay_days": delay,
-                    "outcome_recorded_at": next_date_str,
+                    "outcome_recorded_at": resolution_date,
                 }
             )
 
     return {
-        "n_snapshot_pairs": n_pairs,
+        "n_snapshots": len(snapshots),
         "n_resolved": len(entries),
         "n_unresolvable": n_unresolvable,
         "entries": entries,
@@ -257,7 +327,7 @@ def main():
     n_slip = sum(1 for e in entries if e["actual_outcome"] == "SLIP")
 
     print("TIMING CALIBRATION BACKFILL")
-    print(f"  Snapshot pairs: {result['n_snapshot_pairs']}")
+    print(f"  Snapshots: {result.get('n_snapshots', result.get('n_snapshot_pairs', '?'))}")
     print(f"  Resolved: {result['n_resolved']}")
     print(f"  Unresolvable: {result['n_unresolvable']}")
     print(f"  ON_TIME: {n_on_time} ({n_on_time / max(len(entries), 1) * 100:.1f}%)")

@@ -25,6 +25,7 @@ Output:
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import logging
 import sys
@@ -165,47 +166,86 @@ def load_market_features(as_of: date) -> Dict[str, Dict[str, Any]]:
     if not rankings_path.exists():
         return features
 
-    # Parse CSV
-    lines = rankings_path.read_text().splitlines()
-    if not lines:
-        return features
+    # Column aliases: CSV column name → canonical feature name
+    _ALIASES = {
+        "de_alpha_60d": "alpha_60d",
+        "de_vol_60d": "vol_60d",
+    }
 
-    headers = lines[0].split(",")
-    for line in lines[1:]:
-        vals = line.split(",")
-        if len(vals) != len(headers):
-            continue
-        row = dict(zip(headers, vals))
-        ticker = row.get("ticker", "")
-        if not ticker:
-            continue
+    # Boolean/categorical columns that need special conversion
+    _BOOL_YES_NO = {"opt_event_premium"}
 
-        feat: Dict[str, Any] = {}
-        for key in (
-            "coinvest_score_z",
-            "inst_delta_z",
-            "insider_net_buy_value_90d",
-            "alpha_60d",
-            "de_rsi_14d",
-            "short_interest_pct",
-            "opt_event_premium",
-            "priced_move_pct",
-            "market_cap_mm",
-            "vol_60d",
-            "endpoint_strength_score",
-            "design_quality_score",
-            "execution_momentum",
-            "selector_score",
-        ):
-            v = row.get(key)
-            if v and v not in ("", "NA", "None", "nan"):
-                try:
-                    feat[key] = float(v)
-                except (ValueError, TypeError):
-                    pass
-        features[ticker] = feat
+    # Numeric feature columns to extract (includes both canonical and CSV names)
+    _FEATURE_KEYS = (
+        "coinvest_score_z",
+        "inst_delta_z",
+        "insider_net_buy_value_90d",
+        "alpha_60d",
+        "de_alpha_60d",
+        "de_rsi_14d",
+        "short_interest_pct",
+        "opt_event_premium",
+        "opt_term_slope",
+        "opt_atm_iv",
+        "opt_front_iv",
+        "opt_back_iv",
+        "priced_move_pct",
+        "market_cap_mm",
+        "vol_60d",
+        "de_vol_60d",
+        "endpoint_strength_score",
+        "design_quality_score",
+        "execution_momentum",
+        "selector_score",
+    )
 
-    logger.info("Market features: %d tickers from %s", len(features), latest)
+    # Parse CSV with proper quoting support
+    with open(rankings_path, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            ticker = row.get("ticker", "")
+            if not ticker:
+                continue
+
+            feat: Dict[str, Any] = {}
+            for key in _FEATURE_KEYS:
+                v = row.get(key)
+                if not v or v in ("", "NA", "None", "nan"):
+                    continue
+                canonical = _ALIASES.get(key, key)
+                if canonical in feat:
+                    continue  # don't overwrite direct match with alias
+                if key in _BOOL_YES_NO:
+                    feat[canonical] = 1.0 if v.upper() == "YES" else 0.0
+                else:
+                    try:
+                        feat[canonical] = float(v)
+                    except (ValueError, TypeError):
+                        pass
+
+            # Compute event premium magnitude from term structure if available
+            front = feat.get("opt_front_iv")
+            back = feat.get("opt_back_iv")
+            if front is not None and back is not None and back > 0:
+                feat["event_premium_magnitude"] = max(0.0, front - back)
+
+            features[ticker] = feat
+
+    # Log feature coverage diagnostics
+    if features:
+        sample = next(iter(features.values()))
+        available = sorted(sample.keys())
+        expected = {"coinvest_score_z", "inst_delta_z", "alpha_60d", "de_rsi_14d", "opt_event_premium"}
+        missing = expected - set(available)
+        logger.info(
+            "Market features: %d tickers from %s (%d fields, missing: %s)",
+            len(features),
+            latest,
+            len(available),
+            ", ".join(sorted(missing)) if missing else "none",
+        )
+    else:
+        logger.warning("Market features: 0 tickers loaded")
     return features
 
 
@@ -233,9 +273,16 @@ def run_single_date(
                 ctx[key] = feats[key]
         context_features[ticker] = ctx
 
+    # Build CRT-calibrated outcome model
+    from event_ev.outcome_model import OutcomeModel
+
+    crt_cal = OutcomeModel.build_crt_calibration(DATA_DIR / "snapshots" / "resolutions")
+    outcome_model = OutcomeModel(crt_calibration=crt_cal) if crt_cal else None
+
     # Run calculator
     calc = EventEVCalculator(
         as_of_date=as_of,
+        outcome_model=outcome_model,
         max_days=180,
         min_days=0,
     )

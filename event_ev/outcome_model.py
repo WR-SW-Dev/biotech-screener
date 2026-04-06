@@ -68,9 +68,13 @@ _MODALITY_ADJUSTMENTS: Dict[str, float] = {
 # Regulatory event priors (separate from clinical PoS)
 _REGULATORY_PRIORS: Dict[str, float] = {
     "PDUFA": 0.85,  # most PDUFAs approve after NDA/BLA
+    "PDUFA_ACTION": 0.85,  # CRT alias for PDUFA
     "FDA_ADCOM": 0.65,  # advisory committee more uncertain
+    "ADVISORY_COMMITTEE": 0.65,  # CRT alias for FDA_ADCOM
     "FDA_SUBMISSION": 0.90,  # most submissions get accepted
+    "NDA_BLA_FILING": 0.90,  # CRT alias for FDA_SUBMISSION
     "FDA_DESIGNATION": 0.75,
+    "REGULATORY_DESIGNATION": 0.75,  # CRT alias for FDA_DESIGNATION
     "EMA_OUTCOME": 0.80,
 }
 
@@ -91,10 +95,12 @@ class OutcomeModel:
         pos_priors: Optional[Dict[str, float]] = None,
         mixed_fraction: float = _DEFAULT_MIXED_FRACTION,
         v2_priors: Optional[Dict[str, Any]] = None,
+        crt_calibration: Optional[Dict[str, Any]] = None,
     ) -> None:
         self.pos_priors = pos_priors or dict(WONG_PHASE_PRIORS)
         self.mixed_fraction = mixed_fraction
         self.v2_priors = v2_priors  # loaded from clinical_pos_priors_v2.json
+        self.crt_calibration = crt_calibration  # CRT empirical rates by phase
 
     def estimate(
         self,
@@ -242,7 +248,13 @@ class OutcomeModel:
         # Clinical events: use phase-based PoS
         phase = node.phase
 
-        # Try v2 empirical first (if available and sufficient N)
+        # Try CRT-calibrated prior (Bayesian blend of Wong + CRT evidence)
+        if self.crt_calibration:
+            crt_rate = self._lookup_crt_prior(phase)
+            if crt_rate is not None:
+                return crt_rate, "crt_calibrated"
+
+        # Try v2 empirical (if available and sufficient N)
         if self.v2_priors:
             v2_rate = self._lookup_v2_prior(phase, node.indication)
             if v2_rate is not None:
@@ -299,6 +311,114 @@ class OutcomeModel:
             return entry.get("hit_rate")
 
         return None
+
+    def _lookup_crt_prior(self, phase: str) -> Optional[float]:
+        """Look up CRT-calibrated prior for a phase.
+
+        Uses beta-binomial posterior: blends Wong prior with CRT evidence.
+        Only returns a value if CRT has sufficient data (n >= 15) for the phase,
+        and the phase is NOT subject to Herald selection bias (Phase 1/2 excluded).
+        """
+        if not self.crt_calibration:
+            return None
+
+        entry = self.crt_calibration.get(phase)
+        if entry is None:
+            return None
+
+        n = entry.get("n", 0)
+        if n < 15:
+            return None  # insufficient CRT evidence
+
+        return entry.get("posterior_mean")
+
+    @staticmethod
+    def build_crt_calibration(
+        resolutions_dir,
+        prior_equiv_n: int = 20,
+    ) -> Dict[str, Any]:
+        """Build CRT-calibrated priors from resolution records.
+
+        Uses beta-binomial conjugate update:
+          prior ~ Beta(α₀, β₀) where α₀ = wong_rate × prior_equiv_n
+          posterior ~ Beta(α₀ + hits, β₀ + misses)
+
+        Phase 1/2 are EXCLUDED due to Herald positive-press-release selection bias.
+        Only Phase 3 has sufficient unbiased data for calibration.
+
+        Args:
+            resolutions_dir: Path to data/snapshots/resolutions/
+            prior_equiv_n: Effective sample size of the Wong prior (higher = more
+                conservative, lower = more data-driven). 20 = moderate trust in prior.
+
+        Returns:
+            Dict keyed by phase with posterior_mean, hits, misses, n, prior, source.
+        """
+        import json
+        from pathlib import Path
+
+        resolutions_dir = Path(resolutions_dir)
+        if not resolutions_dir.exists():
+            return {}
+
+        # Phase mapping from catalyst_type
+        _TYPE_TO_PHASE = {
+            "PHASE_3_READOUT": "3",
+            # Phase 1/2 EXCLUDED: Herald selection bias (only positive PRs captured)
+        }
+
+        # Count hits/misses by phase
+        from collections import defaultdict
+
+        counts: Dict[str, Dict[str, int]] = defaultdict(lambda: {"hit": 0, "miss": 0})
+        for month_dir in resolutions_dir.iterdir():
+            if not month_dir.is_dir():
+                continue
+            for f in month_dir.glob("*.json"):
+                try:
+                    rec = json.loads(f.read_text())
+                except (json.JSONDecodeError, OSError):
+                    continue
+                outcome = rec.get("outcome")
+                ct = rec.get("catalyst_type", "")
+                phase = _TYPE_TO_PHASE.get(ct)
+                if phase is None or outcome not in ("HIT", "MISS"):
+                    continue
+                if outcome == "HIT":
+                    counts[phase]["hit"] += 1
+                else:
+                    counts[phase]["miss"] += 1
+
+        calibration = {}
+        for phase, c in counts.items():
+            hits, misses = c["hit"], c["miss"]
+            n = hits + misses
+            wong_rate = WONG_PHASE_PRIORS.get(phase, 0.25)
+
+            # Beta-binomial posterior
+            alpha_0 = wong_rate * prior_equiv_n
+            beta_0 = (1 - wong_rate) * prior_equiv_n
+            posterior_mean = (alpha_0 + hits) / (alpha_0 + beta_0 + n)
+
+            calibration[phase] = {
+                "hits": hits,
+                "misses": misses,
+                "n": n,
+                "empirical_rate": round(hits / n, 4) if n > 0 else None,
+                "wong_prior": wong_rate,
+                "prior_equiv_n": prior_equiv_n,
+                "posterior_mean": round(posterior_mean, 4),
+            }
+            logger.info(
+                "CRT calibration phase=%s: n=%d, empirical=%.3f, wong=%.3f, posterior=%.3f",
+                phase,
+                n,
+                hits / n if n > 0 else 0,
+                wong_rate,
+                posterior_mean,
+            )
+
+        return calibration
 
     def _allocate_mixed(self, node: CatalystNode, context: Dict[str, Any]) -> float:
         """Determine P(MIXED) allocation.

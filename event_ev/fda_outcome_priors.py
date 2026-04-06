@@ -229,9 +229,9 @@ def enrich_regulatory_prior(node_event_type: str, **kwargs) -> Optional[Dict[str
 
     Returns None for non-regulatory events (caller should use default prior).
     """
-    if node_event_type == "PDUFA":
+    if node_event_type in ("PDUFA", "PDUFA_ACTION"):
         return get_pdufa_prior(**kwargs)
-    if node_event_type == "FDA_ADCOM":
+    if node_event_type in ("FDA_ADCOM", "ADVISORY_COMMITTEE"):
         # AdCom prior is just the base rate — no review type adjustment
         return get_pdufa_prior(review_type="UNKNOWN", **{k: v for k, v in kwargs.items() if k != "review_type"})
     return None
