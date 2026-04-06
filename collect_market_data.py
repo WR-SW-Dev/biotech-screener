@@ -20,6 +20,27 @@ from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Dict, Optional, Tuple
 
+REQUIRED_FIELDS: frozenset = frozenset({"ticker", "price", "collected_at"})
+
+
+def validate_market_records(records: list) -> list:
+    """Validate all records have required fields before writing.
+
+    Raises ValueError listing any records missing required fields.
+    """
+    bad = []
+    for r in records:
+        if not isinstance(r, dict):
+            bad.append(("?", "not a dict"))
+            continue
+        missing = REQUIRED_FIELDS - r.keys()
+        if missing:
+            bad.append((r.get("ticker", "?"), sorted(missing)))
+    if bad:
+        details = "; ".join(f"{t}: missing {m}" for t, m in bad)
+        raise ValueError(f"Market data write-time validation failed — {len(bad)} invalid records: {details}")
+    return records
+
 
 def test_network_connectivity() -> Tuple[bool, str]:
     """
@@ -193,7 +214,7 @@ def collect_all_market_data(
 
     # Check yfinance
     try:
-        import yfinance as yf
+        import yfinance as yf  # noqa: F401
 
         print("✅ yfinance library found")
     except ImportError:
@@ -215,35 +236,35 @@ def collect_all_market_data(
             print("❌ Rate limited by Yahoo Finance (Too Many Requests)")
             print("\n   You recently made many requests. Yahoo Finance has temporarily blocked you.")
             if cache_available:
-                print(f"\n✅ USING EXISTING CACHED DATA")
+                print("\n✅ USING EXISTING CACHED DATA")
                 print(f"   Cache date: {cache_date}")
                 print(f"   Records: {len(cached_data)}")
-                print(f"\n   Your cached data is still valid. Wait 15-30 minutes before retrying.")
-                print(f"{'='*80}\n")
+                print("\n   Your cached data is still valid. Wait 15-30 minutes before retrying.")
+                print("=" * 80 + "\n")
                 return
             elif output_file.exists():
                 print(f"\n✅ Output file already exists: {output_file}")
-                print(f"   If you just ran the full pipeline, your data is already collected!")
-                print(f"   Wait 15-30 minutes before attempting another collection.")
-                print(f"{'='*80}\n")
+                print("   If you just ran the full pipeline, your data is already collected!")
+                print("   Wait 15-30 minutes before attempting another collection.")
+                print("=" * 80 + "\n")
                 return
             else:
-                print(f"\n⚠️  No cached data available.")
-                print(f"   Wait 15-30 minutes, then retry:")
-                print(f"   python collect_market_data.py")
-                print(f"{'='*80}\n")
+                print("\n⚠️  No cached data available.")
+                print("   Wait 15-30 minutes, then retry:")
+                print("   python collect_market_data.py")
+                print("=" * 80 + "\n")
                 return  # Don't crash, just exit gracefully
 
         print(f"❌ Network test failed: {error_msg}")
         if cache_available:
-            print(f"\n⚠️  FALLING BACK TO CACHED DATA")
+            print("\n⚠️  FALLING BACK TO CACHED DATA")
             print(f"   Cache date: {cache_date}")
             print(f"   Cache age: {cache_age} days")
             if cache_age > 7:
                 print(f"   ⚠️  WARNING: Cache is stale (>{7} days old)")
-            print(f"\n   To force refresh when network is available, run:")
-            print(f"   python collect_market_data.py --force-refresh")
-            print(f"{'='*80}\n")
+            print("\n   To force refresh when network is available, run:")
+            print("   python collect_market_data.py --force-refresh")
+            print("=" * 80 + "\n")
             return
         else:
             raise ConnectionError(f"Cannot fetch market data: {error_msg}")
@@ -319,6 +340,9 @@ def collect_all_market_data(
         )
         return
 
+    # Validate before writing — catch missing required fields early
+    validate_market_records(all_data)
+
     # Save (atomic: write to temp file, then rename)
     output_file.parent.mkdir(parents=True, exist_ok=True)
     import tempfile
@@ -365,7 +389,7 @@ def main():
         print("=" * 80)
 
         try:
-            import yfinance as yf
+            import yfinance as yf  # noqa: F401
 
             print("✅ yfinance library found")
         except ImportError:
@@ -378,7 +402,7 @@ def main():
             print("✅ Yahoo Finance API is reachable")
             return 0
         else:
-            print(f"❌ Yahoo Finance API is NOT reachable")
+            print("❌ Yahoo Finance API is NOT reachable")
             print(f"   Reason: {error_msg}")
             print("\n   Possible solutions:")
             print("   1. Check your network/proxy configuration")
