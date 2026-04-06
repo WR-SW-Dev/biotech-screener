@@ -410,17 +410,26 @@ def run_backtest(start: str, cost_bps: float) -> Dict[str, Any]:
         if a4r_rw_hedged is not None:
             arms["a4_ranker_rw"]["hedged_rw"].append(a4r_rw_hedged)
 
-        # Regime (trailing XBI 20d)
-        xbi_20, _ = forward_return_ew(prices, ["XBI"], snap_date, 20)
-        if xbi_20 is not None:
-            if xbi_20 < -0.02:
-                regime = "bear"
-            elif xbi_20 > 0.02:
-                regime = "bull"
-            else:
-                regime = "neutral"
-        else:
-            regime = "unknown"
+        # Regime (LAGGED: trailing XBI 20d return BEFORE snap_date)
+        xbi_prices = prices.get("XBI", {})
+        xbi_sorted = sorted(xbi_prices.keys())
+        regime = "unknown"
+        snap_idx = None
+        for i, d in enumerate(xbi_sorted):
+            if d >= snap_date:
+                snap_idx = i
+                break
+        if snap_idx is not None and snap_idx >= 20:
+            p_now = xbi_prices[xbi_sorted[snap_idx]]
+            p_prev = xbi_prices[xbi_sorted[snap_idx - 20]]
+            if p_prev > 0:
+                trailing_ret = (p_now - p_prev) / p_prev
+                if trailing_ret < -0.02:
+                    regime = "bear"
+                elif trailing_ret > 0.02:
+                    regime = "bull"
+                else:
+                    regime = "neutral"
 
         rec = {
             "date": snap_date,
