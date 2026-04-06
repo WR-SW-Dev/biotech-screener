@@ -783,7 +783,7 @@ def format_digest_md(d: Dict[str, Any]) -> str:
         lines.append(
             f"| Metric | Value |\n|--------|-------|\n"
             f"| Cumulative | {perf.get('cumulative_return_pct', 0):+.2f}% |\n"
-            f"| Excess vs XBI | {perf.get('cumulative_excess_pct', 0):+.2f}% |\n"
+            f"| Excess vs XBI | {perf.get('cumulative_excess_pct', 0):+.2f}% (EW-vs-cap-wt gap included) |\n"
             f"| Max DD | {perf.get('max_drawdown_pct', 0):.2f}% |\n"
             f"| Sharpe | {perf.get('sharpe_ratio', 0):.3f} |\n"
             f"| Win rate | {perf.get('win_rate', 0):.0%} |\n"

@@ -37,7 +37,7 @@ DD_ABS_CRIT = -0.20  # -20% absolute drawdown
 DD_REL_WARN = -0.05  # -5% vs XBI
 CORR_HIGH = 0.85  # portfolio too correlated to XBI
 EARNINGS_CLUSTER_WARN = 5  # >5 names reporting same week
-BULL_XBI_THRESHOLD = 0.02  # XBI > +2% = bull regime (model weakness)
+BULL_XBI_THRESHOLD = 0.02  # XBI > +2% = bull regime
 
 # C6/C7 thresholds
 VOL_TARGET = 0.50  # 50% annualized portfolio vol target
@@ -166,7 +166,7 @@ def build_risk_report(as_of_date: str) -> dict[str, Any]:
             {"level": "WARN", "type": "correlation", "detail": f"Portfolio-XBI corr {corr:.2f} > {CORR_HIGH}"}
         )
 
-    # 4. Regime check (bull = model weakness)
+    # 4. Regime check (bull excess vs XBI is mostly EW-vs-cap-wt gap, not alpha failure)
     xbi_30d_ret = 0
     if len(xbi_prices) >= 22:
         xbi_30d_ret = xbi_prices[-1][1] / xbi_prices[-22][1] - 1
@@ -177,9 +177,13 @@ def build_risk_report(as_of_date: str) -> dict[str, Any]:
     if regime == "bull":
         alerts.append(
             {
-                "level": "WARN",
+                "level": "INFO",
                 "type": "regime",
-                "detail": f"Bull regime (XBI 30d: {xbi_30d_ret:+.1%}). Model IR is -0.13 in bull.",
+                "detail": (
+                    f"Bull regime (XBI 30d: {xbi_30d_ret:+.1%}). "
+                    f"Excess vs XBI will lag due to EW-vs-cap-wt gap; "
+                    f"true selection alpha is ~flat in bull."
+                ),
             }
         )
 

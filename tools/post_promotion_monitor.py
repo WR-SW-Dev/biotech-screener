@@ -111,8 +111,9 @@ def compute_monitor(as_of_date: str) -> Dict[str, Any]:
         alerts.append(f"LOW_POSITIONS: only {n_positions} positions (expected ~30)")
     if n_periods > 0 and cum_excess < -5:
         alerts.append(f"EXCESS_DRAWDOWN: {cum_excess:+.1f}% since promotion")
-    if regime == "bull" and n_periods > 10:
-        alerts.append("BULL_REGIME: known weakness zone — monitor closely")
+    # Note: bull excess vs XBI is mostly EW-vs-cap-weight benchmark mismatch,
+    # not selector failure. True selection alpha is ~flat in bull.
+    # See bull_bear_decomposition_2026_04_06.md.
     if realized_cost_drag_bps > 50:
         alerts.append(f"HIGH_COST_DRAG: {realized_cost_drag_bps:.0f} bps realized since promotion")
 
@@ -147,11 +148,11 @@ def print_monitor(m: Dict):
     print(f"  Regime:     {m['regime']}")
     p = m["performance_since_promotion"]
     print(f"\n  Since {m['promotion_date']}:")
-    print(f"    PnL:      {p['cum_pnl_pct']:+.2f}%")
-    print(f"    XBI:      {p['cum_xbi_pct']:+.2f}%")
-    print(f"    Excess:   {p['cum_excess_pct']:+.2f}%")
-    print(f"    Turnover: {p['total_turnover']:.1%}")
-    print(f"    Cost:     {p['realized_cost_drag_bps']:.0f} bps")
+    print(f"    PnL:             {p['cum_pnl_pct']:+.2f}%")
+    print(f"    XBI:             {p['cum_xbi_pct']:+.2f}%")
+    print(f"    Excess vs XBI:   {p['cum_excess_pct']:+.2f}%  (includes EW-vs-cap-wt gap)")
+    print(f"    Turnover:        {p['total_turnover']:.1%}")
+    print(f"    Cost:            {p['realized_cost_drag_bps']:.0f} bps")
 
     if m["alerts"]:
         print("\n  ALERTS:")
