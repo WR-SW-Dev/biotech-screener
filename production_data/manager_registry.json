@@ -192,6 +192,36 @@
       "name": "Artal Group (Invus)",
       "aum_b": 5.0,
       "style": "long_term_biotech"
+    },
+    {
+      "cik": "0001577524",
+      "name": "Sarissa Capital Management",
+      "aum_b": 1.0,
+      "style": "biotech_activist"
+    },
+    {
+      "cik": "0001704132",
+      "name": "Foresite Capital IV",
+      "aum_b": 1.2,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0001792206",
+      "name": "Foresite Capital V",
+      "aum_b": 1.2,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0002013341",
+      "name": "Foresite Capital VI",
+      "aum_b": 1.1,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0001601692",
+      "name": "Broadfin Capital (Kotler)",
+      "aum_b": 1.5,
+      "style": "healthcare_event_driven"
     }
   ],
   "conditional": [
@@ -233,9 +263,9 @@
     }
   ],
   "metadata": {
-    "version": "2.3",
+    "version": "2.4",
     "last_updated": "2026-04-06",
-    "total_elite_aum_b": 78.84,
+    "total_elite_aum_b": 84.84,
     "notes": [
       "Elite Core = primary signal source",
       "Conditional = secondary breadth signal"
