@@ -410,6 +410,7 @@ class EventEV:
     expectation: CrowdBelief
     payoff: ScenarioPayoffs
     position: Optional[PositionRecommendation] = None
+    branch_sensitivity: Optional[Dict[str, Any]] = None
 
     @property
     def scenario_ev(self) -> float:
@@ -440,6 +441,8 @@ class EventEV:
         }
         if self.position:
             result["position"] = self.position.to_dict()
+        if self.branch_sensitivity:
+            result["branch_sensitivity"] = self.branch_sensitivity
         return result
 
     def to_json(self, indent: int = 2) -> str:

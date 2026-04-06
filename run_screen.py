@@ -5987,6 +5987,107 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Options diagnostics snapshot failed (%s) — skipping sidecar", exc)
 
+    # --- Spec 059: Options event overlay artifacts ---
+    try:
+        from event_ev.catalyst_risk_overlay import build_catalyst_risk_matrix, collect_escalated_alerts
+        from event_ev.implied_realized_calibration import make_forward_log_entry
+        from event_ev.surface_diagnostics import detect_surface_anomalies
+
+        # Forward logging — record implied moves for pending catalysts (grows calibration table)
+        _fwd_log = []
+        for _row in csv_rows:
+            _liq = (_row.get("opt_liquidity_state") or "").strip()
+            _imp = _row.get("implied_event_move", "")
+            _cdays = _row.get("catalyst_days", "")
+            if _liq == "liquid" and _imp and _cdays:
+                try:
+                    _imp_f = float(_imp)
+                    _cdays_i = int(float(_cdays))
+                    if _imp_f > 0 and 0 < _cdays_i <= 90:
+                        _fwd_log.append(
+                            make_forward_log_entry(
+                                ticker=_row.get("ticker", ""),
+                                event_type=_row.get("catalyst_event_type", ""),
+                                event_family=_row.get("catalyst_family", ""),
+                                phase=_row.get("lead_program_phase", ""),
+                                implied_event_move=_imp_f,
+                                catalyst_days=_cdays_i,
+                                opt_liquidity_state=_liq,
+                                snapshot_date=as_of_date,
+                            )
+                        )
+                except (ValueError, TypeError):
+                    pass
+        if _fwd_log:
+            _fwd_path = snap_path / "options_forward_log.json"
+            with open(_fwd_path, "w", encoding="utf-8") as f:
+                json.dump({"as_of_date": as_of_date, "n_entries": len(_fwd_log), "entries": _fwd_log}, f, indent=2)
+            logger.info("[SPEC059] Forward log: %d entries written", len(_fwd_log))
+
+        # Surface anomaly detection
+        _surface_rows = []
+        for _row in csv_rows:
+            _surface_rows.append(
+                {
+                    "ticker": _row.get("ticker", ""),
+                    "opt_front_iv": _row.get("opt_front_iv", ""),
+                    "opt_back_iv": _row.get("opt_back_iv", ""),
+                    "opt_atm_iv": _row.get("opt_atm_iv", ""),
+                    "opt_liquidity_state": _row.get("opt_liquidity_state", "absent"),
+                    "catalyst_days": _row.get("catalyst_days", ""),
+                    "event_family": _row.get("catalyst_family", ""),
+                }
+            )
+        _anomalies = detect_surface_anomalies(_surface_rows)
+        if _anomalies:
+            with open(snap_path / "surface_anomalies.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {"as_of_date": as_of_date, "n_anomalies": len(_anomalies), "anomalies": _anomalies}, f, indent=2
+                )
+            logger.info("[SPEC059] Surface anomalies: %d flagged", len(_anomalies))
+
+        # Catalyst risk matrix (book names near catalysts)
+        _risk_rows = []
+        for _row in csv_rows:
+            _ar = _row.get("actionable_rank", "")
+            if _ar and str(_ar).strip().isdigit() and int(_ar) <= 30:
+                _risk_rows.append(
+                    {
+                        "ticker": _row.get("ticker", ""),
+                        "catalyst_days": _row.get("catalyst_days", ""),
+                        "implied_event_move": _row.get("implied_event_move", ""),
+                        "opt_atm_iv": _row.get("opt_atm_iv", ""),
+                        "opt_iv_regime": _row.get("opt_iv_regime", ""),
+                        "opt_liquidity_state": _row.get("opt_liquidity_state", "absent"),
+                        "underlying_price": _row.get("close_price", _row.get("underlying_price", "")),
+                        "weight_pct": _row.get("weight_pct", "3.33"),
+                        "event_family": _row.get("catalyst_family", ""),
+                    }
+                )
+        _matrix = build_catalyst_risk_matrix(_risk_rows, max_days=30)
+        _alerts = collect_escalated_alerts(_risk_rows)
+        if _matrix or _alerts:
+            with open(snap_path / "catalyst_risk_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "risk_matrix": _matrix,
+                        "n_risk_names": len(_matrix),
+                        "escalated_alerts": _alerts,
+                        "n_alerts": len(_alerts),
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[SPEC059] Risk matrix: %d names, %d alerts (%d critical)",
+                len(_matrix),
+                len(_alerts),
+                sum(1 for a in _alerts if a.get("severity") == "critical"),
+            )
+    except Exception as _s059_exc:
+        logger.debug("Spec 059 overlay artifacts skipped: %s", _s059_exc)
+
     # --- Write regulatory coverage telemetry sidecar ---
     try:
         from common.regulatory_coverage_telemetry import write_telemetry as _write_reg_tel

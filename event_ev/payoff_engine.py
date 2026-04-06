@@ -16,6 +16,7 @@ from datetime import date
 from typing import Any, Dict, List, Optional
 
 from .data_contracts import CatalystNode, OutcomeProbabilities, ScenarioPayoffs
+from .implied_realized_calibration import CalibrationLookup, compute_options_adjusted_move
 
 logger = logging.getLogger(__name__)
 
@@ -73,10 +74,14 @@ class PayoffEngine:
         move_priors: Optional[Dict[str, Dict[str, float]]] = None,
         event_move_table: Optional[Dict[str, Dict[str, float]]] = None,
         risk_aversion: float = _DEFAULT_LAMBDA,
+        options_calibration: Optional[CalibrationLookup] = None,
+        options_blend_weight: float = 0.5,
     ) -> None:
         self.move_priors = move_priors or dict(_DEFAULT_MOVE_PRIORS)
         self.event_move_table = event_move_table  # from event_move_lookup.build_table()
         self.risk_aversion = risk_aversion
+        self.options_calibration = options_calibration
+        self.options_blend_weight = options_blend_weight
 
     def estimate(
         self,
@@ -119,6 +124,45 @@ class PayoffEngine:
         upside_hit = upside_dist.get("p50", 20.0)
         downside_miss = downside_dist.get("p50", -40.0)
         move_mixed = mixed_dist.get("p50", -2.0)
+
+        # Step 2b: Options-implied adjustment (Spec 059)
+        implied_move = context.get("implied_event_move")
+        liquidity = context.get("opt_liquidity_state", "absent")
+        if (
+            self.options_calibration is not None
+            and implied_move is not None
+            and liquidity == "liquid"
+            and float(implied_move) > 0
+        ):
+            implied_move = float(implied_move)
+            hit_adj = self.options_calibration.get_adjustment(family, phase_bucket, "HIT")
+            miss_adj = self.options_calibration.get_adjustment(family, phase_bucket, "MISS")
+
+            if hit_adj is not None:
+                upside_hit = compute_options_adjusted_move(
+                    upside_hit,
+                    implied_move,
+                    hit_adj["ratio"],
+                    self.options_blend_weight,
+                )
+                features_used["upside_source"] = "options_adjusted"
+                features_used["upside_calibration_ratio"] = hit_adj["ratio"]
+                features_used["upside_calibration_n"] = hit_adj["n"]
+
+            if miss_adj is not None:
+                downside_miss = compute_options_adjusted_move(
+                    downside_miss,
+                    implied_move,
+                    miss_adj["ratio"],
+                    self.options_blend_weight,
+                )
+                features_used["downside_source"] = "options_adjusted"
+                features_used["downside_calibration_ratio"] = miss_adj["ratio"]
+                features_used["downside_calibration_n"] = miss_adj["n"]
+
+            features_used["options_adjusted"] = hit_adj is not None or miss_adj is not None
+            features_used["implied_event_move"] = implied_move
+            features_used["options_blend_weight"] = self.options_blend_weight
 
         # Step 3: Apply adjustments
         mcap_mult = self._mcap_multiplier(context.get("market_cap_mm"))

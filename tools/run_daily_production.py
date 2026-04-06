@@ -5125,6 +5125,28 @@ def run_daily(
         except Exception as _fd_err:
             _logger.warning(f"Factor drift failed: {_fd_err}")
 
+        # --- Step 5k.21: Event EV scoring (non-blocking, Spec 060) ---
+        try:
+            from tools.build_event_ev_scores import build_scores as _build_ev_scores
+
+            _ev_dir = REPO_ROOT / "artifacts" / "event_ev"
+            _ev_result = _build_ev_scores(
+                as_of_date=as_of_date,
+                output_dir=_ev_dir,
+            )
+            _ev_n = _ev_result.get("n_total", 0)
+            _ev_act = _ev_result.get("n_actionable", 0)
+            if _ev_n > 0:
+                _ev_top = _ev_result["leaderboard"][0] if _ev_result.get("leaderboard") else {}
+                _logger.info(
+                    f"Event EV → {_ev_n} scored, {_ev_act} actionable, top={_ev_top.get('ticker', '?')} "
+                    f"EV={_ev_top.get('scenario_ev', 0):+.1f}%"
+                )
+            else:
+                _logger.info("Event EV → 0 catalysts in scoring window")
+        except Exception as _ev_err:
+            _logger.warning(f"Event EV scoring failed: {_ev_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest

@@ -566,6 +566,27 @@ async def api_ticker_detail(ticker: str, date: str = ""):
             except (json.JSONDecodeError, OSError):
                 pass
 
+    # Spec 059: Risk overlay for this ticker
+    risk_overlay = {}
+    risk_data = _load_json(REPO_ROOT / "data" / "snapshots" / date / "catalyst_risk_overlay.json")
+    if risk_data:
+        for rm in risk_data.get("risk_matrix", []):
+            if rm.get("ticker") == ticker.upper():
+                risk_overlay["risk_matrix"] = rm
+                break
+        for al in risk_data.get("escalated_alerts", []):
+            if al.get("ticker") == ticker.upper():
+                risk_overlay["escalated_alert"] = al
+                break
+
+    # Spec 059: Surface anomaly for this ticker
+    anomaly_data = _load_json(REPO_ROOT / "data" / "snapshots" / date / "surface_anomalies.json")
+    if anomaly_data:
+        for an in anomaly_data.get("anomalies", []):
+            if an.get("ticker") == ticker.upper():
+                risk_overlay["surface_anomaly"] = an
+                break
+
     return {
         "ticker": ticker.upper(),
         "date": date,
@@ -573,6 +594,7 @@ async def api_ticker_detail(ticker: str, date: str = ""):
         "position": position,
         "options": options,
         "crt_resolutions": crt,
+        "risk_overlay": risk_overlay,
     }
 
 
@@ -1234,6 +1256,97 @@ async def api_herald_precision_latest():
     if not files:
         return {"error": "No Herald precision snapshots"}
     return _load_json(files[0]) or {"error": "Failed to load"}
+
+
+# --- Spec 059: Options Event Overlay ---
+
+
+@app.get("/api/catalyst_risk_matrix/{date}")
+async def api_catalyst_risk_matrix(date: str):
+    """Catalyst proximity risk matrix for book names near catalysts."""
+    snap = REPO_ROOT / "data" / "snapshots" / date / "catalyst_risk_overlay.json"
+    data = _load_json(snap)
+    if not data:
+        return {"error": f"No risk overlay for {date}", "risk_matrix": [], "escalated_alerts": []}
+    return data
+
+
+@app.get("/api/surface_anomalies/{date}")
+async def api_surface_anomalies(date: str):
+    """Surface anomaly flags from cross-sectional options analysis."""
+    snap = REPO_ROOT / "data" / "snapshots" / date / "surface_anomalies.json"
+    data = _load_json(snap)
+    if not data:
+        return {"error": f"No surface anomalies for {date}", "anomalies": []}
+    return data
+
+
+@app.get("/api/options_forward_log/{date}")
+async def api_options_forward_log(date: str):
+    """Options forward log entries for calibration growth tracking."""
+    snap = REPO_ROOT / "data" / "snapshots" / date / "options_forward_log.json"
+    data = _load_json(snap)
+    if not data:
+        return {"error": f"No forward log for {date}", "entries": []}
+    return data
+
+
+# --- Spec 060: Event EV Scoring ---
+
+
+@app.get("/api/event_ev/leaderboard/{date}")
+async def api_event_ev_leaderboard(date: str):
+    """Event EV leaderboard — top catalysts by downside-adjusted EV."""
+    ev_dir = REPO_ROOT / "artifacts" / "event_ev"
+    lb_path = ev_dir / f"{date}_ev_leaderboard.json"
+    if lb_path.exists():
+        data = _load_json(lb_path)
+        if data is not None:
+            return {"as_of_date": date, "leaderboard": data}
+    # Try scores file as fallback
+    scores_path = ev_dir / f"{date}_event_ev_scores.json"
+    data = _load_json(scores_path)
+    if data:
+        return {"as_of_date": date, "leaderboard": data.get("leaderboard", [])}
+    return {"error": f"No EV leaderboard for {date}", "leaderboard": []}
+
+
+@app.get("/api/event_ev/detail/{ticker}/{date}")
+async def api_event_ev_detail(ticker: str, date: str):
+    """Full EventEV breakdown for a single ticker."""
+    ev_dir = REPO_ROOT / "artifacts" / "event_ev"
+    full_path = ev_dir / f"{date}_event_ev_full.json"
+    data = _load_json(full_path)
+    if not data:
+        return {"error": f"No EV data for {date}"}
+    events = data.get("events", [])
+    matches = [e for e in events if e.get("node", {}).get("ticker", "").upper() == ticker.upper()]
+    if not matches:
+        return {"error": f"No EV data for {ticker} on {date}"}
+    return {"ticker": ticker.upper(), "date": date, "events": matches}
+
+
+@app.get("/api/event_ev/history")
+async def api_event_ev_history(limit: int = 30):
+    """Recent EV leaderboard snapshots for trend tracking."""
+    ev_dir = REPO_ROOT / "artifacts" / "event_ev"
+    if not ev_dir.exists():
+        return {"error": "No event EV data", "snapshots": []}
+    files = sorted(ev_dir.glob("*_event_ev_scores.json"), reverse=True)[:limit]
+    snapshots = []
+    for f in files:
+        data = _load_json(f)
+        if data:
+            snapshots.append(
+                {
+                    "as_of_date": data.get("as_of_date"),
+                    "n_total": data.get("n_total", 0),
+                    "n_actionable": data.get("n_actionable", 0),
+                    "top_ev": data.get("stats", {}).get("top_ev"),
+                    "mean_ev": data.get("stats", {}).get("mean_ev"),
+                }
+            )
+    return {"snapshots": snapshots}
 
 
 if __name__ == "__main__":

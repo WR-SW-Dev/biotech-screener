@@ -27,12 +27,14 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from .branch_sensitivity import compute_branch_sensitivity, compute_breakeven_straddle
 from .catalyst_graph import CatalystGraph
 from .data_contracts import CatalystNode, EventEV, PositionRecommendation
 from .expectation_model import ExpectationModel
 from .outcome_model import OutcomeModel
 from .payoff_engine import PayoffEngine
 from .portfolio_translator import PortfolioTranslator
+from .surface_diagnostics import classify_term_structure, compute_belief_intensity_modifier
 from .timing_hazard import TimingHazardModel
 
 logger = logging.getLogger(__name__)
@@ -181,12 +183,63 @@ class EventEVCalculator:
         # Layer 5: Payoff
         payoff_est = self.payoff.estimate(node, outcome_est, self.as_of_date, context_feats)
 
+        # Spec 059: Branch sensitivity overlay (diagnostic, liquid-only)
+        branch_sens = None
+        try:
+            front_iv = context_feats.get("opt_front_iv") or market_feats.get("opt_front_iv")
+            back_iv = context_feats.get("opt_back_iv") or market_feats.get("opt_back_iv")
+            atm_iv = context_feats.get("opt_atm_iv") or market_feats.get("opt_atm_iv")
+            liquidity = context_feats.get("opt_liquidity_state") or market_feats.get("opt_liquidity_state", "absent")
+            underlying = context_feats.get("underlying_price") or market_feats.get("underlying_price")
+            catalyst_days_val = node.days_to_event(self.as_of_date)
+
+            if atm_iv and underlying and catalyst_days_val and catalyst_days_val > 0:
+                surface = {
+                    "opt_atm_iv": atm_iv,
+                    "opt_front_iv": front_iv,
+                    "opt_back_iv": back_iv,
+                    "underlying_price": underlying,
+                    "catalyst_days": catalyst_days_val,
+                    "opt_liquidity_state": liquidity,
+                    "event_family": node.event_family,
+                }
+                scenario_moves = {
+                    "upside_hit": payoff_est.upside_hit,
+                    "downside_miss": payoff_est.downside_miss,
+                    "move_mixed": payoff_est.move_mixed,
+                }
+                branch_sens = compute_branch_sensitivity(surface, scenario_moves)
+
+                # Add breakeven straddle info
+                if branch_sens is not None:
+                    breakeven = compute_breakeven_straddle(
+                        float(underlying),
+                        float(atm_iv),
+                        catalyst_days_val,
+                        event_family=node.event_family,
+                    )
+                    if breakeven:
+                        branch_sens["breakeven"] = breakeven
+
+                    # Add term structure shape + belief modifier
+                    if front_iv and back_iv:
+                        shape = classify_term_structure(float(front_iv), float(back_iv), catalyst_days_val)
+                        if shape:
+                            branch_sens["term_shape"] = shape
+                            branch_sens["belief_modifier"] = compute_belief_intensity_modifier(
+                                shape,
+                                0.0,  # epr_z=0 for single-name (no cross-section here)
+                            )
+        except Exception:
+            logger.debug("Branch sensitivity failed for %s — skipping", node.ticker)
+
         return EventEV(
             node=node,
             timing=timing_est,
             outcome=outcome_est,
             expectation=expectation_est,
             payoff=payoff_est,
+            branch_sensitivity=branch_sens,
         )
 
     # =========================================================================
