@@ -4,19 +4,19 @@ from __future__ import annotations
 
 import json
 import math
+import sys
 from pathlib import Path
 
 import pytest
 
-import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from institutional_summary import build_institutional_summary, _pad_cik, SCHEMA_VERSION
-
+from institutional_summary import SCHEMA_VERSION, _pad_cik, build_institutional_summary
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 def _write_cache(tmp_path, as_of_date, managers_data):
     """Write synthetic 13F PIT cache matching real schema.
@@ -30,19 +30,21 @@ def _write_cache(tmp_path, as_of_date, managers_data):
 
     mgr_entries = []
     for cik, name, holdings in managers_data:
-        mgr_entries.append({
-            "manager_cik": cik,
-            "manager_name": name,
-            "selected": True,
-            "period_of_report": "2025-12-31",
-            "filed_at": "2026-02-14",
-            "form_type": "13F-HR",
-            "accession": "0000000000-00-000000",
-            "holdings_count": len(holdings),
-            "manager_json_path": f"managers/{cik}.json",
-            "raw_xml_path": "",
-            "rejection_reason": "",
-        })
+        mgr_entries.append(
+            {
+                "manager_cik": cik,
+                "manager_name": name,
+                "selected": True,
+                "period_of_report": "2025-12-31",
+                "filed_at": "2026-02-14",
+                "form_type": "13F-HR",
+                "accession": "0000000000-00-000000",
+                "holdings_count": len(holdings),
+                "manager_json_path": f"managers/{cik}.json",
+                "raw_xml_path": "",
+                "rejection_reason": "",
+            }
+        )
         mgr_json = {
             "manager_cik": cik,
             "manager_name": name,
@@ -89,20 +91,32 @@ def _holding(ticker, shares=1000, value=100, cusip="000000000", issuer="Test Inc
 # Tests
 # ---------------------------------------------------------------------------
 
+
 class TestSchemaContract:
     """Output has all required top-level and per-ticker keys."""
 
     def test_required_top_level_keys(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA", shares=500)]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA", shares=500)]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "BBBB"}, cache_base_dir=tmp_path)
         assert result is not None
         expected_keys = {
-            "schema_version", "version", "created_at",
-            "as_of_date", "cache_as_of_date", "cache_schema_version",
-            "elite_managers_total", "elite_managers_with_filing",
-            "tickers_with_signal", "tickers_in_universe", "signal_coverage_pct",
+            "schema_version",
+            "version",
+            "created_at",
+            "as_of_date",
+            "cache_as_of_date",
+            "cache_schema_version",
+            "elite_managers_total",
+            "elite_managers_with_filing",
+            "tickers_with_signal",
+            "tickers_in_universe",
+            "signal_coverage_pct",
             "tickers",
         }
         assert set(result.keys()) == expected_keys
@@ -110,14 +124,22 @@ class TestSchemaContract:
         assert result["created_at"].endswith("Z")
 
     def test_required_per_ticker_keys(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA"}, cache_base_dir=tmp_path)
         per_ticker_keys = {
-            "elite_holders_count", "elite_holder_names", "elite_holder_shares",
-            "elite_total_shares", "elite_total_value_usd_thousands",
-            "inst_score_raw", "inst_score_z",
+            "elite_holders_count",
+            "elite_holder_names",
+            "elite_holder_shares",
+            "elite_total_shares",
+            "elite_total_value_usd_thousands",
+            "inst_score_raw",
+            "inst_score_z",
         }
         assert set(result["tickers"]["AAAA"].keys()) == per_ticker_keys
 
@@ -126,23 +148,32 @@ class TestDeterminism:
     """Same inputs produce byte-identical JSON output."""
 
     def test_deterministic_output(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000002", "Mgr B", [_holding("BBBB"), _holding("AAAA")]),
-            ("0000000001", "Mgr A", [_holding("AAAA"), _holding("CCCC")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000002", "Mgr B", [_holding("BBBB"), _holding("AAAA")]),
+                ("0000000001", "Mgr A", [_holding("AAAA"), _holding("CCCC")]),
+            ],
+        )
         uni = {"AAAA", "BBBB", "CCCC"}
         r1 = build_institutional_summary("2026-01-01", uni, cache_base_dir=tmp_path)
         r2 = build_institutional_summary("2026-01-01", uni, cache_base_dir=tmp_path)
         # Exclude created_at (timestamp differs between calls)
-        r1.pop("created_at"); r2.pop("created_at")
+        r1.pop("created_at")
+        r2.pop("created_at")
         j1 = json.dumps(r1, indent=2, sort_keys=False)
         j2 = json.dumps(r2, indent=2, sort_keys=False)
         assert j1 == j2
 
     def test_ticker_keys_sorted(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("ZZZZ"), _holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("ZZZZ"), _holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"ZZZZ", "AAAA", "MMMM"}, cache_base_dir=tmp_path)
         assert list(result["tickers"].keys()) == ["AAAA", "MMMM", "ZZZZ"]
 
@@ -152,10 +183,14 @@ class TestZScore:
 
     def test_known_z_values(self, tmp_path):
         # 3 tickers: A held by 2, B held by 1, C held by 0
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA"), _holding("BBBB")]),
-            ("0000000002", "Mgr B", [_holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA"), _holding("BBBB")]),
+                ("0000000002", "Mgr B", [_holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "BBBB", "CCCC"}, cache_base_dir=tmp_path)
         # raw scores: A=2, B=1, C=0  → mean=1.0, std=sqrt(2/3)
         mean = 1.0
@@ -166,9 +201,13 @@ class TestZScore:
 
     def test_all_same_scores_z_is_zero(self, tmp_path):
         # All tickers held by 1 manager → std=0 → z=0
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA"), _holding("BBBB")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA"), _holding("BBBB")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "BBBB"}, cache_base_dir=tmp_path)
         assert result["tickers"]["AAAA"]["inst_score_z"] == 0.0
         assert result["tickers"]["BBBB"]["inst_score_z"] == 0.0
@@ -178,9 +217,13 @@ class TestCoverage:
     """Tickers not held get elite_holders_count=0."""
 
     def test_unheld_tickers_included(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "XXXX"}, cache_base_dir=tmp_path)
         assert result["tickers"]["XXXX"]["elite_holders_count"] == 0
         assert result["tickers"]["XXXX"]["elite_holder_names"] == []
@@ -230,9 +273,13 @@ class TestEmptyUniverse:
     """Empty universe returns summary with 0 tickers."""
 
     def test_empty_universe(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", set(), cache_base_dir=tmp_path)
         assert result is not None
         assert result["tickers_in_universe"] == 0
@@ -245,18 +292,26 @@ class TestTickerMatching:
     """Only universe tickers included; non-universe holdings ignored."""
 
     def test_non_universe_excluded(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA"), _holding("XXXX")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA"), _holding("XXXX")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA"}, cache_base_dir=tmp_path)
         assert "XXXX" not in result["tickers"]
         assert "AAAA" in result["tickers"]
 
     def test_empty_ticker_holdings_skipped(self, tmp_path):
         """Holdings with ticker="" are not matched."""
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding(""), _holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding(""), _holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", ""}, cache_base_dir=tmp_path)
         # Empty string ticker should not appear (filtered by `if r.get("ticker")`)
         assert result["tickers"]["AAAA"]["elite_holders_count"] == 1
@@ -270,13 +325,68 @@ class TestSharesAggregation:
             _holding("AAAA", shares=500, value=50),
             _holding("AAAA", shares=300, value=30),  # e.g. common + call
         ]
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", holdings),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", holdings),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA"}, cache_base_dir=tmp_path)
         assert result["tickers"]["AAAA"]["elite_total_shares"] == 800
         assert result["tickers"]["AAAA"]["elite_total_value_usd_thousands"] == 80
         assert result["tickers"]["AAAA"]["elite_holders_count"] == 1  # still 1 manager
+
+
+class TestCUSIPFallback:
+    """Blank-ticker holdings resolved via cusip_static_map.json."""
+
+    def test_blank_ticker_resolved_by_cusip(self, tmp_path):
+        """Holdings with blank ticker but known CUSIP should be counted."""
+        # Write a CUSIP static map
+        cusip_map_path = tmp_path / "production_data" / "cusip_static_map.json"
+        cusip_map_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(cusip_map_path, "w") as f:
+            json.dump({"19240Q201": "COGT"}, f)
+
+        # Holding with blank ticker but resolvable CUSIP
+        _write_cache(
+            tmp_path / "caches",
+            "2026-01-01",
+            [("0000000001", "Mgr A", [_holding("", cusip="19240Q201", issuer="COGENT BIOSCIENCES")])],
+        )
+
+        # Monkey-patch the cusip_map_path for this test
+        import institutional_summary as mod
+
+        orig_path = Path(mod.__file__).parent / "production_data" / "cusip_static_map.json"
+        # Write the map to the expected location (or patch)
+        orig_path.parent.mkdir(parents=True, exist_ok=True)
+        backup = None
+        if orig_path.exists():
+            backup = orig_path.read_text()
+        orig_path.write_text(json.dumps({"19240Q201": "COGT"}))
+
+        try:
+            result = build_institutional_summary("2026-01-01", {"COGT"}, cache_base_dir=tmp_path / "caches")
+            assert result is not None
+            assert result["tickers"]["COGT"]["elite_holders_count"] == 1
+            assert result["tickers_with_signal"] == 1
+        finally:
+            if backup is not None:
+                orig_path.write_text(backup)
+            else:
+                orig_path.unlink(missing_ok=True)
+
+    def test_blank_ticker_without_cusip_map_skipped(self, tmp_path):
+        """Holdings with blank ticker and unknown CUSIP are still skipped."""
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [("0000000001", "Mgr A", [_holding("", cusip="999999999", issuer="UNKNOWN")])],
+        )
+        result = build_institutional_summary("2026-01-01", {"COGT"}, cache_base_dir=tmp_path)
+        assert result["tickers"]["COGT"]["elite_holders_count"] == 0
 
 
 class TestPadCik:
@@ -300,9 +410,16 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 from run_daily_production import check_institutional_summary
 
 
-def _write_sidecar(snap_dir, *, coverage_pct=None, tickers_with=201,
-                   tickers_total=353, managers_used=29, managers_total=29,
-                   schema_version=None):
+def _write_sidecar(
+    snap_dir,
+    *,
+    coverage_pct=None,
+    tickers_with=201,
+    tickers_total=353,
+    managers_used=29,
+    managers_total=29,
+    schema_version=None,
+):
     """Write a valid institutional_summary.json sidecar for gate testing.
 
     Generates synthetic per-ticker data matching the specified counts.
@@ -391,8 +508,7 @@ class TestInstitutionalSummaryGate:
         assert "schema invalid" in result.detail
 
     def test_value_fields(self, tmp_path):
-        _write_sidecar(tmp_path, tickers_with=200,
-                       tickers_total=350, managers_used=28, managers_total=29)
+        _write_sidecar(tmp_path, tickers_with=200, tickers_total=350, managers_used=28, managers_total=29)
         result = check_institutional_summary(tmp_path, warn_coverage_pct=50.0)
         assert result.value["tickers_with_signal"] == 200
         assert result.value["tickers_in_universe"] == 350
@@ -404,10 +520,14 @@ class TestEliteHolderShares:
     """elite_holder_shares field: all holders, sorted by name."""
 
     def test_field_present_and_sorted(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Zeta Fund", [_holding("AAAA", shares=500)]),
-            ("0000000002", "Alpha Fund", [_holding("AAAA", shares=300)]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Zeta Fund", [_holding("AAAA", shares=500)]),
+                ("0000000002", "Alpha Fund", [_holding("AAAA", shares=300)]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA"}, cache_base_dir=tmp_path)
         shares = result["tickers"]["AAAA"]["elite_holder_shares"]
         assert isinstance(shares, dict)
@@ -430,9 +550,13 @@ class TestEliteHolderShares:
         assert len(result["tickers"]["AAAA"]["elite_holder_names"]) == 10
 
     def test_unheld_ticker_empty_dict(self, tmp_path):
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", [_holding("AAAA")]),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", [_holding("AAAA")]),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA", "XXXX"}, cache_base_dir=tmp_path)
         assert result["tickers"]["XXXX"]["elite_holder_shares"] == {}
 
@@ -441,9 +565,13 @@ class TestEliteHolderShares:
             _holding("AAAA", shares=500, value=50),
             _holding("AAAA", shares=300, value=30),
         ]
-        _write_cache(tmp_path, "2026-01-01", [
-            ("0000000001", "Mgr A", holdings),
-        ])
+        _write_cache(
+            tmp_path,
+            "2026-01-01",
+            [
+                ("0000000001", "Mgr A", holdings),
+            ],
+        )
         result = build_institutional_summary("2026-01-01", {"AAAA"}, cache_base_dir=tmp_path)
         shares = result["tickers"]["AAAA"]["elite_holder_shares"]
         assert shares["Mgr A"] == 800
