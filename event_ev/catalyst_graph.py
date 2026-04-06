@@ -333,6 +333,62 @@ class CatalystGraph:
             logger.info("Enriched %d regulatory nodes with FDA designations", enriched)
         return enriched
 
+    def enrich_with_adcom_outcomes(
+        self,
+        adcom_records: List[Dict[str, Any]],
+    ) -> int:
+        """Enrich PDUFA nodes with advisory committee vote outcomes.
+
+        Matches AdCom records to PDUFA nodes by ticker. When a matching
+        AdCom record exists, sets adcom_outcome on the node, which the
+        outcome model uses to adjust the PDUFA approval probability.
+
+        Args:
+            adcom_records: list of dicts with keys: ticker, vote_yes, vote_no,
+                          vote_favorable, fda_outcome, meeting_date
+
+        Returns:
+            Number of nodes enriched.
+        """
+        from .fda_outcome_priors import classify_adcom_outcome
+
+        # Build ticker → adcom outcome lookup (most recent per ticker)
+        by_ticker: Dict[str, Dict] = {}
+        for r in sorted(adcom_records, key=lambda x: x.get("meeting_date", "")):
+            tk = r.get("ticker", "")
+            if tk:
+                by_ticker[tk] = r
+
+        enriched = 0
+        for node in self._nodes.values():
+            if node.event_type != "PDUFA":
+                continue
+            adcom = by_ticker.get(node.ticker)
+            if not adcom:
+                continue
+            yes = adcom.get("vote_yes", 0) or 0
+            no = adcom.get("vote_no", 0) or 0
+            total = yes + no
+            if total > 0:
+                node.adcom_outcome = classify_adcom_outcome(yes, total)
+                enriched += 1
+
+        # Also check for prior CRL history (resubmission indicator)
+        crl_tickers = {r.get("ticker") for r in adcom_records if r.get("fda_outcome") == "CRL"}
+        crl_enriched = 0
+        for node in self._nodes.values():
+            if node.event_type == "PDUFA" and node.ticker in crl_tickers:
+                node.has_prior_crl = True
+                crl_enriched += 1
+
+        if enriched or crl_enriched:
+            logger.info(
+                "Enriched %d PDUFA nodes with AdCom outcomes, %d with CRL history",
+                enriched,
+                crl_enriched,
+            )
+        return enriched + crl_enriched
+
     def load_from_catalyst_events(
         self,
         summaries: List[Dict[str, Any]],
