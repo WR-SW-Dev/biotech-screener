@@ -10881,6 +10881,13 @@ Module 3 Catalyst Detection:
         "'present': counts all present components regardless of gating. (default: applied)",
     )
 
+    parser.add_argument(
+        "--allow-weekend",
+        action="store_true",
+        default=False,
+        help="Allow running on weekends/non-trading days (for research/testing only).",
+    )
+
     args = parser.parse_args()
 
     # =========================================================================
@@ -11071,6 +11078,17 @@ Module 3 Catalyst Detection:
                     logger.warning(f"  {w}")
             else:
                 logger.info("Input freshness check: all hashes match previous run")
+
+        # Trading day guard — prevent snapshots on weekends/holidays
+        # (run_daily_production.py has its own gate, but run_screen.py can be called directly)
+        from datetime import date as _date_cls
+
+        _as_of = _date_cls.fromisoformat(args.as_of_date)
+        if _as_of.weekday() >= 5 and not getattr(args, "allow_weekend", False):
+            logger.error(
+                f"NOT A TRADING DAY: {args.as_of_date} is {_as_of.strftime('%A')}. " f"Use --allow-weekend to override."
+            )
+            return 1
 
         # Refresh price_history.csv with latest prices (non-blocking)
         try:

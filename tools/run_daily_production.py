@@ -4885,6 +4885,41 @@ def run_daily(
         except Exception as _cs_err:
             _logger.warning(f"Coinvest shadow failed: {_cs_err}")
 
+        # --- Step 5k.11c: Regime shadow (non-blocking, diagnostic) ---
+        try:
+            from tools.run_regime_shadow import run_regime_shadow
+
+            _rs_result = run_regime_shadow(as_of_date)
+            _rs_dir = REPO_ROOT / "artifacts" / "regime_shadow"
+            _rs_dir.mkdir(parents=True, exist_ok=True)
+            _rs_path = _rs_dir / f"{as_of_date}.json"
+            with open(_rs_path, "w") as _rs_f:
+                json.dump(_rs_result, _rs_f, indent=2, default=str)
+            _rs_simple = _rs_result.get("simple_classifier", {}).get("regime", "?")
+            _rs_rich = _rs_result.get("rich_classifier", {}).get("regime", "?")
+            _rs_agree = _rs_result.get("agreement", False)
+            _logger.info(f"Regime shadow → simple={_rs_simple} rich={_rs_rich} agree={_rs_agree}")
+        except Exception as _rs_err:
+            _logger.warning(f"Regime shadow failed: {_rs_err}")
+
+        # --- Step 5k.11d: Regime evaluation update (non-blocking, diagnostic) ---
+        try:
+            import json as _json_re
+
+            from scripts.research.regime_evaluation import run_evaluation
+
+            _re_result = run_evaluation(horizon=5, since=None, live_only=False)
+            _re_dir = REPO_ROOT / "artifacts" / "regime_evaluation"
+            _re_dir.mkdir(parents=True, exist_ok=True)
+            _re_path = _re_dir / "regime_eval_h5.json"
+            with open(_re_path, "w") as _re_f:
+                _json_re.dump(_re_result, _re_f, indent=2, default=str)
+            _re_delta = _re_result.get("switching", {}).get("delta", "?")
+            _re_n = _re_result.get("n_observations", 0)
+            _logger.info(f"Regime eval → n={_re_n}, switching delta={_re_delta}%")
+        except Exception as _re_err:
+            _logger.warning(f"Regime evaluation failed: {_re_err}")
+
         # --- Step 5k.12: Asymmetry score (non-blocking, accumulates EPD history) ---
         try:
             from scripts.research.top30_asymmetry_score import score_snapshot

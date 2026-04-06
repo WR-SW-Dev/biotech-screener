@@ -29,24 +29,25 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Any, Tuple, Protocol, runtime_checkable, Callable
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from functools import lru_cache, cached_property
+from functools import cached_property, lru_cache
+from typing import Any, Dict, List, Optional, Protocol, Tuple, runtime_checkable
 
 # Import momentum health monitor for IC-based adjustments
 try:
     from momentum_health_monitor import (
-        MomentumHealthMonitor,
         IC_GOOD,
         IC_MARGINAL,
         IC_WEAK,
         WEIGHT_DISABLED,
         WEIGHT_MINIMAL,
         WEIGHT_REDUCED,
+        MomentumHealthMonitor,
     )
+
     HAS_MOMENTUM_MONITOR = True
 except ImportError:
     HAS_MOMENTUM_MONITOR = False
@@ -85,6 +86,7 @@ class RegimeTransitionCallback(Protocol):
 @dataclass
 class RegimeTransitionEvent:
     """Record of a regime transition event."""
+
     old_regime: str
     new_regime: str
     transition_date: date
@@ -106,12 +108,13 @@ class RegimeTransitionEvent:
 
 class MarketRegime(Enum):
     """Market regime classifications."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     VOLATILITY_SPIKE = "VOLATILITY_SPIKE"
     SECTOR_ROTATION = "SECTOR_ROTATION"
-    RECESSION_RISK = "RECESSION_RISK"          # Inverted yield curve + widening credit
-    CREDIT_CRISIS = "CREDIT_CRISIS"            # Extreme credit spread (>600bps OAS)
+    RECESSION_RISK = "RECESSION_RISK"  # Inverted yield curve + widening credit
+    CREDIT_CRISIS = "CREDIT_CRISIS"  # Extreme credit spread (>600bps OAS)
     SECTOR_DISLOCATION = "SECTOR_DISLOCATION"  # Biotech divergence >15%
     UNKNOWN = "UNKNOWN"
 
@@ -204,41 +207,81 @@ class RegimeHMM:
     """
 
     REGIMES = [
-        "BULL", "BEAR", "VOLATILITY_SPIKE", "SECTOR_ROTATION",
-        "RECESSION_RISK", "CREDIT_CRISIS", "SECTOR_DISLOCATION"
+        "BULL",
+        "BEAR",
+        "VOLATILITY_SPIKE",
+        "SECTOR_ROTATION",
+        "RECESSION_RISK",
+        "CREDIT_CRISIS",
+        "SECTOR_DISLOCATION",
     ]
 
     # Transition probability matrix (regimes tend to persist)
     # Row = from regime, Column = to regime
     DEFAULT_TRANSITION_PROBS = {
-        "BULL": {"BULL": Decimal("0.85"), "BEAR": Decimal("0.05"),
-                 "VOLATILITY_SPIKE": Decimal("0.02"), "SECTOR_ROTATION": Decimal("0.05"),
-                 "RECESSION_RISK": Decimal("0.01"), "CREDIT_CRISIS": Decimal("0.01"),
-                 "SECTOR_DISLOCATION": Decimal("0.01")},
-        "BEAR": {"BULL": Decimal("0.05"), "BEAR": Decimal("0.80"),
-                 "VOLATILITY_SPIKE": Decimal("0.05"), "SECTOR_ROTATION": Decimal("0.05"),
-                 "RECESSION_RISK": Decimal("0.03"), "CREDIT_CRISIS": Decimal("0.01"),
-                 "SECTOR_DISLOCATION": Decimal("0.01")},
-        "VOLATILITY_SPIKE": {"BULL": Decimal("0.05"), "BEAR": Decimal("0.15"),
-                             "VOLATILITY_SPIKE": Decimal("0.60"), "SECTOR_ROTATION": Decimal("0.10"),
-                             "RECESSION_RISK": Decimal("0.05"), "CREDIT_CRISIS": Decimal("0.03"),
-                             "SECTOR_DISLOCATION": Decimal("0.02")},
-        "SECTOR_ROTATION": {"BULL": Decimal("0.15"), "BEAR": Decimal("0.15"),
-                            "VOLATILITY_SPIKE": Decimal("0.05"), "SECTOR_ROTATION": Decimal("0.55"),
-                            "RECESSION_RISK": Decimal("0.04"), "CREDIT_CRISIS": Decimal("0.02"),
-                            "SECTOR_DISLOCATION": Decimal("0.04")},
-        "RECESSION_RISK": {"BULL": Decimal("0.02"), "BEAR": Decimal("0.15"),
-                           "VOLATILITY_SPIKE": Decimal("0.08"), "SECTOR_ROTATION": Decimal("0.05"),
-                           "RECESSION_RISK": Decimal("0.60"), "CREDIT_CRISIS": Decimal("0.08"),
-                           "SECTOR_DISLOCATION": Decimal("0.02")},
-        "CREDIT_CRISIS": {"BULL": Decimal("0.01"), "BEAR": Decimal("0.10"),
-                          "VOLATILITY_SPIKE": Decimal("0.15"), "SECTOR_ROTATION": Decimal("0.04"),
-                          "RECESSION_RISK": Decimal("0.10"), "CREDIT_CRISIS": Decimal("0.58"),
-                          "SECTOR_DISLOCATION": Decimal("0.02")},
-        "SECTOR_DISLOCATION": {"BULL": Decimal("0.10"), "BEAR": Decimal("0.10"),
-                               "VOLATILITY_SPIKE": Decimal("0.05"), "SECTOR_ROTATION": Decimal("0.15"),
-                               "RECESSION_RISK": Decimal("0.03"), "CREDIT_CRISIS": Decimal("0.02"),
-                               "SECTOR_DISLOCATION": Decimal("0.55")},
+        "BULL": {
+            "BULL": Decimal("0.85"),
+            "BEAR": Decimal("0.05"),
+            "VOLATILITY_SPIKE": Decimal("0.02"),
+            "SECTOR_ROTATION": Decimal("0.05"),
+            "RECESSION_RISK": Decimal("0.01"),
+            "CREDIT_CRISIS": Decimal("0.01"),
+            "SECTOR_DISLOCATION": Decimal("0.01"),
+        },
+        "BEAR": {
+            "BULL": Decimal("0.05"),
+            "BEAR": Decimal("0.80"),
+            "VOLATILITY_SPIKE": Decimal("0.05"),
+            "SECTOR_ROTATION": Decimal("0.05"),
+            "RECESSION_RISK": Decimal("0.03"),
+            "CREDIT_CRISIS": Decimal("0.01"),
+            "SECTOR_DISLOCATION": Decimal("0.01"),
+        },
+        "VOLATILITY_SPIKE": {
+            "BULL": Decimal("0.05"),
+            "BEAR": Decimal("0.15"),
+            "VOLATILITY_SPIKE": Decimal("0.60"),
+            "SECTOR_ROTATION": Decimal("0.10"),
+            "RECESSION_RISK": Decimal("0.05"),
+            "CREDIT_CRISIS": Decimal("0.03"),
+            "SECTOR_DISLOCATION": Decimal("0.02"),
+        },
+        "SECTOR_ROTATION": {
+            "BULL": Decimal("0.15"),
+            "BEAR": Decimal("0.15"),
+            "VOLATILITY_SPIKE": Decimal("0.05"),
+            "SECTOR_ROTATION": Decimal("0.55"),
+            "RECESSION_RISK": Decimal("0.04"),
+            "CREDIT_CRISIS": Decimal("0.02"),
+            "SECTOR_DISLOCATION": Decimal("0.04"),
+        },
+        "RECESSION_RISK": {
+            "BULL": Decimal("0.02"),
+            "BEAR": Decimal("0.15"),
+            "VOLATILITY_SPIKE": Decimal("0.08"),
+            "SECTOR_ROTATION": Decimal("0.05"),
+            "RECESSION_RISK": Decimal("0.60"),
+            "CREDIT_CRISIS": Decimal("0.08"),
+            "SECTOR_DISLOCATION": Decimal("0.02"),
+        },
+        "CREDIT_CRISIS": {
+            "BULL": Decimal("0.01"),
+            "BEAR": Decimal("0.10"),
+            "VOLATILITY_SPIKE": Decimal("0.15"),
+            "SECTOR_ROTATION": Decimal("0.04"),
+            "RECESSION_RISK": Decimal("0.10"),
+            "CREDIT_CRISIS": Decimal("0.58"),
+            "SECTOR_DISLOCATION": Decimal("0.02"),
+        },
+        "SECTOR_DISLOCATION": {
+            "BULL": Decimal("0.10"),
+            "BEAR": Decimal("0.10"),
+            "VOLATILITY_SPIKE": Decimal("0.05"),
+            "SECTOR_ROTATION": Decimal("0.15"),
+            "RECESSION_RISK": Decimal("0.03"),
+            "CREDIT_CRISIS": Decimal("0.02"),
+            "SECTOR_DISLOCATION": Decimal("0.55"),
+        },
     }
 
     def __init__(
@@ -278,8 +321,9 @@ class RegimeHMM:
         for to_regime in self.REGIMES:
             prob = Decimal("0")
             for from_regime in self.REGIMES:
-                prob += (self.state_probs.get(from_regime, Decimal("0")) *
-                        self.transition_probs.get(from_regime, {}).get(to_regime, Decimal("0")))
+                prob += self.state_probs.get(from_regime, Decimal("0")) * self.transition_probs.get(
+                    from_regime, {}
+                ).get(to_regime, Decimal("0"))
             predicted_probs[to_regime] = prob
 
         # Update step: P(s_t | observations_{1:t})
@@ -380,9 +424,7 @@ class EnsembleRegimeClassifier:
         # Normalize score_result to probabilities
         total_score = sum(score_result.values())
         if total_score > Decimal("0"):
-            score_probs = {
-                k: v / total_score for k, v in score_result.items()
-            }
+            score_probs = {k: v / total_score for k, v in score_result.items()}
         else:
             score_probs = {k: Decimal("0") for k in score_result}
 
@@ -397,8 +439,7 @@ class EnsembleRegimeClassifier:
 
             # Weighted combination
             ensemble_probs[regime] = (
-                self.weights["score_based"] * score_prob +
-                (Decimal("1") - self.weights["score_based"]) * hmm_prob
+                self.weights["score_based"] * score_prob + (Decimal("1") - self.weights["score_based"]) * hmm_prob
             )
 
         # Normalize ensemble probabilities
@@ -454,31 +495,31 @@ class RegimeDetectionEngine:
     VERSION = "1.2.0"  # Added staleness gating
 
     # VIX thresholds for regime classification
-    VIX_LOW = Decimal("15")      # Below = calm markets
-    VIX_NORMAL = Decimal("20")   # Normal range
-    VIX_ELEVATED = Decimal("25") # Elevated concern
-    VIX_HIGH = Decimal("30")     # High volatility
+    VIX_LOW = Decimal("15")  # Below = calm markets
+    VIX_NORMAL = Decimal("20")  # Normal range
+    VIX_ELEVATED = Decimal("25")  # Elevated concern
+    VIX_HIGH = Decimal("30")  # High volatility
     VIX_EXTREME = Decimal("40")  # Crisis levels
 
     # XBI vs SPY relative performance thresholds (30-day)
-    XBI_OUTPERFORM_STRONG = Decimal("5")   # Strong biotech rally
-    XBI_OUTPERFORM_MODERATE = Decimal("2") # Moderate outperformance
+    XBI_OUTPERFORM_STRONG = Decimal("5")  # Strong biotech rally
+    XBI_OUTPERFORM_MODERATE = Decimal("2")  # Moderate outperformance
     XBI_UNDERPERFORM_MODERATE = Decimal("-2")  # Moderate underperformance
-    XBI_UNDERPERFORM_STRONG = Decimal("-5")    # Biotech selloff
+    XBI_UNDERPERFORM_STRONG = Decimal("-5")  # Biotech selloff
 
     # Fed rate change thresholds (3-month basis points)
-    RATE_HIKE_AGGRESSIVE = Decimal("0.50")   # Aggressive tightening
-    RATE_HIKE_MODERATE = Decimal("0.25")     # Moderate tightening
-    RATE_CUT_MODERATE = Decimal("-0.25")     # Moderate easing
-    RATE_CUT_AGGRESSIVE = Decimal("-0.50")   # Aggressive easing
+    RATE_HIKE_AGGRESSIVE = Decimal("0.50")  # Aggressive tightening
+    RATE_HIKE_MODERATE = Decimal("0.25")  # Moderate tightening
+    RATE_CUT_MODERATE = Decimal("-0.25")  # Moderate easing
+    RATE_CUT_AGGRESSIVE = Decimal("-0.50")  # Aggressive easing
 
     # Yield curve thresholds (10Y-2Y spread in basis points)
-    YIELD_CURVE_INVERTED = Decimal("-10")        # bps - mildly inverted
-    YIELD_CURVE_DEEPLY_INVERTED = Decimal("-50") # bps - deeply inverted
+    YIELD_CURVE_INVERTED = Decimal("-10")  # bps - mildly inverted
+    YIELD_CURVE_DEEPLY_INVERTED = Decimal("-50")  # bps - deeply inverted
 
     # High yield credit spread thresholds (OAS in basis points)
-    HY_SPREAD_ELEVATED = Decimal("400")   # bps OAS - elevated stress
-    HY_SPREAD_CRISIS = Decimal("600")     # bps OAS - crisis levels
+    HY_SPREAD_ELEVATED = Decimal("400")  # bps OAS - elevated stress
+    HY_SPREAD_CRISIS = Decimal("600")  # bps OAS - crisis levels
 
     # Sector dislocation threshold (biotech divergence from market)
     SECTOR_DISLOCATION_THRESHOLD = Decimal("15")  # % divergence
@@ -492,8 +533,8 @@ class RegimeDetectionEngine:
     # Data staleness thresholds and confidence haircuts
     # Regime is time-sensitive; stale data should not drive full weight tilts
     STALENESS_THRESHOLDS: Dict[int, Decimal] = {
-        2: Decimal("1.00"),   # ≤2 days: full confidence
-        5: Decimal("0.85"),   # 3-5 days: 15% haircut
+        2: Decimal("1.00"),  # ≤2 days: full confidence
+        5: Decimal("0.85"),  # 3-5 days: 15% haircut
         10: Decimal("0.65"),  # 6-10 days: 35% haircut
     }
     STALENESS_MAX_DAYS = 10  # >10 days: force UNKNOWN regime
@@ -505,40 +546,40 @@ class RegimeDetectionEngine:
     # Signal weight adjustments by regime
     REGIME_ADJUSTMENTS: Dict[str, Dict[str, Decimal]] = {
         "BULL": {
-            "momentum": Decimal("1.20"),      # Boost momentum (chase winners)
-            "fundamental": Decimal("0.90"),   # Slightly reduce fundamental focus
-            "quality": Decimal("1.00"),       # Neutral quality
-            "catalyst": Decimal("1.15"),      # Boost catalyst plays
-            "institutional": Decimal("1.05"), # Slight institutional boost
-            "clinical": Decimal("1.10"),      # Boost clinical progress
-            "financial": Decimal("0.95")      # Slightly reduce financial focus
+            "momentum": Decimal("1.20"),  # Boost momentum (chase winners)
+            "fundamental": Decimal("0.90"),  # Slightly reduce fundamental focus
+            "quality": Decimal("1.00"),  # Neutral quality
+            "catalyst": Decimal("1.15"),  # Boost catalyst plays
+            "institutional": Decimal("1.05"),  # Slight institutional boost
+            "clinical": Decimal("1.10"),  # Boost clinical progress
+            "financial": Decimal("0.95"),  # Slightly reduce financial focus
         },
         "BEAR": {
-            "momentum": Decimal("0.80"),      # Reduce momentum (avoid falling knives)
-            "fundamental": Decimal("1.15"),   # Boost fundamental focus
-            "quality": Decimal("1.20"),       # Strong quality premium
-            "catalyst": Decimal("0.90"),      # Reduce catalyst speculation
-            "institutional": Decimal("1.15"), # Boost institutional backing
-            "clinical": Decimal("1.05"),      # Slight clinical boost
-            "financial": Decimal("1.20")      # Strong financial focus (runway)
+            "momentum": Decimal("0.80"),  # Reduce momentum (avoid falling knives)
+            "fundamental": Decimal("1.15"),  # Boost fundamental focus
+            "quality": Decimal("1.20"),  # Strong quality premium
+            "catalyst": Decimal("0.90"),  # Reduce catalyst speculation
+            "institutional": Decimal("1.15"),  # Boost institutional backing
+            "clinical": Decimal("1.05"),  # Slight clinical boost
+            "financial": Decimal("1.20"),  # Strong financial focus (runway)
         },
         "VOLATILITY_SPIKE": {
-            "momentum": Decimal("0.70"),      # Strongly reduce momentum
-            "fundamental": Decimal("0.95"),   # Slight fundamental reduction
-            "quality": Decimal("1.30"),       # Maximum quality premium
-            "catalyst": Decimal("0.80"),      # Reduce catalyst (uncertainty)
-            "institutional": Decimal("1.10"), # Institutional stability premium
-            "clinical": Decimal("0.90"),      # Reduce clinical speculation
-            "financial": Decimal("1.25")      # Strong runway focus
+            "momentum": Decimal("0.70"),  # Strongly reduce momentum
+            "fundamental": Decimal("0.95"),  # Slight fundamental reduction
+            "quality": Decimal("1.30"),  # Maximum quality premium
+            "catalyst": Decimal("0.80"),  # Reduce catalyst (uncertainty)
+            "institutional": Decimal("1.10"),  # Institutional stability premium
+            "clinical": Decimal("0.90"),  # Reduce clinical speculation
+            "financial": Decimal("1.25"),  # Strong runway focus
         },
         "SECTOR_ROTATION": {
-            "momentum": Decimal("1.00"),      # Neutral momentum
-            "fundamental": Decimal("1.05"),   # Slight fundamental bias
-            "quality": Decimal("1.10"),       # Slight quality premium
-            "catalyst": Decimal("1.00"),      # Neutral catalyst
-            "institutional": Decimal("1.05"), # Slight institutional premium
-            "clinical": Decimal("1.00"),      # Neutral clinical
-            "financial": Decimal("1.05")      # Slight financial focus
+            "momentum": Decimal("1.00"),  # Neutral momentum
+            "fundamental": Decimal("1.05"),  # Slight fundamental bias
+            "quality": Decimal("1.10"),  # Slight quality premium
+            "catalyst": Decimal("1.00"),  # Neutral catalyst
+            "institutional": Decimal("1.05"),  # Slight institutional premium
+            "clinical": Decimal("1.00"),  # Neutral clinical
+            "financial": Decimal("1.05"),  # Slight financial focus
         },
         "UNKNOWN": {
             "momentum": Decimal("1.00"),
@@ -547,35 +588,35 @@ class RegimeDetectionEngine:
             "catalyst": Decimal("1.00"),
             "institutional": Decimal("1.00"),
             "clinical": Decimal("1.00"),
-            "financial": Decimal("1.00")
+            "financial": Decimal("1.00"),
         },
         "RECESSION_RISK": {
-            "momentum": Decimal("0.60"),      # Strongly reduce momentum
-            "fundamental": Decimal("1.10"),   # Boost fundamentals
-            "quality": Decimal("1.35"),       # Strong quality premium
-            "catalyst": Decimal("0.85"),      # Reduce speculation
-            "institutional": Decimal("1.10"), # Institutional stability
-            "clinical": Decimal("0.95"),      # Slight clinical reduction
-            "financial": Decimal("1.35")      # Maximum runway focus
+            "momentum": Decimal("0.60"),  # Strongly reduce momentum
+            "fundamental": Decimal("1.10"),  # Boost fundamentals
+            "quality": Decimal("1.35"),  # Strong quality premium
+            "catalyst": Decimal("0.85"),  # Reduce speculation
+            "institutional": Decimal("1.10"),  # Institutional stability
+            "clinical": Decimal("0.95"),  # Slight clinical reduction
+            "financial": Decimal("1.35"),  # Maximum runway focus
         },
         "CREDIT_CRISIS": {
-            "momentum": Decimal("0.50"),      # Severely reduce momentum
-            "fundamental": Decimal("1.15"),   # Boost fundamentals
-            "quality": Decimal("1.40"),       # Maximum quality premium
-            "catalyst": Decimal("0.70"),      # Strongly reduce speculation
-            "institutional": Decimal("1.15"), # Strong institutional premium
-            "clinical": Decimal("0.85"),      # Reduce clinical speculation
-            "financial": Decimal("1.45")      # Critical runway focus
+            "momentum": Decimal("0.50"),  # Severely reduce momentum
+            "fundamental": Decimal("1.15"),  # Boost fundamentals
+            "quality": Decimal("1.40"),  # Maximum quality premium
+            "catalyst": Decimal("0.70"),  # Strongly reduce speculation
+            "institutional": Decimal("1.15"),  # Strong institutional premium
+            "clinical": Decimal("0.85"),  # Reduce clinical speculation
+            "financial": Decimal("1.45"),  # Critical runway focus
         },
         "SECTOR_DISLOCATION": {
-            "momentum": Decimal("0.85"),      # Moderately reduce momentum
-            "fundamental": Decimal("1.05"),   # Slight fundamental boost
-            "quality": Decimal("1.10"),       # Quality premium
-            "catalyst": Decimal("1.05"),      # Neutral catalyst
-            "institutional": Decimal("1.20"), # Strong institutional premium
-            "clinical": Decimal("1.00"),      # Neutral clinical
-            "financial": Decimal("1.05")      # Slight financial focus
-        }
+            "momentum": Decimal("0.85"),  # Moderately reduce momentum
+            "fundamental": Decimal("1.05"),  # Slight fundamental boost
+            "quality": Decimal("1.10"),  # Quality premium
+            "catalyst": Decimal("1.05"),  # Neutral catalyst
+            "institutional": Decimal("1.20"),  # Strong institutional premium
+            "clinical": Decimal("1.00"),  # Neutral clinical
+            "financial": Decimal("1.05"),  # Slight financial focus
+        },
     }
 
     # Regime descriptions for reporting
@@ -587,7 +628,7 @@ class RegimeDetectionEngine:
         "RECESSION_RISK": "Yield curve inversion signals recession risk - maximum defensive posture",
         "CREDIT_CRISIS": "Extreme credit stress - focus on balance sheet strength and liquidity",
         "SECTOR_DISLOCATION": "Biotech sector divergence from broader market - institutional focus",
-        "UNKNOWN": "Insufficient data for regime classification"
+        "UNKNOWN": "Insufficient data for regime classification",
     }
 
     @cached_property
@@ -813,11 +854,7 @@ class RegimeDetectionEngine:
         else:
             return ("0.65", False)
 
-    def compute_staleness_haircut(
-        self,
-        data_as_of_date: date,
-        run_as_of_date: date
-    ) -> Tuple[int, Decimal, bool]:
+    def compute_staleness_haircut(self, data_as_of_date: date, run_as_of_date: date) -> Tuple[int, Decimal, bool]:
         """
         Compute confidence haircut based on data staleness.
 
@@ -834,9 +871,7 @@ class RegimeDetectionEngine:
         age_days = (run_as_of_date - data_as_of_date).days
 
         # Use cached computation
-        haircut_str, is_stale = self._compute_staleness_haircut_cached(
-            age_days, self.STALENESS_MAX_DAYS
-        )
+        haircut_str, is_stale = self._compute_staleness_haircut_cached(age_days, self.STALENESS_MAX_DAYS)
         haircut = Decimal(haircut_str)
 
         if is_stale:
@@ -859,17 +894,17 @@ class RegimeDetectionEngine:
         vix_current: Decimal,
         xbi_vs_spy_30d: Decimal,  # % relative performance last 30 days
         fed_rate_change_3m: Optional[Decimal] = None,  # Rate change last 3 months
-        xbi_momentum_10d: Optional[Decimal] = None,    # 10-day XBI momentum
-        spy_momentum_10d: Optional[Decimal] = None,    # 10-day SPY momentum
-        credit_spread_change: Optional[Decimal] = None, # HY spread change
-        momentum_ic_3m: Optional[Decimal] = None,      # 3-month rolling momentum IC
+        xbi_momentum_10d: Optional[Decimal] = None,  # 10-day XBI momentum
+        spy_momentum_10d: Optional[Decimal] = None,  # 10-day SPY momentum
+        credit_spread_change: Optional[Decimal] = None,  # HY spread change
+        momentum_ic_3m: Optional[Decimal] = None,  # 3-month rolling momentum IC
         as_of_date: Optional[date] = None,
-        data_as_of_date: Optional[date] = None,        # Date of market snapshot data
+        data_as_of_date: Optional[date] = None,  # Date of market snapshot data
         # New signals (all optional for backward compatibility)
-        yield_curve_slope: Optional[Decimal] = None,   # 10Y-2Y spread in bps
-        hy_credit_spread: Optional[Decimal] = None,    # HY OAS in bps
+        yield_curve_slope: Optional[Decimal] = None,  # 10Y-2Y spread in bps
+        hy_credit_spread: Optional[Decimal] = None,  # HY OAS in bps
         biotech_fund_flows: Optional[Decimal] = None,  # Weekly ETF flows in $MM
-        use_ensemble: bool = False                     # Enable ensemble classification
+        use_ensemble: bool = False,  # Enable ensemble classification
     ) -> Dict[str, Any]:
         """
         Detect current market regime and return signal adjustments.
@@ -911,7 +946,7 @@ class RegimeDetectionEngine:
             credit_spread_change=credit_spread_change,
             yield_curve_slope=yield_curve_slope,
             hy_credit_spread=hy_credit_spread,
-            biotech_fund_flows=biotech_fund_flows
+            biotech_fund_flows=biotech_fund_flows,
         )
 
         # Determine primary regime and confidence
@@ -935,9 +970,7 @@ class RegimeDetectionEngine:
         # Apply staleness gating if both dates provided
         staleness_info = None
         if data_as_of_date is not None and as_of_date is not None:
-            age_days, haircut, is_stale = self.compute_staleness_haircut(
-                data_as_of_date, as_of_date
-            )
+            age_days, haircut, is_stale = self.compute_staleness_haircut(data_as_of_date, as_of_date)
 
             staleness_info = {
                 "data_as_of_date": data_as_of_date.isoformat(),
@@ -956,26 +989,17 @@ class RegimeDetectionEngine:
                 staleness_info["reason"] = f"Data age ({age_days} days) exceeds max ({self.STALENESS_MAX_DAYS} days)"
             else:
                 # Apply haircut to confidence
-                confidence = (confidence * haircut).quantize(
-                    Decimal("0.01"), rounding=ROUND_HALF_UP
-                )
+                confidence = (confidence * haircut).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
                 staleness_info["adjusted_confidence"] = str(confidence)
                 staleness_info["action"] = "HAIRCUT_APPLIED" if haircut < Decimal("1.00") else "FULL_CONFIDENCE"
 
         # Get signal adjustments for this regime
-        signal_adjustments = self.REGIME_ADJUSTMENTS.get(
-            regime,
-            self.REGIME_ADJUSTMENTS["UNKNOWN"]
-        ).copy()
+        signal_adjustments = self.REGIME_ADJUSTMENTS.get(regime, self.REGIME_ADJUSTMENTS["UNKNOWN"]).copy()
 
         # Apply IC-based momentum health adjustment (kill switch)
         momentum_health = None
         if momentum_ic_3m is not None and HAS_MOMENTUM_MONITOR:
-            momentum_health = self._apply_momentum_health_adjustment(
-                signal_adjustments,
-                momentum_ic_3m,
-                regime
-            )
+            momentum_health = self._apply_momentum_health_adjustment(signal_adjustments, momentum_ic_3m, regime)
 
         # Compile indicator summary
         indicators = {
@@ -992,7 +1016,7 @@ class RegimeDetectionEngine:
             # Raw values for new signals
             "yield_curve_slope_value": str(yield_curve_slope) if yield_curve_slope else None,
             "hy_credit_spread_value": str(hy_credit_spread) if hy_credit_spread else None,
-            "biotech_fund_flows_value": str(biotech_fund_flows) if biotech_fund_flows else None
+            "biotech_fund_flows_value": str(biotech_fund_flows) if biotech_fund_flows else None,
         }
 
         # Generate flags
@@ -1021,7 +1045,7 @@ class RegimeDetectionEngine:
                 "yield_curve_slope": str(yield_curve_slope) if yield_curve_slope else None,
                 "hy_credit_spread": str(hy_credit_spread) if hy_credit_spread else None,
                 "biotech_fund_flows": str(biotech_fund_flows) if biotech_fund_flows else None,
-                "use_ensemble": use_ensemble
+                "use_ensemble": use_ensemble,
             },
             "staleness": staleness_info,
             "momentum_health": momentum_health,
@@ -1031,15 +1055,13 @@ class RegimeDetectionEngine:
             "signal_adjustments": {k: str(v) for k, v in signal_adjustments.items()},
             "indicators": indicators,
             "flags": flags,
-            "module_version": self.VERSION
+            "module_version": self.VERSION,
         }
 
         self.audit_trail.append(audit_entry)
-        self.regime_history.append({
-            "as_of_date": as_of_date.isoformat() if as_of_date else None,
-            "regime": regime,
-            "confidence": confidence
-        })
+        self.regime_history.append(
+            {"as_of_date": as_of_date.isoformat() if as_of_date else None, "regime": regime, "confidence": confidence}
+        )
 
         return {
             "regime": regime,
@@ -1052,13 +1074,11 @@ class RegimeDetectionEngine:
             "indicators": indicators,
             "flags": flags,
             "ensemble": ensemble_result,
-            "audit_entry": audit_entry
+            "audit_entry": audit_entry,
         }
 
     def apply_regime_weights(
-        self,
-        base_scores: Dict[str, Decimal],
-        regime_adjustments: Dict[str, Decimal]
+        self, base_scores: Dict[str, Decimal], regime_adjustments: Dict[str, Decimal]
     ) -> Dict[str, Decimal]:
         """
         Apply regime-based weight adjustments to base scores.
@@ -1075,17 +1095,11 @@ class RegimeDetectionEngine:
         for signal_name, base_score in base_scores.items():
             multiplier = regime_adjustments.get(signal_name, Decimal("1.0"))
             adjusted = base_score * multiplier
-            adjusted_scores[signal_name] = adjusted.quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            adjusted_scores[signal_name] = adjusted.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         return adjusted_scores
 
-    def get_composite_weight_adjustments(
-        self,
-        regime: str,
-        base_weights: Dict[str, Decimal]
-    ) -> Dict[str, Decimal]:
+    def get_composite_weight_adjustments(self, regime: str, base_weights: Dict[str, Decimal]) -> Dict[str, Decimal]:
         """
         Get adjusted composite weights for a given regime.
 
@@ -1111,8 +1125,7 @@ class RegimeDetectionEngine:
         total = sum(adjusted.values())
         if total > Decimal("0"):
             normalized = {
-                k: (v / total).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP)
-                for k, v in adjusted.items()
+                k: (v / total).quantize(Decimal("0.001"), rounding=ROUND_HALF_UP) for k, v in adjusted.items()
             }
         else:
             normalized = base_weights.copy()
@@ -1129,7 +1142,7 @@ class RegimeDetectionEngine:
         credit_spread_change: Optional[Decimal],
         yield_curve_slope: Optional[Decimal] = None,
         hy_credit_spread: Optional[Decimal] = None,
-        biotech_fund_flows: Optional[Decimal] = None
+        biotech_fund_flows: Optional[Decimal] = None,
     ) -> Dict[str, Decimal]:
         """Calculate classification scores for each regime."""
 
@@ -1140,16 +1153,16 @@ class RegimeDetectionEngine:
             "SECTOR_ROTATION": Decimal("0"),
             "RECESSION_RISK": Decimal("0"),
             "CREDIT_CRISIS": Decimal("0"),
-            "SECTOR_DISLOCATION": Decimal("0")
+            "SECTOR_DISLOCATION": Decimal("0"),
         }
 
         # VIX contribution - VOLATILITY_SPIKE gets priority at extreme levels
         if vix_current >= self.VIX_EXTREME:
             scores["VOLATILITY_SPIKE"] += Decimal("60")  # Increased from 40
-            scores["BEAR"] += Decimal("10")              # Reduced from 20
+            scores["BEAR"] += Decimal("10")  # Reduced from 20
         elif vix_current >= self.VIX_HIGH:
             scores["VOLATILITY_SPIKE"] += Decimal("45")  # Increased from 30
-            scores["BEAR"] += Decimal("10")              # Reduced from 15
+            scores["BEAR"] += Decimal("10")  # Reduced from 15
         elif vix_current >= self.VIX_ELEVATED:
             scores["BEAR"] += Decimal("15")
             scores["SECTOR_ROTATION"] += Decimal("10")
@@ -1203,13 +1216,27 @@ class RegimeDetectionEngine:
                 scores["SECTOR_ROTATION"] += Decimal("10")
 
         # Yield curve contribution -> RECESSION_RISK gets priority when inverted
+        # VIX-gated attenuation: if VIX < 20, the market is NOT pricing recession
+        # risk regardless of yield curve shape. The 2022-2024 inversion was structural
+        # (Fed hiking cycle), not a recession signal — VIX stayed calm throughout.
+        # Scale RR contribution by VIX level: VIX < 15 → 0%, 15-20 → 30%, >= 20 → 100%.
+        # This preserves RR scoring when VIX confirms stress, and suppresses it when
+        # VIX says the market is calm (the actual risk barometer).
+        _yc_rr_scale = Decimal("1.0")
+        if yield_curve_slope is not None and yield_curve_slope <= self.YIELD_CURVE_INVERTED:
+            if vix_current < Decimal("15"):
+                _yc_rr_scale = Decimal("0.0")
+            elif vix_current < Decimal("20"):
+                _yc_rr_scale = Decimal("0.3")
+            # VIX >= 20: full weight (market confirms stress)
+
         if yield_curve_slope is not None:
             if yield_curve_slope <= self.YIELD_CURVE_DEEPLY_INVERTED:
-                scores["RECESSION_RISK"] += Decimal("55")  # Increased from 40
-                scores["BEAR"] += Decimal("10")            # Reduced from 15
+                scores["RECESSION_RISK"] += (Decimal("55") * _yc_rr_scale).to_integral_value()
+                scores["BEAR"] += (Decimal("10") * _yc_rr_scale).to_integral_value()
             elif yield_curve_slope <= self.YIELD_CURVE_INVERTED:
-                scores["RECESSION_RISK"] += Decimal("35")  # Increased from 25
-                scores["BEAR"] += Decimal("5")             # Reduced from 10
+                scores["RECESSION_RISK"] += (Decimal("35") * _yc_rr_scale).to_integral_value()
+                scores["BEAR"] += (Decimal("5") * _yc_rr_scale).to_integral_value()
             elif yield_curve_slope >= Decimal("100"):  # Steep curve (>100bps)
                 scores["BULL"] += Decimal("10")
 
@@ -1217,7 +1244,7 @@ class RegimeDetectionEngine:
         if hy_credit_spread is not None:
             if hy_credit_spread >= self.HY_SPREAD_CRISIS:
                 scores["CREDIT_CRISIS"] += Decimal("85")  # Increased further for clear signal
-                scores["BEAR"] += Decimal("5")            # Minimal BEAR contribution
+                scores["BEAR"] += Decimal("5")  # Minimal BEAR contribution
                 scores["VOLATILITY_SPIKE"] += Decimal("10")
             elif hy_credit_spread >= self.HY_SPREAD_ELEVATED:
                 scores["CREDIT_CRISIS"] += Decimal("40")  # Increased from 35
@@ -1227,18 +1254,27 @@ class RegimeDetectionEngine:
                 scores["BULL"] += Decimal("10")
 
             # Combined RECESSION_RISK signal: inverted curve + widening credit
+            # Also VIX-gated: only fires when VIX confirms stress
             if yield_curve_slope is not None:
                 if yield_curve_slope <= self.YIELD_CURVE_INVERTED and hy_credit_spread >= self.HY_SPREAD_ELEVATED:
-                    scores["RECESSION_RISK"] += Decimal("25")  # Increased from 20
+                    scores["RECESSION_RISK"] += (Decimal("25") * _yc_rr_scale).to_integral_value()
 
         # Sector dislocation contribution - priority when extreme divergence
         if xbi_vs_spy_30d is not None:
             abs_divergence = abs(xbi_vs_spy_30d)
             if abs_divergence >= self.SECTOR_DISLOCATION_THRESHOLD:
                 scores["SECTOR_DISLOCATION"] += Decimal("55")  # Increased from 35
-                scores["SECTOR_ROTATION"] += Decimal("10")     # Reduced from 15
+                scores["SECTOR_ROTATION"] += Decimal("10")  # Reduced from 15
             elif abs_divergence >= Decimal("10"):
                 scores["SECTOR_DISLOCATION"] += Decimal("25")  # Increased from 15
+
+        # Benign conditions floor: low VIX + tight credit = risk-on environment
+        # This prevents structural yield curve inversion from dominating when
+        # the market is clearly not pricing recession risk (2023-2024 pattern)
+        if vix_current <= Decimal("18") and hy_credit_spread is not None and hy_credit_spread <= Decimal("350"):
+            scores["BULL"] += Decimal("20")
+        elif vix_current <= Decimal("20") and hy_credit_spread is not None and hy_credit_spread <= Decimal("350"):
+            scores["BULL"] += Decimal("10")
 
         # Fund flow contribution
         if biotech_fund_flows is not None:
@@ -1247,17 +1283,14 @@ class RegimeDetectionEngine:
             elif biotech_fund_flows >= self.FUND_FLOW_MODERATE_INFLOWS:
                 scores["BULL"] += Decimal("8")
             elif biotech_fund_flows <= self.FUND_FLOW_HEAVY_OUTFLOWS:
-                scores["BEAR"] += Decimal("10")            # Reduced from 15
+                scores["BEAR"] += Decimal("10")  # Reduced from 15
                 scores["SECTOR_DISLOCATION"] += Decimal("20")  # Increased from 10
             elif biotech_fund_flows <= self.FUND_FLOW_MODERATE_OUTFLOWS:
-                scores["BEAR"] += Decimal("5")             # Reduced from 8
+                scores["BEAR"] += Decimal("5")  # Reduced from 8
 
         return scores
 
-    def _select_regime(
-        self,
-        regime_scores: Dict[str, Decimal]
-    ) -> Tuple[str, Decimal]:
+    def _select_regime(self, regime_scores: Dict[str, Decimal]) -> Tuple[str, Decimal]:
         """Select the regime with highest score and calculate confidence."""
 
         # Find max score
@@ -1268,9 +1301,7 @@ class RegimeDetectionEngine:
         total_score = sum(regime_scores.values())
 
         if total_score > Decimal("0"):
-            confidence = (max_score / total_score).quantize(
-                Decimal("0.01"), rounding=ROUND_HALF_UP
-            )
+            confidence = (max_score / total_score).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         else:
             return "UNKNOWN", Decimal("0.00")
 
@@ -1366,12 +1397,7 @@ class RegimeDetectionEngine:
         else:
             return "NEUTRAL"
 
-    def _generate_flags(
-        self,
-        vix: Decimal,
-        xbi_vs_spy: Decimal,
-        regime: str
-    ) -> List[str]:
+    def _generate_flags(self, vix: Decimal, xbi_vs_spy: Decimal, regime: str) -> List[str]:
         """Generate warning/info flags."""
         flags = []
 
@@ -1405,10 +1431,7 @@ class RegimeDetectionEngine:
         return flags
 
     def _apply_momentum_health_adjustment(
-        self,
-        signal_adjustments: Dict[str, Decimal],
-        momentum_ic_3m: Decimal,
-        regime: str
+        self, signal_adjustments: Dict[str, Decimal], momentum_ic_3m: Decimal, regime: str
     ) -> Dict[str, Any]:
         """
         Apply IC-based momentum health adjustment (kill switch).
@@ -1466,8 +1489,11 @@ class RegimeDetectionEngine:
             "original_weight": str(original_momentum),
             "adjusted_weight": str(final_weight),
             "regime": regime,
-            "action": "DISABLED" if final_weight == Decimal("0") else
-                      "REDUCED" if final_weight < original_momentum else "FULL",
+            "action": (
+                "DISABLED"
+                if final_weight == Decimal("0")
+                else "REDUCED" if final_weight < original_momentum else "FULL"
+            ),
         }
 
     def get_regime_history(self) -> List[Dict[str, Any]]:
@@ -1509,9 +1535,7 @@ def demonstration() -> None:
     print("-" * 70)
 
     result1 = engine.detect_regime(
-        vix_current=Decimal("14.5"),
-        xbi_vs_spy_30d=Decimal("6.2"),
-        fed_rate_change_3m=Decimal("-0.25")
+        vix_current=Decimal("14.5"), xbi_vs_spy_30d=Decimal("6.2"), fed_rate_change_3m=Decimal("-0.25")
     )
 
     print(f"Regime: {result1['regime']}")
@@ -1519,7 +1543,7 @@ def demonstration() -> None:
     print(f"Confidence: {result1['confidence']}")
     print(f"Indicators: {result1['indicators']}")
     print("Signal Adjustments:")
-    for signal, mult in result1['signal_adjustments'].items():
+    for signal, mult in result1["signal_adjustments"].items():
         print(f"  {signal}: {mult}x")
     print()
 
@@ -1528,9 +1552,7 @@ def demonstration() -> None:
     print("-" * 70)
 
     result2 = engine.detect_regime(
-        vix_current=Decimal("28.5"),
-        xbi_vs_spy_30d=Decimal("-7.3"),
-        fed_rate_change_3m=Decimal("0.75")
+        vix_current=Decimal("28.5"), xbi_vs_spy_30d=Decimal("-7.3"), fed_rate_change_3m=Decimal("0.75")
     )
 
     print(f"Regime: {result2['regime']}")
@@ -1547,9 +1569,7 @@ def demonstration() -> None:
     print("-" * 70)
 
     result3 = engine.detect_regime(
-        vix_current=Decimal("42.0"),
-        xbi_vs_spy_30d=Decimal("-3.5"),
-        fed_rate_change_3m=Decimal("0.00")
+        vix_current=Decimal("42.0"), xbi_vs_spy_30d=Decimal("-3.5"), fed_rate_change_3m=Decimal("0.00")
     )
 
     print(f"Regime: {result3['regime']}")
@@ -1561,16 +1581,9 @@ def demonstration() -> None:
     print("Example 4: Composite Weight Adjustment")
     print("-" * 70)
 
-    base_weights = {
-        "clinical": Decimal("0.40"),
-        "financial": Decimal("0.35"),
-        "catalyst": Decimal("0.25")
-    }
+    base_weights = {"clinical": Decimal("0.40"), "financial": Decimal("0.35"), "catalyst": Decimal("0.25")}
 
-    adjusted_weights = engine.get_composite_weight_adjustments(
-        regime="BEAR",
-        base_weights=base_weights
-    )
+    adjusted_weights = engine.get_composite_weight_adjustments(regime="BEAR", base_weights=base_weights)
 
     print("Base Weights → Adjusted Weights (BEAR regime):")
     for component in base_weights:
@@ -1597,7 +1610,7 @@ def demonstration() -> None:
             vix_current=Decimal("18.0"),
             xbi_vs_spy_30d=Decimal("1.0"),
             fed_rate_change_3m=Decimal("0.00"),
-            momentum_ic_3m=ic
+            momentum_ic_3m=ic,
         )
 
         print(f"\nIC = {ic} ({description})")

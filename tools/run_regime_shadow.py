@@ -170,7 +170,11 @@ def _run_rich_classifier(
 
     # Build inputs from XBI metrics + market snapshot
     vix = market_snapshot.get("vix", "20")
-    xbi_30d = xbi_metrics.get("xbi_return_30d")
+    # Use relative XBI-SPY return from market snapshot (correct),
+    # falling back to absolute XBI 30d return if snapshot missing SPY data
+    xbi_30d = market_snapshot.get("xbi_vs_spy_30d")
+    if xbi_30d is None or xbi_30d == "":
+        xbi_30d = xbi_metrics.get("xbi_return_30d")
     if xbi_30d is None:
         xbi_30d = 0
     fed_rate = market_snapshot.get("fed_rate_change_3m", "0")
@@ -188,6 +192,8 @@ def _run_rich_classifier(
     # Optional macro inputs
     yield_curve_bps = market_snapshot.get("yield_curve_slope_bps")
     credit_change = market_snapshot.get("credit_spread_change")
+    hy_credit_spread = market_snapshot.get("hy_credit_spread")
+    biotech_fund_flows = market_snapshot.get("biotech_fund_flows")
 
     try:
         kwargs = dict(
@@ -203,6 +209,10 @@ def _run_rich_classifier(
             kwargs["yield_curve_slope"] = Decimal(str(yield_curve_bps))
         if credit_change and credit_change != "0":
             kwargs["credit_spread_change"] = Decimal(str(credit_change))
+        if hy_credit_spread and hy_credit_spread != "0":
+            kwargs["hy_credit_spread"] = Decimal(str(hy_credit_spread))
+        if biotech_fund_flows and biotech_fund_flows != "0":
+            kwargs["biotech_fund_flows"] = Decimal(str(biotech_fund_flows))
 
         result = engine.detect_regime(**kwargs)
 
