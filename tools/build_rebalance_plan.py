@@ -47,6 +47,61 @@ def _sf(v, default=float("nan")):
         return default
 
 
+def _compute_drawdowns(
+    price_csv: Path,
+    as_of_date: str,
+    portfolio_tickers: list[str],
+    lookback: int = 20,
+) -> tuple[float, dict[str, float]]:
+    """Compute trailing drawdowns from price history for C4.
+
+    Returns (portfolio_dd_from_high, {ticker: dd_from_high}).
+    Uses XBI as portfolio proxy. DD is negative (e.g., -0.12 = 12% below high).
+    """
+    tickers_needed = set(portfolio_tickers) | {"XBI"}
+
+    # Load prices: {ticker: [(date_str, close), ...]}
+    prices: dict[str, list[tuple[str, float]]] = {}
+    with open(price_csv, newline="") as f:
+        for row in csv.DictReader(f):
+            tk = row.get("ticker", "")
+            if tk not in tickers_needed:
+                continue
+            d = row.get("date", "")
+            c = _sf(row.get("close"), default=None)
+            if d and c is not None:
+                prices.setdefault(tk, []).append((d, c))
+
+    # Sort by date, take last `lookback` entries up to as_of_date
+    def _trailing(ticker: str) -> tuple[float, float] | None:
+        """Returns (high, current) for trailing window, or None."""
+        pts = prices.get(ticker, [])
+        pts = [(d, c) for d, c in pts if d <= as_of_date]
+        pts.sort(key=lambda x: x[0])
+        if len(pts) < 2:
+            return None
+        window = pts[-lookback:]
+        high = max(c for _, c in window)
+        current = window[-1][1]
+        return high, current
+
+    # Portfolio-level DD (XBI proxy)
+    xbi = _trailing("XBI")
+    portfolio_dd = 0.0
+    if xbi and xbi[0] > 0:
+        portfolio_dd = (xbi[1] - xbi[0]) / xbi[0]  # negative when below high
+
+    # Single-name DDs
+    name_dds: dict[str, float] = {}
+    for tk in portfolio_tickers:
+        result = _trailing(tk)
+        if result and result[0] > 0:
+            dd = (result[1] - result[0]) / result[0]
+            name_dds[tk] = dd
+
+    return portfolio_dd, name_dds
+
+
 def build_plan(as_of_date: str) -> dict[str, Any]:
     rankings_path = SNAPSHOTS_DIR / as_of_date / "rankings.csv"
     if not rankings_path.exists():
@@ -118,12 +173,24 @@ def build_plan(as_of_date: str) -> dict[str, Any]:
         corr_cluster_max_names=ccl.get("max_names_per_cluster", 3),
     )
 
-    # Build vol/corr snapshot for C6/C7
+    # Build market snapshot for risk layer
     snapshot = MarketSnapshot()
+    price_csv = REPO_ROOT / "production_data" / "price_history.csv"
+
+    # C4: Populate drawdown data from price history
+    try:
+        if price_csv.exists():
+            portfolio_tks = [p.ticker for p in risk_positions]
+            portfolio_dd, name_dds = _compute_drawdowns(price_csv, as_of_date, portfolio_tks)
+            snapshot.portfolio_dd_from_high = portfolio_dd
+            snapshot.single_name_dds = name_dds
+    except Exception:
+        pass  # graceful degradation — C4 skips with default (0.0)
+
+    # C6/C7: Build vol/corr snapshot
     try:
         from portfolio_vol_corr_layer import build_vol_corr_snapshot
 
-        price_csv = REPO_ROOT / "production_data" / "price_history.csv"
         if price_csv.exists() and (risk_policy.vol_target_enabled or risk_policy.corr_cluster_enabled):
             portfolio_tks = [p.ticker for p in risk_positions]
             ew_w = 1.0 / max(len(portfolio_tks), 1)

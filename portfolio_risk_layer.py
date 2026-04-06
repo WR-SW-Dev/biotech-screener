@@ -112,8 +112,11 @@ def _apply_correlated_pair_limit(positions, policy, breaches):
     limit = policy.max_same_indication_phase
     groups: Dict[tuple, List[Position]] = defaultdict(list)
     for p in positions:
-        if p.primary_indication and p.lead_program_phase:
-            groups[(p.primary_indication, p.lead_program_phase)].append(p)
+        # Use primary_indication if available, fall back to therapeutic_area
+        indication = p.primary_indication or p.therapeutic_area
+        phase = p.lead_program_phase
+        if indication and phase:
+            groups[(indication, phase)].append(p)
     dropped = set()
     for key, group in groups.items():
         if len(group) <= limit:
