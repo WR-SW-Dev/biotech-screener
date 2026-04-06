@@ -115,12 +115,6 @@
       "style": "physician_led_fundamental"
     },
     {
-      "cik": "0001595851",
-      "name": "Ghost Tree Capital",
-      "aum_b": 0.36,
-      "style": "healthcare_long_short"
-    },
-    {
       "cik": "0001274413",
       "name": "Sectoral Asset Management",
       "aum_b": 0.39,
@@ -179,7 +173,7 @@
       "name": "BVF Partners",
       "aum_b": 3.0,
       "style": "biotech_specialist",
-      "notes": "Last filing Q4 2023 — stale. Monitor for Q1 2026 filing."
+      "notes": "Last filing Q4 2023 \u2014 stale. Monitor for Q1 2026 filing."
     },
     {
       "cik": "0001633313",
@@ -263,12 +257,13 @@
     }
   ],
   "metadata": {
-    "version": "2.4",
+    "version": "2.5",
     "last_updated": "2026-04-06",
-    "total_elite_aum_b": 84.84,
+    "total_elite_aum_b": 122.72,
     "notes": [
       "Elite Core = primary signal source",
-      "Conditional = secondary breadth signal"
+      "Conditional = secondary breadth signal",
+      "v2.5: Ghost Tree removed \u2014 t=-5.16 anti-signal across 454 obs / 12 quarters"
     ]
   }
 }
