@@ -34,13 +34,6 @@
     "first_seen_date": "2026-03-17",
     "estimated_event_date": "2026-07-01"
   },
-  "BIIB": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 17,
-    "first_seen_date": "2026-03-17",
-    "estimated_event_date": "2026-04-03"
-  },
   "RPRX": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",
@@ -180,13 +173,6 @@
     "catalyst_days_at_first_seen": 89,
     "first_seen_date": "2026-04-02",
     "estimated_event_date": "2026-06-30"
-  },
-  "IONS": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 1,
-    "first_seen_date": "2026-04-02",
-    "estimated_event_date": "2026-04-03"
   },
   "KNSA": {
     "catalyst_event_type": "DATA_READOUT",
