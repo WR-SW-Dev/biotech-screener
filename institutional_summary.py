@@ -75,9 +75,19 @@ def build_institutional_summary(
     except Exception:
         _ca_reg = None
 
+    # CUSIP fallback map for holdings with blank tickers
+    _cusip_map: Dict[str, str] = {}
+    _cusip_map_path = Path(__file__).parent / "production_data" / "cusip_static_map.json"
+    if _cusip_map_path.exists():
+        try:
+            _cusip_map = json.loads(_cusip_map_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+
     # Accumulate per-ticker holdings across selected managers
     # Per-ticker: {holders: set(short_name), total_shares: int, total_value: int}
     ticker_accum: Dict[str, Dict[str, Any]] = {}
+    _cusip_resolved = 0
 
     selected_managers = [m for m in index.get("managers", []) if m.get("selected")]
     for mgr_entry in selected_managers:
@@ -91,6 +101,12 @@ def build_institutional_summary(
 
         for h in mgr_data.get("holdings", []):
             tk = h.get("ticker", "")
+            # CUSIP fallback: resolve blank tickers from static map
+            if not tk and _cusip_map:
+                cusip = (h.get("cusip") or "").strip().upper()[:9]
+                tk = _cusip_map.get(cusip, "")
+                if tk:
+                    _cusip_resolved += 1
             # Resolve renamed tickers (e.g. BGNE → ONC)
             if tk and _ca_reg:
                 tk = _ca_resolve(tk, as_of_date, _ca_reg)
@@ -154,6 +170,9 @@ def build_institutional_summary(
                 tickers_out[tk]["inst_score_z"] = 0.0
 
     tickers_with_signal = sum(1 for v in tickers_out.values() if v["elite_holders_count"] > 0)
+
+    if _cusip_resolved > 0:
+        logger.info("CUSIP fallback resolved %d blank-ticker holdings from static map", _cusip_resolved)
 
     return {
         "schema_version": SCHEMA_VERSION,
