@@ -295,9 +295,9 @@ def check_shadow_monitor(dt: date) -> CheckResult:
 
     if anomalies:
         return CheckResult(
-            "shadow_monitor", "FAIL" if len(anomalies) > 1 else "WARN", f"alert_level={alert_level}", anomalies
+            "shadow_monitor", "FAIL" if len(anomalies) > 1 else "WARN", f"attention={alert_level}", anomalies
         )
-    return CheckResult("shadow_monitor", "OK", f"alert_level={alert_level}")
+    return CheckResult("shadow_monitor", "OK", f"attention={alert_level}")
 
 
 # ── AACT Trial Ingest ─────────────────────────────────────────
