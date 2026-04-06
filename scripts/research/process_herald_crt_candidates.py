@@ -85,6 +85,58 @@ def candidate_to_resolution(cand: dict) -> dict:
     return record
 
 
+def auto_classify_headline(headline: str):
+    """Attempt to classify a NEEDS_REVIEW candidate by headline phrases.
+
+    Returns 'HIT', 'MISS', or None (still ambiguous).
+    Uses phrase-level matching to avoid false positives like 'seronegative'.
+    """
+    hl = (headline or "").lower()
+
+    miss_phrases = [
+        "did not meet",
+        "failed to meet",
+        "failed to achieve",
+        "complete response letter",
+        "receives crl",
+        "received crl",
+        "terminated the",
+        "discontinued the",
+        "halted the",
+        "negative results",
+        "negative outcome",
+        "disappointing results",
+    ]
+    for phrase in miss_phrases:
+        if phrase in hl:
+            return "MISS"
+
+    hit_phrases = [
+        "positive topline",
+        "positive interim",
+        "positive phase",
+        "positive results",
+        "positive data",
+        "positive clinical",
+        "positive efficacy",
+        "positive safety",
+        "met its primary",
+        "met the primary",
+        "met all primary",
+        "breakthrough therapy designation",
+        "breakthrough designation",
+        "fda approval",
+        "approved by fda",
+        "granted approval",
+        "accelerated approval",
+    ]
+    for phrase in hit_phrases:
+        if phrase in hl:
+            return "HIT"
+
+    return None
+
+
 def main():
     import argparse
 
@@ -95,11 +147,27 @@ def main():
         action="store_true",
         help="Also write NEEDS_REVIEW candidates (default: only HIT/MISS)",
     )
+    parser.add_argument(
+        "--auto-classify",
+        action="store_true",
+        help="Auto-classify NEEDS_REVIEW candidates by headline phrases",
+    )
     args = parser.parse_args()
 
     candidates = load_candidates()
     existing = load_existing_keys()
     print(f"Existing resolutions: {len(existing)} (ticker, date) keys")
+
+    # Auto-classify NEEDS_REVIEW if requested
+    n_auto = 0
+    if args.auto_classify:
+        for c in candidates:
+            if c.get("mapped_outcome") == "NEEDS_REVIEW":
+                verdict = auto_classify_headline(c.get("headline", ""))
+                if verdict:
+                    c["mapped_outcome"] = verdict
+                    n_auto += 1
+        print(f"Auto-classified: {n_auto} NEEDS_REVIEW → HIT/MISS")
 
     # Filter to actionable candidates
     actionable = []

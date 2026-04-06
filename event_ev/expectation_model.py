@@ -38,7 +38,7 @@ _DEFAULT_FEATURE_WEIGHTS: Dict[str, float] = {
     "alpha_60d": 0.15,  # pre-event drift
     "rsi_14d": 0.10,  # momentum
     "short_interest_inv": 0.05,  # inverted: low short = bullish
-    "opt_event_premium": 0.05,  # options implied premium
+    "event_premium_mag": 0.05,  # continuous: front_iv - back_iv (term structure inversion)
     "priced_move_pct": 0.05,  # options implied move
 }
 
@@ -186,13 +186,15 @@ class ExpectationModel:
             v = float(raw["short_interest_pct"])
             normalized["short_interest_inv"] = _clamp(1.0 - v / 30, 0, 1)
 
-        # opt_event_premium: YES/NO flag (1.0/0.0) or continuous [0, 2+]
-        if "opt_event_premium" in raw and raw["opt_event_premium"] is not None:
+        # event_premium_magnitude: continuous (front_iv - back_iv), typically [0, 0.5]
+        # Higher = more term structure inversion = market pricing a near-term event
+        if "event_premium_magnitude" in raw and raw["event_premium_magnitude"] is not None:
+            v = float(raw["event_premium_magnitude"])
+            normalized["event_premium_mag"] = _clamp(v / 0.4, 0, 1)  # 0.4 IV spread ≈ max
+        elif "opt_event_premium" in raw and raw["opt_event_premium"] is not None:
+            # Fallback: binary YES/NO flag
             v = float(raw["opt_event_premium"])
-            if v <= 1.0:
-                normalized["opt_event_premium"] = _clamp(v, 0, 1)
-            else:
-                normalized["opt_event_premium"] = _clamp(v / 2.0, 0, 1)
+            normalized["event_premium_mag"] = _clamp(v, 0, 1)
 
         # priced_move_pct: pass-through (not part of belief score, used as diagnostic)
         if "priced_move_pct" in raw and raw["priced_move_pct"] is not None:
@@ -314,7 +316,7 @@ class ExpectationModel:
             "alpha_60d": "alpha_60d",
             "rsi_14d": "de_rsi_14d",
             "short_interest_inv": "short_interest_pct",
-            "opt_event_premium": "opt_event_premium",
+            "event_premium_mag": "event_premium_magnitude",
             "priced_move_pct": "priced_move_pct",
         }
         return mapping.get(normalized_key, normalized_key)

@@ -155,6 +155,23 @@ def _resolve_outcome(
     return None, None
 
 
+def _slip_threshold(catalyst_days: float) -> int:
+    """Compute adaptive slip threshold based on how far out the catalyst is.
+
+    Near-term (0-30d): 14 days is a meaningful slip.
+    Medium (31-90d): 21 days — some imprecision expected.
+    Far (91-180d): 30 days — soft dates, monthly granularity common.
+    Very far (180d+): 60 days — estimates shift by quarters routinely.
+    """
+    if catalyst_days <= 30:
+        return 14
+    if catalyst_days <= 90:
+        return 21
+    if catalyst_days <= 180:
+        return 30
+    return 60
+
+
 def _resolve_outcome_multi(
     ticker: str,
     pred: dict,
@@ -168,6 +185,7 @@ def _resolve_outcome_multi(
     """
     cat_days = pred["catalyst_days"]
     expected_date = snap_date + timedelta(days=int(cat_days))
+    threshold = _slip_threshold(cat_days)
 
     for future_date, future_map in future_snapshots:
         # Only check snapshots after the expected date
@@ -178,7 +196,7 @@ def _resolve_outcome_multi(
                 future_days = future_entry["catalyst_days"]
                 future_expected = future_date + timedelta(days=int(future_days))
                 slip_days = (future_expected - expected_date).days
-                if slip_days > 14:
+                if slip_days > threshold:
                     return "SLIP", slip_days, str(future_date)
             continue
 
@@ -193,7 +211,7 @@ def _resolve_outcome_multi(
         slip_days = (future_expected - expected_date).days
 
         # Date pushed out significantly → SLIP
-        if slip_days > 14:
+        if slip_days > threshold:
             return "SLIP", slip_days, str(future_date)
 
         # Expected date passed, ticker has a new far-out catalyst → old event resolved
@@ -259,6 +277,13 @@ def backfill_calibration(min_date: str = "2025-01-01", max_lookahead: int = 12) 
         for ticker, pred in current_map.items():
             key = (snap_date_str, ticker)
             if key in seen_keys:
+                continue
+
+            # Skip FAR catalysts (>90d): dates are estimated, not scheduled.
+            # Revisions are normal imprecision, not meaningful slips.
+            # FAR horizon = >90d per classify_horizon_bucket().
+            if pred["catalyst_days"] > 90:
+                n_unresolvable += 1
                 continue
 
             outcome, delay, resolution_date = _resolve_outcome_multi(ticker, pred, snap_date, future_snapshots)
