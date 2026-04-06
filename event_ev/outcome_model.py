@@ -222,9 +222,19 @@ class OutcomeModel:
         )
 
     def _get_prior(self, node: CatalystNode) -> tuple[float, str]:
-        """Get the base prior P(HIT) for this catalyst type."""
-        # Regulatory events use separate priors
+        """Get the base prior P(HIT) for this catalyst type.
+
+        For PDUFA/AdCom events, uses enriched FDA historical rates that
+        incorporate review type, therapeutic area, designations, and CRL history.
+        For clinical events, uses phase-based PoS (v2 empirical → Wong et al.).
+        """
+        # Regulatory events: try enriched FDA priors first
         if node.event_family == EventFamily.REGULATORY.value:
+            enriched = self._get_enriched_regulatory_prior(node)
+            if enriched is not None:
+                return enriched
+
+            # Fall back to flat regulatory priors
             reg_prior = _REGULATORY_PRIORS.get(node.event_type)
             if reg_prior is not None:
                 return reg_prior, f"regulatory_{node.event_type}"
@@ -241,6 +251,33 @@ class OutcomeModel:
         # Fall back to Wong et al.
         prior = self.pos_priors.get(phase, self.pos_priors.get("unknown", 0.25))
         return prior, "wong_et_al"
+
+    def _get_enriched_regulatory_prior(self, node: CatalystNode) -> Optional[tuple[float, str]]:
+        """Try to get enriched PDUFA/AdCom prior from FDA historical data."""
+        try:
+            from .fda_outcome_priors import enrich_regulatory_prior
+        except ImportError:
+            return None
+
+        # Extract features from node metadata
+        review_type = getattr(node, "review_type", None) or "UNKNOWN"
+        therapeutic_area = node.indication or ""
+        designations = getattr(node, "designations", None) or []
+        has_prior_crl = getattr(node, "has_prior_crl", False)
+        adcom_outcome = getattr(node, "adcom_outcome", None)
+
+        result = enrich_regulatory_prior(
+            node.event_type,
+            review_type=review_type,
+            therapeutic_area=therapeutic_area,
+            designations=designations,
+            has_prior_crl=has_prior_crl,
+            adcom_outcome=adcom_outcome,
+        )
+        if result is None:
+            return None
+
+        return result["p_approve"], result["source"]
 
     def _lookup_v2_prior(self, phase: str, indication: str) -> Optional[float]:
         """Look up v2 empirical prior. Returns None if insufficient data."""

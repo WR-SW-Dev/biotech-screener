@@ -111,6 +111,12 @@ class CatalystNode:
     sponsor_quality: Optional[float] = None  # [0, 1]
     nct_id: Optional[str] = None
 
+    # FDA regulatory context (for enriched PDUFA priors)
+    review_type: Optional[str] = None  # PRIORITY, STANDARD
+    designations: List[str] = field(default_factory=list)  # BTD, FT, ODD, RMAT
+    has_prior_crl: bool = False  # True if resubmission after CRL
+    adcom_outcome: Optional[str] = None  # unanimous_yes, strong_yes, etc.
+
     # Graph
     depends_on: List[str] = field(default_factory=list)
     blocks: List[str] = field(default_factory=list)

@@ -291,6 +291,48 @@ class CatalystGraph:
         logger.info("Loaded %d PDUFA nodes (as_of=%s)", count, as_of)
         return count
 
+    def enrich_with_fda_designations(
+        self,
+        designations: List[Dict[str, Any]],
+    ) -> int:
+        """Enrich PDUFA/regulatory nodes with FDA designation data.
+
+        Matches designations to nodes by ticker, adds review_type,
+        designations list, and other regulatory context.
+
+        Args:
+            designations: list of dicts with keys: ticker, designation_type,
+                         drug_name, indication, grant_date
+
+        Returns:
+            Number of nodes enriched.
+        """
+        # Build ticker → designations lookup
+        by_ticker: Dict[str, List[str]] = {}
+        for d in designations:
+            tk = d.get("ticker", "")
+            dtype = d.get("designation_type", "")
+            if tk and dtype:
+                by_ticker.setdefault(tk, []).append(dtype)
+
+        enriched = 0
+        for node in self._nodes.values():
+            if node.event_family != EventFamily.REGULATORY.value:
+                continue
+            desigs = by_ticker.get(node.ticker, [])
+            if desigs:
+                node.designations = list(set(desigs))
+                # Infer review type from designations
+                if "BTD" in desigs or "PR" in desigs:
+                    node.review_type = "PRIORITY"
+                elif not node.review_type:
+                    node.review_type = "STANDARD"
+                enriched += 1
+
+        if enriched:
+            logger.info("Enriched %d regulatory nodes with FDA designations", enriched)
+        return enriched
+
     def load_from_catalyst_events(
         self,
         summaries: List[Dict[str, Any]],
