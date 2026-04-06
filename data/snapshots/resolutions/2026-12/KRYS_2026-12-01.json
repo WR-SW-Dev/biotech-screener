@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "KRYS",
+    "catalyst_date": "2026-12-01",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Krystal Biotech Announces Positive Interim Clinical Update from KB407 Phase 1 CORAL-1 Study with Confirmation of Wild-Type CFTR Delivery to the Lungs of Patients with Cystic Fibrosis",
+    "resolution_date": "2026-12-01",
+    "outcome": "HIT",
+    "outcome_detail": "Krystal Biotech Announces Positive Interim Clinical Update from KB407 Phase 1 CORAL-1 Study with Confirmation of Wild-Type CFTR Delivery to the Lungs of Patients with Cystic Fibrosis",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://ir.krystalbio.com/news-releases/news-release-details/krystal-biotech-announces-positive-interim-clinical-update-kb407",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "9685de49cfcf243e63af0ad5bdd7537cba5c0f87f53de2408ab66a3cde68989b"
+}

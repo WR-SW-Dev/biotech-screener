@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "AMLX",
+  "catalyst_date": "2026-03-03",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: serious adverse event",
+  "resolution_date": "2026-03-24",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: PHASE 2 PHASE 3 COMMERCIAL STUDIES Phase 3 LUCIDITY trial underway. Enrollment c",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-24_AMLX",
+  "prediction_snapshot_date": "2026-03-02",
+  "prediction_dem_rank": 158,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 15.300000190734863,
+  "price_t_0": 14.109999656677246,
+  "price_t_plus_5": 14.791500091552734,
+  "price_direction": "down",
+  "days_from_expected": 28,
+  "as_of_date": "2026-03-31",
+  "record_hash": "9d811407e9573b37f359823694188f82fc2500ffd080393ee5c406ed1f6cc7d2"
+}

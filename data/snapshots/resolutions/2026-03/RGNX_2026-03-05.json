@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "RGNX",
+  "catalyst_date": "2026-03-05",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "FDA issued Complete Response Letter (CRL); definitive rejection; price -4.6% (anticipated/priced in); DEM rank unranked",
+  "resolution_date": "2026-03-05",
+  "outcome": "MISS",
+  "outcome_detail": "FDA issued Complete Response Letter (CRL); definitive rejection; price -4.6% (anticipated/priced in); DEM rank unranked",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-04",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 9.140000343322754,
+  "price_t_0": 8.720000267028809,
+  "price_t_plus_5": 9.079999923706055,
+  "price_direction": "down",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "729e133b95eeed46fa5112ccfd6c4658ae3202f1ed74e1c2f20ad20fd92a61e8"
+}

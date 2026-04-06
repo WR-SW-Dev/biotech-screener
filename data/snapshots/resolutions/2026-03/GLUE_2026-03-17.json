@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "GLUE",
+  "catalyst_date": "2026-03-17",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: serious adverse event",
+  "resolution_date": "2026-03-17",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: Phase 2 studies of MRT-8102, including in patients with elevated CVD-risk in H2 ",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-17_GLUE",
+  "prediction_snapshot_date": "2026-03-16",
+  "prediction_dem_rank": 80,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 16.639999389648438,
+  "price_t_0": 16.485000610351562,
+  "price_t_plus_5": 14.720000267028809,
+  "price_direction": "flat",
+  "days_from_expected": 14,
+  "as_of_date": "2026-03-31",
+  "record_hash": "f9289743c51c9598ce91d6d5107bc33bcc16849070f3f544fb4e41babbb6aec0"
+}

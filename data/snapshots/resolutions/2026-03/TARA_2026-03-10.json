@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "TARA",
+  "catalyst_date": "2026-03-10",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: serious adverse event",
+  "resolution_date": "2026-03-10",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: expects to complete enrollment of the BCG-Unresponsive registrational cohort of ",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-10_TARA",
+  "prediction_snapshot_date": "2026-03-09",
+  "prediction_dem_rank": 88,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": 22,
+  "as_of_date": "2026-04-01",
+  "record_hash": "83f938d4b79d236b15c543e2b56f3492e6b2070658b5efb9a7aa2fd34531b24e"
+}

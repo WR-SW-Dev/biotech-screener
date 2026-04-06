@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "BCRX",
+    "catalyst_date": "2026-05-01",
+    "catalyst_type": "PDUFA_ACTION",
+    "catalyst_description": "BioCryst Announces FDA Approval of ORLADEYO&#174; (berotralstat) Oral Pellets, First and Only Oral Prophylactic Treatment for Patients with HAE Aged 2 to &lt;12 Years",
+    "resolution_date": "2026-05-01",
+    "outcome": "HIT",
+    "outcome_detail": "BioCryst Announces FDA Approval of ORLADEYO&#174; (berotralstat) Oral Pellets, First and Only Oral Prophylactic Treatment for Patients with HAE Aged 2 to &lt;12 Years",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2025/12/12/3204568/29446/en/BioCryst-Announces-FDA-Approval-of-ORLADEYO-berotralstat-Oral-Pellets-First-and-Only-Oral-Prophylactic-Treatment-for-Patients-with-HAE-Aged-2-to-12-Years.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "976f5dc047e7c65347429e58961a2c3c3ce291ce2bc7aff4d67e29e6b50a1a7a"
+}

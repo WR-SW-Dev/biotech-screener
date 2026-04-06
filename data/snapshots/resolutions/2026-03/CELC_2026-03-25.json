@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "CELC",
+  "catalyst_date": "2026-03-25",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "NDA accepted with Priority Review; PDUFA July 17, 2026; VIKTORIA-1 PIK3CA wild-type Phase 3 data published in JCO (gedatolisib triplet PFS 9.3 vs 2.0 months, HR=0.24, p<0.0001)",
+  "resolution_date": "2026-03-25",
+  "outcome": "HIT",
+  "outcome_detail": "NDA accepted with Priority Review; PDUFA July 17, 2026; VIKTORIA-1 PIK3CA wild-type Phase 3 data published in JCO (gedatolisib triplet PFS 9.3 vs 2.0 months, HR=0.24, p<0.0001)",
+  "source_type": "MANUAL",
+  "source_id": "https://www.stocktitan.net/sec-filings/CELC/8-k-celcuity-inc-reports-material-event-4c332a9d76ab.html",
+  "prediction_snapshot_date": "2026-03-24",
+  "prediction_dem_rank": 7,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 102.01000213623047,
+  "price_t_0": 110.22000122070312,
+  "price_t_plus_5": null,
+  "price_direction": "up",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "c9cb9ffacdf13e6627920a684102901fc0620d6afe60bbbf25ac4b3e2b1dfe87"
+}

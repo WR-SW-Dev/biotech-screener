@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "OCGN",
+  "catalyst_date": "2026-03-24",
+  "catalyst_type": "PDUFA_ACTION",
+  "catalyst_description": "8-K: BLA submission EMA (ATMP) SYFO V RE and IZERVAY $ 1 B combined annual sales 2 - ",
+  "resolution_date": "2026-03-27",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: BLA submission EMA (ATMP) SYFOVRE and IZERVAY $1B combined annual sales2-3M Pati",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-27_OCGN",
+  "prediction_snapshot_date": "2026-03-23",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 2.0350000858306885,
+  "price_t_0": 1.9199999570846558,
+  "price_t_plus_5": 1.75,
+  "price_direction": "down",
+  "days_from_expected": 7,
+  "as_of_date": "2026-03-31",
+  "record_hash": "a06e6f68c97e4270da30913fac906c47448d10512adae1e0e21537e3526c1447"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "BBIO",
+  "catalyst_date": "2026-03-30",
+  "catalyst_type": "PDUFA_ACTION",
+  "catalyst_description": "8-K: NDA submission brings us one step closer to delivering the first approved therap",
+  "resolution_date": "2026-03-30",
+  "outcome": "HIT",
+  "outcome_detail": "8-K: NDA submission brings us one step closer to delivering the first approved therap",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-30_BBIO",
+  "prediction_snapshot_date": "2026-03-28",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": 2,
+  "as_of_date": "2026-04-01",
+  "record_hash": "3fed2d2b8760ebaed91ad5942c2fcf96f4f74a5b1e102846fb5799db736b4589"
+}

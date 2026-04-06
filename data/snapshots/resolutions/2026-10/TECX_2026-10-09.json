@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "TECX",
+    "catalyst_date": "2026-10-09",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Tectonic Therapeutic Announces Positive Topline Data from Phase 1b Part B Clinical Trial for TX45 in Patients with Group 2 Pulmonary Hypertension in HFrEF",
+    "resolution_date": "2026-10-09",
+    "outcome": "HIT",
+    "outcome_detail": "Tectonic Therapeutic Announces Positive Topline Data from Phase 1b Part B Clinical Trial for TX45 in Patients with Group 2 Pulmonary Hypertension in HFrEF",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2025/10/29/3176829/0/en/Tectonic-Therapeutic-Announces-Positive-Topline-Data-from-Phase-1b-Part-B-Clinical-Trial-for-TX45-in-Patients-with-Group-2-Pulmonary-Hypertension-in-HFrEF.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "9d3167cb9d400fabfc44cd9cfa4715b2602682f4a0e4fca71079c83458fcb553"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "XENE",
+  "catalyst_date": "2026-03-06",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Same Phase 3 azetukalner FOS readout as 03-09 event; pre-announcement 8K on 03-06 (no price move); actual resolution on 03-09 (+49.6%); DEM rank 61",
+  "resolution_date": "2026-03-09",
+  "outcome": "HIT",
+  "outcome_detail": "Same Phase 3 azetukalner FOS readout as 03-09 event; pre-announcement 8K on 03-06 (no price move); actual resolution on 03-09 (+49.6%); DEM rank 61",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-05",
+  "prediction_dem_rank": 61,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 42.04999923706055,
+  "price_t_0": 41.939998626708984,
+  "price_t_plus_5": 55.80500030517578,
+  "price_direction": "flat",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "61f5b93752ed1250891482c7b99f5e5db3b1b2ef73c798480d8c3896ee889edb"
+}

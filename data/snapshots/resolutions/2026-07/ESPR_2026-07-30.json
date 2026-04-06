@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "ESPR",
+    "catalyst_date": "2026-07-30",
+    "catalyst_type": "NDA_BLA_FILING",
+    "catalyst_description": "Esperion Bempedoic Acid Receives Multiple Class 1 Recommendations",
+    "resolution_date": "2026-07-30",
+    "outcome": "HIT",
+    "outcome_detail": "Esperion Bempedoic Acid Receives Multiple Class 1 Recommendations",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "herald_intake_manual_review",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "303c59a1a1b9df1959cfba531d7903271e4841d2808838b5b29650b68e04564e"
+}

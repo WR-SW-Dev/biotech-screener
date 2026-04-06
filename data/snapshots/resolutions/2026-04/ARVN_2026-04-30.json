@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "ARVN",
+    "catalyst_date": "2026-04-30",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Arvinas Announces Positive Phase 1 Data for ARV-102 Showing Greater Than 50% LRRK2 Degradation in the CSF of Patients with Parkinson\u2019s Disease Treated for 28 Days",
+    "resolution_date": "2026-04-30",
+    "outcome": "HIT",
+    "outcome_detail": "Arvinas Announces Positive Phase 1 Data for ARV-102 Showing Greater Than 50% LRRK2 Degradation in the CSF of Patients with Parkinson\u2019s Disease Treated for 28 Days",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/18/3258013/0/en/Arvinas-Announces-Positive-Phase-1-Data-for-ARV-102-Showing-Greater-Than-50-LRRK2-Degradation-in-the-CSF-of-Patients-with-Parkinson-s-Disease-Treated-for-28-Days.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "57c3c102edbc5e09e823df95af6a8621f6d9964326eb15a4f30c7d85639b22bc"
+}

@@ -1,0 +1,14 @@
+{
+  "ticker": "PRAX",
+  "catalyst_date": "2026-06-01",
+  "catalyst_type": "NDA_ACCEPTANCE",
+  "outcome": "HIT",
+  "price_direction": null,
+  "source": "herald_manual_triage",
+  "headline": "Praxis Precision Medicines Announces FDA Acceptance and Priority Review of NDA for Relutrigine",
+  "notes": "FDA NDA acceptance + priority review \u2014 scored as HIT",
+  "resolved_date": "2026-04-06",
+  "triage_batch": "2026-04-06_manual",
+  "schema_version": "1.0.0",
+  "record_hash": "b346222f4b633db36be81908d42318f70d688ece2b3da9da4f2bc16fd6b51ca5"
+}

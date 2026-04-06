@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "SUPN",
+    "catalyst_date": "2026-09-01",
+    "catalyst_type": "PDUFA_ACTION",
+    "catalyst_description": "Biogen Receives European Commission Approval for ZURZUVAE",
+    "resolution_date": "2026-09-01",
+    "outcome": "HIT",
+    "outcome_detail": "Biogen Receives European Commission Approval for ZURZUVAE",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "herald_intake_manual_review",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "c7677e263fec1a9a16c3cb36dc5301ee300e6a052ea4aa7d48f16a36d6a82fc4"
+}

@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "MRNA",
+    "catalyst_date": "2026-04-15",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Wave Life Sciences Announces Positive Interim Phase 1 Data from INLIGHT: Further Improvements in Body Composition, with Clinically Meaningful Reductions in Visceral Fat and Waist Circumference, at Six Months Following Single Dose of WVE-007",
+    "resolution_date": "2026-04-15",
+    "outcome": "HIT",
+    "outcome_detail": "Wave Life Sciences Announces Positive Interim Phase 1 Data from INLIGHT: Further Improvements in Body Composition, with Clinically Meaningful Reductions in Visceral Fat and Waist Circumference, at Six Months Following Single Dose of WVE-007",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/26/3262889/0/en/Wave-Life-Sciences-Announces-Positive-Interim-Phase-1-Data-from-INLIGHT-Further-Improvements-in-Body-Composition-with-Clinically-Meaningful-Reductions-in-Visceral-Fat-and-Waist-Cir.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "1d23b8b1eefb75de7b504dcd5fbe878ec993221e59d54b98217998d0c267f097"
+}

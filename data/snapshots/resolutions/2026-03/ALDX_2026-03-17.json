@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "ALDX",
+  "catalyst_date": "2026-03-17",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Negative FDA regulatory outcome; Type A meeting needed for NDA approval path (PDUFA was Dec 2025); -67.4% price move (4.25 to 1.38) with 14x volume spike; DEM rank 98",
+  "resolution_date": "2026-03-17",
+  "outcome": "MISS",
+  "outcome_detail": "Negative FDA regulatory outcome; Type A meeting needed for NDA approval path (PDUFA was Dec 2025); -67.4% price move (4.25 to 1.38) with 14x volume spike; DEM rank 98",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-16",
+  "prediction_dem_rank": 98,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 4.251800060272217,
+  "price_t_0": 1.3849999904632568,
+  "price_t_plus_5": 1.8700000047683716,
+  "price_direction": "down",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "35aefea498bdc7d0afcc63691d5b2e1c4a48466b744c42df44279b8b6b8c38bd"
+}

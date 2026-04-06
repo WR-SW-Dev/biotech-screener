@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "COGT",
+    "catalyst_date": "2026-06-01",
+    "catalyst_type": "REGULATORY_DESIGNATION",
+    "catalyst_description": "Cogent Biosciences Announces Breakthrough Therapy Designation",
+    "resolution_date": "2026-06-01",
+    "outcome": "HIT",
+    "outcome_detail": "Cogent Biosciences Announces Breakthrough Therapy Designation",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://investors.cogentbio.com/news-releases/news-release-details/cogent-biosciences-announces-breakthrough-therapy-designation",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "b7d1ed36f67fd988c2ae2b6933031796f704ed3bdcef6238fa0757734d24a507"
+}

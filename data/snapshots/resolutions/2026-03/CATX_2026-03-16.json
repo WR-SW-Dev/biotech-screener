@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "CATX",
+  "catalyst_date": "2026-03-16",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: Serious adverse event",
+  "resolution_date": "2026-03-16",
+  "outcome": "MISS",
+  "outcome_detail": "8-K: Serious adverse event",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-16_CATX",
+  "prediction_snapshot_date": "2026-03-15",
+  "prediction_dem_rank": 163,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": 16,
+  "as_of_date": "2026-04-01",
+  "record_hash": "d9de7a8f73a1f2fbacef7b98dbe18e44f882e5dde2241bed11c49c7a85fb263e"
+}

@@ -152,6 +152,8 @@ production_data/price_history_split_adj.csv
 cache/
 .mcp.json
 data/snapshots/
+!data/snapshots/resolutions/
+!data/snapshots/resolutions/**
 data/snapshots_pit/
 data/snapshots_reranked/
 data/snapshots_reranked_*/

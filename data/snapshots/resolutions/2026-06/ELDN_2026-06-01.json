@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "ELDN",
+    "catalyst_date": "2026-06-01",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Eledon Pharmaceuticals Presents Long-Term Phase 1b Data for Tegoprubart",
+    "resolution_date": "2026-06-01",
+    "outcome": "HIT",
+    "outcome_detail": "Eledon Pharmaceuticals Presents Long-Term Phase 1b Data for Tegoprubart",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "herald_intake_manual_review",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "4d10c3dcacf9a4af5cb8e0ca4e215e494c6dfaa47ece79565e25add6fcc6a1b5"
+}

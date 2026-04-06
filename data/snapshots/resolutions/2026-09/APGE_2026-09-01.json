@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "APGE",
+    "catalyst_date": "2026-09-01",
+    "catalyst_type": "PHASE_2_READOUT",
+    "catalyst_description": "Apogee Therapeutics Announces Positive Phase 2 Part A 52-Week Data of Zumilokibart (APG777), Demonstrating Maintenance and Deepening of Responses with Every 3- and 6-Month Dosing in Moderate-to-Severe Atopic Dermatitis",
+    "resolution_date": "2026-09-01",
+    "outcome": "HIT",
+    "outcome_detail": "Apogee Therapeutics Announces Positive Phase 2 Part A 52-Week Data of Zumilokibart (APG777), Demonstrating Maintenance and Deepening of Responses with Every 3- and 6-Month Dosing in Moderate-to-Severe Atopic Dermatitis",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/23/3260201/0/en/Apogee-Therapeutics-Announces-Positive-Phase-2-Part-A-52-Week-Data-of-Zumilokibart-APG777-Demonstrating-Maintenance-and-Deepening-of-Responses-with-Every-3-and-6-Month-Dosing-in-Mo.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "350c0a98b56714aaa8d7dc67f9ef994a45abc50d3c7ff45426c8faefa0f95124"
+}

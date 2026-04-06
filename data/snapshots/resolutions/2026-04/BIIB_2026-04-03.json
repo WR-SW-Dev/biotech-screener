@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "BIIB",
+  "catalyst_date": "2026-04-03",
+  "catalyst_type": "PDUFA_ACTION",
+  "catalyst_description": "PDUFA: SPINRAZA (nusinersen) high dose \u2014 Spinal Muscular Atrophy (high dose regimen)",
+  "resolution_date": "2026-04-03",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "",
+  "source_type": "CTGOV_STATUS",
+  "source_id": "NCT06741657",
+  "prediction_snapshot_date": "2026-03-31",
+  "prediction_dem_rank": 110,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": -3,
+  "as_of_date": "2026-03-31",
+  "record_hash": "74b7bf600fa56dca9476e0b49e477d2d4dce979d682bd610be549a6e8cea641f"
+}

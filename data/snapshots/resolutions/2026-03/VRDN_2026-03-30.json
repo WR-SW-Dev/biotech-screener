@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "VRDN",
+  "catalyst_date": "2026-03-30",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Data disappointment; BLA timeline update and chronic TED topline data Q2 2026; -32.3% price move (27.39 to 18.53) with 10x volume spike (13.7M vs ~1M normal); DEM rank not ranked",
+  "resolution_date": "2026-03-30",
+  "outcome": "MISS",
+  "outcome_detail": "Data disappointment; BLA timeline update and chronic TED topline data Q2 2026; -32.3% price move (27.39 to 18.53) with 10x volume spike (13.7M vs ~1M normal); DEM rank not ranked",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-28",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 27.389999389648438,
+  "price_t_0": 18.530000686645508,
+  "price_t_plus_5": null,
+  "price_direction": "down",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "95f0c9ea9a1c90e9d2eb4038a733c48b20a2724e847a031d415ad69adf86eee6"
+}

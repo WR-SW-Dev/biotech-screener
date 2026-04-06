@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "OCGN",
+  "catalyst_date": "2026-03-04",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: serious adverse event",
+  "resolution_date": "2026-03-27",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: BLA submission EMA (ATMP) SYFOVRE and IZERVAY $1B combined annual sales2-3M Pati",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-27_OCGN",
+  "prediction_snapshot_date": "2026-03-03",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 1.8600000143051147,
+  "price_t_0": 1.9600000381469727,
+  "price_t_plus_5": 2.299999952316284,
+  "price_direction": "up",
+  "days_from_expected": 27,
+  "as_of_date": "2026-03-31",
+  "record_hash": "2faab34e7f1db43dc51fef3a269851aba7e2e749db66db58b8301b6fc07aabdc"
+}

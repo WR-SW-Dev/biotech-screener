@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "NBIX",
+    "catalyst_date": "2026-04-01",
+    "catalyst_type": "PHASE_2_READOUT",
+    "catalyst_description": "Nxera Pharma Notes Positive Phase 2 Data for Partnered Schizophrenia Candidate  NBI-1117568",
+    "resolution_date": "2026-04-01",
+    "outcome": "HIT",
+    "outcome_detail": "Nxera Pharma Notes Positive Phase 2 Data for Partnered Schizophrenia Candidate  NBI-1117568",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2024/08/28/2936889/0/en/Nxera-Pharma-Notes-Positive-Phase-2-Data-for-Partnered-Schizophrenia-Candidate-NBI-1117568.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "f32c6b62025320a750bf0dfc3af0802f50ef9fd8ee96b0836b04a6a39589837a"
+}

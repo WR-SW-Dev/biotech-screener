@@ -1,0 +1,14 @@
+{
+  "ticker": "CNTA",
+  "catalyst_date": "2026-04-30",
+  "catalyst_type": "IND_CLEARANCE",
+  "outcome": "HIT",
+  "price_direction": null,
+  "source": "herald_manual_triage",
+  "headline": "Centessa Pharmaceuticals Announces Clearance of Investigational New Drug Application (IND) for ORX142",
+  "notes": "IND clearance is a regulatory milestone \u2014 scored as HIT",
+  "resolved_date": "2026-04-06",
+  "triage_batch": "2026-04-06_manual",
+  "schema_version": "1.0.0",
+  "record_hash": "a7d9a69239015c2168b0bfdea449fd4dd799bad57c344202d4f31d789516377f"
+}

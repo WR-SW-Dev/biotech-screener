@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "FOLD",
+    "catalyst_date": "2026-06-01",
+    "catalyst_type": "PHASE_2_READOUT",
+    "catalyst_description": "Celldex Presents Positive Data from Phase 2 Chronic Spontaneous Urticaria and Phase 2 Cold Urticaria and Symptomatic Dermographism Studies Demonstrating Rapid, Profound and Durable Improvements in Patient Quality of Life at AAD 2026",
+    "resolution_date": "2026-06-01",
+    "outcome": "HIT",
+    "outcome_detail": "Celldex Presents Positive Data from Phase 2 Chronic Spontaneous Urticaria and Phase 2 Cold Urticaria and Symptomatic Dermographism Studies Demonstrating Rapid, Profound and Durable Improvements in Patient Quality of Life at AAD 2026",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/27/3263841/24180/en/Celldex-Presents-Positive-Data-from-Phase-2-Chronic-Spontaneous-Urticaria-and-Phase-2-Cold-Urticaria-and-Symptomatic-Dermographism-Studies-Demonstrating-Rapid-Profound-and-Durable-.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "3302b1b7c39ed0d68522dbae75da6b39a4b0deb05f3bc4e2ad842952f958d1c9"
+}

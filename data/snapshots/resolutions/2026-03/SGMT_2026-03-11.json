@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "SGMT",
+  "catalyst_date": "2026-03-11",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: serious adverse event",
+  "resolution_date": "2026-03-11",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: topline results in open-label Phase 3 trial evaluating the long-term safety of d",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-11_SGMT",
+  "prediction_snapshot_date": "2026-03-10",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 5.610000133514404,
+  "price_t_0": 5.739999771118164,
+  "price_t_plus_5": 5.079999923706055,
+  "price_direction": "up",
+  "days_from_expected": 20,
+  "as_of_date": "2026-03-31",
+  "record_hash": "6f6e21cc08a76fd5e0a6bbde64a956ac3440286e7037184b9ff474e8cd8c759d"
+}

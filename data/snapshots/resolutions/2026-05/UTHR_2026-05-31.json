@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "UTHR",
+    "catalyst_date": "2026-05-31",
+    "catalyst_type": "PDUFA_ACTION",
+    "catalyst_description": "U.S. FDA Approves Liquidia YUTREPIA",
+    "resolution_date": "2026-05-31",
+    "outcome": "HIT",
+    "outcome_detail": "U.S. FDA Approves Liquidia YUTREPIA",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "herald_intake_manual_review",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "af6836b13a08b7d8fe201a342ec1bc83a2aba04c32b06d19dc03922ab61e43aa"
+}

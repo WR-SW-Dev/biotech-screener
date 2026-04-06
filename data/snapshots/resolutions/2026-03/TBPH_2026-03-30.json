@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "TBPH",
+  "catalyst_date": "2026-03-30",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Phase 3 CYPRESS did not meet primary OHSA composite endpoint for ampreloxetine in nOH; program wound down, R&D org eliminated, strategic alternatives",
+  "resolution_date": "2026-03-30",
+  "outcome": "MISS",
+  "outcome_detail": "Phase 3 CYPRESS did not meet primary OHSA composite endpoint for ampreloxetine in nOH; program wound down, R&D org eliminated, strategic alternatives",
+  "source_type": "MANUAL",
+  "source_id": "https://www.stocktitan.net/sec-filings/TBPH/8-k-theravance-biopharma-inc-reports-material-event-5941432becdf.html",
+  "prediction_snapshot_date": "2026-03-28",
+  "prediction_dem_rank": 93,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 15.079999923706055,
+  "price_t_0": 15.260000228881836,
+  "price_t_plus_5": null,
+  "price_direction": "flat",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "65e47fb8ae630d3dcd7e452c47fa4a983aa3915d87670d189564cfcdbd6409c3"
+}

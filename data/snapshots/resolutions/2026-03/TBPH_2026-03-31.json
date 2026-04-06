@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "TBPH",
+    "catalyst_date": "2026-03-31",
+    "catalyst_type": "PHASE_3_READOUT",
+    "catalyst_description": "Theravance Biopharma Reports Phase 3 CYPRESS Study Did Not Meet Primary Endpoint; Board Accelerates Strategic Review and Announces Cost Reduction Actions",
+    "resolution_date": "2026-03-31",
+    "outcome": "MISS",
+    "outcome_detail": "Theravance Biopharma Reports Phase 3 CYPRESS Study Did Not Meet Primary Endpoint; Board Accelerates Strategic Review and Announces Cost Reduction Actions",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://investor.theravance.com/news-releases/news-release-details/theravance-biopharma-reports-phase-3-cypress-study-did-not-meet",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "5a7d9b03ff00743b7cefba54c2db9db76ee43e44395fc77cb8e1bb743e81ca98"
+}

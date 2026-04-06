@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "VRDN",
+  "catalyst_date": "2026-04-01",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "8-K: topline data in chronic TED in Q2 2026",
+  "resolution_date": "2026-03-30",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: topline data in chronic TED in Q2 2026",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-30_VRDN",
+  "prediction_snapshot_date": "2026-03-31",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 18.530000686645508,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": -1,
+  "as_of_date": "2026-03-31",
+  "record_hash": "bc5af0f38c084c4ccda566d547014645f1a8828f1cba756511a3810245e12d5c"
+}

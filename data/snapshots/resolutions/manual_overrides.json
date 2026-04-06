@@ -1,0 +1,98 @@
+[
+  {
+    "ticker": "PVLA",
+    "catalyst_date": "2026-03-31",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 SELVA met primary endpoint (mLM-IGA, p<0.001); 86% much/very much improved; NDA planned H2 2026",
+    "resolution_date": "2026-03-31",
+    "source": "https://www.stocktitan.net/sec-filings/PVLA/8-k-palvella-therapeutics-inc-reports-material-event-e06f2b173bd2.html"
+  },
+  {
+    "ticker": "TBPH",
+    "catalyst_date": "2026-03-30",
+    "outcome": "MISS",
+    "outcome_detail": "Phase 3 CYPRESS did not meet primary OHSA composite endpoint for ampreloxetine in nOH; program wound down, R&D org eliminated, strategic alternatives",
+    "resolution_date": "2026-03-30",
+    "source": "https://www.stocktitan.net/sec-filings/TBPH/8-k-theravance-biopharma-inc-reports-material-event-5941432becdf.html"
+  },
+  {
+    "ticker": "CELC",
+    "catalyst_date": "2026-03-25",
+    "outcome": "HIT",
+    "outcome_detail": "NDA accepted with Priority Review; PDUFA July 17, 2026; VIKTORIA-1 PIK3CA wild-type Phase 3 data published in JCO (gedatolisib triplet PFS 9.3 vs 2.0 months, HR=0.24, p<0.0001)",
+    "resolution_date": "2026-03-25",
+    "source": "https://www.stocktitan.net/sec-filings/CELC/8-k-celcuity-inc-reports-material-event-4c332a9d76ab.html"
+  },
+  {
+    "ticker": "KOD",
+    "catalyst_date": "2026-03-26",
+    "outcome": "HIT",
+    "outcome_detail": "GLOW2 Phase 3 topline results in diabetic retinopathy; +74.8% price move on 03-27; DEM rank 23",
+    "resolution_date": "2026-03-27",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "XENE",
+    "catalyst_date": "2026-03-09",
+    "outcome": "HIT",
+    "outcome_detail": "Phase 3 azetukalner in FOS primary endpoint met; NDA submission planned Q3 2026; +49.6% price move on 03-09; DEM rank 60",
+    "resolution_date": "2026-03-09",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "XENE",
+    "catalyst_date": "2026-03-06",
+    "outcome": "HIT",
+    "outcome_detail": "Same Phase 3 azetukalner FOS readout as 03-09 event; pre-announcement 8K on 03-06 (no price move); actual resolution on 03-09 (+49.6%); DEM rank 61",
+    "resolution_date": "2026-03-09",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "MAZE",
+    "catalyst_date": "2026-03-25",
+    "outcome": "MISS",
+    "outcome_detail": "Serious adverse event reported via 8-K; -35.2% price move (49.00 to 31.73) on 03-25; DEM rank 36",
+    "resolution_date": "2026-03-25",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "ALDX",
+    "catalyst_date": "2026-03-17",
+    "outcome": "MISS",
+    "outcome_detail": "Negative FDA regulatory outcome; Type A meeting needed for NDA approval path (PDUFA was Dec 2025); -67.4% price move (4.25 to 1.38) with 14x volume spike; DEM rank 98",
+    "resolution_date": "2026-03-17",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "QURE",
+    "catalyst_date": "2026-03-02",
+    "outcome": "MISS",
+    "outcome_detail": "Negative corporate/clinical update; multi-day decline from 23.81 (02-25) through 10.50 (03-02); -32.8% on catalyst date; volume 16.5M vs ~1M normal; DEM rank not ranked",
+    "resolution_date": "2026-03-02",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "VRDN",
+    "catalyst_date": "2026-03-30",
+    "outcome": "MISS",
+    "outcome_detail": "Data disappointment; BLA timeline update and chronic TED topline data Q2 2026; -32.3% price move (27.39 to 18.53) with 10x volume spike (13.7M vs ~1M normal); DEM rank not ranked",
+    "resolution_date": "2026-03-30",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "RGNX",
+    "catalyst_date": "2026-03-05",
+    "outcome": "MISS",
+    "outcome_detail": "FDA issued Complete Response Letter (CRL); definitive rejection; price -4.6% (anticipated/priced in); DEM rank unranked",
+    "resolution_date": "2026-03-05",
+    "source": "price_action_evidence"
+  },
+  {
+    "ticker": "AQST",
+    "catalyst_date": "2026-03-04",
+    "outcome": "MISS",
+    "outcome_detail": "FDA issued CRL; NDA resubmission planned Q3 2026; price +6.1% (market liked resubmission path despite CRL); DEM rank unranked",
+    "resolution_date": "2026-03-04",
+    "source": "price_action_evidence"
+  }
+]

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "PVLA",
+  "catalyst_date": "2026-03-31",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Phase 3 SELVA met primary endpoint (mLM-IGA, p<0.001); 86% much/very much improved; NDA planned H2 2026",
+  "resolution_date": "2026-03-31",
+  "outcome": "HIT",
+  "outcome_detail": "Phase 3 SELVA met primary endpoint (mLM-IGA, p<0.001); 86% much/very much improved; NDA planned H2 2026",
+  "source_type": "MANUAL",
+  "source_id": "https://www.stocktitan.net/sec-filings/PVLA/8-k-palvella-therapeutics-inc-reports-material-event-e06f2b173bd2.html",
+  "prediction_snapshot_date": "2026-03-28",
+  "prediction_dem_rank": 18,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 110.66000366210938,
+  "price_t_0": 110.66000366210938,
+  "price_t_plus_5": null,
+  "price_direction": "flat",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "7accefae4ab31639746b88264710c0d62c87de641f3587722cb4d20ea9a0211d"
+}

@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "REGN",
+    "catalyst_date": "2026-04-01",
+    "catalyst_type": "PHASE_3_READOUT",
+    "catalyst_description": "Olatorepatide Obesity Treatment Licensed by Regeneron Demonstrates Positive Phase 3 Results in Chinese Patients",
+    "resolution_date": "2026-04-01",
+    "outcome": "HIT",
+    "outcome_detail": "Olatorepatide Obesity Treatment Licensed by Regeneron Demonstrates Positive Phase 3 Results in Chinese Patients",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/09/3251688/0/en/Olatorepatide-Obesity-Treatment-Licensed-by-Regeneron-Demonstrates-Positive-Phase-3-Results-in-Chinese-Patients.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "ddc836d3511fcf3d8de68c01cf3190570b329eb7513035b12f0ae0895fa42cc4"
+}

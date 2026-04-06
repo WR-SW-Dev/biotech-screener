@@ -1,0 +1,59 @@
+{
+  "schema": "calibration_summary.v1",
+  "period": "2026-03",
+  "total_resolutions": 24,
+  "outcome_distribution": {
+    "MISS": 10,
+    "NEEDS_REVIEW": 7,
+    "HIT": 7
+  },
+  "by_catalyst_type": {
+    "PHASE_3_READOUT": {
+      "n": 14,
+      "hit": 6,
+      "miss": 8,
+      "mixed": 0,
+      "hit_rate": 0.429
+    },
+    "CORPORATE_UPDATE": {
+      "n": 7,
+      "hit": 0,
+      "miss": 2,
+      "mixed": 0,
+      "hit_rate": 0.0
+    },
+    "PDUFA_ACTION": {
+      "n": 3,
+      "hit": 1,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    }
+  },
+  "by_dem_decile": {
+    "top_10": {
+      "n": 1,
+      "hit": 1,
+      "miss": 0,
+      "hit_rate": 1.0
+    },
+    "top_20": {
+      "n": 2,
+      "hit": 2,
+      "miss": 0,
+      "hit_rate": 1.0
+    },
+    "top_60": {
+      "n": 6,
+      "hit": 4,
+      "miss": 2,
+      "hit_rate": 0.667
+    },
+    "bottom_50": {
+      "n": 3,
+      "hit": 1,
+      "miss": 1,
+      "hit_rate": 0.5
+    }
+  }
+}

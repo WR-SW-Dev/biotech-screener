@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "KOD",
+    "catalyst_date": "2026-08-01",
+    "catalyst_type": "PHASE_3_READOUT",
+    "catalyst_description": "Kodiak Sciences Announces Positive Topline Results in GLOW2, the Second Phase 3 Study in Diabetic Retinopathy, Demonstrating Superiority of Zenkuda\u2122 (tarcocimab tedromer) Over Sham",
+    "resolution_date": "2026-08-01",
+    "outcome": "HIT",
+    "outcome_detail": "Kodiak Sciences Announces Positive Topline Results in GLOW2, the Second Phase 3 Study in Diabetic Retinopathy, Demonstrating Superiority of Zenkuda\u2122 (tarcocimab tedromer) Over Sham",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://ir.kodiak.com/news-releases/news-release-details/kodiak-sciences-announces-positive-topline-results-glow2-second",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "321744b9ba62a9a3f22e64e01144894f582fb4b60ce28b02b57f58b749467a28"
+}

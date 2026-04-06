@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "ALMS",
+    "catalyst_date": "2026-07-01",
+    "catalyst_type": "PHASE_3_READOUT",
+    "catalyst_description": "Alumis Envudeucitinib Delivers Early and Robust Improvements in Skin Clearance",
+    "resolution_date": "2026-07-01",
+    "outcome": "HIT",
+    "outcome_detail": "Alumis Envudeucitinib Delivers Early and Robust Improvements in Skin Clearance",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "herald_intake_manual_review",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "6f83a28d90a58f5a358b9640976bc74bee1260ffbd69465fcc9c7b7c81fef28a"
+}

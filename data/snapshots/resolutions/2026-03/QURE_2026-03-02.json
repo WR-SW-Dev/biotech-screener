@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "QURE",
+  "catalyst_date": "2026-03-02",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Negative corporate/clinical update; multi-day decline from 23.81 (02-25) through 10.50 (03-02); -32.8% on catalyst date; volume 16.5M vs ~1M normal; DEM rank not ranked",
+  "resolution_date": "2026-03-02",
+  "outcome": "MISS",
+  "outcome_detail": "Negative corporate/clinical update; multi-day decline from 23.81 (02-25) through 10.50 (03-02); -32.8% on catalyst date; volume 16.5M vs ~1M normal; DEM rank not ranked",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-01",
+  "prediction_dem_rank": null,
+  "prediction_composite_score": null,
+  "price_t_minus_1": 15.630000114440918,
+  "price_t_0": 10.5,
+  "price_t_plus_5": 17.989999771118164,
+  "price_direction": "down",
+  "days_from_expected": null,
+  "as_of_date": "2026-03-31",
+  "record_hash": "4825c06e7c48d629c589e66b590ba1d4cbe6e96f91436d46d425017e065f0aac"
+}

@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "XENE",
+    "catalyst_date": "2026-03-31",
+    "catalyst_type": "PHASE_3_READOUT",
+    "catalyst_description": "Xenon Announces Positive Topline Data from Phase 3 X-TOLE2 Study of Azetukalner in Focal Onset Seizures (FOS)",
+    "resolution_date": "2026-03-31",
+    "outcome": "HIT",
+    "outcome_detail": "Xenon Announces Positive Topline Data from Phase 3 X-TOLE2 Study of Azetukalner in Focal Onset Seizures (FOS)",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/09/3251686/33485/en/Xenon-Announces-Positive-Topline-Data-from-Phase-3-X-TOLE2-Study-of-Azetukalner-in-Focal-Onset-Seizures-FOS.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "b7d836c7c632de30811a2688a324f06ef2d326ecf83b06fc0ea92d51a4d21d69"
+}

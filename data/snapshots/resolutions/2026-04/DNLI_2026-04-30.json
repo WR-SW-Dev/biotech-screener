@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "DNLI",
+    "catalyst_date": "2026-04-30",
+    "catalyst_type": "PDUFA_ACTION",
+    "catalyst_description": "Denali Therapeutics Announces U.S. FDA Approval of AVLAYAH\u2122 (tividenofusp alfa-eknm) for Treatment of Hunter Syndrome (MPS II)",
+    "resolution_date": "2026-04-30",
+    "outcome": "HIT",
+    "outcome_detail": "Denali Therapeutics Announces U.S. FDA Approval of AVLAYAH\u2122 (tividenofusp alfa-eknm) for Treatment of Hunter Syndrome (MPS II)",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2026/03/25/3262412/0/en/Denali-Therapeutics-Announces-U-S-FDA-Approval-of-AVLAYAH-tividenofusp-alfa-eknm-for-Treatment-of-Hunter-Syndrome-MPS-II.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "adbcb2a28845494e62d76b084c4fbd2bea284d76db062db5d4fcf92ced669002"
+}

@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "SRRK",
+    "catalyst_date": "2026-03-31",
+    "catalyst_type": "PHASE_2_READOUT",
+    "catalyst_description": "Northstrive Biosciences Announces Positive FDA Response Supporting A Submission of IND for a Phase 2 Clinical Trial for EL-22 in Combination with GLP-1 Receptor Agonist for Obesity Treatment",
+    "resolution_date": "2026-03-31",
+    "outcome": "HIT",
+    "outcome_detail": "Northstrive Biosciences Announces Positive FDA Response Supporting A Submission of IND for a Phase 2 Clinical Trial for EL-22 in Combination with GLP-1 Receptor Agonist for Obesity Treatment",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://www.globenewswire.com/news-release/2025/04/24/3067373/0/en/Northstrive-Biosciences-Announces-Positive-FDA-Response-Supporting-A-Submission-of-IND-for-a-Phase-2-Clinical-Trial-for-EL-22-in-Combination-with-GLP-1-Receptor-Agonist-for-Obesity.html",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "8ae4b3119452812c112ccd830d59c599cfa081db9e14e2c120d95c70020dbfd1"
+}

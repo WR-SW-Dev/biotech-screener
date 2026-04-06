@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "UTHR",
+  "catalyst_date": "2026-03-30",
+  "catalyst_type": "PHASE_3_READOUT",
+  "catalyst_description": "Phase 3 TETON-1 Tyvaso in IPF met primary endpoint; FVC +130.1mL vs placebo (p<0.0001); +13% price move ($520 to $590); sNDA priority review planned summer 2026; DEM rank 114 tier A commercial_pharma",
+  "resolution_date": "2026-03-30",
+  "outcome": "HIT",
+  "outcome_detail": "Phase 3 TETON-1 Tyvaso in IPF met primary endpoint; FVC +130.1mL vs placebo (p<0.0001); +13% price move ($520 to $590); sNDA priority review planned summer 2026; DEM rank 114 tier A commercial_pharma",
+  "source_type": "MANUAL",
+  "source_id": "price_action_evidence",
+  "prediction_snapshot_date": "2026-03-28",
+  "prediction_dem_rank": 113,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": null,
+  "as_of_date": "2026-04-01",
+  "record_hash": "069e6d7dccc60b7574875115f90b6da162d2bb106493f4fdabe9220761135153"
+}

@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "RAPP",
+  "catalyst_date": "2026-03-10",
+  "catalyst_type": "CORPORATE_UPDATE",
+  "catalyst_description": "8-K: clinical hold on ",
+  "resolution_date": "2026-03-10",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: results expected in 2027. &#x2022; Bipolar Mania Phase 2 Trial Progress. The Com",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-10_RAPP",
+  "prediction_snapshot_date": "2026-03-09",
+  "prediction_dem_rank": 35,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": 20,
+  "as_of_date": "2026-03-30",
+  "record_hash": "cf0d3599ca62a7343fe3bb49bca993ee77a7f8e3fcffec06cb6a5fa37002188a"
+}

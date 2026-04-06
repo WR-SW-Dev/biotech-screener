@@ -1,0 +1,22 @@
+{
+    "schema_version": "1.0.0",
+    "ticker": "ORKA",
+    "catalyst_date": "2026-04-01",
+    "catalyst_type": "PHASE_1_DATA",
+    "catalyst_description": "Oruka Therapeutics Announces Positive Interim Phase 1 Data for ORKA-002 and Initiation of EVERLAST-B Trial of ORKA-001",
+    "resolution_date": "2026-04-01",
+    "outcome": "HIT",
+    "outcome_detail": "Oruka Therapeutics Announces Positive Interim Phase 1 Data for ORKA-002 and Initiation of EVERLAST-B Trial of ORKA-001",
+    "source_type": "PRESS_RELEASE",
+    "source_id": "https://ir.orukatx.com/news-releases/news-release-details/oruka-therapeutics-announces-positive-interim-phase-1-data-orka",
+    "prediction_snapshot_date": null,
+    "prediction_dem_rank": null,
+    "prediction_composite_score": null,
+    "price_t_minus_1": null,
+    "price_t_0": null,
+    "price_t_plus_5": null,
+    "price_direction": null,
+    "days_from_expected": null,
+    "as_of_date": "2026-04-06",
+    "record_hash": "80df0c5148331e3e899e79d3c3dbcaed2fbd1fd5126895344da99a3487d43081"
+}

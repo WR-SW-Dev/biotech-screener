@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "ticker": "PVLA",
+  "catalyst_date": "2026-04-01",
+  "catalyst_type": "PDUFA_ACTION",
+  "catalyst_description": "8-K: NDA submission in 2H 2026 Cutaneous Venous Malformations 2 Positive Phase 2 data",
+  "resolution_date": "2026-03-31",
+  "outcome": "NEEDS_REVIEW",
+  "outcome_detail": "8-K: NDA submission while preparing for a planned standalone U.S. commercial launch. ",
+  "source_type": "SEC_8K",
+  "source_id": "8K_2026-03-31_PVLA",
+  "prediction_snapshot_date": "2026-03-31",
+  "prediction_dem_rank": 54,
+  "prediction_composite_score": null,
+  "price_t_minus_1": null,
+  "price_t_0": null,
+  "price_t_plus_5": null,
+  "price_direction": null,
+  "days_from_expected": 0,
+  "as_of_date": "2026-04-01",
+  "record_hash": "410f64d39b07b6b753bc0f1304ee30c2b1d319fe382cca9dad9169db1252c426"
+}
