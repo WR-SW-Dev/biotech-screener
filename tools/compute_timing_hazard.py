@@ -205,8 +205,9 @@ def compute_calibration_by_slice(
         return {"slices": [], "n_resolved": 0, "trailing_days": trailing_days}
 
     # Group by (family_bucket, horizon_bucket, hardness)
-    from collections import defaultdict
+    from collections import Counter, defaultdict
 
+    # Each bucket entry: (prob, on_time, ticker, event_type)
     buckets = defaultdict(list)
     for entry in resolved:
         family = classify_family_bucket(entry.get("catalyst_family", ""), entry.get("catalyst_event_type", ""))
@@ -214,26 +215,49 @@ def compute_calibration_by_slice(
         hardness = entry.get("hardness", "UNKNOWN")
         on_time = 1 if entry["actual_outcome"] == "ON_TIME" else 0
         prob = entry.get("on_time_prob", 0.5)
-        buckets[(family, horizon, hardness)].append((prob, on_time))
+        ticker = entry.get("ticker", "?")
+        event_type = entry.get("catalyst_event_type", "?")
+        buckets[(family, horizon, hardness)].append((prob, on_time, ticker, event_type))
 
     slices = []
     for (family, horizon, hardness), records in sorted(buckets.items()):
         n = len(records)
         if n == 0:
             continue
-        probs, actuals = zip(*records)
+        probs, actuals, tickers, event_types = zip(*records)
         mean_prob = sum(probs) / n
         actual_rate = sum(actuals) / n
-        # Brier score
-        brier = sum((p - a) ** 2 for p, a in records) / n
+        brier = sum((p - a) ** 2 for p, a in zip(probs, actuals)) / n
+
+        # --- Concentration diagnostics ---
+        distinct_tickers = set(tickers)
+        # Event = (ticker, event_type) pair
+        distinct_events = set(zip(tickers, event_types))
+        ticker_counts = Counter(tickers)
+        top_ticker, top_count = ticker_counts.most_common(1)[0]
+        top_ticker_share = top_count / n
+
+        # Event-weighted rate: one vote per distinct ticker (de-duped)
+        ticker_outcomes: dict[str, list[int]] = defaultdict(list)
+        for a, t in zip(actuals, tickers):
+            ticker_outcomes[t].append(a)
+        # Each ticker votes once: majority outcome
+        ticker_votes = [1 if sum(v) > len(v) / 2 else 0 for v in ticker_outcomes.values()]
+        event_weighted_rate = sum(ticker_votes) / len(ticker_votes) if ticker_votes else 0.0
+
         slices.append(
             {
                 "family": family,
                 "horizon": horizon,
                 "hardness": hardness,
                 "n": n,
+                "n_distinct_tickers": len(distinct_tickers),
+                "n_distinct_events": len(distinct_events),
+                "top_ticker": top_ticker,
+                "top_ticker_share": round(top_ticker_share, 3),
                 "mean_predicted_prob": round(mean_prob, 3),
                 "actual_on_time_rate": round(actual_rate, 3),
+                "event_weighted_on_time_rate": round(event_weighted_rate, 3),
                 "brier_score": round(brier, 4),
                 "overconfidence": round(mean_prob - actual_rate, 3),
             }
@@ -604,18 +628,27 @@ def _load_near_term_adaptive_rates(
     rule logic: REGULATORY → HARD → UNKNOWN → SOFT.  Falls back to constants
     if any slice has fewer than NEAR_TERM_MIN_SLICE_SAMPLES outcomes.
 
-    Returns dict with keys: regulatory, hard, unknown, soft (float or None),
-    n_regulatory, n_hard, n_unknown, n_soft (int), fallback (bool).
+    Includes concentration diagnostics (distinct tickers, top-ticker share,
+    event-weighted rates) and shrinks toward fallback constants when effective
+    sample size is low (high ticker concentration).
+
+    Returns dict with per-slice rates, counts, concentration metrics,
+    and a fallback flag.
     """
+    from collections import Counter, defaultdict
+
+    _FALLBACK_CONSTANTS = {
+        "regulatory": NEAR_TERM_REGULATORY_PROB,
+        "hard": NEAR_TERM_HARD_PROB,
+        "unknown": NEAR_TERM_UNKNOWN_PROB,
+        "soft": NEAR_TERM_SOFT_PROB,
+    }
     fallback_result = {
-        "regulatory": None,
-        "hard": None,
-        "unknown": None,
-        "soft": None,
-        "n_regulatory": 0,
-        "n_hard": 0,
-        "n_unknown": 0,
-        "n_soft": 0,
+        **{k: None for k in _FALLBACK_CONSTANTS},
+        **{f"n_{k}": 0 for k in _FALLBACK_CONSTANTS},
+        **{f"n_tickers_{k}": 0 for k in _FALLBACK_CONSTANTS},
+        **{f"top_ticker_share_{k}": 0.0 for k in _FALLBACK_CONSTANTS},
+        **{f"event_weighted_{k}": None for k in _FALLBACK_CONSTANTS},
         "fallback": True,
     }
     if not CALIBRATION_LEDGER.exists():
@@ -630,8 +663,8 @@ def _load_near_term_adaptive_rates(
     window_start_str = str(window_start)
     cutoff_str = as_of_date[:10]
 
-    # Buckets matching the rule decision tree
-    buckets: dict[str, list[float]] = {
+    # Each bucket entry: (on_time, ticker)
+    buckets: dict[str, list[tuple[float, str]]] = {
         "regulatory": [],
         "hard": [],
         "unknown": [],
@@ -651,33 +684,70 @@ def _load_near_term_adaptive_rates(
             pred_date = entry.get("prediction_date", "")
             if not outcome or pred_date >= cutoff_str or pred_date < window_start_str:
                 continue
-            # Near-term only
             cat_days = entry.get("catalyst_days", 999)
             if cat_days > NEAR_TERM_DAYS:
                 continue
 
             on_time = 1.0 if outcome == "ON_TIME" else 0.0
+            ticker = entry.get("ticker", "?")
             family = entry.get("catalyst_family", entry.get("family_bucket", ""))
             is_hard = entry.get("is_hard_catalyst", False)
 
             if family == "REGULATORY":
-                buckets["regulatory"].append(on_time)
+                buckets["regulatory"].append((on_time, ticker))
             elif is_hard:
-                buckets["hard"].append(on_time)
+                buckets["hard"].append((on_time, ticker))
             elif family in ("", "UNKNOWN"):
-                buckets["unknown"].append(on_time)
+                buckets["unknown"].append((on_time, ticker))
             else:
-                buckets["soft"].append(on_time)
+                buckets["soft"].append((on_time, ticker))
 
-    # Check minimum samples
     min_n = NEAR_TERM_MIN_SLICE_SAMPLES
     insufficient = any(len(v) < min_n for v in buckets.values())
 
-    result = {"fallback": insufficient}
-    for key, vals in buckets.items():
-        n = len(vals)
+    result: dict = {"fallback": insufficient}
+    for key, entries in buckets.items():
+        n = len(entries)
         result[f"n_{key}"] = n
-        result[key] = (sum(vals) / n) if n >= min_n else None
+
+        if n < min_n:
+            result[key] = None
+            result[f"n_tickers_{key}"] = 0
+            result[f"top_ticker_share_{key}"] = 0.0
+            result[f"event_weighted_{key}"] = None
+            continue
+
+        # Raw prediction-weighted rate
+        raw_rate = sum(ot for ot, _ in entries) / n
+
+        # Concentration diagnostics
+        ticker_counts = Counter(t for _, t in entries)
+        n_tickers = len(ticker_counts)
+        top_ticker, top_count = ticker_counts.most_common(1)[0]
+        top_share = top_count / n
+
+        # Event-weighted rate: one vote per distinct ticker (majority outcome)
+        ticker_outcomes: dict[str, list[float]] = defaultdict(list)
+        for ot, t in entries:
+            ticker_outcomes[t].append(ot)
+        ticker_votes = [1.0 if sum(v) > len(v) / 2 else 0.0 for v in ticker_outcomes.values()]
+        event_weighted_rate = sum(ticker_votes) / len(ticker_votes)
+
+        # Shrinkage: blend toward fallback constant based on effective sample size.
+        # effective_n = n_tickers (not n_predictions). When a few tickers dominate,
+        # effective_n is small and we lean more on the prior (fallback constant).
+        # alpha = effective_n / (effective_n + prior_weight)
+        # prior_weight=10 means ~10 distinct tickers needed for 50/50 blend.
+        prior_weight = 10.0
+        alpha = n_tickers / (n_tickers + prior_weight)
+        shrunk_rate = alpha * raw_rate + (1.0 - alpha) * _FALLBACK_CONSTANTS[key]
+
+        result[key] = shrunk_rate
+        result[f"raw_{key}"] = round(raw_rate, 4)
+        result[f"n_tickers_{key}"] = n_tickers
+        result[f"top_ticker_share_{key}"] = round(top_share, 3)
+        result[f"event_weighted_{key}"] = round(event_weighted_rate, 3)
+        result[f"shrinkage_alpha_{key}"] = round(alpha, 3)
 
     return result
 
@@ -1070,19 +1140,17 @@ def compute_timing_hazard(snapshot_date=None):
     near_term_adaptive = _load_near_term_adaptive_rates(snapshot_date)
     use_adaptive = not near_term_adaptive["fallback"]
     if use_adaptive:
-        log.info(
-            "Near-term adaptive rates (90d window): "
-            "regulatory=%.3f (n=%d), hard=%.3f (n=%d), "
-            "soft=%.3f (n=%d), unknown=%.3f (n=%d)",
-            near_term_adaptive["regulatory"],
-            near_term_adaptive["n_regulatory"],
-            near_term_adaptive["hard"],
-            near_term_adaptive["n_hard"],
-            near_term_adaptive["soft"],
-            near_term_adaptive["n_soft"],
-            near_term_adaptive["unknown"],
-            near_term_adaptive["n_unknown"],
-        )
+        for _k in ("regulatory", "hard", "soft", "unknown"):
+            log.info(
+                "  %s: %.3f (raw=%.3f, α=%.2f, n=%d pred, %d tickers, top=%.0f%%)",
+                _k,
+                near_term_adaptive[_k],
+                near_term_adaptive.get(f"raw_{_k}", 0),
+                near_term_adaptive.get(f"shrinkage_alpha_{_k}", 0),
+                near_term_adaptive[f"n_{_k}"],
+                near_term_adaptive.get(f"n_tickers_{_k}", 0),
+                near_term_adaptive.get(f"top_ticker_share_{_k}", 0) * 100,
+            )
     else:
         log.info("Near-term rates: using fallback constants (insufficient adaptive data)")
 
