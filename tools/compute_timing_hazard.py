@@ -278,7 +278,8 @@ def _compute_calibration_curve(records, n_bins=10):
     from collections import defaultdict
 
     bins = defaultdict(list)
-    for prob, actual in records:
+    for rec in records:
+        prob, actual = rec[0], rec[1]  # handles 2-tuples and 3-tuples
         b = min(int(prob * n_bins), n_bins - 1)
         bins[b].append((prob, actual))
 
@@ -360,25 +361,41 @@ def build_calibration_dashboard(as_of_date: str, trailing_days: int = 90) -> dic
         horizon = entry.get("horizon_bucket", "UNKNOWN")
         hardness = entry.get("hardness", "UNKNOWN")
         source = entry.get("source_provenance", "UNKNOWN")
+        ticker = entry.get("ticker", "?")
         on_time = 1 if entry["actual_outcome"] == "ON_TIME" else 0
         prob = entry.get("on_time_prob", 0.5)
 
-        rec = (prob, on_time)
+        rec = (prob, on_time, ticker)
         slice_buckets[(family, horizon, hardness)].append(rec)
         horizon_buckets[horizon].append(rec)
         source_buckets[source].append(rec)
         all_records.append(rec)
 
     def _summarize(records):
+        from collections import Counter
+
         n = len(records)
         if n == 0:
             return {"n": 0}
-        probs, actuals = zip(*records)
+        probs, actuals, tickers = zip(*records)
+        ticker_counts = Counter(tickers)
+        n_tickers = len(ticker_counts)
+        top_ticker, top_count = ticker_counts.most_common(1)[0]
+        # Event-weighted: one vote per ticker (majority outcome)
+        tk_outcomes: dict[str, list[int]] = defaultdict(list)
+        for a, t in zip(actuals, tickers):
+            tk_outcomes[t].append(a)
+        tk_votes = [1 if sum(v) > len(v) / 2 else 0 for v in tk_outcomes.values()]
+        evt_rate = sum(tk_votes) / len(tk_votes) if tk_votes else 0.0
         return {
             "n": n,
+            "n_distinct_tickers": n_tickers,
+            "top_ticker": top_ticker,
+            "top_ticker_share": round(top_count / n, 3),
             "mean_predicted": round(sum(probs) / n, 3),
             "actual_rate": round(sum(actuals) / n, 3),
-            "brier": round(sum((p - a) ** 2 for p, a in records) / n, 4),
+            "event_weighted_rate": round(evt_rate, 3),
+            "brier": round(sum((p - a) ** 2 for p, a in zip(probs, actuals)) / n, 4),
             "overconfidence": round(sum(probs) / n - sum(actuals) / n, 3),
         }
 
