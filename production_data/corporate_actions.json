@@ -61,6 +61,8 @@
     {"ticker": "HOWL",  "action": "ticker_change", "effective_date": "2024-08-01", "old_ticker": "WERW",  "new_ticker": "HOWL",  "notes": "Werewolf Therapeutics renamed to Howl Therapeutics. Same CUSIP, same CIK."},
     {"ticker": "ONC",   "action": "ticker_change", "effective_date": "2025-01-02", "old_ticker": "BGNE",  "new_ticker": "ONC",   "notes": "BeiGene renamed to BeOne Medicines. CUSIP unchanged."},
     {"ticker": "SYRE",  "action": "ticker_change", "effective_date": "2023-10-01", "old_ticker": "AGLE",  "new_ticker": "SYRE",  "notes": "Aeglea BioTherapeutics renamed to Spyre Therapeutics after reverse merge."},
+    {"ticker": "BBOT",  "action": "ticker_change", "effective_date": "2025-04-07", "old_ticker": "BIOR",  "new_ticker": "BBOT",  "notes": "BioAtla renamed ticker BIOR to BBOT. Same CUSIP 107924102."},
+    {"ticker": "CAI",   "action": "ticker_change", "effective_date": "2025-09-15", "old_ticker": "CRIS",  "new_ticker": "CAI",   "notes": "Curis renamed to Context AI Therapeutics. CUSIP 142152107 unchanged."},
 
     {"ticker": "DAWN",  "action": "acquisition", "effective_date": "2026-03-15", "acquirer": "Unknown",  "deal_price": 21.35, "notes": "Day One Biopharmaceuticals. Flat price suggests acquisition. Needs confirmation."},
     {"ticker": "FOLD",  "action": "acquisition", "effective_date": "2026-03-01", "acquirer": "Unknown",  "deal_price": 14.40, "notes": "Amicus Therapeutics. Flat price suggests acquisition. Needs confirmation."}

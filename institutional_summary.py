@@ -107,9 +107,17 @@ def build_institutional_summary(
                 tk = _cusip_map.get(cusip, "")
                 if tk:
                     _cusip_resolved += 1
-            # Resolve renamed tickers (e.g. BGNE → ONC)
+            # Resolve renamed tickers (e.g. BGNE → ONC, BIOR → BBOT)
             if tk and _ca_reg:
                 tk = _ca_resolve(tk, as_of_date, _ca_reg)
+            # Second CUSIP fallback: if ticker is non-blank but not in universe
+            # (stale ticker from old filing), try CUSIP resolution
+            if tk and tk not in universe_tickers and _cusip_map:
+                cusip = (h.get("cusip") or "").strip().upper()[:9]
+                resolved = _cusip_map.get(cusip, "")
+                if resolved and resolved in universe_tickers:
+                    tk = resolved
+                    _cusip_resolved += 1
             if not tk or tk not in universe_tickers:
                 continue
 
