@@ -49,15 +49,15 @@ ROLLING_WINDOW_RECORDS = 200  # record-count fallback for global rate
 ROLLING_FALLBACK = 0.70  # fallback when ledger has insufficient data
 ROLLING_MIN_SLICE_SAMPLES = 10  # min records per family×horizon slice
 
-# Hybrid near-term override (OOS-validated, v2.1)
-# Near-term catalysts (0-30d) have 28% base rate — rolling base (~70%) is catastrophically wrong.
-# Rule-based override for near-term (0-30d) catalysts.
-# Constants derived from resolved OOS outcomes in calibration ledger (2026-04-06).
+# Near-term override: adaptive from rolling window, fallback to constants.
 NEAR_TERM_DAYS = 30
-NEAR_TERM_REGULATORY_PROB = 0.98  # regulatory: 95.2% actual (n=21), keep conservative
-NEAR_TERM_HARD_PROB = 0.95  # hard catalysts: 95.7% actual (n=46), was 0.85
-NEAR_TERM_SOFT_PROB = 0.87  # soft clinical: 87.0% actual (n=454), was 0.28
-NEAR_TERM_UNKNOWN_PROB = 0.80  # unknown family: 80.5% actual (n=553), was 0.28
+NEAR_TERM_ADAPTIVE_WINDOW_DAYS = 90  # shorter window = more reactive
+NEAR_TERM_MIN_SLICE_SAMPLES = 20  # require 20+ resolved outcomes per slice
+# Fallback constants (from resolved OOS outcomes, 2026-04-06)
+NEAR_TERM_REGULATORY_PROB = 0.98
+NEAR_TERM_HARD_PROB = 0.95
+NEAR_TERM_SOFT_PROB = 0.87
+NEAR_TERM_UNKNOWN_PROB = 0.80
 
 # Source quality hierarchy for catalyst sources
 SOURCE_QUALITY = {
@@ -594,6 +594,94 @@ def _load_rolling_base_rate_sliced(as_of_date: str):
     return rates
 
 
+def _load_near_term_adaptive_rates(
+    as_of_date: str,
+    trailing_days: int = NEAR_TERM_ADAPTIVE_WINDOW_DAYS,
+) -> dict:
+    """Compute adaptive on-time rates for near-term (0-30d) catalysts.
+
+    Groups resolved near-term outcomes by the same decision tree used in the
+    rule logic: REGULATORY → HARD → UNKNOWN → SOFT.  Falls back to constants
+    if any slice has fewer than NEAR_TERM_MIN_SLICE_SAMPLES outcomes.
+
+    Returns dict with keys: regulatory, hard, unknown, soft (float or None),
+    n_regulatory, n_hard, n_unknown, n_soft (int), fallback (bool).
+    """
+    fallback_result = {
+        "regulatory": None,
+        "hard": None,
+        "unknown": None,
+        "soft": None,
+        "n_regulatory": 0,
+        "n_hard": 0,
+        "n_unknown": 0,
+        "n_soft": 0,
+        "fallback": True,
+    }
+    if not CALIBRATION_LEDGER.exists():
+        return fallback_result
+
+    try:
+        cutoff = date.fromisoformat(as_of_date[:10])
+        window_start = cutoff - timedelta(days=trailing_days)
+    except (ValueError, TypeError):
+        return fallback_result
+
+    window_start_str = str(window_start)
+    cutoff_str = as_of_date[:10]
+
+    # Buckets matching the rule decision tree
+    buckets: dict[str, list[float]] = {
+        "regulatory": [],
+        "hard": [],
+        "unknown": [],
+        "soft": [],
+    }
+
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                entry = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            outcome = entry.get("actual_outcome")
+            pred_date = entry.get("prediction_date", "")
+            if not outcome or pred_date >= cutoff_str or pred_date < window_start_str:
+                continue
+            # Near-term only
+            cat_days = entry.get("catalyst_days", 999)
+            if cat_days > NEAR_TERM_DAYS:
+                continue
+
+            on_time = 1.0 if outcome == "ON_TIME" else 0.0
+            family = entry.get("catalyst_family", entry.get("family_bucket", ""))
+            is_hard = entry.get("is_hard_catalyst", False)
+
+            if family == "REGULATORY":
+                buckets["regulatory"].append(on_time)
+            elif is_hard:
+                buckets["hard"].append(on_time)
+            elif family in ("", "UNKNOWN"):
+                buckets["unknown"].append(on_time)
+            else:
+                buckets["soft"].append(on_time)
+
+    # Check minimum samples
+    min_n = NEAR_TERM_MIN_SLICE_SAMPLES
+    insufficient = any(len(v) < min_n for v in buckets.values())
+
+    result = {"fallback": insufficient}
+    for key, vals in buckets.items():
+        n = len(vals)
+        result[f"n_{key}"] = n
+        result[key] = (sum(vals) / n) if n >= min_n else None
+
+    return result
+
+
 def _build_catalyst_node(row, snap_date, trial_update_dates, aact_delta):
     """Convert a rankings.csv row into a CatalystNode for timing estimation."""
     ticker = row.get("ticker", "")
@@ -978,6 +1066,26 @@ def compute_timing_hazard(snapshot_date=None):
     # Sliced rolling rates (v3): Brier 0.109, ECE 0.030 on 1691 OOS records
     rolling_sliced = _load_rolling_base_rate_sliced(snapshot_date)
 
+    # Adaptive near-term rates from rolling window
+    near_term_adaptive = _load_near_term_adaptive_rates(snapshot_date)
+    use_adaptive = not near_term_adaptive["fallback"]
+    if use_adaptive:
+        log.info(
+            "Near-term adaptive rates (90d window): "
+            "regulatory=%.3f (n=%d), hard=%.3f (n=%d), "
+            "soft=%.3f (n=%d), unknown=%.3f (n=%d)",
+            near_term_adaptive["regulatory"],
+            near_term_adaptive["n_regulatory"],
+            near_term_adaptive["hard"],
+            near_term_adaptive["n_hard"],
+            near_term_adaptive["soft"],
+            near_term_adaptive["n_soft"],
+            near_term_adaptive["unknown"],
+            near_term_adaptive["n_unknown"],
+        )
+    else:
+        log.info("Near-term rates: using fallback constants (insufficient adaptive data)")
+
     # Process each position with a catalyst
     results = []
     for row in rows:
@@ -1020,16 +1128,17 @@ def compute_timing_hazard(snapshot_date=None):
         family_bucket = classify_family_bucket(catalyst_family, event_type)
 
         if catalyst_days <= NEAR_TERM_DAYS:
-            # Near-term: rule-based by catalyst type (OOS-calibrated 2026-04-06)
+            # Near-term: adaptive from rolling window, fallback to constants
             if catalyst_family == "REGULATORY":
-                on_time_prob = NEAR_TERM_REGULATORY_PROB
+                on_time_prob = near_term_adaptive["regulatory"] if use_adaptive else NEAR_TERM_REGULATORY_PROB
             elif is_hard:
-                on_time_prob = NEAR_TERM_HARD_PROB
+                on_time_prob = near_term_adaptive["hard"] if use_adaptive else NEAR_TERM_HARD_PROB
             elif catalyst_family in ("", "UNKNOWN"):
-                on_time_prob = NEAR_TERM_UNKNOWN_PROB
+                on_time_prob = near_term_adaptive["unknown"] if use_adaptive else NEAR_TERM_UNKNOWN_PROB
             else:
-                on_time_prob = NEAR_TERM_SOFT_PROB
-            prob_method = "near_term_rule"
+                on_time_prob = near_term_adaptive["soft"] if use_adaptive else NEAR_TERM_SOFT_PROB
+            on_time_prob = max(on_time_prob, 0.05)  # floor
+            prob_method = "near_term_adaptive" if use_adaptive else "near_term_rule_fallback"
         else:
             # Medium/far: sliced rolling base rate (v3, family × horizon)
             slice_key = (family_bucket, horizon_bucket)

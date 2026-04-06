@@ -187,17 +187,24 @@ def _resolve_outcome_multi(
     expected_date = snap_date + timedelta(days=int(cat_days))
     threshold = _slip_threshold(cat_days)
 
+    # Track consecutive pushouts for early slip confirmation
+    consecutive_pushouts = 0
+    EARLY_SLIP_CONFIRMATIONS = 2  # require 2+ consecutive pushouts before expected date
+
     for future_date, future_map in future_snapshots:
-        # Only check snapshots after the expected date
+        # Before expected date window: only detect slips with confirmation
         if future_date < expected_date - timedelta(days=7):
-            # Check for early slip detection: date pushed out before expected
             future_entry = future_map.get(ticker)
             if future_entry is not None:
                 future_days = future_entry["catalyst_days"]
                 future_expected = future_date + timedelta(days=int(future_days))
                 slip_days = (future_expected - expected_date).days
                 if slip_days > threshold:
-                    return "SLIP", slip_days, str(future_date)
+                    consecutive_pushouts += 1
+                    if consecutive_pushouts >= EARLY_SLIP_CONFIRMATIONS:
+                        return "SLIP", slip_days, str(future_date)
+                else:
+                    consecutive_pushouts = 0  # reset on non-pushout
             continue
 
         future_entry = future_map.get(ticker)
