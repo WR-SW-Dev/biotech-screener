@@ -51,11 +51,13 @@ ROLLING_MIN_SLICE_SAMPLES = 10  # min records per family×horizon slice
 
 # Hybrid near-term override (OOS-validated, v2.1)
 # Near-term catalysts (0-30d) have 28% base rate — rolling base (~70%) is catastrophically wrong.
-# Rule-based override: Brier 0.175 vs current 0.396 on near-term OOS data.
+# Rule-based override for near-term (0-30d) catalysts.
+# Constants derived from resolved OOS outcomes in calibration ledger (2026-04-06).
 NEAR_TERM_DAYS = 30
-NEAR_TERM_REGULATORY_PROB = 0.98  # regulatory events are near-deterministic
-NEAR_TERM_HARD_PROB = 0.85  # hard catalysts with confirmed dates
-NEAR_TERM_SOFT_PROB = 0.28  # empirical near-term base rate from OOS data
+NEAR_TERM_REGULATORY_PROB = 0.98  # regulatory: 95.2% actual (n=21), keep conservative
+NEAR_TERM_HARD_PROB = 0.95  # hard catalysts: 95.7% actual (n=46), was 0.85
+NEAR_TERM_SOFT_PROB = 0.87  # soft clinical: 87.0% actual (n=454), was 0.28
+NEAR_TERM_UNKNOWN_PROB = 0.80  # unknown family: 80.5% actual (n=553), was 0.28
 
 # Source quality hierarchy for catalyst sources
 SOURCE_QUALITY = {
@@ -1018,11 +1020,13 @@ def compute_timing_hazard(snapshot_date=None):
         family_bucket = classify_family_bucket(catalyst_family, event_type)
 
         if catalyst_days <= NEAR_TERM_DAYS:
-            # Near-term: rule-based by catalyst type
+            # Near-term: rule-based by catalyst type (OOS-calibrated 2026-04-06)
             if catalyst_family == "REGULATORY":
                 on_time_prob = NEAR_TERM_REGULATORY_PROB
             elif is_hard:
                 on_time_prob = NEAR_TERM_HARD_PROB
+            elif catalyst_family in ("", "UNKNOWN"):
+                on_time_prob = NEAR_TERM_UNKNOWN_PROB
             else:
                 on_time_prob = NEAR_TERM_SOFT_PROB
             prob_method = "near_term_rule"
