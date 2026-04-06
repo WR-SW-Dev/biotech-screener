@@ -1544,6 +1544,11 @@ SNAPSHOT_COLUMNS = (
         # --- IV crush stress test (from Massive chain analytics) ---
         "iv_crush_breakeven_pct",
         "crush_adjusted_implied_move",
+        # --- Market data pass-through for Event EV expectation model ---
+        "short_interest_pct",
+        "close_price",
+        "market_cap_mm",
+        "priced_move_pct",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",
@@ -4947,6 +4952,22 @@ def save_validation_snapshot(
 
     # --- Output hygiene: fill deterministic defaults for z-score fields ---
     _ensure_defaults(csv_rows)
+
+    # --- Inject market data fields for Event EV expectation model ---
+    for _r in csv_rows:
+        _tk = (_r.get("ticker") or "").upper()
+        _md = market_data_by_ticker.get(_tk, {})
+        if _md:
+            if "short_interest_pct" not in _r or not _r.get("short_interest_pct"):
+                _r["short_interest_pct"] = _md.get("short_percent", "")
+            if "close_price" not in _r or not _r.get("close_price"):
+                _r["close_price"] = _md.get("price", "")
+            if "market_cap_mm" not in _r or not _r.get("market_cap_mm"):
+                _mcap = _md.get("market_cap")
+                _r["market_cap_mm"] = round(_mcap / 1e6, 1) if _mcap else ""
+        # priced_move_pct: alias straddle_price (already expressed as fraction)
+        if not _r.get("priced_move_pct") and _r.get("straddle_price"):
+            _r["priced_move_pct"] = _r["straddle_price"]
 
     # --- Applicability flags (for scorecard N/A-aware missingness) ---
     for _r in csv_rows:
