@@ -20,6 +20,7 @@ Programmatic:
     from tools.build_ops_digest import build_ops_digest
     digest = build_ops_digest("2026-03-23")
 """
+
 from __future__ import annotations
 
 import argparse
@@ -431,6 +432,36 @@ def _build_asymmetry_outliers(snap_dir: Path) -> Dict[str, Any]:
 # ---------------------------------------------------------------------------
 
 
+def _build_review_packet_summary() -> Dict[str, Any]:
+    """Load latest review packet and extract summary for ops digest."""
+    review_dir = REPO_ROOT / "artifacts" / "review"
+    if not review_dir.exists():
+        return {"available": False}
+    files = sorted(review_dir.glob("*_review_packet.json"), reverse=True)
+    if not files:
+        return {"available": False}
+    try:
+        rp = json.loads(files[0].read_text())
+        timing = rp.get("timing", {})
+        cal = rp.get("calibration", {})
+        confusion = rp.get("confusion", {})
+        rq = rp.get("review_queue", {})
+        priorities = rq.get("top_priorities", [])[:3]
+        return {
+            "available": True,
+            "packet_date": rp.get("snapshot_date"),
+            "n_warnings": timing.get("n_warnings", 0),
+            "calibration_status": rp.get("calibration_status"),
+            "brier": cal.get("overall_brier"),
+            "n_resolved": cal.get("n_resolved", 0),
+            "herald_accuracy": confusion.get("accuracy"),
+            "n_labeled": confusion.get("n_labeled", 0),
+            "top_priorities": [p.get("ticker", "?") for p in priorities],
+        }
+    except Exception:
+        return {"available": False}
+
+
 def build_ops_digest(
     as_of_date: str,
     *,
@@ -607,6 +638,9 @@ def build_ops_digest(
     # Asymmetry outliers — implied_vs_realized flags for discretionary review
     asymmetry_outliers = _build_asymmetry_outliers(snap_dir)
 
+    # Review packet summary (timing + event quality)
+    review_packet_summary = _build_review_packet_summary()
+
     return {
         "schema": SCHEMA_VERSION,
         "as_of_date": as_of_date,
@@ -627,6 +661,7 @@ def build_ops_digest(
         "surface_delta": surface_delta,
         "options_monitor_v11": om11_summary,
         "asymmetry_outliers": asymmetry_outliers,
+        "review_packet": review_packet_summary,
     }
 
 
@@ -778,6 +813,20 @@ def format_digest_md(d: Dict[str, Any]) -> str:
             for name, status in checks.items():
                 lines.append(f"| {name} | {status} |")
             lines.append("")
+
+    # Review Packet Summary (timing + event quality)
+    rps = d.get("review_packet", {})
+    if rps.get("available"):
+        lines.append("## Review Packet")
+        lines.append("")
+        lines.append(f"Timing: {rps.get('n_warnings', 0)} warnings, cal={rps.get('calibration_status', '—')}")
+        if rps.get("brier") is not None:
+            lines.append(f"  Brier={rps['brier']}, {rps.get('n_resolved', 0)} resolved")
+        if rps.get("herald_accuracy") is not None:
+            lines.append(f"  Herald accuracy={rps['herald_accuracy']} ({rps.get('n_labeled', 0)} labeled)")
+        if rps.get("top_priorities"):
+            lines.append("  Priority: " + ", ".join(rps["top_priorities"]))
+        lines.append("")
 
     # Nearest catalysts
     cats = d.get("nearest_catalysts", [])

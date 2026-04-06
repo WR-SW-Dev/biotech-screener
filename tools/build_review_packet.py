@@ -14,6 +14,7 @@ Usage:
     python tools/build_review_packet.py
     python tools/build_review_packet.py --snapshot-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse
@@ -127,8 +128,12 @@ def _summarize_timing_warnings(timing: dict) -> list[dict]:
                 "catalyst_family": cat.get("catalyst_family", ""),
                 "on_time_prob": cat["on_time_prob"],
                 "confidence": cat["timing_confidence_bucket"],
-                "warnings": [w["label"] for w in cat.get("warning_reasons", [])],
-                "top_reason": cat["warning_reasons"][0]["reason"] if cat.get("warning_reasons") else "",
+                "warnings": [(w["label"] if isinstance(w, dict) else str(w)) for w in cat.get("warning_reasons", [])],
+                "top_reason": (
+                    cat["warning_reasons"][0]["reason"]
+                    if cat.get("warning_reasons") and isinstance(cat["warning_reasons"][0], dict)
+                    else str(cat["warning_reasons"][0]) if cat.get("warning_reasons") else ""
+                ),
             }
         )
     return warnings
@@ -322,6 +327,110 @@ def build_review_packet(snapshot_date: str | None = None) -> dict:
     return packet
 
 
+def render_review_packet_md(packet: dict) -> str:
+    """Render the review packet as a compact operator-readable markdown document."""
+    snap = packet.get("snapshot_date", "?")
+    lines = [
+        f"# Review Packet — {snap}",
+        "",
+        f"*Generated: {packet.get('generated_at', '?')}*  ",
+        "*Status: DIAGNOSTIC / NON-BINDING*",
+        "",
+    ]
+
+    # Health summary
+    timing = packet.get("timing", {})
+    cal = packet.get("calibration", {})
+
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
+    lines.append(
+        f"| Artifacts loaded | {sum(packet.get('artifacts_loaded', {}).values())}/{len(packet.get('artifacts_loaded', {}))} |"
+    )
+    lines.append(f"| Timing warnings | {timing.get('n_warnings', 0)} |")
+    lines.append(f"| Rolling base rate | {timing.get('rolling_base_rate', '—')} |")
+    trend = timing.get("base_rate_trend")
+    lines.append(f"| Base rate trend | {f'{trend:+.3f}' if trend is not None else '—'} |")
+    lines.append(f"| Calibration | {cal.get('n_resolved', 0)} resolved, Brier={cal.get('overall_brier', '—')} |")
+
+    eq = packet.get("event_type_distribution", {})
+    if eq.get("available"):
+        lines.append(f"| Mean event_type_score | {eq.get('mean_event_type_score', '—')} |")
+
+    confusion = packet.get("confusion", {})
+    if confusion.get("available"):
+        lines.append(
+            f"| Herald accuracy | {confusion.get('accuracy', '—')} ({confusion.get('n_labeled', 0)} labeled) |"
+        )
+
+    lines.append("")
+
+    # Top timing warnings
+    warnings = timing.get("warnings", [])
+    if warnings:
+        lines.append("## Top Timing Warnings")
+        lines.append("")
+        lines.append("| Ticker | Rank | Days | Family | Prob | Warnings |")
+        lines.append("|--------|------|------|--------|------|----------|")
+        for w in warnings[:10]:
+            wlabels = ", ".join(w.get("warnings", []))
+            lines.append(
+                f"| {w['ticker']} | {w['rank']} | {w['catalyst_days']} "
+                f"| {w.get('catalyst_family', '—')} | {w['on_time_prob']:.2f} "
+                f"| {wlabels} |"
+            )
+        lines.append("")
+
+    # Calibration health
+    if cal.get("available"):
+        lines.append("## Calibration Health")
+        lines.append("")
+        by_horizon = cal.get("by_horizon", {})
+        if by_horizon:
+            lines.append("| Horizon | N | Brier | Actual Rate |")
+            lines.append("|---------|---|-------|-------------|")
+            for h, v in sorted(by_horizon.items()):
+                lines.append(f"| {h} | {v.get('n', 0)} | {v.get('brier', '—')} | {v.get('actual_rate', '—')} |")
+            lines.append("")
+
+    # Event quality
+    if eq.get("available"):
+        lines.append("## Event Quality")
+        lines.append("")
+        dist = eq.get("event_type_dist", {})
+        if dist:
+            lines.append(f"Event type distribution: {dist}")
+        lines.append("")
+
+    # Herald precision
+    hp = packet.get("herald_precision", {})
+    if hp.get("available"):
+        lines.append("## Herald Precision")
+        lines.append("")
+        lines.append(f"- False informational rate: {hp.get('false_informational_rate', '—')}")
+        lines.append(f"- Severity reaction rate: {hp.get('severity_reaction_rate', '—')}")
+        lines.append(f"- CRT agreement rate: {hp.get('crt_agreement_rate', '—')}")
+        drift = hp.get("drift_flags", [])
+        if drift:
+            lines.append(f"- **DRIFT FLAGS**: {len(drift)}")
+        lines.append("")
+
+    # Review queue
+    rq = packet.get("review_queue", {})
+    if rq.get("top_priorities"):
+        lines.append("## Operator Priority Queue")
+        lines.append("")
+        for p in rq["top_priorities"][:10]:
+            ticker = p.get("ticker", "?")
+            reasons = ", ".join(p.get("reasons", []))
+            lines.append(f"- **{ticker}**: {reasons}")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
 def main():
     parser = argparse.ArgumentParser(description="Build unified review packet")
     parser.add_argument("--snapshot-date", default=None, help="Snapshot date (default: latest)")
@@ -337,8 +446,14 @@ def main():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     snap = packet["snapshot_date"]
-    out_path = OUTPUT_DIR / f"{snap}_review_packet.json"
-    out_path.write_text(json.dumps(packet, indent=2, default=str))
+
+    # Write JSON
+    out_json = OUTPUT_DIR / f"{snap}_review_packet.json"
+    out_json.write_text(json.dumps(packet, indent=2, default=str))
+
+    # Write Markdown
+    out_md = OUTPUT_DIR / f"{snap}_review_packet.md"
+    out_md.write_text(render_review_packet_md(packet))
 
     # Print summary
     print(f"REVIEW PACKET -- {snap}")
@@ -365,7 +480,8 @@ def main():
     if rq.get("n_flagged"):
         print(f"  Review queue: {rq['n_flagged']}/{rq['n_candidates']} flagged")
 
-    print(f"  Saved: {out_path}")
+    print(f"  Saved: {out_json}")
+    print(f"  Saved: {out_md}")
 
 
 if __name__ == "__main__":

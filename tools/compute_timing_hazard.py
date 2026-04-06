@@ -16,15 +16,19 @@ Usage:
     python3 tools/compute_timing_hazard.py
     python3 tools/compute_timing_hazard.py --snapshot-date 2026-04-03
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
+import logging
 import math
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+
+log = logging.getLogger("timing_hazard")
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT))
@@ -593,20 +597,50 @@ def _compute_execution_warning(
       - label: structured warning label
       - reason: plain-text explanation
       - drivers: top 1-2 features contributing
+      - severity: HIGH / MEDIUM / INFO
+      - context_bucket: family_hardness_horizon (e.g. REGULATORY_HARD_NEAR)
     """
+    # Classify context for suppression rules
+    family_bucket = classify_family_bucket(catalyst_family)
+    horizon_bucket = classify_horizon_bucket(catalyst_days) if catalyst_days is not None else "FAR"
+    hardness = "HARD" if is_hard else "SOFT"
+    context_bucket = f"{family_bucket}_{hardness}_{horizon_bucket}"
+
+    # Regulatory + hard + near-term = effectively deterministic
+    is_regulatory_deterministic = family_bucket == "REGULATORY" and hardness == "HARD" and horizon_bucket == "NEAR"
+
     warnings = []
+
+    # REGULATORY_DETERMINISTIC — positive signal: no timing concern
+    if is_regulatory_deterministic:
+        warnings.append(
+            {
+                "label": "REGULATORY_DETERMINISTIC",
+                "reason": f"Regulatory hard catalyst ({catalyst_days}d) — date is effectively fixed",
+                "drivers": ["is_regulatory", "is_hard_catalyst"],
+                "severity": "INFO",
+                "context_bucket": context_bucket,
+            }
+        )
+        # Return early — suppress all other warnings for deterministic dates
+        return False, warnings
 
     # SHORT_DATED_REVISION_RISK — near-term + recent pushout
     if catalyst_days is not None and catalyst_days <= 30 and last_revision_pushout:
+        # Elevate to HIGH if clinical + soft + near (highest slip risk)
+        sev = "HIGH" if (family_bucket == "CLINICAL" and hardness == "SOFT") else "MEDIUM"
         warnings.append(
             {
                 "label": "SHORT_DATED_REVISION_RISK",
                 "reason": f"Near-term catalyst ({catalyst_days}d) with recent date pushout",
                 "drivers": ["last_revision_pushout", "days_to_expected_near"],
+                "severity": sev,
+                "context_bucket": context_bucket,
             }
         )
 
     # LOW_CONFIDENCE_DATE — vague precision or low model confidence
+    # Suppressed for regulatory hard catalysts (already returned above)
     low_precision = precision in ("MONTH", "QUARTER", "HALF_YEAR", "YEAR", "UNKNOWN")
     low_model_conf = logistic_prob is not None and logistic_prob < 0.50
     if low_precision or date_confidence < 0.50 or low_model_conf:
@@ -626,16 +660,22 @@ def _compute_execution_warning(
                 "label": "LOW_CONFIDENCE_DATE",
                 "reason": f"Low date confidence: {', '.join(parts)}",
                 "drivers": drivers[:2],
+                "severity": "HIGH" if (horizon_bucket == "NEAR" and hardness == "SOFT") else "MEDIUM",
+                "context_bucket": context_bucket,
             }
         )
 
     # STALE_EVENT_RECORD — no recent AACT/CTgov update
     if last_update_age is not None and last_update_age > 120:
+        # Downgrade to INFO for hard catalysts (date is source-confirmed)
+        sev = "INFO" if hardness == "HARD" else "MEDIUM"
         warnings.append(
             {
                 "label": "STALE_EVENT_RECORD",
                 "reason": f"Last AACT/CTgov update {last_update_age}d ago (>120d threshold)",
                 "drivers": ["last_update_age"],
+                "severity": sev,
+                "context_bucket": context_bucket,
             }
         )
 
@@ -646,6 +686,8 @@ def _compute_execution_warning(
                 "label": "FAMILY_MISSING",
                 "reason": "No catalyst family assigned — timing bucket unknown",
                 "drivers": ["catalyst_family"],
+                "severity": "HIGH",
+                "context_bucket": context_bucket,
             }
         )
 
@@ -656,6 +698,8 @@ def _compute_execution_warning(
                 "label": "SOURCE_UNRELIABLE",
                 "reason": f"Source '{source}' has reliability action={source_action}",
                 "drivers": ["source_reliability"],
+                "severity": "HIGH" if source_action == "SUPPRESS" else "MEDIUM",
+                "context_bucket": context_bucket,
             }
         )
 
@@ -669,6 +713,8 @@ def _compute_execution_warning(
                     "label": "PCD_DELAYED",
                     "reason": f"{n_delayed} trial(s) with PCD delayed in latest AACT delta",
                     "drivers": ["pcd_delayed"],
+                    "severity": "HIGH" if horizon_bucket == "NEAR" else "MEDIUM",
+                    "context_bucket": context_bucket,
                 }
             )
         if n_downgrades > 0:
@@ -677,10 +723,130 @@ def _compute_execution_warning(
                     "label": "STATUS_DOWNGRADE",
                     "reason": f"{n_downgrades} trial status downgrade(s) in latest AACT delta",
                     "drivers": ["status_downgrade"],
+                    "severity": "HIGH",
+                    "context_bucket": context_bucket,
                 }
             )
 
+    # Sort by severity: HIGH first, then MEDIUM, then INFO
+    _SEV_ORDER = {"HIGH": 0, "MEDIUM": 1, "INFO": 2}
+    warnings.sort(key=lambda w: _SEV_ORDER.get(w.get("severity", "MEDIUM"), 1))
+
     return bool(warnings), warnings
+
+
+# ---------------------------------------------------------------------------
+# Hygiene + calibration status helpers
+# ---------------------------------------------------------------------------
+
+
+def _hygiene_check_family(catalysts: list) -> dict:
+    """Check catalyst_family coverage across the snapshot."""
+    from collections import Counter
+
+    n_total = len(catalysts)
+    family_counts = Counter(c.get("family_bucket", "UNKNOWN") for c in catalysts)
+    n_missing = family_counts.get("UNKNOWN", 0)
+    if n_total > 0 and n_missing / n_total > 0.10:
+        log.warning(
+            "Family hygiene: %d/%d (%.0f%%) catalysts have UNKNOWN family",
+            n_missing,
+            n_total,
+            100 * n_missing / n_total,
+        )
+    return {
+        "n_total": n_total,
+        "n_missing": n_missing,
+        "missing_pct": round(100 * n_missing / n_total, 1) if n_total > 0 else 0,
+        "n_by_family": dict(family_counts),
+    }
+
+
+def _compute_calibration_status() -> str:
+    """Determine calibration status from resolved outcomes in the ledger."""
+    if not CALIBRATION_LEDGER.exists():
+        return "EXPERIMENTAL"
+    n_resolved = 0
+    with open(CALIBRATION_LEDGER, encoding="utf-8") as f:
+        for line in f:
+            try:
+                entry = json.loads(line.strip())
+                if entry.get("actual_outcome") is not None:
+                    n_resolved += 1
+            except (json.JSONDecodeError, AttributeError):
+                pass
+    if n_resolved < 50:
+        return "EXPERIMENTAL"
+    if n_resolved < 200:
+        return "UNDER_CALIBRATION"
+    return "CALIBRATED"
+
+
+CALIBRATION_CYCLE_LOG = OUTPUT_DIR / "calibration_cycle_log.jsonl"
+
+
+def emit_calibration_cycle_summary(result: dict, as_of_date: str):
+    """Write one-line cycle summary to calibration_cycle_log.jsonl.
+
+    Tracks calibration health over time without parsing the full ledger.
+    """
+    from collections import Counter
+
+    catalysts = result.get("catalysts", [])
+    family_dist = dict(Counter(c.get("family_bucket", "UNKNOWN") for c in catalysts))
+    horizon_dist = dict(Counter(c.get("horizon_bucket", "FAR") for c in catalysts))
+
+    # Trailing resolved count + Brier by family from calibration_by_slice
+    brier_by_family = {}
+    brier_by_horizon = {}
+    n_resolved_trailing = 0
+    slice_path = CALIBRATION_BY_SLICE
+    if slice_path.exists():
+        try:
+            slices = json.loads(slice_path.read_text())
+            n_resolved_trailing = slices.get("n_resolved", 0)
+            for s in slices.get("slices", []):
+                fam = s.get("family", "ALL")
+                hor = s.get("horizon", "ALL")
+                brier = s.get("brier")
+                if fam != "ALL" and hor == "ALL" and brier is not None:
+                    brier_by_family[fam] = round(brier, 4)
+                if hor != "ALL" and fam == "ALL" and brier is not None:
+                    brier_by_horizon[hor] = round(brier, 4)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    entry = {
+        "cycle_date": as_of_date,
+        "n_predictions": len(catalysts),
+        "family_dist": family_dist,
+        "horizon_dist": horizon_dist,
+        "n_resolved_trailing": n_resolved_trailing,
+        "rolling_base_rate": result.get("rolling_base_rate"),
+        "calibration_status": result.get("calibration_status", "UNKNOWN"),
+        "brier_by_family": brier_by_family,
+        "brier_by_horizon": brier_by_horizon,
+    }
+
+    # Dedup guard
+    if CALIBRATION_CYCLE_LOG.exists():
+        with open(CALIBRATION_CYCLE_LOG, encoding="utf-8") as f:
+            for line in f:
+                try:
+                    if json.loads(line.strip()).get("cycle_date") == as_of_date:
+                        return
+                except (json.JSONDecodeError, AttributeError):
+                    pass
+
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    with open(CALIBRATION_CYCLE_LOG, "a", encoding="utf-8") as f:
+        f.write(json.dumps(entry, default=str) + "\n")
+    log.info(
+        "Calibration cycle log: %s (%d predictions, %d resolved trailing)",
+        as_of_date,
+        len(catalysts),
+        n_resolved_trailing,
+    )
 
 
 def compute_timing_hazard(snapshot_date=None):
@@ -849,22 +1015,40 @@ def compute_timing_hazard(snapshot_date=None):
     n_low = sum(1 for r in results if r["timing_confidence_bucket"] == "LOW")
     n_stale = sum(1 for r in results if r["timing_confidence_bucket"] == "STALE")
 
+    # Family hygiene check
+    family_hygiene = _hygiene_check_family(results)
+
+    # Calibration status from ledger
+    calibration_status = _compute_calibration_status()
+
+    # Warning severity summary
+    n_high_sev = sum(
+        1
+        for r in results
+        if r["execution_warning_flag"]
+        for w in r.get("warning_reasons", [])
+        if w.get("severity") == "HIGH"
+    )
+
     return {
-        "schema": "timing_hazard_overlay.v2",
+        "schema": "timing_hazard_overlay.v3",
         "snapshot_date": snapshot_date,
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "probability_method": "rolling_base_rate_90d",
+        "probability_method": "hybrid_v2.1",
         "rolling_base_rate": round(rolling_base, 3),
         "prior_base_rate": round(prior_base, 3) if prior_base is not None else None,
         "base_rate_trend": base_rate_trend,
+        "calibration_status": calibration_status,
         "n_catalysts": len(results),
         "n_warnings": n_warnings,
+        "n_warnings_high": n_high_sev,
         "confidence_dist": {
             "HIGH": n_high,
             "MEDIUM": n_medium,
             "LOW": n_low,
             "STALE": n_stale,
         },
+        "family_hygiene": family_hygiene,
         "mean_on_time_prob": (round(sum(r["on_time_prob"] for r in results) / len(results), 3) if results else None),
         "catalysts": results,
     }

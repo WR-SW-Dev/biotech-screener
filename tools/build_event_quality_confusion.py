@@ -11,6 +11,7 @@ Usage:
     python tools/build_event_quality_confusion.py
     python tools/build_event_quality_confusion.py --as-of-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse
@@ -289,6 +290,72 @@ def main():
         for f in result["drift_flags"]:
             print(f"    {f['class']}: F1 {f['baseline_f1']:.2f} -> {f['current_f1']:.2f} ({f['delta_pp']:+.1f}pp)")
     print(f"  Saved: {out_path}")
+
+
+def build_outlier_review_queue(as_of_date: str = "") -> dict:
+    """Identify misclassification outliers needing human review.
+
+    Finds: false-informational cases (informational_only but large move),
+    top confusion pairs, low-confidence auto-labels.
+    """
+    records = load_ground_truth()
+    if not records:
+        return {"n_outliers": 0, "queue": []}
+
+    queue = []
+    for r in records:
+        urgency = 0
+        reasons = []
+
+        # False informational: labeled informational but had large return
+        ret = r.get("gt_return_pct")
+        if r.get("gt_informational_only") and ret is not None and abs(ret) > 10:
+            urgency += 4
+            reasons.append(f"FALSE_INFORMATIONAL(ret={ret:+.1f}%)")
+
+        # Herald/GT category disagreement
+        herald = (r.get("event_category") or "").lower()
+        gt = (r.get("gt_event_category") or "").lower()
+        if herald and gt and herald != gt:
+            urgency += 3
+            reasons.append(f"CATEGORY_MISMATCH({herald}→{gt})")
+
+        # Low auto-label confidence
+        conf = r.get("gt_auto_confidence", 1.0)
+        if r.get("gt_label_source") == "price_reaction_low_conf":
+            urgency += 2
+            reasons.append(f"LOW_AUTO_CONFIDENCE({conf:.2f})")
+
+        if urgency > 0:
+            queue.append(
+                {
+                    "ticker": r.get("ticker", "?"),
+                    "date": r.get("published_at_utc", "")[:10],
+                    "headline": r.get("headline", "")[:80],
+                    "herald_category": herald,
+                    "gt_category": gt,
+                    "label_source": r.get("gt_label_source", "?"),
+                    "return_pct": ret,
+                    "urgency": urgency,
+                    "reasons": reasons,
+                    "suggested_action": "MANUAL_REVIEW",
+                }
+            )
+
+    queue.sort(key=lambda x: -x["urgency"])
+
+    result = {
+        "schema": "outlier_review_queue.v1",
+        "as_of_date": as_of_date or date.today().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "n_outliers": len(queue),
+        "queue": queue[:50],  # top 50
+    }
+
+    out_path = OUTPUT_DIR / "outlier_review_queue.json"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(result, indent=2, default=str))
+    return result
 
 
 if __name__ == "__main__":

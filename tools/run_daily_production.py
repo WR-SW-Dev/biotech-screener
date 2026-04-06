@@ -14,6 +14,7 @@ Exit codes:
   1 — hard gate FAIL (snapshot stays in staging)
   2 — gate WARN (snapshot promoted but flagged)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -5057,6 +5058,7 @@ def run_daily(
                 build_calibration_dashboard,
                 compute_calibration_by_slice,
                 compute_timing_hazard,
+                emit_calibration_cycle_summary,
             )
 
             _th_result = compute_timing_hazard(as_of_date)
@@ -5079,11 +5081,17 @@ def run_daily(
                     _cal_dash_path = _th_dir / "calibration_dashboard.json"
                     with open(_cal_dash_path, "w") as _cd_f:
                         json.dump(_cal_dash, _cd_f, indent=2, default=str)
+                # Calibration cycle log
+                emit_calibration_cycle_summary(_th_result, as_of_date)
                 _th_n = _th_result.get("n_catalysts", 0)
                 _th_w = _th_result.get("n_warnings", 0)
+                _th_hw = _th_result.get("n_warnings_high", 0)
+                _th_cal = _th_result.get("calibration_status", "?")
                 _th_trend = _th_result.get("base_rate_trend")
                 _trend_str = f", trend={_th_trend:+.3f}" if _th_trend is not None else ""
-                _logger.info(f"Timing hazard → {_th_n} catalysts, {_th_w} warnings{_trend_str}")
+                _logger.info(
+                    f"Timing hazard → {_th_n} catalysts, {_th_w} warnings ({_th_hw} HIGH), cal={_th_cal}{_trend_str}"
+                )
             else:
                 _logger.info(f"Timing hazard → skipped ({_th_result.get('error', '?')})")
         except Exception as _th_err:

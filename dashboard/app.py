@@ -1123,6 +1123,30 @@ async def api_event_quality_confusion():
     return _load_json(path) or {"error": "Failed to load"}
 
 
+@app.get("/api/event_quality/outlier_queue")
+async def api_event_quality_outlier_queue():
+    """Outlier review queue — misclassification cases needing human review."""
+    path = REPO_ROOT / "artifacts" / "event_quality" / "outlier_review_queue.json"
+    if not path.exists():
+        return {"error": "No outlier review queue data"}
+    return _load_json(path) or {"error": "Failed to load"}
+
+
+@app.get("/api/event_quality/operator_priority")
+async def api_event_quality_operator_priority():
+    """Operator priority queue — positions needing attention by urgency."""
+    path = REPO_ROOT / "artifacts" / "event_quality_shadow"
+    if not path.is_dir():
+        return {"error": "No event quality shadow data"}
+    files = sorted(path.glob("event_quality_shadow_*.json"), reverse=True)
+    if not files:
+        return {"error": "No shadow artifacts found"}
+    data = _load_json(files[0])
+    if not data:
+        return {"error": "Failed to load"}
+    return {"reviews": data.get("reviews", []), "date": data.get("snapshot_date")}
+
+
 @app.get("/api/review/packets")
 async def api_review_packets():
     """Latest review packet (unified timing + event quality)."""
