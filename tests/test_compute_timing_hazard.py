@@ -106,13 +106,18 @@ class TestExecutionWarningKwargs:
 
     def test_short_dated_revision_risk(self):
         """SHORT_DATED_REVISION_RISK fires for near-term + pushout."""
-        has_warn, reasons = self._call(catalyst_days=15, last_revision_pushout=True)
+        # Use CLINICAL+SOFT to avoid REGULATORY_DETERMINISTIC suppression
+        has_warn, reasons = self._call(
+            catalyst_days=15, last_revision_pushout=True, catalyst_family="CLINICAL", is_hard=False
+        )
         labels = [w["label"] for w in reasons]
         assert "SHORT_DATED_REVISION_RISK" in labels
 
     def test_short_dated_no_fire_without_pushout(self):
         """SHORT_DATED_REVISION_RISK should NOT fire without pushout."""
-        has_warn, reasons = self._call(catalyst_days=15, last_revision_pushout=False)
+        has_warn, reasons = self._call(
+            catalyst_days=15, last_revision_pushout=False, catalyst_family="CLINICAL", is_hard=False
+        )
         labels = [w["label"] for w in reasons]
         assert "SHORT_DATED_REVISION_RISK" not in labels
 
