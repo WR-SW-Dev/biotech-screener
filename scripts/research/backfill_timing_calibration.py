@@ -296,7 +296,7 @@ def backfill_calibration(min_date: str = "2025-01-01", max_lookahead: int = 12) 
             family = pred["catalyst_family"]
             hardness = classify_hardness(pred["is_hard_catalyst"], pred["catalyst_source"])
             horizon = classify_horizon_bucket(pred["catalyst_days"])
-            family_bucket = classify_family_bucket(family)
+            family_bucket = classify_family_bucket(family, pred["catalyst_event_type"])
 
             slip_prob = 1.0 - on_time_prob
             entries.append(

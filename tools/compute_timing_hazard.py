@@ -127,10 +127,37 @@ def classify_hardness(is_hard_catalyst: bool, source: str) -> str:
     return "SOFT"
 
 
-def classify_family_bucket(catalyst_family: str) -> str:
-    """Normalize catalyst family to REGULATORY / CLINICAL / SAFETY / UNKNOWN."""
+def classify_family_bucket(catalyst_family: str, event_type: str = "") -> str:
+    """Normalize catalyst family to REGULATORY / CLINICAL / SAFETY / UNKNOWN.
+
+    Falls back to event_type classification when catalyst_family is empty.
+    """
     if catalyst_family in ("REGULATORY", "CLINICAL", "SAFETY"):
         return catalyst_family
+
+    # Infer from event_type when family is missing
+    if event_type:
+        et = event_type.upper()
+        if et.startswith("CT_") or et in (
+            "DATA_READOUT",
+            "PHASE_1_DATA",
+            "PHASE_2_READOUT",
+            "PHASE_3_READOUT",
+            "INTERIM_ANALYSIS",
+        ):
+            return "CLINICAL"
+        if et.startswith("FDA_") or et in (
+            "PDUFA",
+            "PDUFA_ACTION",
+            "NDA_BLA_FILING",
+            "ADVISORY_COMMITTEE",
+            "REGULATORY_DESIGNATION",
+        ):
+            return "REGULATORY"
+
+    # Default: biotech screener universe is overwhelmingly clinical,
+    # but missing metadata signals lower-confidence scheduling.
+    # Keep as separate bucket — UNKNOWN catalysts slip 2x more than confirmed CLINICAL.
     return "UNKNOWN"
 
 
@@ -180,7 +207,7 @@ def compute_calibration_by_slice(
 
     buckets = defaultdict(list)
     for entry in resolved:
-        family = classify_family_bucket(entry.get("catalyst_family", ""))
+        family = classify_family_bucket(entry.get("catalyst_family", ""), entry.get("catalyst_event_type", ""))
         horizon = entry.get("horizon_bucket", "UNKNOWN")
         hardness = entry.get("hardness", "UNKNOWN")
         on_time = 1 if entry["actual_outcome"] == "ON_TIME" else 0
@@ -303,7 +330,7 @@ def build_calibration_dashboard(as_of_date: str, trailing_days: int = 90) -> dic
     all_records = []
 
     for entry in resolved:
-        family = classify_family_bucket(entry.get("catalyst_family", ""))
+        family = classify_family_bucket(entry.get("catalyst_family", ""), entry.get("catalyst_event_type", ""))
         horizon = entry.get("horizon_bucket", "UNKNOWN")
         hardness = entry.get("hardness", "UNKNOWN")
         source = entry.get("source_provenance", "UNKNOWN")
@@ -987,7 +1014,8 @@ def compute_timing_hazard(snapshot_date=None):
         # Timing bucket classification (Spec 058)
         horizon_bucket = classify_horizon_bucket(catalyst_days)
         hardness = classify_hardness(is_hard, source)
-        family_bucket = classify_family_bucket(catalyst_family)
+        event_type = row.get("catalyst_event_type", "")
+        family_bucket = classify_family_bucket(catalyst_family, event_type)
 
         if catalyst_days <= NEAR_TERM_DAYS:
             # Near-term: rule-based by catalyst type
