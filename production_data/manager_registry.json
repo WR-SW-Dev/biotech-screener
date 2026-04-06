@@ -173,6 +173,42 @@
       "name": "Opaleye Management",
       "aum_b": 0.64,
       "style": "binary_catalyst_biotech"
+    },
+    {
+      "cik": "0001079114",
+      "name": "BVF Partners",
+      "aum_b": 3.0,
+      "style": "biotech_specialist"
+    },
+    {
+      "cik": "0001633313",
+      "name": "Consonance Capital Management",
+      "aum_b": 2.0,
+      "style": "physician_led_biotech"
+    },
+    {
+      "cik": "0001578738",
+      "name": "Sarissa Capital Management",
+      "aum_b": 1.0,
+      "style": "biotech_activist"
+    },
+    {
+      "cik": "0001599684",
+      "name": "Foresite Capital Management",
+      "aum_b": 3.5,
+      "style": "biotech_crossover"
+    },
+    {
+      "cik": "0001444695",
+      "name": "Broadfin Capital",
+      "aum_b": 1.5,
+      "style": "healthcare_event_driven"
+    },
+    {
+      "cik": "0001029160",
+      "name": "Artal Group (Invus)",
+      "aum_b": 5.0,
+      "style": "long_term_biotech"
     }
   ],
   "conditional": [
@@ -214,9 +250,9 @@
     }
   ],
   "metadata": {
-    "version": "2.1",
-    "last_updated": "2026-01-28",
-    "total_elite_aum_b": 68.84,
+    "version": "2.2",
+    "last_updated": "2026-04-06",
+    "total_elite_aum_b": 84.84,
     "notes": [
       "Elite Core = primary signal source",
       "Conditional = secondary breadth signal"
