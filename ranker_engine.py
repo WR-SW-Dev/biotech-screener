@@ -179,6 +179,12 @@ class RankerConfig:
     # --- Missingness penalty per missing signal ---
     missing_signal_penalty: float = 0.10
 
+    # --- Z-score bounds for numeric signals ---
+    # Ranker uses [-2, 2] → [-0.5, 0.5] (centered adjustments). Tighter than
+    # the selector ([-3, 3]) because the ranker operates on a pre-filtered
+    # cohort (top-60) where extreme outliers are noise, not signal.
+    z_score_clamp: float = 2.0
+
 
 DEFAULT_RANKER_CONFIG = RankerConfig()
 
@@ -237,11 +243,16 @@ def _score_ranker_signal(
     row: Dict[str, Any],
     spec: RankerSignalSpec,
     cohort_stats: Dict[str, _RankerCohortStats],
+    z_clamp: float = 2.0,
 ) -> Tuple[float, bool]:
     """Score a single ranker signal.
 
     Returns (score, is_missing). Score is centered around 0.0 for numeric
-    signals (z-space, clamped to [-2, 2]), or [0, 1] for categorical.
+    signals (z-space, clamped to [-z_clamp, z_clamp] then rescaled to
+    [-0.5, 0.5]), or [-0.5, 0.5] for categorical.
+
+    The ranker uses z_clamp=2.0 (tighter than selector's 3.0) because it
+    operates on a pre-filtered cohort where extreme outliers are noise.
     """
     raw = row.get(spec.name)
 
@@ -273,13 +284,13 @@ def _score_ranker_signal(
         return (0.0, False)
 
     z = (fval - stats.mean) / stats.std
-    z = max(-2.0, min(2.0, z))
+    z = max(-z_clamp, min(z_clamp, z))
 
     if not spec.higher_is_better:
         z = -z
 
     # Normalize to [-0.5, 0.5] for aggregation
-    score = z / 4.0  # [-2,2] → [-0.5, 0.5]
+    score = z / (2.0 * z_clamp)
     return (score, False)
 
 
@@ -288,6 +299,7 @@ def _compute_ranker_block(
     signals: Tuple[RankerSignalSpec, ...],
     cohort_stats: Dict[str, _RankerCohortStats],
     missing_penalty: float,
+    z_clamp: float = 2.0,
 ) -> Tuple[float, int]:
     """Compute a weighted ranker block score centered around 0.
 
@@ -298,7 +310,7 @@ def _compute_ranker_block(
     missing_count = 0
 
     for spec in signals:
-        score, is_missing = _score_ranker_signal(row, spec, cohort_stats)
+        score, is_missing = _score_ranker_signal(row, spec, cohort_stats, z_clamp=z_clamp)
         if is_missing:
             missing_count += 1
             score = -missing_penalty  # penalize missing toward negative
@@ -433,7 +445,13 @@ def compute_ranker_adjustments(
         raw_adj = 0.0
         block_scores: dict[str, float] = {}
         for block_name, signals, weight in block_configs:
-            bscore, _ = _compute_ranker_block(rows[i], signals, cohort_stats, config.missing_signal_penalty)
+            bscore, _ = _compute_ranker_block(
+                rows[i],
+                signals,
+                cohort_stats,
+                config.missing_signal_penalty,
+                z_clamp=config.z_score_clamp,
+            )
             block_scores[block_name] = round(bscore, 6)
             raw_adj += weight * bscore
 

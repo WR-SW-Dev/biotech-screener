@@ -1,10 +1,11 @@
 """Tests for weekly rebalance schedule generation."""
+
+import sys
 from datetime import date
+from pathlib import Path
 
 import pytest
 
-import sys
-from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from backtest.panel_builder_m1 import generate_rebalance_dates
@@ -40,23 +41,30 @@ class TestGenerateRebalanceDates:
         assert len(dates) == 3
 
     def test_monday_schedule(self):
-        """Non-Friday weekday works."""
+        """Non-Friday weekday works. MLK Day (Jan 20) rolls to prior trading day."""
         dates = generate_rebalance_dates(
             start=date(2025, 1, 6),  # Monday
             end=date(2025, 1, 20),
             weekday="MON",
         )
-        expected = [date(2025, 1, 6), date(2025, 1, 13), date(2025, 1, 20)]
+        # Jan 20 is MLK Day → rolls back to Fri Jan 17
+        expected = [date(2025, 1, 6), date(2025, 1, 13), date(2025, 1, 17)]
         assert dates == expected
 
     def test_holiday_roll(self):
         """When a Friday is not a trading day, roll to previous trading day."""
         # Simulate: Jan 10 is not a trading day
         trading_days = {
-            "2025-01-03", "2025-01-06", "2025-01-07", "2025-01-08",
+            "2025-01-03",
+            "2025-01-06",
+            "2025-01-07",
+            "2025-01-08",
             "2025-01-09",  # Thursday before missing Friday
             # "2025-01-10" — missing (holiday)
-            "2025-01-13", "2025-01-14", "2025-01-15", "2025-01-16",
+            "2025-01-13",
+            "2025-01-14",
+            "2025-01-15",
+            "2025-01-16",
             "2025-01-17",
         }
         dates = generate_rebalance_dates(

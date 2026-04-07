@@ -22,6 +22,30 @@ logger = logging.getLogger(__name__)
 
 OPENFDA_URL = "https://api.fda.gov/drug/drugsfda.json"
 
+_openfda_breaker = None
+
+
+def _get_openfda_breaker():
+    """Lazy-init circuit breaker for openFDA API."""
+    global _openfda_breaker
+    if _openfda_breaker is None:
+        try:
+            from common.robustness_extended import StatefulCircuitBreaker, StatefulCircuitBreakerConfig
+
+            _openfda_breaker = StatefulCircuitBreaker(
+                "openfda_api",
+                config=StatefulCircuitBreakerConfig(
+                    failure_threshold=3,
+                    success_threshold=2,
+                    timeout_seconds=120.0,
+                    window_size_seconds=300.0,
+                ),
+            )
+        except ImportError:
+            _openfda_breaker = None
+    return _openfda_breaker
+
+
 # Rate limit: 4 req/sec (conservative, well under 240/min)
 _MIN_INTERVAL = 0.25
 
@@ -163,6 +187,7 @@ def collect_openfda_approvals(
         sponsor_map = build_sponsor_ticker_map(data_dir)
 
     session = create_resilient_session(timeout=30)
+    breaker = _get_openfda_breaker()
 
     start_date = as_of_date - timedelta(days=lookback_days)
     # openFDA date format: YYYYMMDD
@@ -175,11 +200,16 @@ def collect_openfda_approvals(
     max_results = 1000
 
     while total_fetched < max_results:
+        # Circuit breaker: fail fast if API is consistently failing
+        if breaker and not breaker.allow_request():
+            logger.warning("openFDA circuit breaker OPEN — aborting fetch at skip=%d", skip)
+            break
+
         search = f"submissions.submission_status_date:{date_range}"
         url = f"{OPENFDA_URL}?search={search}&limit={limit}&skip={skip}"
 
         try:
-            resp = session.get(url)
+            resp = session.get(url, timeout=30)
             time.sleep(_MIN_INTERVAL)
 
             if resp.status_code == 404:
@@ -191,6 +221,9 @@ def collect_openfda_approvals(
             results = data.get("results", [])
             if not results:
                 break
+
+            if breaker:
+                breaker.record_success()
 
             for drug in results:
                 sponsor = drug.get("sponsor_name", "")
@@ -254,6 +287,8 @@ def collect_openfda_approvals(
 
         except Exception as e:
             logger.warning("openFDA request failed at skip=%d: %s", skip, e)
+            if breaker:
+                breaker.record_failure(e)
             break
 
     logger.info(

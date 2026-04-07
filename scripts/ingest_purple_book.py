@@ -167,7 +167,10 @@ def download_latest_csv(output_dir: Path) -> Optional[Path]:
             dest = output_dir / f"purple_book_{y}_{m:02d}.csv"
             try:
                 log.info("Trying: %s", url)
-                urllib.request.urlretrieve(url, dest)
+                req = urllib.request.Request(url)
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    with open(dest, "wb") as f:
+                        f.write(resp.read())
                 log.info("Downloaded: %s", dest)
                 return dest
             except Exception:

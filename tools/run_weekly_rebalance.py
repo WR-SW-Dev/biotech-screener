@@ -20,7 +20,7 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -53,11 +53,37 @@ DAY_MAP = {
 
 
 def is_rebalance_day(as_of_date: str, policy: Dict[str, Any]) -> bool:
-    """Check if as_of_date falls on the policy's rebalance_day."""
+    """Check if as_of_date falls on the policy's rebalance_day.
+
+    Holiday-aware: if the normal rebalance day is a market holiday,
+    the rebalance shifts to the previous trading day.
+    """
     rebalance_day = policy.get("rebalance_day", "FRIDAY").upper()
     target_weekday = DAY_MAP.get(rebalance_day, 4)
-    dt = datetime.strptime(as_of_date, "%Y-%m-%d")
-    return dt.weekday() == target_weekday
+    dt = datetime.strptime(as_of_date, "%Y-%m-%d").date() if isinstance(as_of_date, str) else as_of_date
+
+    # Check if the normal rebalance day this week is a holiday
+    try:
+        from common.market_calendar import is_trading_day, prev_trading_day
+
+        # Find this week's target rebalance day
+        days_ahead = (target_weekday - dt.weekday()) % 7
+        target_date = dt + timedelta(days=days_ahead) if days_ahead > 0 else dt
+
+        # If the target day is a holiday, rebalance shifts to prior trading day
+        if not is_trading_day(target_date) and target_date == dt + timedelta(days=days_ahead):
+            shifted = prev_trading_day(target_date)
+            if shifted == dt:
+                return True  # Today is the shifted rebalance day
+
+        # Normal case: today is the target weekday and it's a trading day
+        if dt.weekday() == target_weekday and is_trading_day(dt):
+            return True
+
+        return False
+    except ImportError:
+        # Fallback: weekday-only check (no holiday awareness)
+        return dt.weekday() == target_weekday
 
 
 def detect_off_cycle_exceptions(

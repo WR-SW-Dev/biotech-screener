@@ -106,11 +106,13 @@ def load_universe_tickers() -> Set[str]:
 # ---------------------------------------------------------------------------
 def fetch_trials_for_ticker(ticker: str, sponsor_map: Dict[str, List[str]]) -> List[Dict]:
     """Fetch current trials for a ticker from CT.gov API v2."""
+    import urllib.error
     import urllib.parse
     import urllib.request
 
     sponsors = sponsor_map.get(ticker, [ticker])
     all_trials = []
+    failed_sponsors = []
 
     for sponsor in sponsors:
         params = urllib.parse.urlencode(
@@ -158,8 +160,21 @@ def fetch_trials_for_ticker(ticker: str, sponsor_map: Dict[str, List[str]]) -> L
                 if record["nct_id"]:
                     all_trials.append(record)
 
+        except urllib.error.URLError as e:
+            logger.warning("Network error for %s (sponsor=%s): %s", ticker, sponsor, e)
+            failed_sponsors.append(sponsor)
         except Exception as e:
             logger.warning("Failed to fetch for %s (sponsor=%s): %s", ticker, sponsor, e)
+            failed_sponsors.append(sponsor)
+
+    if failed_sponsors:
+        logger.warning(
+            "CTgov poll %s: %d/%d sponsors failed: %s",
+            ticker,
+            len(failed_sponsors),
+            len(sponsors),
+            failed_sponsors,
+        )
 
     return all_trials
 

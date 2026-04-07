@@ -2,6 +2,10 @@
 """
 module_2_financial.py - Financial Health Scoring (vNext)
 
+DEPRECATED: The production pipeline uses module_2_financial_v2.py.
+This module is retained for backward compatibility with backtest
+scripts in sec_13f/scripts/. New code should import from v2.
+
 Scores tickers on financial health using:
 1. Cash runway (45% weight)
 2. Dilution risk (25% weight)
@@ -33,13 +37,9 @@ Usage:
 
 import logging
 import math
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
-from common.integration_contracts import (
-    validate_module_2_output,
-    is_validation_enabled,
-    TickerCollection,
-)
+from common.integration_contracts import TickerCollection, is_validation_enabled, validate_module_2_output
 
 logger = logging.getLogger(__name__)
 
@@ -48,16 +48,16 @@ logger = logging.getLogger(__name__)
 # =============================================================================
 
 # Burn rate confidence levels
-BURN_CONFIDENCE_HIGH = "HIGH"      # CFO/FCF available
-BURN_CONFIDENCE_MED = "MED"        # NetIncome proxy
-BURN_CONFIDENCE_LOW = "LOW"        # R&D proxy
-BURN_CONFIDENCE_NONE = "NONE"      # No data
+BURN_CONFIDENCE_HIGH = "HIGH"  # CFO/FCF available
+BURN_CONFIDENCE_MED = "MED"  # NetIncome proxy
+BURN_CONFIDENCE_LOW = "LOW"  # R&D proxy
+BURN_CONFIDENCE_NONE = "NONE"  # No data
 
 # Data state levels
-DATA_STATE_FULL = "FULL"           # All key fields present
-DATA_STATE_PARTIAL = "PARTIAL"     # Some fields present
-DATA_STATE_MINIMAL = "MINIMAL"     # Only basic fields
-DATA_STATE_NONE = "NONE"           # No data
+DATA_STATE_FULL = "FULL"  # All key fields present
+DATA_STATE_PARTIAL = "PARTIAL"  # Some fields present
+DATA_STATE_MINIMAL = "MINIMAL"  # Only basic fields
+DATA_STATE_NONE = "NONE"  # No data
 
 # Liquidity gate threshold (dollar ADV)
 LIQUIDITY_GATE_THRESHOLD = 500_000  # $500K minimum daily volume
@@ -69,6 +69,7 @@ EPS = 1e-9
 # =============================================================================
 # YTD PERIOD DETECTION
 # =============================================================================
+
 
 def get_ytd_months_from_date(date_str: Optional[str]) -> int:
     """
@@ -88,17 +89,18 @@ def get_ytd_months_from_date(date_str: Optional[str]) -> int:
 
     try:
         from datetime import datetime
-        date = datetime.fromisoformat(date_str.split('T')[0])
+
+        date = datetime.fromisoformat(date_str.split("T")[0])
         month = date.month
 
         # Map fiscal quarter end month to YTD months
         # Note: Some companies have non-calendar fiscal years, but most biotechs use calendar year
         if month in [1, 2, 3]:
-            return 3   # Q1 or Jan/Feb year-end
+            return 3  # Q1 or Jan/Feb year-end
         elif month in [4, 5, 6]:
-            return 6   # Q2
+            return 6  # Q2
         elif month in [7, 8, 9]:
-            return 9   # Q3
+            return 9  # Q3
         else:  # 10, 11, 12
             return 12  # Q4 / Annual
     except Exception:
@@ -108,6 +110,7 @@ def get_ytd_months_from_date(date_str: Optional[str]) -> int:
 # =============================================================================
 # BURN RATE CALCULATION (HIERARCHICAL)
 # =============================================================================
+
 
 def calculate_burn_rate(financial_data: Dict[str, Any]) -> Tuple[Optional[float], str, str, str]:
     """
@@ -127,13 +130,13 @@ def calculate_burn_rate(financial_data: Dict[str, Any]) -> Tuple[Optional[float]
         (monthly_burn, burn_source, burn_confidence, burn_period)
     """
     # Try CFO first (most reliable for cash burn)
-    cfo = financial_data.get('CFO') or financial_data.get('CashFlowFromOperations')
-    cfo_quarterly = financial_data.get('CFO_quarterly') or financial_data.get('CFO_Q')
-    cfo_ytd = financial_data.get('CFO_YTD')
+    cfo = financial_data.get("CFO") or financial_data.get("CashFlowFromOperations")
+    cfo_quarterly = financial_data.get("CFO_quarterly") or financial_data.get("CFO_Q")
+    cfo_ytd = financial_data.get("CFO_YTD")
 
     # Try FCF
-    fcf = financial_data.get('FCF') or financial_data.get('FreeCashFlow')
-    fcf_quarterly = financial_data.get('FCF_quarterly') or financial_data.get('FCF_Q')
+    fcf = financial_data.get("FCF") or financial_data.get("FreeCashFlow")
+    fcf_quarterly = financial_data.get("FCF_quarterly") or financial_data.get("FCF_Q")
 
     # Prefer quarterly CFO if available (explicitly marked as quarterly)
     if cfo_quarterly is not None and cfo_quarterly < 0:
@@ -143,14 +146,14 @@ def calculate_burn_rate(financial_data: Dict[str, Any]) -> Tuple[Optional[float]
     # Try YTD CFO with quarter differencing
     if cfo_ytd is not None and cfo_ytd < 0:
         # Assume YTD covers current fiscal quarters
-        quarters_in_ytd = financial_data.get('quarters_in_ytd', 2)
+        quarters_in_ytd = financial_data.get("quarters_in_ytd", 2)
         months_in_ytd = quarters_in_ytd * 3
         monthly_burn = abs(cfo_ytd) / max(months_in_ytd, 1)
         return (monthly_burn, "CFO_YTD", BURN_CONFIDENCE_HIGH, f"ytd_{quarters_in_ytd}q")
 
     # Try annual/latest CFO - detect period from date
     if cfo is not None and cfo < 0:
-        cfo_date = financial_data.get('CFO_date')
+        cfo_date = financial_data.get("CFO_date")
         ytd_months = get_ytd_months_from_date(cfo_date)
         monthly_burn = abs(cfo) / ytd_months
         return (monthly_burn, "CFO", BURN_CONFIDENCE_HIGH, f"ytd_{ytd_months}mo")
@@ -162,23 +165,23 @@ def calculate_burn_rate(financial_data: Dict[str, Any]) -> Tuple[Optional[float]
 
     # Try FCF - detect period from date
     if fcf is not None and fcf < 0:
-        fcf_date = financial_data.get('FCF_date')
+        fcf_date = financial_data.get("FCF_date")
         ytd_months = get_ytd_months_from_date(fcf_date)
         monthly_burn = abs(fcf) / ytd_months
         return (monthly_burn, "FCF", BURN_CONFIDENCE_HIGH, f"ytd_{ytd_months}mo")
 
     # Fallback to NetIncome if negative - CRITICAL: Use YTD-aware calculation
-    net_income = financial_data.get('NetIncome', 0)
+    net_income = financial_data.get("NetIncome", 0)
     if net_income is not None and net_income < 0:
-        ni_date = financial_data.get('NetIncome_date')
+        ni_date = financial_data.get("NetIncome_date")
         ytd_months = get_ytd_months_from_date(ni_date)
         monthly_burn = abs(net_income) / ytd_months
         return (monthly_burn, "NetIncome", BURN_CONFIDENCE_MED, f"ytd_{ytd_months}mo")
 
     # Fallback to R&D proxy - CRITICAL: Use YTD-aware calculation
-    rd_expense = financial_data.get('R&D', 0) or financial_data.get('ResearchAndDevelopment', 0)
+    rd_expense = financial_data.get("R&D", 0) or financial_data.get("ResearchAndDevelopment", 0)
     if rd_expense is not None and rd_expense > 0:
-        rd_date = financial_data.get('R&D_date')
+        rd_date = financial_data.get("R&D_date")
         ytd_months = get_ytd_months_from_date(rd_date)
         # Assume total opex = R&D × 1.5 (add G&A overhead)
         ytd_burn = rd_expense * 1.5
@@ -197,8 +200,8 @@ def calculate_trailing_burn(financial_data: Dict[str, Any]) -> Tuple[Optional[fl
         (monthly_burn_avg, quarters_used)
     """
     # Check for quarterly burn history
-    burn_history = financial_data.get('burn_history', [])
-    quarterly_burns = financial_data.get('quarterly_burns', [])
+    burn_history = financial_data.get("burn_history", [])
+    quarterly_burns = financial_data.get("quarterly_burns", [])
 
     # Use whichever is available
     quarters = burn_history if burn_history else quarterly_burns
@@ -227,6 +230,7 @@ def calculate_trailing_burn(financial_data: Dict[str, Any]) -> Tuple[Optional[fl
 # LIQUID ASSETS CALCULATION
 # =============================================================================
 
+
 def calculate_liquid_assets(financial_data: Dict[str, Any]) -> Tuple[float, List[str]]:
     """
     Calculate liquid assets: Cash + MarketableSecurities.
@@ -237,16 +241,16 @@ def calculate_liquid_assets(financial_data: Dict[str, Any]) -> Tuple[float, List
     components = []
 
     # Primary: Cash and cash equivalents
-    cash = financial_data.get('Cash', 0) or 0
+    cash = financial_data.get("Cash", 0) or 0
     if cash > 0:
         components.append("Cash")
 
     # Add marketable securities if available
     marketable_sec = (
-        financial_data.get('MarketableSecurities', 0) or
-        financial_data.get('ShortTermInvestments', 0) or
-        financial_data.get('AvailableForSaleSecurities', 0) or
-        0
+        financial_data.get("MarketableSecurities", 0)
+        or financial_data.get("ShortTermInvestments", 0)
+        or financial_data.get("AvailableForSaleSecurities", 0)
+        or 0
     )
     if marketable_sec > 0:
         components.append("MarketableSecurities")
@@ -260,6 +264,7 @@ def calculate_liquid_assets(financial_data: Dict[str, Any]) -> Tuple[float, List
 # CASH RUNWAY CALCULATION
 # =============================================================================
 
+
 def calculate_cash_runway(financial_data: Dict[str, Any], market_data: Dict[str, Any]) -> Dict[str, Any]:
     """
     Calculate months of cash runway with detailed burn info.
@@ -268,45 +273,45 @@ def calculate_cash_runway(financial_data: Dict[str, Any], market_data: Dict[str,
         Dict with runway_months, monthly_burn, score, burn metadata
     """
     result = {
-        'runway_months': None,
-        'monthly_burn': None,
-        'runway_score': 50.0,  # Default neutral
-        'burn_source': 'none',
-        'burn_confidence': BURN_CONFIDENCE_NONE,
-        'burn_period': 'none',
-        'liquid_assets': 0,
-        'liquid_components': [],
+        "runway_months": None,
+        "monthly_burn": None,
+        "runway_score": 50.0,  # Default neutral
+        "burn_source": "none",
+        "burn_confidence": BURN_CONFIDENCE_NONE,
+        "burn_period": "none",
+        "liquid_assets": 0,
+        "liquid_components": [],
     }
 
     # Calculate liquid assets
     liquid_assets, liquid_components = calculate_liquid_assets(financial_data)
-    result['liquid_assets'] = liquid_assets
-    result['liquid_components'] = liquid_components
+    result["liquid_assets"] = liquid_assets
+    result["liquid_components"] = liquid_components
 
     # Check for profitability first
-    net_income = financial_data.get('NetIncome', 0)
-    cfo = financial_data.get('CFO') or financial_data.get('CashFlowFromOperations')
+    net_income = financial_data.get("NetIncome", 0)
+    cfo = financial_data.get("CFO") or financial_data.get("CashFlowFromOperations")
 
     # CASE 1: Profitable company (positive CFO or positive net income)
     if (cfo is not None and cfo > 0) or (net_income is not None and net_income > 0):
-        result['runway_months'] = 999.0
-        result['monthly_burn'] = 0.0
-        result['runway_score'] = 95.0
-        result['burn_source'] = 'profitable'
-        result['burn_confidence'] = BURN_CONFIDENCE_HIGH
-        result['burn_period'] = 'na'
+        result["runway_months"] = 999.0
+        result["monthly_burn"] = 0.0
+        result["runway_score"] = 95.0
+        result["burn_source"] = "profitable"
+        result["burn_confidence"] = BURN_CONFIDENCE_HIGH
+        result["burn_period"] = "na"
         return result
 
     # CASE 2: Try trailing 4-quarter average
     trailing_burn, quarters_used = calculate_trailing_burn(financial_data)
     if trailing_burn is not None and trailing_burn > EPS:
         runway_months = liquid_assets / trailing_burn
-        result['runway_months'] = runway_months
-        result['monthly_burn'] = trailing_burn
-        result['burn_source'] = f'trailing_{quarters_used}q'
-        result['burn_confidence'] = BURN_CONFIDENCE_HIGH
-        result['burn_period'] = f'{quarters_used}q_avg'
-        result['runway_score'] = _score_runway(runway_months)
+        result["runway_months"] = runway_months
+        result["monthly_burn"] = trailing_burn
+        result["burn_source"] = f"trailing_{quarters_used}q"
+        result["burn_confidence"] = BURN_CONFIDENCE_HIGH
+        result["burn_period"] = f"{quarters_used}q_avg"
+        result["runway_score"] = _score_runway(runway_months)
         return result
 
     # CASE 3: Single-quarter estimate from hierarchy
@@ -314,16 +319,16 @@ def calculate_cash_runway(financial_data: Dict[str, Any], market_data: Dict[str,
 
     if monthly_burn is not None and monthly_burn > EPS:
         runway_months = liquid_assets / monthly_burn
-        result['runway_months'] = runway_months
-        result['monthly_burn'] = monthly_burn
-        result['burn_source'] = burn_source
-        result['burn_confidence'] = burn_confidence
-        result['burn_period'] = burn_period
-        result['runway_score'] = _score_runway(runway_months)
+        result["runway_months"] = runway_months
+        result["monthly_burn"] = monthly_burn
+        result["burn_source"] = burn_source
+        result["burn_confidence"] = burn_confidence
+        result["burn_period"] = burn_period
+        result["runway_score"] = _score_runway(runway_months)
         return result
 
     # CASE 4: No burn data - return neutral with liquid assets info
-    result['runway_score'] = 50.0
+    result["runway_score"] = 50.0
     return result
 
 
@@ -332,23 +337,22 @@ def _score_runway(runway_months: float) -> float:
     if runway_months >= 24:
         return 100.0  # 2+ years
     elif runway_months >= 18:
-        return 90.0   # 18-24 months
+        return 90.0  # 18-24 months
     elif runway_months >= 12:
-        return 70.0   # 12-18 months
+        return 70.0  # 12-18 months
     elif runway_months >= 6:
-        return 40.0   # 6-12 months
+        return 40.0  # 6-12 months
     else:
-        return 10.0   # < 6 months
+        return 10.0  # < 6 months
 
 
 # =============================================================================
 # DILUTION RISK (MONOTONIC, STABLE)
 # =============================================================================
 
+
 def calculate_dilution_risk(
-    financial_data: Dict,
-    market_data: Dict,
-    runway_months: Optional[float]
+    financial_data: Dict, market_data: Dict, runway_months: Optional[float]
 ) -> Tuple[Optional[float], float]:
     """
     Score dilution risk with monotonic, stable scoring.
@@ -360,7 +364,7 @@ def calculate_dilution_risk(
     """
     # Get liquid assets (prefer to raw cash)
     liquid_assets, _ = calculate_liquid_assets(financial_data)
-    market_cap = market_data.get('market_cap', 0) or 0
+    market_cap = market_data.get("market_cap", 0) or 0
 
     if market_cap is None or market_cap <= 0:
         return (None, 50.0)
@@ -403,6 +407,7 @@ def calculate_dilution_risk(
 # LIQUIDITY SCORING (DOLLAR ADV EMPHASIS)
 # =============================================================================
 
+
 def score_liquidity(market_data: Dict[str, Any]) -> Tuple[float, bool, float]:
     """
     Score based on market cap and trading volume.
@@ -411,9 +416,9 @@ def score_liquidity(market_data: Dict[str, Any]) -> Tuple[float, bool, float]:
     Returns:
         (liquidity_score, liquidity_gate, dollar_adv)
     """
-    market_cap = market_data.get('market_cap', 0) or 0
-    avg_volume = market_data.get('avg_volume', 0) or 0
-    price = market_data.get('price', 0) or 0
+    market_cap = market_data.get("market_cap", 0) or 0
+    avg_volume = market_data.get("avg_volume", 0) or 0
+    price = market_data.get("price", 0) or 0
 
     if not all([market_cap, avg_volume, price]):
         return (50.0, False, 0.0)
@@ -428,31 +433,31 @@ def score_liquidity(market_data: Dict[str, Any]) -> Tuple[float, bool, float]:
     if dollar_adv >= 50e6:
         adv_score = 100.0  # $50M+
     elif dollar_adv >= 20e6:
-        adv_score = 90.0   # $20-50M
+        adv_score = 90.0  # $20-50M
     elif dollar_adv >= 10e6:
-        adv_score = 80.0   # $10-20M
+        adv_score = 80.0  # $10-20M
     elif dollar_adv >= 5e6:
-        adv_score = 70.0   # $5-10M
+        adv_score = 70.0  # $5-10M
     elif dollar_adv >= 1e6:
-        adv_score = 55.0   # $1-5M
+        adv_score = 55.0  # $1-5M
     elif dollar_adv >= 500e3:
-        adv_score = 40.0   # $500K-1M
+        adv_score = 40.0  # $500K-1M
     elif dollar_adv >= 100e3:
-        adv_score = 25.0   # $100K-500K
+        adv_score = 25.0  # $100K-500K
     else:
-        adv_score = 10.0   # <$100K
+        adv_score = 10.0  # <$100K
 
     # Market cap tiers (40% weight)
     if market_cap > 10e9:
         mcap_score = 100.0  # >$10B
     elif market_cap > 2e9:
-        mcap_score = 80.0   # $2-10B
+        mcap_score = 80.0  # $2-10B
     elif market_cap > 500e6:
-        mcap_score = 60.0   # $500M-2B
+        mcap_score = 60.0  # $500M-2B
     elif market_cap > 200e6:
-        mcap_score = 40.0   # $200M-500M
+        mcap_score = 40.0  # $200M-500M
     else:
-        mcap_score = 20.0   # <$200M
+        mcap_score = 20.0  # <$200M
 
     # Composite: Dollar ADV 60%, Market Cap 40%
     liquidity_score = adv_score * 0.60 + mcap_score * 0.40
@@ -464,7 +469,10 @@ def score_liquidity(market_data: Dict[str, Any]) -> Tuple[float, bool, float]:
 # DATA QUALITY ASSESSMENT
 # =============================================================================
 
-def assess_data_quality(financial_data: Dict[str, Any], market_data: Dict[str, Any]) -> Tuple[str, List[str], Dict[str, str]]:
+
+def assess_data_quality(
+    financial_data: Dict[str, Any], market_data: Dict[str, Any]
+) -> Tuple[str, List[str], Dict[str, str]]:
     """
     Assess data quality and track inputs used.
 
@@ -475,58 +483,55 @@ def assess_data_quality(financial_data: Dict[str, Any], market_data: Dict[str, A
     inputs_used = {}
 
     # Key financial fields
-    cash = financial_data.get('Cash')
+    cash = financial_data.get("Cash")
     if cash is not None:
-        inputs_used['cash_field'] = 'Cash'
+        inputs_used["cash_field"] = "Cash"
     else:
-        missing_fields.append('Cash')
+        missing_fields.append("Cash")
 
     # Check for marketable securities
-    mkt_sec = (
-        financial_data.get('MarketableSecurities') or
-        financial_data.get('ShortTermInvestments')
-    )
+    mkt_sec = financial_data.get("MarketableSecurities") or financial_data.get("ShortTermInvestments")
     if mkt_sec is not None:
-        inputs_used['marketable_securities'] = 'MarketableSecurities'
+        inputs_used["marketable_securities"] = "MarketableSecurities"
 
     # Check burn source
-    cfo = financial_data.get('CFO') or financial_data.get('CashFlowFromOperations')
-    fcf = financial_data.get('FCF') or financial_data.get('FreeCashFlow')
-    net_income = financial_data.get('NetIncome')
-    rd = financial_data.get('R&D')
+    cfo = financial_data.get("CFO") or financial_data.get("CashFlowFromOperations")
+    fcf = financial_data.get("FCF") or financial_data.get("FreeCashFlow")
+    net_income = financial_data.get("NetIncome")
+    rd = financial_data.get("R&D")
 
     if cfo is not None:
-        inputs_used['burn_field'] = 'CFO'
+        inputs_used["burn_field"] = "CFO"
     elif fcf is not None:
-        inputs_used['burn_field'] = 'FCF'
+        inputs_used["burn_field"] = "FCF"
     elif net_income is not None:
-        inputs_used['burn_field'] = 'NetIncome'
+        inputs_used["burn_field"] = "NetIncome"
     elif rd is not None:
-        inputs_used['burn_field'] = 'R&D_proxy'
+        inputs_used["burn_field"] = "R&D_proxy"
     else:
-        missing_fields.append('burn_rate')
+        missing_fields.append("burn_rate")
 
     # Market data
-    market_cap = market_data.get('market_cap')
+    market_cap = market_data.get("market_cap")
     if market_cap is not None:
-        inputs_used['market_cap'] = 'market_cap'
+        inputs_used["market_cap"] = "market_cap"
     else:
-        missing_fields.append('market_cap')
+        missing_fields.append("market_cap")
 
-    avg_volume = market_data.get('avg_volume')
+    avg_volume = market_data.get("avg_volume")
     if avg_volume is not None:
-        inputs_used['volume_field'] = 'avg_volume'
+        inputs_used["volume_field"] = "avg_volume"
     else:
-        missing_fields.append('avg_volume')
+        missing_fields.append("avg_volume")
 
-    price = market_data.get('price')
+    price = market_data.get("price")
     if price is not None:
-        inputs_used['price_field'] = 'price'
+        inputs_used["price_field"] = "price"
     else:
-        missing_fields.append('price')
+        missing_fields.append("price")
 
     # Determine data state
-    critical_fields = ['Cash', 'market_cap']
+    critical_fields = ["Cash", "market_cap"]
     critical_missing = [f for f in critical_fields if f in missing_fields]
 
     if len(missing_fields) == 0:
@@ -546,13 +551,13 @@ def assess_data_quality(financial_data: Dict[str, Any], market_data: Dict[str, A
 # =============================================================================
 
 # Revenue scale thresholds (annual)
-REVENUE_THRESHOLD_PRESENCE = 10e6    # $10M minimum for "has revenue"
-REVENUE_THRESHOLD_SCALE_1 = 100e6    # $100M
-REVENUE_THRESHOLD_SCALE_2 = 1e9      # $1B
+REVENUE_THRESHOLD_PRESENCE = 10e6  # $10M minimum for "has revenue"
+REVENUE_THRESHOLD_SCALE_1 = 100e6  # $100M
+REVENUE_THRESHOLD_SCALE_2 = 1e9  # $1B
+
 
 def calculate_revenue_score(
-    financial_data: Dict[str, Any],
-    monthly_burn: Optional[float]
+    financial_data: Dict[str, Any], monthly_burn: Optional[float]
 ) -> Tuple[Dict[str, Any], float]:
     """
     Calculate revenue score using Tier 1 approach.
@@ -599,16 +604,16 @@ def calculate_revenue_score(
         - scale_pts: Points from scale component
         - coverage_penalty: Penalty points (0 or negative)
     """
-    revenue = financial_data.get('Revenue', 0) or 0
+    revenue = financial_data.get("Revenue", 0) or 0
 
     details = {
-        'revenue': revenue,
-        'has_revenue': False,
-        'revenue_scale_bucket': 'pre_revenue',
-        'revenue_coverage': None,
-        'presence_pts': 0.0,
-        'scale_pts': 0.0,
-        'coverage_penalty': 0.0,
+        "revenue": revenue,
+        "has_revenue": False,
+        "revenue_scale_bucket": "pre_revenue",
+        "revenue_coverage": None,
+        "presence_pts": 0.0,
+        "scale_pts": 0.0,
+        "coverage_penalty": 0.0,
     }
 
     # =========================================================================
@@ -617,48 +622,44 @@ def calculate_revenue_score(
     if revenue < REVENUE_THRESHOLD_PRESENCE:
         # Neutral baseline - don't penalize pre-revenue biotechs
         # Score = 50 (middle of 0-100 range)
-        details['revenue_scale_bucket'] = 'pre_revenue'
+        details["revenue_scale_bucket"] = "pre_revenue"
         return details, 50.0
 
     # =========================================================================
     # CASE 2: Has meaningful revenue
     # =========================================================================
-    details['has_revenue'] = True
+    details["has_revenue"] = True
 
     # Component 1: Presence bonus (binary)
-    details['presence_pts'] = 40.0
+    details["presence_pts"] = 40.0
 
     # Component 2: Scale bonus (log-bucketed)
     if revenue >= REVENUE_THRESHOLD_SCALE_2:  # >$1B
-        details['scale_pts'] = 40.0
-        details['revenue_scale_bucket'] = 'large'
+        details["scale_pts"] = 40.0
+        details["revenue_scale_bucket"] = "large"
     elif revenue >= REVENUE_THRESHOLD_SCALE_1:  # $100M-1B
-        details['scale_pts'] = 30.0
-        details['revenue_scale_bucket'] = 'medium'
+        details["scale_pts"] = 30.0
+        details["revenue_scale_bucket"] = "medium"
     else:  # $10M-100M
-        details['scale_pts'] = 15.0
-        details['revenue_scale_bucket'] = 'small'
+        details["scale_pts"] = 15.0
+        details["revenue_scale_bucket"] = "small"
 
     # Component 3: Coverage penalty (only applies if burning despite revenue)
     if monthly_burn is not None and monthly_burn > 0:
         annual_burn = monthly_burn * 12
         coverage = revenue / annual_burn
-        details['revenue_coverage'] = coverage
+        details["revenue_coverage"] = coverage
 
         if coverage < 0.25:
             # Significant burn despite revenue - penalty
-            details['coverage_penalty'] = -20.0
+            details["coverage_penalty"] = -20.0
         elif coverage < 0.5:
             # Moderate burn despite revenue - smaller penalty
-            details['coverage_penalty'] = -10.0
+            details["coverage_penalty"] = -10.0
         # else: coverage >= 0.5, no penalty
 
     # Calculate final score
-    score = (
-        details['presence_pts'] +
-        details['scale_pts'] +
-        details['coverage_penalty']
-    )
+    score = details["presence_pts"] + details["scale_pts"] + details["coverage_penalty"]
 
     # Clamp to [0, 100] (though max should be 80)
     score = max(0.0, min(100.0, score))
@@ -668,25 +669,22 @@ def calculate_revenue_score(
 
 # Legacy wrapper for backwards compatibility
 def calculate_revenue_coverage(
-    financial_data: Dict[str, Any],
-    monthly_burn: Optional[float]
+    financial_data: Dict[str, Any], monthly_burn: Optional[float]
 ) -> Tuple[Optional[float], float]:
     """
     Legacy wrapper - returns (coverage_ratio, score) for backwards compatibility.
     Internally uses the new Tier 1 scoring.
     """
     details, score = calculate_revenue_score(financial_data, monthly_burn)
-    return details.get('revenue_coverage'), score
+    return details.get("revenue_coverage"), score
 
 
 # =============================================================================
 # SEVERITY DETERMINATION
 # =============================================================================
 
-def determine_financial_severity(
-    runway_months: Optional[float],
-    cash_to_mcap: Optional[float]
-) -> str:
+
+def determine_financial_severity(runway_months: Optional[float], cash_to_mcap: Optional[float]) -> str:
     """
     Determine severity level based on financial health metrics.
 
@@ -718,6 +716,7 @@ def determine_financial_severity(
 # MAIN SCORING FUNCTION
 # =============================================================================
 
+
 def score_financial_health(ticker: str, financial_data: Dict[str, Any], market_data: Dict[str, Any]) -> Dict[str, Any]:
     """Main scoring function for Module 2 (vNext)"""
 
@@ -726,14 +725,12 @@ def score_financial_health(ticker: str, financial_data: Dict[str, Any], market_d
 
     # Component 1: Cash Runway (50%)
     runway_result = calculate_cash_runway(financial_data, market_data)
-    runway_months = runway_result['runway_months']
-    burn_rate = runway_result['monthly_burn']
-    runway_score = runway_result['runway_score']
+    runway_months = runway_result["runway_months"]
+    burn_rate = runway_result["monthly_burn"]
+    runway_score = runway_result["runway_score"]
 
     # Component 2: Dilution Risk (30%)
-    cash_to_mcap, dilution_score = calculate_dilution_risk(
-        financial_data, market_data, runway_months
-    )
+    cash_to_mcap, dilution_score = calculate_dilution_risk(financial_data, market_data, runway_months)
 
     # Component 3: Liquidity (15%)
     liquidity_score, liquidity_gate, dollar_adv = score_liquidity(market_data)
@@ -743,19 +740,10 @@ def score_financial_health(ticker: str, financial_data: Dict[str, Any], market_d
 
     # Composite score - BUGFIX: Use `is not None` checks
     # Weights: Runway 45%, Dilution 25%, Liquidity 15%, Revenue 15%
-    scores_valid = (
-        runway_score is not None and
-        dilution_score is not None and
-        liquidity_score is not None
-    )
+    scores_valid = runway_score is not None and dilution_score is not None and liquidity_score is not None
 
     if scores_valid:
-        composite = (
-            runway_score * 0.45 +
-            dilution_score * 0.25 +
-            liquidity_score * 0.15 +
-            revenue_score * 0.15
-        )
+        composite = runway_score * 0.45 + dilution_score * 0.25 + liquidity_score * 0.15 + revenue_score * 0.15
         # Clamp composite to [0, 100]
         composite = max(0.0, min(100.0, composite))
         has_data = True
@@ -777,11 +765,11 @@ def score_financial_health(ticker: str, financial_data: Dict[str, Any], market_d
         flags.append("liquidity_gate")
     if not has_data:
         flags.append("missing_financial_data")
-    if runway_result['burn_confidence'] == BURN_CONFIDENCE_LOW:
+    if runway_result["burn_confidence"] == BURN_CONFIDENCE_LOW:
         flags.append("burn_estimated")
 
     # Extract market_cap for downstream modules
-    market_cap = market_data.get('market_cap', 0) or 0
+    market_cap = market_data.get("market_cap", 0) or 0
     market_cap_mm = market_cap / 1e6 if market_cap > 0 else None
 
     return {
@@ -794,47 +782,52 @@ def score_financial_health(ticker: str, financial_data: Dict[str, Any], market_d
         "dilution_score": float(dilution_score) if dilution_score is not None else None,
         "liquidity_score": float(liquidity_score) if liquidity_score is not None else None,
         "revenue_score": float(revenue_score),
-        "revenue_coverage": float(revenue_details['revenue_coverage']) if revenue_details.get('revenue_coverage') is not None else None,
-        "has_revenue": revenue_details.get('has_revenue', False),
-        "revenue_scale_bucket": revenue_details.get('revenue_scale_bucket', 'pre_revenue'),
-        "revenue_presence_pts": float(revenue_details.get('presence_pts', 0)),
-        "revenue_scale_pts": float(revenue_details.get('scale_pts', 0)),
-        "revenue_coverage_penalty": float(revenue_details.get('coverage_penalty', 0)),
+        "revenue_coverage": (
+            float(revenue_details["revenue_coverage"]) if revenue_details.get("revenue_coverage") is not None else None
+        ),
+        "has_revenue": revenue_details.get("has_revenue", False),
+        "revenue_scale_bucket": revenue_details.get("revenue_scale_bucket", "pre_revenue"),
+        "revenue_presence_pts": float(revenue_details.get("presence_pts", 0)),
+        "revenue_scale_pts": float(revenue_details.get("scale_pts", 0)),
+        "revenue_coverage_penalty": float(revenue_details.get("coverage_penalty", 0)),
         "cash_to_mcap": float(cash_to_mcap) if cash_to_mcap is not None else None,
         "monthly_burn": float(burn_rate) if burn_rate is not None else None,
         "market_cap_mm": market_cap_mm,  # Added for Module 5 integration
         "has_financial_data": has_data,
         "severity": severity,
         "flags": flags,
-
         # New burn-rate hierarchy fields
-        "burn_source": runway_result['burn_source'],
-        "burn_confidence": runway_result['burn_confidence'],
-        "burn_period": runway_result['burn_period'],
-
+        "burn_source": runway_result["burn_source"],
+        "burn_confidence": runway_result["burn_confidence"],
+        "burn_period": runway_result["burn_period"],
         # New liquidity fields
         "liquidity_gate": liquidity_gate,
         "dollar_adv": float(dollar_adv) if dollar_adv is not None else None,
-
         # New liquid assets fields
-        "liquid_assets": float(runway_result['liquid_assets']),
-        "liquid_components": runway_result['liquid_components'],
-
+        "liquid_assets": float(runway_result["liquid_assets"]),
+        "liquid_components": runway_result["liquid_components"],
         # V2: Raw CFO and Revenue for valuation regime routing
-        "CFO": financial_data.get('CFO'),
-        "Revenue": financial_data.get('Revenue'),
-
+        "CFO": financial_data.get("CFO"),
+        "Revenue": financial_data.get("Revenue"),
         # New data quality fields
         "financial_data_state": data_state,
         "missing_fields": missing_fields,
         "inputs_used": inputs_used,
-
         # Financial confidence for downstream gating (Module 5)
         "financial_confidence": (
-            "HIGH" if data_state == DATA_STATE_FULL and runway_result['burn_confidence'] in (BURN_CONFIDENCE_HIGH, BURN_CONFIDENCE_MED)
-            else "MED" if data_state == DATA_STATE_PARTIAL or runway_result['burn_confidence'] == BURN_CONFIDENCE_LOW
-            else "LOW" if data_state in (DATA_STATE_MINIMAL, DATA_STATE_NONE) or runway_result['burn_confidence'] == BURN_CONFIDENCE_NONE
-            else "LOW"
+            "HIGH"
+            if data_state == DATA_STATE_FULL
+            and runway_result["burn_confidence"] in (BURN_CONFIDENCE_HIGH, BURN_CONFIDENCE_MED)
+            else (
+                "MED"
+                if data_state == DATA_STATE_PARTIAL or runway_result["burn_confidence"] == BURN_CONFIDENCE_LOW
+                else (
+                    "LOW"
+                    if data_state in (DATA_STATE_MINIMAL, DATA_STATE_NONE)
+                    or runway_result["burn_confidence"] == BURN_CONFIDENCE_NONE
+                    else "LOW"
+                )
+            )
         ),
     }
 
@@ -859,8 +852,8 @@ def run_module_2(universe: TickerCollection, financial_data: List[Dict], market_
     logger.debug(f"Financial records: {len(financial_data)}, Market records: {len(market_data)}")
 
     # Create lookup dicts
-    fin_lookup = {f['ticker']: f for f in financial_data if 'ticker' in f}
-    mkt_lookup = {m['ticker']: m for m in market_data if 'ticker' in m}
+    fin_lookup = {f["ticker"]: f for f in financial_data if "ticker" in f}
+    mkt_lookup = {m["ticker"]: m for m in market_data if "ticker" in m}
 
     results = []
     for ticker in universe:
@@ -883,6 +876,7 @@ def run_module_2(universe: TickerCollection, financial_data: List[Dict], market_
 # SELF-CHECKS (Unit-test-like)
 # =============================================================================
 
+
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify correctness."""
     errors: List[str] = []
@@ -890,119 +884,109 @@ def _run_self_checks() -> List[str]:
     # CHECK 1: Bugfix - `if x is not None` vs `if x`
     # Zero runway should NOT be treated as None
     result = score_financial_health(
-        "CHECK1",
-        {'Cash': 0, 'NetIncome': -100e6},
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        "CHECK1", {"Cash": 0, "NetIncome": -100e6}, {"market_cap": 1e9, "avg_volume": 100000, "price": 10}
     )
-    if result['runway_months'] != 0.0:
+    if result["runway_months"] != 0.0:
         # With 0 cash and burn, runway should be 0
         pass  # This is expected - 0 cash / burn = 0 runway
 
     # CHECK 2: Burn hierarchy - CFO preferred over NetIncome
     result = score_financial_health(
         "CHECK2",
-        {'Cash': 500e6, 'CFO': -50e6, 'NetIncome': -100e6},
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        {"Cash": 500e6, "CFO": -50e6, "NetIncome": -100e6},
+        {"market_cap": 1e9, "avg_volume": 100000, "price": 10},
     )
-    if result['burn_source'] != 'CFO':
+    if result["burn_source"] != "CFO":
         errors.append(f"CHECK2 FAIL: burn_source={result['burn_source']}, expected CFO")
 
     # CHECK 3: Liquid assets includes marketable securities
     result = score_financial_health(
         "CHECK3",
-        {'Cash': 200e6, 'MarketableSecurities': 300e6, 'NetIncome': -50e6},
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        {"Cash": 200e6, "MarketableSecurities": 300e6, "NetIncome": -50e6},
+        {"market_cap": 1e9, "avg_volume": 100000, "price": 10},
     )
-    if result['liquid_assets'] != 500e6:
+    if result["liquid_assets"] != 500e6:
         errors.append(f"CHECK3 FAIL: liquid_assets={result['liquid_assets']}, expected 500M")
 
     # CHECK 4: Dilution score clamped to [0, 100]
     result = score_financial_health(
-        "CHECK4",
-        {'Cash': 10e9, 'NetIncome': -1e6},  # Huge cash
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        "CHECK4", {"Cash": 10e9, "NetIncome": -1e6}, {"market_cap": 1e9, "avg_volume": 100000, "price": 10}  # Huge cash
     )
-    if not (0 <= result['dilution_score'] <= 100):
+    if not (0 <= result["dilution_score"] <= 100):
         errors.append(f"CHECK4 FAIL: dilution_score={result['dilution_score']}, not in [0,100]")
 
     # CHECK 5: Liquidity gate triggers below threshold
     result = score_financial_health(
         "CHECK5",
-        {'Cash': 100e6, 'NetIncome': -10e6},
-        {'market_cap': 500e6, 'avg_volume': 10000, 'price': 10}  # $100K ADV
+        {"Cash": 100e6, "NetIncome": -10e6},
+        {"market_cap": 500e6, "avg_volume": 10000, "price": 10},  # $100K ADV
     )
-    if not result['liquidity_gate']:
+    if not result["liquidity_gate"]:
         errors.append(f"CHECK5 FAIL: liquidity_gate={result['liquidity_gate']}, expected True")
 
     # CHECK 6: Data quality state
     result = score_financial_health(
-        "CHECK6",
-        {'Cash': 100e6},  # Missing burn data
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        "CHECK6", {"Cash": 100e6}, {"market_cap": 1e9, "avg_volume": 100000, "price": 10}  # Missing burn data
     )
-    if result['financial_data_state'] not in [DATA_STATE_PARTIAL, DATA_STATE_MINIMAL]:
+    if result["financial_data_state"] not in [DATA_STATE_PARTIAL, DATA_STATE_MINIMAL]:
         errors.append(f"CHECK6 FAIL: data_state={result['financial_data_state']}")
 
     # CHECK 7: Runway penalty is clamped
     result = score_financial_health(
         "CHECK7",
-        {'Cash': 10e6, 'NetIncome': -100e6},  # Very short runway
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 10}
+        {"Cash": 10e6, "NetIncome": -100e6},  # Very short runway
+        {"market_cap": 1e9, "avg_volume": 100000, "price": 10},
     )
     # With ~0.3 months runway, dilution penalty should be applied but clamped
-    if result['dilution_score'] < 0 or result['dilution_score'] > 100:
+    if result["dilution_score"] < 0 or result["dilution_score"] > 100:
         errors.append(f"CHECK7 FAIL: dilution_score={result['dilution_score']}, not clamped")
 
     # CHECK 8: Revenue scoring - pre-revenue gets neutral 50 pts
     result = score_financial_health(
         "CHECK8",
-        {'Cash': 100e6, 'NetIncome': -20e6, 'Revenue': 0},
-        {'market_cap': 500e6, 'avg_volume': 50000, 'price': 20}
+        {"Cash": 100e6, "NetIncome": -20e6, "Revenue": 0},
+        {"market_cap": 500e6, "avg_volume": 50000, "price": 20},
     )
-    if result['revenue_score'] != 50.0:
+    if result["revenue_score"] != 50.0:
         errors.append(f"CHECK8 FAIL: revenue_score={result['revenue_score']}, expected 50.0 (pre-revenue neutral)")
 
     # CHECK 9: Revenue scoring - small revenue ($50M) gets presence + scale
     result = score_financial_health(
         "CHECK9",
-        {'Cash': 100e6, 'NetIncome': 50e6, 'Revenue': 50e6},  # Profitable
-        {'market_cap': 500e6, 'avg_volume': 50000, 'price': 20}
+        {"Cash": 100e6, "NetIncome": 50e6, "Revenue": 50e6},  # Profitable
+        {"market_cap": 500e6, "avg_volume": 50000, "price": 20},
     )
     # $50M revenue: presence (40) + scale_small (15) = 55 pts
-    if result['revenue_score'] != 55.0:
+    if result["revenue_score"] != 55.0:
         errors.append(f"CHECK9 FAIL: revenue_score={result['revenue_score']}, expected 55.0")
 
     # CHECK 10: Revenue scoring - large revenue (>$1B) gets full points
     result = score_financial_health(
         "CHECK10",
-        {'Cash': 5e9, 'NetIncome': 1e9, 'Revenue': 2e9},  # Large pharma
-        {'market_cap': 50e9, 'avg_volume': 1000000, 'price': 100}
+        {"Cash": 5e9, "NetIncome": 1e9, "Revenue": 2e9},  # Large pharma
+        {"market_cap": 50e9, "avg_volume": 1000000, "price": 100},
     )
     # $2B revenue: presence (40) + scale_large (40) = 80 pts
-    if result['revenue_score'] != 80.0:
+    if result["revenue_score"] != 80.0:
         errors.append(f"CHECK10 FAIL: revenue_score={result['revenue_score']}, expected 80.0")
 
     # CHECK 11: Revenue scoring - burning despite revenue gets penalty
     result = score_financial_health(
         "CHECK11",
-        {'Cash': 200e6, 'NetIncome': -500e6, 'Revenue': 100e6},  # Low coverage
-        {'market_cap': 1e9, 'avg_volume': 100000, 'price': 50}
+        {"Cash": 200e6, "NetIncome": -500e6, "Revenue": 100e6},  # Low coverage
+        {"market_cap": 1e9, "avg_volume": 100000, "price": 50},
     )
     # $100M revenue, $500M burn -> coverage = 0.2 < 0.25 -> penalty -20
     # presence (40) + scale_small (15) + penalty (-20) = 35 pts
-    if result['revenue_coverage_penalty'] != -20.0:
+    if result["revenue_coverage_penalty"] != -20.0:
         errors.append(f"CHECK11 FAIL: revenue_coverage_penalty={result['revenue_coverage_penalty']}, expected -20.0")
 
     # CHECK 12: Determinism - same inputs produce same outputs
     result1 = score_financial_health(
-        "CHECK12",
-        {'Cash': 100e6, 'NetIncome': -20e6},
-        {'market_cap': 500e6, 'avg_volume': 50000, 'price': 20}
+        "CHECK12", {"Cash": 100e6, "NetIncome": -20e6}, {"market_cap": 500e6, "avg_volume": 50000, "price": 20}
     )
     result2 = score_financial_health(
-        "CHECK12",
-        {'Cash': 100e6, 'NetIncome': -20e6},
-        {'market_cap': 500e6, 'avg_volume': 50000, 'price': 20}
+        "CHECK12", {"Cash": 100e6, "NetIncome": -20e6}, {"market_cap": 500e6, "avg_volume": 50000, "price": 20}
     )
     if result1 != result2:
         errors.append("CHECK12 FAIL: Non-deterministic outputs")
@@ -1013,6 +997,7 @@ def _run_self_checks() -> List[str]:
 # =============================================================================
 # CLI / MAIN
 # =============================================================================
+
 
 def main() -> None:
     """Test Module 2 on sample data with self-checks"""
@@ -1028,54 +1013,66 @@ def main() -> None:
     else:
         print("All self-checks passed!\n")
 
-    universe = ['CVAC', 'RYTM', 'IMMP', 'RICH']
+    universe = ["CVAC", "RYTM", "IMMP", "RICH"]
 
     financial_data = [
-        {'ticker': 'CVAC', 'Cash': 500e6, 'MarketableSecurities': 100e6,
-         'NetIncome': -100e6, 'CFO': -80e6, 'R&D': 60e6},
-        {'ticker': 'RYTM', 'Cash': 200e6, 'NetIncome': -50e6, 'R&D': 40e6},
-        {'ticker': 'IMMP', 'Cash': 1000e6, 'MarketableSecurities': 500e6,
-         'NetIncome': -150e6, 'FCF': -120e6, 'R&D': 100e6},
-        {'ticker': 'RICH', 'Cash': 2000e6, 'NetIncome': 200e6},  # Profitable
+        {
+            "ticker": "CVAC",
+            "Cash": 500e6,
+            "MarketableSecurities": 100e6,
+            "NetIncome": -100e6,
+            "CFO": -80e6,
+            "R&D": 60e6,
+        },
+        {"ticker": "RYTM", "Cash": 200e6, "NetIncome": -50e6, "R&D": 40e6},
+        {
+            "ticker": "IMMP",
+            "Cash": 1000e6,
+            "MarketableSecurities": 500e6,
+            "NetIncome": -150e6,
+            "FCF": -120e6,
+            "R&D": 100e6,
+        },
+        {"ticker": "RICH", "Cash": 2000e6, "NetIncome": 200e6},  # Profitable
     ]
 
     market_data = [
-        {'ticker': 'CVAC', 'market_cap': 2e9, 'avg_volume': 500000, 'price': 20.0},
-        {'ticker': 'RYTM', 'market_cap': 800e6, 'avg_volume': 200000, 'price': 15.0},
-        {'ticker': 'IMMP', 'market_cap': 5e9, 'avg_volume': 1000000, 'price': 50.0},
-        {'ticker': 'RICH', 'market_cap': 10e9, 'avg_volume': 2000000, 'price': 100.0},
+        {"ticker": "CVAC", "market_cap": 2e9, "avg_volume": 500000, "price": 20.0},
+        {"ticker": "RYTM", "market_cap": 800e6, "avg_volume": 200000, "price": 15.0},
+        {"ticker": "IMMP", "market_cap": 5e9, "avg_volume": 1000000, "price": 50.0},
+        {"ticker": "RICH", "market_cap": 10e9, "avg_volume": 2000000, "price": 100.0},
     ]
 
     results = run_module_2(universe, financial_data, market_data)
 
-    print("="*80)
+    print("=" * 80)
     print("MODULE 2: FINANCIAL HEALTH SCORING (vNext) - TEST RUN")
-    print("="*80)
+    print("=" * 80)
 
     for r in results:
         print(f"\n{r['ticker']}:")
         print(f"  Financial Score: {r['financial_normalized']:.2f}")
         print(f"  Data State: {r['financial_data_state']}")
-        if r['runway_months'] is not None:
+        if r["runway_months"] is not None:
             print(f"  Runway: {r['runway_months']:.1f} months ({r['runway_score']:.0f} pts)")
             print(f"    Burn: ${r['monthly_burn']/1e6:.1f}M/mo ({r['burn_source']}, {r['burn_confidence']})")
             print(f"    Liquid Assets: ${r['liquid_assets']/1e6:.0f}M ({r['liquid_components']})")
-        if r['cash_to_mcap'] is not None:
+        if r["cash_to_mcap"] is not None:
             print(f"  Dilution: {r['cash_to_mcap']:.1%} cash/mcap ({r['dilution_score']:.0f} pts)")
-        if r['liquidity_score'] is not None:
-            gate_str = " [GATED]" if r['liquidity_gate'] else ""
+        if r["liquidity_score"] is not None:
+            gate_str = " [GATED]" if r["liquidity_gate"] else ""
             print(f"  Liquidity: {r['liquidity_score']:.0f} pts (${r['dollar_adv']/1e6:.1f}M ADV){gate_str}")
-        if r['flags']:
+        if r["flags"]:
             print(f"  Flags: {r['flags']}")
-        if r['missing_fields']:
+        if r["missing_fields"]:
             print(f"  Missing: {r['missing_fields']}")
 
-    print("\n" + "="*80)
+    print("\n" + "=" * 80)
     if errors:
         print(f"MODULE 2 TEST COMPLETE - {len(errors)} self-check failures")
     else:
         print("MODULE 2 TEST COMPLETE - All checks passed!")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":
@@ -1085,6 +1082,7 @@ if __name__ == "__main__":
 # =============================================================================
 # COMPATIBILITY WRAPPER
 # =============================================================================
+
 
 def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
     """
@@ -1099,15 +1097,15 @@ def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         # Legacy: (records, active_tickers, as_of_date)
         records = args[0]
         universe = args[1]
-        as_of_date = args[2] if len(args) > 2 else kwargs.get('as_of_date')
+        as_of_date = args[2] if len(args) > 2 else kwargs.get("as_of_date")
         financial_data = records
         market_data = []
     else:
         # Extract parameters from kwargs
-        universe = kwargs.get('universe', kwargs.get('active_tickers', kwargs.get('active_universe', [])))
-        financial_data = kwargs.get('financial_records', kwargs.get('financial_data', []))
-        market_data = kwargs.get('market_records', kwargs.get('market_data', []))
-        as_of_date = kwargs.get('as_of_date')
+        universe = kwargs.get("universe", kwargs.get("active_tickers", kwargs.get("active_universe", [])))
+        financial_data = kwargs.get("financial_records", kwargs.get("financial_data", []))
+        market_data = kwargs.get("market_records", kwargs.get("market_data", []))
+        as_of_date = kwargs.get("as_of_date")
 
     # Convert set to list if needed
     # DETERMINISM: Sort the set to ensure consistent iteration order
@@ -1115,13 +1113,13 @@ def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
         universe = sorted(universe)
 
     # If market_data is empty but we have raw_universe, extract it
-    if not market_data and 'raw_universe' in kwargs:
-        raw_universe = kwargs['raw_universe']
+    if not market_data and "raw_universe" in kwargs:
+        raw_universe = kwargs["raw_universe"]
         market_data = []
         for record in raw_universe:
-            if 'market_data' in record and record.get('ticker'):
-                mkt = record['market_data'].copy()
-                mkt['ticker'] = record['ticker']
+            if "market_data" in record and record.get("ticker"):
+                mkt = record["market_data"].copy()
+                mkt["ticker"] = record["ticker"]
                 market_data.append(mkt)
 
     # Map legacy field names to new format
@@ -1129,86 +1127,97 @@ def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
     mapped_market = []
 
     # Track tickers we've seen in input data (even if PIT-filtered)
-    all_input_tickers = {rec.get('ticker') for rec in financial_data if rec.get('ticker')}
+    all_input_tickers = {rec.get("ticker") for rec in financial_data if rec.get("ticker")}
 
     for rec in financial_data:
-        ticker = rec.get('ticker')
+        ticker = rec.get("ticker")
 
         # PIT filtering: skip records from the future
-        source_date = rec.get('source_date')
+        source_date = rec.get("source_date")
         if source_date and as_of_date and source_date > as_of_date:
             continue
 
         # Map legacy field names (cash_mm -> Cash in dollars, etc.)
-        fin_rec = {'ticker': ticker}
+        fin_rec = {"ticker": ticker}
 
         # Cash: cash_mm (millions) -> Cash (dollars)
         # Fallback chain: cash_mm → Cash → CashAndSecurities (aggregate from EDGAR)
-        if 'cash_mm' in rec:
-            fin_rec['Cash'] = rec['cash_mm'] * 1e6
-        elif 'Cash' in rec and rec['Cash'] is not None:
-            fin_rec['Cash'] = rec['Cash']
-        elif 'CashAndSecurities' in rec and rec['CashAndSecurities'] is not None:
-            fin_rec['Cash'] = rec['CashAndSecurities']
+        if "cash_mm" in rec:
+            fin_rec["Cash"] = rec["cash_mm"] * 1e6
+        elif "Cash" in rec and rec["Cash"] is not None:
+            fin_rec["Cash"] = rec["Cash"]
+        elif "CashAndSecurities" in rec and rec["CashAndSecurities"] is not None:
+            fin_rec["Cash"] = rec["CashAndSecurities"]
 
         # Burn rate: burn_rate_mm -> NetIncome (negative)
-        if 'burn_rate_mm' in rec:
-            fin_rec['NetIncome'] = -rec['burn_rate_mm'] * 1e6  # Burn is expense
-        elif 'NetIncome' in rec:
-            fin_rec['NetIncome'] = rec['NetIncome']
+        if "burn_rate_mm" in rec:
+            fin_rec["NetIncome"] = -rec["burn_rate_mm"] * 1e6  # Burn is expense
+        elif "NetIncome" in rec:
+            fin_rec["NetIncome"] = rec["NetIncome"]
 
         # R&D
-        if 'rd_mm' in rec:
-            fin_rec['R&D'] = rec['rd_mm'] * 1e6
-        elif 'R&D' in rec:
-            fin_rec['R&D'] = rec['R&D']
+        if "rd_mm" in rec:
+            fin_rec["R&D"] = rec["rd_mm"] * 1e6
+        elif "R&D" in rec:
+            fin_rec["R&D"] = rec["R&D"]
 
         # CFO/FCF/Revenue pass-through
-        for field in ['CFO', 'CFO_quarterly', 'CFO_YTD', 'FCF', 'FCF_quarterly',
-                      'MarketableSecurities', 'ShortTermInvestments', 'AvailableForSaleSecurities',
-                      'Debt', 'Revenue']:
+        for field in [
+            "CFO",
+            "CFO_quarterly",
+            "CFO_YTD",
+            "FCF",
+            "FCF_quarterly",
+            "MarketableSecurities",
+            "ShortTermInvestments",
+            "AvailableForSaleSecurities",
+            "Debt",
+            "Revenue",
+        ]:
             if field in rec:
                 fin_rec[field] = rec[field]
 
         # CRITICAL: Pass through date fields for YTD period detection
-        for date_field in ['NetIncome_date', 'CFO_date', 'FCF_date', 'R&D_date', 'Cash_date', 'Revenue_date']:
+        for date_field in ["NetIncome_date", "CFO_date", "FCF_date", "R&D_date", "Cash_date", "Revenue_date"]:
             if date_field in rec:
                 fin_rec[date_field] = rec[date_field]
 
         mapped_financial.append(fin_rec)
 
         # Extract market data from combined record if present
-        mkt_rec = {'ticker': ticker}
-        if 'market_cap_mm' in rec:
-            mkt_rec['market_cap'] = rec['market_cap_mm'] * 1e6
-        elif 'market_cap' in rec:
-            mkt_rec['market_cap'] = rec['market_cap']
+        mkt_rec = {"ticker": ticker}
+        if "market_cap_mm" in rec:
+            mkt_rec["market_cap"] = rec["market_cap_mm"] * 1e6
+        elif "market_cap" in rec:
+            mkt_rec["market_cap"] = rec["market_cap"]
 
-        if 'avg_volume' in rec:
-            mkt_rec['avg_volume'] = rec['avg_volume']
-        elif 'volume_avg_30d' in rec:
-            mkt_rec['avg_volume'] = rec['volume_avg_30d']
+        if "avg_volume" in rec:
+            mkt_rec["avg_volume"] = rec["avg_volume"]
+        elif "volume_avg_30d" in rec:
+            mkt_rec["avg_volume"] = rec["volume_avg_30d"]
         else:
-            mkt_rec['avg_volume'] = 100000  # Default
+            mkt_rec["avg_volume"] = 100000  # Default
 
-        if 'price' in rec:
-            mkt_rec['price'] = rec['price']
+        if "price" in rec:
+            mkt_rec["price"] = rec["price"]
         else:
-            mkt_rec['price'] = 10.0  # Default
+            mkt_rec["price"] = 10.0  # Default
 
         mapped_market.append(mkt_rec)
 
     # Add any separate market_data records
     for rec in market_data:
-        mapped_market.append({
-            'ticker': rec.get('ticker'),
-            'market_cap': rec.get('market_cap'),
-            'price': rec.get('price'),
-            'avg_volume': rec.get('volume_avg_30d') or rec.get('avg_volume'),
-        })
+        mapped_market.append(
+            {
+                "ticker": rec.get("ticker"),
+                "market_cap": rec.get("market_cap"),
+                "price": rec.get("price"),
+                "avg_volume": rec.get("volume_avg_30d") or rec.get("avg_volume"),
+            }
+        )
 
     # Filter universe to only tickers we have data for
-    available_tickers = {r['ticker'] for r in mapped_financial}
+    available_tickers = {r["ticker"] for r in mapped_financial}
     filtered_universe = [t for t in universe if t in available_tickers]
     # Only create placeholders for tickers with NO input data at all (not PIT-filtered ones)
     truly_missing_tickers = [t for t in universe if t not in all_input_tickers]
@@ -1219,44 +1228,43 @@ def compute_module_2_financial(*args: Any, **kwargs: Any) -> Dict[str, Any]:
     # NOTE: These get sev2 (50% penalty) not sev3 (hard exclusion) so newly-added
     # tickers without financial data yet are ranked with a penalty, not silently dropped.
     for ticker in truly_missing_tickers:
-        result.append({
-            'ticker': ticker,
-            'score': 0,
-            'financial_score': 0.0,  # Required by validation
-            'financial_normalized': 0.0,  # Legacy alias
-            'runway_months': None,
-            'cash_mm': None,
-            'burn_rate_mm': None,
-            'flags': ['missing_financial_data'],
-            'data_state': DATA_STATE_NONE,
-            'severity': 'sev2',  # Missing data = penalty, not hard gate
-            'financial_confidence': 'NONE',
-        })
+        result.append(
+            {
+                "ticker": ticker,
+                "score": 0,
+                "financial_score": 0.0,  # Required by validation
+                "financial_normalized": 0.0,  # Legacy alias
+                "runway_months": None,
+                "cash_mm": None,
+                "burn_rate_mm": None,
+                "flags": ["missing_financial_data"],
+                "data_state": DATA_STATE_NONE,
+                "severity": "sev2",  # Missing data = penalty, not hard gate
+                "financial_confidence": "NONE",
+            }
+        )
 
     # Add legacy field names to existing results for backwards compatibility
     for score in result:
-        if 'flags' not in score:
-            score['flags'] = []
+        if "flags" not in score:
+            score["flags"] = []
         # Add cash_mm from liquid_assets if available
-        if 'cash_mm' not in score:
-            liquid = score.get('liquid_assets', 0) or 0
+        if "cash_mm" not in score:
+            liquid = score.get("liquid_assets", 0) or 0
             if liquid > 0:
-                score['cash_mm'] = liquid / 1e6
+                score["cash_mm"] = liquid / 1e6
             else:
-                score['cash_mm'] = None
-                if 'missing_cash' not in score['flags']:
-                    score['flags'].append('missing_cash')
+                score["cash_mm"] = None
+                if "missing_cash" not in score["flags"]:
+                    score["flags"].append("missing_cash")
 
     # DETERMINISM: Sort results by ticker to ensure consistent output order
-    result_sorted = sorted(result, key=lambda x: x.get('ticker', ''))
+    result_sorted = sorted(result, key=lambda x: x.get("ticker", ""))
 
     # Wrap in expected format
     output = {
-        'scores': result_sorted,
-        'diagnostic_counts': {
-            'scored': len(filtered_universe),
-            'missing': len(truly_missing_tickers)
-        }
+        "scores": result_sorted,
+        "diagnostic_counts": {"scored": len(filtered_universe), "missing": len(truly_missing_tickers)},
     }
 
     # Validate output schema before returning

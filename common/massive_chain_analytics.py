@@ -381,6 +381,30 @@ def load_chain_snapshot(snap_dir: Path, ticker: str) -> List[Dict[str, Any]]:
         return []
 
 
+_massive_breaker = None
+
+
+def _get_massive_breaker():
+    """Lazy-init circuit breaker for Massive Finance API."""
+    global _massive_breaker
+    if _massive_breaker is None:
+        try:
+            from common.robustness_extended import StatefulCircuitBreaker, StatefulCircuitBreakerConfig
+
+            _massive_breaker = StatefulCircuitBreaker(
+                "massive_chain_api",
+                config=StatefulCircuitBreakerConfig(
+                    failure_threshold=10,
+                    success_threshold=3,
+                    timeout_seconds=180.0,
+                    window_size_seconds=600.0,
+                ),
+            )
+        except ImportError:
+            _massive_breaker = None
+    return _massive_breaker
+
+
 def warm_chain_analytics(
     tickers: List[str],
     snap_dir: Path,
@@ -405,11 +429,21 @@ def warm_chain_analytics(
         logger.warning("options_history_massive not available")
         return {}
 
+    breaker = _get_massive_breaker()
     results: Dict[str, Dict[str, Any]] = {}
     n_fetched = 0
     n_failed = 0
 
     for ticker in tickers:
+        # Circuit breaker: skip remaining tickers if API is consistently failing
+        if breaker and not breaker.allow_request():
+            logger.warning(
+                "[MASSIVE_CHAIN] Circuit breaker OPEN — skipping %s and remaining tickers",
+                ticker,
+            )
+            n_failed += len(tickers) - n_fetched - n_failed
+            break
+
         try:
             chain = fetch_chain_snapshot(ticker.upper(), limit=250)
             if not chain:
@@ -424,14 +458,28 @@ def warm_chain_analytics(
             analytics = compute_chain_analytics(chain, underlying_price, as_of_date)
             results[ticker.upper()] = analytics
             n_fetched += 1
+            if breaker:
+                breaker.record_success()
+        except (ConnectionError, TimeoutError, OSError) as exc:
+            logger.warning("Chain fetch network error for %s: %s", ticker, exc)
+            n_failed += 1
+            if breaker:
+                breaker.record_failure(exc)
         except Exception as exc:
-            logger.debug("Chain fetch failed for %s: %s", ticker, exc)
+            logger.warning("Chain fetch failed for %s: %s", ticker, exc)
             n_failed += 1
 
-    logger.info(
-        "[MASSIVE_CHAIN] Warmed %d/%d tickers (%d failed)",
-        n_fetched,
-        len(tickers),
-        n_failed,
-    )
+    if n_failed > 0:
+        logger.warning(
+            "[MASSIVE_CHAIN] Warmed %d/%d tickers (%d failed)",
+            n_fetched,
+            len(tickers),
+            n_failed,
+        )
+    else:
+        logger.info(
+            "[MASSIVE_CHAIN] Warmed %d/%d tickers (0 failed)",
+            n_fetched,
+            len(tickers),
+        )
     return results

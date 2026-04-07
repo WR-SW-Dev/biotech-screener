@@ -263,14 +263,29 @@ class GateResult:
 
 @dataclass(frozen=True)
 class DriftThresholds:
-    """Versioned thresholds for drift monitoring gate (WARN-only)."""
+    """Versioned thresholds for drift monitoring gate.
 
+    WARN thresholds trigger warnings but allow snapshot promotion.
+    FAIL thresholds block snapshot promotion when extreme drift is
+    detected (indicating potential data corruption or pipeline error).
+    Set fail_* to 0 (overlap) or a very large number (counts) to disable.
+    """
+
+    # WARN thresholds (non-blocking)
     warn_top20_overlap_pct: float = 70.0
     warn_top60_overlap_pct: float = 80.0
     warn_rank_spearman_rho: float = 0.90
     warn_mean_abs_rank_delta_top60: float = 8.0
     warn_tier_migration_count: int = 10
     warn_eligibility_change_count: int = 10
+
+    # FAIL thresholds (blocking — extreme drift likely signals a bug)
+    fail_top20_overlap_pct: float = 30.0  # <30% overlap = catastrophic churn
+    fail_top60_overlap_pct: float = 50.0  # <50% overlap = data feed issue
+    fail_rank_spearman_rho: float = 0.50  # <0.50 = rankings essentially scrambled
+    fail_mean_abs_rank_delta_top60: float = 25.0  # >25 avg rank change = broken
+    fail_tier_migration_count: int = 40  # >40 tier changes = data corruption
+    fail_eligibility_change_count: int = 40  # >40 eligibility flips = broken
 
     @property
     def thresholds_id(self) -> str:
@@ -1165,7 +1180,11 @@ def check_drift_monitoring(
     as_of_date: str,
     thresholds: DriftThresholds,
 ) -> GateResult:
-    """Compare current snapshot vs most recent prior. WARN-only gate (never FAIL).
+    """Compare current snapshot vs most recent prior.
+
+    WARN thresholds flag operational concerns. FAIL thresholds block
+    snapshot promotion when extreme drift is detected (likely a data
+    feed failure or pipeline bug).
 
     Writes drift_report.json + drift_report.md as sidecar artifacts.
     """
@@ -1189,7 +1208,34 @@ def check_drift_monitoring(
 
     metrics = _compute_drift_metrics(current_csv, prior_csv)
 
-    # Evaluate thresholds — collect warn reasons
+    # Evaluate FAIL thresholds first — extreme drift blocks promotion
+    fail_reasons: List[str] = []
+    if metrics["top20_overlap_pct"] < thresholds.fail_top20_overlap_pct:
+        fail_reasons.append(
+            f"FAIL top20_overlap_pct: {metrics['top20_overlap_pct']:.1f}% < {thresholds.fail_top20_overlap_pct}%"
+        )
+    if metrics["top60_overlap_pct"] < thresholds.fail_top60_overlap_pct:
+        fail_reasons.append(
+            f"FAIL top60_overlap_pct: {metrics['top60_overlap_pct']:.1f}% < {thresholds.fail_top60_overlap_pct}%"
+        )
+    if metrics["rank_spearman_rho"] is not None and metrics["rank_spearman_rho"] < thresholds.fail_rank_spearman_rho:
+        fail_reasons.append(
+            f"FAIL rank_spearman_rho: {metrics['rank_spearman_rho']:.4f} < {thresholds.fail_rank_spearman_rho}"
+        )
+    if metrics["mean_abs_rank_delta_top60"] > thresholds.fail_mean_abs_rank_delta_top60:
+        fail_reasons.append(
+            f"FAIL mean_abs_rank_delta_top60: {metrics['mean_abs_rank_delta_top60']:.1f} > {thresholds.fail_mean_abs_rank_delta_top60}"
+        )
+    if metrics["tier_migration_count"] > thresholds.fail_tier_migration_count:
+        fail_reasons.append(
+            f"FAIL tier_migration_count: {metrics['tier_migration_count']} > {thresholds.fail_tier_migration_count}"
+        )
+    if metrics["eligibility_change_count"] > thresholds.fail_eligibility_change_count:
+        fail_reasons.append(
+            f"FAIL eligibility_change_count: {metrics['eligibility_change_count']} > {thresholds.fail_eligibility_change_count}"
+        )
+
+    # Evaluate WARN thresholds
     warn_reasons: List[str] = []
     if metrics["top20_overlap_pct"] < thresholds.warn_top20_overlap_pct:
         warn_reasons.append(
@@ -1216,16 +1262,22 @@ def check_drift_monitoring(
             f"warn_eligibility_change_count: {metrics['eligibility_change_count']} > {thresholds.warn_eligibility_change_count}"
         )
 
-    status = "WARN" if warn_reasons else "PASS"
+    if fail_reasons:
+        status = "FAIL"
+    elif warn_reasons:
+        status = "WARN"
+    else:
+        status = "PASS"
 
     # Build and write drift report JSON
     report = {
-        "version": "1.0.0",
+        "version": "1.1.0",
         "thresholds_id": thresholds.thresholds_id,
         "thresholds": asdict(thresholds),
         "current_date": as_of_date,
         "prior_date": prior.name,
         "metrics": metrics,
+        "fail_reasons": fail_reasons,
         "warn_reasons": warn_reasons,
         "status": status,
     }
@@ -1238,7 +1290,9 @@ def check_drift_monitoring(
     _write_drift_report_md(report, report_md_path)
 
     detail = f"vs {prior.name}: "
-    if warn_reasons:
+    if fail_reasons:
+        detail += "BLOCKED — " + "; ".join(fail_reasons)
+    elif warn_reasons:
         detail += "; ".join(warn_reasons)
     else:
         detail += (

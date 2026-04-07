@@ -44,11 +44,10 @@ Version: 1.0.0
 from __future__ import annotations
 
 import hashlib
-import json
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from statistics import mean, median, stdev
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -115,25 +114,29 @@ BOOTSTRAP_CI_LEVELS = [0.90, 0.95, 0.99]
 # ENUMS
 # =============================================================================
 
+
 class ICQuality(str, Enum):
     """IC quality classification."""
+
     EXCELLENT = "EXCELLENT"  # IC > 0.05
-    GOOD = "GOOD"            # IC 0.03-0.05
-    WEAK = "WEAK"            # IC 0.01-0.03
-    NOISE = "NOISE"          # IC < 0.01
-    NEGATIVE = "NEGATIVE"    # IC < 0 (inverted signal)
+    GOOD = "GOOD"  # IC 0.03-0.05
+    WEAK = "WEAK"  # IC 0.01-0.03
+    NOISE = "NOISE"  # IC < 0.01
+    NEGATIVE = "NEGATIVE"  # IC < 0 (inverted signal)
 
 
 class MarketCapBucket(str, Enum):
     """Market cap classification for stratified analysis."""
-    MICRO = "MICRO"     # < $300M
-    SMALL = "SMALL"     # $300M - $1B
-    MID = "MID"         # $1B - $5B
-    LARGE = "LARGE"     # > $5B
+
+    MICRO = "MICRO"  # < $300M
+    SMALL = "SMALL"  # $300M - $1B
+    MID = "MID"  # $1B - $5B
+    LARGE = "LARGE"  # > $5B
 
 
 class SectorCategory(str, Enum):
     """Biotech sector categories."""
+
     ONCOLOGY = "ONCOLOGY"
     RARE_DISEASE = "RARE_DISEASE"
     CNS = "CNS"
@@ -145,6 +148,7 @@ class SectorCategory(str, Enum):
 
 class RegimeType(str, Enum):
     """Market regime classification."""
+
     BULL = "BULL"
     BEAR = "BEAR"
     NEUTRAL = "NEUTRAL"
@@ -154,9 +158,11 @@ class RegimeType(str, Enum):
 # DATACLASSES
 # =============================================================================
 
+
 @dataclass
 class ForwardReturn:
     """Forward return calculation result."""
+
     ticker: str
     horizon: str
     start_date: str
@@ -170,6 +176,7 @@ class ForwardReturn:
 @dataclass
 class ICResult:
     """IC calculation result."""
+
     ic_value: Decimal
     ic_quality: ICQuality
     n_observations: int
@@ -193,6 +200,7 @@ class ICResult:
 @dataclass
 class BootstrapCI:
     """Bootstrap confidence interval result."""
+
     point_estimate: Decimal
     ci_90_lower: Decimal
     ci_90_upper: Decimal
@@ -208,6 +216,7 @@ class BootstrapCI:
 @dataclass
 class RollingICResult:
     """Rolling IC result for a specific window."""
+
     window_end_date: str
     ic_value: Decimal
     n_observations: int
@@ -218,6 +227,7 @@ class RollingICResult:
 @dataclass
 class StratifiedIC:
     """IC stratified by category."""
+
     category: str
     ic_value: Decimal
     n_observations: int
@@ -227,6 +237,7 @@ class StratifiedIC:
 @dataclass
 class ICReport:
     """Comprehensive IC report for a screening period."""
+
     as_of_date: str
     horizon: str
     overall_ic: ICResult
@@ -242,6 +253,7 @@ class ICReport:
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def _decimal(x: Any) -> Decimal:
     """Convert to Decimal safely."""
@@ -297,40 +309,53 @@ def _classify_market_cap(market_cap_mm: Decimal) -> MarketCapBucket:
 # TRADING CALENDAR
 # =============================================================================
 
+
 def next_trading_day(d: DateLike) -> str:
-    """Get next trading day (skip weekends)."""
-    dt = _parse_date(d) + timedelta(days=1)
-    while dt.weekday() >= 5:
-        dt = dt + timedelta(days=1)
-    return _format_date(dt)
+    """Get next trading day (holiday-aware)."""
+    try:
+        from common.market_calendar import next_trading_day as _ntd
+
+        return _format_date(_ntd(_parse_date(d)))
+    except ImportError:
+        dt = _parse_date(d) + timedelta(days=1)
+        while dt.weekday() >= 5:
+            dt = dt + timedelta(days=1)
+        return _format_date(dt)
 
 
 def add_trading_days(d: DateLike, trading_days: int) -> str:
-    """Add N trading days to a date."""
-    dt = _parse_date(d)
-    days_added = 0
-    while days_added < trading_days:
-        dt = dt + timedelta(days=1)
-        if dt.weekday() < 5:
-            days_added += 1
-    return _format_date(dt)
+    """Add N trading days to a date (holiday-aware)."""
+    try:
+        from common.market_calendar import add_trading_days as _atd
+
+        return _format_date(_atd(_parse_date(d), trading_days))
+    except ImportError:
+        dt = _parse_date(d)
+        days_added = 0
+        while days_added < trading_days:
+            dt = dt + timedelta(days=1)
+            if dt.weekday() < 5:
+                days_added += 1
+        return _format_date(dt)
 
 
 def subtract_trading_days(d: DateLike, trading_days: int) -> str:
-    """Subtract N trading days from a date."""
-    dt = _parse_date(d)
-    days_subtracted = 0
-    while days_subtracted < trading_days:
-        dt = dt - timedelta(days=1)
-        if dt.weekday() < 5:
-            days_subtracted += 1
-    return _format_date(dt)
+    """Subtract N trading days from a date (holiday-aware)."""
+    try:
+        from common.market_calendar import add_trading_days as _atd
+
+        return _format_date(_atd(_parse_date(d), -trading_days))
+    except ImportError:
+        dt = _parse_date(d)
+        days_subtracted = 0
+        while days_subtracted < trading_days:
+            dt = dt - timedelta(days=1)
+            if dt.weekday() < 5:
+                days_subtracted += 1
+        return _format_date(dt)
 
 
-def compute_forward_windows(
-    as_of_date: DateLike,
-    horizons: Optional[List[str]] = None
-) -> Dict[str, Dict[str, Any]]:
+def compute_forward_windows(as_of_date: DateLike, horizons: Optional[List[str]] = None) -> Dict[str, Dict[str, Any]]:
     """
     Compute forward return measurement windows for each horizon.
 
@@ -359,6 +384,7 @@ def compute_forward_windows(
 # =============================================================================
 # SPEARMAN RANK CORRELATION
 # =============================================================================
+
 
 def _compute_ranks(values: List[Decimal]) -> List[float]:
     """
@@ -391,11 +417,7 @@ def _compute_ranks(values: List[Decimal]) -> List[float]:
     return ranks
 
 
-def compute_kendall_tau(
-    rankings: List[int],
-    forward_returns: List[Decimal],
-    negate: bool = True
-) -> Optional[Decimal]:
+def compute_kendall_tau(rankings: List[int], forward_returns: List[Decimal], negate: bool = True) -> Optional[Decimal]:
     """
     Calculate Kendall tau-b rank correlation between rankings and forward returns.
 
@@ -450,11 +472,7 @@ def compute_kendall_tau(
     return _quantize(Decimal(str(tau)))
 
 
-def compute_spearman_ic(
-    rankings: List[int],
-    forward_returns: List[Decimal],
-    negate: bool = True
-) -> Optional[Decimal]:
+def compute_spearman_ic(rankings: List[int], forward_returns: List[Decimal], negate: bool = True) -> Optional[Decimal]:
     """
     Calculate Spearman rank correlation between rankings and forward returns.
 
@@ -485,8 +503,7 @@ def compute_spearman_ic(
     mean_r = mean(rank_ranks)
     mean_ret = mean(return_ranks)
 
-    numerator = sum((r - mean_r) * (ret - mean_ret)
-                    for r, ret in zip(rank_ranks, return_ranks))
+    numerator = sum((r - mean_r) * (ret - mean_ret) for r, ret in zip(rank_ranks, return_ranks))
 
     denom_r = sum((r - mean_r) ** 2 for r in rank_ranks) ** 0.5
     denom_ret = sum((ret - mean_ret) ** 2 for ret in return_ranks) ** 0.5
@@ -504,9 +521,7 @@ def compute_spearman_ic(
 
 
 def calculate_ic(
-    rankings: Dict[str, int],
-    forward_returns: Dict[str, float],
-    method: str = "spearman"
+    rankings: Dict[str, int], forward_returns: Dict[str, float], method: str = "spearman"
 ) -> Optional[Decimal]:
     """
     Calculate IC from ranking and return dictionaries.
@@ -579,10 +594,7 @@ def compute_quintile_spread(
         monotonic: bool (Q1 >= Q2 >= ... >= Q5)
         n_per_quintile: int
     """
-    common = sorted(
-        [t for t in rankings if t in forward_returns],
-        key=lambda t: rankings[t]
-    )
+    common = sorted([t for t in rankings if t in forward_returns], key=lambda t: rankings[t])
     n = len(common)
     if n < 20:
         return None
@@ -636,6 +648,7 @@ def compute_quintile_spread(
 # =============================================================================
 # FORWARD RETURN CALCULATION ENGINE
 # =============================================================================
+
 
 class ForwardReturnEngine:
     """
@@ -696,21 +709,13 @@ class ForwardReturnEngine:
             # Get benchmark return for this horizon
             benchmark_return = None
             if include_benchmark_adjustment:
-                bench_ret = self.return_provider(
-                    self.benchmark_ticker,
-                    window["start"],
-                    window["end"]
-                )
+                bench_ret = self.return_provider(self.benchmark_ticker, window["start"], window["end"])
                 if bench_ret is not None:
                     benchmark_return = _decimal(bench_ret)
 
             # Calculate return for each ticker
             for ticker in tickers:
-                raw_ret = self.return_provider(
-                    ticker,
-                    window["start"],
-                    window["end"]
-                )
+                raw_ret = self.return_provider(ticker, window["start"], window["end"])
 
                 if raw_ret is None:
                     results[horizon][ticker] = ForwardReturn(
@@ -769,6 +774,7 @@ class ForwardReturnEngine:
 # IC CALCULATION ENGINE
 # =============================================================================
 
+
 class ICCalculationEngine:
     """
     Engine for IC calculation with statistical significance testing.
@@ -826,9 +832,8 @@ class ICCalculationEngine:
                 is_sig_99 = True
             elif ic_squared < Decimal("1"):
                 t_stat = _quantize(
-                    ic * Decimal(str(math.sqrt(n - 2))) /
-                    Decimal(str(math.sqrt(float(Decimal("1") - ic_squared)))),
-                    DECIMAL_4DP
+                    ic * Decimal(str(math.sqrt(n - 2))) / Decimal(str(math.sqrt(float(Decimal("1") - ic_squared)))),
+                    DECIMAL_4DP,
                 )
 
                 # Approximate p-value using normal distribution for large n
@@ -863,6 +868,7 @@ def _normal_cdf(x: float) -> float:
 # BOOTSTRAP CONFIDENCE INTERVALS
 # =============================================================================
 
+
 class BootstrapEngine:
     """
     Bootstrap resampling for IC confidence intervals.
@@ -885,14 +891,10 @@ class BootstrapEngine:
         hash_input = f"{seed}:{iteration}".encode()
         hash_bytes = hashlib.sha256(hash_input).digest()
         # Convert first 8 bytes to float in [0, 1)
-        int_val = int.from_bytes(hash_bytes[:8], byteorder='big')
+        int_val = int.from_bytes(hash_bytes[:8], byteorder="big")
         return int_val / (2**64)
 
-    def _bootstrap_sample_indices(
-        self,
-        n: int,
-        iteration: int
-    ) -> List[int]:
+    def _bootstrap_sample_indices(self, n: int, iteration: int) -> List[int]:
         """
         Generate bootstrap sample indices deterministically.
         """
@@ -986,6 +988,7 @@ class BootstrapEngine:
 # IC STABILITY ANALYSIS
 # =============================================================================
 
+
 class ICStabilityAnalyzer:
     """
     Analyze IC stability over time and across market conditions.
@@ -1018,7 +1021,7 @@ class ICStabilityAnalyzer:
 
         for i in range(window_weeks - 1, len(weekly_results)):
             # Aggregate data for this window
-            window_data = weekly_results[i - window_weeks + 1:i + 1]
+            window_data = weekly_results[i - window_weeks + 1 : i + 1]
 
             # Combine rankings and returns
             all_rankings = {}
@@ -1035,13 +1038,15 @@ class ICStabilityAnalyzer:
             ic = calculate_ic(all_rankings, all_returns)
 
             if ic is not None:
-                rolling_results.append(RollingICResult(
-                    window_end_date=week.get("as_of_date", ""),
-                    ic_value=ic,
-                    n_observations=len(all_rankings),
-                    regime=week.get("regime"),
-                    ic_quality=_classify_ic(ic),
-                ))
+                rolling_results.append(
+                    RollingICResult(
+                        window_end_date=week.get("as_of_date", ""),
+                        ic_value=ic,
+                        n_observations=len(all_rankings),
+                        regime=week.get("regime"),
+                        ic_quality=_classify_ic(ic),
+                    )
+                )
 
         return rolling_results
 
@@ -1080,9 +1085,7 @@ class ICStabilityAnalyzer:
         results = {}
         for regime, (rankings, returns) in regime_data.items():
             if rankings:
-                results[regime] = self.ic_engine.calculate_ic_with_significance(
-                    rankings, returns
-                )
+                results[regime] = self.ic_engine.calculate_ic_with_significance(rankings, returns)
             else:
                 results[regime] = ICResult(
                     ic_value=Decimal("0"),
@@ -1112,9 +1115,7 @@ class ICStabilityAnalyzer:
             Dict of sector -> ICResult
         """
         sectors = ["ONCOLOGY", "RARE_DISEASE", "CNS", "IMMUNOLOGY", "INFECTIOUS", "OTHER"]
-        sector_data: Dict[str, Tuple[Dict[str, int], Dict[str, float]]] = {
-            s: ({}, {}) for s in sectors
-        }
+        sector_data: Dict[str, Tuple[Dict[str, int], Dict[str, float]]] = {s: ({}, {}) for s in sectors}
 
         for week_idx, week in enumerate(weekly_results):
             for ticker, rank in week.get("rankings", {}).items():
@@ -1131,9 +1132,7 @@ class ICStabilityAnalyzer:
         results = {}
         for sector, (rankings, returns) in sector_data.items():
             if rankings:
-                results[sector] = self.ic_engine.calculate_ic_with_significance(
-                    rankings, returns
-                )
+                results[sector] = self.ic_engine.calculate_ic_with_significance(rankings, returns)
 
         return results
 
@@ -1153,9 +1152,7 @@ class ICStabilityAnalyzer:
             Dict of market_cap_bucket -> ICResult
         """
         buckets = ["MICRO", "SMALL", "MID", "LARGE"]
-        bucket_data: Dict[str, Tuple[Dict[str, int], Dict[str, float]]] = {
-            b: ({}, {}) for b in buckets
-        }
+        bucket_data: Dict[str, Tuple[Dict[str, int], Dict[str, float]]] = {b: ({}, {}) for b in buckets}
 
         for week_idx, week in enumerate(weekly_results):
             for ticker, rank in week.get("rankings", {}).items():
@@ -1173,9 +1170,7 @@ class ICStabilityAnalyzer:
         results = {}
         for bucket, (rankings, returns) in bucket_data.items():
             if rankings:
-                results[bucket] = self.ic_engine.calculate_ic_with_significance(
-                    rankings, returns
-                )
+                results[bucket] = self.ic_engine.calculate_ic_with_significance(rankings, returns)
 
         return results
 
@@ -1183,6 +1178,7 @@ class ICStabilityAnalyzer:
 # =============================================================================
 # IC TREND ANALYSIS
 # =============================================================================
+
 
 def analyze_ic_trend(rolling_ics: List[RollingICResult]) -> Dict[str, Any]:
     """
@@ -1255,6 +1251,7 @@ def analyze_ic_trend(rolling_ics: List[RollingICResult]) -> Dict[str, Any]:
 # OUT-OF-SAMPLE VALIDATION
 # =============================================================================
 
+
 class OutOfSampleValidator:
     """
     Out-of-sample validation framework.
@@ -1289,14 +1286,8 @@ class OutOfSampleValidator:
             Dict with train IC, test IC, and consistency metrics
         """
         # Split data into train and test
-        train_data = [
-            w for w in weekly_results
-            if train_start <= w.get("as_of_date", "") <= train_end
-        ]
-        test_data = [
-            w for w in weekly_results
-            if test_start <= w.get("as_of_date", "") <= test_end
-        ]
+        train_data = [w for w in weekly_results if train_start <= w.get("as_of_date", "") <= train_end]
+        test_data = [w for w in weekly_results if test_start <= w.get("as_of_date", "") <= test_end]
 
         # Aggregate train period
         train_rankings = {}
@@ -1319,12 +1310,8 @@ class OutOfSampleValidator:
                     test_returns[key] = week["forward_returns"][ticker]
 
         # Calculate IC for each period
-        train_ic = self.ic_engine.calculate_ic_with_significance(
-            train_rankings, train_returns
-        )
-        test_ic = self.ic_engine.calculate_ic_with_significance(
-            test_rankings, test_returns
-        )
+        train_ic = self.ic_engine.calculate_ic_with_significance(train_rankings, train_returns)
+        test_ic = self.ic_engine.calculate_ic_with_significance(test_rankings, test_returns)
 
         # Calculate consistency metrics
         ic_decay = None
@@ -1364,6 +1351,7 @@ class OutOfSampleValidator:
 # =============================================================================
 # WEEKLY IC REPORT GENERATOR
 # =============================================================================
+
 
 class WeeklyICReportGenerator:
     """
@@ -1412,17 +1400,11 @@ class WeeklyICReportGenerator:
         as_of_str = _format_date(_parse_date(as_of_date))
 
         # Calculate forward returns
-        returns_by_horizon = self.forward_return_engine.calculate_forward_returns(
-            tickers, as_of_date, [horizon]
-        )
+        returns_by_horizon = self.forward_return_engine.calculate_forward_returns(tickers, as_of_date, [horizon])
 
         # Extract returns for target horizon
         horizon_returns = returns_by_horizon.get(horizon, {})
-        forward_returns = {
-            t: float(fr.raw_return)
-            for t, fr in horizon_returns.items()
-            if fr.raw_return is not None
-        }
+        forward_returns = {t: float(fr.raw_return) for t, fr in horizon_returns.items() if fr.raw_return is not None}
 
         # Calculate overall IC with significance
         overall_ic = self.ic_engine.calculate_ic_with_significance(rankings, forward_returns)
@@ -1430,9 +1412,7 @@ class WeeklyICReportGenerator:
         # Bootstrap confidence intervals
         bootstrap_ci = None
         if len(forward_returns) >= MIN_OBS_BOOTSTRAP:
-            bootstrap_ci = self.bootstrap_engine.calculate_bootstrap_ci(
-                rankings, forward_returns
-            )
+            bootstrap_ci = self.bootstrap_engine.calculate_bootstrap_ci(rankings, forward_returns)
 
         # Rolling IC analysis (if historical data available)
         rolling_ic = []
@@ -1459,9 +1439,7 @@ class WeeklyICReportGenerator:
                 "forward_returns": forward_returns,
                 "regime": current_regime,
             }
-            regime_ic = self.stability_analyzer.calculate_regime_conditional_ic(
-                historical_results + [current_week]
-            )
+            regime_ic = self.stability_analyzer.calculate_regime_conditional_ic(historical_results + [current_week])
 
         # Sector-conditional IC
         sector_ic = {}
@@ -1504,14 +1482,18 @@ class WeeklyICReportGenerator:
             "horizon_display": HORIZON_DISPLAY_NAMES.get(horizon, horizon),
             "overall_ic": overall_ic.to_dict(),
             "ic_quality_assessment": _get_ic_quality_assessment(overall_ic),
-            "bootstrap_ci": {
-                "point_estimate": str(bootstrap_ci.point_estimate),
-                "ci_90": [str(bootstrap_ci.ci_90_lower), str(bootstrap_ci.ci_90_upper)],
-                "ci_95": [str(bootstrap_ci.ci_95_lower), str(bootstrap_ci.ci_95_upper)],
-                "ci_99": [str(bootstrap_ci.ci_99_lower), str(bootstrap_ci.ci_99_upper)],
-                "bootstrap_std": str(bootstrap_ci.bootstrap_std),
-                "n_iterations": bootstrap_ci.n_iterations,
-            } if bootstrap_ci else None,
+            "bootstrap_ci": (
+                {
+                    "point_estimate": str(bootstrap_ci.point_estimate),
+                    "ci_90": [str(bootstrap_ci.ci_90_lower), str(bootstrap_ci.ci_90_upper)],
+                    "ci_95": [str(bootstrap_ci.ci_95_lower), str(bootstrap_ci.ci_95_upper)],
+                    "ci_99": [str(bootstrap_ci.ci_99_lower), str(bootstrap_ci.ci_99_upper)],
+                    "bootstrap_std": str(bootstrap_ci.bootstrap_std),
+                    "n_iterations": bootstrap_ci.n_iterations,
+                }
+                if bootstrap_ci
+                else None
+            ),
             "rolling_ic_12w": [
                 {
                     "window_end_date": r.window_end_date,
@@ -1522,19 +1504,14 @@ class WeeklyICReportGenerator:
                 }
                 for r in rolling_ic
             ],
-            "trend_analysis": {
-                k: str(v) if isinstance(v, Decimal) else v
-                for k, v in trend_analysis.items()
-            } if trend_analysis else {},
-            "regime_conditional_ic": {
-                k: v.to_dict() for k, v in regime_ic.items()
-            },
-            "sector_ic": {
-                k: v.to_dict() for k, v in sector_ic.items()
-            },
-            "market_cap_ic": {
-                k: v.to_dict() for k, v in market_cap_ic.items()
-            },
+            "trend_analysis": (
+                {k: str(v) if isinstance(v, Decimal) else v for k, v in trend_analysis.items()}
+                if trend_analysis
+                else {}
+            ),
+            "regime_conditional_ic": {k: v.to_dict() for k, v in regime_ic.items()},
+            "sector_ic": {k: v.to_dict() for k, v in sector_ic.items()},
+            "market_cap_ic": {k: v.to_dict() for k, v in market_cap_ic.items()},
             "coverage_stats": coverage_stats,
             "current_regime": current_regime,
             "provenance": {
@@ -1551,7 +1528,6 @@ class WeeklyICReportGenerator:
 def _get_ic_quality_assessment(ic_result: ICResult) -> Dict[str, Any]:
     """Generate human-readable IC quality assessment."""
     quality = ic_result.ic_quality
-    ic_val = float(ic_result.ic_value)
 
     if quality == ICQuality.EXCELLENT:
         assessment = "Excellent signal - institutional-grade, strong predictive power"
@@ -1582,6 +1558,7 @@ def _get_ic_quality_assessment(ic_result: ICResult) -> Dict[str, Any]:
 # =============================================================================
 # TIME-SERIES DATABASE (RANKING/RETURN STORAGE)
 # =============================================================================
+
 
 class ICTimeSeriesDatabase:
     """
@@ -1623,9 +1600,9 @@ class ICTimeSeriesDatabase:
         # Ensure directory exists
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
-        with open(filepath, 'w', newline='') as f:
+        with open(filepath, "w", newline="") as f:
             writer = csv.writer(f)
-            writer.writerow(['ticker', 'rank', 'score'])
+            writer.writerow(["ticker", "rank", "score"])
 
             for ticker in sorted(rankings.keys()):
                 score = scores.get(ticker, "") if scores else ""
@@ -1658,9 +1635,9 @@ class ICTimeSeriesDatabase:
         for horizon_returns in returns.values():
             all_tickers.update(horizon_returns.keys())
 
-        with open(filepath, 'w', newline='') as f:
+        with open(filepath, "w", newline="") as f:
             writer = csv.writer(f)
-            header = ['ticker'] + [f'return_{h}' for h in horizons]
+            header = ["ticker"] + [f"return_{h}" for h in horizons]
             writer.writerow(header)
 
             for ticker in sorted(all_tickers):
@@ -1685,17 +1662,14 @@ class ICTimeSeriesDatabase:
             return {}
 
         rankings = {}
-        with open(filepath, 'r', newline='') as f:
+        with open(filepath, "r", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                rankings[row['ticker']] = int(row['rank'])
+                rankings[row["ticker"]] = int(row["rank"])
 
         return rankings
 
-    def load_returns(
-        self,
-        as_of_date: DateLike
-    ) -> Dict[str, Dict[str, Optional[Decimal]]]:
+    def load_returns(self, as_of_date: DateLike) -> Dict[str, Dict[str, Optional[Decimal]]]:
         """Load returns from CSV file."""
         import csv
         from pathlib import Path
@@ -1709,13 +1683,13 @@ class ICTimeSeriesDatabase:
 
         returns: Dict[str, Dict[str, Optional[Decimal]]] = {}
 
-        with open(filepath, 'r', newline='') as f:
+        with open(filepath, "r", newline="") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                ticker = row['ticker']
+                ticker = row["ticker"]
                 for col in row:
-                    if col.startswith('return_'):
-                        horizon = col.replace('return_', '')
+                    if col.startswith("return_"):
+                        horizon = col.replace("return_", "")
                         if horizon not in returns:
                             returns[horizon] = {}
                         val = row[col]
@@ -1750,6 +1724,7 @@ class ICTimeSeriesDatabase:
 # MAIN IC MEASUREMENT SYSTEM
 # =============================================================================
 
+
 class ICMeasurementSystem:
     """
     Main orchestrator for IC measurement and tracking.
@@ -1776,9 +1751,7 @@ class ICMeasurementSystem:
         self.bootstrap_engine = BootstrapEngine(bootstrap_seed)
         self.stability_analyzer = ICStabilityAnalyzer(self.ic_engine)
         self.oos_validator = OutOfSampleValidator(self.ic_engine)
-        self.report_generator = WeeklyICReportGenerator(
-            return_provider, benchmark_ticker, bootstrap_seed
-        )
+        self.report_generator = WeeklyICReportGenerator(return_provider, benchmark_ticker, bootstrap_seed)
         self.database = ICTimeSeriesDatabase(data_dir)
 
     def process_weekly_screening(
@@ -1818,16 +1791,12 @@ class ICMeasurementSystem:
         self.database.store_ranking(as_of_date, rankings, scores)
 
         # Calculate forward returns for all horizons
-        all_returns = self.forward_return_engine.calculate_forward_returns(
-            tickers, as_of_date, horizons
-        )
+        all_returns = self.forward_return_engine.calculate_forward_returns(tickers, as_of_date, horizons)
 
         # Store returns
         returns_for_storage: Dict[str, Dict[str, Optional[Decimal]]] = {}
         for horizon in horizons:
-            returns_for_storage[horizon] = {
-                t: fr.raw_return for t, fr in all_returns.get(horizon, {}).items()
-            }
+            returns_for_storage[horizon] = {t: fr.raw_return for t, fr in all_returns.get(horizon, {}).items()}
         self.database.store_returns(as_of_date, returns_for_storage)
 
         # Load historical data for rolling analysis
@@ -1839,46 +1808,44 @@ class ICMeasurementSystem:
             hist_rankings = self.database.load_ranking(hist_date)
             hist_returns = self.database.load_returns(hist_date)
             if hist_rankings and hist_returns:
-                historical_results.append({
-                    "as_of_date": hist_date,
-                    "rankings": hist_rankings,
-                    "forward_returns": {
-                        t: float(r)
-                        for t, r in hist_returns.get("20d", {}).items()
-                        if r is not None
-                    },
-                })
+                historical_results.append(
+                    {
+                        "as_of_date": hist_date,
+                        "rankings": hist_rankings,
+                        "forward_returns": {
+                            t: float(r) for t, r in hist_returns.get("20d", {}).items() if r is not None
+                        },
+                    }
+                )
 
         # Generate IC reports for each horizon
         horizon_reports = {}
         for horizon in horizons:
             # Extract returns for this horizon
             horizon_returns = {
-                t: float(fr.raw_return)
-                for t, fr in all_returns.get(horizon, {}).items()
-                if fr.raw_return is not None
+                t: float(fr.raw_return) for t, fr in all_returns.get(horizon, {}).items() if fr.raw_return is not None
             }
 
             # Calculate IC with significance
-            ic_result = self.ic_engine.calculate_ic_with_significance(
-                rankings, horizon_returns
-            )
+            ic_result = self.ic_engine.calculate_ic_with_significance(rankings, horizon_returns)
 
             # Bootstrap CI
             bootstrap_ci = None
             if len(horizon_returns) >= MIN_OBS_BOOTSTRAP:
-                bootstrap_ci = self.bootstrap_engine.calculate_bootstrap_ci(
-                    rankings, horizon_returns
-                )
+                bootstrap_ci = self.bootstrap_engine.calculate_bootstrap_ci(rankings, horizon_returns)
 
             horizon_reports[horizon] = {
                 "ic": ic_result.to_dict(),
                 "quality_assessment": _get_ic_quality_assessment(ic_result),
-                "bootstrap_ci": {
-                    "point_estimate": str(bootstrap_ci.point_estimate),
-                    "ci_95": [str(bootstrap_ci.ci_95_lower), str(bootstrap_ci.ci_95_upper)],
-                    "bootstrap_std": str(bootstrap_ci.bootstrap_std),
-                } if bootstrap_ci else None,
+                "bootstrap_ci": (
+                    {
+                        "point_estimate": str(bootstrap_ci.point_estimate),
+                        "ci_95": [str(bootstrap_ci.ci_95_lower), str(bootstrap_ci.ci_95_upper)],
+                        "bootstrap_std": str(bootstrap_ci.bootstrap_std),
+                    }
+                    if bootstrap_ci
+                    else None
+                ),
                 "n_with_returns": len(horizon_returns),
             }
 
@@ -1890,9 +1857,7 @@ class ICMeasurementSystem:
                 "as_of_date": as_of_str,
                 "rankings": rankings,
                 "forward_returns": {
-                    t: float(r)
-                    for t, r in returns_for_storage.get("20d", {}).items()
-                    if r is not None
+                    t: float(r) for t, r in returns_for_storage.get("20d", {}).items() if r is not None
                 },
                 "regime": current_regime,
             }
@@ -1901,11 +1866,7 @@ class ICMeasurementSystem:
             trend_analysis = analyze_ic_trend(rolling_ic)
 
         # Stratified analysis (using 20d horizon)
-        primary_returns = {
-            t: float(r)
-            for t, r in returns_for_storage.get("20d", {}).items()
-            if r is not None
-        }
+        primary_returns = {t: float(r) for t, r in returns_for_storage.get("20d", {}).items() if r is not None}
 
         regime_ic = {}
         sector_ic = {}
@@ -1921,8 +1882,7 @@ class ICMeasurementSystem:
             all_weeks = historical_results + [current_week]
 
             regime_ic = {
-                k: v.to_dict()
-                for k, v in self.stability_analyzer.calculate_regime_conditional_ic(all_weeks).items()
+                k: v.to_dict() for k, v in self.stability_analyzer.calculate_regime_conditional_ic(all_weeks).items()
             }
 
             if ticker_sectors:
@@ -1936,9 +1896,7 @@ class ICMeasurementSystem:
             if ticker_market_caps:
                 market_cap_ic = {
                     k: v.to_dict()
-                    for k, v in self.stability_analyzer.calculate_market_cap_ic(
-                        all_weeks, ticker_market_caps
-                    ).items()
+                    for k, v in self.stability_analyzer.calculate_market_cap_ic(all_weeks, ticker_market_caps).items()
                 }
 
         # Compile complete report
@@ -1965,10 +1923,11 @@ class ICMeasurementSystem:
                 }
                 for r in rolling_ic
             ],
-            "trend_analysis": {
-                k: str(v) if isinstance(v, Decimal) else v
-                for k, v in trend_analysis.items()
-            } if trend_analysis else {},
+            "trend_analysis": (
+                {k: str(v) if isinstance(v, Decimal) else v for k, v in trend_analysis.items()}
+                if trend_analysis
+                else {}
+            ),
             "stratified_analysis": {
                 "by_regime": regime_ic,
                 "by_sector": sector_ic,
@@ -2015,15 +1974,13 @@ class ICMeasurementSystem:
             returns = self.database.load_returns(date_str)
 
             if rankings and returns:
-                weekly_results.append({
-                    "as_of_date": date_str,
-                    "rankings": rankings,
-                    "forward_returns": {
-                        t: float(r)
-                        for t, r in returns.get("20d", {}).items()
-                        if r is not None
-                    },
-                })
+                weekly_results.append(
+                    {
+                        "as_of_date": date_str,
+                        "rankings": rankings,
+                        "forward_returns": {t: float(r) for t, r in returns.get("20d", {}).items() if r is not None},
+                    }
+                )
 
         return self.oos_validator.validate_train_test_split(
             weekly_results, train_start, train_end, test_start, test_end
@@ -2042,21 +1999,45 @@ if __name__ == "__main__":
 
     # Example: Calculate IC from sample data
     sample_rankings = {
-        "ACME": 1, "BETA": 2, "GAMMA": 3, "DELTA": 4, "EPSILON": 5,
-        "ZETA": 6, "ETA": 7, "THETA": 8, "IOTA": 9, "KAPPA": 10,
-        "LAMBDA": 11, "MU": 12, "NU": 13, "XI": 14, "OMICRON": 15,
+        "ACME": 1,
+        "BETA": 2,
+        "GAMMA": 3,
+        "DELTA": 4,
+        "EPSILON": 5,
+        "ZETA": 6,
+        "ETA": 7,
+        "THETA": 8,
+        "IOTA": 9,
+        "KAPPA": 10,
+        "LAMBDA": 11,
+        "MU": 12,
+        "NU": 13,
+        "XI": 14,
+        "OMICRON": 15,
     }
 
     # Simulated returns (lower rank = higher return = good signal)
     sample_returns = {
-        "ACME": 0.15, "BETA": 0.12, "GAMMA": 0.10, "DELTA": 0.08, "EPSILON": 0.06,
-        "ZETA": 0.04, "ETA": 0.02, "THETA": 0.00, "IOTA": -0.02, "KAPPA": -0.04,
-        "LAMBDA": -0.06, "MU": -0.08, "NU": -0.10, "XI": -0.12, "OMICRON": -0.14,
+        "ACME": 0.15,
+        "BETA": 0.12,
+        "GAMMA": 0.10,
+        "DELTA": 0.08,
+        "EPSILON": 0.06,
+        "ZETA": 0.04,
+        "ETA": 0.02,
+        "THETA": 0.00,
+        "IOTA": -0.02,
+        "KAPPA": -0.04,
+        "LAMBDA": -0.06,
+        "MU": -0.08,
+        "NU": -0.10,
+        "XI": -0.12,
+        "OMICRON": -0.14,
     }
 
     print("Sample Data:")
     print(f"  Rankings: {len(sample_rankings)} securities")
-    print(f"  Returns: Simulated perfect signal (rank 1 = highest return)")
+    print("  Returns: Simulated perfect signal (rank 1 = highest return)")
     print()
 
     # Calculate IC

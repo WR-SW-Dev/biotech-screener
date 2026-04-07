@@ -12,9 +12,10 @@ from __future__ import annotations
 import json
 import logging
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
-from datetime import date, datetime
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -22,20 +23,46 @@ from typing import Any, Dict, List, Optional
 CTGOV_API_BASE = "https://clinicaltrials.gov/api/v2"
 CTGOV_RATE_LIMIT = 0.2  # 5 requests/second max
 
-# Cache directory
-CACHE_DIR = Path("/home/claude/biotech_screener/data/cache/ctgov")
+# Cache directory — resolved relative to repo root
+_REPO_ROOT = Path(__file__).resolve().parent.parent
+CACHE_DIR = _REPO_ROOT / "data" / "cache" / "ctgov"
+
+
+_ctgov_breaker = None
+
+
+def _get_ctgov_breaker():
+    """Lazy-init circuit breaker for CTgov API."""
+    global _ctgov_breaker
+    if _ctgov_breaker is None:
+        try:
+            from common.robustness_extended import StatefulCircuitBreaker, StatefulCircuitBreakerConfig
+
+            _ctgov_breaker = StatefulCircuitBreaker(
+                "ctgov_api",
+                config=StatefulCircuitBreakerConfig(
+                    failure_threshold=5,
+                    success_threshold=2,
+                    timeout_seconds=120.0,
+                    window_size_seconds=300.0,
+                ),
+            )
+        except ImportError:
+            _ctgov_breaker = None
+    return _ctgov_breaker
 
 
 class ClinicalTrialsClient:
     """
     Client for ClinicalTrials.gov v2 API.
-    Handles rate limiting and caching.
+    Handles rate limiting, caching, and circuit breaking.
     """
 
     def __init__(self, cache_dir: Path = CACHE_DIR):
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self._last_request = 0.0
+        self._breaker = _get_ctgov_breaker()
 
     def _rate_limit(self) -> None:
         """Enforce rate limiting."""
@@ -45,7 +72,15 @@ class ClinicalTrialsClient:
         self._last_request = time.time()
 
     def _make_request(self, endpoint: str, params: Dict[str, str]) -> Dict[str, Any]:
-        """Make API request with caching."""
+        """Make API request with caching and circuit breaker protection."""
+        # Circuit breaker: fail fast if API is down
+        if self._breaker and not self._breaker.allow_request():
+            logging.getLogger(__name__).warning(
+                "CTgov circuit breaker OPEN — skipping request for %s",
+                endpoint,
+            )
+            return {}
+
         self._rate_limit()
 
         url = f"{CTGOV_API_BASE}/{endpoint}?{urllib.parse.urlencode(params)}"
@@ -58,9 +93,21 @@ class ClinicalTrialsClient:
                 # Sanity check: if we expected studies but got none, log it
                 if not data:
                     logging.getLogger(__name__).warning("CTgov API returned empty response for %s", endpoint)
+                if self._breaker:
+                    self._breaker.record_success()
                 return data
+        except urllib.error.URLError as e:
+            logging.getLogger(__name__).warning("CTgov network error for %s: %s", endpoint, e)
+            if self._breaker:
+                self._breaker.record_failure(e)
+            return {}
+        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+            logging.getLogger(__name__).error("CTgov parse error for %s: %s", endpoint, e)
+            return {}
         except Exception as e:
-            logging.getLogger(__name__).warning("CTgov API request failed for %s: %s", endpoint, e)
+            logging.getLogger(__name__).error("CTgov unexpected error for %s: %s", endpoint, e)
+            if self._breaker:
+                self._breaker.record_failure(e)
             return {}
 
     def search_by_sponsor(
@@ -259,11 +306,13 @@ def fetch_trials_for_tickers(
     Returns:
         List of trial records with ticker field added
     """
+    _log = logging.getLogger(__name__)
     client = ClinicalTrialsClient()
     all_trials = []
+    failed_tickers = []
 
     for ticker, company in ticker_to_company.items():
-        print(f"  Fetching trials for {ticker} ({company})...")
+        _log.info("Fetching trials for %s (%s)...", ticker, company)
 
         try:
             trials = client.search_by_sponsor(company)
@@ -273,10 +322,19 @@ def fetch_trials_for_tickers(
                 trial["ticker"] = ticker
 
             all_trials.extend(trials)
-            print(f"    Found {len(trials)} trials")
+            _log.info("  Found %d trials for %s", len(trials), ticker)
 
         except Exception as e:
-            print(f"    Error: {e}")
+            _log.warning("Failed to fetch trials for %s (%s): %s", ticker, company, e)
+            failed_tickers.append(ticker)
+
+    if failed_tickers:
+        _log.warning(
+            "CTgov fetch: %d/%d tickers failed: %s",
+            len(failed_tickers),
+            len(ticker_to_company),
+            failed_tickers,
+        )
 
     return all_trials
 

@@ -1402,355 +1402,21 @@ def write_json_output(filepath: Path, data: Dict[str, Any], secure: bool = True)
 
 
 # =============================================================================
-# VALIDATION SNAPSHOT (for forward-looking backtest)
+# COLUMN DEFINITIONS & CONSTANTS — delegated to run_screen_columns.py
 # =============================================================================
 
-# Columns saved in the validation snapshot CSV.
-# These are the minimum fields needed for forward IC / decile-lift analysis.
-SNAPSHOT_COLUMNS = (
-    [
-        # --- Identity ---
-        "ticker",
-        "company_name",
-        # --- What drives the ranking (read left-to-right) ---
-        "actionable_rank",
-        "target_weight_pct",
-        "tier_any",
-        "tier_any_reason",
-        "tier_dev",
-        "tier_reason",
-        "tier_commercial",
-        "alpha_cohort_pct",
-        "commercial_quality_pct",
-        "has_commercial_quality",
-        "clinical_optionality_pct_dev",
-        "has_clinical_optionality_dev",
-        "clinical_rank_pct_dev",
-        "catalyst_days",
-        "catalyst_in_window",
-        "catalyst_mode",
-        "catalyst_bucket",
-        "cat_priority",
-        "mom_state",
-        "risk_flags",
-        "size_band",
-        "size_reasons",
-        # --- Explanation fields ---
-        "top_3_drivers",
-        "catalyst_reason_detail",
-        # --- Engine / run metadata ---
-        "decision_engine_version",
-        "decision_engine_ruleset_id",
-        "eligible",
-        "ineligible_reasons",
-        # --- Red flag audit trail ---
-        "fundamental_red_flag",
-        "fundamental_red_flag_reasons",
-        "fundamental_red_flag_inputs",
-        # --- Diagnostics / supporting DE signals ---
-        "alpha_cohort_key",
-        "alpha_cohort_raw",
-        "commercial_quality",
-        "clinical_alpha_z",
-        "clinical_readout_days",
-        "clinical_coverage_flag",
-        "clinical_score_z",
-        "clinical_score_z_tier",
-        "sponsor_tier1_count",
-        "sponsor_overlap_count",
-        "sponsor_net_buying",
-        "coinvest_score_z",
-        "coinvest_tag",
-        "coinvest_conviction",
-        "coinvest_tier1_conviction",
-        "coinvest_max_position_pct",
-        "coinvest_filing_age_days",
-        "coinvest_recency_state",
-        "inst_delta_z",  # z of net_elite_holders_delta (cross-sectional, ddof=0)
-        "inst_delta_net",  # raw net_elite_holders_delta
-        "inst_delta_new",  # elite_new_count
-        "inst_delta_exit",  # elite_exit_count
-        "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
-        "has_coinvest_signal",  # True when sponsor_tier1_count is real data
-        "has_inst_delta",  # True when institutional delta is available
-        "has_catalyst_signal",  # True when catalyst_mode != "missing"
-        "catalyst_strength",
-        "catalyst_decay_w",
-        "runway_bucket",
-        "cost_bucket",
-        "est_cost_bps",
-        "cost_mult",
-        "cost_haircut_applied",
-        "dd_rel_margin_rescued",
-        "catalyst_tilt_mult",
-        "catalyst_tilt_applied",
-        "catalyst_type_tier",
-        "catalyst_type_mult",
-        "catalyst_type_tilt_applied",
-        "mom_state_tilt_mult",
-        "mom_state_tilt_applied",
-        "de_catalyst_days",
-        "de_catalyst_in_window",
-        "de_catalyst_mode",
-        "de_alpha_60d",
-        "de_alpha_60d_source",
-        "de_alpha_60d_missing_reason",
-        "de_tier1_count",
-        "de_beta_xbi_60d",
-        "de_beta_xbi_60d_source",
-        "de_beta_xbi_60d_missing_reason",
-        "de_drawdown",
-        "de_drawdown_missing_reason",
-        "de_rsi_14d",
-        "de_vol_60d",
-        "de_drawdown_xbi",
-        "de_drawdown_rel_xbi",
-        # --- Earnings calendar ---
-        "next_earnings_date",
-        # --- AACT execution score ---
-        "aact_execution_score",
-        # --- Context / provenance ---
-        "stage_bucket",
-        "market_cap_bucket",
-        "severity",
-        "archetype",
-        "industry_group",
-        "returns_source",
-        "catalyst_source",
-        "catalyst_event_type",
-        "is_hard_catalyst",
-        "catalyst_family",
-        "binary_quality_score",
-        "regulatory_quality",
-        "clinical_quality",
-        "has_adcom",
-        "single_asset_risk",
-        # --- Clinical 91-180 quality features ---
-        "clinical_days_precision",
-        "clinical_date_confidence",
-        "clinical_design_quality",
-        "clinical_program_depth",
-        "clinical_quality_composite",
-        # --- FDA AdCom voting-pattern pilot (passive, informational) ---
-        *ADCOM_VOTE_COLUMNS,
-        # --- Options-implied vol/skew diagnostics (passive, tastytrade) ---
-        *OPTIONS_DIAGNOSTIC_COLUMNS,
-        # --- Options quality composite (derived from diagnostics) ---
-        *OPTIONS_QUALITY_COLUMNS,
-        # --- Market-model disagreement (shadow diagnostic, not ranking) ---
-        "implied_event_move",
-        "pos_divergence",
-        "market_model_disagreement",
-        # --- IV crush stress test (from Massive chain analytics) ---
-        "iv_crush_breakeven_pct",
-        "crush_adjusted_implied_move",
-        # --- Market data pass-through for Event EV expectation model ---
-        "short_interest_pct",
-        "close_price",
-        "market_cap_mm",
-        "priced_move_pct",
-        # --- Straddle mispricing (from event_move_table + chain/IV) ---
-        "cheap_vol_score",
-        "vol_classification",
-        "straddle_price",
-        # --- Pre-event put/call ratio (from Massive day aggs, shadow) ---
-        "pre_event_put_call_ratio",
-        # --- Term structure validation flags (Agent 0 staleness / blind spot) ---
-        "ts_flag",
-        "ts_flag_type",
-        "ts_flag_reason",
-        # --- Secondary regulatory catalyst (independent of nearest) ---
-        "regulatory_days",
-        "regulatory_event_type",
-        "regulatory_confidence",
-        "has_regulatory_upcoming_180d",
-        "missing_components",
-        "missingness_penalty",
-        "confidence_overall",
-        # --- Source reliability (empirical slip-based) ---
-        "source_reliability_action",
-        "source_reliability_penalty",
-        # --- Underlying module scores (informational) ---
-        "momentum_score",
-        "catalyst_score",
-        "smart_money_score",
-        "valuation_score",
-        "clinical_score",
-        "financial_score",
-        # --- Clinical Calendar Alpha v2 (informational, sort/sizing off by default) ---
-        "clinical_score_v2",
-        "clinical_score_v2_z",
-        "lead_program_phase",
-        "lead_program_readout_days",
-        "program_count",
-        "program_diversification",
-        "readout_curve_score",
-        "readout_density_90",
-        "late_stage_readouts_180",
-        "execution_momentum",
-        "design_quality_score",
-        "endpoint_strength_score",
-        "therapeutic_area",
-        "competitive_intensity_z",
-        "crowding_level",
-        "sizing_multiplier_clinical",
-        # --- Morningstar research diagnostics (not in composite) ---
-        "ms_volatility_3yr",
-        "ms_volatility_5yr",
-        "ms_star_rating",
-        "ms_return_ytd",
-        "ms_return_annualized_3yr",
-        "ms_return_annualized_5yr",
-        # --- Surface signal fields (Spec 020, were computed but not persisted) ---
-        "atm_iv_change_5d",
-        "actual_implied_move_pctile",
-        "surface_move_extreme",
-        "iv_ramp_flag",
-        "post_event_drift_risk",
-        "rr_25d_trend_7d",
-        "rr_trend_flag",
-        "surface_signal_quality",
-        "surface_validation_basis",
-        # --- Options verdict research features (Spec 038) ---
-        "ovf_agreement_count",
-        "ovf_severity_score",
-        "ovf_near_catalyst",
-        "ovf_has_event_premium",
-        "ovf_has_iv_ramp",
-        "ovf_has_quiet_before",
-        "ovf_surface_confirmed",
-        "ovf_composite",
-        # --- Options Monitor v1.1 research features (Spec 040) ---
-        "ovf11_ep",
-        "ovf11_sr",
-        "ovf11_sk",
-        "ovf11_dv",
-        "ovf11_quality",
-        "ovf11_confidence",
-        "ovf11_score",
-        "ovf11_primary_factor",
-        "ovf11_monitor_verdict",
-        "ovf11_trade_bias",
-        "ovf11_event_window_flag",
-        "ovf11_catalyst_class",
-        # --- Legacy Module 5 composite fields (far right) ---
-        "composite_rank",
-        "composite_score",
-        "score_rank_pct",
-        "score_z",
-        "composite_score_attn",
-        "score_rank_pct_attn",
-        "score_z_attn",
-        # --- Sort contribution diagnostics (populated at sort time) ---
-        "de_sort_total_adj",
-    ]
-    + [f"de_sort_contrib_{k}" for k in SORT_CONTRIB_KEYS]
-    + [
-        # --- Spec 050: Selector/Ranker columns ---
-        "selector_score",
-        "selector_rank_bucket",
-        "selector_clinical_block",
-        "selector_catalyst_block",
-        "selector_survivability_block",
-        "selector_institutional_block",
-        "selector_market_block",
-        "ranker_active",
-        "ranker_adjustment",
-        "final_score",
-        "ranker_options_block",
-        "ranker_inst_block",
-        "ranker_aact_block",
-        "regime_label",
-        "ranker_v2_score",
-        "ranker_v2_rank",
-    ]
+from run_screen_columns import (  # noqa: E402
+    PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH,
+    PHASE2_DEFAULT_RULESET_PATH,
+    PHASE2_DEFAULT_TIER_FILTER,
+    PHASE2_DEFAULT_TOP_K,
+    PHASE2_PINNED_RULESET_ID,
+    PHASE2_PINNED_THRESHOLDS_ID,
+    PHASE2_PORTFOLIO_COLUMNS,
+    PORTFOLIO_POSITIONS_COLUMNS,
+    POSITIONS_TOP_K,
+    SNAPSHOT_COLUMNS,
 )
-
-# Phase-2 decision portfolio output columns
-PHASE2_PORTFOLIO_COLUMNS = [
-    "ticker",
-    "company_name",
-    # DE output first
-    "actionable_rank",
-    # Tiers + reasons
-    "tier_any",
-    "tier_any_reason",
-    "tier_dev",
-    "tier_reason",
-    "tier_commercial",
-    # Primary DE drivers
-    "alpha_cohort_pct",
-    "clinical_optionality_pct_dev",
-    "clinical_alpha_z",
-    "clinical_score_z",
-    "clinical_score_z_tier",
-    "commercial_quality_pct",
-    "catalyst_days",
-    "catalyst_mode",
-    "cat_priority",
-    "mom_state",
-    "risk_flags",
-    "size_band",
-    "size_reasons",
-    # Earnings
-    "next_earnings_date",
-    # Metadata + missingness
-    "decision_engine_version",
-    "decision_engine_ruleset_id",
-    "alpha_cohort_key",
-    "alpha_cohort_raw",
-    "missing_components",
-    "archetype",
-    # Legacy composite (far right)
-    "composite_rank",
-    "composite_score",
-]
-
-# Phase-2 portfolio positions output columns (weighted top-K subset)
-PORTFOLIO_POSITIONS_COLUMNS = [
-    "ticker",
-    "company_name",
-    "actionable_rank",
-    "target_weight_pct",
-    # Tiers
-    "tier_any",
-    "tier_any_reason",
-    "tier_dev",
-    "tier_reason",
-    "tier_commercial",
-    # Primary DE drivers
-    "alpha_cohort_pct",
-    "clinical_optionality_pct_dev",
-    "catalyst_days",
-    "catalyst_mode",
-    "mom_state",
-    "risk_flags",
-    "size_band",
-    "size_reasons",
-    # Earnings
-    "next_earnings_date",
-    # Metadata
-    "archetype",
-    "eligible",
-    # Legacy composite (far right)
-    "composite_rank",
-    "composite_score",
-]
-
-# Phase-2 operational defaults
-PHASE2_DEFAULT_RULESET_PATH = (
-    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.13.0_a4_selector_ranker.json"
-)
-PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
-PHASE2_DEFAULT_TOP_K = 20
-# Spec 050: EW Top-30 positions (all eligible, no tier filter)
-POSITIONS_TOP_K = 30
-PHASE2_PINNED_RULESET_ID = "2a3e79eb"
-PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
-    Path(__file__).resolve().parent / "production_data" / "phase2_health_thresholds" / "v1.json"
-)
-PHASE2_PINNED_THRESHOLDS_ID = "70636854"
-
 
 # =============================================================================
 # INPUT MANIFEST – dependency registry
@@ -6000,6 +5666,14 @@ def save_validation_snapshot(
         logger.warning(f"Could not write snapshot CSV: {e}")
         return None
 
+    # --- Write SHA-256 checksum sidecar for rankings.csv ---
+    try:
+        from common.snapshot_integrity import write_checksum
+
+        write_checksum(csv_path)
+    except Exception as exc:
+        logger.debug("Checksum sidecar write failed: %s", exc)
+
     # --- Write options diagnostics sidecar ---
     try:
         from common.options_snapshot import write_options_snapshot
@@ -7303,638 +6977,38 @@ def log_smart_money_debug(
 
 
 # =============================================================================
-# CHECKPOINTING
+# CHECKPOINTING / MANIFEST / AUDIT — delegated to run_screen_checkpoint.py
+# Re-exports below maintain backward compatibility for existing importers.
 # =============================================================================
 
-CHECKPOINT_MODULES = ["module_1", "module_2", "module_3", "module_4", "enhancements", "module_5"]
-
-
-def save_checkpoint(checkpoint_dir: Path, module_name: str, as_of_date: str, data: Dict[str, Any]) -> Path:
-    """
-    Save module checkpoint to disk with integrity metadata.
-
-    Args:
-        checkpoint_dir: Directory for checkpoints
-        module_name: Module identifier (e.g., "module_1")
-        as_of_date: Analysis date
-        data: Module output data
-
-    Returns:
-        Path to checkpoint file
-
-    Raises:
-        PathTraversalError: If path components are invalid
-    """
-    # SECURITY: Validate checkpoint path to prevent directory traversal
-    try:
-        filepath = validate_checkpoint_path(checkpoint_dir, module_name, as_of_date)
-    except (PathTraversalError, ValueError) as e:
-        raise PathTraversalError(f"Invalid checkpoint path: module={module_name}, date={as_of_date}: {e}") from e
-
-    # Create checkpoint directory with secure permissions
-    safe_mkdir(checkpoint_dir, mode=0o700)
-
-    checkpoint_data = {
-        "module": module_name,
-        "as_of_date": as_of_date,
-        "version": VERSION,
-        "data": data,
-    }
-
-    # INTEGRITY: Add content hash for verification on load
-    # Use json_serializer (not str) to match safe_write_json serialization path
-    data_json = json.dumps(data, sort_keys=True, default=json_serializer)
-    checkpoint_data["_content_hash"] = compute_content_hash(data_json)
-
-    # Write atomically with secure permissions
-    safe_write_json(filepath, checkpoint_data, mode=0o600)
-    logger.debug(f"Checkpoint saved with integrity hash: {filepath}")
-    return filepath
-
-
-def load_checkpoint(
-    checkpoint_dir: Path, module_name: str, as_of_date: str, verify_integrity: bool = True
-) -> Optional[Dict[str, Any]]:
-    """
-    Load module checkpoint from disk with integrity verification.
-
-    Args:
-        checkpoint_dir: Directory for checkpoints
-        module_name: Module identifier
-        as_of_date: Analysis date
-        verify_integrity: Whether to verify content hash (default True)
-
-    Returns:
-        Module output data, or None if checkpoint not found
-
-    Raises:
-        IntegrityError: If integrity verification fails
-        PathTraversalError: If path components are invalid
-    """
-    # SECURITY: Validate checkpoint path to prevent directory traversal
-    try:
-        filepath = validate_checkpoint_path(checkpoint_dir, module_name, as_of_date)
-    except (PathTraversalError, ValueError) as e:
-        logger.warning(f"Invalid checkpoint path: {e}")
-        return None
-
-    if not filepath.exists():
-        return None
-
-    # SECURITY: Check for symlinks
-    if filepath.is_symlink():
-        logger.warning(f"Checkpoint is a symlink (security risk), ignoring: {filepath}")
-        return None
-
-    # SECURITY: Validate file size
-    try:
-        validate_file_size(filepath, MAX_JSON_FILE_SIZE_MB)
-    except FileSizeError as e:
-        logger.warning(f"Checkpoint file too large: {e}")
-        return None
-
-    with open(filepath, "r", encoding="utf-8") as f:
-        checkpoint_data = json.load(f)
-
-    # Validate checkpoint version compatibility
-    checkpoint_version = checkpoint_data.get("version", "0.0.0")
-    if checkpoint_version.split(".")[0] != VERSION.split(".")[0]:
-        logger.warning(f"Checkpoint version mismatch: {checkpoint_version} vs {VERSION}. " "Ignoring checkpoint.")
-        return None
-
-    # INTEGRITY: Verify content hash if present
-    if verify_integrity and "_content_hash" in checkpoint_data:
-        data = checkpoint_data.get("data", {})
-        data_json = json.dumps(data, sort_keys=True, default=json_serializer)
-        computed_hash = compute_content_hash(data_json)
-        stored_hash = checkpoint_data["_content_hash"]
-
-        if computed_hash != stored_hash:
-            logger.error(
-                f"Checkpoint integrity check FAILED: {filepath}. " f"Expected {stored_hash}, got {computed_hash}"
-            )
-            raise IntegrityError(f"Checkpoint corrupted or tampered: {filepath}")
-
-        logger.debug(f"Checkpoint integrity verified: {filepath}")
-
-    logger.info(f"Loaded checkpoint: {filepath}")
-    return checkpoint_data.get("data")
-
-
-def get_resume_module_index(resume_from: Optional[str]) -> int:
-    """
-    Get the index of the module to resume from.
-
-    Args:
-        resume_from: Module name to resume from (e.g., "module_3")
-
-    Returns:
-        Index in CHECKPOINT_MODULES (0 = start from beginning)
-    """
-    if resume_from is None:
-        return 0
-
-    try:
-        return CHECKPOINT_MODULES.index(resume_from)
-    except ValueError:
-        logger.warning(f"Unknown module '{resume_from}', starting from beginning")
-        return 0
-
-
-# =============================================================================
-# DRY-RUN VALIDATION
-# =============================================================================
-
-
-def validate_inputs_dry_run(data_dir: Path, enable_coinvest: bool = False) -> Dict[str, Any]:
-    """
-    Validate all required input files exist without running pipeline.
-
-    Args:
-        data_dir: Directory containing input data files
-        enable_coinvest: Whether co-invest signals are required
-
-    Returns:
-        Dict with validation results
-    """
-    required_files = [
-        ("universe.json", "Universe data"),
-        ("financial_records.json", "Financial records"),
-        ("trial_records.json", "Clinical trial records"),
-        ("market_data.json", "Market data"),
-    ]
-
-    optional_files = [
-        ("coinvest_signals.json", "Co-invest signals"),
-    ]
-
-    results = {
-        "valid": True,
-        "data_dir": str(data_dir),
-        "required_files": {},
-        "optional_files": {},
-        "content_hashes": {},
-        "errors": [],
-    }
-
-    # Check required files
-    for filename, description in required_files:
-        filepath = data_dir / filename
-        exists = filepath.exists()
-        results["required_files"][filename] = {
-            "exists": exists,
-            "description": description,
-        }
-
-        if exists:
-            # Compute content hash
-            content_hash = hashlib.sha256(filepath.read_bytes()).hexdigest()[:16]
-            results["content_hashes"][filename] = content_hash
-
-            # Try to load and count records
-            try:
-                with open(filepath, "r", encoding="utf-8") as f:
-                    data = json.load(f)
-                if isinstance(data, list):
-                    results["required_files"][filename]["record_count"] = len(data)
-            except (json.JSONDecodeError, Exception) as e:
-                results["required_files"][filename]["error"] = str(e)
-                results["errors"].append(f"{filename}: {e}")
-                results["valid"] = False
-        else:
-            results["errors"].append(f"Required file missing: {filename}")
-            results["valid"] = False
-
-    # Check optional files
-    for filename, description in optional_files:
-        filepath = data_dir / filename
-        exists = filepath.exists()
-        results["optional_files"][filename] = {
-            "exists": exists,
-            "description": description,
-            "required": (filename == "coinvest_signals.json" and enable_coinvest),
-        }
-
-        if exists:
-            content_hash = hashlib.sha256(filepath.read_bytes()).hexdigest()[:16]
-            results["content_hashes"][filename] = content_hash
-        elif filename == "coinvest_signals.json" and enable_coinvest:
-            # Mirror runtime fallback: holdings_detailed.json → holdings_snapshots.json
-            fallback_detailed = data_dir / "holdings_detailed.json"
-            fallback_snapshots = data_dir / "holdings_snapshots.json"
-            if fallback_detailed.exists() or fallback_snapshots.exists():
-                fallback_name = fallback_detailed.name if fallback_detailed.exists() else fallback_snapshots.name
-                results["optional_files"][filename]["fallback"] = fallback_name
-            else:
-                results["errors"].append(f"Co-invest enabled but {filename} missing (no holdings fallback found)")
-                results["valid"] = False
-
-    return results
-
-
-# =============================================================================
-# INPUT MANIFEST – builders
-# =============================================================================
-
-
-def _count_records(filepath: Path) -> Optional[int]:
-    """Return record count for a data file (JSON list/dict length, or CSV row count)."""
-    try:
-        if filepath.suffix == ".csv":
-            with open(filepath, "r", encoding="utf-8") as f:
-                # subtract 1 for header
-                n = sum(1 for _ in f) - 1
-            return max(n, 0)
-        with open(filepath, "r", encoding="utf-8") as f:
-            data = json.load(f)
-        if isinstance(data, list):
-            return len(data)
-        if isinstance(data, dict):
-            return len(data)
-        return None
-    except Exception:
-        return None
-
-
-def _resolve_cache_paths(
-    as_of_date: str,
-    data_dir: Path,
-    ctgov_cache_dir: Optional[Any] = None,
-) -> Dict[str, Path]:
-    """Pre-resolve dynamic cache paths for the input manifest."""
-    resolved: Dict[str, Path] = {}
-    repo_root = Path(__file__).resolve().parent
-
-    # ctgov cache
-    if ctgov_cache_dir is not False:
-        _cache_root = Path(ctgov_cache_dir) if ctgov_cache_dir else repo_root / "cache" / "ctgov"
-        candidate = _cache_root / f"trial_records_{as_of_date}.json"
-        if candidate.exists():
-            resolved["ctgov_cache"] = candidate
-
-    # SEC 8-K cache
-    sec_dir = repo_root / "cache" / "sec" / "8k_catalysts"
-    if sec_dir.is_dir():
-        candidates = sorted(sec_dir.glob(f"8k_catalysts_{as_of_date}*.json"))
-        if candidates:
-            resolved["sec_8k_cache"] = candidates[-1]
-
-    # FDA AdCom cache
-    fda_dir = repo_root / "cache" / "fda"
-    if fda_dir.is_dir():
-        candidate = fda_dir / f"adcom_calendar_{as_of_date}.json"
-        if candidate.exists():
-            resolved["fda_adcom_cache"] = candidate
-
-    return resolved
-
-
-def build_inputs_manifest(
-    as_of_date: str,
-    data_dir: Path,
-    conditions: Dict[str, bool],
-    resolved_paths: Optional[Dict[str, Path]] = None,
-) -> Dict[str, Any]:
-    """Build a deterministic manifest of every input file consumed by this run.
-
-    Returns a dict matching the inputs_manifest.json v1 schema.
-    """
-    resolved_paths = resolved_paths or {}
-    dependencies = []
-    errors: List[str] = []
-    warnings: List[str] = []
-
-    for dep in DEPENDENCY_REGISTRY:
-        # Condition gating: skip entries whose condition is inactive
-        if dep.condition and not conditions.get(dep.condition, False):
-            continue
-
-        # Resolve path
-        if dep.key in resolved_paths:
-            filepath = resolved_paths[dep.key]
-        elif dep.path_template:
-            filepath = data_dir / dep.path_template
-        else:
-            # Dynamic path with no override — not resolvable
-            if dep.required:
-                errors.append(f"{dep.key}: required but path not resolvable")
-            else:
-                warnings.append(f"{dep.key}: dynamic path not resolved (skipped)")
-            continue
-
-        entry: Dict[str, Any] = {
-            "key": dep.key,
-            "path": str(filepath),
-            "required": dep.required,
-            "exists": filepath.exists(),
-            "resolved_from": dep.resolved_from,
-            "load_site": dep.load_site,
-            "sha256": None,
-            "record_count": None,
-        }
-
-        if filepath.exists():
-            entry["sha256"] = sha256_file(filepath)
-            entry["record_count"] = _count_records(filepath)
-        else:
-            if dep.required:
-                errors.append(f"{dep.key}: required file missing ({filepath})")
-            else:
-                warnings.append(f"{dep.key}: optional file missing ({filepath})")
-
-        dependencies.append(entry)
-
-    # Sort by key for determinism
-    dependencies.sort(key=lambda d: d["key"])
-
-    return {
-        "manifest_version": MANIFEST_VERSION,
-        "as_of_date": as_of_date,
-        "generated_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "data_dir": str(data_dir),
-        "dependencies": dependencies,
-        "validation": {
-            "all_required_present": len(errors) == 0,
-            "errors": errors,
-            "warnings": warnings,
-        },
-    }
-
-
-def verify_inputs_manifest(manifest: Dict[str, Any]) -> bool:
-    """Return True if all required inputs are present, logging each error."""
-    validation = manifest.get("validation", {})
-    for err in validation.get("errors", []):
-        logger.error(f"[INPUT MANIFEST] {err}")
-    for warn in validation.get("warnings", []):
-        logger.warning(f"[INPUT MANIFEST] {warn}")
-    return validation.get("all_required_present", False)
-
-
-def verify_against_prior_manifest(
-    current: Dict[str, Any],
-    prior: Dict[str, Any],
-) -> List[str]:
-    """Compare current manifest against a prior one.
-
-    Returns a list of drift errors for required deps that are missing or
-    whose SHA-256 has changed.
-    """
-    errs: List[str] = []
-    if prior.get("manifest_version") != current.get("manifest_version"):
-        return [
-            f"manifest_version mismatch (prior={prior.get('manifest_version')} current={current.get('manifest_version')})"
-        ]
-    if prior.get("as_of_date") != current.get("as_of_date"):
-        return [f"as_of_date mismatch (prior={prior.get('as_of_date')} current={current.get('as_of_date')})"]
-
-    cur_map = {d["key"]: d for d in current.get("dependencies", []) if d.get("required")}
-    prior_req = {d["key"] for d in prior.get("dependencies", []) if d.get("required")}
-    for key in sorted(set(cur_map.keys()) - prior_req):
-        errs.append(f"{key}: required dep absent from prior manifest (cannot drift-check)")
-
-    for p in prior.get("dependencies", []):
-        if not p.get("required"):
-            continue
-        key = p["key"]
-        c = cur_map.get(key)
-        if not c or not c.get("exists"):
-            errs.append(f"{key}: required dep missing (prior path={p.get('path')})")
-            continue
-        p_sha = p.get("sha256")
-        c_sha = c.get("sha256")
-        if p_sha and c_sha and p_sha != c_sha:
-            errs.append(f"{key}: sha256 drift (prior={p_sha[:12]}.. current={c_sha[:12]}..)")
-    return errs
-
-
-# =============================================================================
-# REPLAY BUNDLES
-# =============================================================================
-
-_CACHE_KEY_TO_SUBDIR = {
-    "ctgov_cache": "ctgov",
-    "ctgov_cache_dir": "ctgov",
-    "sec_8k_cache": "sec",
-    "sec_cache_dir": "sec",
-    "fda_adcom_cache": "fda",
-    "fda_cache_dir": "fda",
-}
-
-
-def _bundle_relpath(dep: Dict[str, Any]) -> Optional[str]:
-    """Map a manifest dependency to its relative path inside a replay bundle."""
-    key = dep.get("key", "")
-    path = dep.get("path", "")
-    if not path:
-        return None
-    p = Path(path)
-    fname = p.name
-    if key == "decision_ruleset":
-        return f"rulesets/{fname}"
-    subdir = _CACHE_KEY_TO_SUBDIR.get(key)
-    if subdir:
-        # If the dep itself is a directory, it *is* the cache root.
-        return f"cache/{subdir}" if p.is_dir() else f"cache/{subdir}/{fname}"
-    return f"data/{fname}"
-
-
-def create_replay_bundle(
-    manifest: Dict[str, Any],
-    output_path: Path,
-    include_optional_present: bool = True,
-) -> Path:
-    """Create a replay_bundle.tgz from a manifest's dependency list.
-
-    Args:
-        manifest: The inputs_manifest dict (as returned by build_inputs_manifest).
-        output_path: Where to write the tarball.
-        include_optional_present: If True, include optional deps that exist.
-
-    Returns:
-        The output_path written.
-    """
-    deps = manifest.get("dependencies", [])
-    index_entries: List[Dict[str, Any]] = []
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-
-    with tarfile.open(output_path, "w:gz") as tar:
-        # 1. Write inputs_manifest.json
-        manifest_bytes = json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8")
-        import io
-
-        ti = tarfile.TarInfo(name="inputs_manifest.json")
-        ti.size = len(manifest_bytes)
-        tar.addfile(ti, io.BytesIO(manifest_bytes))
-
-        # 2. Package each included dependency
-        for dep in deps:
-            if not dep.get("exists"):
-                continue
-            if not dep.get("required") and not include_optional_present:
-                continue
-            src = Path(dep["path"])
-            if not src.exists():
-                continue
-            relpath = _bundle_relpath(dep)
-            if not relpath:
-                continue
-            # For directories, arcname is the dir root; for files, it's the full path.
-            arc = relpath if src.is_file() else relpath.rstrip("/")
-            tar.add(str(src), arcname=arc)
-            index_entries.append(
-                {
-                    "key": dep["key"],
-                    "relpath": relpath,
-                    "sha256": dep.get("sha256"),
-                    "required": dep.get("required", False),
-                }
-            )
-
-        # 3. Write bundle_index.json
-        bundle_index = {
-            "bundle_version": "v1",
-            "manifest_version": manifest.get("manifest_version"),
-            "as_of_date": manifest.get("as_of_date"),
-            "created_at": datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-            "files": sorted(index_entries, key=lambda e: e["key"]),
-        }
-        idx_bytes = json.dumps(bundle_index, indent=2, sort_keys=True).encode("utf-8")
-        ti2 = tarfile.TarInfo(name="bundle_index.json")
-        ti2.size = len(idx_bytes)
-        tar.addfile(ti2, io.BytesIO(idx_bytes))
-
-    logger.info(f"[REPLAY BUNDLE] Created: {output_path} " f"({len(index_entries)} files)")
-    return output_path
-
-
-def extract_replay_bundle(bundle_path: Path) -> Dict[str, Any]:
-    """Extract a replay bundle to a temp directory and return path mappings.
-
-    Returns:
-        Dict with keys:
-            tmp_dir: Path to the temp directory (caller should clean up)
-            data_dir: Path to extracted data/ directory
-            manifest_path: Path to inputs_manifest.json
-            ruleset_path: Path to first ruleset file (or None)
-            ctgov_cache_dir: Path to ctgov cache dir (or None)
-            bundle_index: Parsed bundle_index.json dict
-    """
-    tmp_dir = Path(tempfile.mkdtemp(prefix="replay_bundle_"))
-    with tarfile.open(bundle_path, "r:gz") as tar:
-        tar.extractall(tmp_dir, filter="data")
-
-    data_dir = tmp_dir / "data"
-    if not data_dir.is_dir():
-        data_dir.mkdir()
-
-    manifest_path = tmp_dir / "inputs_manifest.json"
-    index_path = tmp_dir / "bundle_index.json"
-
-    bundle_index = {}
-    if index_path.exists():
-        with open(index_path, "r", encoding="utf-8") as f:
-            bundle_index = json.load(f)
-
-    # Detect ruleset
-    rulesets_dir = tmp_dir / "rulesets"
-    ruleset_path = None
-    if rulesets_dir.is_dir():
-        rulesets = list(rulesets_dir.glob("*.json"))
-        if rulesets:
-            ruleset_path = rulesets[0]
-
-    # Detect cache dirs
-    ctgov_cache_dir = (tmp_dir / "cache" / "ctgov") if (tmp_dir / "cache" / "ctgov").is_dir() else None
-    sec_cache_dir = (tmp_dir / "cache" / "sec") if (tmp_dir / "cache" / "sec").is_dir() else None
-    fda_cache_dir = (tmp_dir / "cache" / "fda") if (tmp_dir / "cache" / "fda").is_dir() else None
-
-    return {
-        "tmp_dir": tmp_dir,
-        "data_dir": data_dir,
-        "manifest_path": manifest_path,
-        "ruleset_path": ruleset_path,
-        "ctgov_cache_dir": ctgov_cache_dir,
-        "sec_cache_dir": sec_cache_dir,
-        "fda_cache_dir": fda_cache_dir,
-        "bundle_index": bundle_index,
-    }
-
-
-# =============================================================================
-# AUDIT TRAIL
-# =============================================================================
-
-
-def create_audit_record(
-    as_of_date: str,
-    data_dir: Path,
-    content_hashes: Dict[str, str],
-) -> Dict[str, Any]:
-    """
-    Create comprehensive audit record for the run.
-
-    Args:
-        as_of_date: Analysis date
-        data_dir: Data directory path
-        content_hashes: Dict of filename -> content hash
-
-    Returns:
-        Audit record dict
-    """
-    audit = {
-        "as_of_date": as_of_date,
-        "orchestrator_version": VERSION,
-        "data_dir": str(data_dir),
-        "input_hashes": dict(sorted(content_hashes.items())),
-        "parameter_snapshots": {},
-        "parameter_hashes": {},
-    }
-
-    # Add risk gates parameters if available
-    if HAS_RISK_GATES:
-        audit["parameter_snapshots"]["risk_gates"] = get_risk_params()
-        audit["parameter_hashes"]["risk_gates"] = risk_params_hash()
-
-    # Add liquidity scoring parameters if available
-    if HAS_LIQUIDITY_SCORING:
-        audit["parameter_snapshots"]["liquidity_scoring"] = get_liq_params()
-        audit["parameter_hashes"]["liquidity_scoring"] = liq_params_hash()
-
-    return audit
-
-
-def append_audit_log(audit_log_path: Path, record: Dict[str, Any]) -> None:
-    """
-    Append audit record to JSONL log file.
-
-    Args:
-        audit_log_path: Path to audit log file
-        record: Audit record to append
-    """
-    audit_log_path.parent.mkdir(parents=True, exist_ok=True)
-
-    line = json.dumps(record, sort_keys=True, separators=(",", ":"))
-    with open(audit_log_path, "a", encoding="utf-8") as f:
-        f.write(line + "\n")
-
-
-def verify_input_freshness(previous_screen: Path, data_dir: Path) -> List[str]:
-    """Compare current input hashes against a previous screen run."""
-    with open(previous_screen, "r") as f:
-        prev = json.load(f)
-    prev_hashes = prev.get("run_metadata", {}).get("input_hashes", {})
-    warnings = []
-    for json_file in sorted(data_dir.glob("*.json")):
-        if json_file.name.startswith("run_log") or json_file.name.startswith("screen_"):
-            continue
-        current_hash = hashlib.sha256(json_file.read_bytes()).hexdigest()[:16]
-        prev_hash = prev_hashes.get(json_file.name)
-        if prev_hash and current_hash != prev_hash:
-            warnings.append(f"STALE: {json_file.name} changed since {previous_screen.name}")
-        elif not prev_hash:
-            warnings.append(f"NEW: {json_file.name} not in previous run")
-    return warnings
+from run_screen_checkpoint import (  # noqa: E402,F811
+    CHECKPOINT_MODULES,
+    DEPENDENCY_REGISTRY,
+    MANIFEST_VERSION,
+    InputDependency,
+    _bundle_relpath,
+    _count_records,
+    _resolve_cache_paths,
+    append_audit_log,
+    build_inputs_manifest,
+    create_audit_record,
+    create_replay_bundle,
+    extract_replay_bundle,
+    get_resume_module_index,
+    load_checkpoint,
+    save_checkpoint,
+    validate_inputs_dry_run,
+    verify_against_prior_manifest,
+    verify_input_freshness,
+    verify_inputs_manifest,
+)
+
+# --- Old checkpoint/manifest/audit implementations removed ---
+# See run_screen_checkpoint.py for the canonical implementations.
+# The re-exports above ensure backward compatibility.
+
+# Marker to find the deletion boundary — search for _load_module5_weights below
+_CHECKPOINT_SECTION_REMOVED = True
 
 
 def _load_module5_weights(path: Path) -> Optional[Dict[str, "Decimal"]]:
@@ -8401,6 +7475,20 @@ def run_screening_pipeline(
     except RuntimeError as e:
         logger.warning(f"Memory check: {e}")
         # Continue anyway but log the warning
+
+    # PREFLIGHT: Validate env vars and data files before processing
+    try:
+        from common.startup_preflight import run_preflight
+
+        preflight = run_preflight(data_dir=data_dir, check_env=True, check_files=True)
+        if not preflight.ok:
+            logger.error("Preflight check FAILED:\n%s", preflight.summary())
+            raise RuntimeError(
+                f"Preflight failed with {len(preflight.hard)} hard error(s). "
+                f"Fix these before running the pipeline. Run details:\n{preflight.summary()}"
+            )
+    except ImportError:
+        logger.debug("startup_preflight not available — skipping")
 
     logger.info(f"[{as_of_date}] Starting screening pipeline...")
     logger.info(f"  Data directory: {data_dir}")
@@ -9219,6 +8307,18 @@ def run_screening_pipeline(
     enhancement_result = None
 
     # Run enhancement layer if enhancements enabled OR if short interest enabled with data
+    def _safe_run_engine(engine_name: str, fn, *args, **kwargs):
+        """Run an enhancement engine with error protection.
+
+        Returns the engine result on success, or None on failure.
+        Logs the error at WARNING level so the pipeline can continue.
+        """
+        try:
+            return fn(*args, **kwargs)
+        except Exception as exc:
+            logger.warning("Enhancement engine '%s' failed: %s — skipping", engine_name, exc)
+            return None
+
     should_run_enhancements = (enable_enhancements and HAS_ENHANCEMENTS) or (
         enable_short_interest and short_interest_data
     )
@@ -9237,9 +8337,23 @@ def run_screening_pipeline(
             as_of_date_obj = to_date_object(as_of_date)
 
             # Initialize engines (PoS/Regime only if full enhancements enabled)
-            pos_engine = ProbabilityOfSuccessEngine() if (enable_enhancements and HAS_ENHANCEMENTS) else None
-            regime_engine = RegimeDetectionEngine() if (enable_enhancements and HAS_ENHANCEMENTS) else None
-            si_engine = ShortInterestSignalEngine() if short_interest_data else None
+            pos_engine = None
+            regime_engine = None
+            si_engine = None
+            if enable_enhancements and HAS_ENHANCEMENTS:
+                try:
+                    pos_engine = ProbabilityOfSuccessEngine()
+                except Exception as exc:
+                    logger.warning("PoS engine init failed: %s — skipping", exc)
+                try:
+                    regime_engine = RegimeDetectionEngine()
+                except Exception as exc:
+                    logger.warning("Regime engine init failed: %s — skipping", exc)
+            if short_interest_data:
+                try:
+                    si_engine = ShortInterestSignalEngine()
+                except Exception as exc:
+                    logger.warning("SI engine init failed: %s — skipping", exc)
 
             # Step 1: Detect market regime with enhanced macro data
             regime_result = None
@@ -9370,14 +8484,17 @@ def run_screening_pipeline(
                         }
                     )
 
-                pos_result = pos_engine.score_universe(pos_universe, as_of_date_obj)
-                pos_diag = pos_result["diagnostic_counts"]
-                conf_dist = pos_diag.get("confidence_distribution", {})
-                logger.info(
-                    f"  PoS: mapped={pos_diag['indication_coverage_pct']} | "
-                    f"effective(>=0.40)={pos_diag.get('effective_coverage_pct', 'N/A')} | "
-                    f"conf(H/M/L)={conf_dist.get('high', 0)}/{conf_dist.get('medium', 0)}/{conf_dist.get('low', 0)}"
-                )
+                pos_result = _safe_run_engine("PoS", pos_engine.score_universe, pos_universe, as_of_date_obj)
+                if pos_result is None:
+                    logger.info("  PoS: skipped (engine error)")
+                else:
+                    pos_diag = pos_result["diagnostic_counts"]
+                    conf_dist = pos_diag.get("confidence_distribution", {})
+                    logger.info(
+                        f"  PoS: mapped={pos_diag['indication_coverage_pct']} | "
+                        f"effective(>=0.40)={pos_diag.get('effective_coverage_pct', 'N/A')} | "
+                        f"conf(H/M/L)={conf_dist.get('high', 0)}/{conf_dist.get('medium', 0)}/{conf_dist.get('low', 0)}"
+                    )
 
             # Step 3: Calculate short interest signals (if data available)
             si_result = None
@@ -9397,137 +8514,155 @@ def run_screening_pipeline(
                         }
                     )
 
-                si_result = si_engine.score_universe(si_universe, as_of_date_obj)
-                logger.info(
-                    f"  SI scored: {si_result['diagnostic_counts']['total_scored']}, "
-                    f"Coverage: {si_result['diagnostic_counts']['data_coverage_pct']}"
-                )
+                si_result = _safe_run_engine("ShortInterest", si_engine.score_universe, si_universe, as_of_date_obj)
+                if si_result:
+                    logger.info(
+                        f"  SI scored: {si_result['diagnostic_counts']['total_scored']}, "
+                        f"Coverage: {si_result['diagnostic_counts']['data_coverage_pct']}"
+                    )
 
             # Step 4: Calculate accuracy enhancements (if available)
             accuracy_result = None
             if HAS_ACCURACY_ENHANCEMENTS:
-                accuracy_adapter = AccuracyEnhancementsAdapter()
+                try:
+                    accuracy_adapter = AccuracyEnhancementsAdapter()
 
-                # Build trial data map from trial records
-                trial_data_map = {}
-                for trial in trial_records:
-                    ticker = trial.get("lead_sponsor_ticker") or trial.get("ticker")
-                    if ticker:
-                        ticker = ticker.upper()
-                        if ticker not in trial_data_map:
-                            trial_data_map[ticker] = trial
-                        # Keep most recent trial per ticker
-                        elif trial.get("last_update_posted", "") > trial_data_map[ticker].get("last_update_posted", ""):
-                            trial_data_map[ticker] = trial
+                    # Build trial data map from trial records
+                    trial_data_map = {}
+                    for trial in trial_records:
+                        ticker = trial.get("lead_sponsor_ticker") or trial.get("ticker")
+                        if ticker:
+                            ticker = ticker.upper()
+                            if ticker not in trial_data_map:
+                                trial_data_map[ticker] = trial
+                            # Keep most recent trial per ticker
+                            elif trial.get("last_update_posted", "") > trial_data_map[ticker].get(
+                                "last_update_posted", ""
+                            ):
+                                trial_data_map[ticker] = trial
 
-                # Build financial data map
-                financial_data_map = {}
-                for score in m2_result.get("scores", []):
-                    ticker = score.get("ticker")
-                    if ticker:
-                        financial_data_map[ticker] = score
+                    # Build financial data map
+                    financial_data_map = {}
+                    for score in m2_result.get("scores", []):
+                        ticker = score.get("ticker")
+                        if ticker:
+                            financial_data_map[ticker] = score
 
-                # Get VIX from market snapshot
-                vix_current = None
-                if market_snapshot:
-                    vix_current = Decimal(str(market_snapshot.get("vix", "20")))
+                    # Get VIX from market snapshot
+                    vix_current = None
+                    if market_snapshot:
+                        vix_current = Decimal(str(market_snapshot.get("vix", "20")))
 
-                # Compute accuracy adjustments for universe
-                universe_for_accuracy = [{"ticker": t.upper()} for t in active_tickers]
-                accuracy_adjustments = accuracy_adapter.compute_universe_adjustments(
-                    universe=universe_for_accuracy,
-                    trial_data_map=trial_data_map,
-                    financial_data_map=financial_data_map,
-                    as_of_date=as_of_date_obj,
-                    vix_current=vix_current,
-                    market_regime=regime_result.get("regime") if regime_result else None,
-                )
+                    # Compute accuracy adjustments for universe
+                    universe_for_accuracy = [{"ticker": t.upper()} for t in active_tickers]
+                    accuracy_adjustments = _safe_run_engine(
+                        "Accuracy",
+                        accuracy_adapter.compute_universe_adjustments,
+                        universe=universe_for_accuracy,
+                        trial_data_map=trial_data_map,
+                        financial_data_map=financial_data_map,
+                        as_of_date=as_of_date_obj,
+                        vix_current=vix_current,
+                        market_regime=regime_result.get("regime") if regime_result else None,
+                    )
 
-                accuracy_diag = accuracy_adapter.get_diagnostic_counts()
-                logger.info(
-                    f"  Accuracy enhancements: {accuracy_diag['total']} tickers, "
-                    f"staleness={accuracy_diag['staleness_coverage_pct']}%, "
-                    f"regulatory={accuracy_diag['regulatory_coverage_pct']}%"
-                )
+                    if accuracy_adjustments is None:
+                        logger.info("  Accuracy enhancements: skipped (engine error)")
+                    else:
+                        accuracy_diag = accuracy_adapter.get_diagnostic_counts()
+                        logger.info(
+                            f"  Accuracy enhancements: {accuracy_diag['total']} tickers, "
+                            f"staleness={accuracy_diag['staleness_coverage_pct']}%, "
+                            f"regulatory={accuracy_diag['regulatory_coverage_pct']}%"
+                        )
 
-                # Convert to serializable format
-                accuracy_result = {
-                    "adjustments": {
-                        ticker: {
-                            "clinical_adjustment": str(adj.clinical_adjustment),
-                            "financial_adjustment": str(adj.financial_adjustment),
-                            "catalyst_adjustment": str(adj.catalyst_adjustment),
-                            "regulatory_bonus": str(adj.regulatory_bonus),
-                            "confidence": adj.confidence,
-                            "adjustments_applied": adj.adjustments_applied,
+                        # Convert to serializable format
+                        accuracy_result = {
+                            "adjustments": {
+                                ticker: {
+                                    "clinical_adjustment": str(adj.clinical_adjustment),
+                                    "financial_adjustment": str(adj.financial_adjustment),
+                                    "catalyst_adjustment": str(adj.catalyst_adjustment),
+                                    "regulatory_bonus": str(adj.regulatory_bonus),
+                                    "confidence": adj.confidence,
+                                    "adjustments_applied": adj.adjustments_applied,
+                                }
+                                for ticker, adj in accuracy_adjustments.items()
+                            },
+                            "diagnostic_counts": accuracy_diag,
                         }
-                        for ticker, adj in accuracy_adjustments.items()
-                    },
-                    "diagnostic_counts": accuracy_diag,
-                }
+
+                except Exception as _exc:
+                    logger.warning("Enhancement 'Accuracy' failed: %s — skipping", _exc)
 
             # Step 5: Calculate dilution risk scores (if available)
             dilution_risk_result = None
             if HAS_DILUTION_RISK:
-                dilution_engine = DilutionRiskEngine()
+                try:
+                    dilution_engine = DilutionRiskEngine()
 
-                # Build dilution risk universe from financial + market + catalyst data
-                dilution_universe = []
-                financial_by_ticker = {r.get("ticker"): r for r in financial_records if r.get("ticker")}
-                market_by_ticker = market_data_by_ticker  # Already indexed
+                    # Build dilution risk universe from financial + market + catalyst data
+                    dilution_universe = []
+                    financial_by_ticker = {r.get("ticker"): r for r in financial_records if r.get("ticker")}
+                    market_by_ticker = market_data_by_ticker  # Already indexed
 
-                for ticker in active_tickers:
-                    fin_data = financial_by_ticker.get(ticker, {})
-                    mkt_data = market_by_ticker.get(ticker.upper(), {})
+                    for ticker in active_tickers:
+                        fin_data = financial_by_ticker.get(ticker, {})
+                        mkt_data = market_by_ticker.get(ticker.upper(), {})
 
-                    # Get next catalyst date from Module 3 summaries
-                    catalyst_summary = catalyst_summaries.get(ticker.upper()) or catalyst_summaries.get(ticker)
-                    next_catalyst_date = None
-                    if catalyst_summary:
-                        # Handle both dict and object formats
-                        if isinstance(catalyst_summary, dict):
-                            next_catalyst_date = catalyst_summary.get("next_catalyst_date")
-                        elif hasattr(catalyst_summary, "next_catalyst_date"):
-                            next_catalyst_date = catalyst_summary.next_catalyst_date
+                        # Get next catalyst date from Module 3 summaries
+                        catalyst_summary = catalyst_summaries.get(ticker.upper()) or catalyst_summaries.get(ticker)
+                        next_catalyst_date = None
+                        if catalyst_summary:
+                            # Handle both dict and object formats
+                            if isinstance(catalyst_summary, dict):
+                                next_catalyst_date = catalyst_summary.get("next_catalyst_date")
+                            elif hasattr(catalyst_summary, "next_catalyst_date"):
+                                next_catalyst_date = catalyst_summary.next_catalyst_date
 
-                    # Calculate quarterly burn from NetIncome or R&D (annualized / 4)
-                    quarterly_burn = None
-                    net_income = fin_data.get("NetIncome")
-                    if net_income is not None and net_income < 0:
-                        # NetIncome is annualized, divide by 4 for quarterly
-                        quarterly_burn = Decimal(str(net_income)) / Decimal("4")
-                    elif fin_data.get("R&D"):
-                        # Fall back to R&D as burn proxy (annualized / 4, negative)
-                        quarterly_burn = -Decimal(str(fin_data.get("R&D"))) / Decimal("4")
+                        # Calculate quarterly burn from NetIncome or R&D (annualized / 4)
+                        quarterly_burn = None
+                        net_income = fin_data.get("NetIncome")
+                        if net_income is not None and net_income < 0:
+                            # NetIncome is annualized, divide by 4 for quarterly
+                            quarterly_burn = Decimal(str(net_income)) / Decimal("4")
+                        elif fin_data.get("R&D"):
+                            # Fall back to R&D as burn proxy (annualized / 4, negative)
+                            quarterly_burn = -Decimal(str(fin_data.get("R&D"))) / Decimal("4")
 
-                    dilution_universe.append(
-                        {
-                            "ticker": ticker,
-                            "quarterly_cash": (
-                                Decimal(str(fin_data.get("CashAndSecurities") or fin_data.get("Cash")))
-                                if (fin_data.get("CashAndSecurities") or fin_data.get("Cash"))
-                                else None
-                            ),
-                            "quarterly_burn": quarterly_burn,
-                            "next_catalyst_date": next_catalyst_date,
-                            "market_cap": (
-                                Decimal(str(mkt_data.get("market_cap"))) if mkt_data.get("market_cap") else None
-                            ),
-                            "avg_daily_volume_90d": (
-                                int(mkt_data.get("avg_volume_90d", 0)) if mkt_data.get("avg_volume_90d") else None
-                            ),
-                        }
+                        dilution_universe.append(
+                            {
+                                "ticker": ticker,
+                                "quarterly_cash": (
+                                    Decimal(str(fin_data.get("CashAndSecurities") or fin_data.get("Cash")))
+                                    if (fin_data.get("CashAndSecurities") or fin_data.get("Cash"))
+                                    else None
+                                ),
+                                "quarterly_burn": quarterly_burn,
+                                "next_catalyst_date": next_catalyst_date,
+                                "market_cap": (
+                                    Decimal(str(mkt_data.get("market_cap"))) if mkt_data.get("market_cap") else None
+                                ),
+                                "avg_daily_volume_90d": (
+                                    int(mkt_data.get("avg_volume_90d", 0)) if mkt_data.get("avg_volume_90d") else None
+                                ),
+                            }
+                        )
+
+                    dilution_risk_result = _safe_run_engine(
+                        "DilutionRisk", dilution_engine.score_universe, dilution_universe, as_of_date_obj
+                    )
+                    diag_dr = dilution_risk_result.get("diagnostic_counts", {})
+                    risk_dist = diag_dr.get("risk_distribution", {})
+                    logger.info(
+                        f"  Dilution risk: {diag_dr.get('total_scored', 0)} scored, "
+                        f"HIGH={risk_dist.get('HIGH_RISK', 0)}, "
+                        f"MED={risk_dist.get('MEDIUM_RISK', 0)}, "
+                        f"LOW={risk_dist.get('LOW_RISK', 0)}"
                     )
 
-                dilution_risk_result = dilution_engine.score_universe(dilution_universe, as_of_date_obj)
-                diag_dr = dilution_risk_result.get("diagnostic_counts", {})
-                risk_dist = diag_dr.get("risk_distribution", {})
-                logger.info(
-                    f"  Dilution risk: {diag_dr.get('total_scored', 0)} scored, "
-                    f"HIGH={risk_dist.get('HIGH_RISK', 0)}, "
-                    f"MED={risk_dist.get('MEDIUM_RISK', 0)}, "
-                    f"LOW={risk_dist.get('LOW_RISK', 0)}"
-                )
+                except Exception as _exc:
+                    logger.warning("Enhancement 'DilutionRisk' failed: %s — skipping", _exc)
 
             # Step 6: Calculate timeline slippage scores (if available)
             timeline_slippage_result = None
@@ -9596,189 +8731,231 @@ def run_screening_pipeline(
             # Step 8: Calculate pipeline diversity scores (if available)
             pipeline_diversity_result = None
             if HAS_PIPELINE_DIVERSITY:
-                diversity_engine = PipelineDiversityEngine()
+                try:
+                    diversity_engine = PipelineDiversityEngine()
 
-                # Build clinical data map from Module 4 results
-                clinical_data_map = {}
-                for clinical_score in m4_result.get("scores", []):
-                    ticker = clinical_score.get("ticker")
-                    if ticker:
-                        clinical_data_map[ticker.upper()] = {
-                            "n_trials_unique": clinical_score.get("n_trials_unique", 0),
-                            "lead_phase": clinical_score.get("lead_phase", "phase_2"),
-                        }
+                    # Build clinical data map from Module 4 results
+                    clinical_data_map = {}
+                    for clinical_score in m4_result.get("scores", []):
+                        ticker = clinical_score.get("ticker")
+                        if ticker:
+                            clinical_data_map[ticker.upper()] = {
+                                "n_trials_unique": clinical_score.get("n_trials_unique", 0),
+                                "lead_phase": clinical_score.get("lead_phase", "phase_2"),
+                            }
 
-                diversity_universe = []
-                for t in active_tickers:
-                    ticker_upper = t.upper()
-                    diversity_universe.append(
-                        {
-                            "ticker": ticker_upper,
-                            "clinical_data": clinical_data_map.get(ticker_upper, {}),
-                        }
+                    diversity_universe = []
+                    for t in active_tickers:
+                        ticker_upper = t.upper()
+                        diversity_universe.append(
+                            {
+                                "ticker": ticker_upper,
+                                "clinical_data": clinical_data_map.get(ticker_upper, {}),
+                            }
+                        )
+
+                    pipeline_diversity_result = _safe_run_engine(
+                        "PipelineDiversity",
+                        diversity_engine.score_universe,
+                        diversity_universe,
+                        trial_records,
+                        as_of_date_obj,
                     )
 
-                pipeline_diversity_result = diversity_engine.score_universe(
-                    diversity_universe, trial_records, as_of_date_obj
-                )
+                    diag_pd = pipeline_diversity_result.get("diagnostic_counts", {})
+                    risk_dist = diag_pd.get("risk_distribution", {})
+                    logger.info(
+                        f"  Pipeline diversity: {diag_pd.get('total_scored', 0)} scored, "
+                        f"single_asset={risk_dist.get('single_asset', 0)}, "
+                        f"diversified={risk_dist.get('diversified', 0) + risk_dist.get('broad_portfolio', 0)}"
+                    )
 
-                diag_pd = pipeline_diversity_result.get("diagnostic_counts", {})
-                risk_dist = diag_pd.get("risk_distribution", {})
-                logger.info(
-                    f"  Pipeline diversity: {diag_pd.get('total_scored', 0)} scored, "
-                    f"single_asset={risk_dist.get('single_asset', 0)}, "
-                    f"diversified={risk_dist.get('diversified', 0) + risk_dist.get('broad_portfolio', 0)}"
-                )
+                except Exception as _exc:
+                    logger.warning("Enhancement 'PipelineDiversity' failed: %s — skipping", _exc)
 
             # Step 9: Calculate competitive intensity scores (if available)
             competitive_intensity_result = None
             if HAS_COMPETITIVE_INTENSITY:
-                intensity_engine = CompetitiveIntensityEngine()
+                try:
+                    intensity_engine = CompetitiveIntensityEngine()
 
-                intensity_universe = [{"ticker": t.upper()} for t in active_tickers]
-                competitive_intensity_result = intensity_engine.score_universe(
-                    intensity_universe, trial_records, as_of_date_obj
-                )
+                    intensity_universe = [{"ticker": t.upper()} for t in active_tickers]
+                    competitive_intensity_result = _safe_run_engine(
+                        "CompetitiveIntensity",
+                        intensity_engine.score_universe,
+                        intensity_universe,
+                        trial_records,
+                        as_of_date_obj,
+                    )
 
-                diag_ci = competitive_intensity_result.get("diagnostic_counts", {})
-                intensity_dist = diag_ci.get("intensity_distribution", {})
-                logger.info(
-                    f"  Competitive intensity: {diag_ci.get('total_scored', 0)} scored, "
-                    f"low={intensity_dist.get('low', 0)}, "
-                    f"moderate={intensity_dist.get('moderate', 0)}, "
-                    f"high={intensity_dist.get('high', 0)}, "
-                    f"intense={intensity_dist.get('intense', 0)}"
-                )
+                    diag_ci = competitive_intensity_result.get("diagnostic_counts", {})
+                    intensity_dist = diag_ci.get("intensity_distribution", {})
+                    logger.info(
+                        f"  Competitive intensity: {diag_ci.get('total_scored', 0)} scored, "
+                        f"low={intensity_dist.get('low', 0)}, "
+                        f"moderate={intensity_dist.get('moderate', 0)}, "
+                        f"high={intensity_dist.get('high', 0)}, "
+                        f"intense={intensity_dist.get('intense', 0)}"
+                    )
+
+                except Exception as _exc:
+                    logger.warning("Enhancement 'CompetitiveIntensity' failed: %s — skipping", _exc)
 
             # Step 10: Calculate partnership validation scores (if available)
             partnership_result = None
             if HAS_PARTNERSHIP_ENGINE:
-                partnership_engine = PartnershipEngine()
+                try:
+                    partnership_engine = PartnershipEngine()
 
-                # Load partnership data from file
-                partnerships_path = Path(data_dir) / "partnerships.json"
-                partnership_records = []
-                if partnerships_path.exists():
-                    try:
-                        with open(partnerships_path) as f:
-                            partnership_data = json.load(f)
-                        partnership_records = partnership_data.get("partnerships", [])
-                        logger.info(f"  Loaded {len(partnership_records)} partnership records from file")
-                    except Exception as e:
-                        logger.warning(f"  Failed to load partnerships.json: {e}")
+                    # Load partnership data from file
+                    partnerships_path = Path(data_dir) / "partnerships.json"
+                    partnership_records = []
+                    if partnerships_path.exists():
+                        try:
+                            with open(partnerships_path) as f:
+                                partnership_data = json.load(f)
+                            partnership_records = partnership_data.get("partnerships", [])
+                            logger.info(f"  Loaded {len(partnership_records)} partnership records from file")
+                        except Exception as e:
+                            logger.warning(f"  Failed to load partnerships.json: {e}")
 
-                partnership_universe = [{"ticker": t.upper()} for t in active_tickers]
-                partnership_result = partnership_engine.score_universe(
-                    partnership_universe, partnership_records, as_of_date_obj
-                )
+                    partnership_universe = [{"ticker": t.upper()} for t in active_tickers]
+                    partnership_result = _safe_run_engine(
+                        "Partnership",
+                        partnership_engine.score_universe,
+                        partnership_universe,
+                        partnership_records,
+                        as_of_date_obj,
+                    )
 
-                diag_ps = partnership_result.get("diagnostic_counts", {})
-                strength_dist = diag_ps.get("strength_distribution", {})
-                logger.info(
-                    f"  Partnership validation: {diag_ps.get('total_scored', 0)} scored, "
-                    f"with_partnerships={diag_ps.get('with_partnerships', 0)}, "
-                    f"with_top_tier={diag_ps.get('with_top_tier', 0)}"
-                )
-                logger.info(
-                    f"    Strength distribution: exceptional={strength_dist.get('exceptional', 0)}, "
-                    f"strong={strength_dist.get('strong', 0)}, "
-                    f"moderate={strength_dist.get('moderate', 0)}, "
-                    f"weak={strength_dist.get('weak', 0)}"
-                )
+                    diag_ps = partnership_result.get("diagnostic_counts", {})
+                    strength_dist = diag_ps.get("strength_distribution", {})
+                    logger.info(
+                        f"  Partnership validation: {diag_ps.get('total_scored', 0)} scored, "
+                        f"with_partnerships={diag_ps.get('with_partnerships', 0)}, "
+                        f"with_top_tier={diag_ps.get('with_top_tier', 0)}"
+                    )
+                    logger.info(
+                        f"    Strength distribution: exceptional={strength_dist.get('exceptional', 0)}, "
+                        f"strong={strength_dist.get('strong', 0)}, "
+                        f"moderate={strength_dist.get('moderate', 0)}, "
+                        f"weak={strength_dist.get('weak', 0)}"
+                    )
+
+                except Exception as _exc:
+                    logger.warning("Enhancement 'Partnership' failed: %s — skipping", _exc)
 
             # Step 11: Calculate cash burn trajectory scores (if available)
             cash_burn_result = None
             if HAS_CASH_BURN_ENGINE:
-                cash_burn_engine = CashBurnEngine()
+                try:
+                    cash_burn_engine = CashBurnEngine()
 
-                # Load quarterly burn history data (if available)
-                quarterly_burn_path = Path(data_dir) / "quarterly_burn_history.json"
-                quarterly_burn_by_ticker = {}
-                if quarterly_burn_path.exists():
-                    try:
-                        with open(quarterly_burn_path) as f:
-                            quarterly_data = json.load(f)
-                        burn_history = quarterly_data.get("burn_history", {})
-                        for ticker, data in burn_history.items():
-                            quarterly_burn_by_ticker[ticker.upper()] = data.get("quarterly_burn", [])
-                        logger.info(f"  Loaded quarterly burn history for {len(quarterly_burn_by_ticker)} tickers")
-                    except Exception as e:
-                        logger.warning(f"  Failed to load quarterly_burn_history.json: {e}")
+                    # Load quarterly burn history data (if available)
+                    quarterly_burn_path = Path(data_dir) / "quarterly_burn_history.json"
+                    quarterly_burn_by_ticker = {}
+                    if quarterly_burn_path.exists():
+                        try:
+                            with open(quarterly_burn_path) as f:
+                                quarterly_data = json.load(f)
+                            burn_history = quarterly_data.get("burn_history", {})
+                            for ticker, data in burn_history.items():
+                                quarterly_burn_by_ticker[ticker.upper()] = data.get("quarterly_burn", [])
+                            logger.info(f"  Loaded quarterly burn history for {len(quarterly_burn_by_ticker)} tickers")
+                        except Exception as e:
+                            logger.warning(f"  Failed to load quarterly_burn_history.json: {e}")
 
-                # Build financial data map for cash burn engine
-                # Uses runway_months from Module 2 and quarterly burn data
-                cash_burn_financial = {}
-                for score in m2_result.get("scores", []):
-                    ticker = score.get("ticker", "").upper()
-                    if ticker:
-                        cash_burn_financial[ticker] = {
-                            "runway_months": score.get("runway_months"),
-                            "cash_position": score.get("liquid_assets") or score.get("cash"),
-                            "quarterly_burn": quarterly_burn_by_ticker.get(ticker, []),
-                        }
-
-                # Build clinical data map for Phase 3 detection
-                cash_burn_clinical = {}
-                if m4_result:
-                    for score in m4_result.get("scores", []):
+                    # Build financial data map for cash burn engine
+                    # Uses runway_months from Module 2 and quarterly burn data
+                    cash_burn_financial = {}
+                    for score in m2_result.get("scores", []):
                         ticker = score.get("ticker", "").upper()
                         if ticker:
-                            cash_burn_clinical[ticker] = {
-                                "lead_phase": score.get("lead_phase"),
+                            cash_burn_financial[ticker] = {
+                                "runway_months": score.get("runway_months"),
+                                "cash_position": score.get("liquid_assets") or score.get("cash"),
+                                "quarterly_burn": quarterly_burn_by_ticker.get(ticker, []),
                             }
 
-                cash_burn_universe = [{"ticker": t.upper()} for t in active_tickers]
-                cash_burn_result = cash_burn_engine.score_universe(
-                    cash_burn_universe, cash_burn_financial, cash_burn_clinical, as_of_date_obj
-                )
+                    # Build clinical data map for Phase 3 detection
+                    cash_burn_clinical = {}
+                    if m4_result:
+                        for score in m4_result.get("scores", []):
+                            ticker = score.get("ticker", "").upper()
+                            if ticker:
+                                cash_burn_clinical[ticker] = {
+                                    "lead_phase": score.get("lead_phase"),
+                                }
 
-                diag_cb = cash_burn_result.get("diagnostic_counts", {})
-                trajectory_dist = diag_cb.get("trajectory_distribution", {})
-                risk_dist = diag_cb.get("risk_distribution", {})
-                logger.info(f"  Cash burn trajectory: {diag_cb.get('total_scored', 0)} scored")
-                logger.info(
-                    f"    Trajectory: decel={trajectory_dist.get('decelerating', 0)}, "
-                    f"stable={trajectory_dist.get('stable', 0)}, "
-                    f"accel={trajectory_dist.get('accelerating', 0)}, "
-                    f"justified={trajectory_dist.get('accelerating_justified', 0)}, "
-                    f"unknown={trajectory_dist.get('unknown', 0)}"
-                )
-                logger.info(
-                    f"    Risk: low={risk_dist.get('low', 0)}, "
-                    f"moderate={risk_dist.get('moderate', 0)}, "
-                    f"high={risk_dist.get('high', 0)}, "
-                    f"critical={risk_dist.get('critical', 0)}"
-                )
+                    cash_burn_universe = [{"ticker": t.upper()} for t in active_tickers]
+                    cash_burn_result = _safe_run_engine(
+                        "CashBurn",
+                        cash_burn_engine.score_universe,
+                        cash_burn_universe,
+                        cash_burn_financial,
+                        cash_burn_clinical,
+                        as_of_date_obj,
+                    )
+
+                    diag_cb = cash_burn_result.get("diagnostic_counts", {})
+                    trajectory_dist = diag_cb.get("trajectory_distribution", {})
+                    risk_dist = diag_cb.get("risk_distribution", {})
+                    logger.info(f"  Cash burn trajectory: {diag_cb.get('total_scored', 0)} scored")
+                    logger.info(
+                        f"    Trajectory: decel={trajectory_dist.get('decelerating', 0)}, "
+                        f"stable={trajectory_dist.get('stable', 0)}, "
+                        f"accel={trajectory_dist.get('accelerating', 0)}, "
+                        f"justified={trajectory_dist.get('accelerating_justified', 0)}, "
+                        f"unknown={trajectory_dist.get('unknown', 0)}"
+                    )
+                    logger.info(
+                        f"    Risk: low={risk_dist.get('low', 0)}, "
+                        f"moderate={risk_dist.get('moderate', 0)}, "
+                        f"high={risk_dist.get('high', 0)}, "
+                        f"critical={risk_dist.get('critical', 0)}"
+                    )
+
+                except Exception as _exc:
+                    logger.warning("Enhancement 'CashBurn' failed: %s — skipping", _exc)
 
             # Step 12: Calculate phase transition momentum scores (if available)
             phase_momentum_result = None
             if HAS_PHASE_MOMENTUM_ENGINE:
-                phase_momentum_engine = PhaseTransitionEngine()
+                try:
+                    phase_momentum_engine = PhaseTransitionEngine()
 
-                # Build trials by ticker map
-                trials_by_ticker = {}
-                for trial in trial_records:
-                    ticker = trial.get("ticker", "").upper()
-                    if ticker:
-                        if ticker not in trials_by_ticker:
-                            trials_by_ticker[ticker] = []
-                        trials_by_ticker[ticker].append(trial)
+                    # Build trials by ticker map
+                    trials_by_ticker = {}
+                    for trial in trial_records:
+                        ticker = trial.get("ticker", "").upper()
+                        if ticker:
+                            if ticker not in trials_by_ticker:
+                                trials_by_ticker[ticker] = []
+                            trials_by_ticker[ticker].append(trial)
 
-                phase_momentum_universe = [{"ticker": t.upper()} for t in active_tickers]
-                phase_momentum_result = phase_momentum_engine.score_universe(
-                    phase_momentum_universe, trials_by_ticker, None, as_of_date_obj
-                )
+                    phase_momentum_universe = [{"ticker": t.upper()} for t in active_tickers]
+                    phase_momentum_result = _safe_run_engine(
+                        "PhaseMomentum",
+                        phase_momentum_engine.score_universe,
+                        phase_momentum_universe,
+                        trials_by_ticker,
+                        None,
+                        as_of_date_obj,
+                    )
 
-                diag_pm = phase_momentum_result.get("diagnostic_counts", {})
-                momentum_dist = diag_pm.get("momentum_distribution", {})
-                logger.info(f"  Phase momentum: {diag_pm.get('total_scored', 0)} scored")
-                logger.info(
-                    f"    Momentum: strong_pos={momentum_dist.get('strong_positive', 0)}, "
-                    f"pos={momentum_dist.get('positive', 0)}, "
-                    f"neutral={momentum_dist.get('neutral', 0)}, "
-                    f"neg={momentum_dist.get('negative', 0)}, "
-                    f"strong_neg={momentum_dist.get('strong_negative', 0)}"
-                )
+                    diag_pm = phase_momentum_result.get("diagnostic_counts", {})
+                    momentum_dist = diag_pm.get("momentum_distribution", {})
+                    logger.info(f"  Phase momentum: {diag_pm.get('total_scored', 0)} scored")
+                    logger.info(
+                        f"    Momentum: strong_pos={momentum_dist.get('strong_positive', 0)}, "
+                        f"pos={momentum_dist.get('positive', 0)}, "
+                        f"neutral={momentum_dist.get('neutral', 0)}, "
+                        f"neg={momentum_dist.get('negative', 0)}, "
+                        f"strong_neg={momentum_dist.get('strong_negative', 0)}"
+                    )
+
+                except Exception as _exc:
+                    logger.warning("Enhancement 'PhaseMomentum' failed: %s — skipping", _exc)
 
             # Step 13: Calculate Morningstar quantitative signal scores (if available)
             morningstar_result = None
@@ -9787,7 +8964,13 @@ def run_screening_pipeline(
                 ms_loaded = ms_engine.load_data(Path(data_dir))
                 if ms_loaded > 0:
                     ms_universe = [{"ticker": t.upper()} for t in active_tickers]
-                    morningstar_result = ms_engine.score_universe(ms_universe, market_data_by_ticker, as_of_date_obj)
+                    morningstar_result = _safe_run_engine(
+                        "Morningstar",
+                        ms_engine.score_universe,
+                        ms_universe,
+                        market_data_by_ticker,
+                        as_of_date_obj,
+                    )
                     ms_diag = morningstar_result.get("diagnostic_counts", {})
                     logger.info(
                         f"  Morningstar signals: {ms_diag.get('total_scored', 0)} scored, "

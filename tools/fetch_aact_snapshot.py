@@ -556,7 +556,7 @@ def download_aact_snapshot(download_dir: Path, snapshot_date: str | None = None)
     log.info("Downloading AACT flat files from %s", url)
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "WakeRobin-AACT-Agent/1.0"})
-        with urllib.request.urlopen(req) as resp:
+        with urllib.request.urlopen(req, timeout=120) as resp:
             with open(dest, "wb") as f:
                 while True:
                     chunk = resp.read(8192)

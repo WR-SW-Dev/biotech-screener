@@ -163,10 +163,29 @@ def load_policy(path: Optional[Path] = None) -> Dict[str, Any]:
 
 
 def load_rankings(snap_dir: Path) -> List[Dict[str, str]]:
-    """Load rankings.csv from snapshot, return eligible rows sorted by rank."""
+    """Load rankings.csv from snapshot, return eligible rows sorted by rank.
+
+    If a .sha256 sidecar exists, the file integrity is verified before loading.
+    A mismatch logs a warning but does not block loading (defense in depth).
+    """
     csv_path = snap_dir / "rankings.csv"
     if not csv_path.is_file():
         raise FileNotFoundError(f"rankings.csv not found in {snap_dir}")
+
+    # Verify integrity if sidecar exists
+    try:
+        import logging
+
+        from common.snapshot_integrity import verify_checksum
+
+        if not verify_checksum(csv_path):
+            logging.getLogger(__name__).warning(
+                "Checksum mismatch for %s — file may have been modified",
+                csv_path,
+            )
+    except ImportError:
+        pass
+
     with open(csv_path, encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     eligible = [r for r in rows if r.get("eligible") == "1"]

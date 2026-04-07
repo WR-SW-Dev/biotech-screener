@@ -1,4 +1,5 @@
 """Tests for drift monitoring gate in run_daily_production.py."""
+
 from __future__ import annotations
 
 import csv
@@ -6,15 +7,18 @@ import json
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from run_daily_production import (
-    DriftThresholds,
-    _compute_drift_metrics,
-    _find_prior_snapshot,
-    check_drift_monitoring,
+from run_daily_production import DriftThresholds, _find_prior_snapshot, check_drift_monitoring
+
+# Thresholds with FAIL disabled — for tests that only check WARN behavior
+WARN_ONLY_THRESHOLDS = DriftThresholds(
+    fail_top20_overlap_pct=-1.0,
+    fail_top60_overlap_pct=-1.0,
+    fail_rank_spearman_rho=-2.0,
+    fail_mean_abs_rank_delta_top60=9999.0,
+    fail_tier_migration_count=9999,
+    fail_eligibility_change_count=9999,
 )
 
 
@@ -23,8 +27,12 @@ from run_daily_production import (
 # ---------------------------------------------------------------------------
 
 HEADER = [
-    "ticker", "actionable_rank", "tier_dev", "eligible",
-    "composite_rank", "composite_score",
+    "ticker",
+    "actionable_rank",
+    "tier_dev",
+    "eligible",
+    "composite_rank",
+    "composite_score",
 ]
 
 
@@ -222,7 +230,7 @@ class TestCheckDriftMonitoring:
         staging = tmp_path / "staging" / "2026-02-19"
         _write_rankings(staging / "rankings.csv", rows_current)
 
-        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
         assert gate.status == "WARN"
         assert any("warn_top20_overlap_pct" in r for r in gate.detail.split(";"))
 
@@ -243,7 +251,7 @@ class TestCheckDriftMonitoring:
         staging = tmp_path / "staging" / "2026-02-19"
         _write_rankings(staging / "rankings.csv", rows_current)
 
-        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
         assert gate.status == "WARN"
         assert any("warn_rank_spearman_rho" in r for r in gate.detail.split(";"))
 
@@ -295,13 +303,13 @@ class TestCheckDriftMonitoring:
         staging = tmp_path / "staging" / "2026-02-19"
         _write_rankings(staging / "rankings.csv", rows_current)
 
-        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
         assert gate.status == "WARN"
         # At least overlap should be triggered
         assert "warn_top20_overlap_pct" in gate.detail
 
-    def test_never_fails(self, tmp_path):
-        """Even extreme drift → status is WARN, never FAIL."""
+    def test_extreme_drift_fails(self, tmp_path):
+        """Extreme drift (0% overlap) → status is FAIL (blocks promotion)."""
         rows_prior = _make_tickers(30)
         # Totally different universe
         rows_current = _make_tickers(30, start=100)
@@ -313,6 +321,29 @@ class TestCheckDriftMonitoring:
         _write_rankings(staging / "rankings.csv", rows_current)
 
         gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        assert gate.status == "FAIL"
+
+    def test_extreme_drift_with_disabled_fail_thresholds(self, tmp_path):
+        """With FAIL thresholds disabled, extreme drift only WARNs."""
+        rows_prior = _make_tickers(30)
+        rows_current = _make_tickers(30, start=100)
+
+        snapshot_dir = tmp_path / "snapshots"
+        _write_rankings(snapshot_dir / "2026-02-18" / "rankings.csv", rows_prior)
+
+        staging = tmp_path / "staging" / "2026-02-19"
+        _write_rankings(staging / "rankings.csv", rows_current)
+
+        # Disable FAIL by setting impossibly permissive thresholds
+        permissive = DriftThresholds(
+            fail_top20_overlap_pct=0.0,
+            fail_top60_overlap_pct=0.0,
+            fail_rank_spearman_rho=0.0,
+            fail_mean_abs_rank_delta_top60=999.0,
+            fail_tier_migration_count=999,
+            fail_eligibility_change_count=999,
+        )
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", permissive)
         assert gate.status in ("PASS", "WARN")
         assert gate.status != "FAIL"
 
@@ -354,13 +385,14 @@ class TestCheckDriftMonitoring:
         with open(staging / "drift_report.json") as f:
             report = json.load(f)
 
-        assert report["version"] == "1.0.0"
+        assert report["version"] in ("1.0.0", "1.1.0")
         assert "thresholds_id" in report
         assert "metrics" in report
         assert "status" in report
         assert "current_date" in report
         assert "prior_date" in report
         assert "warn_reasons" in report
+        assert "fail_reasons" in report
 
         metrics = report["metrics"]
         assert "top20_overlap_pct" in metrics
@@ -378,18 +410,23 @@ class TestCheckDriftMonitoring:
             writer = csv.DictWriter(f, fieldnames=["ticker", "composite_rank", "tier_dev", "eligible"])
             writer.writeheader()
             for i in range(1, 31):
-                writer.writerow({
-                    "ticker": f"TICK{i}",
-                    "composite_rank": str(i),
-                    "tier_dev": "A" if i <= 7 else "B",
-                    "eligible": "True",
-                })
+                writer.writerow(
+                    {
+                        "ticker": f"TICK{i}",
+                        "composite_rank": str(i),
+                        "tier_dev": "A" if i <= 7 else "B",
+                        "eligible": "True",
+                    }
+                )
 
         staging = tmp_path / "staging" / "2026-02-19"
         _write_rankings(staging / "rankings.csv", _make_tickers(30))
 
         gate = check_drift_monitoring(
-            staging, tmp_path / "snapshots", "2026-02-19", DriftThresholds(),
+            staging,
+            tmp_path / "snapshots",
+            "2026-02-19",
+            DriftThresholds(),
         )
         assert gate.status in ("PASS", "WARN")
         assert gate.value["rank_column_prior"] == "composite_rank"
@@ -414,7 +451,7 @@ class TestCheckDriftMonitoring:
         staging = tmp_path / "staging" / "2026-02-19"
         _write_rankings(staging / "rankings.csv", rows_current)
 
-        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
         assert gate.status == "WARN"
         assert "warn_mean_abs_rank_delta_top60" in gate.detail
 
@@ -424,12 +461,7 @@ class TestCheckDriftMonitoring:
 # ---------------------------------------------------------------------------
 
 import pandas as pd
-
-from run_drift_report import (
-    DriftGuardrails,
-    _institutional_metrics,
-    evaluate_guardrails,
-)
+from run_drift_report import DriftGuardrails, _institutional_metrics, evaluate_guardrails
 
 
 def _make_inst_rankings(n: int = 30, nonzero_z_pct: float = 50.0) -> pd.DataFrame:
@@ -440,13 +472,15 @@ def _make_inst_rankings(n: int = 30, nonzero_z_pct: float = 50.0) -> pd.DataFram
     n_nonzero = int(n * nonzero_z_pct / 100)
     for i in range(n):
         z = round(np.random.default_rng(i).standard_normal(), 4) if i < n_nonzero else 0.0
-        rows.append({
-            "ticker": f"TICK{i+1}",
-            "archetype": "drug_developer",
-            "actionable_rank": str(i + 1),
-            "inst_delta_z": z,
-            "inst_delta_net": 1 if z > 0 else 0,
-        })
+        rows.append(
+            {
+                "ticker": f"TICK{i+1}",
+                "archetype": "drug_developer",
+                "actionable_rank": str(i + 1),
+                "inst_delta_z": z,
+                "inst_delta_net": 1 if z > 0 else 0,
+            }
+        )
     return pd.DataFrame(rows)
 
 
@@ -465,11 +499,13 @@ class TestInstitutionalMetrics:
 
     def test_inst_metrics_absent(self):
         """Returns None when columns missing (old snapshots)."""
-        df = pd.DataFrame({
-            "ticker": ["TICK1"],
-            "archetype": ["drug_developer"],
-            "actionable_rank": ["1"],
-        })
+        df = pd.DataFrame(
+            {
+                "ticker": ["TICK1"],
+                "archetype": ["drug_developer"],
+                "actionable_rank": ["1"],
+            }
+        )
         result = _institutional_metrics(df)
         assert result is None
 

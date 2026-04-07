@@ -20,12 +20,15 @@ Version: 2.0.0
 from __future__ import annotations
 
 import hashlib
+import logging
 import math
 import re
 from dataclasses import dataclass
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
+
+logger = logging.getLogger(__name__)
 
 __version__ = "2.0.0"
 __all__ = [
@@ -852,6 +855,7 @@ def compute_competitive_intensity(
 
     # Score each ticker
     raw_results: Dict[str, Dict[str, Any]] = {}
+    failed_tickers = []
     for ticker in active_tickers:
         tk = ticker.upper()
         try:
@@ -861,18 +865,37 @@ def compute_competitive_intensity(
                 "crowding_level": str(score_result.get("crowding_level", "uncrowded")),
                 "competitor_count": int(score_result.get("competitor_count", 0)),
             }
-        except Exception:
+        except (KeyError, TypeError, ValueError) as exc:
+            logger.debug("Competitive scoring failed for %s: %s", tk, exc)
             raw_results[tk] = {
-                "competitive_intensity_score": 0.0,
-                "crowding_level": "uncrowded",
+                "competitive_intensity_score": float("nan"),
+                "crowding_level": "unknown",
                 "competitor_count": 0,
             }
+            failed_tickers.append(tk)
+        except Exception as exc:
+            logger.warning("Unexpected error scoring %s: %s", tk, exc)
+            raw_results[tk] = {
+                "competitive_intensity_score": float("nan"),
+                "crowding_level": "unknown",
+                "competitor_count": 0,
+            }
+            failed_tickers.append(tk)
 
-    # Z-score across universe (ddof=0)
-    scores: list[float] = [float(v["competitive_intensity_score"]) for v in raw_results.values()]
-    if scores:
-        mean_val = sum(scores) / len(scores)
-        var_val = sum((s - mean_val) ** 2 for s in scores) / len(scores)
+    if failed_tickers:
+        logger.warning("Competitive scoring: %d/%d tickers failed", len(failed_tickers), len(active_tickers))
+
+    # Z-score across universe (ddof=0) — exclude NaN (failed tickers) from stats
+    import math
+
+    valid_scores: list[float] = [
+        float(v["competitive_intensity_score"])
+        for v in raw_results.values()
+        if not math.isnan(float(v["competitive_intensity_score"]))
+    ]
+    if valid_scores:
+        mean_val = sum(valid_scores) / len(valid_scores)
+        var_val = sum((s - mean_val) ** 2 for s in valid_scores) / len(valid_scores)
         std_val = var_val**0.5
     else:
         mean_val = 0.0
@@ -881,7 +904,10 @@ def compute_competitive_intensity(
     result = {}
     for tk, data in raw_results.items():
         ci_score = float(data["competitive_intensity_score"])
-        if std_val > 0:
+        if math.isnan(ci_score):
+            z = 0.0
+            ci_score = 0.0
+        elif std_val > 0:
             z = (ci_score - mean_val) / std_val
         else:
             z = 0.0

@@ -18,7 +18,7 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-REPO_ROOT = Path("/mnt/c/Projects/biotech_screener/biotech-screener")
+REPO_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 LOGS_DIR = REPO_ROOT / "logs"

@@ -179,6 +179,12 @@ class SelectorConfig:
     # --- Missingness penalty per missing signal (subtracted from block score) ---
     missing_signal_penalty: float = 0.10
 
+    # --- Z-score bounds for numeric signals ---
+    # Selector uses [-3, 3] → [0, 1] for absolute scoring. Wider bounds than
+    # the ranker ([-2, 2]) because selector ranks the full universe where
+    # outliers carry more information.
+    z_score_clamp: float = 3.0
+
     # --- Rank bucket cutoffs ---
     top_10_cutoff: int = 10
     top_30_cutoff: int = 30
@@ -248,11 +254,17 @@ def _score_signal(
     row: Dict[str, Any],
     spec: SignalSpec,
     cohort_stats: Dict[str, _CohortStats],
+    z_clamp: float = 3.0,
 ) -> Tuple[float, bool]:
     """Score a single signal for a row.
 
-    Returns (score, is_missing). Score is in roughly [-2, 2] z-space for
-    numeric signals, [0, 1] for categorical signals.
+    Returns (score, is_missing). Score is in [0, 1] for both categorical
+    and numeric signals. Numeric signals are z-scored and clamped to
+    [-z_clamp, z_clamp] then rescaled to [0, 1].
+
+    The selector uses z_clamp=3.0 (wider) because it ranks the full
+    universe where outliers carry more information. The ranker uses 2.0
+    (tighter) because it adjusts within a pre-filtered cohort.
     """
     raw = row.get(spec.name)
 
@@ -285,14 +297,13 @@ def _score_signal(
         return (0.0, False)
 
     z = (fval - stats.mean) / stats.std
-    # Clamp to [-3, 3] to limit outlier influence
-    z = max(-3.0, min(3.0, z))
+    z = max(-z_clamp, min(z_clamp, z))
 
     if not spec.higher_is_better:
         z = -z
 
-    # Rescale z from [-3, 3] to [0, 1] for uniform block aggregation
-    score = (z + 3.0) / 6.0
+    # Rescale z from [-z_clamp, z_clamp] to [0, 1] for uniform block aggregation
+    score = (z + z_clamp) / (2.0 * z_clamp)
     return (score, False)
 
 
@@ -301,6 +312,7 @@ def _compute_block_score(
     signals: Tuple[SignalSpec, ...],
     cohort_stats: Dict[str, _CohortStats],
     missing_penalty: float,
+    z_clamp: float = 3.0,
 ) -> Tuple[float, int]:
     """Compute a weighted block sub-score.
 
@@ -311,7 +323,7 @@ def _compute_block_score(
     missing_count = 0
 
     for spec in signals:
-        score, is_missing = _score_signal(row, spec, cohort_stats)
+        score, is_missing = _score_signal(row, spec, cohort_stats, z_clamp=z_clamp)
         if is_missing:
             missing_count += 1
             # Missing signal: use neutral score (0.5) minus penalty
@@ -392,7 +404,13 @@ def compute_selector_scores(
             if bw <= 0:
                 row_blocks[block_name] = 0.5  # neutral placeholder for zero-weight blocks
                 continue
-            bscore, bmissing = _compute_block_score(row, signals, cohort_stats, config.missing_signal_penalty)
+            bscore, bmissing = _compute_block_score(
+                row,
+                signals,
+                cohort_stats,
+                config.missing_signal_penalty,
+                z_clamp=config.z_score_clamp,
+            )
             row_blocks[block_name] = round(bscore, 6)
             total_missing += bmissing
             weighted_sum += bw * bscore

@@ -109,6 +109,7 @@ class EventEVCalculator:
 
         # Run layers
         event_evs = []
+        failed_nodes = []
         for node in cohort:
             try:
                 ev = self._process_single(
@@ -119,6 +120,15 @@ class EventEVCalculator:
                 event_evs.append(ev)
             except Exception:
                 logger.exception("Failed to process node %s (%s)", node.node_id, node.ticker)
+                failed_nodes.append(node.node_id)
+
+        if failed_nodes:
+            logger.warning(
+                "EV calculation: %d/%d nodes failed: %s",
+                len(failed_nodes),
+                len(cohort),
+                failed_nodes[:10],
+            )
 
         # Sort by downside-adjusted EV
         event_evs.sort(key=lambda ev: ev.payoff.downside_adjusted_ev, reverse=True)
@@ -230,7 +240,7 @@ class EventEVCalculator:
                                 shape,
                                 0.0,  # epr_z=0 for single-name (no cross-section here)
                             )
-        except Exception:
+        except (KeyError, TypeError, ValueError, ZeroDivisionError):
             logger.debug("Branch sensitivity failed for %s — skipping", node.ticker)
 
         return EventEV(

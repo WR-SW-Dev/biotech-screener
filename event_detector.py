@@ -5,13 +5,13 @@ event_detector.py - CT.gov Catalyst Event Detection
 Detects status changes, timeline shifts, and date confirmations from trial deltas.
 """
 
+import logging
 from dataclasses import dataclass
 from datetime import date, timedelta
-from typing import Optional, Protocol
 from enum import Enum
-import logging
+from typing import Optional, Protocol
 
-from ctgov_adapter import CanonicalTrialRecord, CTGovStatus, CompletionType
+from ctgov_adapter import CanonicalTrialRecord, CompletionType, CTGovStatus
 
 logger = logging.getLogger(__name__)
 
@@ -20,29 +20,40 @@ logger = logging.getLogger(__name__)
 # MARKET CALENDAR PROTOCOL
 # ============================================================================
 
+
 class MarketCalendar(Protocol):
     """Interface for market calendar"""
+
     def next_trading_day(self, d: date) -> date:
         """Returns next NYSE trading day after given date"""
         ...
 
 
 class SimpleMarketCalendar:
-    """Simple market calendar that skips weekends (for testing)"""
+    """Market calendar that skips weekends and US market holidays."""
+
     def next_trading_day(self, d: date) -> date:
-        """Skip weekends, no holiday handling"""
-        next_day = d + timedelta(days=1)
-        while next_day.weekday() >= 5:  # Saturday=5, Sunday=6
-            next_day += timedelta(days=1)
-        return next_day
+        """Return the next NYSE trading day after d."""
+        try:
+            from common.market_calendar import next_trading_day
+
+            return next_trading_day(d)
+        except ImportError:
+            # Fallback: weekends only
+            next_day = d + timedelta(days=1)
+            while next_day.weekday() >= 5:
+                next_day += timedelta(days=1)
+            return next_day
 
 
 # ============================================================================
 # EVENT TYPES
 # ============================================================================
 
+
 class EventType(Enum):
     """Catalyst event types from CT.gov deltas"""
+
     CT_STATUS_SEVERE_NEG = "CT_STATUS_SEVERE_NEG"
     CT_STATUS_DOWNGRADE = "CT_STATUS_DOWNGRADE"
     CT_STATUS_UPGRADE = "CT_STATUS_UPGRADE"
@@ -63,9 +74,11 @@ class EventType(Enum):
 # CATALYST EVENT
 # ============================================================================
 
+
 @dataclass
 class CatalystEvent:
     """Single catalyst event from CT.gov delta with full explainability"""
+
     source: str = "CTGOV"
     nct_id: str = ""
     event_type: EventType = EventType.CT_STATUS_UPGRADE
@@ -110,17 +123,17 @@ class CatalystEvent:
     def to_dict(self) -> dict:
         """Serialize for JSON with full explainability"""
         return {
-            'source': self.source,
-            'nct_id': self.nct_id,
-            'event_type': self.event_type.value,
-            'direction': self.direction,
-            'impact': self.impact,
-            'confidence': self.confidence,
-            'disclosed_at': self.disclosed_at.isoformat(),
-            'fields_changed': self.fields_changed,
-            'actual_date': self.actual_date.isoformat() if self.actual_date else None,
-            'event_rule_id': self.event_rule_id,
-            'confidence_reason': self.confidence_reason,
+            "source": self.source,
+            "nct_id": self.nct_id,
+            "event_type": self.event_type.value,
+            "direction": self.direction,
+            "impact": self.impact,
+            "confidence": self.confidence,
+            "disclosed_at": self.disclosed_at.isoformat(),
+            "fields_changed": self.fields_changed,
+            "actual_date": self.actual_date.isoformat() if self.actual_date else None,
+            "event_rule_id": self.event_rule_id,
+            "confidence_reason": self.confidence_reason,
         }
 
 
@@ -128,57 +141,53 @@ class CatalystEvent:
 # EVENT CLASSIFICATION
 # ============================================================================
 
-def classify_status_change(
-    old_status: CTGovStatus, 
-    new_status: CTGovStatus
-) -> tuple[Optional[EventType], int, str]:
+
+def classify_status_change(old_status: CTGovStatus, new_status: CTGovStatus) -> tuple[Optional[EventType], int, str]:
     """
     Classify status change event
-    
+
     Returns: (event_type, impact, direction)
     """
     # Granular terminal statuses
     if new_status == CTGovStatus.TERMINATED:
-        return (EventType.CT_TRIAL_TERMINATED, 3, 'NEG')
+        return (EventType.CT_TRIAL_TERMINATED, 3, "NEG")
     if new_status == CTGovStatus.WITHDRAWN:
-        return (EventType.CT_TRIAL_WITHDRAWN, 3, 'NEG')
+        return (EventType.CT_TRIAL_WITHDRAWN, 3, "NEG")
     if new_status == CTGovStatus.SUSPENDED:
-        return (EventType.CT_TRIAL_SUSPENDED, 2, 'NEG')  # May resume
-    
+        return (EventType.CT_TRIAL_SUSPENDED, 2, "NEG")  # May resume
+
     # Directional change based on status ordering
     if new_status.value < old_status.value:
         # Downgrade
         delta = old_status.value - new_status.value
         impact = min(3, 1 + delta // 2)
-        return (EventType.CT_STATUS_DOWNGRADE, impact, 'NEG')
-    
+        return (EventType.CT_STATUS_DOWNGRADE, impact, "NEG")
+
     elif new_status.value > old_status.value:
         # Upgrade
         delta = new_status.value - old_status.value
         impact = min(3, 1 + delta // 2)
-        return (EventType.CT_STATUS_UPGRADE, impact, 'POS')
-    
+        return (EventType.CT_STATUS_UPGRADE, impact, "POS")
+
     else:
         # No change
-        return (None, 0, 'NEUTRAL')
+        return (None, 0, "NEUTRAL")
 
 
 def classify_timeline_change(
-    old_date: date,
-    new_date: date,
-    noise_band_days: int = 14
+    old_date: date, new_date: date, noise_band_days: int = 14
 ) -> tuple[Optional[EventType], int, str]:
     """
     Classify timeline change event
-    
+
     Returns: (event_type, impact, direction)
     Ignores changes <14 days as noise
     """
     delta_days = (new_date - old_date).days
-    
+
     if abs(delta_days) < noise_band_days:
-        return (None, 0, 'NEUTRAL')
-    
+        return (None, 0, "NEUTRAL")
+
     # Severity scaling
     if abs(delta_days) < 60:
         impact = 1
@@ -186,11 +195,11 @@ def classify_timeline_change(
         impact = 2
     else:
         impact = 3
-    
+
     if delta_days >= noise_band_days:
-        return (EventType.CT_TIMELINE_PUSHOUT, impact, 'NEG')
+        return (EventType.CT_TIMELINE_PUSHOUT, impact, "NEG")
     else:  # delta_days <= -noise_band_days
-        return (EventType.CT_TIMELINE_PULLIN, impact, 'POS')
+        return (EventType.CT_TIMELINE_PULLIN, impact, "POS")
 
 
 def classify_date_confirmation(
@@ -198,54 +207,53 @@ def classify_date_confirmation(
     new_type: Optional[CompletionType],
     actual_date: date,
     as_of_date: date,
-    recency_threshold_days: int = 90
+    recency_threshold_days: int = 90,
 ) -> tuple[Optional[EventType], int, str, Optional[date]]:
     """
     Classify date confirmation event
-    
+
     Returns: (event_type, impact, direction, actual_date)
     """
     # Detect ANTICIPATED/ESTIMATED → ACTUAL transitions
-    if (old_type in {CompletionType.ANTICIPATED, CompletionType.ESTIMATED} and 
-        new_type == CompletionType.ACTUAL):
-        
+    if old_type in {CompletionType.ANTICIPATED, CompletionType.ESTIMATED} and new_type == CompletionType.ACTUAL:
+
         days_since_actual = (as_of_date - actual_date).days
-        
+
         if days_since_actual <= recency_threshold_days:
-            return (EventType.CT_DATE_CONFIRMED_ACTUAL, 1, 'POS', actual_date)
-    
-    return (None, 0, 'NEUTRAL', None)
+            return (EventType.CT_DATE_CONFIRMED_ACTUAL, 1, "POS", actual_date)
+
+    return (None, 0, "NEUTRAL", None)
 
 
 def classify_results_posted(
-    old_results_date: Optional[date],
-    new_results_date: Optional[date]
+    old_results_date: Optional[date], new_results_date: Optional[date]
 ) -> tuple[Optional[EventType], int, str]:
     """
     Classify results posted event
-    
+
     Returns: (event_type, impact, direction)
     """
     if old_results_date is None and new_results_date is not None:
-        return (EventType.CT_RESULTS_POSTED, 1, 'NEUTRAL')
-    elif (old_results_date != new_results_date and 
-          new_results_date is not None):
-        return (EventType.CT_RESULTS_POSTED, 1, 'NEUTRAL')
-    
-    return (None, 0, 'NEUTRAL')
+        return (EventType.CT_RESULTS_POSTED, 1, "NEUTRAL")
+    elif old_results_date != new_results_date and new_results_date is not None:
+        return (EventType.CT_RESULTS_POSTED, 1, "NEUTRAL")
+
+    return (None, 0, "NEUTRAL")
 
 
 # ============================================================================
 # EVENT DETECTOR
 # ============================================================================
 
+
 @dataclass
 class EventDetectorConfig:
     """Configuration for event detection"""
+
     noise_band_days: int = 14
     recency_threshold_days: int = 90
     confidence_scores: dict = None
-    
+
     def __post_init__(self):
         if self.confidence_scores is None:
             self.confidence_scores = {
@@ -265,24 +273,21 @@ class EventDetectorConfig:
 
 class EventDetector:
     """Detects catalyst events from trial record deltas"""
-    
+
     def __init__(self, config: EventDetectorConfig = EventDetectorConfig()):
         self.config = config
-    
+
     def detect_events(
-        self,
-        current_record: CanonicalTrialRecord,
-        prior_record: Optional[CanonicalTrialRecord],
-        as_of_date: date
+        self, current_record: CanonicalTrialRecord, prior_record: Optional[CanonicalTrialRecord], as_of_date: date
     ) -> list[CatalystEvent]:
         """
         Detect all catalyst events for a single trial
-        
+
         Args:
             current_record: Current state
             prior_record: Prior state (None if first ingest)
             as_of_date: Date for PIT validation
-        
+
         Returns:
             List of catalyst events
         """
@@ -300,43 +305,49 @@ class EventDetector:
         # Status change detection
         if current_record.overall_status != prior_record.overall_status:
             event_type, impact, direction = classify_status_change(
-                prior_record.overall_status,
-                current_record.overall_status
+                prior_record.overall_status, current_record.overall_status
             )
             if event_type:
                 # Generate confidence reason
                 if event_type == EventType.CT_STATUS_SEVERE_NEG:
-                    confidence_reason = f"Trial status changed to {current_record.overall_status.name} (terminal negative)"
-                elif direction == 'NEG':
-                    confidence_reason = f"Status downgrade: {prior_record.overall_status.name} → {current_record.overall_status.name}"
+                    confidence_reason = (
+                        f"Trial status changed to {current_record.overall_status.name} (terminal negative)"
+                    )
+                elif direction == "NEG":
+                    confidence_reason = (
+                        f"Status downgrade: {prior_record.overall_status.name} → {current_record.overall_status.name}"
+                    )
                 else:
-                    confidence_reason = f"Status upgrade: {prior_record.overall_status.name} → {current_record.overall_status.name}"
+                    confidence_reason = (
+                        f"Status upgrade: {prior_record.overall_status.name} → {current_record.overall_status.name}"
+                    )
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    fields_changed={
-                        'overallStatus': [
-                            prior_record.overall_status.name,
-                            current_record.overall_status.name
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
-        
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        fields_changed={
+                            "overallStatus": [prior_record.overall_status.name, current_record.overall_status.name]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
+
         # Primary completion date change
-        if (current_record.primary_completion_date and
-            prior_record.primary_completion_date and
-            current_record.primary_completion_date != prior_record.primary_completion_date):
+        if (
+            current_record.primary_completion_date
+            and prior_record.primary_completion_date
+            and current_record.primary_completion_date != prior_record.primary_completion_date
+        ):
 
             event_type, impact, direction = classify_timeline_change(
                 prior_record.primary_completion_date,
                 current_record.primary_completion_date,
-                self.config.noise_band_days
+                self.config.noise_band_days,
             )
             if event_type is None:
                 # Small date change filtered as noise - suppress activity proxy
@@ -348,31 +359,33 @@ class EventDetector:
                 else:
                     confidence_reason = f"Primary completion date pulled in by {abs(delta_days)} days"
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    fields_changed={
-                        'primaryCompletionDate': [
-                            prior_record.primary_completion_date.isoformat(),
-                            current_record.primary_completion_date.isoformat()
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
-        
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        fields_changed={
+                            "primaryCompletionDate": [
+                                prior_record.primary_completion_date.isoformat(),
+                                current_record.primary_completion_date.isoformat(),
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
+
         # Study completion date change
-        if (current_record.completion_date and
-            prior_record.completion_date and
-            current_record.completion_date != prior_record.completion_date):
+        if (
+            current_record.completion_date
+            and prior_record.completion_date
+            and current_record.completion_date != prior_record.completion_date
+        ):
 
             event_type, impact, direction = classify_timeline_change(
-                prior_record.completion_date,
-                current_record.completion_date,
-                self.config.noise_band_days
+                prior_record.completion_date, current_record.completion_date, self.config.noise_band_days
             )
             if event_type is None:
                 # Small date change filtered as noise - suppress activity proxy
@@ -384,93 +397,111 @@ class EventDetector:
                 else:
                     confidence_reason = f"Study completion date pulled in by {abs(delta_days)} days"
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    fields_changed={
-                        'completionDate': [
-                            prior_record.completion_date.isoformat(),
-                            current_record.completion_date.isoformat()
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        fields_changed={
+                            "completionDate": [
+                                prior_record.completion_date.isoformat(),
+                                current_record.completion_date.isoformat(),
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
 
         # Primary completion type change (ANTICIPATED → ACTUAL)
-        if (current_record.primary_completion_type != prior_record.primary_completion_type and
-            current_record.primary_completion_date):
+        if (
+            current_record.primary_completion_type != prior_record.primary_completion_type
+            and current_record.primary_completion_date
+        ):
 
             event_type, impact, direction, actual_date = classify_date_confirmation(
                 prior_record.primary_completion_type,
                 current_record.primary_completion_type,
                 current_record.primary_completion_date,
                 as_of_date,
-                self.config.recency_threshold_days
+                self.config.recency_threshold_days,
             )
             if event_type:
-                prior_type = prior_record.primary_completion_type.value if prior_record.primary_completion_type else 'None'
-                current_type = current_record.primary_completion_type.value if current_record.primary_completion_type else 'None'
+                prior_type = (
+                    prior_record.primary_completion_type.value if prior_record.primary_completion_type else "None"
+                )
+                current_type = (
+                    current_record.primary_completion_type.value if current_record.primary_completion_type else "None"
+                )
                 confidence_reason = f"Primary completion type changed: {prior_type} → {current_type}"
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    actual_date=actual_date,
-                    fields_changed={
-                        'primaryCompletionType': [
-                            prior_record.primary_completion_type.value if prior_record.primary_completion_type else None,
-                            current_record.primary_completion_type.value if current_record.primary_completion_type else None
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        actual_date=actual_date,
+                        fields_changed={
+                            "primaryCompletionType": [
+                                (
+                                    prior_record.primary_completion_type.value
+                                    if prior_record.primary_completion_type
+                                    else None
+                                ),
+                                (
+                                    current_record.primary_completion_type.value
+                                    if current_record.primary_completion_type
+                                    else None
+                                ),
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
 
         # Study completion type change
-        if (current_record.completion_type != prior_record.completion_type and
-            current_record.completion_date):
+        if current_record.completion_type != prior_record.completion_type and current_record.completion_date:
 
             event_type, impact, direction, actual_date = classify_date_confirmation(
                 prior_record.completion_type,
                 current_record.completion_type,
                 current_record.completion_date,
                 as_of_date,
-                self.config.recency_threshold_days
+                self.config.recency_threshold_days,
             )
             if event_type:
-                prior_type = prior_record.completion_type.value if prior_record.completion_type else 'None'
-                current_type = current_record.completion_type.value if current_record.completion_type else 'None'
+                prior_type = prior_record.completion_type.value if prior_record.completion_type else "None"
+                current_type = current_record.completion_type.value if current_record.completion_type else "None"
                 confidence_reason = f"Study completion type changed: {prior_type} → {current_type}"
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    actual_date=actual_date,
-                    fields_changed={
-                        'completionType': [
-                            prior_record.completion_type.value if prior_record.completion_type else None,
-                            current_record.completion_type.value if current_record.completion_type else None
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        actual_date=actual_date,
+                        fields_changed={
+                            "completionType": [
+                                prior_record.completion_type.value if prior_record.completion_type else None,
+                                current_record.completion_type.value if current_record.completion_type else None,
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
 
         # Results posted detection
         if current_record.results_first_posted != prior_record.results_first_posted:
             event_type, impact, direction = classify_results_posted(
-                prior_record.results_first_posted,
-                current_record.results_first_posted
+                prior_record.results_first_posted, current_record.results_first_posted
             )
             if event_type:
                 if prior_record.results_first_posted is None:
@@ -478,32 +509,44 @@ class EventDetector:
                 else:
                     confidence_reason = f"Results posting date updated: {prior_record.results_first_posted} → {current_record.results_first_posted}"
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=event_type,
-                    direction=direction,
-                    impact=impact,
-                    confidence=self.config.confidence_scores[event_type],
-                    disclosed_at=disclosed_at,
-                    fields_changed={
-                        'resultsFirstPosted': [
-                            prior_record.results_first_posted.isoformat() if prior_record.results_first_posted else None,
-                            current_record.results_first_posted.isoformat() if current_record.results_first_posted else None
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=event_type,
+                        direction=direction,
+                        impact=impact,
+                        confidence=self.config.confidence_scores[event_type],
+                        disclosed_at=disclosed_at,
+                        fields_changed={
+                            "resultsFirstPosted": [
+                                (
+                                    prior_record.results_first_posted.isoformat()
+                                    if prior_record.results_first_posted
+                                    else None
+                                ),
+                                (
+                                    current_record.results_first_posted.isoformat()
+                                    if current_record.results_first_posted
+                                    else None
+                                ),
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
 
         # Activity proxy detection: trial was updated but no specific event type detected
         # This is a historical data workaround - CT.gov API only shows current state,
         # so we can't know what specifically changed. But an update indicates engagement.
         # NOTE: Skip activity proxy if small date changes were filtered as noise - we know
         # what changed, we just chose to ignore it as noise.
-        if (len(events) == 0 and
-            not noise_filtered and
-            current_record.last_update_posted is not None and
-            prior_record.last_update_posted is not None and
-            current_record.last_update_posted != prior_record.last_update_posted):
+        if (
+            len(events) == 0
+            and not noise_filtered
+            and current_record.last_update_posted is not None
+            and prior_record.last_update_posted is not None
+            and current_record.last_update_posted != prior_record.last_update_posted
+        ):
             # Only generate activity proxy if no other events were detected
             days_since_update = (as_of_date - current_record.last_update_posted).days
 
@@ -524,21 +567,31 @@ class EventDetector:
                     f"administrative update, protocol amendment, or enrollment activity."
                 )
 
-                events.append(CatalystEvent(
-                    nct_id=current_record.nct_id,
-                    event_type=EventType.CT_ACTIVITY_PROXY,
-                    direction='NEUTRAL',
-                    impact=impact,
-                    confidence=self.config.confidence_scores[EventType.CT_ACTIVITY_PROXY],
-                    disclosed_at=disclosed_at,
-                    fields_changed={
-                        'lastUpdatePosted': [
-                            prior_record.last_update_posted.isoformat() if prior_record.last_update_posted else None,
-                            current_record.last_update_posted.isoformat() if current_record.last_update_posted else None
-                        ]
-                    },
-                    confidence_reason=confidence_reason,
-                ))
+                events.append(
+                    CatalystEvent(
+                        nct_id=current_record.nct_id,
+                        event_type=EventType.CT_ACTIVITY_PROXY,
+                        direction="NEUTRAL",
+                        impact=impact,
+                        confidence=self.config.confidence_scores[EventType.CT_ACTIVITY_PROXY],
+                        disclosed_at=disclosed_at,
+                        fields_changed={
+                            "lastUpdatePosted": [
+                                (
+                                    prior_record.last_update_posted.isoformat()
+                                    if prior_record.last_update_posted
+                                    else None
+                                ),
+                                (
+                                    current_record.last_update_posted.isoformat()
+                                    if current_record.last_update_posted
+                                    else None
+                                ),
+                            ]
+                        },
+                        confidence_reason=confidence_reason,
+                    )
+                )
 
         return events
 
@@ -547,15 +600,13 @@ class EventDetector:
 # EVENT SCORING
 # ============================================================================
 
+
 def compute_event_score(
-    event: CatalystEvent,
-    as_of_date: date,
-    calendar: MarketCalendar,
-    decay_constant: float = 30.0
+    event: CatalystEvent, as_of_date: date, calendar: MarketCalendar, decay_constant: float = 30.0
 ) -> float:
     """
     Score = impact × confidence × proximity
-    
+
     Proximity decay:
     - CT.gov deltas are "now" events (proximity = 1.0 at disclosure)
     - Date confirmations decay from actual_date, not disclosed_at
@@ -570,7 +621,7 @@ def compute_event_score(
     else:
         # For other events, full proximity at disclosure
         proximity = 1.0
-    
+
     return event.impact * event.confidence * proximity
 
 
@@ -578,10 +629,9 @@ def compute_event_score(
 # ACTIVITY PROXY DETECTION (HISTORICAL DATA WORKAROUND)
 # ============================================================================
 
+
 def detect_activity_proxy_from_lookback(
-    trials: list[CanonicalTrialRecord],
-    as_of_date: date,
-    lookback_days: int = 120
+    trials: list[CanonicalTrialRecord], as_of_date: date, lookback_days: int = 120
 ) -> dict[str, list[CatalystEvent]]:
     """
     Detect activity proxy events from last_update_posted within lookback window.
@@ -626,13 +676,13 @@ def detect_activity_proxy_from_lookback(
         event = CatalystEvent(
             nct_id=trial.nct_id,
             event_type=EventType.CT_ACTIVITY_PROXY,
-            direction='NEUTRAL',
+            direction="NEUTRAL",
             impact=impact,
             confidence=0.30 * decay,  # Decayed confidence
             disclosed_at=trial.last_update_posted,
             fields_changed={
-                'lastUpdatePosted': [None, trial.last_update_posted.isoformat()],
-                'days_ago': days_since_update,
+                "lastUpdatePosted": [None, trial.last_update_posted.isoformat()],
+                "days_ago": days_since_update,
             },
             confidence_reason=(
                 f"Trial updated {days_since_update} days ago. "
@@ -653,7 +703,7 @@ def compute_activity_proxy_score(
     trials: list[CanonicalTrialRecord],
     as_of_date: date,
     lookback_days: int = 120,
-    phase_weights: dict[str, float] = None
+    phase_weights: dict[str, float] = None,
 ) -> dict[str, any]:
     """
     Compute activity proxy score based on recent trial updates.
@@ -675,11 +725,11 @@ def compute_activity_proxy_score(
     """
     if phase_weights is None:
         phase_weights = {
-            'PHASE3': 10.0,
-            'PHASE2': 7.0,
-            'PHASE1': 4.0,
-            'PHASE4': 3.0,  # Post-marketing
-            'NA': 2.0,
+            "PHASE3": 10.0,
+            "PHASE2": 7.0,
+            "PHASE1": 4.0,
+            "PHASE4": 3.0,  # Post-marketing
+            "NA": 2.0,
         }
 
     cutoff_120d = as_of_date - timedelta(days=120)
@@ -709,17 +759,17 @@ def compute_activity_proxy_score(
         decay = max(0.1, 1.0 - (days_ago / lookback_days))
 
         # Phase-based weighting (extract phase from trial if available)
-        phase_key = 'NA'  # Default
-        if hasattr(trial, 'phase') and trial.phase:
+        phase_key = "NA"  # Default
+        if hasattr(trial, "phase") and trial.phase:
             phase_str = str(trial.phase).upper()
-            if 'PHASE3' in phase_str or 'PHASE 3' in phase_str:
-                phase_key = 'PHASE3'
-            elif 'PHASE2' in phase_str or 'PHASE 2' in phase_str:
-                phase_key = 'PHASE2'
-            elif 'PHASE1' in phase_str or 'PHASE 1' in phase_str:
-                phase_key = 'PHASE1'
-            elif 'PHASE4' in phase_str or 'PHASE 4' in phase_str:
-                phase_key = 'PHASE4'
+            if "PHASE3" in phase_str or "PHASE 3" in phase_str:
+                phase_key = "PHASE3"
+            elif "PHASE2" in phase_str or "PHASE 2" in phase_str:
+                phase_key = "PHASE2"
+            elif "PHASE1" in phase_str or "PHASE 1" in phase_str:
+                phase_key = "PHASE1"
+            elif "PHASE4" in phase_str or "PHASE 4" in phase_str:
+                phase_key = "PHASE4"
 
         base_score = phase_weights.get(phase_key, 2.0)
         trial_score = base_score * decay
@@ -727,10 +777,10 @@ def compute_activity_proxy_score(
         total_score += trial_score
 
     return {
-        'activity_proxy_score': round(total_score, 2),
-        'activity_count_120d': activity_count_120d,
-        'activity_count_30d': activity_count_30d,
-        'recent_nct_ids': recent_nct_ids,
+        "activity_proxy_score": round(total_score, 2),
+        "activity_count_120d": activity_count_120d,
+        "activity_count_30d": activity_count_30d,
+        "recent_nct_ids": recent_nct_ids,
     }
 
 

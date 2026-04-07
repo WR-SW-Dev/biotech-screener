@@ -4,6 +4,7 @@ Milestone 1 Panel Builder — builds (rebalance_date, ticker, scores…, fwd ret
 PIT-safe: calls run_screening_pipeline with explicit as_of_date and pit_mode.
 Deterministic: stable date/ticker ordering, stable column set.
 """
+
 from __future__ import annotations
 
 import csv
@@ -25,12 +26,26 @@ logger = logging.getLogger(__name__)
 
 # Fields that are metadata / not numeric scores (skip in auto-discovery)
 _SKIP_KEYS = {
-    "ticker", "composite_rank", "market_cap_bucket", "stage_bucket",
-    "severity", "rankable", "coinvest_overlap_count", "coinvest_quarter",
-    "coinvest_usable", "missing_subfactor_pct", "flags", "determinism_hash",
-    "schema_version", "normalization_method", "cohort_key",
-    "score_breakdown", "component_scores", "effective_weights",
-    "coinvest_holders", "monotonic_caps_applied",
+    "ticker",
+    "composite_rank",
+    "market_cap_bucket",
+    "stage_bucket",
+    "severity",
+    "rankable",
+    "coinvest_overlap_count",
+    "coinvest_quarter",
+    "coinvest_usable",
+    "missing_subfactor_pct",
+    "flags",
+    "determinism_hash",
+    "schema_version",
+    "normalization_method",
+    "cohort_key",
+    "score_breakdown",
+    "component_scores",
+    "effective_weights",
+    "coinvest_holders",
+    "monotonic_caps_applied",
 }
 
 
@@ -83,9 +98,14 @@ def extract_component_scores(record: Dict[str, Any]) -> Dict[str, float]:
             out[key] = _safe_float(val)
 
     # V2 fallback: flat fields like clinical_dev_raw, financial_raw, etc.
-    for key in ("clinical_dev_raw", "clinical_dev_normalized",
-                "financial_raw", "financial_normalized",
-                "catalyst_raw", "catalyst_normalized"):
+    for key in (
+        "clinical_dev_raw",
+        "clinical_dev_normalized",
+        "financial_raw",
+        "financial_normalized",
+        "catalyst_raw",
+        "catalyst_normalized",
+    ):
         if key not in out:
             val = record.get(key)
             if val is not None:
@@ -147,24 +167,31 @@ def generate_rebalance_dates(
 
 
 def _roll_to_trading_day(d: date, trading_days: Optional[Set[str]]) -> date:
-    """Roll d backwards to the nearest trading day."""
+    """Roll d backwards to the nearest trading day (holiday-aware)."""
     if trading_days is not None:
         # Roll back up to 7 days to find a trading day
         for _ in range(7):
             if d.isoformat() in trading_days:
                 return d
             d -= timedelta(days=1)
-        # Fallback: return original minus weekends
         return d
-    # No calendar — just skip weekends
-    while d.weekday() >= 5:
-        d -= timedelta(days=1)
-    return d
+    # Use market calendar if available, otherwise skip weekends
+    try:
+        from common.market_calendar import is_trading_day, prev_trading_day
+
+        if is_trading_day(d):
+            return d
+        return prev_trading_day(d + timedelta(days=1))
+    except ImportError:
+        while d.weekday() >= 5:
+            d -= timedelta(days=1)
+        return d
 
 
 # ---------------------------------------------------------------------------
 # Price loading + forward returns
 # ---------------------------------------------------------------------------
+
 
 def load_price_history(
     filepath: Path,
@@ -262,6 +289,7 @@ def compute_forward_return(
 # Pipeline caller
 # ---------------------------------------------------------------------------
 
+
 def run_pipeline_for_date(
     as_of_date: str,
     data_dir: Path,
@@ -345,6 +373,7 @@ def _json_default(obj: Any) -> Any:
 # Panel builder
 # ---------------------------------------------------------------------------
 
+
 def build_panel(
     rebalance_dates: List[date],
     data_dir: Path,
@@ -425,9 +454,7 @@ def build_panel(
 
             # Forward returns
             for horizon, col_name in [(5, "fwd_5d"), (21, "fwd_21d"), (63, "fwd_63d"), (126, "fwd_126d")]:
-                ret = compute_forward_return(
-                    ticker_prices, trading_days, as_of_str, horizon
-                )
+                ret = compute_forward_return(ticker_prices, trading_days, as_of_str, horizon)
                 row[col_name] = ret
 
             all_rows.append(row)
@@ -438,6 +465,7 @@ def build_panel(
 # ---------------------------------------------------------------------------
 # CSV output
 # ---------------------------------------------------------------------------
+
 
 def write_panel_csv_gz(
     rows: List[Dict[str, Any]],
