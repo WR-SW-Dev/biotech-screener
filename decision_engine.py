@@ -307,6 +307,30 @@ class DecisionRuleset:
     pcr_penalty_mode: str = "off"
     pcr_penalty_weight: float = 0.25
 
+    # Event EV Promotion Ladder (Spec 061, all opt-in, default OFF)
+    # Staged promotion of Event EV into production decisions:
+    #   "off":            no Event EV influence (diagnostic only, Spec 060)
+    #   "tiebreaker":     EV breaks ties among names with identical sort keys
+    #   "rank_overlay":   bounded sort contribution (like coinvest/institutional)
+    #   "sizing_overlay": multiplicative sizing tilt on target_weight_pct
+    #   "composite":      full composite replacement (NOT IMPLEMENTED, placeholder)
+    event_ev_stage: str = "off"
+
+    # Stage 2 — Rank overlay parameters
+    event_ev_rank_overlay_weight: float = 0.0  # [0.0, 1.0]; 0.0 = no overlay
+    event_ev_rank_overlay_cap: float = 0.15  # max |delta| on anchor scale
+    event_ev_min_analog_confidence: str = "ok"  # "ok" | "low" | "insufficient"
+
+    # Stage 3 — Sizing tilt parameters (multipliers on target_weight_pct)
+    event_ev_sizing_tilt_mults: tuple = (
+        ("high_ev", 1.0),
+        ("mid_ev", 1.0),
+        ("low_ev", 1.0),
+        ("no_ev", 1.0),
+    )
+    event_ev_sizing_high_threshold: float = 3.0  # ds_adj_ev % above → high_ev
+    event_ev_sizing_low_threshold: float = -1.0  # ds_adj_ev % below → low_ev
+
     # Portfolio mechanics — rebalance buffer for top-K evaluation.
     # Existing holdings stay unless they fall below rank K + buffer.
     # Reduces turnover from small rank oscillations.  0 = disabled.
@@ -474,6 +498,38 @@ class DecisionRuleset:
             raise ValueError(
                 f"less_binary_construction must be one of {_valid_lb_modes}, " f"got {self.less_binary_construction!r}"
             )
+        # Validate event_ev_stage (Spec 061)
+        _valid_ev_stages = ("off", "tiebreaker", "rank_overlay", "sizing_overlay", "composite")
+        if self.event_ev_stage not in _valid_ev_stages:
+            raise ValueError(
+                f"event_ev_stage must be one of {_valid_ev_stages}, " f"got '{self.event_ev_stage}'"
+            )
+        if not (0.0 <= self.event_ev_rank_overlay_weight <= 1.0):
+            raise ValueError(
+                f"event_ev_rank_overlay_weight must be in [0.0, 1.0], " f"got {self.event_ev_rank_overlay_weight}"
+            )
+        if not (0.0 <= self.event_ev_rank_overlay_cap <= 1.0):
+            raise ValueError(
+                f"event_ev_rank_overlay_cap must be in [0.0, 1.0], " f"got {self.event_ev_rank_overlay_cap}"
+            )
+        _valid_analog_conf = ("ok", "low", "insufficient")
+        if self.event_ev_min_analog_confidence not in _valid_analog_conf:
+            raise ValueError(
+                f"event_ev_min_analog_confidence must be one of {_valid_analog_conf}, "
+                f"got '{self.event_ev_min_analog_confidence}'"
+            )
+        # Validate event_ev_sizing_tilt_mults
+        _valid_ev_buckets = {"high_ev", "mid_ev", "low_ev", "no_ev"}
+        for bucket, mult in self.event_ev_sizing_tilt_mults:
+            if bucket not in _valid_ev_buckets:
+                raise ValueError(
+                    f"event_ev_sizing_tilt_mults: unknown bucket '{bucket}', "
+                    f"expected one of {sorted(_valid_ev_buckets)}"
+                )
+            if mult <= 0:
+                raise ValueError(
+                    f"event_ev_sizing_tilt_mults: mult must be > 0, got {mult} for '{bucket}'"
+                )
 
     @property
     def sizing_weights_dict(self) -> Dict[str, float]:
@@ -566,6 +622,9 @@ class DecisionRuleset:
         # Convert clinical_stage_mults list-of-lists back to tuple-of-tuples
         if "clinical_stage_mults" in d and isinstance(d["clinical_stage_mults"], list):
             d["clinical_stage_mults"] = tuple(tuple(pair) for pair in d["clinical_stage_mults"])
+        # Convert event_ev_sizing_tilt_mults list-of-lists back to tuple-of-tuples (Spec 061)
+        if "event_ev_sizing_tilt_mults" in d and isinstance(d["event_ev_sizing_tilt_mults"], list):
+            d["event_ev_sizing_tilt_mults"] = tuple(tuple(pair) for pair in d["event_ev_sizing_tilt_mults"])
         # Migration: enable_catalyst_priority=True → catalyst_priority_mode="tiebreaker"
         if d.get("enable_catalyst_priority") and "catalyst_priority_mode" not in d:
             d["catalyst_priority_mode"] = "tiebreaker"
@@ -1492,6 +1551,34 @@ def resolve_catalyst_priority(
 
 
 # =============================================================================
+# EVENT EV PROMOTION LADDER (Spec 061)
+# =============================================================================
+
+# Ordered stages — higher index = more aggressive integration.
+# _ev_stage_at_least() compares current stage against a minimum.
+_EV_STAGE_ORDER = {
+    "off": 0,
+    "tiebreaker": 1,
+    "rank_overlay": 2,
+    "sizing_overlay": 3,
+    "composite": 4,
+}
+
+# Analog confidence ordering for gate comparison.
+_ANALOG_CONF_ORDER = {"insufficient": 0, "low": 1, "ok": 2}
+
+
+def _ev_stage_at_least(ruleset: "DecisionRuleset", minimum: str) -> bool:
+    """Return True if ruleset.event_ev_stage >= minimum in the ladder."""
+    return _EV_STAGE_ORDER.get(ruleset.event_ev_stage, 0) >= _EV_STAGE_ORDER.get(minimum, 0)
+
+
+def _analog_confidence_meets(actual: str, minimum: str) -> bool:
+    """Return True if actual analog confidence >= minimum threshold."""
+    return _ANALOG_CONF_ORDER.get(actual, 0) >= _ANALOG_CONF_ORDER.get(minimum, 0)
+
+
+# =============================================================================
 # SORT CONTRIBUTION HELPERS
 # =============================================================================
 
@@ -1515,6 +1602,7 @@ SORT_CONTRIB_KEYS: Tuple[str, ...] = (
     "pcr_penalty_bw",
     "oncology_crowding",
     "options_verdict",
+    "event_ev",
 )
 
 
@@ -1703,6 +1791,19 @@ def _build_sort_contributions(
             delta_ovf = ovf_w * ovf
             contribs.append(SortContribution("options_verdict", ovf, ovf_w, delta_ovf))
 
+    # 16. Event EV rank overlay (Spec 061, Stage 2)
+    # Adds a bounded sort contribution based on downside_adjusted_ev z-score.
+    # Gated on event_ev_stage >= "rank_overlay" AND analog confidence threshold.
+    if _ev_stage_at_least(ruleset, "rank_overlay") and ruleset.event_ev_rank_overlay_weight > 0:
+        ev_z = _safe_decimal(decision_fields.get("event_ev_score_z"))
+        ev_conf = str(decision_fields.get("event_ev_analog_confidence", ""))
+        if _analog_confidence_meets(ev_conf, ruleset.event_ev_min_analog_confidence):
+            ev_cap = _safe_decimal(ruleset.event_ev_rank_overlay_cap)
+            ev_eff = _clamp_d(ev_z, -ev_cap, ev_cap)
+            ev_w = _w(ruleset.event_ev_rank_overlay_weight)
+            delta_ev = ev_w * ev_eff
+            contribs.append(SortContribution("event_ev", ev_z, ev_w, delta_ev))
+
     return contribs
 
 
@@ -1726,6 +1827,10 @@ _EXTERNAL_SORT_FIELDS: frozenset = frozenset(
         "has_regulatory_upcoming_180d",  # used by options_quality sort mode secondary reg path
         "regulatory_days",  # used by options_quality sort mode secondary reg path
         "pre_event_put_call_ratio",  # used by pcr_penalty_mode penalty
+        "event_ev_score",  # used by Spec 061 Stage 1 tiebreaker
+        "event_ev_score_z",  # used by Spec 061 Stage 2 rank overlay
+        "event_ev_analog_confidence",  # used by Spec 061 rank overlay confidence gate
+        "event_ev_bucket",  # used by Spec 061 Stage 3 sizing overlay
     }
 )
 
@@ -1767,6 +1872,13 @@ def compute_actionable_sort_key(
     is_dev = 0 if archetype == "drug_developer" else 1
 
     rs = ruleset or DEFAULT_RULESET
+
+    # Spec 061 Stage 4: composite mode is recognized but not implemented.
+    if rs.event_ev_stage == "composite":
+        raise NotImplementedError(
+            "event_ev_stage='composite' is reserved for a future promotion spec. "
+            "Use 'tiebreaker', 'rank_overlay', or 'sizing_overlay' for now."
+        )
 
     # Select tier based on tiering priority mode
     if rs.tiering_priority_mode == "tier_first":
@@ -1885,6 +1997,13 @@ def compute_actionable_sort_key(
     # prefix is (is_eligible, is_dev, tier_ord) in dev_first mode
     # or (is_eligible, tier_ord, is_dev) in tier_first mode
 
+    # Spec 061: Event EV tiebreaker (Stage 1+).
+    # When event_ev_stage >= "tiebreaker", insert -ev_score before the
+    # alphabetic ticker tiebreak. Higher EV → more negative → sorts first.
+    _ev_tiebreak = _D0
+    if _ev_stage_at_least(rs, "tiebreaker"):
+        _ev_tiebreak = -_safe_decimal(decision_fields.get("event_ev_score"))
+
     # Spec 050: when sort_anchor=selector_score, the score IS the primary
     # ordering signal regardless of catalyst_priority_mode. All other sort
     # elements are tiebreakers only.
@@ -1892,6 +2011,7 @@ def compute_actionable_sort_key(
         return prefix + (
             anchor,  # -final_score: primary ordering
             missing_count,
+            _ev_tiebreak,  # Spec 061: EV tiebreaker (0 when stage=off)
             ticker,
         )
 
@@ -1907,6 +2027,7 @@ def compute_actionable_sort_key(
             sponsor_neg,  # descending sponsor count
             mom_ord,  # tailwind < neutral < headwind
             cat_mode_ord,  # specific < blended < no_upcoming < missing
+            _ev_tiebreak,  # Spec 061: EV tiebreaker (0 when stage=off)
             ticker,  # alphabetic tiebreak
         )
 
@@ -1922,6 +2043,7 @@ def compute_actionable_sort_key(
             sponsor_neg,  # descending sponsor count
             mom_ord,  # tailwind < neutral < headwind
             cat_priority,  # priority as tiebreaker
+            _ev_tiebreak,  # Spec 061: EV tiebreaker (0 when stage=off)
             ticker,  # alphabetic tiebreak
         )
 
@@ -1937,6 +2059,7 @@ def compute_actionable_sort_key(
         sponsor_neg,  # descending sponsor count (negated)
         mom_ord,  # tailwind < neutral < headwind
         anchor,  # ascending composite rank (or negated pct)
+        _ev_tiebreak,  # Spec 061: EV tiebreaker (0 when stage=off)
         ticker,  # alphabetic tiebreak
     )
 
@@ -2150,6 +2273,10 @@ def compute_target_weights(
     rs = ruleset or DEFAULT_RULESET
     weights_map = rs.sizing_weights_dict
 
+    # Spec 061 Stage 3: Event EV sizing tilt (multiplicative, default all 1.0)
+    _ev_sizing_active = _ev_stage_at_least(rs, "sizing_overlay")
+    _ev_tilt_map = dict(rs.event_ev_sizing_tilt_mults) if _ev_sizing_active else {}
+
     raw_weights = []
     for row in rows:
         band = row.get("size_band", "XS")
@@ -2158,7 +2285,8 @@ def compute_target_weights(
         mm = _safe_float(row.get("mom_state_tilt_mult"), default=1.0)
         csm = _safe_float(row.get("sizing_multiplier_clinical"), default=1.0)
         ctm = _safe_float(row.get("catalyst_type_mult"), default=1.0)
-        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm * csm * ctm)
+        evm = _ev_tilt_map.get(str(row.get("event_ev_bucket", "no_ev")), 1.0) if _ev_sizing_active else 1.0
+        raw_weights.append(weights_map.get(str(band), 0.15) * cm * tm * mm * csm * ctm * evm)
 
     # Floor prevents explosive weights from near-zero floating-point totals.
     # Smallest real weight in production is ~0.15, so 1e-9 is safely below.
@@ -2374,6 +2502,11 @@ DECISION_COLUMNS = [
     "ranker_options_block",
     "ranker_inst_block",
     "ranker_aact_block",
+    # --- Spec 061: Event EV columns (populated by run_screen.py) ---
+    "event_ev_score",
+    "event_ev_score_z",
+    "event_ev_bucket",
+    "event_ev_analog_confidence",
 ]
 
 
@@ -2532,6 +2665,12 @@ def compute_decision_fields(
     fields["ranker_options_block"] = ""
     fields["ranker_inst_block"] = ""
     fields["ranker_aact_block"] = ""
+
+    # Spec 061: Event EV placeholders (populated later by run_screen.py)
+    fields["event_ev_score"] = ""
+    fields["event_ev_score_z"] = ""
+    fields["event_ev_bucket"] = ""
+    fields["event_ev_analog_confidence"] = ""
 
     return fields
 
