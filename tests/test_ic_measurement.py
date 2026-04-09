@@ -15,7 +15,6 @@ Comprehensive test coverage for:
 Author: Wake Robin Capital Management
 """
 
-import json
 import sys
 import tempfile
 from datetime import date, timedelta
@@ -27,56 +26,49 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from backtest.ic_measurement import (
-    # Core functions
-    calculate_ic,
-    compute_spearman_ic,
-    _compute_ranks,
-    _classify_ic,
-    _classify_market_cap,
-    _quantize,
-    _decimal,
-    # Trading calendar
-    next_trading_day,
-    add_trading_days,
-    subtract_trading_days,
-    compute_forward_windows,
-    # Enums
-    ICQuality,
-    MarketCapBucket,
-    SectorCategory,
-    RegimeType,
-    # Data classes
-    ForwardReturn,
-    ICResult,
-    BootstrapCI,
-    RollingICResult,
-    StratifiedIC,
-    # Engines
-    ForwardReturnEngine,
-    ICCalculationEngine,
-    BootstrapEngine,
-    ICStabilityAnalyzer,
-    OutOfSampleValidator,
-    WeeklyICReportGenerator,
-    ICTimeSeriesDatabase,
-    ICMeasurementSystem,
-    # Analysis functions
-    analyze_ic_trend,
-    _get_ic_quality_assessment,
-    # Constants
-    MIN_OBS_IC,
-    MIN_OBS_BOOTSTRAP,
+from backtest.ic_measurement import (  # noqa: F401  # Core functions; Trading calendar; Enums; Data classes; Engines; Analysis functions; Constants
+    HORIZON_TRADING_DAYS,
     IC_EXCELLENT,
     IC_GOOD,
     IC_WEAK,
-    HORIZON_TRADING_DAYS,
+    MIN_OBS_BOOTSTRAP,
+    MIN_OBS_IC,
+    BootstrapCI,
+    BootstrapEngine,
+    ForwardReturn,
+    ForwardReturnEngine,
+    ICCalculationEngine,
+    ICMeasurementSystem,
+    ICQuality,
+    ICResult,
+    ICStabilityAnalyzer,
+    ICTimeSeriesDatabase,
+    MarketCapBucket,
+    OutOfSampleValidator,
+    RegimeType,
+    RollingICResult,
+    SectorCategory,
+    StratifiedIC,
+    WeeklyICReportGenerator,
+    _classify_ic,
+    _classify_market_cap,
+    _compute_ranks,
+    _decimal,
+    _get_ic_quality_assessment,
+    _quantize,
+    add_trading_days,
+    analyze_ic_trend,
+    calculate_ic,
+    compute_forward_windows,
+    compute_spearman_ic,
+    next_trading_day,
+    subtract_trading_days,
 )
-
 
 # =============================================================================
 # FIXTURES
 # =============================================================================
+
 
 @pytest.fixture
 def as_of_date() -> date:
@@ -88,9 +80,21 @@ def as_of_date() -> date:
 def sample_rankings() -> Dict[str, int]:
     """Sample rankings where lower rank = better (15 tickers)."""
     return {
-        "ACME": 1, "BETA": 2, "GAMMA": 3, "DELTA": 4, "EPSILON": 5,
-        "ZETA": 6, "ETA": 7, "THETA": 8, "IOTA": 9, "KAPPA": 10,
-        "LAMBDA": 11, "MU": 12, "NU": 13, "XI": 14, "OMICRON": 15,
+        "ACME": 1,
+        "BETA": 2,
+        "GAMMA": 3,
+        "DELTA": 4,
+        "EPSILON": 5,
+        "ZETA": 6,
+        "ETA": 7,
+        "THETA": 8,
+        "IOTA": 9,
+        "KAPPA": 10,
+        "LAMBDA": 11,
+        "MU": 12,
+        "NU": 13,
+        "XI": 14,
+        "OMICRON": 15,
     }
 
 
@@ -98,10 +102,41 @@ def sample_rankings() -> Dict[str, int]:
 def large_sample_rankings() -> Dict[str, int]:
     """Large sample rankings for bootstrap/significance tests (35 tickers)."""
     tickers = [
-        "T01", "T02", "T03", "T04", "T05", "T06", "T07", "T08", "T09", "T10",
-        "T11", "T12", "T13", "T14", "T15", "T16", "T17", "T18", "T19", "T20",
-        "T21", "T22", "T23", "T24", "T25", "T26", "T27", "T28", "T29", "T30",
-        "T31", "T32", "T33", "T34", "T35",
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
     ]
     return {t: i + 1 for i, t in enumerate(tickers)}
 
@@ -120,10 +155,41 @@ def large_random_returns() -> Dict[str, float]:
     tickers = [f"T{i:02d}" for i in range(1, 36)]
     # Scrambled values with no pattern
     values = [
-        0.02, -0.08, 0.12, -0.03, 0.07, -0.15, 0.09, -0.11, 0.05, 0.00,
-        -0.04, 0.11, -0.06, 0.03, -0.09, 0.14, -0.02, 0.08, -0.12, 0.01,
-        -0.07, 0.06, -0.10, 0.04, -0.01, 0.10, -0.05, 0.13, -0.08, 0.02,
-        -0.14, 0.07, -0.03, 0.15, -0.09,
+        0.02,
+        -0.08,
+        0.12,
+        -0.03,
+        0.07,
+        -0.15,
+        0.09,
+        -0.11,
+        0.05,
+        0.00,
+        -0.04,
+        0.11,
+        -0.06,
+        0.03,
+        -0.09,
+        0.14,
+        -0.02,
+        0.08,
+        -0.12,
+        0.01,
+        -0.07,
+        0.06,
+        -0.10,
+        0.04,
+        -0.01,
+        0.10,
+        -0.05,
+        0.13,
+        -0.08,
+        0.02,
+        -0.14,
+        0.07,
+        -0.03,
+        0.15,
+        -0.09,
     ]
     return {t: values[i] for i, t in enumerate(tickers)}
 
@@ -132,9 +198,21 @@ def large_random_returns() -> Dict[str, float]:
 def perfect_returns() -> Dict[str, float]:
     """Returns perfectly correlated with rankings (lower rank = higher return)."""
     return {
-        "ACME": 0.15, "BETA": 0.12, "GAMMA": 0.10, "DELTA": 0.08, "EPSILON": 0.06,
-        "ZETA": 0.04, "ETA": 0.02, "THETA": 0.00, "IOTA": -0.02, "KAPPA": -0.04,
-        "LAMBDA": -0.06, "MU": -0.08, "NU": -0.10, "XI": -0.12, "OMICRON": -0.14,
+        "ACME": 0.15,
+        "BETA": 0.12,
+        "GAMMA": 0.10,
+        "DELTA": 0.08,
+        "EPSILON": 0.06,
+        "ZETA": 0.04,
+        "ETA": 0.02,
+        "THETA": 0.00,
+        "IOTA": -0.02,
+        "KAPPA": -0.04,
+        "LAMBDA": -0.06,
+        "MU": -0.08,
+        "NU": -0.10,
+        "XI": -0.12,
+        "OMICRON": -0.14,
     }
 
 
@@ -142,9 +220,21 @@ def perfect_returns() -> Dict[str, float]:
 def random_returns() -> Dict[str, float]:
     """Returns uncorrelated with rankings (random)."""
     return {
-        "ACME": 0.02, "BETA": -0.08, "GAMMA": 0.12, "DELTA": -0.03, "EPSILON": 0.07,
-        "ZETA": -0.01, "ETA": 0.09, "THETA": -0.11, "IOTA": 0.05, "KAPPA": 0.00,
-        "LAMBDA": -0.04, "MU": 0.11, "NU": -0.06, "XI": 0.03, "OMICRON": -0.09,
+        "ACME": 0.02,
+        "BETA": -0.08,
+        "GAMMA": 0.12,
+        "DELTA": -0.03,
+        "EPSILON": 0.07,
+        "ZETA": -0.01,
+        "ETA": 0.09,
+        "THETA": -0.11,
+        "IOTA": 0.05,
+        "KAPPA": 0.00,
+        "LAMBDA": -0.04,
+        "MU": 0.11,
+        "NU": -0.06,
+        "XI": 0.03,
+        "OMICRON": -0.09,
     }
 
 
@@ -152,15 +242,28 @@ def random_returns() -> Dict[str, float]:
 def inverted_returns() -> Dict[str, float]:
     """Returns inversely correlated with rankings (higher rank = higher return)."""
     return {
-        "ACME": -0.14, "BETA": -0.12, "GAMMA": -0.10, "DELTA": -0.08, "EPSILON": -0.06,
-        "ZETA": -0.04, "ETA": -0.02, "THETA": 0.00, "IOTA": 0.02, "KAPPA": 0.04,
-        "LAMBDA": 0.06, "MU": 0.08, "NU": 0.10, "XI": 0.12, "OMICRON": 0.14,
+        "ACME": -0.14,
+        "BETA": -0.12,
+        "GAMMA": -0.10,
+        "DELTA": -0.08,
+        "EPSILON": -0.06,
+        "ZETA": -0.04,
+        "ETA": -0.02,
+        "THETA": 0.00,
+        "IOTA": 0.02,
+        "KAPPA": 0.04,
+        "LAMBDA": 0.06,
+        "MU": 0.08,
+        "NU": 0.10,
+        "XI": 0.12,
+        "OMICRON": 0.14,
     }
 
 
 @pytest.fixture
 def mock_return_provider():
     """Mock return provider that returns fixed values."""
+
     def provider(ticker: str, start_date: str, end_date: str) -> Optional[str]:
         # Return based on ticker for testing
         returns_map = {
@@ -172,6 +275,7 @@ def mock_return_provider():
             "XBI": "0.03",  # Benchmark
         }
         return returns_map.get(ticker.upper())
+
     return provider
 
 
@@ -222,12 +326,14 @@ def weekly_historical_results() -> List[Dict[str, Any]]:
         # Alternate regimes
         regime = ["BULL", "NEUTRAL", "BEAR"][week % 3]
 
-        results.append({
-            "as_of_date": week_date.isoformat(),
-            "rankings": rankings,
-            "forward_returns": returns,
-            "regime": regime,
-        })
+        results.append(
+            {
+                "as_of_date": week_date.isoformat(),
+                "rankings": rankings,
+                "forward_returns": returns,
+                "regime": regime,
+            }
+        )
 
     return results
 
@@ -235,6 +341,7 @@ def weekly_historical_results() -> List[Dict[str, Any]]:
 # =============================================================================
 # HELPER FUNCTION TESTS
 # =============================================================================
+
 
 class TestHelperFunctions:
     """Tests for helper functions."""
@@ -279,6 +386,7 @@ class TestHelperFunctions:
 # TRADING CALENDAR TESTS
 # =============================================================================
 
+
 class TestTradingCalendar:
     """Tests for trading calendar functions."""
 
@@ -290,24 +398,25 @@ class TestTradingCalendar:
         assert next_trading_day("2026-01-12") == "2026-01-13"
 
     def test_next_trading_day_friday(self):
-        """Test next trading day from Friday (skips weekend)."""
-        # Friday -> Monday
-        assert next_trading_day("2026-01-16") == "2026-01-19"
+        """Test next trading day from Friday (skips weekend + MLK Day)."""
+        # Friday Jan 16 → skip Sat/Sun/MLK (Mon Jan 19) → Tue Jan 20
+        assert next_trading_day("2026-01-16") == "2026-01-20"
 
     def test_next_trading_day_saturday(self):
-        """Test next trading day from Saturday."""
-        assert next_trading_day("2026-01-17") == "2026-01-19"
+        """Test next trading day from Saturday (skips weekend + MLK Day)."""
+        assert next_trading_day("2026-01-17") == "2026-01-20"
 
     def test_add_trading_days(self):
-        """Test adding trading days."""
-        # Start on Monday, add 5 days = next Monday
-        assert add_trading_days("2026-01-12", 5) == "2026-01-19"
-        # Start on Wednesday, add 3 days = Monday (crosses weekend)
-        assert add_trading_days("2026-01-14", 3) == "2026-01-19"
+        """Test adding trading days (holiday-aware)."""
+        # Start Mon Jan 12, add 5 days = 13, 14, 15, 16, 20 (skip MLK 19)
+        assert add_trading_days("2026-01-12", 5) == "2026-01-20"
+        # Start Wed Jan 14, add 3 days = 15, 16, 20 (skip MLK 19)
+        assert add_trading_days("2026-01-14", 3) == "2026-01-20"
 
     def test_subtract_trading_days(self):
-        """Test subtracting trading days."""
-        # Start on Monday, subtract 5 days = previous Monday
+        """Test subtracting trading days (holiday-aware)."""
+        # MLK Day Jan 19 is a holiday; subtract_trading_days starts counting back
+        # from Jan 19: -1=Jan 16, -2=15, -3=14, -4=13, -5=12
         assert subtract_trading_days("2026-01-19", 5) == "2026-01-12"
 
     def test_compute_forward_windows(self):
@@ -335,6 +444,7 @@ class TestTradingCalendar:
 # =============================================================================
 # SPEARMAN IC TESTS
 # =============================================================================
+
 
 class TestSpearmanIC:
     """Tests for Spearman rank correlation / IC calculation."""
@@ -413,6 +523,7 @@ class TestSpearmanIC:
 # IC CALCULATION ENGINE TESTS
 # =============================================================================
 
+
 class TestICCalculationEngine:
     """Tests for ICCalculationEngine with significance testing."""
 
@@ -462,6 +573,7 @@ class TestICCalculationEngine:
 # BOOTSTRAP ENGINE TESTS
 # =============================================================================
 
+
 class TestBootstrapEngine:
     """Tests for bootstrap confidence interval calculation."""
 
@@ -510,8 +622,7 @@ class TestBootstrapEngine:
         small_returns = {k: 0.01 * i for i, k in enumerate(list(sample_rankings.keys())[:5])}
 
         ci = engine.calculate_bootstrap_ci(
-            {k: v for k, v in sample_rankings.items() if k in small_returns},
-            small_returns
+            {k: v for k, v in sample_rankings.items() if k in small_returns}, small_returns
         )
         # Should return None because n < MIN_OBS_BOOTSTRAP (30)
         assert ci is None
@@ -520,6 +631,7 @@ class TestBootstrapEngine:
 # =============================================================================
 # FORWARD RETURN ENGINE TESTS
 # =============================================================================
+
 
 class TestForwardReturnEngine:
     """Tests for ForwardReturnEngine."""
@@ -566,6 +678,7 @@ class TestForwardReturnEngine:
 # =============================================================================
 # IC STABILITY ANALYSIS TESTS
 # =============================================================================
+
 
 class TestICStabilityAnalyzer:
     """Tests for IC stability analysis."""
@@ -638,10 +751,10 @@ class TestICStabilityAnalyzer:
         analyzer = ICStabilityAnalyzer(ic_engine)
 
         ticker_market_caps = {
-            "ACME": Decimal("5000"),   # LARGE
-            "BETA": Decimal("2000"),   # MID
-            "GAMMA": Decimal("500"),   # SMALL
-            "DELTA": Decimal("200"),   # MICRO
+            "ACME": Decimal("5000"),  # LARGE
+            "BETA": Decimal("2000"),  # MID
+            "GAMMA": Decimal("500"),  # SMALL
+            "DELTA": Decimal("200"),  # MICRO
             "EPSILON": Decimal("3000"),
             "ZETA": Decimal("1500"),
             "ETA": Decimal("800"),
@@ -659,6 +772,7 @@ class TestICStabilityAnalyzer:
 # =============================================================================
 # IC TREND ANALYSIS TESTS
 # =============================================================================
+
 
 class TestICTrendAnalysis:
     """Tests for IC trend analysis."""
@@ -690,8 +804,7 @@ class TestICTrendAnalysis:
     def test_analyze_trend_stable(self):
         """Test trend detection for stable IC."""
         rolling_ics = [
-            RollingICResult(f"2025-01-{i:02d}", Decimal("0.05"), 50, None, ICQuality.GOOD)
-            for i in range(1, 13)
+            RollingICResult(f"2025-01-{i:02d}", Decimal("0.05"), 50, None, ICQuality.GOOD) for i in range(1, 13)
         ]
 
         trend = analyze_ic_trend(rolling_ics)
@@ -712,6 +825,7 @@ class TestICTrendAnalysis:
 # =============================================================================
 # OUT-OF-SAMPLE VALIDATION TESTS
 # =============================================================================
+
 
 class TestOutOfSampleValidator:
     """Tests for out-of-sample validation."""
@@ -757,6 +871,7 @@ class TestOutOfSampleValidator:
 # =============================================================================
 # TIME-SERIES DATABASE TESTS
 # =============================================================================
+
 
 class TestICTimeSeriesDatabase:
     """Tests for IC time-series database storage."""
@@ -820,6 +935,7 @@ class TestICTimeSeriesDatabase:
 # IC QUALITY ASSESSMENT TESTS
 # =============================================================================
 
+
 class TestICQualityAssessment:
     """Tests for IC quality assessment generation."""
 
@@ -881,12 +997,11 @@ class TestICQualityAssessment:
 # WEEKLY IC REPORT GENERATOR TESTS
 # =============================================================================
 
+
 class TestWeeklyICReportGenerator:
     """Tests for weekly IC report generation."""
 
-    def test_generate_basic_report(
-        self, mock_return_provider, sample_rankings, as_of_date
-    ):
+    def test_generate_basic_report(self, mock_return_provider, sample_rankings, as_of_date):
         """Test basic report generation."""
         generator = WeeklyICReportGenerator(
             mock_return_provider,
@@ -933,12 +1048,11 @@ class TestWeeklyICReportGenerator:
 # IC MEASUREMENT SYSTEM INTEGRATION TESTS
 # =============================================================================
 
+
 class TestICMeasurementSystemIntegration:
     """Integration tests for full IC measurement system."""
 
-    def test_process_weekly_screening(
-        self, mock_return_provider, temp_data_dir, sample_rankings, as_of_date
-    ):
+    def test_process_weekly_screening(self, mock_return_provider, temp_data_dir, sample_rankings, as_of_date):
         """Test full weekly screening processing."""
         system = ICMeasurementSystem(
             return_provider=mock_return_provider,
@@ -962,9 +1076,7 @@ class TestICMeasurementSystemIntegration:
         assert "20d" in result["horizon_analysis"]
         assert "coverage" in result
 
-    def test_system_data_persistence(
-        self, mock_return_provider, temp_data_dir, sample_rankings, as_of_date
-    ):
+    def test_system_data_persistence(self, mock_return_provider, temp_data_dir, sample_rankings, as_of_date):
         """Test that data is persisted correctly."""
         system = ICMeasurementSystem(
             return_provider=mock_return_provider,
@@ -1004,6 +1116,7 @@ class TestICMeasurementSystemIntegration:
 # DETERMINISM TESTS
 # =============================================================================
 
+
 class TestDeterminism:
     """Tests ensuring deterministic behavior."""
 
@@ -1014,9 +1127,7 @@ class TestDeterminism:
 
         assert ic1 == ic2
 
-    def test_report_generation_deterministic(
-        self, mock_return_provider, sample_rankings, as_of_date
-    ):
+    def test_report_generation_deterministic(self, mock_return_provider, sample_rankings, as_of_date):
         """Test report generation is deterministic."""
         generator = WeeklyICReportGenerator(
             mock_return_provider,
@@ -1046,13 +1157,13 @@ class TestDeterminism:
 # EDGE CASE TESTS
 # =============================================================================
 
+
 class TestEdgeCases:
     """Tests for edge cases and boundary conditions."""
 
     def test_all_same_rankings(self):
         """Test IC with all same rankings (no variance)."""
-        rankings = {"A": 1, "B": 1, "C": 1, "D": 1, "E": 1,
-                    "F": 1, "G": 1, "H": 1, "I": 1, "J": 1}
+        rankings = {"A": 1, "B": 1, "C": 1, "D": 1, "E": 1, "F": 1, "G": 1, "H": 1, "I": 1, "J": 1}
         returns = {k: i * 0.01 for i, k in enumerate(rankings.keys())}
 
         ic = calculate_ic(rankings, returns)
@@ -1088,6 +1199,7 @@ class TestEdgeCases:
 # =============================================================================
 # ADDITIONAL COVERAGE TESTS
 # =============================================================================
+
 
 class TestICResultSerialization:
     """Tests for ICResult serialization."""
@@ -1146,6 +1258,7 @@ class TestForwardReturnWithoutBenchmark:
 
     def test_forward_returns_no_benchmark(self, as_of_date):
         """Test forward returns without benchmark adjustment."""
+
         def provider(ticker: str, start_date: str, end_date: str) -> Optional[str]:
             if ticker == "ACME":
                 return "0.05"
@@ -1198,7 +1311,14 @@ class TestOOSConsistencyClassifications:
             test_end="2023-12-31",
         )
 
-        assert result["consistency"] in ["CONSISTENT", "IMPROVED", "DEGRADED", "INVERTED", "CONSISTENTLY_WEAK", "UNKNOWN"]
+        assert result["consistency"] in [
+            "CONSISTENT",
+            "IMPROVED",
+            "DEGRADED",
+            "INVERTED",
+            "CONSISTENTLY_WEAK",
+            "UNKNOWN",
+        ]
 
 
 class TestNegativeICTStatistic:
@@ -1226,6 +1346,7 @@ class TestEqualWeightBenchmarkEdgeCases:
 
     def test_empty_returns_for_benchmark(self):
         """Test equal-weight benchmark with empty returns."""
+
         def provider(ticker: str, start_date: str, end_date: str) -> Optional[str]:
             return None
 
@@ -1236,6 +1357,7 @@ class TestEqualWeightBenchmarkEdgeCases:
 
     def test_benchmark_with_none_values(self):
         """Test equal-weight benchmark ignores None values."""
+
         def provider(ticker: str, start_date: str, end_date: str) -> Optional[str]:
             return None
 
@@ -1268,11 +1390,13 @@ class TestRollingICWindowBoundaries:
             week_date = base_date + timedelta(weeks=week)
             rankings = {f"T{i}": i for i in range(1, 16)}
             returns = {f"T{i}": 0.01 * (16 - i) for i in range(1, 16)}
-            results.append({
-                "as_of_date": week_date.isoformat(),
-                "rankings": rankings,
-                "forward_returns": returns,
-            })
+            results.append(
+                {
+                    "as_of_date": week_date.isoformat(),
+                    "rankings": rankings,
+                    "forward_returns": returns,
+                }
+            )
 
         rolling_results = analyzer.calculate_rolling_ic(results, window_weeks=12)
 

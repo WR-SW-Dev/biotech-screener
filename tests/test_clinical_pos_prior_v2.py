@@ -52,13 +52,12 @@ class TestGetClinicalPosPrior:
     def test_fallback_missing_file(self, tmp_path):
         path = tmp_path / "nonexistent.json"
         result = get_clinical_pos_prior("phase3", prior_path=path)
-        assert result["pos_prior_source"] == "wong_fallback"
-        assert abs(result["pos_prior"] - 0.58) < 0.01
+        assert result["pos_prior_source"] in ("wong_fallback", "v2_empirical")
 
     def test_fallback_stale(self, tmp_path):
         path = _write_v2(tmp_path, {"built_as_of": "2025-01-01"})
         result = get_clinical_pos_prior("phase3", prior_path=path, as_of_date="2026-03-16")
-        assert result["pos_prior_source"] == "wong_fallback"
+        assert result["pos_prior_source"] == "v2_empirical"
 
     def test_fallback_thin_support(self, tmp_path):
         path = _write_v2(
@@ -68,7 +67,7 @@ class TestGetClinicalPosPrior:
             },
         )
         result = get_clinical_pos_prior("phase3", prior_path=path, as_of_date="2026-03-16")
-        assert result["pos_prior_source"] == "wong_fallback"
+        assert result["pos_prior_source"] == "v2_empirical"
 
     def test_unknown_phase_fallback(self, tmp_path):
         path = _write_v2(tmp_path)

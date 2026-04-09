@@ -4620,9 +4620,10 @@ def save_validation_snapshot(
     _ensure_defaults(csv_rows)
 
     # --- Inject market data fields for Event EV expectation model ---
+    _mkt_lookup = market_data_by_ticker or {}
     for _r in csv_rows:
         _tk = (_r.get("ticker") or "").upper()
-        _md = market_data_by_ticker.get(_tk, {})
+        _md = _mkt_lookup.get(_tk, {})
         if _md:
             if "short_interest_pct" not in _r or not _r.get("short_interest_pct"):
                 _r["short_interest_pct"] = _md.get("short_percent", "")

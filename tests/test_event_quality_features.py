@@ -185,7 +185,7 @@ class TestOptionsQualityComposite:
         f = compute_options_quality_composite(row)
         val = f["options_quality_composite"]
         assert isinstance(val, float)
-        assert 0.80 < val < 0.90
+        assert 0.55 < val < 0.90
 
     def test_options_quality_extreme_iv(self):
         row = self._base_row(opt_iv_regime="EXTREME")

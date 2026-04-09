@@ -23,7 +23,8 @@ class TestForwardReturnAlignment:
     """Verify that research panel and eval_forward_returns use the same window."""
 
     def test_research_panel_starts_at_snap_date(self):
-        """Research panel forward_return uses first date >= snap_date as t0."""
+        """Research panel forward_return uses execution_lag=1 by default,
+        so t0 = next trading day after snap_date."""
         from scripts.research.build_signal_research_panel import forward_return
 
         prices = {
@@ -34,22 +35,24 @@ class TestForwardReturnAlignment:
             "2024-02-02": 104.0,
         }
         sorted_dates = sorted(prices.keys())
-        # snap_date = "2024-01-30" -> t0 = "2024-01-30", t0+2 = "2024-02-01"
+        # snap_date = "2024-01-30" with execution_lag=1 -> t0 = "2024-01-31", t0+2 = "2024-02-02"
         ret = forward_return(prices, sorted_dates, "2024-01-30", 2)
         assert ret is not None
-        assert abs(ret - (103.0 / 101.0 - 1)) < 1e-9
+        assert abs(ret - (104.0 / 102.0 - 1)) < 1e-9
 
     def test_research_panel_weekend_snap_date(self):
-        """If snap_date is a weekend, forward_return finds next available date."""
+        """If snap_date is a weekend, forward_return finds next available date,
+        then applies execution_lag=1."""
         from scripts.research.build_signal_research_panel import forward_return
 
         # No 2024-02-03 or 2024-02-04 (weekend)
-        prices = {"2024-02-02": 100.0, "2024-02-05": 102.0, "2024-02-06": 103.0}
+        prices = {"2024-02-02": 100.0, "2024-02-05": 102.0, "2024-02-06": 103.0, "2024-02-07": 105.0}
         sorted_dates = sorted(prices.keys())
-        # snap_date = "2024-02-03" -> t0 = "2024-02-05" (next available)
+        # snap_date = "2024-02-03" -> first date >= snap_date = "2024-02-05",
+        # execution_lag=1 -> t0 = "2024-02-06", t0+1 = "2024-02-07"
         ret = forward_return(prices, sorted_dates, "2024-02-03", 1)
         assert ret is not None
-        assert abs(ret - (103.0 / 102.0 - 1)) < 1e-9
+        assert abs(ret - (105.0 / 103.0 - 1)) < 1e-9
 
     def test_documented_mismatch_with_metrics(self):
         """Document that backtest/metrics.py uses next_trading_day start."""

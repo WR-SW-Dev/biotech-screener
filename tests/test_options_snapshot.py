@@ -100,7 +100,7 @@ class TestWriteOptionsSnapshot:
         snap.mkdir()
         write_options_snapshot(snap, [_make_row()], "2026-03-11")
         summary = json.loads((snap / "options_diagnostics_summary.json").read_text())
-        assert summary["schema"] == "options_diagnostics_summary.v2"
+        assert summary["schema"] == "options_diagnostics_summary.v3"
         assert summary["as_of_date"] == "2026-03-11"
 
     def test_summary_coverage(self, tmp_path):

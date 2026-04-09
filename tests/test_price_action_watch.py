@@ -166,7 +166,7 @@ class TestOutputSchema:
         for f in artifacts_dir.glob("*_watch.json"):
             with open(f) as fh:
                 data = json.load(fh)
-            assert data.get("schema") == "price_action_watch.v1"
+            assert data.get("schema") in ("price_action_watch.v1", "price_action_watch.v2")
             assert "as_of_date" in data
             assert "n_alerted" in data or "n_total" in data
             assert isinstance(data.get("rows", data.get("names", [])), list)

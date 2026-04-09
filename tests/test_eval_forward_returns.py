@@ -274,10 +274,17 @@ class TestSkipBehavior:
         # No rankings.csv
 
         price_csv = tmp_dir / "prices.csv"
+        # Need prices after snapshot date so anchor resolves (next_trading_day)
         _write_price_csv(
             price_csv,
             [
-                {"date": "2025-06-01", "ticker": "A", "close": "100"},
+                {"date": "2025-06-02", "ticker": "A", "close": "100"},
+                {"date": "2025-06-03", "ticker": "A", "close": "105"},
+                {"date": "2025-06-04", "ticker": "A", "close": "110"},
+                {"date": "2025-06-05", "ticker": "A", "close": "115"},
+                {"date": "2025-06-06", "ticker": "A", "close": "120"},
+                {"date": "2025-06-09", "ticker": "A", "close": "125"},
+                {"date": "2025-06-10", "ticker": "A", "close": "130"},
             ],
         )
 
@@ -634,11 +641,13 @@ class TestBenchmarkEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        # Anchor resolves to 2025-01-07 (next_trading_day after snap);
+        # forward return computed from 2025-01-07 → 2025-01-08.
+        for d in ["2025-01-07", "2025-01-08"]:
             for t in ["A", "B", "C"]:
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 110)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 110)})
             # Benchmark
-            rows.append({"date": d, "ticker": "XBI", "close": str(100 if d == "2025-01-06" else 105)})
+            rows.append({"date": d, "ticker": "XBI", "close": str(100 if d == "2025-01-07" else 105)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -646,7 +655,6 @@ class TestBenchmarkEval:
             snapshot_root=tmp_dir / "snapshots",
             price_csv=price_csv,
             horizons=[1],
-            anchor_mode="exact",
             benchmark="XBI",
         )
         evaluated = [r for r in results if not r.skipped]
@@ -664,7 +672,7 @@ class TestBenchmarkEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for t in ["A", "B", "XBI"]:
                 rows.append({"date": d, "ticker": t, "close": "100"})
         price_csv = tmp_dir / "prices.csv"
@@ -695,10 +703,10 @@ class TestLongShortEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
                 base = 100 + i
-                price = base if d == "2025-01-06" else base * (1 + 0.01 * (20 - i))
+                price = base if d == "2025-01-07" else base * (1 + 0.01 * (20 - i))
                 rows.append({"date": d, "ticker": t, "close": str(price)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
@@ -810,14 +818,14 @@ class TestSortBugFix:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for t in ["GOOD1", "GOOD2", "GOOD3"]:
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 120)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 120)})
             for t in ["MED1", "MED2"]:
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 105)})
-            rows.append({"date": d, "ticker": "LOW1", "close": str(100 if d == "2025-01-06" else 85)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 105)})
+            rows.append({"date": d, "ticker": "LOW1", "close": str(100 if d == "2025-01-07" else 85)})
             for t in ineligible:
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 50)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 50)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -854,9 +862,9 @@ class TestSignConsistency:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     # Rank 1 → +20%, rank 20 → -18%
@@ -895,9 +903,9 @@ class TestSignConsistency:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     # INVERTED: rank 1 → worst return, rank 20 → best
@@ -1123,9 +1131,9 @@ class TestMonotonicInEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1166,9 +1174,9 @@ class TestSignMismatchDump:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     if i < 3:
@@ -1220,9 +1228,9 @@ class TestSignMismatchDump:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1406,11 +1414,13 @@ class TestEvalUniverse:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
+        # Anchor resolves to 2025-01-07 (next_trading_day after snap)
+        # Forward return: 2025-01-07 → 2025-01-08
         # Only 7 tickers have anchor prices; only 5 have forward prices
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i in range(7):
                 t = tickers[i]
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 elif i < 5:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -1439,9 +1449,9 @@ class TestEvalUniverse:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     # rank 0 → 20%, rank 19 → -18% (monotonic)
@@ -1497,9 +1507,9 @@ class TestComponentEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1543,9 +1553,9 @@ class TestComponentEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i  # monotonic with rank
@@ -1581,9 +1591,9 @@ class TestComponentEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1613,9 +1623,9 @@ class TestComponentEval:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1677,9 +1687,9 @@ class TestPortfolioVariants:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1827,9 +1837,9 @@ class TestEnhancedComponentDiag:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1865,9 +1875,9 @@ class TestEnhancedComponentDiag:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -1901,9 +1911,9 @@ class TestEnhancedComponentDiag:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -1937,9 +1947,9 @@ class TestEnhancedComponentDiag:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-06" else 100 + i)})
+                rows.append({"date": d, "ticker": t, "close": str(100 if d == "2025-01-07" else 100 + i)})
         price_csv = tmp_dir / "prices.csv"
         _write_price_csv(price_csv, rows)
 
@@ -2254,9 +2264,9 @@ class TestCoinvestEvalMode:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -2550,9 +2560,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.02 * i
@@ -2594,9 +2604,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.01 * i
@@ -2635,9 +2645,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.01 * i
@@ -2672,9 +2682,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -2727,9 +2737,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -2770,9 +2780,9 @@ class TestSignalFlagFiltering:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.10 - 0.02 * i
@@ -2833,9 +2843,9 @@ class TestCatalystEvalMode:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -2876,9 +2886,9 @@ class TestCatalystEvalMode:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     # Returns monotonically correlated with proximity
@@ -2936,9 +2946,9 @@ class TestCatalystEvalMode:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     ret = 0.20 - 0.01 * i
@@ -2986,9 +2996,9 @@ class TestCoinvestStaleness:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -3027,9 +3037,9 @@ class TestCoinvestStaleness:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})
@@ -3065,9 +3075,9 @@ class TestCoinvestStaleness:
         _write_metadata(snap_dir, "2025-01-06")
 
         rows = []
-        for d in ["2025-01-06", "2025-01-07"]:
+        for d in ["2025-01-07", "2025-01-08"]:
             for i, t in enumerate(tickers):
-                if d == "2025-01-06":
+                if d == "2025-01-07":
                     rows.append({"date": d, "ticker": t, "close": "100"})
                 else:
                     rows.append({"date": d, "ticker": t, "close": "110"})

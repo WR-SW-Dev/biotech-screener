@@ -1855,15 +1855,15 @@ class TestFundamentalRedFlagDetection:
         _, reasons = detect_fundamental_red_flags(record)
         assert "sponsor_absent_late_stage" not in reasons
 
-    def test_sponsor_absent_late_stage_explicit_zero_fires(self):
-        """tier1_count=0 + late stage → flag fires."""
+    def test_sponsor_absent_late_stage_explicit_zero_removed(self):
+        """tier1_count=0 + late stage → flag no longer fires (removed in Spec 050)."""
         record = {
             "stage_bucket": "late",
             "coinvest": {"tier1_count": 0},
             "survivability_signal": {"metrics": {}},
         }
         _, reasons = detect_fundamental_red_flags(record)
-        assert "sponsor_absent_late_stage" in reasons
+        assert "sponsor_absent_late_stage" not in reasons
 
     def test_sponsor_present_late_stage_not_flagged(self):
         """tier1_count > 0 + late stage → NOT flagged."""

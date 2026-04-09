@@ -305,7 +305,7 @@ class TestIsTickerCollision:
 
     def test_true_collision_unrelated_company(self):
         assert _is_ticker_collision(
-            "Eclipse Foundation showcases open source innovation at embedded world 2026",
+            "Eclipse Group showcases new electric vehicles at auto show 2026",
             "KURA",
             self.NAMES,
         )
