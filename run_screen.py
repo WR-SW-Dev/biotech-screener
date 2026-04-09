@@ -4632,9 +4632,7 @@ def save_validation_snapshot(
             if "market_cap_mm" not in _r or not _r.get("market_cap_mm"):
                 _mcap = _md.get("market_cap")
                 _r["market_cap_mm"] = round(_mcap / 1e6, 1) if _mcap else ""
-        # priced_move_pct: alias straddle_price (already expressed as fraction)
-        if not _r.get("priced_move_pct") and _r.get("straddle_price"):
-            _r["priced_move_pct"] = _r["straddle_price"]
+        # priced_move_pct: populated later after straddle scoring (see below)
 
     # --- Applicability flags (for scorecard N/A-aware missingness) ---
     for _r in csv_rows:
@@ -5638,6 +5636,12 @@ def save_validation_snapshot(
         )
     except Exception as _oq_exc:
         logger.debug("Options review queue skipped: %s", _oq_exc)
+
+    # --- Final field injection: priced_move_pct from straddle_price ---
+    # Must run AFTER straddle scoring (which populates straddle_price from chain analytics)
+    for _r in csv_rows:
+        if not _r.get("priced_move_pct") and _r.get("straddle_price"):
+            _r["priced_move_pct"] = _r["straddle_price"]
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
