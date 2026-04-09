@@ -3,8 +3,17 @@
 Bayesian prior-posterior framework for estimating catalyst outcome
 branch probabilities (HIT / MISS / MIXED).
 
-Prior: Clinical PoS from Wong et al. + v2 empirical priors,
-       keyed by (phase, indication, endpoint_class).
+Prior: Phase-specific clinical PoS from Wong et al. + literature priors
+       + CRT empirical calibration, keyed by (phase, indication, endpoint_class).
+
+Phase-specific base rates (literature fallback):
+  - Phase 1 readout: ~63% (transition to Phase 2)
+  - Phase 2 readout: ~31% (transition to Phase 3)
+  - Phase 3 readout: ~58% (primary endpoint success, Wong et al.)
+  - PDUFA approval: ~85-90% (FDA CDER historical)
+
+CRT calibration overrides literature when sufficient unbiased data exists.
+Phase 1/2 CRT data excluded due to Herald positive-press-release selection bias.
 
 Likelihood updates: endpoint strength, design quality, sponsor quality,
        execution behavior, modality, competitive context.
@@ -36,6 +45,37 @@ WONG_PHASE_PRIORS: Dict[str, float] = {
     "4": 0.650,
     "unknown": 0.250,
 }
+
+# Literature-based phase transition success rates.
+# These represent the probability that a readout at a given phase is positive
+# (i.e., the drug advances), NOT the overall LoA from Phase X to approval.
+# Sources: Wong et al. 2019, BIO/QLS 2011-2020, Thomas et al. 2016
+LITERATURE_PHASE_READOUT_PRIORS: Dict[str, float] = {
+    "1": 0.630,  # Phase 1→2 transition rate
+    "1_2": 0.470,  # Midpoint of Phase 1→2 and Phase 2→3
+    "2": 0.310,  # Phase 2→3 transition rate
+    "2_3": 0.400,  # Phase 2/3→3 transition
+    "3": 0.580,  # Phase 3 primary endpoint success (Wong et al.)
+    "4": 0.650,  # Post-marketing (mostly confirmatory)
+    "unknown": 0.350,  # Conservative unknown
+}
+
+# Mapping from CRT catalyst_type to clinical phase.
+# Used by build_crt_calibration to aggregate resolution data.
+# Extend this dict to capture new catalyst_type values from CRT.
+DEFAULT_CATALYST_TYPE_TO_PHASE: Dict[str, str] = {
+    "PHASE_1_DATA": "1",
+    "PHASE_1_2_DATA": "1_2",
+    "PHASE_2_READOUT": "2",
+    "PHASE_2_3_READOUT": "2_3",
+    "PHASE_3_READOUT": "3",
+    "PHASE_4_DATA": "4",
+}
+
+# Phases where CRT data is EXCLUDED due to Herald positive-press-release
+# selection bias (only positive readouts captured → inflated hit rate).
+# Only Phase 3 has enough balanced (HIT + MISS) CRT data for calibration.
+HERALD_BIASED_PHASES: frozenset = frozenset({"1", "1_2", "2"})
 
 # Indication difficulty adjustments (multiplicative)
 _INDICATION_DIFFICULTY: Dict[str, float] = {
@@ -96,11 +136,14 @@ class OutcomeModel:
         mixed_fraction: float = _DEFAULT_MIXED_FRACTION,
         v2_priors: Optional[Dict[str, Any]] = None,
         crt_calibration: Optional[Dict[str, Any]] = None,
+        phase_readout_priors: Optional[Dict[str, float]] = None,
     ) -> None:
         self.pos_priors = pos_priors or dict(WONG_PHASE_PRIORS)
         self.mixed_fraction = mixed_fraction
         self.v2_priors = v2_priors  # loaded from clinical_pos_priors_v2.json
         self.crt_calibration = crt_calibration  # CRT empirical rates by phase
+        # Phase-specific readout priors (literature-based, overridable)
+        self.phase_readout_priors = phase_readout_priors or dict(LITERATURE_PHASE_READOUT_PRIORS)
 
     def estimate(
         self,
@@ -230,9 +273,13 @@ class OutcomeModel:
     def _get_prior(self, node: CatalystNode) -> tuple[float, str]:
         """Get the base prior P(HIT) for this catalyst type.
 
-        For PDUFA/AdCom events, uses enriched FDA historical rates that
-        incorporate review type, therapeutic area, designations, and CRL history.
-        For clinical events, uses phase-based PoS (v2 empirical → Wong et al.).
+        Priority order:
+          1. Regulatory events → enriched FDA priors → flat regulatory priors
+          2. Clinical events:
+             a. CRT-calibrated (Bayesian blend, Phase 3+ only due to Herald bias)
+             b. v2 empirical (if sufficient N)
+             c. Phase-specific readout priors (literature-based)
+             d. Wong et al. LoA priors (last resort)
         """
         # Regulatory events: try enriched FDA priors first
         if node.event_family == EventFamily.REGULATORY.value:
@@ -248,7 +295,7 @@ class OutcomeModel:
         # Clinical events: use phase-based PoS
         phase = node.phase
 
-        # Try CRT-calibrated prior (Bayesian blend of Wong + CRT evidence)
+        # Try CRT-calibrated prior (Bayesian blend, unbiased phases only)
         if self.crt_calibration:
             crt_rate = self._lookup_crt_prior(phase)
             if crt_rate is not None:
@@ -260,7 +307,12 @@ class OutcomeModel:
             if v2_rate is not None:
                 return v2_rate, "v2_empirical"
 
-        # Fall back to Wong et al.
+        # Phase-specific readout priors (literature-based)
+        readout_prior = self.phase_readout_priors.get(phase)
+        if readout_prior is not None:
+            return readout_prior, "literature_phase_readout"
+
+        # Fall back to Wong et al. LoA
         prior = self.pos_priors.get(phase, self.pos_priors.get("unknown", 0.25))
         return prior, "wong_et_al"
 
@@ -315,15 +367,20 @@ class OutcomeModel:
     def _lookup_crt_prior(self, phase: str) -> Optional[float]:
         """Look up CRT-calibrated prior for a phase.
 
-        Uses beta-binomial posterior: blends Wong prior with CRT evidence.
-        Only returns a value if CRT has sufficient data (n >= 15) for the phase,
-        and the phase is NOT subject to Herald selection bias (Phase 1/2 excluded).
+        Uses beta-binomial posterior: blends literature prior with CRT evidence.
+        Only returns a value if:
+          - CRT has sufficient data (n >= 15) for the phase
+          - The phase is NOT marked as Herald-biased
         """
         if not self.crt_calibration:
             return None
 
         entry = self.crt_calibration.get(phase)
         if entry is None:
+            return None
+
+        # Exclude Herald-biased phases (Phase 1/2 have inflated hit rates)
+        if entry.get("herald_biased", False):
             return None
 
         n = entry.get("n", 0)
@@ -336,20 +393,31 @@ class OutcomeModel:
     def build_crt_calibration(
         resolutions_dir,
         prior_equiv_n: int = 20,
+        catalyst_type_to_phase: Optional[Dict[str, str]] = None,
+        herald_biased_phases: Optional[frozenset] = None,
     ) -> Dict[str, Any]:
         """Build CRT-calibrated priors from resolution records.
 
         Uses beta-binomial conjugate update:
-          prior ~ Beta(α₀, β₀) where α₀ = wong_rate × prior_equiv_n
-          posterior ~ Beta(α₀ + hits, β₀ + misses)
+          prior ~ Beta(alpha_0, beta_0) where alpha_0 = base_rate * prior_equiv_n
+          posterior ~ Beta(alpha_0 + hits, beta_0 + misses)
 
-        Phase 1/2 are EXCLUDED due to Herald positive-press-release selection bias.
-        Only Phase 3 has sufficient unbiased data for calibration.
+        Herald-biased phases (1, 1_2, 2 by default) are collected but marked
+        as biased so that _lookup_crt_prior can exclude them. Only unbiased
+        phases (3, 2_3, 4) are used for calibration.
+
+        The base rate for Bayesian blending uses LITERATURE_PHASE_READOUT_PRIORS
+        (phase transition rates) rather than WONG_PHASE_PRIORS (lifetime LoA),
+        since readout priors better match what CRT measures.
 
         Args:
             resolutions_dir: Path to data/snapshots/resolutions/
-            prior_equiv_n: Effective sample size of the Wong prior (higher = more
-                conservative, lower = more data-driven). 20 = moderate trust in prior.
+            prior_equiv_n: Effective sample size of the prior (higher = more
+                conservative, lower = more data-driven). 20 = moderate trust.
+            catalyst_type_to_phase: Mapping from catalyst_type to phase string.
+                Defaults to DEFAULT_CATALYST_TYPE_TO_PHASE.
+            herald_biased_phases: Phases to exclude from calibration.
+                Defaults to HERALD_BIASED_PHASES.
 
         Returns:
             Dict keyed by phase with posterior_mean, hits, misses, n, prior, source.
@@ -361,11 +429,8 @@ class OutcomeModel:
         if not resolutions_dir.exists():
             return {}
 
-        # Phase mapping from catalyst_type
-        _TYPE_TO_PHASE = {
-            "PHASE_3_READOUT": "3",
-            # Phase 1/2 EXCLUDED: Herald selection bias (only positive PRs captured)
-        }
+        type_to_phase = catalyst_type_to_phase or DEFAULT_CATALYST_TYPE_TO_PHASE
+        biased = herald_biased_phases if herald_biased_phases is not None else HERALD_BIASED_PHASES
 
         # Count hits/misses by phase
         from collections import defaultdict
@@ -381,7 +446,7 @@ class OutcomeModel:
                     continue
                 outcome = rec.get("outcome")
                 ct = rec.get("catalyst_type", "")
-                phase = _TYPE_TO_PHASE.get(ct)
+                phase = type_to_phase.get(ct)
                 if phase is None or outcome not in ("HIT", "MISS"):
                     continue
                 if outcome == "HIT":
@@ -393,29 +458,35 @@ class OutcomeModel:
         for phase, c in counts.items():
             hits, misses = c["hit"], c["miss"]
             n = hits + misses
-            wong_rate = WONG_PHASE_PRIORS.get(phase, 0.25)
+
+            # Use literature readout prior (not Wong LoA) for Bayesian blend
+            base_rate = LITERATURE_PHASE_READOUT_PRIORS.get(phase, WONG_PHASE_PRIORS.get(phase, 0.25))
 
             # Beta-binomial posterior
-            alpha_0 = wong_rate * prior_equiv_n
-            beta_0 = (1 - wong_rate) * prior_equiv_n
+            alpha_0 = base_rate * prior_equiv_n
+            beta_0 = (1 - base_rate) * prior_equiv_n
             posterior_mean = (alpha_0 + hits) / (alpha_0 + beta_0 + n)
 
+            is_biased = phase in biased
             calibration[phase] = {
                 "hits": hits,
                 "misses": misses,
                 "n": n,
                 "empirical_rate": round(hits / n, 4) if n > 0 else None,
-                "wong_prior": wong_rate,
+                "base_rate_prior": round(base_rate, 4),
                 "prior_equiv_n": prior_equiv_n,
                 "posterior_mean": round(posterior_mean, 4),
+                "herald_biased": is_biased,
             }
+            bias_tag = " [HERALD-BIASED, excluded]" if is_biased else ""
             logger.info(
-                "CRT calibration phase=%s: n=%d, empirical=%.3f, wong=%.3f, posterior=%.3f",
+                "CRT calibration phase=%s: n=%d, empirical=%.3f, base=%.3f, posterior=%.3f%s",
                 phase,
                 n,
                 hits / n if n > 0 else 0,
-                wong_rate,
+                base_rate,
                 posterior_mean,
+                bias_tag,
             )
 
         return calibration

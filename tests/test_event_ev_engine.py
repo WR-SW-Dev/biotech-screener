@@ -762,3 +762,234 @@ class TestPITSafety:
             [date(2026, 4, 1)],
         )
         assert len(records) == 0  # post-event date should be filtered out
+
+
+# ============================================================================
+# Phase-Specific Outcome Priors
+# ============================================================================
+
+
+class TestPhaseSpecificPriors:
+    """Tests for phase-specific clinical base rates (literature + CRT)."""
+
+    def test_literature_priors_used_by_default(self):
+        """Without CRT data, model should use literature phase readout priors."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        # Phase 1 readout: literature says ~63%
+        p1 = model.estimate(_make_node(phase="1"), date(2026, 4, 4))
+        # With literature prior (0.63), after indication adjustment,
+        # p_hit should be much higher than Wong LoA (0.066)
+        assert p1.p_hit > 0.30, f"Phase 1 p_hit={p1.p_hit} too low (literature=0.63)"
+        assert p1.prior_source == "literature_phase_readout"
+
+    def test_phase2_uses_literature_prior(self):
+        """Phase 2 readout should use literature rate (~31%), not Wong LoA."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        p2 = model.estimate(
+            _make_node(phase="2", indication="unknown"),
+            date(2026, 4, 4),
+        )
+        assert p2.prior_source == "literature_phase_readout"
+        # Literature 0.31 → after mixed allocation, p_hit should be ~0.27
+        assert 0.15 < p2.p_hit < 0.45, f"Phase 2 p_hit={p2.p_hit} outside expected range"
+
+    def test_phase3_uses_literature_prior_without_crt(self):
+        """Phase 3 should use literature prior when no CRT calibration."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()  # no crt_calibration
+        p3 = model.estimate(
+            _make_node(phase="3", indication="unknown"),
+            date(2026, 4, 4),
+        )
+        assert p3.prior_source == "literature_phase_readout"
+
+    def test_phase_ordering_with_literature_priors(self):
+        """Phase 2 should have lower p_hit than Phase 3 (0.31 vs 0.58)."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        p2 = model.estimate(_make_node(phase="2", indication="unknown"), date(2026, 4, 4))
+        p3 = model.estimate(_make_node(phase="3", indication="unknown"), date(2026, 4, 4))
+        assert p3.p_hit > p2.p_hit, f"Phase 3 ({p3.p_hit}) should > Phase 2 ({p2.p_hit})"
+
+    def test_crt_calibrated_overrides_literature_for_phase3(self):
+        """When CRT has sufficient Phase 3 data, it should override literature."""
+        from event_ev.outcome_model import OutcomeModel
+
+        crt = {
+            "3": {
+                "hits": 18,
+                "misses": 9,
+                "n": 27,
+                "posterior_mean": 0.613,
+                "herald_biased": False,
+            }
+        }
+        model = OutcomeModel(crt_calibration=crt)
+        p3 = model.estimate(_make_node(phase="3", indication="unknown"), date(2026, 4, 4))
+        assert p3.prior_source == "crt_calibrated"
+
+    def test_crt_excludes_herald_biased_phases(self):
+        """Phase 1/2 CRT data should be excluded (Herald selection bias)."""
+        from event_ev.outcome_model import OutcomeModel
+
+        crt = {
+            "1": {
+                "hits": 10,
+                "misses": 0,
+                "n": 10,
+                "posterior_mean": 0.85,
+                "herald_biased": True,
+            },
+            "2": {
+                "hits": 7,
+                "misses": 0,
+                "n": 7,
+                "posterior_mean": 0.70,
+                "herald_biased": True,
+            },
+        }
+        model = OutcomeModel(crt_calibration=crt)
+        # Phase 1: should fall through to literature, not CRT
+        p1 = model.estimate(_make_node(phase="1"), date(2026, 4, 4))
+        assert p1.prior_source != "crt_calibrated"
+        assert p1.prior_source == "literature_phase_readout"
+
+    def test_crt_excludes_insufficient_n(self):
+        """CRT data with < 15 observations should be excluded."""
+        from event_ev.outcome_model import OutcomeModel
+
+        crt = {
+            "3": {
+                "hits": 5,
+                "misses": 3,
+                "n": 8,
+                "posterior_mean": 0.59,
+                "herald_biased": False,
+            }
+        }
+        model = OutcomeModel(crt_calibration=crt)
+        p3 = model.estimate(_make_node(phase="3", indication="unknown"), date(2026, 4, 4))
+        assert p3.prior_source == "literature_phase_readout"
+
+    def test_custom_phase_readout_priors(self):
+        """User can override phase readout priors."""
+        from event_ev.outcome_model import OutcomeModel
+
+        custom = {"2": 0.40, "3": 0.65}
+        model = OutcomeModel(phase_readout_priors=custom)
+        p2 = model.estimate(_make_node(phase="2", indication="unknown"), date(2026, 4, 4))
+        # Custom prior is 0.40, should be reflected
+        assert p2.prior_source == "literature_phase_readout"
+        assert p2.features_used["prior_p_hit"] == 0.4
+
+    def test_unknown_phase_falls_through(self):
+        """Unknown phase not in literature priors should fall to Wong."""
+        from event_ev.outcome_model import OutcomeModel
+
+        # Use custom priors that don't include "unknown"
+        model = OutcomeModel(phase_readout_priors={"3": 0.58})
+        pu = model.estimate(_make_node(phase="unknown", indication="unknown"), date(2026, 4, 4))
+        assert pu.prior_source == "wong_et_al"
+
+    def test_build_crt_calibration_expanded_mapping(self, tmp_path):
+        """build_crt_calibration should use expanded catalyst_type mapping."""
+        import json
+
+        from event_ev.outcome_model import OutcomeModel
+
+        # Create mock resolution files
+        month_dir = tmp_path / "2026-04"
+        month_dir.mkdir()
+
+        # Phase 3 readouts
+        for i, outcome in enumerate(["HIT"] * 18 + ["MISS"] * 9):
+            rec = {"catalyst_type": "PHASE_3_READOUT", "outcome": outcome}
+            (month_dir / f"P3_{i}.json").write_text(json.dumps(rec))
+
+        # Phase 2 readouts (will be collected but marked biased)
+        for i, outcome in enumerate(["HIT"] * 7):
+            rec = {"catalyst_type": "PHASE_2_READOUT", "outcome": outcome}
+            (month_dir / f"P2_{i}.json").write_text(json.dumps(rec))
+
+        # Phase 1 readouts (biased)
+        for i, outcome in enumerate(["HIT"] * 10):
+            rec = {"catalyst_type": "PHASE_1_DATA", "outcome": outcome}
+            (month_dir / f"P1_{i}.json").write_text(json.dumps(rec))
+
+        cal = OutcomeModel.build_crt_calibration(tmp_path)
+
+        # Phase 3 should be present and unbiased
+        assert "3" in cal
+        assert cal["3"]["herald_biased"] is False
+        assert cal["3"]["n"] == 27
+        assert cal["3"]["hits"] == 18
+
+        # Phase 2 should be present but marked biased
+        assert "2" in cal
+        assert cal["2"]["herald_biased"] is True
+
+        # Phase 1 should be present but marked biased
+        assert "1" in cal
+        assert cal["1"]["herald_biased"] is True
+
+    def test_build_crt_uses_literature_base_rate(self, tmp_path):
+        """CRT calibration should blend with literature readout priors, not Wong LoA."""
+        import json
+
+        from event_ev.outcome_model import LITERATURE_PHASE_READOUT_PRIORS, OutcomeModel
+
+        month_dir = tmp_path / "2026-04"
+        month_dir.mkdir()
+        for i, outcome in enumerate(["HIT"] * 18 + ["MISS"] * 9):
+            rec = {"catalyst_type": "PHASE_3_READOUT", "outcome": outcome}
+            (month_dir / f"P3_{i}.json").write_text(json.dumps(rec))
+
+        cal = OutcomeModel.build_crt_calibration(tmp_path, prior_equiv_n=20)
+        entry = cal["3"]
+
+        # base_rate_prior should be literature (0.58), not Wong LoA
+        assert entry["base_rate_prior"] == round(LITERATURE_PHASE_READOUT_PRIORS["3"], 4)
+
+        # Verify posterior is between literature prior and empirical rate
+        emp = 18 / 27  # 0.667
+        lit = LITERATURE_PHASE_READOUT_PRIORS["3"]  # 0.58
+        assert lit < entry["posterior_mean"] < emp + 0.01
+
+    def test_probs_sum_to_one_all_phases_with_literature(self):
+        """All phases should produce valid probabilities with literature priors."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        for phase in ("1", "1_2", "2", "2_3", "3", "4", "unknown"):
+            probs = model.estimate(
+                _make_node(phase=phase, indication="unknown"),
+                date(2026, 4, 4),
+            )
+            total = probs.p_hit + probs.p_miss + probs.p_mixed
+            assert abs(total - 1.0) < 0.01, f"Phase {phase}: sum={total}"
+            assert 0 < probs.p_hit < 1, f"Phase {phase}: p_hit={probs.p_hit}"
+
+    def test_regulatory_unaffected_by_phase_priors(self):
+        """PDUFA events should still use regulatory priors, not phase readout."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        pdufa = model.estimate(_make_pdufa_node(), date(2026, 4, 4))
+        # PDUFA should NOT use literature_phase_readout
+        assert "literature_phase_readout" not in pdufa.prior_source
+        assert pdufa.p_hit > 0.6  # PDUFA base ~85%
+
+    def test_backward_compat_no_new_args(self):
+        """OutcomeModel() with no args should still work (backward compat)."""
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        probs = model.estimate(_make_node(phase="3"), date(2026, 4, 4))
+        assert probs.p_hit > 0
+        assert probs.p_miss > 0
