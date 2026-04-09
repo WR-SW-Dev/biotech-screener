@@ -215,8 +215,10 @@ def evaluate_ev_readiness(
         try:
             with open(fpath, encoding="utf-8") as f:
                 data = json.load(f)
-            events = data if isinstance(data, list) else data.get("events", [])
-            tickers = {ev.get("node", {}).get("ticker") for ev in events if ev.get("node", {}).get("ticker")}
+            events = data if isinstance(data, list) else data.get("leaderboard", data.get("events", []))
+            tickers = {ev.get("ticker") or ev.get("node", {}).get("ticker", "") for ev in events} - {
+                ""
+            }  # Remove empty strings
             # Coverage as count (we don't know top-30 here, use absolute count)
             coverages.append(len(tickers))
         except (json.JSONDecodeError, OSError):

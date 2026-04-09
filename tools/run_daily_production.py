@@ -5214,6 +5214,28 @@ def run_daily(
         except Exception as _val_err:
             _logger.warning(f"Event EV validation failed: {_val_err}")
 
+        # --- Step 5k.23: Event EV promotion readiness (non-blocking) ---
+        try:
+            from event_ev.promotion_ladder import evaluate_ev_readiness
+
+            _ev_readiness = evaluate_ev_readiness()
+            _ready_stage = "off"
+            for _stage in ["composite", "sizing_overlay", "rank_overlay", "tiebreaker"]:
+                if _ev_readiness.get(_stage, {}).get("ready"):
+                    _ready_stage = _stage
+                    break
+            _ev_n_days = _ev_readiness.get("tiebreaker", {}).get("evidence", {}).get("n_daily_artifacts", 0)
+            _logger.info(f"Event EV readiness → {_ev_n_days} days, highest ready: {_ready_stage}")
+
+            # Write readiness artifact
+            _readiness_path = REPO_ROOT / "artifacts" / "event_ev" / "ev_promotion_readiness.json"
+            with open(_readiness_path, "w") as _rf:
+                import json as _json
+
+                _json.dump(_ev_readiness, _rf, indent=2, sort_keys=True, default=str)
+        except Exception as _ready_err:
+            _logger.warning(f"Event EV readiness check failed: {_ready_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
