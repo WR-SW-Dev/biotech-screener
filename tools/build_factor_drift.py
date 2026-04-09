@@ -17,6 +17,7 @@ Output:
 Usage:
     python tools/build_factor_drift.py --as-of-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse

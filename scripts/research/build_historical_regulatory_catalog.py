@@ -9,6 +9,7 @@ Usage:
     python scripts/research/build_historical_regulatory_catalog.py
     python scripts/research/build_historical_regulatory_catalog.py --start-year 2020
 """
+
 from __future__ import annotations
 
 import argparse

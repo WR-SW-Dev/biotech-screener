@@ -12,13 +12,13 @@ Usage
         --ctgov-cache-dir cache/ctgov \
         [--dry-run] [--force] [--date-from YYYY-MM-DD] [--date-to YYYY-MM-DD] [--verbose]
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
 import re
-import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -55,6 +55,7 @@ _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # Discovery helpers
 # ---------------------------------------------------------------------------
 
+
 def _discover_13f_dates(pit_base: Path) -> List[str]:
     """Return sorted list of YYYY-MM-DD date strings from 13F PIT dirs."""
     dates: list[str] = []
@@ -83,9 +84,7 @@ def _discover_ctgov_dates(ctgov_dir: Path) -> List[str]:
     return dates
 
 
-def _find_latest_cache_date(
-    cache_dates: List[str], snap_date: str
-) -> Optional[str]:
+def _find_latest_cache_date(cache_dates: List[str], snap_date: str) -> Optional[str]:
     """Return the latest cache date ``<= snap_date``, or ``None``."""
     best: Optional[str] = None
     for d in cache_dates:
@@ -99,6 +98,7 @@ def _find_latest_cache_date(
 # ---------------------------------------------------------------------------
 # Detection helper
 # ---------------------------------------------------------------------------
+
 
 def _detect_active_families(header_cols: set[str]) -> set[str]:
     """Return set of family names whose indicator columns appear in header."""
@@ -120,6 +120,7 @@ def _read_csv_header(rankings_csv: Path) -> set[str]:
 # ---------------------------------------------------------------------------
 # Core reconstruction
 # ---------------------------------------------------------------------------
+
 
 def reconstruct_data_sources(
     snap_date: str,
@@ -172,6 +173,7 @@ def reconstruct_data_sources(
 # ---------------------------------------------------------------------------
 # Batch
 # ---------------------------------------------------------------------------
+
 
 def restamp_batch(
     snapshot_root: Path,
@@ -252,9 +254,7 @@ def restamp_batch(
 
         if not dry_run:
             metadata["data_sources"] = sources
-            metadata["data_sources_restamped_at"] = (
-                datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-            )
+            metadata["data_sources_restamped_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             with open(meta_path, "w", encoding="utf-8") as f:
                 json.dump(metadata, f, indent=2, sort_keys=True)
                 f.write("\n")
@@ -271,10 +271,9 @@ def restamp_batch(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def _build_parser() -> argparse.ArgumentParser:
-    p = argparse.ArgumentParser(
-        description="Re-stamp historical snapshots with data_sources provenance."
-    )
+    p = argparse.ArgumentParser(description="Re-stamp historical snapshots with data_sources provenance.")
     p.add_argument(
         "--snapshot-root",
         type=Path,
@@ -318,12 +317,16 @@ def main(argv: Optional[list[str]] = None) -> None:
         verbose=args.verbose,
     )
     mode = "DRY RUN" if args.dry_run else "DONE"
-    print(f"\n{mode}: {summary['n_stamped']} stamped, "
-          f"{summary['n_skipped_existing']} skipped (existing), "
-          f"{summary['n_skipped_no_rankings']} skipped (no data)")
-    print(f"  Families — sec_13f: {summary['families']['sec_13f']}, "
-          f"ctgov: {summary['families']['ctgov']}, "
-          f"sec_8k: {summary['families']['sec_8k']}")
+    print(
+        f"\n{mode}: {summary['n_stamped']} stamped, "
+        f"{summary['n_skipped_existing']} skipped (existing), "
+        f"{summary['n_skipped_no_rankings']} skipped (no data)"
+    )
+    print(
+        f"  Families — sec_13f: {summary['families']['sec_13f']}, "
+        f"ctgov: {summary['families']['ctgov']}, "
+        f"sec_8k: {summary['families']['sec_8k']}"
+    )
 
 
 if __name__ == "__main__":

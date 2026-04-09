@@ -14,6 +14,7 @@ Usage:
     python tools/build_pit_financials.py --force           # re-download all
     python tools/build_pit_financials.py --workers 3       # parallel workers (default 1)
 """
+
 import argparse
 import json
 import logging

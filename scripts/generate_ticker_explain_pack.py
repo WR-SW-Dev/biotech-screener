@@ -8,6 +8,7 @@ Outputs:
     ticker_explain_pack.json   — structured data
     ticker_explain_pack.md     — human-readable Markdown
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,23 +27,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 sys.path.insert(0, str(PROJECT_ROOT / "scripts"))
 
-from run_phase2_snapshot_delta import (
-    SnapshotData,
-    _safe_float,
-    _safe_int,
-    load_snapshot,
-)
-from run_drift_report import (
-    _GATE_KEYS,
-    _parse_pipe_separated,
-    compute_attribution,
-)
-from decision_engine import (
-    DecisionRuleset,
-    compute_gate_margins,
-    compute_tier_margins,
-)
-from decision_engine_codes import build_explanation, describe_code
+from run_drift_report import _GATE_KEYS, _parse_pipe_separated, compute_attribution
+
+from decision_engine import DecisionRuleset, compute_gate_margins, compute_tier_margins
+from decision_engine_codes import build_explanation
+from run_phase2_snapshot_delta import SnapshotData, _safe_float, _safe_int, load_snapshot
 
 # ---------------------------------------------------------------------------
 # Constants
@@ -327,9 +316,7 @@ def build_explain_pack(
         dossier = extract_dossier(ticker, current.rankings, a_floor)
 
         if prior is not None:
-            delta = compute_ticker_delta(
-                ticker, current.rankings, prior.rankings
-            )
+            delta = compute_ticker_delta(ticker, current.rankings, prior.rankings)
             if delta is not None:
                 dossier["delta"] = delta
 
@@ -340,7 +327,9 @@ def build_explain_pack(
     n_eligible = 0
     n_rescued = 0
     margin_cols: Dict[str, List[float]] = {
-        "dd_abs_margin": [], "dd_rel_margin": [], "optionality_margin_a": [],
+        "dd_abs_margin": [],
+        "dd_rel_margin": [],
+        "optionality_margin_a": [],
     }
 
     ruleset = DecisionRuleset(tier_a_optionality_floor=a_floor)
@@ -434,7 +423,9 @@ def render_dossier_md(dossier: Dict[str, Any]) -> str:
     # Summary table
     lines.append("| Field | Value |")
     lines.append("|-------|-------|")
-    lines.append(f"| Composite rank / score | {_fmt_num(dossier.get('composite_rank'))} / {_fmt_num(dossier.get('composite_score'))} |")
+    lines.append(
+        f"| Composite rank / score | {_fmt_num(dossier.get('composite_rank'))} / {_fmt_num(dossier.get('composite_score'))} |"
+    )
     lines.append(f"| Size band | {dossier.get('size_band', 'n/a')} |")
     lines.append(f"| Actionable rank | {_fmt_num(dossier.get('actionable_rank'))} |")
     lines.append(f"| Target weight | {_fmt_pct(dossier.get('target_weight_pct'))} |")
@@ -445,10 +436,7 @@ def render_dossier_md(dossier: Dict[str, Any]) -> str:
     if explanation:
         elig_block = explanation["eligibility"]
         if elig_block["failed_gates"]:
-            parts = [
-                f"{g} ({elig_block['gate_details'].get(g, '')})"
-                for g in elig_block["failed_gates"]
-            ]
+            parts = [f"{g} ({elig_block['gate_details'].get(g, '')})" for g in elig_block["failed_gates"]]
             lines.append(f"**Gates:** {', '.join(parts)} FAIL")
         else:
             lines.append("**Gates:** all pass")
@@ -469,16 +457,15 @@ def render_dossier_md(dossier: Dict[str, Any]) -> str:
         cat_parts.append(f"{cat_days} days")
     if cat_mode:
         cat_parts.append(cat_mode)
-    lines.append(f"**Catalyst:** {' ('.join(cat_parts[:1])}" + (f" ({', '.join(cat_parts[1:])})" if len(cat_parts) > 1 else ""))
+    lines.append(
+        f"**Catalyst:** {' ('.join(cat_parts[:1])}" + (f" ({', '.join(cat_parts[1:])})" if len(cat_parts) > 1 else "")
+    )
 
     # Tier reason (from explanation)
     if explanation:
         tier_block = explanation["tier"]
         if tier_block["primary_reasons"]:
-            descs = [
-                tier_block["reason_descriptions"].get(r, r)
-                for r in tier_block["primary_reasons"]
-            ]
+            descs = [tier_block["reason_descriptions"].get(r, r) for r in tier_block["primary_reasons"]]
             lines.append(f"**Tier reason:** {' + '.join(descs)}")
 
     # Optionality
@@ -517,15 +504,13 @@ def render_dossier_md(dossier: Dict[str, Any]) -> str:
             rel_m = gm.get("dd_rel_margin")
             abs_s = f"{abs_m:+.3f}" if abs_m is not None else "n/a"
             rel_s = f"{rel_m:+.3f}" if rel_m is not None else "n/a"
-            lines.append(f"**Decision Reversal:** Rescued by relative gate "
-                         f"(abs margin={abs_s}, rel margin={rel_s})")
+            lines.append("**Decision Reversal:** Rescued by relative gate " f"(abs margin={abs_s}, rel margin={rel_s})")
         elif not dossier.get("eligible") and gm.get("first_failed_effective_gate"):
             gate = gm["first_failed_effective_gate"]
             cf = gm.get("counterfactual", {})
             if cf:
                 cf_parts = [f"{k}\u2192{v}" for k, v in cf.items()]
-                lines.append(f"**Decision Reversal:** {gate} \u2014 "
-                             f"to flip: {', '.join(cf_parts)}")
+                lines.append(f"**Decision Reversal:** {gate} \u2014 " f"to flip: {', '.join(cf_parts)}")
             else:
                 lines.append(f"**Decision Reversal:** {gate}")
         # Margin summary for all tickers
@@ -567,9 +552,7 @@ def render_dossier_md(dossier: Dict[str, Any]) -> str:
                             f"{col} {_fmt_num(d['prior'])}\u2192{_fmt_num(d['current'])} ({sign}{_fmt_num(change)})"
                         )
                     else:
-                        delta_parts.append(
-                            f"{col} {_fmt_num(d['prior'])}\u2192{_fmt_num(d['current'])}"
-                        )
+                        delta_parts.append(f"{col} {_fmt_num(d['prior'])}\u2192{_fmt_num(d['current'])}")
 
         if delta_parts:
             lines.append(f"\n**Delta:** {', '.join(delta_parts)}")
@@ -625,9 +608,7 @@ def render_explain_pack_md(pack: Dict[str, Any]) -> str:
 # CLI entry point
 # ---------------------------------------------------------------------------
 def main(argv: Optional[List[str]] = None) -> None:
-    parser = argparse.ArgumentParser(
-        description="Generate per-ticker explain dossiers for drift movers."
-    )
+    parser = argparse.ArgumentParser(description="Generate per-ticker explain dossiers for drift movers.")
     parser.add_argument(
         "--snapshot-dir",
         type=Path,

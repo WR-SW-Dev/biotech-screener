@@ -10,6 +10,7 @@ Usage:
     python3 tools/weekly_health_packet.py --as-of-date 2026-03-07
     python3 tools/weekly_health_packet.py --relaxed               # acknowledge non-strict run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -18,7 +19,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -29,6 +30,7 @@ OUTPUT_ROOT = PROJECT_ROOT / "output" / "health_packets"
 
 
 # ── Snapshot discovery ───────────────────────────────────────────────
+
 
 def _find_latest_snapshot_date() -> Optional[str]:
     """Return the most recent YYYY-MM-DD snapshot directory name."""
@@ -66,12 +68,11 @@ def _load_csv(path: Path) -> List[Dict[str, str]]:
 
 # ── Turnover (current + trailing 4-week avg) ────────────────────────
 
+
 def _turnover_from_delta(delta: List[Dict[str, str]]) -> Optional[float]:
     """Return turnover % for a delta CSV, or None if no prior portfolio."""
-    entries = sum(1 for r in delta if r.get("in_current") == "1"
-                  and r.get("in_prior") == "0")
-    exits = sum(1 for r in delta if r.get("in_current") == "0"
-                and r.get("in_prior") == "1")
+    entries = sum(1 for r in delta if r.get("in_current") == "1" and r.get("in_prior") == "0")
+    exits = sum(1 for r in delta if r.get("in_current") == "0" and r.get("in_prior") == "1")
     prior_active = sum(1 for r in delta if r.get("in_prior") == "1")
     if prior_active == 0:
         return None  # fresh-start run — no prior portfolio to compare against
@@ -81,16 +82,15 @@ def _turnover_from_delta(delta: List[Dict[str, str]]) -> Optional[float]:
 def _compute_turnover(snap_dir: Path, as_of_date: str) -> Dict:
     """Compute turnover from run_delta CSV; also trailing 4-week avg (skips fresh-start runs)."""
     delta = _load_csv(snap_dir / "phase2_run_delta.csv")
-    entries = sum(1 for r in delta if r.get("in_current") == "1"
-                  and r.get("in_prior") == "0")
-    exits = sum(1 for r in delta if r.get("in_current") == "0"
-                and r.get("in_prior") == "1")
+    entries = sum(1 for r in delta if r.get("in_current") == "1" and r.get("in_prior") == "0")
+    exits = sum(1 for r in delta if r.get("in_current") == "0" and r.get("in_prior") == "1")
     turnover_pct = _turnover_from_delta(delta)
 
     # Trailing 4-week snapshots (skip fresh-start runs where prior_active=0)
     trailing = []
     snap_dates = sorted(
-        d.name for d in SNAPSHOTS_ROOT.iterdir()
+        d.name
+        for d in SNAPSHOTS_ROOT.iterdir()
         if d.is_dir() and len(d.name) == 10 and d.name[4] == "-" and d.name < as_of_date
     )
     for prior_date in reversed(snap_dates[-8:]):  # look back up to 8 to find 4 valid
@@ -116,13 +116,10 @@ def _compute_turnover(snap_dir: Path, as_of_date: str) -> Dict:
 
 # ── Portfolio shape ──────────────────────────────────────────────────
 
+
 def _portfolio_shape(snap_dir: Path) -> Dict:
     positions = _load_csv(snap_dir / "portfolio_positions.csv")
-    portfolio = [
-        r for r in positions
-        if r.get("actionable_rank", "").strip()
-        and r.get("eligible", "") == "1"
-    ]
+    portfolio = [r for r in positions if r.get("actionable_rank", "").strip() and r.get("eligible", "") == "1"]
     portfolio.sort(key=lambda r: int(r.get("actionable_rank", "9999") or "9999"))
 
     portfolio_json = _load_json(snap_dir / "decision_portfolio.json") or {}
@@ -161,6 +158,7 @@ def _portfolio_shape(snap_dir: Path) -> Dict:
 
 # ── Action-required items ────────────────────────────────────────────
 
+
 def _action_items(
     *,
     gates: List[Dict],
@@ -175,40 +173,45 @@ def _action_items(
     # New FAILs
     for g in gates:
         if g.get("status") == "FAIL":
-            items.append({"severity": "FAIL", "type": "gate_fail",
-                          "detail": f"{g['name']}: {g.get('detail', '')}"})
+            items.append({"severity": "FAIL", "type": "gate_fail", "detail": f"{g['name']}: {g.get('detail', '')}"})
 
     # Drift WARN streak ≥ 2
     if ruleset_health and ruleset_health.get("consecutive_warn_days", 0) >= 2:
-        items.append({
-            "severity": "WARN",
-            "type": "drift_warn_streak",
-            "detail": (f"Ruleset health WARN streak = "
-                       f"{ruleset_health['consecutive_warn_days']} days"),
-        })
+        items.append(
+            {
+                "severity": "WARN",
+                "type": "drift_warn_streak",
+                "detail": ("Ruleset health WARN streak = " f"{ruleset_health['consecutive_warn_days']} days"),
+            }
+        )
 
     # Rollback recommendation — detail updated post-drill if drill_path provided
     if ruleset_health and ruleset_health.get("recommend_rollback"):
-        items.append({
-            "severity": "FAIL",
-            "type": "rollback_recommended",
-            "detail": "ruleset_health recommends rollback",
-        })
+        items.append(
+            {
+                "severity": "FAIL",
+                "type": "rollback_recommended",
+                "detail": "ruleset_health recommends rollback",
+            }
+        )
 
     # Turnover spike vs 4-week avg (skip fresh-start runs where tc is None)
     t4 = turnover.get("trailing_4w_avg_pct")
     tc = turnover.get("turnover_pct")
     if tc is not None and t4 is not None and tc > t4 * 2.5 and tc > 5:
-        items.append({
-            "severity": "WARN",
-            "type": "turnover_spike",
-            "detail": f"Turnover {tc:.1f}% vs 4w avg {t4:.1f}% (>2.5x)",
-        })
+        items.append(
+            {
+                "severity": "WARN",
+                "type": "turnover_spike",
+                "detail": f"Turnover {tc:.1f}% vs 4w avg {t4:.1f}% (>2.5x)",
+            }
+        )
 
     # Cache health issues (skip "unknown" — old snapshots may not have cache data)
     if cache and cache.get("overall_status") not in ("ok", "unknown", None):
-        items.append({"severity": "WARN", "type": "cache_health",
-                      "detail": f"overall_status={cache['overall_status']}"})
+        items.append(
+            {"severity": "WARN", "type": "cache_health", "detail": f"overall_status={cache['overall_status']}"}
+        )
 
     # Live performance: warn if 4w mean_net_return is negative
     if live_performance:
@@ -216,19 +219,19 @@ def _action_items(
         mean_net = last_4w.get("mean_net_return")
         n_dates = last_4w.get("n_dates", 0)
         if mean_net is not None and n_dates >= 3 and mean_net < 0:
-            items.append({
-                "severity": "WARN",
-                "type": "live_performance_negative",
-                "detail": (
-                    f"4-week mean net return is negative: "
-                    f"{mean_net:.4f} ({n_dates} dates)"
-                ),
-            })
+            items.append(
+                {
+                    "severity": "WARN",
+                    "type": "live_performance_negative",
+                    "detail": ("4-week mean net return is negative: " f"{mean_net:.4f} ({n_dates} dates)"),
+                }
+            )
 
     return items
 
 
 # ── Preflight summary (from audit dir if present) ───────────────────
+
 
 def _preflight_summary(snap_dir: Path) -> Optional[Dict]:
     """Read preflight_summary.json from the snapshot's audit dir, if present."""
@@ -240,6 +243,7 @@ def _preflight_summary(snap_dir: Path) -> Optional[Dict]:
 
 
 # ── Live performance section ─────────────────────────────────────────
+
 
 def _live_performance_section() -> Dict:
     """Read output/live_performance_summary.json and return a compact section.
@@ -276,17 +280,18 @@ def _live_performance_section() -> Dict:
 
 # ── Main packet builder ──────────────────────────────────────────────
 
+
 def build_health_packet(as_of_date: str, *, relaxed: bool = False) -> Dict:
     snap_dir = SNAPSHOTS_ROOT / as_of_date
     if not snap_dir.is_dir():
         raise FileNotFoundError(f"Snapshot directory not found: {snap_dir}")
 
-    metadata = _load_json(snap_dir / "metadata.json") or {}
+    _load_json(snap_dir / "metadata.json") or {}
     run_manifest = _load_json(snap_dir / "run_manifest.json") or {}
     drift = _load_json(snap_dir / "drift_report.json") or {}
     ruleset_health = _load_json(snap_dir / "ruleset_health.json") or {}
     cache = _load_json(snap_dir / "cache_health.json") or {}
-    phase2 = _load_json(snap_dir / "phase2_health.json") or {}
+    _load_json(snap_dir / "phase2_health.json") or {}
 
     # ── Provenance ───────────────────────────────────────────────────
     git_info = run_manifest.get("git", {})
@@ -294,10 +299,9 @@ def build_health_packet(as_of_date: str, *, relaxed: bool = False) -> Dict:
     git_sha = git_info.get("commit_sha", "unknown")[:8]
     ruleset_id = ruleset_info.get("ruleset_hash") or ruleset_health.get("active_ruleset_id", "unknown")
     ruleset_path = snap_dir / "decision_ruleset.json"
-    ruleset_filename = "unknown"
     if ruleset_path.is_file():
         try:
-            dr = json.loads(ruleset_path.read_text())
+            json.loads(ruleset_path.read_text())
             # No filename stored in the json; use the name from run_manifest if present
         except Exception:
             pass
@@ -382,8 +386,7 @@ def build_health_packet(as_of_date: str, *, relaxed: bool = False) -> Dict:
             "fail_count": len(fail_gates),
             "warn_names": [g["name"] for g in warn_gates],
             "fail_names": [g["name"] for g in fail_gates],
-            "fail_details": [{"name": g["name"], "detail": g.get("detail", "")}
-                             for g in fail_gates],
+            "fail_details": [{"name": g["name"], "detail": g.get("detail", "")} for g in fail_gates],
         },
         "preflight": preflight,
         "drift": drift_data,
@@ -397,6 +400,7 @@ def build_health_packet(as_of_date: str, *, relaxed: bool = False) -> Dict:
 
 
 # ── Markdown renderer ────────────────────────────────────────────────
+
 
 def _v(val, fmt=".2f", suffix="") -> str:
     if val is None:
@@ -451,8 +455,8 @@ def render_markdown(packet: Dict) -> str:
     lines += [
         "## Provenance",
         "",
-        f"| Field | Value |",
-        f"|-------|-------|",
+        "| Field | Value |",
+        "|-------|-------|",
         f"| as_of_date | `{prov['as_of_date']}` |",
         f"| git_sha | `{prov['git_sha']}` |",
         f"| ruleset_id | `{prov['ruleset_id']}` |",
@@ -465,8 +469,8 @@ def render_markdown(packet: Dict) -> str:
     lines += [
         "## Gates Checklist",
         "",
-        f"| Status | Count |",
-        f"|--------|-------|",
+        "| Status | Count |",
+        "|--------|-------|",
         f"| PASS | {gates['pass_count']} |",
         f"| WARN | {gates['warn_count']} |",
         f"| FAIL | {gates['fail_count']} |",
@@ -487,8 +491,8 @@ def render_markdown(packet: Dict) -> str:
         lines += [
             "## Preflight",
             "",
-            f"| Status | Count |",
-            f"|--------|-------|",
+            "| Status | Count |",
+            "|--------|-------|",
             f"| PASS | {pf.get('n_pass', '—')} |",
             f"| WARN | {pf.get('n_warn', '—')} |",
             f"| FAIL | {pf.get('n_fail', '—')} |",
@@ -510,8 +514,8 @@ def render_markdown(packet: Dict) -> str:
         "",
         "### Drift",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Status | `{drift['status']}` |",
         f"| Top-20 overlap | {_v(drift['top20_overlap_pct'], '.1f', '%')} |",
         f"| Top-60 overlap | {_v(drift['top60_overlap_pct'], '.1f', '%')} |",
@@ -525,8 +529,8 @@ def render_markdown(packet: Dict) -> str:
     lines += [
         "### Ruleset Health",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Status | `{rh['status']}` |",
         f"| Consecutive WARN days | {rh['consecutive_warn_days']} |",
         f"| Days since promotion | {_v(rh['days_since_promotion'], 'd')} |",
@@ -536,17 +540,15 @@ def render_markdown(packet: Dict) -> str:
         "",
         "### Cache Health",
         "",
-        f"| Cache | Count | Status |",
-        f"|-------|-------|--------|",
+        "| Cache | Count | Status |",
+        "|-------|-------|--------|",
     ]
     for key, label in [("sec8k", "SEC 8-K"), ("ctgov", "CTGov PIT")]:
         cd = cache.get(key, {})
-        lines.append(f"| {label} | {cd.get('count','—')} | "
-                     f"`{cd.get('status','unknown')}` |")
+        lines.append(f"| {label} | {cd.get('count','—')} | " f"`{cd.get('status','unknown')}` |")
     lines += [
-        f"",
-        f"**Overall**: `{cache['overall_status'].upper()}`"
-        + (" ⚠ Degraded run" if cache["degraded_run"] else ""),
+        "",
+        f"**Overall**: `{cache['overall_status'].upper()}`" + (" ⚠ Degraded run" if cache["degraded_run"] else ""),
         "",
     ]
 
@@ -560,8 +562,8 @@ def render_markdown(packet: Dict) -> str:
     lines += [
         "### Turnover",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| This week | {_v(tc, '.2f', '%') + spike + fresh_note} |",
         f"| Trailing 4-week avg | {_v(t4, '.2f', '%')} (n={turn['trailing_n']}) |",
         f"| Entries | {turn['entries']} |",
@@ -573,8 +575,8 @@ def render_markdown(packet: Dict) -> str:
     lines += [
         "## Portfolio Shape",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Eligible securities | {port['n_eligible']} |",
         f"| Portfolio (top-K) | {port['n_portfolio']} |",
         f"| Weight sum | {_v(port['weight_sum_pct'], '.2f', '%')} |",
@@ -589,10 +591,9 @@ def render_markdown(packet: Dict) -> str:
         "|------|--------|------|--------|------|-------|",
     ]
     for p in port["top10"]:
-        w = f"{p['weight_pct']:.2f}%" if p['weight_pct'] else "—"
+        w = f"{p['weight_pct']:.2f}%" if p["weight_pct"] else "—"
         flags = p.get("risk_flags") or "—"
-        lines.append(f"| {p['rank']} | `{p['ticker']}` | {p['tier']} | "
-                     f"{w} | {p['size_band']} | {flags} |")
+        lines.append(f"| {p['rank']} | `{p['ticker']}` | {p['tier']} | " f"{w} | {p['size_band']} | {flags} |")
     lines.append("")
 
     return "\n".join(lines)
@@ -600,21 +601,27 @@ def render_markdown(packet: Dict) -> str:
 
 # ── Entry point ──────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate weekly health packet for a snapshot date",
         allow_abbrev=False,
     )
     parser.add_argument(
-        "--as-of-date", default=None,
+        "--as-of-date",
+        default=None,
         help="YYYY-MM-DD snapshot date (default: latest snapshot)",
     )
     parser.add_argument(
-        "--relaxed", action="store_true", default=False,
+        "--relaxed",
+        action="store_true",
+        default=False,
         help="Acknowledge this is a non-strict / non-production run",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=OUTPUT_ROOT,
+        "--out-dir",
+        type=Path,
+        default=OUTPUT_ROOT,
         help=f"Output directory (default: {OUTPUT_ROOT})",
     )
     args = parser.parse_args()
@@ -640,25 +647,23 @@ def main() -> None:
     if rollback_action:
         try:
             from rollback_drill import run_drill, write_drill_artifacts
+
             drill_out_dir = args.out_dir / f"rollback_{as_of_date}"
             drill = run_drill(as_of_date)
             md_drill, json_drill = write_drill_artifacts(drill, drill_out_dir)
-            rollback_action["detail"] = (
-                f"ruleset_health recommends rollback — see {md_drill}"
-            )
+            rollback_action["detail"] = f"ruleset_health recommends rollback — see {md_drill}"
             packet["rollback_drill_path"] = str(md_drill)
             print(f"  Rollback drill → {md_drill}")
         except Exception as exc:
             rollback_action["detail"] = (
-                f"ruleset_health recommends rollback — "
-                f"run: python3 scripts/rollback_drill.py  (drill error: {exc})"
+                "ruleset_health recommends rollback — " f"run: python3 scripts/rollback_drill.py  (drill error: {exc})"
             )
 
     md_path = args.out_dir / f"health_{as_of_date}.md"
     json_path = args.out_dir / f"health_{as_of_date}.json"
 
     # Write JSON (drop non-serialisable rich_risk_checks blob)
-    serialisable = {k: v for k, v in packet.items() if k != "portfolio" or True}
+    _ = {k: v for k, v in packet.items() if k != "portfolio" or True}
     # Strip the nested checks dict from portfolio for cleaner JSON
     clean_packet = dict(packet)
     clean_portfolio = dict(packet["portfolio"])
@@ -677,18 +682,17 @@ def main() -> None:
     print(f"  Ruleset : {prov['ruleset_id']} (v{prov['ruleset_version']})")
     print(f"  git SHA : {prov['git_sha']}")
     gates_s = packet["gates"]
-    print(f"  Gates   : {gates_s['pass_count']} PASS, "
-          f"{gates_s['warn_count']} WARN, {gates_s['fail_count']} FAIL")
+    print(f"  Gates   : {gates_s['pass_count']} PASS, " f"{gates_s['warn_count']} WARN, {gates_s['fail_count']} FAIL")
     drift = packet["drift"]
     rh = packet["ruleset_health"]
-    print(f"  Drift   : {drift['status']} "
-          f"(top20={_v(drift['top20_overlap_pct'],'.1f','%')}, "
-          f"top60={_v(drift['top60_overlap_pct'],'.1f','%')})")
-    print(f"  RH      : {rh['status']} "
-          f"(streak={rh['consecutive_warn_days']}d)")
+    print(
+        f"  Drift   : {drift['status']} "
+        f"(top20={_v(drift['top20_overlap_pct'],'.1f','%')}, "
+        f"top60={_v(drift['top60_overlap_pct'],'.1f','%')})"
+    )
+    print(f"  RH      : {rh['status']} " f"(streak={rh['consecutive_warn_days']}d)")
     turn = packet["turnover"]
-    print(f"  Turnover: {_v(turn['turnover_pct'],'.2f','%')} "
-          f"(4w avg={_v(turn['trailing_4w_avg_pct'],'.2f','%')})")
+    print(f"  Turnover: {_v(turn['turnover_pct'],'.2f','%')} " f"(4w avg={_v(turn['trailing_4w_avg_pct'],'.2f','%')})")
     if actions:
         print(f"\n  ⚠  {len(actions)} action item(s):")
         for item in actions:

@@ -15,6 +15,7 @@ Optionally includes reason-change-only movers (--include-reason-only).
 
 Uses rankings.csv fields: ticker, eligible, ineligible_reasons (pipe-separated).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,7 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_csv_rows(path: Path) -> Dict[str, Dict[str, str]]:
     with open(path, newline="", encoding="utf-8") as f:
@@ -72,6 +74,7 @@ def _stable_json(obj: Any) -> str:
 # ---------------------------------------------------------------------------
 # Mover detection
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class Mover:
@@ -122,45 +125,54 @@ def find_movers(
         reason_change = prs != crs
 
         if flip or (include_reason_only and reason_change):
-            movers.append(Mover(
-                ticker=t,
-                prior_eligible=pe,
-                cur_eligible=ce,
-                prior_reasons=prs,
-                cur_reasons=crs,
-                archetype=archetype,
-                tier_any=tier_any,
-            ))
+            movers.append(
+                Mover(
+                    ticker=t,
+                    prior_eligible=pe,
+                    cur_eligible=ce,
+                    prior_reasons=prs,
+                    cur_reasons=crs,
+                    archetype=archetype,
+                    tier_any=tier_any,
+                )
+            )
 
     # Deterministic ordering: flips (newly ineligible first), then ticker
-    movers.sort(key=lambda m: (
-        0 if (m.prior_eligible == 1 and m.cur_eligible == 0) else
-        1 if (m.prior_eligible == 0 and m.cur_eligible == 1) else 2,
-        m.ticker,
-    ))
-    return movers[:max(0, max_tickers)]
+    movers.sort(
+        key=lambda m: (
+            (
+                0
+                if (m.prior_eligible == 1 and m.cur_eligible == 0)
+                else 1 if (m.prior_eligible == 0 and m.cur_eligible == 1) else 2
+            ),
+            m.ticker,
+        )
+    )
+    return movers[: max(0, max_tickers)]
 
 
 # ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
 
+
 def _write_csv(path: Path, movers: List[Mover]) -> None:
-    fields = ["ticker", "prior_eligible", "cur_eligible",
-              "prior_reasons", "cur_reasons", "archetype", "tier_any"]
+    fields = ["ticker", "prior_eligible", "cur_eligible", "prior_reasons", "cur_reasons", "archetype", "tier_any"]
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=fields)
         w.writeheader()
         for m in movers:
-            w.writerow({
-                "ticker": m.ticker,
-                "prior_eligible": "" if m.prior_eligible is None else m.prior_eligible,
-                "cur_eligible": "" if m.cur_eligible is None else m.cur_eligible,
-                "prior_reasons": "|".join(m.prior_reasons),
-                "cur_reasons": "|".join(m.cur_reasons),
-                "archetype": m.archetype,
-                "tier_any": m.tier_any,
-            })
+            w.writerow(
+                {
+                    "ticker": m.ticker,
+                    "prior_eligible": "" if m.prior_eligible is None else m.prior_eligible,
+                    "cur_eligible": "" if m.cur_eligible is None else m.cur_eligible,
+                    "prior_reasons": "|".join(m.prior_reasons),
+                    "cur_reasons": "|".join(m.cur_reasons),
+                    "archetype": m.archetype,
+                    "tier_any": m.tier_any,
+                }
+            )
 
 
 def render_triage_md(ctx: Dict[str, Any], movers: List[Mover]) -> str:
@@ -177,11 +189,11 @@ def render_triage_md(ctx: Dict[str, Any], movers: List[Mover]) -> str:
 
     new_inel = [m for m in movers if m.prior_eligible == 1 and m.cur_eligible == 0]
     new_el = [m for m in movers if m.prior_eligible == 0 and m.cur_eligible == 1]
-    reason_only = [m for m in movers
-                   if m.prior_eligible == m.cur_eligible and m.prior_reasons != m.cur_reasons]
+    reason_only = [m for m in movers if m.prior_eligible == m.cur_eligible and m.prior_reasons != m.cur_reasons]
 
     lines += [
-        "| Bucket | Count |", "|---|---:|",
+        "| Bucket | Count |",
+        "|---|---:|",
         f"| newly_ineligible (1->0) | {len(new_inel)} |",
         f"| newly_eligible (0->1) | {len(new_el)} |",
         f"| reason_change_only | {len(reason_only)} |",
@@ -212,6 +224,7 @@ def render_triage_md(ctx: Dict[str, Any], movers: List[Mover]) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def _pick_prior_date(snapshot_root: Path, as_of: str) -> Optional[str]:
     dates: List[str] = []
@@ -259,7 +272,8 @@ def main() -> int:
     pri = _load_csv_rows(pri_rank)
 
     movers = find_movers(
-        cur, pri,
+        cur,
+        pri,
         include_reason_only=args.include_reason_only,
         max_tickers=args.max_tickers,
     )
@@ -285,7 +299,8 @@ def main() -> int:
     }
     (out_dir / "triage_summary.json").write_text(_stable_json(payload), encoding="utf-8")
     (out_dir / "triage_summary.md").write_text(
-        render_triage_md(ctx, movers) + "\n", encoding="utf-8",
+        render_triage_md(ctx, movers) + "\n",
+        encoding="utf-8",
     )
     _write_csv(out_dir / "movers.csv", movers)
 

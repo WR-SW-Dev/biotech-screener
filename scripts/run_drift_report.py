@@ -20,6 +20,7 @@ Usage:
         --output-dir output \
         [--window-size 10]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,21 +43,12 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from run_phase2_snapshot_delta import (
-    SnapshotData,
-    _catalyst_coverage,
-    _safe_float,
-    _safe_int,
-    _tier_counts,
-    load_snapshot,
-)
+from run_phase2_snapshot_delta import SnapshotData, _safe_float, _safe_int, _tier_counts, load_snapshot
 
 # ---------------------------------------------------------------------------
 # Guardrails dataclass
 # ---------------------------------------------------------------------------
-MANIFEST_PATH = (
-    PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
-)
+MANIFEST_PATH = PROJECT_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
 
 
 @dataclass(frozen=True)
@@ -69,20 +61,20 @@ class DriftGuardrails:
     """
 
     # FAIL triggers
-    fail_a_pct_low: float = 0.0        # A-tier % among dev = 0% (pipeline broken)
-    fail_a_pct_high: float = 25.0      # A-tier % among dev > 25%
-    fail_catalyst_missing_high: float = 85.0   # catalyst missing % among eligible > 85%
-    fail_overlap_low: float = 50.0     # top-25 overlap vs prior < 50%
+    fail_a_pct_low: float = 0.0  # A-tier % among dev = 0% (pipeline broken)
+    fail_a_pct_high: float = 25.0  # A-tier % among dev > 25%
+    fail_catalyst_missing_high: float = 85.0  # catalyst missing % among eligible > 85%
+    fail_overlap_low: float = 50.0  # top-25 overlap vs prior < 50%
     fail_dispersion_low: float = 0.10  # optionality std < 0.10
 
     # WARN triggers
-    warn_a_pct_low: float = 1.5              # WARN if A-tier % < 1.5% (sparse catalyst regime)
+    warn_a_pct_low: float = 1.5  # WARN if A-tier % < 1.5% (sparse catalyst regime)
 
     # Cost / eligibility / drawdown coverage
-    warn_median_cost_bps_high: float = 60.0   # median round-trip cost > 60 bps
-    warn_cost_coverage_low: float = 80.0      # WARN if cost coverage < 80%
-    warn_cap_binding_high: float = 20.0       # WARN if cap-binding (floor bucket) > 20%
-    warn_eligible_dev_pct_low: float = 10.0   # eligible dev % < 10% → WARN
+    warn_median_cost_bps_high: float = 60.0  # median round-trip cost > 60 bps
+    warn_cost_coverage_low: float = 80.0  # WARN if cost coverage < 80%
+    warn_cap_binding_high: float = 20.0  # WARN if cap-binding (floor bucket) > 20%
+    warn_eligible_dev_pct_low: float = 10.0  # eligible dev % < 10% → WARN
     warn_drawdown_rel_coverage_low: float = 80.0  # WARN if XBI relative DD coverage < 80%
     fail_drawdown_rel_coverage_low: float = 50.0  # FAIL if XBI relative DD coverage < 50%
 
@@ -96,30 +88,30 @@ class DriftGuardrails:
     warn_dd_rel_margin_rescue_share_high: float = 5.0  # WARN if rescued share > 5%
 
     # Returns-source mix
-    warn_rs_unknown_share_high: float = 8.5        # WARN if unknown source > 8.5%
+    warn_rs_unknown_share_high: float = 8.5  # WARN if unknown source > 8.5%
     warn_rs_csv_outlier_override_share_high: float = 1.0  # WARN if outlier overrides > 1%
-    warn_rs_morningstar_share_low: float = 85.0    # WARN if Morningstar share < 85%
+    warn_rs_morningstar_share_low: float = 85.0  # WARN if Morningstar share < 85%
 
     # Catalyst coverage
-    warn_cat_eligible_share_low: float = 95.0         # WARN if eligible % of dev < 95%
-    warn_cat_specific_days_share_low: float = 40.0    # WARN if specific_days % of eligible < 40%
+    warn_cat_eligible_share_low: float = 95.0  # WARN if eligible % of dev < 95%
+    warn_cat_specific_days_share_low: float = 40.0  # WARN if specific_days % of eligible < 40%
 
     # Catalyst source mix
-    warn_cs_ctgov_share_low: float = 37.0             # WARN if CTGOV_CALENDAR share < 37%
-    warn_cs_unknown_share_high: float = 5.0           # WARN if unknown source share > 5%
+    warn_cs_ctgov_share_low: float = 37.0  # WARN if CTGOV_CALENDAR share < 37%
+    warn_cs_unknown_share_high: float = 5.0  # WARN if unknown source share > 5%
 
     # Catalyst event type mix (regime-gated: only when cat_specific_days ≥ 40%)
-    warn_ct_unknown_share_high: float = 5.0           # WARN if unknown event type share > 5%
-    warn_ct_fda_share_spike: float = 30.0             # WARN if FDA_DECISION + FDA_ADCOM share > 30%
+    warn_ct_unknown_share_high: float = 5.0  # WARN if unknown event type share > 5%
+    warn_ct_fda_share_spike: float = 30.0  # WARN if FDA_DECISION + FDA_ADCOM share > 30%
 
     # Institutional delta coverage
-    warn_inst_delta_nonzero_low: float = 5.0          # WARN if <5% of dev have nonzero z
+    warn_inst_delta_nonzero_low: float = 5.0  # WARN if <5% of dev have nonzero z
 
     # Adaptive WARN layer
-    warn_iqr_k: float = 2.0             # WARN if |delta| > k * max(IQR, floor)
-    warn_iqr_floor: float = 1.0         # minimum IQR (prevents spurious WARN from flat windows)
-    warn_min_window: int = 3            # minimum snapshots for adaptive WARN to activate
-    fail_corroboration_count: int = 2   # FAIL metrics needed for ROLLBACK_RECOMMENDED
+    warn_iqr_k: float = 2.0  # WARN if |delta| > k * max(IQR, floor)
+    warn_iqr_floor: float = 1.0  # minimum IQR (prevents spurious WARN from flat windows)
+    warn_min_window: int = 3  # minimum snapshots for adaptive WARN to activate
+    fail_corroboration_count: int = 2  # FAIL metrics needed for ROLLBACK_RECOMMENDED
 
     @property
     def guardrails_id(self) -> str:
@@ -156,9 +148,7 @@ class DriftGuardrails:
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 
-def load_snapshot_window(
-    snap_dir: Path, window_size: int
-) -> List[SnapshotData]:
+def load_snapshot_window(snap_dir: Path, window_size: int) -> List[SnapshotData]:
     """Load the last *window_size* snapshots sorted by date (ascending).
 
     Only considers directories whose name matches YYYY-MM-DD and that
@@ -214,7 +204,8 @@ def _synthesize_actionable_rank(df: pd.DataFrame) -> pd.Series:
 
 
 def load_panel_as_snapshots(
-    panel_path: Path, window_size: int = 0,
+    panel_path: Path,
+    window_size: int = 0,
 ) -> List[SnapshotData]:
     """Load a walkforward panel CSV and convert to SnapshotData objects.
 
@@ -240,8 +231,7 @@ def load_panel_as_snapshots(
             break
     if date_col is None:
         raise ValueError(
-            f"Panel CSV missing date column (expected one of: "
-            f"as_of_date, snapshot_date, date): {panel_path}"
+            "Panel CSV missing date column (expected one of: " f"as_of_date, snapshot_date, date): {panel_path}"
         )
     if date_col != "as_of_date":
         df = df.rename(columns={date_col: "as_of_date"})
@@ -271,11 +261,7 @@ def load_panel_as_snapshots(
         # Determine ruleset_id (first non-blank value)
         ruleset_id = ""
         if "ruleset_id" in date_df.columns:
-            ids = [
-                str(v).strip()
-                for v in date_df["ruleset_id"].dropna().unique()
-                if str(v).strip()
-            ]
+            ids = [str(v).strip() for v in date_df["ruleset_id"].dropna().unique() if str(v).strip()]
             if ids:
                 ruleset_id = ids[0]
 
@@ -311,11 +297,7 @@ def _optionality_std(rankings: pd.DataFrame) -> Optional[float]:
     dev = rankings[rankings["archetype"] == "drug_developer"]
     if "clinical_optionality_pct_dev" not in dev.columns:
         return None
-    vals = [
-        _safe_float(v, None)
-        for v in dev["clinical_optionality_pct_dev"]
-        if _safe_float(v, None) is not None
-    ]
+    vals = [_safe_float(v, None) for v in dev["clinical_optionality_pct_dev"] if _safe_float(v, None) is not None]
     if len(vals) < 2:
         return None
     return round(statistics.stdev(vals), 4)
@@ -326,11 +308,7 @@ def _composite_iqr(rankings: pd.DataFrame) -> Optional[float]:
     dev = rankings[rankings["archetype"] == "drug_developer"]
     if "composite_score" not in dev.columns:
         return None
-    vals = sorted(
-        _safe_float(v, None)
-        for v in dev["composite_score"]
-        if _safe_float(v, None) is not None
-    )
+    vals = sorted(_safe_float(v, None) for v in dev["composite_score"] if _safe_float(v, None) is not None)
     if len(vals) < 4:
         return None
     q1 = vals[len(vals) // 4]
@@ -349,11 +327,7 @@ def _catalyst_missing_pct_eligible(rankings: pd.DataFrame) -> Optional[float]:
         return None
     if "catalyst_mode" not in eligible.columns:
         return None
-    n_missing = sum(
-        1
-        for m in eligible["catalyst_mode"]
-        if str(m).strip() in ("missing", "")
-    )
+    n_missing = sum(1 for m in eligible["catalyst_mode"] if str(m).strip() in ("missing", ""))
     return round(n_missing / n_elig * 100, 1)
 
 
@@ -387,11 +361,7 @@ def _drawdown_coverage_pct(rankings: pd.DataFrame) -> Optional[float]:
     if "de_drawdown_missing_reason" not in dev.columns:
         # Older snapshots without this column — assume coverage unknown
         return None
-    n_covered = sum(
-        1
-        for r in dev["de_drawdown_missing_reason"]
-        if str(r).strip() == ""
-    )
+    n_covered = sum(1 for r in dev["de_drawdown_missing_reason"] if str(r).strip() == "")
     return round(n_covered / n_dev * 100, 1)
 
 
@@ -403,11 +373,7 @@ def _drawdown_rel_coverage_pct(rankings: pd.DataFrame) -> Optional[float]:
         return None
     if "de_drawdown_rel_xbi" not in dev.columns:
         return None
-    n_covered = sum(
-        1
-        for v in dev["de_drawdown_rel_xbi"]
-        if v is not None and str(v).strip() not in ("", "nan")
-    )
+    n_covered = sum(1 for v in dev["de_drawdown_rel_xbi"] if v is not None and str(v).strip() not in ("", "nan"))
     return round(n_covered / n_dev * 100, 1)
 
 
@@ -538,6 +504,7 @@ def _unknown_reason_breakdown(offenders: list, n_eligible: int) -> str:
     if not offenders or n_eligible <= 0:
         return ""
     from collections import Counter
+
     buckets: Counter = Counter()
     for o in offenders:
         reason = o.get("unknown_reason", "missing")
@@ -553,9 +520,16 @@ def _unknown_reason_breakdown(offenders: list, n_eligible: int) -> str:
 
 
 _CATALYST_SOURCE_KEYS = (
-    "CTGOV_CALENDAR", "FDA_CALENDAR", "SEC_8K_FILING",
-    "SEC_10Q_FILING", "SEC_10K_FILING", "SEC_6K_FILING",
-    "FEDERAL_REGISTER", "CORPORATE_CALENDAR", "none", "unknown",
+    "CTGOV_CALENDAR",
+    "FDA_CALENDAR",
+    "SEC_8K_FILING",
+    "SEC_10Q_FILING",
+    "SEC_10K_FILING",
+    "SEC_6K_FILING",
+    "FEDERAL_REGISTER",
+    "CORPORATE_CALENDAR",
+    "none",
+    "unknown",
 )
 
 
@@ -637,10 +611,7 @@ def _catalyst_source_metrics(
     if modes is None:
         sources = [_norm_source(v) for v in raw_source_vals]
     else:
-        sources = [
-            _norm_source(v, m)
-            for v, m in zip(raw_source_vals, modes.tolist())
-        ]
+        sources = [_norm_source(v, m) for v, m in zip(raw_source_vals, modes.tolist())]
     counts = Counter(sources)
 
     result = {"cs_n_eligible": n_eligible}
@@ -675,23 +646,27 @@ def _catalyst_source_metrics(
         unknown_offenders = []
         for i, norm_src in enumerate(sources):
             if norm_src == "unknown":
-                unknown_offenders.append({
-                    "ticker": tickers[i],
-                    "catalyst_mode": cat_modes[i],
-                    "event_type": cat_event_types[i],
-                    "catalyst_days": cat_days[i],
-                    "unknown_reason": _classify_unknown_reason(raw_source_vals[i]),
-                })
-        unknown_offenders.sort(
-            key=lambda o: (_MODE_ORDER.get(o["catalyst_mode"], 9), o["ticker"])
-        )
+                unknown_offenders.append(
+                    {
+                        "ticker": tickers[i],
+                        "catalyst_mode": cat_modes[i],
+                        "event_type": cat_event_types[i],
+                        "catalyst_days": cat_days[i],
+                        "unknown_reason": _classify_unknown_reason(raw_source_vals[i]),
+                    }
+                )
+        unknown_offenders.sort(key=lambda o: (_MODE_ORDER.get(o["catalyst_mode"], 9), o["ticker"]))
         result["_cs_unknown_offenders"] = unknown_offenders
 
         # Non-CTGOV offenders: dated catalysts from other sources
         # Shows "what replaced CTGOV?" when ctgov floor WARN trips
         _SRC_ORDER = {
-            "FDA_CALENDAR": 0, "FEDERAL_REGISTER": 0,
-            "SEC_8K_FILING": 1, "SEC_10Q_FILING": 1, "SEC_10K_FILING": 1, "SEC_6K_FILING": 1,
+            "FDA_CALENDAR": 0,
+            "FEDERAL_REGISTER": 0,
+            "SEC_8K_FILING": 1,
+            "SEC_10Q_FILING": 1,
+            "SEC_10K_FILING": 1,
+            "SEC_6K_FILING": 1,
             "CORPORATE_CALENDAR": 2,
         }
         _DATED_MODES = {"specific_days", "blended_window"}
@@ -700,13 +675,15 @@ def _catalyst_source_metrics(
             if norm_src not in ("CTGOV_CALENDAR", "none", "unknown"):
                 mode = cat_modes[i]
                 if mode in _DATED_MODES:
-                    non_ctgov_offenders.append({
-                        "ticker": tickers[i],
-                        "catalyst_mode": mode,
-                        "catalyst_source": norm_src,
-                        "event_type": cat_event_types[i],
-                        "catalyst_days": cat_days[i],
-                    })
+                    non_ctgov_offenders.append(
+                        {
+                            "ticker": tickers[i],
+                            "catalyst_mode": mode,
+                            "catalyst_source": norm_src,
+                            "event_type": cat_event_types[i],
+                            "catalyst_days": cat_days[i],
+                        }
+                    )
         non_ctgov_offenders.sort(
             key=lambda o: (
                 _SRC_ORDER.get(o["catalyst_source"], 9),
@@ -724,11 +701,21 @@ def _catalyst_source_metrics(
 _CT_MAX_OFFENDERS = 10  # max tickers listed in ct_* offender appendix
 
 _CATALYST_EVENT_TYPE_KEYS = (
-    "DATA_READOUT", "FDA_DECISION", "FDA_ADCOM",
-    "FDA_PDUFA_DATE", "FDA_APPROVAL", "FDA_CRL",
-    "FDA_RTF", "FDA_WARNING_LETTER", "FDA_SUBMISSION",
-    "CT_PRIMARY_COMPLETION", "CT_STUDY_COMPLETION", "CT_RESULTS_POSTED",
-    "TRIAL_ONGOING", "none", "unknown",
+    "DATA_READOUT",
+    "FDA_DECISION",
+    "FDA_ADCOM",
+    "FDA_PDUFA_DATE",
+    "FDA_APPROVAL",
+    "FDA_CRL",
+    "FDA_RTF",
+    "FDA_WARNING_LETTER",
+    "FDA_SUBMISSION",
+    "CT_PRIMARY_COMPLETION",
+    "CT_STUDY_COMPLETION",
+    "CT_RESULTS_POSTED",
+    "TRIAL_ONGOING",
+    "none",
+    "unknown",
 )
 
 # Map enrichment-pipeline event type names → canonical names
@@ -813,10 +800,7 @@ def _catalyst_event_type_metrics(
     if modes is None:
         types = [_norm_event_type(v) for v in raw_event_type_vals]
     else:
-        types = [
-            _norm_event_type(v, m)
-            for v, m in zip(raw_event_type_vals, modes.tolist())
-        ]
+        types = [_norm_event_type(v, m) for v, m in zip(raw_event_type_vals, modes.tolist())]
     counts = Counter(types)
 
     result = {"ct_n_eligible": n_eligible}
@@ -852,16 +836,16 @@ def _catalyst_event_type_metrics(
         unknown_offenders = []
         for i, norm_type in enumerate(types):
             if norm_type == "unknown":
-                unknown_offenders.append({
-                    "ticker": tickers[i],
-                    "catalyst_mode": cat_modes[i],
-                    "catalyst_source": cat_sources[i],
-                    "catalyst_days": cat_days[i],
-                    "unknown_reason": _classify_unknown_reason(raw_event_type_vals[i]),
-                })
-        unknown_offenders.sort(
-            key=lambda o: (_MODE_ORDER.get(o["catalyst_mode"], 9), o["ticker"])
-        )
+                unknown_offenders.append(
+                    {
+                        "ticker": tickers[i],
+                        "catalyst_mode": cat_modes[i],
+                        "catalyst_source": cat_sources[i],
+                        "catalyst_days": cat_days[i],
+                        "unknown_reason": _classify_unknown_reason(raw_event_type_vals[i]),
+                    }
+                )
+        unknown_offenders.sort(key=lambda o: (_MODE_ORDER.get(o["catalyst_mode"], 9), o["ticker"]))
         result["_ct_unknown_offenders"] = unknown_offenders
 
         # FDA offenders: tickers tagged FDA_DECISION or FDA_ADCOM
@@ -870,14 +854,14 @@ def _catalyst_event_type_metrics(
         fda_offenders = []
         for i, norm_type in enumerate(types):
             if norm_type in ("FDA_DECISION", "FDA_ADCOM"):
-                fda_offenders.append({
-                    "ticker": tickers[i],
-                    "event_type": norm_type,
-                    "catalyst_source": cat_sources[i],
-                })
-        fda_offenders.sort(
-            key=lambda o: (_ET_ORDER.get(o["event_type"], 9), o["ticker"])
-        )
+                fda_offenders.append(
+                    {
+                        "ticker": tickers[i],
+                        "event_type": norm_type,
+                        "catalyst_source": cat_sources[i],
+                    }
+                )
+        fda_offenders.sort(key=lambda o: (_ET_ORDER.get(o["event_type"], 9), o["ticker"]))
         result["_ct_fda_offenders"] = fda_offenders
 
     return result
@@ -912,7 +896,8 @@ def _catalyst_priority_metrics(
 
 
 def _cost_metrics(
-    rankings: pd.DataFrame, cap_bps: float = 1000.0,
+    rankings: pd.DataFrame,
+    cap_bps: float = 1000.0,
 ) -> Optional[Dict[str, Any]]:
     """Cost telemetry metrics from pipeline-produced columns.
 
@@ -931,58 +916,55 @@ def _cost_metrics(
 
     if n_dev == 0:
         for k in (
-            "cost_coverage_pct", "est_cost_bps_p10", "est_cost_bps_p50",
-            "est_cost_bps_p90", "median_cost_bps", "mean_cost_mult",
+            "cost_coverage_pct",
+            "est_cost_bps_p10",
+            "est_cost_bps_p50",
+            "est_cost_bps_p90",
+            "median_cost_bps",
+            "mean_cost_mult",
             "cap_binding_pct",
-            "cost_bucket_no_pct", "cost_bucket_mild_pct",
-            "cost_bucket_heavy_pct", "cost_bucket_floor_pct",
+            "cost_bucket_no_pct",
+            "cost_bucket_mild_pct",
+            "cost_bucket_heavy_pct",
+            "cost_bucket_floor_pct",
         ):
             result[k] = None
         return result
 
     # --- est_cost_bps percentiles + coverage ---
     if "est_cost_bps" in dev.columns:
-        cost_vals = [
-            fv for v in dev["est_cost_bps"]
-            if (fv := _safe_float(v, None)) is not None
-        ]
+        cost_vals = [fv for v in dev["est_cost_bps"] if (fv := _safe_float(v, None)) is not None]
         result["cost_coverage_pct"] = round(len(cost_vals) / n_dev * 100, 1)
 
         if cost_vals:
             cost_sorted = sorted(cost_vals)
             n = len(cost_sorted)
-            result["est_cost_bps_p10"] = round(
-                cost_sorted[max(0, int(n * 0.10))], 1
-            )
+            result["est_cost_bps_p10"] = round(cost_sorted[max(0, int(n * 0.10))], 1)
             result["est_cost_bps_p50"] = round(statistics.median(cost_sorted), 1)
-            result["est_cost_bps_p90"] = round(
-                cost_sorted[min(n - 1, int(n * 0.90))], 1
-            )
+            result["est_cost_bps_p90"] = round(cost_sorted[min(n - 1, int(n * 0.90))], 1)
             result["median_cost_bps"] = result["est_cost_bps_p50"]
             eps = 1e-9
             result["cap_binding_pct"] = round(
-                sum(1 for v in cost_vals if v >= (cap_bps - eps))
-                / len(cost_vals) * 100, 1
+                sum(1 for v in cost_vals if v >= (cap_bps - eps)) / len(cost_vals) * 100, 1
             )
         else:
-            for k in ("est_cost_bps_p10", "est_cost_bps_p50",
-                       "est_cost_bps_p90", "median_cost_bps",
-                       "cap_binding_pct"):
+            for k in ("est_cost_bps_p10", "est_cost_bps_p50", "est_cost_bps_p90", "median_cost_bps", "cap_binding_pct"):
                 result[k] = None
     else:
-        for k in ("cost_coverage_pct", "est_cost_bps_p10", "est_cost_bps_p50",
-                   "est_cost_bps_p90", "median_cost_bps", "cap_binding_pct"):
+        for k in (
+            "cost_coverage_pct",
+            "est_cost_bps_p10",
+            "est_cost_bps_p50",
+            "est_cost_bps_p90",
+            "median_cost_bps",
+            "cap_binding_pct",
+        ):
             result[k] = None
 
     # --- cost_mult stats + bucket shares ---
     if "cost_mult" in dev.columns:
-        mults = [
-            fv for v in dev["cost_mult"]
-            if (fv := _safe_float(v, None)) is not None
-        ]
-        result["mean_cost_mult"] = (
-            round(statistics.mean(mults), 4) if mults else None
-        )
+        mults = [fv for v in dev["cost_mult"] if (fv := _safe_float(v, None)) is not None]
+        result["mean_cost_mult"] = round(statistics.mean(mults), 4) if mults else None
 
         n_with = len(mults)
         if n_with > 0:
@@ -1018,26 +1000,22 @@ def _institutional_metrics(rankings: pd.DataFrame) -> Optional[Dict[str, Any]]:
     result: Dict[str, Any] = {
         "inst_delta_z_std": round(float(vals.std(ddof=0)), 4),
         "inst_delta_z_mean": round(float(vals.mean()), 4),
-        "inst_delta_nonzero_pct": round(
-            float((vals != 0).sum()) / len(vals) * 100, 1
-        ),
+        "inst_delta_nonzero_pct": round(float((vals != 0).sum()) / len(vals) * 100, 1),
     }
 
     # Coverage: % of dev with net_elite_holders_delta != 0 (active signal)
     if "inst_delta_net" in dev.columns:
         net_vals = pd.to_numeric(dev["inst_delta_net"], errors="coerce").dropna()
-        result["inst_delta_active_pct"] = round(
-            float((net_vals != 0).sum()) / len(net_vals) * 100, 1
-        ) if len(net_vals) > 0 else 0.0
+        result["inst_delta_active_pct"] = (
+            round(float((net_vals != 0).sum()) / len(net_vals) * 100, 1) if len(net_vals) > 0 else 0.0
+        )
 
     # Top-20 institutional coverage: % of top-20 dev with inst_delta_net > 0
     top20 = _top_n_tickers(rankings, 20)
     if top20 and "inst_delta_net" in rankings.columns:
         top20_rows = rankings[rankings["ticker"].isin(top20)]
         top20_pos = pd.to_numeric(top20_rows["inst_delta_net"], errors="coerce").fillna(0)
-        result["inst_top20_positive_delta_pct"] = round(
-            float((top20_pos > 0).sum()) / len(top20) * 100, 1
-        )
+        result["inst_top20_positive_delta_pct"] = round(float((top20_pos > 0).sum()) / len(top20) * 100, 1)
 
     return result
 
@@ -1061,16 +1039,12 @@ def compute_snapshot_metrics(
     # Tier counts and percentages
     for tier in ("A", "B", "C", "D"):
         metrics[f"tier_{tier}_count"] = tc[tier]
-        metrics[f"tier_{tier}_pct"] = (
-            round(tc[tier] / n_dev * 100, 1) if n_dev > 0 else 0.0
-        )
+        metrics[f"tier_{tier}_pct"] = round(tc[tier] / n_dev * 100, 1) if n_dev > 0 else 0.0
 
     # Eligible percentage
     dev = rankings[rankings["archetype"] == "drug_developer"]
     if "eligible" in dev.columns:
-        n_elig = sum(
-            1 for e in dev["eligible"] if str(e).strip() == "1"
-        )
+        n_elig = sum(1 for e in dev["eligible"] if str(e).strip() == "1")
         metrics["eligible_pct"] = round(n_elig / n_dev * 100, 1) if n_dev > 0 else 0.0
     else:
         metrics["eligible_pct"] = None
@@ -1105,9 +1079,14 @@ def compute_snapshot_metrics(
     for key in ("median_dd_abs_margin", "median_dd_rel_margin"):
         metrics[key] = margin_summary.get(key)
     metrics["rescued_count"] = margin_summary.get("rescued_count")
-    for key in ("dd_abs_near_gate_pct", "dd_rel_near_gate_pct",
-                "optionality_near_a_floor_pct", "rescued_share_pct",
-                "dd_rel_margin_rescue_count", "dd_rel_margin_rescue_share_pct"):
+    for key in (
+        "dd_abs_near_gate_pct",
+        "dd_rel_near_gate_pct",
+        "optionality_near_a_floor_pct",
+        "rescued_share_pct",
+        "dd_rel_margin_rescue_count",
+        "dd_rel_margin_rescue_share_pct",
+    ):
         metrics[key] = margin_summary.get(key)
 
     # Cost telemetry
@@ -1181,12 +1160,10 @@ def compute_drift_metrics(
             prev_top = all_metrics[i - 1].get("_top25", set())
             cur_top = m.get("_top25", set())
             if prev_top and cur_top:
-                union = prev_top | cur_top
+                prev_top | cur_top
                 intersection = prev_top & cur_top
                 # Jaccard-style: intersection over 25 (fixed denominator)
-                m["top25_overlap_pct"] = round(
-                    len(intersection) / 25 * 100, 1
-                )
+                m["top25_overlap_pct"] = round(len(intersection) / 25 * 100, 1)
             else:
                 m["top25_overlap_pct"] = None
 
@@ -1198,29 +1175,55 @@ def compute_drift_metrics(
 
     # Rolling aggregates for key numeric metrics
     roll_keys = [
-        "tier_A_pct", "tier_B_pct", "tier_C_pct", "tier_D_pct",
-        "eligible_pct", "catalyst_missing_pct", "catalyst_backfill_share_pct",
+        "tier_A_pct",
+        "tier_B_pct",
+        "tier_C_pct",
+        "tier_D_pct",
+        "eligible_pct",
+        "catalyst_missing_pct",
+        "catalyst_backfill_share_pct",
         "top25_overlap_pct",
-        "optionality_std", "composite_iqr", "drawdown_coverage_pct",
+        "optionality_std",
+        "composite_iqr",
+        "drawdown_coverage_pct",
         "drawdown_rel_coverage_pct",
-        "catalyst_strength_near_pct", "catalyst_strength_mid_pct",
-        "catalyst_strength_far_pct", "catalyst_strength_missing_pct",
-        "median_dd_abs_margin", "median_dd_rel_margin", "rescued_count",
-        "dd_abs_near_gate_pct", "dd_rel_near_gate_pct",
-        "optionality_near_a_floor_pct", "rescued_share_pct",
-        "dd_rel_margin_rescue_count", "dd_rel_margin_rescue_share_pct",
-        "cost_coverage_pct", "cap_binding_pct", "mean_cost_mult",
-        "est_cost_bps_p50", "median_cost_bps",
-        "rs_morningstar_share_pct", "rs_unknown_share_pct",
+        "catalyst_strength_near_pct",
+        "catalyst_strength_mid_pct",
+        "catalyst_strength_far_pct",
+        "catalyst_strength_missing_pct",
+        "median_dd_abs_margin",
+        "median_dd_rel_margin",
+        "rescued_count",
+        "dd_abs_near_gate_pct",
+        "dd_rel_near_gate_pct",
+        "optionality_near_a_floor_pct",
+        "rescued_share_pct",
+        "dd_rel_margin_rescue_count",
+        "dd_rel_margin_rescue_share_pct",
+        "cost_coverage_pct",
+        "cap_binding_pct",
+        "mean_cost_mult",
+        "est_cost_bps_p50",
+        "median_cost_bps",
+        "rs_morningstar_share_pct",
+        "rs_unknown_share_pct",
         "rs_csv_outlier_override_share_pct",
-        "cat_eligible_share_pct", "cat_specific_days_share_pct",
-        "cat_no_upcoming_share_pct", "cat_missing_share_pct",
-        "cs_ctgov_calendar_share_pct", "cs_fda_calendar_share_pct",
-        "cs_sec_8k_filing_share_pct", "cs_corporate_calendar_share_pct",
-        "cs_none_share_pct", "cs_unknown_share_pct",
-        "ct_data_readout_share_pct", "ct_fda_decision_share_pct",
-        "ct_fda_adcom_share_pct", "ct_trial_ongoing_share_pct",
-        "ct_none_share_pct", "ct_unknown_share_pct",
+        "cat_eligible_share_pct",
+        "cat_specific_days_share_pct",
+        "cat_no_upcoming_share_pct",
+        "cat_missing_share_pct",
+        "cs_ctgov_calendar_share_pct",
+        "cs_fda_calendar_share_pct",
+        "cs_sec_8k_filing_share_pct",
+        "cs_corporate_calendar_share_pct",
+        "cs_none_share_pct",
+        "cs_unknown_share_pct",
+        "ct_data_readout_share_pct",
+        "ct_fda_decision_share_pct",
+        "ct_fda_adcom_share_pct",
+        "ct_trial_ongoing_share_pct",
+        "ct_none_share_pct",
+        "ct_unknown_share_pct",
     ]
     rolling: Dict[str, Dict[str, Any]] = {}
     for key in roll_keys:
@@ -1270,9 +1273,7 @@ def find_rollback_candidate(
     with open(manifest_path) as f:
         manifest = json.load(f)
 
-    retired = [
-        r for r in manifest.get("rulesets", []) if r.get("status") == "retired"
-    ]
+    retired = [r for r in manifest.get("rulesets", []) if r.get("status") == "retired"]
     if not retired:
         return None
 
@@ -1307,31 +1308,20 @@ def evaluate_guardrails(
 
     # FAIL checks
     if a_pct is not None and a_pct <= guardrails.fail_a_pct_low:
-        reasons.append(
-            f"A-tier % = {a_pct:.1f}% <= {guardrails.fail_a_pct_low}% floor"
-        )
+        reasons.append(f"A-tier % = {a_pct:.1f}% <= {guardrails.fail_a_pct_low}% floor")
     if a_pct is not None and a_pct > guardrails.fail_a_pct_high:
-        reasons.append(
-            f"A-tier % = {a_pct:.1f}% > {guardrails.fail_a_pct_high}% ceiling"
-        )
+        reasons.append(f"A-tier % = {a_pct:.1f}% > {guardrails.fail_a_pct_high}% ceiling")
     if cat_missing is not None and cat_missing > guardrails.fail_catalyst_missing_high:
-        reasons.append(
-            f"Catalyst missing = {cat_missing:.1f}% > {guardrails.fail_catalyst_missing_high}% ceiling"
-        )
+        reasons.append(f"Catalyst missing = {cat_missing:.1f}% > {guardrails.fail_catalyst_missing_high}% ceiling")
     if overlap is not None and overlap < guardrails.fail_overlap_low:
-        reasons.append(
-            f"Top-25 overlap = {overlap:.1f}% < {guardrails.fail_overlap_low}% floor"
-        )
+        reasons.append(f"Top-25 overlap = {overlap:.1f}% < {guardrails.fail_overlap_low}% floor")
     if opt_std is not None and opt_std < guardrails.fail_dispersion_low:
-        reasons.append(
-            f"Optionality std = {opt_std:.4f} < {guardrails.fail_dispersion_low} floor"
-        )
+        reasons.append(f"Optionality std = {opt_std:.4f} < {guardrails.fail_dispersion_low} floor")
 
     dd_rel_cov = current.get("drawdown_rel_coverage_pct")
     if dd_rel_cov is not None and dd_rel_cov < guardrails.fail_drawdown_rel_coverage_low:
         reasons.append(
-            f"Relative DD coverage = {dd_rel_cov:.1f}% < "
-            f"{guardrails.fail_drawdown_rel_coverage_low}% floor"
+            f"Relative DD coverage = {dd_rel_cov:.1f}% < " f"{guardrails.fail_drawdown_rel_coverage_low}% floor"
         )
 
     if reasons:
@@ -1347,36 +1337,26 @@ def evaluate_guardrails(
     warn_reasons: List[str] = []
 
     if a_pct is not None and a_pct > guardrails.fail_a_pct_low and a_pct < guardrails.warn_a_pct_low:
-        warn_reasons.append(
-            f"A-tier % = {a_pct:.1f}% < {guardrails.warn_a_pct_low}% (sparse catalyst regime)"
-        )
+        warn_reasons.append(f"A-tier % = {a_pct:.1f}% < {guardrails.warn_a_pct_low}% (sparse catalyst regime)")
 
     median_cost = current.get("median_cost_bps")
     if median_cost is not None and median_cost > guardrails.warn_median_cost_bps_high:
         warn_reasons.append(
-            f"Median cost = {median_cost:.1f} bps > "
-            f"{guardrails.warn_median_cost_bps_high} bps ceiling"
+            f"Median cost = {median_cost:.1f} bps > " f"{guardrails.warn_median_cost_bps_high} bps ceiling"
         )
 
     cost_coverage = current.get("cost_coverage_pct")
     if cost_coverage is not None and cost_coverage < guardrails.warn_cost_coverage_low:
-        warn_reasons.append(
-            f"Cost coverage = {cost_coverage:.1f}% < "
-            f"{guardrails.warn_cost_coverage_low}% floor"
-        )
+        warn_reasons.append(f"Cost coverage = {cost_coverage:.1f}% < " f"{guardrails.warn_cost_coverage_low}% floor")
 
     cap_binding = current.get("cap_binding_pct")
     if cap_binding is not None and cap_binding > guardrails.warn_cap_binding_high:
-        warn_reasons.append(
-            f"Cap binding = {cap_binding:.1f}% > "
-            f"{guardrails.warn_cap_binding_high}% ceiling"
-        )
+        warn_reasons.append(f"Cap binding = {cap_binding:.1f}% > " f"{guardrails.warn_cap_binding_high}% ceiling")
 
     backfill_share = current.get("catalyst_backfill_share_pct")
     if backfill_share is not None and backfill_share > guardrails.warn_backfill_share_high:
         warn_reasons.append(
-            f"Backfill share = {backfill_share:.1f}% > "
-            f"{guardrails.warn_backfill_share_high}% ceiling"
+            f"Backfill share = {backfill_share:.1f}% > " f"{guardrails.warn_backfill_share_high}% ceiling"
         )
 
     rescue_share = current.get("dd_rel_margin_rescue_share_pct")
@@ -1388,25 +1368,22 @@ def evaluate_guardrails(
 
     eligible_pct = current.get("eligible_pct")
     if eligible_pct is not None and eligible_pct < guardrails.warn_eligible_dev_pct_low:
-        warn_reasons.append(
-            f"eligible_dev_pct={eligible_pct:.1f}% < "
-            f"{guardrails.warn_eligible_dev_pct_low}% floor"
-        )
+        warn_reasons.append(f"eligible_dev_pct={eligible_pct:.1f}% < " f"{guardrails.warn_eligible_dev_pct_low}% floor")
 
-    if (dd_rel_cov is not None
-            and dd_rel_cov < guardrails.warn_drawdown_rel_coverage_low
-            and dd_rel_cov >= guardrails.fail_drawdown_rel_coverage_low):
+    if (
+        dd_rel_cov is not None
+        and dd_rel_cov < guardrails.warn_drawdown_rel_coverage_low
+        and dd_rel_cov >= guardrails.fail_drawdown_rel_coverage_low
+    ):
         warn_reasons.append(
-            f"Relative DD coverage = {dd_rel_cov:.1f}% < "
-            f"{guardrails.warn_drawdown_rel_coverage_low}% floor"
+            f"Relative DD coverage = {dd_rel_cov:.1f}% < " f"{guardrails.warn_drawdown_rel_coverage_low}% floor"
         )
 
     # Returns-source mix checks
     rs_unknown = current.get("rs_unknown_share_pct")
     if rs_unknown is not None and rs_unknown > guardrails.warn_rs_unknown_share_high:
         warn_reasons.append(
-            f"Returns source unknown = {rs_unknown:.1f}% > "
-            f"{guardrails.warn_rs_unknown_share_high}% ceiling"
+            f"Returns source unknown = {rs_unknown:.1f}% > " f"{guardrails.warn_rs_unknown_share_high}% ceiling"
         )
     rs_outlier = current.get("rs_csv_outlier_override_share_pct")
     if rs_outlier is not None and rs_outlier > guardrails.warn_rs_csv_outlier_override_share_high:
@@ -1417,37 +1394,30 @@ def evaluate_guardrails(
     rs_mstar = current.get("rs_morningstar_share_pct")
     if rs_mstar is not None and rs_mstar < guardrails.warn_rs_morningstar_share_low:
         warn_reasons.append(
-            f"Returns source morningstar = {rs_mstar:.1f}% < "
-            f"{guardrails.warn_rs_morningstar_share_low}% floor"
+            f"Returns source morningstar = {rs_mstar:.1f}% < " f"{guardrails.warn_rs_morningstar_share_low}% floor"
         )
 
     # Catalyst coverage checks
     cat_elig = current.get("cat_eligible_share_pct")
     if cat_elig is not None and cat_elig < guardrails.warn_cat_eligible_share_low:
         warn_reasons.append(
-            f"Catalyst eligible share = {cat_elig:.1f}% < "
-            f"{guardrails.warn_cat_eligible_share_low}% floor"
+            f"Catalyst eligible share = {cat_elig:.1f}% < " f"{guardrails.warn_cat_eligible_share_low}% floor"
         )
     cat_sd = current.get("cat_specific_days_share_pct")
     if cat_sd is not None and cat_sd < guardrails.warn_cat_specific_days_share_low:
         warn_reasons.append(
-            f"Catalyst specific_days share = {cat_sd:.1f}% < "
-            f"{guardrails.warn_cat_specific_days_share_low}% floor"
+            f"Catalyst specific_days share = {cat_sd:.1f}% < " f"{guardrails.warn_cat_specific_days_share_low}% floor"
         )
 
     # Catalyst source mix checks — only evaluate when dated catalysts are
     # prevalent enough for source mix to be meaningful.
     cat_sd_current = current.get("cat_specific_days_share_pct")
-    _cs_regime_ok = (
-        cat_sd_current is not None
-        and cat_sd_current >= _SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN
-    )
+    _cs_regime_ok = cat_sd_current is not None and cat_sd_current >= _SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN
     if _cs_regime_ok:
         cs_ctgov = current.get("cs_ctgov_calendar_share_pct")
         if cs_ctgov is not None and cs_ctgov < guardrails.warn_cs_ctgov_share_low:
             warn_reasons.append(
-                f"Catalyst source CTGOV share = {cs_ctgov:.1f}% < "
-                f"{guardrails.warn_cs_ctgov_share_low}% floor"
+                f"Catalyst source CTGOV share = {cs_ctgov:.1f}% < " f"{guardrails.warn_cs_ctgov_share_low}% floor"
             )
         cs_unknown = current.get("cs_unknown_share_pct")
         if cs_unknown is not None and cs_unknown > guardrails.warn_cs_unknown_share_high:
@@ -1486,8 +1456,7 @@ def evaluate_guardrails(
     inst_nz = current.get("inst_delta_nonzero_pct")
     if inst_nz is not None and inst_nz < guardrails.warn_inst_delta_nonzero_low:
         warn_reasons.append(
-            f"inst_delta_nonzero_pct={inst_nz:.1f}% < "
-            f"{guardrails.warn_inst_delta_nonzero_low}% floor"
+            f"inst_delta_nonzero_pct={inst_nz:.1f}% < " f"{guardrails.warn_inst_delta_nonzero_low}% floor"
         )
 
     if warn_reasons:
@@ -1604,11 +1573,7 @@ def compute_suggested_guardrails(
 
     suggestions: List[Dict[str, Any]] = []
     for metric_key, direction, guardrail_field, label in _SUGGESTION_SPECS:
-        vals = [
-            m[metric_key]
-            for m in prior
-            if m.get(metric_key) is not None
-        ]
+        vals = [m[metric_key] for m in prior if m.get(metric_key) is not None]
         if len(vals) < min_points:
             continue
 
@@ -1619,29 +1584,29 @@ def compute_suggested_guardrails(
             "ct_unknown_share_pct",
         ):
             cat_vals = [
-                m["cat_specific_days_share_pct"]
-                for m in prior
-                if m.get("cat_specific_days_share_pct") is not None
+                m["cat_specific_days_share_pct"] for m in prior if m.get("cat_specific_days_share_pct") is not None
             ]
             cat_median = statistics.median(cat_vals) if cat_vals else 0.0
             if cat_median < _SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN:
                 current_threshold = getattr(guardrails, guardrail_field, None)
-                suggestions.append({
-                    "metric": metric_key,
-                    "label": label,
-                    "direction": direction,
-                    "n": len(vals),
-                    "median": None,
-                    "iqr": None,
-                    "suggested": None,
-                    "current_threshold": current_threshold,
-                    "tighter": False,
-                    "suppressed": True,
-                    "suppressed_reason": (
-                        f"prior median cat_specific_days={cat_median:.1f}%"
-                        f" < {_SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN:.1f}%"
-                    ),
-                })
+                suggestions.append(
+                    {
+                        "metric": metric_key,
+                        "label": label,
+                        "direction": direction,
+                        "n": len(vals),
+                        "median": None,
+                        "iqr": None,
+                        "suggested": None,
+                        "current_threshold": current_threshold,
+                        "tighter": False,
+                        "suppressed": True,
+                        "suppressed_reason": (
+                            f"prior median cat_specific_days={cat_median:.1f}%"
+                            f" < {_SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN:.1f}%"
+                        ),
+                    }
+                )
                 continue
 
         median = statistics.median(vals)
@@ -1667,17 +1632,19 @@ def compute_suggested_guardrails(
             else:
                 tighter = suggested < current_threshold
 
-        suggestions.append({
-            "metric": metric_key,
-            "label": label,
-            "direction": direction,
-            "n": len(vals),
-            "median": round(median, 1),
-            "iqr": round(iqr, 1),
-            "suggested": suggested,
-            "current_threshold": current_threshold,
-            "tighter": tighter,
-        })
+        suggestions.append(
+            {
+                "metric": metric_key,
+                "label": label,
+                "direction": direction,
+                "n": len(vals),
+                "median": round(median, 1),
+                "iqr": round(iqr, 1),
+                "suggested": suggested,
+                "current_threshold": current_threshold,
+                "tighter": tighter,
+            }
+        )
 
     return suggestions
 
@@ -1765,15 +1732,12 @@ def _compute_margin_summary(dev: pd.DataFrame) -> Dict[str, Any]:
 
     # Rescued count
     if "rescued_by_rel" in dev.columns:
-        result["rescued_count"] = sum(
-            1 for v in dev["rescued_by_rel"]
-            if str(v).strip() == "1"
-        )
+        result["rescued_count"] = sum(1 for v in dev["rescued_by_rel"] if str(v).strip() == "1")
     else:
         result["rescued_count"] = None
 
     # --- Gate pressure metrics (share within ±5pp of threshold) ---
-    n_dev = len(dev)
+    len(dev)
 
     for col, key in [
         ("dd_abs_margin", "dd_abs_near_gate_pct"),
@@ -1796,27 +1760,20 @@ def _compute_margin_summary(dev: pd.DataFrame) -> Dict[str, Any]:
     # rescued_share_pct = rescued / eligible
     if "eligible" in dev.columns and result.get("rescued_count") is not None:
         n_elig = sum(1 for e in dev["eligible"] if str(e).strip() == "1")
-        result["rescued_share_pct"] = (
-            round(result["rescued_count"] / n_elig * 100, 1)
-            if n_elig > 0 else 0.0
-        )
+        result["rescued_share_pct"] = round(result["rescued_count"] / n_elig * 100, 1) if n_elig > 0 else 0.0
     else:
         result["rescued_share_pct"] = None
 
     # dd_rel_margin_rescued count + share
     if "dd_rel_margin_rescued" in dev.columns:
-        result["dd_rel_margin_rescue_count"] = sum(
-            1 for v in dev["dd_rel_margin_rescued"]
-            if str(v).strip() == "1"
-        )
+        result["dd_rel_margin_rescue_count"] = sum(1 for v in dev["dd_rel_margin_rescued"] if str(v).strip() == "1")
     else:
         result["dd_rel_margin_rescue_count"] = None
 
     if "eligible" in dev.columns and result.get("dd_rel_margin_rescue_count") is not None:
         n_elig = sum(1 for e in dev["eligible"] if str(e).strip() == "1")
         result["dd_rel_margin_rescue_share_pct"] = (
-            round(result["dd_rel_margin_rescue_count"] / n_elig * 100, 1)
-            if n_elig > 0 else 0.0
+            round(result["dd_rel_margin_rescue_count"] / n_elig * 100, 1) if n_elig > 0 else 0.0
         )
     else:
         result["dd_rel_margin_rescue_share_pct"] = None
@@ -1871,15 +1828,17 @@ def _compute_strength_transitions(
             improved.append(entry)
 
     # Sort by magnitude (biggest rank change first), then ticker for stability
-    degraded.sort(key=lambda e: (-abs(_STRENGTH_RANK.get(e["current"], 3) - _STRENGTH_RANK.get(e["prior"], 3)), e["ticker"]))
-    improved.sort(key=lambda e: (-abs(_STRENGTH_RANK.get(e["current"], 3) - _STRENGTH_RANK.get(e["prior"], 3)), e["ticker"]))
+    degraded.sort(
+        key=lambda e: (-abs(_STRENGTH_RANK.get(e["current"], 3) - _STRENGTH_RANK.get(e["prior"], 3)), e["ticker"])
+    )
+    improved.sort(
+        key=lambda e: (-abs(_STRENGTH_RANK.get(e["current"], 3) - _STRENGTH_RANK.get(e["prior"], 3)), e["ticker"])
+    )
 
     return degraded[:10], improved[:10]
 
 
-def _compute_churn_details(
-    prior_rankings: pd.DataFrame, current_rankings: pd.DataFrame
-) -> Dict[str, Any]:
+def _compute_churn_details(prior_rankings: pd.DataFrame, current_rankings: pd.DataFrame) -> Dict[str, Any]:
     """Compute portfolio churn between two snapshots.
 
     Uses top-25 by actionable_rank among dev tickers.
@@ -2032,21 +1991,48 @@ def generate_drift_report_md(
 
     rows = [
         ("A-tier count (dev)", current.get("tier_A_count")),
-        ("A-tier % (dev)", f"{current.get('tier_A_pct', 'N/A')}%"
-         if current.get("tier_A_pct") is not None else "N/A"),
+        ("A-tier % (dev)", f"{current.get('tier_A_pct', 'N/A')}%" if current.get("tier_A_pct") is not None else "N/A"),
         ("B-tier count (dev)", current.get("tier_B_count")),
-        ("Eligible % (dev)", f"{current.get('eligible_pct', 'N/A')}%"
-         if current.get("eligible_pct") is not None else "N/A"),
-        ("Catalyst missing (elig)", f"{current.get('catalyst_missing_pct', 'N/A')}%"
-         if current.get("catalyst_missing_pct") is not None else "N/A"),
-        ("Backfill share (elig)", f"{current.get('catalyst_backfill_share_pct', 'N/A')}%"
-         if current.get("catalyst_backfill_share_pct") is not None else "N/A"),
-        ("Drawdown coverage (dev)", f"{current.get('drawdown_coverage_pct', 'N/A')}%"
-         if current.get("drawdown_coverage_pct") is not None else "N/A"),
-        ("Rel DD coverage (dev)", f"{current.get('drawdown_rel_coverage_pct', 'N/A')}%"
-         if current.get("drawdown_rel_coverage_pct") is not None else "N/A"),
-        ("Top-25 overlap (vs prior)", f"{current.get('top25_overlap_pct', 'N/A')}%"
-         if current.get("top25_overlap_pct") is not None else "N/A"),
+        (
+            "Eligible % (dev)",
+            f"{current.get('eligible_pct', 'N/A')}%" if current.get("eligible_pct") is not None else "N/A",
+        ),
+        (
+            "Catalyst missing (elig)",
+            (
+                f"{current.get('catalyst_missing_pct', 'N/A')}%"
+                if current.get("catalyst_missing_pct") is not None
+                else "N/A"
+            ),
+        ),
+        (
+            "Backfill share (elig)",
+            (
+                f"{current.get('catalyst_backfill_share_pct', 'N/A')}%"
+                if current.get("catalyst_backfill_share_pct") is not None
+                else "N/A"
+            ),
+        ),
+        (
+            "Drawdown coverage (dev)",
+            (
+                f"{current.get('drawdown_coverage_pct', 'N/A')}%"
+                if current.get("drawdown_coverage_pct") is not None
+                else "N/A"
+            ),
+        ),
+        (
+            "Rel DD coverage (dev)",
+            (
+                f"{current.get('drawdown_rel_coverage_pct', 'N/A')}%"
+                if current.get("drawdown_rel_coverage_pct") is not None
+                else "N/A"
+            ),
+        ),
+        (
+            "Top-25 overlap (vs prior)",
+            f"{current.get('top25_overlap_pct', 'N/A')}%" if current.get("top25_overlap_pct") is not None else "N/A",
+        ),
         ("Optionality std", _fmt(current.get("optionality_std"), 2)),
         ("Composite IQR", _fmt(current.get("composite_iqr"))),
     ]
@@ -2077,10 +2063,7 @@ def generate_drift_report_md(
         bk_mild = _fmt(current.get("cost_bucket_mild_pct"))
         bk_heavy = _fmt(current.get("cost_bucket_heavy_pct"))
         bk_floor = _fmt(current.get("cost_bucket_floor_pct"))
-        lines.append(
-            f"| {'Bucket no/mild/heavy/floor':<25} | "
-            f"{bk_no}% / {bk_mild}% / {bk_heavy}% / {bk_floor}% |"
-        )
+        lines.append(f"| {'Bucket no/mild/heavy/floor':<25} | " f"{bk_no}% / {bk_mild}% / {bk_heavy}% / {bk_floor}% |")
 
         lines.append(f"| {'Cap binding':<25} | {_fmt(current.get('cap_binding_pct'))}% |")
         lines.append("")
@@ -2121,7 +2104,7 @@ def generate_drift_report_md(
         lines.append("")
         lines.append(
             "> **Note:** Coverage here is *specific_days* (dated catalysts within the "
-            "actionable near/mid window), not audit \"any catalyst\". "
+            'actionable near/mid window), not audit "any catalyst". '
             "See `docs/CATALYST_COVERAGE_CROSSWALK.md` for definitions."
         )
         lines.append("")
@@ -2153,9 +2136,7 @@ def generate_drift_report_md(
             if _cs_unknown_warn or verbose_offenders:
                 lines.append("### Unknown Source — Top Offenders")
                 lines.append("")
-                lines.append(
-                    "Dated-catalyst tickers with missing or unrecognized source."
-                )
+                lines.append("Dated-catalyst tickers with missing or unrecognized source.")
                 lines.append("")
                 lines.append("| Ticker | Catalyst Mode  | Days | Event Type     | Reason         |")
                 lines.append("|--------|----------------|------|----------------|----------------|")
@@ -2251,9 +2232,7 @@ def generate_drift_report_md(
             if _ct_unknown_warn or verbose_offenders:
                 lines.append("### Unknown Event Type — Top Offenders")
                 lines.append("")
-                lines.append(
-                    "Dated-catalyst tickers with missing or unrecognized event type."
-                )
+                lines.append("Dated-catalyst tickers with missing or unrecognized event type.")
                 lines.append("")
                 lines.append("| Ticker | Catalyst Mode  | Days | Catalyst Source      | Reason         |")
                 lines.append("|--------|----------------|------|----------------------|----------------|")
@@ -2291,9 +2270,7 @@ def generate_drift_report_md(
             if _ct_fda_warn or verbose_offenders:
                 lines.append("### FDA-Tagged Tickers")
                 lines.append("")
-                lines.append(
-                    "Tickers labeled FDA_DECISION or FDA_ADCOM — verify source provenance."
-                )
+                lines.append("Tickers labeled FDA_DECISION or FDA_ADCOM — verify source provenance.")
                 lines.append("")
                 lines.append("| Ticker | Event Type     | Catalyst Source      |")
                 lines.append("|--------|----------------|----------------------|")
@@ -2304,10 +2281,7 @@ def generate_drift_report_md(
                         f"| {off['catalyst_source'] or '—':<20} |"
                     )
                 if len(fda_offenders) > _CT_MAX_OFFENDERS:
-                    lines.append(
-                        f"| ...    | ({len(fda_offenders) - _CT_MAX_OFFENDERS} more)"
-                        f"{'':<14} | {'':<20} |"
-                    )
+                    lines.append(f"| ...    | ({len(fda_offenders) - _CT_MAX_OFFENDERS} more)" f"{'':<14} | {'':<20} |")
                 lines.append("")
             else:
                 lines.append(
@@ -2348,8 +2322,10 @@ def generate_drift_report_md(
         lines.append("| Metric              | Min   | Max   | Mean  | Median | IQR   | Delta | Current |")
         lines.append("|---------------------|-------|-------|-------|--------|-------|-------|---------|")
         for key in [
-            "tier_A_pct", "catalyst_missing_pct",
-            "top25_overlap_pct", "optionality_std",
+            "tier_A_pct",
+            "catalyst_missing_pct",
+            "top25_overlap_pct",
+            "optionality_std",
             "catalyst_strength_near_pct",
         ]:
             if key not in rolling:
@@ -2369,9 +2345,7 @@ def generate_drift_report_md(
         lines.append("")
 
     # Mixed rulesets warning
-    rulesets_in_window = set(
-        s.get("ruleset_id", "") for s in metrics.get("snapshots", [])
-    )
+    rulesets_in_window = set(s.get("ruleset_id", "") for s in metrics.get("snapshots", []))
     rulesets_in_window.discard("")
     if len(rulesets_in_window) > 1:
         lines.append("## Warning: Mixed Rulesets in Window")
@@ -2389,9 +2363,7 @@ def generate_drift_report_md(
     # Drift Attribution (pairwise diff of last two snapshots)
     if attribution is not None:
         lines.append("## Drift Attribution")
-        lines.append(
-            f"Comparing {attribution['prior_date']} → {attribution['current_date']}"
-        )
+        lines.append(f"Comparing {attribution['prior_date']} → {attribution['current_date']}")
         lines.append("")
 
         # Eligibility Gate Changes
@@ -2452,9 +2424,7 @@ def generate_drift_report_md(
                 lines.append("| Ticker | Tier | Band | Reason |")
                 lines.append("|--------|------|------|--------|")
                 for d in dropped:
-                    lines.append(
-                        f"| {d['ticker']} | {d['tier_dev']} | {d['size_band']} | {d['tier_reason']} |"
-                    )
+                    lines.append(f"| {d['ticker']} | {d['tier_dev']} | {d['size_band']} | {d['tier_reason']} |")
                 lines.append("")
 
             added = churn.get("added", [])
@@ -2464,9 +2434,7 @@ def generate_drift_report_md(
                 lines.append("| Ticker | Tier | Band | Reason |")
                 lines.append("|--------|------|------|--------|")
                 for a in added:
-                    lines.append(
-                        f"| {a['ticker']} | {a['tier_dev']} | {a['size_band']} | {a['tier_reason']} |"
-                    )
+                    lines.append(f"| {a['ticker']} | {a['tier_dev']} | {a['size_band']} | {a['tier_reason']} |")
                 lines.append("")
 
         # Gate Margin Shifts
@@ -2475,10 +2443,7 @@ def generate_drift_report_md(
         current_ms = ms.get("current", {})
         delta_ms = ms.get("delta", {})
         # Only show if at least one non-None value exists
-        has_data = any(
-            v is not None
-            for v in list(prior_ms.values()) + list(current_ms.values())
-        )
+        has_data = any(v is not None for v in list(prior_ms.values()) + list(current_ms.values()))
         if has_data:
             lines.append("### Gate Margin Shifts")
             lines.append("")
@@ -2497,7 +2462,11 @@ def generate_drift_report_md(
                 d = delta_ms.get(key)
                 p_s = f"{p:+.4f}" if isinstance(p, float) else (str(p) if p is not None else "N/A")
                 c_s = f"{c:+.4f}" if isinstance(c, float) else (str(c) if c is not None else "N/A")
-                d_s = f"{d:+.4f}" if isinstance(d, float) else (f"+{d}" if isinstance(d, int) and d > 0 else str(d) if d is not None else "N/A")
+                d_s = (
+                    f"{d:+.4f}"
+                    if isinstance(d, float)
+                    else (f"+{d}" if isinstance(d, int) and d > 0 else str(d) if d is not None else "N/A")
+                )
                 lines.append(f"| {label} | {p_s} | {c_s} | {d_s} |")
             lines.append("")
 
@@ -2509,10 +2478,7 @@ def generate_drift_report_md(
             ("Rescued share %", "rescued_share_pct"),
             ("DD rel-margin rescue share %", "dd_rel_margin_rescue_share_pct"),
         ]
-        has_pressure = any(
-            current_ms.get(k) is not None or prior_ms.get(k) is not None
-            for _, k in pressure_rows
-        )
+        has_pressure = any(current_ms.get(k) is not None or prior_ms.get(k) is not None for _, k in pressure_rows)
         if has_pressure:
             lines.append("### Gate Pressure")
             lines.append("")
@@ -2539,10 +2505,12 @@ def generate_drift_report_md(
             lines.append(f"- {r}")
     if rollback_candidate:
         lines.append("")
-        lines.append(f"**Rollback candidate**: {rollback_candidate['id']} "
-                      f"({rollback_candidate.get('file', 'N/A')})")
-        lines.append(f"  To rollback: `python scripts/promote_ruleset.py "
-                      f"{rollback_candidate['id']} --rollback --force`")
+        lines.append(
+            f"**Rollback candidate**: {rollback_candidate['id']} " f"({rollback_candidate.get('file', 'N/A')})"
+        )
+        lines.append(
+            "  To rollback: `python scripts/promote_ruleset.py " f"{rollback_candidate['id']} --rollback --force`"
+        )
     lines.append("")
 
     # Guardrails config
@@ -2603,8 +2571,8 @@ def generate_drift_report_md(
         any_suppressed = any(s.get("suppressed") for s in suggestions)
         if any_suppressed:
             lines.append(
-                f"Suppression threshold: "
-                f"suggest_cs_min_cat_specific_days_median ="
+                "Suppression threshold: "
+                "suggest_cs_min_cat_specific_days_median ="
                 f" {_SUGGEST_CS_MIN_CAT_SPECIFIC_DAYS_MEDIAN:.1f}%"
             )
         lines.append("")
@@ -2688,10 +2656,10 @@ def generate_rollback_packet_md(
         lines.append("")
         lines.append("```bash")
         lines.append(
-            f'python -c "import json; '
+            'python -c "import json; '
             f"d=json.load(open('production_data/decision_rulesets/{rfile}')); "
             f"assert d['ruleset_id']=='{rid}', f'ID mismatch: {{d[\"ruleset_id\"]}}'; "
-            f"print('OK:', d['ruleset_id'])\""
+            "print('OK:', d['ruleset_id'])\""
         )
         lines.append("```")
         lines.append("")
@@ -2699,18 +2667,11 @@ def generate_rollback_packet_md(
         # --- Rollback commands ---
         lines.append("## Rollback Commands")
         lines.append("")
+        lines.append("1. Verify fingerprint (above)")
+        lines.append(f"2. `python scripts/promote_ruleset.py {rid} --rollback --force`")
+        lines.append("3. Re-run screen: `python run_screen.py --strict`")
         lines.append(
-            f"1. Verify fingerprint (above)"
-        )
-        lines.append(
-            f"2. `python scripts/promote_ruleset.py {rid} --rollback --force`"
-        )
-        lines.append(
-            "3. Re-run screen: `python run_screen.py --strict`"
-        )
-        lines.append(
-            "4. Re-run drift: `python scripts/run_drift_report.py "
-            "--snapshot-dir data/snapshots --output-dir output`"
+            "4. Re-run drift: `python scripts/run_drift_report.py " "--snapshot-dir data/snapshots --output-dir output`"
         )
         lines.append("")
     else:
@@ -2726,8 +2687,11 @@ def generate_rollback_packet_md(
     lines.append("| Metric | Value |")
     lines.append("|--------|-------|")
     for key in (
-        "tier_A_pct", "tier_B_pct", "catalyst_missing_pct",
-        "top25_overlap_pct", "optionality_std",
+        "tier_A_pct",
+        "tier_B_pct",
+        "catalyst_missing_pct",
+        "top25_overlap_pct",
+        "optionality_std",
     ):
         val = current_metrics.get(key)
         if val is not None:
@@ -2742,9 +2706,7 @@ def generate_rollback_packet_md(
 # CLI
 # ---------------------------------------------------------------------------
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate daily drift report for post-promotion monitoring."
-    )
+    parser = argparse.ArgumentParser(description="Generate daily drift report for post-promotion monitoring.")
 
     # Input source: snapshot directory OR panel CSV (mutually exclusive)
     source = parser.add_mutually_exclusive_group(required=True)
@@ -2810,13 +2772,12 @@ def main() -> int:
     # Compute metrics
     is_panel = args.panel is not None
     metrics = compute_drift_metrics(
-        snapshots, strict_cs_missing=not is_panel,
+        snapshots,
+        strict_cs_missing=not is_panel,
     )
 
     # Evaluate guardrails (FAIL + static WARN checks)
-    gr_status, gr_reasons, rollback, recommended_action = evaluate_guardrails(
-        metrics, guardrails
-    )
+    gr_status, gr_reasons, rollback, recommended_action = evaluate_guardrails(metrics, guardrails)
 
     # Evaluate adaptive warnings (WARN layer — window-relative)
     aw_status, aw_reasons = evaluate_adaptive_warnings(metrics, guardrails)
@@ -2843,22 +2804,27 @@ def main() -> int:
 
     # Compute suggested guardrails (informational — uses prior snapshots only)
     suggestions = compute_suggested_guardrails(
-        metrics.get("snapshots", []), guardrails,
+        metrics.get("snapshots", []),
+        guardrails,
     )
 
     # Generate reports
     md = generate_drift_report_md(
-        metrics, final_status, fail_reasons, guardrails, rollback,
-        recommended_action, adaptive_warnings=warn_reasons or None,
-        attribution=attribution, suggestions=suggestions or None,
+        metrics,
+        final_status,
+        fail_reasons,
+        guardrails,
+        rollback,
+        recommended_action,
+        adaptive_warnings=warn_reasons or None,
+        attribution=attribution,
+        suggestions=suggestions or None,
         verbose_offenders=args.verbose_offenders,
     )
     if is_panel and "## Catalyst Source Mix" in md:
         md = md.replace(
             "## Catalyst Source Mix\n\n",
-            "## Catalyst Source Mix\n\n"
-            "_Panel CSV: empty catalyst_source treated as `none`"
-            " (CSV ambiguity)._\n\n",
+            "## Catalyst Source Mix\n\n" "_Panel CSV: empty catalyst_source treated as `none`" " (CSV ambiguity)._\n\n",
             1,
         )
     if is_panel and "## Catalyst Event Type Mix" in md:
@@ -2877,9 +2843,15 @@ def main() -> int:
             f"window={window_size}\n\n"
         ) + md
     report_json = generate_drift_json(
-        metrics, final_status, fail_reasons, guardrails, rollback,
-        recommended_action, adaptive_warnings=warn_reasons or None,
-        attribution=attribution, suggestions=suggestions or None,
+        metrics,
+        final_status,
+        fail_reasons,
+        guardrails,
+        rollback,
+        recommended_action,
+        adaptive_warnings=warn_reasons or None,
+        attribution=attribution,
+        suggestions=suggestions or None,
     )
 
     # Write outputs
@@ -2897,8 +2869,12 @@ def main() -> int:
     # Rollback packet (only on FAIL)
     if final_status == "FAIL":
         packet = generate_rollback_packet_md(
-            final_status, fail_reasons, rollback, recommended_action,
-            metrics.get("current", {}), guardrails,
+            final_status,
+            fail_reasons,
+            rollback,
+            recommended_action,
+            metrics.get("current", {}),
+            guardrails,
         )
         packet_path = args.output_dir / "rollback_packet.md"
         packet_path.write_text(packet, encoding="utf-8")

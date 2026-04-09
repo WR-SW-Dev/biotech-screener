@@ -9,6 +9,7 @@ Used by run_screen.py to enforce PIT survivorship filtering:
 - Exclude tickers that hadn't IPO'd yet as of the snapshot date
 - Exclude tickers that delisted before the snapshot date
 """
+
 from __future__ import annotations
 
 import csv

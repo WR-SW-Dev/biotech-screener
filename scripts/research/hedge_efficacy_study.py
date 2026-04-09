@@ -18,6 +18,7 @@ Output:
     hedge_efficacy_study.json — full structured results
     hedge_efficacy_study.md  — IC-readable summary
 """
+
 from __future__ import annotations
 
 import argparse
@@ -364,7 +365,7 @@ def generate_markdown(
     lines = [
         f"# Hedge Structure Efficacy Study — {etf_ticker}",
         "",
-        f"*{months}-month backtest ending {as_of_date}, " f"Massive historical option closes*",
+        f"*{months}-month backtest ending {as_of_date}, " "Massive historical option closes*",
         "",
     ]
 
@@ -403,7 +404,7 @@ def generate_markdown(
     if sorted_results:
         s0 = sorted_results[0]["summary"]
         baseline = (
-            f"**Unhedged baseline**: "
+            "**Unhedged baseline**: "
             f"return={s0['total_return_unhedged']:.2%}, "
             f"max DD={s0['max_dd_unhedged']:.2%}, "
             f"worst month={s0['worst_month_unhedged']:.2%}"

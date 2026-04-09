@@ -15,6 +15,7 @@ When the universe lacks ir_url / pr_rss_url entries, the collectors return []
 early without writing cache. This script writes empty sentinel caches in that
 case so future warm_caches calls short-circuit properly.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -59,8 +60,7 @@ def _load_universe(data_dir: Path) -> List[Dict]:
         return json.load(f)
 
 
-def _write_empty_cache(cache_path: Path, schema: str, collector_version: str,
-                       as_of_date: date) -> None:
+def _write_empty_cache(cache_path: Path, schema: str, collector_version: str, as_of_date: date) -> None:
     """Write a minimal empty cache wrapper so warm_caches short-circuits."""
     wrapper = {
         "schema": schema,
@@ -102,6 +102,7 @@ def _validate_cache(cache_path: Path, as_of_str: str) -> Dict:
 # Core backfill
 # ---------------------------------------------------------------------------
 
+
 def backfill(
     start: date,
     end: date,
@@ -113,13 +114,12 @@ def backfill(
     skip_existing: bool = True,
 ) -> Dict:
     """Run backfill for the given date range. Returns summary stats."""
-    from wake_robin_data_pipeline.collectors.ir_events_collector import (
-        collect_ir_events, SCHEMA as IR_SCHEMA, COLLECTOR_VERSION as IR_VERSION,
-    )
-    from wake_robin_data_pipeline.collectors.press_release_collector import (
-        collect_press_release_events, SCHEMA as PR_SCHEMA,
-        COLLECTOR_VERSION as PR_VERSION,
-    )
+    from wake_robin_data_pipeline.collectors.ir_events_collector import COLLECTOR_VERSION as IR_VERSION
+    from wake_robin_data_pipeline.collectors.ir_events_collector import SCHEMA as IR_SCHEMA
+    from wake_robin_data_pipeline.collectors.ir_events_collector import collect_ir_events
+    from wake_robin_data_pipeline.collectors.press_release_collector import COLLECTOR_VERSION as PR_VERSION
+    from wake_robin_data_pipeline.collectors.press_release_collector import SCHEMA as PR_SCHEMA
+    from wake_robin_data_pipeline.collectors.press_release_collector import collect_press_release_events
 
     universe = _load_universe(data_dir)
     if not universe:
@@ -134,13 +134,17 @@ def backfill(
                 load_company_calendar_sources,
                 merge_universe_with_company_calendar_sources,
             )
+
             cal_sources = load_company_calendar_sources(sources_path)
             if cal_sources:
                 universe, merge_stats = merge_universe_with_company_calendar_sources(
-                    universe, cal_sources,
+                    universe,
+                    cal_sources,
                 )
-                print(f"Calendar sources merged: ir_added={merge_stats['ir_url_added']} "
-                      f"pr_added={merge_stats['pr_rss_url_added']}")
+                print(
+                    f"Calendar sources merged: ir_added={merge_stats['ir_url_added']} "
+                    f"pr_added={merge_stats['pr_rss_url_added']}"
+                )
         except Exception as e:
             logger.warning("Failed to merge company calendar sources: %s", e)
 
@@ -149,9 +153,14 @@ def backfill(
 
     stats = {
         "days_attempted": 0,
-        "ir_days_ok": 0, "ir_total_events": 0, "ir_skipped": 0,
-        "pr_days_ok": 0, "pr_total_events": 0, "pr_skipped": 0,
-        "failures": 0, "violations": 0,
+        "ir_days_ok": 0,
+        "ir_total_events": 0,
+        "ir_skipped": 0,
+        "pr_days_ok": 0,
+        "pr_total_events": 0,
+        "pr_skipped": 0,
+        "failures": 0,
+        "violations": 0,
     }
 
     for d in _all_days(start, end):
@@ -185,8 +194,10 @@ def backfill(
             # Validate
             v = _validate_cache(ir_path, as_of_str)
             if v["past_dates"] > 0 or v["bad_precision"] > 0:
-                print(f"VIOLATION {d}: IR past_dates={v['past_dates']} "
-                      f"bad_precision={v['bad_precision']}", file=sys.stderr)
+                print(
+                    f"VIOLATION {d}: IR past_dates={v['past_dates']} " f"bad_precision={v['bad_precision']}",
+                    file=sys.stderr,
+                )
                 stats["violations"] += 1
             stats["ir_days_ok"] += 1
             stats["ir_total_events"] += ir_n
@@ -216,8 +227,10 @@ def backfill(
             # Validate
             v = _validate_cache(pr_path, as_of_str)
             if v["past_dates"] > 0 or v["bad_precision"] > 0:
-                print(f"VIOLATION {d}: PR past_dates={v['past_dates']} "
-                      f"bad_precision={v['bad_precision']}", file=sys.stderr)
+                print(
+                    f"VIOLATION {d}: PR past_dates={v['past_dates']} " f"bad_precision={v['bad_precision']}",
+                    file=sys.stderr,
+                )
                 stats["violations"] += 1
             stats["pr_days_ok"] += 1
             stats["pr_total_events"] += pr_n
@@ -234,25 +247,24 @@ def backfill(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Backfill IR events + press release caches per day"
-    )
+    parser = argparse.ArgumentParser(description="Backfill IR events + press release caches per day")
     parser.add_argument("--start", required=True, help="Start date YYYY-MM-DD")
     parser.add_argument("--end", required=True, help="End date YYYY-MM-DD")
     parser.add_argument(
-        "--sources", default="ir_events,press_releases",
+        "--sources",
+        default="ir_events,press_releases",
         help="Comma-separated: ir_events,press_releases (default: both)",
     )
     parser.add_argument("--data-dir", default="production_data")
     parser.add_argument("--ir-cache-dir", default="cache/ir")
     parser.add_argument("--press-cache-dir", default="cache/press")
-    parser.add_argument("--sleep-seconds", type=float, default=0.0,
-                        help="Sleep between dates (default: 0, no network needed)")
-    parser.add_argument("--max-days", type=int, default=0,
-                        help="Cap on number of days to process (0=unlimited)")
-    parser.add_argument("--no-skip-existing", action="store_true",
-                        help="Reprocess even if cache file exists")
+    parser.add_argument(
+        "--sleep-seconds", type=float, default=0.0, help="Sleep between dates (default: 0, no network needed)"
+    )
+    parser.add_argument("--max-days", type=int, default=0, help="Cap on number of days to process (0=unlimited)")
+    parser.add_argument("--no-skip-existing", action="store_true", help="Reprocess even if cache file exists")
     args = parser.parse_args()
 
     logging.basicConfig(

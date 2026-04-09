@@ -9,6 +9,7 @@ Provides:
 - Structured logging with correlation IDs
 - Graceful degradation helpers
 """
+
 from __future__ import annotations
 
 import functools
@@ -16,7 +17,7 @@ import logging
 import time
 import uuid
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date
 from decimal import Decimal
 from typing import Any, Callable, Dict, List, Optional, Set, TypeVar, Union
 
@@ -60,19 +61,22 @@ logger = logging.getLogger(__name__)
 # DATA STALENESS VALIDATION
 # ============================================================================
 
+
 @dataclass
 class DataFreshnessConfig:
     """Configuration for data freshness validation."""
+
     max_financial_age_days: int = 120  # ~1 quarter + buffer
-    max_trial_age_days: int = 30       # Clinical trial data should be recent
+    max_trial_age_days: int = 30  # Clinical trial data should be recent
     max_market_data_age_days: int = 5  # Market data should be very recent
-    warn_threshold_pct: float = 0.75   # Warn at 75% of max age
-    strict_mode: bool = False          # Raise exception on stale data
+    warn_threshold_pct: float = 0.75  # Warn at 75% of max age
+    strict_mode: bool = False  # Raise exception on stale data
 
 
 @dataclass
 class DataFreshnessResult:
     """Result of data freshness validation."""
+
     is_fresh: bool
     is_warning: bool
     age_days: int
@@ -202,9 +206,7 @@ def validate_record_freshness(
             continue
 
         ticker = record.get("ticker", record.get("nct_id", "unknown"))
-        result = validate_data_freshness(
-            record_date, as_of_date, data_type, config, record_id=ticker
-        )
+        result = validate_data_freshness(record_date, as_of_date, data_type, config, record_id=ticker)
 
         total_age += max(0, result.age_days)
 
@@ -225,9 +227,11 @@ def validate_record_freshness(
 # CROSS-MODULE CONSISTENCY CHECKS
 # ============================================================================
 
+
 @dataclass
 class ConsistencyReport:
     """Report of cross-module consistency validation."""
+
     is_consistent: bool
     missing_in_m2: Set[str] = field(default_factory=set)
     missing_in_m3: Set[str] = field(default_factory=set)
@@ -298,10 +302,12 @@ def validate_ticker_coverage(
         warnings.append(f"Module 4 has {len(orphan_m4)} orphan tickers not in universe")
 
     is_consistent = (
-        coverage_m2 >= min_coverage_pct and
-        coverage_m3 >= min_coverage_pct and
-        coverage_m4 >= min_coverage_pct and
-        not orphan_m2 and not orphan_m3 and not orphan_m4
+        coverage_m2 >= min_coverage_pct
+        and coverage_m3 >= min_coverage_pct
+        and coverage_m4 >= min_coverage_pct
+        and not orphan_m2
+        and not orphan_m3
+        and not orphan_m4
     )
 
     return ConsistencyReport(
@@ -331,6 +337,7 @@ def validate_module_handoff(
     Returns:
         Dict with is_valid, missing_fields, extra_fields
     """
+
     # Flatten nested fields for checking
     def get_all_keys(d: Dict, prefix: str = "") -> Set[str]:
         keys = set()
@@ -361,14 +368,15 @@ def validate_module_handoff(
 # RETRY LOGIC WITH EXPONENTIAL BACKOFF
 # ============================================================================
 
+
 class RetryExhaustedError(Exception):
     """Raised when all retry attempts are exhausted."""
-    pass
 
 
 @dataclass
 class RetryConfig:
     """Configuration for retry logic."""
+
     max_attempts: int = 3
     base_delay_seconds: float = 1.0
     max_delay_seconds: float = 30.0
@@ -404,7 +412,7 @@ def retry_with_backoff(
                     last_exception = e
                     if attempt < config.max_attempts - 1:
                         delay = min(
-                            config.base_delay_seconds * (config.exponential_base ** attempt),
+                            config.base_delay_seconds * (config.exponential_base**attempt),
                             config.max_delay_seconds,
                         )
                         logger.warning(
@@ -413,15 +421,14 @@ def retry_with_backoff(
                         )
                         time.sleep(delay)
                     else:
-                        logger.error(
-                            f"All {config.max_attempts} attempts exhausted for {func.__name__}: {e}"
-                        )
+                        logger.error(f"All {config.max_attempts} attempts exhausted for {func.__name__}: {e}")
 
             raise RetryExhaustedError(
                 f"Failed after {config.max_attempts} attempts: {last_exception}"
             ) from last_exception
 
         return wrapper
+
     return decorator
 
 
@@ -429,13 +436,14 @@ def retry_with_backoff(
 # RESILIENT HTTP SESSION
 # ============================================================================
 
+
 def create_resilient_session(
     max_retries: int = 3,
     backoff_factor: float = 1.0,
     status_forcelist: tuple = (429, 500, 502, 503, 504),
     timeout: float = 30,
     extra_headers: Optional[Dict[str, str]] = None,
-) -> "requests.Session":
+) -> "requests.Session":  # noqa: F821
     """Create a requests.Session with automatic retry on transient failures.
 
     Args:
@@ -449,8 +457,8 @@ def create_resilient_session(
         A configured ``requests.Session`` with retry adapters mounted.
     """
     import requests
-    from urllib3.util.retry import Retry
     from requests.adapters import HTTPAdapter
+    from urllib3.util.retry import Retry
 
     retry = Retry(
         total=max_retries,
@@ -486,9 +494,11 @@ def create_resilient_session(
 # MEMORY GUARDS
 # ============================================================================
 
+
 @dataclass
 class MemoryGuardConfig:
     """Configuration for memory guards."""
+
     max_universe_size: int = 1000
     chunk_size: int = 200
     warn_threshold: int = 500
@@ -548,7 +558,7 @@ def estimate_memory_usage(
     if ticker_count > config.max_universe_size:
         warning = f"Universe size {ticker_count} exceeds recommended max {config.max_universe_size}"
     elif ticker_count > config.warn_threshold:
-        warning = f"Large universe: consider chunking for better performance"
+        warning = "Large universe: consider chunking for better performance"
 
     return {
         "ticker_count": ticker_count,
@@ -564,12 +574,14 @@ def estimate_memory_usage(
 
 # Thread-local storage for correlation ID
 import threading
+
 _correlation_context = threading.local()
 
 
 @dataclass
 class CorrelationContext:
     """Context for correlated logging across operations."""
+
     correlation_id: str
     run_id: Optional[str] = None
     as_of_date: Optional[str] = None
@@ -598,6 +610,7 @@ def with_correlation_id(correlation_id: Optional[str] = None) -> Callable:
         def process_module():
             ...
     """
+
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -609,7 +622,9 @@ def with_correlation_id(correlation_id: Optional[str] = None) -> Callable:
             finally:
                 if old_id:
                     set_correlation_id(old_id)
+
         return wrapper
+
     return decorator
 
 
@@ -640,9 +655,11 @@ class CorrelatedLogger:
 # GRACEFUL DEGRADATION
 # ============================================================================
 
+
 @dataclass
 class GracefulDegradationConfig:
     """Configuration for graceful degradation."""
+
     allow_missing_financial: bool = True
     allow_missing_catalyst: bool = True
     allow_missing_clinical: bool = False  # Clinical is critical
@@ -654,6 +671,7 @@ class GracefulDegradationConfig:
 @dataclass
 class DegradationReport:
     """Report of degradation applied during scoring."""
+
     was_degraded: bool
     missing_components: List[str] = field(default_factory=list)
     penalties_applied: Dict[str, str] = field(default_factory=dict)
@@ -699,9 +717,7 @@ def compute_with_degradation(
             warnings.append(f"Missing critical component: {component}")
 
     if available_count < config.min_components_required:
-        warnings.append(
-            f"Insufficient components: {available_count} < {config.min_components_required} required"
-        )
+        warnings.append(f"Insufficient components: {available_count} < {config.min_components_required} required")
 
     report.warnings = warnings
 
@@ -710,8 +726,6 @@ def compute_with_degradation(
         penalty_per_missing = config.missing_penalty_pct
         total_penalty = penalty_per_missing * len(missing)
         report.confidence_adjustment = Decimal("1.0") - min(total_penalty, Decimal("0.50"))
-        report.penalties_applied = {
-            comp: str(penalty_per_missing) for comp in missing
-        }
+        report.penalties_applied = {comp: str(penalty_per_missing) for comp in missing}
 
     return report

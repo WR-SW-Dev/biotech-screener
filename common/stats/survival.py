@@ -11,6 +11,7 @@ Usage:
     km = kaplan_meier(durations, events)
     cox = cox_ph_simple(durations, events, covariates)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -58,13 +59,15 @@ def kaplan_meier(
         at_risk -= n_censored
         if at_risk <= 0:
             break
-        survival *= (1 - n_events / at_risk)
-        table.append({
-            "time": float(time),
-            "n_events": n_events,
-            "at_risk": at_risk,
-            "survival": _round(survival),
-        })
+        survival *= 1 - n_events / at_risk
+        table.append(
+            {
+                "time": float(time),
+                "n_events": n_events,
+                "at_risk": at_risk,
+                "survival": _round(survival),
+            }
+        )
         at_risk -= n_events
 
     # Median survival
@@ -239,8 +242,10 @@ def stratified_kaplan_meier(
         g1, g2 = unique_groups
         m1, m2 = groups == g1, groups == g2
         lr = _log_rank_test(
-            durations[m1], events[m1],
-            durations[m2], events[m2],
+            durations[m1],
+            events[m1],
+            durations[m2],
+            events[m2],
         )
     else:
         lr = {"note": "log-rank only for 2 groups"}
@@ -267,7 +272,7 @@ def _log_rank_test(dur1, ev1, dur2, ev2):
 
     O1 = 0.0  # observed events in group 1
     E1 = 0.0  # expected events in group 1
-    V = 0.0   # variance
+    V = 0.0  # variance
 
     for t in unique_times:
         at_risk_1 = np.sum((all_dur >= t) & (all_group == 0))
@@ -290,6 +295,7 @@ def _log_rank_test(dur1, ev1, dur2, ev2):
     chi2 = (O1 - E1) ** 2 / V
 
     from scipy.stats import chi2 as chi2_dist
+
     p_value = 1 - chi2_dist.cdf(chi2, df=1)
 
     return {

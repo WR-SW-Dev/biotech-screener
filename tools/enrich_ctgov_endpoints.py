@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_ctgov_endpoints.py
     python tools/enrich_ctgov_endpoints.py --max-trials 50
 """
+
 from __future__ import annotations
 
 import argparse

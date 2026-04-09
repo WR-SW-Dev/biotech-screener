@@ -18,6 +18,7 @@ Output:
 Usage:
     python tools/build_production_monitor.py --as-of-date 2026-04-04
 """
+
 from __future__ import annotations
 
 import argparse

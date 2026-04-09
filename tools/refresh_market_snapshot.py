@@ -66,8 +66,8 @@ def _fetch_fred_hy_oas() -> float | None:
         return None
 
     url = (
-        f"https://api.stlouisfed.org/fred/series/observations"
-        f"?series_id=BAMLH0A0HYM2&sort_order=desc&limit=5"
+        "https://api.stlouisfed.org/fred/series/observations"
+        "?series_id=BAMLH0A0HYM2&sort_order=desc&limit=5"
         f"&file_type=json&api_key={api_key}"
     )
     try:

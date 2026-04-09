@@ -12,6 +12,7 @@ CLI:
   python scripts/refresh_goldens.py
   python scripts/refresh_goldens.py --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,11 +23,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from tests.test_decision_engine_contract import (
-    ALL_GOLDEN,
-    _compute_golden,
-    _compute_golden_output_fingerprint,
-)
+from tests.test_decision_engine_contract import ALL_GOLDEN, _compute_golden, _compute_golden_output_fingerprint
 
 # Pattern matching `EXPECTED_FINGERPRINT = "..."` inside the test file.
 _FP_PATTERN = re.compile(r'(EXPECTED_FINGERPRINT\s*=\s*)"([a-f0-9]+)"')
@@ -49,11 +46,10 @@ def _golden_summary() -> str:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Recompute golden output fingerprint and update test constant."
-    )
+    parser = argparse.ArgumentParser(description="Recompute golden output fingerprint and update test constant.")
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would change without writing.",
     )
     args = parser.parse_args()
@@ -85,7 +81,7 @@ def main() -> int:
         return 0
 
     # Write updated constant
-    new_source = source[:m.start(2)] + new_fp + source[m.end(2):]
+    new_source = source[: m.start(2)] + new_fp + source[m.end(2) :]
     TEST_FILE.write_text(new_source, encoding="utf-8")
     print(f"Updated EXPECTED_FINGERPRINT in {TEST_FILE}")
     return 0

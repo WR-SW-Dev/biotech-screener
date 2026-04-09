@@ -10,6 +10,7 @@ loading, turnover, net return) and ``backtest/regime.py`` (regime labels).
 
 Outputs: portfolio_timeseries.csv + summary.json → ``--out-dir``
 """
+
 from __future__ import annotations
 
 import argparse

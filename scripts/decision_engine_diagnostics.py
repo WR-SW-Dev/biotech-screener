@@ -12,6 +12,7 @@ Reads snapshots from data/snapshots/YYYY-MM-DD/rankings.csv and computes:
 Usage:
     python3 scripts/decision_engine_diagnostics.py [--from-date 2026-01-15] [--to-date 2026-02-16]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,6 +34,7 @@ if str(_PROJECT_ROOT) not in sys.path:
 # Data loading
 # ---------------------------------------------------------------------------
 
+
 def _load_rankings(snapshot_dir: Path) -> list[dict]:
     csv_path = snapshot_dir / "rankings.csv"
     if not csv_path.exists():
@@ -42,7 +44,9 @@ def _load_rankings(snapshot_dir: Path) -> list[dict]:
 
 
 def _discover_snapshots(
-    base: Path, from_date: date | None, to_date: date | None,
+    base: Path,
+    from_date: date | None,
+    to_date: date | None,
 ) -> list[tuple[str, Path]]:
     """Return sorted (date_str, path) for snapshots in range."""
     results = []
@@ -66,6 +70,7 @@ def _discover_snapshots(
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _safe_float(v: str) -> float | None:
     if v is None or v == "":
@@ -101,6 +106,7 @@ def _spearman_corr(ranks_a: dict[str, int], ranks_b: dict[str, int]) -> float | 
     tickers = sorted(common)
     ra = [ranks_a[t] for t in tickers]
     rb = [ranks_b[t] for t in tickers]
+
     # Convert to ranks within common set
     def _rank(vals):
         indexed = sorted(range(len(vals)), key=lambda i: vals[i])
@@ -108,10 +114,11 @@ def _spearman_corr(ranks_a: dict[str, int], ranks_b: dict[str, int]) -> float | 
         for rank, idx in enumerate(indexed, 1):
             ranks[idx] = rank
         return ranks
+
     ra_r = _rank(ra)
     rb_r = _rank(rb)
     d_sq = sum((a - b) ** 2 for a, b in zip(ra_r, rb_r))
-    return 1 - (6 * d_sq) / (n * (n ** 2 - 1))
+    return 1 - (6 * d_sq) / (n * (n**2 - 1))
 
 
 def _percentile(values: list[float], p: float) -> float:
@@ -141,20 +148,23 @@ def _stats(values: list[float]) -> dict:
 # Diagnostic computations
 # ---------------------------------------------------------------------------
 
+
 def compute_tier_distribution(snapshots: list[tuple[str, list[dict]]]) -> list[dict]:
     """A/B/C/D/missing counts per date."""
     results = []
     for date_str, rows in snapshots:
         counts = Counter(r.get("tier_dev", "") for r in rows)
-        results.append({
-            "date": date_str,
-            "total": len(rows),
-            "A": counts.get("A", 0),
-            "B": counts.get("B", 0),
-            "C": counts.get("C", 0),
-            "D": counts.get("D", 0),
-            "no_tier": counts.get("", 0),
-        })
+        results.append(
+            {
+                "date": date_str,
+                "total": len(rows),
+                "A": counts.get("A", 0),
+                "B": counts.get("B", 0),
+                "C": counts.get("C", 0),
+                "D": counts.get("D", 0),
+                "no_tier": counts.get("", 0),
+            }
+        )
     return results
 
 
@@ -169,24 +179,25 @@ def compute_tier_churn(snapshots: list[tuple[str, list[dict]]]) -> list[dict]:
         common = set(prev_tiers) & set(curr_tiers)
         changed = sum(1 for t in common if prev_tiers[t] != curr_tiers[t])
         # Track direction of changes
-        upgrades = sum(1 for t in common
-                       if prev_tiers[t] in ("B", "C", "D") and curr_tiers[t] == "A")
-        downgrades = sum(1 for t in common
-                         if prev_tiers[t] == "A" and curr_tiers[t] in ("B", "C", "D"))
-        results.append({
-            "from_date": prev_date,
-            "to_date": curr_date,
-            "common_tickers": len(common),
-            "tier_changes": changed,
-            "churn_pct": round(100 * changed / len(common), 2) if common else 0,
-            "A_upgrades": upgrades,
-            "A_downgrades": downgrades,
-        })
+        upgrades = sum(1 for t in common if prev_tiers[t] in ("B", "C", "D") and curr_tiers[t] == "A")
+        downgrades = sum(1 for t in common if prev_tiers[t] == "A" and curr_tiers[t] in ("B", "C", "D"))
+        results.append(
+            {
+                "from_date": prev_date,
+                "to_date": curr_date,
+                "common_tickers": len(common),
+                "tier_changes": changed,
+                "churn_pct": round(100 * changed / len(common), 2) if common else 0,
+                "A_upgrades": upgrades,
+                "A_downgrades": downgrades,
+            }
+        )
     return results
 
 
 def compute_topk_stability(
-    snapshots: list[tuple[str, list[dict]]], k: int = 20,
+    snapshots: list[tuple[str, list[dict]]],
+    k: int = 20,
 ) -> list[dict]:
     """Jaccard overlap + Spearman of top-K actionable_rank across consecutive dates."""
     results = []
@@ -195,14 +206,16 @@ def compute_topk_stability(
         curr_date, curr_rows = snapshots[i]
 
         def _topk_set(rows):
-            ranked = [(r["ticker"], _safe_int(r.get("actionable_rank")))
-                      for r in rows if r.get("actionable_rank")]
+            ranked = [(r["ticker"], _safe_int(r.get("actionable_rank"))) for r in rows if r.get("actionable_rank")]
             ranked.sort(key=lambda x: x[1] or 9999)
             return {t for t, rank in ranked[:k]}
 
         def _rank_dict(rows):
-            return {r["ticker"]: _safe_int(r.get("actionable_rank"))
-                    for r in rows if r.get("actionable_rank") and _safe_int(r.get("actionable_rank"))}
+            return {
+                r["ticker"]: _safe_int(r.get("actionable_rank"))
+                for r in rows
+                if r.get("actionable_rank") and _safe_int(r.get("actionable_rank"))
+            }
 
         prev_top = _topk_set(prev_rows)
         curr_top = _topk_set(curr_rows)
@@ -212,13 +225,15 @@ def compute_topk_stability(
         curr_ranks = _rank_dict(curr_rows)
         spearman = _spearman_corr(prev_ranks, curr_ranks)
 
-        results.append({
-            "from_date": prev_date,
-            "to_date": curr_date,
-            "k": k,
-            "jaccard": round(jaccard, 4),
-            "spearman": round(spearman, 4) if spearman is not None else None,
-        })
+        results.append(
+            {
+                "from_date": prev_date,
+                "to_date": curr_date,
+                "k": k,
+                "jaccard": round(jaccard, 4),
+                "spearman": round(spearman, 4) if spearman is not None else None,
+            }
+        )
     return results
 
 
@@ -226,8 +241,7 @@ def compute_score_contributions(
     snapshots: list[tuple[str, list[dict]]],
 ) -> dict[str, dict]:
     """Mean/median of component scores, grouped by tier_dev."""
-    SCORE_COLS = ["clinical_score", "catalyst_score", "momentum_score",
-                  "financial_score", "smart_money_score"]
+    SCORE_COLS = ["clinical_score", "catalyst_score", "momentum_score", "financial_score", "smart_money_score"]
     by_tier: dict[str, dict[str, list[float]]] = defaultdict(lambda: defaultdict(list))
 
     for _, rows in snapshots:
@@ -263,8 +277,7 @@ def compute_missing_data(
     snapshots: list[tuple[str, list[dict]]],
 ) -> dict[str, dict]:
     """Frequency of missing/blank values in key columns for top-60 names."""
-    KEY_COLS = ["catalyst_days", "clinical_score", "de_drawdown",
-                "catalyst_mode", "financial_score"]
+    KEY_COLS = ["catalyst_days", "clinical_score", "de_drawdown", "catalyst_mode", "financial_score"]
     overall: dict[str, int] = defaultdict(int)
     top60: dict[str, int] = defaultdict(int)
     total_rows = 0
@@ -292,20 +305,17 @@ def compute_missing_data(
         "total_top60_rows": total_top60,
         "missing_overall": {col: overall[col] for col in KEY_COLS},
         "missing_pct_overall": {
-            col: round(100 * overall[col] / total_rows, 2) if total_rows else 0
-            for col in KEY_COLS
+            col: round(100 * overall[col] / total_rows, 2) if total_rows else 0 for col in KEY_COLS
         },
         "missing_top60": {col: top60[col] for col in KEY_COLS},
-        "missing_pct_top60": {
-            col: round(100 * top60[col] / total_top60, 2) if total_top60 else 0
-            for col in KEY_COLS
-        },
+        "missing_pct_top60": {col: round(100 * top60[col] / total_top60, 2) if total_top60 else 0 for col in KEY_COLS},
     }
 
 
 # ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
+
 
 def _format_markdown(diag: dict) -> str:
     lines = ["# Decision Engine Diagnostics Report\n"]
@@ -338,9 +348,7 @@ def _format_markdown(diag: dict) -> str:
         lines.append("-" * 50)
         for row in diag[k_label]:
             sp = f"{row['spearman']:.4f}" if row["spearman"] is not None else "N/A"
-            lines.append(
-                f"{row['from_date']:<14} {row['to_date']:<14} {row['jaccard']:>8.4f} {sp:>9}"
-            )
+            lines.append(f"{row['from_date']:<14} {row['to_date']:<14} {row['jaccard']:>8.4f} {sp:>9}")
 
     # Score contributions
     lines.append("\n## Score Contributions by Tier\n")
@@ -378,6 +386,7 @@ def _format_markdown(diag: dict) -> str:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Decision Engine Diagnostics")
@@ -432,7 +441,7 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Wrote: {md_path}")
 
     # Print summary
-    print(f"\n--- Summary ---")
+    print("\n--- Summary ---")
     td = diag["tier_distribution"]
     if td:
         latest = td[-1]

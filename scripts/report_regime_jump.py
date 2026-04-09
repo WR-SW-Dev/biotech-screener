@@ -9,6 +9,7 @@ Usage:
     python3 scripts/report_regime_jump.py --as-of-date 2026-02-04
     python3 scripts/report_regime_jump.py --as-of-date 2026-02-04 --top 25 --output report.txt
 """
+
 from __future__ import annotations
 
 import argparse
@@ -59,13 +60,12 @@ def _top_n_set(rows: list[dict], n: int) -> set[str]:
 
 
 def compute_flips(
-    cur_rows: list[dict], prior_rows: list[dict],
+    cur_rows: list[dict],
+    prior_rows: list[dict],
 ) -> list[dict]:
     """Find all B→G catalyst mode flips (dev-only, common tickers)."""
     prior_by_t = {
-        r.get("ticker", ""): r
-        for r in prior_rows
-        if r.get("archetype") == "drug_developer" and r.get("ticker", "")
+        r.get("ticker", ""): r for r in prior_rows if r.get("archetype") == "drug_developer" and r.get("ticker", "")
     }
 
     flips = []
@@ -78,18 +78,20 @@ def compute_flips(
         prev = _mode(prior_by_t[t])
         cur = _mode(r)
         if prev in BAD_MODES and cur in GOOD_MODES:
-            flips.append({
-                "ticker": t,
-                "rank": int(r.get("composite_rank", 999)),
-                "mode": cur,
-                "days": _days(r),
-                "source": r.get("catalyst_source", "") or "",
-                "event_type": r.get("catalyst_event_type", "") or "",
-                "tier": r.get("tier_dev", "") or "",
-                "strength": r.get("catalyst_strength", "") or "",
-                "prev_mode": prev,
-                "eligible": r.get("eligible", ""),
-            })
+            flips.append(
+                {
+                    "ticker": t,
+                    "rank": int(r.get("composite_rank", 999)),
+                    "mode": cur,
+                    "days": _days(r),
+                    "source": r.get("catalyst_source", "") or "",
+                    "event_type": r.get("catalyst_event_type", "") or "",
+                    "tier": r.get("tier_dev", "") or "",
+                    "strength": r.get("catalyst_strength", "") or "",
+                    "prev_mode": prev,
+                    "eligible": r.get("eligible", ""),
+                }
+            )
     flips.sort(key=lambda x: x["rank"])
     return flips
 
@@ -116,51 +118,51 @@ def format_report(
 
     # ── Header ─────────────────────────────────────────────────────────
     w(f"{'=' * 72}")
-    w(f"  REGIME-JUMP ATTRIBUTION REPORT")
+    w("  REGIME-JUMP ATTRIBUTION REPORT")
     w(f"  as_of_date: {as_of_date}    prior_date: {prior_date}")
     w(f"{'=' * 72}")
 
     # ── Summary ────────────────────────────────────────────────────────
-    w(f"\n## Summary")
+    w("\n## Summary")
     w(f"  Total B→G flips (dev-only): {len(flips)}")
     w(f"  In top-60:  {len(flips_60)}   {[f['ticker'] for f in flips_60]}")
     w(f"  In top-100: {len(flips_100)}  {[f['ticker'] for f in flips_100]}")
 
     if shadow_metrics:
-        w(f"\n  Shadow metrics context:")
+        w("\n  Shadow metrics context:")
         w(f"    A-tier count: {shadow_metrics.get('A_tier_count', '?')}")
         w(f"    Median catalyst days (good): {shadow_metrics.get('median_catalyst_days_good', '?')}")
         w(f"    Top-60 overlap vs prior: {shadow_metrics.get('top60_overlap', '?')}")
         w(f"    Top-100 overlap vs prior: {shadow_metrics.get('top100_overlap', '?')}")
 
     # ── Source attribution ─────────────────────────────────────────────
-    w(f"\n## Source Attribution")
+    w("\n## Source Attribution")
     src_counts = Counter(f["source"] or "(blended/multi)" for f in flips)
     for src, cnt in src_counts.most_common():
         pct = 100 * cnt / len(flips)
         w(f"  {src:<25} {cnt:3d}  ({pct:.0f}%)")
 
     # ── Event type breakdown ───────────────────────────────────────────
-    w(f"\n## Event Type Breakdown")
+    w("\n## Event Type Breakdown")
     et_counts = Counter(f["event_type"] or "(blended/multi)" for f in flips)
     for et, cnt in et_counts.most_common():
         pct = 100 * cnt / len(flips)
         w(f"  {et:<30} {cnt:3d}  ({pct:.0f}%)")
 
     # ── Tier impact ────────────────────────────────────────────────────
-    w(f"\n## Tier Distribution of Flippers")
+    w("\n## Tier Distribution of Flippers")
     tier_counts = Counter(f["tier"] or "(none)" for f in flips)
     for tier, cnt in sorted(tier_counts.items()):
         w(f"  {tier}: {cnt}")
 
     # ── Prior mode ─────────────────────────────────────────────────────
-    w(f"\n## Prior Catalyst Mode (what they flipped FROM)")
+    w("\n## Prior Catalyst Mode (what they flipped FROM)")
     pm_counts = Counter(f["prev_mode"] for f in flips)
     for pm, cnt in pm_counts.most_common():
         w(f"  {pm}: {cnt}")
 
     # ── Catalyst strength distribution ─────────────────────────────────
-    w(f"\n## Catalyst Strength Distribution")
+    w("\n## Catalyst Strength Distribution")
     str_counts = Counter(f["strength"] or "(unknown)" for f in flips)
     for s, cnt in sorted(str_counts.items(), key=lambda x: STRENGTH_ORDER.get(x[0], 99)):
         w(f"  {s}: {cnt}")
@@ -168,33 +170,37 @@ def format_report(
     # ── Top N flippers detail ──────────────────────────────────────────
     show = flips[:top_n]
     w(f"\n## Top {len(show)} B→G Flippers (by composite rank)")
-    w(f"  {'Rank':<5} {'Ticker':<7} {'Tier':<5} {'Source':<22} {'Event Type':<27} "
-      f"{'Days':>5} {'Str':<8} {'Hard Gate'}")
+    w(
+        f"  {'Rank':<5} {'Ticker':<7} {'Tier':<5} {'Source':<22} {'Event Type':<27} "
+        f"{'Days':>5} {'Str':<8} {'Hard Gate'}"
+    )
     w(f"  {'-' * 100}")
 
     for f in show:
         days_str = f"{f['days']:.0f}" if f["days"] is not None else "-"
         # Hard gate = survived if tier is A or B (actionable)
         gate = "PASS" if f["tier"] in ("A", "B") else "gated"
-        w(f"  {f['rank']:<5} {f['ticker']:<7} {f['tier']:<5} "
-          f"{f['source'] or '(blended)':<22} "
-          f"{f['event_type'] or '(blended)':<27} "
-          f"{days_str:>5} {f['strength']:<8} {gate}")
+        w(
+            f"  {f['rank']:<5} {f['ticker']:<7} {f['tier']:<5} "
+            f"{f['source'] or '(blended)':<22} "
+            f"{f['event_type'] or '(blended)':<27} "
+            f"{days_str:>5} {f['strength']:<8} {gate}"
+        )
 
     # ── Interpretation ─────────────────────────────────────────────────
-    w(f"\n## Interpretation")
+    w("\n## Interpretation")
 
     ctg_pct = 100 * src_counts.get("CTGOV_CALENDAR", 0) / len(flips) if flips else 0
     no_upcoming_pct = 100 * pm_counts.get("no_upcoming", 0) / len(flips) if flips else 0
 
-    w(f"  This is a DATA REGIME TRANSITION, not organic churn.")
+    w("  This is a DATA REGIME TRANSITION, not organic churn.")
     if ctg_pct > 50:
         w(f"  - {ctg_pct:.0f}% of flips sourced from CTGOV_CALENDAR (trial_records.json enabled)")
     if no_upcoming_pct > 90:
         w(f"  - {no_upcoming_pct:.0f}% flipped from 'no_upcoming' (no prior catalyst data)")
-    w(f"  - Expected: this date is the first with CT.gov data in PIT-strict mode")
-    w(f"  - Subsequent dates should show near-zero churn (confirmed by timeseries)")
-    w(f"  - WARN health status on this date is expected and benign")
+    w("  - Expected: this date is the first with CT.gov data in PIT-strict mode")
+    w("  - Subsequent dates should show near-zero churn (confirmed by timeseries)")
+    w("  - WARN health status on this date is expected and benign")
 
     w(f"\n{'=' * 72}")
     return "\n".join(lines)
@@ -206,10 +212,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     parser.add_argument("--as-of-date", required=True)
     parser.add_argument(
-        "--snapshot-dir", type=Path, default=SCRIPT_DIR / "data" / "snapshots",
+        "--snapshot-dir",
+        type=Path,
+        default=SCRIPT_DIR / "data" / "snapshots",
     )
     parser.add_argument(
-        "--rollup-csv", type=Path,
+        "--rollup-csv",
+        type=Path,
         default=SCRIPT_DIR / "output" / "catalyst_shadow_timeseries.csv",
     )
     parser.add_argument("--top", type=int, default=25, help="Top N flippers to show")

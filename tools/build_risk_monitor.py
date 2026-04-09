@@ -11,6 +11,7 @@ Watches the shadow portfolio for:
 Usage:
     python tools/build_risk_monitor.py --as-of-date 2026-04-02
 """
+
 from __future__ import annotations
 
 import argparse
@@ -181,8 +182,8 @@ def build_risk_report(as_of_date: str) -> dict[str, Any]:
                 "type": "regime",
                 "detail": (
                     f"Bull regime (XBI 30d: {xbi_30d_ret:+.1%}). "
-                    f"Excess vs XBI will lag due to EW-vs-cap-wt gap; "
-                    f"true selection alpha is ~flat in bull."
+                    "Excess vs XBI will lag due to EW-vs-cap-wt gap; "
+                    "true selection alpha is ~flat in bull."
                 ),
             }
         )

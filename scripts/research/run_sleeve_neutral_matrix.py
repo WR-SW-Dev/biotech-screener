@@ -13,6 +13,7 @@ Example:
         --date-from 2025-06-30 \
         --date-grid monthly
 """
+
 from __future__ import annotations
 
 import argparse

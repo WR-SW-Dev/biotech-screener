@@ -10,6 +10,7 @@ Usage:
     python3 tools/track_calendar_slips.py --as-of-date 2026-03-10
     python3 tools/track_calendar_slips.py --as-of-date 2026-03-10 --snap-root data/snapshots
 """
+
 from __future__ import annotations
 
 import argparse

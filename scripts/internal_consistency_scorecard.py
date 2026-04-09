@@ -6,6 +6,7 @@ rank/tier invariants, duplicate tickers, eligibility consistency.
 
 Outputs: scorecard_{date}.json + scorecard_{date}.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -15,7 +16,7 @@ import sys
 from collections import Counter
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -24,15 +25,27 @@ SCHEMA_VERSION = "internal_consistency_scorecard.v2"
 
 # Columns that must be present and non-empty for every eligible ticker
 REQUIRED_COLUMNS = [
-    "ticker", "actionable_rank", "tier_dev", "eligible",
-    "composite_rank", "composite_score", "archetype",
+    "ticker",
+    "actionable_rank",
+    "tier_dev",
+    "eligible",
+    "composite_rank",
+    "composite_score",
+    "archetype",
 ]
 
 # Numeric columns to check for NaN hotspots (only should-be-present fields)
 NUMERIC_COLUMNS = [
-    "composite_score", "score_rank_pct", "alpha_cohort_pct",
-    "de_drawdown", "de_rsi_14d", "de_beta_xbi_60d", "de_alpha_60d",
-    "clinical_score_z_tier", "coinvest_score_z", "inst_delta_z",
+    "composite_score",
+    "score_rank_pct",
+    "alpha_cohort_pct",
+    "de_drawdown",
+    "de_rsi_14d",
+    "de_beta_xbi_60d",
+    "de_alpha_60d",
+    "clinical_score_z_tier",
+    "coinvest_score_z",
+    "inst_delta_z",
     "catalyst_decay_w",
 ]
 
@@ -72,6 +85,7 @@ NA_FIELD_RULES: Dict[str, Any] = {
 # Check functions
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class CheckResult:
     name: str
@@ -89,12 +103,14 @@ def check_duplicate_tickers(rows: List[Dict[str, str]]) -> CheckResult:
     if dupes:
         sample = ", ".join(f"{t}({c})" for t, c in sorted(dupes.items())[:5])
         return CheckResult(
-            name="duplicate_tickers", status="WARN",
+            name="duplicate_tickers",
+            status="WARN",
             detail=f"{len(dupes)} duplicate tickers: {sample}",
             value=len(dupes),
         )
     return CheckResult(
-        name="duplicate_tickers", status="PASS",
+        name="duplicate_tickers",
+        status="PASS",
         detail=f"0 duplicates in {len(tickers)} rows",
     )
 
@@ -115,10 +131,15 @@ def check_missingness(
     real_miss_rates excludes expected N/A rows per NA_FIELD_RULES.
     """
     if not rows:
-        return CheckResult(
-            name="missingness", status="WARN",
-            detail="No rows to check",
-        ), {}, {}
+        return (
+            CheckResult(
+                name="missingness",
+                status="WARN",
+                detail="No rows to check",
+            ),
+            {},
+            {},
+        )
 
     n = len(rows)
     all_cols = list(rows[0].keys()) if rows else []
@@ -145,23 +166,32 @@ def check_missingness(
         real_miss_rates[col] = real_missing / n
 
     # WARN only on real (unexpected) missingness
-    high_miss = {col: rate for col, rate in real_miss_rates.items()
-                 if rate > warn_threshold}
+    high_miss = {col: rate for col, rate in real_miss_rates.items() if rate > warn_threshold}
 
     if high_miss:
-        sample = ", ".join(f"{c}={r:.1%}" for c, r in
-                           sorted(high_miss.items(), key=lambda x: -x[1])[:5])
-        return CheckResult(
-            name="missingness", status="WARN",
-            detail=f"{len(high_miss)} columns above {warn_threshold:.0%} (real): {sample}",
-            value=len(high_miss), threshold=warn_threshold,
-        ), total_miss_rates, real_miss_rates
+        sample = ", ".join(f"{c}={r:.1%}" for c, r in sorted(high_miss.items(), key=lambda x: -x[1])[:5])
+        return (
+            CheckResult(
+                name="missingness",
+                status="WARN",
+                detail=f"{len(high_miss)} columns above {warn_threshold:.0%} (real): {sample}",
+                value=len(high_miss),
+                threshold=warn_threshold,
+            ),
+            total_miss_rates,
+            real_miss_rates,
+        )
 
-    return CheckResult(
-        name="missingness", status="PASS",
-        detail=f"All {len(all_cols)} columns below {warn_threshold:.0%} real missingness",
-        threshold=warn_threshold,
-    ), total_miss_rates, real_miss_rates
+    return (
+        CheckResult(
+            name="missingness",
+            status="PASS",
+            detail=f"All {len(all_cols)} columns below {warn_threshold:.0%} real missingness",
+            threshold=warn_threshold,
+        ),
+        total_miss_rates,
+        real_miss_rates,
+    )
 
 
 def check_nan_hotspots(rows: List[Dict[str, str]]) -> CheckResult:
@@ -174,22 +204,22 @@ def check_nan_hotspots(rows: List[Dict[str, str]]) -> CheckResult:
     for col in NUMERIC_COLUMNS:
         if col not in rows[0]:
             continue
-        nan_count = sum(1 for r in rows
-                        if (r.get(col) or "").strip().lower() in ("nan", "none", ""))
+        nan_count = sum(1 for r in rows if (r.get(col) or "").strip().lower() in ("nan", "none", ""))
         if nan_count > 0:
             hotspots[col] = nan_count
 
     if hotspots:
-        sample = ", ".join(f"{c}={cnt}/{n}" for c, cnt in
-                           sorted(hotspots.items(), key=lambda x: -x[1])[:5])
+        sample = ", ".join(f"{c}={cnt}/{n}" for c, cnt in sorted(hotspots.items(), key=lambda x: -x[1])[:5])
         return CheckResult(
-            name="nan_hotspots", status="WARN" if any(v > n * 0.10 for v in hotspots.values()) else "PASS",
+            name="nan_hotspots",
+            status="WARN" if any(v > n * 0.10 for v in hotspots.values()) else "PASS",
             detail=f"NaN found in {len(hotspots)} columns: {sample}",
             value=hotspots,
         )
 
     return CheckResult(
-        name="nan_hotspots", status="PASS",
+        name="nan_hotspots",
+        status="PASS",
         detail=f"No NaN in {len(NUMERIC_COLUMNS)} numeric columns",
     )
 
@@ -202,7 +232,7 @@ def check_tie_density(
     if not rows:
         return CheckResult(name="tie_density", status="PASS", detail="No rows")
 
-    n = len(rows)
+    len(rows)
     problems: List[str] = []
 
     for col in RANK_COLUMNS:
@@ -222,13 +252,15 @@ def check_tie_density(
 
     if problems:
         return CheckResult(
-            name="tie_density", status="WARN",
+            name="tie_density",
+            status="WARN",
             detail="; ".join(problems),
             threshold=warn_threshold,
         )
 
     return CheckResult(
-        name="tie_density", status="PASS",
+        name="tie_density",
+        status="PASS",
         detail=f"Tie density OK across {len(RANK_COLUMNS)} rank columns",
         threshold=warn_threshold,
     )
@@ -242,7 +274,8 @@ def check_rank_invariants(rows: List[Dict[str, str]]) -> CheckResult:
     eligible_rows = [r for r in rows if r.get("eligible", "0") == "1"]
     if not eligible_rows:
         return CheckResult(
-            name="rank_invariants", status="PASS",
+            name="rank_invariants",
+            status="PASS",
             detail="No eligible tickers to check",
         )
 
@@ -255,7 +288,8 @@ def check_rank_invariants(rows: List[Dict[str, str]]) -> CheckResult:
 
     if not ranks:
         return CheckResult(
-            name="rank_invariants", status="WARN",
+            name="rank_invariants",
+            status="WARN",
             detail="Could not parse actionable_rank for eligible tickers",
         )
 
@@ -276,12 +310,14 @@ def check_rank_invariants(rows: List[Dict[str, str]]) -> CheckResult:
         if dupes:
             issues.append(f"duplicate ranks: {sorted(set(dupes))[:5]}")
         return CheckResult(
-            name="rank_invariants", status="WARN",
+            name="rank_invariants",
+            status="WARN",
             detail=f"Rank sequence broken ({n} eligible): {'; '.join(issues)}",
         )
 
     return CheckResult(
-        name="rank_invariants", status="PASS",
+        name="rank_invariants",
+        status="PASS",
         detail=f"Ranks 1..{n} contiguous for {n} eligible tickers",
     )
 
@@ -307,13 +343,15 @@ def check_eligibility_tier_consistency(rows: List[Dict[str, str]]) -> CheckResul
     if problems:
         sample = "; ".join(problems[:5])
         return CheckResult(
-            name="eligibility_tier_consistency", status="WARN",
+            name="eligibility_tier_consistency",
+            status="WARN",
             detail=f"{len(problems)} issues: {sample}",
             value=len(problems),
         )
 
     return CheckResult(
-        name="eligibility_tier_consistency", status="PASS",
+        name="eligibility_tier_consistency",
+        status="PASS",
         detail="Eligibility/tier consistent",
     )
 
@@ -322,19 +360,22 @@ def check_required_columns(rows: List[Dict[str, str]]) -> CheckResult:
     """Check that all required columns exist in the CSV."""
     if not rows:
         return CheckResult(
-            name="required_columns", status="WARN",
+            name="required_columns",
+            status="WARN",
             detail="No rows to check",
         )
     present = set(rows[0].keys())
     missing = [c for c in REQUIRED_COLUMNS if c not in present]
     if missing:
         return CheckResult(
-            name="required_columns", status="WARN",
+            name="required_columns",
+            status="WARN",
             detail=f"Missing columns: {', '.join(missing)}",
             value=missing,
         )
     return CheckResult(
-        name="required_columns", status="PASS",
+        name="required_columns",
+        status="PASS",
         detail=f"All {len(REQUIRED_COLUMNS)} required columns present",
     )
 
@@ -343,14 +384,19 @@ def check_required_columns(rows: List[Dict[str, str]]) -> CheckResult:
 # Breakdown helpers (for markdown output)
 # ---------------------------------------------------------------------------
 
+
 def _build_archetype_breakdown(rows: List[Dict[str, str]], miss_cols: List[str]) -> List[str]:
     """Build real-missingness breakdown by archetype (count + rate)."""
     if not rows or not miss_cols:
         return []
     archetypes = sorted(set(r.get("archetype", "?") for r in rows))
-    lines = ["", "## Real Missingness by Archetype", "",
-             "| Archetype | N | " + " | ".join(miss_cols) + " |",
-             "|-----------|---|" + "|".join("---" for _ in miss_cols) + "|"]
+    lines = [
+        "",
+        "## Real Missingness by Archetype",
+        "",
+        "| Archetype | N | " + " | ".join(miss_cols) + " |",
+        "|-----------|---|" + "|".join("---" for _ in miss_cols) + "|",
+    ]
     for arch in archetypes:
         arch_rows = [r for r in rows if r.get("archetype", "?") == arch]
         n_arch = len(arch_rows)
@@ -359,9 +405,7 @@ def _build_archetype_breakdown(rows: List[Dict[str, str]], miss_cols: List[str])
         cells = []
         for col in miss_cols:
             na_rule = NA_FIELD_RULES.get(col)
-            cnt = sum(1 for r in arch_rows
-                      if _is_missing(r.get(col, ""))
-                      and not (na_rule and na_rule(r)))
+            cnt = sum(1 for r in arch_rows if _is_missing(r.get(col, "")) and not (na_rule and na_rule(r)))
             pct = cnt / n_arch
             cells.append(f"{cnt} ({pct:.0%})")
         lines.append(f"| {arch} | {n_arch} | " + " | ".join(cells) + " |")
@@ -373,21 +417,22 @@ def _build_tier_breakdown(rows: List[Dict[str, str]], miss_cols: List[str]) -> L
     if not rows or not miss_cols:
         return []
     tiers = sorted(set((r.get("tier_dev") or "").strip() or "(none)" for r in rows))
-    lines = ["", "## Real Missingness by Tier", "",
-             "| Tier | N | " + " | ".join(miss_cols) + " |",
-             "|------|---|" + "|".join("---" for _ in miss_cols) + "|"]
+    lines = [
+        "",
+        "## Real Missingness by Tier",
+        "",
+        "| Tier | N | " + " | ".join(miss_cols) + " |",
+        "|------|---|" + "|".join("---" for _ in miss_cols) + "|",
+    ]
     for tier in tiers:
-        tier_rows = [r for r in rows
-                     if ((r.get("tier_dev") or "").strip() or "(none)") == tier]
+        tier_rows = [r for r in rows if ((r.get("tier_dev") or "").strip() or "(none)") == tier]
         n_tier = len(tier_rows)
         if n_tier == 0:
             continue
         cells = []
         for col in miss_cols:
             na_rule = NA_FIELD_RULES.get(col)
-            cnt = sum(1 for r in tier_rows
-                      if _is_missing(r.get(col, ""))
-                      and not (na_rule and na_rule(r)))
+            cnt = sum(1 for r in tier_rows if _is_missing(r.get(col, "")) and not (na_rule and na_rule(r)))
             pct = cnt / n_tier
             cells.append(f"{cnt} ({pct:.0%})")
         lines.append(f"| {tier} | {n_tier} | " + " | ".join(cells) + " |")
@@ -401,12 +446,15 @@ def _build_catalyst_mode_breakdown(rows: List[Dict[str, str]]) -> List[str]:
     modes = Counter((r.get("catalyst_mode") or "").strip() or "(empty)" for r in rows)
     if not modes:
         return []
-    lines = ["", "## Catalyst Days Missingness by Mode", "",
-             "| catalyst_mode | N | catalyst_days missing |",
-             "|---------------|---|----------------------|"]
+    lines = [
+        "",
+        "## Catalyst Days Missingness by Mode",
+        "",
+        "| catalyst_mode | N | catalyst_days missing |",
+        "|---------------|---|----------------------|",
+    ]
     for mode, n_mode in sorted(modes.items(), key=lambda x: -x[1]):
-        mode_rows = [r for r in rows
-                     if ((r.get("catalyst_mode") or "").strip() or "(empty)") == mode]
+        mode_rows = [r for r in rows if ((r.get("catalyst_mode") or "").strip() or "(empty)") == mode]
         miss = sum(1 for r in mode_rows if _is_missing(r.get("catalyst_days", "")))
         lines.append(f"| {mode} | {n_mode} | {miss} |")
     return lines
@@ -415,6 +463,7 @@ def _build_catalyst_mode_breakdown(rows: List[Dict[str, str]]) -> List[str]:
 # ---------------------------------------------------------------------------
 # Scorecard orchestrator
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Scorecard:
@@ -460,10 +509,8 @@ def run_scorecard(
 
     miss_check, total_miss, real_miss = check_missingness(rows, warn_missingness)
     check_results.append(miss_check)
-    sc.missingness_detail = {k: round(v, 4) for k, v in total_miss.items()
-                            if v > 0}
-    sc.real_missingness_detail = {k: round(v, 4) for k, v in real_miss.items()
-                                  if v > 0}
+    sc.missingness_detail = {k: round(v, 4) for k, v in total_miss.items() if v > 0}
+    sc.real_missingness_detail = {k: round(v, 4) for k, v in real_miss.items() if v > 0}
 
     check_results.append(check_nan_hotspots(rows))
     check_results.append(check_tie_density(rows, warn_tie_pct))
@@ -482,6 +529,7 @@ def run_scorecard(
 # ---------------------------------------------------------------------------
 # Output writers
 # ---------------------------------------------------------------------------
+
 
 def write_scorecard_json(sc: Scorecard, out_dir: Path) -> Path:
     path = out_dir / f"scorecard_{sc.snapshot_date}.json"
@@ -538,23 +586,32 @@ def write_scorecard_md(sc: Scorecard, out_dir: Path) -> Path:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Internal consistency scorecard for a snapshot",
     )
     parser.add_argument(
-        "--snapshot-dir", type=Path, required=True,
+        "--snapshot-dir",
+        type=Path,
+        required=True,
         help="Path to a single snapshot date directory",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=None,
+        "--out-dir",
+        type=Path,
+        default=None,
         help="Output directory (default: same as snapshot dir)",
     )
     parser.add_argument(
-        "--warn-missingness", type=float, default=DEFAULT_WARN_MISSINGNESS,
+        "--warn-missingness",
+        type=float,
+        default=DEFAULT_WARN_MISSINGNESS,
     )
     parser.add_argument(
-        "--warn-tie-pct", type=float, default=DEFAULT_WARN_TIE_PCT,
+        "--warn-tie-pct",
+        type=float,
+        default=DEFAULT_WARN_TIE_PCT,
     )
     args = parser.parse_args()
 

@@ -22,6 +22,7 @@ Usage:
         --ctgov-cache cache/ctgov/trial_records_2025-06-30.json \
         --out /tmp/pit_validation_2025-06-30.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import json
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 VERSION = "1.0.0"
 SCHEMA_VERSION = "pit_validation.v1"
@@ -41,6 +42,7 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_date(s) -> Optional[date]:
     """Parse YYYY-MM-DD or YYYY-MM string to date, or None."""
@@ -67,6 +69,7 @@ def _sha256_file(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # CTgov PIT validator
 # ---------------------------------------------------------------------------
+
 
 def validate_ctgov_pit(
     trials: List[dict],
@@ -97,23 +100,27 @@ def validate_ctgov_pit(
         fp = _parse_date(t.get("first_posted") or t.get("study_first_posted"))
         if fp is not None and fp > as_of:
             if len(first_posted_violations) < max_examples:
-                first_posted_violations.append({
-                    "nct_id": nct_id,
-                    "ticker": ticker,
-                    "first_posted": str(fp),
-                    "as_of_date": as_of_date,
-                })
+                first_posted_violations.append(
+                    {
+                        "nct_id": nct_id,
+                        "ticker": ticker,
+                        "first_posted": str(fp),
+                        "as_of_date": as_of_date,
+                    }
+                )
 
         # Check last_update_posted > as_of_date (informational in strict)
         lup = _parse_date(t.get("last_update_posted"))
         if lup is not None and lup > as_of:
             if len(last_update_violations) < max_examples:
-                last_update_violations.append({
-                    "nct_id": nct_id,
-                    "ticker": ticker,
-                    "last_update_posted": str(lup),
-                    "as_of_date": as_of_date,
-                })
+                last_update_violations.append(
+                    {
+                        "nct_id": nct_id,
+                        "ticker": ticker,
+                        "last_update_posted": str(lup),
+                        "as_of_date": as_of_date,
+                    }
+                )
 
     n_fp = len(first_posted_violations)
     n_lup = len(last_update_violations)
@@ -121,9 +128,9 @@ def validate_ctgov_pit(
     # In strict mode, first_posted violations are hard violations
     # last_update_posted > as_of is flagged but only a hard violation
     # if the trial was admitted by first_posted alone
-    is_clean = (n_fp == 0)
+    is_clean = n_fp == 0
     if mode == "strict":
-        is_clean = (n_fp == 0)
+        is_clean = n_fp == 0
     else:
         # degrade: only flag, don't count as violation
         is_clean = True
@@ -143,6 +150,7 @@ def validate_ctgov_pit(
 # ---------------------------------------------------------------------------
 # Catalyst PIT validator
 # ---------------------------------------------------------------------------
+
 
 def validate_catalyst_pit(
     events: Dict[str, Any],
@@ -188,30 +196,34 @@ def validate_catalyst_pit(
         da = td.get("nearest_disclosed_at", "")
         if not da:
             if len(missing_disclosed_at) < max_examples:
-                missing_disclosed_at.append({
-                    "ticker": ticker,
-                    "catalyst_mode": td.get("catalyst_mode", ""),
-                    "nearest_event_source": td.get("nearest_event_source", ""),
-                })
+                missing_disclosed_at.append(
+                    {
+                        "ticker": ticker,
+                        "catalyst_mode": td.get("catalyst_mode", ""),
+                        "nearest_event_source": td.get("nearest_event_source", ""),
+                    }
+                )
             continue
 
         da_date = _parse_date(da)
         if da_date is not None and da_date > as_of:
             if len(future_disclosed_at) < max_examples:
-                future_disclosed_at.append({
-                    "ticker": ticker,
-                    "disclosed_at": str(da_date),
-                    "as_of_date": as_of_date,
-                    "nearest_event_source": td.get("nearest_event_source", ""),
-                })
+                future_disclosed_at.append(
+                    {
+                        "ticker": ticker,
+                        "disclosed_at": str(da_date),
+                        "as_of_date": as_of_date,
+                        "nearest_event_source": td.get("nearest_event_source", ""),
+                    }
+                )
 
     n_missing = len(missing_disclosed_at)
     n_future = len(future_disclosed_at)
 
     if mode == "strict":
-        is_clean = (n_missing == 0 and n_future == 0)
+        is_clean = n_missing == 0 and n_future == 0
     else:
-        is_clean = (n_future == 0)
+        is_clean = n_future == 0
 
     return {
         "source": "catalyst",
@@ -228,6 +240,7 @@ def validate_catalyst_pit(
 # ---------------------------------------------------------------------------
 # Combined report builder
 # ---------------------------------------------------------------------------
+
 
 def build_validation_report(
     as_of_date: str,
@@ -266,29 +279,35 @@ def build_validation_report(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Validate PIT correctness of clinical and catalyst inputs",
     )
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="As-of date (ISO format)",
     )
     parser.add_argument(
-        "--ctgov-cache", default=None,
+        "--ctgov-cache",
+        default=None,
         help="Path to CTgov trial records cache JSON",
     )
     parser.add_argument(
-        "--catalyst-events", default=None,
+        "--catalyst-events",
+        default=None,
         help="Path to catalyst events PIT JSON",
     )
     parser.add_argument(
-        "--mode", default="strict",
+        "--mode",
+        default="strict",
         choices=["strict", "degrade"],
         help="Validation mode (default: strict)",
     )
     parser.add_argument(
-        "--out", default=None,
+        "--out",
+        default=None,
         help="Output JSON path (default: output/pit_validation_{date}.json)",
     )
     args = parser.parse_args(argv)
@@ -317,13 +336,14 @@ def main(argv: Optional[List[str]] = None) -> int:
             if not ctgov_result["clean"]:
                 n_viol = ctgov_result["first_posted_violations"]
                 print(
-                    f"::warning::CTgov PIT: {n_viol} first_posted violations "
-                    f"for as_of_date={as_of_date}",
+                    f"::warning::CTgov PIT: {n_viol} first_posted violations " f"for as_of_date={as_of_date}",
                     file=sys.stderr,
                 )
-            print(f"CTgov: {ctgov_result['total_records']} records, "
-                  f"{ctgov_result['first_posted_violations']} first_posted violations, "
-                  f"{ctgov_result['last_update_future_count']} last_update future")
+            print(
+                f"CTgov: {ctgov_result['total_records']} records, "
+                f"{ctgov_result['first_posted_violations']} first_posted violations, "
+                f"{ctgov_result['last_update_future_count']} last_update future"
+            )
         else:
             print(f"::warning::CTgov cache not found: {ctgov_path}", file=sys.stderr)
 
@@ -347,21 +367,25 @@ def main(argv: Optional[List[str]] = None) -> int:
                     f"{n_fut} future disclosed_at for as_of_date={as_of_date}",
                     file=sys.stderr,
                 )
-            print(f"Catalyst: {catalyst_result['total_tickers']} tickers, "
-                  f"{catalyst_result['missing_disclosed_at']} missing disclosed_at, "
-                  f"{catalyst_result['future_disclosed_at']} future disclosed_at")
+            print(
+                f"Catalyst: {catalyst_result['total_tickers']} tickers, "
+                f"{catalyst_result['missing_disclosed_at']} missing disclosed_at, "
+                f"{catalyst_result['future_disclosed_at']} future disclosed_at"
+            )
         else:
             print(f"::warning::Catalyst events not found: {cat_path}", file=sys.stderr)
 
     # Build report
     report = build_validation_report(
-        as_of_date, mode, ctgov_result, catalyst_result, file_hashes,
+        as_of_date,
+        mode,
+        ctgov_result,
+        catalyst_result,
+        file_hashes,
     )
 
     # Write output
-    out_path = Path(args.out) if args.out else (
-        _PROJECT_ROOT / "output" / f"pit_validation_{as_of_date}.json"
-    )
+    out_path = Path(args.out) if args.out else (_PROJECT_ROOT / "output" / f"pit_validation_{as_of_date}.json")
     if not out_path.is_absolute():
         out_path = _PROJECT_ROOT / out_path
     out_path.parent.mkdir(parents=True, exist_ok=True)

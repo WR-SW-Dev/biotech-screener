@@ -331,7 +331,7 @@ def generate_report(
         report["status"] = "insufficient_sample"
         report["message"] = (
             f"Need {min_snapshots} snapshots for analysis, have {n_snapshots}. "
-            f"Continue accumulating weekly snapshots."
+            "Continue accumulating weekly snapshots."
         )
         report["summary_stats"] = {}
         report["flag_splits"] = {}

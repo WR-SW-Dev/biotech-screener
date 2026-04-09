@@ -25,6 +25,7 @@ Output structure:
         index.json      # manifest
         prices.csv      # one row per ticker, anchor + horizon columns
 """
+
 from __future__ import annotations
 
 import argparse
@@ -60,8 +61,8 @@ CACHE_TYPE = "price_pit"
 DEFAULT_HORIZONS = [5, 20, 63]
 
 # Split detection thresholds (same as repair_price_history_splits.py)
-SPLIT_JUMP_THRESHOLD = 3.0      # +300% single-day
-SPLIT_DROP_THRESHOLD = -0.75    # -75% single-day
+SPLIT_JUMP_THRESHOLD = 3.0  # +300% single-day
+SPLIT_DROP_THRESHOLD = -0.75  # -75% single-day
 
 # CSV columns
 ANCHOR_COLS = ["ticker", "anchor_date", "anchor_close"]
@@ -79,6 +80,7 @@ def _horizon_cols(horizons: List[int]) -> List[str]:
 # ---------------------------------------------------------------------------
 # Price CSV helpers
 # ---------------------------------------------------------------------------
+
 
 def _sha256_file(path: Path) -> str:
     """Compute SHA-256 hex digest of a file."""
@@ -143,6 +145,7 @@ def _find_anchor_date(sorted_dates: List[str], as_of: str) -> Optional[str]:
 # Schema validation (12 invariants)
 # ---------------------------------------------------------------------------
 
+
 def validate_price_pit_index(
     index: Dict[str, Any],
     expected_as_of_date: str,
@@ -199,7 +202,7 @@ def validate_price_pit_index(
     # 8. coverage_pct consistent with ticker_count and tickers_missing_anchor
     missing = index.get("tickers_missing_anchor", [])
     if not isinstance(missing, list):
-        return False, f"tickers_missing_anchor must be a list"
+        return False, "tickers_missing_anchor must be a list"
     n_missing = len(missing)
     if tc > 0:
         expected_cov = round(100.0 * (tc - n_missing) / tc, 2)
@@ -221,10 +224,7 @@ def validate_price_pit_index(
     if not isinstance(pending, list):
         return False, "horizons_pending must be a list"
     if set(filled) | set(pending) != set(horizons):
-        return False, (
-            f"horizons_filled {filled} | horizons_pending {pending} "
-            f"!= configured {horizons}"
-        )
+        return False, (f"horizons_filled {filled} | horizons_pending {pending} " f"!= configured {horizons}")
 
     # 11. source_csv_sha256 is 64-char hex
     sha = index.get("source_csv_sha256", "")
@@ -245,6 +245,7 @@ def validate_price_pit_index(
 # ---------------------------------------------------------------------------
 # Split detection
 # ---------------------------------------------------------------------------
+
 
 def detect_split_warnings(
     rows: List[Dict[str, str]],
@@ -288,13 +289,15 @@ def detect_split_warnings(
 
             pct = (fwd / anchor) - 1.0
             if pct > jump_threshold or pct < drop_threshold:
-                warnings.append({
-                    "ticker": ticker,
-                    "horizon": h,
-                    "anchor_close": anchor,
-                    "forward_close": fwd,
-                    "pct_change": round(pct, 4),
-                })
+                warnings.append(
+                    {
+                        "ticker": ticker,
+                        "horizon": h,
+                        "anchor_close": anchor,
+                        "forward_close": fwd,
+                        "pct_change": round(pct, 4),
+                    }
+                )
 
     return warnings
 
@@ -302,6 +305,7 @@ def detect_split_warnings(
 # ---------------------------------------------------------------------------
 # Core: snapshot_price_cache
 # ---------------------------------------------------------------------------
+
 
 def snapshot_price_cache(
     as_of_date: str,
@@ -389,7 +393,11 @@ def snapshot_price_cache(
     # Write prices.csv atomically
     prices_path = out_dir / "prices.csv"
     with tempfile.NamedTemporaryFile(
-        mode="w", newline="", suffix=".csv", dir=str(out_dir), delete=False,
+        mode="w",
+        newline="",
+        suffix=".csv",
+        dir=str(out_dir),
+        delete=False,
     ) as tmp:
         writer = csv.DictWriter(tmp, fieldnames=columns)
         writer.writeheader()
@@ -401,7 +409,10 @@ def snapshot_price_cache(
     # Write index.json atomically
     index_path = out_dir / "index.json"
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", dir=str(out_dir), delete=False,
+        mode="w",
+        suffix=".json",
+        dir=str(out_dir),
+        delete=False,
     ) as tmp:
         json.dump(index, tmp, indent=2)
         tmp_index = tmp.name
@@ -417,6 +428,7 @@ def snapshot_price_cache(
 # ---------------------------------------------------------------------------
 # Core: backfill_forward_prices
 # ---------------------------------------------------------------------------
+
 
 def backfill_forward_prices(
     cache_dir: Path,
@@ -482,8 +494,7 @@ def backfill_forward_prices(
     # Only add split warnings for this horizon that aren't already recorded
     existing_sw = {(w["ticker"], w["horizon"]) for w in index.get("split_warnings", [])}
     new_horizon_splits = [
-        w for w in new_splits
-        if w["horizon"] == horizon and (w["ticker"], w["horizon"]) not in existing_sw
+        w for w in new_splits if w["horizon"] == horizon and (w["ticker"], w["horizon"]) not in existing_sw
     ]
 
     # Update index
@@ -505,14 +516,15 @@ def backfill_forward_prices(
             index["horizons_pending"] = sorted(set(index["horizons_pending"]) - {horizon})
 
     if new_horizon_splits:
-        index["split_warnings"].extend(
-            {"ticker": w["ticker"], "horizon": w["horizon"]}
-            for w in new_horizon_splits
-        )
+        index["split_warnings"].extend({"ticker": w["ticker"], "horizon": w["horizon"]} for w in new_horizon_splits)
 
     # Write back atomically
     with tempfile.NamedTemporaryFile(
-        mode="w", newline="", suffix=".csv", dir=str(cache_dir), delete=False,
+        mode="w",
+        newline="",
+        suffix=".csv",
+        dir=str(cache_dir),
+        delete=False,
     ) as tmp:
         writer = csv.DictWriter(tmp, fieldnames=fieldnames)
         writer.writeheader()
@@ -521,16 +533,16 @@ def backfill_forward_prices(
     os.replace(tmp_name, str(prices_path))
 
     with tempfile.NamedTemporaryFile(
-        mode="w", suffix=".json", dir=str(cache_dir), delete=False,
+        mode="w",
+        suffix=".json",
+        dir=str(cache_dir),
+        delete=False,
     ) as tmp:
         json.dump(index, tmp, indent=2)
         tmp_name = tmp.name
     os.replace(tmp_name, str(index_path))
 
-    logger.info(
-        f"Backfill h{horizon}: {filled} prices filled, "
-        f"{len(new_horizon_splits)} split warnings"
-    )
+    logger.info(f"Backfill h{horizon}: {filled} prices filled, " f"{len(new_horizon_splits)} split warnings")
     return {
         "filled": filled,
         "skipped": False,
@@ -541,6 +553,7 @@ def backfill_forward_prices(
 # ---------------------------------------------------------------------------
 # Core: backfill_all_caches
 # ---------------------------------------------------------------------------
+
 
 def backfill_all_caches(
     cache_base: Path,
@@ -610,8 +623,7 @@ def backfill_all_caches(
             results["by_date"][cache_date] = date_results
 
     logger.info(
-        f"Backfill complete: {results['dirs_processed']} dirs, "
-        f"{results['total_filled']} total prices filled"
+        f"Backfill complete: {results['dirs_processed']} dirs, " f"{results['total_filled']} total prices filled"
     )
     return results
 
@@ -620,47 +632,61 @@ def backfill_all_caches(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="PIT price cache: snapshot anchors + backfill forward prices",
     )
     parser.add_argument(
-        "--as-of-date", type=str,
+        "--as-of-date",
+        type=str,
         default=date.today().isoformat(),
         help="Snapshot date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=REPO_ROOT / "production_data" / "price_history.csv",
         help="Path to price_history.csv",
     )
     parser.add_argument(
-        "--rankings-csv", type=Path, default=None,
+        "--rankings-csv",
+        type=Path,
+        default=None,
         help="Path to rankings.csv (required for --snapshot)",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=None,
+        "--out-dir",
+        type=Path,
+        default=None,
         help="Output directory (default: data/caches/price_pit/PIT/{as_of_date})",
     )
     parser.add_argument(
-        "--cache-base", type=Path,
+        "--cache-base",
+        type=Path,
         default=REPO_ROOT / "data" / "caches" / "price_pit" / "PIT",
         help="Base directory for all PIT price caches",
     )
     parser.add_argument(
-        "--horizons", type=str, default="5,20,63",
+        "--horizons",
+        type=str,
+        default="5,20,63",
         help="Comma-separated forward horizons in trading days",
     )
     parser.add_argument(
-        "--snapshot", action="store_true",
+        "--snapshot",
+        action="store_true",
         help="Create anchor cache for --as-of-date",
     )
     parser.add_argument(
-        "--backfill-all", action="store_true",
+        "--backfill-all",
+        action="store_true",
         help="Backfill matured horizons for all existing caches",
     )
     parser.add_argument(
-        "--through-date", type=str, default=None,
+        "--through-date",
+        type=str,
+        default=None,
         help="Through-date for backfill (default: as-of-date)",
     )
 

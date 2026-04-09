@@ -8,6 +8,7 @@ Usage:
     python scripts/research/extract_ctgov_outcome_labels.py
     python scripts/research/extract_ctgov_outcome_labels.py --max-trials 100
 """
+
 from __future__ import annotations
 
 import json

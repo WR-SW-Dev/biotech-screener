@@ -16,6 +16,7 @@ Usage:
     python scripts/research/crowding_orthogonality_analysis.py
     python scripts/research/crowding_orthogonality_analysis.py --horizons 5,20,63
 """
+
 from __future__ import annotations
 
 import argparse

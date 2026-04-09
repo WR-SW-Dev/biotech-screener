@@ -22,11 +22,11 @@ Point-in-Time Note:
     introduce lookahead bias since it only uses data that was already in market_data.json.
 """
 
-import json
 import argparse
+import json
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional
-import sys
 
 
 def estimate_xbi_return_from_data(market_data: List[Dict]) -> float:
@@ -118,30 +118,11 @@ def enrich_with_momentum(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Estimate 60-day momentum from existing market_data fields"
-    )
-    parser.add_argument(
-        "--market-data",
-        type=Path,
-        required=True,
-        help="Path to market_data.json"
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output path (defaults to overwriting input)"
-    )
-    parser.add_argument(
-        "--xbi-return",
-        type=float,
-        help="Override XBI 60-day return (e.g., -0.05 for -5%%)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print what would be done without making changes"
-    )
+    parser = argparse.ArgumentParser(description="Estimate 60-day momentum from existing market_data fields")
+    parser.add_argument("--market-data", type=Path, required=True, help="Path to market_data.json")
+    parser.add_argument("--output", type=Path, help="Output path (defaults to overwriting input)")
+    parser.add_argument("--xbi-return", type=float, help="Override XBI 60-day return (e.g., -0.05 for -5%%)")
+    parser.add_argument("--dry-run", action="store_true", help="Print what would be done without making changes")
 
     args = parser.parse_args()
 
@@ -166,7 +147,7 @@ def main():
     has_returns_1m = sum(1 for r in market_data if r.get("returns_1m") is not None)
     has_vol_90d = sum(1 for r in market_data if r.get("volatility_90d") is not None)
 
-    print(f"\nCurrent state:")
+    print("\nCurrent state:")
     print(f"  With return_60d: {has_return_60d}/{len(market_data)}")
     print(f"  With returns_3m (source): {has_returns_3m}/{len(market_data)}")
     print(f"  With returns_1m (fallback): {has_returns_1m}/{len(market_data)}")
@@ -188,16 +169,16 @@ def main():
         sys.exit(0)
 
     # Enrich the data
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     enriched, count = enrich_with_momentum(market_data, args.xbi_return)
-    print("="*60)
+    print("=" * 60)
 
     # Report final state
     has_return_60d = sum(1 for r in enriched if r.get("return_60d") is not None)
     has_xbi = sum(1 for r in enriched if r.get("xbi_return_60d") is not None)
     has_vol_252d = sum(1 for r in enriched if r.get("volatility_252d") is not None)
 
-    print(f"\nFinal state:")
+    print("\nFinal state:")
     print(f"  With return_60d: {has_return_60d}/{len(enriched)}")
     print(f"  With xbi_return_60d: {has_xbi}/{len(enriched)}")
     print(f"  With volatility_252d: {has_vol_252d}/{len(enriched)}")
@@ -222,8 +203,7 @@ def main():
             est = " (estimated)" if r.get("return_60d_estimated") else ""
             alpha_str = f"{alpha:.4f}" if isinstance(alpha, (int, float)) else str(alpha)
             vol_str = f"{vol:.4f}" if vol else "N/A"
-            print(f"  {r['ticker']}: return_60d={r['return_60d']:.4f}{est}, "
-                  f"alpha={alpha_str}, vol={vol_str}")
+            print(f"  {r['ticker']}: return_60d={r['return_60d']:.4f}{est}, " f"alpha={alpha_str}, vol={vol_str}")
             sample_count += 1
             if sample_count >= 5:
                 break

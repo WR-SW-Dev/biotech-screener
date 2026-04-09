@@ -41,7 +41,7 @@ Version: 1.0.0
 from __future__ import annotations
 
 from decimal import Decimal, InvalidOperation
-from typing import Any, Callable, Dict, List, Optional, TypeVar, Union, Sequence
+from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Union
 
 T = TypeVar("T")
 K = TypeVar("K")
@@ -51,6 +51,7 @@ V = TypeVar("V")
 # ============================================================================
 # NULL CHECKS
 # ============================================================================
+
 
 def is_present(value: Any) -> bool:
     """
@@ -149,11 +150,8 @@ def is_empty_or_none(value: Any) -> bool:
 # SAFE ACCESS
 # ============================================================================
 
-def safe_get(
-    mapping: Optional[Dict[K, V]],
-    key: K,
-    default: Optional[V] = None
-) -> Optional[V]:
+
+def safe_get(mapping: Optional[Dict[K, V]], key: K, default: Optional[V] = None) -> Optional[V]:
     """
     Safely get value from dict with explicit None handling.
 
@@ -179,11 +177,7 @@ def safe_get(
     return mapping.get(key, default)
 
 
-def safe_get_nested(
-    data: Optional[Dict],
-    keys: Sequence[str],
-    default: Any = None
-) -> Any:
+def safe_get_nested(data: Optional[Dict], keys: Sequence[str], default: Any = None) -> Any:
     """
     Safely get nested value from dict.
 
@@ -215,11 +209,7 @@ def safe_get_nested(
     return current
 
 
-def safe_get_index(
-    sequence: Optional[Sequence[T]],
-    index: int,
-    default: Optional[T] = None
-) -> Optional[T]:
+def safe_get_index(sequence: Optional[Sequence[T]], index: int, default: Optional[T] = None) -> Optional[T]:
     """
     Safely get value from sequence by index.
 
@@ -248,10 +238,7 @@ def safe_get_index(
         return default
 
 
-def safe_get_first(
-    sequence: Optional[Sequence[T]],
-    default: Optional[T] = None
-) -> Optional[T]:
+def safe_get_first(sequence: Optional[Sequence[T]], default: Optional[T] = None) -> Optional[T]:
     """
     Safely get first element of sequence.
 
@@ -265,10 +252,7 @@ def safe_get_first(
     return safe_get_index(sequence, 0, default)
 
 
-def safe_get_last(
-    sequence: Optional[Sequence[T]],
-    default: Optional[T] = None
-) -> Optional[T]:
+def safe_get_last(sequence: Optional[Sequence[T]], default: Optional[T] = None) -> Optional[T]:
     """
     Safely get last element of sequence.
 
@@ -285,6 +269,7 @@ def safe_get_last(
 # ============================================================================
 # COALESCE / DEFAULT VALUES
 # ============================================================================
+
 
 def coalesce(*values: Optional[T]) -> Optional[T]:
     """
@@ -326,10 +311,7 @@ def default_if_none(value: Optional[T], default: T) -> T:
     return default if value is None else value
 
 
-def default_if_empty(
-    value: Optional[Union[str, List, Dict]],
-    default: T
-) -> Union[str, List, Dict, T]:
+def default_if_empty(value: Optional[Union[str, List, Dict]], default: T) -> Union[str, List, Dict, T]:
     """
     Return default if value is None or empty.
 
@@ -348,6 +330,7 @@ def default_if_empty(
 # ============================================================================
 # SAFE ARITHMETIC
 # ============================================================================
+
 
 def safe_divide(
     numerator: Optional[Union[Decimal, float, int]],
@@ -391,8 +374,7 @@ def safe_divide(
 
 
 def safe_multiply(
-    *values: Optional[Union[Decimal, float, int]],
-    default: Optional[Decimal] = None
+    *values: Optional[Union[Decimal, float, int]], default: Optional[Decimal] = None
 ) -> Optional[Decimal]:
     """
     Safely multiply multiple values.
@@ -462,10 +444,8 @@ def safe_sum(
 # SAFE CONVERSION
 # ============================================================================
 
-def safe_int(
-    value: Any,
-    default: Optional[int] = None
-) -> Optional[int]:
+
+def safe_int(value: Any, default: Optional[int] = None) -> Optional[int]:
     """
     Safely convert value to int.
 
@@ -488,10 +468,7 @@ def safe_int(
         return default
 
 
-def safe_float(
-    value: Any,
-    default: Optional[float] = None
-) -> Optional[float]:
+def safe_float(value: Any, default: Optional[float] = None) -> Optional[float]:
     """
     Safely convert value to float.
 
@@ -511,10 +488,7 @@ def safe_float(
         return default
 
 
-def safe_decimal(
-    value: Any,
-    default: Optional[Decimal] = None
-) -> Optional[Decimal]:
+def safe_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     """
     Safely convert value to Decimal.
 
@@ -538,10 +512,7 @@ def safe_decimal(
         return default
 
 
-def safe_str(
-    value: Any,
-    default: Optional[str] = None
-) -> Optional[str]:
+def safe_str(value: Any, default: Optional[str] = None) -> Optional[str]:
     """
     Safely convert value to string.
 
@@ -562,11 +533,8 @@ def safe_str(
 # CONDITIONAL EXECUTION
 # ============================================================================
 
-def if_present(
-    value: Optional[T],
-    func: Callable[[T], V],
-    default: Optional[V] = None
-) -> Optional[V]:
+
+def if_present(value: Optional[T], func: Callable[[T], V], default: Optional[V] = None) -> Optional[V]:
     """
     Apply function if value is not None.
 
@@ -613,6 +581,7 @@ def map_if_present(
 # ============================================================================
 # COLLECTION SAFETY
 # ============================================================================
+
 
 def ensure_list(value: Optional[Union[T, List[T]]]) -> List[T]:
     """

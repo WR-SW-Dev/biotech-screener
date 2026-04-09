@@ -11,6 +11,7 @@ Outputs (in output/data_integrity/):
     catalyst_diff_sample.csv    — catalyst spot-check (25 tickers)
     root_cause_summary.md       — root cause classification + recommendations
 """
+
 from __future__ import annotations
 
 import argparse

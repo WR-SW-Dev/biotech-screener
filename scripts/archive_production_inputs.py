@@ -9,6 +9,7 @@ Usage:
     python3 scripts/archive_production_inputs.py --as-of-date 2026-04-02
     python3 scripts/archive_production_inputs.py --as-of-date 2026-04-02 --data-dir production_data
 """
+
 from __future__ import annotations
 
 import argparse

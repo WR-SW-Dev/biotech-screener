@@ -17,6 +17,7 @@ Usage:
         --dates manifests/catalyst_tilt_eval_dates.txt \
         --ruleset production_data/decision_rulesets/v1.11.0_b91_clinical_quality_w05_candidate.json
 """
+
 from __future__ import annotations
 
 import argparse

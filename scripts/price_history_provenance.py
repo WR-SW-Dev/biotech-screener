@@ -11,6 +11,7 @@ Usage:
     --output PATH         (default: production_data/price_history_manifest.json)
     --check SHA256_PREFIX  Verify hash matches prefix, exit 1 if not
 """
+
 from __future__ import annotations
 
 import argparse
@@ -71,19 +72,24 @@ def compute_price_history_stats(csv_path: Path) -> Dict[str, Any]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Price history provenance — fingerprint and manifest."
-    )
+    parser = argparse.ArgumentParser(description="Price history provenance — fingerprint and manifest.")
     parser.add_argument(
-        "--price-csv", type=str, default=str(DEFAULT_PRICE_CSV),
+        "--price-csv",
+        type=str,
+        default=str(DEFAULT_PRICE_CSV),
         help=f"Path to price_history.csv (default: {DEFAULT_PRICE_CSV})",
     )
     parser.add_argument(
-        "--output", type=str, default=str(DEFAULT_OUTPUT),
+        "--output",
+        type=str,
+        default=str(DEFAULT_OUTPUT),
         help=f"Output manifest JSON path (default: {DEFAULT_OUTPUT})",
     )
     parser.add_argument(
-        "--check", type=str, default=None, metavar="SHA256_PREFIX",
+        "--check",
+        type=str,
+        default=None,
+        metavar="SHA256_PREFIX",
         help="Verify hash matches this prefix, exit 1 if not",
     )
     args = parser.parse_args()
@@ -117,7 +123,7 @@ def main() -> int:
         f.write("\n")
 
     # Print summary
-    print(f"Price history provenance")
+    print("Price history provenance")
     print(f"  File:     {csv_path}")
     print(f"  SHA256:   {stats['price_history_sha256'][:16]}...")
     print(f"  Rows:     {stats['row_count']:,}")

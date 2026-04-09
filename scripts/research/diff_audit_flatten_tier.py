@@ -12,6 +12,7 @@ Usage:
         --top-k 20 \\
         --out output/diff_audit_flatten_tier.md
 """
+
 from __future__ import annotations
 
 import csv

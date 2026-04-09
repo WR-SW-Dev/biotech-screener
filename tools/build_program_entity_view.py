@@ -14,6 +14,7 @@ Output:
 Usage:
     python tools/build_program_entity_view.py
 """
+
 from __future__ import annotations
 
 import argparse

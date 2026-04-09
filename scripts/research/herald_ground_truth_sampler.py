@@ -8,6 +8,7 @@ human annotation.
 Usage:
     python scripts/research/herald_ground_truth_sampler.py --n-samples 100
 """
+
 from __future__ import annotations
 
 import argparse

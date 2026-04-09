@@ -12,6 +12,7 @@ Usage:
         eval_fn=selector_delta_fn,
     )
 """
+
 from __future__ import annotations
 
 import math
@@ -58,25 +59,34 @@ def leave_one_slice_out(
 
     # Full-sample evaluation
     full_result = _eval_selector_delta(
-        snapshots, signal, y_col, higher_is_better,
-        top_n, eligible_col, exclude_slice=None, slice_col=None,
+        snapshots,
+        signal,
+        y_col,
+        higher_is_better,
+        top_n,
+        eligible_col,
+        exclude_slice=None,
+        slice_col=None,
     )
 
     # Per-slice leave-out evaluation
     slice_results = {}
     for sv in sorted(slice_values):
         result = _eval_selector_delta(
-            snapshots, signal, y_col, higher_is_better,
-            top_n, eligible_col, exclude_slice=sv, slice_col=slice_col,
+            snapshots,
+            signal,
+            y_col,
+            higher_is_better,
+            top_n,
+            eligible_col,
+            exclude_slice=sv,
+            slice_col=slice_col,
         )
         slice_results[sv] = result
 
     # Stability analysis
     full_delta = full_result.get("mean_improvement_pp", 0) or 0
-    deltas = {
-        sv: (r.get("mean_improvement_pp", 0) or 0)
-        for sv, r in slice_results.items()
-    }
+    deltas = {sv: (r.get("mean_improvement_pp", 0) or 0) for sv, r in slice_results.items()}
     worst_slice = min(deltas, key=deltas.get) if deltas else None
     best_slice = max(deltas, key=deltas.get) if deltas else None
 
@@ -142,7 +152,9 @@ def multi_slice_robustness(
     results = {}
     for label, col in slice_cols.items():
         result = leave_one_slice_out(
-            augmented, signal, y_col,
+            augmented,
+            signal,
+            y_col,
             slice_col=col,
             higher_is_better=higher_is_better,
             top_n=top_n,
@@ -150,16 +162,9 @@ def multi_slice_robustness(
         results[label] = result
 
     # Overall verdict
-    verdicts = {
-        label: r.get("stability_verdict", "")
-        for label, r in results.items()
-    }
-    n_unstable = sum(
-        1 for v in verdicts.values() if "UNSTABLE" in v
-    )
-    n_moderate = sum(
-        1 for v in verdicts.values() if "MODERATE" in v
-    )
+    verdicts = {label: r.get("stability_verdict", "") for label, r in results.items()}
+    n_unstable = sum(1 for v in verdicts.values() if "UNSTABLE" in v)
+    n_moderate = sum(1 for v in verdicts.values() if "MODERATE" in v)
 
     if n_unstable >= 2:
         overall = "FRAGILE — unstable across multiple dimensions"
@@ -179,8 +184,14 @@ def multi_slice_robustness(
 
 
 def _eval_selector_delta(
-    snapshots, signal, y_col, higher_is_better,
-    top_n, eligible_col, exclude_slice, slice_col,
+    snapshots,
+    signal,
+    y_col,
+    higher_is_better,
+    top_n,
+    eligible_col,
+    exclude_slice,
+    slice_col,
 ) -> dict[str, Any]:
     """Compute selector delta for a signal, optionally excluding a slice."""
     improvements = []
@@ -196,9 +207,13 @@ def _eval_selector_delta(
             fwd = _sf(r.get(y_col))
             rank = _sf(r.get("actionable_rank"))
             if sv is not None and fwd is not None and rank is not None:
-                eligible.append({
-                    "signal": sv, "fwd": fwd, "rank": rank,
-                })
+                eligible.append(
+                    {
+                        "signal": sv,
+                        "fwd": fwd,
+                        "rank": rank,
+                    }
+                )
 
         if len(eligible) < top_n:
             continue
@@ -221,9 +236,7 @@ def _eval_selector_delta(
     return {
         "mean_improvement_pp": _round(mean_imp * 100),
         "t_stat": _round(_safe_tstat([v * 100 for v in improvements])),
-        "hit_rate": _round(
-            sum(1 for v in improvements if v > 0) / len(improvements)
-        ),
+        "hit_rate": _round(sum(1 for v in improvements if v > 0) / len(improvements)),
         "n_periods": len(improvements),
     }
 

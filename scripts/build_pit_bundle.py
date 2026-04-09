@@ -28,6 +28,7 @@ Usage:
     python3 scripts/build_pit_bundle.py \\
         --validate --bundle-root data/bundles/PIT/2026-01-15
 """
+
 from __future__ import annotations
 
 import argparse
@@ -50,6 +51,7 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_json(path: Path) -> Optional[Any]:
     """Graceful JSON load; returns None on any error."""
@@ -92,6 +94,7 @@ def _sha256_file(path: Path) -> str:
 # ---------------------------------------------------------------------------
 # Bundle building
 # ---------------------------------------------------------------------------
+
 
 def _find_latest_cache_date(cache_root: Path, as_of_date: str) -> Optional[str]:
     """Find the latest 13F cache date <= as_of_date (for carry-forward).
@@ -152,10 +155,8 @@ def build_single_bundle(
     # 1. Clinical features
     if not skip_clinical:
         try:
-            from scripts.build_clinical_features_pit import (
-                build_clinical_features,
-                validate_clinical_features_schema,
-            )
+            from scripts.build_clinical_features_pit import build_clinical_features
+
             if trial_records_path is None:
                 trial_records_path = _PROJECT_ROOT / "production_data" / "trial_records.json"
             trial_data = _load_json(trial_records_path)
@@ -182,25 +183,26 @@ def build_single_bundle(
                 # PIT validation on the trial input
                 try:
                     from scripts.validate_pit_inputs import validate_ctgov_pit
+
                     vr = validate_ctgov_pit(
-                        trial_data, as_of_date, pit_mode,
+                        trial_data,
+                        as_of_date,
+                        pit_mode,
                         max_examples=999_999,
                     )
                     pit_quality["ctgov_trials_filtered_future_posted"] = vr["first_posted_violations"]
                 except Exception:
                     pass
             else:
-                print(f"  SKIP clinical: trial_records not a list", file=sys.stderr)
+                print("  SKIP clinical: trial_records not a list", file=sys.stderr)
         except Exception as e:
             print(f"  SKIP clinical: {e}", file=sys.stderr)
 
     # 2. Catalyst events
     if not skip_catalyst:
         try:
-            from scripts.build_catalyst_events_pit import (
-                build_catalyst_events,
-                validate_catalyst_events_schema,
-            )
+            from scripts.build_catalyst_events_pit import build_catalyst_events
+
             cat = build_catalyst_events(
                 as_of_date=as_of_date,
                 universe_tickers=universe_tickers,
@@ -221,6 +223,7 @@ def build_single_bundle(
             # PIT validation on catalyst events
             try:
                 from scripts.validate_pit_inputs import validate_catalyst_pit
+
                 vr = validate_catalyst_pit(cat, as_of_date, pit_mode)
                 pit_quality["catalyst_tickers_missing_disclosed_at"] = vr["missing_disclosed_at"]
                 pit_quality["catalyst_tickers_future_disclosed_at"] = vr["future_disclosed_at"]
@@ -232,13 +235,8 @@ def build_single_bundle(
     # 3. Coinvest features
     if not skip_coinvest:
         try:
-            from scripts.build_coinvest_features_from_13f import (
-                build_coinvest_features,
-                validate_coinvest_features_schema,
-                _load_cusip_map,
-                _pad_cik,
-            )
             from elite_managers import get_all_managers
+            from scripts.build_coinvest_features_from_13f import _load_cusip_map, _pad_cik, build_coinvest_features
 
             if cache_13f_root is None:
                 cache_13f_root = _PROJECT_ROOT / "data" / "caches" / "sec_13f" / "PIT"
@@ -262,9 +260,7 @@ def build_single_bundle(
                     manager_tiers[padded] = m.get("tier", 0)
                     manager_names[padded] = m.get("short_name", m.get("name", padded))
 
-                cusip_map = _load_cusip_map(
-                    _PROJECT_ROOT / "production_data" / "cusip_static_map.json"
-                )
+                cusip_map = _load_cusip_map(_PROJECT_ROOT / "production_data" / "cusip_static_map.json")
 
                 coinv = build_coinvest_features(
                     as_of_date=coinvest_source_date,
@@ -290,7 +286,7 @@ def build_single_bundle(
                         comp_meta["source_date"] = coinvest_source_date
                     components["coinvest_features"] = comp_meta
                 else:
-                    print(f"  SKIP coinvest: build returned None", file=sys.stderr)
+                    print("  SKIP coinvest: build returned None", file=sys.stderr)
             else:
                 print(f"  SKIP coinvest: no cache at {cache_date_dir}", file=sys.stderr)
         except Exception as e:
@@ -329,10 +325,7 @@ def validate_bundle(bundle_dir: Path) -> Tuple[bool, str]:
         return False, f"cannot load manifest from {manifest_path}"
 
     if manifest.get("schema_version") != SCHEMA_VERSION:
-        return False, (
-            f"expected manifest schema {SCHEMA_VERSION}, "
-            f"got {manifest.get('schema_version')}"
-        )
+        return False, (f"expected manifest schema {SCHEMA_VERSION}, " f"got {manifest.get('schema_version')}")
 
     components = manifest.get("components", {})
     if not components:
@@ -344,10 +337,7 @@ def validate_bundle(bundle_dir: Path) -> Tuple[bool, str]:
             return False, f"missing component file: {fpath}"
         actual_hash = _sha256_file(fpath)
         if actual_hash != info["sha256"]:
-            return False, (
-                f"hash mismatch for {name}: expected {info['sha256']}, "
-                f"got {actual_hash}"
-            )
+            return False, (f"hash mismatch for {name}: expected {info['sha256']}, " f"got {actual_hash}")
 
         # Validate component schema
         data = _load_json(fpath)
@@ -355,8 +345,7 @@ def validate_bundle(bundle_dir: Path) -> Tuple[bool, str]:
             return False, f"cannot parse {fpath}"
         if data.get("schema_version") != info["schema_version"]:
             return False, (
-                f"schema mismatch for {name}: expected {info['schema_version']}, "
-                f"got {data.get('schema_version')}"
+                f"schema mismatch for {name}: expected {info['schema_version']}, " f"got {data.get('schema_version')}"
             )
 
     return True, "OK"
@@ -437,10 +426,9 @@ def build_batch_bundles(
             n_components = len(manifest["components"])
             if n_components > 0:
                 results.append(manifest)
-                print(f"  {n_components} components, "
-                      f"{manifest['build_duration_seconds']}s")
+                print(f"  {n_components} components, " f"{manifest['build_duration_seconds']}s")
             else:
-                print(f"  SKIP: no components built")
+                print("  SKIP: no components built")
         except Exception as e:
             print(f"  ERROR: {e}", file=sys.stderr)
     return results
@@ -450,56 +438,71 @@ def build_batch_bundles(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build PIT feature bundles",
     )
     parser.add_argument(
-        "--as-of-date", default=None, help="Single date (ISO format)",
+        "--as-of-date",
+        default=None,
+        help="Single date (ISO format)",
     )
     parser.add_argument(
-        "--batch", action="store_true",
+        "--batch",
+        action="store_true",
         help="Build bundles for all discoverable dates",
     )
     parser.add_argument(
-        "--cadence", choices=["quarterly", "monthly"], default="quarterly",
-        help="Date cadence for batch mode (default: quarterly). "
-             "Filters discovered dates to cadence boundaries.",
+        "--cadence",
+        choices=["quarterly", "monthly"],
+        default="quarterly",
+        help="Date cadence for batch mode (default: quarterly). " "Filters discovered dates to cadence boundaries.",
     )
     parser.add_argument(
-        "--bundle-root", default="data/bundles/PIT",
+        "--bundle-root",
+        default="data/bundles/PIT",
         help="Bundle output root directory",
     )
     parser.add_argument(
-        "--universe", default="production_data/universe.json",
+        "--universe",
+        default="production_data/universe.json",
         help="Universe JSON path",
     )
     parser.add_argument(
-        "--trial-records", default=None,
+        "--trial-records",
+        default=None,
         help="Path to trial_records.json (default: production_data/trial_records.json)",
     )
     parser.add_argument(
-        "--13f-cache-root", dest="cache_13f_root", default=None,
+        "--13f-cache-root",
+        dest="cache_13f_root",
+        default=None,
         help="13F cache root (default: data/caches/sec_13f/PIT)",
     )
     parser.add_argument(
-        "--skip-clinical", action="store_true",
+        "--skip-clinical",
+        action="store_true",
         help="Skip clinical features",
     )
     parser.add_argument(
-        "--skip-catalyst", action="store_true",
+        "--skip-catalyst",
+        action="store_true",
         help="Skip catalyst features",
     )
     parser.add_argument(
-        "--skip-coinvest", action="store_true",
+        "--skip-coinvest",
+        action="store_true",
         help="Skip coinvest features",
     )
     parser.add_argument(
-        "--validate", action="store_true",
+        "--validate",
+        action="store_true",
         help="Validate an existing bundle instead of building",
     )
     parser.add_argument(
-        "--pit-mode", default="strict",
+        "--pit-mode",
+        default="strict",
         choices=["strict", "degrade"],
         help="PIT mode: strict (default) or degrade",
     )
@@ -515,7 +518,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         dest="ctgov_cache_root",
         default=None,
         help="Discover additional dates from CTgov PIT cache directory "
-             "(e.g. cache/ctgov). Scans trial_records_*.json filenames.",
+        "(e.g. cache/ctgov). Scans trial_records_*.json filenames.",
     )
     args = parser.parse_args(argv)
 
@@ -580,7 +583,9 @@ def main(argv: Optional[List[str]] = None) -> int:
                 return 1
         print(f"Discovered {len(dates)} dates (cadence={args.cadence})")
         results = build_batch_bundles(
-            dates, bundle_root, universe,
+            dates,
+            bundle_root,
+            universe,
             trial_records_path=trial_path,
             cache_13f_root=cache_root,
             skip_clinical=args.skip_clinical,
@@ -606,8 +611,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             coinvest_carry_forward=args.coinvest_carry_forward,
         )
         n = len(manifest["components"])
-        print(f"\nBundle: {n} components, "
-              f"{manifest['build_duration_seconds']}s")
+        print(f"\nBundle: {n} components, " f"{manifest['build_duration_seconds']}s")
         for name, info in manifest["components"].items():
             print(f"  {name}: {info['coverage_pct']}% coverage")
         return 0

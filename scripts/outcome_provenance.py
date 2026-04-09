@@ -6,6 +6,7 @@ they were computed from.  Any outcome-altering data change (backfill,
 correction, split adjustment) will produce a different hash, making the
 change obvious and auditable.
 """
+
 from __future__ import annotations
 
 import subprocess
@@ -26,7 +27,9 @@ def get_git_sha() -> str:
     try:
         r = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            capture_output=True,
+            text=True,
+            timeout=5,
             cwd=str(PROJECT_ROOT),
         )
         if r.returncode == 0:

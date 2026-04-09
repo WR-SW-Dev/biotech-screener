@@ -10,6 +10,7 @@ Usage:
         --price-csv production_data/price_history.csv \
         --output-dir output/put_call_ratio_study
 """
+
 from __future__ import annotations
 
 import argparse

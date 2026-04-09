@@ -14,6 +14,7 @@ Uses actual turnover from weekly snapshots to measure real portfolio churn.
 Usage:
     python3 scripts/research/txn_cost_model.py
 """
+
 from __future__ import annotations
 
 import csv

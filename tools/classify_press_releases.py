@@ -9,6 +9,7 @@ Usage:
     python tools/classify_press_releases.py --input data/press_releases/releases_2026-03-31.jsonl --dry-run
     python tools/classify_press_releases.py --input data/press_releases/releases_2026-03-31.jsonl --stdout-only
 """
+
 from __future__ import annotations
 
 import argparse

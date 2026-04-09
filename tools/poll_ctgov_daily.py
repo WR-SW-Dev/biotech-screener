@@ -27,6 +27,7 @@ Usage:
     python tools/poll_ctgov_daily.py --dry-run  # fetch + diff but don't write
     python tools/poll_ctgov_daily.py --cached-only  # diff against cache without API calls
 """
+
 from __future__ import annotations
 
 import argparse

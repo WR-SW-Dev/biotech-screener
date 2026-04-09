@@ -264,12 +264,12 @@ def print_summary(result: dict):
     # rolling_3m available in result
 
     print(f"\n{'='*75}")
-    print(f"MONTHLY IC DECOMPOSITION — Selector Health")
+    print("MONTHLY IC DECOMPOSITION — Selector Health")
     print(f"{'='*75}")
     print(f"Date range: {overall['date_range']}")
     print(f"Total dates: {overall['n_total_dates']}, Months: {overall['n_months']}")
 
-    print(f"\nOverall IC:")
+    print("\nOverall IC:")
     for h in ["h20", "h63"]:
         mu = overall.get(f"overall_mean_ic_{h}", "—")
         med = overall.get(f"overall_median_ic_{h}", "—")

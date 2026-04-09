@@ -13,6 +13,7 @@ Usage:
     python tools/pit_audit_artifacts.py --as-of-date 2026-04-02 --audit survivorship
     python tools/pit_audit_artifacts.py --as-of-date 2026-04-02 --audit financials
 """
+
 from __future__ import annotations
 
 import argparse

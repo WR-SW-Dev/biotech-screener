@@ -20,6 +20,7 @@ Usage:
         --anchor-mode clinical \\
         --target-bucket less_binary
 """
+
 from __future__ import annotations
 
 import csv

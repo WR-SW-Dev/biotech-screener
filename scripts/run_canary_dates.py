@@ -17,6 +17,7 @@ Usage:
     python scripts/run_canary_dates.py --policy path/to/canary_policy.json
     python scripts/run_canary_dates.py --history path/to/history.jsonl
 """
+
 from __future__ import annotations
 
 import argparse

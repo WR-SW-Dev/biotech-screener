@@ -9,6 +9,7 @@ Usage:
     python tools/fetch_company_press_releases.py --as-of-date 2026-03-31 --ticker SION
     python tools/fetch_company_press_releases.py --health-check
 """
+
 from __future__ import annotations
 
 import argparse

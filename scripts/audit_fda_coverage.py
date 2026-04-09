@@ -47,8 +47,13 @@ UNIVERSE_PATH = PROJECT_ROOT / "production_data" / "universe.json"
 ARTIFACTS_DIR = PROJECT_ROOT / "artifacts"
 
 FDA_EVENT_TYPES = {
-    "FDA_PDUFA_DATE", "FDA_ADCOM", "FDA_CRL", "FDA_RTF",
-    "FDA_WARNING_LETTER", "FDA_APPROVAL", "FDA_SUBMISSION",
+    "FDA_PDUFA_DATE",
+    "FDA_ADCOM",
+    "FDA_CRL",
+    "FDA_RTF",
+    "FDA_WARNING_LETTER",
+    "FDA_APPROVAL",
+    "FDA_SUBMISSION",
     "FDA_DESIGNATION",
 }
 
@@ -119,11 +124,14 @@ def _cache_version_suffix(path):
 def main():
     parser = argparse.ArgumentParser(description="FDA event coverage diagnostic")
     parser.add_argument(
-        "--as-of-date", type=str, default=None,
+        "--as-of-date",
+        type=str,
+        default=None,
         help="Specific as-of date (YYYY-MM-DD). Default: latest available cache.",
     )
     parser.add_argument(
-        "--compare", action="store_true",
+        "--compare",
+        action="store_true",
         help="Compare old-pattern vs new-pattern cache for the same date.",
     )
     args = parser.parse_args()
@@ -133,10 +141,7 @@ def main():
     if isinstance(universe_data, dict):
         universe_tickers = set(universe_data.get("tickers", []))
     elif isinstance(universe_data, list):
-        universe_tickers = {
-            e.get("ticker", e) if isinstance(e, dict) else str(e)
-            for e in universe_data
-        }
+        universe_tickers = {e.get("ticker", e) if isinstance(e, dict) else str(e) for e in universe_data}
     else:
         universe_tickers = set()
 
@@ -174,7 +179,7 @@ def main():
 
         gained = new_in_u - old_in_u
         lost = old_in_u - new_in_u
-        print(f"\n  DELTA:")
+        print("\n  DELTA:")
         print(f"    Gained: {len(gained)} tickers — {sorted(gained)}" if gained else "    Gained: 0")
         print(f"    Lost:   {len(lost)} tickers — {sorted(lost)}" if lost else "    Lost:   0")
         print(f"    Net:    {len(new_in_u) - len(old_in_u):+d}")
@@ -183,9 +188,11 @@ def main():
         old_keys = {(e["ticker"], e["event_type"], e["event_date"]) for e in old_fda}
         new_only = [e for e in new_fda if (e["ticker"], e["event_type"], e["event_date"]) not in old_keys]
         if new_only:
-            print(f"\n  NEW FDA events (not in old cache):")
+            print("\n  NEW FDA events (not in old cache):")
             for e in sorted(new_only, key=lambda x: x["ticker"]):
-                print(f"    {e['ticker']:6s} {e['event_type']:20s} {e['event_date']} prec={e.get('date_precision','?')}")
+                print(
+                    f"    {e['ticker']:6s} {e['event_type']:20s} {e['event_date']} prec={e.get('date_precision','?')}"
+                )
 
         # Write comparison artifact
         ARTIFACTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -269,8 +276,7 @@ def main():
         corp_entries = corp_data
 
     corp_fda_entries = [
-        e for e in corp_entries
-        if isinstance(e, dict) and "fda" in str(e.get("event_type", "")).lower()
+        e for e in corp_entries if isinstance(e, dict) and "fda" in str(e.get("event_type", "")).lower()
     ]
     corp_fda_tickers = {e.get("ticker", "").upper() for e in corp_fda_entries if e.get("ticker")}
     corp_fda_in_universe = corp_fda_tickers & universe_tickers

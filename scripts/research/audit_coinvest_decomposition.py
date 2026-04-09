@@ -16,6 +16,7 @@ Then runs signal cards on all variants vs the original coinvest_score_z.
 Usage:
     python3 scripts/research/audit_coinvest_decomposition.py
 """
+
 from __future__ import annotations
 
 import csv

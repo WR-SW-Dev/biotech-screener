@@ -15,6 +15,7 @@ Usage:
     python3 scripts/eval_eligibility_gate.py --as-of-date 2026-02-27
     python3 scripts/eval_eligibility_gate.py --delta-json path/to/eligibility_delta.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ SCHEMA = "eligibility_gate.v1"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _read_json(path: Path) -> Any:
     return json.loads(path.read_text(encoding="utf-8"))
@@ -65,6 +67,7 @@ def _append_step_summary(md: str) -> None:
 # ---------------------------------------------------------------------------
 # Gate logic
 # ---------------------------------------------------------------------------
+
 
 def evaluate_eligibility_gate(
     delta: Dict[str, Any],
@@ -116,6 +119,7 @@ def evaluate_eligibility_gate(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Eligibility drift gate.")
     ap.add_argument("--as-of-date", default="", help="Build delta first, then evaluate.")
@@ -136,12 +140,7 @@ def main() -> int:
 
     delta_path: Path
     if args.as_of_date:
-        from scripts.build_eligibility_delta import (
-            build_delta,
-            pick_prior_date,
-            _read_json,
-            _is_degraded,
-        )
+        from scripts.build_eligibility_delta import _is_degraded, _read_json, build_delta, pick_prior_date
 
         as_of = args.as_of_date.strip()
         snapshot_root = Path(args.snapshot_dir)
@@ -153,7 +152,9 @@ def main() -> int:
         prior = args.prior_date.strip()
         if not prior:
             prior = pick_prior_date(
-                snapshot_root, as_of, include_degraded=args.include_degraded,
+                snapshot_root,
+                as_of,
+                include_degraded=args.include_degraded,
             )
             if not prior:
                 raise SystemExit("Could not auto-select prior date.")
@@ -177,6 +178,7 @@ def main() -> int:
         delta_path.write_text(_stable_json(delta_obj), encoding="utf-8")
 
         from scripts.build_eligibility_delta import render_delta_md
+
         md_path = snap_dir / "eligibility_delta.md"
         md_path.write_text(render_delta_md(delta_obj) + "\n", encoding="utf-8")
     else:
@@ -223,8 +225,10 @@ def main() -> int:
 
     # Step summary
     md_lines = [
-        "## Eligibility Gate", "",
-        "| Field | Value |", "|---|---|",
+        "## Eligibility Gate",
+        "",
+        "| Field | Value |",
+        "|---|---|",
         f"| verdict | **{verdict}** |",
         f"| as_of_date | `{gate_out['as_of_date']}` |",
         f"| prior_date | `{gate_out['prior_date']}` |",

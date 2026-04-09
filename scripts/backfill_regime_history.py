@@ -92,8 +92,8 @@ def _fetch_fred_hy_oas_history(start: str, end: str) -> Dict[str, float]:
 
     # FRED API limits to 100k observations per request, plenty for our range
     url = (
-        f"https://api.stlouisfed.org/fred/series/observations"
-        f"?series_id=BAMLH0A0HYM2"
+        "https://api.stlouisfed.org/fred/series/observations"
+        "?series_id=BAMLH0A0HYM2"
         f"&observation_start={start}&observation_end={end}"
         f"&sort_order=asc&file_type=json&api_key={api_key}"
     )

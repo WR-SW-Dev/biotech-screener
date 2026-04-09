@@ -22,6 +22,7 @@ Usage:
         --date-from 2020-03-31 --date-to 2025-12-31 \
         --out-dir output/component_ic
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import json
 import math
 import statistics
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -57,21 +58,17 @@ SIGNALS = [
     ("clinical_score", +1, "clinical_score", "clinical"),
     ("clinical_alpha_z", +1, "clinical_alpha_z", "clinical"),
     ("clinical_score_z", +1, "clinical_score_z", "clinical"),
-
     # Catalyst
     ("catalyst_decay_w", +1, "catalyst_decay_w", "catalyst"),
     ("catalyst_days", -1, "catalyst_days (inv)", "catalyst"),
-
     # Coinvest
     ("sponsor_tier1_count", +1, "sponsor_tier1_count", "coinvest"),
     ("coinvest_score_z", +1, "coinvest_score_z", "coinvest"),
-
     # Price overlay / defensive
     ("de_alpha_60d", +1, "alpha_60d", "price"),
     ("de_drawdown", +1, "drawdown (less neg=better)", "price"),
     ("de_beta_xbi_60d", +1, "beta_xbi_60d", "price"),
     ("de_rsi_14d", +1, "rsi_14d", "price"),
-
     # Composite
     ("actionable_rank", -1, "actionable_rank (inv)", "composite"),
 ]
@@ -80,6 +77,7 @@ SIGNALS = [
 # ---------------------------------------------------------------------------
 # Per-date, per-signal evaluation
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SignalDateResult:
@@ -185,9 +183,7 @@ def evaluate_signals(
             for ticker in all_tickers:
                 if ticker not in prices:
                     continue
-                ret = compute_forward_return(
-                    prices[ticker], sorted_dates, trade_date, h
-                )
+                ret = compute_forward_return(prices[ticker], sorted_dates, trade_date, h)
                 if ret is not None:
                     fwd_rets[ticker] = ret
 
@@ -206,22 +202,22 @@ def evaluate_signals(
                     ret_vals = [fwd_rets[t] for t in common]
                     ic = spearman_ic(sig_vals, ret_vals)
 
-                spread, top_ret, bot_ret = _decile_spread_from_signal(
-                    sig, fwd_rets, direction
-                )
+                spread, top_ret, bot_ret = _decile_spread_from_signal(sig, fwd_rets, direction)
 
-                results.append(SignalDateResult(
-                    date=snap_date,
-                    trade_date=trade_date,
-                    signal_name=label,
-                    component=component,
-                    horizon=h,
-                    ic=round(ic, 4) if ic is not None else None,
-                    ls_spread=round(spread, 6) if spread is not None else None,
-                    n_obs=n,
-                    top_decile_ret=round(top_ret, 6) if top_ret is not None else None,
-                    bottom_decile_ret=round(bot_ret, 6) if bot_ret is not None else None,
-                ))
+                results.append(
+                    SignalDateResult(
+                        date=snap_date,
+                        trade_date=trade_date,
+                        signal_name=label,
+                        component=component,
+                        horizon=h,
+                        ic=round(ic, 4) if ic is not None else None,
+                        ls_spread=round(spread, 6) if spread is not None else None,
+                        n_obs=n,
+                        top_decile_ret=round(top_ret, 6) if top_ret is not None else None,
+                        bottom_decile_ret=round(bot_ret, 6) if bot_ret is not None else None,
+                    )
+                )
 
     return results
 
@@ -229,6 +225,7 @@ def evaluate_signals(
 # ---------------------------------------------------------------------------
 # Aggregation and output
 # ---------------------------------------------------------------------------
+
 
 def aggregate(
     results: List[SignalDateResult],
@@ -270,18 +267,20 @@ def aggregate(
             if ls_std and ls_std > 0:
                 ls_t = mean_ls / (ls_std / math.sqrt(len(spreads)))
 
-        out[h].append({
-            "signal": signal_name,
-            "component": component,
-            "n_dates": len(ics),
-            "mean_n_obs": round(statistics.mean(n_obs_list), 0) if n_obs_list else 0,
-            "mean_ic": round(mean_ic, 4) if mean_ic is not None else None,
-            "median_ic": round(median_ic, 4) if median_ic is not None else None,
-            "std_ic": round(std_ic, 4) if std_ic is not None else None,
-            "ic_t": round(ic_t, 3) if ic_t is not None else None,
-            "mean_ls": round(mean_ls, 6) if mean_ls is not None else None,
-            "ls_t": round(ls_t, 3) if ls_t is not None else None,
-        })
+        out[h].append(
+            {
+                "signal": signal_name,
+                "component": component,
+                "n_dates": len(ics),
+                "mean_n_obs": round(statistics.mean(n_obs_list), 0) if n_obs_list else 0,
+                "mean_ic": round(mean_ic, 4) if mean_ic is not None else None,
+                "median_ic": round(median_ic, 4) if median_ic is not None else None,
+                "std_ic": round(std_ic, 4) if std_ic is not None else None,
+                "ic_t": round(ic_t, 3) if ic_t is not None else None,
+                "mean_ls": round(mean_ls, 6) if mean_ls is not None else None,
+                "ls_t": round(ls_t, 3) if ls_t is not None else None,
+            }
+        )
 
     return out
 
@@ -300,9 +299,17 @@ def write_summary(
     # CSV (all horizons)
     csv_path = out_dir / "by_signal.csv"
     fieldnames = [
-        "horizon", "component", "signal", "n_dates", "mean_n_obs",
-        "mean_ic", "median_ic", "std_ic", "ic_t",
-        "mean_ls", "ls_t",
+        "horizon",
+        "component",
+        "signal",
+        "n_dates",
+        "mean_n_obs",
+        "mean_ic",
+        "median_ic",
+        "std_ic",
+        "ic_t",
+        "mean_ls",
+        "ls_t",
     ]
     with open(csv_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -327,14 +334,8 @@ def write_summary(
     for h, rows in sorted(agg.items()):
         lines.append(f"## {h}d Horizon")
         lines.append("")
-        lines.append(
-            "| Component | Signal | N | Obs | Mean IC | Median IC | "
-            "IC t | Mean L/S | L/S t |"
-        )
-        lines.append(
-            "|-----------|--------|---|-----|---------|-----------|"
-            "------|----------|-------|"
-        )
+        lines.append("| Component | Signal | N | Obs | Mean IC | Median IC | " "IC t | Mean L/S | L/S t |")
+        lines.append("|-----------|--------|---|-----|---------|-----------|" "------|----------|-------|")
         # Sort by absolute IC descending
         sorted_rows = sorted(
             rows,
@@ -360,33 +361,31 @@ def write_summary(
         lines.append("")
 
     # Interpretation guide
-    lines.extend([
-        "## Interpretation",
-        "",
-        "- **IC > 0**: higher signal value predicts higher forward returns "
-        "(after applying direction correction).",
-        "- **IC t > 2.0**: statistically significant at ~95% confidence "
-        "(bold in table).",
-        "- **Mean L/S**: top-decile minus bottom-decile equal-weight return "
-        "(positive = signal sorts well at tails).",
-        "- Signals with **negative IC and significant t-stat**: "
-        "actively hurting the ranking.",
-        "- Signals with **near-zero IC**: not contributing predictive power.",
-        "",
-        "### Signal Directions",
-        "- clinical_score, clinical_alpha_z, clinical_score_z: "
-        "higher = better clinical pipeline.",
-        "- catalyst_decay_w: higher = stronger upcoming catalyst.",
-        "- catalyst_days (inv): *inverted* — fewer days to catalyst = higher signal.",
-        "- sponsor_tier1_count, coinvest_score_z: "
-        "higher = more institutional support.",
-        "- alpha_60d: higher = better recent momentum vs XBI.",
-        "- drawdown: higher (less negative) = less beaten down.",
-        "- beta_xbi_60d: higher = more market-sensitive.",
-        "- rsi_14d: higher = more overbought.",
-        "- actionable_rank (inv): *inverted* — lower rank = better.",
-        "",
-    ])
+    lines.extend(
+        [
+            "## Interpretation",
+            "",
+            "- **IC > 0**: higher signal value predicts higher forward returns "
+            "(after applying direction correction).",
+            "- **IC t > 2.0**: statistically significant at ~95% confidence " "(bold in table).",
+            "- **Mean L/S**: top-decile minus bottom-decile equal-weight return "
+            "(positive = signal sorts well at tails).",
+            "- Signals with **negative IC and significant t-stat**: " "actively hurting the ranking.",
+            "- Signals with **near-zero IC**: not contributing predictive power.",
+            "",
+            "### Signal Directions",
+            "- clinical_score, clinical_alpha_z, clinical_score_z: " "higher = better clinical pipeline.",
+            "- catalyst_decay_w: higher = stronger upcoming catalyst.",
+            "- catalyst_days (inv): *inverted* — fewer days to catalyst = higher signal.",
+            "- sponsor_tier1_count, coinvest_score_z: " "higher = more institutional support.",
+            "- alpha_60d: higher = better recent momentum vs XBI.",
+            "- drawdown: higher (less negative) = less beaten down.",
+            "- beta_xbi_60d: higher = more market-sensitive.",
+            "- rsi_14d: higher = more overbought.",
+            "- actionable_rank (inv): *inverted* — lower rank = better.",
+            "",
+        ]
+    )
 
     with open(md_path, "w") as f:
         f.write("\n".join(lines))
@@ -400,53 +399,67 @@ def write_detail_csv(
     out_dir.mkdir(parents=True, exist_ok=True)
     path = out_dir / "by_date_signal.csv"
     fieldnames = [
-        "date", "trade_date", "signal_name", "component", "horizon",
-        "ic", "ls_spread", "n_obs",
-        "top_decile_ret", "bottom_decile_ret",
+        "date",
+        "trade_date",
+        "signal_name",
+        "component",
+        "horizon",
+        "ic",
+        "ls_spread",
+        "n_obs",
+        "top_decile_ret",
+        "bottom_decile_ret",
     ]
     with open(path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
         writer.writeheader()
         for r in results:
-            writer.writerow({
-                "date": r.date,
-                "trade_date": r.trade_date,
-                "signal_name": r.signal_name,
-                "component": r.component,
-                "horizon": r.horizon,
-                "ic": r.ic,
-                "ls_spread": r.ls_spread,
-                "n_obs": r.n_obs,
-                "top_decile_ret": r.top_decile_ret,
-                "bottom_decile_ret": r.bottom_decile_ret,
-            })
+            writer.writerow(
+                {
+                    "date": r.date,
+                    "trade_date": r.trade_date,
+                    "signal_name": r.signal_name,
+                    "component": r.component,
+                    "horizon": r.horizon,
+                    "ic": r.ic,
+                    "ls_spread": r.ls_spread,
+                    "n_obs": r.n_obs,
+                    "top_decile_ret": r.top_decile_ret,
+                    "bottom_decile_ret": r.bottom_decile_ret,
+                }
+            )
 
 
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Component-level IC attribution",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots_pit",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=PROJECT_ROOT / "production_data" / "price_history.csv",
     )
     parser.add_argument("--horizons", default="5,20,63")
     parser.add_argument(
-        "--anchor-mode", default="next_trading_day",
+        "--anchor-mode",
+        default="next_trading_day",
         choices=["exact", "next_trading_day", "prev_trading_day"],
     )
     parser.add_argument("--date-from", default=None)
     parser.add_argument("--date-to", default=None)
     parser.add_argument(
-        "--out-dir", type=Path,
+        "--out-dir",
+        type=Path,
         default=PROJECT_ROOT / "output" / "component_ic",
     )
     args = parser.parse_args()
@@ -486,10 +499,7 @@ def main() -> None:
             t_str = f"t={ic_t:+.2f}" if ic_t is not None else "t=   —"
             ls = row["mean_ls"]
             ls_str = f"L/S={ls:+.2%}" if ls is not None else "L/S=    —"
-            print(
-                f"    {sig}{row['component']:10s} {row['signal']:30s} "
-                f"IC={ic_str} {t_str}  {ls_str}"
-            )
+            print(f"    {sig}{row['component']:10s} {row['signal']:30s} " f"IC={ic_str} {t_str}  {ls_str}")
 
 
 if __name__ == "__main__":

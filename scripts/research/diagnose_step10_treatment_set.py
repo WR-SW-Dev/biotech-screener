@@ -8,6 +8,7 @@ meaningful A/B harness.
 Usage:
     python scripts/research/diagnose_step10_treatment_set.py
 """
+
 from __future__ import annotations
 
 import csv

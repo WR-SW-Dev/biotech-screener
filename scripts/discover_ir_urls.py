@@ -13,12 +13,12 @@ Usage:
     python3 scripts/discover_ir_urls.py --ticker ACAD
     python3 scripts/discover_ir_urls.py --skip-existing --max-tickers 50
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import sys
-import time
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from urllib.parse import urlparse
@@ -84,6 +84,7 @@ def _get_yfinance_info(ticker: str) -> Tuple[Optional[str], Optional[str]]:
     """
     try:
         import yfinance as yf
+
         info = yf.Ticker(ticker).info or {}
         website = info.get("website") or None
         ir_website = info.get("irWebsite") or None
@@ -212,7 +213,7 @@ def main():
         tickers_to_process.append(tk)
 
     if args.max_tickers > 0:
-        tickers_to_process = tickers_to_process[:args.max_tickers]
+        tickers_to_process = tickers_to_process[: args.max_tickers]
 
     print(f"Processing {len(tickers_to_process)} tickers (existing sources: {len(existing_sources)})...")
 
@@ -270,7 +271,7 @@ def main():
     total_rss = sum(1 for v in existing_sources.values() if v.get("pr_rss_url"))
 
     print(f"\n{'='*60}")
-    print(f"DISCOVERY SUMMARY")
+    print("DISCOVERY SUMMARY")
     print(f"{'='*60}")
     print(f"Tickers processed:  {processed}")
     print(f"No website found:   {no_website}")

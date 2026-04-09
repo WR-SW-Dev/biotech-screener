@@ -8,6 +8,7 @@ Usage:
     python3 scripts/backfill_aact_deltas.py
     python3 scripts/backfill_aact_deltas.py --inject-rankings
 """
+
 from __future__ import annotations
 
 import argparse

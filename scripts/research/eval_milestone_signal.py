@@ -7,6 +7,7 @@ on the dev subset, using the standard Spearman rank-IC framework.
 Usage:
     python3 scripts/research/eval_milestone_signal.py
 """
+
 from __future__ import annotations
 
 import csv

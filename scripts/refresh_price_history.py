@@ -8,6 +8,7 @@ Usage:
     python scripts/refresh_price_history.py
     python scripts/refresh_price_history.py --days-back 5
 """
+
 from __future__ import annotations
 
 import argparse

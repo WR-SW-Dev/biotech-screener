@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_biomarker_context.py
     python tools/enrich_biomarker_context.py --max-tickers 10
 """
+
 from __future__ import annotations
 
 import argparse

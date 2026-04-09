@@ -11,6 +11,7 @@ Usage:
     python tools/catalyst_resolution_tracker.py --as-of-date 2026-03-31
     python tools/catalyst_resolution_tracker.py --as-of-date 2026-03-31 --dry-run
 """
+
 from __future__ import annotations
 
 import argparse

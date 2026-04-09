@@ -6,6 +6,7 @@ RESEARCH ONLY — not for production use.
 Reranks raw snapshots with both baseline and candidate rulesets,
 then computes per-date top-K overlap (Jaccard) and name churn.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -14,7 +15,7 @@ import csv
 import json
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -25,8 +26,7 @@ from scripts.research.rerank_snapshots import rerank
 
 def _top_k_tickers(rows: List[Dict[str, str]], k: int) -> List[str]:
     """Return tickers with actionable_rank 1..k, in rank order."""
-    ranked = [(int(r["actionable_rank"]), r.get("ticker", ""))
-              for r in rows if r.get("actionable_rank", "").isdigit()]
+    ranked = [(int(r["actionable_rank"]), r.get("ticker", "")) for r in rows if r.get("actionable_rank", "").isdigit()]
     ranked.sort()
     return [t for _, t in ranked[:k]]
 
@@ -95,22 +95,29 @@ def main() -> None:
         description="A/B rerank overlap between baseline and candidate rulesets",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
     )
     parser.add_argument(
-        "--baseline-ruleset", type=Path, required=True,
+        "--baseline-ruleset",
+        type=Path,
+        required=True,
         help="Baseline DecisionRuleset JSON",
     )
     parser.add_argument(
-        "--candidate-ruleset", type=Path, required=True,
+        "--candidate-ruleset",
+        type=Path,
+        required=True,
         help="Candidate DecisionRuleset JSON",
     )
     parser.add_argument("--top-ks", type=str, default="20,60")
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--min-cols", type=int, default=50,
+        "--min-cols",
+        type=int,
+        default=50,
         help="Skip snapshots with fewer than this many columns",
     )
     parser.add_argument("--out", type=Path, default=None)
@@ -124,11 +131,13 @@ def main() -> None:
     print(f"Candidate: {candidate_rs.ruleset_id}")
 
     # Discover snapshot dates (only clean YYYY-MM-DD dirs)
-    snap_dates = sorted([
-        p.name for p in args.snapshot_root.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "rankings.csv").exists()
-    ])
+    snap_dates = sorted(
+        [
+            p.name
+            for p in args.snapshot_root.iterdir()
+            if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "rankings.csv").exists()
+        ]
+    )
 
     if args.date_from:
         snap_dates = [d for d in snap_dates if d >= args.date_from]
@@ -183,11 +192,16 @@ def main() -> None:
 
         if jaccards:
             import statistics
+
             print(f"Top-{k}:")
-            print(f"  Jaccard:  mean={statistics.mean(jaccards):.4f}  "
-                  f"min={min(jaccards):.4f}  median={statistics.median(jaccards):.4f}")
-            print(f"  Churn:    mean={statistics.mean(churns):.2f}  "
-                  f"max={max(churns)}  zero_churn_dates={zero_churn}/{len(churns)}")
+            print(
+                f"  Jaccard:  mean={statistics.mean(jaccards):.4f}  "
+                f"min={min(jaccards):.4f}  median={statistics.median(jaccards):.4f}"
+            )
+            print(
+                f"  Churn:    mean={statistics.mean(churns):.2f}  "
+                f"max={max(churns)}  zero_churn_dates={zero_churn}/{len(churns)}"
+            )
             print()
 
     # Collect all unique name changes across dates
@@ -223,6 +237,7 @@ def main() -> None:
             churns = [all_results[d][k]["churn"] for d in all_results]
             if jaccards:
                 import statistics
+
                 out_data["summary"][f"top_{k}"] = {
                     "mean_jaccard": round(statistics.mean(jaccards), 4),
                     "min_jaccard": round(min(jaccards), 4),

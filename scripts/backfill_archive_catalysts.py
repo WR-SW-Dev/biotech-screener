@@ -18,6 +18,7 @@ Usage:
     python scripts/backfill_archive_catalysts.py [--archives-dir PATH] \
         [--dry-run] [--dates YYYY-MM-DD,...] [--window-days 365]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,18 +41,26 @@ DEFAULT_ARCHIVE_DIR = PROJECT_ROOT / "data" / "archives"
 DEFAULT_WINDOW_DAYS = 365
 
 # Status whitelist for trial_cd and trial_active sources
-ACTIVE_STATUSES = frozenset({
-    "RECRUITING",
-    "ACTIVE_NOT_RECRUITING",
-    "NOT_YET_RECRUITING",
-    "ENROLLING_BY_INVITATION",
-})
+ACTIVE_STATUSES = frozenset(
+    {
+        "RECRUITING",
+        "ACTIVE_NOT_RECRUITING",
+        "NOT_YET_RECRUITING",
+        "ENROLLING_BY_INVITATION",
+    }
+)
 
 # Phase whitelist (matches enrich_archive_inputs.py)
-PHASE_WHITELIST = frozenset({
-    "PHASE2", "PHASE3", "PHASE 2", "PHASE 3",
-    "PHASE2/PHASE3", "PHASE 2/PHASE 3",
-})
+PHASE_WHITELIST = frozenset(
+    {
+        "PHASE2",
+        "PHASE3",
+        "PHASE 2",
+        "PHASE 3",
+        "PHASE2/PHASE3",
+        "PHASE 2/PHASE 3",
+    }
+)
 
 
 # ---------------------------------------------------------------------------
@@ -60,6 +69,7 @@ PHASE_WHITELIST = frozenset({
 @dataclass
 class BackfillResult:
     """Per-archive backfill summary."""
+
     date_str: str
     n_dev: int = 0
     n_existing: int = 0
@@ -307,23 +317,28 @@ def backfill_archive(
 # CLI
 # ---------------------------------------------------------------------------
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Backfill catalyst signals from trial milestones into archives."
-    )
+    parser = argparse.ArgumentParser(description="Backfill catalyst signals from trial milestones into archives.")
     parser.add_argument(
-        "--archives-dir", type=str, default=str(DEFAULT_ARCHIVE_DIR),
+        "--archives-dir",
+        type=str,
+        default=str(DEFAULT_ARCHIVE_DIR),
         help=f"Directory containing .tar.gz archives (default: {DEFAULT_ARCHIVE_DIR})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Compute coverage deltas without modifying archives",
     )
     parser.add_argument(
-        "--dates", type=str, default=None,
+        "--dates",
+        type=str,
+        default=None,
         help="Comma-separated list of dates to process (default: all)",
     )
     parser.add_argument(
-        "--window-days", type=int, default=DEFAULT_WINDOW_DAYS,
+        "--window-days",
+        type=int,
+        default=DEFAULT_WINDOW_DAYS,
         help=f"Forward look-ahead window in days (default: {DEFAULT_WINDOW_DAYS})",
     )
     args = parser.parse_args()

@@ -15,6 +15,7 @@ Usage:
     python scripts/research/sweep_thresholds.py --params tier_a_optionality_floor,rebalance_buffer_ranks
     python scripts/research/sweep_thresholds.py --top-k 60 --sample-dates 20
 """
+
 from __future__ import annotations
 
 import argparse

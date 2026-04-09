@@ -19,21 +19,24 @@ Usage:
     data/snapshots/2026-02-11__sec_cache_only \
     --json-out ablation_summary.json
 """
-import argparse, csv, json, sys
+
+import argparse
+import csv
+import json
+from collections import Counter
 from pathlib import Path
-from collections import Counter, defaultdict
 
 parser = argparse.ArgumentParser(description="Compare two ablation snapshots")
 parser.add_argument("dir_a", type=Path, help="Baseline snapshot (e.g. __sec_off)")
 parser.add_argument("dir_b", type=Path, help="Treatment snapshot (e.g. __sec_cache_only)")
-parser.add_argument("--json-out", type=Path, default=None,
-                    help="Write machine-readable summary JSON to this path")
+parser.add_argument("--json-out", type=Path, default=None, help="Write machine-readable summary JSON to this path")
 args = parser.parse_args()
 
 A_dir, B_dir = args.dir_a, args.dir_b
 
 GOOD_MODES = {"specific_days", "blended_window"}
-BAD_MODES  = {"no_upcoming", "missing", ""}
+BAD_MODES = {"no_upcoming", "missing", ""}
+
 
 def load_json(p: Path):
     try:
@@ -41,11 +44,14 @@ def load_json(p: Path):
     except FileNotFoundError:
         return None
 
+
 def norm(s):
     return (s or "").strip()
 
+
 def norm_lower(s):
     return norm(s).lower()
+
 
 def parse_int(s):
     s = norm(s).lower()
@@ -55,6 +61,7 @@ def parse_int(s):
         return int(float(s))
     except (ValueError, OverflowError):
         return None
+
 
 def read_rankings(p: Path):
     with p.open("r", encoding="utf-8", newline="") as f:
@@ -84,19 +91,21 @@ def read_rankings(p: Path):
             rows[t] = row
             order.append(t)
 
-        rank = {t: i+1 for i, t in enumerate(order)}
+        rank = {t: i + 1 for i, t in enumerate(order)}
         return order, rank, rows, ticker_col, want
+
 
 def top_overlap(listA, listB, N):
     setA, setB = set(listA[:N]), set(listB[:N])
     inter = setA & setB
     return len(inter), sorted(setB - setA), sorted(setA - setB)
 
+
 def diff_counts(name, a, b, top=25):
     a = a or {}
     b = b or {}
     keys = set(a) | set(b)
-    deltas = [(k, int(b.get(k,0)) - int(a.get(k,0)), int(a.get(k,0)), int(b.get(k,0))) for k in keys]
+    deltas = [(k, int(b.get(k, 0)) - int(a.get(k, 0)), int(a.get(k, 0)), int(b.get(k, 0))) for k in keys]
     deltas.sort(key=lambda x: (abs(x[1]), x[0]), reverse=True)
     print(f"\n{name} deltas (B - A):")
     any_change = False
@@ -107,6 +116,7 @@ def diff_counts(name, a, b, top=25):
     if not any_change:
         print("  (no changes)")
 
+
 # ---- Load source mix ----
 mixA = load_json(A_dir / "catalyst_source_mix.json")
 mixB = load_json(B_dir / "catalyst_source_mix.json")
@@ -116,7 +126,9 @@ print(f"A: {A_dir}\nB: {B_dir}")
 if mixA and mixB:
     print("\n== Catalyst source mix ==")
     print(f"total_events: {mixA.get('total_events')} -> {mixB.get('total_events')}")
-    print(f"unique_tickers_with_events: {mixA.get('unique_tickers_with_events')} -> {mixB.get('unique_tickers_with_events')}")
+    print(
+        f"unique_tickers_with_events: {mixA.get('unique_tickers_with_events')} -> {mixB.get('unique_tickers_with_events')}"
+    )
     diff_counts("by_source", mixA.get("by_source"), mixB.get("by_source"))
     diff_counts("by_confidence", mixA.get("by_confidence"), mixB.get("by_confidence"))
     diff_counts("by_date_precision", mixA.get("by_date_precision"), mixB.get("by_date_precision"))
@@ -130,8 +142,8 @@ listB, rankB, rowsB, tick_colB, wantB = read_rankings(B_dir / "rankings.csv")
 
 print("\n== Rankings columns detected ==")
 print(f"ticker column: A={tick_colA}, B={tick_colB}")
-print("A cols:", {k:v for k,v in wantA.items() if v})
-print("B cols:", {k:v for k,v in wantB.items() if v})
+print("A cols:", {k: v for k, v in wantA.items() if v})
+print("B cols:", {k: v for k, v in wantB.items() if v})
 
 # ---- Overlap & churn ----
 print("\n== Top overlap ==")
@@ -167,17 +179,16 @@ print("\n== Catalyst UX delta (from rankings.csv) ==")
 
 col_modeA = wantA.get("catalyst_mode")
 col_modeB = wantB.get("catalyst_mode")
-col_srcA  = wantA.get("catalyst_source")
-col_srcB  = wantB.get("catalyst_source")
-col_evtA  = wantA.get("catalyst_event_type")
-col_evtB  = wantB.get("catalyst_event_type")
+col_srcA = wantA.get("catalyst_source")
+col_srcB = wantB.get("catalyst_source")
+col_evtA = wantA.get("catalyst_event_type")
+col_evtB = wantB.get("catalyst_event_type")
 col_daysA = wantA.get("catalyst_days")
 col_daysB = wantB.get("catalyst_days")
-col_strA  = wantA.get("catalyst_strength")
-col_strB  = wantB.get("catalyst_strength")
+col_strA = wantA.get("catalyst_strength")
+col_strB = wantB.get("catalyst_strength")
 
-missing_cols = [k for k, v in {**wantA, **wantB}.items()
-                if not wantA.get(k) or not wantB.get(k)]
+missing_cols = [k for k, v in {**wantA, **wantB}.items() if not wantA.get(k) or not wantB.get(k)]
 if missing_cols:
     print(f"\nNOTE: columns missing in one/both snapshots (sections skipped): {missing_cols}")
 
@@ -233,18 +244,20 @@ for t in common:
 print(f"Tickers compared (intersection): {len(common)}")
 
 if col_modeA and col_modeB:
-    print("\nConversions (bad -> good): "
-          f"{len(good_from_bad)}  (no_upcoming/missing -> specific_days/blended_window)")
+    print(
+        "\nConversions (bad -> good): " f"{len(good_from_bad)}  (no_upcoming/missing -> specific_days/blended_window)"
+    )
     if good_from_bad:
         print("  First 25:", ", ".join(good_from_bad[:25]))
 
-    print("\nRegressions (good -> bad): "
-          f"{len(bad_from_good)}  (specific_days/blended_window -> no_upcoming/missing)")
+    print(
+        "\nRegressions (good -> bad): " f"{len(bad_from_good)}  (specific_days/blended_window -> no_upcoming/missing)"
+    )
     if bad_from_good:
         print("  First 25:", ", ".join(bad_from_good[:25]))
 
     print("\nMost common catalyst_mode transitions (top 12):")
-    for (a,b), c in mode_trans.most_common(12):
+    for (a, b), c in mode_trans.most_common(12):
         print(f"  {a or '(blank)'} -> {b or '(blank)'} : {c}")
 else:
     print("\n(catalyst_mode column missing — skipping conversions)")
@@ -253,33 +266,33 @@ if col_daysA and col_daysB:
     print(f"\nNearest catalyst days gained (missing -> present): {len(days_gained)}")
     if days_gained:
         days_gained.sort(key=lambda x: x[1])
-        print("  Closest 15:", ", ".join([f"{t}({d}d)" for t,d in days_gained[:15]]))
+        print("  Closest 15:", ", ".join([f"{t}({d}d)" for t, d in days_gained[:15]]))
 
     print(f"\nNearest catalyst days lost (present -> missing): {len(days_lost)}")
     if days_lost:
         days_lost.sort(key=lambda x: x[1])
-        print("  First 15:", ", ".join([f"{t}({d}d)" for t,d in days_lost[:15]]))
+        print("  First 15:", ", ".join([f"{t}({d}d)" for t, d in days_lost[:15]]))
 else:
     print("\n(catalyst_days column missing — skipping days gained/lost)")
 
 if col_srcA and col_srcB:
     print(f"\nCatalyst source changed (catalyst_source): {len(src_changed)}")
     if src_changed:
-        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t,a,b in src_changed[:20]]))
+        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t, a, b in src_changed[:20]]))
 else:
     print("\n(catalyst_source column missing — skipping provenance shifts)")
 
 if col_evtA and col_evtB:
     print(f"\nCatalyst event type changed (catalyst_event_type): {len(evt_changed)}")
     if evt_changed:
-        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t,a,b in evt_changed[:20]]))
+        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t, a, b in evt_changed[:20]]))
 else:
     print("\n(catalyst_event_type column missing — skipping event type shifts)")
 
 if col_strA and col_strB:
     print(f"\nCatalyst strength changed (catalyst_strength): {len(strength_changed)}")
     if strength_changed:
-        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t,a,b in strength_changed[:20]]))
+        print("  First 20:", ", ".join([f"{t}:{a}->{b}" for t, a, b in strength_changed[:20]]))
 else:
     print("\n(catalyst_strength column missing — skipping strength shifts)")
 

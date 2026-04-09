@@ -11,6 +11,7 @@ Output:
 Usage:
     python scripts/research/catalyst_history_diagnostics.py
 """
+
 from __future__ import annotations
 
 import argparse

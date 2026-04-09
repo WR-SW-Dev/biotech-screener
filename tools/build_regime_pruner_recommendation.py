@@ -13,6 +13,7 @@ This is the committee-ready ops pack: one artifact with the daily call.
 Usage:
     python tools/build_regime_pruner_recommendation.py --as-of-date 2026-04-02
 """
+
 from __future__ import annotations
 
 import csv

@@ -20,6 +20,7 @@ Bundles tested:
 Usage:
     python3 scripts/research/ablation_coinvest_audit.py
 """
+
 from __future__ import annotations
 
 import csv

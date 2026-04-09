@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ConsistencyIssue:
     """Single consistency issue."""
+
     severity: str  # "error", "warning", "info"
     category: str  # "missing", "orphan", "duplicate", "stale"
     message: str
@@ -37,6 +38,7 @@ class ConsistencyIssue:
 @dataclass
 class ConsistencyReport:
     """Result of consistency validation."""
+
     valid: bool
     issues: List[ConsistencyIssue] = field(default_factory=list)
     stats: Dict[str, Any] = field(default_factory=dict)
@@ -56,10 +58,7 @@ class ConsistencyReport:
         return f"Consistency check: {errors} errors, {warnings} warnings"
 
 
-def extract_tickers(
-    records: List[Dict[str, Any]],
-    ticker_field: str = "ticker"
-) -> Set[str]:
+def extract_tickers(records: List[Dict[str, Any]], ticker_field: str = "ticker") -> Set[str]:
     """
     Extract unique tickers from records.
 
@@ -78,10 +77,7 @@ def extract_tickers(
     return tickers
 
 
-def find_duplicates(
-    records: List[Dict[str, Any]],
-    key_fields: List[str]
-) -> Dict[str, List[int]]:
+def find_duplicates(records: List[Dict[str, Any]], key_fields: List[str]) -> Dict[str, List[int]]:
     """
     Find duplicate records by key fields.
 
@@ -107,9 +103,7 @@ def find_duplicates(
 
 
 def check_coverage(
-    universe_tickers: Set[str],
-    data_tickers: Set[str],
-    data_name: str
+    universe_tickers: Set[str], data_tickers: Set[str], data_name: str
 ) -> Tuple[Set[str], Set[str], float]:
     """
     Check data coverage against universe.
@@ -164,13 +158,15 @@ def validate_data_consistency(
     universe_dups = find_duplicates(universe, ["ticker"])
     if universe_dups:
         dup_tickers = [k.split("|")[0] for k in universe_dups.keys()]
-        issues.append(ConsistencyIssue(
-            severity="error",
-            category="duplicate",
-            message=f"Universe contains {len(universe_dups)} duplicate tickers",
-            affected_tickers=dup_tickers,
-            details={"duplicates": universe_dups},
-        ))
+        issues.append(
+            ConsistencyIssue(
+                severity="error",
+                category="duplicate",
+                message=f"Universe contains {len(universe_dups)} duplicate tickers",
+                affected_tickers=dup_tickers,
+                details={"duplicates": universe_dups},
+            )
+        )
 
     # Check financial records
     if financial_records is not None:
@@ -183,31 +179,37 @@ def validate_data_consistency(
 
         if missing:
             severity = "error" if coverage < min_coverage_pct else "warning"
-            issues.append(ConsistencyIssue(
-                severity=severity,
-                category="missing",
-                message=f"Financial data missing for {len(missing)} universe members ({coverage:.1f}% coverage)",
-                affected_tickers=sorted(missing)[:20],
-                details={"coverage_pct": coverage},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity=severity,
+                    category="missing",
+                    message=f"Financial data missing for {len(missing)} universe members ({coverage:.1f}% coverage)",
+                    affected_tickers=sorted(missing)[:20],
+                    details={"coverage_pct": coverage},
+                )
+            )
 
         if orphans:
-            issues.append(ConsistencyIssue(
-                severity="warning",
-                category="orphan",
-                message=f"Financial data exists for {len(orphans)} non-universe tickers",
-                affected_tickers=sorted(orphans)[:20],
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity="warning",
+                    category="orphan",
+                    message=f"Financial data exists for {len(orphans)} non-universe tickers",
+                    affected_tickers=sorted(orphans)[:20],
+                )
+            )
 
         # Check for duplicate financial records
         fin_dups = find_duplicates(financial_records, ["ticker"])
         if fin_dups:
-            issues.append(ConsistencyIssue(
-                severity="warning",
-                category="duplicate",
-                message=f"Financial records contain {len(fin_dups)} duplicate tickers",
-                affected_tickers=[k.split("|")[0] for k in fin_dups.keys()],
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity="warning",
+                    category="duplicate",
+                    message=f"Financial records contain {len(fin_dups)} duplicate tickers",
+                    affected_tickers=[k.split("|")[0] for k in fin_dups.keys()],
+                )
+            )
 
     # Check trial records
     if trial_records is not None:
@@ -225,24 +227,28 @@ def validate_data_consistency(
 
         # Trials don't require full coverage (not all companies have trials)
         if coverage < 50:  # Less strict threshold for trials
-            issues.append(ConsistencyIssue(
-                severity="info",
-                category="missing",
-                message=f"Trial data coverage is {coverage:.1f}% (may be expected)",
-                affected_tickers=[],
-                details={"coverage_pct": coverage},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity="info",
+                    category="missing",
+                    message=f"Trial data coverage is {coverage:.1f}% (may be expected)",
+                    affected_tickers=[],
+                    details={"coverage_pct": coverage},
+                )
+            )
 
         # Check for duplicate trial records by NCT ID
         trial_dups = find_duplicates(trial_records, ["nct_id"])
         if trial_dups:
-            issues.append(ConsistencyIssue(
-                severity="warning",
-                category="duplicate",
-                message=f"Trial records contain {len(trial_dups)} duplicate NCT IDs",
-                affected_tickers=[],
-                details={"duplicate_count": len(trial_dups)},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity="warning",
+                    category="duplicate",
+                    message=f"Trial records contain {len(trial_dups)} duplicate NCT IDs",
+                    affected_tickers=[],
+                    details={"duplicate_count": len(trial_dups)},
+                )
+            )
 
     # Check market data
     if market_data is not None:
@@ -254,13 +260,15 @@ def validate_data_consistency(
 
         if missing:
             severity = "error" if coverage < min_coverage_pct else "warning"
-            issues.append(ConsistencyIssue(
-                severity=severity,
-                category="missing",
-                message=f"Market data missing for {len(missing)} universe members ({coverage:.1f}% coverage)",
-                affected_tickers=sorted(missing)[:20],
-                details={"coverage_pct": coverage},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity=severity,
+                    category="missing",
+                    message=f"Market data missing for {len(missing)} universe members ({coverage:.1f}% coverage)",
+                    affected_tickers=sorted(missing)[:20],
+                    details={"coverage_pct": coverage},
+                )
+            )
 
     # Check short interest
     if short_interest is not None:
@@ -271,13 +279,15 @@ def validate_data_consistency(
 
         # Short interest data is optional, so just info-level
         if coverage < 50:
-            issues.append(ConsistencyIssue(
-                severity="info",
-                category="missing",
-                message=f"Short interest coverage is {coverage:.1f}%",
-                affected_tickers=[],
-                details={"coverage_pct": coverage},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity="info",
+                    category="missing",
+                    message=f"Short interest coverage is {coverage:.1f}%",
+                    affected_tickers=[],
+                    details={"coverage_pct": coverage},
+                )
+            )
 
     # Determine overall validity
     has_errors = any(i.severity == "error" for i in issues)
@@ -318,13 +328,15 @@ def validate_record_completeness(
         if tickers:
             pct = len(tickers) / len(records) * 100 if records else 0
             severity = "error" if pct > 50 else "warning" if pct > 10 else "info"
-            issues.append(ConsistencyIssue(
-                severity=severity,
-                category="missing",
-                message=f"{data_name} missing '{field}' for {len(tickers)} records ({pct:.1f}%)",
-                affected_tickers=tickers[:10],
-                details={"missing_pct": pct},
-            ))
+            issues.append(
+                ConsistencyIssue(
+                    severity=severity,
+                    category="missing",
+                    message=f"{data_name} missing '{field}' for {len(tickers)} records ({pct:.1f}%)",
+                    affected_tickers=tickers[:10],
+                    details={"missing_pct": pct},
+                )
+            )
 
     return ConsistencyReport(
         valid=not any(i.severity == "error" for i in issues),

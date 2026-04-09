@@ -20,6 +20,7 @@ Output:
 Usage:
     python3 scripts/research/timing_hazard_oos_validation.py
 """
+
 from __future__ import annotations
 
 import csv

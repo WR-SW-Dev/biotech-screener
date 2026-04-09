@@ -21,6 +21,7 @@ Usage:
         --ruleset production_data/decision_rulesets/v1.11.0_b91_clinical_quality_w05_candidate.json \
         --start 2025-06-01
 """
+
 from __future__ import annotations
 
 import argparse

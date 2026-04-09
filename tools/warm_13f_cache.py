@@ -16,6 +16,7 @@ Output structure:
         managers/{CIK}.json             # parsed holdings per manager
         raw/{CIK}/{accession}.xml       # raw info table XML
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,10 +27,10 @@ import sys
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 # ---------------------------------------------------------------------------
 # Repo root — same pattern as run_daily_production.py
@@ -37,8 +38,8 @@ from typing import Any, Dict, List, Optional
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from sec_13f.edgar_13f import SEC13FFetcher, Filing13F, Holding
-from elite_managers import get_elite_managers, get_all_managers
+from elite_managers import get_all_managers, get_elite_managers
+from sec_13f.edgar_13f import Filing13F, SEC13FFetcher
 
 logging.basicConfig(
     level=logging.INFO,
@@ -57,9 +58,11 @@ FILINGS_LOOKBACK_N = 8  # ~2-year lookback for get_recent_filings
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PITFilingSelection:
     """Result of PIT filing selection for one manager."""
+
     manager_cik: str
     filing: Optional[Filing13F]
     period_of_report: Optional[str]
@@ -72,6 +75,7 @@ class PITFilingSelection:
 # ---------------------------------------------------------------------------
 # Rate limiter — thread-safe token bucket
 # ---------------------------------------------------------------------------
+
 
 class RateLimiter:
     """Thread-safe token-bucket rate limiter.
@@ -97,6 +101,7 @@ class RateLimiter:
 # ---------------------------------------------------------------------------
 # PIT selection — pure logic, no I/O
 # ---------------------------------------------------------------------------
+
 
 def select_pit_filing(
     filings: list[Filing13F],
@@ -160,6 +165,7 @@ def select_pit_filing(
 # ---------------------------------------------------------------------------
 # Per-manager warm
 # ---------------------------------------------------------------------------
+
 
 def warm_one_manager(
     manager: Dict[str, Any],
@@ -248,9 +254,7 @@ def warm_one_manager(
         result["accession"] = selection.accession
         result["holdings_count"] = len(holdings)
         result["manager_json_path"] = f"managers/{cik_padded}.json"
-        result["raw_xml_path"] = (
-            f"raw/{cik_padded}/{filing.accession_number}.xml" if has_raw_xml else ""
-        )
+        result["raw_xml_path"] = f"raw/{cik_padded}/{filing.accession_number}.xml" if has_raw_xml else ""
 
         logger.info(
             f"  {name} (CIK {cik}): {len(holdings)} holdings, "
@@ -268,6 +272,7 @@ def warm_one_manager(
 # ---------------------------------------------------------------------------
 # Index builder — pure logic
 # ---------------------------------------------------------------------------
+
 
 def build_index(
     as_of_date: date,
@@ -323,6 +328,7 @@ def build_index(
 # Orchestrator
 # ---------------------------------------------------------------------------
 
+
 def warm_13f_cache(
     as_of_date: date,
     out_dir: Path,
@@ -343,8 +349,7 @@ def warm_13f_cache(
 
     total = len(managers)
     logger.info(
-        f"Warming 13F cache: {total} managers, as_of={as_of_date}, "
-        f"elite_only={elite_only}, workers={max_workers}"
+        f"Warming 13F cache: {total} managers, as_of={as_of_date}, " f"elite_only={elite_only}, workers={max_workers}"
     )
 
     # Shared resources
@@ -361,7 +366,12 @@ def warm_13f_cache(
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         futures = {
             executor.submit(
-                warm_one_manager, mgr, as_of_date, out_dir, fetcher, rate_limiter,
+                warm_one_manager,
+                mgr,
+                as_of_date,
+                out_dir,
+                fetcher,
+                rate_limiter,
             ): mgr
             for mgr in managers
         }
@@ -373,12 +383,14 @@ def warm_13f_cache(
             except Exception as e:
                 mgr = futures[future]
                 logger.error(f"  {mgr.get('name', '?')}: unhandled {e}")
-                results.append({
-                    "manager_cik": mgr.get("cik", "").lstrip("0").zfill(10),
-                    "manager_name": mgr.get("name", ""),
-                    "status": "error",
-                    "error": str(e),
-                })
+                results.append(
+                    {
+                        "manager_cik": mgr.get("cik", "").lstrip("0").zfill(10),
+                        "manager_name": mgr.get("name", ""),
+                        "status": "error",
+                        "error": str(e),
+                    }
+                )
 
     # Sort results by CIK for determinism
     results.sort(key=lambda r: r["manager_cik"])
@@ -390,10 +402,7 @@ def warm_13f_cache(
         json.dump(index, f, indent=2)
 
     ok_count = index["managers_with_filing"]
-    logger.info(
-        f"13F cache complete: {ok_count}/{total} managers with filings, "
-        f"coverage={index['coverage_pct']}%"
-    )
+    logger.info(f"13F cache complete: {ok_count}/{total} managers with filings, " f"coverage={index['coverage_pct']}%")
 
     return index
 
@@ -403,14 +412,25 @@ def warm_13f_cache(
 # ---------------------------------------------------------------------------
 
 _REQUIRED_TOP_LEVEL = {
-    "schema_version", "cache_type", "as_of_date", "created_at",
-    "elite_only", "total_managers", "managers_with_filing",
-    "coverage_pct", "managers",
+    "schema_version",
+    "cache_type",
+    "as_of_date",
+    "created_at",
+    "elite_only",
+    "total_managers",
+    "managers_with_filing",
+    "coverage_pct",
+    "managers",
 }
 
 _SELECTED_REQUIRED = {
-    "period_of_report", "filed_at", "form_type", "accession",
-    "holdings_count", "manager_json_path", "raw_xml_path",
+    "period_of_report",
+    "filed_at",
+    "form_type",
+    "accession",
+    "holdings_count",
+    "manager_json_path",
+    "raw_xml_path",
 }
 
 
@@ -473,10 +493,7 @@ def validate_sec_13f_index_schema(
     if tm > 0:
         expected_cov = mwf / tm * 100
         if abs(cov - expected_cov) > 0.2:
-            return False, (
-                f"coverage_pct inconsistent: {cov} vs expected "
-                f"{expected_cov:.1f} ({mwf}/{tm})"
-            )
+            return False, (f"coverage_pct inconsistent: {cov} vs expected " f"{expected_cov:.1f} ({mwf}/{tm})")
 
     # --- managers list ---
     managers = index["managers"]
@@ -505,8 +522,7 @@ def validate_sec_13f_index_schema(
             rr = m.get("rejection_reason", "")
             if not rr:
                 return False, (
-                    f"managers[{i}] (cik={m.get('manager_cik', '?')}) "
-                    f"selected=false but rejection_reason is empty"
+                    f"managers[{i}] (cik={m.get('manager_cik', '?')}) " "selected=false but rejection_reason is empty"
                 )
 
     # --- determinism: managers sorted by manager_cik ---
@@ -520,6 +536,7 @@ def validate_sec_13f_index_schema(
 # ---------------------------------------------------------------------------
 # Gate function (for run_daily_production.py)
 # ---------------------------------------------------------------------------
+
 
 def check_13f_cache_health(
     cache_dir: Path,
@@ -554,7 +571,8 @@ def check_13f_cache_health(
 
     # Schema validation
     ok, schema_detail = validate_sec_13f_index_schema(
-        index, expected_as_of_date=as_of_date,
+        index,
+        expected_as_of_date=as_of_date,
     )
     if not ok:
         return {
@@ -600,6 +618,7 @@ def check_13f_cache_health(
 # ---------------------------------------------------------------------------
 # Date generation (for batch/cadence mode)
 # ---------------------------------------------------------------------------
+
 
 def generate_quarter_end_dates(date_from: date, date_to: date) -> list:
     """Return ascending list of quarter-end dates within [date_from, date_to]."""
@@ -654,39 +673,54 @@ def main():
         description="Build PIT-safe 13F cache from SEC EDGAR filings.",
     )
     parser.add_argument(
-        "--as-of-date", default=None,
+        "--as-of-date",
+        default=None,
         help="PIT cutoff date (YYYY-MM-DD). Only filings filed on or before this date are included.",
     )
     parser.add_argument(
-        "--out", type=Path, default=None,
+        "--out",
+        type=Path,
+        default=None,
         help="Output directory (default: data/caches/sec_13f/PIT/{as_of_date})",
     )
     parser.add_argument(
-        "--elite-only", action="store_true", default=False,
+        "--elite-only",
+        action="store_true",
+        default=False,
         help="Only warm Elite Core (Tier 1) managers (default: all managers)",
     )
     parser.add_argument(
-        "--max-managers", type=int, default=None,
+        "--max-managers",
+        type=int,
+        default=None,
         help="Limit number of managers (for testing)",
     )
     parser.add_argument(
-        "--max-workers", type=int, default=4,
+        "--max-workers",
+        type=int,
+        default=4,
         help="Thread pool size (default: 4)",
     )
     parser.add_argument(
-        "--fetcher-cache-dir", type=Path, default=None,
+        "--fetcher-cache-dir",
+        type=Path,
+        default=None,
         help="SEC13FFetcher XML cache directory (default: data/13f_cache)",
     )
     parser.add_argument(
-        "--cadence", choices=["quarterly", "monthly"], default="quarterly",
+        "--cadence",
+        choices=["quarterly", "monthly"],
+        default="quarterly",
         help="Date cadence for batch mode (default: quarterly)",
     )
     parser.add_argument(
-        "--date-from", default=None,
+        "--date-from",
+        default=None,
         help="Start date for batch mode (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--date-to", default=None,
+        "--date-to",
+        default=None,
         help="End date for batch mode (YYYY-MM-DD)",
     )
 

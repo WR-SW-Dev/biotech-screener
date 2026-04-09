@@ -24,6 +24,7 @@ Release naming:
 
 The workflow's "Hydrate inputs" step downloads these bundles.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -60,10 +61,7 @@ def validate_market_data(data_dir: Path, as_of_date: str) -> tuple[bool, str]:
         return False, "market_data.json is empty or not a list"
 
     # Check collected_at freshness
-    collected_dates = [
-        r.get("collected_at") for r in records
-        if isinstance(r, dict) and r.get("collected_at")
-    ]
+    collected_dates = [r.get("collected_at") for r in records if isinstance(r, dict) and r.get("collected_at")]
     if not collected_dates:
         return False, "No collected_at field found in market_data.json"
 
@@ -79,17 +77,14 @@ def validate_market_data(data_dir: Path, as_of_date: str) -> tuple[bool, str]:
         return False, (
             f"market_data.json is {age_days}d stale "
             f"(collected={collected_at}, as_of={as_of_date}). "
-            f"Run collect_market_data.py first."
+            "Run collect_market_data.py first."
         )
 
     # Count records
     n_records = len(records)
     n_with_price = sum(1 for r in records if isinstance(r, dict) and r.get("price"))
 
-    return True, (
-        f"OK: {n_records} records, {n_with_price} with price, "
-        f"collected={collected_at}, age={age_days}d"
-    )
+    return True, (f"OK: {n_records} records, {n_with_price} with price, " f"collected={collected_at}, age={age_days}d")
 
 
 def build_tarball(data_dir: Path, as_of_date: str, output_path: Path) -> Path:
@@ -111,7 +106,8 @@ def gh_release_exists(tag: str) -> bool:
     """Check if a GitHub release with the given tag exists."""
     result = subprocess.run(
         ["gh", "release", "view", tag],
-        capture_output=True, text=True,
+        capture_output=True,
+        text=True,
     )
     return result.returncode == 0
 
@@ -130,14 +126,20 @@ def publish_release(
         print(f"  Release {tag} already exists — deleting and recreating")
         subprocess.run(
             ["gh", "release", "delete", tag, "--yes", "--cleanup-tag"],
-            capture_output=True, text=True,
+            capture_output=True,
+            text=True,
         )
 
     cmd = [
-        "gh", "release", "create", tag,
+        "gh",
+        "release",
+        "create",
+        tag,
         str(tarball),
-        "--title", title,
-        "--notes", f"Phase2 inputs bundle for {as_of_date}\n\nContents: {', '.join(BUNDLE_FILES)}",
+        "--title",
+        title,
+        "--notes",
+        f"Phase2 inputs bundle for {as_of_date}\n\nContents: {', '.join(BUNDLE_FILES)}",
     ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -153,19 +155,26 @@ def publish_release(
 
         # Copy tarball with the latest name
         import shutil
+
         shutil.copy2(str(tarball), str(latest_tarball))
 
         if gh_release_exists(latest_tag):
             subprocess.run(
                 ["gh", "release", "delete", latest_tag, "--yes", "--cleanup-tag"],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
 
         cmd = [
-            "gh", "release", "create", latest_tag,
+            "gh",
+            "release",
+            "create",
+            latest_tag,
             str(latest_tarball),
-            "--title", f"Phase2 inputs (latest: {as_of_date})",
-            "--notes", f"Floating tag — always points to the most recent inputs bundle.\n\nCurrently: {as_of_date}",
+            "--title",
+            f"Phase2 inputs (latest: {as_of_date})",
+            "--notes",
+            f"Floating tag — always points to the most recent inputs bundle.\n\nCurrently: {as_of_date}",
         ]
         result = subprocess.run(cmd, capture_output=True, text=True)
         if result.returncode != 0:
@@ -181,10 +190,7 @@ def detect_date(data_dir: Path) -> str:
         try:
             with open(mkt_path) as f:
                 records = json.load(f)
-            collected_dates = [
-                r.get("collected_at") for r in records
-                if isinstance(r, dict) and r.get("collected_at")
-            ]
+            collected_dates = [r.get("collected_at") for r in records if isinstance(r, dict) and r.get("collected_at")]
             if collected_dates:
                 return max(collected_dates)
         except (json.JSONDecodeError, OSError):
@@ -201,15 +207,19 @@ def main():
         help="Bundle date (YYYY-MM-DD). Auto-detected from market_data.json if omitted.",
     )
     parser.add_argument(
-        "--data-dir", type=Path, default=DATA_DIR,
+        "--data-dir",
+        type=Path,
+        default=DATA_DIR,
         help="Path to production_data/",
     )
     parser.add_argument(
-        "--update-latest", action="store_true",
+        "--update-latest",
+        action="store_true",
         help="Also update the inputs-latest floating release",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Build tarball but don't publish",
     )
     args = parser.parse_args()
@@ -237,14 +247,15 @@ def main():
         build_tarball(data_dir, as_of_date, tarball_path)
 
         if args.dry_run:
-            print(f"\nDRY RUN — tarball built but not published")
+            print("\nDRY RUN — tarball built but not published")
             print(f"  {tarball_path}")
             return
 
         # Publish
         print("\nPublishing to GitHub ...")
         publish_release(
-            tarball_path, as_of_date,
+            tarball_path,
+            as_of_date,
             update_latest=args.update_latest,
         )
 

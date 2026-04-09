@@ -9,6 +9,7 @@ Usage:
     python3 scripts/research/process_herald_crt_candidates.py
     python3 scripts/research/process_herald_crt_candidates.py --dry-run
 """
+
 from __future__ import annotations
 
 import hashlib

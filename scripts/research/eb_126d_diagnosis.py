@@ -11,6 +11,7 @@ RESEARCH ONLY — not for production.
 
 Output: markdown summary printed to stdout.
 """
+
 from __future__ import annotations
 
 import csv
@@ -24,8 +25,8 @@ from typing import Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-E_ROOT   = PROJECT_ROOT / "data" / "snapshots_reranked"
-EB_ROOT  = PROJECT_ROOT / "data" / "snapshots_reranked_eb_combined"
+E_ROOT = PROJECT_ROOT / "data" / "snapshots_reranked"
+EB_ROOT = PROJECT_ROOT / "data" / "snapshots_reranked_eb_combined"
 PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
 
 K_TOP = 20
@@ -36,6 +37,7 @@ HORIZONS = [63, 84, 126]
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def safe_float(v, default=float("nan")) -> float:
     try:
@@ -60,6 +62,7 @@ def sorted_by_rank(rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
             return int(v)
         except (TypeError, ValueError):
             return 99999
+
     return sorted(rows, key=_key)
 
 
@@ -100,6 +103,7 @@ def pearson(x: List[float], y: List[float]) -> float:
 # ---------------------------------------------------------------------------
 # Price index
 # ---------------------------------------------------------------------------
+
 
 def build_price_index() -> Dict[str, Dict[str, float]]:
     """Returns {ticker: {date: close_price}}."""
@@ -143,11 +147,11 @@ def forward_return(
     if idx0 < 0:
         return None
     entry_idx = idx0 + 1
-    exit_idx  = idx0 + horizon
+    exit_idx = idx0 + horizon
     if exit_idx >= len(trade_dates):
         return None
     entry_date = trade_dates[entry_idx]
-    exit_date  = trade_dates[exit_idx]
+    exit_date = trade_dates[exit_idx]
     p0 = price_idx.get(ticker, {}).get(entry_date)
     p1 = price_idx.get(ticker, {}).get(exit_date)
     if p0 and p1 and p0 > 0:
@@ -159,16 +163,17 @@ def forward_return(
 # Snapshot discovery
 # ---------------------------------------------------------------------------
 
+
 def snapshot_dates(root: Path) -> List[str]:
-    return sorted([
-        p.name for p in root.iterdir()
-        if p.is_dir() and len(p.name) == 10 and (p / "rankings.csv").exists()
-    ])
+    return sorted(
+        [p.name for p in root.iterdir() if p.is_dir() and len(p.name) == 10 and (p / "rankings.csv").exists()]
+    )
 
 
 # ---------------------------------------------------------------------------
 # Part 1: Movers analysis
 # ---------------------------------------------------------------------------
+
 
 def movers_analysis(
     price_idx: Dict[str, Dict[str, float]],
@@ -188,7 +193,7 @@ def movers_analysis(
 
     # Per-horizon: spread contribution tracking
     # spread = mean(top-K returns) - mean(bottom-K returns)
-    spread_e:  Dict[int, List[float]] = {h: [] for h in HORIZONS}
+    spread_e: Dict[int, List[float]] = {h: [] for h in HORIZONS}
     spread_eb: Dict[int, List[float]] = {h: [] for h in HORIZONS}
 
     # Movers: tickers that enter EB bottom-K but not E bottom-K
@@ -205,7 +210,7 @@ def movers_analysis(
 
         e_tickers = [r["ticker"] for r in e_rows]
         eb_tickers = [r["ticker"] for r in eb_rows]
-        n = max(len(e_tickers), len(eb_tickers))
+        max(len(e_tickers), len(eb_tickers))
 
         e_bottom = set(e_tickers[-K_BOT:])
         eb_bottom = set(eb_tickers[-K_BOT:])
@@ -229,37 +234,27 @@ def movers_analysis(
             delta_rank = eb_rank - e_rank  # positive = moved down (worse)
             ret126 = forward_return(tk, d, 126, price_idx, trade_dates)
             row_data = e_by_ticker.get(tk, {})
-            movers_into_bottom.append({
-                "ticker": tk,
-                "date": d,
-                "e_rank": e_rank,
-                "eb_rank": eb_rank,
-                "delta_rank": delta_rank,
-                "return_126d": ret126,
-                "optionality_pct": safe_float(row_data.get("clinical_optionality_pct_dev")),
-                "clinical_alpha_z": safe_float(row_data.get("clinical_alpha_z")),
-            })
+            movers_into_bottom.append(
+                {
+                    "ticker": tk,
+                    "date": d,
+                    "e_rank": e_rank,
+                    "eb_rank": eb_rank,
+                    "delta_rank": delta_rank,
+                    "return_126d": ret126,
+                    "optionality_pct": safe_float(row_data.get("clinical_optionality_pct_dev")),
+                    "clinical_alpha_z": safe_float(row_data.get("clinical_alpha_z")),
+                }
+            )
 
         # Spread computation per horizon
         for h in HORIZONS:
-            e_top_rets = [
-                forward_return(tk, d, h, price_idx, trade_dates)
-                for tk in e_tickers[:K_TOP]
-            ]
-            e_bot_rets = [
-                forward_return(tk, d, h, price_idx, trade_dates)
-                for tk in e_tickers[-K_BOT:]
-            ]
-            eb_top_rets = [
-                forward_return(tk, d, h, price_idx, trade_dates)
-                for tk in eb_tickers[:K_TOP]
-            ]
-            eb_bot_rets = [
-                forward_return(tk, d, h, price_idx, trade_dates)
-                for tk in eb_tickers[-K_BOT:]
-            ]
-            e_top  = [r for r in e_top_rets if r is not None]
-            e_bot  = [r for r in e_bot_rets if r is not None]
+            e_top_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in e_tickers[:K_TOP]]
+            e_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in e_tickers[-K_BOT:]]
+            eb_top_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in eb_tickers[:K_TOP]]
+            eb_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in eb_tickers[-K_BOT:]]
+            e_top = [r for r in e_top_rets if r is not None]
+            e_bot = [r for r in e_bot_rets if r is not None]
             eb_top = [r for r in eb_top_rets if r is not None]
             eb_bot = [r for r in eb_bot_rets if r is not None]
             if e_top and e_bot:
@@ -283,6 +278,7 @@ def movers_analysis(
 # Part 2: Residualized clinical tilt ablation
 # ---------------------------------------------------------------------------
 
+
 def residualized_ablation(
     price_idx: Dict[str, Dict[str, float]],
     trade_dates: List[str],
@@ -298,7 +294,7 @@ def residualized_ablation(
 
     CLINICAL_W = 0.3  # same as calendar_alpha_sort_weight in the active ruleset
 
-    spread_e:     Dict[int, List[float]] = {h: [] for h in HORIZONS}
+    spread_e: Dict[int, List[float]] = {h: [] for h in HORIZONS}
     spread_resid: Dict[int, List[float]] = {h: [] for h in HORIZONS}
 
     for d in common:
@@ -312,8 +308,7 @@ def residualized_ablation(
         cazs = [safe_float(r.get("clinical_alpha_z")) for r in e_rows]
 
         # OLS: caz ~ opt on rows with both valid
-        valid = [(o, c) for o, c in zip(opts, cazs)
-                 if not (math.isnan(o) or math.isnan(c))]
+        valid = [(o, c) for o, c in zip(opts, cazs) if not (math.isnan(o) or math.isnan(c))]
         if len(valid) < 5:
             continue
         vx, vy = zip(*valid)
@@ -351,30 +346,20 @@ def residualized_ablation(
                 return 0.0
             return max(lo, min(hi, v))
 
-        e_keys = [
-            cr - CLINICAL_W * clamp(cv2, 0.0, 2.0)
-            for cr, cv2 in zip(composite_ranks, cal_v2_z)
-        ]
-        resid_keys = [
-            cr - CLINICAL_W * clamp(rz, 0.0, 2.0)
-            for cr, rz in zip(composite_ranks, resid_z)
-        ]
+        e_keys = [cr - CLINICAL_W * clamp(cv2, 0.0, 2.0) for cr, cv2 in zip(composite_ranks, cal_v2_z)]
+        resid_keys = [cr - CLINICAL_W * clamp(rz, 0.0, 2.0) for cr, rz in zip(composite_ranks, resid_z)]
 
-        e_order    = sorted(range(len(e_rows)), key=lambda i: e_keys[i])
+        e_order = sorted(range(len(e_rows)), key=lambda i: e_keys[i])
         resid_order = sorted(range(len(e_rows)), key=lambda i: resid_keys[i])
 
-        e_tickers_sorted     = [tickers[i] for i in e_order]
+        e_tickers_sorted = [tickers[i] for i in e_order]
         resid_tickers_sorted = [tickers[i] for i in resid_order]
 
         for h in HORIZONS:
-            e_top_rets = [forward_return(tk, d, h, price_idx, trade_dates)
-                          for tk in e_tickers_sorted[:K_TOP]]
-            e_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates)
-                          for tk in e_tickers_sorted[-K_BOT:]]
-            r_top_rets = [forward_return(tk, d, h, price_idx, trade_dates)
-                          for tk in resid_tickers_sorted[:K_TOP]]
-            r_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates)
-                          for tk in resid_tickers_sorted[-K_BOT:]]
+            e_top_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in e_tickers_sorted[:K_TOP]]
+            e_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in e_tickers_sorted[-K_BOT:]]
+            r_top_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in resid_tickers_sorted[:K_TOP]]
+            r_bot_rets = [forward_return(tk, d, h, price_idx, trade_dates) for tk in resid_tickers_sorted[-K_BOT:]]
 
             e_t = [r for r in e_top_rets if r is not None]
             e_b = [r for r in e_bot_rets if r is not None]
@@ -392,6 +377,7 @@ def residualized_ablation(
 # ---------------------------------------------------------------------------
 # Report
 # ---------------------------------------------------------------------------
+
 
 def fmt_pct(v: Optional[float]) -> str:
     if v is None or math.isnan(v):
@@ -422,7 +408,7 @@ def main() -> None:
     r1 = movers_analysis(price_idx, trade_dates, cutoff_date)
 
     # Spread summary
-    print(f"\n## Part 1: E vs EB — Spread & Movers")
+    print("\n## Part 1: E vs EB — Spread & Movers")
     print(f"\nDates evaluated: {r1['n_dates']}")
     print(f"\n### Top-{K_TOP}/Bottom-{K_BOT} Spread (annualized ~ multiply by 252/h)")
     print(f"{'Horizon':>8} | {'E spread':>10} | {'EB spread':>10} | {'Delta':>10}")
@@ -440,7 +426,7 @@ def main() -> None:
     if len(corr_data) >= 5:
         opts, cazs = zip(*corr_data)
         r_oc = pearson(list(opts), list(cazs))
-        print(f"\n### Correlation: optionality_pct vs clinical_alpha_z")
+        print("\n### Correlation: optionality_pct vs clinical_alpha_z")
         print(f"Pooled (n={len(corr_data):,} rows): r = {r_oc:.3f}")
     else:
         print("\nInsufficient data for correlation.")
@@ -462,26 +448,29 @@ def main() -> None:
         rets = [e["return_126d"] for e in entries if e["return_126d"] is not None]
         mean_ret = statistics.mean(rets) if rets else float("nan")
         mean_delta = statistics.mean(e["delta_rank"] for e in entries)
-        mean_opt = statistics.mean(
-            e["optionality_pct"] for e in entries
-            if not math.isnan(e["optionality_pct"])
-        ) if any(not math.isnan(e["optionality_pct"]) for e in entries) else float("nan")
-        mean_caz = statistics.mean(
-            e["clinical_alpha_z"] for e in entries
-            if not math.isnan(e["clinical_alpha_z"])
-        ) if any(not math.isnan(e["clinical_alpha_z"]) for e in entries) else float("nan")
-        ticker_summary.append({
-            "ticker": tk,
-            "n_dates": len(entries),
-            "mean_delta_rank": mean_delta,
-            "mean_ret_126d": mean_ret,
-            "mean_opt_pct": mean_opt,
-            "mean_caz": mean_caz,
-        })
+        mean_opt = (
+            statistics.mean(e["optionality_pct"] for e in entries if not math.isnan(e["optionality_pct"]))
+            if any(not math.isnan(e["optionality_pct"]) for e in entries)
+            else float("nan")
+        )
+        mean_caz = (
+            statistics.mean(e["clinical_alpha_z"] for e in entries if not math.isnan(e["clinical_alpha_z"]))
+            if any(not math.isnan(e["clinical_alpha_z"]) for e in entries)
+            else float("nan")
+        )
+        ticker_summary.append(
+            {
+                "ticker": tk,
+                "n_dates": len(entries),
+                "mean_delta_rank": mean_delta,
+                "mean_ret_126d": mean_ret,
+                "mean_opt_pct": mean_opt,
+                "mean_caz": mean_caz,
+            }
+        )
 
     # Sort by mean 126d return ascending (worst first)
-    ticker_summary.sort(key=lambda x: x["mean_ret_126d"]
-                        if not math.isnan(x["mean_ret_126d"]) else float("inf"))
+    ticker_summary.sort(key=lambda x: x["mean_ret_126d"] if not math.isnan(x["mean_ret_126d"]) else float("inf"))
 
     print(f"\n{'Ticker':>6} | {'N':>3} | {'ΔRank':>6} | {'Ret126d':>8} | {'OptPct':>7} | {'CAZ':>6}")
     print("-" * 52)
@@ -497,9 +486,11 @@ def main() -> None:
     # Characterize: entrants vs non-entrants
     all_movers_rets = [m["return_126d"] for m in movers if m["return_126d"] is not None]
     if all_movers_rets:
-        print(f"\nAll EB-bottom entrants (n={len(all_movers_rets)}): "
-              f"mean 126d = {fmt_pct(statistics.mean(all_movers_rets))}, "
-              f"median = {fmt_pct(statistics.median(all_movers_rets))}")
+        print(
+            f"\nAll EB-bottom entrants (n={len(all_movers_rets)}): "
+            f"mean 126d = {fmt_pct(statistics.mean(all_movers_rets))}, "
+            f"median = {fmt_pct(statistics.median(all_movers_rets))}"
+        )
 
     # -----------------------------------------------------------------------
     # Part 2: Residualized clinical tilt
@@ -508,7 +499,7 @@ def main() -> None:
     print("Computing clinical_alpha_resid = zscore(caz - beta*opt) per date...")
     r2 = residualized_ablation(price_idx, trade_dates, cutoff_date)
 
-    print(f"\n### Spread comparison: E vs E+Resid (clinical_alpha_z residualized on optionality_pct)")
+    print("\n### Spread comparison: E vs E+Resid (clinical_alpha_z residualized on optionality_pct)")
     print(f"\n{'Horizon':>8} | {'E spread':>10} | {'Resid spread':>13} | {'Delta':>10}")
     print("-" * 50)
     for h in HORIZONS:
@@ -519,13 +510,15 @@ def main() -> None:
         delta = mr - me if not (math.isnan(me) or math.isnan(mr)) else float("nan")
         print(f"{h:>8}d | {fmt_pct(me):>10} | {fmt_pct(mr):>13} | {fmt_pct(delta):>10}")
 
-    print("""
+    print(
+        """
 ### Interpretation
 - If resid spread ≈ E spread at 126d → residualization successfully decouples the clinical tilt
   from optionality correlation → worth productizing as a clinical sort signal
 - If resid spread still regresses → the correlation is not the root cause; the issue is
   purely that clinical_alpha_z pushes overexposed names into top-K regardless of residualization
-""")
+"""
+    )
 
 
 if __name__ == "__main__":

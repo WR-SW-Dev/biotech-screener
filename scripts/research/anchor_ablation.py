@@ -14,15 +14,14 @@ Configs:
   E: anchor=optionality, no alpha modifier
   F: anchor=optionality, alpha as within_tier nudge
 """
+
 from __future__ import annotations
 
 import argparse
 import copy
-import csv
 import json
 import statistics
 import sys
-import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -31,23 +30,19 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from common.ranking_utils import backfill_columns, safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-
 from scripts.research.run_alpha_experiment import (
     compute_turnover,
     discover_snapshot_dates,
     evaluate_single_date,
-    filter_date_grid,
     hydrate_missing_exposures,
     load_price_series,
     load_rankings,
-    spearman_ic,
-    top_k_portfolio_return,
 )
-
 
 # ---------------------------------------------------------------------------
 # Re-rank with custom anchor column
 # ---------------------------------------------------------------------------
+
 
 def rerank_with_anchor(
     rows: List[Dict[str, str]],
@@ -71,18 +66,20 @@ def rerank_with_anchor(
         for r in rows:
             r["_ablation_anchor_pct"] = r.get("alpha_cohort_pct", "0")
 
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=safe_float(r.get("_ablation_anchor_pct")),
-        alpha_raw=safe_float(r.get("alpha_cohort_raw")),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=safe_float(r.get("_ablation_anchor_pct")),
+            alpha_raw=safe_float(r.get("alpha_cohort_raw")),
+        )
+    )
 
     rank = 1
     for r in rows:
@@ -99,12 +96,11 @@ def rerank_with_anchor(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Anchor ablation study")
-    parser.add_argument("--snapshot-root", type=Path,
-                        default=PROJECT_ROOT / "data" / "snapshots")
-    parser.add_argument("--price-csv", type=Path,
-                        default=PROJECT_ROOT / "production_data" / "price_history.csv")
+    parser.add_argument("--snapshot-root", type=Path, default=PROJECT_ROOT / "data" / "snapshots")
+    parser.add_argument("--price-csv", type=Path, default=PROJECT_ROOT / "production_data" / "price_history.csv")
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument("--horizons", type=str, default="5,20")
@@ -129,11 +125,13 @@ def main() -> None:
     print(f"  {len(prices)} tickers, {len(sorted_dates)} trading dates")
 
     # Load base ruleset from latest snapshot
-    dates_with_rs = sorted([
-        p.name for p in args.snapshot_root.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "decision_ruleset.json").exists()
-    ])
+    dates_with_rs = sorted(
+        [
+            p.name
+            for p in args.snapshot_root.iterdir()
+            if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+        ]
+    )
     rs_path = args.snapshot_root / dates_with_rs[-1] / "decision_ruleset.json"
     base_rs = DecisionRuleset.from_json(str(rs_path))
     print(f"Base ruleset: {base_rs.ruleset_id}")
@@ -145,45 +143,40 @@ def main() -> None:
     configs: List[Tuple[str, DecisionRuleset, str]] = []
 
     # A: current production — alpha_cohort anchor
-    rs_a = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",
-                       alpha_modifier_mode="within_tier",
-                       alpha_modifier_weight=0.05)
+    rs_a = dc_replace(
+        base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="within_tier", alpha_modifier_weight=0.05
+    )
     configs.append(("A_alpha_anchor", rs_a, "alpha_cohort_pct"))
 
     # B: legacy composite anchor, no alpha modifier
-    rs_b = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",  # trick: use alpha_cohort mode but inject legacy pct
-                       alpha_modifier_mode="off",
-                       alpha_modifier_weight=0.0)
+    rs_b = dc_replace(
+        base_rs,
+        sort_anchor="alpha_cohort",  # trick: use alpha_cohort mode but inject legacy pct
+        alpha_modifier_mode="off",
+        alpha_modifier_weight=0.0,
+    )
     configs.append(("B_legacy_anchor", rs_b, "score_rank_pct_attn"))
 
     # C: legacy composite + alpha within_tier w=0.05
-    rs_c = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",
-                       alpha_modifier_mode="within_tier",
-                       alpha_modifier_weight=0.05)
+    rs_c = dc_replace(
+        base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="within_tier", alpha_modifier_weight=0.05
+    )
     configs.append(("C_legacy+alpha_0.05", rs_c, "score_rank_pct_attn"))
 
     # D: legacy composite + alpha within_tier w=0.15
-    rs_d = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",
-                       alpha_modifier_mode="within_tier",
-                       alpha_modifier_weight=0.15)
+    rs_d = dc_replace(
+        base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="within_tier", alpha_modifier_weight=0.15
+    )
     configs.append(("D_legacy+alpha_0.15", rs_d, "score_rank_pct_attn"))
 
     # E: optionality anchor, no alpha
-    rs_e = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",
-                       alpha_modifier_mode="off",
-                       alpha_modifier_weight=0.0)
+    rs_e = dc_replace(base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="off", alpha_modifier_weight=0.0)
     configs.append(("E_optionality_anchor", rs_e, "clinical_optionality_pct_dev"))
 
     # F: optionality + alpha w=0.05
-    rs_f = dc_replace(base_rs,
-                       sort_anchor="alpha_cohort",
-                       alpha_modifier_mode="within_tier",
-                       alpha_modifier_weight=0.05)
+    rs_f = dc_replace(
+        base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="within_tier", alpha_modifier_weight=0.05
+    )
     configs.append(("F_optionality+alpha_0.05", rs_f, "clinical_optionality_pct_dev"))
 
     # Pre-load snapshots
@@ -215,8 +208,13 @@ def main() -> None:
             rows = rerank_with_anchor(rows, rs, anchor_col)
 
             metrics = evaluate_single_date(
-                snap_date, rows, prices, sorted_dates,
-                horizons, args.top_k, [],
+                snap_date,
+                rows,
+                prices,
+                sorted_dates,
+                horizons,
+                args.top_k,
+                [],
             )
 
             if metrics.skipped:
@@ -230,7 +228,7 @@ def main() -> None:
                 if ret is not None:
                     ret_by_h[h].append(ret)
 
-            curr_topk = metrics.top_k_tickers[:args.top_k]
+            curr_topk = metrics.top_k_tickers[: args.top_k]
             if prev_topk:
                 t = compute_turnover(prev_topk, curr_topk)
                 turnovers.append(t)
@@ -241,9 +239,7 @@ def main() -> None:
         for h in horizons:
             ics = ic_by_h[h]
             row[f"ic_{h}d"] = statistics.mean(ics) if ics else None
-            row[f"hit_{h}d"] = (
-                sum(1 for ic in ics if ic > 0) / len(ics) if ics else None
-            )
+            row[f"hit_{h}d"] = sum(1 for ic in ics if ic > 0) / len(ics) if ics else None
             rets = [r for r in ret_by_h[h] if r is not None]
             row[f"ret_{h}d"] = statistics.mean(rets) if rets else None
             row[f"n_{h}d"] = len(ics)

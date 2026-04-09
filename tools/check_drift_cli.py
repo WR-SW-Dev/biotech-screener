@@ -9,6 +9,7 @@ Exit codes:
   2  at least one threshold breached (WARN)
   Never exits 1 — drift is advisory only.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,11 +24,7 @@ _REPO_ROOT = _TOOLS_DIR.parent
 sys.path.insert(0, str(_TOOLS_DIR))
 sys.path.insert(0, str(_REPO_ROOT))
 
-from run_daily_production import (
-    DriftThresholds,
-    _compute_drift_metrics,
-    _write_drift_report_md,
-)
+from run_daily_production import DriftThresholds, _compute_drift_metrics, _write_drift_report_md
 
 
 def run_drift_check(
@@ -104,7 +101,7 @@ def run_drift_check(
     else:
         rho = metrics.get("rank_spearman_rho")
         print(
-            f"Drift check: OK — "
+            "Drift check: OK — "
             f"top20={metrics['top20_overlap_pct']:.0f}%, "
             f"top60={metrics['top60_overlap_pct']:.0f}%, "
             f"rho={rho}"
@@ -118,19 +115,27 @@ def main() -> None:
         epilog="Exit codes: 0=OK, 2=WARN (never 1)",
     )
     parser.add_argument(
-        "--current-csv", type=Path, required=True,
+        "--current-csv",
+        type=Path,
+        required=True,
         help="Path to current/candidate rankings.csv",
     )
     parser.add_argument(
-        "--prior-csv", type=Path, required=True,
+        "--prior-csv",
+        type=Path,
+        required=True,
         help="Path to prior/baseline rankings.csv",
     )
     parser.add_argument(
-        "--output-dir", type=Path, required=True,
+        "--output-dir",
+        type=Path,
+        required=True,
         help="Directory for drift_report.json + drift_report.md",
     )
     parser.add_argument(
-        "--thresholds", type=Path, default=None,
+        "--thresholds",
+        type=Path,
+        default=None,
         help="Path to drift thresholds JSON (default: built-in defaults)",
     )
     args = parser.parse_args()

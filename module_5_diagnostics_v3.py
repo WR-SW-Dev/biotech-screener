@@ -13,6 +13,7 @@ Design invariant enforced here:
 
 This prevents the "applied:0 but breakdown sums to 44" class of bug.
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
@@ -94,7 +95,7 @@ def compute_momentum_breakdown(
 
     # coverage_pct = fraction of universe with usable momentum
     if total_rankable > 0:
-        coverage_pct = (Decimal(str(applied)) / Decimal(str(total_rankable)) * 100)
+        coverage_pct = Decimal(str(applied)) / Decimal(str(total_rankable)) * 100
     else:
         coverage_pct = Decimal("0")
 

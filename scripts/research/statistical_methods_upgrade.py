@@ -8,6 +8,7 @@ Usage:
     python3 scripts/research/statistical_methods_upgrade.py
     python3 scripts/research/statistical_methods_upgrade.py --method fama_macbeth
 """
+
 from __future__ import annotations
 
 import argparse
@@ -122,15 +123,19 @@ def run_fama_macbeth(snapshots):
         sig = fm["signals"].get(signal, {})
         nw_t = sig.get("newey_west_t", 0) or 0
         coef = sig.get("mean_coefficient", 0) or 0
-        print(f"    {signal}: coef={coef:+.4f} NW-t={nw_t:+.2f} "
-              f"{'***' if abs(nw_t) >= 2.58 else '**' if abs(nw_t) >= 1.96 else '*' if abs(nw_t) >= 1.64 else ''}")
+        print(
+            f"    {signal}: coef={coef:+.4f} NW-t={nw_t:+.2f} "
+            f"{'***' if abs(nw_t) >= 2.58 else '**' if abs(nw_t) >= 1.96 else '*' if abs(nw_t) >= 1.64 else ''}"
+        )
         results["models"][f"univariate_{signal}"] = fm
 
     # Model 2: Incumbent controls only
     print("\n  1b. Incumbent controls...")
     controls_fm = fama_macbeth(
-        snapshots, "fwd_excess_xbi_63d",
-        INCUMBENT_CONTROLS + RISK_CONTROLS, nw_lags=3,
+        snapshots,
+        "fwd_excess_xbi_63d",
+        INCUMBENT_CONTROLS + RISK_CONTROLS,
+        nw_lags=3,
     )
     if "error" not in controls_fm:
         for sig_name, sig_data in controls_fm["signals"].items():
@@ -142,13 +147,12 @@ def run_fama_macbeth(snapshots):
 
     # Model 3: Incremental tests for each non-incumbent signal
     print("\n  1c. Incremental tests (candidate + incumbent controls)...")
-    test_signals = [
-        s for s in CANDIDATE_SIGNALS
-        if s not in INCUMBENT_CONTROLS and s not in RISK_CONTROLS
-    ]
+    test_signals = [s for s in CANDIDATE_SIGNALS if s not in INCUMBENT_CONTROLS and s not in RISK_CONTROLS]
     for signal in test_signals:
         inc = run_incremental_test(
-            snapshots, signal, INCUMBENT_CONTROLS + RISK_CONTROLS,
+            snapshots,
+            signal,
+            INCUMBENT_CONTROLS + RISK_CONTROLS,
         )
         if "error" in inc.get("incremental", {}):
             continue
@@ -160,12 +164,12 @@ def run_fama_macbeth(snapshots):
 
     # Model 4: Full block model
     print("\n  1d. Full block model...")
-    all_signals = [
-        s for s in CANDIDATE_SIGNALS
-        if s not in RISK_CONTROLS  # risk is in controls
-    ]
+    all_signals = [s for s in CANDIDATE_SIGNALS if s not in RISK_CONTROLS]  # risk is in controls
     full_fm = fama_macbeth(
-        snapshots, "fwd_excess_xbi_63d", all_signals, nw_lags=3,
+        snapshots,
+        "fwd_excess_xbi_63d",
+        all_signals,
+        nw_lags=3,
     )
     if "error" not in full_fm:
         print(f"    R² = {full_fm.get('mean_r_squared', 'N/A')}")
@@ -249,8 +253,10 @@ def run_bootstrap(snapshots):
         results["strategies"][name] = boot
         ci_str = f"[{boot.get('ci_lower', '?'):.4f}, {boot.get('ci_upper', '?'):.4f}]"
         excl = "CI excl 0" if boot.get("ci_excludes_zero") else "CI includes 0"
-        print(f"    {name:30s} mean={boot.get('boot_mean', 0):+.4f} "
-              f"95% CI={ci_str} P(>0)={boot.get('prob_positive', 0):.2f} {excl}")
+        print(
+            f"    {name:30s} mean={boot.get('boot_mean', 0):+.4f} "
+            f"95% CI={ci_str} P(>0)={boot.get('prob_positive', 0):.2f} {excl}"
+        )
 
     # Pairwise comparisons vs baseline
     if "baseline_rank" in strategy_returns:
@@ -262,9 +268,12 @@ def run_bootstrap(snapshots):
             # Align lengths (use min length)
             min_len = min(len(base), len(rets))
             comp = compare_strategies(
-                rets[:min_len], base[:min_len],
+                rets[:min_len],
+                base[:min_len],
                 labels=(name, "baseline_rank"),
-                block_length=6, n_bootstrap=10000, seed=42,
+                block_length=6,
+                n_bootstrap=10000,
+                seed=42,
             )
             results["comparisons"][name] = comp
             prob = comp.get("prob_a_better", 0) or 0
@@ -411,6 +420,7 @@ def run_calibration(panel, snapshots):
                 diff_score = eligible[i]["coinvest"] - eligible[j]["coinvest"]
                 # Predict: higher coinvest → higher return
                 from scipy.special import expit
+
                 pred_prob = expit(diff_score)  # sigmoid of score difference
                 actual_win = 1.0 if eligible[i]["fwd"] > eligible[j]["fwd"] else 0.0
                 all_predicted.append(pred_prob)
@@ -426,9 +436,7 @@ def run_calibration(panel, snapshots):
 
     # Full calibration report
     report = calibration_report(predicted, actual, n_bins=10)
-    results["full_sample"] = {
-        k: v for k, v in report.items() if k != "calibrated_scores"
-    }
+    results["full_sample"] = {k: v for k, v in report.items() if k != "calibrated_scores"}
     print(f"  Brier score: {report.get('brier_score', 'N/A')}")
     print(f"  ECE: {report.get('ece', 'N/A')}")
     print(f"  Verdict: {report.get('calibration_verdict', 'N/A')}")
@@ -461,7 +469,8 @@ def run_robustness(snapshots):
     for signal, higher_better in test_signals:
         print(f"\n  {signal}...")
         rob = multi_slice_robustness(
-            snapshots, signal,
+            snapshots,
+            signal,
             higher_is_better=higher_better,
             top_n=30,
         )
@@ -480,9 +489,11 @@ def run_robustness(snapshots):
                 "best_delta": slice_result.get("best_slice_delta"),
                 "verdict": slice_result.get("stability_verdict"),
             }
-            print(f"    {dim}: worst={slice_result.get('worst_slice')} "
-                  f"({slice_result.get('worst_slice_delta', 'N/A')}pp) "
-                  f"→ {slice_result.get('stability_verdict', '?')}")
+            print(
+                f"    {dim}: worst={slice_result.get('worst_slice')} "
+                f"({slice_result.get('worst_slice_delta', 'N/A')}pp) "
+                f"→ {slice_result.get('stability_verdict', '?')}"
+            )
 
         print(f"    OVERALL: {rob.get('overall_verdict')}")
         results[signal] = compact
@@ -508,7 +519,9 @@ def run_survival(panel):
     events = []
     covariates = []
     covariate_names = [
-        "clinical_score_v2_z", "financial_score", "coinvest_score_z",
+        "clinical_score_v2_z",
+        "financial_score",
+        "coinvest_score_z",
     ]
 
     for row in panel:
@@ -569,13 +582,12 @@ def run_survival(panel):
 
     if len(stages) == len(dur):
         strat_km = stratified_kaplan_meier(dur, ev, np.array(stages))
-        results["stratified_km"] = {
-            k: v for k, v in strat_km.items()
-            if k != "groups"  # exclude full survival tables
-        }
+        results["stratified_km"] = {k: v for k, v in strat_km.items() if k != "groups"}  # exclude full survival tables
         for g, gdata in strat_km.get("groups", {}).items():
-            print(f"  {g}: n={gdata.get('n_obs')}, events={gdata.get('n_events')}, "
-                  f"median={gdata.get('median_survival', 'N/A')}")
+            print(
+                f"  {g}: n={gdata.get('n_obs')}, events={gdata.get('n_events')}, "
+                f"median={gdata.get('median_survival', 'N/A')}"
+            )
 
     # Cox PH
     print("  Running Cox PH...")
@@ -639,10 +651,7 @@ def write_bootstrap_summary(boot_results, path):
         ci_u = boot.get("ci_upper", 0)
         prob = boot.get("prob_positive", 0)
         excl = "YES" if boot.get("ci_excludes_zero") else "no"
-        lines.append(
-            f"| `{name}` | {mean:+.4f} | [{ci_l:.4f}, {ci_u:.4f}] "
-            f"| {prob:.2f} | {excl} |"
-        )
+        lines.append(f"| `{name}` | {mean:+.4f} | [{ci_l:.4f}, {ci_u:.4f}] " f"| {prob:.2f} | {excl} |")
     lines.append("")
     path.write_text("\n".join(lines))
 
@@ -669,9 +678,7 @@ def write_multiple_testing_summary(mt_results, path):
         ):
             r = bh["results"][name]
             status = "**REJECT**" if r["rejected"] else "retain"
-            lines.append(
-                f"| `{name}` | {r['raw_p']:.4f} | {r['q_value']:.4f} | {status} |"
-            )
+            lines.append(f"| `{name}` | {r['raw_p']:.4f} | {r['q_value']:.4f} | {status} |")
         lines.append(f"\n{bh['n_rejected']}/{bh['n_tests']} rejected at FDR=0.10\n")
 
     wrc = mt_results.get("whites_rc")
@@ -690,7 +697,11 @@ def write_multiple_testing_summary(mt_results, path):
 
 def main():
     parser = argparse.ArgumentParser(description="Spec 055 — Statistical Methods Upgrade")
-    parser.add_argument("--method", default="ALL", help="Method to run: fama_macbeth, bootstrap, multiple_testing, calibration, robustness, survival, or ALL")
+    parser.add_argument(
+        "--method",
+        default="ALL",
+        help="Method to run: fama_macbeth, bootstrap, multiple_testing, calibration, robustness, survival, or ALL",
+    )
     args = parser.parse_args()
 
     panel = load_panel()
@@ -699,10 +710,18 @@ def main():
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    methods = args.method.lower().split(",") if args.method != "ALL" else [
-        "fama_macbeth", "bootstrap", "multiple_testing",
-        "calibration", "robustness", "survival",
-    ]
+    methods = (
+        args.method.lower().split(",")
+        if args.method != "ALL"
+        else [
+            "fama_macbeth",
+            "bootstrap",
+            "multiple_testing",
+            "calibration",
+            "robustness",
+            "survival",
+        ]
+    )
 
     all_results = {}
 

@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 #!/usr/bin/env python3
 """
 module_3_scoring_v2.py - Module 3 Catalyst Scoring System v2 (Robust)
@@ -22,34 +23,33 @@ Version: 2.0.0
 import logging
 import math
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Any, Set
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 from module_3_schema_v2 import (
+    CONFIDENCE_WEIGHTS,
+    EVENT_DEFAULT_CONFIDENCE,
+    EVENT_TYPE_WEIGHT,
+    NEGATIVE_CATALYST_TYPES,
     SCHEMA_VERSION,
     SCORE_VERSION,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    CatalystWindowBucket,
-    SourceReliability,
-    DateSpecificity,
-    DeltaType,
-    CatalystEventV2,
-    DeltaEvent,
-    TickerCatalystSummaryV2,
-    DiagnosticCountsV2,
-    NEGATIVE_CATALYST_TYPES,
     SEVERE_NEGATIVE_TYPES,
-    CONFIDENCE_WEIGHTS,
     SEVERITY_SCORE_CONTRIBUTION,
-    EVENT_TYPE_WEIGHT,
-    EVENT_DEFAULT_CONFIDENCE,
+    CatalystEventV2,
+    CatalystWindowBucket,
+    ConfidenceLevel,
+    DateSpecificity,
+    DeltaEvent,
+    DeltaType,
+    DiagnosticCountsV2,
+    EventSeverity,
+    EventType,
+    SourceReliability,
+    TickerCatalystSummaryV2,
     compute_catalyst_window_bucket,
     compute_date_uncertainty_factor,
     decimal_to_str,
 )
-
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -85,6 +85,7 @@ NEGATIVE_SCALE_FACTOR = Decimal("1.5")
 # =============================================================================
 # RECENCY / DECAY
 # =============================================================================
+
 
 def compute_recency_weight(
     event_date: Optional[str],
@@ -146,6 +147,7 @@ def compute_staleness_factor(
 # PROXIMITY SCORING (ENHANCED)
 # =============================================================================
 
+
 def compute_proximity_score(
     events: List[CatalystEventV2],
     as_of_date: date,
@@ -202,7 +204,7 @@ def compute_proximity_score(
 
         # Date-uncertainty penalty: attenuate imprecise event dates
         uncertainty_factor = compute_date_uncertainty_factor(
-            getattr(event, 'date_specificity', DateSpecificity.UNKNOWN)
+            getattr(event, "date_specificity", DateSpecificity.UNKNOWN)
         )
 
         # Combined contribution
@@ -219,6 +221,7 @@ def compute_proximity_score(
 # =============================================================================
 # DELTA ENGINE (ENHANCED)
 # =============================================================================
+
 
 def detect_deltas(
     current_events: List[CatalystEventV2],
@@ -252,28 +255,32 @@ def detect_deltas(
     # EVENT_ADDED: new event_id
     for e in current_events:
         if e.event_id not in prior_ids:
-            deltas.append(DeltaEvent(
-                ticker=e.ticker,
-                nct_id=e.nct_id,
-                delta_type=DeltaType.EVENT_ADDED,
-                prior_value=None,
-                new_value=e.event_type.value,
-                shift_days=None,
-                source_date=source_date,
-            ))
+            deltas.append(
+                DeltaEvent(
+                    ticker=e.ticker,
+                    nct_id=e.nct_id,
+                    delta_type=DeltaType.EVENT_ADDED,
+                    prior_value=None,
+                    new_value=e.event_type.value,
+                    shift_days=None,
+                    source_date=source_date,
+                )
+            )
 
     # EVENT_REMOVED: event_id in prior but not current
     for e in prior_events:
         if e.event_id not in current_ids:
-            deltas.append(DeltaEvent(
-                ticker=e.ticker,
-                nct_id=e.nct_id,
-                delta_type=DeltaType.EVENT_REMOVED,
-                prior_value=e.event_type.value,
-                new_value=None,
-                shift_days=None,
-                source_date=source_date,
-            ))
+            deltas.append(
+                DeltaEvent(
+                    ticker=e.ticker,
+                    nct_id=e.nct_id,
+                    delta_type=DeltaType.EVENT_REMOVED,
+                    prior_value=e.event_type.value,
+                    new_value=None,
+                    shift_days=None,
+                    source_date=source_date,
+                )
+            )
 
     # DATE_SHIFT / WINDOW_WIDENING / STATUS_CHANGE for matched stable_ids
     matched_stable_ids = set(current_by_stable.keys()) & set(prior_by_stable.keys())
@@ -297,29 +304,33 @@ def detect_deltas(
                 ):
                     delta_type = DeltaType.WINDOW_WIDENING
 
-                deltas.append(DeltaEvent(
-                    ticker=curr.ticker,
-                    nct_id=curr.nct_id,
-                    delta_type=delta_type,
-                    prior_value=prior.event_date,
-                    new_value=curr.event_date,
-                    shift_days=shift_days,
-                    source_date=source_date,
-                ))
+                deltas.append(
+                    DeltaEvent(
+                        ticker=curr.ticker,
+                        nct_id=curr.nct_id,
+                        delta_type=delta_type,
+                        prior_value=prior.event_date,
+                        new_value=curr.event_date,
+                        shift_days=shift_days,
+                        source_date=source_date,
+                    )
+                )
             except (ValueError, TypeError):
                 pass
 
         # STATUS_CHANGE (via field_changed containing "status")
         if "status" in curr.field_changed.lower() and curr.new_value != prior.new_value:
-            deltas.append(DeltaEvent(
-                ticker=curr.ticker,
-                nct_id=curr.nct_id,
-                delta_type=DeltaType.STATUS_CHANGE,
-                prior_value=prior.new_value,
-                new_value=curr.new_value,
-                shift_days=None,
-                source_date=source_date,
-            ))
+            deltas.append(
+                DeltaEvent(
+                    ticker=curr.ticker,
+                    nct_id=curr.nct_id,
+                    delta_type=DeltaType.STATUS_CHANGE,
+                    prior_value=prior.new_value,
+                    new_value=curr.new_value,
+                    shift_days=None,
+                    source_date=source_date,
+                )
+            )
 
     return deltas
 
@@ -400,6 +411,7 @@ def compute_delta_score(
 # NEGATIVE CATALYST SCORING
 # =============================================================================
 
+
 def compute_negative_catalyst_score(
     events: List[CatalystEventV2],
     as_of_date: date,
@@ -438,7 +450,7 @@ def compute_negative_catalyst_score(
 
         # Date-uncertainty penalty
         uncertainty_factor = compute_date_uncertainty_factor(
-            getattr(event, 'date_specificity', DateSpecificity.UNKNOWN)
+            getattr(event, "date_specificity", DateSpecificity.UNKNOWN)
         )
 
         # Combined contribution (type_weight is already negative)
@@ -455,6 +467,7 @@ def compute_negative_catalyst_score(
 # =============================================================================
 # CERTAINTY SCORING
 # =============================================================================
+
 
 def compute_avg_certainty(
     events: List[CatalystEventV2],
@@ -497,6 +510,7 @@ def compute_avg_certainty(
 # VELOCITY SCORING
 # =============================================================================
 
+
 def compute_velocity(
     current_proximity: Decimal,
     historical_proximities: List[Decimal],
@@ -524,6 +538,7 @@ def compute_velocity(
 # OVERRIDE SCORING
 # =============================================================================
 
+
 def calculate_score_override(
     events: List[CatalystEventV2],
 ) -> Tuple[Decimal, str]:
@@ -542,13 +557,11 @@ def calculate_score_override(
     if severity_counts.get(EventSeverity.CRITICAL_POSITIVE, 0) > 0:
         return (SCORE_OVERRIDE_CRITICAL_POSITIVE, "CRITICAL_POSITIVE_EVENTS")
 
-    positive_count = (
-        severity_counts.get(EventSeverity.POSITIVE, 0) +
-        severity_counts.get(EventSeverity.CRITICAL_POSITIVE, 0)
+    positive_count = severity_counts.get(EventSeverity.POSITIVE, 0) + severity_counts.get(
+        EventSeverity.CRITICAL_POSITIVE, 0
     )
-    negative_count = (
-        severity_counts.get(EventSeverity.NEGATIVE, 0) +
-        severity_counts.get(EventSeverity.SEVERE_NEGATIVE, 0)
+    negative_count = severity_counts.get(EventSeverity.NEGATIVE, 0) + severity_counts.get(
+        EventSeverity.SEVERE_NEGATIVE, 0
     )
 
     if positive_count > 0 and negative_count == 0:
@@ -570,6 +583,7 @@ def calculate_score_override(
 # =============================================================================
 # BLENDED SCORING
 # =============================================================================
+
 
 def calculate_score_blended(
     events: List[CatalystEventV2],
@@ -598,7 +612,7 @@ def calculate_score_blended(
         confidence_weight = CONFIDENCE_WEIGHTS.get(confidence, Decimal("0.5"))
         recency_weight = compute_recency_weight(event.event_date, as_of_date)
         uncertainty_factor = compute_date_uncertainty_factor(
-            getattr(event, 'date_specificity', DateSpecificity.UNKNOWN)
+            getattr(event, "date_specificity", DateSpecificity.UNKNOWN)
         )
 
         severity_contrib = SEVERITY_SCORE_CONTRIBUTION.get(severity, Decimal("0"))
@@ -611,11 +625,7 @@ def calculate_score_blended(
     score = SCORE_DEFAULT + (total_contribution * staleness)
     score = max(SCORE_MIN, min(SCORE_MAX, score))
 
-    weighted_counts = {
-        sev.value: decimal_to_str(weighted_sums[sev])
-        for sev in EventSeverity
-        if weighted_sums[sev] > 0
-    }
+    weighted_counts = {sev.value: decimal_to_str(weighted_sums[sev]) for sev in EventSeverity if weighted_sums[sev] > 0}
 
     return (score, weighted_counts)
 
@@ -623,6 +633,7 @@ def calculate_score_blended(
 # =============================================================================
 # TICKER-LEVEL SCORING
 # =============================================================================
+
 
 def calculate_ticker_catalyst_score(
     ticker: str,
@@ -664,10 +675,9 @@ def calculate_ticker_catalyst_score(
     if prior_events is not None:
         sorted_prior = sorted(prior_events, key=lambda e: e.sort_key())
         delta_events = detect_deltas(sorted_events, sorted_prior, as_of_date)
-        (
-            delta_score, n_added, n_removed, n_date_shifts,
-            n_window_widenings, n_status_changes, max_slip
-        ) = compute_delta_score(delta_events, as_of_date)
+        delta_score, n_added, n_removed, n_date_shifts, n_window_widenings, n_status_changes, max_slip = (
+            compute_delta_score(delta_events, as_of_date)
+        )
 
     # Velocity
     velocity = None
@@ -675,14 +685,10 @@ def calculate_ticker_catalyst_score(
         velocity = compute_velocity(proximity_score, historical_proximities)
 
     # Negative catalyst score
-    negative_score, n_negative, n_severe_negative = compute_negative_catalyst_score(
-        sorted_events, as_of_date
-    )
+    negative_score, n_negative, n_severe_negative = compute_negative_catalyst_score(sorted_events, as_of_date)
 
     # Certainty
-    avg_certainty, n_high_conf, uncertainty_penalty = compute_avg_certainty(
-        sorted_events, as_of_date
-    )
+    avg_certainty, n_high_conf, uncertainty_penalty = compute_avg_certainty(sorted_events, as_of_date)
 
     # Mode selection
     score_diff = abs(score_override - score_blended)
@@ -841,6 +847,7 @@ def _select_top_3_events(
 # BATCH SCORING
 # =============================================================================
 
+
 def score_catalyst_events(
     events_by_ticker: Dict[str, List[CatalystEventV2]],
     active_tickers: List[str],
@@ -867,7 +874,9 @@ def score_catalyst_events(
         historical_proximities = historical_proximities_by_ticker.get(ticker)
 
         summary = calculate_ticker_catalyst_score(
-            ticker, events, as_of_date,
+            ticker,
+            events,
+            as_of_date,
             prior_events=prior_events,
             historical_proximities=historical_proximities,
         )
@@ -920,8 +929,12 @@ def score_catalyst_events(
         diagnostics.coverage_state = "NONE"
 
     diagnostics.coverage_pct = (
-        Decimal(diagnostics.tickers_with_events) / Decimal(diagnostics.tickers_analyzed) * Decimal("100")
-    ).quantize(Decimal("0.1")) if diagnostics.tickers_analyzed > 0 else Decimal("0")
+        (Decimal(diagnostics.tickers_with_events) / Decimal(diagnostics.tickers_analyzed) * Decimal("100")).quantize(
+            Decimal("0.1")
+        )
+        if diagnostics.tickers_analyzed > 0
+        else Decimal("0")
+    )
 
     logger.info(f"Scoring complete. Generated {len(summaries)} summaries")
 

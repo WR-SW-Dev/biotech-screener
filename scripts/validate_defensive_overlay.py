@@ -14,7 +14,7 @@ import json
 import sys
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
-from typing import List, Dict, Optional, Tuple
+from typing import List, Optional, Tuple
 
 
 def safe_decimal(val) -> Decimal:
@@ -88,7 +88,9 @@ def validate_defensive_overlay(results_path: Path) -> Tuple[bool, List[str]]:
         messages.append(f"  - expected_excess_return_annual: {has_er}/{len(ranked)} securities")
 
         # Show ER distribution
-        er_values = [float(r.get("expected_excess_return_annual", 0)) for r in ranked if "expected_excess_return_annual" in r]
+        er_values = [
+            float(r.get("expected_excess_return_annual", 0)) for r in ranked if "expected_excess_return_annual" in r
+        ]
         if er_values:
             messages.append(f"  - ER range: {min(er_values):.4f} to {max(er_values):.4f}")
 

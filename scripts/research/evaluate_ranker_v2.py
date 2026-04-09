@@ -11,6 +11,7 @@ Usage:
     python3 scripts/research/evaluate_ranker_v2.py --variants pairwise_logistic
     python3 scripts/research/evaluate_ranker_v2.py --cohorts C1
 """
+
 from __future__ import annotations
 
 import argparse

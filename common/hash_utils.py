@@ -16,11 +16,13 @@ from typing import Any, Dict, List, Protocol, Union
 
 class HasToDict(Protocol):
     """Protocol for objects with a to_dict method."""
+
     def to_dict(self) -> dict[str, Any]: ...
 
 
 class HasValue(Protocol):
     """Protocol for enum-like objects with a value attribute."""
+
     @property
     def value(self) -> Any: ...
 
@@ -29,9 +31,7 @@ class HasValue(Protocol):
 TrialLike = Union[HasToDict, dict[str, Any]]
 
 
-def stable_json_dumps(
-    obj: Union[Dict[str, Any], List[Any], str, int, float, bool, None]
-) -> str:
+def stable_json_dumps(obj: Union[Dict[str, Any], List[Any], str, int, float, bool, None]) -> str:
     """
     Convert object to JSON string with deterministic ordering.
 
@@ -47,9 +47,8 @@ def stable_json_dumps(
     Returns:
         Deterministic JSON string
     """
-    def default_serializer(
-        o: Union[date, Decimal, HasValue, HasToDict, object]
-    ) -> Union[str, Dict[str, Any]]:
+
+    def default_serializer(o: Union[date, Decimal, HasValue, HasToDict, object]) -> Union[str, Dict[str, Any]]:
         if isinstance(o, date):
             return o.isoformat()
         if isinstance(o, Decimal):
@@ -63,9 +62,7 @@ def stable_json_dumps(
     return json.dumps(obj, sort_keys=True, default=default_serializer)
 
 
-def compute_hash(
-    data: Union[Dict[str, Any], List[Any], str, int, float, bool, None]
-) -> str:
+def compute_hash(data: Union[Dict[str, Any], List[Any], str, int, float, bool, None]) -> str:
     """
     Compute SHA-256 hash of data.
 
@@ -102,7 +99,7 @@ def compute_trial_facts_hash(trials_by_ticker: dict[str, list[TrialLike]]) -> st
     """
     # Build canonical representation
     canonical: dict[str, list[dict[str, Any]]] = {}
-    
+
     for ticker in sorted(trials_by_ticker.keys()):
         trials = trials_by_ticker[ticker]
         # Convert to dicts if needed and sort by nct_id
@@ -114,11 +111,11 @@ def compute_trial_facts_hash(trials_by_ticker: dict[str, list[TrialLike]]) -> st
                 trial_dicts.append(t)
             else:
                 raise TypeError(f"Unknown trial type: {type(t)}")
-        
+
         # Sort by nct_id for determinism
         trial_dicts.sort(key=lambda x: x.get("nct_id", ""))
         canonical[ticker] = trial_dicts
-    
+
     return compute_hash(canonical)
 
 
@@ -130,15 +127,15 @@ def compute_snapshot_id(
 ) -> str:
     """
     Compute unique snapshot ID from all inputs.
-    
+
     Same inputs -> identical snapshot_id -> identical snapshot content.
-    
+
     Args:
         as_of_date: Snapshot date
         pit_cutoff: PIT cutoff date
         input_hashes: Dict of input component hashes
         provider_metadata: Provider configuration and state
-    
+
     Returns:
         Hash string serving as snapshot ID
     """
@@ -148,5 +145,5 @@ def compute_snapshot_id(
         "input_hashes": input_hashes,
         "provider_metadata": provider_metadata,
     }
-    
+
     return compute_hash(canonical)

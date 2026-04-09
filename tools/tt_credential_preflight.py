@@ -14,6 +14,7 @@ Usage:
     python tools/tt_credential_preflight.py
     python tools/tt_credential_preflight.py --json
 """
+
 from __future__ import annotations
 
 import argparse

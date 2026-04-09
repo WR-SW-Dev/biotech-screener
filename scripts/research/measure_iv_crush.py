@@ -12,6 +12,7 @@ Usage:
         --event-subset hard \
         --output-dir output/iv_crush_calibration
 """
+
 from __future__ import annotations
 
 import argparse

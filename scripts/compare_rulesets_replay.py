@@ -11,6 +11,7 @@ Usage:
         --candidate-ruleset production_data/decision_rulesets/v1.3.3_missing_sort_only_candidate.json \
         --snapshot-dir data/snapshots/2026-02-16
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,11 +23,7 @@ import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from decision_engine import (
-    DecisionRuleset,
-    _compute_tier_commercial,
-    compute_actionable_sort_key,
-)
+from decision_engine import DecisionRuleset, _compute_tier_commercial, compute_actionable_sort_key
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -35,7 +32,6 @@ from decision_engine import (
 TOP_K = 20
 TOP_60 = 60
 
-import numpy as np
 
 _CQ_WEIGHTS = {"financial": 0.45, "valuation": 0.35, "momentum": 0.20}
 
@@ -49,11 +45,7 @@ def _compute_commercial_quality(df: pd.DataFrame) -> pd.DataFrame:
     df["commercial_quality_pct"] = None
 
     comm_mask = df["archetype"].str.startswith("commercial_", na=False)
-    comm = df.loc[
-        comm_mask
-        & df["financial_score"].notna()
-        & df["valuation_score"].notna()
-    ].copy()
+    comm = df.loc[comm_mask & df["financial_score"].notna() & df["valuation_score"].notna()].copy()
 
     if comm.empty:
         return df
@@ -154,9 +146,7 @@ def rank_portfolio(df: pd.DataFrame, ruleset: DecisionRuleset, top_k: int = TOP_
         return pool
 
     # Compute sort keys
-    pool["_sort_key"] = pool.apply(
-        lambda r: _sort_key_for_row(r, ruleset), axis=1
-    )
+    pool["_sort_key"] = pool.apply(lambda r: _sort_key_for_row(r, ruleset), axis=1)
     pool = pool.sort_values("_sort_key").reset_index(drop=True)
     pool["_rank"] = range(1, len(pool) + 1)
     return pool
@@ -222,11 +212,11 @@ def compare(
     base_arch_20 = base_sorted.head(TOP_K)["archetype"].value_counts().to_dict() if not base_sorted.empty else {}
 
     # Commercial names entering candidate portfolio (tier_first specific)
-    cand_commercial_20 = sorted(
-        cand_sorted.head(TOP_K).loc[
-            cand_sorted.head(TOP_K)["archetype"] != "drug_developer", "ticker"
-        ].tolist()
-    ) if not cand_sorted.empty else []
+    cand_commercial_20 = (
+        sorted(cand_sorted.head(TOP_K).loc[cand_sorted.head(TOP_K)["archetype"] != "drug_developer", "ticker"].tolist())
+        if not cand_sorted.empty
+        else []
+    )
 
     return {
         "baseline_id": baseline_rs.ruleset_id,
@@ -260,6 +250,7 @@ def compare(
 # Report generation
 # ---------------------------------------------------------------------------
 
+
 def format_report(result: dict, date: str) -> str:
     """Format comparison as markdown."""
     base_mode = result.get("baseline_mode", "dev_first")
@@ -270,8 +261,8 @@ def format_report(result: dict, date: str) -> str:
         f"Baseline: `{result['baseline_id']}` ({base_mode}) vs Candidate: `{result['candidate_id']}` ({cand_mode})",
         "",
         "## Overlap",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Top-20 overlap | {result['top20_overlap']}% |",
         f"| Top-60 overlap | {result['top60_overlap']}% |",
         f"| Mean rank churn (top-60 common) | {result['mean_rank_churn_top60']} |",
@@ -286,14 +277,14 @@ def format_report(result: dict, date: str) -> str:
         f"Exits: {', '.join(result['exits_60']) or 'none'}",
         "",
         "## Missingness in Portfolio",
-        f"| Scope | Baseline | Candidate |",
-        f"|-------|----------|-----------|",
+        "| Scope | Baseline | Candidate |",
+        "|-------|----------|-----------|",
         f"| Top-20 | {result['base_top20_missing']} | {result['cand_top20_missing']} |",
         f"| Top-60 | {result['base_top60_missing']} | {result['cand_top60_missing']} |",
         "",
         "## Tier Distribution (Top-20)",
-        f"| Tier | Baseline | Candidate |",
-        f"|------|----------|-----------|",
+        "| Tier | Baseline | Candidate |",
+        "|------|----------|-----------|",
     ]
     all_tiers = sorted(set(list(result["base_tier_dist_20"]) + list(result["cand_tier_dist_20"])))
     for t in all_tiers:
@@ -330,6 +321,7 @@ def format_report(result: dict, date: str) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Compare two rulesets on an existing snapshot")
@@ -425,9 +417,13 @@ def main(argv=None) -> int:
             print(f"[INFO] Backfilled clinical_score_z_tier for {n_comm_filled} commercial tickers (ddof=0)")
 
     # Backfill institutional delta columns (cold-start: 0 when no delta sidecar)
-    for col, default in [("inst_delta_z", 0.0), ("inst_delta_net", 0),
-                         ("inst_delta_new", 0), ("inst_delta_exit", 0),
-                         ("inst_delta_nonzero_pct", 0.0)]:
+    for col, default in [
+        ("inst_delta_z", 0.0),
+        ("inst_delta_net", 0),
+        ("inst_delta_new", 0),
+        ("inst_delta_exit", 0),
+        ("inst_delta_nonzero_pct", 0.0),
+    ]:
         if col not in rankings.columns:
             rankings[col] = default
             print(f"[INFO] Backfilled {col} with {default} (no delta sidecar)")

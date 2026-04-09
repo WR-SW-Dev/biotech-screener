@@ -8,6 +8,7 @@ Usage:
     python3 tools/build_rebalance_orders.py --as-of-date 2026-03-08
     python3 tools/build_rebalance_orders.py --as-of-date 2026-03-08 --round-lots --min-trade-usd 1000
 """
+
 from __future__ import annotations
 
 import argparse

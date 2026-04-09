@@ -9,6 +9,7 @@ Usage:
     result = block_bootstrap(monthly_returns, block_length=6, n_bootstrap=10000)
     comparison = compare_strategies(returns_a, returns_b, block_length=6)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -52,9 +53,7 @@ def block_bootstrap(
         # Sample block start indices
         starts = rng.integers(0, n_starts, size=n_blocks)
         # Concatenate blocks
-        sample = np.concatenate([
-            returns[s: s + block_length] for s in starts
-        ])[:T]  # trim to original length
+        sample = np.concatenate([returns[s : s + block_length] for s in starts])[:T]  # trim to original length
         boot_means[b] = np.mean(sample)
 
     alpha = 1 - confidence_level
@@ -168,8 +167,11 @@ def compare_strategies(
 
     diff = a - b
     diff_boot = block_bootstrap(
-        diff, block_length=block_length, n_bootstrap=n_bootstrap,
-        confidence_level=confidence_level, seed=seed,
+        diff,
+        block_length=block_length,
+        n_bootstrap=n_bootstrap,
+        confidence_level=confidence_level,
+        seed=seed,
     )
 
     return {

@@ -10,29 +10,25 @@ For 3 spot-check dates across regimes:
 If A_alpha doesn't reproduce the archive ranking, the replay isn't
 measuring production and must be fixed before interpreting results.
 """
+
 from __future__ import annotations
 
 import copy
-import csv
-import json
-import math
 import statistics
 import sys
-import tarfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.ranking_utils import backfill_columns, safe_float
-from decision_engine import DecisionRuleset, compute_actionable_sort_key
+from common.ranking_utils import backfill_columns
+from decision_engine import DecisionRuleset
 from module_5_alpha_cohort import attach_alpha_scores
 from scripts.build_alpha_cohort_table import backfill_clinical_z_tier
 from scripts.build_alpha_cohort_table_oos import build_oos_table
 from scripts.research.anchor_replay import (
     AnchorConfig,
-    _avg_ranks,
     compute_forward_return,
     load_archive_rankings,
     load_price_series,
@@ -45,9 +41,9 @@ PRICE_CSV = PROJECT_ROOT / "production_data" / "price_history.csv"
 
 # 3 dates spanning regimes
 SPOT_CHECK_DATES = [
-    "2020-07-31",   # COVID biotech boom
-    "2022-09-30",   # Bear market / rate hikes
-    "2025-06-30",   # Recent
+    "2020-07-31",  # COVID biotech boom
+    "2022-09-30",  # Bear market / rate hikes
+    "2025-06-30",  # Recent
 ]
 
 
@@ -68,8 +64,7 @@ def compute_ic_from_ranks(
     reverse: bool = False,
 ) -> Dict[str, Any]:
     """Compute IC using a specific rank field. If reverse=True, flip the signal."""
-    eligible = [r for r in rows if r.get("eligible") == "1"
-                and r.get(rank_field, "").strip()]
+    eligible = [r for r in rows if r.get("eligible") == "1" and r.get(rank_field, "").strip()]
     if not eligible:
         return {"ic": None, "n": 0}
 
@@ -109,7 +104,7 @@ def compute_ic_from_ranks(
         if t in fwd_rets:
             rank_val = float(i + 1)
             if reverse:
-                signal_vals.append(rank_val)   # high rank = high signal (reversed)
+                signal_vals.append(rank_val)  # high rank = high signal (reversed)
             else:
                 signal_vals.append(-rank_val)  # low rank = high signal (normal)
 
@@ -139,11 +134,17 @@ def main() -> None:
 
     # Load base ruleset
     snap_dir = PROJECT_ROOT / "data" / "snapshots"
-    dates_with_rs = sorted([
-        p.name for p in snap_dir.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "decision_ruleset.json").exists()
-    ]) if snap_dir.exists() else []
+    dates_with_rs = (
+        sorted(
+            [
+                p.name
+                for p in snap_dir.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
+        if snap_dir.exists()
+        else []
+    )
     if dates_with_rs:
         rs_path = snap_dir / dates_with_rs[-1] / "decision_ruleset.json"
         base_rs = DecisionRuleset.from_json(str(rs_path))
@@ -151,10 +152,8 @@ def main() -> None:
         base_rs = DecisionRuleset()
 
     from dataclasses import replace as dc_replace
-    rs_alpha = dc_replace(base_rs,
-                          sort_anchor="alpha_cohort",
-                          alpha_modifier_mode="off",
-                          alpha_modifier_weight=0.0)
+
+    rs_alpha = dc_replace(base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="off", alpha_modifier_weight=0.0)
 
     cfg_alpha = AnchorConfig("A_alpha", "alpha_pct")
     cfg_optionality = AnchorConfig("E_optionality", "optionality_pct")
@@ -173,7 +172,7 @@ def main() -> None:
 
         raw_rows = load_archive_rankings(tar_path, date_str)
         if not raw_rows:
-            print(f"  No rankings — skip\n")
+            print("  No rankings — skip\n")
             continue
 
         n_eligible = sum(1 for r in raw_rows if r.get("eligible") == "1")
@@ -181,7 +180,11 @@ def main() -> None:
 
         # 1) IC from archive's existing actionable_rank
         archive_ic = compute_ic_from_ranks(
-            raw_rows, prices, sorted_dates, date_str, horizon,
+            raw_rows,
+            prices,
+            sorted_dates,
+            date_str,
+            horizon,
             rank_field="actionable_rank",
         )
 
@@ -201,7 +204,8 @@ def main() -> None:
         backfill_clinical_z_tier(rerank_base)
         if table is not None:
             attach_alpha_scores(
-                rerank_base, table,
+                rerank_base,
+                table,
                 shrink_k=base_rs.alpha_cohort_shrink_k,
                 clip_min=base_rs.alpha_cohort_clip_min,
                 clip_max=base_rs.alpha_cohort_clip_max,
@@ -215,30 +219,48 @@ def main() -> None:
         # 2a) Re-rank with A_alpha config
         rows_alpha = copy.deepcopy(rerank_base)
         rows_alpha = rerank_rows(rows_alpha, cfg_alpha, rs_alpha)
-        alpha_top20 = [r.get("ticker", "") for r in
-                       sorted([r for r in rows_alpha if r.get("eligible") == "1"],
-                              key=lambda r: int(r.get("actionable_rank") or 9999))[:20]]
+        alpha_top20 = [
+            r.get("ticker", "")
+            for r in sorted(
+                [r for r in rows_alpha if r.get("eligible") == "1"], key=lambda r: int(r.get("actionable_rank") or 9999)
+            )[:20]
+        ]
 
         alpha_ic = compute_ic_from_ranks(
-            rows_alpha, prices, sorted_dates, date_str, horizon,
+            rows_alpha,
+            prices,
+            sorted_dates,
+            date_str,
+            horizon,
             rank_field="actionable_rank",
         )
 
         # 2b) Re-rank with E_optionality config
         rows_opt = copy.deepcopy(rerank_base)
         rows_opt = rerank_rows(rows_opt, cfg_optionality, rs_alpha)
-        opt_top20 = [r.get("ticker", "") for r in
-                     sorted([r for r in rows_opt if r.get("eligible") == "1"],
-                            key=lambda r: int(r.get("actionable_rank") or 9999))[:20]]
+        opt_top20 = [
+            r.get("ticker", "")
+            for r in sorted(
+                [r for r in rows_opt if r.get("eligible") == "1"], key=lambda r: int(r.get("actionable_rank") or 9999)
+            )[:20]
+        ]
 
         opt_ic = compute_ic_from_ranks(
-            rows_opt, prices, sorted_dates, date_str, horizon,
+            rows_opt,
+            prices,
+            sorted_dates,
+            date_str,
+            horizon,
             rank_field="actionable_rank",
         )
 
         # 3) Reversed ranking (bottom-20 as "top")
         reversed_ic = compute_ic_from_ranks(
-            raw_rows, prices, sorted_dates, date_str, horizon,
+            raw_rows,
+            prices,
+            sorted_dates,
+            date_str,
+            horizon,
             rank_field="actionable_rank",
             reverse=True,
         )
@@ -248,13 +270,13 @@ def main() -> None:
         print(f"  Alpha table built: {'YES' if table else 'NO'}")
         print()
 
-        print(f"  Archive ranking (production proxy):")
+        print("  Archive ranking (production proxy):")
         print(f"    IC(60d) = {archive_ic['ic']}  (n={archive_ic['n']})")
         print(f"    Top-20 ret = {archive_ic.get('top20_ret')}")
         print(f"    Top-20: {archive_top20}")
         print()
 
-        print(f"  Replay A_alpha re-ranking:")
+        print("  Replay A_alpha re-ranking:")
         print(f"    IC(60d) = {alpha_ic['ic']}  (n={alpha_ic['n']})")
         print(f"    Top-20 ret = {alpha_ic.get('top20_ret')}")
         print(f"    Top-20: {alpha_top20}")
@@ -262,8 +284,7 @@ def main() -> None:
 
         # Overlap
         overlap = set(archive_top20) & set(alpha_top20)
-        print(f"  Archive vs A_alpha top-20 overlap: {len(overlap)}/20 "
-              f"({len(overlap)/20:.0%})")
+        print(f"  Archive vs A_alpha top-20 overlap: {len(overlap)}/20 " f"({len(overlap)/20:.0%})")
         if len(overlap) < 20:
             only_archive = set(archive_top20) - set(alpha_top20)
             only_alpha = set(alpha_top20) - set(archive_top20)
@@ -271,7 +292,7 @@ def main() -> None:
             print(f"    Only in A_alpha: {sorted(only_alpha)}")
         print()
 
-        print(f"  Replay E_optionality re-ranking:")
+        print("  Replay E_optionality re-ranking:")
         print(f"    IC(60d) = {opt_ic['ic']}  (n={opt_ic['n']})")
         print(f"    Top-20 ret = {opt_ic.get('top20_ret')}")
         print(f"    Top-20: {opt_top20}")
@@ -281,9 +302,9 @@ def main() -> None:
         print(f"  A_alpha vs E_optionality top-20 overlap: {len(overlap_ae)}/20")
         print()
 
-        print(f"  REVERSED ranking (bottom-20 = 'top'):")
+        print("  REVERSED ranking (bottom-20 = 'top'):")
         print(f"    IC(60d) = {reversed_ic['ic']}  (n={reversed_ic['n']})")
-        print(f"    (Expect sign flip if ranking has any predictive content)")
+        print("    (Expect sign flip if ranking has any predictive content)")
         print()
 
 

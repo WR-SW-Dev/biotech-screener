@@ -22,6 +22,7 @@ Workflow:
     2. Run eval_forward_returns.py on the generated snapshots
     3. Print summary comparison vs baseline
 """
+
 from __future__ import annotations
 
 import argparse

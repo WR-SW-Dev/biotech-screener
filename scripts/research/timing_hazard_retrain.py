@@ -16,6 +16,7 @@ Output:
 Usage:
     python3 scripts/research/timing_hazard_retrain.py
 """
+
 from __future__ import annotations
 
 import csv

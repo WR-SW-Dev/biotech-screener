@@ -19,6 +19,7 @@ Output per date:
         managers/{CIK}.json
         raw/{CIK}/{accession}.xml   (if fetcher has cached XML)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,7 +27,6 @@ import json
 import logging
 import shutil
 import sys
-import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -38,11 +38,11 @@ from typing import Any, Dict, List, Optional
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from sec_13f.edgar_13f import SEC13FFetcher, Filing13F, Holding
-from elite_managers import get_elite_managers, get_all_managers
+from elite_managers import get_all_managers, get_elite_managers
+from sec_13f.edgar_13f import SEC13FFetcher
 from tools.warm_13f_cache import (
-    SCHEMA_VERSION,
     CACHE_TYPE,
+    SCHEMA_VERSION,
     RateLimiter,
     select_pit_filing,
     validate_sec_13f_index_schema,
@@ -61,6 +61,7 @@ DEFAULT_LOOKBACK_FILINGS = 16  # ~4-year lookback (vs 8 in daily)
 # ---------------------------------------------------------------------------
 # Quarter-end date generation
 # ---------------------------------------------------------------------------
+
 
 def generate_quarter_end_dates(
     date_from: date,
@@ -88,6 +89,7 @@ def generate_quarter_end_dates(
 # ---------------------------------------------------------------------------
 # Per-manager backfill (parameterised lookback)
 # ---------------------------------------------------------------------------
+
 
 def _warm_one_manager_backfill(
     manager: Dict[str, Any],
@@ -120,9 +122,7 @@ def _warm_one_manager_backfill(
         if selection.filing is None:
             result["status"] = "no_filing"
             result["rejection_reason"] = selection.rejection_reason
-            logger.debug(
-                f"  {name} (CIK {cik}): {selection.rejection_reason}"
-            )
+            logger.debug(f"  {name} (CIK {cik}): {selection.rejection_reason}")
             return result
 
         filing = selection.filing
@@ -174,11 +174,7 @@ def _warm_one_manager_backfill(
         result["accession"] = selection.accession
         result["holdings_count"] = len(holdings)
         result["manager_json_path"] = f"managers/{cik_padded}.json"
-        result["raw_xml_path"] = (
-            f"raw/{cik_padded}/{filing.accession_number}.xml"
-            if has_raw_xml
-            else ""
-        )
+        result["raw_xml_path"] = f"raw/{cik_padded}/{filing.accession_number}.xml" if has_raw_xml else ""
 
     except Exception as e:
         result["status"] = "error"
@@ -192,6 +188,7 @@ def _warm_one_manager_backfill(
 # Index builder with backfill metadata
 # ---------------------------------------------------------------------------
 
+
 def _build_backfill_index(
     as_of_date: date,
     manager_results: List[Dict[str, Any]],
@@ -203,11 +200,7 @@ def _build_backfill_index(
 ) -> Dict[str, Any]:
     """Build index.json with v1 schema fields + backfill metadata block."""
     ok_results = [r for r in manager_results if r["status"] == "ok"]
-    coverage_pct = (
-        round(len(ok_results) / total_managers * 100, 1)
-        if total_managers
-        else 0.0
-    )
+    coverage_pct = round(len(ok_results) / total_managers * 100, 1) if total_managers else 0.0
 
     managers_list = []
     for r in manager_results:
@@ -227,27 +220,20 @@ def _build_backfill_index(
             entry["raw_xml_path"] = r.get("raw_xml_path", "")
             entry["rejection_reason"] = ""
         else:
-            entry["rejection_reason"] = (
-                r.get("rejection_reason") or r.get("error") or "unknown"
-            )
+            entry["rejection_reason"] = r.get("rejection_reason") or r.get("error") or "unknown"
         managers_list.append(entry)
 
     return {
         "schema_version": SCHEMA_VERSION,
         "cache_type": CACHE_TYPE,
         "as_of_date": as_of_date.isoformat(),
-        "created_at": datetime.now(tz=timezone.utc)
-        .isoformat()
-        .replace("+00:00", "Z"),
+        "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
         "elite_only": elite_only,
         "total_managers": total_managers,
         "managers_with_filing": len(ok_results),
         "coverage_pct": coverage_pct,
         "selection_policy": {
-            "pit_rule": (
-                "filing_date<=as_of; latest report_date; "
-                "prefer 13F-HR/A; latest filing_date"
-            ),
+            "pit_rule": ("filing_date<=as_of; latest report_date; " "prefer 13F-HR/A; latest filing_date"),
             "recent_filings_lookback_n": lookback_filings,
         },
         "managers": managers_list,
@@ -256,9 +242,7 @@ def _build_backfill_index(
             "cadence": cadence,
             "manager_set": manager_set,
             "lookback_filings": lookback_filings,
-            "generated_at": datetime.now(tz=timezone.utc)
-            .isoformat()
-            .replace("+00:00", "Z"),
+            "generated_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
         },
     }
 
@@ -266,6 +250,7 @@ def _build_backfill_index(
 # ---------------------------------------------------------------------------
 # Resume helpers
 # ---------------------------------------------------------------------------
+
 
 def _is_date_complete(out_root: Path, as_of_date: date) -> bool:
     """Return True if a valid v1 index.json already exists for this date."""
@@ -275,9 +260,7 @@ def _is_date_complete(out_root: Path, as_of_date: date) -> bool:
     try:
         with open(index_path) as f:
             index = json.load(f)
-        ok, _ = validate_sec_13f_index_schema(
-            index, expected_as_of_date=as_of_date.isoformat()
-        )
+        ok, _ = validate_sec_13f_index_schema(index, expected_as_of_date=as_of_date.isoformat())
         return ok
     except (json.JSONDecodeError, OSError):
         return False
@@ -305,18 +288,20 @@ def _find_missing_managers(
                 with open(mgr_path) as f:
                     data = json.load(f)
                 # Reconstruct a result dict from the cached manager JSON
-                existing_results.append({
-                    "manager_cik": cik_padded,
-                    "manager_name": data.get("manager_name", mgr.get("name", "")),
-                    "status": "ok",
-                    "period_of_report": data.get("period_of_report", ""),
-                    "filed_at": data.get("filed_at", ""),
-                    "form_type": data.get("form_type", ""),
-                    "accession": data.get("accession", ""),
-                    "holdings_count": len(data.get("holdings", [])),
-                    "manager_json_path": f"managers/{cik_padded}.json",
-                    "raw_xml_path": "",  # cannot recover from manager JSON alone
-                })
+                existing_results.append(
+                    {
+                        "manager_cik": cik_padded,
+                        "manager_name": data.get("manager_name", mgr.get("name", "")),
+                        "status": "ok",
+                        "period_of_report": data.get("period_of_report", ""),
+                        "filed_at": data.get("filed_at", ""),
+                        "form_type": data.get("form_type", ""),
+                        "accession": data.get("accession", ""),
+                        "holdings_count": len(data.get("holdings", [])),
+                        "manager_json_path": f"managers/{cik_padded}.json",
+                        "raw_xml_path": "",  # cannot recover from manager JSON alone
+                    }
+                )
             except (json.JSONDecodeError, OSError):
                 # Corrupt JSON — re-fetch
                 missing.append(mgr)
@@ -329,6 +314,7 @@ def _find_missing_managers(
 # ---------------------------------------------------------------------------
 # Per-date orchestrator
 # ---------------------------------------------------------------------------
+
 
 def _backfill_one_date(
     as_of_date: date,
@@ -346,7 +332,7 @@ def _backfill_one_date(
     """Warm cache for a single date, with resume support."""
     date_dir = out_root / as_of_date.isoformat()
     elite_only = manager_set == "elite"
-    total_managers = len(managers)
+    len(managers)
 
     # Apply max_managers limit
     effective_managers = managers[:max_managers] if max_managers else managers
@@ -357,15 +343,10 @@ def _backfill_one_date(
     to_fetch = effective_managers
 
     if resume and date_dir.exists():
-        missing, existing_results = _find_missing_managers(
-            date_dir, effective_managers
-        )
+        missing, existing_results = _find_missing_managers(date_dir, effective_managers)
         to_fetch = missing
         if not to_fetch:
-            logger.info(
-                f"  {as_of_date}: all {len(existing_results)} managers "
-                f"cached, skipping"
-            )
+            logger.info(f"  {as_of_date}: all {len(existing_results)} managers " "cached, skipping")
 
     date_dir.mkdir(parents=True, exist_ok=True)
 
@@ -391,15 +372,15 @@ def _backfill_one_date(
                     new_results.append(result)
                 except Exception as e:
                     mgr = futures[future]
-                    logger.error(
-                        f"  {mgr.get('name', '?')}: unhandled {e}"
+                    logger.error(f"  {mgr.get('name', '?')}: unhandled {e}")
+                    new_results.append(
+                        {
+                            "manager_cik": mgr.get("cik", "").lstrip("0").zfill(10),
+                            "manager_name": mgr.get("name", ""),
+                            "status": "error",
+                            "error": str(e),
+                        }
                     )
-                    new_results.append({
-                        "manager_cik": mgr.get("cik", "").lstrip("0").zfill(10),
-                        "manager_name": mgr.get("name", ""),
-                        "status": "error",
-                        "error": str(e),
-                    })
 
     # Merge existing + new, deduplicate by CIK (new wins)
     results_by_cik: Dict[str, Dict[str, Any]] = {}
@@ -445,6 +426,7 @@ def _backfill_one_date(
 # Coverage report
 # ---------------------------------------------------------------------------
 
+
 def _build_coverage_report(
     per_date: List[Dict[str, Any]],
     total_managers: int,
@@ -472,6 +454,7 @@ def _build_coverage_report(
 # Main entry point
 # ---------------------------------------------------------------------------
 
+
 def _load_managers(manager_set: str) -> List[Dict[str, Any]]:
     """Load manager list based on manager_set parameter."""
     if manager_set == "coinvest":
@@ -479,10 +462,7 @@ def _load_managers(manager_set: str) -> List[Dict[str, Any]]:
     elif manager_set == "elite":
         return get_elite_managers()
     else:
-        raise ValueError(
-            f"Unknown manager_set: {manager_set!r}. "
-            f"Must be 'coinvest' or 'elite'."
-        )
+        raise ValueError(f"Unknown manager_set: {manager_set!r}. " "Must be 'coinvest' or 'elite'.")
 
 
 def backfill_13f_history(
@@ -541,15 +521,17 @@ def backfill_13f_history(
             # Read existing index for summary
             with open(out_root / d.isoformat() / "index.json") as f:
                 existing_index = json.load(f)
-            per_date.append({
-                "as_of_date": d.isoformat(),
-                "managers_with_filing": existing_index["managers_with_filing"],
-                "total_managers": existing_index["total_managers"],
-                "coverage_pct": existing_index["coverage_pct"],
-                "fetched": 0,
-                "cached": existing_index["total_managers"],
-                "skipped": True,
-            })
+            per_date.append(
+                {
+                    "as_of_date": d.isoformat(),
+                    "managers_with_filing": existing_index["managers_with_filing"],
+                    "total_managers": existing_index["total_managers"],
+                    "coverage_pct": existing_index["coverage_pct"],
+                    "fetched": 0,
+                    "cached": existing_index["total_managers"],
+                    "skipped": True,
+                }
+            )
             skipped += 1
             continue
 
@@ -581,9 +563,7 @@ def backfill_13f_history(
     }
 
     if report:
-        summary["coverage_report"] = _build_coverage_report(
-            per_date, total_managers
-        )
+        summary["coverage_report"] = _build_coverage_report(per_date, total_managers)
 
     return summary
 
@@ -591,6 +571,7 @@ def backfill_13f_history(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(
@@ -695,7 +676,7 @@ def main() -> int:
 
     if "coverage_report" in summary:
         rpt = summary["coverage_report"]
-        print(f"\nCoverage Report:")
+        print("\nCoverage Report:")
         print(f"  Dates:           {rpt['total_dates']}")
         print(f"  Target managers: {rpt['total_managers_target']}")
         if rpt["total_dates"] > 0:

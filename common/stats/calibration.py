@@ -8,6 +8,7 @@ Usage:
 
     report = calibration_report(predicted_scores, actual_outcomes, n_bins=10)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -52,13 +53,15 @@ def reliability_curve(
             continue
         bin_pred = predicted[mask]
         bin_actual = actual[mask]
-        bins.append({
-            "bin_idx": i,
-            "mean_predicted": _round(float(np.mean(bin_pred))),
-            "mean_actual": _round(float(np.mean(bin_actual))),
-            "count": int(np.sum(mask)),
-            "gap": _round(float(abs(np.mean(bin_pred) - np.mean(bin_actual)))),
-        })
+        bins.append(
+            {
+                "bin_idx": i,
+                "mean_predicted": _round(float(np.mean(bin_pred))),
+                "mean_actual": _round(float(np.mean(bin_actual))),
+                "count": int(np.sum(mask)),
+                "gap": _round(float(abs(np.mean(bin_pred) - np.mean(bin_actual)))),
+            }
+        )
 
     return {
         "n_bins": len(bins),
@@ -132,8 +135,11 @@ def platt_scaling(
         return -np.sum(ll)
 
     from scipy.optimize import minimize
+
     result = minimize(
-        neg_log_likelihood, x0=[1.0, 0.0], method="Nelder-Mead",
+        neg_log_likelihood,
+        x0=[1.0, 0.0],
+        method="Nelder-Mead",
     )
     a_opt, b_opt = result.x
 
@@ -218,20 +224,14 @@ def calibration_report(
     if run_platt:
         try:
             platt = platt_scaling(predicted, actual)
-            result["platt"] = {
-                k: v for k, v in platt.items()
-                if k != "calibrated_scores"
-            }
+            result["platt"] = {k: v for k, v in platt.items() if k != "calibrated_scores"}
         except Exception as e:
             result["platt"] = {"error": str(e)}
 
     if run_isotonic:
         try:
             iso = isotonic_calibration(predicted, actual)
-            result["isotonic"] = {
-                k: v for k, v in iso.items()
-                if k != "calibrated_scores"
-            }
+            result["isotonic"] = {k: v for k, v in iso.items() if k != "calibrated_scores"}
         except Exception as e:
             result["isotonic"] = {"error": str(e)}
 

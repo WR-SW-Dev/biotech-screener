@@ -13,16 +13,16 @@ Exit codes:
   0 — audit complete (this is audit, not a gate)
   2 — file missing or parse error
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
-
+from typing import Any, Dict, List, Optional
 
 # ---------------------------------------------------------------------------
 # Core audit logic (importable for testing)
@@ -102,10 +102,14 @@ def audit_future_events(
         for field in _DATE_FIELDS:
             raw = rec.get(field)
             if raw and _parse_date_safe(raw) is None:
-                malformed_dates.append({
-                    "nct_id": nct_id, "ticker": ticker,
-                    "field": field, "raw_value": str(raw)[:50],
-                })
+                malformed_dates.append(
+                    {
+                        "nct_id": nct_id,
+                        "ticker": ticker,
+                        "field": field,
+                        "raw_value": str(raw)[:50],
+                    }
+                )
 
         # Future PCD
         if pcd and pcd > as_of_date:
@@ -118,11 +122,15 @@ def audit_future_events(
 
             # Far-future flag
             if days_ahead > horizon_days:
-                far_future.append({
-                    "nct_id": nct_id, "ticker": ticker,
-                    "field": "primary_completion_date",
-                    "date": pcd.isoformat(), "days_ahead": days_ahead,
-                })
+                far_future.append(
+                    {
+                        "nct_id": nct_id,
+                        "ticker": ticker,
+                        "field": "primary_completion_date",
+                        "date": pcd.isoformat(),
+                        "days_ahead": days_ahead,
+                    }
+                )
 
         # Future CD
         if cd and cd > as_of_date:
@@ -136,28 +144,37 @@ def audit_future_events(
 
         # PCD after CD by > 30 days
         if pcd and cd and pcd > cd and (pcd - cd).days > 30:
-            pcd_after_cd.append({
-                "nct_id": nct_id, "ticker": ticker,
-                "pcd": pcd.isoformat(), "cd": cd.isoformat(),
-                "gap_days": (pcd - cd).days,
-            })
+            pcd_after_cd.append(
+                {
+                    "nct_id": nct_id,
+                    "ticker": ticker,
+                    "pcd": pcd.isoformat(),
+                    "cd": cd.isoformat(),
+                    "gap_days": (pcd - cd).days,
+                }
+            )
 
         # Missing disclosed_at on records with future dates
         if (pcd and pcd > as_of_date) or (cd and cd > as_of_date):
             if not lup:
-                missing_disclosed_at.append({
-                    "nct_id": nct_id, "ticker": ticker,
-                })
+                missing_disclosed_at.append(
+                    {
+                        "nct_id": nct_id,
+                        "ticker": ticker,
+                    }
+                )
 
     # Top tickers by future PCD count
     top_tickers = []
     for tk, cnt in ticker_future_pcd_count.most_common(top_n):
         earliest = ticker_earliest_pcd.get(tk)
-        top_tickers.append({
-            "ticker": tk,
-            "future_pcd_count": cnt,
-            "earliest_future_pcd": earliest.isoformat() if earliest else None,
-        })
+        top_tickers.append(
+            {
+                "ticker": tk,
+                "future_pcd_count": cnt,
+                "earliest_future_pcd": earliest.isoformat() if earliest else None,
+            }
+        )
 
     # Status distribution
     status_dist = Counter((r.get("status") or "MISSING") for r in records)
@@ -249,6 +266,7 @@ def format_markdown(audit: dict, top_n: int = 30) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="Audit CTGov future event extraction quality")
     parser.add_argument("--as-of-date", required=True, help="YYYY-MM-DD")
@@ -261,6 +279,7 @@ def main():
 
     # sys.path setup for project imports
     import sys as _sys
+
     project_root = str(Path(__file__).resolve().parent.parent)
     if project_root not in _sys.path:
         _sys.path.insert(0, project_root)
@@ -295,13 +314,15 @@ def main():
 
     # Print key metrics to stdout
     m = audit["metrics"]
-    print(f"\n--- Summary ---")
+    print("\n--- Summary ---")
     print(f"Total trials: {m['total_trials']:,}")
     print(f"Future PCD: {m['future_primary_completion_date']:,} ({m['pct_future_primary_completion_date']:.1f}%)")
     print(f"Future CD: {m['future_completion_date']:,} ({m['pct_future_completion_date']:.1f}%)")
-    print(f"Flags: malformed={audit['flag_summary']['malformed_count']}, "
-          f"far_future={audit['flag_summary']['far_future_count']}, "
-          f"pcd>cd={audit['flag_summary']['pcd_after_cd_count']}")
+    print(
+        f"Flags: malformed={audit['flag_summary']['malformed_count']}, "
+        f"far_future={audit['flag_summary']['far_future_count']}, "
+        f"pcd>cd={audit['flag_summary']['pcd_after_cd_count']}"
+    )
 
     sys.exit(0)
 

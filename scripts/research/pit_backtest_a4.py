@@ -16,6 +16,7 @@ Usage:
     python3 scripts/research/pit_backtest_a4.py
     python3 scripts/research/pit_backtest_a4.py --start 2021-01-01 --cost-bps 30
 """
+
 from __future__ import annotations
 
 import argparse

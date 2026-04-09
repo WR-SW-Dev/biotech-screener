@@ -20,6 +20,7 @@ Usage:
     python3 tools/build_ev_validation.py --as-of-date 2026-04-09
     python3 tools/build_ev_validation.py --rebuild  # rebuild ledger from scratch
 """
+
 from __future__ import annotations
 
 import argparse

@@ -21,6 +21,7 @@ Usage:
     python3 scripts/research/execution_delta_study.py --track A
     python3 scripts/research/execution_delta_study.py --track B
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1662,7 +1663,7 @@ def main():
             track_a_results,
             OUTPUT_DIR / "signal_ranking_table.md",
         )
-        print(f"\n  Signal ranking table: " f"{OUTPUT_DIR / 'signal_ranking_table.md'}")
+        print("\n  Signal ranking table: " f"{OUTPUT_DIR / 'signal_ranking_table.md'}")
 
     if "B" in tracks:
         sel_bundles = run_selector_bundles(snapshots)
@@ -1670,14 +1671,14 @@ def main():
             sel_bundles,
             OUTPUT_DIR / "selector_bundle_comparison.md",
         )
-        print(f"\n  Selector bundle table: " f"{OUTPUT_DIR / 'selector_bundle_comparison.md'}")
+        print("\n  Selector bundle table: " f"{OUTPUT_DIR / 'selector_bundle_comparison.md'}")
 
         rnk_bundles = run_ranker_bundles(snapshots)
         write_ranker_bundle_table(
             rnk_bundles,
             OUTPUT_DIR / "ranker_bundle_comparison.md",
         )
-        print(f"\n  Ranker bundle table: " f"{OUTPUT_DIR / 'ranker_bundle_comparison.md'}")
+        print("\n  Ranker bundle table: " f"{OUTPUT_DIR / 'ranker_bundle_comparison.md'}")
 
     if "C" in tracks:
         track_c_results = run_track_c(panel, snapshots)
@@ -1716,7 +1717,7 @@ def main():
         promote = [c for c in track_a_results if c["verdict"] == "PROMOTE_CANDIDATE"]
         shadow = [c for c in track_a_results if c["verdict"] == "SHADOW"]
         if promote:
-            print(f"  PROMOTE candidates: " f"{[c['signal'] for c in promote]}")
+            print("  PROMOTE candidates: " f"{[c['signal'] for c in promote]}")
         if shadow:
             print(f"  SHADOW: {[c['signal'] for c in shadow]}")
 

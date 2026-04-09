@@ -10,6 +10,7 @@ Usage:
         --aact-dir aact/ \
         --out data/caches/pi_features/ctgov_api_pi_supplement.json
 """
+
 from __future__ import annotations
 
 import argparse

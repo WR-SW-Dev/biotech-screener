@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 """
 Integration Contracts for Biotech Screener Pipeline.
 
@@ -15,6 +16,7 @@ Design Philosophy:
 
 Version: 1.1.0
 """
+
 from __future__ import annotations
 
 import warnings
@@ -39,23 +41,14 @@ from typing import (
 )
 
 # Re-export Module 3 schema types for cross-module usage
-from module_3_schema import (
-    # Enums
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    CatalystWindowBucket,
-    # Dataclasses
-    CatalystEventV2,
-    TickerCatalystSummaryV2,
+from module_3_schema import SCHEMA_VERSION as MODULE_3_SCHEMA_VERSION
+from module_3_schema import SCORE_VERSION as MODULE_3_SCORE_VERSION
+from module_3_schema import CatalystEventV2, CatalystWindowBucket, ConfidenceLevel
+from module_3_schema import (  # noqa: F401; Enums; Dataclasses; Version constants; Validation functions
     DiagnosticCounts as Module3DiagnosticCounts,
-    # Version constants
-    SCHEMA_VERSION as MODULE_3_SCHEMA_VERSION,
-    SCORE_VERSION as MODULE_3_SCORE_VERSION,
-    # Validation functions
-    validate_summary_schema as validate_m3_summary_schema,
 )
-
+from module_3_schema import EventSeverity, EventType, TickerCatalystSummaryV2
+from module_3_schema import validate_summary_schema as validate_m3_summary_schema
 
 __version__ = "1.4.0"  # Added score bounds validation, production mode enforcement, deep validation by default
 
@@ -111,11 +104,7 @@ SUPPORTED_SCHEMA_VERSIONS = {
 }
 
 
-def check_schema_version(
-    module_name: str,
-    result: Dict[str, Any],
-    strict: bool = False
-) -> Tuple[bool, Optional[str]]:
+def check_schema_version(module_name: str, result: Dict[str, Any], strict: bool = False) -> Tuple[bool, Optional[str]]:
     """
     Check if result schema version is supported.
 
@@ -157,10 +146,9 @@ def check_schema_version(
 # SCHEMA MIGRATION HELPERS
 # =============================================================================
 
+
 def migrate_module_output(
-    result: Dict[str, Any],
-    module_name: str,
-    target_version: Optional[str] = None
+    result: Dict[str, Any], module_name: str, target_version: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Migrate module output to target schema version.
@@ -181,10 +169,7 @@ def migrate_module_output(
     return result
 
 
-def _migrate_module_2_output(
-    result: Dict[str, Any],
-    target_version: Optional[str] = None
-) -> Dict[str, Any]:
+def _migrate_module_2_output(result: Dict[str, Any], target_version: Optional[str] = None) -> Dict[str, Any]:
     """
     Migrate Module 2 output.
 
@@ -204,10 +189,7 @@ def _migrate_module_2_output(
     return migrated
 
 
-def _migrate_module_3_output(
-    result: Dict[str, Any],
-    target_version: Optional[str] = None
-) -> Dict[str, Any]:
+def _migrate_module_3_output(result: Dict[str, Any], target_version: Optional[str] = None) -> Dict[str, Any]:
     """
     Migrate Module 3 output.
 
@@ -274,6 +256,7 @@ DateLike = Union[str, date]
 # DATE NORMALIZATION
 # =============================================================================
 
+
 def normalize_date_input(date_input: DateLike) -> date:
     """Normalize date input to date object.
 
@@ -330,12 +313,14 @@ def normalize_ticker_set(tickers: TickerCollection) -> Set[str]:
 # STANDARDIZED SCORE FIELD NAMES
 # =============================================================================
 
+
 class ScoreFieldNames:
     """
     Standardized score field names across modules.
 
     Use these constants when accessing scores from module outputs.
     """
+
     # Module 2 - Financial
     FINANCIAL_SCORE = "financial_score"
     FINANCIAL_NORMALIZED = "financial_normalized"  # Legacy alias
@@ -356,8 +341,10 @@ class ScoreFieldNames:
 # NESTED TYPE DEFINITIONS FOR MODULE OUTPUTS
 # =============================================================================
 
+
 class ExcludedSecurityRecord(TypedDict, total=False):
     """Schema for excluded security record."""
+
     ticker: str
     reason: str
     exclusion_type: str
@@ -366,6 +353,7 @@ class ExcludedSecurityRecord(TypedDict, total=False):
 
 class DiagnosticCountsDict(TypedDict, total=False):
     """Schema for diagnostic counts in module outputs."""
+
     scored: int
     missing: int
     excluded: int
@@ -376,6 +364,7 @@ class DiagnosticCountsDict(TypedDict, total=False):
 
 class ProvenanceDict(TypedDict, total=False):
     """Schema for provenance/audit trail metadata."""
+
     run_id: str
     schema_version: str
     score_version: str
@@ -388,6 +377,7 @@ class ProvenanceDict(TypedDict, total=False):
 
 class GovernanceDict(TypedDict, total=False):
     """Schema for governance metadata in Module 5 output."""
+
     run_id: str
     schema_version: str
     score_version: str
@@ -405,8 +395,10 @@ ModuleResultDict = Dict[str, Union[str, int, float, bool, List[Any], Dict[str, A
 # MODULE OUTPUT SCHEMAS (TypedDict for validation)
 # =============================================================================
 
+
 class Module1SecurityRecord(TypedDict, total=False):
     """Schema for Module 1 active security record."""
+
     ticker: str
     status: str
     market_cap_mm: Optional[float]
@@ -416,6 +408,7 @@ class Module1SecurityRecord(TypedDict, total=False):
 
 class Module1Output(TypedDict, total=False):
     """Schema for Module 1 output."""
+
     as_of_date: str  # ISO date string
     active_securities: List[Module1SecurityRecord]
     excluded_securities: List[ExcludedSecurityRecord]
@@ -425,6 +418,7 @@ class Module1Output(TypedDict, total=False):
 
 class Module2ScoreRecord(TypedDict, total=False):
     """Schema for Module 2 financial score record."""
+
     ticker: str
     financial_score: float  # Standardized name
     financial_normalized: float  # Legacy alias (same value)
@@ -437,12 +431,14 @@ class Module2ScoreRecord(TypedDict, total=False):
 
 class Module2Output(TypedDict):
     """Schema for Module 2 output."""
+
     scores: List[Module2ScoreRecord]
     diagnostic_counts: DiagnosticCountsDict
 
 
 class Module3SummaryRecord(TypedDict, total=False):
     """Schema for Module 3 catalyst summary record."""
+
     ticker: str
     catalyst_score: float  # Standardized name
     score_blended: float  # V2 detail
@@ -454,6 +450,7 @@ class Module3SummaryRecord(TypedDict, total=False):
 
 class Module3Output(TypedDict):
     """Schema for Module 3 output."""
+
     summaries: Dict[str, Union[TickerCatalystSummaryV2, Module3SummaryRecord]]
     diagnostic_counts: DiagnosticCountsDict
     as_of_date: str
@@ -466,6 +463,7 @@ class Module3Output(TypedDict):
 
 class Module4ScoreRecord(TypedDict, total=False):
     """Schema for Module 4 clinical score record."""
+
     ticker: str
     clinical_score: str  # Decimal as string
     lead_phase: str
@@ -477,6 +475,7 @@ class Module4ScoreRecord(TypedDict, total=False):
 
 class Module4Output(TypedDict):
     """Schema for Module 4 output."""
+
     as_of_date: str
     scores: List[Module4ScoreRecord]
     diagnostic_counts: DiagnosticCountsDict
@@ -485,6 +484,7 @@ class Module4Output(TypedDict):
 
 class Module5RankedRecord(TypedDict, total=False):
     """Schema for Module 5 ranked security record."""
+
     ticker: str
     composite_score: float
     rank: int
@@ -497,6 +497,7 @@ class Module5RankedRecord(TypedDict, total=False):
 
 class Module5Output(TypedDict):
     """Schema for Module 5 output."""
+
     ranked_securities: List[Module5RankedRecord]
     excluded_securities: List[ExcludedSecurityRecord]
     diagnostic_counts: DiagnosticCountsDict
@@ -517,8 +518,10 @@ CatalystSummary = Union[TickerCatalystSummaryV2, Module3SummaryRecord, Dict[str,
 # SCHEMA VALIDATION
 # =============================================================================
 
+
 class SchemaValidationError(Exception):
     """Raised when module output fails schema validation."""
+
     pass
 
 
@@ -567,9 +570,7 @@ def validate_module_2_output(output: Dict[str, Any], validate_bounds: bool = Tru
             raise SchemaValidationError(f"scores[{i}] missing 'ticker' field")
         # Check for standardized or legacy field name
         if "financial_score" not in score and "financial_normalized" not in score:
-            raise SchemaValidationError(
-                f"scores[{i}] missing 'financial_score' or 'financial_normalized' field"
-            )
+            raise SchemaValidationError(f"scores[{i}] missing 'financial_score' or 'financial_normalized' field")
 
     # Score bounds validation (enabled by default for fail-loud behavior)
     if validate_bounds and is_validation_enabled():
@@ -578,11 +579,7 @@ def validate_module_2_output(output: Dict[str, Any], validate_bounds: bool = Tru
             raise SchemaValidationError(f"Module 2 score bounds violations: {errors}")
 
 
-def validate_module_3_output(
-    output: Dict[str, Any],
-    deep: bool = True,
-    validate_bounds: bool = True
-) -> None:
+def validate_module_3_output(output: Dict[str, Any], deep: bool = True, validate_bounds: bool = True) -> None:
     """
     Validate Module 3 output schema.
 
@@ -609,10 +606,9 @@ def validate_module_3_output(
     # Warn about deprecated summaries_legacy
     if "summaries_legacy" in output and output["summaries_legacy"]:
         warnings.warn(
-            "summaries_legacy is deprecated and will be removed in a future version. "
-            "Use summaries instead.",
+            "summaries_legacy is deprecated and will be removed in a future version. " "Use summaries instead.",
             DeprecationWarning,
-            stacklevel=2
+            stacklevel=2,
         )
 
     # Deep validation using module_3_schema validator (enabled by default)
@@ -625,15 +621,11 @@ def validate_module_3_output(
             elif isinstance(summary, dict):
                 summary_dict = summary
             else:
-                raise SchemaValidationError(
-                    f"summaries[{ticker}] must be dict or TickerCatalystSummaryV2"
-                )
+                raise SchemaValidationError(f"summaries[{ticker}] must be dict or TickerCatalystSummaryV2")
 
             is_valid, errors = validate_m3_summary_schema(summary_dict)
             if not is_valid:
-                raise SchemaValidationError(
-                    f"summaries[{ticker}] schema validation failed: {errors}"
-                )
+                raise SchemaValidationError(f"summaries[{ticker}] schema validation failed: {errors}")
 
     # Score bounds validation (enabled by default for fail-loud behavior)
     if validate_bounds and is_validation_enabled():
@@ -702,11 +694,7 @@ def validate_module_5_output(output: Dict[str, Any], validate_bounds: bool = Tru
             raise SchemaValidationError(f"Module 5 score bounds violations: {errors}")
 
 
-def validate_pipeline_handoff(
-    source_module: str,
-    target_module: str,
-    output: Dict[str, Any]
-) -> None:
+def validate_pipeline_handoff(source_module: str, target_module: str, output: Dict[str, Any]) -> None:
     """
     Validate output when passing between modules.
 
@@ -731,19 +719,16 @@ def validate_pipeline_handoff(
         try:
             validator(output)
         except SchemaValidationError as e:
-            raise SchemaValidationError(
-                f"Handoff from {source_module} to {target_module} failed: {e}"
-            ) from e
+            raise SchemaValidationError(f"Handoff from {source_module} to {target_module} failed: {e}") from e
 
 
 # =============================================================================
 # SCORE EXTRACTION HELPERS
 # =============================================================================
 
+
 def extract_financial_score(
-    score_record: Union[Module2ScoreRecord, Mapping[str, Any]],
-    warn_legacy: bool = True,
-    return_decimal: bool = False
+    score_record: Union[Module2ScoreRecord, Mapping[str, Any]], warn_legacy: bool = True, return_decimal: bool = False
 ) -> Optional[Union[float, Decimal]]:
     """
     Extract financial score from Module 2 score record.
@@ -789,10 +774,7 @@ def extract_financial_score(
         return float(value)
 
 
-def extract_catalyst_score(
-    summary: CatalystSummary,
-    warn_legacy: bool = True
-) -> Optional[float]:
+def extract_catalyst_score(summary: CatalystSummary, warn_legacy: bool = True) -> Optional[float]:
     """
     Extract catalyst score from Module 3 summary.
 
@@ -854,17 +836,12 @@ def extract_catalyst_score(
         return None
 
     except (ValueError, TypeError, InvalidOperation) as e:
-        warnings.warn(
-            f"Failed to extract catalyst_score from summary: {e}",
-            RuntimeWarning,
-            stacklevel=2
-        )
+        warnings.warn(f"Failed to extract catalyst_score from summary: {e}", RuntimeWarning, stacklevel=2)
         return None
 
 
 def extract_clinical_score(
-    score_record: Union[Module4ScoreRecord, Mapping[str, Any]],
-    return_decimal: bool = False
+    score_record: Union[Module4ScoreRecord, Mapping[str, Any]], return_decimal: bool = False
 ) -> Optional[Union[float, Decimal]]:
     """
     Extract clinical score from Module 4 score record.
@@ -916,15 +893,13 @@ def extract_clinical_score(
                 return float(val)
     except (ValueError, TypeError, InvalidOperation) as e:
         warnings.warn(
-            f"Failed to extract clinical_score: {val!r} ({type(val).__name__}): {e}",
-            RuntimeWarning,
-            stacklevel=2
+            f"Failed to extract clinical_score: {val!r} ({type(val).__name__}): {e}", RuntimeWarning, stacklevel=2
         )
         return None
 
 
 def extract_market_cap_mm(
-    record: Union[Module1SecurityRecord, Module2ScoreRecord, Mapping[str, Any]]
+    record: Union[Module1SecurityRecord, Module2ScoreRecord, Mapping[str, Any]],
 ) -> Optional[float]:
     """
     Extract market_cap_mm from various record formats.
@@ -944,9 +919,11 @@ def extract_market_cap_mm(
 # DIAGNOSTIC COUNTS NORMALIZATION
 # =============================================================================
 
+
 # Standardized diagnostic count field names
 class DiagnosticFields:
     """Standardized diagnostic count field names across modules."""
+
     # Common fields (all modules)
     SCORED = "scored"  # Number of items successfully scored
     TOTAL = "total"  # Total input items
@@ -965,10 +942,7 @@ class DiagnosticFields:
     PIT_FILTERED = "pit_filtered"
 
 
-def normalize_diagnostic_counts(
-    module_name: str,
-    diagnostic_counts: Dict[str, Any]
-) -> Dict[str, Any]:
+def normalize_diagnostic_counts(module_name: str, diagnostic_counts: Dict[str, Any]) -> Dict[str, Any]:
     """
     Normalize diagnostic counts to standardized schema.
 
@@ -988,9 +962,7 @@ def normalize_diagnostic_counts(
     if DiagnosticFields.SCORED not in normalized:
         # Try to infer from module-specific fields
         if module_name == "module_3":
-            normalized[DiagnosticFields.SCORED] = normalized.get(
-                DiagnosticFields.TICKERS_ANALYZED, 0
-            )
+            normalized[DiagnosticFields.SCORED] = normalized.get(DiagnosticFields.TICKERS_ANALYZED, 0)
         elif "total_scored" in normalized:
             normalized[DiagnosticFields.SCORED] = normalized["total_scored"]
 
@@ -1005,9 +977,7 @@ def normalize_diagnostic_counts(
 
 
 def validate_diagnostic_counts(
-    module_name: str,
-    diagnostic_counts: Dict[str, Any],
-    strict: bool = False
+    module_name: str, diagnostic_counts: Dict[str, Any], strict: bool = False
 ) -> Tuple[bool, List[str]]:
     """
     Validate diagnostic counts contain expected fields.
@@ -1048,12 +1018,11 @@ def validate_diagnostic_counts(
 # DEPRECATION HELPERS
 # =============================================================================
 
+
 def warn_legacy_field(field_name: str, replacement: str, module: str) -> None:
     """Emit deprecation warning for legacy field names."""
     warnings.warn(
-        f"{module}: Field '{field_name}' is deprecated. Use '{replacement}' instead.",
-        DeprecationWarning,
-        stacklevel=3
+        f"{module}: Field '{field_name}' is deprecated. Use '{replacement}' instead.", DeprecationWarning, stacklevel=3
     )
 
 
@@ -1063,7 +1032,7 @@ def warn_summaries_legacy() -> None:
         "Module 3: 'summaries_legacy' is deprecated and will be removed in v2.0. "
         "Use 'summaries' with TickerCatalystSummaryV2 objects instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
 
@@ -1084,14 +1053,12 @@ SCORE_BOUNDS = {
 
 class ScoreBoundsError(Exception):
     """Raised when a score is outside valid bounds."""
+
     pass
 
 
 def validate_score_bounds(
-    value: Union[float, int, str, Decimal, None],
-    field_name: str,
-    ticker: Optional[str] = None,
-    strict: bool = True
+    value: Union[float, int, str, Decimal, None], field_name: str, ticker: Optional[str] = None, strict: bool = True
 ) -> Tuple[bool, Optional[str]]:
     """
     Validate that a score is within expected bounds.
@@ -1128,9 +1095,7 @@ def validate_score_bounds(
         return False, error_msg
 
     if numeric_val < min_val or numeric_val > max_val:
-        error_msg = (
-            f"Score {field_name}={numeric_val:.4f} out of bounds [{min_val}, {max_val}]"
-        )
+        error_msg = f"Score {field_name}={numeric_val:.4f} out of bounds [{min_val}, {max_val}]"
         if ticker:
             error_msg = f"[{ticker}] {error_msg}"
         if strict:
@@ -1140,10 +1105,7 @@ def validate_score_bounds(
     return True, None
 
 
-def validate_module_2_score_bounds(
-    scores: List[Dict[str, Any]],
-    strict: bool = True
-) -> Tuple[bool, List[str]]:
+def validate_module_2_score_bounds(scores: List[Dict[str, Any]], strict: bool = True) -> Tuple[bool, List[str]]:
     """
     Validate all Module 2 scores are within bounds.
 
@@ -1161,9 +1123,7 @@ def validate_module_2_score_bounds(
 
         # Check financial_score
         if "financial_score" in score:
-            is_valid, error = validate_score_bounds(
-                score["financial_score"], "financial_score", ticker, strict=False
-            )
+            is_valid, error = validate_score_bounds(score["financial_score"], "financial_score", ticker, strict=False)
             if not is_valid and error:
                 errors.append(error)
 
@@ -1181,10 +1141,7 @@ def validate_module_2_score_bounds(
     return len(errors) == 0, errors
 
 
-def validate_module_3_score_bounds(
-    summaries: Dict[str, Any],
-    strict: bool = True
-) -> Tuple[bool, List[str]]:
+def validate_module_3_score_bounds(summaries: Dict[str, Any], strict: bool = True) -> Tuple[bool, List[str]]:
     """
     Validate all Module 3 scores are within bounds.
 
@@ -1210,9 +1167,7 @@ def validate_module_3_score_bounds(
             continue
 
         if score_val is not None:
-            is_valid, error = validate_score_bounds(
-                score_val, "score_blended", ticker, strict=False
-            )
+            is_valid, error = validate_score_bounds(score_val, "score_blended", ticker, strict=False)
             if not is_valid and error:
                 errors.append(error)
 
@@ -1222,10 +1177,7 @@ def validate_module_3_score_bounds(
     return len(errors) == 0, errors
 
 
-def validate_module_4_score_bounds(
-    scores: List[Dict[str, Any]],
-    strict: bool = True
-) -> Tuple[bool, List[str]]:
+def validate_module_4_score_bounds(scores: List[Dict[str, Any]], strict: bool = True) -> Tuple[bool, List[str]]:
     """
     Validate all Module 4 scores are within bounds.
 
@@ -1242,9 +1194,7 @@ def validate_module_4_score_bounds(
         ticker = score.get("ticker", f"record_{i}")
 
         if "clinical_score" in score:
-            is_valid, error = validate_score_bounds(
-                score["clinical_score"], "clinical_score", ticker, strict=False
-            )
+            is_valid, error = validate_score_bounds(score["clinical_score"], "clinical_score", ticker, strict=False)
             if not is_valid and error:
                 errors.append(error)
 
@@ -1255,8 +1205,7 @@ def validate_module_4_score_bounds(
 
 
 def validate_module_5_score_bounds(
-    ranked_securities: List[Dict[str, Any]],
-    strict: bool = True
+    ranked_securities: List[Dict[str, Any]], strict: bool = True
 ) -> Tuple[bool, List[str]]:
     """
     Validate all Module 5 scores are within bounds.
@@ -1274,9 +1223,7 @@ def validate_module_5_score_bounds(
         ticker = record.get("ticker", f"record_{i}")
 
         if "composite_score" in record:
-            is_valid, error = validate_score_bounds(
-                record["composite_score"], "composite_score", ticker, strict=False
-            )
+            is_valid, error = validate_score_bounds(record["composite_score"], "composite_score", ticker, strict=False)
             if not is_valid and error:
                 errors.append(error)
 
@@ -1299,6 +1246,7 @@ def validate_module_5_score_bounds(
 # PRODUCTION MODE ENFORCEMENT
 # =============================================================================
 
+
 def is_production_mode() -> bool:
     """
     Check if running in production mode.
@@ -1315,10 +1263,7 @@ def is_production_mode() -> bool:
     return prod_mode or strict_validation
 
 
-def enforce_production_validation(
-    output: Dict[str, Any],
-    module_name: str
-) -> None:
+def enforce_production_validation(output: Dict[str, Any], module_name: str) -> None:
     """
     Enforce strict validation in production mode.
 

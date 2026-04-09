@@ -30,6 +30,7 @@ Usage:
         --date-manifest output/audited_sets/audited_dates_2020_2024_strict.txt \
         --out-dir output/research/less_binary_validation
 """
+
 from __future__ import annotations
 
 import json

@@ -11,6 +11,7 @@ Sections:
   3. Why We Held These — top 3 sort contributions per position per bucket
   4. Event Proximity Rails — regulatory + clinical proximity band heatmap
 """
+
 from __future__ import annotations
 
 import csv

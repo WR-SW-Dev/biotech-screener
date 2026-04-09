@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_open_targets.py
     python tools/enrich_open_targets.py --max-tickers 10
 """
+
 from __future__ import annotations
 
 import argparse

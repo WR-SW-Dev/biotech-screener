@@ -10,6 +10,7 @@ Outputs:
     artifacts/live_shadow/execution/{YYYY-MM-DD}/IC_PACKET.json
     artifacts/live_shadow/execution/{YYYY-MM-DD}/IC_PACKET.md
 """
+
 from __future__ import annotations
 
 import hashlib

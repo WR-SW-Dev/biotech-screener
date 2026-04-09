@@ -15,12 +15,13 @@ Usage:
 The SLO target is defined as a minimum pass rate over the rolling window.
 "PASS" and "WARN" count as successful runs; only "FAIL" consumes budget.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -109,6 +110,7 @@ def compute_slo_report(
 
     # Error budget: how many FAILs are allowed before breaching SLO
     import math
+
     max_allowed_fails = math.floor(total * (1.0 - slo_target_pct / 100.0))
     budget_remaining = max(0, max_allowed_fails - n_fail)
 
@@ -121,9 +123,7 @@ def compute_slo_report(
 
     # Recent failures (last 5)
     recent_failures = [
-        {"date": r["as_of_date"], "gates": {
-            g: s for g, s in r.get("gates", {}).items() if s == "FAIL"
-        }}
+        {"date": r["as_of_date"], "gates": {g: s for g, s in r.get("gates", {}).items() if s == "FAIL"}}
         for r in fail_runs[-5:]
     ]
 
@@ -140,9 +140,7 @@ def compute_slo_report(
         "budget_total": max_allowed_fails,
         "budget_consumed": n_fail,
         "budget_remaining": budget_remaining,
-        "gate_failure_counts": dict(sorted(
-            gate_fail_counts.items(), key=lambda x: -x[1]
-        )),
+        "gate_failure_counts": dict(sorted(gate_fail_counts.items(), key=lambda x: -x[1])),
         "recent_failures": recent_failures,
     }
 
@@ -161,11 +159,15 @@ def format_report(report: Dict[str, Any]) -> str:
     lines.append(f"Target:   {report['slo_target_pct']}% pass rate")
     lines.append(f"Actual:   {report['pass_rate_pct']}%  [{slo_status}]")
     lines.append("")
-    lines.append(f"Runs:     {report['total_runs']} total "
-                 f"({report['pass_runs']} pass, {report['warn_runs']} warn, "
-                 f"{report['fail_runs']} fail)")
-    lines.append(f"Budget:   {report['budget_consumed']}/{report['budget_total']} "
-                 f"consumed, {report['budget_remaining']} remaining")
+    lines.append(
+        f"Runs:     {report['total_runs']} total "
+        f"({report['pass_runs']} pass, {report['warn_runs']} warn, "
+        f"{report['fail_runs']} fail)"
+    )
+    lines.append(
+        f"Budget:   {report['budget_consumed']}/{report['budget_total']} "
+        f"consumed, {report['budget_remaining']} remaining"
+    )
 
     if report["gate_failure_counts"]:
         lines.append("")
@@ -185,16 +187,18 @@ def format_report(report: Dict[str, Any]) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description="SLO / error-budget tracker")
-    parser.add_argument("--window", type=int, default=DEFAULT_WINDOW_DAYS,
-                        help=f"Rolling window in days (default: {DEFAULT_WINDOW_DAYS})")
-    parser.add_argument("--target", type=float, default=SLO_TARGET_PCT,
-                        help=f"SLO target pass rate %% (default: {SLO_TARGET_PCT})")
-    parser.add_argument("--ledger", type=Path, default=GATE_LEDGER_PATH,
-                        help="Path to gate verdict ledger JSONL")
-    parser.add_argument("--json", action="store_true",
-                        help="Output JSON instead of human-readable text")
-    parser.add_argument("--exit-on-breach", action="store_true",
-                        help="Exit 1 if SLO is breached")
+    parser.add_argument(
+        "--window",
+        type=int,
+        default=DEFAULT_WINDOW_DAYS,
+        help=f"Rolling window in days (default: {DEFAULT_WINDOW_DAYS})",
+    )
+    parser.add_argument(
+        "--target", type=float, default=SLO_TARGET_PCT, help=f"SLO target pass rate %% (default: {SLO_TARGET_PCT})"
+    )
+    parser.add_argument("--ledger", type=Path, default=GATE_LEDGER_PATH, help="Path to gate verdict ledger JSONL")
+    parser.add_argument("--json", action="store_true", help="Output JSON instead of human-readable text")
+    parser.add_argument("--exit-on-breach", action="store_true", help="Exit 1 if SLO is breached")
     args = parser.parse_args()
 
     rows = load_ledger(args.ledger)

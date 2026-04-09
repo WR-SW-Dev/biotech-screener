@@ -9,6 +9,7 @@ CLI:
   python scripts/decision_engine_qa_report.py \
     --snapshot-dir data/snapshots/2026-02-09 [--output-dir output]
 """
+
 from __future__ import annotations
 
 import argparse

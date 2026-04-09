@@ -8,6 +8,7 @@ Usage:
     python scripts/diagnostics/options_coverage_audit.py --mode offline
     python scripts/diagnostics/options_coverage_audit.py --mode online  # calls Polygon API
 """
+
 from __future__ import annotations
 
 import argparse

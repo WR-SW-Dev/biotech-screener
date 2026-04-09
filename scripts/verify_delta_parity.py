@@ -12,12 +12,12 @@ Usage:
 
 No EDGAR calls — purely local file analysis.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re as _re
-import sys
 from collections import Counter
 from dataclasses import dataclass, field
 from datetime import date, timedelta
@@ -71,7 +71,9 @@ def _load_cache(path: Path) -> list[dict]:
 
 
 def find_cache_pairs(
-    cache_dir: Path, *, version: str | None = None,
+    cache_dir: Path,
+    *,
+    version: str | None = None,
 ) -> list[tuple[Path, Path]]:
     """Find consecutive versioned cache files sorted by date.
 
@@ -139,12 +141,17 @@ def analyze_pair(
             recent_new.append(k)
         else:
             age = (target_date - date.fromisoformat(disclosed)).days if disclosed else -1
-            late_arrivals.append(LateArrival(
-                ticker=k[0], event_type=k[1], event_date=k[2],
-                disclosed_at=disclosed, age_days=age,
-                confidence=e.get("confidence", "?"),
-                precision=e.get("date_precision", "?"),
-            ))
+            late_arrivals.append(
+                LateArrival(
+                    ticker=k[0],
+                    event_type=k[1],
+                    event_date=k[2],
+                    disclosed_at=disclosed,
+                    age_days=age,
+                    confidence=e.get("confidence", "?"),
+                    precision=e.get("date_precision", "?"),
+                )
+            )
 
     # Step 2: disappeared from seed (EDGAR flicker)
     disappeared_keys = seed_keys - full_keys
@@ -193,15 +200,20 @@ def main() -> int:
         description="Offline delta-vs-full parity check for SEC 8-K caches.",
     )
     parser.add_argument(
-        "--cache-dir", type=Path, default=DEFAULT_CACHE_DIR,
+        "--cache-dir",
+        type=Path,
+        default=DEFAULT_CACHE_DIR,
         help="8-K cache directory",
     )
     parser.add_argument(
-        "--delta-lookback", type=int, default=7,
+        "--delta-lookback",
+        type=int,
+        default=7,
         help="Delta lookback days (default: 7)",
     )
     parser.add_argument(
-        "--strict", action="store_true",
+        "--strict",
+        action="store_true",
         help="Fail on ANY mismatch (default: only fail on high-quality late arrivals)",
     )
     args = parser.parse_args()
@@ -215,9 +227,11 @@ def main() -> int:
     print(f"Delta lookback: {args.delta_lookback}d | Expire window: {EXPIRE_WINDOW_DAYS}d\n")
 
     # Header
-    print(f"  {'pair':<27}  {'seed':>4}  {'full':>4}  "
-          f"{'new':>3}  {'rcnt':>4}  {'late':>4}  "
-          f"{'expd':>4}  {'gone':>4}  {'sim':>4}  status")
+    print(
+        f"  {'pair':<27}  {'seed':>4}  {'full':>4}  "
+        f"{'new':>3}  {'rcnt':>4}  {'late':>4}  "
+        f"{'expd':>4}  {'gone':>4}  {'sim':>4}  status"
+    )
     print("  " + "-" * 90)
 
     all_results: list[PairResult] = []
@@ -230,8 +244,11 @@ def main() -> int:
         target_dt = date.fromisoformat(target_date_str)
 
         r = analyze_pair(
-            _load_cache(seed_path), _load_cache(target_path),
-            seed_dt, target_dt, args.delta_lookback,
+            _load_cache(seed_path),
+            _load_cache(target_path),
+            seed_dt,
+            target_dt,
+            args.delta_lookback,
         )
         all_results.append(r)
         total_late.extend(r.late_arrivals)
@@ -253,8 +270,10 @@ def main() -> int:
     if not total_late:
         print(f"  None. lookback={args.delta_lookback}d catches all new events.")
     else:
-        print(f"\n  {'ticker':<6}  {'event_type':<20}  {'event_date':<11}  "
-              f"{'disclosed':<11}  {'age':>4}  {'conf':<4}  {'prec'}")
+        print(
+            f"\n  {'ticker':<6}  {'event_type':<20}  {'event_date':<11}  "
+            f"{'disclosed':<11}  {'age':>4}  {'conf':<4}  {'prec'}"
+        )
         print("  " + "-" * 80)
         for la in sorted(total_late, key=lambda x: x.age_days, reverse=True):
             print(
@@ -264,7 +283,7 @@ def main() -> int:
             )
 
         # What lookback would catch them?
-        print(f"\n  Lookback sensitivity:")
+        print("\n  Lookback sensitivity:")
         for window in [14, 21, 30, 60, 90]:
             caught = sum(1 for la in total_late if la.age_days <= window)
             print(f"    {window:3d}d → catches {caught}/{len(total_late)} late arrivals")
@@ -273,8 +292,10 @@ def main() -> int:
     total_disappeared = sum(r.disappeared_from_seed for r in all_results)
     total_extra = sum(len(r.extra_keys) for r in all_results)
     if total_disappeared:
-        print(f"\n  EDGAR flicker: {total_disappeared} events disappeared from seed "
-              f"({total_extra} show as 'extra' in delta output)")
+        print(
+            f"\n  EDGAR flicker: {total_disappeared} events disappeared from seed "
+            f"({total_extra} show as 'extra' in delta output)"
+        )
 
     # ── Summary ───────────────────────────────────────────────────────
     n_parity = sum(1 for r in all_results if r.is_parity)
@@ -282,32 +303,27 @@ def main() -> int:
     total_missing = sum(len(r.missing_keys) for r in all_results)
 
     print(f"\n{'='*60}")
-    print(f"VERDICT: {n_parity}/{len(all_results)} pairs at parity, "
-          f"{n_mismatch} mismatches")
-    print(f"  Late arrivals: {len(total_late)} "
-          f"(events delta would miss)")
-    print(f"  EDGAR flicker: {total_disappeared} disappeared, "
-          f"{total_extra} extra in delta")
-    print(f"  Missing from simulated: {total_missing} "
-          f"(= late arrivals + expired late)")
+    print(f"VERDICT: {n_parity}/{len(all_results)} pairs at parity, " f"{n_mismatch} mismatches")
+    print(f"  Late arrivals: {len(total_late)} " "(events delta would miss)")
+    print(f"  EDGAR flicker: {total_disappeared} disappeared, " f"{total_extra} extra in delta")
+    print(f"  Missing from simulated: {total_missing} " "(= late arrivals + expired late)")
 
     # Classify late arrivals by quality
     _JUNK_QUALITY = {"LOW"}
     _JUNK_PRECISION = {"HALF_YEAR"}
     high_quality_late = [
-        la for la in total_late
-        if la.confidence not in _JUNK_QUALITY or la.precision not in _JUNK_PRECISION
+        la for la in total_late if la.confidence not in _JUNK_QUALITY or la.precision not in _JUNK_PRECISION
     ]
 
     if len(total_late) == 0:
         print(f"\n  lookback={args.delta_lookback}d is SAFE for this universe.")
     elif not high_quality_late:
-        print(f"\n  All {len(total_late)} late arrivals are LOW/HALF_YEAR "
-              f"(gated out by hard filter).")
+        print(f"\n  All {len(total_late)} late arrivals are LOW/HALF_YEAR " "(gated out by hard filter).")
         print(f"  lookback={args.delta_lookback}d is SAFE in practice.")
     else:
-        print(f"\n  WARNING: {len(high_quality_late)} late arrivals are "
-              f"NOT low-quality — consider widening lookback.")
+        print(
+            f"\n  WARNING: {len(high_quality_late)} late arrivals are " "NOT low-quality — consider widening lookback."
+        )
 
     # Exit code: --strict fails on any mismatch; default only on real risk
     if args.strict:

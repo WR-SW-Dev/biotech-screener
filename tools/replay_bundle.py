@@ -17,6 +17,7 @@ Exit codes:
     1 = invariant mismatch
     2 = execution error
 """
+
 from __future__ import annotations
 
 import argparse
@@ -71,10 +72,7 @@ def verify_bundle_integrity(bundle_dir: Path) -> List[str]:
 
         actual_sha = _sha256(file_path)
         if actual_sha != expected_sha:
-            errors.append(
-                f"SHA mismatch for {relpath}: "
-                f"expected {expected_sha[:16]}..., got {actual_sha[:16]}..."
-            )
+            errors.append(f"SHA mismatch for {relpath}: " f"expected {expected_sha[:16]}..., got {actual_sha[:16]}...")
 
     return errors
 
@@ -101,52 +99,62 @@ def verify_invariants(
 
     # 1) Schema version check
     schema = manifest.get("schema", "")
-    checks.append({
-        "name": "schema_version",
-        "passed": schema == "replay_bundle.v1",
-        "expected": "replay_bundle.v1",
-        "actual": schema,
-    })
+    checks.append(
+        {
+            "name": "schema_version",
+            "passed": schema == "replay_bundle.v1",
+            "expected": "replay_bundle.v1",
+            "actual": schema,
+        }
+    )
 
     # 2) Ruleset ID present
     expected_ruleset_id = invariants.get("expected_ruleset_id", "")
-    checks.append({
-        "name": "ruleset_id_present",
-        "passed": bool(expected_ruleset_id),
-        "expected": "non-empty",
-        "actual": expected_ruleset_id or "(empty)",
-    })
+    checks.append(
+        {
+            "name": "ruleset_id_present",
+            "passed": bool(expected_ruleset_id),
+            "expected": "non-empty",
+            "actual": expected_ruleset_id or "(empty)",
+        }
+    )
 
     # 3) Top-K tickers file exists and is valid
     topk_path = bundle_dir / "replay" / "expected" / "topk_tickers.json"
     if topk_path.exists():
         topk_data = _read_json(topk_path)
         tickers = topk_data.get("tickers", [])
-        checks.append({
-            "name": "topk_tickers_present",
-            "passed": len(tickers) > 0,
-            "expected": f">0 tickers (top_k={topk_data.get('top_k', '?')})",
-            "actual": f"{len(tickers)} tickers",
-        })
+        checks.append(
+            {
+                "name": "topk_tickers_present",
+                "passed": len(tickers) > 0,
+                "expected": f">0 tickers (top_k={topk_data.get('top_k', '?')})",
+                "actual": f"{len(tickers)} tickers",
+            }
+        )
     else:
-        checks.append({
-            "name": "topk_tickers_present",
-            "passed": False,
-            "expected": "topk_tickers.json exists",
-            "actual": "missing",
-        })
+        checks.append(
+            {
+                "name": "topk_tickers_present",
+                "passed": False,
+                "expected": "topk_tickers.json exists",
+                "actual": "missing",
+            }
+        )
 
     # 4) Alpha table SHA (if expected)
     expected_alpha_sha = invariants.get("expected_alpha_table_sha256", "")
     alpha_path = bundle_dir / "inputs" / "alpha_table.json"
     if expected_alpha_sha and alpha_path.exists():
         actual_alpha_sha = _sha256(alpha_path)
-        checks.append({
-            "name": "alpha_table_sha256",
-            "passed": actual_alpha_sha == expected_alpha_sha,
-            "expected": expected_alpha_sha[:16] + "...",
-            "actual": actual_alpha_sha[:16] + "...",
-        })
+        checks.append(
+            {
+                "name": "alpha_table_sha256",
+                "passed": actual_alpha_sha == expected_alpha_sha,
+                "expected": expected_alpha_sha[:16] + "...",
+                "actual": actual_alpha_sha[:16] + "...",
+            }
+        )
 
     # 5) Metadata fingerprint (if expected)
     expected_fp = invariants.get("expected_metadata_fingerprint_sha256", "")
@@ -154,22 +162,26 @@ def verify_invariants(
     if expected_fp and fp_path.exists():
         fp_data = _read_json(fp_path)
         stored_fp = fp_data.get("fingerprint_sha256", "")
-        checks.append({
-            "name": "metadata_fingerprint_consistent",
-            "passed": stored_fp == expected_fp,
-            "expected": expected_fp[:16] + "...",
-            "actual": stored_fp[:16] + "...",
-        })
+        checks.append(
+            {
+                "name": "metadata_fingerprint_consistent",
+                "passed": stored_fp == expected_fp,
+                "expected": expected_fp[:16] + "...",
+                "actual": stored_fp[:16] + "...",
+            }
+        )
 
     # 6) File integrity
     integrity_errors = verify_bundle_integrity(bundle_dir)
-    checks.append({
-        "name": "file_integrity",
-        "passed": len(integrity_errors) == 0,
-        "expected": "all files intact",
-        "actual": f"{len(integrity_errors)} errors" if integrity_errors else "all intact",
-        "detail": integrity_errors[:5] if integrity_errors else None,
-    })
+    checks.append(
+        {
+            "name": "file_integrity",
+            "passed": len(integrity_errors) == 0,
+            "expected": "all files intact",
+            "actual": f"{len(integrity_errors)} errors" if integrity_errors else "all intact",
+            "detail": integrity_errors[:5] if integrity_errors else None,
+        }
+    )
 
     # 7) If replay_snapshot_dir provided, compare actual vs expected
     if replay_snapshot_dir is not None:
@@ -179,24 +191,28 @@ def verify_invariants(
 
             # Check ruleset ID
             replay_ruleset_id = replay_meta.get("clinical_sort_telemetry", {}).get("ruleset_id", "")
-            checks.append({
-                "name": "replay_ruleset_id",
-                "passed": replay_ruleset_id == expected_ruleset_id,
-                "expected": expected_ruleset_id,
-                "actual": replay_ruleset_id,
-            })
+            checks.append(
+                {
+                    "name": "replay_ruleset_id",
+                    "passed": replay_ruleset_id == expected_ruleset_id,
+                    "expected": expected_ruleset_id,
+                    "actual": replay_ruleset_id,
+                }
+            )
 
             # Check metadata fingerprint
-            from tools.make_replay_bundle import FINGERPRINT_KEYS, _sha256_bytes
+            from tools.make_replay_bundle import FINGERPRINT_KEYS
 
             fp_subset = {k: replay_meta[k] for k in FINGERPRINT_KEYS if k in replay_meta}
             actual_fp = hashlib.sha256(_stable_json(fp_subset)).hexdigest()
-            checks.append({
-                "name": "replay_metadata_fingerprint",
-                "passed": actual_fp == expected_fp,
-                "expected": expected_fp[:16] + "...",
-                "actual": actual_fp[:16] + "...",
-            })
+            checks.append(
+                {
+                    "name": "replay_metadata_fingerprint",
+                    "passed": actual_fp == expected_fp,
+                    "expected": expected_fp[:16] + "...",
+                    "actual": actual_fp[:16] + "...",
+                }
+            )
 
     all_passed = all(c["passed"] for c in checks)
     return {"passed": all_passed, "checks": checks}
@@ -216,16 +232,13 @@ def extract_bundle(tgz_path: Path, workdir: Path) -> Path:
         if (workdir / "manifest.json").exists():
             return workdir
         raise FileNotFoundError(
-            f"Expected replay_bundle_v1/ directory in {workdir}, "
-            f"found: {[p.name for p in workdir.iterdir()]}"
+            f"Expected replay_bundle_v1/ directory in {workdir}, " f"found: {[p.name for p in workdir.iterdir()]}"
         )
     return bundle_dir
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Replay a bundle and verify invariants."
-    )
+    parser = argparse.ArgumentParser(description="Replay a bundle and verify invariants.")
     parser.add_argument("--bundle", required=True, type=Path, help="Path to .tgz bundle")
     parser.add_argument(
         "--workdir",
@@ -272,7 +285,9 @@ def main(argv: Optional[List[str]] = None) -> int:
 
         for check in result["checks"]:
             status = "PASS" if check["passed"] else "FAIL"
-            print(f"  [{status}] {check['name']}: expected={check.get('expected', '?')}, actual={check.get('actual', '?')}")
+            print(
+                f"  [{status}] {check['name']}: expected={check.get('expected', '?')}, actual={check.get('actual', '?')}"
+            )
             if check.get("detail"):
                 for d in check["detail"]:
                     print(f"         {d}")

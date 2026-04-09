@@ -12,6 +12,7 @@ Usage:
         --universe production_data/universe.json \
         --out output/research/options_activity_panel.csv
 """
+
 from __future__ import annotations
 
 import argparse

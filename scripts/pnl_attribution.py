@@ -7,6 +7,7 @@ tag, and institutional delta bucket.
 
 Outputs: pnl_attribution.json + pnl_attribution.md (schema pnl_attribution.v1)
 """
+
 from __future__ import annotations
 
 import argparse

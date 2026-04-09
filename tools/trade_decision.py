@@ -18,6 +18,7 @@ Usage:
     python3 tools/trade_decision.py --as-of-date 2026-03-10
     python3 tools/trade_decision.py --as-of-date 2026-03-10 --execution-dir path/to/dir
 """
+
 from __future__ import annotations
 
 import argparse

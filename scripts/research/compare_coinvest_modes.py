@@ -9,6 +9,7 @@ Outputs: coinvest_diagnosis.md (side-by-side IC/L-S/excess tables + recommendati
 Runs eval_forward_returns.evaluate() three times and writes a
 coinvest_diagnosis.md with side-by-side metrics and a recommendation.
 """
+
 from __future__ import annotations
 
 import argparse

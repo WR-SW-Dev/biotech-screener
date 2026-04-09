@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 """
 module_5_composite_with_defensive.py
 
@@ -26,37 +27,37 @@ import json
 import logging
 from decimal import Decimal
 from pathlib import Path
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
 
-from module_5_composite import compute_module_5_composite
-from module_5_composite_v2 import compute_module_5_composite_v2
-from module_5_composite_v3 import compute_module_5_composite_v3
-from defensive_overlay_adapter import (
-    enrich_with_defensive_overlays,
-    validate_defensive_integration,
-    load_defensive_cache,
-    merge_cache_into_scores,
-    attach_output_schema_columns,
-    apply_red_flag_suppression,
-    OUTPUT_SCHEMA_VERSION,
-    DEFAULT_DEFENSIVE_CONFIG,
-    AGGRESSIVE_DEFENSIVE_CONFIG,
-)
 from common.clustering import (
+    DEFAULT_CORR_THRESHOLD,
     attach_cluster_ids,
     attach_indication_clusters,
     select_best_cluster_key,
-    DEFAULT_CORR_THRESHOLD,
 )
 
 # V3 production configuration
 from config.v3_production_integration import (
-    FeatureFlags,
+    V3_PRODUCTION_DEFAULTS,
     FallbackConfig,
+    FeatureFlags,
     SanityOverrideConfig,
     check_sanity_override,
-    V3_PRODUCTION_DEFAULTS,
 )
+from defensive_overlay_adapter import (
+    AGGRESSIVE_DEFENSIVE_CONFIG,
+    DEFAULT_DEFENSIVE_CONFIG,
+    OUTPUT_SCHEMA_VERSION,
+    apply_red_flag_suppression,
+    attach_output_schema_columns,
+    enrich_with_defensive_overlays,
+    load_defensive_cache,
+    merge_cache_into_scores,
+    validate_defensive_integration,
+)
+from module_5_composite import compute_module_5_composite
+from module_5_composite_v2 import compute_module_5_composite_v2
+from module_5_composite_v3 import compute_module_5_composite_v3
 
 logger = logging.getLogger(__name__)
 
@@ -118,13 +119,15 @@ def _apply_sanity_overrides(output_v3: dict, output_v2: dict) -> dict:
             v2_sec["flags"] = v2_sec.get("flags", []) + ["sanity_override_applied"]
             modified_securities.append(v2_sec)
 
-            overrides_applied.append({
-                "ticker": ticker,
-                "v3_rank": v3_rank,
-                "v2_rank": v2_rank,
-                "reason": override_result.override_reason,
-                "driving_factor": override_result.driving_factor,
-            })
+            overrides_applied.append(
+                {
+                    "ticker": ticker,
+                    "v3_rank": v3_rank,
+                    "v2_rank": v2_rank,
+                    "reason": override_result.override_reason,
+                    "driving_factor": override_result.driving_factor,
+                }
+            )
 
             logger.warning(
                 f"Sanity override for {ticker}: v3_rank={v3_rank}, v2_rank={v2_rank}, "
@@ -143,10 +146,7 @@ def _apply_sanity_overrides(output_v3: dict, output_v2: dict) -> dict:
             modified_securities.append(sec_copy)
 
     # Re-rank after any substitutions
-    modified_securities.sort(
-        key=lambda x: Decimal(x.get("composite_score", "0")),
-        reverse=True
-    )
+    modified_securities.sort(key=lambda x: Decimal(x.get("composite_score", "0")), reverse=True)
     for i, sec in enumerate(modified_securities):
         sec["composite_rank"] = i + 1
 
@@ -186,7 +186,7 @@ def _aggregate_thesis_gate_stats(ranked_securities: List[Dict[str, Any]]) -> Dic
     passed = 0
     skipped = 0
     by_display_stage = {}  # early/mid/late -> {triggered, passed}
-    by_event_stage = {}    # poc/pivotal/regulatory -> {triggered, passed}
+    by_event_stage = {}  # poc/pivotal/regulatory -> {triggered, passed}
 
     for sec in ranked_securities:
         # Thesis gate info is in score_breakdown.enhancements.thesis_gate
@@ -396,7 +396,7 @@ def compute_module_5_composite_with_defensive(
     if universe_path:
         path = Path(universe_path)
         if path.exists():
-            with open(path, 'r') as f:
+            with open(path, "r") as f:
                 raw_universe = json.load(f)
             loaded_from = path
         else:
@@ -408,7 +408,7 @@ def compute_module_5_composite_with_defensive(
         for path_str in search_paths:
             path = Path(path_str)
             if path.exists():
-                with open(path, 'r') as f:
+                with open(path, "r") as f:
                     raw_universe = json.load(f)
                 loaded_from = path
                 break
@@ -453,10 +453,7 @@ def compute_module_5_composite_with_defensive(
     cfg = AGGRESSIVE_DEFENSIVE_CONFIG if defensive_config == "aggressive" else DEFAULT_DEFENSIVE_CONFIG
 
     if apply_defensive_multiplier:
-        logger.info(
-            f"Module 5: Defensive multiplier ENABLED "
-            f"(config={cfg.config_id}, hash={cfg.config_hash()})"
-        )
+        logger.info(f"Module 5: Defensive multiplier ENABLED " f"(config={cfg.config_id}, hash={cfg.config_hash()})")
 
     # Add clustering FIRST (must populate cluster_id BEFORE defensive overlay)
     # The defensive overlay uses cluster_id for percentile-within-cluster gate
@@ -502,9 +499,7 @@ def compute_module_5_composite_with_defensive(
         )
         cluster_provenance["cluster_method_requested"] = "none"
         cluster_provenance["cluster_method_effective"] = "cohort_fallback"
-        logger.info(
-            f"Clustering fallback: cohort_key-based, {cluster_provenance.get('n_clusters', 0)} clusters"
-        )
+        logger.info(f"Clustering fallback: cohort_key-based, {cluster_provenance.get('n_clusters', 0)} clusters")
         output["cluster_model"] = cluster_provenance
 
     # NOW apply defensive overlay (after cluster_id is populated)
@@ -561,7 +556,7 @@ __all__ = [
     "OUTPUT_SCHEMA_VERSION",
     "compute_module_5_composite_v3",  # Direct access to v3 scorer
     "compute_module_5_composite_v2",  # Direct access to v2 scorer
-    "V3_PRODUCTION_DEFAULTS",         # V3 configuration
+    "V3_PRODUCTION_DEFAULTS",  # V3 configuration
 ]
 
 

@@ -9,6 +9,7 @@ Reuses common.stats.calibration for ECE, Brier, reliability curves.
 Usage:
     python scripts/research/herald_confidence_calibration.py --as-of-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse

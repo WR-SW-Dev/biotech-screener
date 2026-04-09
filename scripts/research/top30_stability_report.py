@@ -10,6 +10,7 @@ and regime-sliced stability for three arms:
 Usage:
     python3 scripts/research/top30_stability_report.py
 """
+
 from __future__ import annotations
 
 import csv

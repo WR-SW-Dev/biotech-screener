@@ -18,6 +18,7 @@ Usage:
         --date-from 2026-03-01 \\
         --out-dir output/research/options_overlay_policy_ab
 """
+
 from __future__ import annotations
 
 import argparse

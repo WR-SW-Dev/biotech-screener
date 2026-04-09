@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_mesh_normalize.py
     python tools/enrich_mesh_normalize.py --max-conditions 100
 """
+
 from __future__ import annotations
 
 import argparse

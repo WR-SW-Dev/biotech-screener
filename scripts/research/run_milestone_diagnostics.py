@@ -3,6 +3,7 @@
 
 Runs the feature builder on the latest snapshot and reports coverage.
 """
+
 from __future__ import annotations
 
 import csv

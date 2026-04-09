@@ -12,6 +12,7 @@ Usage:
         --thresholds production_data/monitoring_thresholds/v1.json \
         --as-of-date 2026-02-26
 """
+
 from __future__ import annotations
 
 import argparse
@@ -64,13 +65,9 @@ def evaluate(
         fail_floor = cov_thresh.get("eligible_pct_fail")
         warn_floor = cov_thresh.get("eligible_pct_warn")
         if fail_floor is not None and eligible_pct < fail_floor:
-            fail_reasons.append(
-                f"eligible_pct={eligible_pct:.1f}% < fail={fail_floor}%"
-            )
+            fail_reasons.append(f"eligible_pct={eligible_pct:.1f}% < fail={fail_floor}%")
         elif warn_floor is not None and eligible_pct < warn_floor:
-            warn_reasons.append(
-                f"eligible_pct={eligible_pct:.1f}% < warn={warn_floor}%"
-            )
+            warn_reasons.append(f"eligible_pct={eligible_pct:.1f}% < warn={warn_floor}%")
 
     # --- Data counts ---
     dc_thresh = thresholds.get("data_counts", {})
@@ -88,9 +85,7 @@ def evaluate(
             warn_reasons.append(f"{field}={count} < warn_min={warn_min}")
 
     # --- Stability (skip if degraded or suppressed) ---
-    skip_stability = (
-        degraded and degraded_cfg.get("skip_stability_gates", True)
-    ) or stability.get("suppressed", False)
+    skip_stability = (degraded and degraded_cfg.get("skip_stability_gates", True)) or stability.get("suppressed", False)
 
     if not skip_stability:
         stab_thresh = thresholds.get("stability", {})
@@ -101,13 +96,9 @@ def evaluate(
             fail_floor = stab_thresh.get("top60_overlap_fail")
             warn_floor = stab_thresh.get("top60_overlap_warn")
             if fail_floor is not None and top60_overlap < fail_floor:
-                fail_reasons.append(
-                    f"top60_overlap={top60_overlap:.1f}% < fail={fail_floor}%"
-                )
+                fail_reasons.append(f"top60_overlap={top60_overlap:.1f}% < fail={fail_floor}%")
             elif warn_floor is not None and top60_overlap < warn_floor:
-                warn_reasons.append(
-                    f"top60_overlap={top60_overlap:.1f}% < warn={warn_floor}%"
-                )
+                warn_reasons.append(f"top60_overlap={top60_overlap:.1f}% < warn={warn_floor}%")
 
         # Spearman rho
         spearman = _get_nested(stability, "rank_correlation", "spearman")
@@ -115,13 +106,9 @@ def evaluate(
             fail_floor = stab_thresh.get("spearman_rho_fail")
             warn_floor = stab_thresh.get("spearman_rho_warn")
             if fail_floor is not None and spearman < fail_floor:
-                fail_reasons.append(
-                    f"spearman_rho={spearman:.4f} < fail={fail_floor}"
-                )
+                fail_reasons.append(f"spearman_rho={spearman:.4f} < fail={fail_floor}")
             elif warn_floor is not None and spearman < warn_floor:
-                warn_reasons.append(
-                    f"spearman_rho={spearman:.4f} < warn={warn_floor}"
-                )
+                warn_reasons.append(f"spearman_rho={spearman:.4f} < warn={warn_floor}")
 
         # Name turnover (higher is worse)
         turnover = stability.get("name_turnover_pct")
@@ -129,13 +116,9 @@ def evaluate(
             fail_ceil = stab_thresh.get("name_turnover_pct_fail")
             warn_ceil = stab_thresh.get("name_turnover_pct_warn")
             if fail_ceil is not None and turnover > fail_ceil:
-                fail_reasons.append(
-                    f"name_turnover_pct={turnover:.1f}% > fail={fail_ceil}%"
-                )
+                fail_reasons.append(f"name_turnover_pct={turnover:.1f}% > fail={fail_ceil}%")
             elif warn_ceil is not None and turnover > warn_ceil:
-                warn_reasons.append(
-                    f"name_turnover_pct={turnover:.1f}% > warn={warn_ceil}%"
-                )
+                warn_reasons.append(f"name_turnover_pct={turnover:.1f}% > warn={warn_ceil}%")
 
     # --- Verdict ---
     if degraded and degraded_cfg.get("skip_stability_gates", True):
@@ -183,8 +166,8 @@ def build_summary_table(
         "DEGRADED_SKIP": ":fast_forward:",
     }.get(verdict, "")
 
-    lines.append(f"| Field | Value |")
-    lines.append(f"|-------|-------|")
+    lines.append("| Field | Value |")
+    lines.append("|-------|-------|")
     lines.append(f"| as_of_date | `{date_str}` |")
     lines.append(f"| verdict | {icon} **{verdict}** |")
     lines.append(f"| degraded | `{degraded}` |")
@@ -399,7 +382,11 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     # Summary
     summary = build_summary_table(
-        monitoring, thresholds, verdict, fail_reasons, warn_reasons,
+        monitoring,
+        thresholds,
+        verdict,
+        fail_reasons,
+        warn_reasons,
         as_of_date=date_str,
     )
 

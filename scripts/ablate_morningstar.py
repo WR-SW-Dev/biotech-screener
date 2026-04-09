@@ -5,6 +5,7 @@ Usage:
     python3 scripts/ablate_morningstar.py --as-of-date 2026-02-16
     python3 scripts/ablate_morningstar.py --as-of-date 2026-02-16 --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,9 +39,12 @@ def _build_screen_cmd(
     cmd = [
         sys.executable,
         str(PROJECT_DIR / "run_phase2_daily.py"),
-        "--as-of-date", date_str,
-        "--data-dir", str(data_dir),
-        "--snapshot-dir", str(snapshot_dir),
+        "--as-of-date",
+        date_str,
+        "--data-dir",
+        str(data_dir),
+        "--snapshot-dir",
+        str(snapshot_dir),
         f"--morningstar-mode={ms_mode}",
     ]
     if extra:
@@ -133,7 +137,7 @@ def format_report(result: dict, date_str: str, ruleset_id: str) -> str:
         f"# Morningstar Ablation — {date_str}",
         "",
         f"Ruleset: `{ruleset_id}`",
-        f"Comparison: `--morningstar-mode off` vs `--morningstar-mode on` (default)",
+        "Comparison: `--morningstar-mode off` vs `--morningstar-mode on` (default)",
         "",
         "## Overlap",
         "| Metric | Value |",
@@ -228,14 +232,14 @@ def main(argv=None) -> int:
         return 0
 
     # Run OFF
-    print(f"[ABLATION] Running morningstar=off ...")
+    print("[ABLATION] Running morningstar=off ...")
     rc_off = subprocess.run(off_cmd).returncode
     if rc_off not in (0, 2):
         print(f"[ABLATION] OFF run failed (exit {rc_off})", file=sys.stderr)
         return 1
 
     # Run ON
-    print(f"[ABLATION] Running morningstar=on ...")
+    print("[ABLATION] Running morningstar=on ...")
     rc_on = subprocess.run(on_cmd).returncode
     if rc_on not in (0, 2):
         print(f"[ABLATION] ON run failed (exit {rc_on})", file=sys.stderr)
@@ -251,6 +255,7 @@ def main(argv=None) -> int:
     else:
         # Use the pinned ruleset from run_screen
         from run_screen import PHASE2_DEFAULT_RULESET_PATH
+
         ruleset = DecisionRuleset.from_json(str(PHASE2_DEFAULT_RULESET_PATH))
 
     # Compare

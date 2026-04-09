@@ -28,6 +28,7 @@ Usage:
       --date-from 2026-04-01 \
       --out-dir output/research/b91_options_quality_weekly_ab
 """
+
 from __future__ import annotations
 
 import argparse

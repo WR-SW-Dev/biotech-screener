@@ -10,6 +10,7 @@ Usage:
         --candidate output/phase_v3_multidate/v3 \
         --output output/phase_v3_multidate/reports
 """
+
 from __future__ import annotations
 
 import argparse

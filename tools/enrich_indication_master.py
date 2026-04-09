@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_indication_master.py
     python tools/enrich_indication_master.py --max-conditions 50
 """
+
 from __future__ import annotations
 
 import argparse

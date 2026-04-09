@@ -15,6 +15,7 @@ Usage:
     python3 scripts/research/pruner_backtest.py --start 2020-01-01
     python3 scripts/research/pruner_backtest.py --start 2024-01-01 --include-aact
 """
+
 from __future__ import annotations
 
 import argparse

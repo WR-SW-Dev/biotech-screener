@@ -15,6 +15,7 @@ Usage:
         [--md-out diff_report.md] \
         [--strict]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,7 +26,8 @@ import json
 import math
 import sys
 import tarfile
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
+from dataclasses import fields as dc_fields
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -43,9 +45,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 VERSION = "v1.1.0"
 
-REQUIRED_COLUMNS = frozenset({
-    "ticker", "eligible", "tier_dev", "composite_rank", "archetype",
-})
+REQUIRED_COLUMNS = frozenset(
+    {
+        "ticker",
+        "eligible",
+        "tier_dev",
+        "composite_rank",
+        "archetype",
+    }
+)
 
 # actionable_rank is preferred but optional — falls back to composite_rank
 RANK_COLUMN = "actionable_rank"
@@ -119,7 +127,7 @@ def _spearman_rho(x: pd.Series, y: pd.Series) -> Optional[float]:
     rx_m = rx - rx.mean()
     ry_m = ry - ry.mean()
     num = (rx_m * ry_m).sum()
-    denom = math.sqrt((rx_m ** 2).sum() * (ry_m ** 2).sum())
+    denom = math.sqrt((rx_m**2).sum() * (ry_m**2).sum())
     if denom == 0:
         return None
     return round(float(num / denom), 4)
@@ -152,9 +160,7 @@ def _is_commercial(archetype) -> bool:
 # ---------------------------------------------------------------------------
 
 
-def check_baseline_freshness(
-    baseline_path: str, max_age_days: int = 14
-) -> Dict[str, object]:
+def check_baseline_freshness(baseline_path: str, max_age_days: int = 14) -> Dict[str, object]:
     """Check whether the golden baseline is stale.
 
     Looks for ``baseline_meta.json`` sidecar next to rankings.csv.
@@ -201,6 +207,7 @@ class DiffThresholds:
 
     Frozen so instances are hashable and produce a deterministic thresholds_id.
     """
+
     # Overlap (Jaccard)
     fail_top20_overlap_pct: float = 50.0
     warn_top20_overlap_pct: float = 80.0
@@ -255,6 +262,7 @@ class DiffThresholds:
 @dataclass
 class DiffResult:
     """All computed diff metrics between baseline and candidate rankings."""
+
     # Metadata
     baseline_source: str
     candidate_source: str
@@ -310,10 +318,7 @@ class DiffResult:
             v = getattr(self, f.name)
             if isinstance(v, list) and v and isinstance(v[0], tuple):
                 # biggest_rank_movers: list of tuples → list of dicts
-                d[f.name] = [
-                    {"ticker": t, "base_rank": br, "cand_rank": cr}
-                    for t, br, cr in v
-                ]
+                d[f.name] = [{"ticker": t, "base_rank": br, "cand_rank": cr} for t, br, cr in v]
             else:
                 d[f.name] = v
         return d
@@ -326,10 +331,10 @@ class DiffResult:
 
 @dataclass
 class HealthVerdict:
-    status: str         # "OK" | "WARN" | "FAIL"
+    status: str  # "OK" | "WARN" | "FAIL"
     fail_reasons: List[str]
     warn_reasons: List[str]
-    exit_code: int      # 0 / 2 / 1
+    exit_code: int  # 0 / 2 / 1
 
 
 # ---------------------------------------------------------------------------
@@ -353,9 +358,7 @@ def load_rankings(source: str) -> pd.DataFrame:
             raise FileNotFoundError(f"rankings.csv not found in {source_path}")
         df = pd.read_csv(csv_path, dtype=str)
     else:
-        raise FileNotFoundError(
-            f"Source must be a .tar.gz file or directory: {source}"
-        )
+        raise FileNotFoundError(f"Source must be a .tar.gz file or directory: {source}")
 
     if df.empty:
         raise ValueError(f"rankings.csv is empty in {source}")
@@ -363,10 +366,7 @@ def load_rankings(source: str) -> pd.DataFrame:
     # Validate required columns
     missing = REQUIRED_COLUMNS - set(df.columns)
     if missing:
-        raise ValueError(
-            f"rankings.csv in {source} lacks required columns: "
-            f"{sorted(missing)}"
-        )
+        raise ValueError(f"rankings.csv in {source} lacks required columns: " f"{sorted(missing)}")
 
     # Synthesize actionable_rank from composite_rank if missing
     has_native_rank = RANK_COLUMN in df.columns
@@ -406,10 +406,7 @@ def _load_from_tarball(tar_path: Path) -> pd.DataFrame:
 
         if len(matches) > 1:
             names = [m.name for m in matches]
-            raise ValueError(
-                f"Ambiguous: {len(matches)} rankings.csv found in {tar_path}: "
-                f"{names}"
-            )
+            raise ValueError(f"Ambiguous: {len(matches)} rankings.csv found in {tar_path}: " f"{names}")
 
         csv_member = matches[0]
         f = io.TextIOWrapper(tar.extractfile(csv_member), encoding="utf-8")
@@ -527,9 +524,7 @@ def compute_diff(baseline: pd.DataFrame, candidate: pd.DataFrame) -> DiffResult:
             cr = _safe_float(cand_arank.get(t))
             abs_deltas_top60.append(abs(br - cr))
 
-    mean_abs_delta_top60 = round(
-        sum(abs_deltas_top60) / len(abs_deltas_top60), 2
-    ) if abs_deltas_top60 else 0.0
+    mean_abs_delta_top60 = round(sum(abs_deltas_top60) / len(abs_deltas_top60), 2) if abs_deltas_top60 else 0.0
     max_abs_delta_top60 = int(max(abs_deltas_top60)) if abs_deltas_top60 else 0
 
     # Biggest movers (top 15 by |delta|)
@@ -549,10 +544,8 @@ def compute_diff(baseline: pd.DataFrame, candidate: pd.DataFrame) -> DiffResult:
         cand_cs = pd.to_numeric(cand["composite_score"], errors="coerce")
         valid = base_cs.notna() & cand_cs.notna()
         if valid.sum() > 0:
-            deltas = (base_cs[valid] - cand_cs[valid])
-            composite_score_rmse = round(
-                math.sqrt((deltas ** 2).mean()), 4
-            )
+            deltas = base_cs[valid] - cand_cs[valid]
+            composite_score_rmse = round(math.sqrt((deltas**2).mean()), 4)
 
     score_rank_pct_mae: Optional[float] = None
     if "score_rank_pct" in base.columns and "score_rank_pct" in cand.columns:
@@ -560,9 +553,7 @@ def compute_diff(baseline: pd.DataFrame, candidate: pd.DataFrame) -> DiffResult:
         cand_srp = pd.to_numeric(cand["score_rank_pct"], errors="coerce")
         valid = base_srp.notna() & cand_srp.notna()
         if valid.sum() > 0:
-            score_rank_pct_mae = round(
-                float((base_srp[valid] - cand_srp[valid]).abs().mean()), 4
-            )
+            score_rank_pct_mae = round(float((base_srp[valid] - cand_srp[valid]).abs().mean()), 4)
 
     # ── Tier 4: Tier / Eligibility ───────────────────────────────────────
     elig_gained = []
@@ -639,10 +630,7 @@ def compute_diff(baseline: pd.DataFrame, candidate: pd.DataFrame) -> DiffResult:
     comm_tier_mig_count: Optional[int] = None
     comm_tier_mig_matrix: Optional[Dict[str, int]] = None
 
-    has_tier_commercial = (
-        "tier_commercial" in baseline.columns
-        and "tier_commercial" in candidate.columns
-    )
+    has_tier_commercial = "tier_commercial" in baseline.columns and "tier_commercial" in candidate.columns
     if has_tier_commercial:
         base_comm = baseline[baseline["archetype"].map(_is_commercial)].copy()
         cand_comm = candidate[candidate["archetype"].map(_is_commercial)].copy()
@@ -709,9 +697,7 @@ def compute_diff(baseline: pd.DataFrame, candidate: pd.DataFrame) -> DiffResult:
 # ---------------------------------------------------------------------------
 
 
-def evaluate_health(
-    result: DiffResult, thresholds: DiffThresholds
-) -> HealthVerdict:
+def evaluate_health(result: DiffResult, thresholds: DiffThresholds) -> HealthVerdict:
     """Evaluate DiffResult against thresholds. FAIL checked first, then WARN."""
     fails: List[str] = []
     warns: List[str] = []
@@ -727,59 +713,31 @@ def evaluate_health(
 
     # ── FAIL gates ────────────────────────────────────────────────────────
     if result.top20_overlap_pct < thresholds.fail_top20_overlap_pct:
-        fails.append(
-            f"top20_overlap {result.top20_overlap_pct:.1f}% "
-            f"< {thresholds.fail_top20_overlap_pct:.1f}%"
-        )
+        fails.append(f"top20_overlap {result.top20_overlap_pct:.1f}% " f"< {thresholds.fail_top20_overlap_pct:.1f}%")
 
     if result.top60_overlap_pct < thresholds.fail_top60_overlap_pct:
-        fails.append(
-            f"top60_overlap {result.top60_overlap_pct:.1f}% "
-            f"< {thresholds.fail_top60_overlap_pct:.1f}%"
-        )
+        fails.append(f"top60_overlap {result.top60_overlap_pct:.1f}% " f"< {thresholds.fail_top60_overlap_pct:.1f}%")
 
-    if (
-        result.rank_spearman_rho is not None
-        and result.rank_spearman_rho < thresholds.fail_rank_spearman_rho
-    ):
-        fails.append(
-            f"rank_spearman_rho {result.rank_spearman_rho:.4f} "
-            f"< {thresholds.fail_rank_spearman_rho}"
-        )
+    if result.rank_spearman_rho is not None and result.rank_spearman_rho < thresholds.fail_rank_spearman_rho:
+        fails.append(f"rank_spearman_rho {result.rank_spearman_rho:.4f} " f"< {thresholds.fail_rank_spearman_rho}")
 
     if result.eligibility_change_count > thresholds.fail_eligibility_change_count:
         fails.append(
-            f"eligibility_changes {result.eligibility_change_count} "
-            f"> {thresholds.fail_eligibility_change_count}"
+            f"eligibility_changes {result.eligibility_change_count} " f"> {thresholds.fail_eligibility_change_count}"
         )
 
     # ── WARN gates ────────────────────────────────────────────────────────
     if result.top20_overlap_pct < thresholds.warn_top20_overlap_pct:
-        warns.append(
-            f"top20_overlap {result.top20_overlap_pct:.1f}% "
-            f"< {thresholds.warn_top20_overlap_pct:.1f}%"
-        )
+        warns.append(f"top20_overlap {result.top20_overlap_pct:.1f}% " f"< {thresholds.warn_top20_overlap_pct:.1f}%")
 
     if result.top60_overlap_pct < thresholds.warn_top60_overlap_pct:
-        warns.append(
-            f"top60_overlap {result.top60_overlap_pct:.1f}% "
-            f"< {thresholds.warn_top60_overlap_pct:.1f}%"
-        )
+        warns.append(f"top60_overlap {result.top60_overlap_pct:.1f}% " f"< {thresholds.warn_top60_overlap_pct:.1f}%")
 
     if result.top100_overlap_pct < thresholds.warn_top100_overlap_pct:
-        warns.append(
-            f"top100_overlap {result.top100_overlap_pct:.1f}% "
-            f"< {thresholds.warn_top100_overlap_pct:.1f}%"
-        )
+        warns.append(f"top100_overlap {result.top100_overlap_pct:.1f}% " f"< {thresholds.warn_top100_overlap_pct:.1f}%")
 
-    if (
-        result.rank_spearman_rho is not None
-        and result.rank_spearman_rho < thresholds.warn_rank_spearman_rho
-    ):
-        warns.append(
-            f"rank_spearman_rho {result.rank_spearman_rho:.4f} "
-            f"< {thresholds.warn_rank_spearman_rho}"
-        )
+    if result.rank_spearman_rho is not None and result.rank_spearman_rho < thresholds.warn_rank_spearman_rho:
+        warns.append(f"rank_spearman_rho {result.rank_spearman_rho:.4f} " f"< {thresholds.warn_rank_spearman_rho}")
 
     if result.mean_abs_rank_delta_top60 > thresholds.warn_mean_abs_rank_delta_top60:
         warns.append(
@@ -787,35 +745,21 @@ def evaluate_health(
             f"> {thresholds.warn_mean_abs_rank_delta_top60}"
         )
 
-    if (
-        result.composite_score_rmse is not None
-        and result.composite_score_rmse > thresholds.warn_composite_score_rmse
-    ):
+    if result.composite_score_rmse is not None and result.composite_score_rmse > thresholds.warn_composite_score_rmse:
         warns.append(
-            f"composite_score_rmse {result.composite_score_rmse:.4f} "
-            f"> {thresholds.warn_composite_score_rmse}"
+            f"composite_score_rmse {result.composite_score_rmse:.4f} " f"> {thresholds.warn_composite_score_rmse}"
         )
 
-    if (
-        result.score_rank_pct_mae is not None
-        and result.score_rank_pct_mae > thresholds.warn_score_rank_pct_mae
-    ):
-        warns.append(
-            f"score_rank_pct_mae {result.score_rank_pct_mae:.4f} "
-            f"> {thresholds.warn_score_rank_pct_mae}"
-        )
+    if result.score_rank_pct_mae is not None and result.score_rank_pct_mae > thresholds.warn_score_rank_pct_mae:
+        warns.append(f"score_rank_pct_mae {result.score_rank_pct_mae:.4f} " f"> {thresholds.warn_score_rank_pct_mae}")
 
     if result.eligibility_change_count > thresholds.warn_eligibility_change_count:
         warns.append(
-            f"eligibility_changes {result.eligibility_change_count} "
-            f"> {thresholds.warn_eligibility_change_count}"
+            f"eligibility_changes {result.eligibility_change_count} " f"> {thresholds.warn_eligibility_change_count}"
         )
 
     if result.tier_migration_count > thresholds.warn_tier_migration_count:
-        warns.append(
-            f"tier_migration {result.tier_migration_count} "
-            f"> {thresholds.warn_tier_migration_count}"
-        )
+        warns.append(f"tier_migration {result.tier_migration_count} " f"> {thresholds.warn_tier_migration_count}")
 
     if result.catalyst_mode_change_count > thresholds.warn_catalyst_mode_change_count:
         warns.append(
@@ -825,31 +769,18 @@ def evaluate_health(
 
     if len(result.catalyst_good_to_bad) > thresholds.warn_catalyst_good_to_bad:
         warns.append(
-            f"catalyst_good_to_bad {len(result.catalyst_good_to_bad)} "
-            f"> {thresholds.warn_catalyst_good_to_bad}"
+            f"catalyst_good_to_bad {len(result.catalyst_good_to_bad)} " f"> {thresholds.warn_catalyst_good_to_bad}"
         )
 
-    if (
-        result.weight_l1_top20 is not None
-        and result.weight_l1_top20 > thresholds.warn_weight_l1_top20
-    ):
-        warns.append(
-            f"weight_l1_top20 {result.weight_l1_top20:.2f} "
-            f"> {thresholds.warn_weight_l1_top20}"
-        )
+    if result.weight_l1_top20 is not None and result.weight_l1_top20 > thresholds.warn_weight_l1_top20:
+        warns.append(f"weight_l1_top20 {result.weight_l1_top20:.2f} " f"> {thresholds.warn_weight_l1_top20}")
 
     # ── Verdict ───────────────────────────────────────────────────────────
     if fails:
-        return HealthVerdict(
-            status="FAIL", fail_reasons=fails, warn_reasons=warns, exit_code=1
-        )
+        return HealthVerdict(status="FAIL", fail_reasons=fails, warn_reasons=warns, exit_code=1)
     if warns:
-        return HealthVerdict(
-            status="WARN", fail_reasons=[], warn_reasons=warns, exit_code=2
-        )
-    return HealthVerdict(
-        status="OK", fail_reasons=[], warn_reasons=[], exit_code=0
-    )
+        return HealthVerdict(status="WARN", fail_reasons=[], warn_reasons=warns, exit_code=2)
+    return HealthVerdict(status="OK", fail_reasons=[], warn_reasons=[], exit_code=0)
 
 
 # ---------------------------------------------------------------------------
@@ -875,9 +806,7 @@ def format_json_report(
             "warn_reasons": verdict.warn_reasons,
         },
         "metrics": result.to_dict(),
-        "thresholds": {
-            f.name: getattr(thresholds, f.name) for f in dc_fields(thresholds)
-        },
+        "thresholds": {f.name: getattr(thresholds, f.name) for f in dc_fields(thresholds)},
     }
     if baseline_freshness is not None:
         report["baseline_freshness"] = baseline_freshness
@@ -912,10 +841,7 @@ def format_markdown_report(
             parts.append(f"baseline uses `{rci.get('baseline_rank_column_used')}`")
         if not rci.get("candidate_has_actionable_rank"):
             parts.append(f"candidate uses `{rci.get('candidate_rank_column_used')}`")
-        lines.append(
-            f"**Rank column fallback**: {'; '.join(parts)} "
-            f"(actionable_rank not present)"
-        )
+        lines.append(f"**Rank column fallback**: {'; '.join(parts)} " "(actionable_rank not present)")
     lines.append("")
 
     if verdict.fail_reasons:
@@ -990,8 +916,7 @@ def format_markdown_report(
         lines.append("|------|----------|-----------|")
         for tier in all_tiers:
             lines.append(
-                f"| {tier} | {result.tier_dist_baseline.get(tier, 0)} | "
-                f"{result.tier_dist_candidate.get(tier, 0)} |"
+                f"| {tier} | {result.tier_dist_baseline.get(tier, 0)} | " f"{result.tier_dist_candidate.get(tier, 0)} |"
             )
         lines.append("")
 
@@ -1029,13 +954,9 @@ def format_markdown_report(
         lines.append("## Schema Drift")
         lines.append("")
         if result.schema_drift["baseline_only"]:
-            lines.append(
-                f"- Baseline only: {', '.join(result.schema_drift['baseline_only'])}"
-            )
+            lines.append(f"- Baseline only: {', '.join(result.schema_drift['baseline_only'])}")
         if result.schema_drift["candidate_only"]:
-            lines.append(
-                f"- Candidate only: {', '.join(result.schema_drift['candidate_only'])}"
-            )
+            lines.append(f"- Candidate only: {', '.join(result.schema_drift['candidate_only'])}")
         lines.append("")
 
     # ── Biggest movers ────────────────────────────────────────────────────
@@ -1054,17 +975,13 @@ def format_markdown_report(
         lines.append("")
         lines.append(f"Top-20 overlap: {result.commercial_top20_overlap_pct:.1f}%")
         if result.commercial_tier_migration_count is not None:
-            lines.append(
-                f"Tier migration count: {result.commercial_tier_migration_count}"
-            )
+            lines.append(f"Tier migration count: {result.commercial_tier_migration_count}")
         if result.commercial_tier_migration_matrix:
             lines.append("")
             lines.append("| Transition | Count |")
             lines.append("|-----------|-------|")
             for k in sorted(result.commercial_tier_migration_matrix.keys()):
-                lines.append(
-                    f"| {k} | {result.commercial_tier_migration_matrix[k]} |"
-                )
+                lines.append(f"| {k} | {result.commercial_tier_migration_matrix[k]} |")
         lines.append("")
 
     return "\n".join(lines)
@@ -1076,19 +993,20 @@ def format_markdown_report(
 
 
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(
-        description="Compare two rankings.csv sources and compute regression metrics."
-    )
+    p = argparse.ArgumentParser(description="Compare two rankings.csv sources and compute regression metrics.")
     p.add_argument(
-        "--baseline", required=True,
+        "--baseline",
+        required=True,
         help="Path to baseline .tar.gz or snapshot directory",
     )
     p.add_argument(
-        "--candidate", required=True,
+        "--candidate",
+        required=True,
         help="Path to candidate .tar.gz or snapshot directory",
     )
     p.add_argument(
-        "--output-dir", default="output",
+        "--output-dir",
+        default="output",
         help="Directory for output files (default: output/)",
     )
     p.add_argument(
@@ -1096,19 +1014,24 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
         help="Path to DiffThresholds JSON override",
     )
     p.add_argument(
-        "--json-out", default="diff_report.json",
+        "--json-out",
+        default="diff_report.json",
         help="JSON output filename (default: diff_report.json)",
     )
     p.add_argument(
-        "--md-out", default="diff_report.md",
+        "--md-out",
+        default="diff_report.md",
         help="Markdown output filename (default: diff_report.md)",
     )
     p.add_argument(
-        "--strict", action="store_true",
+        "--strict",
+        action="store_true",
         help="WARN also exits 1 (for CI lockdown)",
     )
     p.add_argument(
-        "--baseline-max-age-days", type=int, default=14,
+        "--baseline-max-age-days",
+        type=int,
+        default=14,
         help="Warn if golden baseline is older than N days (default: 14)",
     )
     return p.parse_args(argv)
@@ -1126,9 +1049,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     print(f"Thresholds ID: {thresholds.thresholds_id}")
 
     # Baseline freshness
-    freshness = check_baseline_freshness(
-        args.baseline, args.baseline_max_age_days
-    )
+    freshness = check_baseline_freshness(args.baseline, args.baseline_max_age_days)
     if freshness["age_days"] is not None:
         print(f"Baseline age: {freshness['age_days']} days (source: {freshness['source']})")
         if freshness["stale"]:
@@ -1155,8 +1076,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if freshness["stale"]:
         age = freshness["age_days"]
         verdict.warn_reasons.append(
-            f"baseline_stale: golden baseline is {age} days old "
-            f"(max {args.baseline_max_age_days})"
+            f"baseline_stale: golden baseline is {age} days old " f"(max {args.baseline_max_age_days})"
         )
         if verdict.status == "OK":
             verdict.status = "WARN"

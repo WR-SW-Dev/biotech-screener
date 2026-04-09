@@ -21,6 +21,7 @@ Usage:
     python tools/build_catalyst_delta.py --as-of-date 2026-03-27
     python tools/build_catalyst_delta.py --as-of-date 2026-03-27 --prior-date 2026-03-26
 """
+
 from __future__ import annotations
 
 import argparse

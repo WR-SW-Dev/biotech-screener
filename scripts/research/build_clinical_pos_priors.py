@@ -7,6 +7,7 @@ phase priors, endpoint modifiers, and shrinkage toward reference rates.
 Usage:
     python scripts/research/build_clinical_pos_priors.py
 """
+
 from __future__ import annotations
 
 import json

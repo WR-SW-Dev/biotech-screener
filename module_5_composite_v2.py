@@ -54,14 +54,15 @@ Author: Wake Robin Capital Management
 Version: 2.0.0
 Last Modified: 2026-01-11
 """
+
 from __future__ import annotations
 
 import hashlib
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, date
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
+from datetime import date, datetime
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -126,6 +127,7 @@ VOLATILITY_MAX_ADJUSTMENT = Decimal("0.25")  # Max +/- 25% weight adjustment
 
 class MonotonicCap:
     """Monotonic cap thresholds."""
+
     LIQUIDITY_FAIL_CAP = Decimal("35")
     LIQUIDITY_WARN_CAP = Decimal("60")
     RUNWAY_CRITICAL_CAP = Decimal("40")
@@ -150,6 +152,7 @@ class NormalizationMethod(str, Enum):
 # ============================================================================
 # DATACLASSES
 # ============================================================================
+
 
 @dataclass
 class ComponentScore:
@@ -182,6 +185,7 @@ class ScoreBreakdown:
 # ============================================================================
 # HELPERS
 # ============================================================================
+
 
 def _to_decimal(value: Any, default: Optional[Decimal] = None) -> Optional[Decimal]:
     if value is None:
@@ -257,6 +261,7 @@ def _get_worst_severity(severities: List[str]) -> Severity:
 # WINSORIZED NORMALIZATION
 # ============================================================================
 
+
 def _rank_normalize_winsorized(values: List[Decimal]) -> Tuple[List[Decimal], bool]:
     """Winsorized percentile rank normalization."""
     n = len(values)
@@ -301,13 +306,15 @@ def _rank_normalize_winsorized(values: List[Decimal]) -> Tuple[List[Decimal], bo
 # CONFIDENCE EXTRACTION
 # ============================================================================
 
+
 def _extract_confidence_financial(fin_data: Dict) -> Decimal:
     conf = _to_decimal(fin_data.get("confidence"))
     if conf is not None:
         return _clamp(conf, Decimal("0"), Decimal("1"))
     state = fin_data.get("financial_data_state", "NONE")
-    return {"FULL": Decimal("1.0"), "PARTIAL": Decimal("0.7"),
-            "MINIMAL": Decimal("0.4"), "NONE": Decimal("0.1")}.get(state, Decimal("0.5"))
+    return {"FULL": Decimal("1.0"), "PARTIAL": Decimal("0.7"), "MINIMAL": Decimal("0.4"), "NONE": Decimal("0.1")}.get(
+        state, Decimal("0.5")
+    )
 
 
 def _extract_confidence_clinical(clin_data: Dict) -> Decimal:
@@ -332,7 +339,7 @@ def _extract_confidence_clinical(clin_data: Dict) -> Decimal:
 def _extract_confidence_catalyst(cat_data: Any) -> Decimal:
     if not cat_data:
         return Decimal("0.3")
-    if hasattr(cat_data, 'n_high_confidence'):
+    if hasattr(cat_data, "n_high_confidence"):
         n_high = cat_data.n_high_confidence
         n_events = cat_data.events_detected_total
     elif isinstance(cat_data, dict):
@@ -370,9 +377,11 @@ def _extract_confidence_pos(pos_data: Optional[Dict]) -> Decimal:
 # VOLATILITY ADJUSTMENT
 # ============================================================================
 
+
 @dataclass
 class VolatilityAdjustment:
     """Volatility-based weight adjustment result."""
+
     annualized_vol: Optional[Decimal]
     vol_bucket: str  # "low", "normal", "high", "unknown"
     adjustment_factor: Decimal  # Multiplier for weights (0.75 - 1.25)
@@ -446,8 +455,7 @@ def _extract_volatility(
         # Linear interpolation: at 80% vol -> 0%, capped at -25%
         excess_vol = vol - VOLATILITY_HIGH_THRESHOLD
         adjustment = Decimal("1.0") - min(
-            VOLATILITY_MAX_ADJUSTMENT,
-            VOLATILITY_MAX_ADJUSTMENT * (excess_vol / VOLATILITY_BASELINE)
+            VOLATILITY_MAX_ADJUSTMENT, VOLATILITY_MAX_ADJUSTMENT * (excess_vol / VOLATILITY_BASELINE)
         )
         confidence_penalty = Decimal("0.15")  # Significant penalty for high vol
 
@@ -462,6 +470,7 @@ def _extract_volatility(
 # ============================================================================
 # MONOTONIC CAPS
 # ============================================================================
+
 
 def _apply_monotonic_caps(
     score: Decimal,
@@ -504,6 +513,7 @@ def _apply_monotonic_caps(
 # DETERMINISM HASH
 # ============================================================================
 
+
 def _compute_determinism_hash(
     ticker: str,
     version: str,
@@ -525,25 +535,32 @@ def _compute_determinism_hash(
         "base_weights": {k: str(v) for k, v in sorted(base_weights.items())},
         "effective_weights": {k: str(v) for k, v in sorted(effective_weights.items())},
         "regime_adjustments": {k: str(v) for k, v in sorted(regime_adjustments.items())},
-        "components": sorted([
-            {"name": c.name, "raw": str(c.raw) if c.raw else None,
-             "normalized": str(c.normalized) if c.normalized else None,
-             "contribution": str(c.contribution)}
-            for c in component_scores
-        ], key=lambda x: x["name"]),
+        "components": sorted(
+            [
+                {
+                    "name": c.name,
+                    "raw": str(c.raw) if c.raw else None,
+                    "normalized": str(c.normalized) if c.normalized else None,
+                    "contribution": str(c.contribution),
+                }
+                for c in component_scores
+            ],
+            key=lambda x: x["name"],
+        ),
         "uncertainty_penalty": str(uncertainty_penalty),
         "severity_gate": severity_gate,
         "caps": sorted([str(c) for c in caps]),
         "cohort_key": cohort_key,
         "final_score": str(final_score),
     }
-    canonical = json.dumps(payload, sort_keys=True, separators=(',', ':'))
+    canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(canonical.encode()).hexdigest()[:16]
 
 
 # ============================================================================
 # CO-INVEST OVERLAY
 # ============================================================================
+
 
 def _enrich_with_coinvest(ticker: str, coinvest_signals: dict, as_of_date: date) -> dict:
     """Supports both object format (.positions) and pre-computed dict format."""
@@ -560,7 +577,7 @@ def _enrich_with_coinvest(ticker: str, coinvest_signals: dict, as_of_date: date)
         }
 
     # Handle object format with .positions attribute (original behavior)
-    if not hasattr(signal, 'positions'):
+    if not hasattr(signal, "positions"):
         return {"coinvest_overlap_count": 0, "coinvest_holders": [], "coinvest_usable": False}
 
     pit_positions = [p for p in signal.positions if p.filing_date < as_of_date]
@@ -579,6 +596,7 @@ def _enrich_with_coinvest(ticker: str, coinvest_signals: dict, as_of_date: date)
 # ============================================================================
 # COHORT NORMALIZATION
 # ============================================================================
+
 
 def _apply_cohort_normalization_v2(members: List[Dict], include_pos: bool = False) -> NormalizationMethod:
     if not members:
@@ -605,7 +623,9 @@ def _apply_cohort_normalization_v2(members: List[Dict], include_pos: bool = Fals
         m["clinical_normalized"] = clin_norm[i]
         m["financial_normalized"] = fin_norm[i]
         m["catalyst_normalized"] = cat_norm[i]
-        m["pos_normalized"] = pos_norm[i] if pos_norm else (m.get("pos_raw") if m.get("pos_raw") is not None else Decimal("0"))
+        m["pos_normalized"] = (
+            pos_norm[i] if pos_norm else (m.get("pos_raw") if m.get("pos_raw") is not None else Decimal("0"))
+        )
 
     return NormalizationMethod.COHORT_WINSORIZED if winsor_applied else NormalizationMethod.COHORT
 
@@ -613,6 +633,7 @@ def _apply_cohort_normalization_v2(members: List[Dict], include_pos: bool = Fals
 # ============================================================================
 # SINGLE TICKER SCORING
 # ============================================================================
+
 
 def _score_single_ticker_v2(
     ticker: str,
@@ -639,10 +660,18 @@ def _score_single_ticker_v2(
     clin_raw = _to_decimal(clin_data.get("clinical_score"))
     pos_raw = _to_decimal(pos_data.get("pos_score")) if pos_data else None
 
-    if hasattr(cat_data, 'score_blended'):
+    if hasattr(cat_data, "score_blended"):
         cat_raw = _to_decimal(cat_data.score_blended)
-        cat_proximity = _to_decimal(getattr(cat_data, 'catalyst_proximity_score', 0)) if _to_decimal(getattr(cat_data, 'catalyst_proximity_score', 0)) is not None else Decimal("0")
-        cat_delta = _to_decimal(getattr(cat_data, 'catalyst_delta_score', 0)) if _to_decimal(getattr(cat_data, 'catalyst_delta_score', 0)) is not None else Decimal("0")
+        cat_proximity = (
+            _to_decimal(getattr(cat_data, "catalyst_proximity_score", 0))
+            if _to_decimal(getattr(cat_data, "catalyst_proximity_score", 0)) is not None
+            else Decimal("0")
+        )
+        cat_delta = (
+            _to_decimal(getattr(cat_data, "catalyst_delta_score", 0))
+            if _to_decimal(getattr(cat_data, "catalyst_delta_score", 0)) is not None
+            else Decimal("0")
+        )
     elif isinstance(cat_data, dict):
         scores = cat_data.get("scores", cat_data)
         cat_raw = _to_decimal(scores.get("score_blended", scores.get("catalyst_score_net")))
@@ -718,24 +747,35 @@ def _score_single_ticker_v2(
         w_eff = effective_weights.get(name, Decimal("0"))
         contrib = norm_scores[name] * w_eff
         contributions[name] = contrib
-        component_scores.append(ComponentScore(
-            name=name, raw=raw_scores[name], normalized=norm_scores[name],
-            confidence=confidences.get(name, Decimal("0")),
-            weight_base=base_weights.get(name, Decimal("0")),
-            weight_effective=w_eff, contribution=_quantize_score(contrib),
-            notes=["missing_raw"] if raw_scores[name] is None else [],
-        ))
+        component_scores.append(
+            ComponentScore(
+                name=name,
+                raw=raw_scores[name],
+                normalized=norm_scores[name],
+                confidence=confidences.get(name, Decimal("0")),
+                weight_base=base_weights.get(name, Decimal("0")),
+                weight_effective=w_eff,
+                contribution=_quantize_score(contrib),
+                notes=["missing_raw"] if raw_scores[name] is None else [],
+            )
+        )
 
     if mode == ScoringMode.ENHANCED:
         w_eff = effective_weights.get("pos", Decimal("0"))
         contrib = pos_norm * w_eff
         contributions["pos"] = contrib
-        component_scores.append(ComponentScore(
-            name="pos", raw=pos_raw, normalized=pos_norm, confidence=conf_pos,
-            weight_base=base_weights.get("pos", Decimal("0")),
-            weight_effective=w_eff, contribution=_quantize_score(contrib),
-            notes=["missing_raw"] if pos_raw is None else [],
-        ))
+        component_scores.append(
+            ComponentScore(
+                name="pos",
+                raw=pos_raw,
+                normalized=pos_norm,
+                confidence=conf_pos,
+                weight_base=base_weights.get("pos", Decimal("0")),
+                weight_effective=w_eff,
+                contribution=_quantize_score(contrib),
+                notes=["missing_raw"] if pos_raw is None else [],
+            )
+        )
 
     # Weighted sum
     weighted_sum = sum(contributions.values())
@@ -743,7 +783,8 @@ def _score_single_ticker_v2(
     # Weakest-link
     critical_scores = [
         contributions.get(c, Decimal("0")) / max(effective_weights.get(c, Decimal("1")), EPS)
-        for c in CRITICAL_COMPONENTS if c in contributions
+        for c in CRITICAL_COMPONENTS
+        if c in contributions
     ]
     min_critical = min(critical_scores) if critical_scores else weighted_sum
 
@@ -761,7 +802,7 @@ def _score_single_ticker_v2(
 
     # Severity
     severities = [fin_data.get("severity", "none"), clin_data.get("severity", "none")]
-    if hasattr(cat_data, 'severe_negative_flag') and cat_data.severe_negative_flag:
+    if hasattr(cat_data, "severe_negative_flag") and cat_data.severe_negative_flag:
         severities.append("sev1")
     elif isinstance(cat_data, dict):
         flags_dict = cat_data.get("flags", {})
@@ -788,24 +829,40 @@ def _score_single_ticker_v2(
 
     # Determinism hash
     determinism_hash = _compute_determinism_hash(
-        ticker, SCHEMA_VERSION, mode.value, base_weights, effective_weights,
-        regime_adjustments, component_scores, uncertainty_penalty,
-        SEVERITY_GATE_LABELS[worst_severity], caps_applied, cohort_key, post_bonus,
+        ticker,
+        SCHEMA_VERSION,
+        mode.value,
+        base_weights,
+        effective_weights,
+        regime_adjustments,
+        component_scores,
+        uncertainty_penalty,
+        SEVERITY_GATE_LABELS[worst_severity],
+        caps_applied,
+        cohort_key,
+        post_bonus,
     )
 
     # Build breakdown
     breakdown = ScoreBreakdown(
-        version=SCHEMA_VERSION, mode=mode.value,
+        version=SCHEMA_VERSION,
+        mode=mode.value,
         base_weights={k: str(v) for k, v in base_weights.items()},
         regime_adjustments={k: str(v) for k, v in regime_adjustments.items()},
         effective_weights={k: str(v) for k, v in effective_weights.items()},
-        components=[{
-            "name": c.name, "raw": str(c.raw) if c.raw else None,
-            "normalized": str(c.normalized) if c.normalized else None,
-            "confidence": str(c.confidence), "weight_base": str(c.weight_base),
-            "weight_effective": str(c.weight_effective), "contribution": str(c.contribution),
-            "notes": c.notes,
-        } for c in component_scores],
+        components=[
+            {
+                "name": c.name,
+                "raw": str(c.raw) if c.raw else None,
+                "normalized": str(c.normalized) if c.normalized else None,
+                "confidence": str(c.confidence),
+                "weight_base": str(c.weight_base),
+                "weight_effective": str(c.weight_effective),
+                "contribution": str(c.contribution),
+                "notes": c.notes,
+            }
+            for c in component_scores
+        ],
         penalties_and_gates={
             "uncertainty_penalty_pct": str(_quantize_score(uncertainty_penalty * Decimal("100"))),
             "severity_gate": SEVERITY_GATE_LABELS[worst_severity],
@@ -814,14 +871,17 @@ def _score_single_ticker_v2(
         },
         bonuses={"proximity_bonus": str(proximity_bonus), "delta_bonus": str(delta_bonus)},
         final={
-            "pre_penalty_score": str(pre_penalty), "post_penalty_score": str(post_penalty),
-            "post_cap_score": str(post_cap), "post_bonus_score": str(post_bonus),
+            "pre_penalty_score": str(pre_penalty),
+            "post_penalty_score": str(post_penalty),
+            "post_cap_score": str(post_cap),
+            "post_bonus_score": str(post_bonus),
             "composite_score": str(post_bonus),
         },
         normalization_method=normalization_method.value,
         cohort_info={"cohort_key": cohort_key},
         hybrid_aggregation={
-            "alpha": str(HYBRID_ALPHA), "weighted_sum": str(_quantize_score(weighted_sum)),
+            "alpha": str(HYBRID_ALPHA),
+            "weighted_sum": str(_quantize_score(weighted_sum)),
             "min_critical": str(_quantize_score(min_critical)),
         },
     )
@@ -872,6 +932,7 @@ def _score_single_ticker_v2(
 # ============================================================================
 # MAIN COMPOSITE FUNCTION
 # ============================================================================
+
 
 def compute_module_5_composite_v2(
     universe_result: Dict[str, Any],
@@ -947,10 +1008,16 @@ def compute_module_5_composite_v2(
                 si_by_ticker[si["ticker"].upper()] = si
         regime_data = enhancement_result.get("regime", {})
         regime_name = regime_data.get("regime", "UNKNOWN")
-        regime_adjustments = {k: _to_decimal(v, Decimal("1.0")) for k, v in regime_data.get("signal_adjustments", {}).items()}
+        regime_adjustments = {
+            k: _to_decimal(v, Decimal("1.0")) for k, v in regime_data.get("signal_adjustments", {}).items()
+        }
 
     mode = ScoringMode.ENHANCED if pos_by_ticker else ScoringMode.DEFAULT
-    base_weights = (ENHANCED_WEIGHTS.copy() if mode == ScoringMode.ENHANCED else DEFAULT_WEIGHTS.copy()) if weights is None else {k: _to_decimal(v, Decimal("0")) for k, v in weights.items()}
+    base_weights = (
+        (ENHANCED_WEIGHTS.copy() if mode == ScoringMode.ENHANCED else DEFAULT_WEIGHTS.copy())
+        if weights is None
+        else {k: _to_decimal(v, Decimal("0")) for k, v in weights.items()}
+    )
 
     # Index outputs
     # DETERMINISM: Sort active_tickers to ensure consistent iteration order
@@ -973,7 +1040,7 @@ def compute_module_5_composite_v2(
         clin_score = _to_decimal(clin.get("clinical_score"))
         pos_score = _to_decimal(pos.get("pos_score")) if pos else None
 
-        if hasattr(cat, 'score_blended'):
+        if hasattr(cat, "score_blended"):
             cat_score = _to_decimal(cat.score_blended)
         elif isinstance(cat, dict):
             scores = cat.get("scores", cat)
@@ -982,7 +1049,7 @@ def compute_module_5_composite_v2(
             cat_score = None
 
         severities = [fin.get("severity", "none"), clin.get("severity", "none")]
-        if hasattr(cat, 'severe_negative_flag') and cat.severe_negative_flag:
+        if hasattr(cat, "severe_negative_flag") and cat.severe_negative_flag:
             severities.append("sev1")
         worst_severity = _get_worst_severity(severities)
 
@@ -990,20 +1057,22 @@ def compute_module_5_composite_v2(
             excluded.append({"ticker": ticker, "reason": "sev3_gate", "severity": worst_severity.value})
             continue
 
-        combined.append({
-            "ticker": ticker,
-            "clinical_raw": clin_score,
-            "financial_raw": fin_score,
-            "catalyst_raw": cat_score,
-            "pos_raw": pos_score,
-            "market_cap_bucket": _market_cap_bucket(fin.get("market_cap_mm")),
-            "stage_bucket": _stage_bucket(clin.get("lead_phase")),
-            "fin_data": fin,
-            "cat_data": cat,
-            "clin_data": clin,
-            "pos_data": pos,
-            "si_data": si,
-        })
+        combined.append(
+            {
+                "ticker": ticker,
+                "clinical_raw": clin_score,
+                "financial_raw": fin_score,
+                "catalyst_raw": cat_score,
+                "pos_raw": pos_score,
+                "market_cap_bucket": _market_cap_bucket(fin.get("market_cap_mm")),
+                "stage_bucket": _stage_bucket(clin.get("lead_phase")),
+                "fin_data": fin,
+                "cat_data": cat,
+                "clin_data": clin,
+                "pos_data": pos,
+                "si_data": si,
+            }
+        )
 
     # Cohort grouping
     cohorts: Dict[str, List[Dict]] = {}
@@ -1039,11 +1108,18 @@ def compute_module_5_composite_v2(
         }
         ticker_market_data = market_data_dict.get(rec["ticker"])
         result = _score_single_ticker_v2(
-            ticker=rec["ticker"], fin_data=rec["fin_data"], cat_data=rec["cat_data"],
-            clin_data=rec["clin_data"], pos_data=rec["pos_data"], si_data=rec["si_data"],
-            base_weights=base_weights, regime_adjustments=regime_adjustments,
-            mode=mode, normalized_scores=normalized_scores,
-            cohort_key=rec["cohort_key"], normalization_method=rec["normalization_method"],
+            ticker=rec["ticker"],
+            fin_data=rec["fin_data"],
+            cat_data=rec["cat_data"],
+            clin_data=rec["clin_data"],
+            pos_data=rec["pos_data"],
+            si_data=rec["si_data"],
+            base_weights=base_weights,
+            regime_adjustments=regime_adjustments,
+            mode=mode,
+            normalized_scores=normalized_scores,
+            cohort_key=rec["cohort_key"],
+            normalization_method=rec["normalization_method"],
             market_data=ticker_market_data,
         )
         result["market_cap_bucket"] = rec["market_cap_bucket"]
@@ -1061,7 +1137,13 @@ def compute_module_5_composite_v2(
             rec["coinvest"] = None
 
     # Sort and rank
-    scored.sort(key=lambda x: (-x["composite_score"], -(x["coinvest"]["coinvest_overlap_count"] if x["coinvest"] else 0), x["ticker"]))
+    scored.sort(
+        key=lambda x: (
+            -x["composite_score"],
+            -(x["coinvest"]["coinvest_overlap_count"] if x["coinvest"] else 0),
+            x["ticker"],
+        )
+    )
     for i, rec in enumerate(scored):
         rec["composite_rank"] = i + 1
 
@@ -1070,38 +1152,46 @@ def compute_module_5_composite_v2(
     for rec in scored:
         bd = rec["score_breakdown"]
         coinvest = rec.get("coinvest") or {}
-        ranked_securities.append({
-            "ticker": rec["ticker"],
-            "composite_score": str(rec["composite_score"]),
-            "composite_rank": rec["composite_rank"],
-            "severity": rec["severity"].value,
-            "flags": rec["flags"],
-            "rankable": True,
-            "market_cap_bucket": rec["market_cap_bucket"],
-            "stage_bucket": rec["stage_bucket"],
-            "cohort_key": rec["cohort_key"],
-            "normalization_method": rec["normalization_method"],
-            "confidence_clinical": str(rec["confidence_clinical"]),
-            "confidence_financial": str(rec["confidence_financial"]),
-            "confidence_catalyst": str(rec["confidence_catalyst"]),
-            "confidence_pos": str(rec["confidence_pos"]) if rec["confidence_pos"] else None,
-            "effective_weights": {k: str(v) for k, v in rec["effective_weights"].items()},
-            "monotonic_caps_applied": rec["caps_applied"],
-            "determinism_hash": rec["determinism_hash"],
-            "schema_version": SCHEMA_VERSION,
-            "score_breakdown": {
-                "version": bd.version, "mode": bd.mode,
-                "base_weights": bd.base_weights, "regime_adjustments": bd.regime_adjustments,
-                "effective_weights": bd.effective_weights, "components": bd.components,
-                "penalties_and_gates": bd.penalties_and_gates, "bonuses": bd.bonuses,
-                "final": bd.final, "normalization_method": bd.normalization_method,
-                "cohort_info": bd.cohort_info, "hybrid_aggregation": bd.hybrid_aggregation,
-            },
-            "coinvest_overlap_count": coinvest.get("coinvest_overlap_count", 0),
-            "coinvest_holders": coinvest.get("coinvest_holders", []),
-            "coinvest_usable": coinvest.get("coinvest_usable", False),
-            "volatility_adjustment": rec.get("volatility_adjustment"),
-        })
+        ranked_securities.append(
+            {
+                "ticker": rec["ticker"],
+                "composite_score": str(rec["composite_score"]),
+                "composite_rank": rec["composite_rank"],
+                "severity": rec["severity"].value,
+                "flags": rec["flags"],
+                "rankable": True,
+                "market_cap_bucket": rec["market_cap_bucket"],
+                "stage_bucket": rec["stage_bucket"],
+                "cohort_key": rec["cohort_key"],
+                "normalization_method": rec["normalization_method"],
+                "confidence_clinical": str(rec["confidence_clinical"]),
+                "confidence_financial": str(rec["confidence_financial"]),
+                "confidence_catalyst": str(rec["confidence_catalyst"]),
+                "confidence_pos": str(rec["confidence_pos"]) if rec["confidence_pos"] else None,
+                "effective_weights": {k: str(v) for k, v in rec["effective_weights"].items()},
+                "monotonic_caps_applied": rec["caps_applied"],
+                "determinism_hash": rec["determinism_hash"],
+                "schema_version": SCHEMA_VERSION,
+                "score_breakdown": {
+                    "version": bd.version,
+                    "mode": bd.mode,
+                    "base_weights": bd.base_weights,
+                    "regime_adjustments": bd.regime_adjustments,
+                    "effective_weights": bd.effective_weights,
+                    "components": bd.components,
+                    "penalties_and_gates": bd.penalties_and_gates,
+                    "bonuses": bd.bonuses,
+                    "final": bd.final,
+                    "normalization_method": bd.normalization_method,
+                    "cohort_info": bd.cohort_info,
+                    "hybrid_aggregation": bd.hybrid_aggregation,
+                },
+                "coinvest_overlap_count": coinvest.get("coinvest_overlap_count", 0),
+                "coinvest_holders": coinvest.get("coinvest_holders", []),
+                "coinvest_usable": coinvest.get("coinvest_usable", False),
+                "volatility_adjustment": rec.get("volatility_adjustment"),
+            }
+        )
 
     # DETERMINISM: Sort excluded_securities by ticker for consistent output order
     excluded_sorted = sorted(excluded, key=lambda x: x["ticker"])
@@ -1121,23 +1211,24 @@ def compute_module_5_composite_v2(
             "with_pos_scores": sum(1 for r in ranked_securities if r.get("confidence_pos")),
             "with_caps_applied": sum(1 for r in ranked_securities if r.get("monotonic_caps_applied")),
             "with_volatility_data": sum(
-                1 for r in ranked_securities
-                if r.get("volatility_adjustment", {}).get("annualized_vol_pct") is not None
+                1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("annualized_vol_pct") is not None
             ),
             "high_volatility_count": sum(
-                1 for r in ranked_securities
-                if r.get("volatility_adjustment", {}).get("vol_bucket") == "high"
+                1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "high"
             ),
             "low_volatility_count": sum(
-                1 for r in ranked_securities
-                if r.get("volatility_adjustment", {}).get("vol_bucket") == "low"
+                1 for r in ranked_securities if r.get("volatility_adjustment", {}).get("vol_bucket") == "low"
             ),
         },
         "enhancement_applied": enhancement_applied,
-        "enhancement_diagnostics": {
-            "regime": regime_name,
-            "regime_adjustments": {k: str(v) for k, v in sorted(regime_adjustments.items())},
-        } if enhancement_applied else None,
+        "enhancement_diagnostics": (
+            {
+                "regime": regime_name,
+                "regime_adjustments": {k: str(v) for k, v in sorted(regime_adjustments.items())},
+            }
+            if enhancement_applied
+            else None
+        ),
         "schema_version": SCHEMA_VERSION,
         "provenance": create_provenance(
             RULESET_VERSION,

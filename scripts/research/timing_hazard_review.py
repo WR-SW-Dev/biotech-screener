@@ -23,6 +23,7 @@ Usage:
     python3 scripts/research/timing_hazard_review.py
     python3 scripts/research/timing_hazard_review.py --max-snapshots 20
 """
+
 from __future__ import annotations
 
 import argparse

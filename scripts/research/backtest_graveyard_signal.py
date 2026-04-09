@@ -12,6 +12,7 @@ Usage:
     python scripts/research/backtest_graveyard_signal.py
     python scripts/research/backtest_graveyard_signal.py --horizons 20,63
 """
+
 from __future__ import annotations
 
 import argparse

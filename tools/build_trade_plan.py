@@ -13,6 +13,7 @@ Outputs:
 Usage:
     python3 tools/build_trade_plan.py --as-of-date 2026-03-08
 """
+
 from __future__ import annotations
 
 import argparse

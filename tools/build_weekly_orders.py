@@ -10,6 +10,7 @@ Usage:
     python3 tools/build_weekly_orders.py --as-of-date 2026-03-08 --dry-run
     python3 tools/build_weekly_orders.py --as-of-date 2026-03-08 --slippage-bps 25
 """
+
 from __future__ import annotations
 
 import argparse

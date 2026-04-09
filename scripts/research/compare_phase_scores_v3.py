@@ -13,6 +13,7 @@ Usage:
     python scripts/research/compare_phase_scores_v3.py \
         --snapshot data/snapshots/2026-03-13
 """
+
 from __future__ import annotations
 
 import argparse

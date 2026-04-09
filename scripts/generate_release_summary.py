@@ -16,6 +16,7 @@ Usage:
     --output PATH            (default: artifacts/release_summary.md)
     --candidate-id ID        Candidate ruleset ID (auto-detected from calibration)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -37,6 +38,7 @@ DEFAULT_ARTIFACTS = PROJECT_ROOT / "artifacts"
 # DATA LOADERS
 # =============================================================================
 
+
 def load_json(path: Path) -> Dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
@@ -54,7 +56,8 @@ def find_active_ruleset(manifest: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
 
 def find_candidate_ruleset(
-    manifest: Dict[str, Any], candidate_id: str,
+    manifest: Dict[str, Any],
+    candidate_id: str,
 ) -> Optional[Dict[str, Any]]:
     for entry in manifest.get("rulesets", []):
         if entry.get("id") == candidate_id and entry.get("status") == "candidate":
@@ -65,6 +68,7 @@ def find_candidate_ruleset(
 # =============================================================================
 # SUMMARY GENERATION
 # =============================================================================
+
 
 def generate_release_summary(
     calibration: Dict[str, Any],
@@ -113,17 +117,21 @@ def generate_release_summary(
     a_changed = baseline_a != candidate_a
     cat_changed = baseline_cat is not None and candidate_cat is not None and baseline_cat != candidate_cat
     if not a_changed and not cat_changed:
-        lines.append(f"**No change recommended.** Current parameters are already optimal.")
+        lines.append("**No change recommended.** Current parameters are already optimal.")
         lines.append("")
     else:
         lines.append("| Parameter | Baseline | Candidate | Delta |")
         lines.append("|-----------|----------|-----------|-------|")
         if a_changed and isinstance(candidate_a, (int, float)) and isinstance(baseline_a, (int, float)):
-            lines.append(f"| `tier_a_optionality_floor` | {baseline_a} | {candidate_a} | {candidate_a - baseline_a:+.2f} |")
+            lines.append(
+                f"| `tier_a_optionality_floor` | {baseline_a} | {candidate_a} | {candidate_a - baseline_a:+.2f} |"
+            )
         elif a_changed:
             lines.append(f"| `tier_a_optionality_floor` | {baseline_a} | {candidate_a} | - |")
         if cat_changed:
-            lines.append(f"| `catalyst_near_days` | {baseline_cat} | {candidate_cat} | {candidate_cat - baseline_cat:+d} |")
+            lines.append(
+                f"| `catalyst_near_days` | {baseline_cat} | {candidate_cat} | {candidate_cat - baseline_cat:+d} |"
+            )
         lines.append("")
 
     # Objective improvement
@@ -230,9 +238,11 @@ def generate_release_summary(
     lines.append(f"- Objective score: **{best.get('score', 'n/a')}**")
     lines.append(f"- Candidates evaluated: {len(candidates)}")
     lines.append(f"- Candidates passing constraints: {n_passing}")
-    lines.append(f"- Constraints: A% >= {config.get('min_a_pct', '?')}%, "
-                 f"turnover <= {config.get('max_turnover', '?')}%, "
-                 f"separation > 0")
+    lines.append(
+        f"- Constraints: A% >= {config.get('min_a_pct', '?')}%, "
+        f"turnover <= {config.get('max_turnover', '?')}%, "
+        "separation > 0"
+    )
     passed = best.get("passed", False)
     lines.append(f"- Status: **{'PASS' if passed else 'FAIL'}**")
     if not passed:
@@ -284,27 +294,31 @@ def generate_release_summary(
 # MAIN
 # =============================================================================
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Generate release summary for ruleset promotion."
-    )
+    parser = argparse.ArgumentParser(description="Generate release summary for ruleset promotion.")
     parser.add_argument(
-        "--calibration-json", type=str,
+        "--calibration-json",
+        type=str,
         default=str(DEFAULT_ARTIFACTS / "calibration_report.json"),
         help="Path to calibration_report.json",
     )
     parser.add_argument(
-        "--walkforward-json", type=str,
+        "--walkforward-json",
+        type=str,
         default=str(DEFAULT_ARTIFACTS / "walkforward_report.json"),
         help="Path to walkforward_report.json",
     )
     parser.add_argument(
-        "--output", type=str,
+        "--output",
+        type=str,
         default=str(DEFAULT_ARTIFACTS / "release_summary.md"),
         help="Output path for release_summary.md",
     )
     parser.add_argument(
-        "--candidate-id", type=str, default=None,
+        "--candidate-id",
+        type=str,
+        default=None,
         help="Candidate ruleset ID (auto-detected from manifest if available)",
     )
     args = parser.parse_args()
@@ -340,7 +354,10 @@ def main() -> int:
 
     # Generate summary
     md_content = generate_release_summary(
-        calibration, walkforward, active_entry, candidate_entry,
+        calibration,
+        walkforward,
+        active_entry,
+        candidate_entry,
     )
 
     # Write

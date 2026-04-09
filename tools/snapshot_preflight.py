@@ -17,6 +17,7 @@ Usage (standalone):
         --check-pit --pit-cache-base data/caches/price_pit/PIT \
         --verbose --out output/preflight_report.json --strict
 """
+
 from __future__ import annotations
 
 import argparse
@@ -28,7 +29,7 @@ import re
 import subprocess
 import sys
 from dataclasses import asdict, dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -49,22 +50,32 @@ _NON_HYDRATABLE_REASONS = {"series_too_short"}
 _DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
 SUMMARY_CSV_COLUMNS = [
-    "date", "status", "fail_reasons", "warn_reasons",
-    "eligible_n", "rankings_cols_n", "hydration_coverage_pct",
-    "pit_cache_status", "split_warning_count",
-    "dated_source_status", "dated_source_details",
+    "date",
+    "status",
+    "fail_reasons",
+    "warn_reasons",
+    "eligible_n",
+    "rankings_cols_n",
+    "hydration_coverage_pct",
+    "pit_cache_status",
+    "split_warning_count",
+    "dated_source_status",
+    "dated_source_details",
 ]
 
 # Columns that indicate a data-source family is active in the snapshot.
 # If ANY column in a family is present in the rankings header, the
 # corresponding data_sources entry is expected in metadata.json.
 _SOURCE_FAMILY_COLUMNS = {
-    "sec_13f": {"coinvest_score_z", "sponsor_tier1_count", "inst_delta_z",
-                "has_coinvest_signal", "has_inst_delta"},
-    "ctgov":   {"clinical_score", "clinical_score_z", "clinical_score_v2",
-                "clinical_readout_days", "clinical_coverage_flag"},
-    "sec_8k":  {"catalyst_days", "catalyst_decay_w", "catalyst_source",
-                "has_catalyst_signal"},
+    "sec_13f": {"coinvest_score_z", "sponsor_tier1_count", "inst_delta_z", "has_coinvest_signal", "has_inst_delta"},
+    "ctgov": {
+        "clinical_score",
+        "clinical_score_z",
+        "clinical_score_v2",
+        "clinical_readout_days",
+        "clinical_coverage_flag",
+    },
+    "sec_8k": {"catalyst_days", "catalyst_decay_w", "catalyst_source", "has_catalyst_signal"},
 }
 
 
@@ -72,7 +83,7 @@ _SOURCE_FAMILY_COLUMNS = {
 @dataclass
 class CheckResult:
     name: str
-    status: str          # "PASS", "WARN", "FAIL"
+    status: str  # "PASS", "WARN", "FAIL"
     detail: str = ""
 
     def __repr__(self) -> str:
@@ -83,7 +94,7 @@ class CheckResult:
 @dataclass
 class SnapshotPreflightResult:
     date: str
-    status: str          # worst across checks
+    status: str  # worst across checks
     checks: List[CheckResult] = field(default_factory=list)
     metrics: Dict[str, Any] = field(default_factory=dict)
 
@@ -92,12 +103,8 @@ class SnapshotPreflightResult:
 
     def to_summary_row(self) -> Dict[str, str]:
         """Flatten to a single CSV row for preflight_summary.csv."""
-        fail_reasons = "; ".join(
-            c.detail for c in self.checks if c.status == "FAIL" and c.detail
-        )
-        warn_reasons = "; ".join(
-            c.detail for c in self.checks if c.status == "WARN" and c.detail
-        )
+        fail_reasons = "; ".join(c.detail for c in self.checks if c.status == "FAIL" and c.detail)
+        warn_reasons = "; ".join(c.detail for c in self.checks if c.status == "WARN" and c.detail)
         return {
             "date": self.date,
             "status": self.status,
@@ -156,14 +163,16 @@ def check_rankings_exist(
     missing = REQUIRED_COLS - cols
     if missing:
         return CheckResult(
-            "rankings_exist", "FAIL",
+            "rankings_exist",
+            "FAIL",
             f"missing required columns: {sorted(missing)}",
         )
 
     n_cols = len(cols)
     if n_cols < min_cols:
         return CheckResult(
-            "rankings_exist", "WARN",
+            "rankings_exist",
+            "WARN",
             f"only {n_cols} columns (expected >= {min_cols})",
         )
 
@@ -189,7 +198,8 @@ def check_eligible_count(
 
     if n_elig < min_eligible:
         return CheckResult(
-            "eligible_count", "FAIL",
+            "eligible_count",
+            "FAIL",
             f"{n_elig} eligible rows (need >= {min_eligible})",
         )
 
@@ -213,7 +223,8 @@ def check_hydration_coverage(
             has_source_cols = all(c in fieldnames for c in HYDRATION_SOURCE_COLS)
             if not has_source_cols:
                 return CheckResult(
-                    "hydration_coverage", "WARN",
+                    "hydration_coverage",
+                    "WARN",
                     "source columns absent (pre-hydration vintage)",
                 )
 
@@ -236,10 +247,7 @@ def check_hydration_coverage(
                 # empty source (pre-hydration vintage) or series_too_short.
                 if all(s == "" for s in sources):
                     n_non_hydratable += 1
-                elif has_reason_cols and any(
-                    row.get(c, "") in _NON_HYDRATABLE_REASONS
-                    for c in HYDRATION_REASON_COLS
-                ):
+                elif has_reason_cols and any(row.get(c, "") in _NON_HYDRATABLE_REASONS for c in HYDRATION_REASON_COLS):
                     n_non_hydratable += 1
     except (OSError, csv.Error) as exc:
         return CheckResult("hydration_coverage", "FAIL", f"read error: {exc}")
@@ -251,20 +259,23 @@ def check_hydration_coverage(
     if denom == 0:
         # All eligible tickers are non-hydratable (pre-hydration era)
         return CheckResult(
-            "hydration_coverage", "PASS",
+            "hydration_coverage",
+            "PASS",
             f"hydration n/a ({n_elig} eligible, all non-hydratable)",
         )
 
     coverage = n_hydrated / denom
     if coverage < warn_threshold:
         return CheckResult(
-            "hydration_coverage", "WARN",
+            "hydration_coverage",
+            "WARN",
             f"hydration {coverage:.0%} < {warn_threshold:.0%} "
             f"({n_hydrated}/{denom} hydratable of {n_elig} eligible)",
         )
 
     return CheckResult(
-        "hydration_coverage", "PASS",
+        "hydration_coverage",
+        "PASS",
         f"hydration {coverage:.0%} ({n_hydrated}/{denom} hydratable of {n_elig} eligible)",
     )
 
@@ -280,7 +291,8 @@ def check_pit_price_cache(
 
     if not index_path.exists():
         return CheckResult(
-            "pit_price_cache", "WARN",
+            "pit_price_cache",
+            "WARN",
             f"no PIT cache for {snap_date}",
         )
 
@@ -289,7 +301,8 @@ def check_pit_price_cache(
             index = json.load(f)
     except (OSError, json.JSONDecodeError) as exc:
         return CheckResult(
-            "pit_price_cache", "FAIL",
+            "pit_price_cache",
+            "FAIL",
             f"index.json unreadable: {exc}",
         )
 
@@ -329,10 +342,7 @@ def check_split_warnings(
 
     if eval_horizons:
         horizon_set = set(eval_horizons)
-        relevant = [
-            w for w in warnings
-            if w.get("horizon") in horizon_set
-        ]
+        relevant = [w for w in warnings if w.get("horizon") in horizon_set]
     else:
         relevant = list(warnings)
 
@@ -341,7 +351,8 @@ def check_split_warnings(
 
     tickers = sorted({w.get("ticker", "?") for w in relevant})
     return CheckResult(
-        "split_warnings", "WARN",
+        "split_warnings",
+        "WARN",
         f"{len(relevant)} split warning(s): {', '.join(tickers[:5])}"
         + (f" +{len(tickers) - 5} more" if len(tickers) > 5 else ""),
     )
@@ -385,7 +396,8 @@ def check_dated_sources(
     # Load metadata (only if we have active families to check)
     if not meta_path.exists():
         return CheckResult(
-            "dated_sources", "WARN",
+            "dated_sources",
+            "WARN",
             f"metadata.json missing; active families: {', '.join(sorted(active_families))}",
         )
     try:
@@ -397,7 +409,8 @@ def check_dated_sources(
     data_sources = meta.get("data_sources")
     if data_sources is None:
         return CheckResult(
-            "dated_sources", "WARN",
+            "dated_sources",
+            "WARN",
             f"data_sources map missing; active families: {', '.join(sorted(active_families))}",
         )
 
@@ -432,7 +445,8 @@ def check_dated_sources(
 
     if warnings:
         return CheckResult(
-            "dated_sources", "WARN",
+            "dated_sources",
+            "WARN",
             "; ".join(warnings),
         )
 
@@ -523,10 +537,7 @@ def run_preflight_batch(
     if not snapshot_root.is_dir():
         return report
 
-    snap_dates = sorted(
-        p.name for p in snapshot_root.iterdir()
-        if p.is_dir() and _DATE_RE.match(p.name)
-    )
+    snap_dates = sorted(p.name for p in snapshot_root.iterdir() if p.is_dir() and _DATE_RE.match(p.name))
 
     if date_from:
         snap_dates = [d for d in snap_dates if d >= date_from]
@@ -550,12 +561,15 @@ def run_preflight_batch(
 
 # ── Artifact helpers ────────────────────────────────────────────────
 
+
 def _git_sha() -> str:
     """Return the current git HEAD SHA (short), or 'unknown'."""
     try:
         out = subprocess.check_output(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=str(REPO_ROOT), stderr=subprocess.DEVNULL, text=True,
+            cwd=str(REPO_ROOT),
+            stderr=subprocess.DEVNULL,
+            text=True,
         )
         return out.strip()
     except (subprocess.SubprocessError, FileNotFoundError):
@@ -643,7 +657,8 @@ def write_preflight_artifacts(
     """
     csv_path = write_preflight_summary_csv(report, output_dir)
     manifest_path = write_preflight_manifest(
-        report, output_dir,
+        report,
+        output_dir,
         run_id=run_id,
         snapshot_root=snapshot_root,
         date_from=date_from,
@@ -661,61 +676,83 @@ def main() -> None:
         description="Snapshot eligibility preflight for research backtests",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=REPO_ROOT / "data" / "snapshots",
         help="Root directory containing YYYY-MM-DD snapshot subdirectories",
     )
     parser.add_argument(
-        "--date-from", default=None,
+        "--date-from",
+        default=None,
         help="Earliest date to check (YYYY-MM-DD, inclusive)",
     )
     parser.add_argument(
-        "--date-to", default=None,
+        "--date-to",
+        default=None,
         help="Latest date to check (YYYY-MM-DD, inclusive)",
     )
     parser.add_argument(
-        "--min-cols", type=int, default=25,
+        "--min-cols",
+        type=int,
+        default=25,
         help="Minimum expected column count in rankings.csv (default: 25)",
     )
     parser.add_argument(
-        "--min-eligible", type=int, default=10,
+        "--min-eligible",
+        type=int,
+        default=10,
         help="Minimum eligible row count (default: 10)",
     )
     parser.add_argument(
-        "--warn-threshold", type=float, default=0.80,
+        "--warn-threshold",
+        type=float,
+        default=0.80,
         help="Hydration coverage WARN threshold (default: 0.80)",
     )
     parser.add_argument(
-        "--check-pit", action="store_true", default=False,
+        "--check-pit",
+        action="store_true",
+        default=False,
         help="Enable PIT price cache checks (checks 4 & 5)",
     )
     parser.add_argument(
-        "--pit-cache-base", type=Path,
+        "--pit-cache-base",
+        type=Path,
         default=REPO_ROOT / "data" / "caches" / "price_pit" / "PIT",
         help="Base directory for PIT price caches",
     )
     parser.add_argument(
-        "--eval-horizons", default=None,
+        "--eval-horizons",
+        default=None,
         help="Comma-separated horizons for split warning filter (e.g. 5,20,63)",
     )
     parser.add_argument(
-        "--verbose", action="store_true", default=False,
+        "--verbose",
+        action="store_true",
+        default=False,
         help="Print per-check details",
     )
     parser.add_argument(
-        "--out", type=Path, default=None,
+        "--out",
+        type=Path,
+        default=None,
         help="Write JSON report to this path",
     )
     parser.add_argument(
-        "--artifact-dir", type=Path, default=None,
+        "--artifact-dir",
+        type=Path,
+        default=None,
         help="Write preflight_summary.csv + preflight_manifest.json to this directory",
     )
     parser.add_argument(
-        "--run-id", default=None,
+        "--run-id",
+        default=None,
         help="Run identifier for artifact manifest (auto-generated if omitted)",
     )
     parser.add_argument(
-        "--strict", action="store_true", default=False,
+        "--strict",
+        action="store_true",
+        default=False,
         help="Exit 1 if any snapshot FAILs",
     )
     args = parser.parse_args()
@@ -746,10 +783,7 @@ def main() -> None:
         tag = f"[{pf.status}]"
         line = f"  {pf.date} {tag}"
         if args.verbose or pf.status != "PASS":
-            details = [
-                c.detail for c in pf.checks
-                if c.detail and (args.verbose or c.status != "PASS")
-            ]
+            details = [c.detail for c in pf.checks if c.detail and (args.verbose or c.status != "PASS")]
             if details:
                 line += f"  {'; '.join(details)}"
         print(line)
@@ -768,7 +802,8 @@ def main() -> None:
     if args.artifact_dir:
         run_id = args.run_id or datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
         csv_p, manifest_p = write_preflight_artifacts(
-            report, args.artifact_dir,
+            report,
+            args.artifact_dir,
             run_id=run_id,
             snapshot_root=args.snapshot_root,
             date_from=args.date_from,

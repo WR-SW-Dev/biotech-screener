@@ -18,12 +18,12 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
+import logging
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
-import logging
+from typing import Any, Dict, List, Optional
 
 __version__ = "1.0.0"
 
@@ -32,22 +32,25 @@ logger = logging.getLogger(__name__)
 
 class SignalSourceType(str, Enum):
     """Classification of signal source for PIT safety."""
-    HISTORICAL = "HISTORICAL"           # Detected from past events (PIT-safe)
-    FORWARD_LOOKING = "FORWARD_LOOKING" # Calendar/predicted dates (not PIT-safe for backtesting)
-    MIXED = "MIXED"                     # Contains both types
+
+    HISTORICAL = "HISTORICAL"  # Detected from past events (PIT-safe)
+    FORWARD_LOOKING = "FORWARD_LOOKING"  # Calendar/predicted dates (not PIT-safe for backtesting)
+    MIXED = "MIXED"  # Contains both types
 
 
 class LookaheadRiskLevel(str, Enum):
     """Risk level for lookahead bias contamination."""
-    NONE = "NONE"       # <20% forward-looking
-    LOW = "LOW"         # 20-35% forward-looking
-    MEDIUM = "MEDIUM"   # 35-50% forward-looking
-    HIGH = "HIGH"       # >50% forward-looking (WARNING)
+
+    NONE = "NONE"  # <20% forward-looking
+    LOW = "LOW"  # 20-35% forward-looking
+    MEDIUM = "MEDIUM"  # 35-50% forward-looking
+    HIGH = "HIGH"  # >50% forward-looking (WARNING)
 
 
 @dataclass
 class SignalContribution:
     """Track contribution of historical vs forward-looking signals."""
+
     ticker: str
     historical_score: Decimal
     forward_looking_score: Decimal
@@ -80,13 +83,14 @@ class SeparatedCatalystResult:
     This is the P0 enhancement that prevents calendar catalysts
     from contaminating PIT-safe backtesting.
     """
+
     ticker: str
     as_of_date: str
 
     # Separated scores (use historical_score for backtesting)
-    historical_score: Decimal          # PIT-safe score from detected events
-    forward_looking_score: Decimal     # Score from calendar events (NOT PIT-safe)
-    blended_score: Decimal             # Combined score (for production, not backtest)
+    historical_score: Decimal  # PIT-safe score from detected events
+    forward_looking_score: Decimal  # Score from calendar events (NOT PIT-safe)
+    blended_score: Decimal  # Combined score (for production, not backtest)
 
     # Separated event lists
     historical_events: List[Dict[str, Any]]
@@ -96,7 +100,7 @@ class SeparatedCatalystResult:
     signal_contribution: SignalContribution
 
     # Configuration used
-    forward_looking_weight: Decimal    # Weight applied to forward-looking in blend
+    forward_looking_weight: Decimal  # Weight applied to forward-looking in blend
 
     def get_backtest_safe_score(self) -> Decimal:
         """Return only the PIT-safe historical score for backtesting."""
@@ -282,10 +286,9 @@ class ForwardLookingSeparator:
 
         # Compute blended score for production
         # Historical at full weight, forward-looking at reduced weight
-        blended_score = (
-            historical_score +
-            forward_looking_score * self.forward_looking_weight
-        ).quantize(Decimal("0.01"))
+        blended_score = (historical_score + forward_looking_score * self.forward_looking_weight).quantize(
+            Decimal("0.01")
+        )
 
         # Classify risk
         risk = self.classify_lookahead_risk(fl_weight)
@@ -334,6 +337,7 @@ class ForwardLookingSeparator:
 @dataclass
 class BatchSeparationResult:
     """Results from separating signals for multiple tickers."""
+
     total_tickers: int
     tickers_high_risk: List[str]
     tickers_medium_risk: List[str]
@@ -400,10 +404,9 @@ def separate_batch_signals(
 
         total_fl_weight += result.signal_contribution.forward_looking_weight
 
-    avg_fl_weight = (
-        total_fl_weight / Decimal(len(all_tickers))
-        if all_tickers else Decimal("0")
-    ).quantize(Decimal("0.01"))
+    avg_fl_weight = (total_fl_weight / Decimal(len(all_tickers)) if all_tickers else Decimal("0")).quantize(
+        Decimal("0.01")
+    )
 
     # Log summary warning if many high-risk tickers
     if len(high_risk) > len(all_tickers) * 0.2:  # >20% high risk

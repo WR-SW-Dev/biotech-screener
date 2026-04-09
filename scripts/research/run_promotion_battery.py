@@ -17,6 +17,7 @@ Usage:
         --date-manifest output/research/date_manifest.csv \
         --out-dir output/promotion_battery/
 """
+
 from __future__ import annotations
 
 import argparse

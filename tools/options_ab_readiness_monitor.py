@@ -21,6 +21,7 @@ Usage:
     python tools/options_ab_readiness_monitor.py [--snapshot-root data/snapshots]
     python tools/options_ab_readiness_monitor.py --json  # machine-readable output
 """
+
 from __future__ import annotations
 
 import argparse
@@ -160,14 +161,14 @@ def compute_readiness(
         trigger_detail = (
             f"Trigger met: {n_ab_ready} ab_ready snapshots (>= {min_weeks}), "
             f"{has_step10} with Step-10 eligible OQC (>= {min_step10}). "
-            f"Run eval_b91_options_quality_weekly_ab.py"
+            "Run eval_b91_options_quality_weekly_ab.py"
         )
     elif weeks_met and not step10_met:
         trigger = "BLOCKED"
         trigger_detail = (
             f"Enough snapshots ({n_ab_ready} >= {min_weeks}) but "
-            f"zero Step-10 eligible OQC (secondary reg 91-180d with nonzero OQC). "
-            f"Candidate cannot diverge from baseline until regulatory supply appears."
+            "zero Step-10 eligible OQC (secondary reg 91-180d with nonzero OQC). "
+            "Candidate cannot diverge from baseline until regulatory supply appears."
         )
     else:
         remaining = min_weeks - n_ab_ready

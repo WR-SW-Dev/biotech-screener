@@ -12,6 +12,7 @@ CLI:
     --output-dir output \
     [--dq-threshold 80]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,7 @@ HYPOTHETICAL_WINDOWS = [180, 270, 365]
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_date(s: str) -> date | None:
     """Parse YYYY-MM-DD string to date, or None."""
@@ -85,8 +87,7 @@ def _load_eligible_dev_tickers(csv_path: Path) -> Set[str]:
         if "archetype" not in headers or "eligible" not in headers:
             return tickers
         for row in reader:
-            if (row.get("archetype", "").strip() == "drug_developer"
-                    and row.get("eligible", "").strip() == "1"):
+            if row.get("archetype", "").strip() == "drug_developer" and row.get("eligible", "").strip() == "1":
                 t = row.get("ticker", "").strip().upper()
                 if t:
                     tickers.add(t)
@@ -109,6 +110,7 @@ def _tickers_with_catalyst_from_inputs(
 # ---------------------------------------------------------------------------
 # Hypothetical coverage at varying trial windows
 # ---------------------------------------------------------------------------
+
 
 def compute_hypothetical_coverage(
     trials: List[Dict[str, Any]],
@@ -144,8 +146,7 @@ def compute_hypothetical_coverage(
         if ticker not in eligible_tickers:
             continue
         phase = str(trial.get("phase", "")).upper()
-        if phase not in ("PHASE2", "PHASE3", "PHASE 2", "PHASE 3",
-                         "PHASE2/PHASE3", "PHASE 2/PHASE 3"):
+        if phase not in ("PHASE2", "PHASE3", "PHASE 2", "PHASE 3", "PHASE2/PHASE3", "PHASE 2/PHASE 3"):
             continue
         fp = _parse_date(trial.get("first_posted"))
         pcd = _parse_date(trial.get("primary_completion_date"))
@@ -173,6 +174,7 @@ def compute_hypothetical_coverage(
 # ---------------------------------------------------------------------------
 # Single-archive audit
 # ---------------------------------------------------------------------------
+
 
 def audit_single_archive(
     tar_path: Path,
@@ -260,6 +262,7 @@ def audit_single_archive(
 # All-archive audit
 # ---------------------------------------------------------------------------
 
+
 def audit_all_archives(
     archive_dir: Path,
     dq_threshold: float = DEFAULT_DQ_THRESHOLD,
@@ -276,6 +279,7 @@ def audit_all_archives(
 # ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
+
 
 def format_audit_report_md(results: List[Dict[str, Any]], dq_threshold: float = DEFAULT_DQ_THRESHOLD) -> str:
     """Markdown table: date | n_eligible | missing_180d | missing_270d | missing_365d | pass/fail."""
@@ -354,20 +358,25 @@ def format_audit_json(results: List[Dict[str, Any]], dq_threshold: float = DEFAU
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Audit catalyst data coverage across historical archives."
-    )
+    parser = argparse.ArgumentParser(description="Audit catalyst data coverage across historical archives.")
     parser.add_argument(
-        "--archive-dir", type=str, default=str(DEFAULT_ARCHIVE_DIR),
+        "--archive-dir",
+        type=str,
+        default=str(DEFAULT_ARCHIVE_DIR),
         help=f"Directory containing .tar.gz archives (default: {DEFAULT_ARCHIVE_DIR})",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(DEFAULT_OUTPUT_DIR),
         help=f"Directory for output files (default: {DEFAULT_OUTPUT_DIR})",
     )
     parser.add_argument(
-        "--dq-threshold", type=float, default=DEFAULT_DQ_THRESHOLD,
+        "--dq-threshold",
+        type=float,
+        default=DEFAULT_DQ_THRESHOLD,
         help=f"DQ gate: max catalyst_missing_pct (default: {DEFAULT_DQ_THRESHOLD})",
     )
     args = parser.parse_args()
@@ -390,8 +399,7 @@ def main() -> int:
 
         if r["status"] == "ok":
             dq = "PASS" if r["passes_dq_gate"] else "FAIL"
-            print(f"{dq} (missing={r['catalyst_missing_pct']}%, "
-                  f"{r['catalyst_present']}/{r['n_eligible']} present)")
+            print(f"{dq} (missing={r['catalyst_missing_pct']}%, " f"{r['catalyst_present']}/{r['n_eligible']} present)")
         else:
             print(f"{r['status'].upper()}: {r.get('error', r.get('reason', ''))}")
 

@@ -10,6 +10,7 @@ Usage:
         --baseline-dir data/snapshots_reranked_baseline/ \
         --bucket binary_91_180
 """
+
 from __future__ import annotations
 
 import argparse

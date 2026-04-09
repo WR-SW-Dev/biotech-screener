@@ -52,6 +52,7 @@ Author: Wake Robin Capital Management
 Version: 2.0.0
 Last Modified: 2026-01-11
 """
+
 from __future__ import annotations
 
 import hashlib

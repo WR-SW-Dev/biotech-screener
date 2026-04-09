@@ -19,6 +19,7 @@ Usage:
         --date-from 2025-06-01 --date-to 2025-12-31 \
         --horizons 63,84 --top-k 20
 """
+
 from __future__ import annotations
 
 import argparse

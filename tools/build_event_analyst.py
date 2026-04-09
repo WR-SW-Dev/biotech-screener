@@ -15,6 +15,7 @@ Usage:
     python tools/build_event_analyst.py --as-of-date 2026-04-15
     python tools/build_event_analyst.py --as-of-date 2026-04-15 --lookback 90
 """
+
 from __future__ import annotations
 
 import argparse

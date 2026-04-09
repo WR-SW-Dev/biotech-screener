@@ -12,6 +12,7 @@ Usage:
     python3 scripts/research/test_selector_bundles.py
     python3 scripts/research/test_selector_bundles.py --top-n 30
 """
+
 from __future__ import annotations
 
 import argparse

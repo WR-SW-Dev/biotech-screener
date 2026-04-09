@@ -15,12 +15,12 @@ import json
 import logging
 import os
 import sys
+import uuid
 from contextvars import ContextVar
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler, TimedRotatingFileHandler
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
-import uuid
 
 # Context variable for run correlation ID
 run_id_context: ContextVar[str] = ContextVar("run_id", default="")
@@ -33,15 +33,27 @@ DEFAULT_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
 DEFAULT_BACKUP_COUNT = 5
 
 # Patterns that should be redacted from logs
-SENSITIVE_PATTERNS = frozenset({
-    "api_key", "apikey", "api-key",
-    "password", "passwd", "pwd",
-    "secret", "token", "credential",
-    "ssn", "social_security",
-    "account_number", "account_num",
-    "cusip", "isin",
-    "bearer", "authorization",
-})
+SENSITIVE_PATTERNS = frozenset(
+    {
+        "api_key",
+        "apikey",
+        "api-key",
+        "password",
+        "passwd",
+        "pwd",
+        "secret",
+        "token",
+        "credential",
+        "ssn",
+        "social_security",
+        "account_number",
+        "account_num",
+        "cusip",
+        "isin",
+        "bearer",
+        "authorization",
+    }
+)
 
 
 class RunIdFilter(logging.Filter):
@@ -76,14 +88,10 @@ class SanitizingFilter(logging.Filter):
         if hasattr(record, "args") and record.args:
             if isinstance(record.args, dict):
                 record.args = {
-                    k: self._sanitize(str(v)) if self._is_sensitive_key(k) else v
-                    for k, v in record.args.items()
+                    k: self._sanitize(str(v)) if self._is_sensitive_key(k) else v for k, v in record.args.items()
                 }
             elif isinstance(record.args, tuple):
-                record.args = tuple(
-                    self._sanitize(str(arg)) if isinstance(arg, str) else arg
-                    for arg in record.args
-                )
+                record.args = tuple(self._sanitize(str(arg)) if isinstance(arg, str) else arg for arg in record.args)
 
         return True
 
@@ -95,6 +103,7 @@ class SanitizingFilter(logging.Filter):
                 # Find and redact the value after the pattern
                 # This handles cases like "api_key=abc123" or "api_key: abc123"
                 import re
+
                 regex = rf"({pattern})\s*[=:]\s*['\"]?([^'\"\s,}}]+)['\"]?"
                 text = re.sub(regex, r"\1=[REDACTED]", text, flags=re.IGNORECASE)
         return text

@@ -10,6 +10,7 @@ Computes precision/recall/F1 using multiple ground-truth sources:
 Usage:
     python scripts/research/herald_precision_metrics.py --as-of-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse

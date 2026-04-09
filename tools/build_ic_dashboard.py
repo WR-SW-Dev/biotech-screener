@@ -21,6 +21,7 @@ Usage:
     python tools/build_ic_dashboard.py --as-of-date 2026-03-27
     python tools/build_ic_dashboard.py --as-of-date 2026-03-27 --lookback 20
 """
+
 from __future__ import annotations
 
 import argparse

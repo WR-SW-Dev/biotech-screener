@@ -13,6 +13,7 @@ Sections:
   3. Risk rails deltas (gap-risk, concentration)
   4. Verdict: KEEP_ACTIVE vs ROLLBACK vs NEEDS_MORE
 """
+
 from __future__ import annotations
 
 import argparse

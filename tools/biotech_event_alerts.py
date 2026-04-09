@@ -277,7 +277,7 @@ def build_user_prompt(
     since_utc: datetime,
     window_minutes: int,
 ) -> str:
-    return f"""
+    return """
 Current UTC time: {now_utc.isoformat()}
 Only alert on events first reported or newly confirmed after: {since_utc.isoformat()}
 Nominal poll window: last {window_minutes} minutes

@@ -21,6 +21,7 @@ Usage:
         --candidate-calendar /tmp/pdufa_dates_candidate.json \
         --out-dir output/research/calendar_ab_gate
 """
+
 from __future__ import annotations
 
 import argparse
@@ -540,9 +541,9 @@ def write_ab_receipt(
         lines.append("**PASS**: Candidate calendar meets all pass bars. Safe to promote.")
     elif display_verdict == "HYGIENE_OVERRIDE":
         lines.append(
-            f"**HYGIENE_OVERRIDE**: Edit set is hygiene-only. "
+            "**HYGIENE_OVERRIDE**: Edit set is hygiene-only. "
             f"Original A/B verdict was {v['verdict']} but override applied — "
-            f"safe to promote."
+            "safe to promote."
         )
     elif display_verdict == "WARN":
         lines.append(

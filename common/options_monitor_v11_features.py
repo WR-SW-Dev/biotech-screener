@@ -16,6 +16,7 @@ Usage:
     from common.options_monitor_v11_features import compute_v11_features
     features = compute_v11_features(row, trailing_data, peer_data)
 """
+
 from __future__ import annotations
 
 import math
@@ -94,12 +95,12 @@ def cross_sectional_z(current: float, peer_values: List[float]) -> Optional[floa
 
 # Catalyst-class weights for factor combination
 CATALYST_WEIGHTS = {
-    "regulatory":       {"EP": _D("0.35"), "SR": _D("0.25"), "SK": _D("0.25"), "DV": _D("0.15")},
+    "regulatory": {"EP": _D("0.35"), "SR": _D("0.25"), "SK": _D("0.25"), "DV": _D("0.15")},
     "clinical_topline": {"EP": _D("0.25"), "SR": _D("0.35"), "SK": _D("0.20"), "DV": _D("0.20")},
-    "clinical_safety":  {"EP": _D("0.20"), "SR": _D("0.25"), "SK": _D("0.30"), "DV": _D("0.25")},
-    "earnings":         {"EP": _D("0.40"), "SR": _D("0.25"), "SK": _D("0.15"), "DV": _D("0.20")},
-    "financing":        {"EP": _D("0.10"), "SR": _D("0.20"), "SK": _D("0.35"), "DV": _D("0.35")},
-    "other":            {"EP": _D("0.25"), "SR": _D("0.25"), "SK": _D("0.25"), "DV": _D("0.25")},
+    "clinical_safety": {"EP": _D("0.20"), "SR": _D("0.25"), "SK": _D("0.30"), "DV": _D("0.25")},
+    "earnings": {"EP": _D("0.40"), "SR": _D("0.25"), "SK": _D("0.15"), "DV": _D("0.20")},
+    "financing": {"EP": _D("0.10"), "SR": _D("0.20"), "SK": _D("0.35"), "DV": _D("0.35")},
+    "other": {"EP": _D("0.25"), "SR": _D("0.25"), "SK": _D("0.25"), "DV": _D("0.25")},
 }
 
 
@@ -261,12 +262,7 @@ def compute_composite(
     """Catalyst-weighted composite S_final [0, 1]."""
     weights = CATALYST_WEIGHTS.get(catalyst_class, CATALYST_WEIGHTS["other"])
 
-    s_raw = (
-        weights["EP"] * f_ep
-        + weights["SR"] * f_sr
-        + weights["SK"] * f_sk
-        + weights["DV"] * f_dv
-    )
+    s_raw = weights["EP"] * f_ep + weights["SR"] * f_sr + weights["SK"] * f_sk + weights["DV"] * f_dv
     s_adj = s_raw * confidence
 
     # Orthogonality cap: reduce triple-counting
@@ -291,7 +287,10 @@ def classify_monitor_verdict(s_final: Decimal) -> str:
 
 
 def identify_primary_factor(
-    f_ep: Decimal, f_sr: Decimal, f_sk: Decimal, f_dv: Decimal,
+    f_ep: Decimal,
+    f_sr: Decimal,
+    f_sk: Decimal,
+    f_dv: Decimal,
 ) -> str:
     """Identify which factor dominates."""
     factors = {"EP": f_ep, "SR": f_sr, "SK": f_sk, "DV": f_dv}
@@ -346,7 +345,9 @@ def compute_v11_features(
     f_sk = compute_factor_sk(z_skew_ts, z_skew_change_ts, skew_persist_3, backwardation_flag)
     f_dv = compute_factor_dv(stock_down_iv_up, stock_up_iv_down, quiet_before_catalyst, z_stock_ret_xs, z_iv_change_ts)
 
-    q = compute_chain_quality(bid_ask_pct_median, open_interest_total, volume_total, strike_coverage_score, surface_fit_r2, stale_quote_pct)
+    q = compute_chain_quality(
+        bid_ask_pct_median, open_interest_total, volume_total, strike_coverage_score, surface_fit_r2, stale_quote_pct
+    )
     c = compute_confidence(q, event_window_flag, hard_catalyst_flag)
 
     s_final = compute_composite(f_ep, f_sr, f_sk, f_dv, c, catalyst_class)

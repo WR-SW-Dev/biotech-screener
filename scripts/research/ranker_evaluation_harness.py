@@ -22,6 +22,7 @@ Usage:
     python3 scripts/research/ranker_evaluation_harness.py --signal total_volume_z
     python3 scripts/research/ranker_evaluation_harness.py --signal inst_delta_z --top-n 30 --start 2024-01-01
 """
+
 from __future__ import annotations
 
 import argparse

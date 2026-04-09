@@ -14,6 +14,7 @@ Usage:
         --anchor-mode prev_trading_day \
         --gate
 """
+
 from __future__ import annotations
 
 import argparse

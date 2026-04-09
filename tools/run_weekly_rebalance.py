@@ -14,6 +14,7 @@ Usage:
     python3 tools/run_weekly_rebalance.py --as-of-date 2026-03-08
     python3 tools/run_weekly_rebalance.py --as-of-date 2026-03-08 --force  # always generate trades
 """
+
 from __future__ import annotations
 
 import argparse

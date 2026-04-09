@@ -41,16 +41,15 @@ Point-in-Time Safety:
     - Ensures consistent lookback windows across all tickers
 """
 
-import json
 import argparse
 import hashlib
+import json
 import os
-import tempfile
-from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any, Tuple
 import sys
-
+import tempfile
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # =============================================================================
 # CONSTANTS FOR DETERMINISM AND SAFETY
@@ -85,10 +84,7 @@ def fetch_historical_prices(
 
         prices = []
         for idx, row in hist.iterrows():
-            prices.append({
-                "date": idx.strftime("%Y-%m-%d"),
-                "close": float(row["Close"])
-            })
+            prices.append({"date": idx.strftime("%Y-%m-%d"), "close": float(row["Close"])})
 
         return prices
 
@@ -155,13 +151,13 @@ def calculate_volatility(prices: List[Dict], lookback_trading_days: int = 252) -
         return None
 
     # Use the most recent N trading days
-    recent_prices = prices[-(lookback_trading_days + 1):]
+    recent_prices = prices[-(lookback_trading_days + 1) :]
 
     # Calculate daily returns
     returns = []
     for i in range(1, len(recent_prices)):
-        if recent_prices[i-1]["close"] > 0:
-            daily_return = (recent_prices[i]["close"] / recent_prices[i-1]["close"]) - 1
+        if recent_prices[i - 1]["close"] > 0:
+            daily_return = (recent_prices[i]["close"] / recent_prices[i - 1]["close"]) - 1
             returns.append(daily_return)
 
     if len(returns) < 20:  # Need at least 20 data points
@@ -170,10 +166,10 @@ def calculate_volatility(prices: List[Dict], lookback_trading_days: int = 252) -
     # Calculate standard deviation
     mean_return = sum(returns) / len(returns)
     variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
-    std_dev = variance ** 0.5
+    std_dev = variance**0.5
 
     # Annualize
-    annualized_vol = std_dev * (252 ** 0.5)
+    annualized_vol = std_dev * (252**0.5)
 
     return annualized_vol
 
@@ -206,10 +202,7 @@ def enrich_market_data(
         ref_date = datetime.strptime(reference_date, "%Y-%m-%d")
     else:
         # Use the most recent collected_at from the data
-        collected_dates = [
-            r.get("collected_at") for r in market_data
-            if r.get("collected_at")
-        ]
+        collected_dates = [r.get("collected_at") for r in market_data if r.get("collected_at")]
         if collected_dates:
             ref_date = datetime.strptime(max(collected_dates), "%Y-%m-%d")
         else:
@@ -263,9 +256,11 @@ def enrich_market_data(
             continue
 
         if (i + 1) % 50 == 0:
-            print(f"  Progress: {i + 1}/{total} "
-                  f"(60d: {coverage_stats['with_60d']}, "
-                  f"any: {coverage_stats['with_any_window']})")
+            print(
+                f"  Progress: {i + 1}/{total} "
+                f"(60d: {coverage_stats['with_60d']}, "
+                f"any: {coverage_stats['with_any_window']})"
+            )
 
         # Fetch historical prices - get enough for longest window + volatility
         prices = fetch_historical_prices(ticker, ref_date, lookback_days=400)
@@ -319,20 +314,34 @@ def enrich_market_data(
     print("COVERAGE REPORT")
     print("=" * 60)
     print(f"Total tickers: {coverage_stats['total']}")
-    print(f"With any momentum window: {coverage_stats['with_any_window']} "
-          f"({100*coverage_stats['with_any_window']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"  - 20d window: {coverage_stats['with_20d']} "
-          f"({100*coverage_stats['with_20d']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"  - 60d window: {coverage_stats['with_60d']} "
-          f"({100*coverage_stats['with_60d']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"  - 120d window: {coverage_stats['with_120d']} "
-          f"({100*coverage_stats['with_120d']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"With volatility_252d: {coverage_stats['with_volatility']} "
-          f"({100*coverage_stats['with_volatility']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"Missing all prices: {coverage_stats['missing_prices']} "
-          f"({100*coverage_stats['missing_prices']/max(1,coverage_stats['total']):.1f}%)")
-    print(f"Returns clipped (outliers): {coverage_stats['returns_clipped']} "
-          f"({100*coverage_stats['returns_clipped']/max(1,coverage_stats['total']):.1f}%)")
+    print(
+        f"With any momentum window: {coverage_stats['with_any_window']} "
+        f"({100*coverage_stats['with_any_window']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"  - 20d window: {coverage_stats['with_20d']} "
+        f"({100*coverage_stats['with_20d']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"  - 60d window: {coverage_stats['with_60d']} "
+        f"({100*coverage_stats['with_60d']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"  - 120d window: {coverage_stats['with_120d']} "
+        f"({100*coverage_stats['with_120d']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"With volatility_252d: {coverage_stats['with_volatility']} "
+        f"({100*coverage_stats['with_volatility']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"Missing all prices: {coverage_stats['missing_prices']} "
+        f"({100*coverage_stats['missing_prices']/max(1,coverage_stats['total']):.1f}%)"
+    )
+    print(
+        f"Returns clipped (outliers): {coverage_stats['returns_clipped']} "
+        f"({100*coverage_stats['returns_clipped']/max(1,coverage_stats['total']):.1f}%)"
+    )
     print("=" * 60)
 
     # Build enrichment metadata for audit trail
@@ -353,36 +362,16 @@ def enrich_market_data(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Enrich market_data.json with 60-day momentum fields"
+    parser = argparse.ArgumentParser(description="Enrich market_data.json with 60-day momentum fields")
+    parser.add_argument("--market-data", type=Path, required=True, help="Path to market_data.json")
+    parser.add_argument("--output", type=Path, help="Output path (defaults to overwriting input)")
+    parser.add_argument(
+        "--reference-date", type=str, help="Reference date (YYYY-MM-DD), defaults to collected_at from data"
     )
     parser.add_argument(
-        "--market-data",
-        type=Path,
-        required=True,
-        help="Path to market_data.json"
+        "--rate-limit", type=float, default=0.2, help="Delay between API calls in seconds (default: 0.2)"
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output path (defaults to overwriting input)"
-    )
-    parser.add_argument(
-        "--reference-date",
-        type=str,
-        help="Reference date (YYYY-MM-DD), defaults to collected_at from data"
-    )
-    parser.add_argument(
-        "--rate-limit",
-        type=float,
-        default=0.2,
-        help="Delay between API calls in seconds (default: 0.2)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print what would be done without making changes"
-    )
+    parser.add_argument("--dry-run", action="store_true", help="Print what would be done without making changes")
 
     args = parser.parse_args()
 
@@ -409,7 +398,7 @@ def main():
     has_vol_252d = sum(1 for r in market_data if r.get("volatility_252d") is not None)
     has_any = sum(1 for r in market_data if any(r.get(f"return_{w}d") is not None for w in [20, 60, 120]))
 
-    print(f"\nCurrent state:")
+    print("\nCurrent state:")
     print(f"  With any momentum: {has_any}/{len(market_data)}")
     print(f"  With return_20d: {has_return_20d}/{len(market_data)}")
     print(f"  With return_60d: {has_return_60d}/{len(market_data)}")
@@ -424,19 +413,20 @@ def main():
     # Check for yfinance
     try:
         import yfinance
+
         print(f"\nyfinance version: {yfinance.__version__}")
     except ImportError:
         print("\nError: yfinance not installed. Run: pip install yfinance")
         sys.exit(1)
 
     # Enrich the data
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     enriched, enrichment_metadata = enrich_market_data(
         market_data,
         reference_date=args.reference_date,
         rate_limit_delay=args.rate_limit,
     )
-    print("="*60)
+    print("=" * 60)
 
     # Report final state
     has_return_20d = sum(1 for r in enriched if r.get("return_20d") is not None)
@@ -446,7 +436,7 @@ def main():
     has_vol_252d = sum(1 for r in enriched if r.get("volatility_252d") is not None)
     has_any = sum(1 for r in enriched if any(r.get(f"return_{w}d") is not None for w in [20, 60, 120]))
 
-    print(f"\nFinal state:")
+    print("\nFinal state:")
     print(f"  With any momentum: {has_any}/{len(enriched)}")
     print(f"  With return_20d: {has_return_20d}/{len(enriched)}")
     print(f"  With return_60d: {has_return_60d}/{len(enriched)}")

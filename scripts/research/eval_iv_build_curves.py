@@ -16,6 +16,7 @@ Usage:
         --window-days 60 \
         --output-dir output/eval_iv_build_curves
 """
+
 from __future__ import annotations
 
 import argparse

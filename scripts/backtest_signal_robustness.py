@@ -8,6 +8,7 @@ Alpha is evaluated **out-of-sample**: for each eval date D, a temporary
 cohort table is built from all usable archive dates strictly before D,
 then rows on date D are scored using that rolling table.
 """
+
 from __future__ import annotations
 
 import argparse

@@ -12,6 +12,7 @@ Usage:
     python tools/daily_research_digest.py --as-of-date 2026-03-18
     python tools/daily_research_digest.py --top-n 20
 """
+
 from __future__ import annotations
 
 import argparse

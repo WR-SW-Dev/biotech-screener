@@ -13,6 +13,7 @@ actionable_rank 1..N, and writes results to a staging directory.
 This allows forward-return evaluation on a consistent ranking model
 across dates that were originally produced with different rulesets.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,9 +27,9 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.ranking_utils import backfill_columns, safe_float as _safe_float
+from common.ranking_utils import backfill_columns
+from common.ranking_utils import safe_float as _safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-
 
 # ---------------------------------------------------------------------------
 # PIT coinvest helpers
@@ -124,11 +125,9 @@ def _inject_coinvest_pit(
         return
     mean_v = sum(vals) / n
     var_v = sum((v - mean_v) ** 2 for v in vals) / n
-    std_v = var_v ** 0.5
+    std_v = var_v**0.5
     for r, v in zip(rows, vals):
-        r["coinvest_score_z"] = str(
-            round((v - mean_v) / std_v, 4) if std_v > 0 else 0.0
-        )
+        r["coinvest_score_z"] = str(round((v - mean_v) / std_v, 4) if std_v > 0 else 0.0)
 
 
 def _select_prev_quarter(
@@ -187,16 +186,15 @@ def _inject_coinvest_pit_delta(
         return
     mean_v = sum(vals) / n
     var_v = sum((v - mean_v) ** 2 for v in vals) / n
-    std_v = var_v ** 0.5
+    std_v = var_v**0.5
     for r, v in zip(rows, vals):
-        r["coinvest_delta_z"] = str(
-            round((v - mean_v) / std_v, 4) if std_v > 0 else 0.0
-        )
+        r["coinvest_delta_z"] = str(round((v - mean_v) / std_v, 4) if std_v > 0 else 0.0)
 
 
 # ---------------------------------------------------------------------------
 # Re-ranking
 # ---------------------------------------------------------------------------
+
 
 def rerank(
     rows: List[Dict[str, str]],
@@ -219,23 +217,27 @@ def rerank(
                 row[dest] = row.get(src, "")
 
     # Sort using production-identical logic
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=(
-            _safe_float(r.get("alpha_cohort_pct"))
-            if ruleset.sort_anchor == "alpha_cohort"
-            else (_safe_float(r.get("commercial_quality_pct"))
-                  if r.get("archetype", "").startswith("commercial_")
-                  else _safe_float(r.get("clinical_optionality_pct_dev")))
-        ),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=_safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=(
+                _safe_float(r.get("alpha_cohort_pct"))
+                if ruleset.sort_anchor == "alpha_cohort"
+                else (
+                    _safe_float(r.get("commercial_quality_pct"))
+                    if r.get("archetype", "").startswith("commercial_")
+                    else _safe_float(r.get("clinical_optionality_pct_dev"))
+                )
+            ),
+        )
+    )
 
     # Assign actionable_rank
     rank = 1
@@ -253,75 +255,98 @@ def rerank(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Re-rank historical snapshots through a target ruleset",
     )
     parser.add_argument(
-        "--snapshot-root", type=Path,
+        "--snapshot-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots",
     )
     parser.add_argument(
-        "--out-root", type=Path,
+        "--out-root",
+        type=Path,
         default=PROJECT_ROOT / "data" / "snapshots_reranked",
     )
     parser.add_argument(
-        "--ruleset", type=Path, default=None,
+        "--ruleset",
+        type=Path,
+        default=None,
         help="Path to ruleset JSON. Default: latest snapshot's decision_ruleset.json",
     )
     parser.add_argument("--date-from", type=str, default=None)
     parser.add_argument("--date-to", type=str, default=None)
     parser.add_argument(
-        "--min-cols", type=int, default=50,
+        "--min-cols",
+        type=int,
+        default=50,
         help="Skip snapshots with fewer than this many columns (default: 50)",
     )
     parser.add_argument(
-        "--col-alias", action="append", default=[], metavar="DEST=SRC",
+        "--col-alias",
+        action="append",
+        default=[],
+        metavar="DEST=SRC",
         help="Substitute column values before ranking. Format: DEST=SRC. "
-             "E.g. --col-alias clinical_score_z_tier=clinical_alpha_z "
-             "routes clinical_alpha_z into the clinical-sort slot. "
-             "Can be repeated for multiple substitutions.",
+        "E.g. --col-alias clinical_score_z_tier=clinical_alpha_z "
+        "routes clinical_alpha_z into the clinical-sort slot. "
+        "Can be repeated for multiple substitutions.",
     )
     parser.add_argument(
-        "--coinvest-pit", action="store_true", default=False,
+        "--coinvest-pit",
+        action="store_true",
+        default=False,
         help="Inject PIT-correct coinvest_score_z from pre-built quarterly "
-             "features. Loads files from data/caches/sec_13f/coinvest_features/ "
-             "and selects the latest quarter_end where "
-             "quarter_end + 45 days <= snap_date.",
+        "features. Loads files from data/caches/sec_13f/coinvest_features/ "
+        "and selects the latest quarter_end where "
+        "quarter_end + 45 days <= snap_date.",
     )
     parser.add_argument(
-        "--coinvest-pit-dir", type=Path,
+        "--coinvest-pit-dir",
+        type=Path,
         default=PROJECT_ROOT / "data" / "caches" / "sec_13f" / "coinvest_features",
         help="Directory containing pre-built coinvest feature JSON files. "
-             "Defaults to data/caches/sec_13f/coinvest_features/.",
+        "Defaults to data/caches/sec_13f/coinvest_features/.",
     )
     parser.add_argument(
-        "--coinvest-delta", action="store_true", default=False,
+        "--coinvest-delta",
+        action="store_true",
+        default=False,
         help="Inject coinvest_delta_z (q/q change in tier1_count, cross-sectionally "
-             "z-scored) instead of tier1_count level. Requires --coinvest-pit. "
-             "Route into sort via --col-alias coinvest_score_z=coinvest_delta_z.",
+        "z-scored) instead of tier1_count level. Requires --coinvest-pit. "
+        "Route into sort via --col-alias coinvest_score_z=coinvest_delta_z.",
     )
     parser.add_argument(
-        "--coinvest-negate", action="store_true", default=False,
+        "--coinvest-negate",
+        action="store_true",
+        default=False,
         help="Negate the injected coinvest signal (coinvest_score_z or coinvest_delta_z) "
-             "after PIT injection. Use with a ruleset that has coinvest_positive_only=false "
-             "to implement a full-range CONTRA signal (penalise crowded names, reward "
-             "uncrowded). Requires --coinvest-pit.",
+        "after PIT injection. Use with a ruleset that has coinvest_positive_only=false "
+        "to implement a full-range CONTRA signal (penalise crowded names, reward "
+        "uncrowded). Requires --coinvest-pit.",
     )
     parser.add_argument(
-        "--require-pit-coinvest", action="store_true", default=False,
+        "--require-pit-coinvest",
+        action="store_true",
+        default=False,
         help="Abort if --coinvest-pit is not also passed. Use this for formal "
-             "evaluation runs to prevent accidental use of static holdings data.",
+        "evaluation runs to prevent accidental use of static holdings data.",
     )
     parser.add_argument(
-        "--clinical-negate", action="store_true", default=False,
+        "--clinical-negate",
+        action="store_true",
+        default=False,
         help="Negate clinical_score_z_tier in every snapshot row before re-ranking. "
-             "Used for CONTRA ablation: high-score names are penalised, low-score "
-             "names are boosted. Pair with a ruleset that has clinical_positive_only=false "
-             "for a full bidirectional CONTRA signal.",
+        "Used for CONTRA ablation: high-score names are penalised, low-score "
+        "names are boosted. Pair with a ruleset that has clinical_positive_only=false "
+        "for a full bidirectional CONTRA signal.",
     )
     parser.add_argument(
-        "--preflight", action="store_true", default=False,
+        "--preflight",
+        action="store_true",
+        default=False,
         help="Run snapshot preflight; skip dates that FAIL structural checks",
     )
     args = parser.parse_args()
@@ -370,9 +395,13 @@ def main() -> None:
         ruleset = DecisionRuleset.from_json(str(args.ruleset))
     else:
         # Find latest snapshot with decision_ruleset.json
-        dates = sorted([p.name for p in args.snapshot_root.iterdir()
-                        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-                        and (p / "decision_ruleset.json").exists()])
+        dates = sorted(
+            [
+                p.name
+                for p in args.snapshot_root.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
         if not dates:
             print("ERROR: No snapshot with decision_ruleset.json found")
             sys.exit(1)
@@ -381,11 +410,13 @@ def main() -> None:
         print(f"Using ruleset from {rs_path} (ID: {ruleset.ruleset_id})")
 
     # Discover snapshots
-    snap_dates = sorted([
-        p.name for p in args.snapshot_root.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "rankings.csv").exists()
-    ])
+    snap_dates = sorted(
+        [
+            p.name
+            for p in args.snapshot_root.iterdir()
+            if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "rankings.csv").exists()
+        ]
+    )
 
     if args.date_from:
         snap_dates = [d for d in snap_dates if d >= args.date_from]
@@ -429,11 +460,10 @@ def main() -> None:
         # Preflight check
         if args.preflight:
             from tools.snapshot_preflight import run_preflight as _run_preflight
+
             pf = _run_preflight(src, snap_date)
             if pf.status == "FAIL":
-                details = "; ".join(
-                    c.detail for c in pf.checks if c.status == "FAIL"
-                )
+                details = "; ".join(c.detail for c in pf.checks if c.status == "FAIL")
                 print(f"  {snap_date}: SKIP (preflight_FAIL: {details})")
                 n_skip += 1
                 continue
@@ -441,29 +471,20 @@ def main() -> None:
         # Inject PIT-correct coinvest signal if requested
         chosen_pit_quarter: Optional[str] = None
         if args.coinvest_pit and coinvest_pit_features is not None:
-            chosen_pit_quarter = _select_pit_quarter(
-                snap_date, coinvest_quarters_sorted
-            )
+            chosen_pit_quarter = _select_pit_quarter(snap_date, coinvest_quarters_sorted)
             if len(pit_sample_mappings) < 5:
                 pit_sample_mappings.append((snap_date, chosen_pit_quarter))
             if chosen_pit_quarter is not None:
                 feat = coinvest_pit_features[chosen_pit_quarter]
-                tier1_counts = {
-                    tk: td.get("tier1_count", 0)
-                    for tk, td in feat.get("tickers", {}).items()
-                }
+                tier1_counts = {tk: td.get("tier1_count", 0) for tk, td in feat.get("tickers", {}).items()}
                 if args.coinvest_delta:
                     # Q/Q delta mode: inject coinvest_delta_z
-                    prev_qe = _select_prev_quarter(
-                        chosen_pit_quarter, coinvest_quarters_sorted
-                    )
+                    prev_qe = _select_prev_quarter(chosen_pit_quarter, coinvest_quarters_sorted)
                     feat_prev = coinvest_pit_features.get(prev_qe) if prev_qe else None
                     tier1_counts_prev: Optional[Dict[str, int]] = (
-                        {
-                            tk: td.get("tier1_count", 0)
-                            for tk, td in feat_prev.get("tickers", {}).items()
-                        }
-                        if feat_prev else None
+                        {tk: td.get("tier1_count", 0) for tk, td in feat_prev.get("tickers", {}).items()}
+                        if feat_prev
+                        else None
                     )
                     _inject_coinvest_pit_delta(rows, tier1_counts, tier1_counts_prev)
                 else:
@@ -491,9 +512,7 @@ def main() -> None:
         if args.clinical_negate:
             for r in rows:
                 try:
-                    r["clinical_score_z_tier"] = str(
-                        round(-float(r["clinical_score_z_tier"]), 4)
-                    )
+                    r["clinical_score_z_tier"] = str(round(-float(r["clinical_score_z_tier"]), 4))
                 except (ValueError, TypeError):
                     pass
 

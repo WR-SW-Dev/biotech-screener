@@ -20,6 +20,7 @@ Output:
 Usage:
     python tools/build_calibration_evidence.py --as-of-date 2026-04-15
 """
+
 from __future__ import annotations
 
 import argparse

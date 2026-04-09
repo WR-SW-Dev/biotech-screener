@@ -15,6 +15,7 @@ Usage:
     python3 tools/maintain_universe.py add AAPL --name "Apple Inc." --sector biotech
     python3 tools/maintain_universe.py retire XXXX --reason "acquired by Pfizer 2026-02-01"
 """
+
 from __future__ import annotations
 
 import argparse
@@ -22,7 +23,7 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Set
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(PROJECT_ROOT) not in sys.path:
@@ -42,6 +43,7 @@ _DATA_GAP_LOOKBACK = 5
 # ---------------------------------------------------------------------------
 # I/O helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_universe() -> List[Dict]:
     if not UNIVERSE_JSON.is_file():
@@ -67,6 +69,7 @@ def _now_iso() -> str:
 # Snapshot helpers
 # ---------------------------------------------------------------------------
 
+
 def _discover_snapshot_dates(n: int = _DATA_GAP_LOOKBACK) -> List[str]:
     """Return the most recent N snapshot date strings, sorted descending."""
     if not SNAPSHOTS_ROOT.is_dir():
@@ -90,6 +93,7 @@ def _tickers_in_snapshot(snap_date: str) -> Set[str]:
         return set()
     tickers: Set[str] = set()
     import csv
+
     with csv_path.open(newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -106,6 +110,7 @@ def _eligible_tickers_in_snapshot(snap_date: str) -> Set[str]:
         return set()
     tickers: Set[str] = set()
     import csv
+
     with csv_path.open(newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
@@ -119,6 +124,7 @@ def _eligible_tickers_in_snapshot(snap_date: str) -> Set[str]:
 # ---------------------------------------------------------------------------
 # Audit
 # ---------------------------------------------------------------------------
+
 
 def cmd_audit(args: argparse.Namespace) -> None:
     """Report tickers that may need attention. Never modifies files."""
@@ -140,31 +146,37 @@ def cmd_audit(args: argparse.Namespace) -> None:
 
         # Flag 1: non-active status still in universe
         if status not in ("active", ""):
-            flags.append({
-                "ticker": ticker,
-                "flag": "non_active_status",
-                "detail": f"status={status!r}",
-            })
+            flags.append(
+                {
+                    "ticker": ticker,
+                    "flag": "non_active_status",
+                    "detail": f"status={status!r}",
+                }
+            )
 
         # Flag 2: missing from all recent snapshots (data gap)
         if snap_dates and all(ticker not in s for s in snap_tickers):
-            flags.append({
-                "ticker": ticker,
-                "flag": "missing_from_recent_snapshots",
-                "detail": f"absent from last {len(snap_dates)} snapshot(s): {snap_dates}",
-            })
+            flags.append(
+                {
+                    "ticker": ticker,
+                    "flag": "missing_from_recent_snapshots",
+                    "detail": f"absent from last {len(snap_dates)} snapshot(s): {snap_dates}",
+                }
+            )
 
         # Flag 3: always ineligible across all recent snapshots
-        if snap_dates and all(
-            (ticker in s and ticker not in e)
-            for s, e in zip(snap_tickers, snap_eligible)
-            if ticker in s
-        ) and any(ticker in s for s in snap_tickers):
-            flags.append({
-                "ticker": ticker,
-                "flag": "always_ineligible",
-                "detail": f"present but ineligible in all {len(snap_dates)} recent snapshot(s)",
-            })
+        if (
+            snap_dates
+            and all((ticker in s and ticker not in e) for s, e in zip(snap_tickers, snap_eligible) if ticker in s)
+            and any(ticker in s for s in snap_tickers)
+        ):
+            flags.append(
+                {
+                    "ticker": ticker,
+                    "flag": "always_ineligible",
+                    "detail": f"present but ineligible in all {len(snap_dates)} recent snapshot(s)",
+                }
+            )
 
     if not flags:
         print(f"[audit] Universe looks clean ({len(universe)} tickers). No flags.")
@@ -181,13 +193,14 @@ def cmd_audit(args: argparse.Namespace) -> None:
             print(f"    {item['ticker']:8s}  {item['detail']}")
         print()
 
-    print(f"[audit] To retire: python3 tools/maintain_universe.py retire TICKER --reason '...'")
+    print("[audit] To retire: python3 tools/maintain_universe.py retire TICKER --reason '...'")
     print(f"[audit] Protected tickers (never flagged): {sorted(_PROTECTED)}")
 
 
 # ---------------------------------------------------------------------------
 # Add
 # ---------------------------------------------------------------------------
+
 
 def cmd_add(args: argparse.Namespace) -> None:
     """Add a new ticker to universe.json."""
@@ -213,7 +226,7 @@ def cmd_add(args: argparse.Namespace) -> None:
         "status": "active",
         "added_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
         "added_from_etf": False,
-        "description": args.description or f"Added by maintain_universe.py",
+        "description": args.description or "Added by maintain_universe.py",
     }
     if args.cik:
         entry["cik"] = args.cik
@@ -236,6 +249,7 @@ def cmd_add(args: argparse.Namespace) -> None:
 # ---------------------------------------------------------------------------
 # Retire
 # ---------------------------------------------------------------------------
+
 
 def cmd_retire(args: argparse.Namespace) -> None:
     """Soft-delete a ticker (set status, never physically remove)."""
@@ -292,12 +306,15 @@ def cmd_retire(args: argparse.Namespace) -> None:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Universe maintenance utility for production_data/universe.json.",
     )
     parser.add_argument(
-        "--universe-path", type=Path, default=None,
+        "--universe-path",
+        type=Path,
+        default=None,
         help="Override path to universe.json (for testing)",
     )
     sub = parser.add_subparsers(dest="command", required=True)
@@ -321,9 +338,12 @@ def main() -> None:
     p_retire = sub.add_parser("retire", help="Soft-delete a ticker (sets status)")
     p_retire.add_argument("ticker", help="Ticker symbol to retire")
     p_retire.add_argument("--reason", default="", help="Human-readable reason (e.g. 'acquired by Pfizer 2026-02-01')")
-    p_retire.add_argument("--status", default=None,
-                          choices=["delisted", "excluded_acquired", "retired"],
-                          help="Explicit status (inferred from --reason if omitted)")
+    p_retire.add_argument(
+        "--status",
+        default=None,
+        choices=["delisted", "excluded_acquired", "retired"],
+        help="Explicit status (inferred from --reason if omitted)",
+    )
     p_retire.add_argument("--operator", default=None, help="Operator name for audit log")
     p_retire.set_defaults(func=cmd_retire)
 

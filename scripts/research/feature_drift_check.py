@@ -13,13 +13,12 @@ For each archive date, computes cross-sectional statistics for:
 If these barely change across 2020→2026 or match current values too closely,
 the PIT-lite panel is measuring future-conditioned features.
 """
+
 from __future__ import annotations
 
-import csv
 import json
 import statistics
 import sys
-import tarfile
 from collections import Counter
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -185,8 +184,10 @@ def main() -> None:
             dist = all_stats[d].get("eligible_dist", {})
             elig_counts.append(dist.get("1", 0))
         mean_elig = statistics.mean(elig_counts) if elig_counts else 0
-        print(f"  {y}: {mean_elig:.0f} eligible / "
-              f"{statistics.mean(all_stats[d]['n_rows'] for d in year_dates):.0f} total")
+        print(
+            f"  {y}: {mean_elig:.0f} eligible / "
+            f"{statistics.mean(all_stats[d]['n_rows'] for d in year_dates):.0f} total"
+        )
 
     # Drift metric: correlation of clinical_optionality_pct_dev_mean with date index
     opt_means = []
@@ -196,10 +197,11 @@ def main() -> None:
             opt_means.append((d, m))
 
     if len(opt_means) >= 5:
-        indices = list(range(len(opt_means)))
+        list(range(len(opt_means)))
         vals = [m for _, m in opt_means]
         # Quick rank correlation
-        from scripts.research.anchor_replay import _avg_ranks, spearman_ic
+        from scripts.research.anchor_replay import spearman_ic
+
         r_idx = list(range(len(vals)))
         corr = spearman_ic(r_idx, vals)
         print(f"\n  Time trend in optionality mean: rank-corr = {corr:.4f}")

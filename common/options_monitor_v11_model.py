@@ -10,15 +10,15 @@ Trade verdicts are advisory-only in v1.1.
 Usage:
     from common.options_monitor_v11_model import compute_trade_verdict, track_state
 """
+
 from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass
-from datetime import date
+from dataclasses import dataclass
 from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +29,7 @@ _D0 = _D("0")
 # ---------------------------------------------------------------------------
 # Trade verdict
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class TradeVerdict:
@@ -88,13 +89,7 @@ def compute_trade_verdict(
     # --- Deterministic fallback rules (pre-training phase) ---
 
     # LONG_GAMMA: strong event premium + near catalyst + decent quality
-    if (
-        event_window_flag
-        and hard_catalyst_flag
-        and f_ep >= 0.65
-        and chain_quality >= 0.5
-        and s_final >= 0.60
-    ):
+    if event_window_flag and hard_catalyst_flag and f_ep >= 0.65 and chain_quality >= 0.5 and s_final >= 0.60:
         return TradeVerdict(
             bias="LONG_GAMMA",
             confidence=min(s_final, chain_quality),
@@ -262,7 +257,8 @@ class OM11ProbabilityModel:
         if n < min_observations:
             logger.warning(
                 "Insufficient observations for training: %d < %d",
-                n, min_observations,
+                n,
+                min_observations,
             )
             return False
 
@@ -351,7 +347,9 @@ def compute_full_verdict(
     result["om11_trade_confidence"] = str(round(tv.confidence, 4))
     result["om11_trade_reason"] = tv.reason
     result["om11_p_move_gt_implied"] = str(probs["p_move_gt_implied"]) if probs["p_move_gt_implied"] is not None else ""
-    result["om11_p_post_event_iv_crush"] = str(probs["p_post_event_iv_crush"]) if probs["p_post_event_iv_crush"] is not None else ""
+    result["om11_p_post_event_iv_crush"] = (
+        str(probs["p_post_event_iv_crush"]) if probs["p_post_event_iv_crush"] is not None else ""
+    )
     result["om11_p_false_positive"] = str(probs["p_false_positive"]) if probs["p_false_positive"] is not None else ""
 
     return result

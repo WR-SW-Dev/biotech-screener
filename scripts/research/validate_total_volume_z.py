@@ -11,6 +11,7 @@ Usage:
     python3 scripts/research/validate_total_volume_z.py
     python3 scripts/research/validate_total_volume_z.py --ic-gate 0.10 --min-obs 10
 """
+
 from __future__ import annotations
 
 import argparse

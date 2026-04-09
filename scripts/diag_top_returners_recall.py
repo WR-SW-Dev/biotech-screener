@@ -17,6 +17,7 @@ Usage:
         --output-dir data/diag \
         [--no-fetch]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,7 +28,7 @@ import math
 import statistics
 import sys
 import tarfile
-from datetime import datetime, date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
@@ -45,30 +46,48 @@ RETURN_HORIZONS = {"3m": 63, "6m": 126, "12m": 252, "24m": None}
 _CE_WEIGHTS = {"phase": 0.35, "proximity": 0.35, "quality": 0.30}
 
 _PHASE_NUM = {
-    "approved": 1.0, "phase 3": 0.83, "phase 2/3": 0.67,
-    "phase 2": 0.50, "phase 1/2": 0.33, "phase 1": 0.17,
+    "approved": 1.0,
+    "phase 3": 0.83,
+    "phase 2/3": 0.67,
+    "phase 2": 0.50,
+    "phase 1/2": 0.33,
+    "phase 1": 0.17,
     "preclinical": 0.08,
 }
 
-_CLINICAL_PHASES = frozenset({
-    "PHASE1", "PHASE2", "PHASE3",
-    "PHASE 1", "PHASE 2", "PHASE 3",
-    "PHASE1/PHASE2", "PHASE 1/PHASE 2",
-    "PHASE2/PHASE3", "PHASE 2/PHASE 3",
-    "EARLY_PHASE1",
-})
+_CLINICAL_PHASES = frozenset(
+    {
+        "PHASE1",
+        "PHASE2",
+        "PHASE3",
+        "PHASE 1",
+        "PHASE 2",
+        "PHASE 3",
+        "PHASE1/PHASE2",
+        "PHASE 1/PHASE 2",
+        "PHASE2/PHASE3",
+        "PHASE 2/PHASE 3",
+        "EARLY_PHASE1",
+    }
+)
 
 # Stage multipliers (must match DE ruleset defaults)
 _STAGE_MULTS = {"early": 0.0, "mid": 1.0, "late": 1.5}
 
 # All flags evaluated in the study
 FLAG_NAMES = [
-    "model_top20", "tier_ab",
-    "clinical_z_high", "clinical_top20",
+    "model_top20",
+    "tier_ab",
+    "clinical_z_high",
+    "clinical_top20",
     "clinical_score_z_top20",
-    "clinical_score_z_tier_top20", "clinical_cz_eff_top20",
-    "cs_z_top20_ab", "cz_eff_top20_ab",
-    "clinical_near_readout", "clinical_high_and_near", "clinical_late_high",
+    "clinical_score_z_tier_top20",
+    "clinical_cz_eff_top20",
+    "cs_z_top20_ab",
+    "cz_eff_top20_ab",
+    "clinical_near_readout",
+    "clinical_high_and_near",
+    "clinical_late_high",
     "catalyst_near",
     "any_signal",
 ]
@@ -164,7 +183,7 @@ def _zscore(values: List[float]) -> List[float]:
     winsorized = [max(p5, min(p95, v)) for v in values]
     mean_val = sum(winsorized) / len(winsorized)
     var_val = sum((v - mean_val) ** 2 for v in winsorized) / len(winsorized)
-    std_val = var_val ** 0.5
+    std_val = var_val**0.5
     if std_val > 0:
         return [(v - mean_val) / std_val for v in winsorized]
     return [0.0] * n
@@ -176,8 +195,7 @@ def _zscore(values: List[float]) -> List[float]:
 def load_archive_rankings(archive_path: Path) -> List[dict]:
     """Extract rankings.csv from tar.gz archive -> list of dicts."""
     with tarfile.open(archive_path, "r:gz") as tar:
-        members = [m for m in tar.getmembers()
-                    if "rankings" in m.name and m.name.endswith(".csv")]
+        members = [m for m in tar.getmembers() if "rankings" in m.name and m.name.endswith(".csv")]
         if not members:
             print("  ERROR: No rankings.csv found in archive", file=sys.stderr)
             return []
@@ -271,9 +289,7 @@ def compute_clinical_alpha_z(
         proximity = _clinical_proximity(rd)
         quality = clinical_score / 100.0
 
-        raw = (_CE_WEIGHTS["phase"] * phase_num
-               + _CE_WEIGHTS["proximity"] * proximity
-               + _CE_WEIGHTS["quality"] * quality)
+        raw = _CE_WEIGHTS["phase"] * phase_num + _CE_WEIGHTS["proximity"] * proximity + _CE_WEIGHTS["quality"] * quality
 
         eligible_indices.append(i)
         raw_scores.append(raw)
@@ -321,8 +337,11 @@ def compute_clinical_score_z(csv_rows: List[dict]) -> None:
             csv_rows[idx]["clinical_score_z"] = round(zs[j], 4)
 
         total_filled += len(eligible_indices)
-        print(f"  clinical_score_z ({cohort_arch}): {len(eligible_indices)} tickers, "
-              f"mean={statistics.mean(scores):.1f}", file=sys.stderr)
+        print(
+            f"  clinical_score_z ({cohort_arch}): {len(eligible_indices)} tickers, "
+            f"mean={statistics.mean(scores):.1f}",
+            file=sys.stderr,
+        )
 
     print(f"  clinical_score_z (PIT-safe): {total_filled} total tickers", file=sys.stderr)
 
@@ -350,12 +369,10 @@ def compute_clinical_score_z_tier(csv_rows: List[dict]) -> None:
             scores = [s for _, s in pairs]
             mean_val = sum(scores) / len(scores)
             var_val = sum((s - mean_val) ** 2 for s in scores) / len(scores)  # ddof=0
-            std_val = var_val ** 0.5
+            std_val = var_val**0.5
             for idx, s in pairs:
                 if std_val > 0:
-                    csv_rows[idx]["clinical_score_z_tier"] = round(
-                        (s - mean_val) / std_val, 4
-                    )
+                    csv_rows[idx]["clinical_score_z_tier"] = round((s - mean_val) / std_val, 4)
                 else:
                     csv_rows[idx]["clinical_score_z_tier"] = 0.0
             filled += len(pairs)
@@ -375,8 +392,10 @@ def compute_clinical_score_z_tier(csv_rows: List[dict]) -> None:
             tier_groups[tier].append((i, float(csv_rows[i]["clinical_score"])))
 
     n_dev = _fill_tier_groups(tier_groups)
-    print(f"  clinical_score_z_tier (drug_developer, ddof=0): {n_dev} tickers, "
-          f"{len(tier_groups)} tiers", file=sys.stderr)
+    print(
+        f"  clinical_score_z_tier (drug_developer, ddof=0): {n_dev} tickers, " f"{len(tier_groups)} tiers",
+        file=sys.stderr,
+    )
 
     # --- Commercial cohorts: group by tier_commercial ---
     _COMM_ARCHETYPES = ("commercial_biotech", "commercial_pharma")
@@ -384,9 +403,11 @@ def compute_clinical_score_z_tier(csv_rows: List[dict]) -> None:
 
     n_comm = 0
     for arch in _COMM_ARCHETYPES:
-        comm_indices = [i for i, row in enumerate(csv_rows)
-                        if (row.get("archetype") or "") == arch
-                        and _safe_float(row.get("clinical_score")) is not None]
+        comm_indices = [
+            i
+            for i, row in enumerate(csv_rows)
+            if (row.get("archetype") or "") == arch and _safe_float(row.get("clinical_score")) is not None
+        ]
         if not comm_indices:
             continue
 
@@ -407,9 +428,11 @@ def compute_clinical_score_z_tier(csv_rows: List[dict]) -> None:
                 csv_rows[i]["clinical_score_z_tier"] = round(cz, 4) if cz is not None else 0.0
                 n_comm += 1
 
-    print(f"  clinical_score_z_tier (commercial, ddof=0): {n_comm} tickers"
-          f"{' (tier_commercial fallback to archetype z)' if not has_tier_comm else ''}",
-          file=sys.stderr)
+    print(
+        f"  clinical_score_z_tier (commercial, ddof=0): {n_comm} tickers"
+        f"{' (tier_commercial fallback to archetype z)' if not has_tier_comm else ''}",
+        file=sys.stderr,
+    )
 
 
 def compute_cz_eff(csv_rows: List[dict]) -> None:
@@ -443,12 +466,10 @@ def compute_cz_eff(csv_rows: List[dict]) -> None:
         if v > 0:
             stage_nonzero[stage] = stage_nonzero.get(stage, 0) + 1
 
-    print(f"  cz_eff (stage-gated, pos-only, clamped ±2): {n_filled} tickers",
-          file=sys.stderr)
+    print(f"  cz_eff (stage-gated, pos-only, clamped ±2): {n_filled} tickers", file=sys.stderr)
     for s in sorted(stage_counts):
         nz = stage_nonzero.get(s, 0)
-        print(f"    {s or '(empty)'}: {stage_counts[s]} total, {nz} nonzero",
-              file=sys.stderr)
+        print(f"    {s or '(empty)'}: {stage_counts[s]} total, {nz} nonzero", file=sys.stderr)
 
 
 # ---------------------------------------------------------------------------
@@ -482,8 +503,7 @@ def _trading_dates_sorted(prices: Dict[Tuple[str, str], float]) -> List[str]:
     return sorted({k[0] for k in prices})
 
 
-def _nearest_date(trading_dates: List[str], target: str,
-                  direction: str = "on_or_after") -> Optional[str]:
+def _nearest_date(trading_dates: List[str], target: str, direction: str = "on_or_after") -> Optional[str]:
     if direction == "on_or_after":
         for d in trading_dates:
             if d >= target:
@@ -542,21 +562,18 @@ def fetch_missing_prices(
     if not tickers:
         return {}
 
-    print(f"  Fetching prices for {len(tickers)} tickers via yfinance...",
-          file=sys.stderr)
+    print(f"  Fetching prices for {len(tickers)} tickers via yfinance...", file=sys.stderr)
 
     new_prices: Dict[Tuple[str, str], float] = {}
     ticker_list = sorted(tickers)
     batch_size = 50
     for i in range(0, len(ticker_list), batch_size):
-        batch = ticker_list[i: i + batch_size]
-        print(f"  Batch {i // batch_size + 1}: {len(batch)} tickers",
-              file=sys.stderr)
+        batch = ticker_list[i : i + batch_size]
+        print(f"  Batch {i // batch_size + 1}: {len(batch)} tickers", file=sys.stderr)
         for ticker in batch:
             try:
                 tk = yf.Ticker(ticker)
-                hist = tk.history(start=start_date, end=end_date,
-                                  auto_adjust=False)
+                hist = tk.history(start=start_date, end=end_date, auto_adjust=False)
                 for idx, row in hist.iterrows():
                     close = row.get("Close")
                     if close is None or close != close:
@@ -586,8 +603,7 @@ def fetch_missing_prices(
                 if write_header:
                     writer.writeheader()
                 writer.writerows(rows_to_write)
-        print(f"  Cached {len(rows_to_write)} new price rows to {cache_csv}",
-              file=sys.stderr)
+        print(f"  Cached {len(rows_to_write)} new price rows to {cache_csv}", file=sys.stderr)
 
     return new_prices
 
@@ -623,8 +639,7 @@ def compute_multi_horizon_returns(
 
     print(f"  t0={t0}", file=sys.stderr)
     for label, end in horizon_ends.items():
-        print(f"    {label}: t0+{RETURN_HORIZONS[label] or 'max'} -> {end}",
-              file=sys.stderr)
+        print(f"    {label}: t0+{RETURN_HORIZONS[label] or 'max'} -> {end}", file=sys.stderr)
 
     # Compute returns for each ticker at each horizon
     for row in rows:
@@ -679,14 +694,12 @@ def select_top_returners_by_horizon(
 def compute_flags(rows: List[dict]) -> None:
     """Compute all flag columns on each row (in-place)."""
     # --- Thresholds ---
-    ranks = [v for v in (_safe_float(r.get("composite_rank")) for r in rows)
-             if v is not None]
+    ranks = [v for v in (_safe_float(r.get("composite_rank")) for r in rows) if v is not None]
     rank_top20 = sorted(ranks)[: max(1, int(len(ranks) * 0.20))]
     rank_threshold = max(rank_top20) if rank_top20 else 0
 
     clin_zs = sorted(
-        [v for v in (_safe_float(r.get("clinical_alpha_z")) for r in rows)
-         if v is not None],
+        [v for v in (_safe_float(r.get("clinical_alpha_z")) for r in rows) if v is not None],
         reverse=True,
     )
     n_top20_clin = max(1, int(len(clin_zs) * 0.20))
@@ -700,10 +713,13 @@ def compute_flags(rows: List[dict]) -> None:
         thrs: Dict[str, float] = {}
         for arch in _SIGNAL_COHORTS:
             vals = sorted(
-                [v for r in rows
-                 if (r.get("archetype") or "") == arch
-                 for v in [_safe_float(r.get(col))]
-                 if v is not None],
+                [
+                    v
+                    for r in rows
+                    if (r.get("archetype") or "") == arch
+                    for v in [_safe_float(r.get(col))]
+                    if v is not None
+                ],
                 reverse=True,
             )
             n20 = max(1, int(len(vals) * 0.20))
@@ -717,16 +733,14 @@ def compute_flags(rows: List[dict]) -> None:
     # A+B tier thresholds (DE scope: where clinical sort actually operates)
     ab_rows = [r for r in rows if (r.get("tier_dev") or "").upper() in ("A", "B")]
     ab_cs_zs = sorted(
-        [v for v in (_safe_float(r.get("clinical_score_z")) for r in ab_rows)
-         if v is not None],
+        [v for v in (_safe_float(r.get("clinical_score_z")) for r in ab_rows) if v is not None],
         reverse=True,
     )
     n_top20_cs_ab = max(1, int(len(ab_cs_zs) * 0.20))
     cs_top20_ab_thr = ab_cs_zs[n_top20_cs_ab - 1] if ab_cs_zs else 0
 
     ab_czeff = sorted(
-        [v for v in (_safe_float(r.get("cz_eff")) for r in ab_rows)
-         if v is not None],
+        [v for v in (_safe_float(r.get("cz_eff")) for r in ab_rows) if v is not None],
         reverse=True,
     )
     n_top20_czeff_ab = max(1, int(len(ab_czeff) * 0.20))
@@ -740,8 +754,7 @@ def compute_flags(rows: List[dict]) -> None:
         cs_z = _safe_float(row.get("clinical_score_z"))
         cz_tier = _safe_float(row.get("clinical_score_z_tier"))
         cz_eff = _safe_float(row.get("cz_eff"))
-        cat_mode = (row.get("catalyst_mode")
-                    or row.get("de_catalyst_mode") or "").lower()
+        cat_mode = (row.get("catalyst_mode") or row.get("de_catalyst_mode") or "").lower()
         cat_days = _safe_float(row.get("catalyst_days"))
         rd = row.get("clinical_readout_days")
         rd_val = _safe_float(rd) if rd != "" else None
@@ -754,69 +767,42 @@ def compute_flags(rows: List[dict]) -> None:
         _czeff_thr = czeff_top20_by_cohort.get(arch, 999)
 
         # Original flags
-        row["flag_model_top20"] = 1 if (
-            comp_rank is not None and comp_rank <= rank_threshold
-        ) else 0
+        row["flag_model_top20"] = 1 if (comp_rank is not None and comp_rank <= rank_threshold) else 0
         row["flag_tier_ab"] = 1 if tier in ("A", "B") else 0
-        row["flag_clinical_z_high"] = 1 if (
-            clin_z is not None and clin_z >= 1.0
-        ) else 0
-        row["flag_clinical_top20"] = 1 if (
-            clin_z is not None and clin_z >= clin_top20_thr
-        ) else 0
-        row["flag_catalyst_near"] = 1 if (
-            cat_mode in ("specific_days", "blended_window")
-            and cat_days is not None and cat_days <= 180
-        ) else 0
+        row["flag_clinical_z_high"] = 1 if (clin_z is not None and clin_z >= 1.0) else 0
+        row["flag_clinical_top20"] = 1 if (clin_z is not None and clin_z >= clin_top20_thr) else 0
+        row["flag_catalyst_near"] = (
+            1 if (cat_mode in ("specific_days", "blended_window") and cat_days is not None and cat_days <= 180) else 0
+        )
 
         # PIT-safe clinical_score_z flag (per-cohort top 20%)
-        row["flag_clinical_score_z_top20"] = 1 if (
-            cs_z is not None and cs_z >= _cs_thr
-        ) else 0
+        row["flag_clinical_score_z_top20"] = 1 if (cs_z is not None and cs_z >= _cs_thr) else 0
 
         # Tier-local z-score flag (per-cohort top 20%, PIT-safe)
-        row["flag_clinical_score_z_tier_top20"] = 1 if (
-            cz_tier is not None and cz_tier >= _czt_thr
-        ) else 0
+        row["flag_clinical_score_z_tier_top20"] = 1 if (cz_tier is not None and cz_tier >= _czt_thr) else 0
 
         # cz_eff flag — the DE sort signal (per-cohort top 20%, PIT-safe, stage-gated)
-        row["flag_clinical_cz_eff_top20"] = 1 if (
-            cz_eff is not None and cz_eff >= _czeff_thr and cz_eff > 0
-        ) else 0
+        row["flag_clinical_cz_eff_top20"] = 1 if (cz_eff is not None and cz_eff >= _czeff_thr and cz_eff > 0) else 0
 
         # A+B tier flags (DE scope: where sort signal actually operates)
-        row["flag_cs_z_top20_ab"] = 1 if (
-            tier in ("A", "B")
-            and cs_z is not None and cs_z >= cs_top20_ab_thr
-        ) else 0
-        row["flag_cz_eff_top20_ab"] = 1 if (
-            tier in ("A", "B")
-            and cz_eff is not None and cz_eff >= czeff_top20_ab_thr
-            and cz_eff > 0
-        ) else 0
+        row["flag_cs_z_top20_ab"] = 1 if (tier in ("A", "B") and cs_z is not None and cs_z >= cs_top20_ab_thr) else 0
+        row["flag_cz_eff_top20_ab"] = (
+            1 if (tier in ("A", "B") and cz_eff is not None and cz_eff >= czeff_top20_ab_thr and cz_eff > 0) else 0
+        )
 
         # Near readout (approx PIT)
-        row["flag_clinical_near_readout"] = 1 if (
-            rd_val is not None and rd_val <= 180 and cov == 1
-        ) else 0
+        row["flag_clinical_near_readout"] = 1 if (rd_val is not None and rd_val <= 180 and cov == 1) else 0
 
         # High z AND near readout
-        row["flag_clinical_high_and_near"] = 1 if (
-            row["flag_clinical_z_high"] == 1
-            and row["flag_clinical_near_readout"] == 1
-        ) else 0
+        row["flag_clinical_high_and_near"] = (
+            1 if (row["flag_clinical_z_high"] == 1 and row["flag_clinical_near_readout"] == 1) else 0
+        )
 
         # Late-stage + high clinical score z (per-cohort threshold)
-        row["flag_clinical_late_high"] = 1 if (
-            stage in ("mid", "late")
-            and cs_z is not None and cs_z >= _cs_thr
-        ) else 0
+        row["flag_clinical_late_high"] = 1 if (stage in ("mid", "late") and cs_z is not None and cs_z >= _cs_thr) else 0
 
         # Any signal (union of non-meta flags)
-        row["flag_any_signal"] = 1 if any(
-            row.get(f"flag_{f}") == 1
-            for f in FLAG_NAMES if f != "any_signal"
-        ) else 0
+        row["flag_any_signal"] = 1 if any(row.get(f"flag_{f}") == 1 for f in FLAG_NAMES if f != "any_signal") else 0
 
 
 def compute_recall_lift(
@@ -844,35 +830,34 @@ def compute_recall_lift(
         # Random baseline: expected recall if top-K were random draws
         random_baseline = n_flagged / n_universe if n_universe else 0
 
-        recall_k = (len(flagged_tickers & top_k_set) / len(top_k_set)
-                    if top_k_set else None)
-        recall_pct = (len(flagged_tickers & top_pct_set) / len(top_pct_set)
-                      if top_pct_set else None)
-        precision_k = (len(flagged_tickers & top_k_set) / n_flagged
-                       if n_flagged else None)
+        recall_k = len(flagged_tickers & top_k_set) / len(top_k_set) if top_k_set else None
+        recall_pct = len(flagged_tickers & top_pct_set) / len(top_pct_set) if top_pct_set else None
+        precision_k = len(flagged_tickers & top_k_set) / n_flagged if n_flagged else None
 
         rets_flagged = [r[ret_col] for r in flagged]
         rets_unflagged = [r[ret_col] for r in unflagged]
         mean_flagged = statistics.mean(rets_flagged) if rets_flagged else None
-        mean_unflagged = (statistics.mean(rets_unflagged)
-                          if rets_unflagged else None)
-        lift = (mean_flagged / mean_unflagged
-                if mean_flagged is not None
-                and mean_unflagged and mean_unflagged > 0
-                else None)
+        mean_unflagged = statistics.mean(rets_unflagged) if rets_unflagged else None
+        lift = (
+            mean_flagged / mean_unflagged
+            if mean_flagged is not None and mean_unflagged and mean_unflagged > 0
+            else None
+        )
 
-        results.append({
-            "flag": flag,
-            "definition": FLAG_DEFS.get(flag, ""),
-            "n_flagged": n_flagged,
-            "random_baseline": random_baseline,
-            "recall_k": recall_k,
-            "recall_pct": recall_pct,
-            "precision_k": precision_k,
-            "mean_return_flagged": mean_flagged,
-            "mean_return_unflagged": mean_unflagged,
-            "lift": lift,
-        })
+        results.append(
+            {
+                "flag": flag,
+                "definition": FLAG_DEFS.get(flag, ""),
+                "n_flagged": n_flagged,
+                "random_baseline": random_baseline,
+                "recall_k": recall_k,
+                "recall_pct": recall_pct,
+                "precision_k": precision_k,
+                "mean_return_flagged": mean_flagged,
+                "mean_return_unflagged": mean_unflagged,
+                "lift": lift,
+            }
+        )
     return results
 
 
@@ -886,9 +871,7 @@ def compute_recall_by_horizon(
     for label in RETURN_HORIZONS:
         top_k_set, top_pct_set = top_sets[label]
         ret_col = f"ret_{label}"
-        results[label] = compute_recall_lift(
-            rows, top_k_set, top_pct_set, top_k, ret_col
-        )
+        results[label] = compute_recall_lift(rows, top_k_set, top_pct_set, top_k, ret_col)
     return results
 
 
@@ -896,13 +879,27 @@ def compute_recall_by_horizon(
 # Step 6 — Output
 # ---------------------------------------------------------------------------
 CSV_COLUMNS = [
-    "ticker", "ret_3m", "ret_6m", "ret_12m", "ret_24m",
-    "price_t0", "price_t1",
-    "archetype", "stage_bucket", "composite_rank", "score_rank_pct",
-    "tier_dev", "clinical_score", "clinical_score_z",
-    "clinical_score_z_tier", "cz_eff",
-    "clinical_alpha_z", "clinical_readout_days", "clinical_coverage_flag",
-    "catalyst_days", "catalyst_mode",
+    "ticker",
+    "ret_3m",
+    "ret_6m",
+    "ret_12m",
+    "ret_24m",
+    "price_t0",
+    "price_t1",
+    "archetype",
+    "stage_bucket",
+    "composite_rank",
+    "score_rank_pct",
+    "tier_dev",
+    "clinical_score",
+    "clinical_score_z",
+    "clinical_score_z_tier",
+    "cz_eff",
+    "clinical_alpha_z",
+    "clinical_readout_days",
+    "clinical_coverage_flag",
+    "catalyst_days",
+    "catalyst_mode",
 ] + [f"flag_{f}" for f in FLAG_NAMES]
 
 
@@ -971,27 +968,30 @@ def write_report(
     L.append("|-------|----------|-------------|")
     for label in RETURN_HORIZONS:
         bars = RETURN_HORIZONS[label]
-        L.append(f"| {label} | {horizon_ends.get(label, '?')} | "
-                 f"{bars if bars else 'max'} |")
+        L.append(f"| {label} | {horizon_ends.get(label, '?')} | " f"{bars if bars else 'max'} |")
     L.append("")
 
     L.append("**PIT status of signals**:")
     L.append("| Signal | PIT Status | Notes |")
     L.append("|--------|-----------|-------|")
-    L.append("| composite_rank, tier_dev, catalyst_days/mode | **PIT-safe** | "
-             "From archive at t0 |")
-    L.append("| clinical_score, clinical_score_z | **PIT-safe** | "
-             "Pure z-score of archive clinical_score |")
-    L.append("| clinical_score_z_tier, cz_eff | **PIT-safe** | "
-             "Tier-local z (ddof=0) + stage-gated/pos-only/clamped transform; "
-             "matches DE sort signal |")
-    L.append("| clinical_alpha_z, readout_days | **Approximate PIT** | "
-             "Uses today's trial records filtered by first_posted <= t0; "
-             "PCD/completion dates may have shifted post-t0 |")
+    L.append("| composite_rank, tier_dev, catalyst_days/mode | **PIT-safe** | " "From archive at t0 |")
+    L.append("| clinical_score, clinical_score_z | **PIT-safe** | " "Pure z-score of archive clinical_score |")
+    L.append(
+        "| clinical_score_z_tier, cz_eff | **PIT-safe** | "
+        "Tier-local z (ddof=0) + stage-gated/pos-only/clamped transform; "
+        "matches DE sort signal |"
+    )
+    L.append(
+        "| clinical_alpha_z, readout_days | **Approximate PIT** | "
+        "Uses today's trial records filtered by first_posted <= t0; "
+        "PCD/completion dates may have shifted post-t0 |"
+    )
     L.append("")
-    L.append("> **Survivorship bias**: delisted/acquired tickers excluded. "
-             "In biotech, many top returns come from M&A — results may "
-             "understate signal quality for acquired names.")
+    L.append(
+        "> **Survivorship bias**: delisted/acquired tickers excluded. "
+        "In biotech, many top returns come from M&A — results may "
+        "understate signal quality for acquired names."
+    )
     L.append("")
 
     # --- 2. Return distribution by horizon ---
@@ -1003,7 +1003,10 @@ def write_report(
         ("Mean", lambda vals: _fmt_pct(statistics.mean(vals)) if vals else "—"),
         ("Median", lambda vals: _fmt_pct(statistics.median(vals)) if vals else "—"),
         ("p10", lambda vals: _fmt_pct(sorted(vals)[int(len(vals) * 0.10)]) if len(vals) > 10 else "—"),
-        ("p90", lambda vals: _fmt_pct(sorted(vals)[min(len(vals) - 1, int(len(vals) * 0.90))]) if len(vals) > 10 else "—"),
+        (
+            "p90",
+            lambda vals: _fmt_pct(sorted(vals)[min(len(vals) - 1, int(len(vals) * 0.90))]) if len(vals) > 10 else "—",
+        ),
     ]:
         cells = []
         for label in RETURN_HORIZONS:
@@ -1016,14 +1019,18 @@ def write_report(
     # --- 3. HEADLINE: Recall/Lift by horizon (the key table) ---
     L.append("## 3. Recall / Lift by Horizon (key table)")
     L.append("")
-    L.append(f"Recall@{top_k} for each flag at each horizon. "
-             f"**Random baseline** = flagged/universe (expected recall "
-             f"if top-{top_k} were random draws).")
+    L.append(
+        f"Recall@{top_k} for each flag at each horizon. "
+        "**Random baseline** = flagged/universe (expected recall "
+        f"if top-{top_k} were random draws)."
+    )
     L.append("")
-    L.append("> **Primary horizons: 6m / 12m** (where clinical/catalyst signals "
-             "are designed to predict). **24m is informational only** "
-             "(diluted by noise, M&A, regime shifts). Lift < 1 at 24m does "
-             "not invalidate signal — check 6m/12m for actionable evidence.")
+    L.append(
+        "> **Primary horizons: 6m / 12m** (where clinical/catalyst signals "
+        "are designed to predict). **24m is informational only** "
+        "(diluted by noise, M&A, regime shifts). Lift < 1 at 24m does "
+        "not invalidate signal — check 6m/12m for actionable evidence."
+    )
     L.append("")
 
     # Show per-horizon universe size (baseline denominator varies)
@@ -1031,19 +1038,12 @@ def write_report(
     for label in RETURN_HORIZONS:
         ret_col = f"ret_{label}"
         horizon_n[label] = sum(1 for r in rows if r.get(ret_col) is not None)
-    L.append(f"Universe per horizon: "
-             + ", ".join(f"{h}={horizon_n[h]}" for h in RETURN_HORIZONS))
+    L.append("Universe per horizon: " + ", ".join(f"{h}={horizon_n[h]}" for h in RETURN_HORIZONS))
     L.append("")
 
     # Build a compact horizon × flag table with per-horizon baseline
-    L.append(f"| Flag | N | "
-             + " | ".join(f"BL {h} | R@{top_k} {h} | Lift {h}"
-                          for h in RETURN_HORIZONS)
-             + " |")
-    L.append("|------|----|"
-             + "|".join("--------|-----------|-------"
-                        for _ in RETURN_HORIZONS)
-             + "|")
+    L.append("| Flag | N | " + " | ".join(f"BL {h} | R@{top_k} {h} | Lift {h}" for h in RETURN_HORIZONS) + " |")
+    L.append("|------|----|" + "|".join("--------|-----------|-------" for _ in RETURN_HORIZONS) + "|")
     for fi, flag in enumerate(FLAG_NAMES):
         r24 = recall_by_horizon["24m"][fi]
         nf = r24["n_flagged"]
@@ -1059,8 +1059,10 @@ def write_report(
 
     # Per-cohort N-flagged for cohort-aware flags
     _COHORT_FLAGS = [
-        "clinical_score_z_top20", "clinical_score_z_tier_top20",
-        "clinical_cz_eff_top20", "clinical_late_high",
+        "clinical_score_z_top20",
+        "clinical_score_z_tier_top20",
+        "clinical_cz_eff_top20",
+        "clinical_late_high",
     ]
     _COHORT_ARCHETYPES = [
         ("drug_developer", "DD"),
@@ -1069,17 +1071,13 @@ def write_report(
     ]
     L.append("**N flagged by cohort** (cohort-aware thresholds):")
     L.append("")
-    L.append("| Flag | "
-             + " | ".join(abbr for _, abbr in _COHORT_ARCHETYPES)
-             + " | Total |")
+    L.append("| Flag | " + " | ".join(abbr for _, abbr in _COHORT_ARCHETYPES) + " | Total |")
     L.append("|------|" + "|".join("-----" for _ in _COHORT_ARCHETYPES) + "|-------|")
     for flag in _COHORT_FLAGS:
         counts = []
         total = 0
         for arch, _ in _COHORT_ARCHETYPES:
-            n = sum(1 for r in rows
-                    if r.get(f"flag_{flag}") == 1
-                    and (r.get("archetype") or "") == arch)
+            n = sum(1 for r in rows if r.get(f"flag_{flag}") == 1 and (r.get("archetype") or "") == arch)
             counts.append(str(n))
             total += n
         L.append(f"| {flag} | {' | '.join(counts)} | {total} |")
@@ -1088,15 +1086,16 @@ def write_report(
     # --- 4. Detailed recall table (24m, with precision) ---
     L.append("## 4. Detailed Recall — 24m Horizon (informational)")
     L.append("")
-    L.append("> 24m horizon is noisy and diluted. Lift < 1.0 is expected for "
-             "signals designed around 6-12 month catalysts. Use this table "
-             "for completeness, not for signal validation.")
+    L.append(
+        "> 24m horizon is noisy and diluted. Lift < 1.0 is expected for "
+        "signals designed around 6-12 month catalysts. Use this table "
+        "for completeness, not for signal validation."
+    )
     L.append(
         f"| Flag | Definition | N | Baseline | Recall @{top_k} | "
         f"Recall @{top_pct * 100:.0f}% | Lift | Precision @{top_k} |"
     )
-    L.append("|------|-----------|---|----------|------------|"
-             "-------------|------|--------------|")
+    L.append("|------|-----------|---|----------|------------|" "-------------|------|--------------|")
     for rr in recall_24m:
         flag = rr["flag"]
         defn = rr["definition"]
@@ -1106,8 +1105,7 @@ def write_report(
         rp = _fmt_pct(rr["recall_pct"])
         lift = _fmt_f2(rr["lift"])
         pk = _fmt_pct(rr["precision_k"])
-        L.append(f"| {flag} | {defn} | {nf} | {bl} | {rk} | {rp} | "
-                 f"{lift} | {pk} |")
+        L.append(f"| {flag} | {defn} | {nf} | {bl} | {rk} | {rp} | " f"{lift} | {pk} |")
     L.append("")
 
     # --- 5. Signal decomposition for top 30 ---
@@ -1135,8 +1133,7 @@ def write_report(
         rd = r.get("clinical_readout_days")
         rd_str = str(rd) if rd != "" and rd is not None else "—"
         cat_d = r.get("catalyst_days") or "—"
-        cat_m = (r.get("catalyst_mode")
-                 or r.get("de_catalyst_mode") or "")[:12]
+        cat_m = (r.get("catalyst_mode") or r.get("de_catalyst_mode") or "")[:12]
         flags = []
         for f in FLAG_NAMES:
             if f == "any_signal":
@@ -1168,16 +1165,12 @@ def write_report(
     L.append(f"| Signal | Top {top_k} Mean | Rest Mean | Delta |")
     L.append("|--------|-----------|-----------|-------|")
     for col, label in signal_cols:
-        top_vals = [v for v in (_safe_float(r.get(col)) for r in top_set_rows)
-                    if v is not None]
-        rest_vals = [v for v in (_safe_float(r.get(col)) for r in rest_rows)
-                     if v is not None]
+        top_vals = [v for v in (_safe_float(r.get(col)) for r in top_set_rows) if v is not None]
+        rest_vals = [v for v in (_safe_float(r.get(col)) for r in rest_rows) if v is not None]
         top_mean = statistics.mean(top_vals) if top_vals else None
         rest_mean = statistics.mean(rest_vals) if rest_vals else None
-        delta = ((top_mean - rest_mean)
-                 if top_mean is not None and rest_mean is not None else None)
-        L.append(f"| {label} | {_fmt_f2(top_mean)} | {_fmt_f2(rest_mean)} "
-                 f"| {_fmt_f2(delta)} |")
+        delta = (top_mean - rest_mean) if top_mean is not None and rest_mean is not None else None
+        L.append(f"| {label} | {_fmt_f2(top_mean)} | {_fmt_f2(rest_mean)} " f"| {_fmt_f2(delta)} |")
     L.append("")
 
     # --- 7. Coverage decomposition for top-K ---
@@ -1188,34 +1181,27 @@ def write_report(
 
     # Categorize top-K returners
     top_k_rows = with_ret[:top_k]
-    n_dd = sum(1 for r in top_k_rows
-               if (r.get("archetype") or "") == "drug_developer")
-    n_comm_bio = sum(1 for r in top_k_rows
-                     if (r.get("archetype") or "") == "commercial_biotech")
-    n_comm_pharma = sum(1 for r in top_k_rows
-                        if (r.get("archetype") or "") == "commercial_pharma")
+    n_dd = sum(1 for r in top_k_rows if (r.get("archetype") or "") == "drug_developer")
+    n_comm_bio = sum(1 for r in top_k_rows if (r.get("archetype") or "") == "commercial_biotech")
+    n_comm_pharma = sum(1 for r in top_k_rows if (r.get("archetype") or "") == "commercial_pharma")
     n_comm = n_comm_bio + n_comm_pharma
     n_other = len(top_k_rows) - n_dd - n_comm
-    n_early = sum(1 for r in top_k_rows
-                  if (r.get("stage_bucket") or "").lower() == "early")
-    n_no_tier = sum(1 for r in top_k_rows
-                    if not (r.get("tier_dev") or "")
-                    and not (r.get("tier_commercial") or ""))
-    n_tier_a = sum(1 for r in top_k_rows
-                   if (r.get("tier_dev") or "").upper() == "A")
-    n_tier_b = sum(1 for r in top_k_rows
-                   if (r.get("tier_dev") or "").upper() == "B")
-    n_tier_cd = sum(1 for r in top_k_rows
-                    if (r.get("tier_dev") or "").upper() in ("C", "D"))
-    n_comm_with_czeff = sum(1 for r in top_k_rows
-                            if (r.get("archetype") or "").startswith("commercial_")
-                            and _safe_float(r.get("cz_eff")) is not None
-                            and _safe_float(r.get("cz_eff")) > 0)
-    n_cat_near = sum(1 for r in top_k_rows
-                     if r.get("flag_catalyst_near") == 1)
-    n_no_cat = sum(1 for r in top_k_rows
-                   if (r.get("catalyst_mode") or r.get("de_catalyst_mode")
-                       or "").lower() == "missing")
+    n_early = sum(1 for r in top_k_rows if (r.get("stage_bucket") or "").lower() == "early")
+    n_no_tier = sum(1 for r in top_k_rows if not (r.get("tier_dev") or "") and not (r.get("tier_commercial") or ""))
+    n_tier_a = sum(1 for r in top_k_rows if (r.get("tier_dev") or "").upper() == "A")
+    n_tier_b = sum(1 for r in top_k_rows if (r.get("tier_dev") or "").upper() == "B")
+    n_tier_cd = sum(1 for r in top_k_rows if (r.get("tier_dev") or "").upper() in ("C", "D"))
+    n_comm_with_czeff = sum(
+        1
+        for r in top_k_rows
+        if (r.get("archetype") or "").startswith("commercial_")
+        and _safe_float(r.get("cz_eff")) is not None
+        and _safe_float(r.get("cz_eff")) > 0
+    )
+    n_cat_near = sum(1 for r in top_k_rows if r.get("flag_catalyst_near") == 1)
+    n_no_cat = sum(
+        1 for r in top_k_rows if (r.get("catalyst_mode") or r.get("de_catalyst_mode") or "").lower() == "missing"
+    )
 
     L.append(f"| Category | Count | % of Top-{top_k} |")
     L.append("|----------|-------|--------------|")
@@ -1236,35 +1222,43 @@ def write_report(
         pct = n / len(top_k_rows) * 100 if top_k_rows else 0
         L.append(f"| {label} | {n} | {pct:.0f}% |")
     L.append("")
-    L.append(f"> Of {len(top_k_rows)} top returners, {n_dd} are drug developers, "
-             f"{n_comm} are commercial (biotech+pharma), and {n_other} are other "
-             f"archetypes. {n_early} are early-stage (cz_eff=0 by design). "
-             f"{n_comm_with_czeff} commercial tickers have nonzero cz_eff.")
+    L.append(
+        f"> Of {len(top_k_rows)} top returners, {n_dd} are drug developers, "
+        f"{n_comm} are commercial (biotech+pharma), and {n_other} are other "
+        f"archetypes. {n_early} are early-stage (cz_eff=0 by design). "
+        f"{n_comm_with_czeff} commercial tickers have nonzero cz_eff."
+    )
     L.append("")
 
     # --- 8. Notes ---
     L.append("## 8. Notes")
     missing_t0 = sum(1 for r in rows if r.get("price_t0") is None)
-    missing_t1 = sum(1 for r in rows
-                     if r.get("price_t1") is None and r.get("price_t0") is not None)
+    missing_t1 = sum(1 for r in rows if r.get("price_t1") is None and r.get("price_t0") is not None)
     L.append(f"- Tickers missing t0 price: {missing_t0}")
     L.append(f"- Tickers missing t1 price (had t0): {missing_t1}")
     L.append("- Survivorship bias: delisted/acquired tickers excluded.")
-    L.append("- clinical_alpha_z uses stage_bucket as proxy for lead_phase "
-             "(not in archive); readout_days from today's trial cache "
-             "(PCD may have drifted).")
-    L.append("- clinical_score_z is a pure z-score of the archive's "
-             "clinical_score — fully PIT-safe.")
-    L.append("- clinical_score_z_tier: tier-local z (ddof=0). "
-             "Drug developers: within tier_dev. Commercial: within "
-             "tier_commercial × archetype (fallback to archetype z "
-             "for older archives without tier_commercial).")
-    L.append("- cz_eff: stage-gated (early=0, mid=1.0, late=1.5), "
-             "positive-only, clamped [0, 2]. The actual DE sort signal.")
-    L.append("- Top-20% flags for clinical_score_z, clinical_score_z_tier, and "
-             "cz_eff use **per-cohort thresholds** (drug_developer, "
-             "commercial_biotech, commercial_pharma computed separately, "
-             "then unioned). This prevents mixed-distribution distortion.")
+    L.append(
+        "- clinical_alpha_z uses stage_bucket as proxy for lead_phase "
+        "(not in archive); readout_days from today's trial cache "
+        "(PCD may have drifted)."
+    )
+    L.append("- clinical_score_z is a pure z-score of the archive's " "clinical_score — fully PIT-safe.")
+    L.append(
+        "- clinical_score_z_tier: tier-local z (ddof=0). "
+        "Drug developers: within tier_dev. Commercial: within "
+        "tier_commercial × archetype (fallback to archetype z "
+        "for older archives without tier_commercial)."
+    )
+    L.append(
+        "- cz_eff: stage-gated (early=0, mid=1.0, late=1.5), "
+        "positive-only, clamped [0, 2]. The actual DE sort signal."
+    )
+    L.append(
+        "- Top-20% flags for clinical_score_z, clinical_score_z_tier, and "
+        "cz_eff use **per-cohort thresholds** (drug_developer, "
+        "commercial_biotech, commercial_pharma computed separately, "
+        "then unioned). This prevents mixed-distribution distortion."
+    )
     L.append("")
 
     output_path.write_text("\n".join(L), encoding="utf-8")
@@ -1275,39 +1269,44 @@ def write_report(
 # Main
 # ---------------------------------------------------------------------------
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Top Returners Signal Recall Study"
-    )
+    parser = argparse.ArgumentParser(description="Top Returners Signal Recall Study")
     parser.add_argument(
-        "--archive", type=Path,
+        "--archive",
+        type=Path,
         default=Path("data/archives/2024-01-31.tar.gz"),
         help="Archive tar.gz for t0 (default: data/archives/2024-01-31.tar.gz)",
     )
     parser.add_argument(
-        "--start-date", default="2024-01-31",
+        "--start-date",
+        default="2024-01-31",
         help="Return window start (default: 2024-01-31)",
     )
     parser.add_argument(
-        "--end-date", default="2026-01-27",
+        "--end-date",
+        default="2026-01-27",
         help="Return window end (default: 2026-01-27)",
     )
     parser.add_argument(
-        "--trial-records", type=Path, default=None,
+        "--trial-records",
+        type=Path,
+        default=None,
         help="Trial records JSON (default: auto-detect latest ctgov cache)",
     )
     parser.add_argument(
-        "--price-csv", type=Path,
+        "--price-csv",
+        type=Path,
         default=Path("production_data/price_history.csv"),
         help="Price history CSV",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=Path("data/diag"),
+        "--output-dir",
+        type=Path,
+        default=Path("data/diag"),
         help="Output directory",
     )
     parser.add_argument("--top-k", type=int, default=50)
     parser.add_argument("--top-pct", type=float, default=0.10)
-    parser.add_argument("--no-fetch", action="store_true",
-                        help="Skip yfinance fetch")
+    parser.add_argument("--no-fetch", action="store_true", help="Skip yfinance fetch")
     parser.add_argument("--price-cache", type=Path, default=None)
     args = parser.parse_args()
 
@@ -1350,27 +1349,23 @@ def main() -> None:
     if trial_records_path is None:
         ctgov_dir = Path("cache/ctgov")
         if ctgov_dir.exists():
-            candidates = sorted(ctgov_dir.glob("trial_records_*.json"),
-                                reverse=True)
+            candidates = sorted(ctgov_dir.glob("trial_records_*.json"), reverse=True)
             if candidates:
                 trial_records_path = candidates[0]
-                print(f"  Auto-detected trial records: "
-                      f"{trial_records_path.name}", file=sys.stderr)
+                print("  Auto-detected trial records: " f"{trial_records_path.name}", file=sys.stderr)
 
     if trial_records_path is None or not trial_records_path.exists():
-        print("  WARNING: No trial records — clinical_alpha_z will be empty",
-              file=sys.stderr)
+        print("  WARNING: No trial records — clinical_alpha_z will be empty", file=sys.stderr)
         trial_records: List[dict] = []
     else:
         with trial_records_path.open(encoding="utf-8") as f:
             all_trials = json.load(f)
         as_of = args.start_date
-        trial_records = [
-            t for t in all_trials
-            if (t.get("first_posted") or "") <= as_of
-        ]
-        print(f"  Loaded {len(all_trials)} trials, {len(trial_records)} "
-              f"PIT-safe (first_posted <= {as_of})", file=sys.stderr)
+        trial_records = [t for t in all_trials if (t.get("first_posted") or "") <= as_of]
+        print(
+            f"  Loaded {len(all_trials)} trials, {len(trial_records)} " f"PIT-safe (first_posted <= {as_of})",
+            file=sys.stderr,
+        )
 
     readout_days = compute_clinical_readout_days(trial_records, args.start_date)
     tickers_with_rd = sum(1 for v in readout_days.values() if v is not None)
@@ -1379,14 +1374,15 @@ def main() -> None:
     compute_clinical_alpha_z(rows, readout_days)
 
     # Sanity check z-scores
-    for col_name in ["clinical_alpha_z", "clinical_score_z",
-                     "clinical_score_z_tier", "cz_eff"]:
-        zs = [v for v in (_safe_float(r.get(col_name)) for r in rows)
-              if v is not None]
+    for col_name in ["clinical_alpha_z", "clinical_score_z", "clinical_score_z_tier", "cz_eff"]:
+        zs = [v for v in (_safe_float(r.get(col_name)) for r in rows) if v is not None]
         if zs:
-            print(f"  {col_name}: n={len(zs)}, mean={statistics.mean(zs):.4f}, "
-                  f"std={statistics.stdev(zs):.4f}, "
-                  f"range=[{min(zs):.2f}, {max(zs):.2f}]", file=sys.stderr)
+            print(
+                f"  {col_name}: n={len(zs)}, mean={statistics.mean(zs):.4f}, "
+                f"std={statistics.stdev(zs):.4f}, "
+                f"range=[{min(zs):.2f}, {max(zs):.2f}]",
+                file=sys.stderr,
+            )
 
     # ------------------------------------------------------------------
     # Step 3: Load prices + compute multi-horizon returns
@@ -1394,22 +1390,26 @@ def main() -> None:
     print("Step 3: Loading prices...", file=sys.stderr)
     prices = load_prices(args.price_csv, cache_csv)
     trading_dates = _trading_dates_sorted(prices)
-    print(f"  Loaded {len(prices)} price points, "
-          f"{len(trading_dates)} trading dates "
-          f"({trading_dates[0] if trading_dates else '?'} to "
-          f"{trading_dates[-1] if trading_dates else '?'})", file=sys.stderr)
+    print(
+        f"  Loaded {len(prices)} price points, "
+        f"{len(trading_dates)} trading dates "
+        f"({trading_dates[0] if trading_dates else '?'} to "
+        f"{trading_dates[-1] if trading_dates else '?'})",
+        file=sys.stderr,
+    )
 
     if not args.no_fetch:
         all_tickers = {r["ticker"] for r in rows}
         missing = identify_missing_tickers(
-            all_tickers, prices, trading_dates,
-            args.start_date, args.end_date,
+            all_tickers,
+            prices,
+            trading_dates,
+            args.start_date,
+            args.end_date,
         )
         if missing:
             print(f"  {len(missing)} tickers need price data", file=sys.stderr)
-            new_prices = fetch_missing_prices(
-                missing, cache_csv, args.start_date, args.end_date
-            )
+            new_prices = fetch_missing_prices(missing, cache_csv, args.start_date, args.end_date)
             prices.update(new_prices)
             trading_dates = _trading_dates_sorted(prices)
         else:
@@ -1426,8 +1426,10 @@ def main() -> None:
     top_sets = select_top_returners_by_horizon(rows, args.top_k, args.top_pct)
     for label in RETURN_HORIZONS:
         tk_set, tp_set = top_sets[label]
-        print(f"  {label}: top-{args.top_k}={len(tk_set)}, "
-              f"top-{args.top_pct * 100:.0f}%={len(tp_set)}", file=sys.stderr)
+        print(
+            f"  {label}: top-{args.top_k}={len(tk_set)}, " f"top-{args.top_pct * 100:.0f}%={len(tp_set)}",
+            file=sys.stderr,
+        )
 
     # ------------------------------------------------------------------
     # Step 5: Compute flags + recall/lift by horizon
@@ -1435,27 +1437,22 @@ def main() -> None:
     print("Step 5: Computing flags and recall...", file=sys.stderr)
     compute_flags(rows)
 
-    recall_by_horizon = compute_recall_by_horizon(
-        rows, top_sets, args.top_k
-    )
+    recall_by_horizon = compute_recall_by_horizon(rows, top_sets, args.top_k)
     recall_24m = recall_by_horizon["24m"]
 
     # Print horizon comparison for key flags
-    print(f"\n  {'Flag':28s} | "
-          + " | ".join(f"R@{args.top_k} {h:>3s}" for h in RETURN_HORIZONS)
-          + " | Baseline", file=sys.stderr)
-    print(f"  {'-' * 28}-+-"
-          + "-+-".join("-" * 9 for _ in RETURN_HORIZONS)
-          + "-+---------", file=sys.stderr)
+    print(
+        f"\n  {'Flag':28s} | " + " | ".join(f"R@{args.top_k} {h:>3s}" for h in RETURN_HORIZONS) + " | Baseline",
+        file=sys.stderr,
+    )
+    print(f"  {'-' * 28}-+-" + "-+-".join("-" * 9 for _ in RETURN_HORIZONS) + "-+---------", file=sys.stderr)
     for fi, flag in enumerate(FLAG_NAMES):
         cells = []
         for label in RETURN_HORIZONS:
             rh = recall_by_horizon[label][fi]
             cells.append(_fmt_pct(rh["recall_k"]))
         bl = _fmt_pct(recall_24m[fi]["random_baseline"])
-        print(f"  {flag:28s} | "
-              + " | ".join(f"{c:>9s}" for c in cells)
-              + f" | {bl}", file=sys.stderr)
+        print(f"  {flag:28s} | " + " | ".join(f"{c:>9s}" for c in cells) + f" | {bl}", file=sys.stderr)
 
     # ------------------------------------------------------------------
     # Step 6: Output
@@ -1469,18 +1466,19 @@ def main() -> None:
     md_path = args.output_dir / f"{stem}.md"
 
     write_csv(rows, csv_path)
-    write_report(rows, recall_24m, recall_by_horizon,
-                 actual_t0, actual_t1, horizon_ends,
-                 args.top_k, args.top_pct, md_path)
+    write_report(
+        rows, recall_24m, recall_by_horizon, actual_t0, actual_t1, horizon_ends, args.top_k, args.top_pct, md_path
+    )
 
     # Quick summary to stdout
-    print(f"\n--- Recall by Horizon (key table) ---")
-    print(f"Universe: {len(rows)} tickers, "
-          f"{sum(1 for r in rows if r.get('ret_24m') is not None)} survivors")
-    print(f"Primary horizons: 6m / 12m | 24m: informational only")
-    print(f"{'Flag':28s} | "
-          + " | ".join(f"R@{args.top_k} {h:>3s}" for h in RETURN_HORIZONS)
-          + " | Baseline | Lift 6m | Lift 12m")
+    print("\n--- Recall by Horizon (key table) ---")
+    print(f"Universe: {len(rows)} tickers, " f"{sum(1 for r in rows if r.get('ret_24m') is not None)} survivors")
+    print("Primary horizons: 6m / 12m | 24m: informational only")
+    print(
+        f"{'Flag':28s} | "
+        + " | ".join(f"R@{args.top_k} {h:>3s}" for h in RETURN_HORIZONS)
+        + " | Baseline | Lift 6m | Lift 12m"
+    )
     for fi, flag in enumerate(FLAG_NAMES):
         cells = []
         for label in RETURN_HORIZONS:
@@ -1489,9 +1487,7 @@ def main() -> None:
         bl = _fmt_pct(recall_24m[fi]["random_baseline"])
         lift_6m = _fmt_f2(recall_by_horizon["6m"][fi]["lift"])
         lift_12m = _fmt_f2(recall_by_horizon["12m"][fi]["lift"])
-        print(f"  {flag:28s} | "
-              + " | ".join(f"{c:>9s}" for c in cells)
-              + f" | {bl:>8s} | {lift_6m:>7s} | {lift_12m}")
+        print(f"  {flag:28s} | " + " | ".join(f"{c:>9s}" for c in cells) + f" | {bl:>8s} | {lift_6m:>7s} | {lift_12m}")
 
 
 if __name__ == "__main__":

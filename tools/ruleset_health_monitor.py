@@ -13,6 +13,7 @@ CLI (standalone):
       --history-file artifacts/ruleset_health_history.jsonl \
       --output-dir data/snapshots/2026-02-28
 """
+
 from __future__ import annotations
 
 import argparse

@@ -8,6 +8,7 @@ Checklist v2 (Fama-MacBeth, bootstrap, FDR, LOSO robustness).
 Usage:
     python3 scripts/research/herald_precision_study.py
 """
+
 from __future__ import annotations
 
 import csv

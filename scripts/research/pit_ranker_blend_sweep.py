@@ -8,6 +8,7 @@ and regime splits.
 Usage:
     python3 scripts/research/pit_ranker_blend_sweep.py
 """
+
 from __future__ import annotations
 
 import csv

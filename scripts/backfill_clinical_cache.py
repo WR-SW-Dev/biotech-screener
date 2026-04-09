@@ -7,6 +7,7 @@ Usage:
 
 Produces: cache/clinical/clinical_features_{YYYY-MM-DD}.json per business day.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,6 +30,7 @@ logger = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _business_days(start: date, end: date):
     """Yield business days (Mon-Fri) in [start, end] inclusive."""
@@ -62,6 +64,7 @@ def _serialize(obj: dict) -> str:
 # ---------------------------------------------------------------------------
 # Core
 # ---------------------------------------------------------------------------
+
 
 def backfill_one_date(
     as_of: date,
@@ -135,9 +138,7 @@ def backfill_one_date(
     # Note: trials_after_pit from m4 diagnostic_counts.pit_filtered is the count
     # of trials REMOVED by PIT. The actual count after PIT is total_trials_unique.
     # Fix the label to reflect the actual meaning.
-    output["diagnostic_counts"]["trials_after_pit"] = m4_result["diagnostic_counts"].get(
-        "total_trials_unique", 0
-    )
+    output["diagnostic_counts"]["trials_after_pit"] = m4_result["diagnostic_counts"].get("total_trials_unique", 0)
 
     out_path.write_text(_serialize(output), encoding="utf-8")
     logger.info(f"  {as_of_str}: wrote {len(m4_result['scores'])} tickers")
@@ -154,6 +155,7 @@ def backfill_one_date(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Backfill clinical feature cache")
@@ -192,8 +194,7 @@ def main(argv: list[str] | None = None) -> int:
         for r in rows:
             src_short = r["source"].split("/")[-1][:30]
             print(
-                f"{r['date']:<14} {r['tickers']:>8} {r['trials_raw']:>11} "
-                f"{r['trials_after_pit']:>10}  {src_short}"
+                f"{r['date']:<14} {r['tickers']:>8} {r['trials_raw']:>11} " f"{r['trials_after_pit']:>10}  {src_short}"
             )
         print(f"\nTotal: {len(rows)} dates backfilled")
     else:

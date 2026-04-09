@@ -17,6 +17,7 @@ Usage:
       --new-calendar production_data/pdufa_dates.json \
       --out-dir output/research/reg_calendar_policy_ab
 """
+
 from __future__ import annotations
 
 import argparse
@@ -561,7 +562,7 @@ def write_summary(
     # Primary: cum hedged delta >= +0.20pp (= 0.0020)
     primary_pass = cum_delta is not None and cum_delta >= 0.0020
     lines.append(
-        f"| Cumulative hedged delta | >= +0.20pp "
+        "| Cumulative hedged delta | >= +0.20pp "
         f"| {_delta_pp(cand_agg['cum_hedged'], base_agg['cum_hedged'])} "
         f"| {'PASS' if primary_pass else 'FAIL'} |"
     )
@@ -569,7 +570,7 @@ def write_summary(
     # Guardrail: mean hedged delta >= -0.05pp (= -0.0005)
     guardrail_pass = mean_delta is not None and mean_delta >= -0.0005
     lines.append(
-        f"| Mean weekly hedged delta | >= -0.05pp "
+        "| Mean weekly hedged delta | >= -0.05pp "
         f"| {_delta_pp(cand_agg['mean_hedged'], base_agg['mean_hedged'])} "
         f"| {'PASS' if guardrail_pass else 'FAIL'} |"
     )
@@ -577,7 +578,7 @@ def write_summary(
     # Turnover: delta <= +0.25pp (= 0.0025)
     turnover_pass = turnover_delta is not None and turnover_delta <= 0.0025
     lines.append(
-        f"| Turnover increase | <= +0.25pp "
+        "| Turnover increase | <= +0.25pp "
         f"| {_delta_pp(cand_agg['mean_turnover'], base_agg['mean_turnover'])} "
         f"| {'PASS' if turnover_pass else 'FAIL'} |"
     )

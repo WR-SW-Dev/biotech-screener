@@ -16,6 +16,7 @@ Usage:
     python3 scripts/research/options_activity_study.py --track A
     python3 scripts/research/options_activity_study.py --track B
 """
+
 from __future__ import annotations
 
 import argparse

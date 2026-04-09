@@ -10,6 +10,7 @@ Usage:
     python3 tools/record_fills.py --trade-date 2026-03-06 --mark-all-filled
     python3 tools/record_fills.py --trade-date 2026-03-06 --summary
 """
+
 from __future__ import annotations
 
 import argparse

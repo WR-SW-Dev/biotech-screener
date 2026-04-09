@@ -22,6 +22,7 @@ Usage:
     python scripts/research/eval_preopen_watch.py --min-days 5
     python scripts/research/eval_preopen_watch.py --start-date 2026-03-27 --end-date 2026-04-10
 """
+
 from __future__ import annotations
 
 import argparse
@@ -313,7 +314,7 @@ def main():
 
     if len(dates) < args.min_days:
         print(
-            f"Only {len(dates)} shadow days available (need {args.min_days}). " f"Run daily production to accumulate.",
+            f"Only {len(dates)} shadow days available (need {args.min_days}). " "Run daily production to accumulate.",
             file=sys.stderr,
         )
         if not dates:

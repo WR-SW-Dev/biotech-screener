@@ -11,6 +11,7 @@ Usage:
     python3 tools/fetch_form4_bulk.py --since 2023-01-01
     python3 tools/fetch_form4_bulk.py --workers 4
 """
+
 from __future__ import annotations
 
 import argparse

@@ -16,6 +16,7 @@ Usage:
     python3 scripts/research/audit_regulatory_calendar_coverage.py \\
         --as-of-date 2026-03-08 --snapshot-root data/snapshots
 """
+
 from __future__ import annotations
 
 import argparse

@@ -24,6 +24,7 @@ Output:
 Usage:
     python tools/build_options_verdict.py --as-of-date 2026-03-31
 """
+
 from __future__ import annotations
 
 import argparse
@@ -83,7 +84,9 @@ _PAW_OPTIONS_CODES = {
 
 
 def _load_options_watch(
-    artifacts_dir: Path, date: str, mode: str = "post",
+    artifacts_dir: Path,
+    date: str,
+    mode: str = "post",
 ) -> Dict[str, Dict[str, Any]]:
     """Load options_watch artifact. Returns {ticker: {flags, priority_score, ...}}."""
     suffix = "_watch.json" if mode == "post" else "_premarket_watch.json"
@@ -105,7 +108,8 @@ def _load_options_watch(
 
 
 def _load_surface_delta(
-    snapshots_dir: Path, date: str,
+    snapshots_dir: Path,
+    date: str,
 ) -> Dict[str, Dict[str, Any]]:
     """Load surface_delta artifact. Returns {ticker: {flags, severity, ...}}."""
     data = _load_json(snapshots_dir / date / "surface_delta.json")
@@ -126,7 +130,8 @@ def _load_surface_delta(
 
 
 def _load_price_action(
-    artifacts_dir: Path, date: str,
+    artifacts_dir: Path,
+    date: str,
 ) -> Dict[str, Dict[str, Any]]:
     """Load price_action_watch, filtering to options-relevant alerts only."""
     data = _load_json(artifacts_dir / "price_action_watch" / f"{date}_watch.json")
@@ -198,9 +203,7 @@ def fuse_verdicts(
         if ow_post and ow_post["flags"]:
             lenses_active.append("options_watch_post")
             all_flags.update(ow_post["flags"])
-            context.update({
-                k: v for k, v in ow_post.items() if k != "flags"
-            })
+            context.update({k: v for k, v in ow_post.items() if k != "flags"})
 
         # Lens 2: options_watch pre-open
         ow_pre = options_pre.get(ticker)
@@ -231,48 +234,58 @@ def fuse_verdicts(
         any_high = any(
             f in all_flags
             for f in {
-                "IV_RAMP_HIGH", "SURFACE_MOVE_HIGH", "EVENT_PREMIUM",
-                "EXTREME_SKEW", "QUIET_BEFORE_CATALYST", "REACTION_MISMATCH",
+                "IV_RAMP_HIGH",
+                "SURFACE_MOVE_HIGH",
+                "EVENT_PREMIUM",
+                "EXTREME_SKEW",
+                "QUIET_BEFORE_CATALYST",
+                "REACTION_MISMATCH",
             }
         )
         cat_days = context.get("catalyst_days")
         near_catalyst = cat_days is not None and cat_days <= 14
 
         severity = _classify_fused_severity(
-            len(lenses_active), any_high, near_catalyst,
+            len(lenses_active),
+            any_high,
+            near_catalyst,
         )
 
         # State transition
         was_active = ticker in prior
         state = "ongoing" if was_active else "new"
 
-        verdicts.append({
-            "ticker": ticker,
-            "severity": severity,
-            "n_lenses": len(lenses_active),
-            "lenses": lenses_active,
-            "flags": sorted(all_flags),
-            "near_catalyst": near_catalyst,
-            "catalyst_days": cat_days,
-            "tier": context.get("tier", ""),
-            "state": state,
-            **{k: v for k, v in context.items() if k not in ("flags", "tier")},
-        })
+        verdicts.append(
+            {
+                "ticker": ticker,
+                "severity": severity,
+                "n_lenses": len(lenses_active),
+                "lenses": lenses_active,
+                "flags": sorted(all_flags),
+                "near_catalyst": near_catalyst,
+                "catalyst_days": cat_days,
+                "tier": context.get("tier", ""),
+                "state": state,
+                **{k: v for k, v in context.items() if k not in ("flags", "tier")},
+            }
+        )
 
     # Add resolved tickers (were active yesterday, not today)
     for ticker, prev in prior.items():
         if ticker not in all_tickers:
-            verdicts.append({
-                "ticker": ticker,
-                "severity": "RESOLVED",
-                "n_lenses": 0,
-                "lenses": [],
-                "flags": [],
-                "near_catalyst": False,
-                "catalyst_days": prev.get("catalyst_days"),
-                "tier": prev.get("tier", ""),
-                "state": "resolved",
-            })
+            verdicts.append(
+                {
+                    "ticker": ticker,
+                    "severity": "RESOLVED",
+                    "n_lenses": 0,
+                    "lenses": [],
+                    "flags": [],
+                    "near_catalyst": False,
+                    "catalyst_days": prev.get("catalyst_days"),
+                    "tier": prev.get("tier", ""),
+                    "state": "resolved",
+                }
+            )
 
     # Sort: HIGH first, then MEDIUM, then RESOLVED
     sev_order = {"HIGH": 0, "MEDIUM": 1, "RESOLVED": 2}
@@ -301,7 +314,10 @@ def build_options_verdict(
 
     logger.info(
         "Lenses loaded: options_post=%d, options_pre=%d, surface_delta=%d, price_action=%d",
-        len(options_post), len(options_pre), len(surface_delta), len(price_action),
+        len(options_post),
+        len(options_pre),
+        len(surface_delta),
+        len(price_action),
     )
 
     # Load prior verdict for state transitions
@@ -310,9 +326,7 @@ def build_options_verdict(
 
     prior_verdicts: Dict[str, Dict] = {}
     prior_dates = sorted(
-        f.stem.split("_")[0]
-        for f in out_dir.glob("*_verdict.json")
-        if f.stem.split("_")[0] < as_of_date
+        f.stem.split("_")[0] for f in out_dir.glob("*_verdict.json") if f.stem.split("_")[0] < as_of_date
     )
     if prior_dates:
         prior_data = _load_json(out_dir / f"{prior_dates[-1]}_verdict.json")
@@ -323,7 +337,10 @@ def build_options_verdict(
 
     # Fuse
     verdicts = fuse_verdicts(
-        options_post, options_pre, surface_delta, price_action,
+        options_post,
+        options_pre,
+        surface_delta,
+        price_action,
         prior_verdicts=prior_verdicts,
     )
 
@@ -389,13 +406,14 @@ def _format_md(d: Dict[str, Any]) -> str:
         lines.append("|--------|------|-----|--------|-------|-------|")
         for v in sev_v:
             cat = v.get("catalyst_days", "-")
-            lenses = ",".join(l.replace("options_watch_", "ow_").replace("surface_delta", "sd").replace("price_action", "pa") for l in v["lenses"])
+            lenses = ",".join(
+                l.replace("options_watch_", "ow_").replace("surface_delta", "sd").replace("price_action", "pa")
+                for l in v["lenses"]
+            )
             flags = ", ".join(v["flags"][:4])
             if len(v["flags"]) > 4:
                 flags += f" +{len(v['flags']) - 4}"
-            lines.append(
-                f"| {v['ticker']} | {v.get('tier', '?')} | {cat} | {lenses} | {v['state']} | {flags} |"
-            )
+            lines.append(f"| {v['ticker']} | {v.get('tier', '?')} | {cat} | {lenses} | {v['state']} | {flags} |")
         lines.append("")
 
     resolved = [v for v in verdicts if v["severity"] == "RESOLVED"]
@@ -422,9 +440,7 @@ def _format_md(d: Dict[str, Any]) -> str:
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Options verdict — fused multi-lens alert aggregation"
-    )
+    parser = argparse.ArgumentParser(description="Options verdict — fused multi-lens alert aggregation")
     parser.add_argument(
         "--as-of-date",
         default=datetime.now(timezone.utc).strftime("%Y-%m-%d"),
@@ -441,8 +457,11 @@ def main():
 
     logger.info(
         "Verdict: %d active (H=%d M=%d), %d new, %d resolved",
-        result["n_tickers"], result["n_high"], result["n_medium"],
-        result["n_new"], result["n_resolved"],
+        result["n_tickers"],
+        result["n_high"],
+        result["n_medium"],
+        result["n_new"],
+        result["n_resolved"],
     )
 
 

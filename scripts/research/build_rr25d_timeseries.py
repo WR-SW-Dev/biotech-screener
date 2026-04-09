@@ -16,6 +16,7 @@ Usage:
         --output data/research/rr25d_timeseries.csv \
         --candidates-output output/rr25d_shift_candidates/rr25d_shift_candidates.csv
 """
+
 from __future__ import annotations
 
 import argparse

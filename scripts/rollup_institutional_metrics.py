@@ -12,6 +12,7 @@ Defaults:
     --snapshot-dir  data/snapshots
     --output        output/institutional_metrics_timeseries.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -89,21 +90,23 @@ def collect_institutional_metrics(
         nonzero_count = len(nonzero)
         nonzero_pct = round(100.0 * nonzero_count / n_universe, 2) if n_universe else 0.0
 
-        rows.append({
-            "as_of_date": data.get("as_of_date", d.name),
-            "prior_date": data.get("prior_date", ""),
-            "tickers_in_universe": n_universe,
-            "tickers_common": data.get("tickers_common", ""),
-            "nonzero_count": nonzero_count,
-            "nonzero_pct": nonzero_pct,
-            "total_new": sum(new_counts),
-            "total_exit": sum(exit_counts),
-            "total_net": sum(net_deltas),
-            "max_abs_net": max((abs(n) for n in net_deltas), default=0),
-            "positive_net_count": sum(1 for n in net_deltas if n > 0),
-            "negative_net_count": sum(1 for n in net_deltas if n < 0),
-            "coverage_guard_active": 1 if nonzero_pct < min_nonzero_pct else 0,
-        })
+        rows.append(
+            {
+                "as_of_date": data.get("as_of_date", d.name),
+                "prior_date": data.get("prior_date", ""),
+                "tickers_in_universe": n_universe,
+                "tickers_common": data.get("tickers_common", ""),
+                "nonzero_count": nonzero_count,
+                "nonzero_pct": nonzero_pct,
+                "total_new": sum(new_counts),
+                "total_exit": sum(exit_counts),
+                "total_net": sum(net_deltas),
+                "max_abs_net": max((abs(n) for n in net_deltas), default=0),
+                "positive_net_count": sum(1 for n in net_deltas if n > 0),
+                "negative_net_count": sum(1 for n in net_deltas if n < 0),
+                "coverage_guard_active": 1 if nonzero_pct < min_nonzero_pct else 0,
+            }
+        )
 
     rows.sort(key=lambda r: r.get("as_of_date", ""))
     return rows
@@ -168,15 +171,16 @@ def main(argv: list[str] | None = None) -> int:
 
     # Print summary
     guard_active = sum(1 for r in rows if r["coverage_guard_active"])
-    print(f"  Coverage guard active: {guard_active}/{len(rows)} dates "
-          f"({100 * guard_active / len(rows):.0f}%)")
+    print(f"  Coverage guard active: {guard_active}/{len(rows)} dates " f"({100 * guard_active / len(rows):.0f}%)")
     if rows:
         latest = rows[-1]
-        print(f"  Latest ({latest['as_of_date']}): "
-              f"nonzero={latest['nonzero_count']}/{latest['tickers_in_universe']} "
-              f"({latest['nonzero_pct']}%), "
-              f"net={latest['total_net']}, "
-              f"guard={'ON' if latest['coverage_guard_active'] else 'OFF'}")
+        print(
+            f"  Latest ({latest['as_of_date']}): "
+            f"nonzero={latest['nonzero_count']}/{latest['tickers_in_universe']} "
+            f"({latest['nonzero_pct']}%), "
+            f"net={latest['total_net']}, "
+            f"guard={'ON' if latest['coverage_guard_active'] else 'OFF'}"
+        )
     return 0
 
 

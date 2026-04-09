@@ -18,11 +18,11 @@ Usage:
     from common.options_verdict_features import compute_verdict_features
     features = compute_verdict_features(verdict_artifact, ticker)
 """
+
 from __future__ import annotations
 
 from decimal import Decimal
 from typing import Any, Dict, List, Optional
-
 
 _D = Decimal
 _SEVERITY_SCORE = {"HIGH": _D("2"), "MEDIUM": _D("1"), "RESOLVED": _D("0")}

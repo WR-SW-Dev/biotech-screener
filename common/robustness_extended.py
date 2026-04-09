@@ -10,22 +10,22 @@ Provides advanced robustness features beyond the base module:
 - Module health checks and self-diagnostics
 - Watchdog for detecting stuck operations
 """
+
 from __future__ import annotations
 
 import functools
 import hashlib
 import json
 import logging
-import signal
 import threading
 import time
 import types
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
-from typing import Any, Callable, Dict, Generic, List, Mapping, NoReturn, Optional, Set, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Tuple, TypeVar, Union
 
 # Type alias for JSON-serializable data
 JsonSerializable = Union[str, int, float, bool, None, List["JsonSerializable"], Dict[str, "JsonSerializable"]]
@@ -75,6 +75,7 @@ T = TypeVar("T")
 # TIMEOUT PROTECTION
 # ============================================================================
 
+
 class TimeoutError(Exception):
     """Raised when an operation exceeds its timeout."""
 
@@ -87,6 +88,7 @@ class TimeoutError(Exception):
 @dataclass
 class TimeoutConfig:
     """Configuration for timeout protection."""
+
     timeout_seconds: float = 30.0
     raise_on_timeout: bool = True
     default_value: Any = None
@@ -150,8 +152,7 @@ def with_timeout(config: Optional[TimeoutConfig] = None) -> Callable[[Callable[.
                     )
 
                 logger.warning(
-                    f"Operation '{func.__name__}' timed out after {config.timeout_seconds}s, "
-                    f"returning default value"
+                    f"Operation '{func.__name__}' timed out after {config.timeout_seconds}s, " "returning default value"
                 )
                 return config.default_value
 
@@ -162,6 +163,7 @@ def with_timeout(config: Optional[TimeoutConfig] = None) -> Callable[[Callable[.
             return result[0]
 
         return wrapper
+
     return decorator
 
 
@@ -194,20 +196,23 @@ def run_with_timeout(
 # STATEFUL CIRCUIT BREAKER
 # ============================================================================
 
+
 class CircuitState(Enum):
     """Circuit breaker states."""
-    CLOSED = "closed"      # Normal operation, tracking failures
-    OPEN = "open"          # Failing fast, not executing
+
+    CLOSED = "closed"  # Normal operation, tracking failures
+    OPEN = "open"  # Failing fast, not executing
     HALF_OPEN = "half_open"  # Testing if service recovered
 
 
 @dataclass
 class StatefulCircuitBreakerConfig:
     """Configuration for stateful circuit breaker."""
-    failure_threshold: int = 5          # Failures before opening
-    success_threshold: int = 3          # Successes in half-open to close
-    timeout_seconds: float = 60.0       # Time to wait before half-open
-    half_open_max_calls: int = 3        # Max calls allowed in half-open
+
+    failure_threshold: int = 5  # Failures before opening
+    success_threshold: int = 3  # Successes in half-open to close
+    timeout_seconds: float = 60.0  # Time to wait before half-open
+    half_open_max_calls: int = 3  # Max calls allowed in half-open
 
     # Failure tracking window
     window_size_seconds: float = 120.0  # Time window for counting failures
@@ -330,18 +335,13 @@ class StatefulCircuitBreaker:
 
             if self._state == CircuitState.HALF_OPEN:
                 # Any failure in half-open reopens the circuit
-                logger.warning(
-                    f"Circuit breaker '{self.name}': HALF_OPEN → OPEN (failure: {error})"
-                )
+                logger.warning(f"Circuit breaker '{self.name}': HALF_OPEN → OPEN (failure: {error})")
                 self._state = CircuitState.OPEN
                 self._opened_at = now
 
             elif self._state == CircuitState.CLOSED:
                 if self._failure_count >= self.config.failure_threshold:
-                    logger.warning(
-                        f"Circuit breaker '{self.name}': CLOSED → OPEN "
-                        f"({self._failure_count} failures)"
-                    )
+                    logger.warning(f"Circuit breaker '{self.name}': CLOSED → OPEN " f"({self._failure_count} failures)")
                     self._state = CircuitState.OPEN
                     self._opened_at = now
 
@@ -377,12 +377,11 @@ class StatefulCircuitBreaker:
             def my_function():
                 ...
         """
+
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             if not self.allow_request():
-                raise RuntimeError(
-                    f"Circuit breaker '{self.name}' is OPEN - request rejected"
-                )
+                raise RuntimeError(f"Circuit breaker '{self.name}' is OPEN - request rejected")
 
             try:
                 result = func(*args, **kwargs)
@@ -399,13 +398,15 @@ class StatefulCircuitBreaker:
 # OPERATION THROTTLING
 # ============================================================================
 
+
 @dataclass
 class ThrottleConfig:
     """Configuration for operation throttling."""
-    max_calls: int = 10            # Maximum calls allowed
-    period_seconds: float = 1.0    # Time period for the limit
-    burst_allowance: int = 0       # Extra calls allowed in burst
-    wait_on_limit: bool = True     # If True, wait; if False, raise error
+
+    max_calls: int = 10  # Maximum calls allowed
+    period_seconds: float = 1.0  # Time period for the limit
+    burst_allowance: int = 0  # Extra calls allowed in burst
+    wait_on_limit: bool = True  # If True, wait; if False, raise error
 
 
 class Throttler:
@@ -480,10 +481,12 @@ class Throttler:
 
     def throttle(self, func: Callable[..., T]) -> Callable[..., T]:
         """Decorator to throttle function calls."""
+
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             self.acquire()
             return func(*args, **kwargs)
+
         return wrapper
 
     def get_stats(self) -> Dict[str, Union[str, int, float]]:
@@ -511,10 +514,13 @@ def with_throttle(
         def rate_limited_function():
             ...
     """
-    throttler = Throttler("inline", ThrottleConfig(
-        max_calls=max_calls,
-        period_seconds=period_seconds,
-    ))
+    throttler = Throttler(
+        "inline",
+        ThrottleConfig(
+            max_calls=max_calls,
+            period_seconds=period_seconds,
+        ),
+    )
     return throttler.throttle
 
 
@@ -522,9 +528,11 @@ def with_throttle(
 # DATA INTEGRITY VERIFICATION
 # ============================================================================
 
+
 @dataclass
 class IntegrityConfig:
     """Configuration for data integrity verification."""
+
     hash_algorithm: str = "sha256"
     include_metadata: bool = True
     strict_mode: bool = False  # Raise on mismatch
@@ -533,6 +541,7 @@ class IntegrityConfig:
 @dataclass
 class IntegrityResult:
     """Result of integrity verification."""
+
     is_valid: bool
     expected_hash: Optional[str]
     actual_hash: str
@@ -542,6 +551,7 @@ class IntegrityResult:
 
 def _stable_json_dumps(obj: Union[Dict[str, Any], List[Any], str, int, float, bool, None]) -> str:
     """Deterministic JSON serialization for hashing."""
+
     def default_serializer(o: Union[date, datetime, Decimal, set, object]) -> Union[str, List[str], Dict[str, Any]]:
         if isinstance(o, date):
             return o.isoformat()
@@ -647,9 +657,11 @@ def verify_data_integrity(
 # IDEMPOTENCY TRACKING
 # ============================================================================
 
+
 @dataclass
 class IdempotencyKey:
     """Key for idempotent operation tracking."""
+
     operation: str
     key: str
     timestamp: float = field(default_factory=time.time)
@@ -684,10 +696,7 @@ class IdempotencyStore:
     def _cleanup_old_entries(self) -> None:
         """Remove expired entries."""
         now = time.time()
-        expired = [
-            k for k, v in self._entries.items()
-            if (now - v.timestamp) > self._ttl_seconds
-        ]
+        expired = [k for k, v in self._entries.items() if (now - v.timestamp) > self._ttl_seconds]
         for k in expired:
             del self._entries[k]
             self._results.pop(k, None)
@@ -771,6 +780,7 @@ def idempotent(store: IdempotencyStore, key_func: Callable[..., str]) -> Callabl
         def process_ticker(ticker: str, date: str):
             ...
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
@@ -790,6 +800,7 @@ def idempotent(store: IdempotencyStore, key_func: Callable[..., str]) -> Callabl
                 raise
 
         return wrapper
+
     return decorator
 
 
@@ -797,8 +808,10 @@ def idempotent(store: IdempotencyStore, key_func: Callable[..., str]) -> Callabl
 # MODULE HEALTH CHECKS
 # ============================================================================
 
+
 class HealthStatus(Enum):
     """Health check status."""
+
     HEALTHY = "healthy"
     DEGRADED = "degraded"
     UNHEALTHY = "unhealthy"
@@ -808,6 +821,7 @@ class HealthStatus(Enum):
 @dataclass
 class HealthCheckResult:
     """Result of a health check."""
+
     name: str
     status: HealthStatus
     message: str
@@ -920,14 +934,15 @@ class ModuleHealthChecker:
 # WATCHDOG FOR STUCK OPERATIONS
 # ============================================================================
 
+
 class WatchdogTimeoutError(Exception):
     """Raised when watchdog detects a stuck operation."""
-    pass
 
 
 @dataclass
 class WatchdogConfig:
     """Configuration for operation watchdog."""
+
     timeout_seconds: float = 300.0  # 5 minutes default
     check_interval_seconds: float = 10.0
     on_timeout: str = "warn"  # "warn", "raise", or "callback"
@@ -1064,6 +1079,7 @@ class OperationWatchdog:
 # ============================================================================
 # CONVENIENCE FUNCTIONS
 # ============================================================================
+
 
 def create_robust_pipeline_context(
     correlation_id: Optional[str] = None,

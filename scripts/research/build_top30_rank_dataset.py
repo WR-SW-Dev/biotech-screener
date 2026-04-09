@@ -342,7 +342,7 @@ def main():
 
     # Print summary
     print(f"\n{'='*65}")
-    print(f"TOP-30 RANK DATASET")
+    print("TOP-30 RANK DATASET")
     print(f"{'='*65}")
     print(f"Date range: {s['date_range']}")
     print(f"Snapshots: {s['n_snapshots']}")
@@ -350,16 +350,16 @@ def main():
     print(f"Pairwise rows: {s['n_pairwise_rows']}")
 
     if s.get("mean_top_bottom_spread_h20") is not None:
-        print(f"\nWithin-top-30 spread (h20):")
+        print("\nWithin-top-30 spread (h20):")
         print(f"  Mean top-10 vs bottom-10: {s['mean_top_bottom_spread_h20']:+.4f}")
         print(f"  Median:                   {s['median_top_bottom_spread_h20']:+.4f}")
         print(f"  Spread positive:          {s['spread_positive_pct']:.1%}")
 
-    print(f"\nFeature coverage (top 10 / bottom 5):")
+    print("\nFeature coverage (top 10 / bottom 5):")
     sorted_cov = sorted(s["feature_coverage"].items(), key=lambda x: -x[1])
     for f, c in sorted_cov[:10]:
         print(f"  {f:<40} {c:.1%}")
-    print(f"  ...")
+    print("  ...")
     for f, c in sorted_cov[-5:]:
         print(f"  {f:<40} {c:.1%}")
 

@@ -10,6 +10,7 @@ Usage:
         --output production_data/alpha_cohort_tables/v1.json \
         --horizon 126 --start 2024-01-31 --end 2025-07-31
 """
+
 from __future__ import annotations
 
 import argparse

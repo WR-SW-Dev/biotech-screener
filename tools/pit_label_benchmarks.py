@@ -10,6 +10,7 @@ Usage:
     python tools/pit_label_benchmarks.py
     python tools/pit_label_benchmarks.py --dry-run
 """
+
 from __future__ import annotations
 
 import argparse

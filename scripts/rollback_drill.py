@@ -14,15 +14,15 @@ Usage:
     python3 scripts/rollback_drill.py --n-snapshots 10
     python3 scripts/rollback_drill.py --json              # emit JSON to stdout
 """
+
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
@@ -36,11 +36,12 @@ MANIFEST_PATH = _PROJECT_ROOT / "production_data" / "decision_rulesets" / "manif
 RULESETS_DIR = _PROJECT_ROOT / "production_data" / "decision_rulesets"
 
 # Cross-compare thresholds: below these values → adds a reason
-_CROSS_OVERLAP_WARN = 90.0   # top-20 overlap (active vs LKG)
+_CROSS_OVERLAP_WARN = 90.0  # top-20 overlap (active vs LKG)
 _CROSS_OVERLAP60_WARN = 87.0  # top-60 overlap (active vs LKG)
 
 
 # ── Manifest helpers ──────────────────────────────────────────────────────────
+
 
 def _load_manifest() -> Dict[str, Any]:
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
@@ -68,11 +69,11 @@ def _load_ruleset(entry: Dict) -> Optional[DecisionRuleset]:
     if not path.is_file():
         return None
     data = json.loads(path.read_text(encoding="utf-8"))
-    return DecisionRuleset(**{k: v for k, v in data.items()
-                               if k in DecisionRuleset.__dataclass_fields__})
+    return DecisionRuleset(**{k: v for k, v in data.items() if k in DecisionRuleset.__dataclass_fields__})
 
 
 # ── Snapshot helpers ──────────────────────────────────────────────────────────
+
 
 def _production_snapshot_dates() -> List[str]:
     """Return sorted list of YYYY-MM-DD snapshot dirs."""
@@ -97,6 +98,7 @@ def _load_ruleset_health(as_of_date: str) -> Dict:
 
 # ── Reason builder ────────────────────────────────────────────────────────────
 
+
 def _build_reasons(
     rh: Dict,
     cross: Dict,
@@ -119,8 +121,7 @@ def _build_reasons(
         top60 = cross.get("mean_top60_overlap")
         if top20 is not None and top20 < _CROSS_OVERLAP_WARN:
             reasons.append(
-                f"cross-compare: mean top-20 overlap vs LKG = {top20:.1f}% "
-                f"(< {_CROSS_OVERLAP_WARN:.0f}% threshold)"
+                f"cross-compare: mean top-20 overlap vs LKG = {top20:.1f}% " f"(< {_CROSS_OVERLAP_WARN:.0f}% threshold)"
             )
         if top60 is not None and top60 < _CROSS_OVERLAP60_WARN:
             reasons.append(
@@ -132,6 +133,7 @@ def _build_reasons(
 
 
 # ── Main drill ────────────────────────────────────────────────────────────────
+
 
 def run_drill(
     as_of_date: str,
@@ -233,6 +235,7 @@ def run_drill(
 
 # ── Renderers ─────────────────────────────────────────────────────────────────
 
+
 def _v(val: Any, fmt: str = "", suffix: str = "") -> str:
     if val is None:
         return "—"
@@ -262,9 +265,7 @@ def render_markdown(drill: Dict) -> str:
         f"| Active | `{drill['active']['id']}` | `{drill['active']['file']}` |",
     ]
     if drill["lkg"]["id"]:
-        lines.append(
-            f"| LKG | `{drill['lkg']['id']}` | `{drill['lkg']['file']}` |"
-        )
+        lines.append(f"| LKG | `{drill['lkg']['id']}` | `{drill['lkg']['file']}` |")
     else:
         lines.append("| LKG | — | _(none found in manifest)_ |")
     lines.append("")
@@ -272,8 +273,8 @@ def render_markdown(drill: Dict) -> str:
     lines += [
         "## Ruleset Health",
         "",
-        f"| Metric | Value |",
-        f"|--------|-------|",
+        "| Metric | Value |",
+        "|--------|-------|",
         f"| Status | `{rh['status']}` |",
         f"| Consecutive WARNs | {rh['consecutive_warn_days']}d |",
         f"| recommend_rollback | {'**YES**' if rh['recommend_rollback'] else 'no'} |",
@@ -408,8 +409,7 @@ def render_text(drill: Dict) -> str:
         reason_str = drill["reasons"][0] if drill["reasons"] else "rollback drill triggered"
         lines += [
             "To execute rollback:",
-            f"  python3 scripts/promote_ruleset.py --rollback "
-            f"--reason \"drill: {reason_str}\"",
+            "  python3 scripts/promote_ruleset.py --rollback " f'--reason "drill: {reason_str}"',
             "",
         ]
 
@@ -419,29 +419,34 @@ def render_text(drill: Dict) -> str:
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Rollback drill — read-only diagnostic for active ruleset health",
         allow_abbrev=False,
     )
     parser.add_argument(
-        "--as-of-date", default=None,
+        "--as-of-date",
+        default=None,
         help="YYYY-MM-DD snapshot date (default: latest production snapshot)",
     )
     parser.add_argument(
-        "--n-snapshots", type=int, default=5,
+        "--n-snapshots",
+        type=int,
+        default=5,
         help="Number of recent snapshots to use for cross-compare (default: 5)",
     )
     parser.add_argument(
-        "--json", dest="emit_json", action="store_true",
+        "--json",
+        dest="emit_json",
+        action="store_true",
         help="Emit JSON to stdout instead of human-readable text",
     )
     parser.add_argument(
-        "--out-dir", type=Path, default=None,
-        help=(
-            "Write ROLLBACK.md + ROLLBACK.json to this directory "
-            "(always written regardless of --json flag)"
-        ),
+        "--out-dir",
+        type=Path,
+        default=None,
+        help=("Write ROLLBACK.md + ROLLBACK.json to this directory " "(always written regardless of --json flag)"),
     )
     args = parser.parse_args()
 

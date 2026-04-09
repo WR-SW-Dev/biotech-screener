@@ -25,6 +25,7 @@ Usage:
     python scripts/research/anchor_replay.py \
         --date-grid weekly --date-from 2024-01-01 --date-to 2025-12-31
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,7 +39,6 @@ import statistics
 import sys
 import tarfile
 import time
-from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -48,7 +48,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from common.ranking_utils import backfill_columns, safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-from module_5_alpha_cohort import attach_alpha_scores, compute_alpha_raw
+from module_5_alpha_cohort import attach_alpha_scores
 from scripts.build_alpha_cohort_table import backfill_clinical_z_tier
 from scripts.build_alpha_cohort_table_oos import build_oos_table
 
@@ -57,6 +57,7 @@ log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Archive loading
 # ---------------------------------------------------------------------------
+
 
 def discover_archives(
     archive_dir: Path,
@@ -72,6 +73,7 @@ def discover_archives(
       "weekly"  — keep only one archive per ISO week (prefer last day)
     """
     import re
+
     pattern = re.compile(r"(\d{4}-\d{2}-\d{2})\.tar\.gz$")
     all_archives: List[Tuple[str, Path]] = []
     for p in sorted(archive_dir.glob("*.tar.gz")):
@@ -100,6 +102,7 @@ def discover_archives(
     if date_grid == "weekly":
         # Keep last archive per ISO year-week
         from datetime import date as dt_date
+
         by_week: Dict[str, Tuple[str, Path]] = {}
         for d, p in all_archives:
             parts = d.split("-")
@@ -135,6 +138,7 @@ def discover_snapshots(
 ) -> List[Tuple[str, Path]]:
     """Find PIT snapshot directories in date range."""
     import re
+
     pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
     all_snaps: List[Tuple[str, Path]] = []
     for p in sorted(snapshot_root.iterdir()):
@@ -158,6 +162,7 @@ def discover_snapshots(
         return sorted(by_month.values(), key=lambda x: x[0])
     if date_grid == "weekly":
         from datetime import date as dt_date
+
         by_week: Dict[str, Tuple[str, Path]] = {}
         for d, p in all_snaps:
             parts = d.split("-")
@@ -180,6 +185,7 @@ def load_snapshot_rankings(snap_dir: Path) -> List[Dict[str, str]]:
 # ---------------------------------------------------------------------------
 # Price loading
 # ---------------------------------------------------------------------------
+
 
 def load_price_series(csv_path: Path) -> Dict[str, Dict[str, float]]:
     """Load price_history.csv -> {ticker: {date_str: close}}."""
@@ -225,6 +231,7 @@ def compute_forward_return(
 # ---------------------------------------------------------------------------
 # IC + portfolio eval
 # ---------------------------------------------------------------------------
+
 
 def _avg_ranks(values: List[float]) -> List[float]:
     n = len(values)
@@ -272,6 +279,7 @@ def compute_turnover(prev_set: List[str], curr_set: List[str]) -> float:
 # Paired statistics
 # ---------------------------------------------------------------------------
 
+
 def paired_stats(
     a_vals: List[float],
     b_vals: List[float],
@@ -285,9 +293,13 @@ def paired_stats(
     n = min(len(a_vals), len(b_vals))
     if n < 3:
         return {
-            "n": n, "mean_delta": None, "std_delta": None,
-            "t_stat": None, "p_value": None,
-            "ci_lo_95": None, "ci_hi_95": None,
+            "n": n,
+            "mean_delta": None,
+            "std_delta": None,
+            "t_stat": None,
+            "p_value": None,
+            "ci_lo_95": None,
+            "ci_hi_95": None,
         }
 
     deltas = [b_vals[i] - a_vals[i] for i in range(n)]
@@ -331,14 +343,14 @@ def _normal_sf(z: float) -> float:
         return 1.0 - _normal_sf(-z)
     t = 1.0 / (1.0 + 0.2316419 * z)
     d = 0.3989422804014327  # 1/sqrt(2*pi)
-    poly = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937
-           + t * (-1.821255978 + t * 1.330274429))))
+    poly = t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))))
     return d * math.exp(-0.5 * z * z) * poly
 
 
 # ---------------------------------------------------------------------------
 # Re-ranking
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class AnchorConfig:
@@ -377,18 +389,20 @@ def rerank_rows(
             return safe_float(r.get("_blend_pct")) or 0.0
         return 0.0
 
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=_get_tiebreaker(r),
-        alpha_raw=safe_float(r.get("alpha_cohort_raw")),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=_get_tiebreaker(r),
+            alpha_raw=safe_float(r.get("alpha_cohort_raw")),
+        )
+    )
 
     rank = 1
     for r in rows:
@@ -405,17 +419,18 @@ def rerank_rows(
 # Date evaluation
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class QuintileResult:
     q_means: List[float] = field(default_factory=list)  # [q1..q5]
-    spread: Optional[float] = None   # q1 - q5
+    spread: Optional[float] = None  # q1 - q5
     universe_mean: Optional[float] = None
     q1_excess: Optional[float] = None
     q5_excess: Optional[float] = None
     n_ranked: int = 0
-    monotone: bool = False            # Q1>Q2>Q3>Q4>Q5
-    q1_gt_q5: bool = False            # Q1>Q5 (weak monotonicity)
-    slope: Optional[float] = None     # linear fit: quintile index vs return
+    monotone: bool = False  # Q1>Q2>Q3>Q4>Q5
+    q1_gt_q5: bool = False  # Q1>Q5 (weak monotonicity)
+    slope: Optional[float] = None  # linear fit: quintile index vs return
 
 
 @dataclass
@@ -534,6 +549,7 @@ def evaluate_date(
 # Report generation
 # ---------------------------------------------------------------------------
 
+
 def write_summary_md(
     out_path: Path,
     summary_rows: List[Dict[str, Any]],
@@ -559,12 +575,12 @@ def write_summary_md(
     lines.append("## Aggregate Metrics (common-date intersection)\n")
     h_parts = ["Config"]
     for h in horizons:
-        h_parts += [f"IC({h}d)", f"ΔIC", f"Hit", f"n"]
+        h_parts += [f"IC({h}d)", "ΔIC", "Hit", "n"]
     h_parts += ["Turnover"]
     for h in horizons:
         h_parts += [f"Ret({h}d)"]
     for h in horizons:
-        h_parts += [f"Sprd({h}d)", f"ΔSprd", f"S>0", f"Mono%", f"Q1>5", f"Slope"]
+        h_parts += [f"Sprd({h}d)", "ΔSprd", "S>0", "Mono%", "Q1>5", "Slope"]
     lines.append("| " + " | ".join(h_parts) + " |")
     lines.append("|" + "|".join(["---"] * len(h_parts)) + "|")
 
@@ -624,33 +640,38 @@ def write_summary_md(
             ref_ics = ref["ic_by_h"][h]
             cand_ics = config_results[cfg.label]["ic_by_h"][h]
             ps = paired_stats(ref_ics, cand_ics)
-            lines.append(f"**IC({h}d)**: ΔIC={ps['mean_delta']}, "
-                         f"std={ps['std_delta']}, t={ps['t_stat']}, "
-                         f"p={ps['p_value']}, "
-                         f"95%CI=[{ps['ci_lo_95']}, {ps['ci_hi_95']}]")
+            lines.append(
+                f"**IC({h}d)**: ΔIC={ps['mean_delta']}, "
+                f"std={ps['std_delta']}, t={ps['t_stat']}, "
+                f"p={ps['p_value']}, "
+                f"95%CI=[{ps['ci_lo_95']}, {ps['ci_hi_95']}]"
+            )
 
             ref_rets = ref["ret_by_h"][h]
             cand_rets = config_results[cfg.label]["ret_by_h"][h]
             ps_r = paired_stats(ref_rets, cand_rets)
-            lines.append(f"**Ret({h}d)**: ΔRet={ps_r['mean_delta']}, "
-                         f"std={ps_r['std_delta']}, t={ps_r['t_stat']}, "
-                         f"p={ps_r['p_value']}, "
-                         f"95%CI=[{ps_r['ci_lo_95']}, {ps_r['ci_hi_95']}]")
+            lines.append(
+                f"**Ret({h}d)**: ΔRet={ps_r['mean_delta']}, "
+                f"std={ps_r['std_delta']}, t={ps_r['t_stat']}, "
+                f"p={ps_r['p_value']}, "
+                f"95%CI=[{ps_r['ci_lo_95']}, {ps_r['ci_hi_95']}]"
+            )
 
             ref_sp = ref["spread_by_h"][h]
             cand_sp = config_results[cfg.label]["spread_by_h"][h]
             if len(ref_sp) >= 3 and len(cand_sp) >= 3:
                 ps_s = paired_stats(ref_sp, cand_sp)
-                lines.append(f"**Spread({h}d)**: ΔSpread={ps_s['mean_delta']}, "
-                             f"std={ps_s['std_delta']}, t={ps_s['t_stat']}, "
-                             f"p={ps_s['p_value']}, "
-                             f"95%CI=[{ps_s['ci_lo_95']}, {ps_s['ci_hi_95']}]")
+                lines.append(
+                    f"**Spread({h}d)**: ΔSpread={ps_s['mean_delta']}, "
+                    f"std={ps_s['std_delta']}, t={ps_s['t_stat']}, "
+                    f"p={ps_s['p_value']}, "
+                    f"95%CI=[{ps_s['ci_lo_95']}, {ps_s['ci_hi_95']}]"
+                )
         lines.append("")
 
     # Promotion check
     lines.append("## Promotion Gate (ΔIC + ΔSpread + CI + Turnover)\n")
-    lines.append("Gates: ΔIC(60d) ≥ +0.005, ΔSpread(60d) ≥ +1.0% with CI_lo > 0, "
-                 "ΔTurnover ≤ +0.05\n")
+    lines.append("Gates: ΔIC(60d) ≥ +0.005, ΔSpread(60d) ≥ +1.0% with CI_lo > 0, " "ΔTurnover ≤ +0.05\n")
     ref_row = summary_rows[0]
     for sr in summary_rows[1:]:
         checks = []
@@ -706,33 +727,39 @@ def write_summary_md(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Promotion-grade anchor replay on monthly/weekly archives",
     )
-    parser.add_argument("--archive-dir", type=Path,
-                        default=PROJECT_ROOT / "data" / "archives")
-    parser.add_argument("--snapshot-root", type=Path, default=None,
-                        help="Use PIT snapshot dirs instead of archives")
-    parser.add_argument("--price-csv", type=Path,
-                        default=PROJECT_ROOT / "production_data" / "price_history.csv")
+    parser.add_argument("--archive-dir", type=Path, default=PROJECT_ROOT / "data" / "archives")
+    parser.add_argument("--snapshot-root", type=Path, default=None, help="Use PIT snapshot dirs instead of archives")
+    parser.add_argument("--price-csv", type=Path, default=PROJECT_ROOT / "production_data" / "price_history.csv")
     parser.add_argument("--date-from", type=str, default="2020-01-31")
     parser.add_argument("--date-to", type=str, default="2026-02-28")
-    parser.add_argument("--date-grid", type=str, default="monthly",
-                        choices=["monthly", "weekly", "all"],
-                        help="Date sampling grid (default: monthly)")
+    parser.add_argument(
+        "--date-grid",
+        type=str,
+        default="monthly",
+        choices=["monthly", "weekly", "all"],
+        help="Date sampling grid (default: monthly)",
+    )
     parser.add_argument("--horizons", type=str, default="20,60")
-    parser.add_argument("--alpha-table-horizon", type=int, default=None,
-                        help="Trading-day horizon for PIT alpha table build. "
-                             "Defaults to max(horizons). Pass explicitly to "
-                             "override (e.g. --alpha-table-horizon 84).")
+    parser.add_argument(
+        "--alpha-table-horizon",
+        type=int,
+        default=None,
+        help="Trading-day horizon for PIT alpha table build. "
+        "Defaults to max(horizons). Pass explicitly to "
+        "override (e.g. --alpha-table-horizon 84).",
+    )
     parser.add_argument("--top-k", type=int, default=20)
-    parser.add_argument("--min-eval-dates", type=int, default=12,
-                        help="Minimum eval dates with matured returns for reporting")
+    parser.add_argument(
+        "--min-eval-dates", type=int, default=12, help="Minimum eval dates with matured returns for reporting"
+    )
     parser.add_argument("--blend-weights", type=str, default="0.02,0.05,0.10")
     parser.add_argument("--out", type=Path, default=None)
-    parser.add_argument("--log-level", default="INFO",
-                        choices=["DEBUG", "INFO", "WARNING"])
+    parser.add_argument("--log-level", default="INFO", choices=["DEBUG", "INFO", "WARNING"])
     args = parser.parse_args()
 
     logging.basicConfig(
@@ -749,22 +776,26 @@ def main() -> None:
     use_snapshots = args.snapshot_root is not None
     if use_snapshots:
         archives = discover_snapshots(
-            args.snapshot_root, args.date_from, args.date_to, args.date_grid,
+            args.snapshot_root,
+            args.date_from,
+            args.date_to,
+            args.date_grid,
         )
         if not archives:
             print("No PIT snapshots found in range.")
             return
-        print(f"Snapshots: {len(archives)} ({args.date_grid} grid, "
-              f"{archives[0][0]} → {archives[-1][0]})")
+        print(f"Snapshots: {len(archives)} ({args.date_grid} grid, " f"{archives[0][0]} → {archives[-1][0]})")
     else:
         archives = discover_archives(
-            args.archive_dir, args.date_from, args.date_to, args.date_grid,
+            args.archive_dir,
+            args.date_from,
+            args.date_to,
+            args.date_grid,
         )
         if not archives:
             print("No archives found in range.")
             return
-        print(f"Archives: {len(archives)} ({args.date_grid} grid, "
-              f"{archives[0][0]} → {archives[-1][0]})")
+        print(f"Archives: {len(archives)} ({args.date_grid} grid, " f"{archives[0][0]} → {archives[-1][0]})")
 
     # ---- Load prices ----
     print("Loading prices ...")
@@ -777,11 +808,17 @@ def main() -> None:
 
     # ---- Build base ruleset ----
     snap_dir = PROJECT_ROOT / "data" / "snapshots"
-    dates_with_rs = sorted([
-        p.name for p in snap_dir.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "decision_ruleset.json").exists()
-    ]) if snap_dir.exists() else []
+    dates_with_rs = (
+        sorted(
+            [
+                p.name
+                for p in snap_dir.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
+        if snap_dir.exists()
+        else []
+    )
     if dates_with_rs:
         rs_path = snap_dir / dates_with_rs[-1] / "decision_ruleset.json"
         base_rs = DecisionRuleset.from_json(str(rs_path))
@@ -791,10 +828,7 @@ def main() -> None:
 
     from dataclasses import replace as dc_replace
 
-    rs_alpha = dc_replace(base_rs,
-                          sort_anchor="alpha_cohort",
-                          alpha_modifier_mode="off",
-                          alpha_modifier_weight=0.0)
+    rs_alpha = dc_replace(base_rs, sort_anchor="alpha_cohort", alpha_modifier_mode="off", alpha_modifier_weight=0.0)
 
     # ---- Define configs ----
     configs: List[AnchorConfig] = [
@@ -834,9 +868,7 @@ def main() -> None:
     print(f"\nEvaluating {len(configs)} configs × {len(archives)} dates ...")
 
     # Per-config accumulators: store per-date results
-    config_date_results: Dict[str, Dict[str, DateResult]] = {
-        cfg.label: {} for cfg in configs
-    }
+    config_date_results: Dict[str, Dict[str, DateResult]] = {cfg.label: {} for cfg in configs}
 
     config_results: Dict[str, Dict[str, Any]] = {}
     for cfg in configs:
@@ -872,7 +904,8 @@ def main() -> None:
             alpha_built = alpha_table is not None
             if alpha_built:
                 attach_alpha_scores(
-                    raw_rows, alpha_table,
+                    raw_rows,
+                    alpha_table,
                     shrink_k=base_rs.alpha_cohort_shrink_k,
                     clip_min=base_rs.alpha_cohort_clip_min,
                     clip_max=base_rs.alpha_cohort_clip_max,
@@ -907,7 +940,7 @@ def main() -> None:
                 if ret is not None:
                     acc["ret_by_h"][h].append(ret)
 
-            curr_topk = metrics.top_k_tickers[:args.top_k]
+            curr_topk = metrics.top_k_tickers[: args.top_k]
             if acc["prev_topk"]:
                 t = compute_turnover(acc["prev_topk"], curr_topk)
                 acc["turnovers"].append(t)
@@ -917,7 +950,7 @@ def main() -> None:
             entry: Dict[str, Any] = {
                 "n_eligible": metrics.n_eligible,
                 "alpha_table_built": alpha_built,
-                "top_k": metrics.top_k_tickers[:args.top_k],
+                "top_k": metrics.top_k_tickers[: args.top_k],
             }
             for h in horizons:
                 entry[f"ic_{h}d"] = metrics.ics.get(h)
@@ -937,8 +970,7 @@ def main() -> None:
 
         all_by_date[date_str] = date_entry
 
-        print(f"  {date_str}: {len(raw_rows)} tickers, "
-              f"alpha_table={'YES' if alpha_built else 'NO'}")
+        print(f"  {date_str}: {len(raw_rows)} tickers, " f"alpha_table={'YES' if alpha_built else 'NO'}")
 
     # ---- Common-date intersection ----
     # Find dates where ALL configs have valid IC for all horizons.
@@ -995,7 +1027,7 @@ def main() -> None:
                     acc["q1_gt_q5_by_h"][h].append(qr.q1_gt_q5)
                     if qr.slope is not None:
                         acc["slope_by_h"][h].append(qr.slope)
-            curr_topk = dr.top_k_tickers[:args.top_k]
+            curr_topk = dr.top_k_tickers[: args.top_k]
             if prev_topk:
                 acc["turnovers"].append(compute_turnover(prev_topk, curr_topk))
             prev_topk = curr_topk
@@ -1003,8 +1035,7 @@ def main() -> None:
     # ---- Aggregate + report ----
     print("\n" + "=" * 120)
     print("# Anchor Replay Results (common-date intersection)")
-    print(f"# Grid: {args.date_grid}, dates: {len(common_dates)}, "
-          f"horizons: {horizons}, top_k: {args.top_k}")
+    print(f"# Grid: {args.date_grid}, dates: {len(common_dates)}, " f"horizons: {horizons}, top_k: {args.top_k}")
     print()
 
     header = f"{'Config':<22s}"
@@ -1111,11 +1142,13 @@ def main() -> None:
             ref_ics = ref["ic_by_h"][h]
             cand_ics = config_results[cfg.label]["ic_by_h"][h]
             ps = paired_stats(ref_ics, cand_ics)
-            print(f"  {cfg.label} IC({h}d): ΔIC={ps['mean_delta']:+.4f}, "
-                  f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
-                  f"95%CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
-                  if ps['mean_delta'] is not None else
-                  f"  {cfg.label} IC({h}d): insufficient data")
+            print(
+                f"  {cfg.label} IC({h}d): ΔIC={ps['mean_delta']:+.4f}, "
+                f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
+                f"95%CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
+                if ps["mean_delta"] is not None
+                else f"  {cfg.label} IC({h}d): insufficient data"
+            )
 
     # Spread paired stats
     print()
@@ -1127,14 +1160,15 @@ def main() -> None:
             cand_sp = config_results[cfg.label]["spread_by_h"][h]
             if len(ref_sp) >= 3 and len(cand_sp) >= 3:
                 ps = paired_stats(ref_sp, cand_sp)
-                print(f"  {cfg.label} Spread({h}d): Δ={ps['mean_delta']:+.4f}, "
-                      f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
-                      f"95%CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
-                      if ps['mean_delta'] is not None else
-                      f"  {cfg.label} Spread({h}d): insufficient data")
+                print(
+                    f"  {cfg.label} Spread({h}d): Δ={ps['mean_delta']:+.4f}, "
+                    f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
+                    f"95%CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
+                    if ps["mean_delta"] is not None
+                    else f"  {cfg.label} Spread({h}d): insufficient data"
+                )
             else:
-                print(f"  {cfg.label} Spread({h}d): insufficient data "
-                      f"(ref={len(ref_sp)}, cand={len(cand_sp)})")
+                print(f"  {cfg.label} Spread({h}d): insufficient data " f"(ref={len(ref_sp)}, cand={len(cand_sp)})")
 
     # ---- Promotion check ----
     # Gates (all must PASS):
@@ -1239,12 +1273,17 @@ def main() -> None:
     # summary.md
     write_summary_md(
         out_dir / "summary.md",
-        summary_rows, horizons, configs, config_results,
-        common_dates, all_by_date, args,
+        summary_rows,
+        horizons,
+        configs,
+        config_results,
+        common_dates,
+        all_by_date,
+        args,
     )
 
     print(f"\nOutput: {out_dir}")
-    print(f"  results.json, by_date.json, paired_stats.json, summary.md")
+    print("  results.json, by_date.json, paired_stats.json, summary.md")
 
 
 if __name__ == "__main__":

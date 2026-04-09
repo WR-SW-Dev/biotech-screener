@@ -27,14 +27,16 @@ __version__ = "1.0.0"
 
 class StalenessAction(str, Enum):
     """Action to take when staleness is detected."""
-    PASS = "PASS"           # Data is fresh
-    WARN = "WARN"           # Data is aging, log warning
-    SOFT_GATE = "SOFT_GATE" # Apply penalty but continue
-    HARD_GATE = "HARD_GATE" # Fail pipeline / exclude ticker
+
+    PASS = "PASS"  # Data is fresh
+    WARN = "WARN"  # Data is aging, log warning
+    SOFT_GATE = "SOFT_GATE"  # Apply penalty but continue
+    HARD_GATE = "HARD_GATE"  # Fail pipeline / exclude ticker
 
 
 class DataType(str, Enum):
     """Types of data with different staleness requirements."""
+
     FINANCIAL = "financial"
     TRIAL = "trial"
     MARKET = "market"
@@ -45,39 +47,78 @@ class DataType(str, Enum):
 @dataclass(frozen=True)
 class StalenessThreshold:
     """Staleness thresholds for a specific data type/phase combination."""
+
     data_type: DataType
     phase: Optional[str]  # None = applies to all phases
-    warn_days: int        # Days before warning
-    soft_gate_days: int   # Days before penalty applied
-    hard_gate_days: int   # Days before exclusion/failure
+    warn_days: int  # Days before warning
+    soft_gate_days: int  # Days before penalty applied
+    hard_gate_days: int  # Days before exclusion/failure
     penalty_multiplier: Decimal  # Score multiplier when soft-gated (e.g., 0.5)
 
 
 # Default staleness thresholds by data type and phase
 DEFAULT_STALENESS_THRESHOLDS: List[StalenessThreshold] = [
     # Financial data - stricter for all phases
-    StalenessThreshold(DataType.FINANCIAL, None, warn_days=60, soft_gate_days=90, hard_gate_days=120, penalty_multiplier=Decimal("0.5")),
-
+    StalenessThreshold(
+        DataType.FINANCIAL, None, warn_days=60, soft_gate_days=90, hard_gate_days=120, penalty_multiplier=Decimal("0.5")
+    ),
     # Trial data - varies by phase
-    StalenessThreshold(DataType.TRIAL, "phase_3", warn_days=90, soft_gate_days=120, hard_gate_days=180, penalty_multiplier=Decimal("0.6")),
-    StalenessThreshold(DataType.TRIAL, "phase_2", warn_days=180, soft_gate_days=270, hard_gate_days=365, penalty_multiplier=Decimal("0.7")),
-    StalenessThreshold(DataType.TRIAL, "phase_1", warn_days=270, soft_gate_days=365, hard_gate_days=545, penalty_multiplier=Decimal("0.8")),
-    StalenessThreshold(DataType.TRIAL, None, warn_days=180, soft_gate_days=270, hard_gate_days=365, penalty_multiplier=Decimal("0.7")),
-
+    StalenessThreshold(
+        DataType.TRIAL,
+        "phase_3",
+        warn_days=90,
+        soft_gate_days=120,
+        hard_gate_days=180,
+        penalty_multiplier=Decimal("0.6"),
+    ),
+    StalenessThreshold(
+        DataType.TRIAL,
+        "phase_2",
+        warn_days=180,
+        soft_gate_days=270,
+        hard_gate_days=365,
+        penalty_multiplier=Decimal("0.7"),
+    ),
+    StalenessThreshold(
+        DataType.TRIAL,
+        "phase_1",
+        warn_days=270,
+        soft_gate_days=365,
+        hard_gate_days=545,
+        penalty_multiplier=Decimal("0.8"),
+    ),
+    StalenessThreshold(
+        DataType.TRIAL, None, warn_days=180, soft_gate_days=270, hard_gate_days=365, penalty_multiplier=Decimal("0.7")
+    ),
     # Market data - needs to be very fresh
-    StalenessThreshold(DataType.MARKET, None, warn_days=3, soft_gate_days=5, hard_gate_days=10, penalty_multiplier=Decimal("0.3")),
-
+    StalenessThreshold(
+        DataType.MARKET, None, warn_days=3, soft_gate_days=5, hard_gate_days=10, penalty_multiplier=Decimal("0.3")
+    ),
     # Short interest - FINRA data is already 2-week delayed
-    StalenessThreshold(DataType.SHORT_INTEREST, None, warn_days=20, soft_gate_days=30, hard_gate_days=45, penalty_multiplier=Decimal("0.5")),
-
+    StalenessThreshold(
+        DataType.SHORT_INTEREST,
+        None,
+        warn_days=20,
+        soft_gate_days=30,
+        hard_gate_days=45,
+        penalty_multiplier=Decimal("0.5"),
+    ),
     # 13F holdings - 45-day SEC lag built in, so threshold is relative to filing date
-    StalenessThreshold(DataType.HOLDINGS_13F, None, warn_days=60, soft_gate_days=90, hard_gate_days=135, penalty_multiplier=Decimal("0.4")),
+    StalenessThreshold(
+        DataType.HOLDINGS_13F,
+        None,
+        warn_days=60,
+        soft_gate_days=90,
+        hard_gate_days=135,
+        penalty_multiplier=Decimal("0.4"),
+    ),
 ]
 
 
 @dataclass
 class StalenessCheckResult:
     """Result of a staleness check."""
+
     data_type: DataType
     phase: Optional[str]
     data_date: Optional[date]
@@ -234,7 +275,9 @@ class StalenessGateEngine:
         elif age_days > threshold.warn_days:
             action = StalenessAction.WARN
             penalty = Decimal("1.0")
-            message = f"{data_type.value} data is {age_days} days old (warn: {threshold.warn_days}). Consider refreshing."
+            message = (
+                f"{data_type.value} data is {age_days} days old (warn: {threshold.warn_days}). Consider refreshing."
+            )
         else:
             action = StalenessAction.PASS
             penalty = Decimal("1.0")
@@ -278,26 +321,18 @@ class StalenessGateEngine:
         results = {}
 
         if financial_date is not None:
-            results["financial"] = self.check_staleness(
-                DataType.FINANCIAL, financial_date, as_of_date
-            )
+            results["financial"] = self.check_staleness(DataType.FINANCIAL, financial_date, as_of_date)
 
         if trial_date is not None:
             # For trial data, check with most restrictive phase or default
             trial_phase = "phase_3" if phase_map else None
-            results["trial"] = self.check_staleness(
-                DataType.TRIAL, trial_date, as_of_date, phase=trial_phase
-            )
+            results["trial"] = self.check_staleness(DataType.TRIAL, trial_date, as_of_date, phase=trial_phase)
 
         if market_date is not None:
-            results["market"] = self.check_staleness(
-                DataType.MARKET, market_date, as_of_date
-            )
+            results["market"] = self.check_staleness(DataType.MARKET, market_date, as_of_date)
 
         if holdings_date is not None:
-            results["holdings_13f"] = self.check_staleness(
-                DataType.HOLDINGS_13F, holdings_date, as_of_date
-            )
+            results["holdings_13f"] = self.check_staleness(DataType.HOLDINGS_13F, holdings_date, as_of_date)
 
         return results
 
@@ -386,7 +421,7 @@ def validate_13f_pit_safety(
             False,
             f"13F data for {held_as_of_date} not available until {effective_date} "
             f"({days_early} days after as_of_date {as_of_date}). "
-            "Using this data would create lookahead bias."
+            "Using this data would create lookahead bias.",
         )
 
     return (True, f"13F data is PIT-safe (effective {effective_date} <= as_of_date {as_of_date})")

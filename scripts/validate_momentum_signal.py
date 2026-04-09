@@ -22,26 +22,22 @@ Author: Wake Robin Capital Management
 Version: 1.0.0
 """
 
-import sys
 import math
 import random
-from pathlib import Path
-from decimal import Decimal, ROUND_HALF_UP
-from typing import List, Tuple, Optional, Dict, Any
+import sys
 from dataclasses import dataclass
+from decimal import Decimal
+from pathlib import Path
 from statistics import mean
+from typing import Any, Dict, List, Optional, Tuple
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from backtest.metrics import MIN_OBS_IC, compute_spearman_ic
+
 # Import production code to validate
-from wake_robin_data_pipeline.defensive_overlays import (
-    realized_vol,
-    pearson_corr,
-    momentum,
-    TRADING_DAYS_PER_YEAR,
-)
-from backtest.metrics import compute_spearman_ic, MIN_OBS_IC
+from wake_robin_data_pipeline.defensive_overlays import momentum, pearson_corr, realized_vol
 
 # Validation constants
 VALIDATION_SEED = 42  # Deterministic tests
@@ -52,6 +48,7 @@ TOLERANCE_IC = 0.001  # Tight tolerance for IC math
 @dataclass
 class ValidationResult:
     """Result of a validation test."""
+
     test_name: str
     passed: bool
     expected: str
@@ -89,7 +86,7 @@ class MomentumValidator:
 
         # Calculate actual daily std
         mean_ret = sum(returns) / n_days
-        daily_std = math.sqrt(sum((r - mean_ret)**2 for r in returns) / (n_days - 1))
+        daily_std = math.sqrt(sum((r - mean_ret) ** 2 for r in returns) / (n_days - 1))
 
         # Expected annual vol using sqrt(252)
         expected_annual = daily_std * math.sqrt(252)
@@ -118,7 +115,7 @@ class MomentumValidator:
                 f"Wrong (×252): {wrong_method:.4f}\n"
                 f"Error vs correct: {error_correct:.2%}\n"
                 f"Error vs wrong: {error_wrong:.2%}"
-            )
+            ),
         )
 
     def test_volatility_direct_assertion(self) -> ValidationResult:
@@ -132,7 +129,7 @@ class MomentumValidator:
 
         # Daily std of this series
         mean_ret = sum(returns) / 252
-        daily_std = math.sqrt(sum((r - mean_ret)**2 for r in returns) / 251)
+        daily_std = math.sqrt(sum((r - mean_ret) ** 2 for r in returns) / 251)
 
         # Expected with sqrt(252)
         expected = daily_std * math.sqrt(252)
@@ -150,13 +147,13 @@ class MomentumValidator:
             passed=passed,
             expected=f"{expected:.10f}",
             actual=f"{actual:.10f}",
-            details=f"Absolute error: {error:.2e}"
+            details=f"Absolute error: {error:.2e}",
         )
 
     def test_signal_direction_uptrend(self) -> ValidationResult:
         """Test that uptrending prices produce positive momentum."""
         # Uptrending prices: 100 → 150 over 21 days
-        prices = [100 + i * (50/21) for i in range(22)]
+        prices = [100 + i * (50 / 21) for i in range(22)]
 
         result = momentum(prices, period=21)
 
@@ -167,13 +164,13 @@ class MomentumValidator:
             passed=passed,
             expected="> 0 (positive momentum)",
             actual=f"{float(result):.4f}" if result else "None",
-            details="21-day return should be positive for uptrending prices"
+            details="21-day return should be positive for uptrending prices",
         )
 
     def test_signal_direction_downtrend(self) -> ValidationResult:
         """Test that downtrending prices produce negative momentum."""
         # Downtrending prices: 100 → 50 over 21 days
-        prices = [100 - i * (50/21) for i in range(22)]
+        prices = [100 - i * (50 / 21) for i in range(22)]
 
         result = momentum(prices, period=21)
 
@@ -184,7 +181,7 @@ class MomentumValidator:
             passed=passed,
             expected="< 0 (negative momentum)",
             actual=f"{float(result):.4f}" if result else "None",
-            details="21-day return should be negative for downtrending prices"
+            details="21-day return should be negative for downtrending prices",
         )
 
     def test_ic_calculation_perfect_correlation(self) -> ValidationResult:
@@ -202,7 +199,7 @@ class MomentumValidator:
             passed=passed,
             expected="1.0000",
             actual=f"{float(ic):.4f}" if ic else "None",
-            details="Perfectly ranked scores/returns should give IC = 1.0"
+            details="Perfectly ranked scores/returns should give IC = 1.0",
         )
 
     def test_ic_calculation_inverse_correlation(self) -> ValidationResult:
@@ -220,7 +217,7 @@ class MomentumValidator:
             passed=passed,
             expected="-1.0000",
             actual=f"{float(ic):.4f}" if ic else "None",
-            details="Inversely ranked scores/returns should give IC = -1.0"
+            details="Inversely ranked scores/returns should give IC = -1.0",
         )
 
     def test_ic_calculation_minimum_observations(self) -> ValidationResult:
@@ -238,7 +235,7 @@ class MomentumValidator:
             passed=passed,
             expected="None (insufficient data)",
             actual="None" if ic is None else f"{float(ic):.4f}",
-            details=f"IC should return None when n < {MIN_OBS_IC}"
+            details=f"IC should return None when n < {MIN_OBS_IC}",
         )
 
     def test_correlation_bounds(self) -> ValidationResult:
@@ -263,7 +260,7 @@ class MomentumValidator:
             passed=passed,
             expected="[-1.0, 1.0]",
             actual=actual,
-            details="Correlation must be bounded"
+            details="Correlation must be bounded",
         )
 
     # =========================================================================
@@ -282,7 +279,6 @@ class MomentumValidator:
             (prices_by_ticker, xbi_prices, spy_prices) or (None, None, None)
         """
         import csv
-        from datetime import datetime
 
         universe_file = self.data_dir / "universe_prices.csv"
         indices_file = self.data_dir / "indices_prices.csv"
@@ -293,14 +289,14 @@ class MomentumValidator:
         try:
             # Load universe prices
             prices_by_ticker = {}
-            with open(universe_file, 'r') as f:
+            with open(universe_file, "r") as f:
                 reader = csv.DictReader(f)
                 rows = list(reader)
                 if not rows:
                     return None, None, None
 
                 # Get tickers from header (excluding 'date')
-                tickers = [k for k in rows[0].keys() if k.lower() != 'date']
+                tickers = [k for k in rows[0].keys() if k.lower() != "date"]
 
                 for ticker in tickers:
                     prices_by_ticker[ticker] = []
@@ -314,12 +310,12 @@ class MomentumValidator:
             # Load index prices
             xbi_prices = []
             spy_prices = []
-            with open(indices_file, 'r') as f:
+            with open(indices_file, "r") as f:
                 reader = csv.DictReader(f)
                 for row in reader:
                     try:
-                        xbi_prices.append(float(row.get('XBI', row.get('xbi', 0))))
-                        spy_prices.append(float(row.get('SPY', row.get('spy', 0))))
+                        xbi_prices.append(float(row.get("XBI", row.get("xbi", 0))))
+                        spy_prices.append(float(row.get("SPY", row.get("spy", 0))))
                     except ValueError:
                         pass
 
@@ -333,13 +329,13 @@ class MomentumValidator:
         """Calculate daily returns from prices."""
         if len(prices) < 2:
             return []
-        return [(prices[i] / prices[i-1]) - 1 for i in range(1, len(prices))]
+        return [(prices[i] / prices[i - 1]) - 1 for i in range(1, len(prices))]
 
     def calculate_momentum_score(self, prices: List[float], lookback: int = 21) -> Optional[float]:
         """Calculate momentum score (trailing return)."""
         if len(prices) < lookback + 1:
             return None
-        return (prices[-1] / prices[-lookback-1]) - 1
+        return (prices[-1] / prices[-lookback - 1]) - 1
 
     def test_quartile_spread(self, prices_by_ticker: Dict, forward_days: int = 21) -> ValidationResult:
         """
@@ -352,7 +348,7 @@ class MomentumValidator:
                 passed=False,
                 expected="87.6% spread",
                 actual="No data",
-                details="Load price data to run this test"
+                details="Load price data to run this test",
             )
 
         # Calculate momentum scores for each ticker
@@ -370,7 +366,7 @@ class MomentumValidator:
                 passed=False,
                 expected="87.6% spread",
                 actual=f"Only {len(momentum_scores)} tickers with data",
-                details="Need at least 20 tickers for quartile analysis"
+                details="Need at least 20 tickers for quartile analysis",
             )
 
         # Sort by momentum and assign quartiles
@@ -388,13 +384,13 @@ class MomentumValidator:
         for ticker in q1_tickers:
             prices = prices_by_ticker[ticker]
             if len(prices) >= forward_days:
-                fwd_ret = (prices[-1] / prices[-forward_days-1]) - 1
+                fwd_ret = (prices[-1] / prices[-forward_days - 1]) - 1
                 q1_returns.append(fwd_ret)
 
         for ticker in q4_tickers:
             prices = prices_by_ticker[ticker]
             if len(prices) >= forward_days:
-                fwd_ret = (prices[-1] / prices[-forward_days-1]) - 1
+                fwd_ret = (prices[-1] / prices[-forward_days - 1]) - 1
                 q4_returns.append(fwd_ret)
 
         if not q1_returns or not q4_returns:
@@ -403,7 +399,7 @@ class MomentumValidator:
                 passed=False,
                 expected="87.6% spread",
                 actual="Insufficient forward return data",
-                details=""
+                details="",
             )
 
         q1_mean = mean(q1_returns)
@@ -423,7 +419,7 @@ class MomentumValidator:
                 f"Q4 (bottom) mean return: {q4_mean*100:.2f}%\n"
                 f"Spread: {spread:.1f}%\n"
                 f"Tickers analyzed: {n}"
-            )
+            ),
         )
 
     def test_information_coefficient(self, prices_by_ticker: Dict) -> ValidationResult:
@@ -437,7 +433,7 @@ class MomentumValidator:
                 passed=False,
                 expected="IC = 0.713",
                 actual="No data",
-                details="Load price data to run this test"
+                details="Load price data to run this test",
             )
 
         # Calculate momentum scores and forward returns
@@ -461,7 +457,7 @@ class MomentumValidator:
                 passed=False,
                 expected="IC = 0.713",
                 actual=f"Only {len(momentum_scores)} observations",
-                details=f"Need at least {MIN_OBS_IC} observations"
+                details=f"Need at least {MIN_OBS_IC} observations",
             )
 
         ic = compute_spearman_ic(momentum_scores, forward_returns)
@@ -472,7 +468,7 @@ class MomentumValidator:
                 passed=False,
                 expected="IC = 0.713",
                 actual="IC calculation failed",
-                details=""
+                details="",
             )
 
         ic_val = float(ic)
@@ -486,10 +482,10 @@ class MomentumValidator:
             expected="IC = 0.713 (target)",
             actual=f"IC = {ic_val:.4f}",
             details=(
-                f"Cross-sectional Spearman IC\n"
+                "Cross-sectional Spearman IC\n"
                 f"Observations: {len(momentum_scores)}\n"
-                f"IC > 0.30 = strong, > 0.50 = exceptional"
-            )
+                "IC > 0.30 = strong, > 0.50 = exceptional"
+            ),
         )
 
     def test_regime_detection(self, xbi_prices: List, spy_prices: List) -> ValidationResult:
@@ -502,7 +498,7 @@ class MomentumValidator:
                 passed=False,
                 expected="Valid regime classification",
                 actual="No benchmark data",
-                details="Load XBI and SPY prices to run this test"
+                details="Load XBI and SPY prices to run this test",
             )
 
         # Calculate XBI vs SPY relative performance (30-day)
@@ -537,7 +533,7 @@ class MomentumValidator:
                 f"SPY 30d return: {spy_ret_30d*100:.2f}%\n"
                 f"Relative performance: {relative_perf:.2f}%\n"
                 f"XBI 20d volatility: {xbi_vol:.1f}%"
-            )
+            ),
         )
 
     def test_alpha_decay(self, prices_by_ticker: Dict) -> ValidationResult:
@@ -550,7 +546,7 @@ class MomentumValidator:
                 passed=False,
                 expected="Decaying IC across horizons",
                 actual="No data",
-                details="Load price data to run this test"
+                details="Load price data to run this test",
             )
 
         horizons = [5, 10, 21, 42, 63]
@@ -565,7 +561,7 @@ class MomentumValidator:
                     # 21-day momentum
                     mom = self.calculate_momentum_score(prices[:-(horizon)], lookback=21)
                     # Forward return at this horizon
-                    fwd = (prices[-1] / prices[-(horizon+1)]) - 1
+                    fwd = (prices[-1] / prices[-(horizon + 1)]) - 1
 
                     if mom is not None:
                         momentum_scores.append(Decimal(str(mom)))
@@ -582,7 +578,7 @@ class MomentumValidator:
                 passed=False,
                 expected="IC values across horizons",
                 actual="Insufficient data for any horizon",
-                details=""
+                details="",
             )
 
         # Format results
@@ -599,7 +595,7 @@ class MomentumValidator:
             passed=passed,
             expected="Positive short-term IC, decaying over time",
             actual=f"IC at {min(ic_by_horizon.keys())}d = {ic_by_horizon[min(ic_by_horizon.keys())]:.4f}",
-            details="\n".join(decay_report)
+            details="\n".join(decay_report),
         )
 
     def run_stage2(self) -> List[ValidationResult]:
@@ -642,7 +638,7 @@ class MomentumValidator:
                 print(f"   Expected: {result.expected}")
                 print(f"   Actual:   {result.actual}")
                 if result.details:
-                    for line in result.details.split('\n'):
+                    for line in result.details.split("\n"):
                         print(f"   {line}")
             except Exception as e:
                 result = ValidationResult(
@@ -650,7 +646,7 @@ class MomentumValidator:
                     passed=False,
                     expected="No exception",
                     actual=f"Exception: {e}",
-                    details=str(e)
+                    details=str(e),
                 )
                 results.append(result)
                 print(f"\n❌ {test_func.__name__}: EXCEPTION")
@@ -695,7 +691,7 @@ class MomentumValidator:
                 print(f"   Expected: {result.expected}")
                 print(f"   Actual:   {result.actual}")
                 if result.details and not result.passed:
-                    for line in result.details.split('\n'):
+                    for line in result.details.split("\n"):
                         print(f"   {line}")
             except Exception as e:
                 result = ValidationResult(
@@ -703,7 +699,7 @@ class MomentumValidator:
                     passed=False,
                     expected="No exception",
                     actual=f"Exception: {e}",
-                    details=str(e)
+                    details=str(e),
                 )
                 results.append(result)
                 print(f"\n❌ {test_func.__name__}: EXCEPTION")
@@ -774,20 +770,9 @@ def main():
     """Run momentum signal validation."""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description="Validate momentum signal calculations"
-    )
-    parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Run all validation stages (requires data)"
-    )
-    parser.add_argument(
-        "--data-dir",
-        type=Path,
-        default=Path("data"),
-        help="Directory containing price data CSVs"
-    )
+    parser = argparse.ArgumentParser(description="Validate momentum signal calculations")
+    parser.add_argument("--full", action="store_true", help="Run all validation stages (requires data)")
+    parser.add_argument("--data-dir", type=Path, default=Path("data"), help="Directory containing price data CSVs")
 
     args = parser.parse_args()
 

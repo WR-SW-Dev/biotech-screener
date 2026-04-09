@@ -9,6 +9,7 @@ Strict PIT enforcement via metadata.json.
 
 Outputs: summary.json, summary.md, by_date.csv, skips.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1883,13 +1884,13 @@ def evaluate(
 
             warnings.warn(
                 f"BUCKET_SIZE_WARNING: bucket_filter={bucket_filter} has median N={_median_n} < top_k={top_k}. "
-                f"Within-bucket reranking may not change top-K selection (all names selected). "
-                f"Use full-portfolio eval (no bucket_filter) for promotion decisions.",
+                "Within-bucket reranking may not change top-K selection (all names selected). "
+                "Use full-portfolio eval (no bucket_filter) for promotion decisions.",
                 stacklevel=2,
             )
             print(
                 f"  ::warning::BUCKET_SIZE_WARNING: median bucket N={_median_n} < top_k={top_k}; "
-                f"results may be selection-invariant for within-bucket reranks"
+                "results may be selection-invariant for within-bucket reranks"
             )
 
     # Build summary

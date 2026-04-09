@@ -12,6 +12,7 @@ Usage:
     python tools/enrich_drug_master.py
     python tools/enrich_drug_master.py --max-tickers 10
 """
+
 from __future__ import annotations
 
 import argparse

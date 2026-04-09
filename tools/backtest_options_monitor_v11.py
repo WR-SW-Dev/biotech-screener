@@ -17,6 +17,7 @@ Usage:
     python tools/backtest_options_monitor_v11.py --snapshot-root data/snapshots --cohort regulatory
     python tools/backtest_options_monitor_v11.py --ablation ep_only
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,7 +26,7 @@ import json
 import logging
 import math
 import sys
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -248,12 +249,14 @@ def generate_walk_forward_folds(
         if val_end > end:
             break
 
-        folds.append((
-            current.isoformat(),
-            train_end.isoformat(),
-            val_start.isoformat(),
-            val_end.isoformat(),
-        ))
+        folds.append(
+            (
+                current.isoformat(),
+                train_end.isoformat(),
+                val_start.isoformat(),
+                val_end.isoformat(),
+            )
+        )
         current += timedelta(days=roll_months * 30)
         fold_id += 1
 
@@ -436,7 +439,9 @@ def main():
     parser.add_argument("--snapshot-root", type=Path, default=REPO_ROOT / "data" / "snapshots")
     parser.add_argument("--price-csv", type=Path, default=REPO_ROOT / "production_data" / "price_history.csv")
     parser.add_argument("--out-dir", type=Path, default=REPO_ROOT / "output" / "research" / "om11_backtest")
-    parser.add_argument("--cohort", choices=["regulatory", "clinical_topline", "clinical_safety", "earnings", "financing", "other"])
+    parser.add_argument(
+        "--cohort", choices=["regulatory", "clinical_topline", "clinical_safety", "earnings", "financing", "other"]
+    )
     parser.add_argument("--ablation", choices=list(ABLATION_CONFIGS.keys()))
     parser.add_argument("--start-date", default="2025-01-01")
     parser.add_argument("--end-date", default=date.today().isoformat())
@@ -448,8 +453,10 @@ def main():
 
     # Find available snapshot dates
     snap_dates = sorted(
-        d.name for d in args.snapshot_root.iterdir()
-        if d.is_dir() and len(d.name) == 10
+        d.name
+        for d in args.snapshot_root.iterdir()
+        if d.is_dir()
+        and len(d.name) == 10
         and args.start_date <= d.name <= args.end_date
         and (d / "rankings.csv").exists()
     )

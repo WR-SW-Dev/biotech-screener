@@ -21,6 +21,7 @@ Usage:
         --horizons 84,126 \\
         --benchmark XBI
 """
+
 from __future__ import annotations
 
 import json

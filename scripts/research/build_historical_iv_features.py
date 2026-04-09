@@ -12,6 +12,7 @@ Output: data/research/historical_iv_features.csv
 Usage:
     python scripts/research/build_historical_iv_features.py
 """
+
 from __future__ import annotations
 
 import argparse

@@ -17,6 +17,7 @@ CLI:
         --snapshot-dir data/snapshots \
         --git-sha abc1234
 """
+
 from __future__ import annotations
 
 import argparse
@@ -146,6 +147,7 @@ def _derive_monitoring_verdict(artifacts: Dict[str, Any]) -> Dict[str, Any]:
 
     try:
         from scripts.evaluate_monitoring_gate import evaluate
+
         verdict, fail_reasons, warn_reasons = evaluate(monitoring, thresholds)
     except Exception:
         return {"verdict": "UNKNOWN", "key_metrics": {}}
@@ -236,9 +238,7 @@ def build_triage_context(
     # -- Overall verdict --
     all_verdicts = [g["verdict"] for g in gates.values()]
     overall = _worst_verdict(all_verdicts)
-    non_pass = [
-        name for name, g in gates.items() if g["verdict"] not in ("PASS", "MISSING")
-    ]
+    non_pass = [name for name, g in gates.items() if g["verdict"] not in ("PASS", "MISSING")]
 
     return {
         "schema": SCHEMA,
@@ -302,11 +302,7 @@ def render_summary_md(ctx: Dict[str, Any], artifacts: Dict[str, Any]) -> str:
         for name in non_pass:
             g = ctx["gates"][name]
             lines.append(f"### {name} — {_verdict_icon(g['verdict'])} {g['verdict']}")
-            triggers = (
-                g.get("triggers", [])
-                or g.get("fail_reasons", [])
-                or g.get("warn_reasons", [])
-            )
+            triggers = g.get("triggers", []) or g.get("fail_reasons", []) or g.get("warn_reasons", [])
             if triggers:
                 for t in triggers:
                     lines.append(f"- {t}")
@@ -429,9 +425,7 @@ def assemble_bundle(
         for r in mon_gate.get("warn_reasons", []):
             mon_md_lines.append(f"- WARN: {r}")
         mon_md_lines.append("")
-        (explains_dir / "monitoring.md").write_text(
-            "\n".join(mon_md_lines), encoding="utf-8"
-        )
+        (explains_dir / "monitoring.md").write_text("\n".join(mon_md_lines), encoding="utf-8")
 
     # Generate markdown for eligibility delta
     elig_delta = artifacts.get("eligibility_delta_json")
@@ -447,9 +441,7 @@ def assemble_bundle(
         for note in elig_delta.get("notes", []):
             ed_lines.append(f"- {note}")
         ed_lines.append("")
-        (explains_dir / "eligibility_delta.md").write_text(
-            "\n".join(ed_lines), encoding="utf-8"
-        )
+        (explains_dir / "eligibility_delta.md").write_text("\n".join(ed_lines), encoding="utf-8")
 
     # Generate markdown for ruleset eval
     rs_eval = artifacts.get("ruleset_eval_json")
@@ -467,9 +459,7 @@ def assemble_bundle(
         for r in rs_gate.get("warn_reasons", []):
             re_lines.append(f"- WARN: {r}")
         re_lines.append("")
-        (explains_dir / "ruleset_eval.md").write_text(
-            "\n".join(re_lines), encoding="utf-8"
-        )
+        (explains_dir / "ruleset_eval.md").write_text("\n".join(re_lines), encoding="utf-8")
 
     # Copy movers.csv if available
     movers_path = artifacts.get("movers_csv_path")
@@ -483,23 +473,25 @@ def assemble_bundle(
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Build a unified daily triage bundle from gate artifacts."
-    )
+    parser = argparse.ArgumentParser(description="Build a unified daily triage bundle from gate artifacts.")
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="Snapshot date (YYYY-MM-DD).",
     )
     parser.add_argument(
-        "--snapshot-dir", required=True,
+        "--snapshot-dir",
+        required=True,
         help="Root snapshot directory (e.g. data/snapshots).",
     )
     parser.add_argument(
-        "--git-sha", default="",
+        "--git-sha",
+        default="",
         help="Git commit SHA to include in context.",
     )
     parser.add_argument(
-        "--out-dir", default="",
+        "--out-dir",
+        default="",
         help="Output directory (default: {snap_dir}/{date}/daily_triage).",
     )
     args = parser.parse_args(argv)

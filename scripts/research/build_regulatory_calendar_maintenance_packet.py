@@ -27,6 +27,7 @@ Usage:
         --snap-root data/snapshots \
         --out-dir output/research/reg_calendar_maintenance_packet
 """
+
 from __future__ import annotations
 
 import argparse
@@ -354,10 +355,8 @@ def write_maintenance_packet(packet: Dict[str, Any], out_dir: Path) -> Path:
     if fresh.get("newest_disclosed_at"):
         age = fresh.get("age_days")
         age_str = f"{age}d ago" if age is not None else "?"
-        lines.append(f"**Calendar freshness**: newest disclosed_at = " f"{fresh['newest_disclosed_at']} ({age_str})")
-        lines.append(
-            f"**Disclosed coverage**: " f"{fresh.get('n_with_disclosed', 0)}/{fresh.get('n_total', 0)} entries"
-        )
+        lines.append("**Calendar freshness**: newest disclosed_at = " f"{fresh['newest_disclosed_at']} ({age_str})")
+        lines.append("**Disclosed coverage**: " f"{fresh.get('n_with_disclosed', 0)}/{fresh.get('n_total', 0)} entries")
     else:
         lines.append("**Calendar freshness**: no disclosed_at dates found")
     lines.append("")

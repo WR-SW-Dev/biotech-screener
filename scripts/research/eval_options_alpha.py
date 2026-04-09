@@ -20,6 +20,7 @@ Usage:
         [--min-obs 20] \\
         [--output-dir output/options_alpha_study]
 """
+
 from __future__ import annotations
 
 import argparse

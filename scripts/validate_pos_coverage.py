@@ -15,14 +15,10 @@ import json
 import random
 import sys
 from pathlib import Path
-from decimal import Decimal
-from datetime import date
-from typing import Dict, List, Any, Optional
+from typing import Any, Dict, List, Optional
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from pos_engine import ProbabilityOfSuccessEngine
 
 
 def load_indication_mapping(path: str = "data/indication_mapping.json") -> Dict[str, Any]:
@@ -57,11 +53,7 @@ def categorize_market_cap(market_cap_mm: float) -> str:
         return "mega (>$20B)"
 
 
-def get_ticker_indication(
-    ticker: str,
-    conditions: List[str],
-    mapping: Dict[str, Any]
-) -> Optional[str]:
+def get_ticker_indication(ticker: str, conditions: List[str], mapping: Dict[str, Any]) -> Optional[str]:
     """Determine indication for a ticker using mapping logic."""
     # First check ticker overrides
     if ticker in mapping.get("ticker_overrides", {}):
@@ -78,10 +70,7 @@ def get_ticker_indication(
     return None
 
 
-def run_coverage_analysis(
-    universe: List[Dict[str, Any]],
-    mapping: Dict[str, Any]
-) -> Dict[str, Any]:
+def run_coverage_analysis(universe: List[Dict[str, Any]], mapping: Dict[str, Any]) -> Dict[str, Any]:
     """Run comprehensive coverage analysis."""
 
     # Initialize counters
@@ -127,19 +116,19 @@ def run_coverage_analysis(
                 coverage_by_category[indication] = 0
             coverage_by_category[indication] += 1
 
-            covered_tickers.append({
-                "ticker": ticker,
-                "indication": indication,
-                "market_cap_mm": market_cap_mm,
-                "conditions": conditions[:3] if conditions else [],
-                "source": "override" if ticker in mapping.get("ticker_overrides", {}) else "pattern"
-            })
+            covered_tickers.append(
+                {
+                    "ticker": ticker,
+                    "indication": indication,
+                    "market_cap_mm": market_cap_mm,
+                    "conditions": conditions[:3] if conditions else [],
+                    "source": "override" if ticker in mapping.get("ticker_overrides", {}) else "pattern",
+                }
+            )
         else:
-            uncovered_tickers.append({
-                "ticker": ticker,
-                "market_cap_mm": market_cap_mm,
-                "conditions": conditions[:3] if conditions else []
-            })
+            uncovered_tickers.append(
+                {"ticker": ticker, "market_cap_mm": market_cap_mm, "conditions": conditions[:3] if conditions else []}
+            )
 
     # Calculate coverage percentages
     coverage_pct = covered / total * 100 if total > 0 else 0
@@ -147,8 +136,7 @@ def run_coverage_analysis(
     for bucket in coverage_by_mcap:
         bucket_data = coverage_by_mcap[bucket]
         bucket_data["coverage_pct"] = (
-            bucket_data["covered"] / bucket_data["total"] * 100
-            if bucket_data["total"] > 0 else 0
+            bucket_data["covered"] / bucket_data["total"] * 100 if bucket_data["total"] > 0 else 0
         )
 
     return {
@@ -158,19 +146,17 @@ def run_coverage_analysis(
             "uncovered_tickers": total - covered,
             "coverage_pct": round(coverage_pct, 1),
             "by_override": by_override,
-            "by_pattern": by_pattern
+            "by_pattern": by_pattern,
         },
         "coverage_by_market_cap": coverage_by_mcap,
         "coverage_by_category": dict(sorted(coverage_by_category.items(), key=lambda x: -x[1])),
         "uncovered_sample": uncovered_tickers[:20],
-        "covered_tickers": covered_tickers
+        "covered_tickers": covered_tickers,
     }
 
 
 def run_false_positive_audit(
-    covered_tickers: List[Dict[str, Any]],
-    sample_size: int = 20,
-    seed: int = 42  # Deterministic seed
+    covered_tickers: List[Dict[str, Any]], sample_size: int = 20, seed: int = 42  # Deterministic seed
 ) -> List[Dict[str, Any]]:
     """
     Sample 20 random tickers for manual verification.
@@ -216,8 +202,13 @@ def print_report(analysis: Dict[str, Any], audit_sample: List[Dict[str, Any]]) -
 
     # Sort buckets by market cap order
     bucket_order = [
-        "nano (<$100M)", "micro ($100-300M)", "small ($300M-1B)",
-        "mid ($1-5B)", "large ($5-20B)", "mega (>$20B)", "unknown"
+        "nano (<$100M)",
+        "micro ($100-300M)",
+        "small ($300M-1B)",
+        "mid ($1-5B)",
+        "large ($5-20B)",
+        "mega (>$20B)",
+        "unknown",
     ]
 
     for bucket in bucket_order:
@@ -238,7 +229,7 @@ def print_report(analysis: Dict[str, Any], audit_sample: List[Dict[str, Any]]) -
     print("-" * 70)
     for item in analysis["uncovered_sample"][:10]:
         conditions_str = ", ".join(item["conditions"][:2]) if item["conditions"] else "no conditions"
-        mcap_str = f"${item['market_cap_mm']:.0f}M" if item['market_cap_mm'] else "N/A"
+        mcap_str = f"${item['market_cap_mm']:.0f}M" if item["market_cap_mm"] else "N/A"
         print(f"  {item['ticker']:<8} mcap={mcap_str:<12} conditions: {conditions_str[:40]}")
     print()
 

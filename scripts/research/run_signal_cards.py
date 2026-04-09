@@ -14,6 +14,7 @@ Usage:
     python3 scripts/research/run_signal_cards.py --signals inst_delta_z,clinical_score_v2_z
     python3 scripts/research/run_signal_cards.py --top-n 30 --horizons 20,63
 """
+
 from __future__ import annotations
 
 import argparse

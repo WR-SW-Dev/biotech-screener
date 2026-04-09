@@ -19,6 +19,7 @@ Output:
     artifacts/calendar_source_reliability/<end_date>/source_reliability.md
     output/research/slip_backfill_report.md  (validation report)
 """
+
 from __future__ import annotations
 
 import argparse

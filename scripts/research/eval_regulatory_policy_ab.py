@@ -24,6 +24,7 @@ Usage:
         --horizons 63,84 \\
         --min-reg-pct 3
 """
+
 from __future__ import annotations
 
 import argparse

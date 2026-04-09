@@ -8,6 +8,7 @@ scores, and reliability tables.
 Usage:
     python scripts/research/calibrate_pos_model.py
 """
+
 from __future__ import annotations
 
 import csv

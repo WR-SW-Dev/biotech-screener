@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 120
-extend-ignore = E501,W503,E203,E266,E402
+extend-ignore = E501,W503,E203,E266,E402,E741
 exclude =
     .git,
     __pycache__,
@@ -24,3 +24,15 @@ per-file-ignores =
     run_screen.py:F401,F541,F811,E731,E231
     scripts/run_screen_from_bundle.py:F401,F821,F841
     src/scripts/clean_universe.py:F401
+    scripts/enrich_market_data_momentum.py:E231
+    scripts/build_news_digest.py:F841
+    scripts/extract_13f_history.py:F841
+    tools/sanity_compare_results.py:E231
+    tools/weekly_health_packet.py:E231
+    common/data_consistency.py:F402
+    common/options_verdict_features.py:E741
+    scripts/audit_fda_coverage.py:E231
+    scripts/extract_replay_fixtures.py:E231
+    tools/backtest_options_monitor_v11.py:E741
+    tools/build_options_verdict.py:E741
+    tools/train_options_probability_model.py:E741

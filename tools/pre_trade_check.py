@@ -15,6 +15,7 @@ Outputs:
 Usage:
     python3 tools/pre_trade_check.py --as-of-date 2026-03-08
 """
+
 from __future__ import annotations
 
 import argparse

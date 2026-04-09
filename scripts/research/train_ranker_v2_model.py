@@ -7,6 +7,7 @@ to production_data/ranker_v2_model.json for use by run_screen.py.
 Usage:
     python3 scripts/research/train_ranker_v2_model.py
 """
+
 from __future__ import annotations
 
 import csv

@@ -477,8 +477,6 @@ def validate_liquidity(
 class CircuitBreakerError(Exception):
     """Raised when circuit breaker trips due to excessive failures."""
 
-    pass
-
 
 @dataclass(frozen=True)
 class CircuitBreakerConfig:

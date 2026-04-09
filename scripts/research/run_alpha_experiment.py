@@ -43,6 +43,7 @@ Examples:
         --top-k 60 --horizons 5,20 \\
         --date-from 2026-01-15
 """
+
 from __future__ import annotations
 
 import argparse

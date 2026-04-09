@@ -9,6 +9,7 @@ Usage:
         --snapshots-dir data/snapshots \
         --output data/research/live_options_timeseries.csv
 """
+
 from __future__ import annotations
 
 import argparse

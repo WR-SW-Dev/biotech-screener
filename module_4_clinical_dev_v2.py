@@ -29,26 +29,21 @@ Scoring Components (0-120, normalized to 0-100):
 Author: Wake Robin Capital Management
 Version: 2.0.0
 """
+
 from __future__ import annotations
 
 import hashlib
 import re
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
-from common.integration_contracts import (
-    validate_module_4_output,
-    is_validation_enabled,
-    TickerCollection,
-)
-
+from common.integration_contracts import TickerCollection, is_validation_enabled, validate_module_4_output
 from common.provenance import create_provenance
 from common.score_utils import piecewise_lerp
 from common.types import Severity
-
 
 __version__ = "2.1.0"
 RULESET_VERSION = "2.1.0-V2"
@@ -69,12 +64,14 @@ MAX_CONDITION_STRING_LENGTH = 500
 
 class ValidationError(ValueError):
     """Raised when input validation fails."""
+
     pass
 
 
 # ============================================================================
 # INPUT VALIDATION UTILITIES
 # ============================================================================
+
 
 def _validate_as_of_date(as_of_date: Any) -> str:
     """
@@ -94,12 +91,10 @@ def _validate_as_of_date(as_of_date: Any) -> str:
 
     if not isinstance(as_of_date, str):
         # Try to convert date object
-        if hasattr(as_of_date, 'isoformat'):
+        if hasattr(as_of_date, "isoformat"):
             as_of_date = as_of_date.isoformat()
         else:
-            raise ValidationError(
-                f"as_of_date must be string or date, got {type(as_of_date).__name__}"
-            )
+            raise ValidationError(f"as_of_date must be string or date, got {type(as_of_date).__name__}")
 
     as_of_date = as_of_date.strip()
 
@@ -132,17 +127,14 @@ def _validate_active_tickers(active_tickers: Any) -> List[str]:
 
     if not isinstance(active_tickers, (set, list, frozenset, tuple)):
         raise ValidationError(
-            f"active_tickers must be set, list, tuple, or frozenset, "
-            f"got {type(active_tickers).__name__}"
+            f"active_tickers must be set, list, tuple, or frozenset, " f"got {type(active_tickers).__name__}"
         )
 
     # Convert to list and validate each ticker
     result = []
     for ticker in active_tickers:
         if not isinstance(ticker, str):
-            raise ValidationError(
-                f"Each ticker must be string, got {type(ticker).__name__}: {ticker!r}"
-            )
+            raise ValidationError(f"Each ticker must be string, got {type(ticker).__name__}: {ticker!r}")
         normalized = ticker.strip().upper()
         if normalized:  # Skip empty strings
             result.append(normalized)
@@ -167,16 +159,12 @@ def _validate_trial_records(trial_records: Any) -> List[Dict[str, Any]]:
         return []
 
     if not isinstance(trial_records, list):
-        raise ValidationError(
-            f"trial_records must be list, got {type(trial_records).__name__}"
-        )
+        raise ValidationError(f"trial_records must be list, got {type(trial_records).__name__}")
 
     validated = []
     for i, record in enumerate(trial_records):
         if not isinstance(record, dict):
-            raise ValidationError(
-                f"trial_records[{i}] must be dict, got {type(record).__name__}"
-            )
+            raise ValidationError(f"trial_records[{i}] must be dict, got {type(record).__name__}")
         validated.append(record)
 
     return validated
@@ -264,6 +252,7 @@ _REC_KNOTS_V2 = [
 
 class TrialStatus(str, Enum):
     """Standardized trial status categories."""
+
     COMPLETED = "completed"
     ACTIVE = "active"
     RECRUITING = "recruiting"
@@ -289,11 +278,13 @@ STATUS_QUALITY_WEIGHTS = {
 }
 
 # Negative status categories
-NEGATIVE_STATUSES = frozenset([
-    TrialStatus.TERMINATED,
-    TrialStatus.WITHDRAWN,
-    TrialStatus.SUSPENDED,
-])
+NEGATIVE_STATUSES = frozenset(
+    [
+        TrialStatus.TERMINATED,
+        TrialStatus.WITHDRAWN,
+        TrialStatus.SUSPENDED,
+    ]
+)
 
 
 # ============================================================================
@@ -302,29 +293,29 @@ NEGATIVE_STATUSES = frozenset([
 
 # Strong endpoints - hard clinical outcomes
 STRONG_ENDPOINT_PATTERNS = [
-    (re.compile(r'\boverall\s+survival\b', re.IGNORECASE), "overall_survival"),
-    (re.compile(r'\b(?:os)\b', re.IGNORECASE), "os"),  # Common abbreviation
-    (re.compile(r'\bprogression[- ]?free\s+survival\b', re.IGNORECASE), "pfs"),
-    (re.compile(r'\b(?:pfs)\b', re.IGNORECASE), "pfs_abbrev"),
-    (re.compile(r'\bcomplete\s+response\b', re.IGNORECASE), "complete_response"),
-    (re.compile(r'\b(?:cr)\b', re.IGNORECASE), "cr_abbrev"),
-    (re.compile(r'\bobjective\s+response\s+rate\b', re.IGNORECASE), "orr"),
-    (re.compile(r'\b(?:orr)\b', re.IGNORECASE), "orr_abbrev"),
-    (re.compile(r'\bdisease[- ]?free\s+survival\b', re.IGNORECASE), "dfs"),
-    (re.compile(r'\bevent[- ]?free\s+survival\b', re.IGNORECASE), "efs"),
-    (re.compile(r'\bmajor\s+molecular\s+response\b', re.IGNORECASE), "mmr"),
+    (re.compile(r"\boverall\s+survival\b", re.IGNORECASE), "overall_survival"),
+    (re.compile(r"\b(?:os)\b", re.IGNORECASE), "os"),  # Common abbreviation
+    (re.compile(r"\bprogression[- ]?free\s+survival\b", re.IGNORECASE), "pfs"),
+    (re.compile(r"\b(?:pfs)\b", re.IGNORECASE), "pfs_abbrev"),
+    (re.compile(r"\bcomplete\s+response\b", re.IGNORECASE), "complete_response"),
+    (re.compile(r"\b(?:cr)\b", re.IGNORECASE), "cr_abbrev"),
+    (re.compile(r"\bobjective\s+response\s+rate\b", re.IGNORECASE), "orr"),
+    (re.compile(r"\b(?:orr)\b", re.IGNORECASE), "orr_abbrev"),
+    (re.compile(r"\bdisease[- ]?free\s+survival\b", re.IGNORECASE), "dfs"),
+    (re.compile(r"\bevent[- ]?free\s+survival\b", re.IGNORECASE), "efs"),
+    (re.compile(r"\bmajor\s+molecular\s+response\b", re.IGNORECASE), "mmr"),
 ]
 
 # Weak endpoints - surrogate markers
 WEAK_ENDPOINT_PATTERNS = [
-    (re.compile(r'\bbiomarker\b', re.IGNORECASE), "biomarker"),
-    (re.compile(r'\bpharmacokinetic[s]?\b', re.IGNORECASE), "pk"),
-    (re.compile(r'\b(?:pk)\b', re.IGNORECASE), "pk_abbrev"),
-    (re.compile(r'\bsafety\b', re.IGNORECASE), "safety"),
-    (re.compile(r'\btolerab(?:ility|le)\b', re.IGNORECASE), "tolerability"),
-    (re.compile(r'\bdose[- ]?finding\b', re.IGNORECASE), "dose_finding"),
-    (re.compile(r'\bmaximum\s+tolerated\s+dose\b', re.IGNORECASE), "mtd"),
-    (re.compile(r'\b(?:mtd)\b', re.IGNORECASE), "mtd_abbrev"),
+    (re.compile(r"\bbiomarker\b", re.IGNORECASE), "biomarker"),
+    (re.compile(r"\bpharmacokinetic[s]?\b", re.IGNORECASE), "pk"),
+    (re.compile(r"\b(?:pk)\b", re.IGNORECASE), "pk_abbrev"),
+    (re.compile(r"\bsafety\b", re.IGNORECASE), "safety"),
+    (re.compile(r"\btolerab(?:ility|le)\b", re.IGNORECASE), "tolerability"),
+    (re.compile(r"\bdose[- ]?finding\b", re.IGNORECASE), "dose_finding"),
+    (re.compile(r"\bmaximum\s+tolerated\s+dose\b", re.IGNORECASE), "mtd"),
+    (re.compile(r"\b(?:mtd)\b", re.IGNORECASE), "mtd_abbrev"),
 ]
 
 
@@ -344,11 +335,13 @@ PIT_DATE_FIELDS_PRIORITY = [
 # DATACLASSES
 # ============================================================================
 
+
 @dataclass
 class TrialPITRecord:
     """
     Trial record with full PIT auditability.
     """
+
     nct_id: str
     ticker: str
     phase: str
@@ -395,6 +388,7 @@ class TickerClinicalSummaryV2:
     """
     Per-ticker clinical development summary with full diagnostics.
     """
+
     ticker: str
     as_of_date: str
 
@@ -487,6 +481,7 @@ class TickerClinicalSummaryV2:
 @dataclass
 class DiagnosticCountsV2:
     """Aggregate diagnostic counters."""
+
     tickers_scored: int = 0
     total_trials_raw: int = 0
     total_trials_unique: int = 0
@@ -504,6 +499,7 @@ class DiagnosticCountsV2:
 # ============================================================================
 # DATE PARSING
 # ============================================================================
+
 
 def _parse_date_safe(date_str: Optional[str]) -> Optional[date]:
     """
@@ -524,14 +520,14 @@ def _parse_date_safe(date_str: Optional[str]) -> Optional[date]:
         cleaned = str(date_str).strip()
 
         # Handle datetime format
-        if 'T' in cleaned:
-            cleaned = cleaned.split('T')[0]
+        if "T" in cleaned:
+            cleaned = cleaned.split("T")[0]
 
         # Handle timezone suffix
-        if '+' in cleaned:
-            cleaned = cleaned.split('+')[0]
-        if 'Z' in cleaned:
-            cleaned = cleaned.replace('Z', '')
+        if "+" in cleaned:
+            cleaned = cleaned.split("+")[0]
+        if "Z" in cleaned:
+            cleaned = cleaned.replace("Z", "")
 
         # Parse based on length
         if len(cleaned) >= 10:
@@ -561,6 +557,7 @@ def _compute_pit_cutoff(as_of_date: str) -> str:
 # PIT ENFORCEMENT
 # ============================================================================
 
+
 def _select_pit_date(trial: Dict[str, Any]) -> Tuple[Optional[str], str]:
     """
     Select PIT date field in priority order.
@@ -576,10 +573,7 @@ def _select_pit_date(trial: Dict[str, Any]) -> Tuple[Optional[str], str]:
     return (None, "none")
 
 
-def _is_pit_admissible(
-    source_date: Optional[str],
-    pit_cutoff: str
-) -> Tuple[bool, str]:
+def _is_pit_admissible(source_date: Optional[str], pit_cutoff: str) -> Tuple[bool, str]:
     """
     Check if source_date is PIT-admissible.
 
@@ -608,6 +602,7 @@ def _is_pit_admissible(
 # ============================================================================
 # PHASE PARSING
 # ============================================================================
+
 
 def _parse_phase(phase_str: Optional[str]) -> str:
     """
@@ -648,6 +643,7 @@ def _parse_phase(phase_str: Optional[str]) -> str:
 # ============================================================================
 # STATUS PARSING
 # ============================================================================
+
 
 def _parse_status(status_str: Optional[str]) -> TrialStatus:
     """
@@ -700,6 +696,7 @@ def _parse_status(status_str: Optional[str]) -> TrialStatus:
 # ENDPOINT CLASSIFICATION (Regex-based)
 # ============================================================================
 
+
 def _classify_endpoint(endpoint_text: str) -> Tuple[str, Optional[str]]:
     """
     Classify endpoint using regex with word boundaries.
@@ -730,10 +727,9 @@ def _classify_endpoint(endpoint_text: str) -> Tuple[str, Optional[str]]:
 # CONDITIONS PARSING
 # ============================================================================
 
+
 def _normalize_conditions(
-    conditions_raw: Any,
-    max_depth: int = MAX_CONDITIONS_DEPTH,
-    max_length: int = MAX_CONDITION_STRING_LENGTH
+    conditions_raw: Any, max_depth: int = MAX_CONDITIONS_DEPTH, max_length: int = MAX_CONDITION_STRING_LENGTH
 ) -> List[str]:
     """
     Normalize conditions to List[str] (lower, strip).
@@ -761,7 +757,7 @@ def _normalize_conditions(
 
         if isinstance(value, str):
             # Split on common delimiters
-            for part in value.replace(';', ',').replace('|', ',').split(','):
+            for part in value.replace(";", ",").replace("|", ",").split(","):
                 cleaned = part.lower().strip()
                 if cleaned:
                     # Apply length limit
@@ -798,10 +794,10 @@ def _tokenize_conditions(conditions: List[str]) -> Set[str]:
     Returns unique tokens (words) across all conditions.
     """
     tokens = set()
-    stopwords = frozenset(['and', 'the', 'for', 'with', 'not', 'or', 'in', 'of', 'to'])
+    stopwords = frozenset(["and", "the", "for", "with", "not", "or", "in", "of", "to"])
 
     for cond in conditions:
-        for word in cond.replace('-', ' ').replace('/', ' ').split():
+        for word in cond.replace("-", " ").replace("/", " ").split():
             if word and len(word) > 2 and word not in stopwords:
                 tokens.add(word)
 
@@ -811,6 +807,7 @@ def _tokenize_conditions(conditions: List[str]) -> Set[str]:
 # ============================================================================
 # SCORING FUNCTIONS
 # ============================================================================
+
 
 def _score_trial_count(num_trials: int) -> Decimal:
     """
@@ -850,10 +847,7 @@ def _score_indication_diversity(all_conditions: List[List[str]]) -> Decimal:
     return piecewise_lerp(len(unique_tokens), _DIV_KNOTS_V2)
 
 
-def _score_recency(
-    last_update: Optional[str],
-    as_of_date: str
-) -> Tuple[Decimal, Optional[int], bool, bool]:
+def _score_recency(last_update: Optional[str], as_of_date: str) -> Tuple[Decimal, Optional[int], bool, bool]:
     """
     Score based on most recent trial update (0-5 pts).
 
@@ -930,20 +924,14 @@ def _score_execution(trials: List[TrialPITRecord]) -> Tuple[Decimal, Decimal, De
 
     total = Decimal(len(trials))
     completed = Decimal(sum(1 for t in trials if t.status == TrialStatus.COMPLETED))
-    terminated = Decimal(sum(
-        1 for t in trials
-        if t.status in (TrialStatus.TERMINATED, TrialStatus.WITHDRAWN)
-    ))
+    terminated = Decimal(sum(1 for t in trials if t.status in (TrialStatus.TERMINATED, TrialStatus.WITHDRAWN)))
 
     # Compute rates with Decimal only
     completion_rate = (completed / total).quantize(RATE_PRECISION, rounding=ROUND_HALF_UP)
     termination_rate = (terminated / total).quantize(RATE_PRECISION, rounding=ROUND_HALF_UP)
 
     # Status quality score (weighted average)
-    quality_sum = sum(
-        STATUS_QUALITY_WEIGHTS.get(t.status, Decimal("0.5"))
-        for t in trials
-    )
+    quality_sum = sum(STATUS_QUALITY_WEIGHTS.get(t.status, Decimal("0.5")) for t in trials)
     status_quality_score = (quality_sum / total).quantize(RATE_PRECISION, rounding=ROUND_HALF_UP)
 
     # Execution score
@@ -980,6 +968,7 @@ def _score_endpoints(trials: List[TrialPITRecord]) -> Tuple[Decimal, int, int, i
 # LEAD PROGRAM IDENTIFICATION
 # ============================================================================
 
+
 def _compute_lead_program_key(nct_id: str, phase: str) -> str:
     """
     Compute deterministic lead program key for tie-breaking.
@@ -990,9 +979,7 @@ def _compute_lead_program_key(nct_id: str, phase: str) -> str:
     return hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
 
 
-def _identify_lead_program(
-    trials: List[TrialPITRecord]
-) -> Tuple[str, Optional[str], str]:
+def _identify_lead_program(trials: List[TrialPITRecord]) -> Tuple[str, Optional[str], str]:
     """
     Identify lead program with deterministic tie-breaking.
 
@@ -1034,9 +1021,8 @@ def _identify_lead_program(
 # DEDUPLICATION
 # ============================================================================
 
-def _dedup_trials_by_nct_id(
-    trials: List[TrialPITRecord]
-) -> List[TrialPITRecord]:
+
+def _dedup_trials_by_nct_id(trials: List[TrialPITRecord]) -> List[TrialPITRecord]:
     """
     Deduplicate trials by nct_id.
 
@@ -1079,6 +1065,7 @@ def _dedup_trials_by_nct_id(
 # MAIN SCORING FUNCTION
 # ============================================================================
 
+
 def compute_module_4_clinical_dev_v2(
     trial_records: List[Dict[str, Any]],
     active_tickers: TickerCollection,
@@ -1104,6 +1091,7 @@ def compute_module_4_clinical_dev_v2(
         ValidationError: If inputs fail type validation
     """
     import logging
+
     logger = logging.getLogger(__name__)
 
     # =========================================================================
@@ -1323,9 +1311,7 @@ def compute_module_4_clinical_dev_v2(
                         most_recent_date = update_date
                         most_recent_str = update_str
 
-        recency_bonus, recency_days, recency_unknown, recency_stale = _score_recency(
-            most_recent_str, as_of_date
-        )
+        recency_bonus, recency_days, recency_unknown, recency_stale = _score_recency(most_recent_str, as_of_date)
 
         # Design score (best trial)
         design_score = Decimal("12")
@@ -1342,19 +1328,17 @@ def compute_module_4_clinical_dev_v2(
         # Total (0-120, normalized to 0-100)
         # Quantize each component before summing to ensure precision
         total = (
-            phase_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            phase_progress.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            trial_count_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            diversity_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            recency_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            design_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            execution_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP) +
-            endpoint_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            phase_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + phase_progress.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + trial_count_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + diversity_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + recency_bonus.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + design_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + execution_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
+            + endpoint_score.quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
         )
 
-        clinical_score = ((total / Decimal("120")) * Decimal("100")).quantize(
-            SCORE_PRECISION, rounding=ROUND_HALF_UP
-        )
+        clinical_score = ((total / Decimal("120")) * Decimal("100")).quantize(SCORE_PRECISION, rounding=ROUND_HALF_UP)
 
         # Flags and severity
         flags = []
@@ -1377,8 +1361,13 @@ def compute_module_4_clinical_dev_v2(
 
         # Per-phase trial counts (diagnostic only, no scoring impact)
         phase_counts: Dict[str, int] = {
-            "phase_1": 0, "phase_1_2": 0, "phase_2": 0,
-            "phase_2_3": 0, "phase_3": 0, "approved": 0, "other": 0,
+            "phase_1": 0,
+            "phase_1_2": 0,
+            "phase_2": 0,
+            "phase_2_3": 0,
+            "phase_3": 0,
+            "approved": 0,
+            "other": 0,
         }
         for t in trials:
             p = t.phase.lower().replace(" ", "_").replace("/", "_")
@@ -1446,6 +1435,7 @@ def compute_module_4_clinical_dev_v2(
 # BACKWARDS COMPATIBILITY WRAPPER
 # ============================================================================
 
+
 def compute_module_4_clinical_dev(
     trial_records: List[Dict[str, Any]],
     active_tickers: TickerCollection,
@@ -1462,37 +1452,39 @@ def compute_module_4_clinical_dev(
     # Convert v2 scores to v1 format
     v1_scores = []
     for score in result["scores"]:
-        v1_scores.append({
-            "ticker": score["ticker"],
-            "clinical_score": score["clinical_score"],
-            "phase_score": score["phase_score"],
-            "phase_progress": score["phase_progress"],
-            "trial_count_bonus": score["trial_count_bonus"],
-            "diversity_bonus": score["diversity_bonus"],
-            "recency_bonus": score["recency_bonus"],
-            "design_score": score["design_score"],
-            "execution_score": score["execution_score"],
-            "endpoint_score": score["endpoint_score"],
-            "lead_phase": score["lead_phase"],
-            "trial_count": score["n_trials_unique"],
-            "flags": score["flags"],
-            "severity": score["severity"],
-            # v1 diagnostics
-            "n_trials_unique": score["n_trials_unique"],
-            "n_trials_raw": score["n_trials_raw"],
-            "pit_filtered_count_ticker": score["pit_filtered_count"],
-            "lead_trial_nct_id": score["lead_trial_nct_id"],
-            "recency_days": score["recency_days"],
-            # v2 additions (preserved)
-            "lead_program_key": score["lead_program_key"],
-            "completion_rate": score["completion_rate"],
-            "termination_rate": score["termination_rate"],
-            "status_quality_score": score["status_quality_score"],
-            "n_strong_endpoints": score["n_strong_endpoints"],
-            "n_weak_endpoints": score["n_weak_endpoints"],
-            "n_neutral_endpoints": score["n_neutral_endpoints"],
-            "phase_counts": score.get("phase_counts", {}),
-        })
+        v1_scores.append(
+            {
+                "ticker": score["ticker"],
+                "clinical_score": score["clinical_score"],
+                "phase_score": score["phase_score"],
+                "phase_progress": score["phase_progress"],
+                "trial_count_bonus": score["trial_count_bonus"],
+                "diversity_bonus": score["diversity_bonus"],
+                "recency_bonus": score["recency_bonus"],
+                "design_score": score["design_score"],
+                "execution_score": score["execution_score"],
+                "endpoint_score": score["endpoint_score"],
+                "lead_phase": score["lead_phase"],
+                "trial_count": score["n_trials_unique"],
+                "flags": score["flags"],
+                "severity": score["severity"],
+                # v1 diagnostics
+                "n_trials_unique": score["n_trials_unique"],
+                "n_trials_raw": score["n_trials_raw"],
+                "pit_filtered_count_ticker": score["pit_filtered_count"],
+                "lead_trial_nct_id": score["lead_trial_nct_id"],
+                "recency_days": score["recency_days"],
+                # v2 additions (preserved)
+                "lead_program_key": score["lead_program_key"],
+                "completion_rate": score["completion_rate"],
+                "termination_rate": score["termination_rate"],
+                "status_quality_score": score["status_quality_score"],
+                "n_strong_endpoints": score["n_strong_endpoints"],
+                "n_weak_endpoints": score["n_weak_endpoints"],
+                "n_neutral_endpoints": score["n_neutral_endpoints"],
+                "phase_counts": score.get("phase_counts", {}),
+            }
+        )
 
     output = {
         "as_of_date": result["as_of_date"],

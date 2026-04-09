@@ -18,15 +18,15 @@ Usage:
 # =============================================================================
 
 # Market cap classification buckets
-MCAP_SMALL_THRESHOLD_MM = 500       # < $500M = Small cap
-MCAP_MID_THRESHOLD_MM = 2000        # $500M - $2B = Mid cap
-MCAP_LARGE_THRESHOLD_MM = 5000      # $2B - $5B = Large cap
+MCAP_SMALL_THRESHOLD_MM = 500  # < $500M = Small cap
+MCAP_MID_THRESHOLD_MM = 2000  # $500M - $2B = Mid cap
+MCAP_LARGE_THRESHOLD_MM = 5000  # $2B - $5B = Large cap
 # >= $5B = Mega cap
 
 # Market cap in full USD (for calculations that use raw values)
-MCAP_SMALL_THRESHOLD = 500_000_000      # $500M
-MCAP_MID_THRESHOLD = 2_000_000_000      # $2B
-MCAP_LARGE_THRESHOLD = 5_000_000_000    # $5B
+MCAP_SMALL_THRESHOLD = 500_000_000  # $500M
+MCAP_MID_THRESHOLD = 2_000_000_000  # $2B
+MCAP_LARGE_THRESHOLD = 5_000_000_000  # $5B
 
 
 # =============================================================================
@@ -34,9 +34,9 @@ MCAP_LARGE_THRESHOLD = 5_000_000_000    # $5B
 # =============================================================================
 
 # ADV classification buckets
-ADV_ILLIQUID_THRESHOLD = 250_000        # < $250K = Illiquid
-ADV_MINIMUM_THRESHOLD = 500_000         # $500K minimum for trading
-ADV_LIQUID_THRESHOLD = 2_000_000        # > $2M = Highly liquid
+ADV_ILLIQUID_THRESHOLD = 250_000  # < $250K = Illiquid
+ADV_MINIMUM_THRESHOLD = 500_000  # $500K minimum for trading
+ADV_LIQUID_THRESHOLD = 2_000_000  # > $2M = Highly liquid
 
 # Liquidity tier thresholds
 LIQUIDITY_TIER_THRESHOLDS = {
@@ -104,6 +104,7 @@ SEC_EDGAR_RATE_LIMIT_RPS = 10
 # =============================================================================
 # HELPER FUNCTIONS
 # =============================================================================
+
 
 def bucket_market_cap_mm(mcap_mm: float | None) -> str:
     """Classify market cap (in millions) into bucket."""

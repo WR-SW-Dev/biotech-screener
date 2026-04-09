@@ -22,6 +22,7 @@ Usage:
         --event-subset hard \
         --output-dir output/options_signal_pack
 """
+
 from __future__ import annotations
 
 import argparse

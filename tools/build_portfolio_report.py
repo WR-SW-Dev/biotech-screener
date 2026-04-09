@@ -5,6 +5,7 @@ Usage:
     python3 tools/build_portfolio_report.py
     python3 tools/build_portfolio_report.py --out-dir /tmp/report
 """
+
 from __future__ import annotations
 
 import argparse

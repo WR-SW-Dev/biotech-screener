@@ -15,13 +15,12 @@ Examples:
         --date-from 2026-01-15 --date-to 2026-02-20 \
         --modes within_tier --weights 0.02,0.05,0.10,0.15
 """
+
 from __future__ import annotations
 
 import argparse
 import copy
-import csv
 import json
-import math
 import statistics
 import sys
 import time
@@ -32,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from common.ranking_utils import backfill_columns, safe_float
+from common.ranking_utils import backfill_columns
 from decision_engine import DecisionRuleset
 
 # Reuse building blocks from the alpha experiment runner
@@ -45,14 +44,12 @@ from scripts.research.run_alpha_experiment import (
     load_price_series,
     load_rankings,
     rerank_faithful,
-    spearman_ic,
-    top_k_portfolio_return,
 )
-
 
 # ---------------------------------------------------------------------------
 # Sweep logic
 # ---------------------------------------------------------------------------
+
 
 def sweep_alpha_modifier(
     snapshot_root: Path,
@@ -121,8 +118,13 @@ def sweep_alpha_modifier(
             rows = rerank_faithful(rows, rs)
 
             metrics = evaluate_single_date(
-                snap_date, rows, prices, sorted_dates,
-                horizons, top_k, [],
+                snap_date,
+                rows,
+                prices,
+                sorted_dates,
+                horizons,
+                top_k,
+                [],
             )
 
             if metrics.skipped:
@@ -152,9 +154,7 @@ def sweep_alpha_modifier(
         for h in horizons:
             ics = ic_by_h[h]
             row[f"ic_{h}d"] = statistics.mean(ics) if ics else None
-            row[f"hit_{h}d"] = (
-                sum(1 for ic in ics if ic > 0) / len(ics) if ics else None
-            )
+            row[f"hit_{h}d"] = sum(1 for ic in ics if ic > 0) / len(ics) if ics else None
             rets = [r for r in ret_by_h[h] if r is not None]
             row[f"ret_{h}d"] = statistics.mean(rets) if rets else None
             row[f"n_{h}d"] = len(ics)
@@ -266,15 +266,11 @@ def main() -> None:
         description="Alpha modifier sweep",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--snapshot-root", type=Path,
-                        default=PROJECT_ROOT / "data" / "snapshots")
-    parser.add_argument("--price-csv", type=Path,
-                        default=PROJECT_ROOT / "production_data" / "price_history.csv")
+    parser.add_argument("--snapshot-root", type=Path, default=PROJECT_ROOT / "data" / "snapshots")
+    parser.add_argument("--price-csv", type=Path, default=PROJECT_ROOT / "production_data" / "price_history.csv")
     parser.add_argument("--ruleset", type=Path, default=None)
-    parser.add_argument("--modes", type=str, default="tiebreak,within_tier",
-                        help="Alpha modifier modes to sweep")
-    parser.add_argument("--weights", type=str, default="0.02,0.05,0.10,0.15",
-                        help="Alpha modifier weights to sweep")
+    parser.add_argument("--modes", type=str, default="tiebreak,within_tier", help="Alpha modifier modes to sweep")
+    parser.add_argument("--weights", type=str, default="0.02,0.05,0.10,0.15", help="Alpha modifier weights to sweep")
     parser.add_argument("--horizons", type=str, default="5,20")
     parser.add_argument("--top-k", type=int, default=20)
     parser.add_argument("--date-from", type=str, default=None)
@@ -292,19 +288,20 @@ def main() -> None:
     if args.ruleset:
         ruleset = DecisionRuleset.from_json(str(args.ruleset))
     else:
-        dates = sorted([
-            p.name for p in args.snapshot_root.iterdir()
-            if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-            and (p / "decision_ruleset.json").exists()
-        ])
+        dates = sorted(
+            [
+                p.name
+                for p in args.snapshot_root.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
         if not dates:
             print("ERROR: No snapshot with decision_ruleset.json found")
             sys.exit(1)
         rs_path = args.snapshot_root / dates[-1] / "decision_ruleset.json"
         ruleset = DecisionRuleset.from_json(str(rs_path))
     print(f"Ruleset: {ruleset.ruleset_id}")
-    print(f"Current alpha_modifier: mode={ruleset.alpha_modifier_mode}, "
-          f"weight={ruleset.alpha_modifier_weight}")
+    print(f"Current alpha_modifier: mode={ruleset.alpha_modifier_mode}, " f"weight={ruleset.alpha_modifier_weight}")
 
     t0 = time.time()
     results = sweep_alpha_modifier(

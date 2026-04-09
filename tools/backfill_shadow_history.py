@@ -8,6 +8,7 @@ Usage:
     python3 tools/backfill_shadow_history.py --start-date 2026-03-01 --end-date 2026-03-08
     python3 tools/backfill_shadow_history.py --start-date 2026-03-01 --end-date 2026-03-08 --force
 """
+
 from __future__ import annotations
 
 import argparse

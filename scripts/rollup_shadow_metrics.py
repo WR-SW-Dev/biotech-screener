@@ -12,6 +12,7 @@ Defaults:
     --snapshot-dir  data/snapshots
     --output        output/catalyst_shadow_timeseries.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -146,10 +147,13 @@ def main(argv: list[str] | None = None) -> int:
     print(f"Wrote {len(rows)} rows to {args.output}")
 
     # Print summary table
-    print(f"\n{'date':<12} {'B→G':>4} {'t60':>4} {'t100':>4} {'G→B':>4} {'med_d':>6} "
-          f"{'A_cnt':>5} {'t60%':>6} {'t100%':>6} {'8K':>5} {'CTG':>5} {'FDA':>4}")
+    print(
+        f"\n{'date':<12} {'B→G':>4} {'t60':>4} {'t100':>4} {'G→B':>4} {'med_d':>6} "
+        f"{'A_cnt':>5} {'t60%':>6} {'t100%':>6} {'8K':>5} {'CTG':>5} {'FDA':>4}"
+    )
     print("-" * 83)
     for r in rows:
+
         def _f(v, fmt=".0f"):
             return f"{v:{fmt}}" if v is not None else "-"
 

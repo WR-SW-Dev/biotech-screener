@@ -24,6 +24,7 @@ Usage:
         [--min-obs 20] \\
         [--output-dir output/pos_divergence_study]
 """
+
 from __future__ import annotations
 
 import argparse

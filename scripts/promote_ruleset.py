@@ -13,6 +13,7 @@ CLI:
   python scripts/promote_ruleset.py 0c1129f6 --rollback --reason "test"
   python scripts/promote_ruleset.py 0c1129f6 --rollback --force
 """
+
 from __future__ import annotations
 
 import argparse
@@ -116,7 +117,7 @@ def _validate_changelog(ruleset_id: str, changelog_path: Path = CHANGELOG_PATH) 
         if ruleset_id in line and "[DRAFT]" in line:
             return False, (
                 f"Changelog entry for '{ruleset_id}' still has [DRAFT] marker.\n"
-                f"Edit the entry to remove [DRAFT] before promoting."
+                "Edit the entry to remove [DRAFT] before promoting."
             )
     return True, "Changelog entry found and finalized."
 
@@ -514,7 +515,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             for entry in manifest["rulesets"]:
                 if entry["id"] == rid:
                     print(
-                        f"ERROR: Ruleset '{rid}' has status '{entry['status']}', " f"not 'retired'.",
+                        f"ERROR: Ruleset '{rid}' has status '{entry['status']}', " "not 'retired'.",
                         file=sys.stderr,
                     )
                     return 1
@@ -618,7 +619,7 @@ def main(argv: Optional[List[str]] = None) -> int:
                 print(
                     f"ERROR: Promotion packet verdict is {pkt['overall_verdict']}.\n"
                     f"  See: {args.promotion_packet}\n"
-                    f"  Use --force to bypass.",
+                    "  Use --force to bypass.",
                     file=sys.stderr,
                 )
                 return 1
@@ -658,10 +659,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         ):
             failed = [c["name"] for c in weekly_verdict_data.get("checks", []) if not c.get("pass")]
             print(
-                f"ERROR: Weekly live-sim gate FAIL.\n"
+                "ERROR: Weekly live-sim gate FAIL.\n"
                 f"  Failed checks: {', '.join(failed)}\n"
                 f"  See: {weekly_verdict_path}\n"
-                f"  Use --force to bypass.",
+                "  Use --force to bypass.",
                 file=sys.stderr,
             )
             return 1
@@ -700,10 +701,10 @@ def main(argv: Optional[List[str]] = None) -> int:
             _missing_baseline.append("max_rank_shift")
         if _missing_baseline:
             print(
-                f"ERROR: Gate artifact is missing health-monitor baseline fields: "
+                "ERROR: Gate artifact is missing health-monitor baseline fields: "
                 f"{_missing_baseline}.\n"
-                f"  Sentinel drift monitoring will have no baseline for this ruleset.\n"
-                f"  Use --force to promote without baseline (not recommended).",
+                "  Sentinel drift monitoring will have no baseline for this ruleset.\n"
+                "  Use --force to promote without baseline (not recommended).",
                 file=sys.stderr,
             )
             return 1

@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """Sanity check script to compare old vs new screening results."""
+
 import json
 import sys
 from collections import Counter
 from statistics import mean, median
 
+
 def load(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def get_rows(obj):
     """Extract ranked securities from our results format."""
@@ -23,6 +26,7 @@ def get_rows(obj):
         return obj
     raise ValueError("Unrecognized results JSON shape")
 
+
 def tie_stats(scores, top_n=120):
     """Count exact ties among top N scores."""
     top = scores[:top_n]
@@ -30,6 +34,7 @@ def tie_stats(scores, top_n=120):
     ties = sorted((v, s) for s, v in c.items() if v > 1)
     max_tie = max(c.values()) if c else 0
     return max_tie, len(ties), ties[-5:]
+
 
 def rank_map(rows):
     """Build ticker -> (rank, score, row) mapping."""
@@ -43,8 +48,10 @@ def rank_map(rows):
         out[t] = (int(rk), float(sc), r)
     return out
 
+
 def pct(x, n):
     return 0.0 if n == 0 else 100.0 * x / n
+
 
 def main(old_path, new_path):
     old = rank_map(get_rows(load(old_path)))
@@ -134,10 +141,11 @@ def main(old_path, new_path):
 
     print("Top 10 rank movers:")
     print(f"  {'Ticker':<8} {'Old':>5} {'New':>5} {'Delta':>6}")
-    print("  " + "-"*30)
+    print("  " + "-" * 30)
     for t, old_r, new_r, delta in movers[:10]:
         direction = "↑" if delta > 0 else "↓"
         print(f"  {t:<8} {old_r:>5} {new_r:>5} {delta:>+6} {direction}")
+
 
 if __name__ == "__main__":
     if len(sys.argv) != 3:

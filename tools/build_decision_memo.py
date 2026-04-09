@@ -19,6 +19,7 @@ Usage:
     python3 tools/build_decision_memo.py --snapshot-dir data/snapshots/2026-03-08 \\
         --account-usd 500000 --bucket-targets binary_0_30=0.10,binary_91_180=0.50
 """
+
 from __future__ import annotations
 
 import argparse
@@ -349,7 +350,7 @@ def _build_action_bullets(
         lines.append(
             f"- **Binary 0-30 has {len(high_gap)} HIGH gap-risk names** "
             f"(${gap_dollars:,.0f} / {gap_dollars / acct * 100:.1f}% of account). "
-            f"Consider halving position size or waiting for post-event entry."
+            "Consider halving position size or waiting for post-event entry."
         )
 
     # Price coverage
@@ -359,7 +360,7 @@ def _build_action_bullets(
         lines.append(
             f"- **{len(missing_price)} names missing price coverage** "
             f"({', '.join(r['ticker'] for r in missing_price)}). "
-            f"No beta/drawdown metrics — size conservatively or skip."
+            "No beta/drawdown metrics — size conservatively or skip."
         )
 
     # Concentration check
@@ -370,14 +371,14 @@ def _build_action_bullets(
             display = BUCKET_DISPLAY.get(b, b)
             lines.append(
                 f"- **{display} is {pct:.0f}% of account** — "
-                f"consider --bucket-targets to rebalance toward your 90-180d objective."
+                "consider --bucket-targets to rebalance toward your 90-180d objective."
             )
 
     # Cash
     cash = sizing_summary["residual_cash"]
     if cash > acct * 0.10:
         lines.append(
-            f"- **{cash / acct * 100:.0f}% cash** (${cash:,.0f}). " f"High residual — check if band caps are too tight."
+            f"- **{cash / acct * 100:.0f}% cash** (${cash:,.0f}). " "High residual — check if band caps are too tight."
         )
     elif cash < 0:
         lines.append(f"- **Overage**: ${-cash:,.0f} over account — should not happen with trim logic.")

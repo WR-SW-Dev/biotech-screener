@@ -29,6 +29,7 @@ Standard production usage (live snapshots, strict preflight):
         --rerank \
         --out-root output/audited_backtests/my_run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -422,7 +423,7 @@ def _write_verdict(
             "## Next Step",
             "",
             "```bash",
-            f"python3 scripts/promote_ruleset.py <ruleset_id> " f'--reason "verdict: {name}"',
+            "python3 scripts/promote_ruleset.py <ruleset_id> " f'--reason "verdict: {name}"',
             "```",
             "",
         ]

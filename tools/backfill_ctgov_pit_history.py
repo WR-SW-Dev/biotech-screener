@@ -19,16 +19,16 @@ Usage:
 Output per date:
     {out_root}/trial_records_{as_of_date}.json
 """
+
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
 import sys
-import time
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Repo root — same pattern as backfill_13f_history.py
@@ -46,6 +46,7 @@ PIT_DATE_PRIORITY = ["first_posted", "last_update_posted"]
 # ---------------------------------------------------------------------------
 # Date generation
 # ---------------------------------------------------------------------------
+
 
 def generate_quarter_end_dates(
     date_from: date,
@@ -148,6 +149,7 @@ def generate_dates(
 # PIT filtering
 # ---------------------------------------------------------------------------
 
+
 def _parse_trial_date(s) -> Optional[date]:
     """Parse YYYY-MM-DD or YYYY-MM string to date, or None."""
     if not s:
@@ -194,11 +196,14 @@ def filter_trials_pit(
 
 def _stable_sort_trials(trials: List[dict]) -> List[dict]:
     """Sort trials deterministically for byte-stable output."""
-    return sorted(trials, key=lambda t: (
-        t.get("ticker", ""),
-        t.get("nct_id", ""),
-        t.get("brief_title", ""),
-    ))
+    return sorted(
+        trials,
+        key=lambda t: (
+            t.get("ticker", ""),
+            t.get("nct_id", ""),
+            t.get("brief_title", ""),
+        ),
+    )
 
 
 def _compute_input_hash(data: bytes) -> str:
@@ -209,6 +214,7 @@ def _compute_input_hash(data: bytes) -> str:
 # ---------------------------------------------------------------------------
 # Resume helpers
 # ---------------------------------------------------------------------------
+
 
 def _is_date_complete(out_root: Path, as_of: date) -> bool:
     """Return True if a valid cache file exists for this date."""
@@ -229,6 +235,7 @@ def _is_date_complete(out_root: Path, as_of: date) -> bool:
 # ---------------------------------------------------------------------------
 # Per-date builder
 # ---------------------------------------------------------------------------
+
 
 def build_pit_cache_for_date(
     as_of: date,
@@ -257,8 +264,7 @@ def build_pit_cache_for_date(
         "schema_version": SCHEMA_VERSION,
         "tool_version": TOOL_VERSION,
         "as_of_date": as_of.isoformat(),
-        "created_at": datetime.now(tz=timezone.utc)
-            .isoformat().replace("+00:00", "Z"),
+        "created_at": datetime.now(tz=timezone.utc).isoformat().replace("+00:00", "Z"),
         "pit_mode": pit_mode,
         "pit_convention": "first_posted_or_last_update_lte_as_of",
         "input_hash": input_hash,
@@ -283,6 +289,7 @@ def build_pit_cache_for_date(
 # ---------------------------------------------------------------------------
 # Main orchestrator
 # ---------------------------------------------------------------------------
+
 
 def backfill_ctgov_history(
     date_from: date,
@@ -330,13 +337,15 @@ def backfill_ctgov_history(
             cache_path = out_root / f"trial_records_{d.isoformat()}.json"
             with open(cache_path) as f:
                 existing = json.load(f)
-            per_date.append({
-                "as_of_date": d.isoformat(),
-                "trials_admitted": len(existing),
-                "trials_filtered": total_trials - len(existing),
-                "trials_total": total_trials,
-                "skipped": True,
-            })
+            per_date.append(
+                {
+                    "as_of_date": d.isoformat(),
+                    "trials_admitted": len(existing),
+                    "trials_filtered": total_trials - len(existing),
+                    "trials_total": total_trials,
+                    "skipped": True,
+                }
+            )
             skipped += 1
             continue
 
@@ -378,45 +387,57 @@ def backfill_ctgov_history(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Generate PIT-safe CT.gov caches for backtesting.",
     )
     parser.add_argument(
-        "--date-from", required=True,
+        "--date-from",
+        required=True,
         help="Start date inclusive (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--date-to", required=True,
+        "--date-to",
+        required=True,
         help="End date inclusive (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--cadence", default="quarterly",
+        "--cadence",
+        default="quarterly",
         choices=["quarterly", "monthly", "weekly", "daily"],
         help="Date cadence (default: quarterly)",
     )
     parser.add_argument(
-        "--trial-records", default=None,
+        "--trial-records",
+        default=None,
         help="Path to trial_records.json (default: production_data/trial_records.json)",
     )
     parser.add_argument(
-        "--out-root", type=Path, default=None,
+        "--out-root",
+        type=Path,
+        default=None,
         help="Output root directory (default: cache/ctgov)",
     )
     parser.add_argument(
-        "--resume", action="store_true",
+        "--resume",
+        action="store_true",
         help="Skip dates with existing valid cache file",
     )
     parser.add_argument(
-        "--report", action="store_true",
+        "--report",
+        action="store_true",
         help="Print aggregate coverage report at end",
     )
     parser.add_argument(
-        "--max-dates", type=int, default=None,
+        "--max-dates",
+        type=int,
+        default=None,
         help="Limit number of dates to process (for testing)",
     )
     parser.add_argument(
-        "--pit-mode", default="strict",
+        "--pit-mode",
+        default="strict",
         choices=["strict", "degrade"],
         help="PIT mode (default: strict)",
     )
@@ -447,7 +468,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     if "coverage_report" in summary:
         rpt = summary["coverage_report"]
-        print(f"\nCoverage Report:")
+        print("\nCoverage Report:")
         print(f"  Dates:         {rpt['total_dates']}")
         print(f"  Avg admitted:  {rpt['avg_admitted']:.0f}")
         print(f"  Min admitted:  {rpt['min_admitted']}")

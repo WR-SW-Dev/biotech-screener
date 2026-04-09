@@ -18,6 +18,7 @@ Usage:
         --ruleset data/snapshots/2026-02-21/decision_ruleset.json \
         --date-from 2026-02-01 --date-to 2026-02-10 --force
 """
+
 from __future__ import annotations
 
 import argparse

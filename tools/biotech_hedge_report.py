@@ -12,6 +12,7 @@ Usage:
         --portfolio-csv production_data/portfolio_positions.csv \
         --hedge-notional 1000000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1857,7 +1858,7 @@ def generate_markdown_report(report_data: Dict[str, Any]) -> str:
     if se.get("status") == "ok":
         lines.append("## Static vs Historical Efficacy (shadow diagnostic)\n")
         if se.get("agree"):
-            lines.append(f"Static scorer and historical efficacy **agree**: " f"**{se['static_winner']}**")
+            lines.append("Static scorer and historical efficacy **agree**: " f"**{se['static_winner']}**")
         else:
             lines.append("Static scorer and historical efficacy **disagree**:")
             lines.append("")

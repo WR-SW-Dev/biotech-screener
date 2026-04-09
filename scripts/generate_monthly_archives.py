@@ -14,6 +14,7 @@ Usage:
     python scripts/generate_monthly_archives.py --dry-run
     python scripts/generate_monthly_archives.py --single 2020-01-31
 """
+
 from __future__ import annotations
 
 import argparse
@@ -39,7 +40,8 @@ def last_business_day(year: int, month: int) -> date:
 
 
 def generate_date_grid(
-    start_ym: str, end_ym: str,
+    start_ym: str,
+    end_ym: str,
 ) -> List[str]:
     """Generate end-of-month business day dates from YYYY-MM to YYYY-MM."""
     start_y, start_m = int(start_ym[:4]), int(start_ym[5:7])
@@ -70,7 +72,9 @@ def _load_trading_dates(price_csv: Path) -> List[str]:
 
 
 def generate_weekly_grid(
-    start_ym: str, end_ym: str, price_csv: Path,
+    start_ym: str,
+    end_ym: str,
+    price_csv: Path,
 ) -> List[str]:
     """Generate last-trading-day-per-ISO-week dates.
 
@@ -122,19 +126,28 @@ def run_one_date(
 
     # Step 1: Run scoring pipeline
     cmd_screen = [
-        sys.executable, str(PROJECT_ROOT / "run_screen.py"),
-        "--as-of-date", date_str,
-        "--data-dir", str(data_dir),
-        "--pit-mode", "degrade",
-        "--output", str(output_file),
-        "--snapshot-dir", str(snapshot_dir),
-        "--log-level", "WARNING",
+        sys.executable,
+        str(PROJECT_ROOT / "run_screen.py"),
+        "--as-of-date",
+        date_str,
+        "--data-dir",
+        str(data_dir),
+        "--pit-mode",
+        "degrade",
+        "--output",
+        str(output_file),
+        "--snapshot-dir",
+        str(snapshot_dir),
+        "--log-level",
+        "WARNING",
     ]
 
     with open(log_file, "w") as lf:
         result = subprocess.run(
-            cmd_screen, cwd=str(PROJECT_ROOT),
-            stdout=lf, stderr=subprocess.STDOUT,
+            cmd_screen,
+            cwd=str(PROJECT_ROOT),
+            stdout=lf,
+            stderr=subprocess.STDOUT,
             timeout=600,
         )
 
@@ -144,17 +157,24 @@ def run_one_date(
 
     # Step 2: Archive
     cmd_archive = [
-        sys.executable, str(PROJECT_ROOT / "archive_snapshot.py"),
-        "--date", date_str,
-        "--snapshot-dir", str(snapshot_dir),
-        "--data-dir", str(data_dir),
-        "--archive-dir", str(archive_dir),
+        sys.executable,
+        str(PROJECT_ROOT / "archive_snapshot.py"),
+        "--date",
+        date_str,
+        "--snapshot-dir",
+        str(snapshot_dir),
+        "--data-dir",
+        str(data_dir),
+        "--archive-dir",
+        str(archive_dir),
     ]
 
     with open(log_file, "a") as lf:
         result = subprocess.run(
-            cmd_archive, cwd=str(PROJECT_ROOT),
-            stdout=lf, stderr=subprocess.STDOUT,
+            cmd_archive,
+            cwd=str(PROJECT_ROOT),
+            stdout=lf,
+            stderr=subprocess.STDOUT,
             timeout=120,
         )
 
@@ -169,18 +189,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Generate PIT-lite monthly or weekly archives",
     )
-    parser.add_argument("--start", default="2020-01",
-                        help="Start YYYY-MM (default: 2020-01)")
-    parser.add_argument("--end", default="2026-02",
-                        help="End YYYY-MM (default: 2026-02)")
-    parser.add_argument("--grid", default="monthly",
-                        choices=["monthly", "weekly"],
-                        help="Date grid: monthly or weekly (default: monthly)")
-    parser.add_argument("--single", type=str, default=None,
-                        help="Run a single date (YYYY-MM-DD)")
+    parser.add_argument("--start", default="2020-01", help="Start YYYY-MM (default: 2020-01)")
+    parser.add_argument("--end", default="2026-02", help="End YYYY-MM (default: 2026-02)")
+    parser.add_argument(
+        "--grid",
+        default="monthly",
+        choices=["monthly", "weekly"],
+        help="Date grid: monthly or weekly (default: monthly)",
+    )
+    parser.add_argument("--single", type=str, default=None, help="Run a single date (YYYY-MM-DD)")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--force", action="store_true",
-                        help="Regenerate even if archive exists")
+    parser.add_argument("--force", action="store_true", help="Regenerate even if archive exists")
     args = parser.parse_args()
 
     data_dir = PROJECT_ROOT / "production_data"
@@ -236,8 +255,13 @@ def main() -> None:
         t0 = time.time()
 
         ok = run_one_date(
-            d, data_dir, snapshot_dir, archive_dir,
-            output_dir, log_dir, args.dry_run,
+            d,
+            data_dir,
+            snapshot_dir,
+            archive_dir,
+            output_dir,
+            log_dir,
+            args.dry_run,
         )
 
         dt = time.time() - t0

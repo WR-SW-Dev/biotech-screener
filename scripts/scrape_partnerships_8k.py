@@ -14,7 +14,8 @@ import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional
+
 import requests
 
 # SEC EDGAR API settings
@@ -41,10 +42,32 @@ PARTNERSHIP_KEYWORDS = [
 
 # Major pharma partners (for validation)
 MAJOR_PARTNERS = [
-    "pfizer", "merck", "roche", "novartis", "johnson", "j&j", "abbvie",
-    "bristol-myers", "bms", "astrazeneca", "sanofi", "gsk", "glaxosmithkline",
-    "eli lilly", "lilly", "gilead", "amgen", "regeneron", "biogen", "vertex",
-    "takeda", "bayer", "boehringer", "novo nordisk", "astellas", "daiichi",
+    "pfizer",
+    "merck",
+    "roche",
+    "novartis",
+    "johnson",
+    "j&j",
+    "abbvie",
+    "bristol-myers",
+    "bms",
+    "astrazeneca",
+    "sanofi",
+    "gsk",
+    "glaxosmithkline",
+    "eli lilly",
+    "lilly",
+    "gilead",
+    "amgen",
+    "regeneron",
+    "biogen",
+    "vertex",
+    "takeda",
+    "bayer",
+    "boehringer",
+    "novo nordisk",
+    "astellas",
+    "daiichi",
 ]
 
 
@@ -90,13 +113,15 @@ def fetch_8k_filings(cik: str, ticker: str, lookback_days: int = 730) -> List[Di
 
         for i, form in enumerate(forms):
             if form == "8-K" and dates[i] >= cutoff_date:
-                filings.append({
-                    "ticker": ticker,
-                    "cik": cik,
-                    "filing_date": dates[i],
-                    "accession": accessions[i].replace("-", ""),
-                    "document": descriptions[i],
-                })
+                filings.append(
+                    {
+                        "ticker": ticker,
+                        "cik": cik,
+                        "filing_date": dates[i],
+                        "accession": accessions[i].replace("-", ""),
+                        "document": descriptions[i],
+                    }
+                )
 
         return filings
     except Exception as e:
@@ -117,16 +142,16 @@ def fetch_filing_content(cik: str, accession: str, document: str) -> Optional[st
 
         # Strip HTML tags to get plain text
         # Simple regex-based HTML stripping
-        content = re.sub(r'<style[^>]*>.*?</style>', '', content, flags=re.DOTALL | re.IGNORECASE)
-        content = re.sub(r'<script[^>]*>.*?</script>', '', content, flags=re.DOTALL | re.IGNORECASE)
-        content = re.sub(r'<[^>]+>', ' ', content)
-        content = re.sub(r'&nbsp;', ' ', content)
-        content = re.sub(r'&amp;', '&', content)
-        content = re.sub(r'&#160;', ' ', content)
-        content = re.sub(r'\s+', ' ', content)
+        content = re.sub(r"<style[^>]*>.*?</style>", "", content, flags=re.DOTALL | re.IGNORECASE)
+        content = re.sub(r"<script[^>]*>.*?</script>", "", content, flags=re.DOTALL | re.IGNORECASE)
+        content = re.sub(r"<[^>]+>", " ", content)
+        content = re.sub(r"&nbsp;", " ", content)
+        content = re.sub(r"&amp;", "&", content)
+        content = re.sub(r"&#160;", " ", content)
+        content = re.sub(r"\s+", " ", content)
 
         return content.strip()
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -270,7 +295,7 @@ def scrape_partnerships_for_ticker(ticker: str, lookback_days: int = 730) -> Lis
 
 def load_universe(universe_path: str) -> List[str]:
     """Load tickers from universe file."""
-    with open(universe_path, 'r') as f:
+    with open(universe_path, "r") as f:
         data = json.load(f)
 
     if isinstance(data, list):
@@ -286,7 +311,7 @@ def merge_with_existing(new_partnerships: List[Dict], existing_path: str) -> Lis
     """Merge new partnerships with existing file, avoiding duplicates."""
     existing = []
     if Path(existing_path).exists():
-        with open(existing_path, 'r') as f:
+        with open(existing_path, "r") as f:
             data = json.load(f)
             existing = data.get("partnerships", []) if isinstance(data, dict) else data
 
@@ -331,7 +356,7 @@ def main():
         return 1
 
     if args.limit:
-        tickers = tickers[:args.limit]
+        tickers = tickers[: args.limit]
 
     print(f"Processing {len(tickers)} tickers...")
     print(f"Looking back {args.lookback_days} days")
@@ -369,7 +394,7 @@ def main():
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 
     print(f"\nSaved {len(all_partnerships)} partnerships to {output_path}")

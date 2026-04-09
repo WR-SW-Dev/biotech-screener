@@ -14,6 +14,7 @@ Usage:
     python scripts/research/build_graveyard_catalog.py
     python scripts/research/build_graveyard_catalog.py --as-of-date 2026-03-28
 """
+
 from __future__ import annotations
 
 import argparse

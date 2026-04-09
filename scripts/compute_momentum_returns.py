@@ -17,17 +17,16 @@ Point-in-Time Safety:
     Uses collected_at date from market_data as reference to avoid lookahead bias.
 """
 
-import csv
+import argparse
 import json
 import sys
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from datetime import datetime, timedelta
-from pathlib import Path
 from http.cookiejar import CookieJar
-from typing import Dict, List, Optional, Tuple
-import argparse
+from pathlib import Path
+from typing import List, Optional, Tuple
 
 
 class YahooFinanceSession:
@@ -35,14 +34,12 @@ class YahooFinanceSession:
 
     def __init__(self):
         self.cookie_jar = CookieJar()
-        self.opener = urllib.request.build_opener(
-            urllib.request.HTTPCookieProcessor(self.cookie_jar)
-        )
+        self.opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(self.cookie_jar))
         self.crumb = None
         self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
         }
 
     def _get_crumb(self) -> Optional[str]:
@@ -52,32 +49,21 @@ class YahooFinanceSession:
 
         # First, visit the main page to get cookies
         try:
-            request = urllib.request.Request(
-                'https://finance.yahoo.com',
-                headers=self.headers
-            )
+            request = urllib.request.Request("https://finance.yahoo.com", headers=self.headers)
             self.opener.open(request, timeout=30)
         except Exception:
             pass
 
         # Then fetch the crumb
         try:
-            request = urllib.request.Request(
-                'https://query1.finance.yahoo.com/v1/test/getcrumb',
-                headers=self.headers
-            )
+            request = urllib.request.Request("https://query1.finance.yahoo.com/v1/test/getcrumb", headers=self.headers)
             with self.opener.open(request, timeout=30) as response:
-                self.crumb = response.read().decode('utf-8').strip()
+                self.crumb = response.read().decode("utf-8").strip()
                 return self.crumb
         except Exception:
             return None
 
-    def fetch_prices(
-        self,
-        ticker: str,
-        start_date: datetime,
-        end_date: datetime
-    ) -> List[Tuple[str, float]]:
+    def fetch_prices(self, ticker: str, start_date: datetime, end_date: datetime) -> List[Tuple[str, float]]:
         """
         Fetch historical prices from Yahoo Finance.
 
@@ -100,16 +86,16 @@ class YahooFinanceSession:
         try:
             request = urllib.request.Request(url, headers=self.headers)
             with self.opener.open(request, timeout=30) as response:
-                content = response.read().decode('utf-8')
+                content = response.read().decode("utf-8")
 
             # Parse CSV
-            lines = content.strip().split('\n')
+            lines = content.strip().split("\n")
             if len(lines) < 2:
                 return []
 
             prices = []
             for line in lines[1:]:  # Skip header
-                parts = line.split(',')
+                parts = line.split(",")
                 if len(parts) >= 6:
                     date_str = parts[0]
                     adj_close = parts[5]  # Adj Close column
@@ -179,8 +165,8 @@ def calculate_volatility_252d(prices: List[Tuple[str, float]]) -> Optional[float
     # Calculate daily returns
     returns = []
     for i in range(1, len(recent_prices)):
-        if recent_prices[i-1][1] > 0:
-            daily_return = (recent_prices[i][1] / recent_prices[i-1][1]) - 1
+        if recent_prices[i - 1][1] > 0:
+            daily_return = (recent_prices[i][1] / recent_prices[i - 1][1]) - 1
             returns.append(daily_return)
 
     if len(returns) < 20:
@@ -189,48 +175,22 @@ def calculate_volatility_252d(prices: List[Tuple[str, float]]) -> Optional[float
     # Calculate standard deviation
     mean_return = sum(returns) / len(returns)
     variance = sum((r - mean_return) ** 2 for r in returns) / len(returns)
-    std_dev = variance ** 0.5
+    std_dev = variance**0.5
 
     # Annualize
-    return std_dev * (252 ** 0.5)
+    return std_dev * (252**0.5)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Add 60-day momentum returns to market_data.json"
-    )
+    parser = argparse.ArgumentParser(description="Add 60-day momentum returns to market_data.json")
+    parser.add_argument("--market-data", type=Path, required=True, help="Path to market_data.json")
+    parser.add_argument("--output", type=Path, help="Output path (defaults to overwriting input)")
     parser.add_argument(
-        "--market-data",
-        type=Path,
-        required=True,
-        help="Path to market_data.json"
+        "--reference-date", type=str, help="Reference date (YYYY-MM-DD), defaults to collected_at from data"
     )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        help="Output path (defaults to overwriting input)"
-    )
-    parser.add_argument(
-        "--reference-date",
-        type=str,
-        help="Reference date (YYYY-MM-DD), defaults to collected_at from data"
-    )
-    parser.add_argument(
-        "--delay",
-        type=float,
-        default=0.3,
-        help="Delay between API calls in seconds (default: 0.3)"
-    )
-    parser.add_argument(
-        "--limit",
-        type=int,
-        help="Limit number of tickers to process (for testing)"
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Print what would be done without making changes"
-    )
+    parser.add_argument("--delay", type=float, default=0.3, help="Delay between API calls in seconds (default: 0.3)")
+    parser.add_argument("--limit", type=int, help="Limit number of tickers to process (for testing)")
+    parser.add_argument("--dry-run", action="store_true", help="Print what would be done without making changes")
 
     args = parser.parse_args()
 
@@ -253,10 +213,7 @@ def main():
     if args.reference_date:
         ref_date = datetime.strptime(args.reference_date, "%Y-%m-%d")
     else:
-        collected_dates = [
-            r.get("collected_at") for r in market_data
-            if r.get("collected_at")
-        ]
+        collected_dates = [r.get("collected_at") for r in market_data if r.get("collected_at")]
         if collected_dates:
             ref_date = datetime.strptime(max(collected_dates), "%Y-%m-%d")
         else:
@@ -273,7 +230,7 @@ def main():
     has_xbi = sum(1 for r in market_data if r.get("xbi_return_60d") is not None)
     has_vol = sum(1 for r in market_data if r.get("volatility_252d") is not None)
 
-    print(f"\nCurrent state:")
+    print("\nCurrent state:")
     print(f"  With return_60d: {has_return_60d}/{len(market_data)}")
     print(f"  With xbi_return_60d: {has_xbi}/{len(market_data)}")
     print(f"  With volatility_252d: {has_vol}/{len(market_data)}")
@@ -306,10 +263,10 @@ def main():
     # Process each ticker
     tickers = [r.get("ticker") for r in market_data if r.get("ticker")]
     if args.limit:
-        tickers = tickers[:args.limit]
+        tickers = tickers[: args.limit]
 
     print(f"\nProcessing {len(tickers)} tickers...")
-    print("="*60)
+    print("=" * 60)
 
     success_count = 0
     ticker_to_data = {}
@@ -337,7 +294,7 @@ def main():
 
         time.sleep(args.delay)
 
-    print("="*60)
+    print("=" * 60)
     print(f"Fetched momentum data for {success_count}/{len(tickers)} tickers")
 
     # Update market data records
@@ -351,7 +308,7 @@ def main():
     has_xbi = sum(1 for r in market_data if r.get("xbi_return_60d") is not None)
     has_vol = sum(1 for r in market_data if r.get("volatility_252d") is not None)
 
-    print(f"\nFinal state:")
+    print("\nFinal state:")
     print(f"  With return_60d: {has_return_60d}/{len(market_data)}")
     print(f"  With xbi_return_60d: {has_xbi}/{len(market_data)}")
     print(f"  With volatility_252d: {has_vol}/{len(market_data)}")
@@ -369,9 +326,11 @@ def main():
     print("\nSample enriched records:")
     for r in market_data[:3]:
         if r.get("return_60d"):
-            print(f"  {r['ticker']}: return_60d={r.get('return_60d'):.4f}, "
-                  f"xbi={r.get('xbi_return_60d'):.4f if r.get('xbi_return_60d') else 'N/A'}, "
-                  f"vol={r.get('volatility_252d'):.4f if r.get('volatility_252d') else 'N/A'}")
+            print(
+                f"  {r['ticker']}: return_60d={r.get('return_60d'):.4f}, "
+                f"xbi={r.get('xbi_return_60d'):.4f if r.get('xbi_return_60d') else 'N/A'}, "
+                f"vol={r.get('volatility_252d'):.4f if r.get('volatility_252d') else 'N/A'}"
+            )
 
 
 if __name__ == "__main__":

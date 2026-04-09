@@ -12,6 +12,7 @@ Output:
 Usage:
     python scripts/research/build_catalyst_history_rollup.py
 """
+
 from __future__ import annotations
 
 import argparse

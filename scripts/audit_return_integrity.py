@@ -11,6 +11,7 @@ CLI:
     [--prices production_data/price_history.csv] \
     [--output-dir artifacts/]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,15 +27,16 @@ from typing import Any, Dict, List, Optional, Tuple
 # Constants
 # ---------------------------------------------------------------------------
 
-JUMP_THRESHOLD = 3.0     # +300% single-day → likely reverse split
-DROP_THRESHOLD = -0.75   # -75% single-day → likely forward split / delisting
-TAIL_PCT = 0.005         # top/bottom 0.5% of returns for tail extraction
-WINSORIZE_CAP = 2.0      # ±200% cap for winsorized treatment
-SUSPICIOUS_RET = 5.0     # >500% 60d return with no flagged day → suspicious
+JUMP_THRESHOLD = 3.0  # +300% single-day → likely reverse split
+DROP_THRESHOLD = -0.75  # -75% single-day → likely forward split / delisting
+TAIL_PCT = 0.005  # top/bottom 0.5% of returns for tail extraction
+WINSORIZE_CAP = 2.0  # ±200% cap for winsorized treatment
+SUSPICIOUS_RET = 5.0  # >500% 60d return with no flagged day → suspicious
 
 # ---------------------------------------------------------------------------
 # Phase A — Price discontinuity scan
 # ---------------------------------------------------------------------------
+
 
 def detect_discontinuities(
     prices: Dict[str, Dict[date, Decimal]],
@@ -67,29 +69,34 @@ def detect_discontinuities(
                 continue
             pct = (curr / prev) - 1.0
             if pct >= jump_threshold:
-                flags.append({
-                    "ticker": ticker,
-                    "date": sorted_dates[i].isoformat(),
-                    "close_before": round(prev, 4),
-                    "close_after": round(curr, 4),
-                    "pct_change": round(pct, 4),
-                    "flag_type": "reverse_split",
-                })
+                flags.append(
+                    {
+                        "ticker": ticker,
+                        "date": sorted_dates[i].isoformat(),
+                        "close_before": round(prev, 4),
+                        "close_after": round(curr, 4),
+                        "pct_change": round(pct, 4),
+                        "flag_type": "reverse_split",
+                    }
+                )
             elif pct <= drop_threshold:
-                flags.append({
-                    "ticker": ticker,
-                    "date": sorted_dates[i].isoformat(),
-                    "close_before": round(prev, 4),
-                    "close_after": round(curr, 4),
-                    "pct_change": round(pct, 4),
-                    "flag_type": "forward_split",
-                })
+                flags.append(
+                    {
+                        "ticker": ticker,
+                        "date": sorted_dates[i].isoformat(),
+                        "close_before": round(prev, 4),
+                        "close_after": round(curr, 4),
+                        "pct_change": round(pct, 4),
+                        "flag_type": "forward_split",
+                    }
+                )
     return flags
 
 
 # ---------------------------------------------------------------------------
 # Phase B — Panel tail extraction + classification
 # ---------------------------------------------------------------------------
+
 
 def _flagged_ticker_dates(discontinuities: List[Dict]) -> Dict[str, List[date]]:
     """Build ticker → [flagged dates] lookup from discontinuity list."""
@@ -145,18 +152,25 @@ def classify_panel_extremes(
                 ticker = row.get("ticker", "")
                 as_of_date = row.get("as_of_date", "")
                 classification = _classify_row(
-                    ticker, as_of_date, val, col, flagged_dates,
-                    flagged_tickers, suspicious_ret,
+                    ticker,
+                    as_of_date,
+                    val,
+                    col,
+                    flagged_dates,
+                    flagged_tickers,
+                    suspicious_ret,
                 )
-                year_extremes.append({
-                    "ticker": ticker,
-                    "as_of_date": as_of_date,
-                    "return_col": col,
-                    "return_value": round(val, 6),
-                    "tier": row.get("tier", ""),
-                    "eligible": row.get("eligible", ""),
-                    "classification": classification,
-                })
+                year_extremes.append(
+                    {
+                        "ticker": ticker,
+                        "as_of_date": as_of_date,
+                        "return_col": col,
+                        "return_value": round(val, 6),
+                        "tier": row.get("tier", ""),
+                        "eligible": row.get("eligible", ""),
+                        "classification": classification,
+                    }
+                )
         result[year] = year_extremes
     return result
 
@@ -193,12 +207,14 @@ def _classify_row(
 def _add_calendar_days(d: date, n: int) -> date:
     """Add n calendar days to date d."""
     from datetime import timedelta
+
     return d + timedelta(days=n)
 
 
 # ---------------------------------------------------------------------------
 # Phase C — Tier impact quantification
 # ---------------------------------------------------------------------------
+
 
 def compute_tier_impact(
     panel_rows: List[Dict[str, str]],
@@ -216,8 +232,7 @@ def compute_tier_impact(
     for label, filter_fn, transform_fn in [
         ("raw", lambda t, v: True, lambda v: v),
         ("excl_splits", lambda t, v: t not in flagged_tickers, lambda v: v),
-        ("winsorized_200", lambda t, v: True,
-         lambda v: max(-winsorize_cap, min(winsorize_cap, v))),
+        ("winsorized_200", lambda t, v: True, lambda v: max(-winsorize_cap, min(winsorize_cap, v))),
     ]:
         tier_stats: Dict[str, Dict[str, Any]] = {}
         for tier in ("A", "B", "C", "D"):
@@ -286,6 +301,7 @@ def _weighted_mean(tier_stats: Dict, tiers: Tuple[str, ...]) -> Optional[float]:
 # Phase D — Remediation candidates
 # ---------------------------------------------------------------------------
 
+
 def build_flagged_tickers_manifest(
     discontinuities: List[Dict],
 ) -> List[Dict[str, Any]]:
@@ -296,17 +312,20 @@ def build_flagged_tickers_manifest(
     manifest = []
     for ticker in sorted(by_ticker):
         events = by_ticker[ticker]
-        manifest.append({
-            "ticker": ticker,
-            "n_events": len(events),
-            "events": events,
-        })
+        manifest.append(
+            {
+                "ticker": ticker,
+                "n_events": len(events),
+                "events": events,
+            }
+        )
     return manifest
 
 
 # ---------------------------------------------------------------------------
 # Report formatting
 # ---------------------------------------------------------------------------
+
 
 def format_report_markdown(
     discontinuities: List[Dict],
@@ -325,8 +344,10 @@ def format_report_markdown(
     if not discontinuities:
         lines.append("No single-day price discontinuities found.\n")
     else:
-        lines.append(f"Found **{len(discontinuities)}** discontinuities "
-                      f"across **{len(set(d['ticker'] for d in discontinuities))}** tickers.\n")
+        lines.append(
+            f"Found **{len(discontinuities)}** discontinuities "
+            f"across **{len(set(d['ticker'] for d in discontinuities))}** tickers.\n"
+        )
         lines.append("| Ticker | Date | Close Before | Close After | Pct Change | Type |")
         lines.append("|--------|------|-------------|------------|------------|------|")
         for d in sorted(discontinuities, key=lambda x: x["pct_change"], reverse=True):
@@ -375,10 +396,7 @@ def format_report_markdown(
     else:
         lines.append(f"**{len(flagged_manifest)}** tickers need split-adjusted prices:\n")
         for entry in flagged_manifest:
-            events_str = "; ".join(
-                f"{e['date']} ({e['flag_type']}, {e['pct_change']:+.1%})"
-                for e in entry["events"]
-            )
+            events_str = "; ".join(f"{e['date']} ({e['flag_type']}, {e['pct_change']:+.1%})" for e in entry["events"])
             lines.append(f"- **{entry['ticker']}** — {entry['n_events']} event(s): {events_str}")
         lines.append("")
 
@@ -406,6 +424,7 @@ def build_json_output(
 # Main orchestrator
 # ---------------------------------------------------------------------------
 
+
 def run_audit(
     panel_path: Path,
     prices_path: Path,
@@ -417,6 +436,7 @@ def run_audit(
     # Load prices via CSVReturnsProvider
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from backtest.returns_provider import CSVReturnsProvider
+
     provider = CSVReturnsProvider(prices_path, price_col="close")
 
     # Phase A
@@ -442,21 +462,25 @@ def run_audit(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     md_report = format_report_markdown(
-        discontinuities, panel_extremes, tier_impact, flagged_manifest, scan_date,
+        discontinuities,
+        panel_extremes,
+        tier_impact,
+        flagged_manifest,
+        scan_date,
     )
     (output_dir / "return_integrity_audit.md").write_text(md_report)
 
     json_output = build_json_output(
-        discontinuities, sorted(flagged_set), panel_extremes, tier_impact, scan_date,
+        discontinuities,
+        sorted(flagged_set),
+        panel_extremes,
+        tier_impact,
+        scan_date,
     )
-    (output_dir / "return_integrity_audit.json").write_text(
-        json.dumps(json_output, indent=2, default=str)
-    )
+    (output_dir / "return_integrity_audit.json").write_text(json.dumps(json_output, indent=2, default=str))
 
     # Also write flagged_tickers.json for downstream consumption
-    (output_dir / "flagged_tickers.json").write_text(
-        json.dumps(flagged_manifest, indent=2, default=str)
-    )
+    (output_dir / "flagged_tickers.json").write_text(json.dumps(flagged_manifest, indent=2, default=str))
 
     return json_output
 
@@ -464,6 +488,7 @@ def run_audit(
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Audit forward-return integrity")

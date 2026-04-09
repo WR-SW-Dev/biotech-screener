@@ -16,6 +16,7 @@ Output:
 Usage:
     python tools/build_universe_maintenance.py --as-of-date 2026-03-27
 """
+
 from __future__ import annotations
 
 import argparse

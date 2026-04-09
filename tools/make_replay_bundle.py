@@ -26,6 +26,7 @@ Usage:
     python3 tools/make_replay_bundle.py --as-of-date 2026-02-26
     python3 tools/make_replay_bundle.py --as-of-date 2026-02-26 --out /tmp/bundle.tgz
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,7 +34,6 @@ import csv
 import hashlib
 import io
 import json
-import os
 import sys
 import tarfile
 import time
@@ -284,11 +284,13 @@ def make_replay_bundle(
             assert raw is not None
             sha = _sha256_bytes(raw)
             size = len(raw)
-        included_files.append({
-            "relpath": relpath,
-            "sha256": sha,
-            "bytes": size,
-        })
+        included_files.append(
+            {
+                "relpath": relpath,
+                "sha256": sha,
+                "bytes": size,
+            }
+        )
 
     # Extract key telemetry for manifest
     amt = metadata.get("alpha_table_telemetry") or metadata.get("alpha_modifier_telemetry", {})
@@ -335,7 +337,7 @@ def make_replay_bundle(
     files["manifest.json"] = (None, _stable_json(manifest))
 
     # Recompute included_files with manifest itself
-    manifest_bytes = files["manifest.json"][1]
+    files["manifest.json"][1]
 
     # --- Write .tgz ---
     out_path.parent.mkdir(parents=True, exist_ok=True)
@@ -357,9 +359,7 @@ def make_replay_bundle(
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Package a replay bundle for a Phase-2 snapshot."
-    )
+    parser = argparse.ArgumentParser(description="Package a replay bundle for a Phase-2 snapshot.")
     parser.add_argument("--as-of-date", required=True, help="YYYY-MM-DD")
     parser.add_argument(
         "--snapshot-dir",

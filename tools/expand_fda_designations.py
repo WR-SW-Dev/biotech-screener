@@ -14,6 +14,7 @@ Usage:
     # Coverage diagnostics only
     python3 tools/expand_fda_designations.py --diagnostics
 """
+
 from __future__ import annotations
 
 import argparse

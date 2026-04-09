@@ -21,6 +21,7 @@ Usage:
     python3 scripts/research/backfill_catalyst_event_type.py \\
         --snapshot-root data/snapshots --in-place
 """
+
 from __future__ import annotations
 
 import csv

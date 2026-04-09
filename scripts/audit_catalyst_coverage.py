@@ -51,23 +51,48 @@ CACHE_DIRS_ADCOM = [
 
 # Well-known event types (for classifying unknown/blank)
 KNOWN_EVENT_TYPES = {
-    "DATA_READOUT", "FDA_PDUFA_DATE", "FDA_ADCOM", "FDA_CRL", "FDA_RTF",
-    "FDA_WARNING_LETTER", "FDA_APPROVAL", "FDA_SUBMISSION", "FDA_DESIGNATION",
-    "FDA_DECISION", "CT_PRIMARY_COMPLETION", "CT_STUDY_COMPLETION",
-    "TRIAL_ONGOING", "CLINICAL_HOLD", "SAFETY_SIGNAL", "CT_RESULTS_POSTED",
+    "DATA_READOUT",
+    "FDA_PDUFA_DATE",
+    "FDA_ADCOM",
+    "FDA_CRL",
+    "FDA_RTF",
+    "FDA_WARNING_LETTER",
+    "FDA_APPROVAL",
+    "FDA_SUBMISSION",
+    "FDA_DESIGNATION",
+    "FDA_DECISION",
+    "CT_PRIMARY_COMPLETION",
+    "CT_STUDY_COMPLETION",
+    "TRIAL_ONGOING",
+    "CLINICAL_HOLD",
+    "SAFETY_SIGNAL",
+    "CT_RESULTS_POSTED",
 }
 
 FDA_EVENT_TYPES = {
-    "FDA_PDUFA_DATE", "FDA_ADCOM", "FDA_CRL", "FDA_RTF",
-    "FDA_WARNING_LETTER", "FDA_APPROVAL", "FDA_SUBMISSION",
-    "FDA_DESIGNATION", "FDA_DECISION",
+    "FDA_PDUFA_DATE",
+    "FDA_ADCOM",
+    "FDA_CRL",
+    "FDA_RTF",
+    "FDA_WARNING_LETTER",
+    "FDA_APPROVAL",
+    "FDA_SUBMISSION",
+    "FDA_DESIGNATION",
+    "FDA_DECISION",
 }
 
 # Well-known sources
 KNOWN_SOURCES = {
-    "CTGOV_CALENDAR", "FDA_CALENDAR", "FDA_ADCOM_CALENDAR",
-    "SEC_8K_FILING", "SEC_10Q_FILING", "SEC_10K_FILING", "SEC_6K_FILING",
-    "SEC_8K_ADCOM", "CORPORATE_CALENDAR", "FEDERAL_REGISTER",
+    "CTGOV_CALENDAR",
+    "FDA_CALENDAR",
+    "FDA_ADCOM_CALENDAR",
+    "SEC_8K_FILING",
+    "SEC_10Q_FILING",
+    "SEC_10K_FILING",
+    "SEC_6K_FILING",
+    "SEC_8K_ADCOM",
+    "CORPORATE_CALENDAR",
+    "FEDERAL_REGISTER",
 }
 
 
@@ -274,17 +299,11 @@ def compute_coverage_metrics(
             ctgov_by_type[et] += 1
 
     # Unknown/blank event_type
-    unknown_type_events = [
-        (t, et, src) for t, et, src, _ in all_events
-        if not et or et not in KNOWN_EVENT_TYPES
-    ]
+    unknown_type_events = [(t, et, src) for t, et, src, _ in all_events if not et or et not in KNOWN_EVENT_TYPES]
     blank_type_events = [(t, et, src) for t, et, src, _ in all_events if not et]
 
     # Unknown/blank source
-    unknown_source_events = [
-        (t, et, src) for t, et, src, _ in all_events
-        if not src or src not in KNOWN_SOURCES
-    ]
+    unknown_source_events = [(t, et, src) for t, et, src, _ in all_events if not src or src not in KNOWN_SOURCES]
     blank_source_events = [(t, et, src) for t, et, src, _ in all_events if not src]
 
     metrics = {
@@ -300,26 +319,18 @@ def compute_coverage_metrics(
         "pct_with_ctgov": round(len(ctgov_tickers) / universe_size * 100, 2),
         "ctgov_by_type": dict(ctgov_by_type.most_common()),
         "ctgov_present": len(ctgov_tickers) > 0,
-        "by_source": {
-            s: {"events": c, "tickers": len(source_tickers[s])}
-            for s, c in source_counter.most_common()
-        },
-        "by_event_type": {
-            e: {"events": c, "tickers": len(type_tickers[e])}
-            for e, c in type_counter.most_common()
-        },
+        "by_source": {s: {"events": c, "tickers": len(source_tickers[s])} for s, c in source_counter.most_common()},
+        "by_event_type": {e: {"events": c, "tickers": len(type_tickers[e])} for e, c in type_counter.most_common()},
         "unknown_events": {
             "unknown_type_count": len(unknown_type_events),
             "blank_type_count": len(blank_type_events),
             "unknown_source_count": len(unknown_source_events),
             "blank_source_count": len(blank_source_events),
             "unknown_type_examples": [
-                {"ticker": t, "event_type": et, "source": src}
-                for t, et, src in unknown_type_events[:20]
+                {"ticker": t, "event_type": et, "source": src} for t, et, src in unknown_type_events[:20]
             ],
             "unknown_source_examples": [
-                {"ticker": t, "event_type": et, "source": src}
-                for t, et, src in unknown_source_events[:20]
+                {"ticker": t, "event_type": et, "source": src} for t, et, src in unknown_source_events[:20]
             ],
         },
         "source_ticker_lists": {
@@ -344,37 +355,38 @@ def print_summary(metrics):
     print("CATALYST COVERAGE AUDIT")
     print(f"{'='*60}")
     print(f"  Universe size: {metrics['universe_size']}")
-    print(f"  With any catalyst:   {metrics['tickers_with_any_catalyst']} "
-          f"({metrics['pct_with_any_catalyst']:.1f}%)")
-    print(f"  With dated catalyst: {metrics['tickers_with_dated_catalyst']} "
-          f"({metrics['pct_with_dated_catalyst']:.1f}%)")
-    print(f"  With FDA events:     {metrics['tickers_with_fda']} "
-          f"({metrics['pct_with_fda']:.1f}%)")
-    print(f"  With CTGOV readouts: {metrics['tickers_with_ctgov']} "
-          f"({metrics['pct_with_ctgov']:.1f}%)")
+    print(
+        f"  With any catalyst:   {metrics['tickers_with_any_catalyst']} " f"({metrics['pct_with_any_catalyst']:.1f}%)"
+    )
+    print(
+        f"  With dated catalyst: {metrics['tickers_with_dated_catalyst']} "
+        f"({metrics['pct_with_dated_catalyst']:.1f}%)"
+    )
+    print(f"  With FDA events:     {metrics['tickers_with_fda']} " f"({metrics['pct_with_fda']:.1f}%)")
+    print(f"  With CTGOV readouts: {metrics['tickers_with_ctgov']} " f"({metrics['pct_with_ctgov']:.1f}%)")
 
-    print(f"\n  BY SOURCE:")
+    print("\n  BY SOURCE:")
     for src, data in metrics.get("by_source", {}).items():
         print(f"    {src:25s}  events={data['events']:4d}  tickers={data['tickers']:3d}")
 
-    print(f"\n  BY EVENT TYPE:")
+    print("\n  BY EVENT TYPE:")
     for et, data in metrics.get("by_event_type", {}).items():
         print(f"    {et:30s}  events={data['events']:4d}  tickers={data['tickers']:3d}")
 
     unk = metrics.get("unknown_events", {})
-    print(f"\n  UNKNOWN/BLANK:")
+    print("\n  UNKNOWN/BLANK:")
     print(f"    Unknown event_type:  {unk.get('unknown_type_count', 0)}")
     print(f"    Blank event_type:    {unk.get('blank_type_count', 0)}")
     print(f"    Unknown source:      {unk.get('unknown_source_count', 0)}")
     print(f"    Blank source:        {unk.get('blank_source_count', 0)}")
 
     if unk.get("unknown_type_examples"):
-        print(f"\n    Unknown type examples:")
+        print("\n    Unknown type examples:")
         for ex in unk["unknown_type_examples"][:10]:
             print(f"      {ex['ticker']:6s}  type={ex['event_type']!r:20s}  src={ex['source']!r}")
 
     if unk.get("unknown_source_examples"):
-        print(f"\n    Unknown source examples:")
+        print("\n    Unknown source examples:")
         for ex in unk["unknown_source_examples"][:10]:
             print(f"      {ex['ticker']:6s}  type={ex['event_type']!r:20s}  src={ex['source']!r}")
 
@@ -399,24 +411,28 @@ def print_summary(metrics):
     new_count = uplift.get("tickers_new_count", 0)
     new_tickers = uplift.get("tickers_new", [])
     if new_count > 0:
-        print(f"\n  MULTI-FORM UPLIFT (vs 8-K only):")
+        print("\n  MULTI-FORM UPLIFT (vs 8-K only):")
         print(f"    New tickers from 10-Q/10-K/6-K: {new_count}")
         print(f"    Tickers: {', '.join(new_tickers[:20])}")
         if len(new_tickers) > 20:
             print(f"    ... and {len(new_tickers) - 20} more")
     elif any(s.startswith("SEC_10") or s.startswith("SEC_6K") for s in metrics.get("by_source", {})):
-        print(f"\n  MULTI-FORM UPLIFT (vs 8-K only):")
-        print(f"    New tickers from 10-Q/10-K/6-K: 0 (all already covered by 8-K)")
+        print("\n  MULTI-FORM UPLIFT (vs 8-K only):")
+        print("    New tickers from 10-Q/10-K/6-K: 0 (all already covered by 8-K)")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Comprehensive catalyst coverage audit")
     parser.add_argument(
-        "--as-of-date", type=str, default=None,
+        "--as-of-date",
+        type=str,
+        default=None,
         help="Specific as-of date (YYYY-MM-DD). Default: latest available.",
     )
     parser.add_argument(
-        "--vnext-file", type=str, default=None,
+        "--vnext-file",
+        type=str,
+        default=None,
         help="Path to catalyst_events_vnext_{date}.json. Default: auto-detect.",
     )
     args = parser.parse_args()

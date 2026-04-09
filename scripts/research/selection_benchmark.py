@@ -14,6 +14,7 @@ Usage:
     python3 scripts/research/selection_benchmark.py
     python3 scripts/research/selection_benchmark.py --start 2023-01-01
 """
+
 from __future__ import annotations
 
 import argparse

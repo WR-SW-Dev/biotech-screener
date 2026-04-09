@@ -5,6 +5,7 @@ Usage:
     python tools/fetch_massive_option_day_aggs.py --date 2025-01-02
     python tools/fetch_massive_option_day_aggs.py --from 2025-01-02 --to 2025-01-10
 """
+
 from __future__ import annotations
 
 import argparse

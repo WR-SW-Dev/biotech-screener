@@ -45,6 +45,7 @@ class DeterministicRNG:
         self._np = None
         try:
             import numpy as np
+
             self._np = np.random.Generator(np.random.PCG64(to_uint32(self.seed_int)))
         except Exception:
             self._np = None

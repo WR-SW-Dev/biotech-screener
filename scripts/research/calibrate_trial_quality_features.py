@@ -7,6 +7,7 @@ and tests it against the 1,587 high-confidence CT.gov outcome labels.
 Usage:
     python scripts/research/calibrate_trial_quality_features.py
 """
+
 from __future__ import annotations
 
 import json

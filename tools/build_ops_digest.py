@@ -722,7 +722,7 @@ def format_digest_md(d: Dict[str, Any]) -> str:
     lines.append("## Coverage")
     lines.append("")
     lines.append(
-        f"| Metric | Value |\n|--------|-------|\n"
+        "| Metric | Value |\n|--------|-------|\n"
         f"| Universe | {c.get('n_eligible', 0)}/{c.get('n_total', 0)} eligible |\n"
         f"| Catalyst | {c.get('catalyst_pct', 0):.1f}% |\n"
         f"| Sponsor | {c.get('sponsor_pct', 0):.1f}% |\n"
@@ -781,7 +781,7 @@ def format_digest_md(d: Dict[str, Any]) -> str:
         lines.append("## Shadow Performance")
         lines.append("")
         lines.append(
-            f"| Metric | Value |\n|--------|-------|\n"
+            "| Metric | Value |\n|--------|-------|\n"
             f"| Cumulative | {perf.get('cumulative_return_pct', 0):+.2f}% |\n"
             f"| Excess vs XBI | {perf.get('cumulative_excess_pct', 0):+.2f}% (EW-vs-cap-wt gap included) |\n"
             f"| Max DD | {perf.get('max_drawdown_pct', 0):.2f}% |\n"

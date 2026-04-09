@@ -14,6 +14,7 @@ Usage:
         nw_lags=3,
     )
 """
+
 from __future__ import annotations
 
 import math
@@ -100,7 +101,7 @@ def newey_west_se(coef_series: np.ndarray, lags: int = 3) -> float:
     demeaned = coef_series - mean
 
     # Variance component
-    gamma_0 = float(np.mean(demeaned ** 2))
+    gamma_0 = float(np.mean(demeaned**2))
 
     # Autocovariance components with Bartlett kernel
     nw_sum = 0.0
@@ -154,10 +155,7 @@ def fama_macbeth(
 
         # Filter eligible
         if eligible_col:
-            rows = [
-                r for r in rows
-                if _safe_float(r.get(eligible_col)) == 1.0
-            ]
+            rows = [r for r in rows if _safe_float(r.get(eligible_col)) == 1.0]
 
         # Extract valid observations
         valid = []
@@ -225,6 +223,7 @@ def fama_macbeth(
         # Two-sided p-value from NW t-stat (normal approximation)
         if not math.isnan(nw_t):
             from scipy.stats import norm
+
             p_value = float(2 * (1 - norm.cdf(abs(nw_t))))
         else:
             p_value = np.nan
@@ -269,24 +268,27 @@ def run_incremental_test(
     Returns comparison of all three.
     """
     univariate = fama_macbeth(
-        snapshots, y_col, [candidate_signal], nw_lags=nw_lags,
+        snapshots,
+        y_col,
+        [candidate_signal],
+        nw_lags=nw_lags,
     )
     controls_only = fama_macbeth(
-        snapshots, y_col, control_signals, nw_lags=nw_lags,
+        snapshots,
+        y_col,
+        control_signals,
+        nw_lags=nw_lags,
     )
     full = fama_macbeth(
-        snapshots, y_col, control_signals + [candidate_signal], nw_lags=nw_lags,
+        snapshots,
+        y_col,
+        control_signals + [candidate_signal],
+        nw_lags=nw_lags,
     )
 
     # Extract candidate signal stats from each model
-    uni_stats = (
-        univariate.get("signals", {}).get(candidate_signal, {})
-        if "error" not in univariate else {}
-    )
-    full_stats = (
-        full.get("signals", {}).get(candidate_signal, {})
-        if "error" not in full else {}
-    )
+    uni_stats = univariate.get("signals", {}).get(candidate_signal, {}) if "error" not in univariate else {}
+    full_stats = full.get("signals", {}).get(candidate_signal, {}) if "error" not in full else {}
 
     return {
         "candidate": candidate_signal,
@@ -310,11 +312,7 @@ def run_incremental_test(
             "r_squared": full.get("mean_r_squared"),
             "n_months": full_stats.get("n_months"),
         },
-        "verdict": (
-            "INCREMENTAL"
-            if full_stats.get("survives_controls", False)
-            else "NOT_INCREMENTAL"
-        ),
+        "verdict": ("INCREMENTAL" if full_stats.get("survives_controls", False) else "NOT_INCREMENTAL"),
     }
 
 

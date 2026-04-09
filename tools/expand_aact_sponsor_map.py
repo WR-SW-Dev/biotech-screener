@@ -9,6 +9,7 @@ Usage:
     python tools/expand_aact_sponsor_map.py --auto-merge --min-confidence 0.90
     python tools/expand_aact_sponsor_map.py --dry-run
 """
+
 from __future__ import annotations
 
 import argparse

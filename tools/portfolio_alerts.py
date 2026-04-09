@@ -13,6 +13,7 @@ Usage:
     python3 tools/portfolio_alerts.py --as-of-date 2026-03-08 --webhook-url https://hooks.slack.com/...
     python3 tools/portfolio_alerts.py --as-of-date 2026-03-08 --dry-run
 """
+
 from __future__ import annotations
 
 import argparse

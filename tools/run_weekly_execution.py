@@ -21,6 +21,7 @@ Usage:
     python3 tools/run_weekly_execution.py --as-of-date 2026-03-10 --dry-run
     python3 tools/run_weekly_execution.py --as-of-date 2026-03-10 --skip-snapshot
 """
+
 from __future__ import annotations
 
 import argparse

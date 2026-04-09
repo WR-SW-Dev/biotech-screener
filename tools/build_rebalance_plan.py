@@ -11,6 +11,7 @@ Given the current Top-30 DEM rankings + inst_delta_z, computes:
 Usage:
     python tools/build_rebalance_plan.py --as-of-date 2026-04-02
 """
+
 from __future__ import annotations
 
 import argparse

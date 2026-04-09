@@ -20,6 +20,7 @@ Usage:
     python3 scripts/research/shadow_review_gate.py
     python3 scripts/research/shadow_review_gate.py --min-days 20
 """
+
 from __future__ import annotations
 
 import argparse

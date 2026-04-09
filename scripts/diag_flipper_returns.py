@@ -12,6 +12,7 @@ Usage:
         --output-dir data/diag \
         [--no-fetch]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -19,15 +20,15 @@ import csv
 import json
 import statistics
 import sys
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
-REGIME_FLIP_THRESHOLD = 10          # flips > this → regime (not organic)
-HORIZONS = [1, 5, 20]              # forward return horizons (trading days)
+REGIME_FLIP_THRESHOLD = 10  # flips > this → regime (not organic)
+HORIZONS = [1, 5, 20]  # forward return horizons (trading days)
 PRICE_CACHE_NAME = "price_cache.csv"
 PRICE_COLS = ["date", "ticker", "close"]
 
@@ -76,8 +77,7 @@ def collect_flip_events(
                     "size_band": rk.get("size_band", ""),
                     "archetype": rk.get("archetype", ""),
                     "composite_rank": _safe_float(rk.get("composite_rank")),
-                    "catalyst_mode": rk.get("catalyst_mode")
-                    or rk.get("de_catalyst_mode", ""),
+                    "catalyst_mode": rk.get("catalyst_mode") or rk.get("de_catalyst_mode", ""),
                 }
             )
     return events
@@ -115,9 +115,7 @@ def _trading_dates_sorted(prices: Dict[Tuple[str, str], float]) -> List[str]:
     return sorted({k[0] for k in prices})
 
 
-def _forward_date(
-    trading_dates: List[str], date_str: str, offset: int
-) -> Optional[str]:
+def _forward_date(trading_dates: List[str], date_str: str, offset: int) -> Optional[str]:
     """Return trading date at +offset business days from date_str, or None."""
     try:
         idx = trading_dates.index(date_str)
@@ -166,8 +164,7 @@ def fetch_missing_prices(
     if not tickers:
         return {}
 
-    print(f"  Fetching prices for {len(tickers)} tickers via yfinance...",
-          file=sys.stderr)
+    print(f"  Fetching prices for {len(tickers)} tickers via yfinance...", file=sys.stderr)
 
     new_prices: Dict[Tuple[str, str], float] = {}
     # Fetch in batches to avoid yfinance limits
@@ -175,8 +172,7 @@ def fetch_missing_prices(
     batch_size = 50
     for i in range(0, len(ticker_list), batch_size):
         batch = ticker_list[i : i + batch_size]
-        print(f"  Batch {i // batch_size + 1}: {len(batch)} tickers",
-              file=sys.stderr)
+        print(f"  Batch {i // batch_size + 1}: {len(batch)} tickers", file=sys.stderr)
         for ticker in batch:
             try:
                 tk = yf.Ticker(ticker)
@@ -211,8 +207,7 @@ def fetch_missing_prices(
                 if write_header:
                     writer.writeheader()
                 writer.writerows(rows_to_write)
-        print(f"  Cached {len(rows_to_write)} new price rows to {cache_csv}",
-              file=sys.stderr)
+        print(f"  Cached {len(rows_to_write)} new price rows to {cache_csv}", file=sys.stderr)
 
     return new_prices
 
@@ -261,9 +256,7 @@ def compute_returns(
                 p1 = prices.get((td, t)) if td else None
                 if p0 and p1 and p0 > 0:
                     rets.append(p1 / p0 - 1)
-            universe_medians[(d, h)] = (
-                statistics.median(rets) if len(rets) >= 5 else None
-            )
+            universe_medians[(d, h)] = statistics.median(rets) if len(rets) >= 5 else None
 
     # Compute per-event returns
     results: List[dict] = []
@@ -366,11 +359,22 @@ def compute_all_stats(results: List[dict]) -> List[dict]:
 # Step 6 — Output
 # ---------------------------------------------------------------------------
 CSV_COLUMNS = [
-    "flip_date", "ticker", "cohort", "tier_dev", "size_band", "composite_rank",
+    "flip_date",
+    "ticker",
+    "cohort",
+    "tier_dev",
+    "size_band",
+    "composite_rank",
     "close_t",
-    "ret_1d", "ret_5d", "ret_20d",
-    "universe_ret_1d", "universe_ret_5d", "universe_ret_20d",
-    "excess_1d", "excess_5d", "excess_20d",
+    "ret_1d",
+    "ret_5d",
+    "ret_20d",
+    "universe_ret_1d",
+    "universe_ret_5d",
+    "universe_ret_20d",
+    "excess_1d",
+    "excess_5d",
+    "excess_20d",
 ]
 
 
@@ -392,9 +396,7 @@ def write_csv(results: List[dict], output_path: Path) -> None:
             writer.writerow(row)
 
 
-def write_report(
-    results: List[dict], stats: List[dict], output_path: Path
-) -> None:
+def write_report(results: List[dict], stats: List[dict], output_path: Path) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     dates = sorted({r["flip_date"] for r in results})
     lines: List[str] = []
@@ -420,8 +422,12 @@ def write_report(
     lines.append("## Cohort Summary")
     for s in stats:
         lines.append(f"### {s['cohort']} (N={s['n_flips']})")
-        lines.append("| Horizon | Coverage | Mean Ret | Median Ret | Mean Excess | Median Excess | Hit Rate | Min | Max |")
-        lines.append("|---------|----------|----------|------------|-------------|---------------|----------|-----|-----|")
+        lines.append(
+            "| Horizon | Coverage | Mean Ret | Median Ret | Mean Excess | Median Excess | Hit Rate | Min | Max |"
+        )
+        lines.append(
+            "|---------|----------|----------|------------|-------------|---------------|----------|-----|-----|"
+        )
         for h in HORIZONS:
             cov = s.get(f"coverage_{h}d", "0%")
             mean_r = _fmt_pct(s.get(f"mean_ret_{h}d"))
@@ -542,8 +548,9 @@ def main() -> None:
     cohort_counts = {}
     for e in events:
         cohort_counts[e["cohort"]] = cohort_counts.get(e["cohort"], 0) + 1
-    print(f"  Found {len(events)} flip events across "
-          f"{len({e['flip_date'] for e in events})} dates", file=sys.stderr)
+    print(
+        f"  Found {len(events)} flip events across " f"{len({e['flip_date'] for e in events})} dates", file=sys.stderr
+    )
     for c, n in sorted(cohort_counts.items()):
         print(f"    {c}: {n}", file=sys.stderr)
 
@@ -552,10 +559,13 @@ def main() -> None:
     cache_csv = args.output_dir / PRICE_CACHE_NAME
     prices = load_prices(args.price_csv, cache_csv)
     trading_dates = _trading_dates_sorted(prices)
-    print(f"  Loaded {len(prices)} price points, "
-          f"{len(trading_dates)} trading dates "
-          f"({trading_dates[0] if trading_dates else '?'} to "
-          f"{trading_dates[-1] if trading_dates else '?'})", file=sys.stderr)
+    print(
+        f"  Loaded {len(prices)} price points, "
+        f"{len(trading_dates)} trading dates "
+        f"({trading_dates[0] if trading_dates else '?'} to "
+        f"{trading_dates[-1] if trading_dates else '?'})",
+        file=sys.stderr,
+    )
 
     if not args.no_fetch:
         flip_dates = sorted({e["flip_date"] for e in events})
@@ -566,10 +576,12 @@ def main() -> None:
             new_prices = fetch_missing_prices(missing, cache_csv)
             prices.update(new_prices)
             trading_dates = _trading_dates_sorted(prices)
-            print(f"  Now {len(prices)} price points, "
-                  f"{len(trading_dates)} trading dates "
-                  f"({trading_dates[0]} to {trading_dates[-1]})",
-                  file=sys.stderr)
+            print(
+                f"  Now {len(prices)} price points, "
+                f"{len(trading_dates)} trading dates "
+                f"({trading_dates[0]} to {trading_dates[-1]})",
+                file=sys.stderr,
+            )
         else:
             print("  No missing tickers to fetch", file=sys.stderr)
 
@@ -580,8 +592,7 @@ def main() -> None:
     # Coverage report
     for h in HORIZONS:
         n_with = sum(1 for r in results if r[f"ret_{h}d"] is not None)
-        print(f"  t+{h}d coverage: {n_with}/{len(results)} "
-              f"({n_with/len(results)*100:.0f}%)", file=sys.stderr)
+        print(f"  t+{h}d coverage: {n_with}/{len(results)} " f"({n_with/len(results)*100:.0f}%)", file=sys.stderr)
 
     # Step 5 — Statistics
     print("Step 4: Computing statistics...", file=sys.stderr)
@@ -599,7 +610,7 @@ def main() -> None:
     write_csv(results, csv_path)
     write_report(results, stats, md_path)
 
-    print(f"\nOutputs:", file=sys.stderr)
+    print("\nOutputs:", file=sys.stderr)
     print(f"  CSV:    {csv_path}", file=sys.stderr)
     print(f"  Report: {md_path}", file=sys.stderr)
 
@@ -610,8 +621,7 @@ def main() -> None:
         mean_e = s.get(f"mean_excess_{h}d")
         hit = s.get(f"hit_rate_{h}d")
         cov = s.get(f"coverage_{h}d", "0%")
-        print(f"  t+{h:2d}d: mean excess={_fmt_pct(mean_e):>8s}  "
-              f"hit rate={_fmt_pct(hit):>8s}  coverage={cov}")
+        print(f"  t+{h:2d}d: mean excess={_fmt_pct(mean_e):>8s}  " f"hit rate={_fmt_pct(hit):>8s}  coverage={cov}")
 
 
 if __name__ == "__main__":

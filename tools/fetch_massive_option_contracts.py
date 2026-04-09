@@ -5,6 +5,7 @@ Usage:
     python tools/fetch_massive_option_contracts.py --ticker MRNA --as-of 2026-03-12
     python tools/fetch_massive_option_contracts.py --ticker MRNA,IONS --expiration-from 2026-04-01
 """
+
 from __future__ import annotations
 
 import argparse

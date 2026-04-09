@@ -60,7 +60,7 @@ def detect_catalyst_date_mismatch(
             "reason": (
                 f"term_slope={opt_term_slope:.3f} (front elevated) but "
                 f"catalyst_days={catalyst_days} (model says >90d). "
-                f"Market may see a nearer event."
+                "Market may see a nearer event."
             ),
             "requires_review": True,
         }
@@ -83,7 +83,7 @@ def detect_catalyst_date_mismatch(
                 f"term_slope={opt_term_slope:.3f} (flat/contango) and "
                 f"catalyst_days={catalyst_days} (model says near-term) but "
                 f"IV={opt_atm_iv:.2f} not elevated vs baseline={baseline_iv:.2f}. "
-                f"Possible stale catalyst date."
+                "Possible stale catalyst date."
             ),
             "requires_review": True,
         }

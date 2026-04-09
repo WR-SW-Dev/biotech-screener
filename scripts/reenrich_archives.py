@@ -15,30 +15,23 @@ CLI:
     [--dry-run] \
     [--validate-only]
 """
+
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from enrich_archive_inputs import (
-    ARCHIVE_DIR,
-    PRICE_CSV,
-    TRIAL_PCD_WINDOW_DAYS,
-    enrich_archive,
-    load_price_history,
-)
 from backfill_decision_columns import process_archive
-from decision_engine import DecisionRuleset, DEFAULT_RULESET
+from decision_engine import DEFAULT_RULESET, DecisionRuleset
+from enrich_archive_inputs import ARCHIVE_DIR, PRICE_CSV, TRIAL_PCD_WINDOW_DAYS, enrich_archive, load_price_history
 from scripts.audit_archive_catalyst import audit_single_archive
-
 
 DEFAULT_DQ_THRESHOLD = 80.0
 
@@ -46,6 +39,7 @@ DEFAULT_DQ_THRESHOLD = 80.0
 # ---------------------------------------------------------------------------
 # Core orchestration
 # ---------------------------------------------------------------------------
+
 
 def reenrich_and_validate(
     archive_dir: Path = ARCHIVE_DIR,
@@ -138,7 +132,8 @@ def reenrich_and_validate(
         # Phase 1: Re-enrich (updates decision_inputs.json)
         print(f"  {date_str}: enrich ...", end=" ", flush=True)
         enrich_result = enrich_archive(
-            tar_path, all_prices,
+            tar_path,
+            all_prices,
             dry_run=dry_run,
             trial_window_days=trial_window_days,
             catalyst_only=catalyst_only,
@@ -161,7 +156,9 @@ def reenrich_and_validate(
         if not dry_run:
             print(" → backfill ...", end=" ", flush=True)
             bf_result = process_archive(
-                bf_tar, dry_run=False, ruleset=ruleset,
+                bf_tar,
+                dry_run=False,
+                ruleset=ruleset,
             )
             bf_status = bf_result.get("status", "error")
             print(f"{bf_status}", end="", flush=True)
@@ -183,8 +180,7 @@ def reenrich_and_validate(
                 "status": post_audit.get("status"),
             }
             delta = "—"
-            if (entry["before"].get("missing_pct") is not None
-                    and entry["after"].get("missing_pct") is not None):
+            if entry["before"].get("missing_pct") is not None and entry["after"].get("missing_pct") is not None:
                 d = entry["after"]["missing_pct"] - entry["before"]["missing_pct"]
                 delta = f"{d:+.1f}pp"
             dq_tag = "PASS" if entry["after"].get("passes_dq") else "FAIL"
@@ -203,57 +199,69 @@ def reenrich_and_validate(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Re-enrich archives with wider trial window and validate."
-    )
+    parser = argparse.ArgumentParser(description="Re-enrich archives with wider trial window and validate.")
     parser.add_argument(
-        "--archive-dir", type=str, default=str(ARCHIVE_DIR),
+        "--archive-dir",
+        type=str,
+        default=str(ARCHIVE_DIR),
         help=f"Directory containing .tar.gz archives (default: {ARCHIVE_DIR})",
     )
     parser.add_argument(
-        "--price-csv", type=str, default=str(PRICE_CSV),
+        "--price-csv",
+        type=str,
+        default=str(PRICE_CSV),
         help=f"Path to price_history.csv (default: {PRICE_CSV})",
     )
     parser.add_argument(
-        "--date-range", nargs=2, metavar=("START", "END"),
+        "--date-range",
+        nargs=2,
+        metavar=("START", "END"),
         help="Filter archives by date range (YYYY-MM-DD YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--trial-window", type=int, default=TRIAL_PCD_WINDOW_DAYS,
+        "--trial-window",
+        type=int,
+        default=TRIAL_PCD_WINDOW_DAYS,
         help=f"Trial PCD look-ahead window in days (default: {TRIAL_PCD_WINDOW_DAYS})",
     )
     parser.add_argument(
-        "--ruleset", type=str, default=None,
+        "--ruleset",
+        type=str,
+        default=None,
         help="Path to decision engine ruleset JSON (default: built-in defaults)",
     )
     parser.add_argument(
-        "--dq-threshold", type=float, default=DEFAULT_DQ_THRESHOLD,
+        "--dq-threshold",
+        type=float,
+        default=DEFAULT_DQ_THRESHOLD,
         help=f"DQ gate: max catalyst_missing_pct (default: {DEFAULT_DQ_THRESHOLD})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Compute but don't modify archives",
     )
     parser.add_argument(
-        "--validate-only", action="store_true",
+        "--validate-only",
+        action="store_true",
         help="Audit without modifying archives (for CI)",
     )
     parser.add_argument(
-        "--catalyst-only", action="store_true",
+        "--catalyst-only",
+        action="store_true",
         help="Only update catalyst fields; preserve existing defensive features",
     )
     parser.add_argument(
-        "--output-archive-dir", type=str, default=None,
+        "--output-archive-dir",
+        type=str,
+        default=None,
         help="Write enriched archives to this directory instead of modifying originals",
     )
     args = parser.parse_args()
 
-    ruleset = (
-        DecisionRuleset.from_json(args.ruleset)
-        if args.ruleset
-        else DEFAULT_RULESET
-    )
+    ruleset = DecisionRuleset.from_json(args.ruleset) if args.ruleset else DEFAULT_RULESET
 
     archive_dir = Path(args.archive_dir)
     if not archive_dir.exists():
@@ -291,10 +299,8 @@ def main() -> int:
 
     # Summary
     entries = result.get("archives", [])
-    before_pass = sum(1 for e in entries
-                      if e.get("before", {}).get("passes_dq"))
-    after_pass = sum(1 for e in entries
-                     if e.get("after", {}).get("passes_dq"))
+    before_pass = sum(1 for e in entries if e.get("before", {}).get("passes_dq"))
+    after_pass = sum(1 for e in entries if e.get("after", {}).get("passes_dq"))
 
     print()
     print(f"Results: {len(entries)} archives processed")

@@ -15,6 +15,7 @@ Extracted to reduce module_5_composite_v3.py complexity while preserving:
 Author: Wake Robin Capital Management
 Version: 3.0.0
 """
+
 from __future__ import annotations
 
 import hashlib

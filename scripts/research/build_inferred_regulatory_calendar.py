@@ -12,6 +12,7 @@ Usage:
     python scripts/research/build_inferred_regulatory_calendar.py
     python scripts/research/build_inferred_regulatory_calendar.py --as-of-date 2026-03-15
 """
+
 from __future__ import annotations
 
 import argparse

@@ -15,6 +15,7 @@ Usage:
     python3 scripts/research/pit_k_sweep.py
     python3 scripts/research/pit_k_sweep.py --cost-bps 30
 """
+
 from __future__ import annotations
 
 import argparse

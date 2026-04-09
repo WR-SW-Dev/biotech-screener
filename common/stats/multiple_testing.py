@@ -9,6 +9,7 @@ Usage:
     adjusted = benjamini_hochberg(raw_p_values, alpha=0.10)
     wrc = whites_reality_check(test_statistics, n_bootstrap=10000)
 """
+
 from __future__ import annotations
 
 from typing import Any
@@ -74,9 +75,7 @@ def benjamini_hochberg(
         "n_tests": m,
         "n_rejected": n_rejected,
         "results": results,
-        "rejected_names": [
-            n for n, v in results.items() if v["rejected"]
-        ],
+        "rejected_names": [n for n, v in results.items() if v["rejected"]],
     }
 
 
@@ -130,9 +129,7 @@ def whites_reality_check(
     boot_max_stats = np.empty(n_bootstrap)
     for b in range(n_bootstrap):
         starts = rng.integers(0, n_starts, size=n_blocks)
-        indices = np.concatenate([
-            np.arange(s, s + block_length) for s in starts
-        ])[:T]
+        indices = np.concatenate([np.arange(s, s + block_length) for s in starts])[:T]
         boot_sample = demeaned[indices]  # (T, K)
         boot_means = np.mean(boot_sample, axis=0)
         boot_max_stats[b] = np.max(boot_means)
@@ -148,10 +145,7 @@ def whites_reality_check(
         "block_length": block_length,
         "best_strategy": names[best_idx],
         "best_mean": _round(observed_max),
-        "all_means": {
-            names[i]: _round(float(observed_means[i]))
-            for i in range(K)
-        },
+        "all_means": {names[i]: _round(float(observed_means[i])) for i in range(K)},
         "wrc_p_value": _round(p_value),
         "significant_at_05": p_value < 0.05,
         "significant_at_10": p_value < 0.10,
@@ -211,9 +205,7 @@ def hansen_spa(
     boot_max = np.empty(n_bootstrap)
     for b in range(n_bootstrap):
         starts = rng.integers(0, n_starts, size=n_blocks)
-        indices = np.concatenate([
-            np.arange(s, s + block_length) for s in starts
-        ])[:T]
+        indices = np.concatenate([np.arange(s, s + block_length) for s in starts])[:T]
         boot_means = np.mean(centered[indices], axis=0)
         boot_max[b] = np.max(boot_means)
 
@@ -228,9 +220,7 @@ def hansen_spa(
         "spa_p_value": _round(p_value),
         "significant_at_05": p_value < 0.05,
         "significant_at_10": p_value < 0.10,
-        "strategy_means": {
-            names[i]: _round(float(obs_means[i])) for i in range(K)
-        },
+        "strategy_means": {names[i]: _round(float(obs_means[i])) for i in range(K)},
     }
 
 

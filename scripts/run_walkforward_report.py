@@ -19,10 +19,10 @@ Usage:
     --date-max DATE      Archive end date filter (YYYY-MM-DD)
     --suffix TAG         Suffix for output files (e.g., '2025' → walkforward_panel_2025.csv)
 """
+
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from collections import Counter
@@ -36,17 +36,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
-from decision_engine import DecisionRuleset, DEFAULT_RULESET
-from run_decision_strategy_backtest import (
-    HORIZONS,
-    PANEL_COLUMNS,
-    run_strategy_backtest,
-    write_panel_csv,
-)
-from run_decision_ruleset_sweep import init_providers
-from run_rank_ic_backtest import ARCHIVE_DIR, discover_archives
 from outcome_provenance import build_provenance
+
+from decision_engine import DEFAULT_RULESET, DecisionRuleset
 from decision_engine_codes import registry_fingerprint
+from run_decision_ruleset_sweep import init_providers
+from run_decision_strategy_backtest import HORIZONS, run_strategy_backtest, write_panel_csv
+from run_rank_ic_backtest import ARCHIVE_DIR, discover_archives
 
 DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts"
 
@@ -54,6 +50,7 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts"
 # =============================================================================
 # METRICS
 # =============================================================================
+
 
 def compute_tier_separation(
     panel_rows: List[Dict[str, Any]],
@@ -260,9 +257,7 @@ def compute_eligible_comparison(
             result[f"{label}_count"] = len(rets)
             result[f"{label}_mean_ret"] = round(mean(rets), 2)
             result[f"{label}_median_ret"] = round(median(rets), 2)
-            result[f"{label}_hit_rate"] = round(
-                sum(1 for r in rets if r > 0) / len(rets) * 100, 1
-            )
+            result[f"{label}_hit_rate"] = round(sum(1 for r in rets if r > 0) / len(rets) * 100, 1)
         else:
             result[f"{label}_count"] = 0
             result[f"{label}_mean_ret"] = None
@@ -341,9 +336,7 @@ def compute_rescued_outcomes(
         if rets:
             result[f"{label}_mean_ret"] = round(mean(rets), 2)
             result[f"{label}_median_ret"] = round(median(rets), 2)
-            result[f"{label}_hit_rate"] = round(
-                sum(1 for r in rets if r > 0) / len(rets) * 100, 1
-            )
+            result[f"{label}_hit_rate"] = round(sum(1 for r in rets if r > 0) / len(rets) * 100, 1)
         else:
             result[f"{label}_mean_ret"] = None
             result[f"{label}_median_ret"] = None
@@ -400,9 +393,7 @@ def compute_gate_pressure(
     # rescued_share_pct = rescued / eligible
     n_rescued = sum(1 for r in panel_rows if str(r.get("rescued_by_rel", "0")) == "1")
     n_eligible = sum(1 for r in panel_rows if str(r.get("eligible", "0")) == "1")
-    result["rescued_share_pct"] = (
-        round(n_rescued / n_eligible * 100, 1) if n_eligible > 0 else 0.0
-    )
+    result["rescued_share_pct"] = round(n_rescued / n_eligible * 100, 1) if n_eligible > 0 else 0.0
     result["rescued_count"] = n_rescued
     result["eligible_count"] = n_eligible
 
@@ -548,6 +539,7 @@ def compute_coverage_summary(
 # =============================================================================
 # REPORT GENERATION
 # =============================================================================
+
 
 def generate_walkforward_report_md(
     tier_sep: List[Dict[str, Any]],
@@ -710,16 +702,11 @@ def generate_walkforward_report_md(
             ("Optionality near A-floor", "optionality_near_a_floor_pct"),
             ("Rescued share", "rescued_share_pct"),
         ]
-        has_data = any(
-            gate_pressure.get(k) is not None for _, k in pressure_rows
-        )
+        has_data = any(gate_pressure.get(k) is not None for _, k in pressure_rows)
         if has_data:
             lines.append("## Gate Pressure")
             lines.append("")
-            lines.append(
-                "Share of dev tickers within +/-5pp of each gate threshold "
-                "(panel-wide aggregate)."
-            )
+            lines.append("Share of dev tickers within +/-5pp of each gate threshold " "(panel-wide aggregate).")
             lines.append("")
             lines.append("| Metric | Value |")
             lines.append("|--------|-------|")
@@ -737,10 +724,12 @@ def generate_walkforward_report_md(
     lines.append("")
     overlap = stability.get("mean_top_n_overlap")
     turnover = stability.get("mean_turnover")
-    lines.append(f"- Mean top-25 overlap (Jaccard): "
-                 f"{overlap:.1f}%" if overlap is not None else "- Mean top-25 overlap: n/a")
-    lines.append(f"- Mean position turnover: "
-                 f"{turnover:.1f}%" if turnover is not None else "- Mean position turnover: n/a")
+    lines.append(
+        "- Mean top-25 overlap (Jaccard): " f"{overlap:.1f}%" if overlap is not None else "- Mean top-25 overlap: n/a"
+    )
+    lines.append(
+        "- Mean position turnover: " f"{turnover:.1f}%" if turnover is not None else "- Mean position turnover: n/a"
+    )
     lines.append(f"- Date transitions: {stability.get('n_transitions', 0)}")
     lines.append("")
 
@@ -768,40 +757,59 @@ def generate_walkforward_report_md(
 # MAIN
 # =============================================================================
 
+
 def main():
-    parser = argparse.ArgumentParser(
-        description="Walk-Forward Validation Report"
-    )
+    parser = argparse.ArgumentParser(description="Walk-Forward Validation Report")
     parser.add_argument(
-        "--ruleset", type=str, default=None,
+        "--ruleset",
+        type=str,
+        default=None,
         help="DecisionRuleset JSON path (default: built-in default)",
     )
     parser.add_argument(
-        "--tier-filter", type=str, default="A,B",
+        "--tier-filter",
+        type=str,
+        default="A,B",
         help="Comma-separated tiers for portfolio (default: A,B)",
     )
     parser.add_argument(
-        "--top-k", type=int, default=20,
+        "--top-k",
+        type=int,
+        default=20,
         help="Max portfolio positions (default: 20)",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(DEFAULT_OUTPUT_DIR),
         help="Output directory (default: artifacts/)",
     )
     parser.add_argument(
-        "--date-min", "--start", type=str, default=None, dest="date_min",
+        "--date-min",
+        "--start",
+        type=str,
+        default=None,
+        dest="date_min",
         help="Archive start date filter (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--date-max", "--end", type=str, default=None, dest="date_max",
+        "--date-max",
+        "--end",
+        type=str,
+        default=None,
+        dest="date_max",
         help="Archive end date filter (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--suffix", type=str, default=None,
+        "--suffix",
+        type=str,
+        default=None,
         help="Suffix for output files (e.g., '2025' → walkforward_panel_2025.csv)",
     )
     parser.add_argument(
-        "--archive-dir", type=str, default=None,
+        "--archive-dir",
+        type=str,
+        default=None,
         help=f"Archive directory (default: {ARCHIVE_DIR})",
     )
     args = parser.parse_args()
@@ -913,7 +921,12 @@ def main():
 
     # Write markdown
     md_content = generate_walkforward_report_md(
-        tier_sep, band_sep, eligible_cmp, stability, coverage, config,
+        tier_sep,
+        band_sep,
+        eligible_cmp,
+        stability,
+        coverage,
+        config,
         strength_dist=strength_dist,
         tier_sep_net=tier_sep_net,
         cost_summary=cost_summ,

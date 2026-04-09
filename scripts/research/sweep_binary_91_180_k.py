@@ -20,6 +20,7 @@ Usage:
     python3 scripts/research/sweep_binary_91_180_k.py
     python3 scripts/research/sweep_binary_91_180_k.py --dry-run
 """
+
 from __future__ import annotations
 
 import argparse

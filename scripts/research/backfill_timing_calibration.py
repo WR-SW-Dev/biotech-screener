@@ -18,6 +18,7 @@ Usage:
     python scripts/research/backfill_timing_calibration.py
     python scripts/research/backfill_timing_calibration.py --min-date 2025-06-01
 """
+
 from __future__ import annotations
 
 import argparse

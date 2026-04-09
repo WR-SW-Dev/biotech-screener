@@ -14,6 +14,7 @@ Output:
 Usage:
     python scripts/research/backtest_catalyst_history_signal.py
 """
+
 from __future__ import annotations
 
 import argparse

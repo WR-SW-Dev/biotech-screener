@@ -19,6 +19,7 @@ Usage:
     --output-dir PATH  Output directory (default: artifacts/)
     --suffix TAG       Suffix for output filename
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,8 +28,8 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
-from statistics import mean, median, stdev
-from typing import Any, Dict, List, Optional, Tuple
+from statistics import mean, median
+from typing import Any, Dict, List, Optional
 
 SCRIPT_DIR = Path(__file__).resolve().parent
 PROJECT_ROOT = SCRIPT_DIR.parent
@@ -51,17 +52,27 @@ CATALYST_MID = 180
 # PANEL READER
 # =============================================================================
 
+
 def read_panel(path: Path) -> List[Dict[str, Any]]:
     """Read the panel CSV and parse numeric columns."""
     rows: List[Dict[str, Any]] = []
     with open(path, "r", newline="", encoding="utf-8-sig") as f:
         for raw in csv.DictReader(f):
             row: Dict[str, Any] = dict(raw)
-            for col in ("optionality", "catalyst_days_raw",
-                        "fwd_ret_20d", "fwd_ret_60d",
-                        "fwd_max_dd_20d", "fwd_max_dd_60d", "weight",
-                        "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi",
-                        "dd_abs_margin", "dd_rel_margin"):
+            for col in (
+                "optionality",
+                "catalyst_days_raw",
+                "fwd_ret_20d",
+                "fwd_ret_60d",
+                "fwd_max_dd_20d",
+                "fwd_max_dd_60d",
+                "weight",
+                "drawdown_abs",
+                "drawdown_xbi",
+                "drawdown_rel_xbi",
+                "dd_abs_margin",
+                "dd_rel_margin",
+            ):
                 v = row.get(col, "")
                 if v == "" or v is None:
                     row[col] = None
@@ -81,6 +92,7 @@ def year_of(row: Dict[str, Any]) -> str:
 # =============================================================================
 # STATISTICS HELPERS
 # =============================================================================
+
 
 def summary_stats(values: List[float]) -> Dict[str, Any]:
     """Compute summary stats for a list of floats."""
@@ -113,6 +125,7 @@ def fmt(v, suffix="%", default="n/a"):
 # =============================================================================
 # SECTION 1: TIER PERFORMANCE BY YEAR
 # =============================================================================
+
 
 def section_tier_performance(rows: List[Dict[str, Any]]) -> str:
     """Tier performance breakdown by year."""
@@ -164,6 +177,7 @@ def section_tier_performance(rows: List[Dict[str, Any]]) -> str:
 # SECTION 2: D-TIER ATTRIBUTION
 # =============================================================================
 
+
 def section_dtier_attribution(rows: List[Dict[str, Any]]) -> str:
     """D-tier breakdown by ineligible_reasons and first_failed_gate."""
     lines = ["# Section 2: D-Tier Attribution (Ineligible Reasons)", ""]
@@ -185,7 +199,7 @@ def section_dtier_attribution(rows: List[Dict[str, Any]]) -> str:
             if ret is not None:
                 reason_groups[reason].append(ret)
 
-        lines.append(f"### By ineligible_reasons")
+        lines.append("### By ineligible_reasons")
         lines.append(f"{'Reason':<35} {'N':>5} {'Mean':>8} {'Med':>8} {'P25':>8} {'P75':>8} {'Hit%':>7}")
         lines.append("-" * 80)
         for reason in sorted(reason_groups.keys(), key=lambda k: -len(reason_groups[k])):
@@ -206,7 +220,7 @@ def section_dtier_attribution(rows: List[Dict[str, Any]]) -> str:
             if ret is not None:
                 gate_groups[gate].append(ret)
 
-        lines.append(f"### By first_failed_gate")
+        lines.append("### By first_failed_gate")
         lines.append(f"{'Gate':<35} {'N':>5} {'Mean':>8} {'Med':>8} {'P25':>8} {'P75':>8} {'Hit%':>7}")
         lines.append("-" * 80)
         for gate in sorted(gate_groups.keys(), key=lambda k: -len(gate_groups[k])):
@@ -225,6 +239,7 @@ def section_dtier_attribution(rows: List[Dict[str, Any]]) -> str:
 # =============================================================================
 # SECTION 3: SURGICAL ABLATIONS
 # =============================================================================
+
 
 def compute_separation(rows: List[Dict[str, Any]], tier_col: str = "tier") -> Dict[str, Any]:
     """Compute AB-CD separation from rows with a tier column."""
@@ -334,21 +349,29 @@ def section_ablations(rows: List[Dict[str, Any]]) -> str:
         GATES = ["deep_drawdown", "sev3", "fundamental_red_flag", "adv_fail"]
         gate_ablations = []
         for gate in GATES:
+
             def _gate_match(r, g=gate):
                 if r.get("tier") != "D":
                     return False
                 ffg = r.get("first_failed_gate", "")
                 return ffg == g
+
             abl = run_ablation(yr_rows, f"disable_{gate}", _gate_match)
             gate_ablations.append(abl)
 
         # Report
-        lines.append(f"{'Ablation':<30} {'Flipped':>7} {'A':>4} {'B':>4} {'C':>4} {'D':>4} {'Sep(mean)':>10} {'Sep(med)':>10} {'Δmean':>8}")
+        lines.append(
+            f"{'Ablation':<30} {'Flipped':>7} {'A':>4} {'B':>4} {'C':>4} {'D':>4} {'Sep(mean)':>10} {'Sep(med)':>10} {'Δmean':>8}"
+        )
         lines.append("-" * 96)
 
         for abl in [abl1, abl2] + gate_ablations:
             tc = abl["tier_counts"]
-            delta = round(abl["sep_mean"] - bl["sep_mean"], 2) if abl["sep_mean"] is not None and bl["sep_mean"] is not None else None
+            delta = (
+                round(abl["sep_mean"] - bl["sep_mean"], 2)
+                if abl["sep_mean"] is not None and bl["sep_mean"] is not None
+                else None
+            )
             lines.append(
                 f"{abl['label']:<30} {abl['n_flipped']:>7} "
                 f"{tc.get('A', 0):>4} {tc.get('B', 0):>4} {tc.get('C', 0):>4} {tc.get('D', 0):>4} "
@@ -363,6 +386,7 @@ def section_ablations(rows: List[Dict[str, Any]]) -> str:
 # =============================================================================
 # SECTION 4: DRAWDOWN MARGIN ANALYSIS
 # =============================================================================
+
 
 def section_drawdown_margins(rows: List[Dict[str, Any]]) -> str:
     """Analyze drawdown margins for D-tier rows."""
@@ -391,19 +415,28 @@ def section_drawdown_margins(rows: List[Dict[str, Any]]) -> str:
             lines.append(f"dd_abs_margin distribution (N={len(abs_margins)}):")
             lines.append(f"  Mean: {mean(abs_margins)*100:.1f}pp  Median: {median(abs_margins)*100:.1f}pp")
             sv = sorted(abs_margins)
-            p25 = sv[int(len(sv)*0.25)] if len(sv) > 1 else sv[0]
-            p75 = sv[int(len(sv)*0.75)] if len(sv) > 1 else sv[0]
+            p25 = sv[int(len(sv) * 0.25)] if len(sv) > 1 else sv[0]
+            p75 = sv[int(len(sv) * 0.75)] if len(sv) > 1 else sv[0]
             lines.append(f"  P25: {p25*100:.1f}pp  P75: {p75*100:.1f}pp")
             # Barely ineligible: margin within 5pp of threshold (0.05 in decimal)
             barely = [m for m in abs_margins if m > -0.05]
-            lines.append(f"  Barely ineligible (margin > -5pp): {len(barely)} / {len(abs_margins)} ({len(barely)/len(abs_margins)*100:.1f}%)")
+            lines.append(
+                f"  Barely ineligible (margin > -5pp): {len(barely)} / {len(abs_margins)} ({len(barely)/len(abs_margins)*100:.1f}%)"
+            )
             very_close = [m for m in abs_margins if m > -0.02]
-            lines.append(f"  Very close (margin > -2pp): {len(very_close)} / {len(abs_margins)} ({len(very_close)/len(abs_margins)*100:.1f}%)")
+            lines.append(
+                f"  Very close (margin > -2pp): {len(very_close)} / {len(abs_margins)} ({len(very_close)/len(abs_margins)*100:.1f}%)"
+            )
             # Histogram
-            buckets = [(0.0, -0.02, "0-2pp"), (-0.02, -0.05, "2-5pp"),
-                       (-0.05, -0.10, "5-10pp"), (-0.10, -0.20, "10-20pp"),
-                       (-0.20, -0.50, "20-50pp"), (-0.50, -999, ">50pp")]
-            lines.append(f"  Histogram:")
+            buckets = [
+                (0.0, -0.02, "0-2pp"),
+                (-0.02, -0.05, "2-5pp"),
+                (-0.05, -0.10, "5-10pp"),
+                (-0.10, -0.20, "10-20pp"),
+                (-0.20, -0.50, "20-50pp"),
+                (-0.50, -999, ">50pp"),
+            ]
+            lines.append("  Histogram:")
             for lo, hi, label in buckets:
                 count = sum(1 for m in abs_margins if m <= lo and m > hi)
                 pct = count / len(abs_margins) * 100
@@ -416,7 +449,9 @@ def section_drawdown_margins(rows: List[Dict[str, Any]]) -> str:
             lines.append(f"dd_rel_margin distribution (N={len(rel_margins)}):")
             lines.append(f"  Mean: {mean(rel_margins)*100:.1f}pp  Median: {median(rel_margins)*100:.1f}pp")
             barely = [m for m in rel_margins if m > -0.05]
-            lines.append(f"  Barely ineligible (margin > -5pp): {len(barely)} / {len(rel_margins)} ({len(barely)/len(rel_margins)*100:.1f}%)")
+            lines.append(
+                f"  Barely ineligible (margin > -5pp): {len(barely)} / {len(rel_margins)} ({len(barely)/len(rel_margins)*100:.1f}%)"
+            )
         else:
             lines.append("dd_rel_margin: no data")
         lines.append("")
@@ -431,9 +466,13 @@ def section_drawdown_margins(rows: List[Dict[str, Any]]) -> str:
 
             sc = summary_stats(close_rets)
             sd = summary_stats(deep_rets)
-            lines.append(f"Performance split (deep_drawdown rows only):")
-            lines.append(f"  Near gate  (margin > -10pp): N={sc['count']}, mean={fmt(sc['mean'])}, med={fmt(sc['median'])}, hit={fmt(sc['hit_pct'], suffix='')}")
-            lines.append(f"  Far below  (margin <= -10pp): N={sd['count']}, mean={fmt(sd['mean'])}, med={fmt(sd['median'])}, hit={fmt(sd['hit_pct'], suffix='')}")
+            lines.append("Performance split (deep_drawdown rows only):")
+            lines.append(
+                f"  Near gate  (margin > -10pp): N={sc['count']}, mean={fmt(sc['mean'])}, med={fmt(sc['median'])}, hit={fmt(sc['hit_pct'], suffix='')}"
+            )
+            lines.append(
+                f"  Far below  (margin <= -10pp): N={sd['count']}, mean={fmt(sd['mean'])}, med={fmt(sd['median'])}, hit={fmt(sd['hit_pct'], suffix='')}"
+            )
             lines.append("")
 
     return "\n".join(lines)
@@ -442,6 +481,7 @@ def section_drawdown_margins(rows: List[Dict[str, Any]]) -> str:
 # =============================================================================
 # SECTION 5: D-TIER REVERSAL FILTER (trail_ret_20d)
 # =============================================================================
+
 
 def load_price_index(price_csv: Path) -> Dict[str, Dict[str, float]]:
     """Load price_history.csv into {TICKER: {date_str: close}} index.
@@ -478,7 +518,8 @@ def compute_trailing_return(
     Finds the close on as_of_date (±tolerance), then the close lookback_bars
     trading days earlier, returns (end/start - 1).
     """
-    from datetime import date as _date, timedelta
+    from datetime import date as _date
+    from datetime import timedelta
 
     ticker_prices = prices.get(ticker.upper())
     if not ticker_prices:
@@ -569,7 +610,9 @@ def section_reversal_filter(rows: List[Dict[str, Any]]) -> str:
             f"{fmt(sd['hit_pct'], suffix=''):>6}%"
         )
         delta_mean = round(su["mean"] - sd["mean"], 2) if su["mean"] is not None and sd["mean"] is not None else None
-        delta_med = round(su["median"] - sd["median"], 2) if su["median"] is not None and sd["median"] is not None else None
+        delta_med = (
+            round(su["median"] - sd["median"], 2) if su["median"] is not None and sd["median"] is not None else None
+        )
         lines.append("")
         lines.append(f"Delta (up - down) mean: {fmt(delta_mean)}  median: {fmt(delta_med)}")
         lines.append("")
@@ -580,7 +623,7 @@ def section_reversal_filter(rows: List[Dict[str, Any]]) -> str:
             n = len(sorted_by_trail)
             q_size = n // 5
             if q_size > 0:
-                lines.append(f"### trail_ret_20d quintiles")
+                lines.append("### trail_ret_20d quintiles")
                 lines.append(f"{'Quintile':<12} {'Range':>20} {'N':>5} {'Mean_60d':>9} {'Med_60d':>9} {'Hit%':>7}")
                 lines.append("-" * 70)
                 for qi in range(5):
@@ -604,6 +647,7 @@ def section_reversal_filter(rows: List[Dict[str, Any]]) -> str:
 # =============================================================================
 # SECTION 6: RELATIVE-DRAWDOWN RESCUE AUDIT
 # =============================================================================
+
 
 def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
     """Audit relative-drawdown rescue signal for D-tier rows.
@@ -636,8 +680,12 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
         sr = summary_stats(r_rets)
         snr = summary_stats(nr_rets)
         lines.append(f"### {yr}")
-        lines.append(f"  Rescued (abs breach, rel saved):  N={sr['count']}, mean={fmt(sr['mean'])}, med={fmt(sr['median'])}, hit={fmt(sr['hit_pct'], suffix='')}")
-        lines.append(f"  Not rescued (no abs breach):      N={snr['count']}, mean={fmt(snr['mean'])}, med={fmt(snr['median'])}, hit={fmt(snr['hit_pct'], suffix='')}")
+        lines.append(
+            f"  Rescued (abs breach, rel saved):  N={sr['count']}, mean={fmt(sr['mean'])}, med={fmt(sr['median'])}, hit={fmt(sr['hit_pct'], suffix='')}"
+        )
+        lines.append(
+            f"  Not rescued (no abs breach):      N={snr['count']}, mean={fmt(snr['mean'])}, med={fmt(snr['median'])}, hit={fmt(snr['hit_pct'], suffix='')}"
+        )
         lines.append("")
 
     # ---- 6b: 2×2 abs/rel margin grid for D-tier ----
@@ -651,9 +699,11 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
     REL_SPLIT = -0.10
 
     for yr in sorted(set(year_of(r) for r in rows)):
-        yr_d = [r for r in d_rows if year_of(r) == yr
-                and r.get("dd_abs_margin") is not None
-                and r.get("dd_rel_margin") is not None]
+        yr_d = [
+            r
+            for r in d_rows
+            if year_of(r) == yr and r.get("dd_abs_margin") is not None and r.get("dd_rel_margin") is not None
+        ]
         lines.append(f"### {yr} ({len(yr_d)} D-tier rows with both margins)")
         lines.append("")
 
@@ -677,8 +727,7 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
 
         lines.append(f"{'Cell':<30} {'N':>5} {'Mean':>8} {'Med':>8} {'Hit%':>7}")
         lines.append("-" * 62)
-        for cell in ["abs_shallow+rel_shallow", "abs_shallow+rel_deep",
-                      "abs_deep+rel_shallow", "abs_deep+rel_deep"]:
+        for cell in ["abs_shallow+rel_shallow", "abs_shallow+rel_deep", "abs_deep+rel_shallow", "abs_deep+rel_deep"]:
             s = summary_stats(grid[cell])
             lines.append(
                 f"{cell:<30} {s['count']:>5} "
@@ -695,8 +744,7 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
                 delta_mean = round(mean(s_vals) - mean(d_vals), 2)
                 delta_med = round(median(s_vals) - median(d_vals), 2)
                 lines.append(
-                    f"  {abs_level}: rel_shallow − rel_deep = "
-                    f"Δmean={fmt(delta_mean)}, Δmed={fmt(delta_med)}"
+                    f"  {abs_level}: rel_shallow − rel_deep = " f"Δmean={fmt(delta_mean)}, Δmed={fmt(delta_med)}"
                 )
         lines.append("")
 
@@ -717,10 +765,13 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
         bl = compute_separation(yr_rows)
         lines.append(f"### {yr} (baseline sep_mean={fmt(bl['sep_mean'])}, sep_med={fmt(bl['sep_med'])})")
         lines.append("")
-        lines.append(f"{'Rescue threshold':<20} {'Rescued':>7} {'A':>4} {'B':>4} {'C':>4} {'D':>4} {'Sep(mean)':>10} {'Sep(med)':>10} {'Δmean':>8}")
+        lines.append(
+            f"{'Rescue threshold':<20} {'Rescued':>7} {'A':>4} {'B':>4} {'C':>4} {'D':>4} {'Sep(mean)':>10} {'Sep(med)':>10} {'Δmean':>8}"
+        )
         lines.append("-" * 88)
 
         for thresh in RESCUE_THRESHOLDS:
+
             def _rescue_fn(r, t=thresh):
                 if r.get("tier") != "D":
                     return False
@@ -731,7 +782,11 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
 
             abl = run_ablation(yr_rows, f"rel_margin>{thresh:.2f}", _rescue_fn)
             tc = abl["tier_counts"]
-            delta = round(abl["sep_mean"] - bl["sep_mean"], 2) if abl["sep_mean"] is not None and bl["sep_mean"] is not None else None
+            delta = (
+                round(abl["sep_mean"] - bl["sep_mean"], 2)
+                if abl["sep_mean"] is not None and bl["sep_mean"] is not None
+                else None
+            )
             lines.append(
                 f"dd_rel_margin > {thresh:>5.2f}  {abl['n_flipped']:>7} "
                 f"{tc.get('A', 0):>4} {tc.get('B', 0):>4} {tc.get('C', 0):>4} {tc.get('D', 0):>4} "
@@ -741,11 +796,14 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
 
         # Also report performance of rescued rows at each threshold
         lines.append("")
-        lines.append(f"{'Rescue threshold':<20} {'Rescued':>7} {'Rescued mean':>12} {'Rescued med':>12} {'Rescued hit%':>12}")
+        lines.append(
+            f"{'Rescue threshold':<20} {'Rescued':>7} {'Rescued mean':>12} {'Rescued med':>12} {'Rescued hit%':>12}"
+        )
         lines.append("-" * 70)
         for thresh in RESCUE_THRESHOLDS:
             rescued_rets = [
-                r["fwd_ret_60d"] for r in yr_d
+                r["fwd_ret_60d"]
+                for r in yr_d
                 if r.get("dd_rel_margin") is not None
                 and r["dd_rel_margin"] > thresh
                 and r.get("fwd_ret_60d") is not None
@@ -765,13 +823,15 @@ def section_relative_rescue(rows: List[Dict[str, Any]]) -> str:
 # MAIN
 # =============================================================================
 
+
 def main():
     parser = argparse.ArgumentParser(description="Eligibility Gate Diagnosis")
     parser.add_argument("--panel", type=Path, default=DEFAULT_PANEL)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     parser.add_argument("--suffix", default="")
-    parser.add_argument("--price-csv", type=Path, default=DEFAULT_PRICE_CSV,
-                        help="Price history CSV for trailing return computation")
+    parser.add_argument(
+        "--price-csv", type=Path, default=DEFAULT_PRICE_CSV, help="Price history CSV for trailing return computation"
+    )
     args = parser.parse_args()
 
     print(f"Reading panel: {args.panel}")
@@ -809,14 +869,14 @@ def main():
     today = datetime.now().strftime("%Y-%m-%d")
     header = [
         f"# Eligibility Gate Diagnosis — {today}",
-        f"",
+        "",
         f"Panel: {args.panel.name}",
         f"Rows: {len(rows)}",
         f"Date range: {min(r['as_of_date'] for r in rows)} to {max(r['as_of_date'] for r in rows)}",
         f"Ruleset params: a_floor={A_FLOOR}, b_floor={B_FLOOR}, catalyst_near={CATALYST_NEAR}d, catalyst_mid={CATALYST_MID}d",
-        f"",
-        f"---",
-        f"",
+        "",
+        "---",
+        "",
     ]
 
     report = "\n".join(header) + "\n\n".join(sections)

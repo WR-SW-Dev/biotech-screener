@@ -16,6 +16,7 @@ Usage:
       --date-from 2025-06-01 \
       --out-dir output/research/reg_confidence_ab
 """
+
 from __future__ import annotations
 
 import argparse

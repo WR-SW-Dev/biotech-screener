@@ -8,6 +8,7 @@ for run_daily_production.py.
 
 Never FAIL — always returns PASS or WARN.
 """
+
 from __future__ import annotations
 
 import csv
@@ -16,7 +17,7 @@ import logging
 import re
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # ---------------------------------------------------------------------------
 # Repo root
@@ -25,7 +26,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 # Reuse IC computation from eval_forward_returns (import, not duplicate)
-from scripts.eval_forward_returns import spearman_ic, _avg_ranks
+from scripts.eval_forward_returns import spearman_ic
 
 logging.basicConfig(
     level=logging.INFO,
@@ -37,6 +38,7 @@ logger = logging.getLogger("forward_eval_gate")
 # ---------------------------------------------------------------------------
 # PIT cache discovery
 # ---------------------------------------------------------------------------
+
 
 def _discover_pit_dates(
     cache_base: Path,
@@ -122,16 +124,13 @@ def _get_split_warning_tickers(cache_dir: Path, horizon: int) -> set:
     except (json.JSONDecodeError, OSError):
         return set()
 
-    return {
-        w["ticker"]
-        for w in index.get("split_warnings", [])
-        if w.get("horizon") == horizon
-    }
+    return {w["ticker"] for w in index.get("split_warnings", []) if w.get("horizon") == horizon}
 
 
 # ---------------------------------------------------------------------------
 # Core: evaluate_rolling_ic
 # ---------------------------------------------------------------------------
+
 
 def evaluate_rolling_ic(
     snapshot_dir: Path,
@@ -213,10 +212,13 @@ def evaluate_rolling_ic(
         # Compute Spearman IC
         common_tickers = [t for t in signal if t in fwd_rets]
         if len(common_tickers) < 3:
-            date_details.append({
-                "date": snap_date, "ic": None,
-                "reason": f"insufficient_overlap ({len(common_tickers)})",
-            })
+            date_details.append(
+                {
+                    "date": snap_date,
+                    "ic": None,
+                    "reason": f"insufficient_overlap ({len(common_tickers)})",
+                }
+            )
             continue
 
         signal_vals = [signal[t] for t in common_tickers]
@@ -226,12 +228,14 @@ def evaluate_rolling_ic(
         if ic is not None:
             ics.append(ic)
 
-        date_details.append({
-            "date": snap_date,
-            "ic": round(ic, 4) if ic is not None else None,
-            "n_tickers": len(common_tickers),
-            "n_split_excluded": len(split_tickers),
-        })
+        date_details.append(
+            {
+                "date": snap_date,
+                "ic": round(ic, 4) if ic is not None else None,
+                "n_tickers": len(common_tickers),
+                "n_split_excluded": len(split_tickers),
+            }
+        )
 
     n_evaluated = len(ics)
     value: Dict[str, Any] = {
@@ -257,8 +261,7 @@ def evaluate_rolling_ic(
     if n_evaluated < min_dates:
         return (
             "WARN",
-            f"insufficient dates: {n_evaluated} < {min_dates} "
-            f"(mean_ic={mean_ic:.4f})",
+            f"insufficient dates: {n_evaluated} < {min_dates} " f"(mean_ic={mean_ic:.4f})",
             value,
             thresholds,
         )
@@ -266,16 +269,14 @@ def evaluate_rolling_ic(
     if mean_ic < ic_warn_floor:
         return (
             "WARN",
-            f"mean_ic={mean_ic:.4f} < floor={ic_warn_floor:.4f} "
-            f"(n={n_evaluated}, horizon={horizon}d)",
+            f"mean_ic={mean_ic:.4f} < floor={ic_warn_floor:.4f} " f"(n={n_evaluated}, horizon={horizon}d)",
             value,
             thresholds,
         )
 
     return (
         "PASS",
-        f"mean_ic={mean_ic:.4f}, median_ic={median_ic:.4f} "
-        f"(n={n_evaluated}, horizon={horizon}d)",
+        f"mean_ic={mean_ic:.4f}, median_ic={median_ic:.4f} " f"(n={n_evaluated}, horizon={horizon}d)",
         value,
         thresholds,
     )

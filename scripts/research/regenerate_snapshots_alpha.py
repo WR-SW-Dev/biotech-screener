@@ -14,6 +14,7 @@ Example:
         --train-mode trailing-3 --horizon 84 \
         --date-from 2026-02-02 --date-to 2026-03-10
 """
+
 from __future__ import annotations
 
 import argparse

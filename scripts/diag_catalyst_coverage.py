@@ -23,6 +23,7 @@ Usage:
         [--output-dir data/diag] \
         [--max-window 270]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -216,7 +217,7 @@ def print_report(
     w = lines.append
 
     w(f"# Catalyst Coverage Decomposition — {as_of}")
-    w(f"")
+    w("")
     w(f"Universe: {total} ranked tickers | Max catalyst window: {max_window}d")
     w("")
 
@@ -240,8 +241,10 @@ def print_report(
     # Addressable gap: D+E+F have trials but dates outside window
     addressable = sum(len(buckets.get(k, [])) for k in "DEF")
     addr_pct = addressable / total * 100 if total else 0
-    w(f"**Addressable gap (D+E+F): {addressable} ({addr_pct:.1f}%)** — "
-      f"have active trials but no PCD within {max_window}d")
+    w(
+        f"**Addressable gap (D+E+F): {addressable} ({addr_pct:.1f}%)** — "
+        f"have active trials but no PCD within {max_window}d"
+    )
 
     # Detail per bucket (non-OK)
     for key in ["A", "B", "C", "D", "E", "F", "G", "MISSING"]:
@@ -296,10 +299,23 @@ def write_detail_csv(
     """Write per-ticker CSV with bucket assignment."""
     output_path.parent.mkdir(parents=True, exist_ok=True)
     fieldnames = [
-        "ticker", "composite_rank", "composite_score", "archetype",
-        "catalyst_mode", "catalyst_days", "tier_dev", "tier_commercial",
-        "tier_any", "coverage_bucket", "n_trials", "n_active_interventional",
-        "n_near_pcds", "n_past_pcds", "n_far_pcds", "min_near_days", "min_far_days",
+        "ticker",
+        "composite_rank",
+        "composite_score",
+        "archetype",
+        "catalyst_mode",
+        "catalyst_days",
+        "tier_dev",
+        "tier_commercial",
+        "tier_any",
+        "coverage_bucket",
+        "n_trials",
+        "n_active_interventional",
+        "n_near_pcds",
+        "n_past_pcds",
+        "n_far_pcds",
+        "min_near_days",
+        "min_far_days",
     ]
     with open(output_path, "w", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=fieldnames)
@@ -308,25 +324,27 @@ def write_detail_csv(
         for bucket_code, rows in buckets.items():
             for r in rows:
                 ti = r.get("_trial_info", {})
-                all_rows.append({
-                    "ticker": r["ticker"],
-                    "composite_rank": r.get("composite_rank", ""),
-                    "composite_score": r.get("composite_score", ""),
-                    "archetype": r.get("archetype", ""),
-                    "catalyst_mode": r.get("catalyst_mode", ""),
-                    "catalyst_days": r.get("catalyst_days", ""),
-                    "tier_dev": r.get("tier_dev", ""),
-                    "tier_commercial": r.get("tier_commercial", ""),
-                    "tier_any": r.get("tier_any", ""),
-                    "coverage_bucket": bucket_code,
-                    "n_trials": ti.get("n_trials", 0),
-                    "n_active_interventional": ti.get("n_active_interventional", 0),
-                    "n_near_pcds": len(ti.get("near_pcds_active", [])),
-                    "n_past_pcds": len(ti.get("past_pcds_active", [])),
-                    "n_far_pcds": len(ti.get("far_pcds_active", [])),
-                    "min_near_days": ti.get("min_near_days", ""),
-                    "min_far_days": ti.get("min_far_days", ""),
-                })
+                all_rows.append(
+                    {
+                        "ticker": r["ticker"],
+                        "composite_rank": r.get("composite_rank", ""),
+                        "composite_score": r.get("composite_score", ""),
+                        "archetype": r.get("archetype", ""),
+                        "catalyst_mode": r.get("catalyst_mode", ""),
+                        "catalyst_days": r.get("catalyst_days", ""),
+                        "tier_dev": r.get("tier_dev", ""),
+                        "tier_commercial": r.get("tier_commercial", ""),
+                        "tier_any": r.get("tier_any", ""),
+                        "coverage_bucket": bucket_code,
+                        "n_trials": ti.get("n_trials", 0),
+                        "n_active_interventional": ti.get("n_active_interventional", 0),
+                        "n_near_pcds": len(ti.get("near_pcds_active", [])),
+                        "n_past_pcds": len(ti.get("past_pcds_active", [])),
+                        "n_far_pcds": len(ti.get("far_pcds_active", [])),
+                        "min_near_days": ti.get("min_near_days", ""),
+                        "min_far_days": ti.get("min_far_days", ""),
+                    }
+                )
         all_rows.sort(key=lambda r: int(r["composite_rank"]) if r["composite_rank"] else 999)
         writer.writerows(all_rows)
     print(f"Detail CSV written to {output_path}", file=sys.stderr)
@@ -345,23 +363,33 @@ def main() -> None:
         description="Catalyst coverage decomposition diagnostic",
     )
     parser.add_argument(
-        "--snapshot-dir", type=Path, required=True,
+        "--snapshot-dir",
+        type=Path,
+        required=True,
         help="Path to snapshot directory (contains rankings.csv)",
     )
     parser.add_argument(
-        "--trial-records", type=Path, required=True,
+        "--trial-records",
+        type=Path,
+        required=True,
         help="Path to trial_records JSON (from ctgov cache)",
     )
     parser.add_argument(
-        "--as-of-date", type=str, default=None,
+        "--as-of-date",
+        type=str,
+        default=None,
         help="Analysis date (YYYY-MM-DD). Default: infer from snapshot dir name.",
     )
     parser.add_argument(
-        "--max-window", type=int, default=DEFAULT_MAX_WINDOW,
+        "--max-window",
+        type=int,
+        default=DEFAULT_MAX_WINDOW,
         help=f"Max catalyst detection window in days (default: {DEFAULT_MAX_WINDOW})",
     )
     parser.add_argument(
-        "--output-dir", type=Path, default=None,
+        "--output-dir",
+        type=Path,
+        default=None,
         help="Output directory for report + CSV (default: print to stdout only)",
     )
     args = parser.parse_args()
@@ -385,21 +413,28 @@ def main() -> None:
             as_of = _parse_date(dir_name)
         except ValueError:
             print(
-                "ERROR: Cannot infer as_of_date from directory name. "
-                "Use --as-of-date YYYY-MM-DD.",
+                "ERROR: Cannot infer as_of_date from directory name. " "Use --as-of-date YYYY-MM-DD.",
                 file=sys.stderr,
             )
             sys.exit(1)
 
     # Run decomposition
     buckets, row_by_ticker = decompose_snapshot(
-        rankings_csv, args.trial_records, as_of, args.max_window,
+        rankings_csv,
+        args.trial_records,
+        as_of,
+        args.max_window,
     )
     total = sum(len(v) for v in buckets.values())
 
     # Report
-    report = print_report(buckets, total, as_of, args.max_window,
-                          output_path=args.output_dir / "catalyst_coverage.md" if args.output_dir else None)
+    report = print_report(
+        buckets,
+        total,
+        as_of,
+        args.max_window,
+        output_path=args.output_dir / "catalyst_coverage.md" if args.output_dir else None,
+    )
 
     if not args.output_dir:
         print(report)

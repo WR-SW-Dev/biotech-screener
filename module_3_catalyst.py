@@ -18,79 +18,65 @@ PIT Safety:
 Version: See SCHEMA_VERSION and SCORE_VERSION in module_3_schema.py
 """
 
-from pathlib import Path
+import hashlib
+import json
+import logging
+import time
+import warnings
 from datetime import date, timedelta
 from decimal import Decimal
-from typing import Optional, Dict, List, Set, Tuple, Any, Union
-import json
-import hashlib
-import time
-import logging
-import warnings
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
 # Type alias for flexible date input
 DateLike = Union[str, date]
 
-from ctgov_adapter import process_trial_records_batch, AdapterConfig, CanonicalTrialRecord
-from state_management import StateStore, StateSnapshot
-from event_detector import (
-    EventDetector,
-    EventDetectorConfig,
-    SimpleMarketCalendar,
-    MarketCalendar,
-    CatalystEvent,
-    detect_activity_proxy_from_lookback,
-    compute_activity_proxy_score,
-)
-from catalyst_summary import CatalystAggregator, TickerCatalystSummary, CatalystOutputWriter
-from module_3_schema import (
-    SCHEMA_VERSION,
-    SCORE_VERSION,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    CatalystEventV2,
-    TickerCatalystSummaryV2,
-    DiagnosticCounts,
-    EVENT_SEVERITY_MAP,
-    EVENT_DEFAULT_CONFIDENCE,
-    canonical_json_dumps,
-)
-from module_3_scoring import (
-    score_catalyst_events,
-)
 from catalyst_diagnostics import (
-    compute_delta_diagnostics,
+    CalendarCatalyst,
+    DeltaDiagnostics,
+    StalenessResult,
     check_trial_records_staleness,
+    compute_delta_diagnostics,
     detect_calendar_catalysts,
     detect_readout_window_catalysts,
     summarize_calendar_catalysts,
-    DeltaDiagnostics,
-    StalenessResult,
-    CalendarCatalyst,
-    EventRuleID,
 )
-from time_decay_scoring import (
-    TimeDecayConfig,
-    compute_time_decay_score,
-    score_all_tickers_with_time_decay,
-    DEFAULT_TIME_DECAY_WINDOWS,
+from catalyst_summary import CatalystAggregator, CatalystOutputWriter, TickerCatalystSummary
+from common.integration_contracts import is_validation_enabled, validate_module_3_output
+from ctgov_adapter import AdapterConfig, CanonicalTrialRecord, process_trial_records_batch
+from event_detector import (
+    CatalystEvent,
+    EventDetector,
+    EventDetectorConfig,
+    MarketCalendar,
+    SimpleMarketCalendar,
+    compute_activity_proxy_score,
 )
-from common.integration_contracts import (
-    validate_module_3_output,
-    is_validation_enabled,
+from module_3_schema import (
+    EVENT_DEFAULT_CONFIDENCE,
+    EVENT_SEVERITY_MAP,
+    SCHEMA_VERSION,
+    SCORE_VERSION,
+    CatalystEventV2,
+    ConfidenceLevel,
+    DiagnosticCounts,
+    EventSeverity,
+    EventType,
+    TickerCatalystSummaryV2,
+    canonical_json_dumps,
 )
+from module_3_scoring import score_catalyst_events
+from state_management import StateSnapshot, StateStore
+from time_decay_scoring import TimeDecayConfig, score_all_tickers_with_time_decay
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
 # ============================================================================
 # MODULE 3 CONFIGURATION
 # ============================================================================
+
 
 class Module3Config:
     """Configuration for Module 3 catalyst detection"""
@@ -157,59 +143,59 @@ class Module3Config:
         self.ctgov_cache_dir: Optional[Any] = None
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> 'Module3Config':
+    def from_dict(cls, config_dict: Dict[str, Any]) -> "Module3Config":
         """Create config from dict"""
         config = cls()
 
         # Update event detector settings
-        if 'noise_band_days' in config_dict:
-            config.event_detector_config.noise_band_days = config_dict['noise_band_days']
-        if 'recency_threshold_days' in config_dict:
-            config.event_detector_config.recency_threshold_days = config_dict['recency_threshold_days']
-        if 'decay_constant' in config_dict:
-            config.decay_constant = config_dict['decay_constant']
-        if 'confidence_scores' in config_dict:
-            config.event_detector_config.confidence_scores = config_dict['confidence_scores']
+        if "noise_band_days" in config_dict:
+            config.event_detector_config.noise_band_days = config_dict["noise_band_days"]
+        if "recency_threshold_days" in config_dict:
+            config.event_detector_config.recency_threshold_days = config_dict["recency_threshold_days"]
+        if "decay_constant" in config_dict:
+            config.decay_constant = config_dict["decay_constant"]
+        if "confidence_scores" in config_dict:
+            config.event_detector_config.confidence_scores = config_dict["confidence_scores"]
 
         # Time-decay settings
-        if 'enable_time_decay' in config_dict:
-            config.enable_time_decay = config_dict['enable_time_decay']
-        if 'time_decay_config' in config_dict:
-            config.time_decay_config = TimeDecayConfig.from_dict(config_dict['time_decay_config'])
+        if "enable_time_decay" in config_dict:
+            config.enable_time_decay = config_dict["enable_time_decay"]
+        if "time_decay_config" in config_dict:
+            config.time_decay_config = TimeDecayConfig.from_dict(config_dict["time_decay_config"])
 
         # Corporate catalyst settings
-        if 'enable_corporate_catalysts' in config_dict:
-            config.enable_corporate_catalysts = config_dict['enable_corporate_catalysts']
-        if 'corporate_catalysts_file' in config_dict:
-            config.corporate_catalysts_file = config_dict['corporate_catalysts_file']
+        if "enable_corporate_catalysts" in config_dict:
+            config.enable_corporate_catalysts = config_dict["enable_corporate_catalysts"]
+        if "corporate_catalysts_file" in config_dict:
+            config.corporate_catalysts_file = config_dict["corporate_catalysts_file"]
 
         # FDA ADCOM settings (accept bool for backwards compat: True→"live", False→"off")
-        if 'enable_fda_adcom' in config_dict:
-            val = config_dict['enable_fda_adcom']
+        if "enable_fda_adcom" in config_dict:
+            val = config_dict["enable_fda_adcom"]
             if val is True:
                 config.enable_fda_adcom = "live"
             elif val is False:
                 config.enable_fda_adcom = "off"
             else:
                 config.enable_fda_adcom = str(val)
-        if 'fda_adcom_cache_dir' in config_dict:
-            config.fda_adcom_cache_dir = Path(config_dict['fda_adcom_cache_dir'])
+        if "fda_adcom_cache_dir" in config_dict:
+            config.fda_adcom_cache_dir = Path(config_dict["fda_adcom_cache_dir"])
 
         # SEC 8-K settings (same bool compat)
-        if 'enable_sec_8k_catalysts' in config_dict:
-            val = config_dict['enable_sec_8k_catalysts']
+        if "enable_sec_8k_catalysts" in config_dict:
+            val = config_dict["enable_sec_8k_catalysts"]
             if val is True:
                 config.enable_sec_8k_catalysts = "live"
             elif val is False:
                 config.enable_sec_8k_catalysts = "off"
             else:
                 config.enable_sec_8k_catalysts = str(val)
-        if 'sec_8k_cache_dir' in config_dict:
-            config.sec_8k_cache_dir = Path(config_dict['sec_8k_cache_dir'])
+        if "sec_8k_cache_dir" in config_dict:
+            config.sec_8k_cache_dir = Path(config_dict["sec_8k_cache_dir"])
 
         # SEC multi-form settings (same bool compat)
-        if 'enable_sec_multi_form' in config_dict:
-            val = config_dict['enable_sec_multi_form']
+        if "enable_sec_multi_form" in config_dict:
+            val = config_dict["enable_sec_multi_form"]
             if val is True:
                 config.enable_sec_multi_form = "live"
             elif val is False:
@@ -218,8 +204,8 @@ class Module3Config:
                 config.enable_sec_multi_form = str(val)
 
         # FDA regulatory settings (same bool compat)
-        if 'enable_fda_regulatory' in config_dict:
-            val = config_dict['enable_fda_regulatory']
+        if "enable_fda_regulatory" in config_dict:
+            val = config_dict["enable_fda_regulatory"]
             if val is True:
                 config.enable_fda_regulatory = "live"
             elif val is False:
@@ -228,52 +214,52 @@ class Module3Config:
                 config.enable_fda_regulatory = str(val)
 
         # EMA committee settings (same bool compat)
-        if 'enable_ema_committee' in config_dict:
-            val = config_dict['enable_ema_committee']
+        if "enable_ema_committee" in config_dict:
+            val = config_dict["enable_ema_committee"]
             if val is True:
                 config.enable_ema_committee = "live"
             elif val is False:
                 config.enable_ema_committee = "off"
             else:
                 config.enable_ema_committee = str(val)
-        if 'ema_cache_dir' in config_dict:
-            config.ema_cache_dir = Path(config_dict['ema_cache_dir'])
+        if "ema_cache_dir" in config_dict:
+            config.ema_cache_dir = Path(config_dict["ema_cache_dir"])
 
         # Conference calendar settings (same bool compat)
-        if 'enable_conference_calendar' in config_dict:
-            val = config_dict['enable_conference_calendar']
+        if "enable_conference_calendar" in config_dict:
+            val = config_dict["enable_conference_calendar"]
             if val is True:
                 config.enable_conference_calendar = "live"
             elif val is False:
                 config.enable_conference_calendar = "off"
             else:
                 config.enable_conference_calendar = str(val)
-        if 'conference_cache_dir' in config_dict:
-            config.conference_cache_dir = Path(config_dict['conference_cache_dir'])
+        if "conference_cache_dir" in config_dict:
+            config.conference_cache_dir = Path(config_dict["conference_cache_dir"])
 
         # IR events settings (same bool compat)
-        if 'enable_ir_events' in config_dict:
-            val = config_dict['enable_ir_events']
+        if "enable_ir_events" in config_dict:
+            val = config_dict["enable_ir_events"]
             if val is True:
                 config.enable_ir_events = "live"
             elif val is False:
                 config.enable_ir_events = "off"
             else:
                 config.enable_ir_events = str(val)
-        if 'ir_cache_dir' in config_dict:
-            config.ir_cache_dir = Path(config_dict['ir_cache_dir'])
+        if "ir_cache_dir" in config_dict:
+            config.ir_cache_dir = Path(config_dict["ir_cache_dir"])
 
         # Press release events settings (same bool compat)
-        if 'enable_press_releases' in config_dict:
-            val = config_dict['enable_press_releases']
+        if "enable_press_releases" in config_dict:
+            val = config_dict["enable_press_releases"]
             if val is True:
                 config.enable_press_releases = "live"
             elif val is False:
                 config.enable_press_releases = "off"
             else:
                 config.enable_press_releases = str(val)
-        if 'press_cache_dir' in config_dict:
-            config.press_cache_dir = Path(config_dict['press_cache_dir'])
+        if "press_cache_dir" in config_dict:
+            config.press_cache_dir = Path(config_dict["press_cache_dir"])
 
         return config
 
@@ -281,6 +267,7 @@ class Module3Config:
 # ============================================================================
 # EVENT CONVERSION (LEGACY -> V2)
 # ============================================================================
+
 
 def convert_calendar_catalyst_to_v2(
     calendar_catalyst: CalendarCatalyst,
@@ -298,16 +285,15 @@ def convert_calendar_catalyst_to_v2(
     """
     # Map calendar event types to EventType enum
     CALENDAR_EVENT_TYPE_MAP = {
-        'UPCOMING_PCD': EventType.CT_PRIMARY_COMPLETION,
-        'UPCOMING_SCD': EventType.CT_STUDY_COMPLETION,
-        'RESULTS_DUE': EventType.CT_RESULTS_POSTED,
-        'RESULTS_RECENT': EventType.CT_RESULTS_POSTED,
-        'READOUT_WINDOW': EventType.DATA_READOUT,
+        "UPCOMING_PCD": EventType.CT_PRIMARY_COMPLETION,
+        "UPCOMING_SCD": EventType.CT_STUDY_COMPLETION,
+        "RESULTS_DUE": EventType.CT_RESULTS_POSTED,
+        "RESULTS_RECENT": EventType.CT_RESULTS_POSTED,
+        "READOUT_WINDOW": EventType.DATA_READOUT,
     }
 
     event_type = CALENDAR_EVENT_TYPE_MAP.get(
-        calendar_catalyst.event_type,
-        EventType.CT_PRIMARY_COMPLETION  # Default fallback
+        calendar_catalyst.event_type, EventType.CT_PRIMARY_COMPLETION  # Default fallback
     )
 
     # Get severity from mapping
@@ -334,16 +320,14 @@ def convert_calendar_catalyst_to_v2(
     tags = ()
     disclosed_at = calendar_catalyst.target_date.isoformat()
 
-    if calendar_catalyst.event_type == 'READOUT_WINDOW':
+    if calendar_catalyst.event_type == "READOUT_WINDOW":
         evidence_fields = calendar_catalyst.evidence.fields
-        event_date_val = evidence_fields.get('window_start', calendar_catalyst.target_date.isoformat())
-        event_date_end = evidence_fields.get('window_end')
+        event_date_val = evidence_fields.get("window_start", calendar_catalyst.target_date.isoformat())
+        event_date_end = evidence_fields.get("window_end")
         date_precision = "RANGE"
         tags = ("readout_window",)
         # PIT safety: disclosed_at = PCD (when it became known), not as_of_date
-        disclosed_at = evidence_fields.get(
-            'primary_completion_date', calendar_catalyst.target_date.isoformat()
-        )
+        disclosed_at = evidence_fields.get("primary_completion_date", calendar_catalyst.target_date.isoformat())
     else:
         event_date_val = calendar_catalyst.target_date.isoformat()
 
@@ -377,6 +361,7 @@ def convert_calendar_catalyst_to_v2(
 # CORPORATE CATALYST LOADING AND CONVERSION
 # ============================================================================
 
+
 def load_corporate_catalysts(
     data_dir: Path,
     filename: str = "corporate_catalysts.json",
@@ -399,16 +384,16 @@ def load_corporate_catalysts(
         return []
 
     try:
-        with open(filepath, 'r', encoding='utf-8') as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        events = data.get('events', [])
+        events = data.get("events", [])
 
         # Filter events by as_of_date if provided
         if as_of_date:
             filtered_events = []
             for event in events:
-                event_date_str = event.get('event_date')
+                event_date_str = event.get("event_date")
                 if event_date_str:
                     try:
                         event_date = date.fromisoformat(event_date_str)
@@ -436,9 +421,9 @@ def convert_corporate_catalyst_to_v2(
     Maps corporate event types (FDA_PDUFA_DATE, EARNINGS_RELEASE, etc.)
     to CatalystEventV2 format for scoring integration.
     """
-    ticker = event.get('ticker')
-    event_type_str = event.get('event_type')
-    event_date_str = event.get('event_date')
+    ticker = event.get("ticker")
+    event_type_str = event.get("event_type")
+    event_date_str = event.get("event_date")
 
     if not ticker or not event_type_str or not event_date_str:
         return None
@@ -454,10 +439,10 @@ def convert_corporate_catalyst_to_v2(
     severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.POSITIVE)
 
     # Map confidence string to ConfidenceLevel
-    confidence_str = event.get('confidence', 'MED').upper()
-    if confidence_str == 'HIGH':
+    confidence_str = event.get("confidence", "MED").upper()
+    if confidence_str == "HIGH":
         confidence = ConfidenceLevel.HIGH
-    elif confidence_str == 'LOW':
+    elif confidence_str == "LOW":
         confidence = ConfidenceLevel.LOW
     else:
         confidence = ConfidenceLevel.MED
@@ -470,9 +455,9 @@ def convert_corporate_catalyst_to_v2(
         days_until = 0
 
     # Build event name/description
-    event_name = event.get('event_name', event_type_str)
-    drug_name = event.get('drug_name', '')
-    indication = event.get('indication', '')
+    event.get("event_name", event_type_str)
+    drug_name = event.get("drug_name", "")
+    indication = event.get("indication", "")
 
     # Create descriptive new_value
     if drug_name:
@@ -484,23 +469,23 @@ def convert_corporate_catalyst_to_v2(
 
     # Source mapping
     source_map = {
-        'FDA_PDUFA_DATE': 'FDA_CALENDAR',
-        'FDA_ADCOM': 'FDA_CALENDAR',
-        'FDA_SUBMISSION': 'FDA_CALENDAR',
-        'FDA_APPROVAL': 'FDA_CALENDAR',
-        'FDA_CRL': 'FDA_CALENDAR',
-        'FDA_DESIGNATION': 'FDA_CALENDAR',
-        'EARNINGS_RELEASE': 'CORPORATE_CALENDAR',
-        'CONFERENCE_PRESENTATION': 'CORPORATE_CALENDAR',
-        'INVESTOR_DAY': 'CORPORATE_CALENDAR',
-        'DATA_READOUT': 'COMPANY_GUIDANCE',
-        'DATA_PRESENTATION': 'COMPANY_GUIDANCE',
-        'DATA_PUBLICATION': 'COMPANY_GUIDANCE',
-        'PARTNERSHIP': 'CORPORATE_EVENT',
-        'MA_ACTIVITY': 'CORPORATE_EVENT',
-        'LICENSING_DEAL': 'CORPORATE_EVENT',
+        "FDA_PDUFA_DATE": "FDA_CALENDAR",
+        "FDA_ADCOM": "FDA_CALENDAR",
+        "FDA_SUBMISSION": "FDA_CALENDAR",
+        "FDA_APPROVAL": "FDA_CALENDAR",
+        "FDA_CRL": "FDA_CALENDAR",
+        "FDA_DESIGNATION": "FDA_CALENDAR",
+        "EARNINGS_RELEASE": "CORPORATE_CALENDAR",
+        "CONFERENCE_PRESENTATION": "CORPORATE_CALENDAR",
+        "INVESTOR_DAY": "CORPORATE_CALENDAR",
+        "DATA_READOUT": "COMPANY_GUIDANCE",
+        "DATA_PRESENTATION": "COMPANY_GUIDANCE",
+        "DATA_PUBLICATION": "COMPANY_GUIDANCE",
+        "PARTNERSHIP": "CORPORATE_EVENT",
+        "MA_ACTIVITY": "CORPORATE_EVENT",
+        "LICENSING_DEAL": "CORPORATE_EVENT",
     }
-    source = source_map.get(event_type_str, 'CORPORATE_CALENDAR')
+    source = source_map.get(event_type_str, "CORPORATE_CALENDAR")
 
     return CatalystEventV2(
         ticker=ticker,
@@ -523,17 +508,17 @@ def summarize_corporate_catalysts(events: List[Dict[str, Any]]) -> Dict[str, Any
     """
     if not events:
         return {
-            'total_events': 0,
-            'tickers_with_events': 0,
-            'by_type': {},
+            "total_events": 0,
+            "tickers_with_events": 0,
+            "by_type": {},
         }
 
     tickers = set()
     by_type = {}
 
     for event in events:
-        ticker = event.get('ticker')
-        event_type = event.get('event_type', 'UNKNOWN')
+        ticker = event.get("ticker")
+        event_type = event.get("event_type", "UNKNOWN")
 
         if ticker:
             tickers.add(ticker)
@@ -541,9 +526,9 @@ def summarize_corporate_catalysts(events: List[Dict[str, Any]]) -> Dict[str, Any
         by_type[event_type] = by_type.get(event_type, 0) + 1
 
     return {
-        'total_events': len(events),
-        'tickers_with_events': len(tickers),
-        'by_type': by_type,
+        "total_events": len(events),
+        "tickers_with_events": len(tickers),
+        "by_type": by_type,
     }
 
 
@@ -556,13 +541,13 @@ def convert_fda_adcom_to_v2(
 
     ADCOM dates are official → HIGH confidence.
     """
-    ticker = event.get('ticker')
-    event_date_str = event.get('event_date')
+    ticker = event.get("ticker")
+    event_date_str = event.get("event_date")
     if not ticker or not event_date_str:
         return None
 
-    drug_name = event.get('drug_name', '')
-    event_name = event.get('event_name', f"FDA_ADCOM: {drug_name}")
+    drug_name = event.get("drug_name", "")
+    event_name = event.get("event_name", f"FDA_ADCOM: {drug_name}")
 
     try:
         event_date = date.fromisoformat(event_date_str)
@@ -583,8 +568,8 @@ def convert_fda_adcom_to_v2(
         new_value=new_value,
         source="FDA_ADCOM_CALENDAR",
         confidence=ConfidenceLevel.HIGH,
-        disclosed_at=event.get('disclosed_at', as_of_date.isoformat()),
-        tags=tuple(event.get('tags', [])),
+        disclosed_at=event.get("disclosed_at", as_of_date.isoformat()),
+        tags=tuple(event.get("tags", [])),
     )
 
 
@@ -601,24 +586,24 @@ def convert_ema_committee_to_v2(
         procedure:maa → CRITICAL_POSITIVE severity + field_changed="ema_maa"
         (behaves like PDUFA/AdCom calendar catalyst)
     """
-    ticker = event.get('ticker')
-    event_date_str = event.get('event_date')
+    ticker = event.get("ticker")
+    event_date_str = event.get("event_date")
     if not ticker or not event_date_str:
         return None
 
-    schema = event.get('schema', '')
-    is_outcome = 'outcome' in schema
+    schema = event.get("schema", "")
+    is_outcome = "outcome" in schema
     event_type = EventType.EMA_COMMITTEE_OUTCOME if is_outcome else EventType.EMA_COMMITTEE_AGENDA
-    confidence_str = event.get('confidence', 'MED').upper()
+    confidence_str = event.get("confidence", "MED").upper()
     confidence = {
-        'HIGH': ConfidenceLevel.HIGH,
-        'MED': ConfidenceLevel.MED,
-        'LOW': ConfidenceLevel.LOW,
+        "HIGH": ConfidenceLevel.HIGH,
+        "MED": ConfidenceLevel.MED,
+        "LOW": ConfidenceLevel.LOW,
     }.get(confidence_str, ConfidenceLevel.MED)
 
-    medicine_name = event.get('medicine_name', '')
-    title = event.get('title', '')
-    tags = tuple(event.get('tags', []))
+    event.get("medicine_name", "")
+    title = event.get("title", "")
+    tags = tuple(event.get("tags", []))
 
     try:
         event_date = date.fromisoformat(event_date_str)
@@ -637,16 +622,16 @@ def convert_ema_committee_to_v2(
 
     return CatalystEventV2(
         ticker=ticker,
-        nct_id=event.get('id', f"EMA_{ticker}_{event_date_str}"),
+        nct_id=event.get("id", f"EMA_{ticker}_{event_date_str}"),
         event_type=event_type,
         event_severity=severity,
         event_date=event_date_str,
         field_changed=field_changed,
         prior_value=None,
         new_value=new_value,
-        source=event.get('source', 'EMA_COMMITTEE'),
+        source=event.get("source", "EMA_COMMITTEE"),
         confidence=confidence,
-        disclosed_at=event.get('disclosed_at', as_of_date.isoformat()),
+        disclosed_at=event.get("disclosed_at", as_of_date.isoformat()),
         tags=tags,
     )
 
@@ -662,8 +647,8 @@ def convert_conference_event_to_v2(
       CONF_PRESENTATION       → CONFERENCE_PRESENTATION (MED)
       CONF_ABSTRACT_ACCEPTED_PR → CONFERENCE_ACCEPTED_ABSTRACT (MED)
     """
-    ticker = event.get('ticker')
-    event_date_str = event.get('event_date')
+    ticker = event.get("ticker")
+    event_date_str = event.get("event_date")
     if not ticker or not event_date_str:
         return None
 
@@ -672,33 +657,33 @@ def convert_conference_event_to_v2(
         "CONF_PRESENTATION": EventType.CONFERENCE_PRESENTATION,
         "CONF_ABSTRACT_ACCEPTED_PR": EventType.CONFERENCE_ACCEPTED_ABSTRACT,
     }
-    event_type = _TYPE_MAP.get(event.get('event_type', ''))
+    event_type = _TYPE_MAP.get(event.get("event_type", ""))
     if event_type is None:
         return None
 
-    confidence_str = event.get('confidence', 'MED').upper()
+    confidence_str = event.get("confidence", "MED").upper()
     confidence = {
-        'HIGH': ConfidenceLevel.HIGH,
-        'MED': ConfidenceLevel.MED,
-        'LOW': ConfidenceLevel.LOW,
+        "HIGH": ConfidenceLevel.HIGH,
+        "MED": ConfidenceLevel.MED,
+        "LOW": ConfidenceLevel.LOW,
     }.get(confidence_str, ConfidenceLevel.MED)
 
     severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.POSITIVE)
-    conference = event.get('conference', '')
-    title = event.get('title', '')
+    conference = event.get("conference", "")
+    title = event.get("title", "")
 
     return CatalystEventV2(
         ticker=ticker,
-        nct_id=event.get('id', f"CONF_{ticker}_{event_date_str}"),
+        nct_id=event.get("id", f"CONF_{ticker}_{event_date_str}"),
         event_type=event_type,
         event_severity=severity,
         event_date=event_date_str,
         field_changed="conference_calendar",
         prior_value=None,
         new_value=f"{conference}: {title}"[:120] if title else conference,
-        source=event.get('source', 'CONF_PROGRAM'),
+        source=event.get("source", "CONF_PROGRAM"),
         confidence=confidence,
-        disclosed_at=event.get('disclosed_at', as_of_date.isoformat()),
+        disclosed_at=event.get("disclosed_at", as_of_date.isoformat()),
         tags=tuple(t for t in [f"conference:{conference.lower()}"] if t),
     )
 
@@ -770,9 +755,9 @@ def convert_sec_8k_to_v2(
 
     Preserves date_precision, event_date_end, and uses filing date as disclosed_at.
     """
-    ticker = event.get('ticker')
-    event_type_str = event.get('event_type')
-    event_date_str = event.get('event_date')
+    ticker = event.get("ticker")
+    event_type_str = event.get("event_type")
+    event_date_str = event.get("event_date")
     if not ticker or not event_type_str or not event_date_str:
         return None
 
@@ -781,17 +766,16 @@ def convert_sec_8k_to_v2(
     except ValueError:
         logger.warning(
             "SEC 8-K: unknown event_type '%s' for %s, dropping event",
-            event_type_str, ticker,
+            event_type_str,
+            ticker,
         )
         return None
 
     severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.NEUTRAL)
 
     # Map confidence string to ConfidenceLevel
-    conf_str = event.get('confidence', 'MED').upper()
-    confidence = {'HIGH': ConfidenceLevel.HIGH, 'LOW': ConfidenceLevel.LOW}.get(
-        conf_str, ConfidenceLevel.MED
-    )
+    conf_str = event.get("confidence", "MED").upper()
+    confidence = {"HIGH": ConfidenceLevel.HIGH, "LOW": ConfidenceLevel.LOW}.get(conf_str, ConfidenceLevel.MED)
 
     try:
         event_date = date.fromisoformat(event_date_str)
@@ -799,7 +783,7 @@ def convert_sec_8k_to_v2(
     except ValueError:
         days_until = 0
 
-    event_name = event.get('event_name', event_type_str)
+    event_name = event.get("event_name", event_type_str)
     new_value = f"{days_until}d_ahead: {event_name}"
 
     return CatalystEventV2(
@@ -813,10 +797,10 @@ def convert_sec_8k_to_v2(
         new_value=new_value,
         source=event.get("source", "SEC_8K_FILING"),
         confidence=confidence,
-        disclosed_at=event.get('disclosed_at', as_of_date.isoformat()),
-        event_date_end=event.get('event_date_end'),
-        date_precision=event.get('date_precision', 'DAY'),
-        tags=tuple(event.get('tags', [])),
+        disclosed_at=event.get("disclosed_at", as_of_date.isoformat()),
+        event_date_end=event.get("event_date_end"),
+        date_precision=event.get("date_precision", "DAY"),
+        tags=tuple(event.get("tags", [])),
     )
 
 
@@ -830,7 +814,9 @@ def convert_legacy_event_to_v2(
     Maps old event types to new taxonomy and adds required fields.
     """
     # Map legacy event type to new EventType
-    legacy_type = legacy_event.event_type.value if hasattr(legacy_event.event_type, 'value') else str(legacy_event.event_type)
+    legacy_type = (
+        legacy_event.event_type.value if hasattr(legacy_event.event_type, "value") else str(legacy_event.event_type)
+    )
 
     try:
         event_type = EventType(legacy_type)
@@ -841,7 +827,7 @@ def convert_legacy_event_to_v2(
     severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.NEUTRAL)
 
     # Get confidence from mapping or use legacy value
-    if hasattr(legacy_event, 'confidence') and isinstance(legacy_event.confidence, float):
+    if hasattr(legacy_event, "confidence") and isinstance(legacy_event.confidence, float):
         # Map float confidence to ConfidenceLevel
         if legacy_event.confidence >= 0.85:
             confidence = ConfidenceLevel.HIGH
@@ -891,6 +877,7 @@ def convert_legacy_event_to_v2(
 # DEDUPLICATION
 # ============================================================================
 
+
 def dedup_events(events: List[CatalystEventV2]) -> Tuple[List[CatalystEventV2], int]:
     """
     Deduplicate events by event_id.
@@ -930,6 +917,7 @@ def fuzzy_dedup_events(
 
     # Group by (ticker, event_type)
     from collections import defaultdict
+
     groups: Dict[Tuple[str, str], List[CatalystEventV2]] = defaultdict(list)
     for event in events:
         key = (event.ticker, event.event_type.value)
@@ -1004,6 +992,7 @@ def fuzzy_dedup_events(
 # DETERMINISTIC SORTING
 # ============================================================================
 
+
 def sort_canonical_records(records: List[CanonicalTrialRecord]) -> List[CanonicalTrialRecord]:
     """
     Sort canonical records deterministically by (ticker, nct_id).
@@ -1023,6 +1012,7 @@ def sort_events_v2(events: List[CatalystEventV2]) -> List[CatalystEventV2]:
 # ============================================================================
 # MAIN MODULE 3 FUNCTION (CANONICAL ENTRYPOINT)
 # ============================================================================
+
 
 def compute_module_3_catalyst(
     trial_records_path: Path,
@@ -1125,18 +1115,15 @@ def compute_module_3_catalyst(
             trial_records_raw = json.load(f)
     except FileNotFoundError:
         raise FileNotFoundError(
-            f"Trial records file not found: {trial_records_path}. "
-            f"Ensure the file exists and path is correct."
+            f"Trial records file not found: {trial_records_path}. " "Ensure the file exists and path is correct."
         )
     except json.JSONDecodeError as e:
         raise ValueError(
-            f"Invalid JSON in trial records file {trial_records_path}: {e}. "
-            f"File may be corrupted or malformed."
+            f"Invalid JSON in trial records file {trial_records_path}: {e}. " "File may be corrupted or malformed."
         )
     except PermissionError:
         raise PermissionError(
-            f"Permission denied reading trial records: {trial_records_path}. "
-            f"Check file permissions."
+            f"Permission denied reading trial records: {trial_records_path}. " "Check file permissions."
         )
 
     # Schema validation: fail fast on malformed data
@@ -1162,17 +1149,14 @@ def compute_module_3_catalyst(
             schema_errors.append(f"Record {i}: missing required field 'status' (or 'overall_status')")
     if schema_errors:
         error_sample = schema_errors[:10]
-        msg = (
-            f"Trial records schema validation failed ({len(schema_errors)} errors). "
-            f"First errors: {error_sample}"
-        )
+        msg = f"Trial records schema validation failed ({len(schema_errors)} errors). " f"First errors: {error_sample}"
         if pit_mode == "strict":
             raise ValueError(msg)
         else:
             logger.error(f"SCHEMA_VALIDATION_DEGRADE: {msg}")
             logger.error(
                 f"Continuing with {len(trial_records_raw)} records despite schema errors. "
-                f"Fix trial_records.json to remove this warning."
+                "Fix trial_records.json to remove this warning."
             )
     else:
         logger.info(f"Trial records schema validated: {len(trial_records_raw)} records OK")
@@ -1183,25 +1167,24 @@ def compute_module_3_catalyst(
     staleness_result = check_trial_records_staleness(trial_records_raw, as_of_date)
     if staleness_result.is_stale:
         logger.warning(f"STALENESS WARNING: {staleness_result.recommendation}")
-        logger.warning(f"  trial_records_date={staleness_result.trial_records_date}, "
-                      f"as_of_date={as_of_date}, age={staleness_result.age_days} days")
+        logger.warning(
+            f"  trial_records_date={staleness_result.trial_records_date}, "
+            f"as_of_date={as_of_date}, age={staleness_result.age_days} days"
+        )
     else:
-        logger.info(f"Staleness check: {staleness_result.confidence_level} "
-                   f"(age={staleness_result.age_days} days)")
+        logger.info(f"Staleness check: {staleness_result.confidence_level} " f"(age={staleness_result.age_days} days)")
 
     # =========================================================================
     # PIT VIOLATION GATE: Reject or degrade when data is from the future
     # =========================================================================
     # Direct date comparison — never key off confidence labels.
-    pit_violation = (
-        staleness_result.trial_records_date is not None
-        and staleness_result.trial_records_date > as_of_date
-    )
+    pit_violation = staleness_result.trial_records_date is not None and staleness_result.trial_records_date > as_of_date
     pit_violation_info = None
 
     if pit_violation:
         if pit_mode == "strict":
             from catalyst_diagnostics import PITViolationError
+
             raise PITViolationError(
                 source="trial_records",
                 source_date=staleness_result.trial_records_date,
@@ -1211,8 +1194,8 @@ def compute_module_3_catalyst(
             logger.error(
                 f"PIT_VIOLATION: trial_records dated {staleness_result.trial_records_date} "
                 f"is after as_of_date {as_of_date}. "
-                f"Skipping ALL trial_records-derived logic (diff + calendar + activity proxy). "
-                f"Only corporate catalysts will be used."
+                "Skipping ALL trial_records-derived logic (diff + calendar + activity proxy). "
+                "Only corporate catalysts will be used."
             )
             pit_violation_info = {
                 "source": "trial_records",
@@ -1243,7 +1226,7 @@ def compute_module_3_catalyst(
     prior_snapshot_date = None
     delta_diagnostics = DeltaDiagnostics(prior_snapshot_missing=True)
     calendar_catalysts = []
-    calendar_summary = {'total_catalysts': 0, 'tickers_with_catalysts': 0, 'by_window': {}}
+    calendar_summary = {"total_catalysts": 0, "tickers_with_catalysts": 0, "by_window": {}}
     activity_proxy_by_ticker: Dict[str, Dict[str, Any]] = {}
     total_activity_120d = 0
     total_activity_30d = 0
@@ -1256,16 +1239,12 @@ def compute_module_3_catalyst(
 
     if not pit_violation:
         # Filter to active tickers
-        trial_records = [r for r in trial_records_raw if r.get('ticker') in active_tickers]
+        trial_records = [r for r in trial_records_raw if r.get("ticker") in active_tickers]
         logger.info(f"Processing {len(trial_records)} trials for active tickers")
 
         # Convert to canonical format
         logger.info("Converting to canonical format...")
-        canonical_records, adapter_stats = process_trial_records_batch(
-            trial_records,
-            as_of_date,
-            config.adapter_config
-        )
+        canonical_records, adapter_stats = process_trial_records_batch(trial_records, as_of_date, config.adapter_config)
         logger.info(f"Converted {len(canonical_records)} records successfully")
 
         # DETERMINISTIC: Sort canonical records
@@ -1280,36 +1259,35 @@ def compute_module_3_catalyst(
             logger.info(f"Prior snapshot has {prior_snapshot.key_count} records")
         else:
             logger.info("No prior snapshot found - this is initial run")
-    
+
         # Create current snapshot
-        current_snapshot = StateSnapshot(
-            snapshot_date=as_of_date,
-            records=canonical_records
-        )
-    
+        current_snapshot = StateSnapshot(snapshot_date=as_of_date, records=canonical_records)
+
         # CRITICAL: Verify snapshot dates for correctness
         current_snapshot_date = current_snapshot.snapshot_date
-        logger.info(f"Snapshot dates: current={current_snapshot_date}, prior={prior_snapshot_date or 'None'}, as_of={as_of_date}")
-    
+        logger.info(
+            f"Snapshot dates: current={current_snapshot_date}, prior={prior_snapshot_date or 'None'}, as_of={as_of_date}"
+        )
+
         # Assertion 1: Current snapshot date must equal as_of_date
         if current_snapshot_date != as_of_date:
             raise ValueError(
                 f"Snapshot date mismatch: current_snapshot_date={current_snapshot_date} != as_of_date={as_of_date}"
             )
-    
+
         # Assertion 2: Prior snapshot date must be before current (if prior exists)
         if prior_snapshot_date is not None and prior_snapshot_date >= current_snapshot_date:
             raise ValueError(
                 f"Snapshot date ordering violation: prior={prior_snapshot_date} >= current={current_snapshot_date}. "
-                f"Prior snapshot should be strictly before current. Check state directory for stale data."
+                "Prior snapshot should be strictly before current. Check state directory for stale data."
             )
-    
+
         # =========================================================================
         # DELTA DIAGNOSTICS: Analyze what changed between snapshots
         # =========================================================================
         delta_diagnostics = compute_delta_diagnostics(current_snapshot, prior_snapshot)
         delta_diagnostics.log_summary()
-    
+
         # =========================================================================
         # DETAILED SAMPLE COMPARISON: Check individual trials for changes
         # =========================================================================
@@ -1318,7 +1296,7 @@ def compute_module_3_catalyst(
         logger.info("=" * 60)
         logger.info(f"Current snapshot: {current_snapshot.key_count} trials")
         logger.info(f"Prior snapshot: {prior_snapshot.key_count if prior_snapshot else 0} trials")
-    
+
         if prior_snapshot and current_snapshot.records:
             # Build key sets for comparison using NCT ID ONLY (stable identifier)
             # Ticker association can change between CT.gov queries, but NCT ID is globally unique
@@ -1327,90 +1305,107 @@ def compute_module_3_catalyst(
             common_nct_ids = current_nct_ids & prior_nct_ids
             added_nct_ids = current_nct_ids - prior_nct_ids
             removed_nct_ids = prior_nct_ids - current_nct_ids
-    
+
             # Also track (ticker, nct_id) tuples for detailed comparison
             current_keys = {(r.ticker, r.nct_id) for r in current_snapshot.records}
             prior_keys = {(r.ticker, r.nct_id) for r in prior_snapshot.records}
             common_keys = current_keys & prior_keys
             added_keys = current_keys - prior_keys
             removed_keys = prior_keys - current_keys
-    
-            logger.info(f"NCT ID overlap: {len(common_nct_ids)} common, {len(added_nct_ids)} added, {len(removed_nct_ids)} removed")
-            logger.info(f"(ticker, nct_id) overlap: {len(common_keys)} common, {len(added_keys)} added, {len(removed_keys)} removed")
-    
+
+            logger.info(
+                f"NCT ID overlap: {len(common_nct_ids)} common, {len(added_nct_ids)} added, {len(removed_nct_ids)} removed"
+            )
+            logger.info(
+                f"(ticker, nct_id) overlap: {len(common_keys)} common, {len(added_keys)} added, {len(removed_keys)} removed"
+            )
+
             # Calculate churn rate using NCT IDs (stable keys)
             total_current = len(current_nct_ids) if current_nct_ids else 1
             nct_churn_rate = (len(added_nct_ids) + len(removed_nct_ids)) / (2 * total_current)
-    
+
             # Also calculate ticker association churn for diagnostics
             ticker_churn_rate = (len(added_keys) + len(removed_keys)) / (2 * len(current_keys)) if current_keys else 0
-    
+
             if nct_churn_rate > 0.10:
-                logger.warning(f"⚠️  HIGH NCT ID CHURN: {len(added_nct_ids)} added, {len(removed_nct_ids)} removed ({nct_churn_rate*100:.1f}% churn)")
+                logger.warning(
+                    f"⚠️  HIGH NCT ID CHURN: {len(added_nct_ids)} added, {len(removed_nct_ids)} removed ({nct_churn_rate*100:.1f}% churn)"
+                )
                 logger.warning("   This suggests actual trial population changed significantly.")
-    
+
             if ticker_churn_rate > 0.30 and nct_churn_rate < 0.10:
-                logger.info(f"ℹ️  Ticker association churn: {ticker_churn_rate*100:.1f}% (NCT churn only {nct_churn_rate*100:.1f}%)")
-                logger.info("   Ticker-NCT associations changed but trials are stable - this is expected with CT.gov text search.")
-    
+                logger.info(
+                    f"ℹ️  Ticker association churn: {ticker_churn_rate*100:.1f}% (NCT churn only {nct_churn_rate*100:.1f}%)"
+                )
+                logger.info(
+                    "   Ticker-NCT associations changed but trials are stable - this is expected with CT.gov text search."
+                )
+
             # HIGH CHURN GATE: Only trigger on NCT ID churn (actual trial changes)
             # Ticker association churn is expected and should not trigger fresh baseline
             if nct_churn_rate > 0.30:
-                logger.error(f"CATALYST CHURN GATE TRIGGERED: {nct_churn_rate*100:.1f}% NCT churn exceeds 30% threshold")
+                logger.error(
+                    f"CATALYST CHURN GATE TRIGGERED: {nct_churn_rate*100:.1f}% NCT churn exceeds 30% threshold"
+                )
                 logger.error("   Forcing fresh baseline mode - all events will be detected as initial ingest")
                 logger.error("   This prevents false negatives from dataset regeneration")
                 # Force fresh baseline by clearing prior snapshot reference
                 prior_snapshot = None
                 prior_snapshot_date = None
                 logger.warning("   Prior snapshot cleared - running in fresh baseline mode")
-    
+
             # Sample up to 10 COMMON trials and check field changes
             # Only run if prior_snapshot is still valid (not cleared by churn gate)
             if prior_snapshot is not None:
                 sample_keys = sorted(list(common_keys))[:10]
                 changes_found = 0
-    
+
                 for ticker, nct_id in sample_keys:
                     current_record = current_snapshot.get_record(ticker, nct_id)
                     prior_record = prior_snapshot.get_record(ticker, nct_id)
                     if not current_record or not prior_record:
                         continue
-    
+
                     changes = []
-    
+
                     if current_record.overall_status != prior_record.overall_status:
-                        changes.append(f"status: {prior_record.overall_status.name} → {current_record.overall_status.name}")
-    
+                        changes.append(
+                            f"status: {prior_record.overall_status.name} → {current_record.overall_status.name}"
+                        )
+
                     if current_record.primary_completion_date != prior_record.primary_completion_date:
-                        changes.append(f"pcd: {prior_record.primary_completion_date} → {current_record.primary_completion_date}")
-    
+                        changes.append(
+                            f"pcd: {prior_record.primary_completion_date} → {current_record.primary_completion_date}"
+                        )
+
                     if current_record.last_update_posted != prior_record.last_update_posted:
-                        changes.append(f"updated: {prior_record.last_update_posted} → {current_record.last_update_posted}")
-    
+                        changes.append(
+                            f"updated: {prior_record.last_update_posted} → {current_record.last_update_posted}"
+                        )
+
                     if changes:
                         changes_found += 1
                         logger.info(f"  {nct_id}: {', '.join(changes)}")
-    
+
                 if changes_found == 0 and len(common_keys) > 0:
                     logger.warning("⚠️  NO FIELD CHANGES in common records - snapshots may have same underlying data")
                     logger.info(f"   Current snapshot date: {current_snapshot.snapshot_date}")
                     logger.info(f"   Prior snapshot date: {prior_snapshot.snapshot_date}")
-    
+
         # Check update recency distribution
         cutoff_date = as_of_date - timedelta(days=7)
         recent_updates = sum(
-            1 for r in current_snapshot.records
-            if r.last_update_posted and r.last_update_posted >= cutoff_date
+            1 for r in current_snapshot.records if r.last_update_posted and r.last_update_posted >= cutoff_date
         )
-    
+
         logger.info(f"Trials updated in past 7 days: {recent_updates} / {current_snapshot.key_count}")
-    
+
         if recent_updates < 50:  # Expect ~1% weekly update rate for active trials
             logger.warning(f"⚠️  Very few recent updates ({recent_updates}) - trial_records.json may be stale")
-            logger.warning(f"   This explains why 0 diff-based events are detected")
-    
+            logger.warning("   This explains why 0 diff-based events are detected")
+
         logger.info("=" * 60)
-    
+
         # =========================================================================
         # CALENDAR-BASED CATALYSTS: Forward-looking events from trial dates
         # =========================================================================
@@ -1424,11 +1419,13 @@ def compute_module_3_catalyst(
             logger.info(f"Readout window catalysts: {len(readout_catalysts)} inferred events")
 
         calendar_summary = summarize_calendar_catalysts(calendar_catalysts)
-        logger.info(f"Calendar catalysts: {calendar_summary['total_catalysts']} events "
-                   f"across {calendar_summary['tickers_with_catalysts']} tickers")
-        if calendar_summary['by_window']:
+        logger.info(
+            f"Calendar catalysts: {calendar_summary['total_catalysts']} events "
+            f"across {calendar_summary['tickers_with_catalysts']} tickers"
+        )
+        if calendar_summary["by_window"]:
             logger.info(f"  By window: {calendar_summary['by_window']}")
-    
+
         # =========================================================================
         # ACTIVITY PROXY: Historical data workaround based on last_update_posted
         # =========================================================================
@@ -1436,7 +1433,7 @@ def compute_module_3_catalyst(
         # It identifies trials with recent updates (even without knowing what changed).
         logger.info("Computing activity proxy scores (historical data workaround)...")
         activity_proxy_by_ticker: Dict[str, Dict[str, Any]] = {}
-    
+
         # Group trials by ticker for activity proxy computation
         trials_by_ticker: Dict[str, List[CanonicalTrialRecord]] = {}
         for record in canonical_records:
@@ -1444,7 +1441,7 @@ def compute_module_3_catalyst(
             if ticker not in trials_by_ticker:
                 trials_by_ticker[ticker] = []
             trials_by_ticker[ticker].append(record)
-    
+
         # Compute activity proxy scores per ticker
         total_activity_120d = 0
         total_activity_30d = 0
@@ -1457,12 +1454,14 @@ def compute_module_3_catalyst(
                     lookback_days=120,
                 )
                 activity_proxy_by_ticker[ticker] = proxy_result
-                total_activity_120d += proxy_result['activity_count_120d']
-                total_activity_30d += proxy_result['activity_count_30d']
-    
-        logger.info(f"Activity proxy: {total_activity_120d} trials updated in 120d, "
-                   f"{total_activity_30d} in 30d across {len(activity_proxy_by_ticker)} tickers")
-    
+                total_activity_120d += proxy_result["activity_count_120d"]
+                total_activity_30d += proxy_result["activity_count_30d"]
+
+        logger.info(
+            f"Activity proxy: {total_activity_120d} trials updated in 120d, "
+            f"{total_activity_30d} in 30d across {len(activity_proxy_by_ticker)} tickers"
+        )
+
         # Detect events by comparing states
         logger.info("Detecting diff-based catalyst events...")
         events_by_ticker_v2: Dict[str, List[CatalystEventV2]] = {}
@@ -1470,52 +1469,48 @@ def compute_module_3_catalyst(
         prior_events_by_ticker_v2: Dict[str, List[CatalystEventV2]] = {}
         total_events = 0
         total_deduped = 0
-    
+
         # Use cached NCT ID lookup for prior snapshot (stable key regardless of ticker association)
         # This ensures we find prior records even if ticker-NCT association changed between runs
         # The records_by_nct_id property is lazily computed and cached on first access
-    
+
         for current_record in canonical_records:
             ticker = current_record.ticker
             nct_id = current_record.nct_id
-    
+
             # Get prior record for this trial using NCT ID only (stable lookup via cached dict)
             prior_record = prior_snapshot.get_record_by_nct_id(nct_id) if prior_snapshot else None
-    
+
             # Detect events (legacy format)
-            legacy_events = event_detector.detect_events(
-                current_record,
-                prior_record,
-                as_of_date
-            )
-    
+            legacy_events = event_detector.detect_events(current_record, prior_record, as_of_date)
+
             if legacy_events:
                 if ticker not in events_by_ticker_legacy:
                     events_by_ticker_legacy[ticker] = []
                 events_by_ticker_legacy[ticker].extend(legacy_events)
-    
+
                 # Convert to V2 format
                 if ticker not in events_by_ticker_v2:
                     events_by_ticker_v2[ticker] = []
-    
+
                 for le in legacy_events:
                     v2_event = convert_legacy_event_to_v2(ticker, le)
                     events_by_ticker_v2[ticker].append(v2_event)
-    
+
                 total_events += len(legacy_events)
-    
+
         # DEDUP: Remove duplicate events by event_id
         for ticker in events_by_ticker_v2:
             events_by_ticker_v2[ticker], deduped = dedup_events(events_by_ticker_v2[ticker])
             total_deduped += deduped
-    
+
         # DETERMINISTIC: Sort events per ticker
         for ticker in events_by_ticker_v2:
             events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
-    
+
         logger.info(f"Detected {total_events} events across {len(events_by_ticker_v2)} tickers")
         logger.info(f"Deduped {total_deduped} duplicate events")
-    
+
         # =========================================================================
         # ZERO DIFF-BASED EVENTS DIAGNOSTIC: Explain why no diff events detected
         # =========================================================================
@@ -1524,45 +1519,53 @@ def compute_module_3_catalyst(
             logger.info("=" * 70)
             logger.info("ZERO DIFF-BASED EVENTS - DIAGNOSTIC SUMMARY")
             logger.info("=" * 70)
-    
+
             # Note calendar coverage as fallback
-            if calendar_summary['total_catalysts'] > 0:
-                logger.info(f"CALENDAR FALLBACK ACTIVE: {calendar_summary['total_catalysts']} calendar events "
-                           f"across {calendar_summary['tickers_with_catalysts']} tickers will provide coverage")
-    
+            if calendar_summary["total_catalysts"] > 0:
+                logger.info(
+                    f"CALENDAR FALLBACK ACTIVE: {calendar_summary['total_catalysts']} calendar events "
+                    f"across {calendar_summary['tickers_with_catalysts']} tickers will provide coverage"
+                )
+
             # Check data freshness
             if staleness_result.is_stale:
                 logger.warning(f"DATA STALENESS: trial_records is {staleness_result.age_days} days old")
                 logger.warning(f"  trial_records date: {staleness_result.trial_records_date}")
                 logger.warning(f"  as_of_date:         {as_of_date}")
                 logger.warning(f"  Recommendation:     {staleness_result.recommendation}")
-    
+
             # Check delta diagnostics
             if delta_diagnostics.no_changes_detected:
-                logger.info(f"SNAPSHOT COMPARISON: No field changes between snapshots")
+                logger.info("SNAPSHOT COMPARISON: No field changes between snapshots")
                 logger.info(f"  Current records: {delta_diagnostics.total_current_records}")
                 logger.info(f"  Prior records:   {delta_diagnostics.total_prior_records}")
             elif delta_diagnostics.prior_snapshot_missing:
-                logger.info(f"INITIAL RUN: No prior snapshot - diff detection disabled")
-                logger.info(f"  Calendar-based events will provide catalyst coverage")
+                logger.info("INITIAL RUN: No prior snapshot - diff detection disabled")
+                logger.info("  Calendar-based events will provide catalyst coverage")
             else:
-                logger.info(f"Delta shows changes but no events generated:")
+                logger.info("Delta shows changes but no events generated:")
                 logger.info(f"  Records changed: {delta_diagnostics.records_changed_count}")
-    
+
             logger.info("=" * 70)
-    
+
         # Build prior events for delta scoring (from prior snapshot)
         if prior_snapshot:
             for ticker in active_tickers:
-                prior_records = prior_snapshot.get_records_for_ticker(ticker) if hasattr(prior_snapshot, 'get_records_for_ticker') else []
+                prior_records = (
+                    prior_snapshot.get_records_for_ticker(ticker)
+                    if hasattr(prior_snapshot, "get_records_for_ticker")
+                    else []
+                )
                 if prior_records:
                     prior_events_by_ticker_v2[ticker] = []
                     # Note: Prior events would need to be reconstructed from prior snapshot
                     # For now, we use the detected events from delta comparison
-    
+
         # Load historical proximity scores from state store
-        historical_proximities = state_store.get_historical_proximities(4) if hasattr(state_store, 'get_historical_proximities') else {}
-    
+        historical_proximities = (
+            state_store.get_historical_proximities(4) if hasattr(state_store, "get_historical_proximities") else {}
+        )
+
         # =========================================================================
         # MERGE CALENDAR CATALYSTS INTO SCORING PIPELINE
         # =========================================================================
@@ -1571,18 +1574,18 @@ def compute_module_3_catalyst(
         logger.info("Merging calendar catalysts into scoring pipeline...")
         calendar_events_added = 0
         calendar_tickers_added = 0
-    
+
         for calendar_catalyst in calendar_catalysts:
             ticker = calendar_catalyst.ticker
             v2_event = convert_calendar_catalyst_to_v2(calendar_catalyst, as_of_date=as_of_date)
-    
+
             if ticker not in events_by_ticker_v2:
                 events_by_ticker_v2[ticker] = []
                 calendar_tickers_added += 1
-    
+
             events_by_ticker_v2[ticker].append(v2_event)
             calendar_events_added += 1
-    
+
         # Re-dedup and re-sort after merging calendar events
         if calendar_events_added > 0:
             calendar_deduped = 0
@@ -1590,20 +1593,22 @@ def compute_module_3_catalyst(
                 events_by_ticker_v2[ticker], deduped = dedup_events(events_by_ticker_v2[ticker])
                 calendar_deduped += deduped
                 events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
-    
+
             total_deduped += calendar_deduped
             total_events += calendar_events_added
-    
-            logger.info(f"Merged {calendar_events_added} calendar events across "
-                       f"{calendar_summary['tickers_with_catalysts']} tickers "
-                       f"(new tickers: {calendar_tickers_added}, deduped: {calendar_deduped})")
+
+            logger.info(
+                f"Merged {calendar_events_added} calendar events across "
+                f"{calendar_summary['tickers_with_catalysts']} tickers "
+                f"(new tickers: {calendar_tickers_added}, deduped: {calendar_deduped})"
+            )
 
     # =========================================================================
     # MERGE CORPORATE CATALYSTS INTO SCORING PIPELINE
     # =========================================================================
     # Load and convert corporate catalyst events (PDUFA dates, earnings, conferences, etc.)
     corporate_catalysts = []
-    corporate_summary = {'total_events': 0, 'tickers_with_events': 0, 'by_type': {}}
+    corporate_summary = {"total_events": 0, "tickers_with_events": 0, "by_type": {}}
 
     if config.enable_corporate_catalysts:
         corporate_catalysts = load_corporate_catalysts(
@@ -1614,12 +1619,12 @@ def compute_module_3_catalyst(
         corporate_summary = summarize_corporate_catalysts(corporate_catalysts)
 
         if corporate_catalysts:
-            logger.info(f"Merging corporate catalysts into scoring pipeline...")
+            logger.info("Merging corporate catalysts into scoring pipeline...")
             corporate_events_added = 0
             corporate_tickers_added = 0
 
             for corp_event in corporate_catalysts:
-                ticker = corp_event.get('ticker')
+                ticker = corp_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
 
@@ -1645,9 +1650,11 @@ def compute_module_3_catalyst(
                 total_deduped += corporate_deduped
                 total_events += corporate_events_added
 
-                logger.info(f"Merged {corporate_events_added} corporate events across "
-                           f"{corporate_summary['tickers_with_events']} tickers "
-                           f"(new tickers: {corporate_tickers_added}, deduped: {corporate_deduped})")
+                logger.info(
+                    f"Merged {corporate_events_added} corporate events across "
+                    f"{corporate_summary['tickers_with_events']} tickers "
+                    f"(new tickers: {corporate_tickers_added}, deduped: {corporate_deduped})"
+                )
                 logger.info(f"  By type: {corporate_summary['by_type']}")
         else:
             logger.debug("No corporate catalysts to merge (file not found or empty)")
@@ -1672,14 +1679,13 @@ def compute_module_3_catalyst(
                 _fallback_adcom_path = _fallback_adcom_dir / adcom_cache_path.name
                 if _fallback_adcom_path.exists():
                     logger.warning(
-                        f"FDA ADCOM: cache not in {adcom_cache_path.parent}, "
-                        f"using fallback {_fallback_adcom_path}"
+                        f"FDA ADCOM: cache not in {adcom_cache_path.parent}, " f"using fallback {_fallback_adcom_path}"
                     )
                     _resolved_adcom_path = _fallback_adcom_path
 
             if _resolved_adcom_path.exists():
                 try:
-                    with open(_resolved_adcom_path, 'r', encoding='utf-8') as f:
+                    with open(_resolved_adcom_path, "r", encoding="utf-8") as f:
                         adcom_events = json.load(f)
                     logger.info(f"FDA ADCOM: loaded {len(adcom_events)} events from cache")
                 except Exception as e:
@@ -1689,9 +1695,10 @@ def compute_module_3_catalyst(
         elif _adcom_mode == "live":
             try:
                 from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                    collect_fda_adcom_events,
                     build_product_ticker_map,
+                    collect_fda_adcom_events,
                 )
+
                 product_map = build_product_ticker_map(data_dir)
                 adcom_events = collect_fda_adcom_events(
                     drug_to_ticker=product_map,
@@ -1709,7 +1716,7 @@ def compute_module_3_catalyst(
             adcom_tickers_added = 0
             adcom_touched: Set[str] = set()
             for adcom_event in adcom_events:
-                ticker = adcom_event.get('ticker')
+                ticker = adcom_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_fda_adcom_to_v2(adcom_event, as_of_date)
@@ -1730,8 +1737,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += adcom_deduped
                 total_events += adcom_added
-                logger.info(f"Merged {adcom_added} FDA ADCOM events "
-                           f"(new tickers: {adcom_tickers_added}, deduped: {adcom_deduped})")
+                logger.info(
+                    f"Merged {adcom_added} FDA ADCOM events "
+                    f"(new tickers: {adcom_tickers_added}, deduped: {adcom_deduped})"
+                )
 
     # =========================================================================
     # MERGE SEC 8-K CATALYST EVENTS INTO SCORING PIPELINE
@@ -1746,6 +1755,7 @@ def compute_module_3_catalyst(
             from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
                 _versioned_cache_path as _sec_versioned_path,
             )
+
             sec_cache_path = _sec_versioned_path(Path(config.sec_8k_cache_dir), as_of_date)
         except ImportError:
             # Fallback if collector not available (cache_only mode without collector installed)
@@ -1763,14 +1773,13 @@ def compute_module_3_catalyst(
                     fallback_path = _FALLBACK_8K_DIR / sec_cache_path.name
                 if fallback_path.exists():
                     logger.warning(
-                        f"SEC 8-K: versioned cache not in {sec_cache_path.parent}, "
-                        f"using fallback {fallback_path}"
+                        f"SEC 8-K: versioned cache not in {sec_cache_path.parent}, " f"using fallback {fallback_path}"
                     )
                     _resolved_8k_path = fallback_path
 
             if _resolved_8k_path.exists():
                 try:
-                    with open(_resolved_8k_path, 'r', encoding='utf-8') as f:
+                    with open(_resolved_8k_path, "r", encoding="utf-8") as f:
                         sec_8k_events = json.load(f)
                     logger.info(f"SEC 8-K: loaded {len(sec_8k_events)} events from cache")
                 except Exception as e:
@@ -1783,14 +1792,15 @@ def compute_module_3_catalyst(
                 )
         elif _sec_mode == "live":
             try:
-                from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-                    collect_8k_timing_events,
-                )
+                from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import collect_8k_timing_events
+
                 universe_path = data_dir / "universe.json"
                 if universe_path.exists():
-                    with open(universe_path, 'r', encoding='utf-8') as f:
+                    with open(universe_path, "r", encoding="utf-8") as f:
                         universe_data = json.load(f)
-                    universe_entries = universe_data if isinstance(universe_data, list) else universe_data.get('tickers', [])
+                    universe_entries = (
+                        universe_data if isinstance(universe_data, list) else universe_data.get("tickers", [])
+                    )
                 else:
                     universe_entries = []
 
@@ -1809,7 +1819,7 @@ def compute_module_3_catalyst(
             sec_tickers_added = 0
             sec_touched: Set[str] = set()
             for sec_event in sec_8k_events:
-                ticker = sec_event.get('ticker')
+                ticker = sec_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_sec_8k_to_v2(sec_event, as_of_date)
@@ -1830,8 +1840,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += sec_deduped
                 total_events += sec_added
-                logger.info(f"Merged {sec_added} SEC 8-K catalyst events "
-                           f"(new tickers: {sec_tickers_added}, deduped: {sec_deduped})")
+                logger.info(
+                    f"Merged {sec_added} SEC 8-K catalyst events "
+                    f"(new tickers: {sec_tickers_added}, deduped: {sec_deduped})"
+                )
 
     # =========================================================================
     # MERGE SEC MULTI-FORM (10-Q, 10-K, 6-K) CATALYST EVENTS
@@ -1847,6 +1859,7 @@ def compute_module_3_catalyst(
             from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
                 _multi_form_cache_path as _mf_cache_path,
             )
+
             mf_cache = _mf_cache_path(Path(config.sec_8k_cache_dir), as_of_date)
         except ImportError:
             mf_cache = Path(config.sec_8k_cache_dir) / f"sec_filings_{as_of_date.isoformat()}.json"
@@ -1860,15 +1873,12 @@ def compute_module_3_catalyst(
                 except NameError:
                     fallback_mf = _fallback_mf_dir / mf_cache.name
                 if fallback_mf.exists():
-                    logger.warning(
-                        f"SEC multi-form: cache not in {mf_cache.parent}, "
-                        f"using fallback {fallback_mf}"
-                    )
+                    logger.warning(f"SEC multi-form: cache not in {mf_cache.parent}, " f"using fallback {fallback_mf}")
                     _resolved_mf_path = fallback_mf
 
             if _resolved_mf_path.exists():
                 try:
-                    with open(_resolved_mf_path, 'r', encoding='utf-8') as f:
+                    with open(_resolved_mf_path, "r", encoding="utf-8") as f:
                         mf_events = json.load(f)
                     logger.info(f"SEC multi-form: loaded {len(mf_events)} events from cache")
                 except Exception as e:
@@ -1876,19 +1886,20 @@ def compute_module_3_catalyst(
             else:
                 logger.warning(
                     f"SEC multi-form: no cache for {as_of_date} "
-                    f"(run enrich_archive_inputs.py --sec-multi-form-mode=live)"
+                    "(run enrich_archive_inputs.py --sec-multi-form-mode=live)"
                 )
 
         elif _multi_form_mode == "live":
             try:
-                from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-                    collect_sec_filing_events,
-                )
+                from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import collect_sec_filing_events
+
                 universe_path = data_dir / "universe.json"
                 if universe_path.exists():
-                    with open(universe_path, 'r', encoding='utf-8') as f:
+                    with open(universe_path, "r", encoding="utf-8") as f:
                         universe_data = json.load(f)
-                    universe_entries = universe_data if isinstance(universe_data, list) else universe_data.get('tickers', [])
+                    universe_entries = (
+                        universe_data if isinstance(universe_data, list) else universe_data.get("tickers", [])
+                    )
                 else:
                     universe_entries = []
 
@@ -1911,7 +1922,7 @@ def compute_module_3_catalyst(
             mf_tickers_added = 0
             mf_touched: Set[str] = set()
             for mf_event in mf_events:
-                ticker = mf_event.get('ticker')
+                ticker = mf_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_sec_8k_to_v2(mf_event, as_of_date)
@@ -1936,9 +1947,11 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += mf_deduped
                 total_events += mf_added
-                logger.info(f"Merged {mf_added} SEC multi-form catalyst events "
-                           f"(new tickers: {mf_tickers_added}, deduped: {mf_deduped}, "
-                           f"gated: {mf_gated})")
+                logger.info(
+                    f"Merged {mf_added} SEC multi-form catalyst events "
+                    f"(new tickers: {mf_tickers_added}, deduped: {mf_deduped}, "
+                    f"gated: {mf_gated})"
+                )
 
     # =========================================================================
     # MERGE FDA REGULATORY NOTICES INTO SCORING PIPELINE
@@ -1964,7 +1977,7 @@ def compute_module_3_catalyst(
 
             if _resolved_reg_path.exists():
                 try:
-                    with open(_resolved_reg_path, 'r', encoding='utf-8') as f:
+                    with open(_resolved_reg_path, "r", encoding="utf-8") as f:
                         fda_reg_events = json.load(f)
                     logger.info(f"FDA regulatory: loaded {len(fda_reg_events)} events from cache")
                 except Exception as e:
@@ -1975,9 +1988,10 @@ def compute_module_3_catalyst(
         elif _fda_reg_mode == "live":
             try:
                 from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                    collect_fda_regulatory_notices,
                     build_product_ticker_map,
+                    collect_fda_regulatory_notices,
                 )
+
                 product_map = build_product_ticker_map(data_dir)
                 fda_reg_events = collect_fda_regulatory_notices(
                     product_ticker_map=product_map,
@@ -1994,7 +2008,7 @@ def compute_module_3_catalyst(
             reg_tickers_added = 0
             reg_touched: Set[str] = set()
             for reg_event in fda_reg_events:
-                ticker = reg_event.get('ticker')
+                ticker = reg_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_fda_adcom_to_v2(reg_event, as_of_date)
@@ -2015,8 +2029,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += reg_deduped
                 total_events += reg_added
-                logger.info(f"Merged {reg_added} FDA regulatory events "
-                           f"(new tickers: {reg_tickers_added}, deduped: {reg_deduped})")
+                logger.info(
+                    f"Merged {reg_added} FDA regulatory events "
+                    f"(new tickers: {reg_tickers_added}, deduped: {reg_deduped})"
+                )
 
     # =========================================================================
     # MERGE EMA COMMITTEE EVENTS INTO SCORING PIPELINE
@@ -2033,7 +2049,7 @@ def compute_module_3_catalyst(
             for _ema_path in (ema_events_cache, ema_outcomes_cache):
                 if _ema_path.exists():
                     try:
-                        with open(_ema_path, 'r', encoding='utf-8') as f:
+                        with open(_ema_path, "r", encoding="utf-8") as f:
                             _payload = json.load(f)
                         _evts = _payload.get("events", _payload) if isinstance(_payload, dict) else _payload
                         ema_all_events.extend(_evts)
@@ -2048,20 +2064,23 @@ def compute_module_3_catalyst(
                     collect_ema_committee_events,
                     collect_ema_meeting_outcomes,
                 )
-                from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                    build_product_ticker_map,
-                )
+                from wake_robin_data_pipeline.collectors.fda_adcom_collector import build_product_ticker_map
+
                 product_map = build_product_ticker_map(data_dir)
-                ema_all_events.extend(collect_ema_committee_events(
-                    as_of_date=as_of_date,
-                    cache_dir=config.ema_cache_dir,
-                    product_ticker_map=product_map,
-                ))
-                ema_all_events.extend(collect_ema_meeting_outcomes(
-                    as_of_date=as_of_date,
-                    cache_dir=config.ema_cache_dir,
-                    product_ticker_map=product_map,
-                ))
+                ema_all_events.extend(
+                    collect_ema_committee_events(
+                        as_of_date=as_of_date,
+                        cache_dir=config.ema_cache_dir,
+                        product_ticker_map=product_map,
+                    )
+                )
+                ema_all_events.extend(
+                    collect_ema_meeting_outcomes(
+                        as_of_date=as_of_date,
+                        cache_dir=config.ema_cache_dir,
+                        product_ticker_map=product_map,
+                    )
+                )
             except ImportError:
                 logger.debug("EMA committee collector not available")
             except Exception as e:
@@ -2072,7 +2091,7 @@ def compute_module_3_catalyst(
             ema_tickers_added = 0
             ema_touched: Set[str] = set()
             for ema_event in ema_all_events:
-                ticker = ema_event.get('ticker')
+                ticker = ema_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_ema_committee_to_v2(ema_event, as_of_date)
@@ -2093,8 +2112,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += ema_deduped
                 total_events += ema_added
-                logger.info(f"Merged {ema_added} EMA committee events "
-                           f"(new tickers: {ema_tickers_added}, deduped: {ema_deduped})")
+                logger.info(
+                    f"Merged {ema_added} EMA committee events "
+                    f"(new tickers: {ema_tickers_added}, deduped: {ema_deduped})"
+                )
 
     # =========================================================================
     # MERGE CONFERENCE CALENDAR EVENTS INTO SCORING PIPELINE
@@ -2115,7 +2136,7 @@ def compute_module_3_catalyst(
                     _derived_path = _slug_dir / f"derived_events_{as_of_date.isoformat()}.json"
                     if _derived_path.exists():
                         try:
-                            with open(_derived_path, 'r', encoding='utf-8') as f:
+                            with open(_derived_path, "r", encoding="utf-8") as f:
                                 _payload = json.load(f)
                             _evts = _payload.get("records", _payload) if isinstance(_payload, dict) else _payload
                             conf_all_events.extend(_evts)
@@ -2127,12 +2148,11 @@ def compute_module_3_catalyst(
         elif _conf_mode == "live":
             try:
                 from wake_robin_data_pipeline.collectors.conference_program_collector import (
-                    collect_conference_derived_events,
                     ALL_CONFERENCE_SLUGS,
+                    collect_conference_derived_events,
                 )
-                from wake_robin_data_pipeline.collectors.fda_adcom_collector import (
-                    build_product_ticker_map,
-                )
+                from wake_robin_data_pipeline.collectors.fda_adcom_collector import build_product_ticker_map
+
                 product_map = build_product_ticker_map(data_dir)
                 for _slug in ALL_CONFERENCE_SLUGS:
                     _evts = collect_conference_derived_events(
@@ -2154,7 +2174,7 @@ def compute_module_3_catalyst(
             conf_tickers_added = 0
             conf_touched: Set[str] = set()
             for conf_event in conf_all_events:
-                ticker = conf_event.get('ticker')
+                ticker = conf_event.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_conference_event_to_v2(conf_event, as_of_date)
@@ -2175,8 +2195,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += conf_deduped
                 total_events += conf_added
-                logger.info(f"Merged {conf_added} conference calendar events "
-                           f"(new tickers: {conf_tickers_added}, deduped: {conf_deduped})")
+                logger.info(
+                    f"Merged {conf_added} conference calendar events "
+                    f"(new tickers: {conf_tickers_added}, deduped: {conf_deduped})"
+                )
 
     # =========================================================================
     # MERGE COMPANY-ANNOUNCED IR EVENTS INTO SCORING PIPELINE
@@ -2191,9 +2213,11 @@ def compute_module_3_catalyst(
         if _ir_mode == "cache_only":
             if _ir_cache_path.exists():
                 try:
-                    with open(_ir_cache_path, 'r', encoding='utf-8') as f:
+                    with open(_ir_cache_path, "r", encoding="utf-8") as f:
                         _ir_payload = json.load(f)
-                    ir_events_raw = _ir_payload.get("events", _ir_payload) if isinstance(_ir_payload, dict) else _ir_payload
+                    ir_events_raw = (
+                        _ir_payload.get("events", _ir_payload) if isinstance(_ir_payload, dict) else _ir_payload
+                    )
                     logger.info(f"IR events: loaded {len(ir_events_raw)} events from cache")
                 except Exception as e:
                     logger.warning(f"IR events cache read error: {e}")
@@ -2205,7 +2229,7 @@ def compute_module_3_catalyst(
             ir_tickers_added = 0
             ir_touched: Set[str] = set()
             for ir_rec in ir_events_raw:
-                ticker = ir_rec.get('ticker')
+                ticker = ir_rec.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_company_calendar_to_v2(ir_rec, as_of_date)
@@ -2226,8 +2250,7 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += ir_deduped
                 total_events += ir_added
-                logger.info(f"Merged {ir_added} IR events "
-                           f"(new tickers: {ir_tickers_added}, deduped: {ir_deduped})")
+                logger.info(f"Merged {ir_added} IR events " f"(new tickers: {ir_tickers_added}, deduped: {ir_deduped})")
 
     # =========================================================================
     # MERGE COMPANY-ANNOUNCED PRESS RELEASE EVENTS INTO SCORING PIPELINE
@@ -2242,9 +2265,11 @@ def compute_module_3_catalyst(
         if _pr_mode == "cache_only":
             if _pr_cache_path.exists():
                 try:
-                    with open(_pr_cache_path, 'r', encoding='utf-8') as f:
+                    with open(_pr_cache_path, "r", encoding="utf-8") as f:
                         _pr_payload = json.load(f)
-                    pr_events_raw = _pr_payload.get("events", _pr_payload) if isinstance(_pr_payload, dict) else _pr_payload
+                    pr_events_raw = (
+                        _pr_payload.get("events", _pr_payload) if isinstance(_pr_payload, dict) else _pr_payload
+                    )
                     logger.info(f"Press releases: loaded {len(pr_events_raw)} events from cache")
                 except Exception as e:
                     logger.warning(f"Press release cache read error: {e}")
@@ -2256,7 +2281,7 @@ def compute_module_3_catalyst(
             pr_tickers_added = 0
             pr_touched: Set[str] = set()
             for pr_rec in pr_events_raw:
-                ticker = pr_rec.get('ticker')
+                ticker = pr_rec.get("ticker")
                 if not ticker or ticker not in active_tickers:
                     continue
                 v2_event = convert_company_calendar_to_v2(pr_rec, as_of_date)
@@ -2277,8 +2302,10 @@ def compute_module_3_catalyst(
                     events_by_ticker_v2[ticker] = sort_events_v2(events_by_ticker_v2[ticker])
                 total_deduped += pr_deduped
                 total_events += pr_added
-                logger.info(f"Merged {pr_added} press release events "
-                           f"(new tickers: {pr_tickers_added}, deduped: {pr_deduped})")
+                logger.info(
+                    f"Merged {pr_added} press release events "
+                    f"(new tickers: {pr_tickers_added}, deduped: {pr_deduped})"
+                )
 
     # Update total event count for combined diff + calendar + corporate events
     combined_tickers_with_events = len([t for t in events_by_ticker_v2 if events_by_ticker_v2[t]])
@@ -2312,8 +2339,9 @@ def compute_module_3_catalyst(
             _tickers_with_events.add(_ticker)
             _src_counts[_ev.source] = _src_counts.get(_ev.source, 0) + 1
             _conf_counts[_ev.confidence.value] = _conf_counts.get(_ev.confidence.value, 0) + 1
-            _prec_counts[getattr(_ev, 'date_precision', 'UNKNOWN')] = _prec_counts.get(
-                getattr(_ev, 'date_precision', 'UNKNOWN'), 0) + 1
+            _prec_counts[getattr(_ev, "date_precision", "UNKNOWN")] = (
+                _prec_counts.get(getattr(_ev, "date_precision", "UNKNOWN"), 0) + 1
+            )
     catalyst_source_mix = {
         "total_events": _total_events,
         "unique_tickers_with_events": len(_tickers_with_events),
@@ -2324,7 +2352,7 @@ def compute_module_3_catalyst(
     }
 
     # ----- SEC 8-K future event sub-tally -----
-    _as_of_iso = as_of_date.isoformat() if hasattr(as_of_date, 'isoformat') else str(as_of_date)
+    _as_of_iso = as_of_date.isoformat() if hasattr(as_of_date, "isoformat") else str(as_of_date)
     _sec8k_future: List[Any] = []
     _sec8k_future_tickers: Set[str] = set()
     _sec8k_prec_buckets: Dict[str, int] = {}
@@ -2336,7 +2364,7 @@ def compute_module_3_catalyst(
                 continue
             _sec8k_future.append(_ev)
             _sec8k_future_tickers.add(_ticker)
-            _prec = getattr(_ev, 'date_precision', 'UNKNOWN')
+            _prec = getattr(_ev, "date_precision", "UNKNOWN")
             _sec8k_prec_buckets[_prec] = _sec8k_prec_buckets.get(_prec, 0) + 1
 
     _days_ahead: List[int] = []
@@ -2365,7 +2393,8 @@ def compute_module_3_catalyst(
     # =========================================================================
     _event_ledger = None
     try:
-        from event_ledger import build_event_ledger, LedgerConfig
+        from event_ledger import LedgerConfig, build_event_ledger
+
         if config.ctgov_cache_dir is False:
             _ctgov_dir = False  # sentinel: disable ctgov cache in LedgerConfig
         elif config.ctgov_cache_dir:
@@ -2411,9 +2440,9 @@ def compute_module_3_catalyst(
         if ticker in activity_proxy_by_ticker:
             proxy_data = activity_proxy_by_ticker[ticker]
             summary = summaries_v2[ticker]
-            summary.activity_proxy_score = Decimal(str(proxy_data['activity_proxy_score']))
-            summary.activity_proxy_count_120d = proxy_data['activity_count_120d']
-            summary.activity_proxy_count_30d = proxy_data['activity_count_30d']
+            summary.activity_proxy_score = Decimal(str(proxy_data["activity_proxy_score"]))
+            summary.activity_proxy_count_120d = proxy_data["activity_count_120d"]
+            summary.activity_proxy_count_30d = proxy_data["activity_count_30d"]
 
     # =========================================================================
     # TIME-DECAY SCORING: Multi-window analysis
@@ -2441,12 +2470,13 @@ def compute_module_3_catalyst(
                 summary.time_decay_cluster_bonus_applied = td_result.cluster_bonus_applied
                 summary.time_decay_windows_with_events = td_result.windows_with_events
                 summary.time_decay_window_scores = {
-                    ws.window_name: str(ws.weighted_score)
-                    for ws in td_result.window_scores
+                    ws.window_name: str(ws.weighted_score) for ws in td_result.window_scores
                 }
 
-        logger.info(f"Time-decay scoring complete: {time_decay_diagnostics.get('tickers_with_cluster', 0)} "
-                   f"tickers with sustained catalyst clusters")
+        logger.info(
+            f"Time-decay scoring complete: {time_decay_diagnostics.get('tickers_with_cluster', 0)} "
+            "tickers with sustained catalyst clusters"
+        )
     else:
         logger.info("Time-decay scoring disabled")
 
@@ -2460,8 +2490,7 @@ def compute_module_3_catalyst(
             summary.score_blended *= pit_downgrade_factor
             summary.catalyst_confidence = ConfidenceLevel.LOW
         logger.warning(
-            "PIT_VIOLATION degrade: catalyst scores halved and confidence "
-            "downgraded to LOW (corporate-only mode)"
+            "PIT_VIOLATION degrade: catalyst scores halved and confidence " "downgraded to LOW (corporate-only mode)"
         )
 
     # Also generate legacy summaries for backwards compatibility
@@ -2478,11 +2507,11 @@ def compute_module_3_catalyst(
     tickers_with_events = len([s for s in summaries_legacy.values() if s.events])
 
     diagnostic_counts_legacy = {
-        'events_detected': total_events,
-        'events_deduped': total_deduped,
-        'severe_negatives': severe_negatives,
-        'tickers_with_events': tickers_with_events,
-        'tickers_analyzed': len(active_tickers)
+        "events_detected": total_events,
+        "events_deduped": total_deduped,
+        "severe_negatives": severe_negatives,
+        "tickers_with_events": tickers_with_events,
+        "tickers_analyzed": len(active_tickers),
     }
 
     logger.info(f"Diagnostics: {diagnostics.to_dict()}")
@@ -2511,11 +2540,7 @@ def compute_module_3_catalyst(
         legacy_path = output_dir / f"catalyst_events_{as_of_date.isoformat()}.json"
         logger.info(f"Writing legacy catalyst events to {legacy_path}")
         CatalystOutputWriter.write_catalyst_events(
-            list(summaries_legacy.values()),
-            as_of_date,
-            str(legacy_path),
-            prior_snapshot_date,
-            config.module_version
+            list(summaries_legacy.values()), as_of_date, str(legacy_path), prior_snapshot_date, config.module_version
         )
 
         # Write run log
@@ -2525,12 +2550,12 @@ def compute_module_3_catalyst(
             str(run_log_path),
             execution_time,
             config={
-                'noise_band_days': config.event_detector_config.noise_band_days,
-                'recency_threshold_days': config.event_detector_config.recency_threshold_days,
-                'decay_constant': config.decay_constant,
-                'schema_version': config.schema_version,
-                'score_version': config.score_version,
-            }
+                "noise_band_days": config.event_detector_config.noise_band_days,
+                "recency_threshold_days": config.event_detector_config.recency_threshold_days,
+                "decay_constant": config.decay_constant,
+                "schema_version": config.schema_version,
+                "score_version": config.score_version,
+            },
         )
 
     execution_time = time.time() - start_time
@@ -2541,14 +2566,14 @@ def compute_module_3_catalyst(
         "Module 3: 'summaries_legacy' and 'diagnostic_counts_legacy' are deprecated "
         "and will be removed in v2.0. Use 'summaries' with TickerCatalystSummaryV2 objects instead.",
         DeprecationWarning,
-        stacklevel=2
+        stacklevel=2,
     )
 
     # Compute activity proxy summary
     activity_proxy_summary = {
         "total_activity_120d": total_activity_120d,
         "total_activity_30d": total_activity_30d,
-        "tickers_with_activity": len([t for t, p in activity_proxy_by_ticker.items() if p['activity_count_120d'] > 0]),
+        "tickers_with_activity": len([t for t, p in activity_proxy_by_ticker.items() if p["activity_count_120d"] > 0]),
     }
 
     output = {
@@ -2589,6 +2614,7 @@ def compute_module_3_catalyst(
 # OUTPUT WRITER (vNext)
 # ============================================================================
 
+
 def write_vnext_output(
     summaries: Dict[str, TickerCatalystSummaryV2],
     diagnostics: DiagnosticCounts,
@@ -2596,8 +2622,8 @@ def write_vnext_output(
     prior_snapshot_date: Optional[date],
     config: Module3Config,
     output_path: Path,
-    staleness_result: Optional['StalenessResult'] = None,
-    delta_diagnostics: Optional['DeltaDiagnostics'] = None,
+    staleness_result: Optional["StalenessResult"] = None,
+    delta_diagnostics: Optional["DeltaDiagnostics"] = None,
 ) -> str:
     """
     Write vNext catalyst events output with deterministic JSON.
@@ -2614,7 +2640,9 @@ def write_vnext_output(
         data_freshness = {
             "is_stale": staleness_result.is_stale,
             "age_days": staleness_result.age_days,
-            "trial_records_date": staleness_result.trial_records_date.isoformat() if staleness_result.trial_records_date else None,
+            "trial_records_date": (
+                staleness_result.trial_records_date.isoformat() if staleness_result.trial_records_date else None
+            ),
             "confidence_level": staleness_result.confidence_level,
             "recommendation": staleness_result.recommendation,
         }
@@ -2645,20 +2673,17 @@ def write_vnext_output(
             "delta_summary": delta_summary,
         },
         "diagnostics": diagnostics.to_dict(),
-        "summaries": {
-            ticker: summaries[ticker].to_dict()
-            for ticker in sorted_tickers
-        },
+        "summaries": {ticker: summaries[ticker].to_dict() for ticker in sorted_tickers},
     }
 
     # Write with canonical JSON
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     canonical_json = canonical_json_dumps(output)
-    output_path.write_text(canonical_json, encoding='utf-8')
+    output_path.write_text(canonical_json, encoding="utf-8")
 
     # Compute hash for verification
-    file_hash = hashlib.sha256(canonical_json.encode('utf-8')).hexdigest()
+    file_hash = hashlib.sha256(canonical_json.encode("utf-8")).hexdigest()
 
     logger.info(f"Wrote vNext catalyst events: {output_path} (hash: {file_hash[:16]}...)")
 
@@ -2668,6 +2693,7 @@ def write_vnext_output(
 # ============================================================================
 # INTEGRATION HOOKS
 # ============================================================================
+
 
 def get_integration_record(summary: TickerCatalystSummaryV2) -> Dict[str, Any]:
     """
@@ -2696,52 +2722,32 @@ def get_all_integration_records(
     Returns:
         {ticker: integration_record}
     """
-    return {
-        ticker: get_integration_record(summary)
-        for ticker, summary in sorted(summaries.items())
-    }
+    return {ticker: get_integration_record(summary) for ticker, summary in sorted(summaries.items())}
 
 
 # ============================================================================
 # CLI INTERFACE
 # ============================================================================
 
+
 def main() -> None:
     """Command-line interface for Module 3"""
     import argparse
 
-    parser = argparse.ArgumentParser(
-        description='Module 3: CT.gov Catalyst Detection (vNext)'
+    parser = argparse.ArgumentParser(description="Module 3: CT.gov Catalyst Detection (vNext)")
+    parser.add_argument(
+        "--trial-records", type=str, default="production_data/trial_records.json", help="Path to trial_records.json"
+    )
+    parser.add_argument("--state-dir", type=str, default="production_data/ctgov_state", help="Path to state directory")
+    parser.add_argument("--as-of-date", type=str, required=True, help="Point-in-time date (YYYY-MM-DD) - REQUIRED")
+    parser.add_argument(
+        "--universe",
+        type=str,
+        default="production_data/universe.json",
+        help="Path to universe.json (for active tickers)",
     )
     parser.add_argument(
-        '--trial-records',
-        type=str,
-        default='production_data/trial_records.json',
-        help='Path to trial_records.json'
-    )
-    parser.add_argument(
-        '--state-dir',
-        type=str,
-        default='production_data/ctgov_state',
-        help='Path to state directory'
-    )
-    parser.add_argument(
-        '--as-of-date',
-        type=str,
-        required=True,
-        help='Point-in-time date (YYYY-MM-DD) - REQUIRED'
-    )
-    parser.add_argument(
-        '--universe',
-        type=str,
-        default='production_data/universe.json',
-        help='Path to universe.json (for active tickers)'
-    )
-    parser.add_argument(
-        '--output-dir',
-        type=str,
-        default='production_data',
-        help='Output directory for catalyst events'
+        "--output-dir", type=str, default="production_data", help="Output directory for catalyst events"
     )
 
     args = parser.parse_args()
@@ -2752,7 +2758,7 @@ def main() -> None:
     # Load universe for active tickers
     with open(args.universe) as f:
         universe = json.load(f)
-    active_tickers = {s['ticker'] for s in universe if s.get('ticker') != '_XBI_BENCHMARK_'}
+    active_tickers = {s["ticker"] for s in universe if s.get("ticker") != "_XBI_BENCHMARK_"}
 
     # Run Module 3
     result = compute_module_3_catalyst(
@@ -2760,22 +2766,22 @@ def main() -> None:
         state_dir=Path(args.state_dir),
         active_tickers=active_tickers,
         as_of_date=as_of_date,
-        output_dir=Path(args.output_dir)
+        output_dir=Path(args.output_dir),
     )
 
     # Print summary
-    diag = result['diagnostic_counts']
+    diag = result["diagnostic_counts"]
     print()
-    print("="*80)
+    print("=" * 80)
     print("MODULE 3 CATALYST DETECTION COMPLETE (vNext)")
-    print("="*80)
+    print("=" * 80)
     print(f"Schema version: {result['schema_version']}")
     print(f"Score version: {result['score_version']}")
     print(f"Events detected: {diag['events_detected_total']}")
     print(f"Events deduped: {diag['events_deduped']}")
     print(f"Tickers with events: {diag['tickers_with_events']}/{diag['tickers_analyzed']}")
     print(f"Severe negatives: {diag['tickers_with_severe_negative']}")
-    print("="*80)
+    print("=" * 80)
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ Regimes (by XBI 63d return):
 Usage:
     python3 scripts/research/pruner_regime_analysis.py
 """
+
 from __future__ import annotations
 
 import csv

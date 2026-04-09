@@ -7,6 +7,7 @@ rankings across a curated date manifest. Composes existing tools
 
 Output schema: signal_evidence.v1
 """
+
 from __future__ import annotations
 
 import argparse

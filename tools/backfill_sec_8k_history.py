@@ -14,6 +14,7 @@ Usage:
         --date-from 2022-01-01 --date-to 2024-12-31 \
         --cadence monthly --resume
 """
+
 from __future__ import annotations
 
 import argparse

@@ -6,16 +6,12 @@ Add this to the end of every screening run.
 Catches silent failures before they reach production.
 """
 
-from decimal import Decimal
-from typing import Dict, Any, List
 import json
+from decimal import Decimal
+from typing import Any, Dict
 
 
-def validate_screening_output(
-    result: Dict[str, Any],
-    as_of_date: str,
-    config: Dict[str, Any]
-) -> Dict[str, Any]:
+def validate_screening_output(result: Dict[str, Any], as_of_date: str, config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Validate screening output against production invariants.
 
@@ -33,50 +29,54 @@ def validate_screening_output(
         5. PIT filtering sanity
         6. Data freshness consistency
     """
-    
-    print("\n" + "="*80)
+
+    print("\n" + "=" * 80)
     print("PRODUCTION VALIDATION")
-    print("="*80)
+    print("=" * 80)
     print()
-    
+
     checks = []
-    m5 = result.get('module_5_composite', {})
-    ranked = m5.get('ranked_securities', [])
+    m5 = result.get("module_5_composite", {})
+    ranked = m5.get("ranked_securities", [])
 
     if not ranked:
         print("❌ CRITICAL: No securities ranked!")
         return {"passed": False, "failure_reasons": ["no_securities_ranked"], "checks": []}
 
     # Check if position sizing was enabled (position_weight present)
-    has_weights = ranked and 'position_weight' in ranked[0]
+    has_weights = ranked and "position_weight" in ranked[0]
 
     if has_weights:
         # ========================================================================
         # INVARIANT 1: Weight Sum
         # ========================================================================
-        total_weight = sum(Decimal(str(s['position_weight'])) for s in ranked)
-        cash_target = Decimal(str(config.get('cash_target', '0.10')))
-        expected_weight = Decimal('1.0') - cash_target
+        total_weight = sum(Decimal(str(s["position_weight"])) for s in ranked)
+        cash_target = Decimal(str(config.get("cash_target", "0.10")))
+        expected_weight = Decimal("1.0") - cash_target
         weight_diff = abs(total_weight - expected_weight)
-        weight_tolerance = Decimal('0.0015')  # 15 bps tolerance
+        weight_tolerance = Decimal("0.0015")  # 15 bps tolerance
 
         weight_check = weight_diff < weight_tolerance
-        checks.append(('Weight sum', weight_check))
+        checks.append(("Weight sum", weight_check))
 
         status = "✅" if weight_check else "❌"
-        print(f"{status} Weight Sum: {float(total_weight):.4f} (expected {float(expected_weight):.4f}, diff {float(weight_diff):.4f})")
+        print(
+            f"{status} Weight Sum: {float(total_weight):.4f} (expected {float(expected_weight):.4f}, diff {float(weight_diff):.4f})"
+        )
 
         if not weight_check:
-            print(f"   FAIL: Weight difference {float(weight_diff):.4f} exceeds tolerance {float(weight_tolerance):.4f}")
+            print(
+                f"   FAIL: Weight difference {float(weight_diff):.4f} exceeds tolerance {float(weight_tolerance):.4f}"
+            )
 
         # ========================================================================
         # INVARIANT 2: Excluded Weights
         # ========================================================================
-        excluded = [s for s in ranked if not s.get('rankable', True)]
-        excluded_weight = sum(Decimal(str(s['position_weight'])) for s in excluded)
+        excluded = [s for s in ranked if not s.get("rankable", True)]
+        excluded_weight = sum(Decimal(str(s["position_weight"])) for s in excluded)
 
         excluded_check = excluded_weight == 0
-        checks.append(('Excluded weights zero', excluded_check))
+        checks.append(("Excluded weights zero", excluded_check))
 
         status = "✅" if excluded_check else "❌"
         print(f"{status} Excluded Weights: {float(excluded_weight):.4f} (expected 0.0000)")
@@ -89,13 +89,13 @@ def validate_screening_output(
         # ========================================================================
         # INVARIANT 3: Top-N Count
         # ========================================================================
-        top_n = config.get('top_n')
+        top_n = config.get("top_n")
         if top_n:
-            invested = sum(1 for s in ranked if Decimal(str(s['position_weight'])) > 0)
-            excluded_by_topn = sum(1 for s in ranked if 'NOT_IN_TOP_N' in s.get('position_flags', []))
+            invested = sum(1 for s in ranked if Decimal(str(s["position_weight"])) > 0)
+            excluded_by_topn = sum(1 for s in ranked if "NOT_IN_TOP_N" in s.get("position_flags", []))
 
             topn_check = invested == top_n
-            checks.append(('Top-N count', topn_check))
+            checks.append(("Top-N count", topn_check))
 
             status = "✅" if topn_check else "❌"
             print(f"{status} Top-N Count: {invested} invested (expected {top_n})")
@@ -105,86 +105,88 @@ def validate_screening_output(
                 print(f"   Excluded by top-N: {excluded_by_topn}")
 
             # Additional check: Excluded by top-N should have zero weight
-            topn_excluded_with_weight = sum(1 for s in ranked
-                                           if 'NOT_IN_TOP_N' in s.get('position_flags', [])
-                                           and Decimal(str(s['position_weight'])) > 0)
+            topn_excluded_with_weight = sum(
+                1
+                for s in ranked
+                if "NOT_IN_TOP_N" in s.get("position_flags", []) and Decimal(str(s["position_weight"])) > 0
+            )
             if topn_excluded_with_weight > 0:
                 print(f"   ⚠️  {topn_excluded_with_weight} securities marked NOT_IN_TOP_N but have weight!")
     else:
         # Position sizing disabled - skip weight invariants
         print("ℹ️  Position sizing disabled (weights not computed)")
         print("   Skipping weight-related invariants (1-3)")
-    
+
     # ========================================================================
     # INVARIANT 4: Module Coverage
     # ========================================================================
     print()
     print("📊 Module Coverage:")
-    
-    m1_diag = result.get('module_1_universe', {}).get('diagnostic_counts', {})
-    m2_diag = result.get('module_2_financial', {}).get('diagnostic_counts', {})
-    m3_diag = result.get('module_3_catalyst', {}).get('diagnostic_counts', {})
-    m4_diag = result.get('module_4_clinical', {}).get('diagnostic_counts', {})
-    
+
+    m1_diag = result.get("module_1_universe", {}).get("diagnostic_counts", {})
+    m2_diag = result.get("module_2_financial", {}).get("diagnostic_counts", {})
+    m3_diag = result.get("module_3_catalyst", {}).get("diagnostic_counts", {})
+    m4_diag = result.get("module_4_clinical", {}).get("diagnostic_counts", {})
+
     universe_count = len(ranked)
-    
+
     # Module 1
-    m1_active = m1_diag.get('active', 0)
+    m1_active = m1_diag.get("active", 0)
     print(f"  Module 1 (Universe):  {m1_active} active")
-    
+
     # Module 2
-    m2_scored = m2_diag.get('scored', 0)
+    m2_scored = m2_diag.get("scored", 0)
     m2_pct = m2_scored / universe_count * 100 if universe_count > 0 else 0
     m2_check = m2_pct > 80  # Expect >80% coverage
-    checks.append(('Module 2 coverage >80%', m2_check))
-    
+    checks.append(("Module 2 coverage >80%", m2_check))
+
     status = "✅" if m2_check else "⚠️"
     print(f"  {status} Module 2 (Financial): {m2_scored}/{universe_count} ({m2_pct:.0f}%)")
-    
+
     if not m2_check and m2_scored == 0:
-        print(f"     ❌ ZERO coverage! Check field mapping & data source")
-    
+        print("     ❌ ZERO coverage! Check field mapping & data source")
+
     # Module 3 — 3-tier coverage
-    m3_with_catalyst = m3_diag.get('tickers_with_events', 0)
-    m3_actionable = m3_diag.get('coverage_actionable_180d', 0)
-    m3_high_conf = m3_diag.get('coverage_high_conf_actionable', 0)
+    m3_with_catalyst = m3_diag.get("tickers_with_events", 0)
+    m3_actionable = m3_diag.get("coverage_actionable_180d", 0)
+    m3_high_conf = m3_diag.get("coverage_high_conf_actionable", 0)
     m3_pct = m3_with_catalyst / universe_count * 100 if universe_count > 0 else 0
     m3_act_pct = m3_actionable / universe_count * 100 if universe_count > 0 else 0
     m3_hc_pct = m3_high_conf / universe_count * 100 if universe_count > 0 else 0
     # Don't require 80% for catalysts (they're rarer)
-    m3_check = True  # Informational only
+    _ = True  # Informational only
 
     status = "✅" if m3_pct > 20 else "⚠️"
     print(f"  {status} Module 3 (Catalyst):")
-    m3_downside = m3_diag.get('coverage_downside_actionable', 0)
+    m3_downside = m3_diag.get("coverage_downside_actionable", 0)
     m3_ds_pct = m3_downside / universe_count * 100 if universe_count > 0 else 0
     print(f"       Any-event:           {m3_with_catalyst}/{universe_count} ({m3_pct:.0f}%)")
     print(f"       Actionable (≤180d):  {m3_actionable}/{universe_count} ({m3_act_pct:.0f}%)")
     print(f"       High-conf actable:   {m3_high_conf}/{universe_count} ({m3_hc_pct:.0f}%)")
     print(f"       Downside active:     {m3_downside}/{universe_count} ({m3_ds_pct:.0f}%)")
-    
+
     # Module 4
-    m4_scored = m4_diag.get('scored', 0)
-    m4_trials = m4_diag.get('total_trials', 0)
+    m4_scored = m4_diag.get("scored", 0)
+    m4_trials = m4_diag.get("total_trials", 0)
     m4_pct = m4_scored / universe_count * 100 if universe_count > 0 else 0
     m4_check = m4_pct > 80  # Expect >80% coverage
-    checks.append(('Module 4 coverage >80%', m4_check))
-    
+    checks.append(("Module 4 coverage >80%", m4_check))
+
     status = "✅" if m4_check else "⚠️"
     print(f"  {status} Module 4 (Clinical):  {m4_scored}/{universe_count} ({m4_pct:.0f}%), {m4_trials} trials")
-    
+
     if not m4_check:
-        print(f"     ⚠️  Low coverage! Many stocks missing clinical data")
-    
+        print("     ⚠️  Low coverage! Many stocks missing clinical data")
+
     # ========================================================================
     # INVARIANT 5: PIT Filtering Sanity
     # ========================================================================
     print()
     print("🗓️  Point-in-Time Discipline:")
 
-    pit_filtered = m4_diag.get('pit_filtered', 0)
-    trials_evaluated = m4_diag.get('total_trials', 0)
-    date_coverage_pct = m4_diag.get('date_coverage_pct', 0)
+    pit_filtered = m4_diag.get("pit_filtered", 0)
+    trials_evaluated = m4_diag.get("total_trials", 0)
+    date_coverage_pct = m4_diag.get("date_coverage_pct", 0)
 
     # If we have lots of trials but filtered exactly 0, that's suspicious
     # UNLESS date coverage is 100% (meaning all trials have dates and none are future-dated)
@@ -192,7 +194,7 @@ def validate_screening_output(
         pit_check = True  # All trials have dates, 0 filtered is fine
     else:
         pit_check = not (trials_evaluated > 100 and pit_filtered == 0)
-    checks.append(('PIT filtering plausible', pit_check))
+    checks.append(("PIT filtering plausible", pit_check))
 
     status = "✅" if pit_check else "⚠️"
     print(f"  {status} Trials evaluated: {trials_evaluated}")
@@ -201,55 +203,58 @@ def validate_screening_output(
 
     if not pit_check:
         print(f"     ⚠️  WARNING: {trials_evaluated} trials but 0 filtered suggests missing date fields")
-        print(f"     This may allow lookahead bias. Add date collection to trials.")
-    
+        print("     This may allow lookahead bias. Add date collection to trials.")
+
     # ========================================================================
     # INVARIANT 6: Date Consistency
     # ========================================================================
     print()
     print("📅 Date Consistency:")
-    
-    m1_date = result.get('module_1_universe', {}).get('as_of_date')
-    m2_date = result.get('module_2_financial', {}).get('as_of_date')
-    m3_date = result.get('module_3_catalyst', {}).get('as_of_date')
-    m4_date = result.get('module_4_clinical', {}).get('as_of_date')
-    m5_date = result.get('module_5_composite', {}).get('as_of_date')
-    
+
+    m1_date = result.get("module_1_universe", {}).get("as_of_date")
+    m2_date = result.get("module_2_financial", {}).get("as_of_date")
+    m3_date = result.get("module_3_catalyst", {}).get("as_of_date")
+    m4_date = result.get("module_4_clinical", {}).get("as_of_date")
+    m5_date = result.get("module_5_composite", {}).get("as_of_date")
+
     all_dates = [m1_date, m2_date, m3_date, m4_date, m5_date]
     dates_match = all(d == as_of_date for d in all_dates if d)
-    checks.append(('All module dates match', dates_match))
-    
+    checks.append(("All module dates match", dates_match))
+
     status = "✅" if dates_match else "❌"
     print(f"  {status} Analysis date: {as_of_date}")
     print(f"  {status} All modules match: {dates_match}")
-    
+
     if not dates_match:
-        print(f"     ❌ FAIL: Modules have mismatched dates!")
-        for i, (name, date) in enumerate([
-            ('Module 1', m1_date),
-            ('Module 2', m2_date),
-            ('Module 3', m3_date),
-            ('Module 4', m4_date),
-            ('Module 5', m5_date),
-        ], 1):
+        print("     ❌ FAIL: Modules have mismatched dates!")
+        for i, (name, date) in enumerate(
+            [
+                ("Module 1", m1_date),
+                ("Module 2", m2_date),
+                ("Module 3", m3_date),
+                ("Module 4", m4_date),
+                ("Module 5", m5_date),
+            ],
+            1,
+        ):
             if date != as_of_date:
                 print(f"       {name}: {date} (expected {as_of_date})")
-    
+
     # ========================================================================
     # SUMMARY
     # ========================================================================
     print()
-    print("="*80)
-    
+    print("=" * 80)
+
     passed = sum(1 for _, check in checks if check)
     total = len(checks)
     pass_rate = passed / total * 100 if total > 0 else 0
-    
+
     failure_reasons = [name for name, check in checks if not check]
 
     if passed == total:
         print(f"✅ PASS: All {total} validation checks passed")
-        print("="*80)
+        print("=" * 80)
         return {"passed": True, "failure_reasons": [], "checks": checks}
     else:
         print(f"⚠️  PARTIAL: {passed}/{total} checks passed ({pass_rate:.0f}%)")
@@ -257,7 +262,7 @@ def validate_screening_output(
         print("Failed checks:")
         for name in failure_reasons:
             print(f"  ❌ {name}")
-        print("="*80)
+        print("=" * 80)
         return {"passed": False, "failure_reasons": failure_reasons, "checks": checks}
 
 
@@ -272,7 +277,7 @@ from production_validation import validate_screening_output
 
 def run_screening_pipeline(...):
     # ... existing pipeline code ...
-    
+
     output = {
         'as_of_date': as_of_date,
         'module_1_universe': m1_result,
@@ -282,15 +287,15 @@ def run_screening_pipeline(...):
         'module_5_composite': m5_result,
         # ... other fields ...
     }
-    
+
     # VALIDATE BEFORE RETURNING
     config = {
         'cash_target': '0.10',
         'top_n': 60,  # Or None if not using top-N
     }
-    
+
     validate_screening_output(output, as_of_date, config)
-    
+
     return output
 """
     print(example_code)
@@ -298,26 +303,26 @@ def run_screening_pipeline(...):
 
 if __name__ == "__main__":
     import sys
-    
+
     if len(sys.argv) < 2:
         print("Usage: python production_validation.py <screening_output.json>")
         print()
         print("Or call from within your pipeline:")
         add_validation_to_pipeline()
         sys.exit(1)
-    
+
     # Load screening output
     with open(sys.argv[1]) as f:
         result = json.load(f)
-    
+
     # Run validation
-    as_of_date = result.get('as_of_date', result.get('module_5_composite', {}).get('as_of_date'))
-    
+    as_of_date = result.get("as_of_date", result.get("module_5_composite", {}).get("as_of_date"))
+
     config = {
-        'cash_target': '0.10',
-        'top_n': None,  # Set if using top-N
+        "cash_target": "0.10",
+        "top_n": None,  # Set if using top-N
     }
-    
+
     validation_result = validate_screening_output(result, as_of_date, config)
 
-    sys.exit(0 if validation_result['passed'] else 1)
+    sys.exit(0 if validation_result["passed"] else 1)

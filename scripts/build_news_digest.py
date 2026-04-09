@@ -12,6 +12,7 @@ Usage:
     python3 scripts/build_news_digest.py --window evening
     python3 scripts/build_news_digest.py --window morning --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -191,8 +192,8 @@ def build_digest_text(items: list[dict], window: str) -> str:
     if not items:
         return (
             f"Biotech News Digest — {window_label} {today_str}\n\n"
-            f"No major updates for followed tickers.\n\n"
-            f"Source: Herald (company IR + wire services)\n"
+            "No major updates for followed tickers.\n\n"
+            "Source: Herald (company IR + wire services)\n"
         )
 
     lines = [f"Biotech News Digest — {window_label} {today_str}", f"{len(items)} items", ""]
@@ -226,11 +227,11 @@ def build_digest_text(items: list[dict], window: str) -> str:
 
 def build_digest_html(items: list[dict], window: str) -> str:
     """Build HTML digest."""
-    today_str = date.today().strftime("%b %d, %Y")
+    date.today().strftime("%b %d, %Y")
     window_label = {"morning": "Pre-Market", "midday": "Midday", "evening": "End of Day"}.get(window, window)
 
     if not items:
-        return f"""<html><body>
+        return """<html><body>
 <h2>Biotech News Digest — {window_label} {today_str}</h2>
 <p>No major updates for followed tickers.</p>
 <p style="color:#888;font-size:11px;">Source: Herald (company IR + wire services)</p>
@@ -245,7 +246,7 @@ def build_digest_html(items: list[dict], window: str) -> str:
             current_cat = cat
             label = CATEGORY_LABELS.get(cat, cat)
             rows_html.append(
-                f'<tr><td colspan="3" style="background:#f0f0f0;padding:8px;'
+                '<tr><td colspan="3" style="background:#f0f0f0;padding:8px;'
                 f'font-weight:bold;border-top:2px solid #ccc;">{label}</td></tr>'
             )
 
@@ -257,15 +258,15 @@ def build_digest_html(items: list[dict], window: str) -> str:
         subtype = item.get("event_subtype", "")
 
         rows_html.append(
-            f"<tr>"
+            "<tr>"
             f'<td style="padding:4px 8px;font-weight:bold;vertical-align:top;">{ticker}</td>'
             f'<td style="padding:4px 8px;">{link}'
             f'<br><span style="color:#888;font-size:11px;">{src}'
             f'{" | " + subtype if subtype else ""}</span></td>'
-            f"</tr>"
+            "</tr>"
         )
 
-    return f"""<html><body>
+    return """<html><body>
 <h2 style="margin:0 0 8px 0;">Biotech News Digest — {window_label} {today_str}</h2>
 <p style="margin:0 0 12px 0;color:#666;">{len(items)} items from followed tickers</p>
 <table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;width:100%;">

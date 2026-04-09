@@ -21,6 +21,7 @@ Usage:
         --out-root data/snapshots_reranked_bqs \\
         --weight 2.0
 """
+
 from __future__ import annotations
 
 import csv

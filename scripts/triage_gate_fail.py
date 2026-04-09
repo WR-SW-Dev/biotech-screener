@@ -12,6 +12,7 @@ Usage:
         --ruleset production_data/decision_rulesets/v1.6.1_alpha_modifier_within_tier.json \
         --max-tickers 10
 """
+
 from __future__ import annotations
 
 import argparse
@@ -25,11 +26,9 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from decision_engine import DecisionRuleset
-from scripts.eval_ruleset import (
-    _read_rankings,
-    rank_map as _existing_rank_map,
-    rerank_rows,
-)
+from scripts.eval_ruleset import _read_rankings
+from scripts.eval_ruleset import rank_map as _existing_rank_map
+from scripts.eval_ruleset import rerank_rows
 from scripts.explain_rank_shift import explain_rank_shift
 
 VERSION = "1.0.0"
@@ -61,9 +60,7 @@ def select_worst_date(
 
     # Filter to dates that have at least one temporal metric
     candidates = [
-        pd for pd in per_date
-        if pd.get("temporal_max_shift") is not None
-        or pd.get("temporal_overlap_60") is not None
+        pd for pd in per_date if pd.get("temporal_max_shift") is not None or pd.get("temporal_overlap_60") is not None
     ]
     if not candidates:
         return per_date[-1]
@@ -79,9 +76,7 @@ def select_worst_date(
     return candidates[0]
 
 
-def find_prior_date(
-    worst_date: str, dates_evaluated: List[str]
-) -> Optional[str]:
+def find_prior_date(worst_date: str, dates_evaluated: List[str]) -> Optional[str]:
     """Find the date immediately before *worst_date* in the evaluated list."""
     for i, d in enumerate(dates_evaluated):
         if d == worst_date and i > 0:
@@ -144,13 +139,15 @@ def reconstruct_movers_from_snapshots(
     for t in common:
         s = abs(cur_ranks[t] - pri_ranks[t])
         if s > 0:
-            entries.append({
-                "ticker": t,
-                "shift": s,
-                "from": pri_ranks[t],
-                "to": cur_ranks[t],
-                "date": worst_date,
-            })
+            entries.append(
+                {
+                    "ticker": t,
+                    "shift": s,
+                    "from": pri_ranks[t],
+                    "to": cur_ranks[t],
+                    "date": worst_date,
+                }
+            )
     entries.sort(key=lambda x: (-x["shift"], x["ticker"]))
     return entries[:max_tickers]
 
@@ -186,9 +183,7 @@ def triage_gate_fail(
     # Worst date
     worst = select_worst_date(per_date)
     worst_date = worst["date"] if worst else None
-    prior_date = (
-        find_prior_date(worst_date, dates_evaluated) if worst_date else None
-    )
+    prior_date = find_prior_date(worst_date, dates_evaluated) if worst_date else None
 
     # Severity metric
     worst_metric_name = "temporal_max_shift"
@@ -200,23 +195,21 @@ def triage_gate_fail(
     notes: List[str] = []
 
     # Top movers for worst date
-    movers = (
-        collect_top_movers(eval_data, worst_date, max_tickers)
-        if worst_date
-        else []
-    )
+    movers = collect_top_movers(eval_data, worst_date, max_tickers) if worst_date else []
 
     # Fallback 1: use per-date shift info if enriched movers are absent
     if not movers and worst:
         t = worst.get("temporal_max_shift_ticker")
         if t:
-            movers = [{
-                "ticker": t,
-                "shift": worst.get("temporal_max_shift", 0),
-                "from": worst.get("temporal_max_shift_from"),
-                "to": worst.get("temporal_max_shift_to"),
-                "date": worst_date,
-            }]
+            movers = [
+                {
+                    "ticker": t,
+                    "shift": worst.get("temporal_max_shift", 0),
+                    "from": worst.get("temporal_max_shift_from"),
+                    "to": worst.get("temporal_max_shift_to"),
+                    "date": worst_date,
+                }
+            ]
 
     # Fallback 2: reconstruct from snapshots when eval JSON lacks movers
     if not movers and worst_date and prior_date:
@@ -228,24 +221,21 @@ def triage_gate_fail(
             ruleset=ruleset,
         )
         if movers:
-            notes.append(
-                f"movers reconstructed from snapshots "
-                f"({worst_date} vs {prior_date})"
-            )
+            notes.append("movers reconstructed from snapshots " f"({worst_date} vs {prior_date})")
 
     # Fallback 3: aggregate max_rank_shift from temporal_stability
     if not movers:
-        agg_ms = eval_data.get("temporal_stability", {}).get(
-            "max_rank_shift", {}
-        )
+        agg_ms = eval_data.get("temporal_stability", {}).get("max_rank_shift", {})
         if agg_ms.get("ticker"):
-            movers = [{
-                "ticker": agg_ms["ticker"],
-                "shift": agg_ms.get("shift", 0),
-                "from": agg_ms.get("from"),
-                "to": agg_ms.get("to"),
-                "date": agg_ms.get("date", worst_date),
-            }]
+            movers = [
+                {
+                    "ticker": agg_ms["ticker"],
+                    "shift": agg_ms.get("shift", 0),
+                    "from": agg_ms.get("from"),
+                    "to": agg_ms.get("to"),
+                    "date": agg_ms.get("date", worst_date),
+                }
+            ]
             notes.append("movers from aggregate max_rank_shift")
 
     # Build per-ticker explains (load both snapshots once, rerank once)
@@ -289,43 +279,36 @@ def triage_gate_fail(
                         candidate_id=f"{rs_id}@{worst_date}",
                     )
                     fname = f"explain_{worst_date}_{ticker}.json"
-                    (explain_dir / fname).write_text(
-                        _stable_json(result.payload), encoding="utf-8"
-                    )
+                    (explain_dir / fname).write_text(_stable_json(result.payload), encoding="utf-8")
                     explain_files.append(f"explain/{fname}")
                 except Exception as exc:
                     notes.append(f"explain failed for {ticker}: {exc}")
         else:
-            notes.append(
-                f"snapshot(s) missing for explain "
-                f"({worst_date} or {prior_date})"
-            )
+            notes.append("snapshot(s) missing for explain " f"({worst_date} or {prior_date})")
     elif not prior_date and worst_date:
-        notes.append(
-            f"no prior date for {worst_date} — skipped per-ticker explains"
-        )
+        notes.append(f"no prior date for {worst_date} — skipped per-ticker explains")
 
     # Movers summary (stable subset of fields)
     movers_summary = []
     for m in movers:
         fr = m.get("from")
         to = m.get("to")
-        movers_summary.append({
-            "ticker": m.get("ticker", ""),
-            "from_rank": fr,
-            "to_rank": to,
-            "delta_rank": (to - fr) if to is not None and fr is not None else None,
-            "shift": m.get("shift", 0),
-        })
+        movers_summary.append(
+            {
+                "ticker": m.get("ticker", ""),
+                "from_rank": fr,
+                "to_rank": to,
+                "delta_rank": (to - fr) if to is not None and fr is not None else None,
+                "shift": m.get("shift", 0),
+            }
+        )
 
     summary: Dict[str, Any] = {
         "schema": SCHEMA,
         "version": VERSION,
         "candidate_id": cand_info.get("id", ""),
         "baseline_id": base_info.get("id", ""),
-        "eval_mode": eval_data.get(
-            "mode", config.get("eval_mode", "unknown")
-        ),
+        "eval_mode": eval_data.get("mode", config.get("eval_mode", "unknown")),
         "verdict": gate.get("verdict", "UNKNOWN"),
         "date_range": {
             "start": config.get("start", ""),
@@ -342,12 +325,8 @@ def triage_gate_fail(
 
     # Write outputs
     out_dir.mkdir(parents=True, exist_ok=True)
-    (out_dir / "triage_summary.json").write_text(
-        _stable_json(summary), encoding="utf-8"
-    )
-    (out_dir / "triage_summary.md").write_text(
-        _build_markdown(summary), encoding="utf-8"
-    )
+    (out_dir / "triage_summary.json").write_text(_stable_json(summary), encoding="utf-8")
+    (out_dir / "triage_summary.md").write_text(_build_markdown(summary), encoding="utf-8")
     return summary
 
 
@@ -371,19 +350,14 @@ def _build_markdown(summary: Dict[str, Any]) -> str:
     lines.append("")
     wd = summary["worst_date"] or "none"
     lines.append(f"- **Date:** `{wd}`")
-    lines.append(
-        f"- **{summary['worst_metric_name']}:** "
-        f"{summary['worst_metric_value']}"
-    )
+    lines.append(f"- **{summary['worst_metric_name']}:** " f"{summary['worst_metric_value']}")
     lines.append("")
 
     movers = summary.get("top_movers", [])
     if movers:
         lines.append("## Top Movers")
         lines.append("")
-        lines.append(
-            "| Ticker | Prior Rank | Current Rank | Delta | Shift |"
-        )
+        lines.append("| Ticker | Prior Rank | Current Rank | Delta | Shift |")
         lines.append("|--------|-----------|-------------|-------|-------|")
         for m in movers:
             lines.append(
@@ -420,13 +394,9 @@ def _build_markdown(summary: Dict[str, Any]) -> str:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
-    parser = argparse.ArgumentParser(
-        description="Triage a ruleset gate FAIL/WARN"
-    )
+    parser = argparse.ArgumentParser(description="Triage a ruleset gate FAIL/WARN")
     parser.add_argument("--eval-json", type=Path, required=True)
-    parser.add_argument(
-        "--snapshot-dir", type=Path, default=Path("data/snapshots")
-    )
+    parser.add_argument("--snapshot-dir", type=Path, default=Path("data/snapshots"))
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--max-tickers", type=int, default=10)
     parser.add_argument(
@@ -437,9 +407,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     args = parser.parse_args(argv)
 
     if not args.eval_json.exists():
-        print(
-            f"Error: eval JSON not found: {args.eval_json}", file=sys.stderr
-        )
+        print(f"Error: eval JSON not found: {args.eval_json}", file=sys.stderr)
         return 1
 
     ruleset = None
@@ -454,10 +422,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         ruleset=ruleset,
     )
 
-    print(
-        f"Triage complete: worst_date={summary['worst_date']}, "
-        f"movers={len(summary['top_movers'])}"
-    )
+    print(f"Triage complete: worst_date={summary['worst_date']}, " f"movers={len(summary['top_movers'])}")
     return 0
 
 

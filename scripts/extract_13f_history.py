@@ -30,35 +30,36 @@ import json
 import sys
 from datetime import date, datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
+from governance.canonical_json import canonical_dumps
+from governance.hashing import compute_input_hashes, hash_bytes
+from governance.run_id import compute_run_id
+from governance.schema_registry import PIPELINE_VERSION
 from src.history.snapshots import (
+    MANIFEST_SCHEMA_VERSION,
+    SNAPSHOT_SCHEMA_VERSION,
     get_prior_quarter,
     get_quarter_sequence,
     is_valid_quarter_end,
-    write_snapshot,
     write_manifest,
-    SNAPSHOT_SCHEMA_VERSION,
-    MANIFEST_SCHEMA_VERSION,
+    write_snapshot,
 )
-from governance.canonical_json import canonical_dumps
-from governance.hashing import hash_file, hash_bytes, compute_input_hashes
-from governance.run_id import compute_run_id
-from governance.schema_registry import PIPELINE_VERSION
-
 
 # =============================================================================
 # EXTRACTION CORE (Adapted from edgar_13f_extractor_CORRECTED.py)
 # =============================================================================
 
+
 def import_extractor():
     """Import extraction functions from the corrected extractor."""
     # Import extraction module
     import edgar_13f_extractor_CORRECTED as extractor
+
     return extractor
 
 
@@ -89,8 +90,8 @@ def extract_quarter_holdings(
     all_filings_metadata = {}  # {cik: FilingInfo}
 
     for manager in managers:
-        cik = manager['cik']
-        name = manager['name']
+        cik = manager["cik"]
+        name = manager["name"]
 
         try:
             filing_info, ticker_holdings = extractor.extract_manager_holdings(
@@ -134,16 +135,15 @@ def build_quarter_snapshot(
     universe_tickers = {
         s.get("ticker").strip().upper()
         for s in universe
-        if isinstance(s.get("ticker"), str) and s.get("ticker").strip()
-        and s.get("ticker") != "_XBI_BENCHMARK_"
+        if isinstance(s.get("ticker"), str) and s.get("ticker").strip() and s.get("ticker") != "_XBI_BENCHMARK_"
     }
 
     ticker_data = {}
 
     for ticker in universe_tickers:
         # Get market cap
-        ticker_info = next((s for s in universe if s.get('ticker') == ticker), None)
-        market_cap = ticker_info.get('market_cap_usd', 0) if ticker_info else 0
+        ticker_info = next((s for s in universe if s.get("ticker") == ticker), None)
+        market_cap = ticker_info.get("market_cap_usd", 0) if ticker_info else 0
 
         current = {}
         prior = {}
@@ -154,11 +154,11 @@ def build_quarter_snapshot(
             if ticker in holdings:
                 holding = holdings[ticker]
                 current[cik] = {
-                    'quarter_end': quarter_end.isoformat(),
-                    'state': 'KNOWN',
-                    'shares': holding.shares,
-                    'value_kusd': holding.value_kusd,
-                    'put_call': holding.put_call,
+                    "quarter_end": quarter_end.isoformat(),
+                    "state": "KNOWN",
+                    "shares": holding.shares,
+                    "value_kusd": holding.value_kusd,
+                    "put_call": holding.put_call,
                 }
 
         # Collect prior holdings
@@ -166,74 +166,71 @@ def build_quarter_snapshot(
             if ticker in holdings:
                 holding = holdings[ticker]
                 prior[cik] = {
-                    'quarter_end': prior_quarter_end.isoformat(),
-                    'state': 'KNOWN',
-                    'shares': holding.shares,
-                    'value_kusd': holding.value_kusd,
-                    'put_call': holding.put_call,
+                    "quarter_end": prior_quarter_end.isoformat(),
+                    "state": "KNOWN",
+                    "shares": holding.shares,
+                    "value_kusd": holding.value_kusd,
+                    "put_call": holding.put_call,
                 }
 
         # Collect filings metadata
         for cik, info in filings_metadata.items():
             if ticker in current_holdings.get(cik, {}):
                 filings[cik] = {
-                    'quarter_end': info.quarter_end.isoformat(),
-                    'accession': info.accession,
-                    'total_value_kusd': info.total_value_kusd,
-                    'filed_at': info.filed_at.isoformat(),
-                    'is_amendment': info.is_amendment,
+                    "quarter_end": info.quarter_end.isoformat(),
+                    "accession": info.accession,
+                    "total_value_kusd": info.total_value_kusd,
+                    "filed_at": info.filed_at.isoformat(),
+                    "is_amendment": info.is_amendment,
                 }
 
         # Only include ticker if any manager holds it
         if current or prior:
             ticker_data[ticker] = {
-                'market_cap_usd': market_cap,
-                'holdings': {
-                    'current': current,
-                    'prior': prior,
+                "market_cap_usd": market_cap,
+                "holdings": {
+                    "current": current,
+                    "prior": prior,
                 },
-                'filings_metadata': filings,
+                "filings_metadata": filings,
             }
 
     # Build managers section
     managers_dict = {
-        m['cik']: {
-            'name': m['name'],
-            'aum_b': m.get('aum_b', 0),
-            'style': m.get('style', ''),
+        m["cik"]: {
+            "name": m["name"],
+            "aum_b": m.get("aum_b", 0),
+            "style": m.get("style", ""),
         }
         for m in managers
-        if m['cik'] in current_holdings
+        if m["cik"] in current_holdings
     }
 
     # Build stats
     stats = {
-        'tickers_count': len(ticker_data),
-        'managers_count': len(managers_dict),
-        'total_positions': sum(
-            len(d['holdings']['current'])
-            for d in ticker_data.values()
-        ),
+        "tickers_count": len(ticker_data),
+        "managers_count": len(managers_dict),
+        "total_positions": sum(len(d["holdings"]["current"]) for d in ticker_data.values()),
     }
 
     # Assemble snapshot
     snapshot = {
-        '_schema': {
-            'version': SNAPSHOT_SCHEMA_VERSION,
-            'quarter_end': quarter_end.isoformat(),
-            'prior_quarter_end': prior_quarter_end.isoformat(),
-            'created_by': 'extract_13f_history.py',
+        "_schema": {
+            "version": SNAPSHOT_SCHEMA_VERSION,
+            "quarter_end": quarter_end.isoformat(),
+            "prior_quarter_end": prior_quarter_end.isoformat(),
+            "created_by": "extract_13f_history.py",
         },
-        '_governance': {
-            'run_id': run_id,
-            'score_version': score_version,
-            'parameters_hash': parameters_hash,
-            'input_lineage': input_lineage,
+        "_governance": {
+            "run_id": run_id,
+            "score_version": score_version,
+            "parameters_hash": parameters_hash,
+            "input_lineage": input_lineage,
         },
-        'tickers': ticker_data,
-        'managers': managers_dict,
-        'stats': stats,
-        'warnings': warnings,
+        "tickers": ticker_data,
+        "managers": managers_dict,
+        "stats": stats,
+        "warnings": warnings,
     }
 
     return snapshot
@@ -242,6 +239,7 @@ def build_quarter_snapshot(
 # =============================================================================
 # MAIN EXTRACTION PIPELINE
 # =============================================================================
+
 
 def run_extraction(
     quarter_end: date,
@@ -270,7 +268,7 @@ def run_extraction(
         Manifest dict
     """
     print(f"\n{'='*80}")
-    print(f"13F HISTORY EXTRACTION")
+    print("13F HISTORY EXTRACTION")
     print(f"{'='*80}")
     print(f"Quarter End: {quarter_end}")
     print(f"Quarters: {num_quarters}")
@@ -282,17 +280,17 @@ def run_extraction(
         raise ValueError(f"Invalid quarter end date: {quarter_end}")
 
     # Load inputs
-    with open(manager_registry_path, 'r') as f:
+    with open(manager_registry_path, "r") as f:
         registry = json.load(f)
 
-    with open(universe_path, 'r') as f:
+    with open(universe_path, "r") as f:
         universe = json.load(f)
 
-    with open(cusip_map_path, 'r') as f:
+    with open(cusip_map_path, "r") as f:
         cusip_map = json.load(f)
 
     # Get managers
-    managers = registry.get('elite_core', [])
+    managers = registry.get("elite_core", [])
     if not managers:
         raise ValueError("No elite_core managers in registry")
 
@@ -300,8 +298,7 @@ def run_extraction(
     universe_tickers = {
         s.get("ticker").strip().upper()
         for s in universe
-        if isinstance(s.get("ticker"), str) and s.get("ticker").strip()
-        and s.get("ticker") != "_XBI_BENCHMARK_"
+        if isinstance(s.get("ticker"), str) and s.get("ticker").strip() and s.get("ticker") != "_XBI_BENCHMARK_"
     }
 
     # Compute input hashes
@@ -310,9 +307,9 @@ def run_extraction(
 
     # Compute parameters hash (simple - just the extraction params)
     params = {
-        'quarter_end': quarter_end.isoformat(),
-        'num_quarters': num_quarters,
-        'mode': mode,
+        "quarter_end": quarter_end.isoformat(),
+        "num_quarters": num_quarters,
+        "mode": mode,
     }
     params_json = canonical_dumps(params)
     parameters_hash = hash_bytes(params_json.encode())[:16]
@@ -343,7 +340,7 @@ def run_extraction(
 
     # Cache holdings for prior quarter lookup
     holdings_cache = {}  # {quarter_end: {cik: {ticker: RawHolding}}}
-    filings_cache = {}   # {quarter_end: {cik: FilingInfo}}
+    filings_cache = {}  # {quarter_end: {cik: FilingInfo}}
 
     # Extract each quarter
     for i, q_end in enumerate(quarters):
@@ -402,15 +399,17 @@ def run_extraction(
         # Write snapshot
         filepath, file_hash = write_snapshot(snapshot, q_end, out_dir)
 
-        quarters_info.append({
-            'quarter_end': q_end.isoformat(),
-            'prior_quarter_end': prior_q.isoformat(),
-            'filename': filepath.name,
-            'sha256': file_hash,
-            'tickers_count': snapshot['stats']['tickers_count'],
-            'managers_count': snapshot['stats']['managers_count'],
-            'warnings_count': len(warnings),
-        })
+        quarters_info.append(
+            {
+                "quarter_end": q_end.isoformat(),
+                "prior_quarter_end": prior_q.isoformat(),
+                "filename": filepath.name,
+                "sha256": file_hash,
+                "tickers_count": snapshot["stats"]["tickers_count"],
+                "managers_count": snapshot["stats"]["managers_count"],
+                "warnings_count": len(warnings),
+            }
+        )
 
         print(f"  Written: {filepath.name}")
         print(f"  Tickers: {snapshot['stats']['tickers_count']}")
@@ -418,37 +417,28 @@ def run_extraction(
 
     # Build manifest
     manifest = {
-        '_schema': {
-            'version': MANIFEST_SCHEMA_VERSION,
+        "_schema": {
+            "version": MANIFEST_SCHEMA_VERSION,
         },
-        'run_id': run_id,
-        'params': {
-            'quarter_end': quarter_end.isoformat(),
-            'quarters': num_quarters,
-            'mode': mode,
-            'manager_registry_hash': next(
-                h['sha256'] for h in input_hashes
-                if 'manager' in h['path'].lower()
-            ),
-            'universe_hash': next(
-                h['sha256'] for h in input_hashes
-                if 'universe' in h['path'].lower()
-            ),
-            'cusip_map_hash': next(
-                h['sha256'] for h in input_hashes
-                if 'cusip' in h['path'].lower()
-            ),
+        "run_id": run_id,
+        "params": {
+            "quarter_end": quarter_end.isoformat(),
+            "quarters": num_quarters,
+            "mode": mode,
+            "manager_registry_hash": next(h["sha256"] for h in input_hashes if "manager" in h["path"].lower()),
+            "universe_hash": next(h["sha256"] for h in input_hashes if "universe" in h["path"].lower()),
+            "cusip_map_hash": next(h["sha256"] for h in input_hashes if "cusip" in h["path"].lower()),
         },
-        'quarters': quarters_info,
-        'input_hashes': input_hashes,
-        'warnings_total': len(all_warnings),
+        "quarters": quarters_info,
+        "input_hashes": input_hashes,
+        "warnings_total": len(all_warnings),
     }
 
     # Write manifest
     manifest_path, manifest_hash = write_manifest(manifest, out_dir)
 
     print(f"\n{'='*80}")
-    print(f"EXTRACTION COMPLETE")
+    print("EXTRACTION COMPLETE")
     print(f"{'='*80}")
     print(f"Run ID: {run_id}")
     print(f"Quarters extracted: {len(quarters_info)}")
@@ -464,9 +454,10 @@ def run_extraction(
 # CLI
 # =============================================================================
 
+
 def parse_date(s: str) -> date:
     """Parse YYYY-MM-DD date string."""
-    return datetime.strptime(s, '%Y-%m-%d').date()
+    return datetime.strptime(s, "%Y-%m-%d").date()
 
 
 def main():
@@ -477,58 +468,58 @@ def main():
     )
 
     parser.add_argument(
-        '--quarter-end',
+        "--quarter-end",
         type=parse_date,
         required=True,
-        help='Most recent quarter end date (YYYY-MM-DD)',
+        help="Most recent quarter end date (YYYY-MM-DD)",
     )
 
     parser.add_argument(
-        '--quarters',
+        "--quarters",
         type=int,
         default=12,
-        help='Number of quarters to extract (default: 12)',
+        help="Number of quarters to extract (default: 12)",
     )
 
     parser.add_argument(
-        '--manager-registry',
+        "--manager-registry",
         type=Path,
         required=True,
-        help='Path to manager_registry.json',
+        help="Path to manager_registry.json",
     )
 
     parser.add_argument(
-        '--universe',
+        "--universe",
         type=Path,
         required=True,
-        help='Path to universe.json',
+        help="Path to universe.json",
     )
 
     parser.add_argument(
-        '--cusip-map',
+        "--cusip-map",
         type=Path,
         required=True,
-        help='Path to cusip_static_map.json',
+        help="Path to cusip_static_map.json",
     )
 
     parser.add_argument(
-        '--out-dir',
+        "--out-dir",
         type=Path,
         required=True,
-        help='Output directory for holdings history',
+        help="Output directory for holdings history",
     )
 
     parser.add_argument(
-        '--mode',
-        choices=['live', 'offline'],
-        default='live',
-        help='Extraction mode: live (SEC API) or offline (cached)',
+        "--mode",
+        choices=["live", "offline"],
+        default="live",
+        help="Extraction mode: live (SEC API) or offline (cached)",
     )
 
     parser.add_argument(
-        '--score-version',
-        default='v1',
-        help='Score version for governance (default: v1)',
+        "--score-version",
+        default="v1",
+        help="Score version for governance (default: v1)",
     )
 
     args = parser.parse_args()
@@ -558,6 +549,7 @@ def main():
     except Exception as e:
         print(f"ERROR: Extraction failed: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)
 

@@ -16,6 +16,7 @@ Usage:
         --price-csv production_data/price_history.csv \
         --output-dir output/regulatory_approach_window
 """
+
 from __future__ import annotations
 
 import argparse

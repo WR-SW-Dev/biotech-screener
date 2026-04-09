@@ -12,6 +12,7 @@ top-10 A+B tickers per date to help select golden tickers and tune thresholds.
 Usage:
     python scripts/extract_replay_fixtures.py
 """
+
 from __future__ import annotations
 
 import json
@@ -129,10 +130,8 @@ def print_calibration(fixture: Dict[str, Any], ruleset: DecisionRuleset) -> None
     # Eligibility
     eligible = [r for r in results if r.get("eligible") == "1"]
     dev_eligible = [r for r in dev_results if r.get("eligible") == "1"]
-    print(f"\n  Eligibility: {len(eligible)}/{len(results)} "
-          f"({len(eligible)/len(results)*100:.1f}%)")
-    print(f"  Dev eligible: {len(dev_eligible)}/{len(dev_results)} "
-          f"({len(dev_eligible)/n_dev*100:.1f}%)")
+    print(f"\n  Eligibility: {len(eligible)}/{len(results)} " f"({len(eligible)/len(results)*100:.1f}%)")
+    print(f"  Dev eligible: {len(dev_eligible)}/{len(dev_results)} " f"({len(dev_eligible)/n_dev*100:.1f}%)")
 
     # Coverage: catalyst, sponsor, momentum
     def coverage(field: str, empty_vals: set) -> float:
@@ -142,14 +141,13 @@ def print_calibration(fixture: Dict[str, Any], ruleset: DecisionRuleset) -> None
     cat_cov = coverage("catalyst_mode", {"missing", ""})
     spon_cov = coverage("sponsor_tier1_count", {""})
     mom_cov = coverage("mom_state", {""})
-    print(f"\n  Coverage (dev-stage):")
+    print("\n  Coverage (dev-stage):")
     print(f"    Catalyst:    {cat_cov:5.1f}%")
     print(f"    Sponsor:     {spon_cov:5.1f}%")
     print(f"    Momentum:    {mom_cov:5.1f}%")
 
     # Optionality dispersion
-    opt_vals = [opts.get(t) for t in tickers
-                if opts.get(t) is not None and archetypes.get(t) == "drug_developer"]
+    opt_vals = [opts.get(t) for t in tickers if opts.get(t) is not None and archetypes.get(t) == "drug_developer"]
     if len(opt_vals) >= 2:
         opt_std = statistics.stdev(opt_vals)
         opt_mean = statistics.mean(opt_vals)
@@ -163,7 +161,7 @@ def print_calibration(fixture: Dict[str, Any], ruleset: DecisionRuleset) -> None
         b = r.get("size_band", "")
         if b in band_counts:
             band_counts[b] += 1
-    print(f"\n  Size bands:")
+    print("\n  Size bands:")
     for band, count in band_counts.items():
         print(f"    {band:2s}: {count:3d}")
 
@@ -171,35 +169,35 @@ def print_calibration(fixture: Dict[str, Any], ruleset: DecisionRuleset) -> None
     tier_order = {"A": 0, "B": 1}
     band_order = {"L": 0, "M": 1, "S": 2, "XS": 3}
     ab_tickers = [r for r in dev_results if r.get("tier_dev") in ("A", "B")]
-    ab_tickers.sort(key=lambda r: (
-        tier_order.get(r["tier_dev"], 9),
-        band_order.get(r["size_band"], 9),
-        r["ticker"],
-    ))
-    print(f"\n  Top A+B tickers (first 15):")
+    ab_tickers.sort(
+        key=lambda r: (
+            tier_order.get(r["tier_dev"], 9),
+            band_order.get(r["size_band"], 9),
+            r["ticker"],
+        )
+    )
+    print("\n  Top A+B tickers (first 15):")
     for r in ab_tickers[:15]:
-        print(f"    {r['ticker']:6s}  tier={r['tier_dev']}  band={r['size_band']}  "
-              f"reason={r.get('tier_reason','')}")
+        print(
+            f"    {r['ticker']:6s}  tier={r['tier_dev']}  band={r['size_band']}  " f"reason={r.get('tier_reason','')}"
+        )
 
 
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     ruleset = DecisionRuleset.from_json(str(RULESET_PATH))
     print(f"Ruleset: {ruleset.ruleset_id}")
-    print(f"a_floor={ruleset.tier_a_optionality_floor}, "
-          f"b_floor={ruleset.tier_b_optionality_floor}")
+    print(f"a_floor={ruleset.tier_a_optionality_floor}, " f"b_floor={ruleset.tier_b_optionality_floor}")
 
     for date_str in DATES:
         print(f"\nExtracting {date_str}...")
         fixture = extract_fixture(date_str)
-        print(f"  {len(fixture['tickers'])} tickers, "
-              f"{len(fixture['recs'])} recs")
+        print(f"  {len(fixture['tickers'])} tickers, " f"{len(fixture['recs'])} recs")
 
         # Write fixture
         out_path = OUTPUT_DIR / f"{date_str}.json"
         with open(out_path, "w") as f:
-            json.dump(fixture, f, indent=None, separators=(",", ":"),
-                      default=str)
+            json.dump(fixture, f, indent=None, separators=(",", ":"), default=str)
         size_kb = out_path.stat().st_size / 1024
         print(f"  Written: {out_path.relative_to(PROJECT_ROOT)} ({size_kb:.0f} KB)")
 

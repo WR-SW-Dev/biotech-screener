@@ -25,6 +25,7 @@ Usage:
     python3 tools/coinvest_shadow_tracker.py --as-of-date 2026-04-03
     python3 tools/coinvest_shadow_tracker.py --as-of-date 2026-04-03 --backfill
 """
+
 from __future__ import annotations
 
 import argparse

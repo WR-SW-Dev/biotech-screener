@@ -20,6 +20,7 @@ Usage:
 
 See scripts/research/RESEARCH_WORKFLOW.md for the full workflow.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -58,6 +59,7 @@ _VERDICT_EXIT = {
 # ---------------------------------------------------------------------------
 # Baseline auto-discovery
 # ---------------------------------------------------------------------------
+
 
 def _load_manifest() -> List[Dict]:
     """Load ruleset manifest, return list of rulesets."""
@@ -134,6 +136,7 @@ def _find_baseline_summary(baseline_dir: Optional[Path] = None) -> Optional[Path
 # ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
+
 
 def submit(
     *,
@@ -233,6 +236,7 @@ def submit(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description=(
@@ -241,34 +245,46 @@ def main() -> None:
         )
     )
     parser.add_argument(
-        "--ruleset", type=Path, required=True,
+        "--ruleset",
+        type=Path,
+        required=True,
         help="Path to candidate DecisionRuleset JSON",
     )
     parser.add_argument(
-        "--name", required=True,
+        "--name",
+        required=True,
         help="Short name for this research run (used as run_id)",
     )
     parser.add_argument(
-        "--baseline-dir", type=Path, default=None,
+        "--baseline-dir",
+        type=Path,
+        default=None,
         help=(
             "Path to prior audited backtest run directory containing "
             "eval/summary.json. Auto-discovered from manifest if omitted."
         ),
     )
     parser.add_argument(
-        "--snapshot-root", type=Path, default=None,
+        "--snapshot-root",
+        type=Path,
+        default=None,
         help=f"Snapshot directory (default: {_DEFAULT_SNAPSHOT_ROOT})",
     )
     parser.add_argument(
-        "--price-csv", type=Path, default=None,
+        "--price-csv",
+        type=Path,
+        default=None,
         help="Price history CSV (default: production_data/price_history.csv)",
     )
     parser.add_argument(
-        "--out-root", type=Path, default=None,
+        "--out-root",
+        type=Path,
+        default=None,
         help=f"Output root (default: {_DEFAULT_OUT_ROOT})",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print what would be run without executing",
     )
     args = parser.parse_args()

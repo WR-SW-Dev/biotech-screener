@@ -17,6 +17,7 @@ Usage:
         --candidate production_data/decision_rulesets/v1.6.0_alpha_modifier_candidate.json \\
         --date-from 2026-02-17 --date-to 2026-02-25
 """
+
 from __future__ import annotations
 
 import argparse

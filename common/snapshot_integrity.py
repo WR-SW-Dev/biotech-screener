@@ -107,4 +107,4 @@ def require_checksum(filepath: Path) -> None:
         raise FileNotFoundError(f"Checksum sidecar not found: {sidecar}")
 
     if not verify_checksum(filepath):
-        raise ValueError(f"Integrity check failed for {filepath.name} — " f"file may have been modified after creation")
+        raise ValueError(f"Integrity check failed for {filepath.name} — " "file may have been modified after creation")

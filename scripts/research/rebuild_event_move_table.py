@@ -16,6 +16,7 @@ Usage:
     python3 scripts/research/rebuild_event_move_table.py
     python3 scripts/research/rebuild_event_move_table.py --min-obs 3
 """
+
 from __future__ import annotations
 
 import argparse

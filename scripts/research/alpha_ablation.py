@@ -13,16 +13,15 @@ Usage:
     python scripts/research/alpha_ablation.py --snapshot-root data/snapshots_pit \
         --date-from 2024-01-31 --date-to 2025-12-31
 """
+
 from __future__ import annotations
 
 import argparse
 import copy
 import csv
 import json
-import math
 import statistics
 import sys
-from collections import defaultdict
 from dataclasses import replace as dc_replace
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -32,18 +31,12 @@ sys.path.insert(0, str(PROJECT_ROOT))
 
 from common.ranking_utils import backfill_columns, safe_float
 from decision_engine import DecisionRuleset, compute_actionable_sort_key
-from scripts.research.anchor_replay import (
-    _avg_ranks,
-    compute_forward_return,
-    load_price_series,
-    paired_stats,
-    spearman_ic,
-)
-
+from scripts.research.anchor_replay import compute_forward_return, load_price_series, paired_stats, spearman_ic
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def load_snapshot_rankings(snap_dir: Path) -> List[Dict[str, str]]:
     """Load rankings.csv from a snapshot directory."""
@@ -96,18 +89,20 @@ def rerank_snapshot(
             return -v
         return v
 
-    rows.sort(key=lambda r: compute_actionable_sort_key(
-        decision_fields=r,
-        archetype=r.get("archetype", ""),
-        optionality=safe_float(r.get("clinical_optionality_pct_dev")),
-        composite_rank=r.get("composite_rank"),
-        ticker=r.get("ticker", ""),
-        catalyst_event_type=r.get("catalyst_event_type", ""),
-        catalyst_source=r.get("catalyst_source", ""),
-        ruleset=ruleset,
-        tiebreaker_pct=_get_tiebreaker(r),
-        alpha_raw=_get_alpha_raw(r),
-    ))
+    rows.sort(
+        key=lambda r: compute_actionable_sort_key(
+            decision_fields=r,
+            archetype=r.get("archetype", ""),
+            optionality=safe_float(r.get("clinical_optionality_pct_dev")),
+            composite_rank=r.get("composite_rank"),
+            ticker=r.get("ticker", ""),
+            catalyst_event_type=r.get("catalyst_event_type", ""),
+            catalyst_source=r.get("catalyst_source", ""),
+            ruleset=ruleset,
+            tiebreaker_pct=_get_tiebreaker(r),
+            alpha_raw=_get_alpha_raw(r),
+        )
+    )
 
     rank = 1
     for r in rows:
@@ -209,12 +204,11 @@ def eval_ranking(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Alpha ablation on PIT snapshots")
-    parser.add_argument("--snapshot-root", type=Path,
-                        default=PROJECT_ROOT / "data" / "snapshots_pit")
-    parser.add_argument("--price-csv", type=Path,
-                        default=PROJECT_ROOT / "production_data" / "price_history.csv")
+    parser.add_argument("--snapshot-root", type=Path, default=PROJECT_ROOT / "data" / "snapshots_pit")
+    parser.add_argument("--price-csv", type=Path, default=PROJECT_ROOT / "production_data" / "price_history.csv")
     parser.add_argument("--date-from", type=str, default="2020-01-01")
     parser.add_argument("--date-to", type=str, default="2026-02-28")
     parser.add_argument("--horizons", type=str, default="20,60")
@@ -239,11 +233,17 @@ def main() -> None:
 
     # Load base ruleset
     snap_dir = PROJECT_ROOT / "data" / "snapshots"
-    dates_with_rs = sorted([
-        p.name for p in snap_dir.iterdir()
-        if p.is_dir() and len(p.name) == 10 and p.name[4] == "-"
-        and (p / "decision_ruleset.json").exists()
-    ]) if snap_dir.exists() else []
+    dates_with_rs = (
+        sorted(
+            [
+                p.name
+                for p in snap_dir.iterdir()
+                if p.is_dir() and len(p.name) == 10 and p.name[4] == "-" and (p / "decision_ruleset.json").exists()
+            ]
+        )
+        if snap_dir.exists()
+        else []
+    )
     if dates_with_rs:
         rs_path = snap_dir / dates_with_rs[-1] / "decision_ruleset.json"
         base_rs = DecisionRuleset.from_json(str(rs_path))
@@ -260,10 +260,9 @@ def main() -> None:
         },
         "alpha_removed": {
             "label": "Alpha removed (optionality anchor, modifier off)",
-            "ruleset": dc_replace(base_rs,
-                                  sort_anchor="optionality_pct",
-                                  alpha_modifier_mode="off",
-                                  alpha_modifier_weight=0.0),
+            "ruleset": dc_replace(
+                base_rs, sort_anchor="optionality_pct", alpha_modifier_mode="off", alpha_modifier_weight=0.0
+            ),
             "invert_alpha": False,
         },
         "alpha_inverted": {
@@ -290,11 +289,17 @@ def main() -> None:
 
         for cfg_key, cfg in configs.items():
             rows = rerank_snapshot(
-                raw_rows, cfg["ruleset"],
+                raw_rows,
+                cfg["ruleset"],
                 invert_alpha=cfg["invert_alpha"],
             )
             metrics = eval_ranking(
-                rows, date_str, prices, sorted_dates, horizons, args.top_k,
+                rows,
+                date_str,
+                prices,
+                sorted_dates,
+                horizons,
+                args.top_k,
             )
             if metrics.get("skipped"):
                 continue
@@ -306,6 +311,7 @@ def main() -> None:
             curr_topk = metrics.get("top_k", [])
             if prev_topk[cfg_key]:
                 from scripts.research.anchor_replay import compute_turnover
+
                 t = compute_turnover(prev_topk[cfg_key], curr_topk)
                 turnover_acc[cfg_key].append(t)
             prev_topk[cfg_key] = curr_topk
@@ -313,9 +319,7 @@ def main() -> None:
         print(f"  {date_str}: {len(raw_rows)} tickers")
 
     # Common dates
-    common_dates = set.intersection(
-        *[set(m["date"] for m in v) for v in all_results.values()]
-    )
+    common_dates = set.intersection(*[set(m["date"] for m in v) for v in all_results.values()])
     print(f"\nCommon dates with all configs: {len(common_dates)}")
 
     # Aggregate per config
@@ -326,9 +330,11 @@ def main() -> None:
 
     header = f"{'Config':<40s}"
     for h in horizons:
-        header += (f" {'IC('+str(h)+'d)':>10s} {'Hit':>5s}"
-                   f" {'TopK':>8s} {'BotK':>8s} {'L/S':>8s}"
-                   f" {'Sprd':>8s} {'Mono%':>6s} {'Q1>5':>5s} {'Slope':>8s}")
+        header += (
+            f" {'IC('+str(h)+'d)':>10s} {'Hit':>5s}"
+            f" {'TopK':>8s} {'BotK':>8s} {'L/S':>8s}"
+            f" {'Sprd':>8s} {'Mono%':>6s} {'Q1>5':>5s} {'Slope':>8s}"
+        )
     header += f" {'Turn':>6s}"
     print(header)
     print("-" * len(header))
@@ -395,21 +401,25 @@ def main() -> None:
             cand_ics = cand.get(f"ic_vals_{h}d", [])
             if len(base_ics) >= 3 and len(cand_ics) >= 3:
                 ps = paired_stats(base_ics, cand_ics)
-                print(f"  {cfg_key} IC({h}d): Δ={ps['mean_delta']:+.4f}, "
-                      f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
-                      f"CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
-                      if ps['mean_delta'] is not None else
-                      f"  {cfg_key} IC({h}d): insufficient data")
+                print(
+                    f"  {cfg_key} IC({h}d): Δ={ps['mean_delta']:+.4f}, "
+                    f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
+                    f"CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
+                    if ps["mean_delta"] is not None
+                    else f"  {cfg_key} IC({h}d): insufficient data"
+                )
 
             base_sp = baseline.get(f"spread_vals_{h}d", [])
             cand_sp = cand.get(f"spread_vals_{h}d", [])
             if len(base_sp) >= 3 and len(cand_sp) >= 3:
                 ps = paired_stats(base_sp, cand_sp)
-                print(f"  {cfg_key} Spread({h}d): Δ={ps['mean_delta']:+.4f}, "
-                      f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
-                      f"CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
-                      if ps['mean_delta'] is not None else
-                      f"  {cfg_key} Spread({h}d): insufficient data")
+                print(
+                    f"  {cfg_key} Spread({h}d): Δ={ps['mean_delta']:+.4f}, "
+                    f"t={ps['t_stat']:.2f}, p={ps['p_value']:.3f}, "
+                    f"CI=[{ps['ci_lo_95']:+.4f}, {ps['ci_hi_95']:+.4f}]"
+                    if ps["mean_delta"] is not None
+                    else f"  {cfg_key} Spread({h}d): insufficient data"
+                )
         print()
 
     # Write JSON

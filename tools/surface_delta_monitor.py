@@ -22,6 +22,7 @@ Usage:
     python tools/surface_delta_monitor.py --json-only
     python tools/surface_delta_monitor.py --dry-run   # fetch live, diff, print only
 """
+
 from __future__ import annotations
 
 import argparse

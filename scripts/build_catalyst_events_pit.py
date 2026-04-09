@@ -15,12 +15,12 @@ Usage:
         --out /tmp/catalyst_events_2026-01-15.json \\
         --universe production_data/universe.json
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-from collections import Counter
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -39,6 +39,7 @@ _PROJECT_ROOT = Path(__file__).parent.parent
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_json(path: Path) -> Optional[Any]:
     """Graceful JSON load; returns None on any error."""
@@ -72,6 +73,7 @@ def _load_universe(path: Path) -> Set[str]:
 # ---------------------------------------------------------------------------
 # Catalyst feature derivation
 # ---------------------------------------------------------------------------
+
 
 def _derive_catalyst_mode(
     days_to_catalyst: Optional[int],
@@ -138,8 +140,10 @@ def _derive_catalyst_decay_w(
 
     try:
         from run_screen import compute_catalyst_decay_weight
+
         return round(
-            compute_catalyst_decay_weight(days, 0, near_days, decay_mode), 4,
+            compute_catalyst_decay_weight(days, 0, near_days, decay_mode),
+            4,
         )
     except ImportError:
         # Fallback to step if import fails
@@ -174,7 +178,12 @@ def _derive_catalyst_features(
     mode = _derive_catalyst_mode(days)
     strength = _derive_catalyst_strength(mode, days, near_days, mid_days)
     decay_w = _derive_catalyst_decay_w(
-        mode, strength, days, decay_mode, near_days, mid_days,
+        mode,
+        strength,
+        days,
+        decay_mode,
+        near_days,
+        mid_days,
     )
 
     return {
@@ -214,6 +223,7 @@ def _count_ledger_sources(ledger: list) -> Dict[str, int]:
 # Main builder
 # ---------------------------------------------------------------------------
 
+
 def build_catalyst_events(
     as_of_date: str,
     universe_tickers: Set[str],
@@ -244,7 +254,8 @@ def build_catalyst_events(
     # Build or use provided ledger
     if ledger is None:
         try:
-            from event_ledger import build_event_ledger, query_nearest_catalyst, LedgerConfig
+            from event_ledger import LedgerConfig, build_event_ledger, query_nearest_catalyst
+
             if config is None:
                 config = LedgerConfig()
             ledger = build_event_ledger(as_of, config)
@@ -266,6 +277,7 @@ def build_catalyst_events(
         try:
             from event_ledger import query_nearest_catalyst
         except ImportError:
+
             def query_nearest_catalyst(lg, tk, d):
                 return None
 
@@ -298,8 +310,7 @@ def build_catalyst_events(
         "tickers_in_universe": tickers_in_universe,
         "tickers_with_catalyst": tickers_with_catalyst,
         "catalyst_coverage_pct": (
-            round(tickers_with_catalyst / tickers_in_universe * 100, 1)
-            if tickers_in_universe > 0 else 0.0
+            round(tickers_with_catalyst / tickers_in_universe * 100, 1) if tickers_in_universe > 0 else 0.0
         ),
         "ledger_total_entries": len(ledger),
         "tickers": tickers_data,
@@ -320,6 +331,7 @@ def build_catalyst_events(
 # Schema validation
 # ---------------------------------------------------------------------------
 
+
 def validate_catalyst_events_schema(
     features: dict,
 ) -> Tuple[bool, str]:
@@ -331,38 +343,44 @@ def validate_catalyst_events_schema(
         return False, "features must be a dict"
 
     required_top = [
-        "schema_version", "version", "created_at", "as_of_date",
-        "tickers_in_universe", "tickers_with_catalyst", "catalyst_coverage_pct",
-        "ledger_total_entries", "tickers", "provenance",
+        "schema_version",
+        "version",
+        "created_at",
+        "as_of_date",
+        "tickers_in_universe",
+        "tickers_with_catalyst",
+        "catalyst_coverage_pct",
+        "ledger_total_entries",
+        "tickers",
+        "provenance",
     ]
     for k in required_top:
         if k not in features:
             return False, f"missing required field: {k}"
 
     if features["schema_version"] != SCHEMA_VERSION:
-        return False, (
-            f"expected schema {SCHEMA_VERSION}, "
-            f"got {features['schema_version']}"
-        )
+        return False, (f"expected schema {SCHEMA_VERSION}, " f"got {features['schema_version']}")
 
     # Coverage consistency
     n_uni = features["tickers_in_universe"]
     n_cat = features["tickers_with_catalyst"]
-    expected_pct = (
-        round(n_cat / n_uni * 100, 1) if n_uni > 0 else 0.0
-    )
+    expected_pct = round(n_cat / n_uni * 100, 1) if n_uni > 0 else 0.0
     if abs(features["catalyst_coverage_pct"] - expected_pct) > 0.2:
-        return False, (
-            f"coverage inconsistent: {features['catalyst_coverage_pct']} "
-            f"vs expected {expected_pct}"
-        )
+        return False, (f"coverage inconsistent: {features['catalyst_coverage_pct']} " f"vs expected {expected_pct}")
 
     # Per-ticker required fields
     required_ticker = [
-        "days_to_catalyst", "catalyst_mode", "catalyst_strength",
-        "catalyst_decay_w", "nearest_event_type", "nearest_event_source",
-        "nearest_event_name", "nearest_disclosed_at", "nearest_event_date",
-        "event_count", "source_mix",
+        "days_to_catalyst",
+        "catalyst_mode",
+        "catalyst_strength",
+        "catalyst_decay_w",
+        "nearest_event_type",
+        "nearest_event_source",
+        "nearest_event_name",
+        "nearest_disclosed_at",
+        "nearest_event_date",
+        "event_count",
+        "source_mix",
     ]
     for tk, td in features.get("tickers", {}).items():
         for f in required_ticker:
@@ -372,8 +390,12 @@ def validate_catalyst_events_schema(
     # Provenance required fields
     prov = features.get("provenance", {})
     prov_required = [
-        "builder", "builder_version", "ledger_sources",
-        "catalyst_near_days", "catalyst_mid_days", "decay_mode",
+        "builder",
+        "builder_version",
+        "ledger_sources",
+        "catalyst_near_days",
+        "catalyst_mid_days",
+        "decay_mode",
     ]
     for k in prov_required:
         if k not in prov:
@@ -386,40 +408,52 @@ def validate_catalyst_events_schema(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build PIT-safe catalyst event features from event ledger",
     )
     parser.add_argument(
-        "--as-of-date", required=True, help="As-of date (ISO format)",
+        "--as-of-date",
+        required=True,
+        help="As-of date (ISO format)",
     )
     parser.add_argument("--out", required=True, help="Output JSON path")
     parser.add_argument(
-        "--universe", default="production_data/universe.json",
+        "--universe",
+        default="production_data/universe.json",
         help="Universe JSON path",
     )
     parser.add_argument(
-        "--sec-cache-dir", default=None,
+        "--sec-cache-dir",
+        default=None,
         help="SEC cache directory (default: auto-detect)",
     )
     parser.add_argument(
-        "--fda-cache-dir", default=None,
+        "--fda-cache-dir",
+        default=None,
         help="FDA cache directory (default: auto-detect)",
     )
     parser.add_argument(
-        "--ctgov-cache-dir", default=None,
+        "--ctgov-cache-dir",
+        default=None,
         help="CTGov cache directory (default: auto-detect)",
     )
     parser.add_argument(
-        "--catalyst-near-days", type=int, default=DEFAULT_CATALYST_NEAR_DAYS,
+        "--catalyst-near-days",
+        type=int,
+        default=DEFAULT_CATALYST_NEAR_DAYS,
         help=f"Near catalyst threshold (default: {DEFAULT_CATALYST_NEAR_DAYS})",
     )
     parser.add_argument(
-        "--catalyst-mid-days", type=int, default=DEFAULT_CATALYST_MID_DAYS,
+        "--catalyst-mid-days",
+        type=int,
+        default=DEFAULT_CATALYST_MID_DAYS,
         help=f"Mid catalyst threshold (default: {DEFAULT_CATALYST_MID_DAYS})",
     )
     parser.add_argument(
-        "--decay-mode", default=DEFAULT_DECAY_MODE,
+        "--decay-mode",
+        default=DEFAULT_DECAY_MODE,
         choices=["step", "linear", "exp"],
         help=f"Decay mode (default: {DEFAULT_DECAY_MODE})",
     )
@@ -444,16 +478,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     # Build ledger config
     try:
         from event_ledger import LedgerConfig
+
         config = LedgerConfig(
-            ctgov_cache_dir=(
-                Path(args.ctgov_cache_dir) if args.ctgov_cache_dir else None
-            ),
-            sec_cache_dir=(
-                Path(args.sec_cache_dir) if args.sec_cache_dir else None
-            ),
-            fda_cache_dir=(
-                Path(args.fda_cache_dir) if args.fda_cache_dir else None
-            ),
+            ctgov_cache_dir=(Path(args.ctgov_cache_dir) if args.ctgov_cache_dir else None),
+            sec_cache_dir=(Path(args.sec_cache_dir) if args.sec_cache_dir else None),
+            fda_cache_dir=(Path(args.fda_cache_dir) if args.fda_cache_dir else None),
         )
     except ImportError:
         print("ERROR: event_ledger.py not found on path", file=sys.stderr)
@@ -481,9 +510,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         json.dump(features, f, indent=2)
 
     print(f"Output: {out_path}")
-    print(f"  tickers_with_catalyst: {features['tickers_with_catalyst']}"
-          f" / {features['tickers_in_universe']}"
-          f" ({features['catalyst_coverage_pct']}%)")
+    print(
+        f"  tickers_with_catalyst: {features['tickers_with_catalyst']}"
+        f" / {features['tickers_in_universe']}"
+        f" ({features['catalyst_coverage_pct']}%)"
+    )
     print(f"  ledger_total_entries: {features['ledger_total_entries']}")
     return 0
 

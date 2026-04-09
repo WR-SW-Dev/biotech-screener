@@ -23,6 +23,7 @@ Usage:
     python3 scripts/research/checklist_v2_rerun.py --queue B
     python3 scripts/research/checklist_v2_rerun.py --queue C
 """
+
 from __future__ import annotations
 
 import csv
@@ -940,7 +941,7 @@ def write_operator_memo(scorecard, queue_b, queue_c, output_dir):
             failed = [g for g in ["gate1_pass", "gate2_pass", "gate3_pass", "gate4_pass", "gate5_pass"] if not c.get(g)]
             lines.append(
                 f"- **{signal}**: {total}/5 — failed: {', '.join(g.replace('_pass', '') for g in failed)}. "
-                f"Shadow continues."
+                "Shadow continues."
             )
         else:
             lines.append(f"- **{signal}**: {total}/5 — below bar. Review if data regime changes.")
@@ -949,11 +950,11 @@ def write_operator_memo(scorecard, queue_b, queue_c, output_dir):
     if "POOR" in str(cal_verdict).upper() or "NOT" in str(cal_verdict).upper():
         lines.append(
             f"- **Pairwise ranker**: Calibration={cal_verdict}. "
-            f"Confirms ordinal-only policy (no rank-weighting or confidence sizing)."
+            "Confirms ordinal-only policy (no rank-weighting or confidence sizing)."
         )
     else:
         lines.append(
-            f"- **Pairwise ranker**: Calibration={cal_verdict}. " f"Review whether rank-weighting becomes viable."
+            f"- **Pairwise ranker**: Calibration={cal_verdict}. " "Review whether rank-weighting becomes viable."
         )
 
     b6_boot_pass = boot.get("ci_excludes_zero", False)

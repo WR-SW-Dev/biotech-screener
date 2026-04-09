@@ -1,3 +1,4 @@
+# flake8: noqa: F401
 #!/usr/bin/env python3
 """
 module_3_schema_v2.py - Module 3 Catalyst Event Schema v2 (Robust)
@@ -21,12 +22,11 @@ Version: 2.0.0 - Robust Edition
 import hashlib
 import json
 import math
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
-from typing import Optional, List, Dict, Any, Tuple, Set
-
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # =============================================================================
 # VERSION CONSTANTS
@@ -40,12 +40,14 @@ SCORE_VERSION = "m3score_v2_20260111"
 # EVENT TYPE TAXONOMY (EXPANDED WITH NEGATIVE CATALYSTS)
 # =============================================================================
 
+
 class EventType(str, Enum):
     """
     Catalyst event types from CT.gov deltas.
 
     Expanded taxonomy with explicit negative catalyst categories.
     """
+
     # === POSITIVE STATUS CHANGES ===
     CT_STATUS_UPGRADE = "CT_STATUS_UPGRADE"
     CT_ENROLLMENT_STARTED = "CT_ENROLLMENT_STARTED"
@@ -90,6 +92,7 @@ class EventType(str, Enum):
 
 class EventSeverity(str, Enum):
     """Event severity categories for scoring."""
+
     CRITICAL_POSITIVE = "CRITICAL_POSITIVE"
     POSITIVE = "POSITIVE"
     NEUTRAL = "NEUTRAL"
@@ -99,6 +102,7 @@ class EventSeverity(str, Enum):
 
 class ConfidenceLevel(str, Enum):
     """Confidence levels for events."""
+
     HIGH = "HIGH"
     MED = "MED"
     LOW = "LOW"
@@ -106,6 +110,7 @@ class ConfidenceLevel(str, Enum):
 
 class CatalystWindowBucket(str, Enum):
     """Catalyst window time buckets."""
+
     DAYS_0_30 = "0_30"
     DAYS_31_90 = "31_90"
     DAYS_91_180 = "91_180"
@@ -116,6 +121,7 @@ class CatalystWindowBucket(str, Enum):
 
 class SourceReliability(str, Enum):
     """Source reliability for certainty scoring."""
+
     OFFICIAL = "OFFICIAL"  # CT.gov official status
     REGULATORY = "REGULATORY"  # FDA, EMA filings
     COMPANY = "COMPANY"  # Press release, SEC filing
@@ -125,6 +131,7 @@ class SourceReliability(str, Enum):
 
 class DateSpecificity(str, Enum):
     """Date specificity for certainty scoring."""
+
     EXACT = "EXACT"  # Exact date known
     MONTH = "MONTH"  # Month-level precision
     QUARTER = "QUARTER"  # Quarter-level
@@ -141,7 +148,6 @@ EVENT_SEVERITY_MAP: Dict[EventType, EventSeverity] = {
     EventType.CT_PRIMARY_COMPLETION: EventSeverity.CRITICAL_POSITIVE,
     EventType.CT_STUDY_COMPLETION: EventSeverity.POSITIVE,
     EventType.CT_RESULTS_POSTED: EventSeverity.CRITICAL_POSITIVE,
-
     # Positive
     EventType.CT_STATUS_UPGRADE: EventSeverity.POSITIVE,
     EventType.CT_TIMELINE_PULLIN: EventSeverity.POSITIVE,
@@ -149,13 +155,11 @@ EVENT_SEVERITY_MAP: Dict[EventType, EventSeverity] = {
     EventType.CT_ENROLLMENT_COMPLETE: EventSeverity.POSITIVE,
     EventType.CT_ENROLLMENT_STARTED: EventSeverity.POSITIVE,
     EventType.CT_ENROLLMENT_RESUMED: EventSeverity.POSITIVE,
-
     # Neutral
     EventType.CT_ARM_ADDED: EventSeverity.NEUTRAL,
     EventType.CT_PROTOCOL_AMENDMENT: EventSeverity.NEUTRAL,
     EventType.CT_ENDPOINT_CHANGED: EventSeverity.NEUTRAL,
     EventType.UNKNOWN: EventSeverity.NEUTRAL,
-
     # Negative
     EventType.CT_STATUS_DOWNGRADE: EventSeverity.NEGATIVE,
     EventType.CT_TIMELINE_PUSHOUT: EventSeverity.NEGATIVE,
@@ -163,7 +167,6 @@ EVENT_SEVERITY_MAP: Dict[EventType, EventSeverity] = {
     EventType.CT_WINDOW_WIDENING: EventSeverity.NEGATIVE,
     EventType.CT_ARM_REMOVED: EventSeverity.NEGATIVE,
     EventType.CT_ENROLLMENT_PAUSED: EventSeverity.NEGATIVE,
-
     # Severe negative
     EventType.CT_STATUS_SEVERE_NEG: EventSeverity.SEVERE_NEGATIVE,
     EventType.CT_TRIAL_TERMINATED: EventSeverity.SEVERE_NEGATIVE,
@@ -281,19 +284,16 @@ EVENT_TYPE_WEIGHT: Dict[EventType, Decimal] = {
     EventType.CT_RESULTS_POSTED: Decimal("18.0"),
     EventType.CT_STUDY_COMPLETION: Decimal("15.0"),
     EventType.CT_DATE_CONFIRMED_ACTUAL: Decimal("12.0"),
-
     # Medium-impact
     EventType.CT_ENROLLMENT_COMPLETE: Decimal("10.0"),
     EventType.CT_STATUS_UPGRADE: Decimal("8.0"),
     EventType.CT_TIMELINE_PULLIN: Decimal("6.0"),
-
     # Lower-impact
     EventType.CT_ENROLLMENT_STARTED: Decimal("5.0"),
     EventType.CT_ENROLLMENT_RESUMED: Decimal("4.0"),
     EventType.CT_ARM_ADDED: Decimal("3.0"),
     EventType.CT_PROTOCOL_AMENDMENT: Decimal("2.0"),
     EventType.CT_ENDPOINT_CHANGED: Decimal("1.0"),
-
     # Negative events (contribute to negative score)
     EventType.CT_STATUS_SEVERE_NEG: Decimal("-20.0"),
     EventType.CT_TRIAL_TERMINATED: Decimal("-20.0"),
@@ -307,7 +307,6 @@ EVENT_TYPE_WEIGHT: Dict[EventType, Decimal] = {
     EventType.CT_WINDOW_WIDENING: Decimal("-3.0"),
     EventType.CT_ARM_REMOVED: Decimal("-3.0"),
     EventType.CT_ENROLLMENT_PAUSED: Decimal("-4.0"),
-
     EventType.UNKNOWN: Decimal("0.0"),
 }
 
@@ -349,6 +348,7 @@ EVENT_DEFAULT_CONFIDENCE: Dict[EventType, ConfidenceLevel] = {
 # CATALYST EVENT V2 (ROBUST)
 # =============================================================================
 
+
 @dataclass(frozen=True)
 class CatalystEventV2:
     """
@@ -359,6 +359,7 @@ class CatalystEventV2:
     - source_date: When the data was collected/observed
     - pit_date_field_used: Which date field was used for PIT filtering
     """
+
     ticker: str
     nct_id: str
     event_type: EventType
@@ -430,19 +431,13 @@ class CatalystEventV2:
             Decimal between 0.0 and 1.0
         """
         # Source reliability weight
-        source_weight = SOURCE_RELIABILITY_WEIGHTS.get(
-            self.source_reliability, Decimal("0.3")
-        )
+        source_weight = SOURCE_RELIABILITY_WEIGHTS.get(self.source_reliability, Decimal("0.3"))
 
         # Date specificity weight
-        date_weight = DATE_SPECIFICITY_WEIGHTS.get(
-            self.date_specificity, Decimal("0.2")
-        )
+        date_weight = DATE_SPECIFICITY_WEIGHTS.get(self.date_specificity, Decimal("0.2"))
 
         # Corroboration factor: 1.0 + 0.1 * min(corroboration_count, 3)
-        corroboration_factor = Decimal("1.0") + Decimal("0.1") * Decimal(
-            min(self.corroboration_count, 3)
-        )
+        corroboration_factor = Decimal("1.0") + Decimal("0.1") * Decimal(min(self.corroboration_count, 3))
 
         # Staleness factor: decay based on source_date age
         try:
@@ -529,8 +524,10 @@ class CatalystEventV2:
 # DELTA EVENT (FOR CHANGE DETECTION)
 # =============================================================================
 
+
 class DeltaType(str, Enum):
     """Types of deltas detected between snapshots."""
+
     EVENT_ADDED = "EVENT_ADDED"
     EVENT_REMOVED = "EVENT_REMOVED"
     DATE_SHIFT = "DATE_SHIFT"
@@ -543,6 +540,7 @@ class DeltaEvent:
     """
     Represents a change detected between two snapshots.
     """
+
     ticker: str
     nct_id: str
     delta_type: DeltaType
@@ -574,11 +572,13 @@ class DeltaEvent:
 # TICKER CATALYST SUMMARY V2 (ROBUST)
 # =============================================================================
 
+
 @dataclass
 class TickerCatalystSummaryV2:
     """
     Aggregated catalyst summary for a ticker with full scoring.
     """
+
     ticker: str
     as_of_date: str
 
@@ -667,7 +667,9 @@ class TickerCatalystSummaryV2:
                 "score_mode_used": self.score_mode_used,
                 "catalyst_proximity_score": str(self.catalyst_proximity_score),
                 "catalyst_delta_score": str(self.catalyst_delta_score),
-                "catalyst_velocity_4w": str(self.catalyst_velocity_4w) if self.catalyst_velocity_4w is not None else None,
+                "catalyst_velocity_4w": (
+                    str(self.catalyst_velocity_4w) if self.catalyst_velocity_4w is not None else None
+                ),
                 "negative_catalyst_score": str(self.negative_catalyst_score),
                 "avg_certainty_score": str(self.avg_certainty_score),
                 "uncertainty_penalty": str(self.uncertainty_penalty),
@@ -716,9 +718,11 @@ class TickerCatalystSummaryV2:
 # ENHANCED DIAGNOSTICS
 # =============================================================================
 
+
 @dataclass
 class DiagnosticCountsV2:
     """Enhanced diagnostic counters."""
+
     # Event counts
     events_detected_total: int = 0
     events_deduped: int = 0
@@ -779,6 +783,7 @@ class DiagnosticCountsV2:
 # UTILITY FUNCTIONS
 # =============================================================================
 
+
 def decimal_to_str(d: Decimal, places: int = 4) -> str:
     """Convert Decimal to string with fixed precision."""
     quantizer = Decimal(10) ** -places
@@ -810,9 +815,16 @@ def validate_event_schema(event_dict: Dict[str, Any]) -> Tuple[bool, List[str]]:
     errors = []
 
     required_fields = [
-        "ticker", "nct_id", "event_type", "event_severity",
-        "field_changed", "source", "confidence", "disclosed_at",
-        "source_date", "pit_date_field_used"
+        "ticker",
+        "nct_id",
+        "event_type",
+        "event_severity",
+        "field_changed",
+        "source",
+        "confidence",
+        "disclosed_at",
+        "source_date",
+        "pit_date_field_used",
     ]
 
     for fld in required_fields:

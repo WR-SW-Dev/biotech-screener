@@ -20,6 +20,7 @@ Usage:
         [--horizons 5,21] \
         [--output-dir output/surface_alpha_pack]
 """
+
 from __future__ import annotations
 
 import argparse

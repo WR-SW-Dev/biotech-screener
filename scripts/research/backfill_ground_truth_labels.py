@@ -12,6 +12,7 @@ Records that can't be confidently labeled remain "unlabeled" for human review.
 Usage:
     python scripts/research/backfill_ground_truth_labels.py
 """
+
 from __future__ import annotations
 
 import json

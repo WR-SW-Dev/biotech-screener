@@ -10,6 +10,7 @@ Usage:
     python3 tools/build_trade_deltas.py --as-of-date 2026-03-08 --min-trade 500
     python3 tools/build_trade_deltas.py --current positions/2026-03-08.json --prior positions/2026-03-06.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -110,7 +111,7 @@ def validate_positions(
     # Weight sum
     weight_sum = sum(float(p.get("weight_pct", 0) or 0) for p in positions)
     if weight_sum > 0 and abs(weight_sum - 100.0) > 1.0:
-        warnings.append(f"Weight sum{label} = {weight_sum:.2f}% " f"(deviates > 1pp from 100%)")
+        warnings.append(f"Weight sum{label} = {weight_sum:.2f}% " "(deviates > 1pp from 100%)")
 
     return warnings
 
@@ -355,7 +356,7 @@ def build_no_trades_summary(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     text = (
-        f"# Trade Summary\n\n"
+        "# Trade Summary\n\n"
         f"**Date**: {as_of_date}\n"
         f"**Generated**: {ts}\n\n"
         f"**No trades generated**: {reason}\n"

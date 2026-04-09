@@ -14,6 +14,7 @@ Usage:
 
 See specs/changes/032_pi_trial_count.md for design.
 """
+
 from __future__ import annotations
 
 import argparse

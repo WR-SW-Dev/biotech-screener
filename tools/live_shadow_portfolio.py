@@ -18,6 +18,7 @@ Usage:
     python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --policy production_data/portfolio_policy.json
     python3 tools/live_shadow_portfolio.py --as-of-date 2026-03-08 --account-usd 500000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -1528,7 +1529,7 @@ def render_model_vs_realized_md(
     lines.append("")
     lines.append(
         f"*{mvr['n_fill_overrides']} positions with fill data — "
-        f"theoretical uses close prices, realized uses fill VWAP.*"
+        "theoretical uses close prices, realized uses fill VWAP.*"
     )
     lines.append("")
 
@@ -1996,7 +1997,7 @@ def append_performance(
     prior_date = perf.get("prior_date", "")
     if _perf_row_exists(perf_csv, as_of_date, prior_date, ruleset_id):
         print(
-            f"  [WARN] Dedup: performance row already exists for "
+            "  [WARN] Dedup: performance row already exists for "
             f"date={as_of_date}, prior={prior_date}, ruleset={ruleset_id}. Skipping."
         )
         return
@@ -2919,7 +2920,7 @@ def write_weekly_summary(
         lines.append("## Resolved Regulatory (Demoted to 0%)")
         lines.append("")
         lines.append(
-            f"**{len(resolved_reg)} name(s)** had regulatory event pass — " f"auto-demoted to 0% target this rebalance."
+            f"**{len(resolved_reg)} name(s)** had regulatory event pass — " "auto-demoted to 0% target this rebalance."
         )
         lines.append("")
         lines.append("| Ticker | Event | Days |")

@@ -93,7 +93,7 @@ def build_reminder(events: list[dict], target_dates: list[date]) -> tuple[str, s
     html_rows = []
     for dt in sorted(by_date):
         html_rows.append(
-            f'<tr><td colspan="4" style="background:#f0f0f0;padding:8px;">'
+            '<tr><td colspan="4" style="background:#f0f0f0;padding:8px;">'
             f"<strong>{dt}</strong> ({len(by_date[dt])} names)</td></tr>"
         )
         for e in by_date[dt]:
@@ -106,7 +106,7 @@ def build_reminder(events: list[dict], target_dates: list[date]) -> tuple[str, s
                 f'<td style="padding:4px 8px;text-align:right;">{rev}</td></tr>'
             )
 
-    body_html = f"""<html><body>
+    body_html = """<html><body>
 <h2 style="margin:0 0 12px 0;">Biotech Earnings — {date_label}</h2>
 <table style="border-collapse:collapse;font-family:monospace;font-size:13px;">
 <tr style="border-bottom:2px solid #333;">
@@ -240,17 +240,17 @@ def build_results_email(results: list[dict]) -> tuple[str, str, str]:
             pchg_str = "—"
 
         html_rows.append(
-            f"<tr>"
+            "<tr>"
             f'<td style="padding:4px 8px;"><strong>{r["symbol"]}</strong></td>'
             f'<td style="padding:4px 8px;">{r["company"][:35]}</td>'
             f'<td style="padding:4px 8px;text-align:right;">{eps}</td>'
             f'<td style="padding:4px 8px;text-align:right;">{est}</td>'
             f'<td style="padding:4px 8px;text-align:right;">{surp}</td>'
             f'<td style="padding:4px 8px;text-align:right;">{pchg_str}</td>'
-            f"</tr>"
+            "</tr>"
         )
 
-    body_html = f"""<html><body>
+    body_html = """<html><body>
 <h2 style="margin:0 0 12px 0;">Biotech Earnings Results — {date.today().strftime('%b %d')}</h2>
 <table style="border-collapse:collapse;font-family:monospace;font-size:13px;">
 <tr style="border-bottom:2px solid #333;">

@@ -21,6 +21,7 @@ Usage:
         [--horizons 5,20,63] \\
         [--output-dir output/crowding_penalty]
 """
+
 from __future__ import annotations
 
 import argparse

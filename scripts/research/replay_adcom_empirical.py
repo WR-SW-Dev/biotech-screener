@@ -10,6 +10,7 @@ Reports per-ticker deltas and summary statistics.
 Usage:
     python3 scripts/research/replay_adcom_empirical.py [--out-dir DIR]
 """
+
 from __future__ import annotations
 
 import json

@@ -8,6 +8,7 @@ Usage:
     python scripts/check_8k_forward_events.py --as-of-date 2026-02-28
     python scripts/check_8k_forward_events.py --as-of-date 2026-02-28 --snapshot-dir data/snapshots
 """
+
 from __future__ import annotations
 
 import argparse
@@ -32,16 +33,20 @@ def main(argv: list[str] | None = None) -> int:
         description="Check SEC 8-K forward-looking event coverage.",
     )
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="Analysis date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--cache-dir", type=Path,
+        "--cache-dir",
+        type=Path,
         default=Path("cache/sec/8k_catalysts"),
         help="8-K cache directory (default: cache/sec/8k_catalysts)",
     )
     parser.add_argument(
-        "--snapshot-dir", type=Path, default=None,
+        "--snapshot-dir",
+        type=Path,
+        default=None,
         help="Snapshot directory to check shadow metrics alert",
     )
     args = parser.parse_args(argv)
@@ -57,10 +62,7 @@ def main(argv: list[str] | None = None) -> int:
     if not isinstance(events, list):
         events = events.get("events", [])
 
-    future = [
-        e for e in events
-        if e.get("event_date") and e["event_date"] > as_of.isoformat()
-    ]
+    future = [e for e in events if e.get("event_date") and e["event_date"] > as_of.isoformat()]
 
     tickers = sorted({e["ticker"] for e in future})
     soonest = sorted(future, key=lambda e: e["event_date"])[:5]

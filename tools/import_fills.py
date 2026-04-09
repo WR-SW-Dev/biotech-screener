@@ -8,6 +8,7 @@ Usage:
     python3 tools/import_fills.py --broker-csv ~/Downloads/fills.csv --trade-date 2026-03-07
     python3 tools/import_fills.py --broker-csv ~/Downloads/fills.csv --trade-date 2026-03-07 --broker ibkr
 """
+
 from __future__ import annotations
 
 import argparse

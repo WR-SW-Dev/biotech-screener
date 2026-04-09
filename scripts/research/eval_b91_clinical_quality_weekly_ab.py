@@ -19,6 +19,7 @@ Usage:
       --date-from 2025-06-01 \
       --out-dir output/research/b91_clinical_quality_weekly_ab
 """
+
 from __future__ import annotations
 
 import argparse

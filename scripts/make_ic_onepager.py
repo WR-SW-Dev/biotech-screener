@@ -8,6 +8,7 @@ directory and produces ``ic_onepager.md`` alongside them.
 Usage:
     python scripts/make_ic_onepager.py --snapshot-dir data/snapshots/2026-02-16
 """
+
 from __future__ import annotations
 
 import argparse

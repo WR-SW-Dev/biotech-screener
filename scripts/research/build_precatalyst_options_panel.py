@@ -18,6 +18,7 @@ Usage:
         --buckets binary_now,build_window,less_binary \
         --lookback-days 10
 """
+
 from __future__ import annotations
 
 import argparse

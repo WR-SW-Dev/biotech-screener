@@ -10,6 +10,7 @@ Usage:
     python3 tools/action_packet.py --as-of-date 2026-03-08
     python3 tools/action_packet.py --as-of-date 2026-03-08 --top-n 40
 """
+
 from __future__ import annotations
 
 import argparse

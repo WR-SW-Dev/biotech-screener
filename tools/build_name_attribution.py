@@ -11,6 +11,7 @@ Usage:
     python tools/build_name_attribution.py --as-of-date 2026-04-02
     python tools/build_name_attribution.py --start 2024-01-01
 """
+
 from __future__ import annotations
 
 import argparse

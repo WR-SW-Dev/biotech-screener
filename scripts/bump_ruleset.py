@@ -11,6 +11,7 @@ CLI:
   python scripts/bump_ruleset.py --from-json path/to/overrides.json
   python scripts/bump_ruleset.py --tier-a-optionality-floor 0.50 --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -48,28 +49,20 @@ def _parse_buckets(s: str) -> tuple:
         token = token.strip()
         parts = token.split(":")
         if len(parts) != 2:
-            raise argparse.ArgumentTypeError(
-                f"Expected 'threshold:mult' pair, got '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Expected 'threshold:mult' pair, got '{token}'")
         try:
             raw_thresh = parts[0].strip()
             threshold = int(raw_thresh) if "." not in raw_thresh else float(raw_thresh)
             mult = float(parts[1])
         except ValueError:
-            raise argparse.ArgumentTypeError(
-                f"Non-numeric value in bucket pair '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Non-numeric value in bucket pair '{token}'")
         if not (0 < mult <= 1.0):
-            raise argparse.ArgumentTypeError(
-                f"Multiplier must be in (0, 1], got {mult} in '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Multiplier must be in (0, 1], got {mult} in '{token}'")
         pairs.append((threshold, mult))
     # Validate ascending thresholds
     for i in range(1, len(pairs)):
         if pairs[i][0] <= pairs[i - 1][0]:
-            raise argparse.ArgumentTypeError(
-                f"Bucket thresholds must be strictly ascending: {pairs}"
-            )
+            raise argparse.ArgumentTypeError(f"Bucket thresholds must be strictly ascending: {pairs}")
     return tuple(pairs)
 
 
@@ -88,24 +81,16 @@ def _parse_tilt_mults(s: str) -> tuple:
         token = token.strip()
         parts = token.split(":")
         if len(parts) != 2:
-            raise argparse.ArgumentTypeError(
-                f"Expected 'BAND:mult' pair, got '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Expected 'BAND:mult' pair, got '{token}'")
         band = parts[0].strip().upper()
         if band not in _VALID_TILT_BANDS:
-            raise argparse.ArgumentTypeError(
-                f"Unknown band '{band}', expected one of {sorted(_VALID_TILT_BANDS)}"
-            )
+            raise argparse.ArgumentTypeError(f"Unknown band '{band}', expected one of {sorted(_VALID_TILT_BANDS)}")
         try:
             mult = float(parts[1])
         except ValueError:
-            raise argparse.ArgumentTypeError(
-                f"Non-numeric multiplier in '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Non-numeric multiplier in '{token}'")
         if mult <= 0:
-            raise argparse.ArgumentTypeError(
-                f"Multiplier must be > 0, got {mult} for '{band}'"
-            )
+            raise argparse.ArgumentTypeError(f"Multiplier must be > 0, got {mult} for '{band}'")
         pairs.append((band, mult))
     return tuple(pairs)
 
@@ -121,24 +106,16 @@ def _parse_mom_tilt_mults(s: str) -> tuple:
         token = token.strip()
         parts = token.split(":")
         if len(parts) != 2:
-            raise argparse.ArgumentTypeError(
-                f"Expected 'state:mult' pair, got '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Expected 'state:mult' pair, got '{token}'")
         state = parts[0].strip().lower()
         if state not in _VALID_MOM_STATES:
-            raise argparse.ArgumentTypeError(
-                f"Unknown state '{state}', expected one of {sorted(_VALID_MOM_STATES)}"
-            )
+            raise argparse.ArgumentTypeError(f"Unknown state '{state}', expected one of {sorted(_VALID_MOM_STATES)}")
         try:
             mult = float(parts[1])
         except ValueError:
-            raise argparse.ArgumentTypeError(
-                f"Non-numeric multiplier in '{token}'"
-            )
+            raise argparse.ArgumentTypeError(f"Non-numeric multiplier in '{token}'")
         if mult <= 0:
-            raise argparse.ArgumentTypeError(
-                f"Multiplier must be > 0, got {mult} for '{state}'"
-            )
+            raise argparse.ArgumentTypeError(f"Multiplier must be > 0, got {mult} for '{state}'")
         pairs.append((state, mult))
     return tuple(pairs)
 
@@ -231,27 +208,19 @@ def _apply_overrides(base: DecisionRuleset, overrides: Dict[str, Any]) -> Decisi
 
     # Convert sizing_weights back to tuple-of-tuples
     if isinstance(params.get("sizing_weights"), dict):
-        params["sizing_weights"] = tuple(
-            (k, v) for k, v in sorted(params["sizing_weights"].items())
-        )
+        params["sizing_weights"] = tuple((k, v) for k, v in sorted(params["sizing_weights"].items()))
 
     # Convert cost_haircut_buckets list-of-lists back to tuple-of-tuples
     if isinstance(params.get("cost_haircut_buckets"), list):
-        params["cost_haircut_buckets"] = tuple(
-            tuple(pair) for pair in params["cost_haircut_buckets"]
-        )
+        params["cost_haircut_buckets"] = tuple(tuple(pair) for pair in params["cost_haircut_buckets"])
 
     # Convert catalyst_tilt_mults list-of-lists back to tuple-of-tuples
     if isinstance(params.get("catalyst_tilt_mults"), list):
-        params["catalyst_tilt_mults"] = tuple(
-            tuple(pair) for pair in params["catalyst_tilt_mults"]
-        )
+        params["catalyst_tilt_mults"] = tuple(tuple(pair) for pair in params["catalyst_tilt_mults"])
 
     # Convert mom_state_tilt_mults list-of-lists back to tuple-of-tuples
     if isinstance(params.get("mom_state_tilt_mults"), list):
-        params["mom_state_tilt_mults"] = tuple(
-            tuple(pair) for pair in params["mom_state_tilt_mults"]
-        )
+        params["mom_state_tilt_mults"] = tuple(tuple(pair) for pair in params["mom_state_tilt_mults"])
 
     return DecisionRuleset(**params)
 
@@ -291,19 +260,22 @@ def _append_changelog_draft(new_id: str, diffs: list[str], active_id: str) -> No
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Create a new candidate ruleset from the active ruleset."
-    )
+    parser = argparse.ArgumentParser(description="Create a new candidate ruleset from the active ruleset.")
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Show what would be created without writing.",
     )
     parser.add_argument(
-        "--file", type=str, default=None,
+        "--file",
+        type=str,
+        default=None,
         help="Custom filename for the new ruleset (default: v{version}_candidate.json).",
     )
     parser.add_argument(
-        "--from-json", type=str, default=None,
+        "--from-json",
+        type=str,
+        default=None,
         help="JSON file with arbitrary parameter overrides.",
     )
 
@@ -327,17 +299,20 @@ def main() -> int:
     parser.add_argument("--cost-impact-cap-bps", type=float)
     parser.add_argument("--cost-haircut-floor-mult", type=float)
     parser.add_argument(
-        "--cost-haircut-buckets", type=_parse_buckets,
+        "--cost-haircut-buckets",
+        type=_parse_buckets,
         help="Bucket boundaries as 'threshold:mult,...' (e.g. '400:1.0,1000:0.85,2000:0.70')",
     )
     parser.add_argument("--enable-catalyst-tilt", type=_parse_bool)
     parser.add_argument(
-        "--catalyst-tilt-mults", type=_parse_tilt_mults,
+        "--catalyst-tilt-mults",
+        type=_parse_tilt_mults,
         help="Tilt multipliers as 'BAND:mult,...' (e.g. 'NEAR:1.10,MID:1.05,FAR:0.95,MISSING:0.90')",
     )
     parser.add_argument("--enable-mom-state-tilt", type=_parse_bool)
     parser.add_argument(
-        "--mom-state-tilt-mults", type=_parse_mom_tilt_mults,
+        "--mom-state-tilt-mults",
+        type=_parse_mom_tilt_mults,
         help="Mom state tilt multipliers as 'state:mult,...' (e.g. 'tailwind:1.0,neutral:0.85,headwind:1.0')",
     )
     parser.add_argument("--enable-dd-rel-margin-rescue", type=_parse_bool)
@@ -384,7 +359,7 @@ def main() -> int:
     diffs = _param_diff(active_rs, new_rs)
 
     # Print summary
-    print(f"New candidate ruleset:")
+    print("New candidate ruleset:")
     print(f"  ID:   {new_id}")
     print(f"  File: {out_path}")
     print(f"  Base: {active_id} ({active_entry['file']})")
@@ -422,7 +397,7 @@ def main() -> int:
     idx = manifest["rulesets"].index(active_entry)
     manifest["rulesets"].insert(idx + 1, new_entry)
     _save_manifest(manifest)
-    print(f"Added candidate entry to manifest.")
+    print("Added candidate entry to manifest.")
 
     # Append changelog draft
     _append_changelog_draft(new_id, diffs, active_id)

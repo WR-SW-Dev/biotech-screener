@@ -17,6 +17,7 @@ Usage:
         --out /tmp/clinical_features_2026-01-15.json \\
         --universe production_data/universe.json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,25 +35,41 @@ SCHEMA_VERSION = "clinical_features_pit.v1"
 # Constants — replicated from run_screen.py:2141-2155
 # ---------------------------------------------------------------------------
 
-_CLINICAL_PHASES = frozenset({
-    "PHASE1", "PHASE2", "PHASE3",
-    "PHASE 1", "PHASE 2", "PHASE 3",
-    "PHASE1/PHASE2", "PHASE 1/PHASE 2",
-    "PHASE2/PHASE3", "PHASE 2/PHASE 3",
-    "EARLY_PHASE1",
-})
+_CLINICAL_PHASES = frozenset(
+    {
+        "PHASE1",
+        "PHASE2",
+        "PHASE3",
+        "PHASE 1",
+        "PHASE 2",
+        "PHASE 3",
+        "PHASE1/PHASE2",
+        "PHASE 1/PHASE 2",
+        "PHASE2/PHASE3",
+        "PHASE 2/PHASE 3",
+        "EARLY_PHASE1",
+    }
+)
 
 _PHASE_NUM = {
-    "approved": 1.0, "phase 3": 0.83, "phase 2/3": 0.67,
-    "phase 2": 0.50, "phase 1/2": 0.33, "phase 1": 0.17,
+    "approved": 1.0,
+    "phase 3": 0.83,
+    "phase 2/3": 0.67,
+    "phase 2": 0.50,
+    "phase 1/2": 0.33,
+    "phase 1": 0.17,
     "preclinical": 0.08,
 }
 
 _CE_WEIGHTS = {"phase": 0.35, "proximity": 0.35, "quality": 0.30}
 
-_TERMINAL_NEGATIVE_STATUSES = frozenset({
-    "WITHDRAWN", "TERMINATED", "SUSPENDED",
-})
+_TERMINAL_NEGATIVE_STATUSES = frozenset(
+    {
+        "WITHDRAWN",
+        "TERMINATED",
+        "SUSPENDED",
+    }
+)
 
 PIT_DATE_PRIORITY = ["first_posted", "last_update_posted"]
 
@@ -63,6 +80,7 @@ DEFAULT_FAR_WINDOW_DAYS = 730
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_json(path: Path) -> Optional[Any]:
     """Graceful JSON load; returns None on any error."""
@@ -168,6 +186,7 @@ def _phase_label_to_num(phase_str: str) -> Tuple[float, str]:
 # ---------------------------------------------------------------------------
 # Core computation
 # ---------------------------------------------------------------------------
+
 
 def _compute_readout_for_ticker(
     trials: List[dict],
@@ -328,6 +347,7 @@ def _collected_at_range(trial_records: List[dict]) -> Tuple[str, str]:
 # Main builder
 # ---------------------------------------------------------------------------
 
+
 def build_clinical_features(
     as_of_date: str,
     trial_records: List[dict],
@@ -370,7 +390,8 @@ def build_clinical_features(
 
         # Readout days
         rd, nct_id, n_adm, n_filt, pit_field = _compute_readout_for_ticker(
-            trials, as_of,
+            trials,
+            as_of,
         )
         total_admitted += n_adm
         total_filtered += n_filt
@@ -385,11 +406,7 @@ def build_clinical_features(
         quality = quality_value
 
         # Clinical alpha raw
-        raw = (
-            _CE_WEIGHTS["phase"] * phase_num
-            + _CE_WEIGHTS["proximity"] * proximity
-            + _CE_WEIGHTS["quality"] * quality
-        )
+        raw = _CE_WEIGHTS["phase"] * phase_num + _CE_WEIGHTS["proximity"] * proximity + _CE_WEIGHTS["quality"] * quality
 
         # Far horizon (PIT-safe)
         far_days = _compute_far_horizon_days(trials, as_of, far_window_days)
@@ -430,8 +447,7 @@ def build_clinical_features(
         "tickers_in_universe": tickers_in_universe,
         "tickers_with_signal": tickers_with_signal,
         "signal_coverage_pct": (
-            round(tickers_with_signal / tickers_in_universe * 100, 1)
-            if tickers_in_universe > 0 else 0.0
+            round(tickers_with_signal / tickers_in_universe * 100, 1) if tickers_in_universe > 0 else 0.0
         ),
         "trials_total": all_trials_total,
         "trials_admitted": total_admitted,
@@ -456,6 +472,7 @@ def build_clinical_features(
 # Schema validation
 # ---------------------------------------------------------------------------
 
+
 def validate_clinical_features_schema(
     features: dict,
 ) -> Tuple[bool, str]:
@@ -467,39 +484,47 @@ def validate_clinical_features_schema(
         return False, "features must be a dict"
 
     required_top = [
-        "schema_version", "version", "created_at", "as_of_date",
-        "tickers_in_universe", "tickers_with_signal", "signal_coverage_pct",
-        "trials_total", "trials_admitted", "trials_filtered",
-        "tickers", "provenance",
+        "schema_version",
+        "version",
+        "created_at",
+        "as_of_date",
+        "tickers_in_universe",
+        "tickers_with_signal",
+        "signal_coverage_pct",
+        "trials_total",
+        "trials_admitted",
+        "trials_filtered",
+        "tickers",
+        "provenance",
     ]
     for k in required_top:
         if k not in features:
             return False, f"missing required field: {k}"
 
     if features["schema_version"] != SCHEMA_VERSION:
-        return False, (
-            f"expected schema {SCHEMA_VERSION}, "
-            f"got {features['schema_version']}"
-        )
+        return False, (f"expected schema {SCHEMA_VERSION}, " f"got {features['schema_version']}")
 
     # Coverage consistency
     n_uni = features["tickers_in_universe"]
     n_sig = features["tickers_with_signal"]
-    expected_pct = (
-        round(n_sig / n_uni * 100, 1) if n_uni > 0 else 0.0
-    )
+    expected_pct = round(n_sig / n_uni * 100, 1) if n_uni > 0 else 0.0
     if abs(features["signal_coverage_pct"] - expected_pct) > 0.2:
-        return False, (
-            f"coverage inconsistent: {features['signal_coverage_pct']} "
-            f"vs expected {expected_pct}"
-        )
+        return False, (f"coverage inconsistent: {features['signal_coverage_pct']} " f"vs expected {expected_pct}")
 
     # Per-ticker required fields
     required_ticker = [
-        "readout_days", "readout_nct_id", "phase_num", "lead_phase",
-        "proximity", "quality", "clinical_alpha_raw",
-        "n_trials_admitted", "n_trials_filtered", "pit_date_used",
-        "far_horizon_days", "has_active_interventional",
+        "readout_days",
+        "readout_nct_id",
+        "phase_num",
+        "lead_phase",
+        "proximity",
+        "quality",
+        "clinical_alpha_raw",
+        "n_trials_admitted",
+        "n_trials_filtered",
+        "pit_date_used",
+        "far_horizon_days",
+        "has_active_interventional",
     ]
     for tk, td in features.get("tickers", {}).items():
         for f in required_ticker:
@@ -509,7 +534,10 @@ def validate_clinical_features_schema(
     # Provenance required fields
     prov = features.get("provenance", {})
     prov_required = [
-        "builder", "builder_version", "quality_mode", "quality_value",
+        "builder",
+        "builder_version",
+        "quality_mode",
+        "quality_value",
         "pit_date_priority",
     ]
     for k in prov_required:
@@ -523,29 +551,37 @@ def validate_clinical_features_schema(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
     parser = argparse.ArgumentParser(
         description="Build PIT-safe clinical features from trial_records.json",
     )
     parser.add_argument(
-        "--as-of-date", required=True, help="As-of date (ISO format)",
+        "--as-of-date",
+        required=True,
+        help="As-of date (ISO format)",
     )
     parser.add_argument(
-        "--trial-records", default="production_data/trial_records.json",
+        "--trial-records",
+        default="production_data/trial_records.json",
         help="Path to trial_records.json",
     )
     parser.add_argument("--out", required=True, help="Output JSON path")
     parser.add_argument(
-        "--universe", default="production_data/universe.json",
+        "--universe",
+        default="production_data/universe.json",
         help="Universe JSON path",
     )
     parser.add_argument(
-        "--quality-mode", default="neutral",
+        "--quality-mode",
+        default="neutral",
         choices=["neutral", "from_module4"],
         help="Quality score mode (default: neutral=0.5)",
     )
     parser.add_argument(
-        "--far-window-days", type=int, default=DEFAULT_FAR_WINDOW_DAYS,
+        "--far-window-days",
+        type=int,
+        default=DEFAULT_FAR_WINDOW_DAYS,
         help=f"Far horizon window (default: {DEFAULT_FAR_WINDOW_DAYS})",
     )
     args = parser.parse_args(argv)
@@ -570,16 +606,13 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     trial_data = _load_json(trial_path)
     if trial_data is None:
-        print(f"ERROR: cannot load trial records from {trial_path}",
-              file=sys.stderr)
+        print(f"ERROR: cannot load trial records from {trial_path}", file=sys.stderr)
         return 1
     if not isinstance(trial_data, list):
-        print(f"ERROR: trial_records must be a list, got {type(trial_data)}",
-              file=sys.stderr)
+        print(f"ERROR: trial_records must be a list, got {type(trial_data)}", file=sys.stderr)
         return 1
 
-    print(f"Loaded {len(trial_data)} trial records, "
-          f"{len(universe)} universe tickers")
+    print(f"Loaded {len(trial_data)} trial records, " f"{len(universe)} universe tickers")
 
     # Build features
     features = build_clinical_features(
@@ -604,11 +637,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         json.dump(features, f, indent=2)
 
     print(f"Output: {out_path}")
-    print(f"  tickers_with_signal: {features['tickers_with_signal']}"
-          f" / {features['tickers_in_universe']}"
-          f" ({features['signal_coverage_pct']}%)")
-    print(f"  trials: {features['trials_admitted']} admitted, "
-          f"{features['trials_filtered']} filtered")
+    print(
+        f"  tickers_with_signal: {features['tickers_with_signal']}"
+        f" / {features['tickers_in_universe']}"
+        f" ({features['signal_coverage_pct']}%)"
+    )
+    print(f"  trials: {features['trials_admitted']} admitted, " f"{features['trials_filtered']} filtered")
     return 0
 
 

@@ -11,6 +11,7 @@ Output:
 Usage:
     python tools/enrich_fda_orange_book.py
 """
+
 from __future__ import annotations
 
 import argparse

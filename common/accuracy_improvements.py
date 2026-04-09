@@ -21,12 +21,13 @@ Design Principles:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple, Union
 
@@ -68,8 +69,10 @@ __all__ = [
 # 1. INDICATION-SPECIFIC ENDPOINT WEIGHTING
 # =============================================================================
 
+
 class TherapeuticArea(str, Enum):
     """Therapeutic area classifications."""
+
     ONCOLOGY = "oncology"
     AUTOIMMUNE = "autoimmune"
     CNS = "cns"
@@ -86,50 +89,157 @@ class TherapeuticArea(str, Enum):
 # Therapeutic area keywords for classification
 THERAPEUTIC_AREA_KEYWORDS: Dict[TherapeuticArea, Set[str]] = {
     TherapeuticArea.ONCOLOGY: {
-        "cancer", "tumor", "tumour", "carcinoma", "sarcoma", "leukemia", "lymphoma",
-        "melanoma", "oncology", "malignant", "neoplasm", "metastatic", "glioblastoma",
-        "myeloma", "adenocarcinoma", "nsclc", "sclc", "hcc", "rcc", "aml", "cll",
+        "cancer",
+        "tumor",
+        "tumour",
+        "carcinoma",
+        "sarcoma",
+        "leukemia",
+        "lymphoma",
+        "melanoma",
+        "oncology",
+        "malignant",
+        "neoplasm",
+        "metastatic",
+        "glioblastoma",
+        "myeloma",
+        "adenocarcinoma",
+        "nsclc",
+        "sclc",
+        "hcc",
+        "rcc",
+        "aml",
+        "cll",
     },
     TherapeuticArea.AUTOIMMUNE: {
-        "autoimmune", "rheumatoid", "lupus", "psoriasis", "crohn", "colitis",
-        "multiple sclerosis", "arthritis", "inflammatory", "ibd", "sle",
-        "ankylosing spondylitis", "dermatomyositis", "myasthenia",
+        "autoimmune",
+        "rheumatoid",
+        "lupus",
+        "psoriasis",
+        "crohn",
+        "colitis",
+        "multiple sclerosis",
+        "arthritis",
+        "inflammatory",
+        "ibd",
+        "sle",
+        "ankylosing spondylitis",
+        "dermatomyositis",
+        "myasthenia",
     },
     TherapeuticArea.CNS: {
-        "alzheimer", "parkinson", "depression", "anxiety", "schizophrenia",
-        "epilepsy", "seizure", "cns", "neurological", "neuropathy", "migraine",
-        "huntington", "als", "dementia", "bipolar", "adhd", "autism",
+        "alzheimer",
+        "parkinson",
+        "depression",
+        "anxiety",
+        "schizophrenia",
+        "epilepsy",
+        "seizure",
+        "cns",
+        "neurological",
+        "neuropathy",
+        "migraine",
+        "huntington",
+        "als",
+        "dementia",
+        "bipolar",
+        "adhd",
+        "autism",
     },
     TherapeuticArea.CARDIOVASCULAR: {
-        "cardiovascular", "heart", "cardiac", "hypertension", "atherosclerosis",
-        "arrhythmia", "heart failure", "myocardial", "stroke", "thrombosis",
-        "pulmonary hypertension", "angina", "atrial fibrillation",
+        "cardiovascular",
+        "heart",
+        "cardiac",
+        "hypertension",
+        "atherosclerosis",
+        "arrhythmia",
+        "heart failure",
+        "myocardial",
+        "stroke",
+        "thrombosis",
+        "pulmonary hypertension",
+        "angina",
+        "atrial fibrillation",
     },
     TherapeuticArea.INFECTIOUS_DISEASE: {
-        "infection", "infectious", "viral", "bacterial", "hiv", "hepatitis",
-        "influenza", "covid", "antibiotic", "antiviral", "sepsis", "pneumonia",
-        "tuberculosis", "fungal", "rsv", "ebola",
+        "infection",
+        "infectious",
+        "viral",
+        "bacterial",
+        "hiv",
+        "hepatitis",
+        "influenza",
+        "covid",
+        "antibiotic",
+        "antiviral",
+        "sepsis",
+        "pneumonia",
+        "tuberculosis",
+        "fungal",
+        "rsv",
+        "ebola",
     },
     TherapeuticArea.RARE_DISEASE: {
-        "orphan", "rare disease", "ultra-rare", "genetic disorder", "lysosomal",
-        "duchenne", "sma", "spinal muscular", "hemophilia", "fabry", "gaucher",
-        "pompe", "cystic fibrosis", "phenylketonuria", "pku",
+        "orphan",
+        "rare disease",
+        "ultra-rare",
+        "genetic disorder",
+        "lysosomal",
+        "duchenne",
+        "sma",
+        "spinal muscular",
+        "hemophilia",
+        "fabry",
+        "gaucher",
+        "pompe",
+        "cystic fibrosis",
+        "phenylketonuria",
+        "pku",
     },
     TherapeuticArea.METABOLIC: {
-        "diabetes", "obesity", "metabolic", "nash", "nafld", "hyperlipidemia",
-        "hypercholesterolemia", "gout", "thyroid", "adrenal",
+        "diabetes",
+        "obesity",
+        "metabolic",
+        "nash",
+        "nafld",
+        "hyperlipidemia",
+        "hypercholesterolemia",
+        "gout",
+        "thyroid",
+        "adrenal",
     },
     TherapeuticArea.RESPIRATORY: {
-        "asthma", "copd", "respiratory", "pulmonary", "lung", "bronchitis",
-        "idiopathic pulmonary fibrosis", "ipf", "cystic fibrosis",
+        "asthma",
+        "copd",
+        "respiratory",
+        "pulmonary",
+        "lung",
+        "bronchitis",
+        "idiopathic pulmonary fibrosis",
+        "ipf",
+        "cystic fibrosis",
     },
     TherapeuticArea.OPHTHALMOLOGY: {
-        "eye", "ocular", "retinal", "macular", "glaucoma", "dry eye",
-        "diabetic retinopathy", "amd", "uveitis", "ophthalmology",
+        "eye",
+        "ocular",
+        "retinal",
+        "macular",
+        "glaucoma",
+        "dry eye",
+        "diabetic retinopathy",
+        "amd",
+        "uveitis",
+        "ophthalmology",
     },
     TherapeuticArea.DERMATOLOGY: {
-        "skin", "dermatology", "eczema", "atopic dermatitis", "acne",
-        "vitiligo", "alopecia", "hidradenitis",
+        "skin",
+        "dermatology",
+        "eczema",
+        "atopic dermatitis",
+        "acne",
+        "vitiligo",
+        "alopecia",
+        "hidradenitis",
     },
 }
 
@@ -221,6 +331,7 @@ DEFAULT_ENDPOINT_WEIGHTS: Dict[str, Decimal] = {
 @dataclass
 class EndpointWeightConfig:
     """Configuration for endpoint weighting."""
+
     therapeutic_area: TherapeuticArea
     endpoint_name: str
     base_weight: Decimal
@@ -282,10 +393,7 @@ def compute_weighted_endpoint_score(
     endpoint_lower = endpoint_text.lower().replace("-", " ")
 
     # Get weights for this therapeutic area
-    weights = ENDPOINT_WEIGHTS_BY_AREA.get(
-        therapeutic_area,
-        DEFAULT_ENDPOINT_WEIGHTS
-    )
+    weights = ENDPOINT_WEIGHTS_BY_AREA.get(therapeutic_area, DEFAULT_ENDPOINT_WEIGHTS)
 
     # Find best matching endpoint
     best_match = None
@@ -293,7 +401,7 @@ def compute_weighted_endpoint_score(
 
     for endpoint_type, weight in weights.items():
         # Check for match (word boundary aware)
-        pattern = r'\b' + re.escape(endpoint_type.replace("_", " ")) + r'\b'
+        pattern = r"\b" + re.escape(endpoint_type.replace("_", " ")) + r"\b"
         if re.search(pattern, endpoint_lower, re.IGNORECASE):
             if weight > best_weight:
                 best_weight = weight
@@ -323,9 +431,11 @@ def compute_weighted_endpoint_score(
 # 2. PHASE-DEPENDENT STALENESS THRESHOLDS
 # =============================================================================
 
+
 @dataclass
 class PhaseStalenessConfig:
     """Configuration for phase-dependent staleness."""
+
     phase: str
     max_staleness_days: int
     warning_threshold_days: int
@@ -408,7 +518,8 @@ def _normalize_phase(phase: str) -> str:
     if "," in p or "/" in p:
         # Extract numbers
         import re
-        nums = re.findall(r'\d', p)
+
+        nums = re.findall(r"\d", p)
         if nums:
             nums = sorted(set(nums))
             if len(nums) >= 2:
@@ -418,7 +529,8 @@ def _normalize_phase(phase: str) -> str:
 
     # Handle "phase3" -> "phase 3", "PHASE2" -> "phase 2", "PHASE4" -> "approved"
     import re
-    match = re.match(r'phase\s*(\d)', p)
+
+    match = re.match(r"phase\s*(\d)", p)
     if match:
         phase_num = match.group(1)
         if phase_num == "4":
@@ -435,15 +547,13 @@ def _normalize_phase(phase: str) -> str:
 def get_staleness_threshold_for_phase(phase: str) -> PhaseStalenessConfig:
     """Get staleness configuration for a given phase."""
     normalized = _normalize_phase(phase)
-    return PHASE_STALENESS_THRESHOLDS.get(
-        normalized,
-        PHASE_STALENESS_THRESHOLDS["unknown"]
-    )
+    return PHASE_STALENESS_THRESHOLDS.get(normalized, PHASE_STALENESS_THRESHOLDS["unknown"])
 
 
 @dataclass
 class PhaseStalenessResult:
     """Result of phase-dependent staleness check."""
+
     is_stale: bool
     is_warning: bool
     days_since_update: int
@@ -562,8 +672,10 @@ def compute_phase_staleness(
 # 3. REGULATORY PATHWAY SCORING
 # =============================================================================
 
+
 class RegulatoryDesignation(str, Enum):
     """FDA regulatory designations."""
+
     BREAKTHROUGH_THERAPY = "breakthrough_therapy"
     FAST_TRACK = "fast_track"
     ACCELERATED_APPROVAL = "accelerated_approval"
@@ -575,34 +687,44 @@ class RegulatoryDesignation(str, Enum):
 
 # Regulatory pathway score modifiers
 REGULATORY_SCORE_MODIFIERS: Dict[RegulatoryDesignation, Decimal] = {
-    RegulatoryDesignation.BREAKTHROUGH_THERAPY: Decimal("15"),    # 40%+ higher approval rate
-    RegulatoryDesignation.FAST_TRACK: Decimal("8"),               # Expedited review
-    RegulatoryDesignation.ACCELERATED_APPROVAL: Decimal("5"),     # Faster but confirmatory risk
-    RegulatoryDesignation.PRIORITY_REVIEW: Decimal("6"),          # 6-month vs 10-month review
-    RegulatoryDesignation.ORPHAN_DRUG: Decimal("5"),              # Market exclusivity
-    RegulatoryDesignation.REMS_REQUIRED: Decimal("-5"),           # Distribution complexity
-    RegulatoryDesignation.STANDARD_PATHWAY: Decimal("0"),         # Baseline
+    RegulatoryDesignation.BREAKTHROUGH_THERAPY: Decimal("15"),  # 40%+ higher approval rate
+    RegulatoryDesignation.FAST_TRACK: Decimal("8"),  # Expedited review
+    RegulatoryDesignation.ACCELERATED_APPROVAL: Decimal("5"),  # Faster but confirmatory risk
+    RegulatoryDesignation.PRIORITY_REVIEW: Decimal("6"),  # 6-month vs 10-month review
+    RegulatoryDesignation.ORPHAN_DRUG: Decimal("5"),  # Market exclusivity
+    RegulatoryDesignation.REMS_REQUIRED: Decimal("-5"),  # Distribution complexity
+    RegulatoryDesignation.STANDARD_PATHWAY: Decimal("0"),  # Baseline
 }
 
 # Designation keywords for detection
 DESIGNATION_KEYWORDS: Dict[RegulatoryDesignation, List[str]] = {
     RegulatoryDesignation.BREAKTHROUGH_THERAPY: [
-        "breakthrough therapy", "breakthrough designation", "btd",
+        "breakthrough therapy",
+        "breakthrough designation",
+        "btd",
     ],
     RegulatoryDesignation.FAST_TRACK: [
-        "fast track", "fast-track", "fasttrack",
+        "fast track",
+        "fast-track",
+        "fasttrack",
     ],
     RegulatoryDesignation.ACCELERATED_APPROVAL: [
-        "accelerated approval", "accelerated pathway",
+        "accelerated approval",
+        "accelerated pathway",
     ],
     RegulatoryDesignation.PRIORITY_REVIEW: [
-        "priority review", "priority designation",
+        "priority review",
+        "priority designation",
     ],
     RegulatoryDesignation.ORPHAN_DRUG: [
-        "orphan drug", "orphan designation", "orphan status",
+        "orphan drug",
+        "orphan designation",
+        "orphan status",
     ],
     RegulatoryDesignation.REMS_REQUIRED: [
-        "rems", "risk evaluation", "risk management strategy",
+        "rems",
+        "risk evaluation",
+        "risk management strategy",
     ],
 }
 
@@ -610,6 +732,7 @@ DESIGNATION_KEYWORDS: Dict[RegulatoryDesignation, List[str]] = {
 @dataclass
 class RegulatoryPathwayScore:
     """Result of regulatory pathway scoring."""
+
     designations_detected: List[RegulatoryDesignation]
     total_score_modifier: Decimal
     is_expedited: bool  # Any expedited pathway
@@ -687,10 +810,7 @@ def compute_regulatory_pathway_score(
                 break
 
     # Calculate total modifier (start with Decimal to ensure type consistency)
-    total_modifier = sum(
-        (REGULATORY_SCORE_MODIFIERS[d] for d in detected),
-        Decimal("0")
-    )
+    total_modifier = sum((REGULATORY_SCORE_MODIFIERS[d] for d in detected), Decimal("0"))
 
     # Cap total modifier to prevent extreme scores
     total_modifier = max(Decimal("-10"), min(Decimal("25"), total_modifier))
@@ -708,9 +828,7 @@ def compute_regulatory_pathway_score(
     has_risk_factor = RegulatoryDesignation.REMS_REQUIRED in detected
 
     # Confidence based on detection method
-    confidence = "high" if any(
-        trial_data.get(f) for f in designation_fields
-    ) else "medium" if detected else "low"
+    confidence = "high" if any(trial_data.get(f) for f in designation_fields) else "medium" if detected else "low"
 
     return RegulatoryPathwayScore(
         designations_detected=detected,
@@ -726,8 +844,10 @@ def compute_regulatory_pathway_score(
 # 4. REGIME-ADAPTIVE CATALYST DECAY
 # =============================================================================
 
+
 class MarketRegimeType(str, Enum):
     """Market regime classifications for decay adjustment."""
+
     BULL = "bull"
     BEAR = "bear"
     VOLATILITY_SPIKE = "volatility_spike"
@@ -738,6 +858,7 @@ class MarketRegimeType(str, Enum):
 @dataclass
 class RegimeDecayConfig:
     """Configuration for regime-adaptive decay."""
+
     regime: MarketRegimeType
     decay_half_life_days: int
     rationale: str
@@ -779,6 +900,7 @@ REGIME_DECAY_CONFIGS: Dict[MarketRegimeType, RegimeDecayConfig] = {
 @dataclass
 class RegimeDecayResult:
     """Result of regime-adaptive decay calculation."""
+
     decay_half_life_days: int
     decay_weight: Decimal
     regime: MarketRegimeType
@@ -855,9 +977,11 @@ def compute_regime_adaptive_decay(
 # 5. COMPETITIVE LANDSCAPE PENALTY
 # =============================================================================
 
+
 @dataclass
 class CompetitiveLandscapeResult:
     """Result of competitive landscape analysis."""
+
     indication: str
     phase: str
     competitor_count: int
@@ -869,9 +993,9 @@ class CompetitiveLandscapeResult:
 
 # Competition thresholds and penalties
 COMPETITION_THRESHOLDS = {
-    "low": (0, 2, Decimal("0")),           # 0-2 competitors: no penalty
-    "moderate": (3, 5, Decimal("5")),       # 3-5 competitors: 5 pt penalty
-    "high": (6, 10, Decimal("12")),         # 6-10 competitors: 12 pt penalty
+    "low": (0, 2, Decimal("0")),  # 0-2 competitors: no penalty
+    "moderate": (3, 5, Decimal("5")),  # 3-5 competitors: 5 pt penalty
+    "high": (6, 10, Decimal("12")),  # 6-10 competitors: 12 pt penalty
     "hyper_competitive": (11, 999, Decimal("20")),  # 11+ competitors: 20 pt penalty
 }
 
@@ -954,9 +1078,11 @@ def compute_competition_penalty(
 # 6. DYNAMIC DILUTION (VIX-ADJUSTED)
 # =============================================================================
 
+
 @dataclass
 class VixDilutionAdjustment:
     """Result of VIX-adjusted dilution calculation."""
+
     vix_level: Decimal
     vix_bucket: str  # "low", "normal", "elevated", "high", "extreme"
     adjustment_factor: Decimal  # Multiplier on dilution risk
@@ -1030,9 +1156,11 @@ def compute_vix_dilution_adjustment(
 # 7. BURN SEASONALITY ADJUSTMENT
 # =============================================================================
 
+
 @dataclass
 class QuarterlySeasonalityConfig:
     """Configuration for quarterly burn seasonality."""
+
     quarter: int  # 1-4
     adjustment_factor: Decimal
     rationale: str
@@ -1069,6 +1197,7 @@ QUARTERLY_BURN_SEASONALITY: Dict[int, QuarterlySeasonalityConfig] = {
 @dataclass
 class BurnSeasonalityResult:
     """Result of burn seasonality adjustment."""
+
     fiscal_quarter: int
     adjustment_factor: Decimal
     adjusted_monthly_burn: Decimal
@@ -1115,10 +1244,7 @@ def compute_burn_seasonality_adjustment(
         fiscal_quarter = 4
 
     # Get seasonality config
-    config = QUARTERLY_BURN_SEASONALITY.get(
-        fiscal_quarter,
-        QUARTERLY_BURN_SEASONALITY[4]
-    )
+    config = QUARTERLY_BURN_SEASONALITY.get(fiscal_quarter, QUARTERLY_BURN_SEASONALITY[4])
 
     # Apply adjustment
     adjusted_burn = monthly_burn * config.adjustment_factor
@@ -1149,9 +1275,11 @@ def compute_burn_seasonality_adjustment(
 # 8. BINARY EVENT PROXIMITY BOOST
 # =============================================================================
 
+
 @dataclass
 class ProximityBoostResult:
     """Result of binary event proximity boost calculation."""
+
     days_to_event: int
     proximity_bucket: str  # "imminent", "near_term", "medium_term", "far", "none"
     boost_percentage: Decimal
@@ -1165,10 +1293,10 @@ class ProximityBoostResult:
 # 31-60 days: +10% catalyst weight
 # 61-90 days: +5% catalyst weight
 PROXIMITY_BOOST_THRESHOLDS: Dict[str, Tuple[int, int, Decimal]] = {
-    "imminent": (0, 30, Decimal("0.20")),      # +20%
-    "near_term": (31, 60, Decimal("0.10")),    # +10%
+    "imminent": (0, 30, Decimal("0.20")),  # +20%
+    "near_term": (31, 60, Decimal("0.10")),  # +10%
     "medium_term": (61, 90, Decimal("0.05")),  # +5%
-    "far": (91, 999, Decimal("0.00")),         # No boost
+    "far": (91, 999, Decimal("0.00")),  # No boost
 }
 
 
@@ -1270,6 +1398,7 @@ def compute_binary_event_proximity_boost(
 # INTEGRATION HELPERS
 # =============================================================================
 
+
 def apply_all_accuracy_improvements(
     ticker: str,
     trial_data: Dict[str, Any],
@@ -1306,9 +1435,7 @@ def apply_all_accuracy_improvements(
         conditions = [conditions]
     therapeutic_area = classify_therapeutic_area(conditions)
     endpoint = trial_data.get("primary_endpoint", "")
-    endpoint_weight, endpoint_type, is_strong = compute_weighted_endpoint_score(
-        endpoint, therapeutic_area
-    )
+    endpoint_weight, endpoint_type, is_strong = compute_weighted_endpoint_score(endpoint, therapeutic_area)
     results["endpoint_analysis"] = {
         "therapeutic_area": therapeutic_area.value,
         "endpoint_weight": str(endpoint_weight),
@@ -1350,9 +1477,7 @@ def apply_all_accuracy_improvements(
     # 5. Competitive landscape penalty (if competitors provided)
     indication = conditions[0] if conditions else "unknown"
     if competitor_programs is not None:
-        competition = compute_competition_penalty(
-            indication, phase, competitor_programs
-        )
+        competition = compute_competition_penalty(indication, phase, competitor_programs)
         results["competition_analysis"] = {
             "competitor_count": competition.competitor_count,
             "competition_level": competition.competition_level,
@@ -1381,9 +1506,7 @@ def apply_all_accuracy_improvements(
     if isinstance(liquid_assets, (int, float)):
         liquid_assets = Decimal(str(liquid_assets))
     if monthly_burn > 0:
-        seasonality = compute_burn_seasonality_adjustment(
-            monthly_burn, liquid_assets, as_of_date
-        )
+        seasonality = compute_burn_seasonality_adjustment(monthly_burn, liquid_assets, as_of_date)
         results["seasonality_analysis"] = {
             "fiscal_quarter": seasonality.fiscal_quarter,
             "adjustment_factor": str(seasonality.adjustment_factor),
@@ -1395,7 +1518,8 @@ def apply_all_accuracy_improvements(
     next_catalyst = trial_data.get("next_catalyst_date")
     if next_catalyst:
         proximity = compute_binary_event_proximity_boost(
-            next_catalyst, as_of_date,
+            next_catalyst,
+            as_of_date,
             catalyst_type=trial_data.get("catalyst_type", "unknown"),
             confidence=trial_data.get("catalyst_confidence", "medium"),
         )
@@ -1413,6 +1537,7 @@ def apply_all_accuracy_improvements(
 # SELF-CHECKS
 # =============================================================================
 
+
 def _run_self_checks() -> List[str]:
     """Run self-checks to verify correctness."""
     errors = []
@@ -1424,16 +1549,14 @@ def _run_self_checks() -> List[str]:
         errors.append(f"CHECK1 FAIL: Expected ONCOLOGY, got {area}")
 
     # CHECK 2: Endpoint weighting
-    weight, etype, is_strong = compute_weighted_endpoint_score(
-        "Overall Survival", TherapeuticArea.ONCOLOGY
-    )
+    weight, etype, is_strong = compute_weighted_endpoint_score("Overall Survival", TherapeuticArea.ONCOLOGY)
     if weight < Decimal("0.95") or not is_strong:
         errors.append(f"CHECK2 FAIL: OS weight {weight}, is_strong {is_strong}")
 
     # CHECK 3: Phase staleness
     result = compute_phase_staleness("phase 3", "2024-01-01", "2026-01-15")
     if not result.is_stale:
-        errors.append(f"CHECK3 FAIL: Phase 3 from 2024-01 should be stale by 2026-01")
+        errors.append("CHECK3 FAIL: Phase 3 from 2024-01 should be stale by 2026-01")
 
     # CHECK 4: Regulatory scoring
     trial_data = {"breakthrough_designation": True}
@@ -1442,36 +1565,27 @@ def _run_self_checks() -> List[str]:
         errors.append("CHECK4 FAIL: Breakthrough not detected")
 
     # CHECK 5: Regime decay
-    decay = compute_regime_adaptive_decay(
-        "2026-01-01", "2026-01-15", MarketRegimeType.BULL
-    )
+    decay = compute_regime_adaptive_decay("2026-01-01", "2026-01-15", MarketRegimeType.BULL)
     if decay.decay_half_life_days != 20:
         errors.append(f"CHECK5 FAIL: Bull regime half-life should be 20, got {decay.decay_half_life_days}")
 
     # CHECK 6: Competition penalty
-    comp = compute_competition_penalty(
-        "breast cancer", "phase 3",
-        [{"phase": "phase 3"} for _ in range(8)]
-    )
+    comp = compute_competition_penalty("breast cancer", "phase 3", [{"phase": "phase 3"} for _ in range(8)])
     if comp.competition_level != "high":
         errors.append(f"CHECK6 FAIL: 8 competitors should be 'high', got {comp.competition_level}")
 
     # CHECK 7: VIX adjustment
     vix_adj = compute_vix_dilution_adjustment(Decimal("30"), Decimal("50"))
     if vix_adj.adjustment_factor <= Decimal("1.0"):
-        errors.append(f"CHECK7 FAIL: VIX 30 should increase dilution risk")
+        errors.append("CHECK7 FAIL: VIX 30 should increase dilution risk")
 
     # CHECK 8: Burn seasonality
-    season = compute_burn_seasonality_adjustment(
-        Decimal("10000000"), Decimal("100000000"), "2026-01-15"
-    )
+    season = compute_burn_seasonality_adjustment(Decimal("10000000"), Decimal("100000000"), "2026-01-15")
     if season.adjustment_factor != Decimal("0.85"):
         errors.append(f"CHECK8 FAIL: Q1 adjustment should be 0.85, got {season.adjustment_factor}")
 
     # CHECK 9: Proximity boost
-    prox = compute_binary_event_proximity_boost(
-        "2026-02-01", "2026-01-15"  # 17 days away
-    )
+    prox = compute_binary_event_proximity_boost("2026-02-01", "2026-01-15")  # 17 days away
     if prox.proximity_bucket != "imminent":
         errors.append(f"CHECK9 FAIL: 17 days should be 'imminent', got {prox.proximity_bucket}")
 

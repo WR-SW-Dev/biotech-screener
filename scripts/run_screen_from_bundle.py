@@ -11,20 +11,19 @@ Data flow:
     financial_records.json ─┤
     price_history.csv ──────┘
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
-import hashlib
 import json
 import logging
 import math
 import statistics
 import sys
 import time
-from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 _PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
@@ -274,8 +273,8 @@ def _load_price_history(price_csv: Path) -> Optional["pd.DataFrame"]:
         if "ticker" in cols_lower and "close" in cols_lower:
             # Long format → pivot to wide
             date_col = "date" if "date" in cols_lower else "Date"
-            ticker_col = "ticker" if "ticker" in cols_lower else "Ticker"
-            close_col = "close" if "close" in cols_lower else "Close"
+            "ticker" if "ticker" in cols_lower else "Ticker"
+            "close" if "close" in cols_lower else "Close"
             # Use actual column names (case-sensitive)
             actual_cols = {c.lower(): c for c in df.columns}
             dc = actual_cols.get("date", "Date")
@@ -778,11 +777,9 @@ def run_screen_for_date(
     # Lazy imports for decision engine
     sys.path.insert(0, str(_PROJECT_ROOT))
     # Prepare XBI series
-    import pandas as pd
 
     from decision_engine import (
         SORT_CONTRIB_KEYS,
-        DecisionRuleset,
         compute_actionable_sort_key,
         compute_decision_fields,
         compute_sort_contribs,

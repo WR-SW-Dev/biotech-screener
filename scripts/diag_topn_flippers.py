@@ -7,6 +7,7 @@ Usage:
       --snapshot-dir data/snapshots \
       --rollup-csv output/catalyst_shadow_timeseries.csv
 """
+
 from __future__ import annotations
 
 import argparse

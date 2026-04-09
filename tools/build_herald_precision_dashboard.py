@@ -7,6 +7,7 @@ categories where classifier precision has drifted.
 Usage:
     python tools/build_herald_precision_dashboard.py --as-of-date 2026-04-05
 """
+
 from __future__ import annotations
 
 import argparse

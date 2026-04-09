@@ -20,6 +20,7 @@ Metrics per variant:
 Usage:
     python3 scripts/research/eval_ranker_composition.py
 """
+
 from __future__ import annotations
 
 import csv

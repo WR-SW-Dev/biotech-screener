@@ -18,6 +18,7 @@ Usage:
         [--horizons 5,21] \\
         [--output-dir output/straddle_mispricing]
 """
+
 from __future__ import annotations
 
 import argparse

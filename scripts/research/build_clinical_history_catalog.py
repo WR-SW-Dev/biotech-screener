@@ -7,6 +7,7 @@ design quality fields, and outcome event extraction.
 Usage:
     python scripts/research/build_clinical_history_catalog.py
 """
+
 from __future__ import annotations
 
 import hashlib

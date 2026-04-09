@@ -14,6 +14,7 @@ Usage:
         --output production_data/alpha_cohort_tables/daily/v1_2026-02-24.json \
         --horizon 84 --train-mode trailing-6 --min-train-dates 6
 """
+
 from __future__ import annotations
 
 import argparse
@@ -46,11 +47,7 @@ from run_rank_ic_backtest import (  # noqa: E402
     compute_forward_returns,
     discover_archives,
 )
-from scripts.build_alpha_cohort_table import (  # noqa: E402
-    ALL_KEYS,
-    backfill_clinical_z_tier,
-    load_rankings_dicts,
-)
+from scripts.build_alpha_cohort_table import ALL_KEYS, backfill_clinical_z_tier, load_rankings_dicts  # noqa: E402
 
 log = logging.getLogger(__name__)
 
@@ -65,6 +62,7 @@ ALPHA_CLIP_MAX = 0.10
 # ---------------------------------------------------------------------------
 # Train mode parsing (reuse logic from backtest_signal_robustness.py)
 # ---------------------------------------------------------------------------
+
 
 def parse_train_mode(mode_str: str) -> Tuple[str, Optional[int]]:
     """Parse train mode string.
@@ -97,6 +95,7 @@ def parse_train_mode(mode_str: str) -> Tuple[str, Optional[int]]:
 # ---------------------------------------------------------------------------
 # Core builder
 # ---------------------------------------------------------------------------
+
 
 def build_oos_table(
     as_of_date: str,
@@ -157,21 +156,22 @@ def build_oos_table(
     for date_str, tar_path in pit_archives:
         horizon_end = add_trading_days(date_str, horizon)
         if last_date and horizon_end > last_date.isoformat():
-            log.debug(
-                "Skipping %s — horizon end %s beyond price data", date_str, horizon_end
-            )
+            log.debug("Skipping %s — horizon end %s beyond price data", date_str, horizon_end)
             continue
         usable.append((date_str, tar_path))
 
     log.info(
         "Usable archives (before %s, %d-day fwd available): %d",
-        as_of_date, horizon, len(usable),
+        as_of_date,
+        horizon,
+        len(usable),
     )
 
     if len(usable) < min_train_dates:
         log.warning(
             "Only %d usable dates (need %d) — cannot build table",
-            len(usable), min_train_dates,
+            len(usable),
+            min_train_dates,
         )
         return None
 
@@ -203,20 +203,25 @@ def build_oos_table(
         median_ret = statistics.median(fwd_rets.values())
         excess = {t: r - median_ret for t, r in fwd_rets.items()}
 
-        train_cache.append({
-            "date": date_str,
-            "rows": rows,
-            "excess": excess,
-        })
+        train_cache.append(
+            {
+                "date": date_str,
+                "rows": rows,
+                "excess": excess,
+            }
+        )
         log.info(
             "  %s: %d tickers, %d with fwd returns",
-            date_str, len(tickers), len(fwd_rets),
+            date_str,
+            len(tickers),
+            len(fwd_rets),
         )
 
     if len(train_cache) < min_train_dates:
         log.warning(
             "Only %d valid dates after loading (need %d) — cannot build table",
-            len(train_cache), min_train_dates,
+            len(train_cache),
+            min_train_dates,
         )
         return None
 
@@ -225,10 +230,7 @@ def build_oos_table(
         # Exponential decay weights: w_i = exp(-i * ln(2) / H) where i = distance from newest
         n_dates = len(train_cache)
         half_life = param
-        weights = [
-            math.exp(-(n_dates - 1 - i) * math.log(2) / half_life)
-            for i in range(n_dates)
-        ]
+        weights = [math.exp(-(n_dates - 1 - i) * math.log(2) / half_life) for i in range(n_dates)]
         table = _build_weighted_table(train_cache, weights, shrink_k)
         log.info("Built decay-%d table from %d dates", half_life, n_dates)
     else:
@@ -330,6 +332,7 @@ def _build_weighted_table(
 # Artifact marker write
 # ---------------------------------------------------------------------------
 
+
 def write_table_with_marker(
     table: Dict[str, Any],
     dest: Path,
@@ -373,30 +376,35 @@ def write_table_with_marker(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Build PIT-safe out-of-sample alpha cohort table."
-    )
+    parser = argparse.ArgumentParser(description="Build PIT-safe out-of-sample alpha cohort table.")
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="Reference date (YYYY-MM-DD). Archives strictly before this date are used.",
     )
     parser.add_argument(
-        "--output", type=Path,
+        "--output",
+        type=Path,
         help="Output JSON path (default: production_data/alpha_cohort_tables/daily/v1_<date>.json)",
     )
     parser.add_argument("--horizon", type=int, default=84, help="Forward horizon in trading days")
     parser.add_argument(
-        "--train-mode", default="trailing-6",
+        "--train-mode",
+        default="trailing-6",
         help="Training window: expanding | trailing-N | decay-H",
     )
     parser.add_argument(
-        "--min-train-dates", type=int, default=6,
+        "--min-train-dates",
+        type=int,
+        default=6,
         help="Minimum usable training dates required (default: 6)",
     )
     parser.add_argument("--shrink-k", type=float, default=DEFAULT_SHRINK_K, help="Shrinkage parameter")
     parser.add_argument(
-        "--log-level", default="INFO",
+        "--log-level",
+        default="INFO",
         choices=["DEBUG", "INFO", "WARNING", "ERROR"],
     )
     args = parser.parse_args()
@@ -409,10 +417,7 @@ def main() -> None:
 
     # Default output path
     if args.output is None:
-        args.output = (
-            PROJECT_ROOT / "production_data" / "alpha_cohort_tables"
-            / "daily" / f"v1_{args.as_of_date}.json"
-        )
+        args.output = PROJECT_ROOT / "production_data" / "alpha_cohort_tables" / "daily" / f"v1_{args.as_of_date}.json"
 
     table = build_oos_table(
         as_of_date=args.as_of_date,
@@ -428,7 +433,10 @@ def main() -> None:
 
     # Write output + provenance marker
     write_table_with_marker(
-        table, args.output, as_of_date=args.as_of_date, source="oos_build_cli",
+        table,
+        args.output,
+        as_of_date=args.as_of_date,
+        source="oos_build_cli",
     )
     log.info("Wrote %s", args.output)
     log.info("Wrote %s", args.output.with_suffix(".artifact.json"))

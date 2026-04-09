@@ -13,6 +13,7 @@ Usage:
         --out-root data/snapshots_reranked_notier \\
         --target-bucket less_binary
 """
+
 from __future__ import annotations
 
 import csv

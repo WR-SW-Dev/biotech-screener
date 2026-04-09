@@ -15,6 +15,7 @@ Usage:
     python3 tools/event_quality_shadow_sizer.py
     python3 tools/event_quality_shadow_sizer.py --snapshot-date 2026-04-03
 """
+
 from __future__ import annotations
 
 import argparse

@@ -19,6 +19,7 @@ Usage:
 Requires:
     XAI_API_KEY environment variable (from console.x.ai)
 """
+
 from __future__ import annotations
 
 import argparse
@@ -493,8 +494,8 @@ def format_alert_email(alert: Dict[str, Any]) -> tuple:
         f"Catalyst keyword: {kw_hit}\n"
         f"Title: {title}\n"
         f"Snippet: {alert.get('snippet', '')}\n"
-        f"\n"
-        f"-- Model Context --\n"
+        "\n"
+        "-- Model Context --\n"
         f"Tier: {ctx.get('tier', '?')}, Rank: {ctx.get('actionable_rank', '?')}\n"
         f"Catalyst: {cat_str}, Family: {ctx.get('catalyst_family', '?')}\n"
         f"Hard catalyst: {ctx.get('is_hard_catalyst', False)}\n"
@@ -503,7 +504,7 @@ def format_alert_email(alert: Dict[str, Any]) -> tuple:
         f"In review queue: {ctx.get('in_review_queue', False)}\n"
     )
 
-    html_body = f"""<h3>[{severity}] {ticker} — {topic}</h3>
+    html_body = """<h3>[{severity}] {ticker} — {topic}</h3>
 <p><b>{title}</b></p>
 <p>{alert.get('snippet', '')}</p>
 <p><small>Source: {alert.get('source', '?')} ({src_type}) | Official: {official} | Keyword: {kw_hit}</small></p>

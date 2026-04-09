@@ -11,6 +11,7 @@ Usage:
     python scripts/research/regenerate_pit_v2_snapshots.py --dry-run
     python scripts/research/regenerate_pit_v2_snapshots.py --max-dates 5
 """
+
 from __future__ import annotations
 
 import argparse

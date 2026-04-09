@@ -14,6 +14,7 @@ Wired into run_daily_production.py as a non-blocking post-screen step.
 Usage:
     python tools/build_options_verdict_v11.py --as-of-date 2026-03-31
 """
+
 from __future__ import annotations
 
 import argparse
@@ -101,47 +102,53 @@ def build_verdict_v11(
         was_active = ticker in prior_tickers
         state = "ONGOING" if was_active else "NEW"
 
-        verdicts.append({
-            "ticker": ticker,
-            "tier": row.get("tier_dev", ""),
-            "actionable_rank": row.get("actionable_rank", ""),
-            "catalyst_days": row.get("catalyst_days", ""),
-            "catalyst_family": row.get("catalyst_family", ""),
-            "is_hard_catalyst": row.get("is_hard_catalyst", ""),
-            "state": state,
-            # v1.1 factor scores
-            "om11_ep": row.get("ovf11_ep", ""),
-            "om11_sr": row.get("ovf11_sr", ""),
-            "om11_sk": row.get("ovf11_sk", ""),
-            "om11_dv": row.get("ovf11_dv", ""),
-            "om11_quality": row.get("ovf11_quality", ""),
-            "om11_confidence": row.get("ovf11_confidence", ""),
-            "om11_score_final": row.get("ovf11_score", ""),
-            "om11_primary_factor": row.get("ovf11_primary_factor", ""),
-            "om11_monitor_verdict": row.get("ovf11_monitor_verdict", ""),
-            "om11_trade_bias": row.get("ovf11_trade_bias", ""),
-            "om11_event_window_flag": row.get("ovf11_event_window_flag", ""),
-            "om11_catalyst_class": row.get("ovf11_catalyst_class", ""),
-        })
+        verdicts.append(
+            {
+                "ticker": ticker,
+                "tier": row.get("tier_dev", ""),
+                "actionable_rank": row.get("actionable_rank", ""),
+                "catalyst_days": row.get("catalyst_days", ""),
+                "catalyst_family": row.get("catalyst_family", ""),
+                "is_hard_catalyst": row.get("is_hard_catalyst", ""),
+                "state": state,
+                # v1.1 factor scores
+                "om11_ep": row.get("ovf11_ep", ""),
+                "om11_sr": row.get("ovf11_sr", ""),
+                "om11_sk": row.get("ovf11_sk", ""),
+                "om11_dv": row.get("ovf11_dv", ""),
+                "om11_quality": row.get("ovf11_quality", ""),
+                "om11_confidence": row.get("ovf11_confidence", ""),
+                "om11_score_final": row.get("ovf11_score", ""),
+                "om11_primary_factor": row.get("ovf11_primary_factor", ""),
+                "om11_monitor_verdict": row.get("ovf11_monitor_verdict", ""),
+                "om11_trade_bias": row.get("ovf11_trade_bias", ""),
+                "om11_event_window_flag": row.get("ovf11_event_window_flag", ""),
+                "om11_catalyst_class": row.get("ovf11_catalyst_class", ""),
+            }
+        )
 
     # Add resolved tickers
     active_tickers = {r["ticker"] for r in active}
     for ticker, prev in prior_tickers.items():
         if ticker not in active_tickers:
-            verdicts.append({
-                "ticker": ticker,
-                "state": "RESOLVED",
-                "prior_verdict": prev.get("om11_monitor_verdict", ""),
-                "prior_score": prev.get("om11_score_final", ""),
-                "tier": prev.get("tier", ""),
-            })
+            verdicts.append(
+                {
+                    "ticker": ticker,
+                    "state": "RESOLVED",
+                    "prior_verdict": prev.get("om11_monitor_verdict", ""),
+                    "prior_score": prev.get("om11_score_final", ""),
+                    "tier": prev.get("tier", ""),
+                }
+            )
 
     # Sort: HIGH first, WATCH, RESOLVED
     sev_order = {"HIGH": 0, "WATCH": 1, "RESOLVED": 2, "": 3}
-    verdicts.sort(key=lambda v: (
-        sev_order.get(v.get("om11_monitor_verdict", v.get("state", "")), 9),
-        v["ticker"],
-    ))
+    verdicts.sort(
+        key=lambda v: (
+            sev_order.get(v.get("om11_monitor_verdict", v.get("state", "")), 9),
+            v["ticker"],
+        )
+    )
 
     n_high = sum(1 for v in verdicts if v.get("om11_monitor_verdict") == "HIGH")
     n_watch = sum(1 for v in verdicts if v.get("om11_monitor_verdict") == "WATCH")
@@ -237,8 +244,11 @@ def main():
 
     logger.info(
         "v1.1 Verdict: %d active (H=%d W=%d), %d new, %d resolved",
-        result["n_active"], result["n_high"], result["n_watch"],
-        result["n_new"], result["n_resolved"],
+        result["n_active"],
+        result["n_high"],
+        result["n_watch"],
+        result["n_new"],
+        result["n_resolved"],
     )
 
 

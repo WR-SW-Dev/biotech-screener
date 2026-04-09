@@ -103,8 +103,6 @@ logger = logging.getLogger(__name__)
 class DataIntegrationError(Exception):
     """Base exception for data integration errors."""
 
-    pass
-
 
 class SchemaValidationError(DataIntegrationError):
     """Raised when data doesn't match expected schema."""

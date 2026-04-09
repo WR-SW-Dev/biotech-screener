@@ -11,6 +11,7 @@ Usage:
         --out-json data/snapshots/2026-02-26/monitoring.json \\
         --out-md   data/snapshots/2026-02-26/monitoring.md
 """
+
 from __future__ import annotations
 
 import argparse
@@ -331,14 +332,22 @@ def _render_markdown(mon: Dict[str, Any], top_k: int = 60) -> str:
     lines.append("")
     lines.append("| Field | Value |")
     lines.append("|-------|-------|")
-    for k in ("as_of_date", "ruleset_id", "version", "decision_mode",
-              "cache_health_overall_status", "cache_degraded_run"):
+    for k in (
+        "as_of_date",
+        "ruleset_id",
+        "version",
+        "decision_mode",
+        "cache_health_overall_status",
+        "cache_degraded_run",
+    ):
         lines.append(f"| {k} | `{ctx.get(k, '')}` |")
     if ctx.get("cache_refresh_had_rejections"):
         lines.append(f"| rejected_sources | `{', '.join(ctx.get('cache_refresh_rejected_sources', []))}` |")
     if ctx.get("alpha_table_source"):
         lines.append(f"| alpha_table_source | `{ctx['alpha_table_source']}` |")
-        lines.append(f"| alpha_coverage | {ctx.get('alpha_score_present', '?')}/{ctx.get('alpha_score_present', 0) + ctx.get('alpha_score_missing', 0)} |")
+        lines.append(
+            f"| alpha_coverage | {ctx.get('alpha_score_present', '?')}/{ctx.get('alpha_score_present', 0) + ctx.get('alpha_score_missing', 0)} |"
+        )
     lines.append("")
 
     # Coverage
@@ -375,7 +384,9 @@ def _render_markdown(mon: Dict[str, Any], top_k: int = 60) -> str:
         lines.append(f"| Top-20 overlap | {top20.get('overlap_pct', '?')}% ({top20.get('overlap_count', '?')}/20) |")
 
         topk = stab.get(f"top_{top_k}", {})
-        lines.append(f"| Top-{top_k} overlap | {topk.get('overlap_pct', '?')}% ({topk.get('overlap_count', '?')}/{top_k}) |")
+        lines.append(
+            f"| Top-{top_k} overlap | {topk.get('overlap_pct', '?')}% ({topk.get('overlap_count', '?')}/{top_k}) |"
+        )
 
         lines.append(f"| Name turnover | {stab.get('name_turnover_pct', '?')}% |")
 
@@ -384,7 +395,9 @@ def _render_markdown(mon: Dict[str, Any], top_k: int = 60) -> str:
 
         ms = stab.get("max_rank_shift", {})
         if ms:
-            lines.append(f"| Max rank shift | {ms.get('ticker', '?')}: {ms.get('from', '?')} -> {ms.get('to', '?')} (delta={ms.get('shift', '?')}) |")
+            lines.append(
+                f"| Max rank shift | {ms.get('ticker', '?')}: {ms.get('from', '?')} -> {ms.get('to', '?')} (delta={ms.get('shift', '?')}) |"
+            )
 
         lines.append(f"| % rows rank changed | {stab.get('pct_rows_rank_changed', '?')}% |")
 

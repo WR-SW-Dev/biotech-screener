@@ -44,7 +44,8 @@ def discover_archive_dates() -> list:
 def main():
     parser = argparse.ArgumentParser(description="Build SEC multi-form caches for archive dates")
     parser.add_argument(
-        "--dates", nargs="*",
+        "--dates",
+        nargs="*",
         help="Specific dates to process (YYYY-MM-DD). Default: all archive dates.",
     )
     args = parser.parse_args()

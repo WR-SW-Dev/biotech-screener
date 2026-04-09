@@ -27,6 +27,7 @@ Usage:
       --candidate-root data/snapshots_reranked_b91_quality_primary \\
       --date-manifest output/audited_sets/audited_dates_2020_2024_strict.txt
 """
+
 from __future__ import annotations
 
 import argparse

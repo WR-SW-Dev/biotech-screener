@@ -17,6 +17,7 @@ Usage:
     python scripts/research/backtest_tier_weighted_policy.py
     python scripts/research/backtest_tier_weighted_policy.py --a-weights 4,2.5,1,0
 """
+
 from __future__ import annotations
 
 import argparse

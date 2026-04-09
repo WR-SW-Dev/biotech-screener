@@ -10,6 +10,7 @@ Usage:
     python3 tools/weekly_go_nogo.py --as-of-date 2026-03-08 --confirm
     python3 tools/weekly_go_nogo.py --as-of-date 2026-03-08 --relaxed
 """
+
 from __future__ import annotations
 
 import argparse

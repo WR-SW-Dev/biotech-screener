@@ -18,6 +18,7 @@ Usage:
       --pr-cache cache/press/press_release_events_2026-02-28.json \
       --out-dir data/snapshots/2026-02-28/company_calendar_gate
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,6 +48,7 @@ _DAY_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _stable_json(obj: Any) -> str:
     return json.dumps(obj, indent=2, sort_keys=True, default=str) + "\n"
 
@@ -61,6 +63,7 @@ def _load_cache(path: Path) -> Dict[str, Any] | None:
 # ---------------------------------------------------------------------------
 # Per-stream validation
 # ---------------------------------------------------------------------------
+
 
 def validate_stream(
     cache: Dict[str, Any] | None,
@@ -96,15 +99,11 @@ def validate_stream(
         if not _DAY_RE.fullmatch(str(ed)):
             result["bad_day_precision"] += 1
             if len(result["bad_day_precision_samples"]) < 5:
-                result["bad_day_precision_samples"].append(
-                    {"ticker": ev.get("ticker", "?"), "event_date": ed}
-                )
+                result["bad_day_precision_samples"].append({"ticker": ev.get("ticker", "?"), "event_date": ed})
         elif str(ed) < as_of_date:
             result["past_dates"] += 1
             if len(result["past_date_samples"]) < 5:
-                result["past_date_samples"].append(
-                    {"ticker": ev.get("ticker", "?"), "event_date": ed}
-                )
+                result["past_date_samples"].append({"ticker": ev.get("ticker", "?"), "event_date": ed})
 
     # Bounded unmatched samples from stats
     stats = cache.get("stats", {})
@@ -118,6 +117,7 @@ def validate_stream(
 # ---------------------------------------------------------------------------
 # Gate evaluation
 # ---------------------------------------------------------------------------
+
 
 def evaluate_gate(
     ir_result: Dict[str, Any],
@@ -138,14 +138,10 @@ def evaluate_gate(
         name = r["stream"]
         if r["bad_day_precision"] > 0:
             fail = True
-            notes.append(
-                f"{name}: {r['bad_day_precision']} event(s) with non-day precision"
-            )
+            notes.append(f"{name}: {r['bad_day_precision']} event(s) with non-day precision")
         if r["past_dates"] > 0:
             fail = True
-            notes.append(
-                f"{name}: {r['past_dates']} event(s) with past date"
-            )
+            notes.append(f"{name}: {r['past_dates']} event(s) with past date")
 
     if fail:
         return "FAIL", notes
@@ -161,22 +157,19 @@ def evaluate_gate(
             notes.append(f"{label} cache file missing")
         elif r["event_count"] < minimum:
             warn = True
-            notes.append(
-                f"{label} events={r['event_count']} < min={minimum}"
-            )
+            notes.append(f"{label} events={r['event_count']} < min={minimum}")
 
     if warn:
         return "WARN", notes
 
-    notes.append(
-        f"IR={ir_result['event_count']} events, PR={pr_result['event_count']} events"
-    )
+    notes.append(f"IR={ir_result['event_count']} events, PR={pr_result['event_count']} events")
     return "PASS", notes
 
 
 # ---------------------------------------------------------------------------
 # Output rendering
 # ---------------------------------------------------------------------------
+
 
 def render_markdown(
     verdict: str,
@@ -186,7 +179,8 @@ def render_markdown(
     notes: List[str],
 ) -> str:
     lines = [
-        "## Company Calendar Gate", "",
+        "## Company Calendar Gate",
+        "",
         "| Field | IR Events | Press Releases |",
         "|---|---|---|",
         f"| cache_missing | `{ir_result['missing']}` | `{pr_result['missing']}` |",
@@ -207,22 +201,24 @@ def render_markdown(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main(argv: List[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Company calendar future-date quality gate.")
     ap.add_argument("--as-of-date", required=True, help="YYYY-MM-DD reference date.")
     ap.add_argument(
-        "--ir-cache", default="",
+        "--ir-cache",
+        default="",
         help="Path to IR events cache JSON. Default: cache/ir/ir_events_{date}.json",
     )
     ap.add_argument(
-        "--pr-cache", default="",
+        "--pr-cache",
+        default="",
         help="Path to PR events cache JSON. Default: cache/press/press_release_events_{date}.json",
     )
     ap.add_argument("--out-dir", default="", help="Output directory for gate artifacts.")
     ap.add_argument("--min-ir-events", type=int, default=1, help="Min IR events for PASS.")
     ap.add_argument("--min-pr-events", type=int, default=1, help="Min PR events for PASS.")
-    ap.add_argument("--max-unmatched-samples", type=int, default=100,
-                     help="Cap on unmatched samples in output.")
+    ap.add_argument("--max-unmatched-samples", type=int, default=100, help="Cap on unmatched samples in output.")
     args = ap.parse_args(argv)
 
     try:
@@ -230,11 +226,11 @@ def main(argv: List[str] | None = None) -> int:
         # Validate date format
         date.fromisoformat(as_of)
 
-        ir_path = Path(args.ir_cache) if args.ir_cache else (
-            _PROJECT_ROOT / "cache" / "ir" / f"ir_events_{as_of}.json"
-        )
-        pr_path = Path(args.pr_cache) if args.pr_cache else (
-            _PROJECT_ROOT / "cache" / "press" / f"press_release_events_{as_of}.json"
+        ir_path = Path(args.ir_cache) if args.ir_cache else (_PROJECT_ROOT / "cache" / "ir" / f"ir_events_{as_of}.json")
+        pr_path = (
+            Path(args.pr_cache)
+            if args.pr_cache
+            else (_PROJECT_ROOT / "cache" / "press" / f"press_release_events_{as_of}.json")
         )
 
         ir_cache = _load_cache(ir_path)
@@ -244,7 +240,8 @@ def main(argv: List[str] | None = None) -> int:
         pr_result = validate_stream(pr_cache, "PR", as_of, args.max_unmatched_samples)
 
         verdict, notes = evaluate_gate(
-            ir_result, pr_result,
+            ir_result,
+            pr_result,
             min_ir_events=args.min_ir_events,
             min_pr_events=args.min_pr_events,
         )
@@ -279,11 +276,13 @@ def main(argv: List[str] | None = None) -> int:
         out_dir.mkdir(parents=True, exist_ok=True)
 
         (out_dir / "company_calendar_gate.json").write_text(
-            _stable_json(gate_json), encoding="utf-8",
+            _stable_json(gate_json),
+            encoding="utf-8",
         )
         (out_dir / "company_calendar_gate.md").write_text(md_text, encoding="utf-8")
         (out_dir / "unmatched_samples.json").write_text(
-            _stable_json(combined_unmatched), encoding="utf-8",
+            _stable_json(combined_unmatched),
+            encoding="utf-8",
         )
 
         print(f"Company Calendar Gate: {verdict}")

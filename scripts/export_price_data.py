@@ -14,25 +14,27 @@ Usage:
     python scripts/export_price_data.py --output-dir validation_data
 """
 
-import sys
-import json
 import csv
-from pathlib import Path
+import json
+import sys
 from datetime import date, timedelta
-from typing import Dict, List, Optional
+from pathlib import Path
+from typing import Dict, List
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 # Try to import data providers
 try:
-    from wake_robin_data_pipeline.market_data_provider import PriceDataProvider
+    pass
+
     HAS_MARKET_DATA = True
 except ImportError:
     HAS_MARKET_DATA = False
 
 try:
     import yfinance as yf
+
     HAS_YFINANCE = True
 except ImportError:
     HAS_YFINANCE = False
@@ -61,28 +63,28 @@ def load_universe_tickers() -> List[str]:
                     for item in data:
                         if isinstance(item, str):
                             tickers.add(item)
-                        elif isinstance(item, dict) and 'ticker' in item:
-                            tickers.add(item['ticker'])
+                        elif isinstance(item, dict) and "ticker" in item:
+                            tickers.add(item["ticker"])
                 elif isinstance(data, dict):
-                    if 'tickers' in data:
-                        for item in data['tickers']:
+                    if "tickers" in data:
+                        for item in data["tickers"]:
                             if isinstance(item, str):
                                 tickers.add(item)
-                            elif isinstance(item, dict) and 'ticker' in item:
-                                tickers.add(item['ticker'])
-                    elif 'universe' in data:
-                        for item in data['universe']:
+                            elif isinstance(item, dict) and "ticker" in item:
+                                tickers.add(item["ticker"])
+                    elif "universe" in data:
+                        for item in data["universe"]:
                             if isinstance(item, str):
                                 tickers.add(item)
-                            elif isinstance(item, dict) and 'ticker' in item:
-                                tickers.add(item['ticker'])
+                            elif isinstance(item, dict) and "ticker" in item:
+                                tickers.add(item["ticker"])
 
                 print(f"   Loaded {len(tickers)} tickers from {path}")
             except Exception as e:
                 print(f"   Warning: Could not load {path}: {e}")
 
     # Filter out internal tickers
-    tickers = {t for t in tickers if not t.startswith('_')}
+    tickers = {t for t in tickers if not t.startswith("_")}
 
     return sorted(tickers)
 
@@ -90,6 +92,7 @@ def load_universe_tickers() -> List[str]:
 def generate_sample_prices(tickers: List[str], n_days: int = 252) -> tuple:
     """Generate synthetic price data for testing validation framework."""
     import random
+
     random.seed(42)  # Deterministic
 
     print(f"   Generating synthetic data for {len(tickers)} tickers, {n_days} days...")
@@ -133,6 +136,7 @@ def generate_sample_prices(tickers: List[str], n_days: int = 252) -> tuple:
 def generate_sample_indices(n_days: int = 252) -> tuple:
     """Generate synthetic XBI and SPY data."""
     import random
+
     random.seed(43)
 
     dates = []
@@ -164,6 +168,7 @@ def fetch_prices_morningstar(tickers: List[str], start_date: date, end_date: dat
     """Fetch historical prices using Morningstar provider."""
     try:
         from wake_robin_data_pipeline.market_data_provider import PriceDataProvider
+
         provider = PriceDataProvider()
     except Exception as e:
         print(f"   Morningstar data provider not available: {e}")
@@ -181,12 +186,12 @@ def fetch_prices_morningstar(tickers: List[str], start_date: date, end_date: dat
             if prices:
                 prices_by_ticker[ticker] = [p for _, p in sorted(prices.items())]
                 all_dates.update(prices.keys())
-        except Exception as e:
+        except Exception:
             pass  # Skip failed tickers
 
     dates = sorted(all_dates)
     print(f"   Successfully fetched {len(prices_by_ticker)} tickers, {len(dates)} days")
-    return prices_by_ticker, [d.isoformat() if hasattr(d, 'isoformat') else str(d) for d in dates]
+    return prices_by_ticker, [d.isoformat() if hasattr(d, "isoformat") else str(d) for d in dates]
 
 
 def fetch_prices_yfinance(tickers: List[str], start_date: date, end_date: date) -> tuple:
@@ -202,31 +207,25 @@ def fetch_prices_yfinance(tickers: List[str], start_date: date, end_date: date) 
 
     # Download all at once for efficiency
     try:
-        data = yf.download(
-            tickers,
-            start=start_date.isoformat(),
-            end=end_date.isoformat(),
-            progress=True,
-            threads=True
-        )
+        data = yf.download(tickers, start=start_date.isoformat(), end=end_date.isoformat(), progress=True, threads=True)
 
         if data.empty:
             print("   No data returned from Yahoo Finance")
             return {}
 
         # Extract close prices
-        if 'Close' in data.columns:
-            close_data = data['Close']
-        elif 'Adj Close' in data.columns:
-            close_data = data['Adj Close']
+        if "Close" in data.columns:
+            close_data = data["Close"]
+        elif "Adj Close" in data.columns:
+            close_data = data["Adj Close"]
         else:
             close_data = data
 
         # Get dates
-        dates = [d.strftime('%Y-%m-%d') for d in close_data.index]
+        dates = [d.strftime("%Y-%m-%d") for d in close_data.index]
 
         # Extract per-ticker prices
-        if isinstance(close_data, dict) or hasattr(close_data, 'columns'):
+        if isinstance(close_data, dict) or hasattr(close_data, "columns"):
             for ticker in tickers:
                 if ticker in close_data.columns:
                     prices = close_data[ticker].tolist()
@@ -248,9 +247,9 @@ def fetch_prices_yfinance(tickers: List[str], start_date: date, end_date: date) 
             try:
                 data = yf.download(ticker, start=start_date.isoformat(), end=end_date.isoformat(), progress=False)
                 if not data.empty:
-                    prices_by_ticker[ticker] = data['Close'].tolist()
+                    prices_by_ticker[ticker] = data["Close"].tolist()
                     if not dates:
-                        dates = [d.strftime('%Y-%m-%d') for d in data.index]
+                        dates = [d.strftime("%Y-%m-%d") for d in data.index]
             except Exception as e2:
                 print(f"   Failed {ticker}: {e2}")
 
@@ -261,6 +260,7 @@ def fetch_indices_morningstar(start_date: date, end_date: date) -> tuple:
     """Fetch XBI and SPY prices using Morningstar."""
     try:
         from wake_robin_data_pipeline.market_data_provider import PriceDataProvider
+
         provider = PriceDataProvider()
     except Exception as e:
         print(f"   Morningstar not available: {e}")
@@ -270,13 +270,13 @@ def fetch_indices_morningstar(start_date: date, end_date: date) -> tuple:
     spy = []
 
     try:
-        xbi_prices = provider.get_prices('XBI', start_date, end_date)
-        spy_prices = provider.get_prices('SPY', start_date, end_date)
+        xbi_prices = provider.get_prices("XBI", start_date, end_date)
+        spy_prices = provider.get_prices("SPY", start_date, end_date)
 
         if xbi_prices and spy_prices:
             # Align dates
             common_dates = sorted(set(xbi_prices.keys()) & set(spy_prices.keys()))
-            dates = [d.isoformat() if hasattr(d, 'isoformat') else str(d) for d in common_dates]
+            dates = [d.isoformat() if hasattr(d, "isoformat") else str(d) for d in common_dates]
             xbi = [xbi_prices[d] for d in common_dates]
             spy = [spy_prices[d] for d in common_dates]
             print(f"   Loaded {len(dates)} days of benchmark data")
@@ -296,14 +296,14 @@ def fetch_indices_yfinance(start_date: date, end_date: date) -> tuple:
     print("   Fetching XBI and SPY benchmarks...")
 
     try:
-        data = yf.download(['XBI', 'SPY'], start=start_date.isoformat(), end=end_date.isoformat(), progress=False)
+        data = yf.download(["XBI", "SPY"], start=start_date.isoformat(), end=end_date.isoformat(), progress=False)
 
         if data.empty:
             return [], [], []
 
-        dates = [d.strftime('%Y-%m-%d') for d in data.index]
-        xbi = data['Close']['XBI'].tolist()
-        spy = data['Close']['SPY'].tolist()
+        dates = [d.strftime("%Y-%m-%d") for d in data.index]
+        xbi = data["Close"]["XBI"].tolist()
+        spy = data["Close"]["SPY"].tolist()
 
         print(f"   Loaded {len(dates)} days of benchmark data")
         return dates, xbi, spy
@@ -316,17 +316,17 @@ def fetch_indices_yfinance(start_date: date, end_date: date) -> tuple:
 def export_universe_prices(prices_by_ticker: Dict, dates: List[str], output_path: Path):
     """Export universe prices to CSV."""
     if not prices_by_ticker or not dates:
-        print(f"   No data to export for universe prices")
+        print("   No data to export for universe prices")
         return
 
     # Get tickers with complete data
     tickers = sorted(prices_by_ticker.keys())
 
-    with open(output_path, 'w', newline='') as f:
+    with open(output_path, "w", newline="") as f:
         writer = csv.writer(f)
 
         # Header
-        writer.writerow(['date'] + tickers)
+        writer.writerow(["date"] + tickers)
 
         # Data rows
         for i, d in enumerate(dates):
@@ -336,7 +336,7 @@ def export_universe_prices(prices_by_ticker: Dict, dates: List[str], output_path
                 if i < len(prices):
                     row.append(f"{prices[i]:.4f}")
                 else:
-                    row.append('')
+                    row.append("")
             writer.writerow(row)
 
     print(f"   Exported {len(tickers)} tickers, {len(dates)} days to {output_path}")
@@ -345,16 +345,16 @@ def export_universe_prices(prices_by_ticker: Dict, dates: List[str], output_path
 def export_indices_prices(dates: List[str], xbi: List[float], spy: List[float], output_path: Path):
     """Export index prices to CSV."""
     if not dates:
-        print(f"   No data to export for indices")
+        print("   No data to export for indices")
         return
 
-    with open(output_path, 'w', newline='') as f:
+    with open(output_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(['date', 'XBI', 'SPY'])
+        writer.writerow(["date", "XBI", "SPY"])
 
         for i, d in enumerate(dates):
-            xbi_val = f"{xbi[i]:.4f}" if i < len(xbi) and xbi[i] == xbi[i] else ''
-            spy_val = f"{spy[i]:.4f}" if i < len(spy) and spy[i] == spy[i] else ''
+            xbi_val = f"{xbi[i]:.4f}" if i < len(xbi) and xbi[i] == xbi[i] else ""
+            spy_val = f"{spy[i]:.4f}" if i < len(spy) and spy[i] == spy[i] else ""
             writer.writerow([d, xbi_val, spy_val])
 
     print(f"   Exported {len(dates)} days to {output_path}")
@@ -364,8 +364,8 @@ def main():
     import argparse
 
     parser = argparse.ArgumentParser(description="Export price data for validation")
-    parser.add_argument('--lookback', type=int, default=252, help="Days of history (default: 252 = 1 year)")
-    parser.add_argument('--output-dir', type=Path, default=Path('data'), help="Output directory")
+    parser.add_argument("--lookback", type=int, default=252, help="Days of history (default: 252 = 1 year)")
+    parser.add_argument("--output-dir", type=Path, default=Path("data"), help="Output directory")
     args = parser.parse_args()
 
     print("\n" + "=" * 60)
@@ -411,10 +411,10 @@ def main():
     print("\n" + "=" * 60)
     print("EXPORT COMPLETE")
     print("=" * 60)
-    print(f"\nFiles created:")
+    print("\nFiles created:")
     print(f"  - {universe_path}")
     print(f"  - {indices_path}")
-    print(f"\nRun Stage 2 validation:")
+    print("\nRun Stage 2 validation:")
     print(f"  python scripts/validate_momentum_signal.py --full --data-dir {args.output_dir}")
 
 

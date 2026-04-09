@@ -16,6 +16,7 @@ Usage:
     python scripts/research/build_event_move_table.py
     python scripts/research/build_event_move_table.py --snapshots-dir data/snapshots
 """
+
 from __future__ import annotations
 
 import argparse

@@ -12,15 +12,15 @@ Usage:
         --baseline production_data/decision_rulesets/v1.5.0_coinvest_candidate.json \
         --weights "0.01,0.03,0.05,0.10,0.15,0.20,0.30,0.50"
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-import tempfile
 from dataclasses import replace
 from pathlib import Path
-from typing import List, Optional
+from typing import List
 
 import pandas as pd
 
@@ -43,8 +43,7 @@ def _load_and_patch(
 
 def _backfill_rankings(rankings: pd.DataFrame) -> pd.DataFrame:
     """Backfill columns needed for institutional sort (cold-start safe)."""
-    for col, default in [("inst_delta_z", 0.0), ("inst_delta_net", 0),
-                         ("inst_delta_new", 0), ("inst_delta_exit", 0)]:
+    for col, default in [("inst_delta_z", 0.0), ("inst_delta_net", 0), ("inst_delta_new", 0), ("inst_delta_exit", 0)]:
         if col not in rankings.columns:
             rankings[col] = default
     # Clinical z backfill (same logic as compare_rulesets_replay)
@@ -74,30 +73,37 @@ def sweep(
 
     results = []
     for w in weights:
-        candidate_rs = _load_and_patch(baseline_path, {
-            "enable_institutional_sort_signal": True,
-            "institutional_sort_weight": w,
-            "institutional_positive_only": True,
-        })
+        candidate_rs = _load_and_patch(
+            baseline_path,
+            {
+                "enable_institutional_sort_signal": True,
+                "institutional_sort_weight": w,
+                "institutional_positive_only": True,
+            },
+        )
 
         result = compare(rankings, baseline_rs, candidate_rs)
-        results.append({
-            "weight": w,
-            "top20_overlap": result["top20_overlap"],
-            "top60_overlap": result["top60_overlap"],
-            "names_changed_20": len(result["entrants_20"]),
-            "names_changed_60": len(result["entrants_60"]),
-            "entrants_20": result["entrants_20"],
-            "exits_20": result["exits_20"],
-            "mean_rank_churn_top60": result["mean_rank_churn_top60"],
-            "max_rank_churn_top60": result["max_rank_churn_top60"],
-            "baseline_id": result["baseline_id"],
-            "candidate_id": result["candidate_id"],
-        })
-        print(f"  w={w:.2f}  top20={result['top20_overlap']:.1f}%  "
-              f"top60={result['top60_overlap']:.1f}%  "
-              f"names_chg_20={len(result['entrants_20'])}  "
-              f"mean_churn={result['mean_rank_churn_top60']:.2f}")
+        results.append(
+            {
+                "weight": w,
+                "top20_overlap": result["top20_overlap"],
+                "top60_overlap": result["top60_overlap"],
+                "names_changed_20": len(result["entrants_20"]),
+                "names_changed_60": len(result["entrants_60"]),
+                "entrants_20": result["entrants_20"],
+                "exits_20": result["exits_20"],
+                "mean_rank_churn_top60": result["mean_rank_churn_top60"],
+                "max_rank_churn_top60": result["max_rank_churn_top60"],
+                "baseline_id": result["baseline_id"],
+                "candidate_id": result["candidate_id"],
+            }
+        )
+        print(
+            f"  w={w:.2f}  top20={result['top20_overlap']:.1f}%  "
+            f"top60={result['top60_overlap']:.1f}%  "
+            f"names_chg_20={len(result['entrants_20'])}  "
+            f"mean_churn={result['mean_rank_churn_top60']:.2f}"
+        )
 
     return results
 
@@ -117,7 +123,7 @@ def format_report(results: List[dict]) -> str:
             f"          | {r['names_changed_20']}"
             f"                 | {r['mean_rank_churn_top60']:.2f}"
             f"           | {r['max_rank_churn_top60']}"
-            f"              |"
+            "              |"
         )
 
     if results:
@@ -130,9 +136,11 @@ def format_report(results: List[dict]) -> str:
         ]
         for r in results:
             if r["entrants_20"] or r["exits_20"]:
-                lines.append(f"**w={r['weight']:.2f}**: "
-                             f"in={', '.join(r['entrants_20']) or 'none'}, "
-                             f"out={', '.join(r['exits_20']) or 'none'}")
+                lines.append(
+                    f"**w={r['weight']:.2f}**: "
+                    f"in={', '.join(r['entrants_20']) or 'none'}, "
+                    f"out={', '.join(r['exits_20']) or 'none'}"
+                )
 
     lines.append("")
     return "\n".join(lines)
@@ -140,14 +148,12 @@ def format_report(results: List[dict]) -> str:
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="Sweep institutional sort weight")
-    p.add_argument("--snapshot-dir", required=True,
-                   help="Snapshot directory containing rankings.csv")
-    p.add_argument("--baseline", required=True,
-                   help="Path to baseline ruleset JSON")
-    p.add_argument("--weights", default=None,
-                   help="Comma-separated weights (default: 0.01,0.03,0.05,0.10,0.15,0.20,0.30,0.50)")
-    p.add_argument("--output-dir", default="artifacts",
-                   help="Output directory for reports (default: artifacts)")
+    p.add_argument("--snapshot-dir", required=True, help="Snapshot directory containing rankings.csv")
+    p.add_argument("--baseline", required=True, help="Path to baseline ruleset JSON")
+    p.add_argument(
+        "--weights", default=None, help="Comma-separated weights (default: 0.01,0.03,0.05,0.10,0.15,0.20,0.30,0.50)"
+    )
+    p.add_argument("--output-dir", default="artifacts", help="Output directory for reports (default: artifacts)")
     return p.parse_args(argv)
 
 

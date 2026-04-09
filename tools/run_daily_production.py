@@ -1733,7 +1733,7 @@ def check_institutional_delta(
             name="institutional_delta",
             status="PASS",
             detail=(
-                f"institutional_summary_delta.json valid: "
+                "institutional_summary_delta.json valid: "
                 f"{delta_data.get('as_of_date', '?')} vs {delta_data.get('prior_date', '?')}, "
                 f"{delta_data.get('tickers_common', 0)} common tickers"
             ),
@@ -3247,7 +3247,7 @@ def check_market_data_staleness(
             detail=(
                 f"market_data.json is {age_days}d stale "
                 f"(collected={collected_at}, as_of={as_of_date}, max={max_age_days}d). "
-                f"Run: python collect_market_data.py"
+                "Run: python collect_market_data.py"
             ),
             value=age_days,
             threshold=max_age_days,
@@ -3593,7 +3593,7 @@ def build_run_manifest(
     # Validate gate names against allowlist
     for g in gate_results:
         if g.name not in GATE_ALLOWLIST:
-            raise ValueError(f"Gate '{g.name}' not in GATE_ALLOWLIST. " f"Add it to the allowlist before using it.")
+            raise ValueError(f"Gate '{g.name}' not in GATE_ALLOWLIST. " "Add it to the allowlist before using it.")
 
     # Market data refresh provenance
     mkt_refresh: Dict[str, Any] = {}

@@ -12,6 +12,7 @@ Exit codes:
     3  — artifact not found (non-fatal; caller should continue with fallback)
     2  — API / auth / IO error
 """
+
 from __future__ import annotations
 
 import argparse
@@ -133,7 +134,8 @@ def fetch_alpha_table(
 
     try:
         fd, tmp_path = tempfile.mkstemp(
-            dir=str(dest.parent), suffix=".tmp",
+            dir=str(dest.parent),
+            suffix=".tmp",
         )
         os.write(fd, table_bytes)
         os.close(fd)
@@ -176,23 +178,29 @@ def main() -> int:
         description="Fetch alpha cohort table artifact from GitHub Actions",
     )
     parser.add_argument(
-        "--as-of-date", required=True,
+        "--as-of-date",
+        required=True,
         help="Table date (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--dest", required=True, type=Path,
+        "--dest",
+        required=True,
+        type=Path,
         help="Destination path for the table JSON",
     )
     parser.add_argument(
-        "--repo", default=DEFAULT_REPO,
+        "--repo",
+        default=DEFAULT_REPO,
         help=f"GitHub repo (default: {DEFAULT_REPO})",
     )
     parser.add_argument(
-        "--workflow", default=DEFAULT_WORKFLOW,
+        "--workflow",
+        default=DEFAULT_WORKFLOW,
         help=f"Workflow file name (default: {DEFAULT_WORKFLOW})",
     )
     parser.add_argument(
-        "--required", action="store_true",
+        "--required",
+        action="store_true",
         default=os.environ.get("REQUIRE_ALPHA_TABLE_ARTIFACT", "") == "1",
         help="Exit 2 (not 3) if artifact not found. Also set via REQUIRE_ALPHA_TABLE_ARTIFACT=1.",
     )

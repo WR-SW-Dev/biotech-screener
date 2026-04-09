@@ -54,13 +54,9 @@ logger = logging.getLogger(__name__)
 class PipelineValidationError(Exception):
     """Raised when pipeline input validation fails."""
 
-    pass
-
 
 class DataQualityError(Exception):
     """Raised when data quality is below acceptable threshold."""
-
-    pass
 
 
 # ============================================================================

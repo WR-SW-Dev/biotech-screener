@@ -11,13 +11,13 @@ CLI:
     [--price-history production_data/price_history.csv] \
     [--output-dir /tmp/audit-test]
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
 import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -63,9 +63,11 @@ def audit_drawdown_coverage(
     dd_col = "de_drawdown"
     reason_col = "de_drawdown_missing_reason"
 
-    dd_present_mask = dev[dd_col].apply(
-        lambda v: not pd.isna(v) and str(v).strip() != ""
-    ) if dd_col in dev.columns else pd.Series([False] * total_dev)
+    dd_present_mask = (
+        dev[dd_col].apply(lambda v: not pd.isna(v) and str(v).strip() != "")
+        if dd_col in dev.columns
+        else pd.Series([False] * total_dev)
+    )
     dd_present = int(dd_present_mask.sum())
     dd_missing = total_dev - dd_present
 
@@ -82,9 +84,7 @@ def audit_drawdown_coverage(
             if reason == "":
                 reason = "other"
             missing_reason_counts[reason] = missing_reason_counts.get(reason, 0) + 1
-            missing_tickers_by_reason.setdefault(reason, []).append(
-                str(row.get("ticker", ""))
-            )
+            missing_tickers_by_reason.setdefault(reason, []).append(str(row.get("ticker", "")))
     else:
         # No reason column — fall back to cross-referencing price CSV
         missing_tickers = list(dev[~dd_present_mask]["ticker"])
@@ -106,9 +106,7 @@ def audit_drawdown_coverage(
 
     # Cap ticker lists for readability
     for reason in missing_tickers_by_reason:
-        missing_tickers_by_reason[reason] = sorted(
-            missing_tickers_by_reason[reason]
-        )[:MAX_TICKERS_PER_BUCKET]
+        missing_tickers_by_reason[reason] = sorted(missing_tickers_by_reason[reason])[:MAX_TICKERS_PER_BUCKET]
 
     # --- Price history stats ---
     price_history_stats: Dict[str, Any] = {"available": False}
@@ -160,8 +158,8 @@ def format_audit_markdown(result: Dict[str, Any]) -> str:
     lines: List[str] = []
     lines.append("# Drawdown Coverage Audit")
     lines.append("")
-    lines.append(f"| Metric | Value |")
-    lines.append(f"|---|---|")
+    lines.append("| Metric | Value |")
+    lines.append("|---|---|")
     lines.append(f"| Snapshot date | {result['snapshot_date']} |")
     lines.append(f"| Dev tickers | {result['total_dev_tickers']} |")
     lines.append(f"| Drawdown present | {result['drawdown_present']} |")
@@ -206,12 +204,12 @@ def format_audit_markdown(result: Dict[str, Any]) -> str:
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Audit drawdown data coverage in a snapshot."
-    )
+    parser = argparse.ArgumentParser(description="Audit drawdown data coverage in a snapshot.")
     parser.add_argument(
-        "--snapshot-dir", required=True,
+        "--snapshot-dir",
+        required=True,
         help="Path to the snapshot directory (e.g. data/snapshots/2026-02-07)",
     )
     parser.add_argument(
@@ -220,7 +218,8 @@ def main() -> int:
         help="Path to price_history.csv (default: production_data/price_history.csv)",
     )
     parser.add_argument(
-        "--output-dir", default="output",
+        "--output-dir",
+        default="output",
         help="Directory for output files (default: output)",
     )
     args = parser.parse_args()

@@ -12,6 +12,7 @@ Usage:
         --out production_data/coinvest_features/2025-12-31.json \\
         --universe production_data/universe.json
 """
+
 from __future__ import annotations
 
 import argparse

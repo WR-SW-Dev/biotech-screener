@@ -13,6 +13,7 @@ Usage:
     python tools/build_bioshort_watch.py
     python tools/build_bioshort_watch.py --as-of-date 2026-03-26
 """
+
 from __future__ import annotations
 
 import argparse

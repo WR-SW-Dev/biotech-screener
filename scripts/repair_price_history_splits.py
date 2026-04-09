@@ -15,22 +15,23 @@ CLI:
     [--jump-threshold 3.0] \
     [--drop-threshold -0.75]
 """
+
 from __future__ import annotations
 
 import argparse
 import csv
 import sys
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
-JUMP_THRESHOLD = 3.0     # +300% single-day → reverse split
-DROP_THRESHOLD = -0.75   # -75% single-day → forward split
+JUMP_THRESHOLD = 3.0  # +300% single-day → reverse split
+DROP_THRESHOLD = -0.75  # -75% single-day → forward split
 
 # Quantization for output prices (6 decimal places)
 PRICE_QUANT = Decimal("0.000001")
@@ -39,6 +40,7 @@ PRICE_QUANT = Decimal("0.000001")
 # ---------------------------------------------------------------------------
 # Core logic
 # ---------------------------------------------------------------------------
+
 
 def detect_splits(
     prices: Dict[str, Dict[date, Decimal]],
@@ -64,12 +66,14 @@ def detect_splits(
             pct = float(curr / prev) - 1.0
             if pct >= jump_threshold or pct <= drop_threshold:
                 factor = curr / prev  # Decimal
-                splits.setdefault(ticker, []).append({
-                    "date": sorted_dates[i],
-                    "factor": factor,
-                    "pct_change": round(pct, 6),
-                    "flag_type": "reverse_split" if pct > 0 else "forward_split",
-                })
+                splits.setdefault(ticker, []).append(
+                    {
+                        "date": sorted_dates[i],
+                        "factor": factor,
+                        "pct_change": round(pct, 6),
+                        "flag_type": "reverse_split" if pct > 0 else "forward_split",
+                    }
+                )
     # Sort events per ticker by date ascending
     for ticker in splits:
         splits[ticker].sort(key=lambda e: e["date"])
@@ -154,6 +158,7 @@ def write_adjusted_csv(
 # High-level orchestrator
 # ---------------------------------------------------------------------------
 
+
 def repair_price_history(
     prices_path: Path,
     output_path: Path,
@@ -210,6 +215,7 @@ def repair_price_history(
 # CLI
 # ---------------------------------------------------------------------------
 
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Repair split artifacts in price_history.csv")
     parser.add_argument(
@@ -223,11 +229,15 @@ def main() -> None:
         help="Output split-adjusted CSV path",
     )
     parser.add_argument(
-        "--jump-threshold", type=float, default=JUMP_THRESHOLD,
+        "--jump-threshold",
+        type=float,
+        default=JUMP_THRESHOLD,
         help=f"Reverse split detection threshold (default: {JUMP_THRESHOLD})",
     )
     parser.add_argument(
-        "--drop-threshold", type=float, default=DROP_THRESHOLD,
+        "--drop-threshold",
+        type=float,
+        default=DROP_THRESHOLD,
         help=f"Forward split detection threshold (default: {DROP_THRESHOLD})",
     )
     args = parser.parse_args()
@@ -246,11 +256,13 @@ def main() -> None:
     print(f"  Rows written:        {result['rows_written']}")
 
     if result["split_details"]:
-        print(f"\nSplit events:")
+        print("\nSplit events:")
         for ticker, events in sorted(result["split_details"].items()):
             for e in events:
-                print(f"  {ticker:6s}  {e['date']}  {e['flag_type']:14s}  "
-                      f"factor={e['factor']:.4f}  ({e['pct_change']:+.2%})")
+                print(
+                    f"  {ticker:6s}  {e['date']}  {e['flag_type']:14s}  "
+                    f"factor={e['factor']:.4f}  ({e['pct_change']:+.2%})"
+                )
 
 
 if __name__ == "__main__":

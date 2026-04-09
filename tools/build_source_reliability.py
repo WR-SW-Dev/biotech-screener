@@ -11,6 +11,7 @@ Usage:
     python3 tools/build_source_reliability.py --as-of-date 2026-03-10
     python3 tools/build_source_reliability.py --as-of-date 2026-03-10 --n-weeks 12
 """
+
 from __future__ import annotations
 
 import argparse

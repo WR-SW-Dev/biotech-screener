@@ -15,6 +15,7 @@ Usage:
     python3 scripts/research/build_signal_research_panel.py --start 2022-01-01
     python3 scripts/research/build_signal_research_panel.py --no-parquet  # CSV only
 """
+
 from __future__ import annotations
 
 import argparse

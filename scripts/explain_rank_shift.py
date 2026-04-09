@@ -41,11 +41,9 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from decision_engine import DecisionRuleset
-from scripts.eval_ruleset import (
-    _read_rankings,
-    rank_map as _existing_rank_map,
-    rerank_rows,
-)
+from scripts.eval_ruleset import _read_rankings
+from scripts.eval_ruleset import rank_map as _existing_rank_map
+from scripts.eval_ruleset import rerank_rows
 
 VERSION = "1.0.0"
 SCHEMA = "explain_rank_shift.v1"
@@ -54,6 +52,7 @@ SCHEMA = "explain_rank_shift.v1"
 # -----------------------------
 # Small utilities
 # -----------------------------
+
 
 def _is_nan(x: Any) -> bool:
     try:
@@ -114,58 +113,80 @@ MODULE_KEY_CANDIDATES: Dict[str, List[str]] = {
 }
 
 FEATURE_GROUPS: List[Tuple[str, List[str]]] = [
-    ("eligibility", [
-        "eligible",
-        "archetype",
-        "missing_count",
-        "missing_components",
-        "missingness_penalty",
-    ]),
-    ("tiers", [
-        "tier_dev",
-        "tier_commercial",
-        "tier_any",
-    ]),
-    ("catalyst", [
-        "catalyst_mode",
-        "catalyst_days",
-        "catalyst_priority",
-        "cat_priority",
-        "catalyst_strength",
-        "catalyst_event_type",
-    ]),
-    ("alpha", [
-        "alpha_raw",
-        "alpha_cohort_pct",
-        "alpha_cohort_raw",
-        "clinical_score_z",
-        "clinical_score_z_tier",
-        "clinical_alpha_z",
-    ]),
-    ("coinvest", [
-        "coinvest_score_z",
-        "coinvest_adj",
-        "inst_delta_z",
-        "inst_adj",
-    ]),
-    ("momentum", [
-        "momentum_score",
-        "momentum_score_z",
-        "mom_state",
-    ]),
-    ("price_regime", [
-        "de_alpha_60d",
-        "de_drawdown",
-        "de_beta_xbi_60d",
-        "de_rsi_14d",
-        "de_drawdown_rel_xbi",
-    ]),
+    (
+        "eligibility",
+        [
+            "eligible",
+            "archetype",
+            "missing_count",
+            "missing_components",
+            "missingness_penalty",
+        ],
+    ),
+    (
+        "tiers",
+        [
+            "tier_dev",
+            "tier_commercial",
+            "tier_any",
+        ],
+    ),
+    (
+        "catalyst",
+        [
+            "catalyst_mode",
+            "catalyst_days",
+            "catalyst_priority",
+            "cat_priority",
+            "catalyst_strength",
+            "catalyst_event_type",
+        ],
+    ),
+    (
+        "alpha",
+        [
+            "alpha_raw",
+            "alpha_cohort_pct",
+            "alpha_cohort_raw",
+            "clinical_score_z",
+            "clinical_score_z_tier",
+            "clinical_alpha_z",
+        ],
+    ),
+    (
+        "coinvest",
+        [
+            "coinvest_score_z",
+            "coinvest_adj",
+            "inst_delta_z",
+            "inst_adj",
+        ],
+    ),
+    (
+        "momentum",
+        [
+            "momentum_score",
+            "momentum_score_z",
+            "mom_state",
+        ],
+    ),
+    (
+        "price_regime",
+        [
+            "de_alpha_60d",
+            "de_drawdown",
+            "de_beta_xbi_60d",
+            "de_rsi_14d",
+            "de_drawdown_rel_xbi",
+        ],
+    ),
 ]
 
 
 # -----------------------------
 # Core explain logic (steps 2-5)
 # -----------------------------
+
 
 @dataclass(frozen=True)
 class ExplainResult:
@@ -268,8 +289,7 @@ def explain_rank_shift(
     if delta_rank is not None and abs(delta_rank) >= 50:
         notes.append("large_rank_shift")
 
-    for key in ("tier_any", "tier_dev", "eligible", "missing_count",
-                "catalyst_days", "alpha_raw"):
+    for key in ("tier_any", "tier_dev", "eligible", "missing_count", "catalyst_days", "alpha_raw"):
         b = _get(baseline_row, key)
         c = _get(candidate_row, key)
         if _is_nan(b):
@@ -291,9 +311,7 @@ def explain_rank_shift(
         "features": features,
         "notes": notes,
     }
-    fingerprint = hashlib.sha256(
-        _stable_json(fingerprint_input).encode("utf-8")
-    ).hexdigest()[:16]
+    fingerprint = hashlib.sha256(_stable_json(fingerprint_input).encode("utf-8")).hexdigest()[:16]
 
     payload: Dict[str, Any] = {
         "schema": SCHEMA,
@@ -370,6 +388,7 @@ def explain_rank_shift(
 # Integration seam (Step 1)
 # -----------------------------
 
+
 def _load_rows_and_ranks(
     as_of_date: str,
     ticker: str,
@@ -415,19 +434,16 @@ def _load_rows_and_ranks(
 # CLI
 # -----------------------------
 
+
 def main(argv: Optional[List[str]] = None) -> int:
-    ap = argparse.ArgumentParser(
-        description="Explain a single-ticker rank shift between rulesets"
-    )
+    ap = argparse.ArgumentParser(description="Explain a single-ticker rank shift between rulesets")
     ap.add_argument("--date", required=True, help="YYYY-MM-DD")
     ap.add_argument("--ticker", required=True)
     ap.add_argument("--snapshot-dir", default="data/snapshots")
     ap.add_argument("--candidate-id", required=True)
     ap.add_argument("--baseline-id", required=True)
-    ap.add_argument("--candidate-ruleset", default=None,
-                    help="Path to candidate ruleset JSON (for rerank)")
-    ap.add_argument("--baseline-ruleset", default=None,
-                    help="Path to baseline ruleset JSON (for rerank)")
+    ap.add_argument("--candidate-ruleset", default=None, help="Path to candidate ruleset JSON (for rerank)")
+    ap.add_argument("--baseline-ruleset", default=None, help="Path to baseline ruleset JSON (for rerank)")
     ap.add_argument("--out-json", required=True)
     ap.add_argument("--out-md", default=None)
     ap.add_argument("--rerank-only", action="store_true")
@@ -440,17 +456,15 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.baseline_ruleset:
         base_rs = DecisionRuleset.from_json(args.baseline_ruleset)
 
-    baseline_row, candidate_row, baseline_rank, candidate_rank = (
-        _load_rows_and_ranks(
-            as_of_date=args.date,
-            ticker=args.ticker,
-            snapshot_dir=Path(args.snapshot_dir),
-            candidate_id=args.candidate_id,
-            baseline_id=args.baseline_id,
-            rerank_only=args.rerank_only,
-            candidate_ruleset=cand_rs,
-            baseline_ruleset=base_rs,
-        )
+    baseline_row, candidate_row, baseline_rank, candidate_rank = _load_rows_and_ranks(
+        as_of_date=args.date,
+        ticker=args.ticker,
+        snapshot_dir=Path(args.snapshot_dir),
+        candidate_id=args.candidate_id,
+        baseline_id=args.baseline_id,
+        rerank_only=args.rerank_only,
+        candidate_ruleset=cand_rs,
+        baseline_ruleset=base_rs,
     )
 
     eval_mode = "rerank_only" if args.rerank_only else "normal"

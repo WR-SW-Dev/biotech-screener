@@ -17,6 +17,7 @@ Usage:
     python tools/refresh_morningstar_data.py --dry-run
     python tools/refresh_morningstar_data.py --only mcp_data
 """
+
 from __future__ import annotations
 
 import argparse
@@ -164,11 +165,16 @@ def refresh_mcp_data(tickers: List[str], dry_run: bool = False) -> bool:
 
     logger.info(
         "Refreshing MCP data: %d tickers (%d have MS IDs, %d skipped), %d datapoints...",
-        len(tickers), len(fetchable), len(skipped), len(dp_ids),
+        len(tickers),
+        len(fetchable),
+        len(skipped),
+        len(dp_ids),
     )
 
     if dry_run:
-        logger.info("[DRY RUN] Would fetch %d tickers x %d datapoints in batches of %d", len(fetchable), len(dp_ids), BATCH_SIZE)
+        logger.info(
+            "[DRY RUN] Would fetch %d tickers x %d datapoints in batches of %d", len(fetchable), len(dp_ids), BATCH_SIZE
+        )
         return True
 
     # Reverse map: column name → datapoint ID
@@ -233,7 +239,9 @@ def refresh_mcp_data(tickers: List[str], dry_run: bool = False) -> bool:
 
     out_path = DATA_DIR / "morningstar_mcp_data.json"
     _atomic_write_json(out_path, output)
-    logger.info("Wrote %s (%d tickers, %d with data)", out_path.name, len(records), output["metadata"]["tickers_with_data"])
+    logger.info(
+        "Wrote %s (%d tickers, %d with data)", out_path.name, len(records), output["metadata"]["tickers_with_data"]
+    )
     return True
 
 
@@ -250,7 +258,12 @@ def refresh_price_metrics(tickers: List[str], dry_run: bool = False) -> bool:
     id_to_ticker = {v: k for k, v in id_map.items()}
     fetchable = [(t, id_map[t]) for t in tickers if t in id_map]
 
-    logger.info("Refreshing price metrics: %d tickers (%d with MS IDs), %d datapoints...", len(tickers), len(fetchable), len(dp_ids))
+    logger.info(
+        "Refreshing price metrics: %d tickers (%d with MS IDs), %d datapoints...",
+        len(tickers),
+        len(fetchable),
+        len(dp_ids),
+    )
 
     if dry_run:
         logger.info("[DRY RUN] Would fetch %d tickers x %d datapoints", len(fetchable), len(dp_ids))

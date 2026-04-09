@@ -6,6 +6,7 @@ Provides policy-based resolution of alpha cohort tables for both production
 The resolver enforces PIT-safety: for historical dates, a per-date OOS table
 is used instead of the static table (which may be built from future data).
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -134,7 +135,9 @@ def resolve_alpha_table_path(
             source = "artifact" if (marker_present and marker_valid) else "preexisting_local"
             logger.info(
                 "  Alpha table (%s): reusing %s [source=%s]",
-                policy, dated_path, source,
+                policy,
+                dated_path,
+                source,
             )
             return dated_path, source
         # policy == "daily" falls through to rebuild below
@@ -146,23 +149,22 @@ def resolve_alpha_table_path(
             path, near_date = nearest
             logger.info(
                 "  Alpha table (if_missing): nearest earlier %s for %s",
-                near_date, as_of_date,
+                near_date,
+                as_of_date,
             )
             return path, f"nearest_earlier:{near_date}"
 
     # --- Rebuild OOS table in-process ---
     if allow_rebuild:
         logger.info(
-            "  Alpha table (%s): building OOS table for %s "
-            "(mode=%s, horizon=%s)",
-            policy, as_of_date,
-            ruleset.alpha_train_mode, ruleset.alpha_train_horizon,
+            "  Alpha table (%s): building OOS table for %s " "(mode=%s, horizon=%s)",
+            policy,
+            as_of_date,
+            ruleset.alpha_train_mode,
+            ruleset.alpha_train_horizon,
         )
         try:
-            from scripts.build_alpha_cohort_table_oos import (
-                build_oos_table,
-                write_table_with_marker,
-            )
+            from scripts.build_alpha_cohort_table_oos import build_oos_table, write_table_with_marker
 
             table = build_oos_table(
                 as_of_date=as_of_date,
@@ -174,15 +176,15 @@ def resolve_alpha_table_path(
 
             if table is not None:
                 write_table_with_marker(
-                    table, dated_path,
-                    as_of_date=as_of_date, source="rebuilt_in_run",
+                    table,
+                    dated_path,
+                    as_of_date=as_of_date,
+                    source="rebuilt_in_run",
                 )
                 logger.info("  Alpha table: wrote %s + marker", dated_path)
                 return dated_path, "rebuilt_in_run"
 
-            logger.warning(
-                "  Alpha table rebuild returned None (insufficient data)"
-            )
+            logger.warning("  Alpha table rebuild returned None (insufficient data)")
         except Exception as exc:
             logger.warning("  Alpha table rebuild failed: %s", exc)
 
@@ -193,13 +195,15 @@ def resolve_alpha_table_path(
             path, near_date = nearest
             logger.info(
                 "  Alpha table: falling back to nearest earlier %s for %s",
-                near_date, as_of_date,
+                near_date,
+                as_of_date,
             )
             return path, f"nearest_earlier:{near_date}"
 
     # --- Last resort: static ---
     logger.warning(
-        "  Alpha table: falling back to static table for %s", as_of_date,
+        "  Alpha table: falling back to static table for %s",
+        as_of_date,
     )
     return _static_path(ruleset, project_root), "static_fallback"
 
@@ -249,10 +253,7 @@ def alpha_table_metadata(
 
     # Static warning: if we fell back to static for a date that should have
     # had a per-date table available
-    static_warning = (
-        "static" in source
-        and as_of_date >= EARLIEST_DAILY_TABLE_DATE
-    )
+    static_warning = "static" in source and as_of_date >= EARLIEST_DAILY_TABLE_DATE
 
     return {
         "alpha_table_source": source,

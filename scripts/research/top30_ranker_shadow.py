@@ -460,7 +460,7 @@ def main():
     # Feature importance
     logistic = result["results"].get("B_logistic_pairwise", {})
     if logistic.get("feature_importance"):
-        print(f"\nFeature importance (logistic pairwise):")
+        print("\nFeature importance (logistic pairwise):")
         for fi in logistic["feature_importance"][:10]:
             print(f"  {fi['feature']:<35} {fi['weight']:>+.4f}")
 

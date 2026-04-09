@@ -13,6 +13,7 @@ Usage:
         --bucket less_binary \
         --horizons 84,126
 """
+
 from __future__ import annotations
 
 import csv

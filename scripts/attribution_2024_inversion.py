@@ -9,14 +9,13 @@ Usage:
         --panel artifacts/walkforward_panel__baseline_full.csv \
         [--output-dir artifacts]
 """
+
 from __future__ import annotations
 
 import argparse
-import statistics
-import sys
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -29,9 +28,7 @@ DEFAULT_OUTPUT_DIR = PROJECT_ROOT / "artifacts"
 # ---------------------------------------------------------------------------
 # Bucketing helpers
 # ---------------------------------------------------------------------------
-def _bucket_continuous(
-    series: pd.Series, edges: List[float], labels: List[str]
-) -> pd.Series:
+def _bucket_continuous(series: pd.Series, edges: List[float], labels: List[str]) -> pd.Series:
     """Bucket a numeric series into labeled bins. NaN → 'missing'."""
     result = pd.cut(series, bins=[-np.inf] + edges + [np.inf], labels=labels)
     return result.astype(str).fillna("missing")
@@ -60,8 +57,14 @@ def _dd_abs_margin_buckets(margin: pd.Series) -> pd.Series:
     return _bucket_continuous(
         margin,
         [-0.20, -0.10, -0.05, 0.0, 0.10],
-        ["deep_<-20pp", "stressed_-20to-10pp", "near_-10to-5pp",
-         "borderline_-5to0pp", "safe_0to10pp", "comfortable_>10pp"],
+        [
+            "deep_<-20pp",
+            "stressed_-20to-10pp",
+            "near_-10to-5pp",
+            "borderline_-5to0pp",
+            "safe_0to10pp",
+            "comfortable_>10pp",
+        ],
     )
 
 
@@ -70,8 +73,7 @@ def _dd_rel_margin_buckets(margin: pd.Series) -> pd.Series:
     return _bucket_continuous(
         margin,
         [-0.15, -0.05, 0.0, 0.10],
-        ["deep_<-15pp", "stressed_-15to-5pp", "borderline_-5to0pp",
-         "safe_0to10pp", "comfortable_>10pp"],
+        ["deep_<-15pp", "stressed_-15to-5pp", "borderline_-5to0pp", "safe_0to10pp", "comfortable_>10pp"],
     )
 
 
@@ -80,23 +82,19 @@ def _optionality_buckets(opt: pd.Series) -> pd.Series:
     return _bucket_continuous(
         opt,
         [0.30, 0.55, 0.60, 0.75],
-        ["low_<0.30", "mid_0.30-0.55", "b_floor_0.55-0.60",
-         "a_zone_0.60-0.75", "high_>0.75"],
+        ["low_<0.30", "mid_0.30-0.55", "b_floor_0.55-0.60", "a_zone_0.60-0.75", "high_>0.75"],
     )
 
 
 # ---------------------------------------------------------------------------
 # Stats computation
 # ---------------------------------------------------------------------------
-def _group_stats(
-    df: pd.DataFrame, ret_col: str = "fwd_ret_60d"
-) -> Dict[str, Any]:
+def _group_stats(df: pd.DataFrame, ret_col: str = "fwd_ret_60d") -> Dict[str, Any]:
     """Compute stats for a group of rows."""
     vals = pd.to_numeric(df[ret_col], errors="coerce").dropna()
     n = len(vals)
     if n == 0:
-        return {"n": 0, "mean": None, "median": None, "hit_pct": None,
-                "p25": None, "p75": None}
+        return {"n": 0, "mean": None, "median": None, "hit_pct": None, "p25": None, "p75": None}
     return {
         "n": n,
         "mean": round(float(vals.mean()), 2),
@@ -107,9 +105,7 @@ def _group_stats(
     }
 
 
-def _compute_separation(
-    df: pd.DataFrame, ret_col: str = "fwd_ret_60d"
-) -> Optional[float]:
+def _compute_separation(df: pd.DataFrame, ret_col: str = "fwd_ret_60d") -> Optional[float]:
     """AB-CD mean separation (eligible only, C-tier only for CD)."""
     elig = df[df["eligible"].astype(str).str.strip() == "1"]
     ret = pd.to_numeric(elig[ret_col], errors="coerce")
@@ -139,10 +135,9 @@ def breakout_by_dimension(
         group = sub[mask]
 
         ab_rows = group[group["tier"].isin(["A", "B"])]
-        c_rows = group[(group["tier"] == "C") &
-                       (group["eligible"].astype(str).str.strip() == "1")]
+        c_rows = group[(group["tier"] == "C") & (group["eligible"].astype(str).str.strip() == "1")]
         d_rows = group[group["tier"] == "D"]
-        all_elig = group[group["eligible"].astype(str).str.strip() == "1"]
+        _ = group[group["eligible"].astype(str).str.strip() == "1"]
 
         ab_stats = _group_stats(ab_rows, ret_col)
         c_stats = _group_stats(c_rows, ret_col)
@@ -159,23 +154,25 @@ def breakout_by_dimension(
         if ab_stats["mean"] is not None and c_stats["mean"] is not None:
             ab_c_spread = round(ab_stats["mean"] - c_stats["mean"], 2)
 
-        results.append({
-            "value": str(val),
-            "n_total": len(group),
-            "n_ab": ab_stats["n"],
-            "n_c": c_stats["n"],
-            "n_d": d_stats["n"],
-            "ab_mean": ab_stats["mean"],
-            "ab_median": ab_stats["median"],
-            "ab_hit": ab_stats["hit_pct"],
-            "c_mean": c_stats["mean"],
-            "d_mean": d_stats["mean"],
-            "d_median": d_stats["median"],
-            "d_hit": d_stats["hit_pct"],
-            "ab_d_spread": ab_d_spread,
-            "ab_c_spread": ab_c_spread,
-            "all_mean": all_stats["mean"],
-        })
+        results.append(
+            {
+                "value": str(val),
+                "n_total": len(group),
+                "n_ab": ab_stats["n"],
+                "n_c": c_stats["n"],
+                "n_d": d_stats["n"],
+                "ab_mean": ab_stats["mean"],
+                "ab_median": ab_stats["median"],
+                "ab_hit": ab_stats["hit_pct"],
+                "c_mean": c_stats["mean"],
+                "d_mean": d_stats["mean"],
+                "d_median": d_stats["median"],
+                "d_hit": d_stats["hit_pct"],
+                "ab_d_spread": ab_d_spread,
+                "ab_c_spread": ab_c_spread,
+                "all_mean": all_stats["mean"],
+            }
+        )
 
     return results
 
@@ -196,14 +193,8 @@ def rank_drivers(
         b_2025 = breakouts_2025.get(dim_name, [])
 
         # 2024 spread range
-        spreads_2024 = [
-            r["ab_d_spread"] for r in b_2024
-            if r["ab_d_spread"] is not None and r["n_ab"] >= 5
-        ]
-        spreads_2025 = [
-            r["ab_d_spread"] for r in b_2025
-            if r["ab_d_spread"] is not None and r["n_ab"] >= 5
-        ]
+        spreads_2024 = [r["ab_d_spread"] for r in b_2024 if r["ab_d_spread"] is not None and r["n_ab"] >= 5]
+        spreads_2025 = [r["ab_d_spread"] for r in b_2025 if r["ab_d_spread"] is not None and r["n_ab"] >= 5]
 
         if len(spreads_2024) < 2:
             continue
@@ -214,21 +205,20 @@ def rank_drivers(
         worst = min(b_2024, key=lambda r: r["ab_d_spread"] or 0)
         best = max(b_2024, key=lambda r: r["ab_d_spread"] or 0)
 
-        spread_range_2025 = (
-            max(spreads_2025) - min(spreads_2025) if len(spreads_2025) >= 2
-            else None
-        )
+        spread_range_2025 = max(spreads_2025) - min(spreads_2025) if len(spreads_2025) >= 2 else None
 
-        drivers.append({
-            "dimension": dim_name,
-            "spread_range_2024": round(spread_range_2024, 2),
-            "spread_range_2025": round(spread_range_2025, 2) if spread_range_2025 else None,
-            "worst_cell_2024": worst["value"],
-            "worst_spread_2024": worst["ab_d_spread"],
-            "best_cell_2024": best["value"],
-            "best_spread_2024": best["ab_d_spread"],
-            "n_cells_with_data": len(spreads_2024),
-        })
+        drivers.append(
+            {
+                "dimension": dim_name,
+                "spread_range_2024": round(spread_range_2024, 2),
+                "spread_range_2025": round(spread_range_2025, 2) if spread_range_2025 else None,
+                "worst_cell_2024": worst["value"],
+                "worst_spread_2024": worst["ab_d_spread"],
+                "best_cell_2024": best["value"],
+                "best_spread_2024": best["ab_d_spread"],
+                "n_cells_with_data": len(spreads_2024),
+            }
+        )
 
     # Sort by spread range (descending — widest range = most explanatory)
     drivers.sort(key=lambda d: d["spread_range_2024"], reverse=True)
@@ -246,10 +236,10 @@ def generate_report(
 ) -> str:
     lines = []
     today = date.today().isoformat()
-    lines.append(f"# 2024 Inversion Attribution Report")
-    lines.append(f"")
+    lines.append("# 2024 Inversion Attribution Report")
+    lines.append("")
     lines.append(f"**Date**: {today}")
-    lines.append(f"**Panel**: walkforward_panel__baseline_full.csv")
+    lines.append("**Panel**: walkforward_panel__baseline_full.csv")
     lines.append(f"**Rows**: {len(df)} ({df['as_of_date'].nunique()} snapshots)")
     lines.append("")
 
@@ -271,8 +261,8 @@ def generate_report(
     for year_label, sub in [("2024", df_2024), ("2025", df_2025)]:
         lines.append(f"### {year_label}")
         lines.append("")
-        lines.append(f"| Tier | N | Mean 60d | Median | Hit% | P25 | P75 |")
-        lines.append(f"|------|---|----------|--------|------|-----|-----|")
+        lines.append("| Tier | N | Mean 60d | Median | Hit% | P25 | P75 |")
+        lines.append("|------|---|----------|--------|------|-----|-----|")
         for t in ["A", "B", "C", "D"]:
             tdf = sub[sub["tier"] == t]
             s = _group_stats(tdf)
@@ -296,7 +286,7 @@ def generate_report(
     for i, drv in enumerate(drivers[:3], 1):
         lines.append(f"### #{i}: `{drv['dimension']}`")
         lines.append("")
-        sr_2025 = drv['spread_range_2025']
+        sr_2025 = drv["spread_range_2025"]
         suffix = f" (2025: {sr_2025:+.2f}pp)" if sr_2025 else ""
         lines.append(f"- Spread range (2024): **{drv['spread_range_2024']:+.2f}pp**{suffix}")
         lines.append(f"- Worst cell: `{drv['worst_cell_2024']}` → AB-D = {drv['worst_spread_2024']:+.2f}pp")
@@ -321,8 +311,8 @@ def generate_report(
 
             lines.append(f"**{year_label}:**")
             lines.append("")
-            lines.append(f"| Value | N(AB) | AB mean | AB hit | N(D) | D mean | D hit | AB-D spread |")
-            lines.append(f"|-------|-------|---------|--------|------|--------|-------|-------------|")
+            lines.append("| Value | N(AB) | AB mean | AB hit | N(D) | D mean | D hit | AB-D spread |")
+            lines.append("|-------|-------|---------|--------|------|--------|-------|-------------|")
 
             for row in sorted(data, key=lambda r: r["ab_d_spread"] or 0):
                 v = row["value"]
@@ -356,7 +346,11 @@ def generate_report(
         ("catalyst_mode", None, "Catalyst mode"),
         ("mom_state", None, "Momentum state"),
         ("_adv_bucket", lambda d: _adv_buckets(pd.to_numeric(d["adv_dollars"], errors="coerce")), "ADV bucket"),
-        ("_dd_abs_bucket", lambda d: _dd_abs_margin_buckets(pd.to_numeric(d["dd_abs_margin"], errors="coerce")), "DD abs margin"),
+        (
+            "_dd_abs_bucket",
+            lambda d: _dd_abs_margin_buckets(pd.to_numeric(d["dd_abs_margin"], errors="coerce")),
+            "DD abs margin",
+        ),
     ]:
         if bucket_fn:
             d_top[col_name] = bucket_fn(d_top)
@@ -366,8 +360,8 @@ def generate_report(
         top_dist = d_top[col_name].value_counts(normalize=True).round(3)
         bot_dist = d_bottom[col_name].value_counts(normalize=True).round(3)
         all_vals = sorted(set(top_dist.index) | set(bot_dist.index))
-        lines.append(f"| Value | Top Q (winners) | Bottom Q (losers) | Delta |")
-        lines.append(f"|-------|-----------------|-------------------|-------|")
+        lines.append("| Value | Top Q (winners) | Bottom Q (losers) | Delta |")
+        lines.append("|-------|-----------------|-------------------|-------|")
         for v in all_vals:
             tp = top_dist.get(v, 0)
             bp = bot_dist.get(v, 0)
@@ -392,12 +386,12 @@ def generate_report(
         d1 = drivers[0]
         lines.append(f"1. **{d1['dimension']} penalty**: Weight *= penalty_mult for rows in the")
         lines.append(f"   `{d1['worst_cell_2024']}` bucket (worst AB-D spread: {d1['worst_spread_2024']:+.2f}pp).")
-        lines.append(f"   Test with mult = 0.70 and 0.85 via walkforward panel replay.")
+        lines.append("   Test with mult = 0.70 and 0.85 via walkforward panel replay.")
     if len(drivers) > 1:
         d2 = drivers[1]
         lines.append(f"2. **{d2['dimension']} penalty**: Same approach for `{d2['worst_cell_2024']}` bucket.")
-    lines.append(f"3. **abs_shallow + rel_deep composite**: Weight penalty for rows near")
-    lines.append(f"   abs gate but crushed vs XBI (sector-wide drawdown + idiosyncratic weakness).")
+    lines.append("3. **abs_shallow + rel_deep composite**: Weight penalty for rows near")
+    lines.append("   abs gate but crushed vs XBI (sector-wide drawdown + idiosyncratic weakness).")
     lines.append("")
 
     return "\n".join(lines)
@@ -407,15 +401,17 @@ def generate_report(
 # Main
 # ---------------------------------------------------------------------------
 def main():
-    parser = argparse.ArgumentParser(
-        description="2024 Inversion Attribution Report"
-    )
+    parser = argparse.ArgumentParser(description="2024 Inversion Attribution Report")
     parser.add_argument(
-        "--panel", type=str, default=str(DEFAULT_PANEL),
+        "--panel",
+        type=str,
+        default=str(DEFAULT_PANEL),
         help="Walkforward panel CSV path",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(DEFAULT_OUTPUT_DIR),
         help="Output directory",
     )
     args = parser.parse_args()
@@ -431,15 +427,9 @@ def main():
     # Add bucketed columns
     df["adv_bucket"] = _adv_buckets(pd.to_numeric(df["adv_dollars"], errors="coerce"))
     df["cost_bucket"] = _cost_buckets(pd.to_numeric(df["est_cost_bps"], errors="coerce"))
-    df["dd_abs_margin_bucket"] = _dd_abs_margin_buckets(
-        pd.to_numeric(df["dd_abs_margin"], errors="coerce")
-    )
-    df["dd_rel_margin_bucket"] = _dd_rel_margin_buckets(
-        pd.to_numeric(df["dd_rel_margin"], errors="coerce")
-    )
-    df["optionality_bucket"] = _optionality_buckets(
-        pd.to_numeric(df["optionality"], errors="coerce")
-    )
+    df["dd_abs_margin_bucket"] = _dd_abs_margin_buckets(pd.to_numeric(df["dd_abs_margin"], errors="coerce"))
+    df["dd_rel_margin_bucket"] = _dd_rel_margin_buckets(pd.to_numeric(df["dd_rel_margin"], errors="coerce"))
+    df["optionality_bucket"] = _optionality_buckets(pd.to_numeric(df["optionality"], errors="coerce"))
 
     # Define dimensions to break by
     dimensions = [
@@ -468,8 +458,10 @@ def main():
 
     print("\nTop drivers by spread range:")
     for i, d in enumerate(drivers[:5], 1):
-        print(f"  {i}. {d['dimension']}: range={d['spread_range_2024']:+.2f}pp "
-              f"(worst: {d['worst_cell_2024']}={d['worst_spread_2024']:+.2f}pp)")
+        print(
+            f"  {i}. {d['dimension']}: range={d['spread_range_2024']:+.2f}pp "
+            f"(worst: {d['worst_cell_2024']}={d['worst_spread_2024']:+.2f}pp)"
+        )
 
     # Generate report
     report = generate_report(df, breakouts_2024, breakouts_2025, drivers)

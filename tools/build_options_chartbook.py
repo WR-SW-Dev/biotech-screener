@@ -28,6 +28,7 @@ Usage:
     python tools/build_options_chartbook.py --as-of-date 2026-03-26
     python tools/build_options_chartbook.py --open  # open in browser after build
 """
+
 from __future__ import annotations
 
 import argparse

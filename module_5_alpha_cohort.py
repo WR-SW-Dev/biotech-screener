@@ -7,12 +7,12 @@ Percentile ranks are then assigned deterministically.
 
 Activated via ``sort_anchor="alpha_cohort"`` in the DecisionRuleset.
 """
+
 from __future__ import annotations
 
 import json
 from pathlib import Path
 from typing import Any, Dict, List
-
 
 # ---------------------------------------------------------------------------
 # Horizon band boundaries (upper-exclusive except last)
@@ -109,7 +109,7 @@ def compute_alpha_raw(
     cell = cells.get(key)
 
     # Horizon fallback: if this cell is empty, try the stage-level "none" bucket
-    if (cell is None or cell.get("n", 0) <= 0):
+    if cell is None or cell.get("n", 0) <= 0:
         parts = key.split("|")
         if len(parts) == 3 and parts[1] != "none":
             fallback_key = f"{parts[0]}|none|{parts[2]}"

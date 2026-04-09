@@ -23,6 +23,7 @@ CLI:
     [--min-bars 126] \
     [--dry-run]
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,7 @@ import csv
 import json
 import sys
 import tempfile
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
 
@@ -38,10 +39,7 @@ from typing import Any, Dict, List, Set, Tuple
 def _load_universe_tickers(path: Path) -> List[str]:
     with open(path, "r", encoding="utf-8") as f:
         data = json.load(f)
-    return [
-        t["ticker"] for t in data
-        if not t["ticker"].startswith("_")
-    ]
+    return [t["ticker"] for t in data if not t["ticker"].startswith("_")]
 
 
 def _load_csv_bar_counts(path: Path) -> Dict[str, int]:
@@ -71,15 +69,17 @@ def _fetch_prices(ticker: str, start_date: str, end_date: str) -> List[Dict[str,
         close = row.get("Close")
         if close is None or close != close:  # NaN check
             continue
-        rows.append({
-            "date": dt,
-            "ticker": ticker,
-            "close": str(close),
-            "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
-            "high": str(row["High"]) if row.get("High") == row.get("High") else "",
-            "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
-            "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
-        })
+        rows.append(
+            {
+                "date": dt,
+                "ticker": ticker,
+                "close": str(close),
+                "open": str(row["Open"]) if row.get("Open") == row.get("Open") else "",
+                "high": str(row["High"]) if row.get("High") == row.get("High") else "",
+                "low": str(row["Low"]) if row.get("Low") == row.get("Low") else "",
+                "volume": str(int(row["Volume"])) if row.get("Volume") == row.get("Volume") else "",
+            }
+        )
     return rows
 
 
@@ -87,8 +87,7 @@ def _remove_tickers_from_csv(price_path: Path, tickers_to_remove: Set[str]) -> i
     """Remove all rows for given tickers from the CSV. Returns rows removed."""
     tmp_fd, tmp_path = tempfile.mkstemp(suffix=".csv", dir=price_path.parent)
     removed = 0
-    with open(price_path, "r", encoding="utf-8") as fin, \
-         open(tmp_fd, "w", newline="", encoding="utf-8") as fout:
+    with open(price_path, "r", encoding="utf-8") as fin, open(tmp_fd, "w", newline="", encoding="utf-8") as fout:
         reader = csv.DictReader(fin)
         fieldnames = reader.fieldnames or []
         writer = csv.DictWriter(fout, fieldnames=fieldnames)
@@ -104,9 +103,7 @@ def _remove_tickers_from_csv(price_path: Path, tickers_to_remove: Set[str]) -> i
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Backfill missing price history for universe tickers."
-    )
+    parser = argparse.ArgumentParser(description="Backfill missing price history for universe tickers.")
     parser.add_argument(
         "--universe",
         default="production_data/universe.json",
@@ -170,12 +167,12 @@ def main() -> int:
         print(f"Short series (< {args.min_bars} bars): {len(short)}")
 
     if missing:
-        print(f"\nMissing tickers:")
+        print("\nMissing tickers:")
         for t in sorted(missing):
             print(f"  {t}")
 
     if short:
-        print(f"\nShort-series tickers:")
+        print("\nShort-series tickers:")
         for t, bars in sorted(short):
             print(f"  {t}: {bars} bars")
 
@@ -214,7 +211,7 @@ def main() -> int:
             continue
 
         if not rows:
-            print(f"no data returned")
+            print("no data returned")
             failed.append(ticker)
             continue
 

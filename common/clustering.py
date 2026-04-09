@@ -23,11 +23,12 @@ Default threshold = 0.70:
 Author: Wake Robin Capital Management
 Version: 1.0.0
 """
+
 from __future__ import annotations
 
 import logging
 import math
-from typing import Dict, List, Optional, Set, Tuple, Any
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -50,9 +51,19 @@ CLUSTER_SCHEMA_VERSION = "1.1.0"
 
 # Null-equivalent values to exclude when computing coverage/unique counts
 # Case-insensitive matching, whitespace stripped
-NULL_EQUIVALENTS = frozenset([
-    "", "none", "null", "na", "n/a", "unknown", "undefined", "nan", "-",
-])
+NULL_EQUIVALENTS = frozenset(
+    [
+        "",
+        "none",
+        "null",
+        "na",
+        "n/a",
+        "unknown",
+        "undefined",
+        "nan",
+        "-",
+    ]
+)
 
 
 def _is_null_equivalent(val: Any) -> bool:
@@ -67,6 +78,7 @@ def _is_null_equivalent(val: Any) -> bool:
 # =============================================================================
 # CORRELATION COMPUTATION
 # =============================================================================
+
 
 def compute_correlation(
     returns_a: List[float],
@@ -88,9 +100,9 @@ def compute_correlation(
     """
     # Find overlapping observations (both non-None)
     pairs = [
-        (a, b) for a, b in zip(returns_a, returns_b)
-        if a is not None and b is not None
-        and not (math.isnan(a) or math.isnan(b))
+        (a, b)
+        for a, b in zip(returns_a, returns_b)
+        if a is not None and b is not None and not (math.isnan(a) or math.isnan(b))
     ]
 
     n = len(pairs)
@@ -147,7 +159,7 @@ def compute_pairwise_correlations(
         if not returns_a:
             continue
 
-        for t_b in tickers[i+1:]:
+        for t_b in tickers[i + 1 :]:
             returns_b = returns_by_ticker.get(t_b)
             if not returns_b:
                 continue
@@ -162,6 +174,7 @@ def compute_pairwise_correlations(
 # =============================================================================
 # CLUSTERING (Connected Components)
 # =============================================================================
+
 
 def build_corr_clusters(
     tickers: List[str],
@@ -256,6 +269,7 @@ def compute_cluster_stats(
 # INTEGRATION WITH RANKED SECURITIES
 # =============================================================================
 
+
 def attach_cluster_ids(
     ranked_securities: List[Dict[str, Any]],
     returns_by_ticker: Optional[Dict[str, List[float]]] = None,
@@ -336,6 +350,7 @@ def attach_cluster_ids(
 # =============================================================================
 # FALLBACK: INDICATION-BASED CLUSTERING
 # =============================================================================
+
 
 def build_indication_clusters(
     ranked_securities: List[Dict[str, Any]],
@@ -492,8 +507,7 @@ def attach_indication_clusters(
 
     # Compute coverage for the key used (exclude null-equivalents)
     n = len(ranked_securities)
-    values = [r.get(indication_key) for r in ranked_securities
-              if not _is_null_equivalent(r.get(indication_key))]
+    values = [r.get(indication_key) for r in ranked_securities if not _is_null_equivalent(r.get(indication_key))]
     coverage = len(values) / n if n > 0 else 0
 
     return {

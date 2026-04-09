@@ -22,6 +22,7 @@ Usage:
     python3 tools/build_action_lists.py --as-of-date 2026-03-08
     python3 tools/build_action_lists.py --as-of-date 2026-03-08 --out-dir output/action_lists
 """
+
 from __future__ import annotations
 
 import argparse

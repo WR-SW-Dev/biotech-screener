@@ -7,6 +7,7 @@ since appeared. Report per-source accuracy metrics.
 Usage:
     python scripts/research/track_inferred_confirmations.py
 """
+
 from __future__ import annotations
 
 import json

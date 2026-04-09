@@ -14,6 +14,7 @@ Usage:
     python scripts/research/build_historical_iv_surface.py
     python scripts/research/build_historical_iv_surface.py --max-dates 10
 """
+
 from __future__ import annotations
 
 import argparse

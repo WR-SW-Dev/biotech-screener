@@ -12,6 +12,7 @@ Intended use:
 
 Schema-drift tolerant: tries canonical v1 keys first, then common alternatives.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _safe_int(v: Any, default: int = 0) -> int:
     try:
         if v is None:
@@ -57,6 +59,7 @@ def _stable_json(obj: Any) -> str:
 # ---------------------------------------------------------------------------
 # Summary normalisation
 # ---------------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class NormSummary:
@@ -113,6 +116,7 @@ def normalize_summary(raw: Dict[str, Any], as_of_date: str) -> NormSummary:
 # Snapshot discovery
 # ---------------------------------------------------------------------------
 
+
 def _is_degraded(snapshot_dir: Path) -> bool:
     health = snapshot_dir / "cache_health.json"
     if not health.exists():
@@ -120,10 +124,7 @@ def _is_degraded(snapshot_dir: Path) -> bool:
     try:
         h = _read_json(health)
         if isinstance(h, dict):
-            return (
-                bool(h.get("degraded_run", False))
-                or str(h.get("overall_status", "")).lower() in ("bad", "degraded")
-            )
+            return bool(h.get("degraded_run", False)) or str(h.get("overall_status", "")).lower() in ("bad", "degraded")
     except Exception:
         pass
     return False
@@ -163,6 +164,7 @@ def pick_prior_date(
 # ---------------------------------------------------------------------------
 # Delta computation
 # ---------------------------------------------------------------------------
+
 
 def _reason_delta(cur: Dict[str, int], pri: Dict[str, int]) -> Dict[str, int]:
     keys = set(cur) | set(pri)
@@ -210,6 +212,7 @@ def build_delta(
 # Markdown renderer
 # ---------------------------------------------------------------------------
 
+
 def render_delta_md(delta_obj: Dict[str, Any]) -> str:
     cur = delta_obj["current"]
     pri = delta_obj["prior"]
@@ -252,6 +255,7 @@ def render_delta_md(delta_obj: Dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     ap = argparse.ArgumentParser(description="Build eligibility delta artifact.")
@@ -306,7 +310,9 @@ def main() -> int:
     print(f"Wrote: {out_json}")
     print(f"Wrote: {out_md}")
     d = out["delta"]
-    print(f"Prior: {prior}  Eligible d={d['eligible']:+d}  Ineligible d={d['ineligible']:+d}  pct d={d['pct_ineligible']:+.4f}")
+    print(
+        f"Prior: {prior}  Eligible d={d['eligible']:+d}  Ineligible d={d['ineligible']:+d}  pct d={d['pct_ineligible']:+.4f}"
+    )
     return 0
 
 

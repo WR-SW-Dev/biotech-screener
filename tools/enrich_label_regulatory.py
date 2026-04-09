@@ -11,6 +11,7 @@ Usage:
     python tools/enrich_label_regulatory.py
     python tools/enrich_label_regulatory.py --max-tickers 10
 """
+
 from __future__ import annotations
 
 import argparse

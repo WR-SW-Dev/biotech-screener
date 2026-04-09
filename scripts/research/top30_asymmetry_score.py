@@ -23,6 +23,7 @@ Usage:
     python3 scripts/research/top30_asymmetry_score.py --as-of-date 2026-04-02
     python3 scripts/research/top30_asymmetry_score.py --as-of-date 2026-04-02 --backtest
 """
+
 from __future__ import annotations
 
 import argparse

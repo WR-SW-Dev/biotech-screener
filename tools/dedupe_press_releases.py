@@ -11,6 +11,7 @@ Dedupe strategy:
 Usage:
     python tools/dedupe_press_releases.py --input data/press_releases/releases_2026-03-31.jsonl
 """
+
 from __future__ import annotations
 
 import argparse

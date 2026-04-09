@@ -39,6 +39,7 @@ Author: Wake Robin Capital Management
 Version: 3.0.0
 Last Modified: 2026-01-17
 """
+
 from __future__ import annotations
 
 import json

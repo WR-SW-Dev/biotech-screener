@@ -25,6 +25,7 @@ Usage:
     python tools/train_options_probability_model.py --min-observations 50
     python tools/train_options_probability_model.py --cohort regulatory
 """
+
 from __future__ import annotations
 
 import argparse
@@ -33,7 +34,6 @@ import json
 import logging
 import math
 import sys
-from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -330,10 +330,9 @@ def build_dataset(
 
     # Find snapshots
     snap_dates = sorted(
-        d.name for d in snapshot_root.iterdir()
-        if d.is_dir() and len(d.name) == 10
-        and start_date <= d.name <= end_date
-        and (d / "rankings.csv").exists()
+        d.name
+        for d in snapshot_root.iterdir()
+        if d.is_dir() and len(d.name) == 10 and start_date <= d.name <= end_date and (d / "rankings.csv").exists()
     )
     logger.info("Found %d snapshots in [%s, %s]", len(snap_dates), start_date, end_date)
 
@@ -521,7 +520,9 @@ def train_logistic_model(
 
     logger.info(
         "Model trained: AUC=%.3f, Brier=%.4f, IC=%.4f",
-        auc, brier, ic or 0,
+        auc,
+        brier,
+        ic or 0,
     )
     for name, imp in top_features[:5]:
         logger.info("  %s: %.4f", name, imp)
@@ -583,8 +584,10 @@ def main():
         logger.info("IV history backfill: %s", iv_csv)
 
     features_list, labels_list, feature_names = build_dataset(
-        args.snapshot_root, args.price_csv,
-        start_date=args.start_date, end_date=args.end_date,
+        args.snapshot_root,
+        args.price_csv,
+        start_date=args.start_date,
+        end_date=args.end_date,
         cohort=args.cohort,
         iv_history_csv=iv_csv,
     )
@@ -592,7 +595,8 @@ def main():
     if len(features_list) < args.min_observations:
         logger.warning(
             "Insufficient observations: %d < %d minimum",
-            len(features_list), args.min_observations,
+            len(features_list),
+            args.min_observations,
         )
         if not args.all_cohorts:
             return
@@ -652,16 +656,18 @@ def main():
 
                 model = _train_and_save(c_feats, c_labs, feature_names, label, cohort_name, args.out_dir)
                 if model:
-                    comparison_rows.append({
-                        "label": label,
-                        "cohort": cohort_name,
-                        "n": model["n_observations"],
-                        "pos_rate": model["pos_rate"],
-                        "auc": model["metrics"]["auc"],
-                        "brier": model["metrics"]["brier_score"],
-                        "ic": model["metrics"].get("ic_abs_ret_t1"),
-                        "top_feature": model["top_features"][0][0] if model["top_features"] else None,
-                    })
+                    comparison_rows.append(
+                        {
+                            "label": label,
+                            "cohort": cohort_name,
+                            "n": model["n_observations"],
+                            "pos_rate": model["pos_rate"],
+                            "auc": model["metrics"]["auc"],
+                            "brier": model["metrics"]["brier_score"],
+                            "ic": model["metrics"].get("ic_abs_ret_t1"),
+                            "top_feature": model["top_features"][0][0] if model["top_features"] else None,
+                        }
+                    )
 
         # Write comparison matrix
         comp = {
@@ -680,12 +686,16 @@ def main():
         md.append("|-------|--------|---|------|-----|-------|-----|-------------|")
         for r in comparison_rows:
             ic_str = f"{r['ic']:.4f}" if r["ic"] is not None else "N/A"
-            md.append(f"| {r['label']} | {r['cohort']} | {r['n']} | {r['pos_rate']:.1%} | {r['auc']:.3f} | {r['brier']:.4f} | {ic_str} | {r['top_feature']} |")
+            md.append(
+                f"| {r['label']} | {r['cohort']} | {r['n']} | {r['pos_rate']:.1%} | {r['auc']:.3f} | {r['brier']:.4f} | {ic_str} | {r['top_feature']} |"
+            )
         md.append("")
         (args.out_dir / "cohort_comparison.md").write_text("\n".join(md), encoding="utf-8")
         logger.info("\nComparison: %s", comp_path)
     else:
-        model = _train_and_save(features_list, labels_list, feature_names, args.label, args.cohort or "all", args.out_dir)
+        model = _train_and_save(
+            features_list, labels_list, feature_names, args.label, args.cohort or "all", args.out_dir
+        )
         if model is None:
             logger.error("Training failed")
             return

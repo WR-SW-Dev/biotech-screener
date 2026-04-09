@@ -14,6 +14,7 @@ Usage:
     python3 tools/fetch_form4_insider.py --tickers RVMD KURA
     python3 tools/fetch_form4_insider.py --since 2020-01-01
 """
+
 from __future__ import annotations
 
 import argparse

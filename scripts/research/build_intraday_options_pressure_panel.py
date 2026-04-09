@@ -15,6 +15,7 @@ Usage:
         --universe production_data/universe.json \
         --out output/research/intraday_options_pressure_panel.csv
 """
+
 from __future__ import annotations
 
 import argparse

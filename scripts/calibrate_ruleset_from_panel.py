@@ -26,6 +26,7 @@ Usage:
     --suffix TAG         Suffix for output files (e.g., '2025' → calibration_report_2025.md)
     --dry-run            Print sweep config, exit
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,6 +43,7 @@ PROJECT_ROOT = SCRIPT_DIR.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from outcome_provenance import build_provenance
+
 from decision_engine_codes import registry_fingerprint
 
 DEFAULT_PANEL = PROJECT_ROOT / "artifacts" / "walkforward_panel.csv"
@@ -58,6 +60,7 @@ DEFAULT_CATALYST_NEAR_SWEEP = [30, 45, 60, 90, 120]
 # PANEL READER
 # =============================================================================
 
+
 def read_panel(path: Path) -> List[Dict[str, Any]]:
     """Read the panel CSV and parse numeric columns."""
     rows: List[Dict[str, Any]] = []
@@ -65,10 +68,18 @@ def read_panel(path: Path) -> List[Dict[str, Any]]:
         for raw in csv.DictReader(f):
             row: Dict[str, Any] = dict(raw)
             # Parse numeric fields
-            for col in ("optionality", "catalyst_days_raw",
-                        "fwd_ret_20d", "fwd_ret_60d",
-                        "fwd_max_dd_20d", "fwd_max_dd_60d", "weight",
-                        "drawdown_abs", "drawdown_xbi", "drawdown_rel_xbi"):
+            for col in (
+                "optionality",
+                "catalyst_days_raw",
+                "fwd_ret_20d",
+                "fwd_ret_60d",
+                "fwd_max_dd_20d",
+                "fwd_max_dd_60d",
+                "weight",
+                "drawdown_abs",
+                "drawdown_xbi",
+                "drawdown_rel_xbi",
+            ):
                 v = row.get(col, "")
                 if v == "" or v is None:
                     row[col] = None
@@ -84,6 +95,7 @@ def read_panel(path: Path) -> List[Dict[str, Any]]:
 # =============================================================================
 # DATA-QUALITY GATE
 # =============================================================================
+
 
 def check_panel_data_quality(
     rows: List[Dict[str, Any]],
@@ -133,6 +145,7 @@ def check_panel_data_quality(
 # RE-TIER LOGIC
 # =============================================================================
 
+
 def retier_row(
     row: Dict[str, Any],
     a_floor: float,
@@ -163,8 +176,7 @@ def retier_row(
         dd_rel = row.get("drawdown_rel_xbi")
 
         abs_breach = dd_abs is not None and dd_abs < drawdown_gate
-        rel_breach = (drawdown_rel_xbi_gate is not None
-                      and dd_rel is not None and dd_rel < drawdown_rel_xbi_gate)
+        rel_breach = drawdown_rel_xbi_gate is not None and dd_rel is not None and dd_rel < drawdown_rel_xbi_gate
 
         if dd_rel is None or drawdown_rel_xbi_gate is None:
             # No relative data — absolute-only
@@ -228,6 +240,7 @@ def retier_row(
 # CANDIDATE EVALUATION
 # =============================================================================
 
+
 def evaluate_candidate(
     rows: List[Dict[str, Any]],
     a_floor: float,
@@ -243,8 +256,14 @@ def evaluate_candidate(
     tiers: List[str] = []
     for row in rows:
         new_tier = retier_row(
-            row, a_floor, b_floor, catalyst_near_days, catalyst_mid_days,
-            drawdown_gate, drawdown_rel_xbi_gate, drawdown_gate_require_both,
+            row,
+            a_floor,
+            b_floor,
+            catalyst_near_days,
+            catalyst_mid_days,
+            drawdown_gate,
+            drawdown_rel_xbi_gate,
+            drawdown_gate_require_both,
         )
         tiers.append(new_tier)
 
@@ -258,10 +277,7 @@ def evaluate_candidate(
 
     # Tier distribution among eligible rows only (D excluded — always ineligible)
     n_eligible = sum(1 for i, row in enumerate(rows) if str(row.get("eligible", "0")) == "1")
-    eligible_tier_pcts = {
-        t: round(tier_counts[t] / n_eligible * 100, 1) if n_eligible else 0
-        for t in ("A", "B", "C")
-    }
+    eligible_tier_pcts = {t: round(tier_counts[t] / n_eligible * 100, 1) if n_eligible else 0 for t in ("A", "B", "C")}
 
     # Per-tier return and drawdown metrics
     tier_metrics: Dict[str, Dict[str, Any]] = {}
@@ -346,10 +362,11 @@ def evaluate_candidate(
     mean_turnover = round((1.0 - mean(overlaps)) * 100, 1) if overlaps else None
 
     # Mean A-count per date
-    a_counts = [
-        sum(1 for j, row in enumerate(rows) if row.get("as_of_date") == d and tiers[j] == "A")
-        for d in sorted_dates
-    ] if sorted_dates else []
+    a_counts = (
+        [sum(1 for j, row in enumerate(rows) if row.get("as_of_date") == d and tiers[j] == "A") for d in sorted_dates]
+        if sorted_dates
+        else []
+    )
     mean_a_count = round(mean(a_counts), 1) if a_counts else 0
 
     return {
@@ -409,6 +426,7 @@ def score_candidate(
 # 2D SWEEP HELPERS
 # =============================================================================
 
+
 def _compute_tradeoffs(
     best: Dict[str, Any],
     baseline: Dict[str, Any],
@@ -418,23 +436,15 @@ def _compute_tradeoffs(
     b_dd = baseline.get("ab_median_dd_60d")
     c_dd = best.get("ab_median_dd_60d")
     if b_dd is not None and c_dd is not None and c_dd < b_dd:
-        tradeoffs.append(
-            f"Worse AB max-DD: {c_dd:.2f}% vs baseline {b_dd:.2f}% "
-            f"(delta {c_dd - b_dd:+.2f}pp)"
-        )
+        tradeoffs.append(f"Worse AB max-DD: {c_dd:.2f}% vs baseline {b_dd:.2f}% " f"(delta {c_dd - b_dd:+.2f}pp)")
     b_overlap = baseline.get("mean_top25_overlap_pct")
     c_overlap = best.get("mean_top25_overlap_pct")
     if b_overlap is not None and c_overlap is not None and c_overlap < b_overlap - 2:
-        tradeoffs.append(
-            f"Lower stability: overlap {c_overlap:.1f}% vs baseline {b_overlap:.1f}%"
-        )
+        tradeoffs.append(f"Lower stability: overlap {c_overlap:.1f}% vs baseline {b_overlap:.1f}%")
     b_a_count = baseline.get("mean_a_count_per_date", 0)
     c_a_count = best.get("mean_a_count_per_date", 0)
     if c_a_count > b_a_count * 2:
-        tradeoffs.append(
-            f"A-tier inflation: {c_a_count:.1f} vs baseline {b_a_count:.1f} "
-            f"(may reduce selectivity)"
-        )
+        tradeoffs.append(f"A-tier inflation: {c_a_count:.1f} vs baseline {b_a_count:.1f} " "(may reduce selectivity)")
     return tradeoffs
 
 
@@ -475,8 +485,14 @@ def run_2d_sweep(
             dd_gate, dd_rel_gate, dd_require_both = None, None, True
         for a_floor in a_floor_values:
             result = evaluate_candidate(
-                rows, a_floor, b_floor, cat_near, cat_mid,
-                dd_gate, dd_rel_gate, dd_require_both,
+                rows,
+                a_floor,
+                b_floor,
+                cat_near,
+                cat_mid,
+                dd_gate,
+                dd_rel_gate,
+                dd_require_both,
             )
             result["sweep_val"] = sv
             # Keep legacy key for backward compatibility
@@ -513,16 +529,18 @@ def compute_ridge_summary(
             best = max(group, key=lambda c: c["score"])
 
         elig_dist = best.get("eligible_tier_distribution", {})
-        ridge.append({
-            "sweep_val": sv,
-            "best_a_floor": best["a_floor"],
-            "score": best["score"],
-            "separation_60d": best.get("separation_60d"),
-            "passed": best.get("passed", False),
-            "a_pct_elig": elig_dist.get("A", 0),
-            "ab_median_dd_60d": best.get("ab_median_dd_60d"),
-            "mean_a_count": best.get("mean_a_count_per_date", 0),
-        })
+        ridge.append(
+            {
+                "sweep_val": sv,
+                "best_a_floor": best["a_floor"],
+                "score": best["score"],
+                "separation_60d": best.get("separation_60d"),
+                "passed": best.get("passed", False),
+                "a_pct_elig": elig_dist.get("A", 0),
+                "ab_median_dd_60d": best.get("ab_median_dd_60d"),
+                "mean_a_count": best.get("mean_a_count_per_date", 0),
+            }
+        )
     return ridge
 
 
@@ -562,19 +580,22 @@ def check_neighbor_stability(
         if c["a_floor"] in neighbor_afs and c["sweep_val"] in neighbor_svs:
             if c["a_floor"] == best_af and c["sweep_val"] == best_sv:
                 continue  # skip self
-            neighbors.append({
-                "a_floor": c["a_floor"],
-                "sweep_val": c["sweep_val"],
-                "score": c["score"],
-                "separation_60d": c.get("separation_60d"),
-                "passed": c.get("passed", False),
-            })
+            neighbors.append(
+                {
+                    "a_floor": c["a_floor"],
+                    "sweep_val": c["sweep_val"],
+                    "score": c["score"],
+                    "separation_60d": c.get("separation_60d"),
+                    "passed": c.get("passed", False),
+                }
+            )
     return neighbors
 
 
 # =============================================================================
 # REPORT GENERATION
 # =============================================================================
+
 
 def generate_calibration_report_md(
     candidates: List[Dict[str, Any]],
@@ -656,9 +677,7 @@ def generate_calibration_report_md(
             cv = best.get(key)
             if bv is not None and cv is not None:
                 delta = cv - bv
-                lines.append(
-                    f"| {label} | {bv:.2f} | {cv:.2f} | {delta:+.2f} |"
-                )
+                lines.append(f"| {label} | {bv:.2f} | {cv:.2f} | {delta:+.2f} |")
             else:
                 bv_s = f"{bv:.2f}" if bv is not None else "n/a"
                 cv_s = f"{cv:.2f}" if cv is not None else "n/a"
@@ -680,7 +699,7 @@ def generate_calibration_report_md(
             f"- Objective score: {best.get('score', 'n/a')} "
             f"(best among {sum(1 for c in candidates if c.get('passed'))} passing candidates)"
         )
-        lines.append(f"- All constraints satisfied")
+        lines.append("- All constraints satisfied")
     else:
         lines.append("**No candidate passed all constraints.**")
         lines.append("")
@@ -728,12 +747,8 @@ def generate_calibration_report_2d_md(
     top_n = sorted_cands[:10]
     lines.append("## Top 10 Candidates")
     lines.append("")
-    lines.append(
-        f"| # | a_floor | {sweep_label} | A%(elig) | Sep | AB DD | Score | Pass |"
-    )
-    lines.append(
-        "|---|---------|----------|----------|-----|-------|-------|------|"
-    )
+    lines.append(f"| # | a_floor | {sweep_label} | A%(elig) | Sep | AB DD | Score | Pass |")
+    lines.append("|---|---------|----------|----------|-----|-------|-------|------|")
 
     def _fmt(v, fmt="+.2f"):
         return f"{v:{fmt}}" if v is not None else "n/a"
@@ -756,12 +771,8 @@ def generate_calibration_report_2d_md(
     # Ridge summary
     lines.append(f"## Ridge Summary (best a_floor per {sweep_label})")
     lines.append("")
-    lines.append(
-        f"| {sweep_label} | best a_floor | A%(elig) | A count | Sep | AB DD | Score | Pass |"
-    )
-    lines.append(
-        "|----------|-------------|----------|---------|-----|-------|-------|------|"
-    )
+    lines.append(f"| {sweep_label} | best a_floor | A%(elig) | A count | Sep | AB DD | Score | Pass |")
+    lines.append("|----------|-------------|----------|---------|-----|-------|-------|------|")
     for r in ridge:
         lines.append(
             f"| {r['sweep_val']} "
@@ -786,10 +797,7 @@ def generate_calibration_report_2d_md(
         )
         lines.append("")
         n_passing = sum(1 for n in neighbors if n["passed"])
-        lines.append(
-            f"Neighbors (±1 step): {len(neighbors)} checked, "
-            f"{n_passing} passing"
-        )
+        lines.append(f"Neighbors (±1 step): {len(neighbors)} checked, " f"{n_passing} passing")
         lines.append("")
         lines.append(f"| a_floor | {sweep_label} | Sep | Score | Pass |")
         lines.append("|---------|----------|-----|-------|------|")
@@ -817,8 +825,7 @@ def generate_calibration_report_2d_md(
     lines.append("")
     if best.get("passed"):
         lines.append(
-            f"**`tier_a_optionality_floor = {best['a_floor']:.2f}`, "
-            f"`{sweep_param} = {best['sweep_val']}`**"
+            f"**`tier_a_optionality_floor = {best['a_floor']:.2f}`, " f"`{sweep_param} = {best['sweep_val']}`**"
         )
         lines.append("")
         lines.append("### Baseline vs Candidate")
@@ -876,81 +883,114 @@ def generate_calibration_report_2d_md(
 # MAIN
 # =============================================================================
 
+
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Ruleset Calibration from Walk-Forward Panel"
-    )
+    parser = argparse.ArgumentParser(description="Ruleset Calibration from Walk-Forward Panel")
     parser.add_argument(
-        "--panel", type=str, default=str(DEFAULT_PANEL),
+        "--panel",
+        type=str,
+        default=str(DEFAULT_PANEL),
         help="Panel CSV path (default: artifacts/walkforward_panel.csv)",
     )
     parser.add_argument(
-        "--output-dir", type=str, default=str(DEFAULT_OUTPUT_DIR),
+        "--output-dir",
+        type=str,
+        default=str(DEFAULT_OUTPUT_DIR),
         help="Output directory (default: artifacts/)",
     )
     parser.add_argument(
-        "--a-floor-values", type=str, default=None,
+        "--a-floor-values",
+        type=str,
+        default=None,
         help="Comma-separated a_floor values (default: 0.40,0.45,...,0.65)",
     )
     parser.add_argument(
-        "--b-floor", type=float, default=DEFAULT_B_FLOOR,
+        "--b-floor",
+        type=float,
+        default=DEFAULT_B_FLOOR,
         help=f"tier_b_optionality_floor held constant (default: {DEFAULT_B_FLOOR})",
     )
     parser.add_argument(
-        "--catalyst-near", type=int, default=DEFAULT_CATALYST_NEAR_DAYS,
+        "--catalyst-near",
+        type=int,
+        default=DEFAULT_CATALYST_NEAR_DAYS,
         help=f"catalyst_near_days held constant for 1D sweep (default: {DEFAULT_CATALYST_NEAR_DAYS})",
     )
     parser.add_argument(
-        "--catalyst-mid", type=int, default=180,
+        "--catalyst-mid",
+        type=int,
+        default=180,
         help="catalyst_mid_days held constant when sweeping near (default: 180)",
     )
     parser.add_argument(
-        "--sweep-catalyst-near-days", type=str, default=None,
+        "--sweep-catalyst-near-days",
+        type=str,
+        default=None,
         help="Enable 2D sweep: comma-separated catalyst_near_days values (e.g., '30,45,60,90,120')",
     )
     parser.add_argument(
-        "--sweep-catalyst-mid-days", type=str, default=None,
+        "--sweep-catalyst-mid-days",
+        type=str,
+        default=None,
         help="Enable 2D sweep: comma-separated catalyst_mid_days values (e.g., '150,180,210,270,365')",
     )
     parser.add_argument(
-        "--sweep-drawdown-rel-gate", type=str, default=None,
+        "--sweep-drawdown-rel-gate",
+        type=str,
+        default=None,
         help="Enable 2D sweep: comma-separated drawdown_rel_xbi_gate values (e.g., '-0.10,-0.15,-0.20,-0.25,-0.30')",
     )
     parser.add_argument(
-        "--drawdown-gate", type=float, default=-0.40,
+        "--drawdown-gate",
+        type=float,
+        default=-0.40,
         help="Held constant absolute drawdown gate for drawdown sweep (default: -0.40)",
     )
     parser.add_argument(
-        "--drawdown-gate-require-both", type=str, default="true",
+        "--drawdown-gate-require-both",
+        type=str,
+        default="true",
         help="AND vs OR logic for drawdown gate (default: true)",
     )
     parser.add_argument(
-        "--min-a-pct", type=float, default=3.0,
+        "--min-a-pct",
+        type=float,
+        default=3.0,
         help="Constraint: min %% of rows in tier A (default: 3.0)",
     )
     parser.add_argument(
-        "--max-turnover", type=float, default=50.0,
+        "--max-turnover",
+        type=float,
+        default=50.0,
         help="Constraint: max mean turnover %% (default: 50.0)",
     )
     parser.add_argument(
-        "--date-min", type=str, default=None,
+        "--date-min",
+        type=str,
+        default=None,
         help="Filter panel rows: as_of_date >= DATE (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--date-max", type=str, default=None,
+        "--date-max",
+        type=str,
+        default=None,
         help="Filter panel rows: as_of_date <= DATE (YYYY-MM-DD)",
     )
     parser.add_argument(
-        "--max-missing-catalyst-pct", type=float,
+        "--max-missing-catalyst-pct",
+        type=float,
         default=DEFAULT_MAX_MISSING_CATALYST_PCT,
         help=f"Data-quality gate: max catalyst_mode=missing %% among eligible rows (default: {DEFAULT_MAX_MISSING_CATALYST_PCT})",
     )
     parser.add_argument(
-        "--suffix", type=str, default=None,
+        "--suffix",
+        type=str,
+        default=None,
         help="Suffix for output files (e.g., '2025' → calibration_report_2025.md)",
     )
     parser.add_argument(
-        "--dry-run", action="store_true",
+        "--dry-run",
+        action="store_true",
         help="Print sweep config, exit",
     )
     args = parser.parse_args()
@@ -984,7 +1024,9 @@ def main() -> int:
     require_both = args.drawdown_gate_require_both.lower() in ("true", "1", "yes")
 
     # Parse 2D catalyst/drawdown sweep values
-    n_sweeps = sum(1 for x in [args.sweep_catalyst_near_days, args.sweep_catalyst_mid_days, args.sweep_drawdown_rel_gate] if x)
+    n_sweeps = sum(
+        1 for x in [args.sweep_catalyst_near_days, args.sweep_catalyst_mid_days, args.sweep_drawdown_rel_gate] if x
+    )
     if n_sweeps > 1:
         print("ERROR: Cannot use more than one --sweep-* flag at a time", file=sys.stderr)
         return 1
@@ -1007,7 +1049,9 @@ def main() -> int:
     print(f"  b_floor:         {args.b_floor}")
     if is_2d:
         print(f"  {sweep_label}:   {sweep_values} (2D sweep)")
-        print(f"  Grid size:       {len(a_floor_values)} × {len(sweep_values)} = {len(a_floor_values) * len(sweep_values)} combos")
+        print(
+            f"  Grid size:       {len(a_floor_values)} × {len(sweep_values)} = {len(a_floor_values) * len(sweep_values)} combos"
+        )
     else:
         print(f"  catalyst_near:   {args.catalyst_near}")
     print(f"  Constraints:     A% >= {args.min_a_pct}, turnover <= {args.max_turnover}%")
@@ -1025,7 +1069,7 @@ def main() -> int:
         print(f"ERROR: Panel not found: {panel_path}", file=sys.stderr)
         return 1
 
-    print(f"\nReading panel ...")
+    print("\nReading panel ...")
     rows = read_panel(panel_path)
     print(f"  {len(rows)} rows loaded")
 
@@ -1060,22 +1104,26 @@ def main() -> int:
     if not dq_ok:
         reason = dq_diag.get("reason", "unknown")
         print(f"\n{'=' * 60}")
-        print(f"DATA-QUALITY GATE: FAIL")
+        print("DATA-QUALITY GATE: FAIL")
         print(f"  Reason: {reason}")
         if reason == "insufficient_catalyst_coverage":
-            print(f"  catalyst_mode=missing: {dq_diag['catalyst_missing_pct']}% "
-                  f"of eligible rows (threshold: {dq_diag['threshold_pct']}%)")
-            print(f"  Recommendation: filter to date range with well-formed catalyst data")
-            print(f"  Example: --date-min 2025-01-01")
+            print(
+                f"  catalyst_mode=missing: {dq_diag['catalyst_missing_pct']}% "
+                f"of eligible rows (threshold: {dq_diag['threshold_pct']}%)"
+            )
+            print("  Recommendation: filter to date range with well-formed catalyst data")
+            print("  Example: --date-min 2025-01-01")
         elif reason == "no_eligible_rows":
             print(f"  No eligible rows in panel ({dq_diag['total_rows']} total)")
         elif reason == "empty_panel":
-            print(f"  Panel is empty after filtering")
+            print("  Panel is empty after filtering")
         print(f"{'=' * 60}")
         return 1
     else:
-        print(f"  Data-quality gate: OK (catalyst_missing={dq_diag['catalyst_missing_pct']}%"
-              f" <= {dq_diag['threshold_pct']}%)")
+        print(
+            f"  Data-quality gate: OK (catalyst_missing={dq_diag['catalyst_missing_pct']}%"
+            f" <= {dq_diag['threshold_pct']}%)"
+        )
 
     # Identify baseline
     baseline_a_floor = 0.55  # current active
@@ -1087,9 +1135,7 @@ def main() -> int:
     if is_2d:
         config["sweep_values"] = sweep_values
         config["sweep_label"] = sweep_label
-        config["baseline_sweep_val"] = (
-            baseline_cat_mid if sweep_label == "cat_mid" else baseline_cat_near
-        )
+        config["baseline_sweep_val"] = baseline_cat_mid if sweep_label == "cat_mid" else baseline_cat_near
 
     # File naming
     sfx = f"_{args.suffix}" if args.suffix else ""
@@ -1101,8 +1147,12 @@ def main() -> int:
         n_combos = len(a_floor_values) * len(sweep_values)
         print(f"\nRunning 2D sweep ({n_combos} combos, dim={sweep_label}) ...")
         candidates = run_2d_sweep(
-            rows, a_floor_values, sweep_values,
-            args.b_floor, args.min_a_pct, args.max_turnover,
+            rows,
+            a_floor_values,
+            sweep_values,
+            args.b_floor,
+            args.min_a_pct,
+            args.max_turnover,
             sweep_dim=sweep_label,
             base_near_days=args.catalyst_near,
             base_mid_days=args.catalyst_mid,
@@ -1116,7 +1166,11 @@ def main() -> int:
 
         # Evaluate baseline
         baseline_result = evaluate_candidate(
-            rows, baseline_a_floor, args.b_floor, baseline_cat_near, baseline_cat_mid,
+            rows,
+            baseline_a_floor,
+            args.b_floor,
+            baseline_cat_near,
+            baseline_cat_mid,
         )
         score, violations = score_candidate(baseline_result, args.min_a_pct, args.max_turnover)
         baseline_result["score"] = score
@@ -1124,9 +1178,7 @@ def main() -> int:
         baseline_result["passed"] = len(violations) == 0
         baseline_result["catalyst_near_days"] = baseline_cat_near
         baseline_result["catalyst_mid_days"] = baseline_cat_mid
-        baseline_result["sweep_val"] = (
-            baseline_cat_mid if sweep_label == "cat_mid" else baseline_cat_near
-        )
+        baseline_result["sweep_val"] = baseline_cat_mid if sweep_label == "cat_mid" else baseline_cat_near
 
         # Pick best
         passing = [c for c in candidates if c["passed"]]
@@ -1146,13 +1198,15 @@ def main() -> int:
         # Print ridge
         print(f"\n  Ridge summary (best a_floor per {sweep_label}):")
         for r in ridge:
-            sep_s = f"{r['separation_60d']:+.2f}" if r['separation_60d'] is not None else "n/a"
-            sv = r['sweep_val']
+            sep_s = f"{r['separation_60d']:+.2f}" if r["separation_60d"] is not None else "n/a"
+            sv = r["sweep_val"]
             sv_fmt = f"{sv:3d}" if isinstance(sv, int) else f"{sv:.2f}"
-            print(f"    {sweep_label}={sv_fmt}: "
-                  f"a_floor={r['best_a_floor']:.2f} "
-                  f"sep={sep_s} score={r['score']:.2f} "
-                  f"{'PASS' if r['passed'] else 'FAIL'}")
+            print(
+                f"    {sweep_label}={sv_fmt}: "
+                f"a_floor={r['best_a_floor']:.2f} "
+                f"sep={sep_s} score={r['score']:.2f} "
+                f"{'PASS' if r['passed'] else 'FAIL'}"
+            )
 
         # Write candidate_overrides.json
         overrides_path = output_dir / f"candidate_overrides{sfx}.json"
@@ -1176,9 +1230,9 @@ def main() -> int:
             print(f"  Use: python scripts/bump_ruleset.py --from-json {overrides_path}")
         else:
             if best.get("passed"):
-                print(f"\nBaseline is already optimal. No override generated.")
+                print("\nBaseline is already optimal. No override generated.")
             else:
-                print(f"\nWARNING: No candidate passed constraints. Writing best-effort override.")
+                print("\nWARNING: No candidate passed constraints. Writing best-effort override.")
                 overrides = {"tier_a_optionality_floor": best["a_floor"]}
                 if sweep_label == "cat_mid":
                     overrides["catalyst_mid_days"] = best["catalyst_mid_days"]
@@ -1221,7 +1275,12 @@ def main() -> int:
 
         # Write MD report
         md_content = generate_calibration_report_2d_md(
-            candidates, best, baseline_result, ridge, neighbors, config,
+            candidates,
+            best,
+            baseline_result,
+            ridge,
+            neighbors,
+            config,
             sweep_label=sweep_label,
         )
         md_path = output_dir / f"calibration_report{sfx}.md"
@@ -1310,7 +1369,7 @@ def main() -> int:
             json.dump(overrides, f, indent=2)
             f.write("\n")
     else:
-        print(f"\nWARNING: No candidate passed constraints. Writing best-effort override.")
+        print("\nWARNING: No candidate passed constraints. Writing best-effort override.")
         overrides = {"tier_a_optionality_floor": best["a_floor"]}
         with open(overrides_path, "w", encoding="utf-8") as f:
             json.dump(overrides, f, indent=2)
@@ -1341,9 +1400,7 @@ def main() -> int:
     print(f"Wrote calibration report JSON: {json_path}")
 
     # Write calibration_report.md
-    md_content = generate_calibration_report_md(
-        candidates, best, baseline_result, config
-    )
+    md_content = generate_calibration_report_md(candidates, best, baseline_result, config)
     md_path = output_dir / f"calibration_report{sfx}.md"
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_content)

@@ -17,6 +17,7 @@ Usage:
     python tools/build_aact_trial_deltas.py --as-of-date 2026-04-02
     python tools/build_aact_trial_deltas.py --as-of-date 2026-04-02 --prior 2026-04-01
 """
+
 from __future__ import annotations
 
 import argparse

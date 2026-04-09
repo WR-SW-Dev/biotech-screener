@@ -16,6 +16,7 @@ Usage:
     python tools/build_policy_shadow_compare.py
     python tools/build_policy_shadow_compare.py --as-of-date 2026-03-28
 """
+
 from __future__ import annotations
 
 import argparse
