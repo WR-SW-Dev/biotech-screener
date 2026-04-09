@@ -5236,6 +5236,26 @@ def run_daily(
         except Exception as _ready_err:
             _logger.warning(f"Event EV readiness check failed: {_ready_err}")
 
+        # --- Step 5k.24: Stage 1 shadow memo (non-blocking) ---
+        try:
+            from tools.build_ev_shadow_memo import build_memo as _build_shadow_memo
+
+            _memo = _build_shadow_memo(as_of_date)
+            if "error" not in _memo:
+                _logger.info(
+                    "EV shadow → ties=%d, reordered=%s, top30_changed=%s, ev_cov=%s",
+                    _memo.get("ties_at_cutoff", 0),
+                    _memo.get("names_reordered", False),
+                    _memo.get("top30_changed", False),
+                    _memo.get("ev_coverage_boundary", "?"),
+                )
+                # Append to ledger
+                _memo_path = REPO_ROOT / "artifacts" / "event_ev" / "ev_shadow_memo.jsonl"
+                with open(_memo_path, "a") as _mf:
+                    _mf.write(__import__("json").dumps(_memo, sort_keys=True, separators=(",", ":")) + "\n")
+        except Exception as _memo_err:
+            _logger.warning(f"EV shadow memo failed: {_memo_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
