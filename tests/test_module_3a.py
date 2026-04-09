@@ -375,7 +375,7 @@ class TestModule3Integration(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
 
-    @pytest.mark.skip(reason="Requires historical CTGov cache file (cache/ctgov/trial_records_2024-01-15.json)")
+    @pytest.mark.skip(reason="Requires CTGov PIT cache for 2024-01-15 (not in production data)")
     def test_full_pipeline_first_run(self):
         """Test complete pipeline on first run"""
         result = compute_module_3_catalyst(

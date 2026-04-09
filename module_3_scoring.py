@@ -1,6 +1,11 @@
 """
 Module 3 Catalyst Scoring System vNext
 
+DEPRECATED: Imported by module_3_catalyst.py (active) for score_catalyst_events().
+The schema has moved to module_3_schema.py / module_3_schema_v2.py.
+Retained for backward compatibility. New scoring code should be added to
+module_3_scoring_v2.py.
+
 Converts catalyst events into numeric impact scores (0-100 scale).
 
 Score Modes:
@@ -15,24 +20,24 @@ Determinism Guarantees:
 
 import logging
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
-from typing import Dict, List, Optional, Tuple, Any
+from decimal import ROUND_HALF_UP, Decimal
+from typing import Dict, List, Optional, Tuple
 
-from module_3_schema import (
+from module_3_schema import (  # noqa: F401
+    CONFIDENCE_WEIGHTS,
+    EVENT_DEFAULT_CONFIDENCE,
+    EVENT_SEVERITY_MAP,
+    EVENT_TYPE_WEIGHT,
     SCHEMA_VERSION,
     SCORE_VERSION,
-    EventType,
-    EventSeverity,
-    ConfidenceLevel,
-    CatalystWindowBucket,
-    CatalystEventV2,
-    TickerCatalystSummaryV2,
-    DiagnosticCounts,
-    EVENT_SEVERITY_MAP,
-    EVENT_DEFAULT_CONFIDENCE,
-    CONFIDENCE_WEIGHTS,
     SEVERITY_SCORE_CONTRIBUTION,
-    EVENT_TYPE_WEIGHT,
+    CatalystEventV2,
+    CatalystWindowBucket,
+    ConfidenceLevel,
+    DiagnosticCounts,
+    EventSeverity,
+    EventType,
+    TickerCatalystSummaryV2,
     compute_catalyst_window_bucket,
     decimal_to_str,
     effective_days_until,
@@ -40,10 +45,7 @@ from module_3_schema import (
 )
 
 # Configure logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -75,16 +77,16 @@ PROXIMITY_SCALE_FACTOR = Decimal("2.0")  # Scale factor to normalize to 0-100
 # Maps days-to-event to (base_score, max_score) ranges
 # Used when no delta events exist but upcoming events do
 PROXIMITY_BUCKET_SCORING = {
-    30: (Decimal("80"), Decimal("100")),   # ≤30d → 80-100
-    60: (Decimal("65"), Decimal("80")),    # ≤60d → 65-80
-    90: (Decimal("55"), Decimal("70")),    # ≤90d → 55-70
+    30: (Decimal("80"), Decimal("100")),  # ≤30d → 80-100
+    60: (Decimal("65"), Decimal("80")),  # ≤60d → 65-80
+    90: (Decimal("55"), Decimal("70")),  # ≤90d → 55-70
 }
 PROXIMITY_NEUTRAL_BASE = Decimal("50")  # No upcoming events → neutral baseline
 
 # Continuous proximity kernel parameters
-_PROXIMITY_RAMP_END = 15     # days: anticipation ramp reaches peak
+_PROXIMITY_RAMP_END = 15  # days: anticipation ramp reaches peak
 _PROXIMITY_PLATEAU_END = 45  # days: peak plateau ends
-_PROXIMITY_HORIZON = 90      # days: beyond this → 0 weight
+_PROXIMITY_HORIZON = 90  # days: beyond this → 0 weight
 _PROXIMITY_SATURATION_K = Decimal("25")  # half-saturation constant
 
 # Severity weights for proximity bonus calculation (legacy, kept for reference)
@@ -100,6 +102,7 @@ PROXIMITY_SEVERITY_WEIGHT = {
 # =============================================================================
 # RECENCY / DECAY CALCULATION
 # =============================================================================
+
 
 def compute_recency_weight(
     event_date: Optional[str],
@@ -186,6 +189,7 @@ def compute_staleness_factor(
 # PROXIMITY SCORING (UPCOMING EVENTS)
 # =============================================================================
 
+
 def _proximity_time_weight(days_to_event: int) -> Decimal:
     """Piecewise-linear time kernel for catalyst proximity.
 
@@ -202,8 +206,7 @@ def _proximity_time_weight(days_to_event: int) -> Decimal:
     if days_to_event <= _PROXIMITY_PLATEAU_END:
         return Decimal("1")
     if days_to_event < _PROXIMITY_HORIZON:
-        return (Decimal(_PROXIMITY_HORIZON - days_to_event)
-                / Decimal(_PROXIMITY_HORIZON - _PROXIMITY_PLATEAU_END))
+        return Decimal(_PROXIMITY_HORIZON - days_to_event) / Decimal(_PROXIMITY_HORIZON - _PROXIMITY_PLATEAU_END)
     return Decimal("0")
 
 
@@ -260,8 +263,7 @@ def compute_bucket_proximity_score(
     # Saturating aggregation: Michaelis-Menten style
     # score = 50 + 50 * total / (total + K)
     # K = 25 → one max-impact event (FDA_PDUFA 25×1.0×1.0) reaches 75
-    score = (PROXIMITY_NEUTRAL_BASE
-             + Decimal("50") * total_impact / (total_impact + _PROXIMITY_SATURATION_K))
+    score = PROXIMITY_NEUTRAL_BASE + Decimal("50") * total_impact / (total_impact + _PROXIMITY_SATURATION_K)
     score = max(SCORE_MIN, min(SCORE_MAX, score))
 
     return (score.quantize(Decimal("0.01")), n_upcoming)
@@ -332,6 +334,7 @@ def compute_proximity_score(
 # =============================================================================
 # DELTA SCORING (EVENT-BASED CHANGES)
 # =============================================================================
+
 
 def compute_delta_score(
     current_events: List[CatalystEventV2],
@@ -441,6 +444,7 @@ def compute_delta_score(
 # OVERRIDE SCORING (HIERARCHICAL)
 # =============================================================================
 
+
 def calculate_score_override(
     events: List[CatalystEventV2],
 ) -> Tuple[Decimal, str]:
@@ -476,13 +480,11 @@ def calculate_score_override(
         return (SCORE_OVERRIDE_CRITICAL_POSITIVE, "CRITICAL_POSITIVE_EVENTS")
 
     # Rule 3: Blend positive and negative events
-    positive_count = (
-        severity_counts.get(EventSeverity.POSITIVE, 0) +
-        severity_counts.get(EventSeverity.CRITICAL_POSITIVE, 0)
+    positive_count = severity_counts.get(EventSeverity.POSITIVE, 0) + severity_counts.get(
+        EventSeverity.CRITICAL_POSITIVE, 0
     )
-    negative_count = (
-        severity_counts.get(EventSeverity.NEGATIVE, 0) +
-        severity_counts.get(EventSeverity.SEVERE_NEGATIVE, 0)
+    negative_count = severity_counts.get(EventSeverity.NEGATIVE, 0) + severity_counts.get(
+        EventSeverity.SEVERE_NEGATIVE, 0
     )
 
     if positive_count > 0 and negative_count == 0:
@@ -508,6 +510,7 @@ def calculate_score_override(
 # =============================================================================
 # BLENDED SCORING (CONFIDENCE + RECENCY WEIGHTED)
 # =============================================================================
+
 
 def calculate_score_blended(
     events: List[CatalystEventV2],
@@ -553,15 +556,12 @@ def calculate_score_blended(
         # Weights — use effective event date for range-aware recency
         confidence_weight = CONFIDENCE_WEIGHTS.get(confidence, Decimal("0.5"))
         eff_date = effective_event_date(event, as_of_date)
-        recency_weight = compute_recency_weight(
-            eff_date.isoformat() if eff_date else event.event_date, as_of_date
-        )
+        recency_weight = compute_recency_weight(eff_date.isoformat() if eff_date else event.event_date, as_of_date)
 
         # For range events currently in-window, modulate recency by range
         # progress to differentiate events at different stages.  Decays from
         # 1.0 at range start to 0.85 at range end.
-        if (event.event_date_end and event.date_precision != "DAY"
-                and recency_weight == Decimal("1.0")):
+        if event.event_date_end and event.date_precision != "DAY" and recency_weight == Decimal("1.0"):
             try:
                 start_d = date.fromisoformat(event.event_date)
                 end_d = date.fromisoformat(event.event_date_end)
@@ -597,11 +597,7 @@ def calculate_score_blended(
     score = max(SCORE_MIN, min(SCORE_MAX, score))
 
     # Convert weighted sums to strings for JSON
-    weighted_counts = {
-        sev.value: decimal_to_str(weighted_sums[sev])
-        for sev in EventSeverity
-        if weighted_sums[sev] > 0
-    }
+    weighted_counts = {sev.value: decimal_to_str(weighted_sums[sev]) for sev in EventSeverity if weighted_sums[sev] > 0}
 
     return (score, weighted_counts)
 
@@ -609,6 +605,7 @@ def calculate_score_blended(
 # =============================================================================
 # TICKER-LEVEL SCORING
 # =============================================================================
+
 
 def compute_velocity(
     current_proximity: Decimal,
@@ -676,9 +673,7 @@ def calculate_ticker_catalyst_score(
     # NEW: Compute delta score if prior events available
     if prior_events is not None:
         sorted_prior = sorted(prior_events, key=lambda e: e.sort_key())
-        delta_score, n_added, n_removed, max_slip = compute_delta_score(
-            sorted_events, sorted_prior, as_of_date
-        )
+        delta_score, n_added, n_removed, max_slip = compute_delta_score(sorted_events, sorted_prior, as_of_date)
     else:
         delta_score = Decimal("0")
         n_added = 0
@@ -700,10 +695,7 @@ def calculate_ticker_catalyst_score(
         score_mode = "blended"
 
     # Check for severe negative flag
-    severe_negative_flag = any(
-        e.event_severity == EventSeverity.SEVERE_NEGATIVE
-        for e in sorted_events
-    )
+    severe_negative_flag = any(e.event_severity == EventSeverity.SEVERE_NEGATIVE for e in sorted_events)
 
     # Compute integration hooks — use ledger if available, else fallback
     nearest_event_id = None
@@ -712,6 +704,7 @@ def calculate_ticker_catalyst_score(
 
     if event_ledger is not None:
         from event_ledger import query_nearest_catalyst as _query_nearest
+
         nearest = _query_nearest(event_ledger, ticker, as_of_date)
         if nearest:
             next_catalyst_date = nearest["event_date"]
@@ -725,7 +718,9 @@ def calculate_ticker_catalyst_score(
             catalyst_window_days = None
             nearest_catalyst_type = None
     else:
-        next_catalyst_date, catalyst_window_days, nearest_catalyst_type = _compute_next_catalyst(sorted_events, as_of_date)
+        next_catalyst_date, catalyst_window_days, nearest_catalyst_type = _compute_next_catalyst(
+            sorted_events, as_of_date
+        )
 
     catalyst_window_bucket = compute_catalyst_window_bucket(catalyst_window_days)
     catalyst_confidence = _compute_catalyst_confidence(sorted_events, next_catalyst_date)
@@ -911,6 +906,7 @@ def _select_top_3_events(
 # BATCH SCORING
 # =============================================================================
 
+
 def score_catalyst_events(
     events_by_ticker: Dict[str, List[CatalystEventV2]],
     active_tickers: List[str],
@@ -947,7 +943,9 @@ def score_catalyst_events(
         historical_proximities = historical_proximities_by_ticker.get(ticker)
 
         summary = calculate_ticker_catalyst_score(
-            ticker, events, as_of_date,
+            ticker,
+            events,
+            as_of_date,
             prior_events=prior_events,
             historical_proximities=historical_proximities,
             event_ledger=event_ledger,
@@ -1012,27 +1010,27 @@ def score_catalyst_events(
 
 # Keep old EVENT_SEVERITY for backwards compatibility with existing code
 EVENT_SEVERITY = {
-    'PHASE_ADVANCE_P2_TO_P3': 'CRITICAL_POSITIVE',
-    'PHASE_ADVANCE_P3_TO_NDA': 'CRITICAL_POSITIVE',
-    'FDA_APPROVAL': 'CRITICAL_POSITIVE',
-    'BREAKTHROUGH_DESIGNATION': 'CRITICAL_POSITIVE',
-    'TRIAL_TERMINATION': 'SEVERE_NEGATIVE',
-    'TRIAL_SUSPENDED': 'SEVERE_NEGATIVE',
-    'FDA_REJECTION': 'SEVERE_NEGATIVE',
-    'SAFETY_HOLD': 'SEVERE_NEGATIVE',
-    'ENROLLMENT_COMPLETE': 'POSITIVE',
-    'ENROLLMENT_STARTED': 'POSITIVE',
-    'FAST_TRACK_GRANTED': 'POSITIVE',
-    'ORPHAN_DESIGNATION': 'POSITIVE',
-    'ENROLLMENT_DELAY': 'NEGATIVE',
-    'TRIAL_DELAYED': 'NEGATIVE',
+    "PHASE_ADVANCE_P2_TO_P3": "CRITICAL_POSITIVE",
+    "PHASE_ADVANCE_P3_TO_NDA": "CRITICAL_POSITIVE",
+    "FDA_APPROVAL": "CRITICAL_POSITIVE",
+    "BREAKTHROUGH_DESIGNATION": "CRITICAL_POSITIVE",
+    "TRIAL_TERMINATION": "SEVERE_NEGATIVE",
+    "TRIAL_SUSPENDED": "SEVERE_NEGATIVE",
+    "FDA_REJECTION": "SEVERE_NEGATIVE",
+    "SAFETY_HOLD": "SEVERE_NEGATIVE",
+    "ENROLLMENT_COMPLETE": "POSITIVE",
+    "ENROLLMENT_STARTED": "POSITIVE",
+    "FAST_TRACK_GRANTED": "POSITIVE",
+    "ORPHAN_DESIGNATION": "POSITIVE",
+    "ENROLLMENT_DELAY": "NEGATIVE",
+    "TRIAL_DELAYED": "NEGATIVE",
 }
 
 SEVERITY_SCORES = {
-    'CRITICAL_POSITIVE': 75.0,
-    'POSITIVE': 60.0,
-    'NEGATIVE': 40.0,
-    'SEVERE_NEGATIVE': 20.0,
+    "CRITICAL_POSITIVE": 75.0,
+    "POSITIVE": 60.0,
+    "NEGATIVE": 40.0,
+    "SEVERE_NEGATIVE": 20.0,
 }
 
 DEFAULT_SCORE = 50.0
@@ -1046,17 +1044,17 @@ def calculate_ticker_catalyst_score_legacy(ticker: str, summary) -> Dict:
     """
     # Handle both dict and dataclass
     if isinstance(summary, dict):
-        events = summary.get('events', [])
+        events = summary.get("events", [])
     else:
-        events = getattr(summary, 'events', [])
+        events = getattr(summary, "events", [])
 
     if not events:
         return {
-            'ticker': ticker,
-            'score': DEFAULT_SCORE,
-            'reason': 'NO_EVENTS',
-            'event_count': 0,
-            'severity_breakdown': {}
+            "ticker": ticker,
+            "score": DEFAULT_SCORE,
+            "reason": "NO_EVENTS",
+            "event_count": 0,
+            "severity_breakdown": {},
         }
 
     severity_counts = {}
@@ -1064,27 +1062,24 @@ def calculate_ticker_catalyst_score_legacy(ticker: str, summary) -> Dict:
 
     for event in events:
         if isinstance(event, dict):
-            event_type = event.get('event_type', 'UNKNOWN')
+            event_type = event.get("event_type", "UNKNOWN")
         else:
-            event_type = getattr(event, 'event_type', 'UNKNOWN')
-            if hasattr(event_type, 'value'):
+            event_type = getattr(event, "event_type", "UNKNOWN")
+            if hasattr(event_type, "value"):
                 event_type = event_type.value
 
-        severity = EVENT_SEVERITY.get(event_type, 'NEUTRAL')
+        severity = EVENT_SEVERITY.get(event_type, "NEUTRAL")
         severity_counts[severity] = severity_counts.get(severity, 0) + 1
-        event_details.append({
-            'event_type': event_type,
-            'severity': severity
-        })
+        event_details.append({"event_type": event_type, "severity": severity})
 
     # Hierarchical scoring
-    if severity_counts.get('SEVERE_NEGATIVE', 0) > 0:
+    if severity_counts.get("SEVERE_NEGATIVE", 0) > 0:
         score = 20.0
-    elif severity_counts.get('CRITICAL_POSITIVE', 0) > 0:
+    elif severity_counts.get("CRITICAL_POSITIVE", 0) > 0:
         score = 75.0
     else:
-        positive_count = severity_counts.get('POSITIVE', 0)
-        negative_count = severity_counts.get('NEGATIVE', 0)
+        positive_count = severity_counts.get("POSITIVE", 0)
+        negative_count = severity_counts.get("NEGATIVE", 0)
 
         if positive_count > 0 and negative_count == 0:
             score = 60.0 + min(10.0, positive_count * 5.0)
@@ -1096,35 +1091,50 @@ def calculate_ticker_catalyst_score_legacy(ticker: str, summary) -> Dict:
         else:
             score = DEFAULT_SCORE
 
-    reason = 'SEVERE_NEGATIVE_EVENTS' if severity_counts.get('SEVERE_NEGATIVE', 0) > 0 else \
-             'CRITICAL_POSITIVE_EVENTS' if severity_counts.get('CRITICAL_POSITIVE', 0) > 0 else \
-             'POSITIVE_EVENTS' if severity_counts.get('POSITIVE', 0) > 0 and severity_counts.get('NEGATIVE', 0) == 0 else \
-             'NEGATIVE_EVENTS' if severity_counts.get('NEGATIVE', 0) > 0 and severity_counts.get('POSITIVE', 0) == 0 else \
-             'MIXED_EVENTS' if severity_counts.get('POSITIVE', 0) > 0 and severity_counts.get('NEGATIVE', 0) > 0 else \
-             'NO_CLASSIFIED_EVENTS'
+    reason = (
+        "SEVERE_NEGATIVE_EVENTS"
+        if severity_counts.get("SEVERE_NEGATIVE", 0) > 0
+        else (
+            "CRITICAL_POSITIVE_EVENTS"
+            if severity_counts.get("CRITICAL_POSITIVE", 0) > 0
+            else (
+                "POSITIVE_EVENTS"
+                if severity_counts.get("POSITIVE", 0) > 0 and severity_counts.get("NEGATIVE", 0) == 0
+                else (
+                    "NEGATIVE_EVENTS"
+                    if severity_counts.get("NEGATIVE", 0) > 0 and severity_counts.get("POSITIVE", 0) == 0
+                    else (
+                        "MIXED_EVENTS"
+                        if severity_counts.get("POSITIVE", 0) > 0 and severity_counts.get("NEGATIVE", 0) > 0
+                        else "NO_CLASSIFIED_EVENTS"
+                    )
+                )
+            )
+        )
+    )
 
     return {
-        'ticker': ticker,
-        'score': score,
-        'reason': reason,
-        'event_count': len(events),
-        'severity_breakdown': severity_counts,
-        'event_details': event_details
+        "ticker": ticker,
+        "score": score,
+        "reason": reason,
+        "event_count": len(events),
+        "severity_breakdown": severity_counts,
+        "event_details": event_details,
     }
 
 
 def validate_scores(scores: Dict[str, Dict]) -> Dict:
     """Validate score outputs for sanity."""
     if not scores:
-        return {'valid': False, 'reason': 'NO_SCORES'}
+        return {"valid": False, "reason": "NO_SCORES"}
 
-    score_values = [s['score'] if isinstance(s, dict) else float(s.score_override) for s in scores.values()]
+    score_values = [s["score"] if isinstance(s, dict) else float(s.score_override) for s in scores.values()]
 
     return {
-        'valid': True,
-        'total_tickers': len(scores),
-        'unique_scores': len(set(score_values)),
-        'min_score': min(score_values) if score_values else None,
-        'max_score': max(score_values) if score_values else None,
-        'mean_score': sum(score_values) / len(score_values) if score_values else None,
+        "valid": True,
+        "total_tickers": len(scores),
+        "unique_scores": len(set(score_values)),
+        "min_score": min(score_values) if score_values else None,
+        "max_score": max(score_values) if score_values else None,
+        "mean_score": sum(score_values) / len(score_values) if score_values else None,
     }

@@ -123,12 +123,12 @@ def _validate_postmortem(record: dict) -> list:
         except ValueError:
             errors.append(f"Invalid event_date format: {event_date}")
 
-    # Pre-event fields
+    # Pre-event fields (None is acceptable for optional fields in older artifacts)
     pre_event = record.get("pre_event", {})
     for field, expected_type in PRE_EVENT_REQUIRED_FIELDS.items():
         if field not in pre_event:
             errors.append(f"Missing pre_event field: {field}")
-        elif not isinstance(pre_event[field], expected_type):
+        elif pre_event[field] is not None and not isinstance(pre_event[field], expected_type):
             errors.append(
                 f"pre_event.{field}: expected {expected_type.__name__}, " f"got {type(pre_event[field]).__name__}"
             )
@@ -147,11 +147,13 @@ def _validate_postmortem(record: dict) -> list:
     if pre_event.get("readiness_verdict") and pre_event["readiness_verdict"] not in valid_verdicts:
         errors.append(f"Invalid readiness_verdict: {pre_event['readiness_verdict']}")
 
-    # Outcome fields
+    # Outcome fields (abs_gap added later — tolerate absence in older artifacts)
+    _outcome_optional = {"abs_gap"}
     outcome = record.get("outcome", {})
     for field, expected_types in OUTCOME_REQUIRED_FIELDS.items():
         if field not in outcome:
-            errors.append(f"Missing outcome field: {field}")
+            if field not in _outcome_optional:
+                errors.append(f"Missing outcome field: {field}")
         elif outcome[field] is not None and not isinstance(outcome[field], (int, float)):
             errors.append(f"outcome.{field}: expected numeric or None, " f"got {type(outcome[field]).__name__}")
 
@@ -364,7 +366,6 @@ class TestExistingArtifacts:
             for f in date_dir.glob("*.json"):
                 yield f
 
-    @pytest.mark.skip(reason="artifact data predates schema v1 additions")
     def test_all_existing_artifacts_valid(self):
         """If any postmortem artifacts exist, they should all pass validation."""
         count = 0

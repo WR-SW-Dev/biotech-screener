@@ -5201,6 +5201,19 @@ def run_daily(
         except Exception as _ev_err:
             _logger.warning(f"Event EV scoring failed: {_ev_err}")
 
+        # --- Step 5k.22: Event EV forward validation (non-blocking) ---
+        try:
+            from tools.build_ev_validation import run as _run_ev_validation
+
+            _val_summary = _run_ev_validation()
+            _val_n = _val_summary.get("n_matched", 0)
+            _val_status = _val_summary.get("status", "?")
+            _val_brier = _val_summary.get("brier_score")
+            _brier_str = f", brier={_val_brier:.3f}" if _val_brier is not None else ""
+            _logger.info(f"Event EV validation → {_val_n} matched ({_val_status}{_brier_str})")
+        except Exception as _val_err:
+            _logger.warning(f"Event EV validation failed: {_val_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
