@@ -135,6 +135,7 @@ _ALIASES = {
 _BOOL_YES_NO = {"opt_event_premium"}
 
 _FEATURE_KEYS = (
+    # Market / institutional features
     "coinvest_score_z",
     "inst_delta_z",
     "insider_net_buy_value_90d",
@@ -142,25 +143,35 @@ _FEATURE_KEYS = (
     "de_alpha_60d",
     "de_rsi_14d",
     "short_interest_pct",
+    # Options features
     "opt_event_premium",
     "opt_term_slope",
     "opt_atm_iv",
     "opt_front_iv",
     "opt_back_iv",
     "priced_move_pct",
+    "implied_event_move",
+    "opt_liquidity_state",
+    "opt_iv_regime",
+    # Market structure
     "market_cap_mm",
     "vol_60d",
     "de_vol_60d",
     "selector_score",
-    "implied_event_move",
     "catalyst_days",
-    "opt_liquidity_state",
     "close_price",
     "catalyst_family",
-    "opt_iv_regime",
+    # Clinical discriminators (for outcome model p_hit updates)
+    "endpoint_strength_score",
+    "design_quality_score",
+    "execution_momentum",
+    "binary_quality_score",
+    "competitive_intensity_z",
+    "program_diversification",
 )
 
 _CONTEXT_KEYS = (
+    # Market / options features (for payoff model)
     "market_cap_mm",
     "vol_60d",
     "implied_event_move",
@@ -170,6 +181,14 @@ _CONTEXT_KEYS = (
     "opt_back_iv",
     "opt_iv_regime",
     "catalyst_family",
+    # Clinical discriminators (for outcome model p_hit updates)
+    "endpoint_strength_score",
+    "design_quality_score",
+    "execution_momentum",
+    "binary_quality_score",
+    "competitive_intensity_z",
+    "program_diversification",
+    "underlying_price",
 )
 
 

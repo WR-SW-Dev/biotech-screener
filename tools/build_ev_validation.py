@@ -289,6 +289,27 @@ def match_predictions_to_resolutions(
 # ---------------------------------------------------------------------------
 
 
+def _compute_slice_stats(ledger: List[Dict[str, Any]], key: str) -> Dict[str, Any]:
+    """Compute calibration stats grouped by a ledger field."""
+    by_slice: Dict[str, List[Dict]] = defaultdict(list)
+    for r in ledger:
+        val = r.get(key, "unknown") or "unknown"
+        by_slice[str(val)].append(r)
+
+    stats = {}
+    for slice_val, records in sorted(by_slice.items()):
+        brier = [r["brier_component"] for r in records if r.get("brier_component") is not None]
+        hit_count = sum(1 for r in records if r["outcome"] == "HIT")
+        p_hats = [r.get("predicted_p_hit", 0) for r in records if r.get("predicted_p_hit") is not None]
+        stats[slice_val] = {
+            "n": len(records),
+            "hit_rate": round(hit_count / len(records), 4) if records else None,
+            "mean_predicted_p_hit": round(sum(p_hats) / len(p_hats), 4) if p_hats else None,
+            "mean_brier": round(sum(brier) / len(brier), 4) if brier else None,
+        }
+    return stats
+
+
 def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
     """Compute calibration summary from the validation ledger."""
     if not ledger:
@@ -364,6 +385,8 @@ def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         # Breakdowns
         "calibration_by_p_hit_bucket": calibration_by_bucket,
         "by_family": family_stats,
+        "by_phase": _compute_slice_stats(ledger, "phase"),
+        "by_analog_conf": _compute_slice_stats(ledger, "analog_conf"),
         # Data quality
         "n_with_prices": sum(1 for r in ledger if r.get("realized_1d_return") is not None),
         "n_without_prices": sum(1 for r in ledger if r.get("realized_1d_return") is None),

@@ -196,7 +196,7 @@ class OutcomeModel:
                 updates["modality"] = round(update, 4)
 
         # Endpoint strength (strong endpoints → higher PoS)
-        eps = context.get("endpoint_strength_score")
+        eps = _safe_context_float(context, "endpoint_strength_score")
         if eps is not None:
             # Center at 0.5, scale to ±0.3 log-odds
             update = (eps - 0.5) * 0.6
@@ -204,7 +204,7 @@ class OutcomeModel:
             updates["endpoint_strength"] = round(update, 4)
 
         # Design quality
-        dqs = context.get("design_quality_score")
+        dqs = _safe_context_float(context, "design_quality_score")
         if dqs is not None:
             update = (dqs - 0.5) * 0.4
             log_odds += update
@@ -229,7 +229,7 @@ class OutcomeModel:
             updates["sponsor_track_record"] = round(shrinkage, 4)
 
         # Execution momentum
-        em = context.get("execution_momentum")
+        em = _safe_context_float(context, "execution_momentum")
         if em is not None:
             update = em * 0.15  # small effect
             log_odds += update
@@ -237,11 +237,16 @@ class OutcomeModel:
 
         # Competitive intensity (crowded → lower marginal value but same PoS)
         # This affects value more than probability — small adjustment here
-        ci = context.get("competitive_intensity")
-        if ci is not None and ci > 0.7:
-            update = -0.1  # slightly lower in very crowded indications
-            log_odds += update
-            updates["competitive_intensity"] = round(update, 4)
+        ci = context.get("competitive_intensity") or context.get("competitive_intensity_z")
+        if ci is not None:
+            try:
+                ci_val = float(ci)
+                if ci_val > 0.7:
+                    update = -0.1  # slightly lower in very crowded indications
+                    log_odds += update
+                    updates["competitive_intensity"] = round(update, 4)
+            except (ValueError, TypeError):
+                pass
 
         features_used["log_odds_updates"] = updates
 
@@ -527,25 +532,33 @@ class OutcomeModel:
         context: Dict[str, Any],
         prior_source: str,
     ) -> float:
-        """Model confidence in probability estimates."""
+        """Model confidence in probability estimates.
+
+        Confidence reflects how much the p_hit estimate should be trusted.
+        Low confidence → shrink EV influence harder in downstream consumers.
+        """
         confidence = 0.5  # base
 
-        # v2 empirical priors are more reliable
-        if prior_source == "v2_empirical":
+        # Prior quality hierarchy
+        if prior_source == "crt_calibrated":
+            confidence += 0.20  # best: real outcome data
+        elif prior_source == "v2_empirical":
             confidence += 0.15
+        elif prior_source.startswith("regulatory"):
+            confidence += 0.15  # FDA historical is well-sourced
+        elif prior_source == "literature_phase_readout":
+            confidence += 0.05  # decent but generic
+        # wong_et_al: no bonus (lowest quality)
 
-        # More context features → higher confidence
-        feature_count = sum(
-            1
-            for k in (
-                "endpoint_strength_score",
-                "design_quality_score",
-                "execution_momentum",
-                "sponsor_track_record_n",
-            )
-            if context.get(k) is not None
+        # Clinical discriminator features → higher confidence
+        _discriminator_keys = (
+            "endpoint_strength_score",
+            "design_quality_score",
+            "execution_momentum",
+            "binary_quality_score",
         )
-        confidence += feature_count * 0.05
+        feature_count = sum(1 for k in _discriminator_keys if _safe_context_float(context, k) is not None)
+        confidence += feature_count * 0.04  # up to +0.16
 
         # Regulatory events have more certain priors
         if node.event_family == EventFamily.REGULATORY.value:
@@ -556,6 +569,10 @@ class OutcomeModel:
             confidence += 0.1
         elif node.phase in ("1", "1_2"):
             confidence -= 0.1
+
+        # Unknown phase → big penalty (coarse pooled prior)
+        if node.phase in ("unknown", ""):
+            confidence -= 0.15
 
         return min(max(confidence, 0.1), 0.95)
 
@@ -647,3 +664,17 @@ def _sigmoid(x: float) -> float:
         return 1.0 / (1.0 + math.exp(-x))
     ez = math.exp(x)
     return ez / (1.0 + ez)
+
+
+def _safe_context_float(context: Dict[str, Any], key: str) -> Optional[float]:
+    """Safely extract a float from context (may be str from CSV)."""
+    val = context.get(key)
+    if val is None:
+        return None
+    try:
+        f = float(val)
+        if f != f:  # NaN check
+            return None
+        return f
+    except (ValueError, TypeError):
+        return None
