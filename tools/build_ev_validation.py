@@ -66,50 +66,91 @@ _TYPE_MAP = {
 # ---------------------------------------------------------------------------
 
 
-def load_prices(price_csv: Path) -> Dict[str, Dict[str, float]]:
-    """Load price history into {ticker: {date_str: close}}."""
-    prices: Dict[str, Dict[str, float]] = {}
-    if not price_csv.exists():
-        logger.warning("Price CSV not found: %s", price_csv)
-        return prices
-    with open(price_csv, encoding="utf-8") as f:
-        for row in csv.DictReader(f):
-            t = row.get("ticker", "").strip()
-            d = row.get("date", "").strip()
-            c = row.get("close", "").strip()
-            if t and d and c:
-                try:
-                    prices.setdefault(t, {})[d] = float(c)
-                except ValueError:
-                    pass
-    return prices
+def _get_price_store():
+    """Get or build the SQLite price store."""
+    from common.price_store import PriceStore
+
+    db_path = REPO_ROOT / "data" / "prices.db"
+    store = PriceStore(str(db_path))
+    if store.ticker_count() == 0 and PRICE_CSV.exists():
+        logger.info("Building price store from CSV (one-time)...")
+        store.build_from_csv(str(PRICE_CSV))
+    return store
 
 
-def get_price(
-    prices: Dict[str, Dict[str, float]], ticker: str, target_date: str, max_lookback: int = 5
-) -> Optional[float]:
+def load_prices(price_csv: Path):
+    """Load prices via SQLite store (falls back to CSV if store unavailable)."""
+    try:
+        store = _get_price_store()
+        if store.ticker_count() > 0:
+            logger.info("  %d tickers in price store", store.ticker_count())
+            return store
+    except Exception as exc:
+        logger.warning("Price store unavailable (%s), falling back to CSV", exc)
+
+    # Fallback: load CSV into a dict-based adapter
+    return _CsvPriceFallback(price_csv)
+
+
+class _CsvPriceFallback:
+    """Dict-based price adapter matching PriceStore interface for fallback."""
+
+    def __init__(self, csv_path: Path):
+        self._prices: Dict[str, Dict[str, float]] = {}
+        if csv_path.exists():
+            with open(csv_path, encoding="utf-8") as f:
+                for row in csv.DictReader(f):
+                    t = row.get("ticker", "").strip()
+                    d = row.get("date", "").strip()
+                    c = row.get("close", "").strip()
+                    if t and d and c:
+                        try:
+                            self._prices.setdefault(t, {})[d] = float(c)
+                        except ValueError:
+                            pass
+
+    def get_price(self, ticker: str, target_date: str) -> Optional[float]:
+        return self._prices.get(ticker, {}).get(target_date)
+
+    def get_price_range(self, ticker: str, start: str, end: str) -> list:
+        tp = self._prices.get(ticker, {})
+        return [(d, p) for d, p in sorted(tp.items()) if start <= d <= end]
+
+    def ticker_count(self) -> int:
+        return len(self._prices)
+
+
+def _price_lookup(prices, ticker: str, date_str: str) -> Optional[float]:
+    """Get a single price, supporting both PriceStore and raw dict."""
+    if hasattr(prices, "get_price"):
+        return prices.get_price(ticker, date_str)
+    # Raw dict fallback: {ticker: {date: close}}
+    return (prices.get(ticker) or {}).get(date_str)
+
+
+def get_price(prices, ticker: str, target_date: str, max_lookback: int = 5) -> Optional[float]:
     """Get closing price on or near target_date (look back up to max_lookback days)."""
-    ticker_prices = prices.get(ticker, {})
-    if not ticker_prices:
-        return None
     dt = datetime.strptime(target_date, "%Y-%m-%d").date()
     for offset in range(max_lookback + 1):
         d = (dt - timedelta(days=offset)).isoformat()
-        if d in ticker_prices:
-            return ticker_prices[d]
+        val = _price_lookup(prices, ticker, d)
+        if val is not None:
+            return val
     return None
 
 
-def get_price_forward(
-    prices: Dict[str, Dict[str, float]], ticker: str, anchor_date: str, trading_days: int
-) -> Optional[float]:
+def get_price_forward(prices, ticker: str, anchor_date: str, trading_days: int) -> Optional[float]:
     """Get closing price N trading days after anchor_date."""
-    ticker_prices = prices.get(ticker, {})
-    if not ticker_prices:
-        return None
-    sorted_dates = sorted(d for d in ticker_prices if d > anchor_date)
-    if len(sorted_dates) >= trading_days:
-        return ticker_prices[sorted_dates[trading_days - 1]]
+    if hasattr(prices, "get_price_range"):
+        far_date = (datetime.strptime(anchor_date, "%Y-%m-%d").date() + timedelta(days=trading_days * 3)).isoformat()
+        range_prices = prices.get_price_range(ticker, anchor_date, far_date)
+        after = [(d, p) for d, p in range_prices if d > anchor_date]
+    else:
+        # Raw dict fallback
+        ticker_prices = prices.get(ticker, {})
+        after = sorted((d, p) for d, p in ticker_prices.items() if d > anchor_date)
+    if len(after) >= trading_days:
+        return after[trading_days - 1][1]
     return None
 
 
@@ -416,7 +457,7 @@ def run(rebuild: bool = False) -> Dict[str, Any]:
 
     logger.info("Loading price history...")
     prices = load_prices(PRICE_CSV)
-    logger.info("  %d tickers with price data", len(prices))
+    logger.info("  %d tickers with price data", prices.ticker_count())
 
     # Load existing ledger (for dedup)
     existing_hashes: set = set()
