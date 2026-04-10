@@ -661,26 +661,43 @@ _PLACEBO_RE = re.compile(r"\bplacebo\b", re.I)
 
 
 def _score_trial_design_from_title(trial: dict) -> Tuple[float, List[str]]:
-    """Score trial design quality from title + interventions.
+    """Score trial design quality from title + interventions + structured fields.
 
     Returns (score 0-1, list of signal tags).
     Missing/unclear signals stay at base (not penalized).
+
+    Uses three data sources in priority order:
+    1. Structured fields (randomized, blinded) if available
+    2. Interventions list (placebo presence, arm count)
+    3. Title text parsing (regex signals)
     """
     title = str(trial.get("title") or "")
-    # Also scan interventions for placebo mentions
     intervs = trial.get("interventions") or []
     if isinstance(intervs, str):
         intervs = [intervs]
     search_text = title + " " + " ".join(str(iv) for iv in intervs)
+    intervs_lower = [str(iv).lower() for iv in intervs]
 
     score = 0.3  # base for any trial
     signals = []
 
-    if _RANDOMIZED_RE.search(search_text):
+    # Randomization: structured field first, then title
+    if trial.get("randomized") is True:
+        score += 0.2
+        signals.append("randomized")
+    elif _RANDOMIZED_RE.search(search_text):
         score += 0.2
         signals.append("randomized")
 
-    if _DOUBLE_BLIND_RE.search(search_text):
+    # Blinding: structured field first, then title
+    blinded = trial.get("blinded", "")
+    if blinded == "double":
+        score += 0.2
+        signals.append("double_blind")
+    elif blinded == "single":
+        score += 0.1
+        signals.append("single_blind")
+    elif _DOUBLE_BLIND_RE.search(search_text):
         score += 0.2
         signals.append("double_blind")
     elif _SINGLE_BLIND_RE.search(search_text):
@@ -691,12 +708,19 @@ def _score_trial_design_from_title(trial: dict) -> Tuple[float, List[str]]:
         score += 0.1
         signals.append("parallel")
 
-    if _PLACEBO_CTRL_RE.search(search_text) or _PLACEBO_RE.search(search_text):
+    # Placebo: check interventions list first (more reliable), then title
+    has_placebo = any("placebo" in iv for iv in intervs_lower)
+    if has_placebo or _PLACEBO_CTRL_RE.search(search_text) or _PLACEBO_RE.search(search_text):
         score += 0.1
         signals.append("placebo")
 
+    # Multi-arm bonus: >=3 intervention arms suggests well-designed study
+    if len(intervs) >= 3:
+        score += 0.05
+        signals.append("multi_arm")
+
     # Open-label without blinding doesn't add to score
-    if _OPEN_LABEL_RE.search(search_text) and not signals:
+    if _OPEN_LABEL_RE.search(search_text) and "double_blind" not in signals and "single_blind" not in signals:
         signals.append("open_label")
 
     return min(1.0, score), signals
@@ -766,14 +790,38 @@ _TA_ENDPOINT_PROXY: Dict[str, float] = {
 _LATE_STAGE_BONUS = 0.10  # bonus for late-stage in strong-endpoint TA
 
 
+# Hard endpoint keywords — presence in title suggests stronger evidence quality
+_HARD_ENDPOINT_KEYWORDS = {
+    "overall survival": 0.20,
+    " os ": 0.15,  # space-bounded to avoid false matches
+    "progression-free survival": 0.15,
+    "progression free survival": 0.15,
+    " pfs ": 0.12,
+    "event-free survival": 0.12,
+    " efs ": 0.10,
+    "disease-free survival": 0.12,
+    " dfs ": 0.10,
+    "complete response": 0.10,
+    "overall response rate": 0.08,
+    " orr ": 0.08,
+    " mace ": 0.10,  # major adverse cardiac events
+}
+
+
 def compute_endpoint_strength(
     trial_records: list,
     as_of_date: str,
 ) -> Dict[str, dict]:
-    """Compute endpoint strength proxy per ticker based on therapeutic area.
+    """Compute endpoint strength per ticker from TA + trial-level signals.
+
+    Combines:
+    1. Therapeutic area baseline (TA proxy)
+    2. Title-derived hard endpoint keywords (OS, PFS, ORR, etc.)
+    3. Late-stage bonus
+    4. Primary endpoint text if available
 
     PIT-safe: strict < as_of_date.
-    Returns {ticker: {endpoint_strength_score, therapeutic_area}}.
+    Returns {ticker: {endpoint_strength_score, therapeutic_area, endpoint_signals}}.
     """
     from common.accuracy_improvements import classify_therapeutic_area
 
@@ -791,6 +839,9 @@ def compute_endpoint_strength(
     for ticker, trials in by_ticker.items():
         all_conditions: List[str] = []
         max_phase = 0.0
+        best_endpoint_bonus = 0.0
+        endpoint_signals: List[str] = []
+
         for t in trials:
             if not _pit_ok(t, as_of):
                 continue
@@ -800,17 +851,32 @@ def compute_endpoint_strength(
             all_conditions.extend(conds)
             max_phase = max(max_phase, _phase_num(str(t.get("phase", ""))))
 
+            # Scan title + primary_endpoint for hard endpoint keywords
+            title = str(t.get("title") or "").lower()
+            pe = str(t.get("primary_endpoint") or "").lower()
+            scan_text = f" {title} {pe} "
+
+            for keyword, bonus in _HARD_ENDPOINT_KEYWORDS.items():
+                if keyword in scan_text and bonus > best_endpoint_bonus:
+                    best_endpoint_bonus = bonus
+                    if keyword.strip() not in endpoint_signals:
+                        endpoint_signals.append(keyword.strip())
+
         ta = classify_therapeutic_area(all_conditions)
-        ta_val = ta.value  # string like "oncology"
+        ta_val = ta.value
         base_score = _TA_ENDPOINT_PROXY.get(ta_val, 0.50)
+
+        # Add trial-specific endpoint bonus (capped)
+        base_score += min(best_endpoint_bonus, 0.20)
 
         # Late-stage bonus in strong-endpoint TAs
         if max_phase >= 2.0 and base_score >= 0.65:
             base_score = min(1.0, base_score + _LATE_STAGE_BONUS)
 
         result[ticker] = {
-            "endpoint_strength_score": round(base_score, 4),
+            "endpoint_strength_score": round(min(1.0, base_score), 4),
             "therapeutic_area": ta_val,
+            "endpoint_signals": endpoint_signals,
         }
 
     return result
