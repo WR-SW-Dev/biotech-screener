@@ -5256,6 +5256,34 @@ def run_daily(
         except Exception as _memo_err:
             _logger.warning(f"EV shadow memo failed: {_memo_err}")
 
+        # --- Step 5k.25: Stage 1 canary ledger (non-blocking) ---
+        try:
+            if "_memo" in dir() and _memo and "error" not in _memo:
+                _canary_path = REPO_ROOT / "artifacts" / "event_ev" / "stage1_canary_ledger.jsonl"
+                _canary_entry = {
+                    "date": as_of_date,
+                    "top30_changed": _memo.get("top30_changed", False),
+                    "displaced": _memo.get("displaced", []),
+                    "promoted": _memo.get("promoted", []),
+                    "ties_at_cutoff": _memo.get("ties_at_cutoff", 0),
+                    "gap_30_31": _memo.get("gap_30_31"),
+                    "rank30": _memo.get("rank30", ""),
+                    "rank31": _memo.get("rank31", ""),
+                    "ev_coverage_boundary": _memo.get("ev_coverage_boundary", ""),
+                    "brier": _val_summary.get("brier_score") if "_val_summary" in dir() else None,
+                    "validation_matches": _val_summary.get("n_matched") if "_val_summary" in dir() else None,
+                }
+                with open(_canary_path, "a") as _cf:
+                    _cf.write(__import__("json").dumps(_canary_entry, sort_keys=True, separators=(",", ":")) + "\n")
+                _logger.info(
+                    "Stage 1 canary → top30_changed=%s, ties=%d, ev_cov=%s",
+                    _canary_entry["top30_changed"],
+                    _canary_entry["ties_at_cutoff"],
+                    _canary_entry["ev_coverage_boundary"],
+                )
+        except Exception as _canary_err:
+            _logger.warning(f"Stage 1 canary ledger failed: {_canary_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
