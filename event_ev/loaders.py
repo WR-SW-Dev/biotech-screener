@@ -143,12 +143,17 @@ def load_catalyst_graph(
     if n_precision > 0:
         logger.info("Date precision: %d nodes updated (range markers)", n_precision)
 
-    # 8. Dedup by (ticker, event_type, expected_date)
+    # 8. Roll overdue range markers forward (makes past-date events scorable)
+    n_rolled = graph.roll_overdue_range_markers(as_of)
+    if n_rolled > 0:
+        logger.info("Rolled forward: %d overdue range markers (now in 30d window)", n_rolled)
+
+    # 9. Dedup by (ticker, event_type, expected_date)
     n_dedup = graph.dedup_by_event()
     if n_dedup > 0:
         logger.info("Dedup: %d duplicate nodes removed", n_dedup)
 
-    # 9. Archive stale entries (>180d past event_date, no resolution)
+    # 10. Archive stale entries (>180d past event_date, no resolution)
     n_archived = graph.archive_stale_entries(as_of, max_age_days=180)
     if n_archived > 0:
         logger.info("Archived: %d stale entries (>180d past event_date)", n_archived)

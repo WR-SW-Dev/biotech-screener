@@ -215,6 +215,34 @@ class CatalystGraph:
                 continue
         return fixed
 
+    def roll_overdue_range_markers(self, as_of: date) -> int:
+        """Roll forward overdue range-marker nodes to create a 'next possible' date.
+
+        Nodes with HALF_YEAR/QUARTER/MONTH precision and expected_date in the
+        past represent events that are 'overdue' — they could happen any time.
+        Roll them to as_of + 30 days (near-term window) with low confidence.
+        Only applies to unresolved nodes.
+        """
+        rolled = 0
+        for node in self._nodes.values():
+            if node.is_resolved():
+                continue
+            if node.date_precision not in ("HALF_YEAR", "QUARTER", "MONTH"):
+                continue
+            if not node.expected_date:
+                continue
+            try:
+                ed = date.fromisoformat(node.expected_date)
+                if ed >= as_of:
+                    continue  # Not overdue
+                # Roll forward: place in a 30-day window from as_of
+                node.expected_date = (as_of + timedelta(days=30)).isoformat()
+                node.date_confidence = min(node.date_confidence, 0.15)
+                rolled += 1
+            except (ValueError, TypeError):
+                continue
+        return rolled
+
     def enrich_phases(self, ticker_phase: Dict[str, str]) -> int:
         """Update phase for nodes with phase="unknown" using a ticker→phase map.
 
