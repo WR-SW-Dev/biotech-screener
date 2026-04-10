@@ -124,6 +124,13 @@ def load_catalyst_graph(
         except (json.JSONDecodeError, OSError):
             pass
 
+    # 5.5. Supplement from rankings.csv — create nodes for tickers with Module 3
+    # catalysts but no graph node (bridges the M3 ↔ EV graph gap)
+    snapshots_dir = data_dir / "snapshots"
+    _n_supplemented = _supplement_from_rankings(graph, as_of, snapshots_dir)
+    if _n_supplemented > 0:
+        logger.info("Rankings supplement: %d nodes created from Module 3 catalysts", _n_supplemented)
+
     # 6. Enrich clinical nodes with phase from trial_records.json
     # Phase is critical for outcome model priors but the event ledger
     # and catalyst_events sources often lack it.
@@ -187,6 +194,90 @@ def _build_ticker_phase_map(trials: list) -> Dict[str, str]:
             ticker_phase[tk] = phase
 
     return ticker_phase
+
+
+def _supplement_from_rankings(graph: CatalystGraph, as_of: date, snapshots_dir: Path) -> int:
+    """Create EV graph nodes for tickers with Module 3 catalysts but no graph node.
+
+    Reads catalyst_days, catalyst_event_type, catalyst_family from the latest
+    rankings.csv and creates nodes for tickers that the event ledger missed.
+    Only creates nodes for tickers with specific_days catalyst_mode.
+    """
+    from datetime import timedelta
+
+    from event_ev.catalyst_graph import CatalystNode, NodeStatus, _infer_phase
+
+    # Find latest snapshot
+    if not snapshots_dir.exists():
+        return 0
+    snap_dates = []
+    for d in snapshots_dir.iterdir():
+        if d.is_dir() and len(d.name) == 10:
+            try:
+                sd = date.fromisoformat(d.name)
+                if sd <= as_of:
+                    snap_dates.append(sd)
+            except (ValueError, TypeError):
+                continue
+    if not snap_dates:
+        return 0
+
+    latest = max(snap_dates)
+    rankings_path = snapshots_dir / str(latest) / "rankings.csv"
+    if not rankings_path.exists():
+        return 0
+
+    # Find tickers with M3 catalysts but no graph node
+    existing_tickers = set()
+    for nid, node in graph._nodes.items():
+        existing_tickers.add(node.ticker)
+
+    created = 0
+    with open(rankings_path, newline="", encoding="utf-8-sig") as f:
+        for row in csv.DictReader(f):
+            ticker = row.get("ticker", "")
+            if not ticker or ticker in existing_tickers:
+                continue
+
+            mode = row.get("catalyst_mode", "")
+            if mode != "specific_days":
+                continue
+
+            days_str = row.get("catalyst_days", "").strip()
+            if not days_str:
+                continue
+
+            try:
+                days = int(float(days_str))
+            except (ValueError, TypeError):
+                continue
+
+            event_type = row.get("catalyst_event_type", "DATA_READOUT")
+            family = row.get("catalyst_family", "CLINICAL")
+            expected = (as_of + timedelta(days=days)).isoformat()
+
+            node = CatalystNode(
+                ticker=ticker,
+                event_family=family,
+                event_type=event_type,
+                event_subtype="M3_SUPPLEMENT",
+                expected_date=expected,
+                date_range_start=expected,
+                date_range_end=None,
+                date_precision="MONTH" if days > 90 else "WEEK",
+                date_confidence=0.40 if days <= 90 else 0.25,
+                source="M3_RANKINGS_SUPPLEMENT",
+                source_uid=f"m3_{ticker}_{as_of}",
+                disclosed_at=str(as_of),
+                phase=_infer_phase(row.get("phase", "")),
+                indication="unknown",
+                status=NodeStatus.PENDING.value,
+            )
+            graph.add_node(node)
+            existing_tickers.add(ticker)
+            created += 1
+
+    return created
 
 
 # Column aliases for feature extraction

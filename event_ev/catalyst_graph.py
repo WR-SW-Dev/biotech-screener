@@ -369,10 +369,10 @@ class CatalystGraph:
                 expected_date=e.get("event_date"),
                 date_range_start=e.get("event_date"),
                 date_range_end=e.get("event_date_end"),
-                date_precision=e.get("date_precision", "UNKNOWN"),
+                date_precision=_normalize_precision(e.get("date_precision", "UNKNOWN"), e.get("source", "")),
                 date_confidence=_precision_to_confidence(
                     e.get("confidence", "LOW"),
-                    e.get("date_precision", "UNKNOWN"),
+                    _normalize_precision(e.get("date_precision", "UNKNOWN"), e.get("source", "")),
                     source=e.get("source", "UNKNOWN"),
                     event_type=event_type,
                 ),
@@ -693,6 +693,21 @@ class CatalystGraph:
 
         logger.info("Built %d revision entries from snapshot history", revisions_added)
         return revisions_added
+
+
+def _normalize_precision(raw_precision: str, source: str = "") -> str:
+    """Normalize date precision string, using source-aware defaults.
+
+    CTGOV entries often have precision="?" but carry real specific dates
+    from trial status changes — default to MONTH (conservative).
+    """
+    p = (raw_precision or "UNKNOWN").upper().strip()
+    if p in ("DAY", "WEEK", "MONTH", "QUARTER", "HALF_YEAR", "YEAR", "UNKNOWN"):
+        return p
+    # Invalid precision — use source-aware default
+    if source == "CTGOV":
+        return "MONTH"  # CTgov dates are real but monthly granularity
+    return "UNKNOWN"
 
 
 def _precision_to_confidence(confidence_str: str, precision_str: str, source: str = "", event_type: str = "") -> float:
