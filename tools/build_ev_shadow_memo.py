@@ -35,13 +35,6 @@ SNAP_ROOT = REPO_ROOT / "data" / "snapshots"
 EV_DIR = REPO_ROOT / "artifacts" / "event_ev"
 
 
-def _safe_float(v):
-    try:
-        return float(v)
-    except (ValueError, TypeError):
-        return None
-
-
 def build_memo(as_of_date: str) -> dict:
     snap_dir = SNAP_ROOT / as_of_date
     csv_path = snap_dir / "rankings.csv"
@@ -50,20 +43,23 @@ def build_memo(as_of_date: str) -> dict:
     if not csv_path.exists():
         return {"date": as_of_date, "error": "no rankings.csv"}
 
-    # Load rankings
-    with open(csv_path) as f:
-        rows = list(csv.DictReader(f))
+    # Load rankings via typed SnapshotRecord — no manual string parsing
+    from common.snapshot_record import from_csv_row
 
-    eligible = [r for r in rows if r.get("eligible", "") in ("1", "True")]
+    with open(csv_path) as f:
+        records = [from_csv_row(row) for row in csv.DictReader(f)]
+
     scored = []
-    for r in eligible:
-        fs = _safe_float(r.get("final_score", r.get("selector_score", "")))
+    for rec in records:
+        if not rec.eligible:
+            continue
+        fs = rec.final_score if rec.final_score is not None else rec.selector_score
         if fs is not None:
             scored.append(
                 {
-                    "ticker": r.get("ticker", ""),
+                    "ticker": rec.ticker,
                     "score": fs,
-                    "straddle_price": r.get("straddle_price", "").strip(),
+                    "has_options": rec.straddle_price is not None,
                 }
             )
     scored.sort(key=lambda x: -x["score"])
@@ -110,7 +106,7 @@ def build_memo(as_of_date: str) -> dict:
     # 4. EV coverage at boundary (ranks 25-35)
     boundary = scored[24:35]
     boundary_with_ev = sum(1 for s in boundary if s["ticker"] in ev_lookup)
-    boundary_with_opts = sum(1 for s in boundary if s["straddle_price"])
+    boundary_with_opts = sum(1 for s in boundary if s["has_options"])
 
     gap_30_31 = scored[29]["score"] - scored[30]["score"]
 
