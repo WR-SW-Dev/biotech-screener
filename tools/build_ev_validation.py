@@ -49,6 +49,10 @@ SUMMARY_PATH = EV_ARTIFACTS / "ev_validation_summary.json"
 
 SCHEMA_VERSION = "ev_validation.v1"
 
+# Phases where CRT data is Herald-biased (positive press release selection)
+# Mirrors event_ev/outcome_model.py::HERALD_BIASED_PHASES
+_HERALD_BIASED_PHASES = frozenset({"1", "1_2", "2"})
+
 # Event type mapping: CRT catalyst_type → EV event_type
 # CRT catalyst_type → EV event_type mapping.
 # The two systems use different taxonomies. This map bridges them.
@@ -292,6 +296,12 @@ def match_predictions_to_resolutions(
         # Outcome as binary for Brier score
         outcome_binary = 1.0 if outcome == "HIT" else 0.0 if outcome == "MISS" else 0.5
 
+        # Herald bias flag: Phase 1/2 CRT data is known to be selection-biased
+        # (only positive readouts captured → inflated hit rate)
+        phase = best_pred.get("phase", "unknown")
+        herald_biased = phase in _HERALD_BIASED_PHASES
+        bias_reason = "herald_positive_press_release_selection" if herald_biased else None
+
         record = {
             "schema": SCHEMA_VERSION,
             "record_hash": rec_hash,
@@ -311,9 +321,12 @@ def match_predictions_to_resolutions(
             "predicted_upside_hit": best_pred.get("upside_hit"),
             "predicted_downside_miss": best_pred.get("downside_miss"),
             "event_family": best_pred.get("event_family"),
-            "phase": best_pred.get("phase"),
+            "phase": phase,
             "analog_conf": best_pred.get("analog_conf"),
             "days_to_event_at_prediction": best_pred.get("days_to_event"),
+            # Bias flags
+            "herald_biased": herald_biased,
+            "bias_reason": bias_reason,
             # Outcome (from CRT resolution)
             "outcome": outcome,
             "outcome_binary": outcome_binary,
@@ -374,7 +387,13 @@ def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         }
 
     n = len(ledger)
+
+    # Split into headline (unbiased) and inclusive (all) for dual Brier reporting
+    unbiased = [r for r in ledger if not r.get("herald_biased", False)]
+    biased = [r for r in ledger if r.get("herald_biased", False)]
+
     brier_scores = [r["brier_component"] for r in ledger if r.get("brier_component") is not None]
+    headline_brier = [r["brier_component"] for r in unbiased if r.get("brier_component") is not None]
     ev_errors = [r["ev_error"] for r in ledger if r.get("ev_error") is not None]
     outcomes = [r["outcome"] for r in ledger]
 
@@ -426,14 +445,22 @@ def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
             "mean_ev_error": round(sum(fam_ev_err) / len(fam_ev_err), 4) if fam_ev_err else None,
         }
 
+    # Headline Brier: unbiased rows only (for readiness gate)
+    n_unbiased = len(unbiased)
+    n_biased = len(biased)
+
     summary = {
         "schema": SCHEMA_VERSION,
         "generated_at": datetime.now(tz=__import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "n_matched": n,
-        "status": "accumulating" if n < 20 else "evaluable",
+        "n_unbiased": n_unbiased,
+        "n_herald_biased": n_biased,
+        "status": "accumulating" if n_unbiased < 20 else "evaluable",
         "outcome_distribution": dict(outcome_counts),
-        # Aggregate calibration
-        "brier_score": round(sum(brier_scores) / len(brier_scores), 4) if brier_scores else None,
+        # Headline calibration (unbiased rows only — for readiness gate)
+        "brier_score": round(sum(headline_brier) / len(headline_brier), 4) if headline_brier else None,
+        # Inclusive calibration (all rows — diagnostic only)
+        "brier_inclusive": round(sum(brier_scores) / len(brier_scores), 4) if brier_scores else None,
         "mean_ev_error": round(sum(ev_errors) / len(ev_errors), 4) if ev_errors else None,
         "mean_abs_ev_error": round(sum(abs(e) for e in ev_errors) / len(ev_errors), 4) if ev_errors else None,
         # Breakdowns
@@ -518,13 +545,17 @@ def run(rebuild: bool = False) -> Dict[str, Any]:
     print(f"\n{'='*60}")
     print("EVENT EV FORWARD VALIDATION")
     print("=" * 60)
-    print(f"  Matched records:  {summary['n_matched']}")
+    print(
+        f"  Matched records:  {summary['n_matched']} ({summary.get('n_unbiased', '?')} unbiased, {summary.get('n_herald_biased', '?')} Herald-biased)"
+    )
     print(f"  Status:           {summary['status']}")
     if summary.get("outcome_distribution"):
         od = summary["outcome_distribution"]
         print(f"  Outcomes:         HIT={od.get('HIT', 0)} MISS={od.get('MISS', 0)} MIXED={od.get('MIXED', 0)}")
     if summary.get("brier_score") is not None:
-        print(f"  Brier score:      {summary['brier_score']:.4f}")
+        print(f"  Brier (headline): {summary['brier_score']:.4f}  (unbiased rows only — for readiness gate)")
+    if summary.get("brier_inclusive") is not None:
+        print(f"  Brier (inclusive):{summary['brier_inclusive']:.4f}  (all rows — diagnostic only)")
     if summary.get("mean_ev_error") is not None:
         print(f"  Mean EV error:    {summary['mean_ev_error']:+.4f}")
         print(f"  Mean |EV error|:  {summary['mean_abs_ev_error']:.4f}")
