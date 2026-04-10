@@ -53,6 +53,19 @@ SCHEMA_VERSION = "ev_validation.v1"
 # Mirrors event_ev/outcome_model.py::HERALD_BIASED_PHASES
 _HERALD_BIASED_PHASES = frozenset({"1", "1_2", "2"})
 
+# CRT catalyst_type → clinical phase (for resolving unknown prediction phases)
+_CRT_TYPE_TO_PHASE = {
+    "PHASE_1_DATA": "1",
+    "PHASE_1_READOUT": "1",
+    "PHASE_1_2_DATA": "1_2",
+    "PHASE_2_READOUT": "2",
+    "PHASE_2_DATA": "2",
+    "PHASE_2_3_READOUT": "2_3",
+    "PHASE_3_READOUT": "3",
+    "PHASE_3_DATA": "3",
+    "PHASE_4_DATA": "4",
+}
+
 # Event type mapping: CRT catalyst_type → EV event_type
 # CRT catalyst_type → EV event_type mapping.
 # The two systems use different taxonomies. This map bridges them.
@@ -296,9 +309,12 @@ def match_predictions_to_resolutions(
         # Outcome as binary for Brier score
         outcome_binary = 1.0 if outcome == "HIT" else 0.0 if outcome == "MISS" else 0.5
 
-        # Herald bias flag: Phase 1/2 CRT data is known to be selection-biased
-        # (only positive readouts captured → inflated hit rate)
+        # Resolve phase: prefer prediction phase, fall back to CRT catalyst_type
         phase = best_pred.get("phase", "unknown")
+        if phase in ("unknown", ""):
+            phase = _CRT_TYPE_TO_PHASE.get(crt_type, "unknown")
+
+        # Herald bias flag: Phase 1/2 CRT data is known to be selection-biased
         herald_biased = phase in _HERALD_BIASED_PHASES
         bias_reason = "herald_positive_press_release_selection" if herald_biased else None
 

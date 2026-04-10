@@ -229,24 +229,22 @@ class OutcomeModel:
             updates["sponsor_track_record"] = round(shrinkage, 4)
 
         # Execution momentum
+        # Execution momentum — only apply if non-zero (currently all 0.0 in rankings.csv)
         em = _safe_context_float(context, "execution_momentum")
-        if em is not None:
+        if em is not None and em != 0.0:
             update = em * 0.15  # small effect
             log_odds += update
             updates["execution_momentum"] = round(update, 4)
 
         # Competitive intensity (crowded → lower marginal value but same PoS)
-        # This affects value more than probability — small adjustment here
+        # Uses z-scored competitive_intensity_z (mean=0, std=1).
+        # Only penalize extreme crowding (>2.0 std devs), not moderate.
+        # Prior threshold of 0.7 was too low — fired on 56% of names.
         ci = _safe_context_float(context, "competitive_intensity_z")
-        if ci is not None:
-            try:
-                ci_val = float(ci)
-                if ci_val > 0.7:
-                    update = -0.1  # slightly lower in very crowded indications
-                    log_odds += update
-                    updates["competitive_intensity"] = round(update, 4)
-            except (ValueError, TypeError):
-                pass
+        if ci is not None and ci > 2.0:
+            update = -0.1 * min((ci - 2.0) / 2.0, 1.0)  # graduated, max -0.1
+            log_odds += update
+            updates["competitive_intensity"] = round(update, 4)
 
         features_used["log_odds_updates"] = updates
 
