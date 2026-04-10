@@ -141,6 +141,10 @@ def _build_leaderboard(results: List[EventEV], as_of: date) -> List[Dict[str, An
             "timing_on_time": round(ev.timing.prob_on_time, 3),
             "analog_conf": ev.payoff.analog_confidence,
             "actionable": ev.actionable,
+            "source": ev.node.source,
+            "date_confidence": round(ev.node.date_confidence, 3),
+            "is_rolled_forward": "ROLLED_FORWARD" in (ev.node.event_subtype or ""),
+            "is_supplement": ev.node.source == "M3_RANKINGS_SUPPLEMENT",
         }
 
         # Spec 059 overlays

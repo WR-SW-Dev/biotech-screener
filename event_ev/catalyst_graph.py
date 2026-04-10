@@ -238,6 +238,7 @@ class CatalystGraph:
                 # Roll forward: place in a 30-day window from as_of
                 node.expected_date = (as_of + timedelta(days=30)).isoformat()
                 node.date_confidence = min(node.date_confidence, 0.15)
+                node.event_subtype = (node.event_subtype or "") + "|ROLLED_FORWARD"
                 rolled += 1
             except (ValueError, TypeError):
                 continue

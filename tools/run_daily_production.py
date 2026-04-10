@@ -5284,6 +5284,19 @@ def run_daily(
         except Exception as _canary_err:
             _logger.warning(f"Stage 1 canary ledger failed: {_canary_err}")
 
+        # --- Step 5k.26: Catalyst source report (non-blocking) ---
+        try:
+            from tools.build_catalyst_source_report import build_report as _build_cat_report
+
+            _cat_report = _build_cat_report(as_of_date)
+            _logger.info(
+                "Catalyst source → %d active nodes, %d sources",
+                _cat_report.get("total_active_nodes", 0),
+                len(_cat_report.get("sources", {})),
+            )
+        except Exception as _cat_err:
+            _logger.warning(f"Catalyst source report failed: {_cat_err}")
+
         # --- Step 5l: Ops digest (non-blocking) ---
         try:
             from tools.build_ops_digest import run_ops_digest
