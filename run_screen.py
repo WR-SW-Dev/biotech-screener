@@ -5679,6 +5679,14 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.debug("Checksum sidecar write failed: %s", exc)
 
+    # --- Write snapshot manifest sidecar ---
+    try:
+        from common.snapshot_manifest import write_snapshot_manifest
+
+        write_snapshot_manifest(snap_path)
+    except Exception as exc:
+        logger.debug("Snapshot manifest write failed: %s", exc)
+
     # --- Write options diagnostics sidecar ---
     try:
         from common.options_snapshot import write_options_snapshot
