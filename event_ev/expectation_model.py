@@ -235,9 +235,9 @@ class ExpectationModel:
         for node in nodes:
             feats = market_features_by_ticker.get(node.ticker, {})
             for key in self.feature_weights:
-                raw_key = self._raw_key_for(key)
-                if raw_key in feats and feats[raw_key] is not None:
-                    feature_values.setdefault(key, []).append((node.ticker, float(feats[raw_key])))
+                val = self._get_batch_raw_value(feats, key)
+                if val is not None:
+                    feature_values.setdefault(key, []).append((node.ticker, val))
 
         # Compute cross-sectional percentile ranks
         pct_ranks: Dict[str, Dict[str, float]] = {}
@@ -306,6 +306,31 @@ class ExpectationModel:
             features_used=features_used,
             model_version="expectation_xsectional_v0.1",
         )
+
+    def _get_batch_raw_value(self, feats: Dict[str, Any], key: str) -> Optional[float]:
+        """Extract a raw feature value for batch mode, with fallback logic.
+
+        Handles the event_premium_mag fallback from opt_event_premium that
+        the single-name estimate() path implements but the batch path previously missed.
+        """
+        raw_key = self._raw_key_for(key)
+        val = feats.get(raw_key)
+        if val is not None:
+            try:
+                return float(val)
+            except (ValueError, TypeError):
+                pass
+
+        # Fallback: event_premium_magnitude → opt_event_premium (binary→continuous)
+        if key == "event_premium_mag":
+            fallback = feats.get("opt_event_premium")
+            if fallback is not None:
+                try:
+                    return float(fallback)
+                except (ValueError, TypeError):
+                    pass
+
+        return None
 
     def _raw_key_for(self, normalized_key: str) -> str:
         """Map normalized feature key back to raw input key."""

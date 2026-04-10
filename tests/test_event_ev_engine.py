@@ -1048,3 +1048,56 @@ class TestClinicalVariationInvariant:
         has_design = any(c.get("design_quality_score") is not None for c in ctx.values())
         assert has_endpoint, "No ticker has endpoint_strength_score in context"
         assert has_design, "No ticker has design_quality_score in context"
+
+
+class TestBatchExpectation:
+    """Verify the calculator uses cross-sectional expectation and the batch
+    path preserves the event_premium_magnitude fallback."""
+
+    def test_ev_calculator_uses_batch_expectation(self):
+        """Full EV output should use xsectional model, not single-name."""
+        import json
+        from pathlib import Path
+
+        scores_files = sorted(Path("artifacts/event_ev").glob("*_event_ev_full.json"))
+        if not scores_files:
+            pytest.skip("No full EV artifacts available")
+
+        with open(scores_files[-1]) as f:
+            data = json.load(f)
+        events = data.get("events", [])
+        if not events:
+            pytest.skip("No events in artifact")
+
+        # Check model version on first event
+        exp = events[0].get("expectation", {})
+        assert (
+            exp.get("model_version") == "expectation_xsectional_v0.1"
+        ), f"Expected batch model, got {exp.get('model_version')}"
+        # Percentile ranks must be present (batch mode marker)
+        fu = exp.get("features_used", {})
+        assert "percentile_ranks" in fu, "No percentile_ranks in features_used"
+
+    def test_estimate_batch_falls_back_to_opt_event_premium(self):
+        """The batch path must pick up opt_event_premium when
+        event_premium_magnitude is missing."""
+        import sys
+
+        sys.path.insert(0, ".")
+        from event_ev.expectation_model import ExpectationModel
+
+        model = ExpectationModel()
+
+        # Simulate: only opt_event_premium, no event_premium_magnitude
+        feats = {"opt_event_premium": 0.8}
+        val = model._get_batch_raw_value(feats, "event_premium_mag")
+        assert val == 0.8, f"Expected 0.8 from fallback, got {val}"
+
+        # Simulate: event_premium_magnitude present → no fallback needed
+        feats2 = {"event_premium_magnitude": 0.3, "opt_event_premium": 0.8}
+        val2 = model._get_batch_raw_value(feats2, "event_premium_mag")
+        assert val2 == 0.3, f"Expected 0.3 from primary, got {val2}"
+
+        # Simulate: neither present → None
+        val3 = model._get_batch_raw_value({}, "event_premium_mag")
+        assert val3 is None

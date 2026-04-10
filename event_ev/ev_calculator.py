@@ -107,17 +107,26 @@ class EventEVCalculator:
             self.as_of_date,
         )
 
-        # Run layers
-        event_evs = []
+        # First pass: timing, outcome, payoff (per-name)
+        partials = []
         failed_nodes = []
+        model_p_hits = {}
         for node in cohort:
             try:
-                ev = self._process_single(
+                timing_est = self.timing.estimate(node, self.as_of_date)
+                outcome_est = self.outcome.estimate(
                     node,
-                    market_features.get(node.ticker, {}),
+                    self.as_of_date,
                     context_features.get(node.ticker, {}),
                 )
-                event_evs.append(ev)
+                payoff_est = self.payoff.estimate(
+                    node,
+                    outcome_est,
+                    self.as_of_date,
+                    context_features.get(node.ticker, {}),
+                )
+                partials.append((node, timing_est, outcome_est, payoff_est))
+                model_p_hits[node.node_id] = outcome_est.p_hit
             except Exception:
                 logger.exception("Failed to process node %s (%s)", node.node_id, node.ticker)
                 failed_nodes.append(node.node_id)
@@ -129,6 +138,36 @@ class EventEVCalculator:
                 len(cohort),
                 failed_nodes[:10],
             )
+
+        # Second pass: expectation (cross-sectional batch)
+        beliefs = self.expectation.estimate_batch(
+            [p[0] for p in partials],
+            self.as_of_date,
+            market_features,
+            model_p_hits=model_p_hits,
+        )
+        belief_by_node = {b.node_id: b for b in beliefs}
+
+        # Assemble EventEV objects
+        event_evs = []
+        for node, timing_est, outcome_est, payoff_est in partials:
+            belief = belief_by_node.get(node.node_id)
+            if belief is None:
+                continue
+            try:
+                ev = self._assemble_ev(
+                    node,
+                    timing_est,
+                    outcome_est,
+                    belief,
+                    payoff_est,
+                    market_features.get(node.ticker, {}),
+                    context_features.get(node.ticker, {}),
+                )
+                event_evs.append(ev)
+            except Exception:
+                logger.exception("Failed to assemble EV for %s (%s)", node.node_id, node.ticker)
+                failed_nodes.append(node.node_id)
 
         # Sort by downside-adjusted EV
         event_evs.sort(key=lambda ev: ev.payoff.downside_adjusted_ev, reverse=True)
@@ -180,19 +219,30 @@ class EventEVCalculator:
         market_feats: Dict[str, Any],
         context_feats: Dict[str, Any],
     ) -> EventEV:
-        """Process a single catalyst through all layers."""
-        # Layer 2: Timing
+        """Process a single catalyst through all layers (legacy per-name path).
+
+        Retained for backward compatibility. The main run() method now uses
+        the batch path (timing/outcome/payoff per-name, expectation cross-sectional).
+        """
         timing_est = self.timing.estimate(node, self.as_of_date)
-
-        # Layer 3: Outcome
         outcome_est = self.outcome.estimate(node, self.as_of_date, context_feats)
-
-        # Layer 4: Expectation
         expectation_est = self.expectation.estimate(node, self.as_of_date, market_feats, model_p_hit=outcome_est.p_hit)
-
-        # Layer 5: Payoff
         payoff_est = self.payoff.estimate(node, outcome_est, self.as_of_date, context_feats)
+        return self._assemble_ev(
+            node, timing_est, outcome_est, expectation_est, payoff_est, market_feats, context_feats
+        )
 
+    def _assemble_ev(
+        self,
+        node: CatalystNode,
+        timing_est,
+        outcome_est,
+        expectation_est,
+        payoff_est,
+        market_feats: Dict[str, Any],
+        context_feats: Dict[str, Any],
+    ) -> EventEV:
+        """Assemble EventEV from pre-computed layer estimates + branch sensitivity."""
         # Spec 059: Branch sensitivity overlay (diagnostic, liquid-only)
         branch_sens = None
         try:
