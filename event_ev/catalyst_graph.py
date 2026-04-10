@@ -124,6 +124,24 @@ class CatalystGraph:
     def get_node(self, node_id: str) -> Optional[CatalystNode]:
         return self._nodes.get(node_id)
 
+    def enrich_phases(self, ticker_phase: Dict[str, str]) -> int:
+        """Update phase for nodes with phase="unknown" using a ticker→phase map.
+
+        Only updates clinical/safety events — regulatory events keep their
+        existing phase. Returns count of nodes updated.
+        """
+        count = 0
+        for node in self._nodes.values():
+            if node.phase != "unknown":
+                continue
+            if node.event_family == "REGULATORY":
+                continue
+            phase = ticker_phase.get(node.ticker)
+            if phase and phase != "unknown":
+                node.phase = phase
+                count += 1
+        return count
+
     def get_ticker_nodes(
         self,
         ticker: str,

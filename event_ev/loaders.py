@@ -122,8 +122,49 @@ def load_catalyst_graph(
         except (json.JSONDecodeError, OSError):
             pass
 
+    # 6. Enrich clinical nodes with phase from trial_records.json
+    # Phase is critical for outcome model priors but the event ledger
+    # and catalyst_events sources often lack it.
+    trial_path = prod_data / "trial_records.json"
+    if trial_path.exists():
+        try:
+            trials = json.loads(trial_path.read_text())
+            ticker_phase = _build_ticker_phase_map(trials)
+            n_enriched = graph.enrich_phases(ticker_phase)
+            if n_enriched > 0:
+                logger.info("Phase enrichment: %d nodes updated from trial_records", n_enriched)
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Failed to enrich phases: %s", exc)
+
     logger.info("Catalyst graph: %d total nodes", graph.node_count)
     return graph
+
+
+def _build_ticker_phase_map(trials: list) -> Dict[str, str]:
+    """Build {ticker: lead_phase} from trial records.
+
+    Picks the most advanced active phase per ticker.
+    """
+    from event_ev.catalyst_graph import _infer_phase
+
+    _PHASE_ORDER = {"1": 1, "1_2": 2, "2": 3, "2_3": 4, "3": 5, "4": 6}
+    ticker_phase: Dict[str, str] = {}
+
+    for t in trials:
+        tk = (t.get("ticker") or t.get("lead_sponsor_ticker") or "").upper()
+        raw_phase = t.get("phase", "")
+        if not tk or not raw_phase:
+            continue
+
+        phase = _infer_phase(raw_phase)
+        if phase == "unknown":
+            continue
+
+        existing = ticker_phase.get(tk, "unknown")
+        if _PHASE_ORDER.get(phase, 0) > _PHASE_ORDER.get(existing, 0):
+            ticker_phase[tk] = phase
+
+    return ticker_phase
 
 
 # Column aliases for feature extraction
