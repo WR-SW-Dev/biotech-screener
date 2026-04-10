@@ -140,10 +140,10 @@ class CatalystGraph:
         return self._nodes.get(node_id)
 
     def archive_stale_entries(self, as_of: date, max_age_days: int = 180) -> int:
-        """Mark nodes with event_date > max_age_days in the past as STALE.
+        """Mark nodes with event date > max_age_days in the past as STALE.
 
-        These are events that should have occurred but were never resolved.
-        They inflate the graph and can confuse per-ticker event counts.
+        For windowed events, uses date_range_end instead of expected_date
+        to avoid archiving events whose window hasn't closed yet.
         """
         cutoff = as_of - timedelta(days=max_age_days)
         archived = 0
@@ -153,7 +153,12 @@ class CatalystGraph:
             if not node.expected_date:
                 continue
             try:
-                ed = date.fromisoformat(node.expected_date)
+                # Use range end for windowed events (window may extend beyond expected_date)
+                effective_date = node.expected_date
+                if node.date_range_end and node.date_precision in ("HALF_YEAR", "QUARTER", "MONTH"):
+                    effective_date = node.date_range_end
+
+                ed = date.fromisoformat(effective_date)
                 if ed < cutoff:
                     node.status = NodeStatus.RESOLVED.value
                     node.resolution = "STALE_ARCHIVED"
@@ -185,11 +190,11 @@ class CatalystGraph:
         return len(to_remove)
 
     def fix_range_marker_precision(self) -> int:
-        """Set date_precision for nodes with range-marker expected_dates.
+        """Set date_precision and compute date_range_end for range-marker nodes.
 
         Nodes with expected_date ending in -01 or -31/-30 from SEC_8K sources
         are typically range markers (H1 2024, Q3 2025) — not exact dates.
-        These should have HALF_YEAR or QUARTER precision, not UNKNOWN.
+        Sets precision AND computes the range end so window-aware scoring works.
         """
         fixed = 0
         for node in self._nodes.values():
@@ -202,28 +207,48 @@ class CatalystGraph:
                 if ed.day == 1 and ed.month in (1, 7):
                     node.date_precision = "HALF_YEAR"
                     node.date_confidence = 0.20
+                    # Range: 6 months from start
+                    node.date_range_start = node.expected_date
+                    node.date_range_end = (
+                        (date(ed.year, ed.month + 6, 1) - timedelta(days=1)).isoformat()
+                        if ed.month <= 6
+                        else (date(ed.year + 1, 1, 1) - timedelta(days=1)).isoformat()
+                    )
                     fixed += 1
                 elif ed.day in (1, 28, 29, 30, 31) and ed.month in (1, 4, 7, 10):
                     node.date_precision = "QUARTER"
                     node.date_confidence = 0.25
+                    # Range: 3 months from quarter start
+                    q_start = date(ed.year, ed.month, 1)
+                    q_end_month = ed.month + 3 if ed.month <= 9 else 1
+                    q_end_year = ed.year if ed.month <= 9 else ed.year + 1
+                    node.date_range_start = q_start.isoformat()
+                    node.date_range_end = (date(q_end_year, q_end_month, 1) - timedelta(days=1)).isoformat()
                     fixed += 1
                 elif ed.day == 1:
                     node.date_precision = "MONTH"
                     node.date_confidence = 0.30
+                    # Range: 1 month
+                    node.date_range_start = node.expected_date
+                    next_month = ed.month + 1 if ed.month < 12 else 1
+                    next_year = ed.year if ed.month < 12 else ed.year + 1
+                    node.date_range_end = (date(next_year, next_month, 1) - timedelta(days=1)).isoformat()
                     fixed += 1
             except (ValueError, TypeError):
                 continue
         return fixed
 
-    def roll_overdue_range_markers(self, as_of: date) -> int:
-        """Roll forward overdue range-marker nodes to create a 'next possible' date.
+    def tag_overdue_windowed_nodes(self, as_of: date) -> int:
+        """Tag overdue windowed nodes for downstream identification.
 
         Nodes with HALF_YEAR/QUARTER/MONTH precision and expected_date in the
-        past represent events that are 'overdue' — they could happen any time.
-        Roll them to as_of + 30 days (near-term window) with low confidence.
-        Only applies to unresolved nodes.
+        past are 'overdue' — the event should have happened but wasn't resolved.
+
+        Instead of mutating dates (the old roll-forward approach), these nodes
+        are now handled by days_to_event() which returns a positive number for
+        overdue windows. This method just tags them and caps confidence.
         """
-        rolled = 0
+        tagged = 0
         for node in self._nodes.values():
             if node.is_resolved():
                 continue
@@ -235,14 +260,12 @@ class CatalystGraph:
                 ed = date.fromisoformat(node.expected_date)
                 if ed >= as_of:
                     continue  # Not overdue
-                # Roll forward: place in a 30-day window from as_of
-                node.expected_date = (as_of + timedelta(days=30)).isoformat()
                 node.date_confidence = min(node.date_confidence, 0.15)
-                node.event_subtype = (node.event_subtype or "") + "|ROLLED_FORWARD"
-                rolled += 1
+                node.event_subtype = (node.event_subtype or "") + "|OVERDUE_WINDOW"
+                tagged += 1
             except (ValueError, TypeError):
                 continue
-        return rolled
+        return tagged
 
     def enrich_phases(self, ticker_phase: Dict[str, str]) -> int:
         """Update phase for nodes with phase="unknown" using a ticker→phase map.
@@ -707,7 +730,7 @@ def _normalize_precision(raw_precision: str, source: str = "") -> str:
         return p
     # Invalid precision — use source-aware default
     if source == "CTGOV":
-        return "MONTH"  # CTgov dates are real but monthly granularity
+        return "DAY"  # CTgov dates are real specific dates (from trial status change timestamps)
     return "UNKNOWN"
 
 

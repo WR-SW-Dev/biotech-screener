@@ -143,7 +143,7 @@ def _build_leaderboard(results: List[EventEV], as_of: date) -> List[Dict[str, An
             "actionable": ev.actionable,
             "source": ev.node.source,
             "date_confidence": round(ev.node.date_confidence, 3),
-            "is_rolled_forward": "ROLLED_FORWARD" in (ev.node.event_subtype or ""),
+            "is_overdue_window": "OVERDUE_WINDOW" in (ev.node.event_subtype or ""),
             "is_supplement": ev.node.source == "M3_RANKINGS_SUPPLEMENT",
         }
 

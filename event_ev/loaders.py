@@ -150,10 +150,10 @@ def load_catalyst_graph(
     if n_precision > 0:
         logger.info("Date precision: %d nodes updated (range markers)", n_precision)
 
-    # 8. Roll overdue range markers forward (makes past-date events scorable)
-    n_rolled = graph.roll_overdue_range_markers(as_of)
-    if n_rolled > 0:
-        logger.info("Rolled forward: %d overdue range markers (now in 30d window)", n_rolled)
+    # 8. Tag overdue windowed nodes (days_to_event handles them natively now)
+    n_overdue = graph.tag_overdue_windowed_nodes(as_of)
+    if n_overdue > 0:
+        logger.info("Overdue windows: %d nodes tagged (handled by window-aware days_to_event)", n_overdue)
 
     # 9. Dedup by (ticker, event_type, expected_date)
     n_dedup = graph.dedup_by_event()

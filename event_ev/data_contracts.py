@@ -142,11 +142,45 @@ class CatalystNode:
         return hashlib.sha1(raw.encode()).hexdigest()[:12]
 
     def days_to_event(self, as_of: date) -> Optional[int]:
-        """Calendar days from as_of to expected_date. None if no date."""
+        """Calendar days from as_of to the event's effective date.
+
+        For windowed events (date_range_start + date_range_end), uses the
+        midpoint of the remaining window. For overdue windows where the
+        range end is past, returns a small positive number (event is
+        'imminent but undated') instead of negative.
+
+        For exact events, returns simple calendar days.
+        """
         if not self.expected_date:
             return None
         try:
             evt = date.fromisoformat(self.expected_date)
+
+            # Windowed event: use range if available
+            if self.date_range_end and self.date_precision in (
+                "HALF_YEAR",
+                "QUARTER",
+                "MONTH",
+            ):
+                try:
+                    end = date.fromisoformat(self.date_range_end)
+                    start = date.fromisoformat(self.date_range_start) if self.date_range_start else evt
+
+                    if end < as_of:
+                        # Overdue window: event should have happened already
+                        # Return small positive (imminent) instead of negative
+                        return 15  # treat as ~2 weeks out
+                    elif start <= as_of <= end:
+                        # Inside the window: midpoint of remaining range
+                        remaining = (end - as_of).days
+                        return max(1, remaining // 2)
+                    else:
+                        # Future window: days to midpoint
+                        mid = start + (end - start) / 2
+                        return max(1, (mid - as_of).days)
+                except (ValueError, TypeError):
+                    pass
+
             return (evt - as_of).days
         except (ValueError, TypeError):
             return None
