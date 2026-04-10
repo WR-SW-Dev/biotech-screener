@@ -54,7 +54,7 @@ FEATURE_REGISTRY: Tuple[FeatureSpec, ...] = (
     # --- Market / institutional features ---
     FeatureSpec("coinvest_score_z", "float", "institutional"),
     FeatureSpec("inst_delta_z", "float", "institutional"),
-    FeatureSpec("insider_net_buy_value_90d", "float", "institutional"),
+    # insider_net_buy_value_90d: REMOVED — lane closed (Form 4 revalidation 2026-04-05)
     FeatureSpec("alpha_60d", "float", "market"),
     FeatureSpec("de_alpha_60d", "float", "market"),
     FeatureSpec("de_rsi_14d", "float", "market"),

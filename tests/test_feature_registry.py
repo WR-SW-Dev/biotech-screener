@@ -42,7 +42,7 @@ class TestRegistryIntegrity:
 
     def test_feature_count_regression_guard(self):
         """Catch accidental additions/removals. Update this count intentionally."""
-        assert len(FEATURE_REGISTRY) == 29
+        assert len(FEATURE_REGISTRY) == 28  # 29 - 1 (insider_net_buy removed)
 
     def test_feature_spec_is_frozen(self):
         f = FEATURE_REGISTRY[0]
@@ -70,7 +70,7 @@ class TestGetFeatureKeys:
         legacy = (
             "coinvest_score_z",
             "inst_delta_z",
-            "insider_net_buy_value_90d",
+            # insider_net_buy_value_90d: removed (closed lane)
             "alpha_60d",
             "de_alpha_60d",
             "de_rsi_14d",

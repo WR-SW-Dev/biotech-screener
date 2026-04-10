@@ -237,7 +237,7 @@ class OutcomeModel:
 
         # Competitive intensity (crowded → lower marginal value but same PoS)
         # This affects value more than probability — small adjustment here
-        ci = context.get("competitive_intensity") or context.get("competitive_intensity_z")
+        ci = _safe_context_float(context, "competitive_intensity_z")
         if ci is not None:
             try:
                 ci_val = float(ci)

@@ -50,13 +50,26 @@ SUMMARY_PATH = EV_ARTIFACTS / "ev_validation_summary.json"
 SCHEMA_VERSION = "ev_validation.v1"
 
 # Event type mapping: CRT catalyst_type → EV event_type
+# CRT catalyst_type → EV event_type mapping.
+# The two systems use different taxonomies. This map bridges them.
 _TYPE_MAP = {
+    # Regulatory
     "PDUFA_ACTION": "PDUFA",
+    "NDA_BLA_FILING": "FDA_SUBMISSION",
+    "REGULATORY_DESIGNATION": "FDA_DESIGNATION",
+    "ADCOM_VOTE": "FDA_ADCOM",
+    # Clinical (all readout types → DATA_READOUT)
     "PHASE_3_READOUT": "DATA_READOUT",
     "PHASE_2_READOUT": "DATA_READOUT",
     "PHASE_1_READOUT": "DATA_READOUT",
-    "REGULATORY_DESIGNATION": "REGULATORY",
-    "ADCOM_VOTE": "ADCOM",
+    "PHASE_1_DATA": "DATA_READOUT",
+    "PHASE_2_DATA": "DATA_READOUT",
+    "PHASE_3_DATA": "DATA_READOUT",
+    "PHASE_1_2_DATA": "DATA_READOUT",
+    "PHASE_2_3_READOUT": "DATA_READOUT",
+    # Also match graph's FDA_PDUFA_DATE alias
+    "FDA_PDUFA_DATE": "PDUFA",
+    # Corporate
     "CORPORATE_UPDATE": "CORPORATE",
 }
 
