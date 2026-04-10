@@ -138,7 +138,22 @@ def load_catalyst_graph(
         except (json.JSONDecodeError, OSError) as exc:
             logger.warning("Failed to enrich phases: %s", exc)
 
-    logger.info("Catalyst graph: %d total nodes", graph.node_count)
+    # 7. Fix range-marker date precision (SEC_8K nodes with synthetic dates)
+    n_precision = graph.fix_range_marker_precision()
+    if n_precision > 0:
+        logger.info("Date precision: %d nodes updated (range markers)", n_precision)
+
+    # 8. Dedup by (ticker, event_type, expected_date)
+    n_dedup = graph.dedup_by_event()
+    if n_dedup > 0:
+        logger.info("Dedup: %d duplicate nodes removed", n_dedup)
+
+    # 9. Archive stale entries (>180d past event_date, no resolution)
+    n_archived = graph.archive_stale_entries(as_of, max_age_days=180)
+    if n_archived > 0:
+        logger.info("Archived: %d stale entries (>180d past event_date)", n_archived)
+
+    logger.info("Catalyst graph: %d total nodes (%d active)", graph.node_count, graph.node_count - n_archived)
     return graph
 
 

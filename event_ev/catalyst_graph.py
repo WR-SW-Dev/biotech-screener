@@ -14,7 +14,7 @@ and revision history for timing models.
 from __future__ import annotations
 
 import logging
-from datetime import date
+from datetime import date, timedelta
 from typing import Any, Dict, List, Optional
 
 from .data_contracts import CatalystNode, CatalystRevision, DatePrecision, EventFamily, NodeStatus
@@ -66,6 +66,21 @@ _SUBTYPE_MAP: Dict[str, str] = {
     "CT_PRIMARY_COMPLETION": "PCD",
     "CT_STUDY_COMPLETION": "SCD",
     "CT_RESULTS_POSTED": "RESULTS",
+}
+
+
+# CRT catalyst_type → graph event_type mapping (for resolution matching)
+_CRT_TYPE_TO_GRAPH: Dict[str, str] = {
+    "PDUFA_ACTION": "PDUFA",
+    "NDA_BLA_FILING": "FDA_SUBMISSION",
+    "REGULATORY_DESIGNATION": "FDA_DESIGNATION",
+    "ADCOM_VOTE": "FDA_ADCOM",
+    "PHASE_3_READOUT": "DATA_READOUT",
+    "PHASE_2_READOUT": "DATA_READOUT",
+    "PHASE_1_READOUT": "DATA_READOUT",
+    "PHASE_1_DATA": "DATA_READOUT",
+    "PHASE_2_DATA": "DATA_READOUT",
+    "FDA_PDUFA_DATE": "PDUFA",
 }
 
 
@@ -123,6 +138,82 @@ class CatalystGraph:
 
     def get_node(self, node_id: str) -> Optional[CatalystNode]:
         return self._nodes.get(node_id)
+
+    def archive_stale_entries(self, as_of: date, max_age_days: int = 180) -> int:
+        """Mark nodes with event_date > max_age_days in the past as STALE.
+
+        These are events that should have occurred but were never resolved.
+        They inflate the graph and can confuse per-ticker event counts.
+        """
+        cutoff = as_of - timedelta(days=max_age_days)
+        archived = 0
+        for node in self._nodes.values():
+            if node.is_resolved():
+                continue
+            if not node.expected_date:
+                continue
+            try:
+                ed = date.fromisoformat(node.expected_date)
+                if ed < cutoff:
+                    node.status = NodeStatus.RESOLVED.value
+                    node.resolution = "STALE_ARCHIVED"
+                    archived += 1
+            except (ValueError, TypeError):
+                continue
+        return archived
+
+    def dedup_by_event(self) -> int:
+        """Remove duplicate nodes with same (ticker, event_type, expected_date).
+
+        Keeps the node with the most recent disclosed_at date.
+        Returns count of nodes removed.
+        """
+        seen: Dict[str, str] = {}  # key → best node_id
+        to_remove = []
+        for node in sorted(self._nodes.values(), key=lambda n: n.disclosed_at or "", reverse=True):
+            key = f"{node.ticker}|{node.event_type}|{node.expected_date}"
+            if key in seen:
+                to_remove.append(node.node_id)
+            else:
+                seen[key] = node.node_id
+        for nid in to_remove:
+            if nid in self._nodes:
+                ticker = self._nodes[nid].ticker
+                del self._nodes[nid]
+                if ticker in self._by_ticker:
+                    self._by_ticker[ticker] = [n for n in self._by_ticker[ticker] if n != nid]
+        return len(to_remove)
+
+    def fix_range_marker_precision(self) -> int:
+        """Set date_precision for nodes with range-marker expected_dates.
+
+        Nodes with expected_date ending in -01 or -31/-30 from SEC_8K sources
+        are typically range markers (H1 2024, Q3 2025) — not exact dates.
+        These should have HALF_YEAR or QUARTER precision, not UNKNOWN.
+        """
+        fixed = 0
+        for node in self._nodes.values():
+            if not node.expected_date or node.date_precision != "UNKNOWN":
+                continue
+            if node.source not in ("SEC_8K_FILING", "SEC_8K"):
+                continue
+            try:
+                ed = date.fromisoformat(node.expected_date)
+                if ed.day == 1 and ed.month in (1, 7):
+                    node.date_precision = "HALF_YEAR"
+                    node.date_confidence = 0.20
+                    fixed += 1
+                elif ed.day in (1, 28, 29, 30, 31) and ed.month in (1, 4, 7, 10):
+                    node.date_precision = "QUARTER"
+                    node.date_confidence = 0.25
+                    fixed += 1
+                elif ed.day == 1:
+                    node.date_precision = "MONTH"
+                    node.date_confidence = 0.30
+                    fixed += 1
+            except (ValueError, TypeError):
+                continue
+        return fixed
 
     def enrich_phases(self, ticker_phase: Dict[str, str]) -> int:
         """Update phase for nodes with phase="unknown" using a ticker→phase map.
@@ -470,7 +561,8 @@ class CatalystGraph:
         """Apply CRT resolution outcomes to matching nodes.
 
         Matches by (ticker, catalyst_date) within ±7 day window.
-        Only applies if resolution_date <= as_of.
+        Prefers event_type match when available to avoid cross-type
+        false matches. Only applies if resolution_date <= as_of.
         """
         applied = 0
         for rec in resolution_records:
@@ -484,27 +576,42 @@ class CatalystGraph:
             ticker = rec.get("ticker", "")
             cat_date = rec.get("catalyst_date", "")
             outcome = rec.get("outcome", "")
+            crt_type = rec.get("catalyst_type", "")
 
             if not ticker or not cat_date or not outcome:
                 continue
             if outcome == "INFORMATIONAL":
                 continue
 
-            # Find matching node
+            # Map CRT type to graph event type for matching
+            crt_event_type = _CRT_TYPE_TO_GRAPH.get(crt_type)
+
+            # Find matching node — prefer type+date match, fall back to date-only
+            best_node = None
+            best_gap = 999
             for node in self.get_ticker_nodes(ticker):
                 if not node.expected_date:
                     continue
                 try:
                     nd = date.fromisoformat(node.expected_date)
                     cd = date.fromisoformat(cat_date)
-                    if abs((nd - cd).days) <= 7:
-                        node.status = NodeStatus.RESOLVED.value
-                        node.resolution = outcome
-                        node.resolved_date = res_date
-                        applied += 1
-                        break
+                    gap = abs((nd - cd).days)
+                    if gap > 7:
+                        continue
+                    # Prefer type match (gap penalty 0) over type mismatch (gap penalty 1)
+                    type_match = crt_event_type and node.event_type == crt_event_type
+                    effective_gap = gap if type_match else gap + 100
+                    if effective_gap < best_gap:
+                        best_gap = effective_gap
+                        best_node = node
                 except (ValueError, TypeError):
                     continue
+
+            if best_node is not None:
+                best_node.status = NodeStatus.RESOLVED.value
+                best_node.resolution = outcome
+                best_node.resolved_date = res_date
+                applied += 1
 
         logger.info("Applied %d resolutions (as_of=%s)", applied, as_of)
         return applied
