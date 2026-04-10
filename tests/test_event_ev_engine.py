@@ -8,6 +8,8 @@ from __future__ import annotations
 from datetime import date
 from typing import Any
 
+import pytest
+
 # ============================================================================
 # Fixtures
 # ============================================================================
@@ -993,3 +995,56 @@ class TestPhaseSpecificPriors:
         probs = model.estimate(_make_node(phase="3"), date(2026, 4, 4))
         assert probs.p_hit > 0
         assert probs.p_miss > 0
+
+
+class TestClinicalVariationInvariant:
+    """Regression: clinical p_hit must not collapse to a single value."""
+
+    def test_clinical_p_hit_varies(self):
+        """After phase enrichment + feature wiring, clinical events must
+        have more than one distinct p_hit value."""
+        from pathlib import Path
+
+        scores_files = sorted(Path("artifacts/event_ev").glob("*_event_ev_scores.json"))
+        if not scores_files:
+            pytest.skip("No EV score artifacts available")
+
+        import json
+
+        with open(scores_files[-1]) as f:
+            data = json.load(f)
+        events = data.get("leaderboard", [])
+        clinical = [e for e in events if e.get("event_family") == "CLINICAL"]
+        if len(clinical) < 5:
+            pytest.skip("Too few clinical events to test variation")
+
+        p_hits = {round(e["p_hit"], 4) for e in clinical}
+        assert len(p_hits) > 1, (
+            f"All {len(clinical)} clinical events share p_hit={p_hits.pop()}. "
+            "Clinical discriminators are not reaching the outcome model."
+        )
+
+    def test_context_includes_discriminators(self):
+        """Context features for clinical tickers must include discriminators."""
+        import sys
+
+        sys.path.insert(0, ".")
+        from datetime import date
+        from pathlib import Path
+
+        from event_ev.loaders import load_market_features, split_context_features
+
+        snap_dir = Path("data/snapshots")
+        if not snap_dir.exists():
+            pytest.skip("No snapshots directory")
+
+        mf = load_market_features(date.today(), snap_dir)
+        ctx = split_context_features(mf)
+        if not ctx:
+            pytest.skip("No market features loaded")
+
+        # At least one ticker should have clinical discriminators
+        has_endpoint = any(c.get("endpoint_strength_score") is not None for c in ctx.values())
+        has_design = any(c.get("design_quality_score") is not None for c in ctx.values())
+        assert has_endpoint, "No ticker has endpoint_strength_score in context"
+        assert has_design, "No ticker has design_quality_score in context"
