@@ -181,7 +181,7 @@ def load_ev_predictions(ev_dir: Path) -> Dict[str, List[Dict[str, Any]]]:
 
 
 def load_resolutions(resolutions_root: Path) -> List[Dict[str, Any]]:
-    """Load all CRT resolution files."""
+    """Load resolved CRT events from the resolutions directory."""
     resolutions = []
     if not resolutions_root.exists():
         return resolutions

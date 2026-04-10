@@ -6,6 +6,7 @@ _clinical_proximity, _filter_price_outliers, _validate_price_splits,
 _force_deterministic_generated_at, validate_as_of_date_param,
 z-score computation helpers, and coverage guard logic.
 """
+
 from __future__ import annotations
 
 import math
@@ -19,24 +20,22 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from run_screen import (
-    classify_company_archetype,
-    apply_clinical_activity_filter,
-    parse_catalyst_window,
-    compute_catalyst_decay_weight,
-    _parse_trial_date,
     _clinical_proximity,
     _filter_price_outliers,
-    _validate_price_splits,
     _force_deterministic_generated_at,
+    _parse_trial_date,
+    _validate_price_splits,
+    apply_clinical_activity_filter,
+    classify_company_archetype,
+    compute_catalyst_decay_weight,
+    parse_catalyst_window,
     validate_as_of_date_param,
-    INDUSTRY_TO_ARCHETYPE,
-    PHASE_ORDER,
 )
-
 
 # =============================================================================
 # classify_company_archetype
 # =============================================================================
+
 
 class TestClassifyCompanyArchetype:
     def test_biotech_no_revenue_is_drug_developer(self):
@@ -52,7 +51,10 @@ class TestClassifyCompanyArchetype:
         assert classify_company_archetype("ACME", "Biotechnology", True, "small") == "drug_developer"
 
     def test_pharma_specialty(self):
-        assert classify_company_archetype("PFE", "Drug Manufacturers - Specialty & Generic", False, "pre_revenue") == "commercial_pharma"
+        assert (
+            classify_company_archetype("PFE", "Drug Manufacturers - Specialty & Generic", False, "pre_revenue")
+            == "commercial_pharma"
+        )
 
     def test_pharma_general(self):
         assert classify_company_archetype("JNJ", "Drug Manufacturers - General", True, "large") == "commercial_pharma"
@@ -73,6 +75,7 @@ class TestClassifyCompanyArchetype:
 # =============================================================================
 # apply_clinical_activity_filter
 # =============================================================================
+
 
 class TestApplyClinicalActivityFilter:
     def test_drug_developer_below_min_trials_excluded(self):
@@ -108,6 +111,7 @@ class TestApplyClinicalActivityFilter:
 # parse_catalyst_window
 # =============================================================================
 
+
 class TestParseCatalystWindow:
     def test_standard_window(self):
         assert parse_catalyst_window("15-45") == (15, 45)
@@ -139,6 +143,7 @@ class TestParseCatalystWindow:
 # =============================================================================
 # compute_catalyst_decay_weight
 # =============================================================================
+
 
 class TestComputeCatalystDecayWeight:
     def test_past_event_zero(self):
@@ -183,6 +188,7 @@ class TestComputeCatalystDecayWeight:
 # _parse_trial_date
 # =============================================================================
 
+
 class TestParseTrialDate:
     def test_valid_date(self):
         assert _parse_trial_date("2026-03-06") == date(2026, 3, 6)
@@ -203,6 +209,7 @@ class TestParseTrialDate:
 # =============================================================================
 # _clinical_proximity
 # =============================================================================
+
 
 class TestClinicalProximity:
     def test_none_days_returns_zero(self):
@@ -226,6 +233,7 @@ class TestClinicalProximity:
 # _filter_price_outliers
 # =============================================================================
 
+
 class TestFilterPriceOutliers:
     def test_empty_series(self):
         filtered, warnings = _filter_price_outliers([])
@@ -239,10 +247,7 @@ class TestFilterPriceOutliers:
         assert warnings == []
 
     def test_no_outliers(self):
-        series = [
-            (date(2026, 1, i), 10.0 + i * 0.1)
-            for i in range(1, 10)
-        ]
+        series = [(date(2026, 1, i), 10.0 + i * 0.1) for i in range(1, 10)]
         filtered, warnings = _filter_price_outliers(series)
         assert len(filtered) == len(series)
         assert warnings == []
@@ -276,6 +281,7 @@ class TestFilterPriceOutliers:
 # _validate_price_splits
 # =============================================================================
 
+
 class TestValidatePriceSplits:
     def test_no_splits(self):
         prices = {
@@ -296,6 +302,7 @@ class TestValidatePriceSplits:
 # =============================================================================
 # _force_deterministic_generated_at
 # =============================================================================
+
 
 class TestForceDeterministicGeneratedAt:
     def test_overwrites_provenance(self):
@@ -324,6 +331,7 @@ class TestForceDeterministicGeneratedAt:
 # validate_as_of_date_param
 # =============================================================================
 
+
 class TestValidateAsOfDateParam:
     def test_valid_date(self):
         validate_as_of_date_param("2026-03-06")  # should not raise
@@ -345,6 +353,7 @@ class TestValidateAsOfDateParam:
 # Z-score computation logic (extracted pattern tests)
 # =============================================================================
 
+
 class TestZScoreComputationPatterns:
     """Tests for the z-score computation patterns used in run_screen.py.
 
@@ -360,7 +369,7 @@ class TestZScoreComputationPatterns:
             return []
         mean = sum(values) / n
         var = sum((v - mean) ** 2 for v in values) / n
-        std = var ** 0.5
+        std = var**0.5
         if std == 0:
             return [0.0] * n
         return [round((v - mean) / std, 4) for v in values]
@@ -373,7 +382,7 @@ class TestZScoreComputationPatterns:
     def test_z_scores_unit_variance(self):
         values = [1.0, 2.0, 3.0, 4.0, 5.0]
         zs = self._compute_z_scores(values)
-        var = sum(z ** 2 for z in zs) / len(zs)
+        var = sum(z**2 for z in zs) / len(zs)
         assert abs(var - 1.0) < 0.01
 
     def test_constant_values_all_zero(self):
@@ -398,12 +407,14 @@ class TestZScoreComputationPatterns:
 # Coverage guard logic (pattern test)
 # =============================================================================
 
+
 class TestCoverageGuardPattern:
     """Tests for the coverage guard pattern used in run_screen.py."""
 
     @staticmethod
     def _apply_coverage_guard(
-        rows: list[dict], min_pct: float = 10.0,
+        rows: list[dict],
+        min_pct: float = 10.0,
     ) -> tuple[float, bool]:
         """Replicate the coverage guard logic from run_screen.py."""
         nonzero_count = sum(1 for r in rows if r.get("inst_delta_net", 0) != 0)
@@ -453,9 +464,11 @@ class TestCoverageGuardPattern:
 # SNAPSHOT_COLUMNS integrity
 # =============================================================================
 
+
 class TestSnapshotColumnsIntegrity:
     def test_no_duplicate_columns(self):
         from run_screen import SNAPSHOT_COLUMNS
+
         seen = set()
         for col in SNAPSHOT_COLUMNS:
             assert col not in seen, f"Duplicate column: {col}"
@@ -463,16 +476,71 @@ class TestSnapshotColumnsIntegrity:
 
     def test_required_columns_present(self):
         from run_screen import SNAPSHOT_COLUMNS
+
         required = [
-            "ticker", "actionable_rank", "tier_any", "tier_dev",
-            "eligible", "inst_delta_z", "inst_delta_nonzero_pct",
-            "clinical_score_z", "clinical_score_z_tier",
-            "clinical_score_v2_z", "archetype",
+            "ticker",
+            "actionable_rank",
+            "tier_any",
+            "tier_dev",
+            "eligible",
+            "inst_delta_z",
+            "inst_delta_nonzero_pct",
+            "clinical_score_z",
+            "clinical_score_z_tier",
+            "clinical_score_v2_z",
+            "archetype",
         ]
         for col in required:
             assert col in SNAPSHOT_COLUMNS, f"Missing required column: {col}"
 
     def test_all_columns_are_strings(self):
         from run_screen import SNAPSHOT_COLUMNS
+
         for col in SNAPSHOT_COLUMNS:
             assert isinstance(col, str), f"Non-string column: {col}"
+
+
+class TestSnapshotPhaseHelpers:
+    """Tests for the extracted save_validation_snapshot phase helpers."""
+
+    def test_enrich_market_data_fields(self):
+        from run_screen import _enrich_market_data_fields
+
+        rows = [{"ticker": "ACME"}]
+        market = {"ACME": {"short_percent": 0.15, "price": 50.0, "market_cap": 5e9}}
+        _enrich_market_data_fields(rows, market)
+        assert rows[0]["short_interest_pct"] == 0.15
+        assert rows[0]["close_price"] == 50.0
+        assert rows[0]["market_cap_mm"] == 5000.0
+
+    def test_enrich_market_data_none_safe(self):
+        from run_screen import _enrich_market_data_fields
+
+        rows = [{"ticker": "ACME"}]
+        _enrich_market_data_fields(rows, None)  # should not crash
+
+    def test_enrich_applicability_flags(self):
+        from run_screen import _enrich_applicability_flags
+
+        rows = [
+            {"ticker": "A", "archetype": "drug_developer"},
+            {"ticker": "B", "archetype": "commercial"},
+        ]
+        _enrich_applicability_flags(rows)
+        assert rows[0]["has_clinical_optionality_dev"] == 1
+        assert rows[0]["has_commercial_quality"] == 0
+        assert rows[1]["has_clinical_optionality_dev"] == 0
+        assert rows[1]["has_commercial_quality"] == 1
+
+    def test_finalize_priced_move(self):
+        from run_screen import _finalize_priced_move
+
+        rows = [
+            {"ticker": "A", "straddle_price": "0.25", "priced_move_pct": ""},
+            {"ticker": "B", "straddle_price": "0.30", "priced_move_pct": "0.30"},
+            {"ticker": "C", "straddle_price": "", "priced_move_pct": ""},
+        ]
+        _finalize_priced_move(rows)
+        assert rows[0]["priced_move_pct"] == "0.25"  # filled from straddle
+        assert rows[1]["priced_move_pct"] == "0.30"  # preserved existing
+        assert rows[2]["priced_move_pct"] == ""  # no straddle, stays empty

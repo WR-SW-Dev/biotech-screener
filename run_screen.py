@@ -3489,6 +3489,51 @@ def _write_coverage_quality(
     )
 
 
+# =========================================================================
+# save_validation_snapshot phase helpers
+# Extracted to create testable phase boundaries within the God function.
+# =========================================================================
+
+
+def _enrich_market_data_fields(
+    csv_rows: List[Dict[str, Any]],
+    market_data_by_ticker: Optional[Dict[str, Dict]] = None,
+) -> None:
+    """PHASE 2a: Inject market data fields for Event EV expectation model."""
+    _ensure_defaults(csv_rows)
+    _mkt_lookup = market_data_by_ticker or {}
+    for _r in csv_rows:
+        _tk = (_r.get("ticker") or "").upper()
+        _md = _mkt_lookup.get(_tk, {})
+        if _md:
+            if "short_interest_pct" not in _r or not _r.get("short_interest_pct"):
+                _r["short_interest_pct"] = _md.get("short_percent", "")
+            if "close_price" not in _r or not _r.get("close_price"):
+                _r["close_price"] = _md.get("price", "")
+            if "market_cap_mm" not in _r or not _r.get("market_cap_mm"):
+                _mcap = _md.get("market_cap")
+                _r["market_cap_mm"] = round(_mcap / 1e6, 1) if _mcap else ""
+
+
+def _enrich_applicability_flags(csv_rows: List[Dict[str, Any]]) -> None:
+    """PHASE 2b: Set applicability flags for scorecard N/A-aware missingness."""
+    for _r in csv_rows:
+        _arch = _r.get("archetype", "")
+        _r["has_commercial_quality"] = 1 if _arch != "drug_developer" else 0
+        _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
+
+
+def _finalize_priced_move(csv_rows: List[Dict[str, Any]]) -> None:
+    """PHASE 2z: Final field injection — priced_move_pct from straddle_price.
+
+    Must run AFTER all options scoring (straddle, PCR, etc) and BEFORE CSV write.
+    This was the source of a P0 execution-order bug when it ran too early.
+    """
+    for _r in csv_rows:
+        if not _r.get("priced_move_pct") and _r.get("straddle_price"):
+            _r["priced_move_pct"] = _r["straddle_price"]
+
+
 def save_validation_snapshot(
     snapshot_dir: Path,
     as_of_date: str,
@@ -4616,29 +4661,14 @@ def save_validation_snapshot(
         logger.warning(f"Alpha contract output validation error: {_aso_err}")
         _alpha_output_diag = None
 
-    # --- Output hygiene: fill deterministic defaults for z-score fields ---
-    _ensure_defaults(csv_rows)
+    # =========================================================================
+    # PHASE 2: ENRICH — inject market data, applicability flags, options
+    # This phase adds fields to csv_rows but does not change scores or ranks.
+    # All enrichment must complete before PHASE 3 (WRITE).
+    # =========================================================================
 
-    # --- Inject market data fields for Event EV expectation model ---
-    _mkt_lookup = market_data_by_ticker or {}
-    for _r in csv_rows:
-        _tk = (_r.get("ticker") or "").upper()
-        _md = _mkt_lookup.get(_tk, {})
-        if _md:
-            if "short_interest_pct" not in _r or not _r.get("short_interest_pct"):
-                _r["short_interest_pct"] = _md.get("short_percent", "")
-            if "close_price" not in _r or not _r.get("close_price"):
-                _r["close_price"] = _md.get("price", "")
-            if "market_cap_mm" not in _r or not _r.get("market_cap_mm"):
-                _mcap = _md.get("market_cap")
-                _r["market_cap_mm"] = round(_mcap / 1e6, 1) if _mcap else ""
-        # priced_move_pct: populated later after straddle scoring (see below)
-
-    # --- Applicability flags (for scorecard N/A-aware missingness) ---
-    for _r in csv_rows:
-        _arch = _r.get("archetype", "")
-        _r["has_commercial_quality"] = 1 if _arch != "drug_developer" else 0
-        _r["has_clinical_optionality_dev"] = 1 if _arch == "drug_developer" else 0
+    _enrich_market_data_fields(csv_rows, market_data_by_ticker)
+    _enrich_applicability_flags(csv_rows)
 
     # --- Spec 050/051: Selector + Ranker scoring (mode-dispatched) ---
     _eligible_for_selector = [r for r in csv_rows if _is_eligible(r)]
@@ -5637,11 +5667,14 @@ def save_validation_snapshot(
     except Exception as _oq_exc:
         logger.debug("Options review queue skipped: %s", _oq_exc)
 
-    # --- Final field injection: priced_move_pct from straddle_price ---
-    # Must run AFTER straddle scoring (which populates straddle_price from chain analytics)
-    for _r in csv_rows:
-        if not _r.get("priced_move_pct") and _r.get("straddle_price"):
-            _r["priced_move_pct"] = _r["straddle_price"]
+    # =========================================================================
+    # PHASE 2z: Final field injection (must be last enrichment before write)
+    # =========================================================================
+    _finalize_priced_move(csv_rows)
+
+    # =========================================================================
+    # PHASE 3: WRITE — rankings.csv, checksum, manifest
+    # =========================================================================
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
