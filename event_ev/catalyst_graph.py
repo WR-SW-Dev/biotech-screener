@@ -373,6 +373,8 @@ class CatalystGraph:
                 date_confidence=_precision_to_confidence(
                     e.get("confidence", "LOW"),
                     e.get("date_precision", "UNKNOWN"),
+                    source=e.get("source", "UNKNOWN"),
+                    event_type=event_type,
                 ),
                 source=e.get("source", "UNKNOWN"),
                 source_uid=e.get("source_uid", ""),
@@ -566,6 +568,8 @@ class CatalystGraph:
                     date_confidence=_precision_to_confidence(
                         evt.get("confidence", "LOW"),
                         evt.get("date_precision", "UNKNOWN"),
+                        source=evt.get("source", "UNKNOWN"),
+                        event_type=event_type,
                     ),
                     source=evt.get("source", "UNKNOWN"),
                     source_uid=evt.get("source_uid", evt.get("nct_id", "")),
@@ -691,9 +695,37 @@ class CatalystGraph:
         return revisions_added
 
 
-def _precision_to_confidence(confidence_str: str, precision_str: str) -> float:
-    """Convert ledger confidence + precision into a [0, 1] date-confidence score."""
-    base = {"HIGH": 0.85, "MED": 0.60, "LOW": 0.30}.get(confidence_str.upper(), 0.30)
+def _precision_to_confidence(confidence_str: str, precision_str: str, source: str = "", event_type: str = "") -> float:
+    """Convert ledger confidence + precision into a [0, 1] date-confidence score.
+
+    Source-aware: SEC 8-K PDUFA dates with DAY precision are upgraded to HIGH
+    confidence because the SEC filing is a reliable disclosure of the exact date.
+    """
+    # Handle both string labels (HIGH/MED/LOW) and numeric confidence values
+    try:
+        numeric_conf = float(confidence_str)
+        if numeric_conf >= 0.7:
+            conf_upper = "HIGH"
+        elif numeric_conf >= 0.4:
+            conf_upper = "MED"
+        else:
+            conf_upper = "LOW"
+    except (ValueError, TypeError):
+        conf_upper = confidence_str.upper()
+
+    # Source-aware confidence upgrade
+    if source in ("SEC_8K_FILING", "SEC_8K") and precision_str.upper() == "DAY":
+        if "PDUFA" in event_type or "FDA" in event_type:
+            conf_upper = "HIGH"  # SEC filing with exact PDUFA date = reliable
+        else:
+            conf_upper = "MED"  # SEC filing with exact readout date = moderate
+
+    # CTGOV nodes: upgrade from LOW to MED — trial registry is a reliable source
+    # for primary completion dates even when confidence field says LOW
+    if source == "CTGOV" and conf_upper == "LOW":
+        conf_upper = "MED"  # CTgov PCD/CD dates are registry-sourced, not rumors
+
+    base = {"HIGH": 0.85, "MED": 0.60, "LOW": 0.30}.get(conf_upper, 0.30)
     precision_mult = {
         "DAY": 1.0,
         "WEEK": 0.90,
