@@ -62,6 +62,61 @@ _CTGOV_CACHE_DIR = PROJECT_ROOT / "cache" / "ctgov"
 
 # Delta warming: narrow EDGAR search to recent filings only
 _DELTA_LOOKBACK_DAYS = 7
+
+# Regex patterns for clinical field extraction
+_RE_RANDOMIZED = re.compile(r"\brandomiz", re.IGNORECASE)
+_RE_DOUBLE_BLIND = re.compile(r"\bdouble[- ]?blind", re.IGNORECASE)
+_RE_SINGLE_BLIND = re.compile(r"\bsingle[- ]?blind", re.IGNORECASE)
+_RE_PLACEBO = re.compile(r"\bplacebo\b", re.IGNORECASE)
+
+
+def _enrich_clinical_fields(records: list) -> int:
+    """Enrich trial records with structured clinical fields.
+
+    Extracts randomized, blinded, enrollment, and placebo_controlled
+    from title + interventions. Only sets fields that aren't already present.
+    Returns count of records enriched.
+    """
+    enriched = 0
+    for rec in records:
+        changed = False
+        title = str(rec.get("title") or "")
+        intervs = rec.get("interventions") or []
+        if isinstance(intervs, str):
+            intervs = [intervs]
+        scan = title + " " + " ".join(str(iv) for iv in intervs)
+
+        # Randomized
+        if "randomized" not in rec or rec["randomized"] is None:
+            rec["randomized"] = bool(_RE_RANDOMIZED.search(scan))
+            changed = True
+
+        # Blinded
+        if "blinded" not in rec or rec["blinded"] is None:
+            if _RE_DOUBLE_BLIND.search(scan):
+                rec["blinded"] = "double"
+            elif _RE_SINGLE_BLIND.search(scan):
+                rec["blinded"] = "single"
+            else:
+                rec["blinded"] = "open"
+            changed = True
+
+        # Placebo controlled
+        if "placebo_controlled" not in rec:
+            ivs_lower = [str(iv).lower() for iv in intervs]
+            rec["placebo_controlled"] = any("placebo" in iv for iv in ivs_lower) or bool(_RE_PLACEBO.search(title))
+            changed = True
+
+        # Enrollment (from record if available)
+        if "enrollment" not in rec:
+            rec["enrollment"] = rec.get("enrollment_count") or rec.get("enrollmentInfo", {}).get("count")
+
+        if changed:
+            enriched += 1
+
+    return enriched
+
+
 _EXPIRE_WINDOW_DAYS = 180
 
 
@@ -337,6 +392,12 @@ def warm_ctgov(as_of_date: date, data_dir: Path, cache_dir: Path | None = None) 
 
     missing_lup = sum(1 for r in records if not (r.get("last_update_posted") or "").strip())
     filtered = [r for r in records if (r.get("last_update_posted") or "")[:10] <= cutoff]
+
+    # Enrich with structured clinical fields extracted from title/interventions.
+    # These fields are available from the CTgov API adapter but aren't in the
+    # raw trial_records.json. Extract them at cache-warm time so all downstream
+    # consumers (outcome model, design quality scorer) get structured signals.
+    _enrich_clinical_fields(filtered)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
 
