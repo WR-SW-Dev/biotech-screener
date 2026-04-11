@@ -348,14 +348,26 @@ class ExpectationErrorModel:
         q_thresh = q_vals[min(int(n * quality_cut_pct / 100), n - 1)]
         t_thresh = t_vals[min(int(n * trap_cut_pct / 100), n - 1)]
 
+        # Detect degenerate distributions (e.g. no priced_move_pct → all trap = 0)
+        # When a gate can't differentiate, bypass it (all pass).
+        q_degenerate = q_vals[0] == q_vals[-1]
+        t_degenerate = t_vals[0] == t_vals[-1]
+        # Also degenerate if > 80% of values are identical (ties dominate)
+        if not t_degenerate:
+            t_mode_count = max(t_vals.count(v) for v in set(t_vals))
+            t_degenerate = t_mode_count > n * 0.80
+        if not q_degenerate:
+            q_mode_count = max(q_vals.count(v) for v in set(q_vals))
+            q_degenerate = q_mode_count > n * 0.80
+
         result: Dict[str, Dict[str, Any]] = {}
         for s in scores:
-            q_pass = s.quality_overlay_score > q_thresh
-            t_pass = s.trap_overlay_score > t_thresh
+            q_pass = True if q_degenerate else s.quality_overlay_score > q_thresh
+            t_pass = True if t_degenerate else s.trap_overlay_score > t_thresh
 
             # Percentile rank (0-100)
-            q_pctile = sum(1 for v in q_vals if v <= s.quality_overlay_score) / n * 100
-            t_pctile = sum(1 for v in t_vals if v <= s.trap_overlay_score) / n * 100
+            q_pctile = 50.0 if q_degenerate else sum(1 for v in q_vals if v <= s.quality_overlay_score) / n * 100
+            t_pctile = 50.0 if t_degenerate else sum(1 for v in t_vals if v <= s.trap_overlay_score) / n * 100
 
             result[s.ticker] = {
                 "ees_quality_gate": q_pass,
@@ -365,6 +377,8 @@ class ExpectationErrorModel:
                 "trap_pctile": round(t_pctile, 1),
                 "quality_threshold": round(q_thresh, 4),
                 "trap_threshold": round(t_thresh, 4),
+                "quality_degenerate": q_degenerate,
+                "trap_degenerate": t_degenerate,
             }
 
         return result
