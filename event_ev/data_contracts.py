@@ -430,6 +430,59 @@ class PositionRecommendation:
 
 
 # =============================================================================
+# Expectation Error Score (Jane Street 6-mistake framework)
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class ExpectationErrorScore:
+    """Structured expectation-error assessment for a single ticker.
+
+    Measures where the market's implied view is wrong after adjusting for
+    event priors, crowding, execution friction, and timing risk.
+
+    Policy: OVERLAY-ONLY. Diagnostic / operator review. Not in ranking.
+    """
+
+    ticker: str
+    as_of_date: str
+
+    # Six sub-scores (all normalised to approximately [-1, +1])
+    base_rate_gap_score: float  # implied vs historical realized
+    conditional_misprice_score: float  # scenario EV vs implied
+    slippage_penalty_score: float  # execution friction [0, 1]
+    divergence_score: float  # option surface vs realised vol
+    crowding_bias_score: float  # short-interest positioning
+    timing_decay_risk_score: float  # expensive + uncertain timing [0, 1]
+
+    # Composite
+    expectation_error_score: float
+    expectation_confidence: float  # [0, 1]
+    expectation_notes: str  # human-readable flags
+
+    # Audit trail
+    features_used: Dict[str, Any] = field(default_factory=dict)
+    model_version: str = "ees_v1.0"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "ticker": self.ticker,
+            "as_of_date": self.as_of_date,
+            "base_rate_gap_score": round(self.base_rate_gap_score, 4),
+            "conditional_misprice_score": round(self.conditional_misprice_score, 4),
+            "slippage_penalty_score": round(self.slippage_penalty_score, 4),
+            "divergence_score": round(self.divergence_score, 4),
+            "crowding_bias_score": round(self.crowding_bias_score, 4),
+            "timing_decay_risk_score": round(self.timing_decay_risk_score, 4),
+            "expectation_error_score": round(self.expectation_error_score, 4),
+            "expectation_confidence": round(self.expectation_confidence, 4),
+            "expectation_notes": self.expectation_notes,
+            "features_used": self.features_used,
+            "model_version": self.model_version,
+        }
+
+
+# =============================================================================
 # Composite — EventEV
 # =============================================================================
 

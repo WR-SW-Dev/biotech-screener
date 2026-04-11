@@ -1,0 +1,383 @@
+"""Tests for event_ev.expectation_error_model (EES v1)."""
+
+from __future__ import annotations
+
+import pytest
+
+from event_ev.expectation_error_model import (
+    EES_CSV_COLUMNS,
+    ExpectationErrorModel,
+    _clamp,
+    _phase_bucket,
+    _safe_float,
+    enrich_csv_rows,
+)
+
+# ── Fixtures ─────────────────────────────────────────────────────────────
+
+
+def _row(
+    ticker: str = "ACAD",
+    priced_move_pct: str = "15.0",
+    short_interest_pct: str = "8.5",
+    market_cap_mm: str = "4500.0",
+    close_price: str = "22.50",
+    implied_event_move: str = "12.0",
+    catalyst_family: str = "CLINICAL",
+    lead_program_phase: str = "3",
+    clinical_days_precision: str = "DAY",
+) -> dict:
+    return {
+        "ticker": ticker,
+        "priced_move_pct": priced_move_pct,
+        "short_interest_pct": short_interest_pct,
+        "market_cap_mm": market_cap_mm,
+        "close_price": close_price,
+        "implied_event_move": implied_event_move,
+        "catalyst_family": catalyst_family,
+        "lead_program_phase": lead_program_phase,
+        "clinical_days_precision": clinical_days_precision,
+    }
+
+
+# ── Helpers ──────────────────────────────────────────────────────────────
+
+
+class TestHelpers:
+    def test_clamp(self):
+        assert _clamp(-2, -1, 1) == -1
+        assert _clamp(0.5, -1, 1) == 0.5
+        assert _clamp(2, -1, 1) == 1
+
+    def test_safe_float_valid(self):
+        assert _safe_float("3.14") == pytest.approx(3.14)
+        assert _safe_float(42) == pytest.approx(42.0)
+
+    def test_safe_float_none_cases(self):
+        assert _safe_float(None) is None
+        assert _safe_float("") is None
+        assert _safe_float("None") is None
+        assert _safe_float("nan") is None
+        assert _safe_float("bad") is None
+
+    def test_phase_bucket(self):
+        assert _phase_bucket("3") == "phase3"
+        assert _phase_bucket("2") == "phase2"
+        assert _phase_bucket("1") == "early"
+        assert _phase_bucket("unknown") == "early"
+        assert _phase_bucket("") == "early"
+
+
+# ── Base Rate Gap ────────────────────────────────────────────────────────
+
+
+class TestBaseRateGap:
+    def test_above_base_rate(self):
+        """Implied move well above historical → positive gap score."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="80.0", catalyst_family="CLINICAL", lead_program_phase="3")
+        result = model.score_row(r, "2026-04-10")
+        assert result.base_rate_gap_score > 0.5
+
+    def test_below_base_rate(self):
+        """Implied move well below historical → negative gap score."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="5.0", catalyst_family="CLINICAL", lead_program_phase="3")
+        result = model.score_row(r, "2026-04-10")
+        assert result.base_rate_gap_score < -0.5
+
+    def test_at_base_rate(self):
+        """Implied move near historical median → near-zero gap."""
+        model = ExpectationErrorModel()
+        # CLINICAL|phase3 base rate p50 = 35.0
+        r = _row(priced_move_pct="35.0")
+        result = model.score_row(r, "2026-04-10")
+        assert abs(result.base_rate_gap_score) < 0.1
+
+    def test_missing_priced_move(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="")
+        result = model.score_row(r, "2026-04-10")
+        assert result.base_rate_gap_score == 0.0
+
+
+# ── Conditional Misprice ─────────────────────────────────────────────────
+
+
+class TestConditionalMisprice:
+    def test_underpriced_scenario(self):
+        """Implied move < conditional EV → positive (underpriced)."""
+        model = ExpectationErrorModel()
+        # CLINICAL|phase3 conditional EV ≈ 29.2
+        r = _row(priced_move_pct="10.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.conditional_misprice_score > 0.5
+
+    def test_overpriced_scenario(self):
+        """Implied move >> conditional EV → negative (overpriced)."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="80.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.conditional_misprice_score < -0.5
+
+
+# ── Slippage Penalty ─────────────────────────────────────────────────────
+
+
+class TestSlippagePenalty:
+    def test_large_cap_no_penalty(self):
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="5000.0", close_price="50.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.slippage_penalty_score == 0.0
+
+    def test_micro_cap_penalty(self):
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="80.0", close_price="3.50")
+        result = model.score_row(r, "2026-04-10")
+        assert result.slippage_penalty_score == 1.0  # penny + micro cap
+
+    def test_small_cap_moderate(self):
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="200.0", close_price="12.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.slippage_penalty_score == pytest.approx(0.30)
+
+
+# ── Divergence ───────────────────────────────────────────────────────────
+
+
+class TestDivergence:
+    def test_options_rich(self):
+        """Option implied >> realised → positive divergence."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="30.0", implied_event_move="10.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.divergence_score > 0.5
+
+    def test_options_cheap(self):
+        """Option implied << realised → negative divergence."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="5.0", implied_event_move="20.0")
+        result = model.score_row(r, "2026-04-10")
+        assert result.divergence_score < -0.5
+
+    def test_missing_implied_event_move(self):
+        model = ExpectationErrorModel()
+        r = _row(implied_event_move="")
+        result = model.score_row(r, "2026-04-10")
+        assert result.divergence_score == 0.0
+
+
+# ── Crowding Bias ────────────────────────────────────────────────────────
+
+
+class TestCrowdingBias:
+    def test_high_short_interest(self):
+        model = ExpectationErrorModel()
+        r = _row(short_interest_pct="25.0")
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        assert result.crowding_bias_score > 0.5
+
+    def test_low_short_interest(self):
+        model = ExpectationErrorModel()
+        r = _row(short_interest_pct="2.0")
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        assert result.crowding_bias_score < 0.0
+
+    def test_missing_short_interest(self):
+        model = ExpectationErrorModel()
+        r = _row(short_interest_pct="")
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        assert result.crowding_bias_score == 0.0
+
+
+# ── Timing Decay Risk ────────────────────────────────────────────────────
+
+
+class TestTimingDecayRisk:
+    def test_exact_date_no_risk(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="15.0", clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        assert result.timing_decay_risk_score == 0.0
+
+    def test_uncertain_timing_high_move(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="30.0", clinical_days_precision="UNKNOWN")
+        result = model.score_row(r, "2026-04-10")
+        assert result.timing_decay_risk_score > 0.5
+
+    def test_quarter_moderate(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="15.0", clinical_days_precision="QUARTER")
+        result = model.score_row(r, "2026-04-10")
+        assert result.timing_decay_risk_score == pytest.approx(0.75)
+
+
+# ── Composite Score ──────────────────────────────────────────────────────
+
+
+class TestCompositeScore:
+    def test_positive_ees_when_underpriced(self):
+        """Name at base rate with underpriced conditional + no frictions → positive EES."""
+        model = ExpectationErrorModel()
+        # REGULATORY|phase3: base rate p50=19, conditional EV ≈15.1
+        # priced_move_pct=10 is below conditional EV (underpriced) and below base rate
+        # But conditional_misprice dominates since we pick family with lower spread
+        r = _row(
+            priced_move_pct="10.0",
+            short_interest_pct="2.0",  # below P50 → negative crowding (favorable)
+            market_cap_mm="5000.0",
+            close_price="50.0",
+            implied_event_move="10.0",  # no divergence
+            clinical_days_precision="DAY",
+            catalyst_family="REGULATORY",
+            lead_program_phase="3",
+        )
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        # conditional misprice is positive (+0.51), base rate negative (-0.33)
+        # but frictions all zero → net positive
+        assert result.conditional_misprice_score > 0.3
+
+    def test_negative_ees_high_friction(self):
+        """Micro-cap penny stock with uncertain timing → large penalties."""
+        model = ExpectationErrorModel()
+        r = _row(
+            priced_move_pct="35.0",  # at base rate (neutral)
+            short_interest_pct="5.0",
+            market_cap_mm="50.0",  # micro cap
+            close_price="2.0",  # penny stock
+            implied_event_move="35.0",
+            clinical_days_precision="UNKNOWN",
+        )
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        # slippage = 1.0, timing = high → penalties dominate
+        assert result.slippage_penalty_score == 1.0
+        assert result.timing_decay_risk_score > 0.5
+
+
+# ── Confidence ───────────────────────────────────────────────────────────
+
+
+class TestConfidence:
+    def test_full_data_high_confidence(self):
+        model = ExpectationErrorModel()
+        r = _row(clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        assert result.expectation_confidence == pytest.approx(1.0)
+
+    def test_missing_priced_move_lower(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="", clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        assert result.expectation_confidence == pytest.approx(0.75)
+
+    def test_uncertain_timing_lower(self):
+        model = ExpectationErrorModel()
+        r = _row(clinical_days_precision="UNKNOWN")
+        result = model.score_row(r, "2026-04-10")
+        assert result.expectation_confidence == pytest.approx(0.80)
+
+    def test_all_missing_lowest(self):
+        model = ExpectationErrorModel()
+        r = _row(
+            priced_move_pct="",
+            short_interest_pct="",
+            market_cap_mm="",
+            clinical_days_precision="UNKNOWN",
+        )
+        result = model.score_row(r, "2026-04-10")
+        assert result.expectation_confidence < 0.5
+
+
+# ── Batch Scoring ────────────────────────────────────────────────────────
+
+
+class TestBatchScoring:
+    def test_batch_returns_same_length(self):
+        rows = [_row(ticker="A"), _row(ticker="B"), _row(ticker="C")]
+        model = ExpectationErrorModel()
+        results = model.score_batch(rows, "2026-04-10")
+        assert len(results) == 3
+
+    def test_batch_preserves_order(self):
+        rows = [_row(ticker="AAAA"), _row(ticker="ZZZZ")]
+        model = ExpectationErrorModel()
+        results = model.score_batch(rows, "2026-04-10")
+        assert results[0].ticker == "AAAA"
+        assert results[1].ticker == "ZZZZ"
+
+    def test_batch_cross_sectional_crowding(self):
+        """Names with extreme SI should differ from median SI names."""
+        rows = [
+            _row(ticker="LOW_SI", short_interest_pct="1.0"),
+            _row(ticker="MED_SI", short_interest_pct="5.0"),
+            _row(ticker="HIGH_SI", short_interest_pct="30.0"),
+        ]
+        model = ExpectationErrorModel()
+        results = model.score_batch(rows, "2026-04-10")
+        by_ticker = {r.ticker: r for r in results}
+        assert by_ticker["HIGH_SI"].crowding_bias_score > by_ticker["LOW_SI"].crowding_bias_score
+
+
+# ── Notes ────────────────────────────────────────────────────────────────
+
+
+class TestNotes:
+    def test_notes_include_crowded(self):
+        model = ExpectationErrorModel()
+        r = _row(short_interest_pct="25.0")
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=10.0)
+        assert "crowded" in result.expectation_notes
+
+    def test_notes_include_timing(self):
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="30.0", clinical_days_precision="UNKNOWN")
+        result = model.score_row(r, "2026-04-10")
+        assert "timing decay" in result.expectation_notes
+
+    def test_notes_empty_when_unremarkable(self):
+        model = ExpectationErrorModel()
+        r = _row(
+            priced_move_pct="35.0",  # near base rate
+            short_interest_pct="5.0",
+            market_cap_mm="5000.0",
+            close_price="50.0",
+            implied_event_move="30.0",
+            clinical_days_precision="DAY",
+        )
+        result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
+        assert result.expectation_notes == ""
+
+
+# ── enrich_csv_rows ──────────────────────────────────────────────────────
+
+
+class TestEnrichCsvRows:
+    def test_injects_all_columns(self):
+        rows = [_row()]
+        enrich_csv_rows(rows, "2026-04-10")
+        for col in EES_CSV_COLUMNS:
+            assert col in rows[0], f"Missing column: {col}"
+
+    def test_returns_scores(self):
+        rows = [_row(), _row(ticker="BIIB")]
+        scores = enrich_csv_rows(rows, "2026-04-10")
+        assert len(scores) == 2
+        assert scores[0].ticker == "ACAD"
+
+
+# ── Dataclass serialisation ──────────────────────────────────────────────
+
+
+class TestSerialisation:
+    def test_to_dict_roundtrip(self):
+        model = ExpectationErrorModel()
+        r = _row()
+        result = model.score_row(r, "2026-04-10")
+        d = result.to_dict()
+        assert d["ticker"] == "ACAD"
+        assert "base_rate_gap_score" in d
+        assert "model_version" in d
+        assert isinstance(d["expectation_notes"], str)

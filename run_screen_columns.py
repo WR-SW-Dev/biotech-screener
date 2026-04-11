@@ -162,6 +162,16 @@ SNAPSHOT_COLUMNS = (
         "close_price",
         "market_cap_mm",
         "priced_move_pct",
+        # --- Expectation Error Model (Jane Street 6-mistake framework, overlay-only) ---
+        "base_rate_gap_score",
+        "conditional_misprice_score",
+        "slippage_penalty_score",
+        "divergence_score",
+        "crowding_bias_score",
+        "timing_decay_risk_score",
+        "expectation_error_score",
+        "expectation_confidence",
+        "expectation_notes",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",

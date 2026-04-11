@@ -5837,6 +5837,35 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Regulatory coverage telemetry failed (%s) — skipping sidecar", exc)
 
+    # --- Expectation Error Model (Jane Street 6-mistake overlay) ---
+    try:
+        from event_ev.expectation_error_model import enrich_csv_rows as _enrich_ees
+
+        _ees_scores = _enrich_ees(csv_rows, as_of_date)
+        if _ees_scores:
+            _ees_dicts = [s.to_dict() for s in _ees_scores if s.expectation_confidence >= 0.5]
+            _ees_dicts.sort(key=lambda d: d.get("expectation_error_score", 0), reverse=True)
+            with open(snap_path / "expectation_error_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "ees_v1.0",
+                        "n_scored": len(_ees_scores),
+                        "n_high_confidence": sum(1 for s in _ees_scores if s.expectation_confidence >= 0.6),
+                        "top_10": _ees_dicts[:10],
+                        "bottom_10": _ees_dicts[-10:],
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[EES] Overlay written: %d scored, top EES=%.3f",
+                len(_ees_scores),
+                _ees_dicts[0]["expectation_error_score"] if _ees_dicts else 0.0,
+            )
+    except Exception as _ees_exc:
+        logger.debug("Expectation Error Model overlay skipped: %s", _ees_exc)
+
     # --- Write eligibility summary sidecar ---
     try:
         from decision_engine_codes import canonicalize_reasons
