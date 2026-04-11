@@ -449,3 +449,153 @@ class TestSerialisation:
         assert "base_rate_gap_score" in d
         assert "model_version" in d
         assert isinstance(d["expectation_notes"], str)
+
+
+# ── Gate computation ─────────────────────────────────────────────────────
+
+
+class TestGateComputation:
+    def test_gates_filter_worst_names(self):
+        """Micro-cap penny stocks should fail quality gate while large caps pass."""
+        rows = [
+            # 5 bad names: micro-cap + penny stock
+            _row(ticker="BAD0", market_cap_mm="30", close_price="0.50"),
+            _row(ticker="BAD1", market_cap_mm="50", close_price="1.00"),
+            _row(ticker="BAD2", market_cap_mm="80", close_price="2.00"),
+            _row(ticker="BAD3", market_cap_mm="90", close_price="3.00"),
+            _row(ticker="BAD4", market_cap_mm="150", close_price="4.00"),
+            # 5 good names: large cap
+            _row(ticker="OK0", market_cap_mm="2000", close_price="30.0"),
+            _row(ticker="OK1", market_cap_mm="3000", close_price="40.0"),
+            _row(ticker="OK2", market_cap_mm="5000", close_price="50.0"),
+            _row(ticker="OK3", market_cap_mm="8000", close_price="60.0"),
+            _row(ticker="OK4", market_cap_mm="10000", close_price="70.0"),
+        ]
+        model = ExpectationErrorModel()
+        scores = model.score_batch(rows, "2026-04-10")
+        gates = ExpectationErrorModel.compute_gates(scores, quality_cut_pct=40, trap_cut_pct=0)
+        # All OK names should pass quality gate
+        for ticker in ["OK0", "OK1", "OK2", "OK3", "OK4"]:
+            assert gates[ticker]["ees_quality_gate"] is True, f"{ticker} should pass"
+        # At least some BAD names should fail
+        bad_fails = sum(1 for t in ["BAD0", "BAD1", "BAD2", "BAD3", "BAD4"] if not gates[t]["ees_quality_gate"])
+        assert bad_fails >= 3
+
+    def test_high_cut_filters_more(self):
+        """Higher cutoff should filter more names."""
+        rows = [
+            _row(ticker="MICRO", market_cap_mm="50", close_price="1.0"),
+            _row(ticker="SMALL", market_cap_mm="200", close_price="8.0"),
+            _row(ticker="MID", market_cap_mm="2000", close_price="30.0"),
+            _row(ticker="LARGE", market_cap_mm="10000", close_price="50.0"),
+        ]
+        model = ExpectationErrorModel()
+        scores = model.score_batch(rows, "2026-04-10")
+        gates_20 = ExpectationErrorModel.compute_gates(scores, quality_cut_pct=20, trap_cut_pct=0)
+        gates_50 = ExpectationErrorModel.compute_gates(scores, quality_cut_pct=50, trap_cut_pct=0)
+        n_pass_20 = sum(1 for g in gates_20.values() if g["ees_quality_gate"])
+        n_pass_50 = sum(1 for g in gates_50.values() if g["ees_quality_gate"])
+        assert n_pass_20 >= n_pass_50
+
+    def test_gate_output_has_percentiles(self):
+        rows = [_row(ticker=f"T{i}") for i in range(5)]
+        model = ExpectationErrorModel()
+        scores = model.score_batch(rows, "2026-04-10")
+        gates = ExpectationErrorModel.compute_gates(scores)
+        first = next(iter(gates.values()))
+        assert "quality_pctile" in first
+        assert "trap_pctile" in first
+        assert "quality_threshold" in first
+
+
+# ── Regime toggle ────────────────────────────────────────────────────────
+
+
+class TestRegimeToggle:
+    def test_normal_mode(self):
+        from event_ev.expectation_error_model import resolve_gate_mode
+
+        cfg = resolve_gate_mode("normal")
+        assert cfg["quality_cut_pct"] == 15
+        assert cfg["trap_cut_pct"] == 20
+
+    def test_conservative_mode(self):
+        from event_ev.expectation_error_model import resolve_gate_mode
+
+        cfg = resolve_gate_mode("conservative")
+        assert cfg["quality_cut_pct"] == 20
+        assert cfg["trap_cut_pct"] == 30
+
+    def test_unknown_mode_falls_back(self):
+        from event_ev.expectation_error_model import resolve_gate_mode
+
+        cfg = resolve_gate_mode("unknown_mode")
+        assert cfg["quality_cut_pct"] == 15  # falls back to normal
+
+    def test_enrich_accepts_gate_mode(self):
+        rows = [_row(ticker="A"), _row(ticker="B")]
+        enrich_csv_rows(rows, "2026-04-10", gate_mode="conservative")
+        assert "ees_quality_gate" in rows[0]
+
+
+# ── Gate diagnostics ─────────────────────────────────────────────────────
+
+
+class TestGateDiagnostics:
+    def test_diagnostics_structure(self):
+        from event_ev.expectation_error_model import build_gate_diagnostics
+
+        rows = [_row(ticker=f"T{i}", market_cap_mm=str(50 + i * 100)) for i in range(20)]
+        scores = enrich_csv_rows(rows, "2026-04-10")
+        diag = build_gate_diagnostics(scores, rows, "2026-04-10")
+        assert diag["as_of_date"] == "2026-04-10"
+        assert diag["model_version"] == "ees_v2.0"
+        assert "universe" in diag
+        assert diag["universe"]["total"] == 20
+        assert "eligible" in diag["universe"]
+        assert "quality_fail" in diag["universe"]
+        assert "trap_fail" in diag["universe"]
+        assert "quality_trap_correlation" in diag
+        assert "quality_distribution" in diag
+        assert "trap_distribution" in diag
+
+    def test_diagnostics_eligible_count_matches(self):
+        from event_ev.expectation_error_model import build_gate_diagnostics
+
+        rows = [_row(ticker=f"T{i}") for i in range(10)]
+        scores = enrich_csv_rows(rows, "2026-04-10")
+        diag = build_gate_diagnostics(scores, rows, "2026-04-10")
+        n_elig = sum(1 for r in rows if r.get("ees_eligible") is True)
+        assert diag["universe"]["eligible"] == n_elig
+
+
+# ── Gate performance ─────────────────────────────────────────────────────
+
+
+class TestGatePerformance:
+    def test_returns_none_without_prior(self):
+        from event_ev.expectation_error_model import build_gate_performance
+
+        rows = [_row()]
+        result = build_gate_performance(rows, None, "2026-04-10")
+        assert result is None
+
+    def test_computes_bucket_returns(self):
+        from event_ev.expectation_error_model import build_gate_performance
+
+        # Prior: price=10, eligible
+        prior = [
+            {
+                "ticker": "A",
+                "close_price": "10.0",
+                "ees_quality_gate": True,
+                "ees_trap_gate": True,
+                "ees_eligible": True,
+            }
+        ]
+        # Current: price=11 (+10%)
+        current = [{"ticker": "A", "close_price": "11.0"}]
+        result = build_gate_performance(current, prior, "2026-04-10")
+        assert result is not None
+        assert result["eligible"]["n"] == 1
+        assert result["eligible"]["mean_ret"] == pytest.approx(10.0, abs=0.1)  # +10%

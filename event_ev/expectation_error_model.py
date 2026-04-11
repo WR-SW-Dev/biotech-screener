@@ -492,17 +492,44 @@ EES_CSV_COLUMNS = [
 DEFAULT_QUALITY_CUT_PCT = 15
 DEFAULT_TRAP_CUT_PCT = 20
 
+# ── Regime modes ─────────────────────────────────────────────────────────
+GATE_MODES: Dict[str, Dict[str, int]] = {
+    "normal": {"quality_cut_pct": 15, "trap_cut_pct": 20},
+    "conservative": {"quality_cut_pct": 20, "trap_cut_pct": 30},
+}
+
+
+def resolve_gate_mode(mode: str = "normal") -> Dict[str, int]:
+    """Return gate thresholds for a named mode.
+
+    Args:
+        mode: "normal" (Q15/T20) or "conservative" (Q20/T30)
+    """
+    return dict(GATE_MODES.get(mode, GATE_MODES["normal"]))
+
 
 def enrich_csv_rows(
     csv_rows: List[Dict[str, Any]],
     as_of_date: str,
-    quality_cut_pct: int = DEFAULT_QUALITY_CUT_PCT,
-    trap_cut_pct: int = DEFAULT_TRAP_CUT_PCT,
+    gate_mode: str = "normal",
+    quality_cut_pct: Optional[int] = None,
+    trap_cut_pct: Optional[int] = None,
 ) -> List[ExpectationErrorScore]:
     """Compute EES scores and gates for all rows, inject columns in-place.
 
+    Args:
+        gate_mode: "normal" (Q15/T20) or "conservative" (Q20/T30)
+        quality_cut_pct: override mode's quality threshold
+        trap_cut_pct: override mode's trap threshold
+
     Returns the list of ExpectationErrorScore objects (for sidecar writing).
     """
+    mode_cfg = resolve_gate_mode(gate_mode)
+    if quality_cut_pct is None:
+        quality_cut_pct = mode_cfg["quality_cut_pct"]
+    if trap_cut_pct is None:
+        trap_cut_pct = mode_cfg["trap_cut_pct"]
+
     ees_model = ExpectationErrorModel()
     scores = ees_model.score_batch(csv_rows, as_of_date)
 
@@ -554,3 +581,170 @@ def enrich_csv_rows(
     )
 
     return scores
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# Gate diagnostics (written as sidecar JSON per snapshot)
+# ═════════════════════════════════════════════════════════════════════════
+
+
+def build_gate_diagnostics(
+    scores: List[ExpectationErrorScore],
+    csv_rows: List[Dict[str, Any]],
+    as_of_date: str,
+    gate_mode: str = "normal",
+    quality_cut_pct: int = DEFAULT_QUALITY_CUT_PCT,
+    trap_cut_pct: int = DEFAULT_TRAP_CUT_PCT,
+) -> Dict[str, Any]:
+    """Build daily gate diagnostics for monitoring and drift detection.
+
+    Returns a dict suitable for writing to ees_gate_diagnostics.json.
+    """
+    n_total = len(scores)
+    q_vals = [s.quality_overlay_score for s in scores]
+    t_vals = [s.trap_overlay_score for s in scores]
+
+    n_q_fail = sum(1 for r in csv_rows if r.get("ees_quality_gate") is False)
+    n_t_fail = sum(1 for r in csv_rows if r.get("ees_trap_gate") is False)
+    n_both_fail = sum(1 for r in csv_rows if r.get("ees_quality_gate") is False and r.get("ees_trap_gate") is False)
+    n_eligible = sum(1 for r in csv_rows if r.get("ees_eligible") is True)
+
+    # Correlation between quality and trap
+    corr = _pearson(q_vals, t_vals)
+
+    # Distribution stats
+    def _dist(vals: List[float]) -> Dict[str, float]:
+        s = sorted(vals)
+        n = len(s)
+        if n == 0:
+            return {}
+        return {
+            "min": round(s[0], 4),
+            "p10": round(s[min(int(n * 0.10), n - 1)], 4),
+            "p25": round(s[min(int(n * 0.25), n - 1)], 4),
+            "median": round(s[n // 2], 4),
+            "p75": round(s[min(int(n * 0.75), n - 1)], 4),
+            "p90": round(s[min(int(n * 0.90), n - 1)], 4),
+            "max": round(s[-1], 4),
+        }
+
+    # Names filtered by each gate
+    q_filtered = sorted([r.get("ticker", "") for r in csv_rows if r.get("ees_quality_gate") is False])
+    t_filtered = sorted([r.get("ticker", "") for r in csv_rows if r.get("ees_trap_gate") is False])
+
+    return {
+        "as_of_date": as_of_date,
+        "model_version": "ees_v2.0",
+        "gate_mode": gate_mode,
+        "quality_cut_pct": quality_cut_pct,
+        "trap_cut_pct": trap_cut_pct,
+        "universe": {
+            "total": n_total,
+            "post_quality_gate": n_total - n_q_fail,
+            "post_trap_gate": n_total - n_t_fail,
+            "eligible": n_eligible,
+            "quality_fail": n_q_fail,
+            "trap_fail": n_t_fail,
+            "both_fail": n_both_fail,
+            "pct_eligible": round(n_eligible / n_total * 100, 1) if n_total else 0,
+        },
+        "quality_trap_correlation": round(corr, 4) if corr is not None else None,
+        "quality_distribution": _dist(q_vals),
+        "trap_distribution": _dist(t_vals),
+        "quality_filtered_names": q_filtered[:30],
+        "trap_filtered_names": t_filtered[:30],
+    }
+
+
+def build_gate_performance(
+    csv_rows: List[Dict[str, Any]],
+    prior_rows: Optional[List[Dict[str, Any]]],
+    as_of_date: str,
+) -> Optional[Dict[str, Any]]:
+    """Compare realized returns of gated-out vs eligible names.
+
+    Uses close_price from current snapshot vs prior snapshot to compute
+    short-term realized returns by gate bucket. Returns None if no
+    prior snapshot available.
+    """
+    if not prior_rows:
+        return None
+
+    # Build prior price map
+    prior_prices: Dict[str, float] = {}
+    for r in prior_rows:
+        ticker = r.get("ticker", "")
+        px = _safe_float(r.get("close_price"))
+        if ticker and px and px > 0:
+            prior_prices[ticker] = px
+
+    # Build current price map and gate status from prior snapshot's gates
+    buckets: Dict[str, List[float]] = {
+        "eligible": [],
+        "quality_fail": [],
+        "trap_fail": [],
+        "both_fail": [],
+    }
+
+    for r in prior_rows:
+        ticker = r.get("ticker", "")
+        prior_px = prior_prices.get(ticker)
+        if not prior_px:
+            continue
+
+        # Find current price
+        current_row = next((cr for cr in csv_rows if cr.get("ticker") == ticker), None)
+        if not current_row:
+            continue
+        current_px = _safe_float(current_row.get("close_price"))
+        if not current_px or current_px <= 0:
+            continue
+
+        ret = current_px / prior_px - 1.0
+
+        q_gate = r.get("ees_quality_gate")
+        t_gate = r.get("ees_trap_gate")
+
+        if q_gate is False and t_gate is False:
+            buckets["both_fail"].append(ret)
+        elif q_gate is False:
+            buckets["quality_fail"].append(ret)
+        elif t_gate is False:
+            buckets["trap_fail"].append(ret)
+        elif r.get("ees_eligible") is True:
+            buckets["eligible"].append(ret)
+
+    def _bucket_stats(rets: List[float]) -> Dict[str, Any]:
+        if not rets:
+            return {"n": 0, "mean_ret": None, "hit_rate": None}
+        import statistics
+
+        return {
+            "n": len(rets),
+            "mean_ret": round(statistics.mean(rets) * 100, 4),
+            "hit_rate": round(sum(1 for r in rets if r > 0) / len(rets), 3),
+        }
+
+    return {
+        "as_of_date": as_of_date,
+        "lookback": "snapshot_to_snapshot",
+        "eligible": _bucket_stats(buckets["eligible"]),
+        "quality_fail": _bucket_stats(buckets["quality_fail"]),
+        "trap_fail": _bucket_stats(buckets["trap_fail"]),
+        "both_fail": _bucket_stats(buckets["both_fail"]),
+    }
+
+
+def _pearson(x: List[float], y: List[float]) -> Optional[float]:
+    """Simple Pearson correlation, no dependencies."""
+    n = len(x)
+    if n < 3 or len(y) != n:
+        return None
+    mx = sum(x) / n
+    my = sum(y) / n
+    cov = sum((x[i] - mx) * (y[i] - my) for i in range(n))
+    sx = math.sqrt(sum((x[i] - mx) ** 2 for i in range(n)))
+    sy = math.sqrt(sum((y[i] - my) ** 2 for i in range(n)))
+    if sx == 0 or sy == 0:
+        return None
+    return cov / (sx * sy)

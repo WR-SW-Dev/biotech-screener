@@ -5839,42 +5839,60 @@ def save_validation_snapshot(
 
     # --- Expectation Error Model v2 (quality + trap gates) ---
     try:
+        from event_ev.expectation_error_model import build_gate_diagnostics as _build_gate_diag
+        from event_ev.expectation_error_model import build_gate_performance as _build_gate_perf
         from event_ev.expectation_error_model import enrich_csv_rows as _enrich_ees
 
         _ees_scores = _enrich_ees(csv_rows, as_of_date)
         if _ees_scores:
             _ees_dicts = [s.to_dict() for s in _ees_scores]
             _ees_dicts.sort(key=lambda d: d.get("ees_v2_score", 0), reverse=True)
-            _n_eligible = sum(1 for r in csv_rows if r.get("ees_eligible") is True)
-            _n_q_fail = sum(1 for r in csv_rows if r.get("ees_quality_gate") is False)
-            _n_t_fail = sum(1 for r in csv_rows if r.get("ees_trap_gate") is False)
             with open(snap_path / "expectation_error_overlay.json", "w", encoding="utf-8") as f:
                 json.dump(
                     {
                         "as_of_date": as_of_date,
                         "model_version": "ees_v2.0",
                         "n_scored": len(_ees_scores),
-                        "gates": {
-                            "quality_cut_pct": 15,
-                            "trap_cut_pct": 20,
-                            "n_eligible": _n_eligible,
-                            "n_quality_fail": _n_q_fail,
-                            "n_trap_fail": _n_t_fail,
-                        },
                         "top_10": _ees_dicts[:10],
                         "bottom_10": _ees_dicts[-10:],
                     },
                     f,
                     indent=2,
                 )
+
+            # Gate diagnostics sidecar
+            _diag = _build_gate_diag(_ees_scores, csv_rows, as_of_date)
+            with open(snap_path / "ees_gate_diagnostics.json", "w", encoding="utf-8") as f:
+                json.dump(_diag, f, indent=2)
             logger.info(
-                "[EES] v2 overlay: %d scored, %d eligible (Q-fail=%d, T-fail=%d), top v2=%.3f",
-                len(_ees_scores),
-                _n_eligible,
-                _n_q_fail,
-                _n_t_fail,
-                _ees_dicts[0]["ees_v2_score"] if _ees_dicts else 0.0,
+                "[EES] v2: %d scored, %d eligible (%d%%), Q-fail=%d, T-fail=%d, corr=%.3f",
+                _diag["universe"]["total"],
+                _diag["universe"]["eligible"],
+                _diag["universe"]["pct_eligible"],
+                _diag["universe"]["quality_fail"],
+                _diag["universe"]["trap_fail"],
+                _diag.get("quality_trap_correlation") or 0,
             )
+
+            # Gate performance tracker (compares to prior snapshot)
+            _prior_csv = None
+            if _prior_dir and (_prior_dir / "rankings.csv").exists():
+                import csv as _csv_mod
+
+                with open(_prior_dir / "rankings.csv", newline="", encoding="utf-8") as _pf:
+                    _prior_csv = list(_csv_mod.DictReader(_pf))
+            _perf = _build_gate_perf(csv_rows, _prior_csv, as_of_date)
+            if _perf:
+                with open(snap_path / "ees_gate_performance.json", "w", encoding="utf-8") as f:
+                    json.dump(_perf, f, indent=2)
+                _e_ret = _perf["eligible"].get("mean_ret")
+                _t_ret = _perf["trap_fail"].get("mean_ret")
+                logger.info(
+                    "[EES] Gate perf: eligible=%s%%, trap_fail=%s%% (confirm underperformance=%s)",
+                    _e_ret,
+                    _t_ret,
+                    "YES" if _e_ret is not None and _t_ret is not None and _e_ret > _t_ret else "NO/INSUFF",
+                )
     except Exception as _ees_exc:
         logger.debug("Expectation Error Model overlay skipped: %s", _ees_exc)
 
