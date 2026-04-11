@@ -738,17 +738,23 @@ def build_gate_performance(
 
 def suggest_gate_mode(
     diagnostics_history: List[Dict[str, Any]],
+    performance_history: Optional[List[Dict[str, Any]]] = None,
     min_history: int = 5,
 ) -> str:
-    """Suggest normal vs conservative mode based on recent gate diagnostics.
+    """Suggest normal vs conservative mode based on diagnostics + outcomes.
 
-    Tightens to conservative when:
-      - correlation(quality, trap) rises above 0.40 (edges converging)
-      - eligible % drops below 50% (universe already tight, tighten quality)
-      - trap fail rate spikes (more traps than usual)
+    Input-side triggers (structural):
+      - correlation(quality, trap) > 0.40 (edges converging)
+      - eligible % < 50% (universe already tight)
+      - trap fail rate > 35% (more traps than usual)
+
+    Output-side triggers (outcome-based):
+      - trap_fail mean return > -3% (trap gate not working)
+      - eligible-vs-excluded gap < 1% (gates not separating)
 
     Args:
         diagnostics_history: list of gate_diagnostics dicts, newest last
+        performance_history: list of gate_performance dicts, newest last
         min_history: minimum history length before switching
 
     Returns:
@@ -758,6 +764,8 @@ def suggest_gate_mode(
         return "normal"
 
     recent = diagnostics_history[-min_history:]
+
+    # ── Input-side signals ───────────────────────────────────────
 
     # Signal 1: correlation drift
     corrs = [d.get("quality_trap_correlation") for d in recent if d.get("quality_trap_correlation") is not None]
@@ -777,15 +785,58 @@ def suggest_gate_mode(
             trap_rates.append(trap_fail / total * 100)
     avg_trap_rate = sum(trap_rates) / len(trap_rates) if trap_rates else 20
 
-    # Decision logic
+    # ── Output-side signals ──────────────────────────────────────
+
+    avg_trap_fail_ret = None
+    avg_gap = None
+    if performance_history and len(performance_history) >= min_history:
+        recent_perf = performance_history[-min_history:]
+
+        # Signal 4: trap_fail return not negative enough (trap not working)
+        trap_rets = [
+            p["trap_fail"]["mean_ret"] for p in recent_perf if p.get("trap_fail", {}).get("mean_ret") is not None
+        ]
+        if trap_rets:
+            avg_trap_fail_ret = sum(trap_rets) / len(trap_rets)
+
+        # Signal 5: eligible-vs-excluded gap shrinking
+        gaps = []
+        for p in recent_perf:
+            e_ret = p.get("eligible", {}).get("mean_ret")
+            # Weighted average of all excluded buckets
+            excl_rets = []
+            for bucket in ["quality_fail", "trap_fail", "both_fail"]:
+                b = p.get(bucket, {})
+                if b.get("mean_ret") is not None and b.get("n", 0) > 0:
+                    excl_rets.extend([b["mean_ret"]] * b["n"])
+            if e_ret is not None and excl_rets:
+                excl_avg = sum(excl_rets) / len(excl_rets)
+                gaps.append(e_ret - excl_avg)
+        if gaps:
+            avg_gap = sum(gaps) / len(gaps)
+
+    # ── Decision logic ───────────────────────────────────────────
+
     if avg_corr > 0.40:
         logger.info("[EES] Regime: CONSERVATIVE (correlation drift %.3f > 0.40)", avg_corr)
         return "conservative"
     if avg_eligible < 50:
-        logger.info("[EES] Regime: CONSERVATIVE (eligible %%.1f < 50%%)", avg_eligible)
+        logger.info("[EES] Regime: CONSERVATIVE (eligible %.1f%% < 50%%)", avg_eligible)
         return "conservative"
     if avg_trap_rate > 35:
         logger.info("[EES] Regime: CONSERVATIVE (trap rate %.1f%% > 35%%)", avg_trap_rate)
+        return "conservative"
+    if avg_trap_fail_ret is not None and avg_trap_fail_ret > -3.0:
+        logger.info(
+            "[EES] Regime: CONSERVATIVE (trap_fail return %.2f%% > -3%%, trap not working)",
+            avg_trap_fail_ret,
+        )
+        return "conservative"
+    if avg_gap is not None and avg_gap < 1.0:
+        logger.info(
+            "[EES] Regime: CONSERVATIVE (eligible-vs-excluded gap %.2f%% < 1%%, gates not separating)",
+            avg_gap,
+        )
         return "conservative"
 
     return "normal"

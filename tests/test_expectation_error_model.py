@@ -671,3 +671,65 @@ class TestRegimeDetector:
             }
         ] * 5
         assert suggest_gate_mode(history) == "conservative"
+
+    def test_conservative_when_trap_not_working(self):
+        """Trigger conservative when trap_fail returns aren't negative enough."""
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        diag = [
+            {
+                "quality_trap_correlation": 0.15,
+                "universe": {"pct_eligible": 71, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        # trap_fail returning +2% = trap gate isn't filtering bad names
+        perf = [
+            {
+                "eligible": {"mean_ret": 3.0, "n": 200},
+                "trap_fail": {"mean_ret": 2.0, "n": 50},
+                "quality_fail": {"mean_ret": 1.0, "n": 30},
+                "both_fail": {"mean_ret": -1.0, "n": 10},
+            }
+        ] * 5
+        assert suggest_gate_mode(diag, performance_history=perf) == "conservative"
+
+    def test_conservative_when_gap_shrinks(self):
+        """Trigger conservative when eligible vs excluded gap < 1%."""
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        diag = [
+            {
+                "quality_trap_correlation": 0.15,
+                "universe": {"pct_eligible": 71, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        # eligible +2%, excluded +1.5% → gap = 0.5% < 1%
+        perf = [
+            {
+                "eligible": {"mean_ret": 2.0, "n": 200},
+                "trap_fail": {"mean_ret": 1.5, "n": 50},
+                "quality_fail": {"mean_ret": 1.5, "n": 30},
+                "both_fail": {"mean_ret": 1.5, "n": 10},
+            }
+        ] * 5
+        assert suggest_gate_mode(diag, performance_history=perf) == "conservative"
+
+    def test_normal_when_outcomes_strong(self):
+        """Stay normal when trap failures underperform and gap is wide."""
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        diag = [
+            {
+                "quality_trap_correlation": 0.18,
+                "universe": {"pct_eligible": 71, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        perf = [
+            {
+                "eligible": {"mean_ret": 5.0, "n": 200},
+                "trap_fail": {"mean_ret": -8.0, "n": 50},
+                "quality_fail": {"mean_ret": -3.0, "n": 30},
+                "both_fail": {"mean_ret": -12.0, "n": 10},
+            }
+        ] * 5
+        assert suggest_gate_mode(diag, performance_history=perf) == "normal"
