@@ -702,16 +702,17 @@ def build_gate_performance(
 
         ret = current_px / prior_px - 1.0
 
-        q_gate = r.get("ees_quality_gate")
-        t_gate = r.get("ees_trap_gate")
+        q_gate = str(r.get("ees_quality_gate", "")).strip().lower() != "false"
+        t_gate = str(r.get("ees_trap_gate", "")).strip().lower() != "false"
+        eligible = str(r.get("ees_eligible", "")).strip().lower() == "true"
 
-        if q_gate is False and t_gate is False:
+        if not q_gate and not t_gate:
             buckets["both_fail"].append(ret)
-        elif q_gate is False:
+        elif not q_gate:
             buckets["quality_fail"].append(ret)
-        elif t_gate is False:
+        elif not t_gate:
             buckets["trap_fail"].append(ret)
-        elif r.get("ees_eligible") is True:
+        elif eligible:
             buckets["eligible"].append(ret)
 
     def _bucket_stats(rets: List[float]) -> Dict[str, Any]:
@@ -733,6 +734,61 @@ def build_gate_performance(
         "trap_fail": _bucket_stats(buckets["trap_fail"]),
         "both_fail": _bucket_stats(buckets["both_fail"]),
     }
+
+
+def suggest_gate_mode(
+    diagnostics_history: List[Dict[str, Any]],
+    min_history: int = 5,
+) -> str:
+    """Suggest normal vs conservative mode based on recent gate diagnostics.
+
+    Tightens to conservative when:
+      - correlation(quality, trap) rises above 0.40 (edges converging)
+      - eligible % drops below 50% (universe already tight, tighten quality)
+      - trap fail rate spikes (more traps than usual)
+
+    Args:
+        diagnostics_history: list of gate_diagnostics dicts, newest last
+        min_history: minimum history length before switching
+
+    Returns:
+        "normal" or "conservative"
+    """
+    if len(diagnostics_history) < min_history:
+        return "normal"
+
+    recent = diagnostics_history[-min_history:]
+
+    # Signal 1: correlation drift
+    corrs = [d.get("quality_trap_correlation") for d in recent if d.get("quality_trap_correlation") is not None]
+    avg_corr = sum(corrs) / len(corrs) if corrs else 0
+
+    # Signal 2: eligible % dropping
+    pct_eligible = [d.get("universe", {}).get("pct_eligible", 100) for d in recent]
+    avg_eligible = sum(pct_eligible) / len(pct_eligible) if pct_eligible else 100
+
+    # Signal 3: trap fail rate spiking
+    trap_rates = []
+    for d in recent:
+        u = d.get("universe", {})
+        total = u.get("total", 1)
+        trap_fail = u.get("trap_fail", 0)
+        if total > 0:
+            trap_rates.append(trap_fail / total * 100)
+    avg_trap_rate = sum(trap_rates) / len(trap_rates) if trap_rates else 20
+
+    # Decision logic
+    if avg_corr > 0.40:
+        logger.info("[EES] Regime: CONSERVATIVE (correlation drift %.3f > 0.40)", avg_corr)
+        return "conservative"
+    if avg_eligible < 50:
+        logger.info("[EES] Regime: CONSERVATIVE (eligible %%.1f < 50%%)", avg_eligible)
+        return "conservative"
+    if avg_trap_rate > 35:
+        logger.info("[EES] Regime: CONSERVATIVE (trap rate %.1f%% > 35%%)", avg_trap_rate)
+        return "conservative"
+
+    return "normal"
 
 
 def _pearson(x: List[float], y: List[float]) -> Optional[float]:

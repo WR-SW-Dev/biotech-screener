@@ -583,14 +583,14 @@ class TestGatePerformance:
     def test_computes_bucket_returns(self):
         from event_ev.expectation_error_model import build_gate_performance
 
-        # Prior: price=10, eligible
+        # Prior: price=10, eligible (string values as from CSV)
         prior = [
             {
                 "ticker": "A",
                 "close_price": "10.0",
-                "ees_quality_gate": True,
-                "ees_trap_gate": True,
-                "ees_eligible": True,
+                "ees_quality_gate": "True",
+                "ees_trap_gate": "True",
+                "ees_eligible": "True",
             }
         ]
         # Current: price=11 (+10%)
@@ -599,3 +599,75 @@ class TestGatePerformance:
         assert result is not None
         assert result["eligible"]["n"] == 1
         assert result["eligible"]["mean_ret"] == pytest.approx(10.0, abs=0.1)  # +10%
+
+    def test_trap_fail_bucket(self):
+        from event_ev.expectation_error_model import build_gate_performance
+
+        prior = [
+            {
+                "ticker": "TRAP",
+                "close_price": "10.0",
+                "ees_quality_gate": "True",
+                "ees_trap_gate": "False",
+                "ees_eligible": "False",
+            }
+        ]
+        current = [{"ticker": "TRAP", "close_price": "9.0"}]
+        result = build_gate_performance(current, prior, "2026-04-10")
+        assert result["trap_fail"]["n"] == 1
+        assert result["trap_fail"]["mean_ret"] == pytest.approx(-10.0, abs=0.1)
+
+
+# ── Regime detector ──────────────────────────────────────────────────────
+
+
+class TestRegimeDetector:
+    def test_returns_normal_with_insufficient_history(self):
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        assert suggest_gate_mode([], min_history=5) == "normal"
+        assert suggest_gate_mode([{}] * 3, min_history=5) == "normal"
+
+    def test_returns_normal_under_normal_conditions(self):
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        history = [
+            {
+                "quality_trap_correlation": 0.18,
+                "universe": {"pct_eligible": 71, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        assert suggest_gate_mode(history) == "normal"
+
+    def test_conservative_on_high_correlation(self):
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        history = [
+            {
+                "quality_trap_correlation": 0.50,
+                "universe": {"pct_eligible": 71, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        assert suggest_gate_mode(history) == "conservative"
+
+    def test_conservative_on_low_eligible(self):
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        history = [
+            {
+                "quality_trap_correlation": 0.15,
+                "universe": {"pct_eligible": 40, "total": 300, "trap_fail": 60},
+            }
+        ] * 5
+        assert suggest_gate_mode(history) == "conservative"
+
+    def test_conservative_on_high_trap_rate(self):
+        from event_ev.expectation_error_model import suggest_gate_mode
+
+        history = [
+            {
+                "quality_trap_correlation": 0.15,
+                "universe": {"pct_eligible": 60, "total": 200, "trap_fail": 80},
+            }
+        ] * 5
+        assert suggest_gate_mode(history) == "conservative"
