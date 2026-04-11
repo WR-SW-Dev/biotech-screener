@@ -175,6 +175,9 @@ SNAPSHOT_COLUMNS = (
         "quality_overlay_score",
         "trap_overlay_score",
         "ees_v2_score",
+        "ees_quality_gate",
+        "ees_trap_gate",
+        "ees_eligible",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",

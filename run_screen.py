@@ -5837,21 +5837,30 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Regulatory coverage telemetry failed (%s) — skipping sidecar", exc)
 
-    # --- Expectation Error Model (Jane Street 6-mistake overlay) ---
+    # --- Expectation Error Model v2 (quality + trap gates) ---
     try:
         from event_ev.expectation_error_model import enrich_csv_rows as _enrich_ees
 
         _ees_scores = _enrich_ees(csv_rows, as_of_date)
         if _ees_scores:
-            _ees_dicts = [s.to_dict() for s in _ees_scores if s.expectation_confidence >= 0.5]
+            _ees_dicts = [s.to_dict() for s in _ees_scores]
             _ees_dicts.sort(key=lambda d: d.get("ees_v2_score", 0), reverse=True)
+            _n_eligible = sum(1 for r in csv_rows if r.get("ees_eligible") is True)
+            _n_q_fail = sum(1 for r in csv_rows if r.get("ees_quality_gate") is False)
+            _n_t_fail = sum(1 for r in csv_rows if r.get("ees_trap_gate") is False)
             with open(snap_path / "expectation_error_overlay.json", "w", encoding="utf-8") as f:
                 json.dump(
                     {
                         "as_of_date": as_of_date,
-                        "model_version": "ees_v1.0",
+                        "model_version": "ees_v2.0",
                         "n_scored": len(_ees_scores),
-                        "n_high_confidence": sum(1 for s in _ees_scores if s.expectation_confidence >= 0.6),
+                        "gates": {
+                            "quality_cut_pct": 15,
+                            "trap_cut_pct": 20,
+                            "n_eligible": _n_eligible,
+                            "n_quality_fail": _n_q_fail,
+                            "n_trap_fail": _n_t_fail,
+                        },
                         "top_10": _ees_dicts[:10],
                         "bottom_10": _ees_dicts[-10:],
                     },
@@ -5859,9 +5868,12 @@ def save_validation_snapshot(
                     indent=2,
                 )
             logger.info(
-                "[EES] Overlay written: %d scored, top EES=%.3f",
+                "[EES] v2 overlay: %d scored, %d eligible (Q-fail=%d, T-fail=%d), top v2=%.3f",
                 len(_ees_scores),
-                _ees_dicts[0]["expectation_error_score"] if _ees_dicts else 0.0,
+                _n_eligible,
+                _n_q_fail,
+                _n_t_fail,
+                _ees_dicts[0]["ees_v2_score"] if _ees_dicts else 0.0,
             )
     except Exception as _ees_exc:
         logger.debug("Expectation Error Model overlay skipped: %s", _ees_exc)

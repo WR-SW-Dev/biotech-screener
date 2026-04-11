@@ -318,6 +318,57 @@ class ExpectationErrorModel:
 
         return results
 
+    # ── Gate computation ─────────────────────────────────────────────
+
+    @staticmethod
+    def compute_gates(
+        scores: List[ExpectationErrorScore],
+        quality_cut_pct: int = 15,
+        trap_cut_pct: int = 20,
+    ) -> Dict[str, Dict[str, Any]]:
+        """Compute percentile-based gates for each ticker.
+
+        Args:
+            scores: output of score_batch
+            quality_cut_pct: exclude bottom N% by quality (default 15)
+            trap_cut_pct: exclude bottom N% by trap (default 20)
+
+        Returns:
+            {ticker: {"ees_quality_gate": bool, "ees_trap_gate": bool,
+                       "ees_eligible": bool, "quality_pctile": float,
+                       "trap_pctile": float}}
+        """
+        q_vals = sorted(s.quality_overlay_score for s in scores)
+        t_vals = sorted(s.trap_overlay_score for s in scores)
+        n = len(q_vals)
+
+        if n < 5:
+            return {s.ticker: _pass_all_gates() for s in scores}
+
+        q_thresh = q_vals[min(int(n * quality_cut_pct / 100), n - 1)]
+        t_thresh = t_vals[min(int(n * trap_cut_pct / 100), n - 1)]
+
+        result: Dict[str, Dict[str, Any]] = {}
+        for s in scores:
+            q_pass = s.quality_overlay_score > q_thresh
+            t_pass = s.trap_overlay_score > t_thresh
+
+            # Percentile rank (0-100)
+            q_pctile = sum(1 for v in q_vals if v <= s.quality_overlay_score) / n * 100
+            t_pctile = sum(1 for v in t_vals if v <= s.trap_overlay_score) / n * 100
+
+            result[s.ticker] = {
+                "ees_quality_gate": q_pass,
+                "ees_trap_gate": t_pass,
+                "ees_eligible": q_pass and t_pass,
+                "quality_pctile": round(q_pctile, 1),
+                "trap_pctile": round(t_pctile, 1),
+                "quality_threshold": round(q_thresh, 4),
+                "trap_threshold": round(t_thresh, 4),
+            }
+
+        return result
+
     # ═════════════════════════════════════════════════════════════════
     # Sub-score implementations
     # ═════════════════════════════════════════════════════════════════
@@ -403,6 +454,18 @@ class ExpectationErrorModel:
         return _clamp(priced_move_pct * tf / 20.0, 0.0, 1.0)
 
 
+def _pass_all_gates() -> Dict[str, Any]:
+    return {
+        "ees_quality_gate": True,
+        "ees_trap_gate": True,
+        "ees_eligible": True,
+        "quality_pctile": 50.0,
+        "trap_pctile": 50.0,
+        "quality_threshold": 0.0,
+        "trap_threshold": 0.0,
+    }
+
+
 # ═════════════════════════════════════════════════════════════════════════
 # Utility: inject EES into csv_rows (called from run_screen.py)
 # ═════════════════════════════════════════════════════════════════════════
@@ -420,19 +483,35 @@ EES_CSV_COLUMNS = [
     "quality_overlay_score",
     "trap_overlay_score",
     "ees_v2_score",
+    "ees_quality_gate",
+    "ees_trap_gate",
+    "ees_eligible",
 ]
+
+# Default gate thresholds (sweep-optimised 2026-04-11)
+DEFAULT_QUALITY_CUT_PCT = 15
+DEFAULT_TRAP_CUT_PCT = 20
 
 
 def enrich_csv_rows(
     csv_rows: List[Dict[str, Any]],
     as_of_date: str,
+    quality_cut_pct: int = DEFAULT_QUALITY_CUT_PCT,
+    trap_cut_pct: int = DEFAULT_TRAP_CUT_PCT,
 ) -> List[ExpectationErrorScore]:
-    """Compute EES for all rows and inject columns in-place.
+    """Compute EES scores and gates for all rows, inject columns in-place.
 
     Returns the list of ExpectationErrorScore objects (for sidecar writing).
     """
-    model = ExpectationErrorModel()
-    scores = model.score_batch(csv_rows, as_of_date)
+    ees_model = ExpectationErrorModel()
+    scores = ees_model.score_batch(csv_rows, as_of_date)
+
+    # Compute percentile-based gates
+    gates = ExpectationErrorModel.compute_gates(scores, quality_cut_pct, trap_cut_pct)
+
+    n_q_fail = 0
+    n_t_fail = 0
+    n_eligible = 0
 
     for row, ees in zip(csv_rows, scores):
         row["base_rate_gap_score"] = ees.base_rate_gap_score
@@ -447,5 +526,31 @@ def enrich_csv_rows(
         row["quality_overlay_score"] = ees.quality_overlay_score
         row["trap_overlay_score"] = ees.trap_overlay_score
         row["ees_v2_score"] = ees.ees_v2_score
+
+        g = gates.get(ees.ticker, _pass_all_gates())
+        row["ees_quality_gate"] = g["ees_quality_gate"]
+        row["ees_trap_gate"] = g["ees_trap_gate"]
+        row["ees_eligible"] = g["ees_eligible"]
+
+        if not g["ees_quality_gate"]:
+            n_q_fail += 1
+        if not g["ees_trap_gate"]:
+            n_t_fail += 1
+        if g["ees_eligible"]:
+            n_eligible += 1
+
+    # Gate telemetry — first ticker's thresholds are representative
+    first_gate = next(iter(gates.values()), {})
+    logger.info(
+        "[EES] Gates applied: Q%d/T%d thresholds (q=%.4f, t=%.4f) | " "%d eligible, %d Q-fail, %d T-fail out of %d",
+        quality_cut_pct,
+        trap_cut_pct,
+        first_gate.get("quality_threshold", 0),
+        first_gate.get("trap_threshold", 0),
+        n_eligible,
+        n_q_fail,
+        n_t_fail,
+        len(scores),
+    )
 
     return scores
