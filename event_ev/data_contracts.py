@@ -455,14 +455,19 @@ class ExpectationErrorScore:
     crowding_bias_score: float  # short-interest positioning
     timing_decay_risk_score: float  # expensive + uncertain timing [0, 1]
 
-    # Composite
+    # v1 composite (DEPRECATED — mis-specified, retained for back-compat)
     expectation_error_score: float
     expectation_confidence: float  # [0, 1]
     expectation_notes: str  # human-readable flags
 
+    # v2 overlay composites (ablation-validated 2026-04-11)
+    quality_overlay_score: float  # avoid poor structure: -0.55*slippage - 0.45*timing
+    trap_overlay_score: float  # avoid fake edge: -0.50*base_rate - 0.50*conditional
+    ees_v2_score: float  # 0.60*quality + 0.40*trap
+
     # Audit trail
     features_used: Dict[str, Any] = field(default_factory=dict)
-    model_version: str = "ees_v1.0"
+    model_version: str = "ees_v2.0"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -477,6 +482,9 @@ class ExpectationErrorScore:
             "expectation_error_score": round(self.expectation_error_score, 4),
             "expectation_confidence": round(self.expectation_confidence, 4),
             "expectation_notes": self.expectation_notes,
+            "quality_overlay_score": round(self.quality_overlay_score, 4),
+            "trap_overlay_score": round(self.trap_overlay_score, 4),
+            "ees_v2_score": round(self.ees_v2_score, 4),
             "features_used": self.features_used,
             "model_version": self.model_version,
         }

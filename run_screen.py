@@ -5844,7 +5844,7 @@ def save_validation_snapshot(
         _ees_scores = _enrich_ees(csv_rows, as_of_date)
         if _ees_scores:
             _ees_dicts = [s.to_dict() for s in _ees_scores if s.expectation_confidence >= 0.5]
-            _ees_dicts.sort(key=lambda d: d.get("expectation_error_score", 0), reverse=True)
+            _ees_dicts.sort(key=lambda d: d.get("ees_v2_score", 0), reverse=True)
             with open(snap_path / "expectation_error_overlay.json", "w", encoding="utf-8") as f:
                 json.dump(
                     {

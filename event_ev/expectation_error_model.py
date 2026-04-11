@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 
 EPS = 1e-6
 
-# ── Sub-score weights for the composite EES ──────────────────────────────
+# ── Sub-score weights for the v1 composite EES (retained for compat) ─────
 _DEFAULT_WEIGHTS = {
     "base_rate_gap": 0.30,
     "conditional_misprice": 0.20,
@@ -43,6 +43,17 @@ _DEFAULT_WEIGHTS = {
     "slippage_penalty": 0.15,  # subtracted
     "timing_decay_risk": 0.10,  # subtracted
 }
+
+# ── v2 overlay weights (ablation-validated 2026-04-11) ───────────────────
+# Quality: avoid poor structure (IC +0.125 at 63d, t=17.4, hit=88%)
+_V2_QUALITY_W_SLIPPAGE = 0.55
+_V2_QUALITY_W_TIMING = 0.45
+# Trap: avoid fake edge (IC +0.071 at 63d, t=16.0, hit=86%)
+_V2_TRAP_W_BASE_RATE = 0.50
+_V2_TRAP_W_CONDITIONAL = 0.50
+# Combined: 60% quality + 40% trap (IC +0.100 at 63d, t=12.5)
+_V2_W_QUALITY = 0.60
+_V2_W_TRAP = 0.40
 
 # ── Historical base-rate move distributions (abs %, by family|phase) ─────
 # Source: payoff_engine.py _DEFAULT_MOVE_PRIORS, blended HIT/MISS via
@@ -196,7 +207,7 @@ class ExpectationErrorModel:
         # ── F) Timing decay risk ─────────────────────────────────────
         T = self._timing_decay_risk(pm, precision)
 
-        # ── Composite ────────────────────────────────────────────────
+        # ── v1 Composite (retained for backwards compat) ─────────────
         w = self.weights
         ees = (
             w["base_rate_gap"] * B
@@ -238,6 +249,14 @@ class ExpectationErrorModel:
         if D > 0.5:
             notes_parts.append("option-stock divergence")
 
+        # ── v2 overlays (ablation-validated 2026-04-11) ────────────
+        # Quality: penalise poor structure (higher = better tradability)
+        quality = -(_V2_QUALITY_W_SLIPPAGE * S + _V2_QUALITY_W_TIMING * T)
+        # Trap: penalise obvious cheap setups (higher = safer, less trap)
+        trap = -(_V2_TRAP_W_BASE_RATE * B + _V2_TRAP_W_CONDITIONAL * C)
+        # Combined: quality-dominant blend
+        v2 = _V2_W_QUALITY * quality + _V2_W_TRAP * trap
+
         return ExpectationErrorScore(
             ticker=ticker,
             as_of_date=as_of_date,
@@ -250,6 +269,9 @@ class ExpectationErrorModel:
             expectation_error_score=round(ees, 4),
             expectation_confidence=round(conf, 4),
             expectation_notes="; ".join(notes_parts) if notes_parts else "",
+            quality_overlay_score=round(quality, 4),
+            trap_overlay_score=round(trap, 4),
+            ees_v2_score=round(v2, 4),
             features_used=features,
         )
 
@@ -395,6 +417,9 @@ EES_CSV_COLUMNS = [
     "expectation_error_score",
     "expectation_confidence",
     "expectation_notes",
+    "quality_overlay_score",
+    "trap_overlay_score",
+    "ees_v2_score",
 ]
 
 
@@ -419,5 +444,8 @@ def enrich_csv_rows(
         row["expectation_error_score"] = ees.expectation_error_score
         row["expectation_confidence"] = ees.expectation_confidence
         row["expectation_notes"] = ees.expectation_notes
+        row["quality_overlay_score"] = ees.quality_overlay_score
+        row["trap_overlay_score"] = ees.trap_overlay_score
+        row["ees_v2_score"] = ees.ees_v2_score
 
     return scores

@@ -172,6 +172,9 @@ SNAPSHOT_COLUMNS = (
         "expectation_error_score",
         "expectation_confidence",
         "expectation_notes",
+        "quality_overlay_score",
+        "trap_overlay_score",
+        "ees_v2_score",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",

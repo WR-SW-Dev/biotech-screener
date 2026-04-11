@@ -257,6 +257,74 @@ class TestCompositeScore:
         assert result.timing_decay_risk_score > 0.5
 
 
+# ── v2 Overlays ─────────────────────────────────────────────────────────
+
+
+class TestV2Overlays:
+    def test_quality_negative_for_micro_cap(self):
+        """Micro-cap penny stock → quality score strongly negative."""
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="50.0", close_price="2.0", clinical_days_precision="UNKNOWN")
+        result = model.score_row(r, "2026-04-10")
+        assert result.quality_overlay_score < -0.5
+
+    def test_quality_zero_for_clean_name(self):
+        """Large cap, known date → quality near zero (no penalty)."""
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="5000.0", close_price="50.0", clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        assert result.quality_overlay_score == pytest.approx(0.0, abs=0.01)
+
+    def test_trap_negative_for_obvious_cheap(self):
+        """Name that looks underpriced by scenario EV → trap detector fires (negative)."""
+        model = ExpectationErrorModel()
+        # priced_move=10 is well below conditional EV (~29) → positive conditional_misprice
+        # trap flips this: trap_score should be negative (avoid this name)
+        r = _row(priced_move_pct="10.0", clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        assert result.trap_overlay_score < 0.0
+
+    def test_trap_less_negative_when_overpriced(self):
+        """Name that looks overpriced → trap is less alarmed."""
+        model = ExpectationErrorModel()
+        r = _row(priced_move_pct="80.0", clinical_days_precision="DAY")
+        result = model.score_row(r, "2026-04-10")
+        # conditional_misprice is negative (overpriced), base_rate_gap positive
+        # Flipped: trap should be less negative / more positive
+        assert result.trap_overlay_score > -0.2
+
+    def test_v2_combines_quality_and_trap(self):
+        """v2 is a 60/40 blend of quality and trap."""
+        model = ExpectationErrorModel()
+        r = _row(
+            priced_move_pct="10.0",
+            market_cap_mm="50.0",
+            close_price="2.0",
+            clinical_days_precision="UNKNOWN",
+        )
+        result = model.score_row(r, "2026-04-10")
+        # Quality strongly negative (micro-cap + uncertain timing)
+        assert result.quality_overlay_score < -0.5
+        # v2 = 0.60*quality + 0.40*trap, so v2 is between quality and trap
+        expected = 0.60 * result.quality_overlay_score + 0.40 * result.trap_overlay_score
+        assert result.ees_v2_score == pytest.approx(expected, abs=0.01)
+
+    def test_v2_fields_present_in_to_dict(self):
+        model = ExpectationErrorModel()
+        r = _row()
+        result = model.score_row(r, "2026-04-10")
+        d = result.to_dict()
+        assert "quality_overlay_score" in d
+        assert "trap_overlay_score" in d
+        assert "ees_v2_score" in d
+
+    def test_v2_model_version(self):
+        model = ExpectationErrorModel()
+        r = _row()
+        result = model.score_row(r, "2026-04-10")
+        assert result.model_version == "ees_v2.0"
+
+
 # ── Confidence ───────────────────────────────────────────────────────────
 
 
