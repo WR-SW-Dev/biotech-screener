@@ -125,23 +125,18 @@ class TestConditionalMisprice:
 
 
 class TestSlippagePenalty:
-    def test_large_cap_no_penalty(self):
+    def test_always_zero(self):
+        """Slippage deprecated (PIT audit: look-ahead bias). Always returns 0."""
+        model = ExpectationErrorModel()
+        r = _row(market_cap_mm="50.0", close_price="1.00")
+        result = model.score_row(r, "2026-04-10")
+        assert result.slippage_penalty_score == 0.0
+
+    def test_large_cap_also_zero(self):
         model = ExpectationErrorModel()
         r = _row(market_cap_mm="5000.0", close_price="50.0")
         result = model.score_row(r, "2026-04-10")
         assert result.slippage_penalty_score == 0.0
-
-    def test_micro_cap_penalty(self):
-        model = ExpectationErrorModel()
-        r = _row(market_cap_mm="80.0", close_price="3.50")
-        result = model.score_row(r, "2026-04-10")
-        assert result.slippage_penalty_score == pytest.approx(0.70)  # micro cap only
-
-    def test_small_cap_moderate(self):
-        model = ExpectationErrorModel()
-        r = _row(market_cap_mm="200.0", close_price="12.0")
-        result = model.score_row(r, "2026-04-10")
-        assert result.slippage_penalty_score == pytest.approx(0.30)
 
 
 # ── Divergence ───────────────────────────────────────────────────────────
@@ -240,20 +235,17 @@ class TestCompositeScore:
         # but frictions all zero → net positive
         assert result.conditional_misprice_score > 0.3
 
-    def test_negative_ees_high_friction(self):
-        """Micro-cap with uncertain timing → large penalties."""
+    def test_negative_ees_uncertain_timing(self):
+        """Uncertain timing → timing decay penalty dominates."""
         model = ExpectationErrorModel()
         r = _row(
-            priced_move_pct="35.0",  # at base rate (neutral)
+            priced_move_pct="35.0",
             short_interest_pct="5.0",
-            market_cap_mm="50.0",  # micro cap
-            close_price="2.0",
             implied_event_move="35.0",
             clinical_days_precision="UNKNOWN",
         )
         result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
-        # slippage = 0.70 (micro cap), timing = high → penalties dominate
-        assert result.slippage_penalty_score == pytest.approx(0.70)
+        assert result.slippage_penalty_score == 0.0  # deprecated
         assert result.timing_decay_risk_score > 0.5
 
 

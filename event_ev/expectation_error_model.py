@@ -34,13 +34,13 @@ logger = logging.getLogger(__name__)
 
 EPS = 1e-6
 
-# ── Sub-score weights for the v1 composite EES (retained for compat) ─────
+# ── Sub-score weights for the v1 composite EES (DEPRECATED, retained for compat) ─
 _DEFAULT_WEIGHTS = {
     "base_rate_gap": 0.30,
     "conditional_misprice": 0.20,
     "divergence": 0.10,
     "crowding_bias": 0.15,
-    "slippage_penalty": 0.15,  # subtracted
+    "slippage_penalty": 0.00,  # DEAD — look-ahead bias (PIT audit 2026-04-12)
     "timing_decay_risk": 0.10,  # subtracted
 }
 
@@ -414,14 +414,13 @@ class ExpectationErrorModel:
         return _clamp((cond_ev - priced_move_pct) / (priced_move_pct + EPS), -1.0, 1.0)
 
     def _slippage_penalty(self, market_cap_mm: Optional[float], close_price: Optional[float]) -> float:
-        """Execution friction from thin books."""
-        s = 0.0
-        if market_cap_mm is not None:
-            if market_cap_mm < 100:
-                s += 0.70
-            elif market_cap_mm < 300:
-                s += 0.30
-        return _clamp(s, 0.0, 1.0)
+        """DEPRECATED: was look-ahead bias (PIT audit 2026-04-12).
+
+        Market_cap from PIT archives contained current prices, not historical.
+        IC went from +0.106 to -0.088 under PIT-safe data (micro-caps outperform).
+        Returns 0.0 always. Retained as interface stub for back-compat.
+        """
+        return 0.0
 
     def _divergence(
         self,
