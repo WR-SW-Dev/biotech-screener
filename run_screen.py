@@ -5672,6 +5672,15 @@ def save_validation_snapshot(
     # =========================================================================
     _finalize_priced_move(csv_rows)
 
+    # --- EES v2: score + gate enrichment (must run before CSV write) ---
+    _ees_scores_for_sidecar = None
+    try:
+        from event_ev.expectation_error_model import enrich_csv_rows as _enrich_ees_pre
+
+        _ees_scores_for_sidecar = _enrich_ees_pre(csv_rows, as_of_date)
+    except Exception as _ees_pre_exc:
+        logger.warning("EES pre-write enrichment failed: %s", _ees_pre_exc, exc_info=True)
+
     # =========================================================================
     # PHASE 3: WRITE — rankings.csv, checksum, manifest
     # =========================================================================
@@ -5837,13 +5846,12 @@ def save_validation_snapshot(
     except Exception as exc:
         logger.warning("Regulatory coverage telemetry failed (%s) — skipping sidecar", exc)
 
-    # --- Expectation Error Model v2 (quality + trap gates) ---
+    # --- Expectation Error Model v2 (sidecar artifacts — scores already injected pre-write) ---
     try:
         from event_ev.expectation_error_model import build_gate_diagnostics as _build_gate_diag
         from event_ev.expectation_error_model import build_gate_performance as _build_gate_perf
-        from event_ev.expectation_error_model import enrich_csv_rows as _enrich_ees
 
-        _ees_scores = _enrich_ees(csv_rows, as_of_date)
+        _ees_scores = _ees_scores_for_sidecar
         if _ees_scores:
             _ees_dicts = [s.to_dict() for s in _ees_scores]
             _ees_dicts.sort(key=lambda d: d.get("ees_v2_score", 0), reverse=True)
