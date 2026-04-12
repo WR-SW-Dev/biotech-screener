@@ -261,10 +261,10 @@ class TestCompositeScore:
 
 
 class TestV2Overlays:
-    def test_quality_negative_for_micro_cap(self):
-        """Micro-cap penny stock → quality score strongly negative."""
+    def test_quality_negative_for_uncertain_timing(self):
+        """Uncertain timing + high implied move → quality strongly negative."""
         model = ExpectationErrorModel()
-        r = _row(market_cap_mm="50.0", close_price="2.0", clinical_days_precision="UNKNOWN")
+        r = _row(priced_move_pct="30.0", clinical_days_precision="UNKNOWN")
         result = model.score_row(r, "2026-04-10")
         assert result.quality_overlay_score < -0.5
 
@@ -294,19 +294,17 @@ class TestV2Overlays:
         assert result.trap_overlay_score > -0.2
 
     def test_v2_combines_quality_and_trap(self):
-        """v2 is a 60/40 blend of quality and trap."""
+        """v2 is a 50/50 blend of quality (timing) and trap."""
         model = ExpectationErrorModel()
         r = _row(
-            priced_move_pct="10.0",
-            market_cap_mm="50.0",
-            close_price="2.0",
+            priced_move_pct="30.0",
             clinical_days_precision="UNKNOWN",
         )
         result = model.score_row(r, "2026-04-10")
-        # Quality strongly negative (micro-cap + uncertain timing)
+        # Quality negative from timing decay (uncertain timing + high move)
         assert result.quality_overlay_score < -0.5
-        # v2 = 0.60*quality + 0.40*trap, so v2 is between quality and trap
-        expected = 0.60 * result.quality_overlay_score + 0.40 * result.trap_overlay_score
+        # v2 = 0.50*quality + 0.50*trap
+        expected = 0.50 * result.quality_overlay_score + 0.50 * result.trap_overlay_score
         assert result.ees_v2_score == pytest.approx(expected, abs=0.01)
 
     def test_v2_fields_present_in_to_dict(self):
@@ -456,25 +454,25 @@ class TestSerialisation:
 
 class TestGateComputation:
     def test_gates_filter_worst_names(self):
-        """Micro-cap penny stocks should fail quality gate while large caps pass."""
+        """Names with uncertain timing should fail quality gate; known dates pass."""
         rows = [
-            # 5 bad names: micro-cap + penny stock
-            _row(ticker="BAD0", market_cap_mm="30", close_price="0.50"),
-            _row(ticker="BAD1", market_cap_mm="50", close_price="1.00"),
-            _row(ticker="BAD2", market_cap_mm="80", close_price="2.00"),
-            _row(ticker="BAD3", market_cap_mm="90", close_price="3.00"),
-            _row(ticker="BAD4", market_cap_mm="150", close_price="4.00"),
-            # 5 good names: large cap
-            _row(ticker="OK0", market_cap_mm="2000", close_price="30.0"),
-            _row(ticker="OK1", market_cap_mm="3000", close_price="40.0"),
-            _row(ticker="OK2", market_cap_mm="5000", close_price="50.0"),
-            _row(ticker="OK3", market_cap_mm="8000", close_price="60.0"),
-            _row(ticker="OK4", market_cap_mm="10000", close_price="70.0"),
+            # 5 bad: uncertain timing + high implied move → high timing decay
+            _row(ticker="BAD0", priced_move_pct="40.0", clinical_days_precision="UNKNOWN"),
+            _row(ticker="BAD1", priced_move_pct="35.0", clinical_days_precision="UNKNOWN"),
+            _row(ticker="BAD2", priced_move_pct="30.0", clinical_days_precision="QUARTER"),
+            _row(ticker="BAD3", priced_move_pct="25.0", clinical_days_precision="QUARTER"),
+            _row(ticker="BAD4", priced_move_pct="20.0", clinical_days_precision="MONTH"),
+            # 5 good: exact dates → zero timing decay
+            _row(ticker="OK0", priced_move_pct="15.0", clinical_days_precision="DAY"),
+            _row(ticker="OK1", priced_move_pct="20.0", clinical_days_precision="DAY"),
+            _row(ticker="OK2", priced_move_pct="25.0", clinical_days_precision="DAY"),
+            _row(ticker="OK3", priced_move_pct="10.0", clinical_days_precision="WEEK"),
+            _row(ticker="OK4", priced_move_pct="5.0", clinical_days_precision="DAY"),
         ]
         model = ExpectationErrorModel()
         scores = model.score_batch(rows, "2026-04-10")
         gates = ExpectationErrorModel.compute_gates(scores, quality_cut_pct=40, trap_cut_pct=0)
-        # All OK names should pass quality gate
+        # All OK names should pass quality gate (zero or low timing decay)
         for ticker in ["OK0", "OK1", "OK2", "OK3", "OK4"]:
             assert gates[ticker]["ees_quality_gate"] is True, f"{ticker} should pass"
         # At least some BAD names should fail

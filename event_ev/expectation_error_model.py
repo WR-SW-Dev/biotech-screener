@@ -44,16 +44,16 @@ _DEFAULT_WEIGHTS = {
     "timing_decay_risk": 0.10,  # subtracted
 }
 
-# ── v2 overlay weights (ablation-validated 2026-04-11) ───────────────────
-# Quality: avoid poor structure (IC +0.125 at 63d, t=17.4, hit=88%)
-_V2_QUALITY_W_SLIPPAGE = 0.55
-_V2_QUALITY_W_TIMING = 0.45
-# Trap: avoid fake edge (IC +0.071 at 63d, t=16.0, hit=86%)
+# ── v2 overlay weights (PIT-safe re-validation 2026-04-12) ───────────────
+# Quality: timing decay only (IC +0.078 at 63d, t=18.1 — PIT-safe)
+# NOTE: slippage (market_cap) was look-ahead bias — removed from quality.
+_V2_QUALITY_W_TIMING = 1.0
+# Trap: avoid fake edge (IC +0.077 at 63d, t=18.5 — PIT-safe)
 _V2_TRAP_W_BASE_RATE = 0.50
 _V2_TRAP_W_CONDITIONAL = 0.50
-# Combined: 60% quality + 40% trap (IC +0.100 at 63d, t=12.5)
-_V2_W_QUALITY = 0.60
-_V2_W_TRAP = 0.40
+# Combined: 50% quality + 50% trap (both ~equal IC, both PIT-safe)
+_V2_W_QUALITY = 0.50
+_V2_W_TRAP = 0.50
 
 # ── Historical base-rate move distributions (abs %, by family|phase) ─────
 # Source: payoff_engine.py _DEFAULT_MOVE_PRIORS, blended HIT/MISS via
@@ -249,12 +249,12 @@ class ExpectationErrorModel:
         if D > 0.5:
             notes_parts.append("option-stock divergence")
 
-        # ── v2 overlays (ablation-validated 2026-04-11) ────────────
-        # Quality: penalise poor structure (higher = better tradability)
-        quality = -(_V2_QUALITY_W_SLIPPAGE * S + _V2_QUALITY_W_TIMING * T)
+        # ── v2 overlays (PIT-safe re-validation 2026-04-12) ────────
+        # Quality: timing discipline only (slippage was look-ahead bias)
+        quality = -(_V2_QUALITY_W_TIMING * T)
         # Trap: penalise obvious cheap setups (higher = safer, less trap)
         trap = -(_V2_TRAP_W_BASE_RATE * B + _V2_TRAP_W_CONDITIONAL * C)
-        # Combined: quality-dominant blend
+        # Combined: equal weight (both ~IC +0.077, both PIT-safe)
         v2 = _V2_W_QUALITY * quality + _V2_W_TRAP * trap
 
         return ExpectationErrorScore(
