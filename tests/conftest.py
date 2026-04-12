@@ -41,6 +41,9 @@ NON_DETERMINISTIC_PATHS = {
     "enhancements",
     "summary",
     "module_5_composite",
+    # module_2_financial uses live yfinance data (dollar_adv, cash_to_mcap, etc.)
+    # which changes between runs — exclude from determinism checks
+    "module_2_financial",
 }
 
 
@@ -48,15 +51,24 @@ def _run_pipeline(as_of_date: str, output_path: Path) -> tuple:
     """Run the screening pipeline. Returns (success, stdout, stderr)."""
     with tempfile.TemporaryDirectory() as tmpdir:
         cmd = [
-            sys.executable, "run_screen.py",
-            "--as-of-date", as_of_date,
-            "--data-dir", str(_DATA_DIR),
-            "--output", str(output_path),
-            "--output-dir", tmpdir,
-            "--pit-mode", "degrade",
+            sys.executable,
+            "run_screen.py",
+            "--as-of-date",
+            as_of_date,
+            "--data-dir",
+            str(_DATA_DIR),
+            "--output",
+            str(output_path),
+            "--output-dir",
+            tmpdir,
+            "--pit-mode",
+            "degrade",
         ]
         result = subprocess.run(
-            cmd, capture_output=True, text=True, cwd=_PROJECT_ROOT,
+            cmd,
+            capture_output=True,
+            text=True,
+            cwd=_PROJECT_ROOT,
         )
         return result.returncode == 0, result.stdout, result.stderr
 
@@ -75,10 +87,7 @@ def _remove_paths(data: Any, paths: set, prefix: str = "") -> Any:
         result = {}
         for k, v in data.items():
             full_path = f"{prefix}.{k}" if prefix else k
-            should_exclude = any(
-                full_path == p or full_path.startswith(p + ".")
-                for p in paths
-            )
+            should_exclude = any(full_path == p or full_path.startswith(p + ".") for p in paths)
             if not should_exclude:
                 result[k] = _remove_paths(v, paths, full_path)
         return result
@@ -95,6 +104,7 @@ def _remove_paths(data: Any, paths: set, prefix: str = "") -> Any:
 # Each is an independent subprocess writing to its own temp dir; production_data/
 # is read-only shared input.
 # ============================================================================
+
 
 @pytest.fixture(scope="session")
 def _parallel_pipeline_runs(tmp_path_factory):
@@ -153,6 +163,7 @@ def pipeline_run_historical(_parallel_pipeline_runs):
 # STANDARD DATES
 # ============================================================================
 
+
 @pytest.fixture
 def as_of_date() -> date:
     """Standard as_of_date for deterministic tests."""
@@ -174,6 +185,7 @@ def historical_date() -> date:
 # ============================================================================
 # SAMPLE UNIVERSE DATA
 # ============================================================================
+
 
 @pytest.fixture
 def sample_universe() -> List[Dict[str, Any]]:
@@ -217,6 +229,7 @@ def universe_with_invalid_tickers() -> List[Dict[str, Any]]:
 # ============================================================================
 # SAMPLE FINANCIAL DATA
 # ============================================================================
+
 
 @pytest.fixture
 def sample_financial_records() -> List[Dict[str, Any]]:
@@ -293,6 +306,7 @@ def financial_record_full() -> Dict[str, Any]:
 # SAMPLE CLINICAL TRIAL DATA
 # ============================================================================
 
+
 @pytest.fixture
 def sample_trial_records() -> List[Dict[str, Any]]:
     """Clinical trial records for testing."""
@@ -359,6 +373,7 @@ def trial_with_pcd_imminent(as_of_date) -> Dict[str, Any]:
 # SAMPLE MARKET DATA
 # ============================================================================
 
+
 @pytest.fixture
 def sample_market_data() -> List[Dict[str, Any]]:
     """Market data with prices and volumes."""
@@ -417,6 +432,7 @@ def market_snapshot() -> Dict[str, Any]:
 # SHORT INTEREST DATA
 # ============================================================================
 
+
 @pytest.fixture
 def sample_short_interest() -> List[Dict[str, Any]]:
     """Short interest data for testing."""
@@ -441,6 +457,7 @@ def sample_short_interest() -> List[Dict[str, Any]]:
 # ============================================================================
 # CO-INVEST SIGNALS
 # ============================================================================
+
 
 @pytest.fixture
 def sample_coinvest_signals() -> List[Dict[str, Any]]:
@@ -469,6 +486,7 @@ def sample_coinvest_signals() -> List[Dict[str, Any]]:
 # TEMPORARY DATA DIRECTORIES
 # ============================================================================
 
+
 @pytest.fixture
 def sample_data_dir(
     tmp_path,
@@ -482,18 +500,10 @@ def sample_data_dir(
     data_dir.mkdir()
 
     # Write all required files
-    (data_dir / "universe.json").write_text(
-        json.dumps(sample_universe, indent=2)
-    )
-    (data_dir / "financial_records.json").write_text(
-        json.dumps(sample_financial_records, indent=2)
-    )
-    (data_dir / "trial_records.json").write_text(
-        json.dumps(sample_trial_records, indent=2)
-    )
-    (data_dir / "market_data.json").write_text(
-        json.dumps(sample_market_data, indent=2)
-    )
+    (data_dir / "universe.json").write_text(json.dumps(sample_universe, indent=2))
+    (data_dir / "financial_records.json").write_text(json.dumps(sample_financial_records, indent=2))
+    (data_dir / "trial_records.json").write_text(json.dumps(sample_trial_records, indent=2))
+    (data_dir / "market_data.json").write_text(json.dumps(sample_market_data, indent=2))
 
     # Create ctgov_state directory for Module 3
     ctgov_state = data_dir / "ctgov_state"
@@ -511,15 +521,9 @@ def full_sample_data_dir(
 ) -> Path:
     """Data directory with all optional files included."""
     # Add optional files
-    (sample_data_dir / "coinvest_signals.json").write_text(
-        json.dumps(sample_coinvest_signals, indent=2)
-    )
-    (sample_data_dir / "short_interest.json").write_text(
-        json.dumps(sample_short_interest, indent=2)
-    )
-    (sample_data_dir / "market_snapshot.json").write_text(
-        json.dumps(market_snapshot, indent=2)
-    )
+    (sample_data_dir / "coinvest_signals.json").write_text(json.dumps(sample_coinvest_signals, indent=2))
+    (sample_data_dir / "short_interest.json").write_text(json.dumps(sample_short_interest, indent=2))
+    (sample_data_dir / "market_snapshot.json").write_text(json.dumps(market_snapshot, indent=2))
 
     return sample_data_dir
 
@@ -536,6 +540,7 @@ def empty_data_dir(tmp_path) -> Path:
 # UTILITY FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def active_tickers(sample_universe) -> List[str]:
     """List of active ticker symbols."""
@@ -551,19 +556,20 @@ def decimal_precision() -> int:
 def assert_decimal_equal(actual: Decimal, expected: Decimal, precision: int = 2):
     """Assert two Decimals are equal to given precision."""
     quantize_str = "0." + "0" * precision
-    assert actual.quantize(Decimal(quantize_str)) == expected.quantize(Decimal(quantize_str)), \
-        f"Expected {expected}, got {actual}"
+    assert actual.quantize(Decimal(quantize_str)) == expected.quantize(
+        Decimal(quantize_str)
+    ), f"Expected {expected}, got {actual}"
 
 
 def assert_score_bounded(score: Decimal, min_val: Decimal = Decimal("0"), max_val: Decimal = Decimal("100")):
     """Assert score is within valid bounds."""
-    assert min_val <= score <= max_val, \
-        f"Score {score} out of bounds [{min_val}, {max_val}]"
+    assert min_val <= score <= max_val, f"Score {score} out of bounds [{min_val}, {max_val}]"
 
 
 # ============================================================================
 # MOCKING HELPERS
 # ============================================================================
+
 
 @pytest.fixture
 def mock_date_today(monkeypatch, as_of_date):
@@ -582,6 +588,7 @@ def mock_date_today(monkeypatch, as_of_date):
 # POS ENGINE FIXTURES
 # ============================================================================
 
+
 @pytest.fixture
 def pos_universe() -> List[Dict[str, Any]]:
     """Universe data for PoS engine testing."""
@@ -597,6 +604,7 @@ def pos_universe() -> List[Dict[str, Any]]:
 # ============================================================================
 # DEFENSIVE OVERLAY FIXTURES
 # ============================================================================
+
 
 @pytest.fixture
 def defensive_features_elite() -> Dict[str, str]:
