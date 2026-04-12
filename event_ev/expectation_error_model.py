@@ -500,14 +500,16 @@ EES_CSV_COLUMNS = [
     "ees_eligible",
 ]
 
-# Default gate thresholds (sweep-optimised 2026-04-11)
-DEFAULT_QUALITY_CUT_PCT = 15
+# Default gate thresholds (PIT-safe re-calibration 2026-04-12)
+# Trap is the primary gate. Quality/timing off by default.
+DEFAULT_QUALITY_CUT_PCT = 0
 DEFAULT_TRAP_CUT_PCT = 20
 
-# ── Regime modes ─────────────────────────────────────────────────────────
+# ── Regime modes (PIT-safe re-calibration 2026-04-12) ────────────────────
+# Trap is the primary gate (Sharpe 0.384). Timing is optional stabiliser.
 GATE_MODES: Dict[str, Dict[str, int]] = {
-    "normal": {"quality_cut_pct": 15, "trap_cut_pct": 20},
-    "conservative": {"quality_cut_pct": 20, "trap_cut_pct": 30},
+    "normal": {"quality_cut_pct": 0, "trap_cut_pct": 20},
+    "conservative": {"quality_cut_pct": 15, "trap_cut_pct": 20},
 }
 
 

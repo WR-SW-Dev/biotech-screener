@@ -514,21 +514,21 @@ class TestRegimeToggle:
         from event_ev.expectation_error_model import resolve_gate_mode
 
         cfg = resolve_gate_mode("normal")
-        assert cfg["quality_cut_pct"] == 15
+        assert cfg["quality_cut_pct"] == 0  # timing off by default
         assert cfg["trap_cut_pct"] == 20
 
     def test_conservative_mode(self):
         from event_ev.expectation_error_model import resolve_gate_mode
 
         cfg = resolve_gate_mode("conservative")
-        assert cfg["quality_cut_pct"] == 20
-        assert cfg["trap_cut_pct"] == 30
+        assert cfg["quality_cut_pct"] == 15  # timing on in conservative
+        assert cfg["trap_cut_pct"] == 20
 
     def test_unknown_mode_falls_back(self):
         from event_ev.expectation_error_model import resolve_gate_mode
 
         cfg = resolve_gate_mode("unknown_mode")
-        assert cfg["quality_cut_pct"] == 15  # falls back to normal
+        assert cfg["quality_cut_pct"] == 0  # falls back to normal
 
     def test_enrich_accepts_gate_mode(self):
         rows = [_row(ticker="A"), _row(ticker="B")]
