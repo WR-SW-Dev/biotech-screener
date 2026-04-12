@@ -1,11 +1,11 @@
 """Tests for warm_caches.py — CTGov PIT-filtered cache."""
+
 from __future__ import annotations
 
 import json
 import sys
 from datetime import date
 from pathlib import Path
-from unittest import mock
 
 import pytest
 
@@ -15,10 +15,7 @@ from warm_caches import warm_ctgov
 
 def _make_records(lup_dates: list[str]) -> list[dict]:
     """Build minimal trial records with given last_update_posted dates."""
-    return [
-        {"nct_id": f"NCT{i:08d}", "last_update_posted": d}
-        for i, d in enumerate(lup_dates)
-    ]
+    return [{"nct_id": f"NCT{i:08d}", "last_update_posted": d} for i, d in enumerate(lup_dates)]
 
 
 class TestWarmCtgov:
@@ -135,4 +132,6 @@ class TestWarmCtgov:
         warm_ctgov(date(2026, 1, 15), data_dir, cache_dir)
 
         cached = json.loads((cache_dir / "trial_records_2026-01-15.json").read_text())
-        assert cached[0] == records[0]
+        # Original fields must be preserved (warm_ctgov may add design enrichment fields)
+        for key, value in records[0].items():
+            assert cached[0][key] == value, f"Field {key} changed: {cached[0][key]} != {value}"
