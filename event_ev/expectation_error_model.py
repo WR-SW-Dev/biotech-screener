@@ -414,10 +414,8 @@ class ExpectationErrorModel:
         return _clamp((cond_ev - priced_move_pct) / (priced_move_pct + EPS), -1.0, 1.0)
 
     def _slippage_penalty(self, market_cap_mm: Optional[float], close_price: Optional[float]) -> float:
-        """Execution friction from thin books / penny stocks."""
+        """Execution friction from thin books."""
         s = 0.0
-        if close_price is not None and close_price < 5.0:
-            s += 0.30
         if market_cap_mm is not None:
             if market_cap_mm < 100:
                 s += 0.70

@@ -135,7 +135,7 @@ class TestSlippagePenalty:
         model = ExpectationErrorModel()
         r = _row(market_cap_mm="80.0", close_price="3.50")
         result = model.score_row(r, "2026-04-10")
-        assert result.slippage_penalty_score == 1.0  # penny + micro cap
+        assert result.slippage_penalty_score == pytest.approx(0.70)  # micro cap only
 
     def test_small_cap_moderate(self):
         model = ExpectationErrorModel()
@@ -241,19 +241,19 @@ class TestCompositeScore:
         assert result.conditional_misprice_score > 0.3
 
     def test_negative_ees_high_friction(self):
-        """Micro-cap penny stock with uncertain timing → large penalties."""
+        """Micro-cap with uncertain timing → large penalties."""
         model = ExpectationErrorModel()
         r = _row(
             priced_move_pct="35.0",  # at base rate (neutral)
             short_interest_pct="5.0",
             market_cap_mm="50.0",  # micro cap
-            close_price="2.0",  # penny stock
+            close_price="2.0",
             implied_event_move="35.0",
             clinical_days_precision="UNKNOWN",
         )
         result = model.score_row(r, "2026-04-10", si_p50=5.0, si_p90=20.0)
-        # slippage = 1.0, timing = high → penalties dominate
-        assert result.slippage_penalty_score == 1.0
+        # slippage = 0.70 (micro cap), timing = high → penalties dominate
+        assert result.slippage_penalty_score == pytest.approx(0.70)
         assert result.timing_decay_risk_score > 0.5
 
 
