@@ -673,6 +673,26 @@ async def _fetch_diagnostics_async(
                 result[symbol] = empty_diagnostics("no_liquid_expiry")
                 continue
 
+            # Detect event premium in sub-7-DTE expiries that were filtered out.
+            # When a weekly drops below min_dte=7, the event premium signal
+            # disappears from the primary term structure. This flag captures it.
+            _nearby_event_premium = False
+            if front["dte"] >= 7:
+                for eiv in expiry_ivs:
+                    exp_d = eiv.get("expiration_date")
+                    iv_val = eiv.get("implied_volatility")
+                    if exp_d is None or iv_val is None:
+                        continue
+                    if isinstance(exp_d, str):
+                        try:
+                            exp_d = _date.fromisoformat(exp_d)
+                        except (ValueError, TypeError):
+                            continue
+                    nearby_dte = (exp_d - ref_date).days
+                    if 0 < nearby_dte < 7 and iv_val > front["implied_volatility"] * 1.3:
+                        _nearby_event_premium = True
+                        break
+
             atm_iv = float(m.implied_volatility_index) if m.implied_volatility_index is not None else None
             front_iv = front["implied_volatility"]
             back_iv = back["implied_volatility"] if back else None
@@ -683,6 +703,12 @@ async def _fetch_diagnostics_async(
                 quote_ts = m.implied_volatility_updated_at.isoformat()
             elif m.updated_at:
                 quote_ts = m.updated_at.isoformat()
+
+            # Event premium: prefer primary term structure, fall back to nearby detection
+            _ep_primary = classify_event_premium(term_slope)
+            _ep_final = _ep_primary
+            if _ep_primary == "NO" and _nearby_event_premium:
+                _ep_final = "NEARBY"  # event premium in sub-7-DTE expiry, not in primary structure
 
             diag: Dict[str, Any] = {
                 "opt_has_data": "1",
@@ -699,6 +725,9 @@ async def _fetch_diagnostics_async(
             }
             # Derive operator flags
             diag.update(compute_operator_flags(diag, liquidity_rating=liq))
+            # Override event premium with nearby-expiry detection
+            if _ep_final != _ep_primary:
+                diag["opt_event_premium"] = _ep_final
             result[symbol] = diag
 
         # Second pass: streaming skew for liquid subset

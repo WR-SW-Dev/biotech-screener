@@ -6,11 +6,11 @@ window that have sufficient data coverage. Produces a bounded adjustment
 to the SelectorScore, capped at ±max_adjustment_pct.
 
 Five blocks:
-  1. Options/EventPremium       (default 35%)
-  2. InstitutionalRefinement    (default 25%)
-  3. AACT/Timeline Deltas       (default 20%)
-  4. CatalystNuance             (default 10%)
-  5. Microstructure/Attention   (default 10%)
+  1. Options/EventPremium       (default  5%)
+  2. InstitutionalRefinement    (default 10%)
+  3. AACT/ClinicalQuality       (default 50%)
+  4. CatalystNuance             (default 20%)
+  5. Microstructure/Survivability(default 15%)
 
 Design constraints:
   - Deterministic: same inputs → same outputs
@@ -65,13 +65,12 @@ class RankerSignalSpec:
 class RankerConfig:
     """Immutable configuration for the ranker engine.
 
-    Default weights reflect the Analyst Rank model (Spec 050):
-      - 30% clinical quality
-      - 25% catalyst timing/quality
-      - 20% survivability/financing
-      - 15% institutional confirmation
+    Default weights reflect the clinical_50 blend (Spec 050):
+      - 50% clinical quality (AACT slot)
+      - 20% catalyst timing/quality
+      - 15% survivability + competitive (microstructure slot)
+      - 10% institutional confirmation
       - 5%  options/event-pricing overlay
-      - 5%  competitive pipeline penalty
 
     Block names (options, institutional, aact, catalyst_nuance, microstructure)
     are internal slot names. The signal specs within each slot determine what

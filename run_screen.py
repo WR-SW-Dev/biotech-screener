@@ -4868,43 +4868,50 @@ def save_validation_snapshot(
             }
 
             # --- 2-feature ranker shadow (scoring audit candidate) ---
+            # Skip if the 2feat model is identical to production (avoids
+            # wasting CPU on a comparison that always yields 30/30 overlap).
             try:
                 _2feat_model_path = Path("production_data/ranker_v2_model_2feat.json")
                 if _2feat_model_path.exists():
-                    _2feat_model = json.loads(_2feat_model_path.read_text())
-                    _2f_feats = _2feat_model["model"]["feature_names"]
-                    _2f_weights = _2feat_model["model"]["weights"]
-                    _2f_bias = _2feat_model["model"]["bias"]
+                    _2feat_raw = _2feat_model_path.read_text()
+                    _prod_raw = _rv2_model_path.read_text()
+                    if _2feat_raw == _prod_raw:
+                        logger.debug("  2feat shadow skipped: model identical to production")
+                    else:
+                        _2feat_model = json.loads(_2feat_raw)
+                        _2f_feats = _2feat_model["model"]["feature_names"]
+                        _2f_weights = _2feat_model["model"]["weights"]
+                        _2f_bias = _2feat_model["model"]["bias"]
 
-                    # Z-score within top-60 (same as production ranker)
-                    _2f_top60 = sorted(
-                        _eligible_for_selector,
-                        key=lambda r: -_safe_float(r.get("selector_score"), default=0.0),
-                    )[:60]
-                    _2f_means = {}
-                    _2f_stds = {}
-                    for _f in _2f_feats:
-                        _vals = [_safe_float(r.get(_f), default=0.0) for r in _2f_top60]
-                        _2f_means[_f] = sum(_vals) / max(len(_vals), 1)
-                        _var = sum((_v - _2f_means[_f]) ** 2 for _v in _vals) / max(len(_vals), 1)
-                        _2f_stds[_f] = _var**0.5 if _var > 0 else 1.0
+                        # Z-score within top-60 (same as production ranker)
+                        _2f_top60 = sorted(
+                            _eligible_for_selector,
+                            key=lambda r: -_safe_float(r.get("selector_score"), default=0.0),
+                        )[:60]
+                        _2f_means = {}
+                        _2f_stds = {}
+                        for _f in _2f_feats:
+                            _vals = [_safe_float(r.get(_f), default=0.0) for r in _2f_top60]
+                            _2f_means[_f] = sum(_vals) / max(len(_vals), 1)
+                            _var = sum((_v - _2f_means[_f]) ** 2 for _v in _vals) / max(len(_vals), 1)
+                            _2f_stds[_f] = _var**0.5 if _var > 0 else 1.0
 
-                    _2f_scored = []
-                    for _row in _2f_top60:
-                        _s = _2f_bias
-                        for _k, _f in enumerate(_2f_feats):
-                            _raw = _safe_float(_row.get(_f), default=0.0)
-                            _z = (_raw - _2f_means[_f]) / _2f_stds[_f]
-                            _s += _2f_weights[_k] * _z
-                        _2f_scored.append((_row.get("ticker", ""), _s))
-                    _2f_scored.sort(key=lambda x: -x[1])
-                    _2f_top30 = {t for t, _ in _2f_scored[:30]}
+                        _2f_scored = []
+                        for _row in _2f_top60:
+                            _s = _2f_bias
+                            for _k, _f in enumerate(_2f_feats):
+                                _raw = _safe_float(_row.get(_f), default=0.0)
+                                _z = (_raw - _2f_means[_f]) / _2f_stds[_f]
+                                _s += _2f_weights[_k] * _z
+                            _2f_scored.append((_row.get("ticker", ""), _s))
+                        _2f_scored.sort(key=lambda x: -x[1])
+                        _2f_top30 = {t for t, _ in _2f_scored[:30]}
 
-                    _2f_overlap = _prod_top30_set & _2f_top30
-                    _shadow_comparison["shadow_2feat_top30"] = sorted(_2f_top30)
-                    _shadow_comparison["shadow_2feat_overlap"] = len(_2f_overlap)
-                    _shadow_comparison["shadow_2feat_overlap_pct"] = round(len(_2f_overlap) / 30 * 100, 1)
-                    _shadow_comparison["shadow_2feat_swaps"] = sorted(_prod_top30_set - _2f_top30)
+                        _2f_overlap = _prod_top30_set & _2f_top30
+                        _shadow_comparison["shadow_2feat_top30"] = sorted(_2f_top30)
+                        _shadow_comparison["shadow_2feat_overlap"] = len(_2f_overlap)
+                        _shadow_comparison["shadow_2feat_overlap_pct"] = round(len(_2f_overlap) / 30 * 100, 1)
+                        _shadow_comparison["shadow_2feat_swaps"] = sorted(_prod_top30_set - _2f_top30)
             except Exception as _2f_err:
                 logger.debug("2-feature shadow failed: %s", _2f_err)
 
@@ -5191,7 +5198,22 @@ def save_validation_snapshot(
                 except Exception as exc:
                     logger.warning("market_data.json price parse failed for chain analytics: %s", exc)
 
-            _chain_analytics = warm_chain_analytics(_chain_tickers, snap_path, as_of_date, _chain_prices)
+            _cat_days_map = {}
+            for _r in csv_rows:
+                _tk = _r.get("ticker", "").upper()
+                try:
+                    _cd = int(float(_r.get("catalyst_days", 0)))
+                except (ValueError, TypeError):
+                    _cd = 0
+                if _tk and _cd > 0:
+                    _cat_days_map[_tk] = _cd
+            _chain_analytics = warm_chain_analytics(
+                _chain_tickers,
+                snap_path,
+                as_of_date,
+                _chain_prices,
+                catalyst_days_by_ticker=_cat_days_map,
+            )
 
             # Enrich csv_rows with chain analytics fields
             for row in csv_rows:
@@ -5204,8 +5226,11 @@ def save_validation_snapshot(
                     if not row.get("opt_put_call_skew") and ca.get("put_call_skew") is not None:
                         row["opt_put_call_skew"] = str(round(ca["put_call_skew"], 4))
                     # Store chain-derived fields for downstream use
-                    row["_chain_straddle_price"] = ca.get("straddle_price")
-                    row["_chain_actual_implied_move"] = ca.get("actual_implied_move")
+                    # Prefer catalyst-aligned straddle when available
+                    row["_chain_straddle_price"] = ca.get("catalyst_straddle_price") or ca.get("straddle_price")
+                    row["_chain_actual_implied_move"] = ca.get("catalyst_straddle_implied_move") or ca.get(
+                        "actual_implied_move"
+                    )
                     row["_chain_oi_concentration"] = ca.get("oi_concentration")
                     row["_chain_near_term_vol_share"] = ca.get("near_term_volume_share")
                     # IV crush metrics
@@ -6814,6 +6839,225 @@ def save_validation_snapshot(
                     f.write("\n")
         except Exception:
             pass
+
+    # --- Spec 062: Options Expression Overlay (shadow-only) ---
+    # Evaluates recommendations for all names with catalyst + EES data.
+    # Logs decisions (all names) and attribution (tradeable only).
+    # Outputs a sidecar summary. Zero production impact.
+    try:
+        from event_ev.expression_attribution import evaluate_kill_switches, load_attribution_log
+        from event_ev.expression_attribution import log_decision as _log_expr_decision
+        from event_ev.expression_attribution import log_recommendation as _log_expr_rec
+        from event_ev.expression_layer import build_recommendation as _build_expr_rec
+
+        _expr_decisions = []
+        _expr_n_tradeable = 0
+        _expr_n_rejected = 0
+        _expr_by_type: Dict[str, int] = {}
+        _expr_by_class: Dict[str, int] = {}
+        _expr_by_gate: Dict[str, int] = {}
+
+        # Load prior attribution log for kill-switch state
+        _attr_log_path = Path("data/expression_attribution_log.jsonl")
+        _dec_log_path = Path("data/expression_decision_log.jsonl")
+        _prior_attr = load_attribution_log(_attr_log_path)
+        _ks_state = evaluate_kill_switches(_prior_attr)
+
+        _ees_by_ticker: Dict[str, Any] = {}
+        if _ees_scores_for_sidecar:
+            for _ees_obj in _ees_scores_for_sidecar:
+                _ees_by_ticker[_ees_obj.ticker] = _ees_obj
+
+        for _row in csv_rows:
+            _tk = _row.get("ticker", "")
+            if not _tk:
+                continue
+
+            # Need both catalyst_days and EES to evaluate
+            _cd_raw = _row.get("catalyst_days", "")
+            try:
+                _cd = int(float(_cd_raw)) if _cd_raw else 0
+            except (ValueError, TypeError):
+                _cd = 0
+            if _cd <= 0:
+                continue
+
+            _ees_obj = _ees_by_ticker.get(_tk)
+            if _ees_obj is None:
+                continue
+
+            # Build lightweight typed proxies from CSV row fields
+            from event_ev.data_contracts import CatalystNode as _CN
+            from event_ev.data_contracts import CrowdBelief as _CB
+            from event_ev.data_contracts import ExpectationErrorScore as _EES
+            from event_ev.data_contracts import OutcomeProbabilities as _OP
+            from event_ev.data_contracts import ScenarioPayoffs as _SP
+            from event_ev.data_contracts import TimingEstimate as _TE
+
+            _node_id = f"{_tk}_{as_of_date}"
+
+            _node = _CN(
+                ticker=_tk,
+                event_family=str(_row.get("catalyst_family", "CLINICAL")).upper(),
+                event_type=str(_row.get("catalyst_event_type", "")),
+                event_subtype="",
+                expected_date=_row.get("next_catalyst_date", as_of_date),
+                date_range_start=None,
+                date_range_end=None,
+                date_precision=_row.get("catalyst_date_precision", "MONTH"),
+                date_confidence=float(_row.get("catalyst_date_confidence", 0.5) or 0.5),
+                source=str(_row.get("catalyst_source", "")),
+                source_uid=str(_row.get("nearest_catalyst_source_uid", _tk)),
+                disclosed_at=as_of_date,
+                phase=str(_row.get("phase", "unknown")),
+                indication=str(_row.get("primary_indication", "")),
+                node_id=_node_id,
+            )
+
+            # OutcomeProbabilities: use priors if available, else 50/40/10
+            _p_hit = _safe_float(_row.get("p_hit"), default=0.50)
+            _p_miss = _safe_float(_row.get("p_miss"), default=0.40)
+            _p_mixed = max(0.0, round(1.0 - _p_hit - _p_miss, 4))
+            _out_conf = _safe_float(_row.get("outcome_confidence"), default=0.50)
+            try:
+                _outcome = _OP(
+                    node_id=_node_id,
+                    as_of_date=as_of_date,
+                    p_hit=_p_hit,
+                    p_miss=_p_miss,
+                    p_mixed=_p_mixed,
+                    confidence=_out_conf,
+                    prior_source="csv_proxy",
+                )
+            except ValueError:
+                continue  # p_hit + p_miss + p_mixed != 1.0
+
+            _pm_pct = _safe_float(_row.get("priced_move_pct"))
+            _misprice = _safe_float(_row.get("mispricing_score"), default=0.0)
+
+            _crowd = _CB(
+                node_id=_node_id,
+                as_of_date=as_of_date,
+                implied_p_hit=max(0.0, min(1.0, _p_hit - _misprice)),
+                belief_direction="NEUTRAL",
+                belief_intensity=0.5,
+                priced_move_pct=_pm_pct,
+                mispricing_score=_misprice,
+            )
+
+            _sev = _safe_float(_row.get("scenario_ev"), default=0.0)
+            _up = _safe_float(_row.get("upside_hit"), default=20.0)
+            _down = _safe_float(_row.get("downside_miss"), default=-20.0)
+            _asym = abs(_up / _down) if _down != 0 else 1.0
+
+            _payoff = _SP(
+                node_id=_node_id,
+                as_of_date=as_of_date,
+                upside_hit=_up,
+                downside_miss=_down,
+                move_mixed=_safe_float(_row.get("move_mixed"), default=0.0),
+                scenario_ev=_sev,
+                asymmetry_ratio=round(_asym, 4),
+                downside_adjusted_ev=_safe_float(_row.get("downside_adjusted_ev"), default=_sev),
+                kelly_fraction=_safe_float(_row.get("kelly_fraction"), default=0.0),
+                analog_count=int(_safe_float(_row.get("analog_count"), default=10)),
+                analog_confidence=str(_row.get("analog_confidence", "low") or "low"),
+            )
+
+            _timing = _TE(
+                node_id=_node_id,
+                as_of_date=as_of_date,
+                prob_on_time=_safe_float(_row.get("prob_on_time"), default=0.60),
+                prob_slip=_safe_float(_row.get("prob_slip"), default=0.20),
+                prob_early=_safe_float(_row.get("prob_early"), default=0.10),
+                expected_delay_days=_safe_float(_row.get("expected_delay_days"), default=0.0),
+                median_arrival_days=float(_cd),
+                hazard_rate=0.03,
+            )
+
+            _rec = _build_expr_rec(
+                node=_node,
+                outcome=_outcome,
+                crowd=_crowd,
+                payoff=_payoff,
+                ees=_ees_obj,
+                timing=_timing,
+                as_of_date=as_of_date,
+                opt_liquidity_state=str(_row.get("opt_liquidity_state", "")),
+                opt_atm_iv=_safe_float(_row.get("opt_atm_iv")),
+                opt_front_iv=_safe_float(_row.get("opt_front_iv")),
+                opt_back_iv=_safe_float(_row.get("opt_back_iv")),
+                opt_rr_25d=_safe_float(_row.get("opt_rr_25d")),
+                bid_ask_spread_pct=_safe_float(_row.get("bid_ask_spread_pct")),
+                priced_move_pct=_pm_pct,
+                quote_fresh=True,
+            )
+
+            # Log decision (ALL names)
+            _ks_active = not _ks_state.get("overlay_enabled", True)
+            _ks_reason = "; ".join(_ks_state.get("triggered_rules", [])) if _ks_active else None
+            _log_expr_decision(
+                _rec,
+                log_path=_dec_log_path,
+                timestamp=as_of_date + "T00:00:00",
+                kill_switch_active=_ks_active,
+                kill_switch_reason=_ks_reason,
+            )
+            _expr_decisions.append(_rec)
+
+            # Log attribution (tradeable only)
+            if _rec.is_tradeable and not _ks_active:
+                _log_expr_rec(_rec, log_path=_attr_log_path, timestamp=as_of_date + "T00:00:00")
+                _expr_n_tradeable += 1
+            else:
+                _expr_n_rejected += 1
+
+            # Tally counts
+            _expr_by_type[_rec.mispricing_type] = _expr_by_type.get(_rec.mispricing_type, 0) + 1
+            _expr_by_class[_rec.overlay_class] = _expr_by_class.get(_rec.overlay_class, 0) + 1
+            for _gf in _rec.gate_failures:
+                _expr_by_gate[_gf] = _expr_by_gate.get(_gf, 0) + 1
+
+        # Write sidecar summary
+        _expr_summary = {
+            "schema": "expression_overlay_summary.v1",
+            "as_of_date": as_of_date,
+            "n_evaluated": len(_expr_decisions),
+            "n_tradeable": _expr_n_tradeable,
+            "n_rejected": _expr_n_rejected,
+            "counts_by_mispricing_type": dict(sorted(_expr_by_type.items())),
+            "counts_by_overlay_class": dict(sorted(_expr_by_class.items())),
+            "counts_rejected_by_gate": dict(sorted(_expr_by_gate.items(), key=lambda x: -x[1])),
+            "kill_switch_state": {
+                "overlay_enabled": _ks_state.get("overlay_enabled", True),
+                "sizing_enabled": _ks_state.get("sizing_enabled", True),
+                "disabled_types": _ks_state.get("disabled_types", []),
+                "triggered_rules": _ks_state.get("triggered_rules", []),
+                "evaluation_status": _ks_state.get("evaluation_status", "not_evaluated"),
+            },
+            "attribution_log_path": str(_attr_log_path),
+            "decision_log_path": str(_dec_log_path),
+        }
+        with open(snap_path / "expression_overlay_summary.json", "w", encoding="utf-8") as f:
+            json.dump(_expr_summary, f, indent=2, default=str)
+            f.write("\n")
+
+        # Tradeable recommendations sidecar (for operator review)
+        _tradeable_recs = [r.to_dict() for r in _expr_decisions if r.is_tradeable]
+        if _tradeable_recs:
+            with open(snap_path / "expression_recommendations.json", "w", encoding="utf-8") as f:
+                json.dump(_tradeable_recs, f, indent=2, default=str)
+                f.write("\n")
+
+        logger.info(
+            "[EXPR] Expression overlay: %d evaluated, %d tradeable, %d rejected, " "kill_switch=%s",
+            len(_expr_decisions),
+            _expr_n_tradeable,
+            _expr_n_rejected,
+            "OFF" if _ks_state.get("overlay_enabled", True) else "ON",
+        )
+    except Exception as _expr_exc:
+        logger.debug("Expression overlay skipped: %s", _expr_exc)
 
     logger.info(f"[SNAPSHOT] Saved validation snapshot: {snap_path} " f"({len(ranked)} tickers, v{version})")
     return snap_path
