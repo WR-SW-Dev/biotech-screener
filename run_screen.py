@@ -5901,6 +5901,76 @@ def save_validation_snapshot(
                     _t_ret,
                     "YES" if _e_ret is not None and _t_ret is not None and _e_ret > _t_ret else "NO/INSUFF",
                 )
+            # Execution stress report (daily monitoring)
+            try:
+                from event_ev.portfolio_sizing import build_execution_stress_report, compute_weights
+
+                _b6_map = {}
+                _trap_map = {}
+                for _row in csv_rows:
+                    _t = _row.get("ticker", "")
+                    _sel = _row.get("selector_score")
+                    if _t and _sel is not None:
+                        try:
+                            _b6_map[_t] = float(_sel)
+                        except (ValueError, TypeError):
+                            pass
+                    _trap_val = _row.get("trap_overlay_score")
+                    if _t and _trap_val is not None:
+                        try:
+                            _trap_map[_t] = float(_trap_val)
+                        except (ValueError, TypeError):
+                            pass
+
+                # Dollar volumes: avg_volume × price from market_data
+                _dv_map = {}
+                if market_data_by_ticker:
+                    for _t, _md in market_data_by_ticker.items():
+                        _avg_vol = _md.get("avg_volume") or _md.get("avg_volume_90d")
+                        _px = _md.get("price")
+                        if _avg_vol and _px:
+                            try:
+                                _dv_map[_t] = float(_avg_vol) * float(_px)
+                            except (ValueError, TypeError):
+                                pass
+
+                # Build top-30 portfolio weights for stress check
+                _elig_tickers = [
+                    _row.get("ticker", "")
+                    for _row in csv_rows
+                    if _row.get("ees_eligible") is True or str(_row.get("ees_eligible", "")).lower().strip() == "true"
+                ]
+                _ranked = sorted(
+                    [_t for _t in _elig_tickers if _t in _b6_map],
+                    key=lambda _t: _b6_map[_t],
+                    reverse=True,
+                )[:30]
+
+                if len(_ranked) >= 10 and _b6_map and _trap_map:
+                    _weights = compute_weights(_ranked, _b6_map, _trap_map, alpha=1.5)
+                    _positions = [
+                        {"ticker": _t, "weight": _weights.get(_t, 0)} for _t in _ranked if _weights.get(_t, 0) > 0
+                    ]
+
+                    # Run stress report at $5M base + 1.5x stress
+                    for _sf, _sf_label in [(1.0, "base"), (1.5, "stress")]:
+                        _stress = build_execution_stress_report(_positions, _dv_map, 5_000_000, stress_factor=_sf)
+                        _stress_path = snap_path / f"execution_stress_{_sf_label}.json"
+                        with open(_stress_path, "w", encoding="utf-8") as f:
+                            json.dump(_stress, f, indent=2)
+
+                    _base_stress = build_execution_stress_report(_positions, _dv_map, 5_000_000)
+                    _tc = _base_stress.get("tail_concentration", {})
+                    logger.info(
+                        "[EES] Execution stress: %d positions, top3_participation=%.1f%%, " ">5%%ADV=%d, >20%%ADV=%d",
+                        _base_stress.get("n_positions", 0),
+                        _tc.get("top3_participation_weight_pct", 0),
+                        _tc.get("n_above_5pct_adv", 0),
+                        _tc.get("n_above_20pct_adv", 0),
+                    )
+            except Exception as _stress_exc:
+                logger.warning("Execution stress report failed: %s", _stress_exc, exc_info=True)
+
     except Exception as _ees_exc:
         logger.debug("Expectation Error Model overlay skipped: %s", _ees_exc)
 
