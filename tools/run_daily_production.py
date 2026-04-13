@@ -3981,6 +3981,7 @@ def run_daily(
                 warm_sources,
             ],
             label="warm_caches",
+            timeout=1800,  # CTIS enrichment can exceed default 1200s on catch-up runs
         )
         if _warm_proc.returncode == 0:
             _logger.info("Cache warm OK")

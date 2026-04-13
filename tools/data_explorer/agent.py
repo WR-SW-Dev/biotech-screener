@@ -2,26 +2,21 @@
 """Data Explorer Agent — CLI for analysis and reporting.
 
 Usage:
-    # Snapshot summary
-    python -m tools.data_explorer.agent --summary data/snapshots/2026-04-13/rankings.csv
+    python -m tools.data_explorer summary data/snapshots/2026-04-13
+    python -m tools.data_explorer compare data/snapshots/2026-04-12 data/snapshots/2026-04-13
+    python -m tools.data_explorer qa data/snapshots/2026-04-13
+    python -m tools.data_explorer catalog data/snapshots/2026-04-13
+    python -m tools.data_explorer field coinvest_score_z data/snapshots/2026-04-13
+    python -m tools.data_explorer field --field coinvest_score_z --path data/snapshots/2026-04-13
+    python -m tools.data_explorer top-n data/snapshots/2026-04-13 -n 30
+    python -m tools.data_explorer daily data/snapshots/2026-04-13
+    python -m tools.data_explorer shell
 
-    # Compare two snapshots
-    python -m tools.data_explorer.agent --compare data/snapshots/2026-04-12 data/snapshots/2026-04-13
-
-    # QA check
-    python -m tools.data_explorer.agent --qa data/snapshots/2026-04-13/rankings.csv
-
-    # Catalog available artifacts
-    python -m tools.data_explorer.agent --catalog data/snapshots/2026-04-13
-
-    # Score distribution for a specific field
-    python -m tools.data_explorer.agent --field selector_score data/snapshots/2026-04-13/rankings.csv
-
-    # Top-N names
-    python -m tools.data_explorer.agent --top-n 30 data/snapshots/2026-04-13/rankings.csv
-
-    # Full daily report (summary + charts)
-    python -m tools.data_explorer.agent --report daily data/snapshots/2026-04-13
+All commands accept:
+    --format text|json    Output format (default: text)
+    --output PATH         Write output to file instead of stdout
+    --strict-exit         Propagate QA exit codes (0/1/2) instead of
+                          treating warnings as success
 
 Read-only. Does not modify production data.
 """
@@ -34,15 +29,15 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-import pandas as pd
-
-from tools.data_explorer.catalog import catalog_summary
-from tools.data_explorer.comparator import compare_snapshots
-from tools.data_explorer.explorer import gate_counts, missingness, qa_checks, score_distributions, summarize, top_n
-from tools.data_explorer.loader import load_file
-from tools.data_explorer.reporter import comparison_report, qa_report, snapshot_report
+from tools.data_explorer.formatters import format_response
+from tools.data_explorer.service import run_catalog, run_compare, run_daily, run_field, run_qa, run_summary, run_top_n
 
 logger = logging.getLogger("data_explorer")
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
 
 
 def _output_dir(label: str = "") -> Path:
@@ -53,293 +48,178 @@ def _output_dir(label: str = "") -> Path:
     return out
 
 
-def _load_rankings(path_str: str) -> pd.DataFrame:
-    """Load rankings.csv — accepts file path or snapshot directory."""
-    path = Path(path_str)
-    if path.is_dir():
-        rankings_path = path / "rankings.csv"
-        if rankings_path.exists():
-            return load_file(rankings_path)
-        raise FileNotFoundError(f"No rankings.csv in {path}")
-    return load_file(path)
-
-
-def cmd_summary(args: argparse.Namespace) -> None:
-    """Print and save a snapshot summary."""
-    df = _load_rankings(args.path)
-    s = summarize(df)
-    m = missingness(df)
-    g = gate_counts(df)
-    t = top_n(df, n=10)
-    qa = qa_checks(df)
-
-    # Print to stdout
-    print(f"\n=== Snapshot Summary: {s.get('snapshot_date', 'unknown')} ===")
-    print(f"Rows: {s['n_rows']}  Columns: {s['n_columns']}")
-    print(f"Source: {s['source_path']}")
-    print()
-
-    stats = s.get("score_stats", {})
-    if stats:
-        print("Key Scores:")
-        for col, st in stats.items():
-            print(f"  {col:30s}  N={st['count']:4d}  mean={st['mean']:8.4f}  median={st['median']:8.4f}")
-    print()
-
-    if not t.empty:
-        print("Top 10:")
-        print(t.to_string(index=False))
-    print()
-
-    for gate, counts in g.items():
-        parts = [f"{k}={v}" for k, v in counts.items()]
-        print(f"  {gate}: {', '.join(parts)}")
-    print()
-
-    if qa["n_issues"] > 0:
-        print(f"QA Issues: {qa['n_issues']}")
-        for issue in qa["issues"][:10]:
-            print(f"  [{issue['severity']}] {issue['check']}: {issue['detail']}")
+def _emit(text: str, output_path: str | None) -> None:
+    """Print to stdout or write to file."""
+    if output_path:
+        Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(output_path).write_text(text + "\n")
     else:
-        print("QA: all checks passed")
+        print(text)
 
-    # Generate charts and report
-    out_dir = _output_dir("summary")
-    chart_paths = []
-    try:
-        from tools.data_explorer.viz import plot_gate_bars, plot_score_distributions
 
-        cp = plot_score_distributions(df, out_path=out_dir / "score_distributions.png")
-        if cp:
-            chart_paths.append(cp)
-        gp = plot_gate_bars(g, out_path=out_dir / "gate_bars.png")
-        if gp:
-            chart_paths.append(gp)
-    except ImportError:
-        logger.debug("matplotlib not available, skipping charts")
+def _qa_process_exit(resp: dict, strict: bool) -> int:
+    """Derive process exit code from a QA exit_code.
 
-    report_md = snapshot_report(s, m, g, t, qa, chart_paths)
-    report_path = out_dir / "snapshot_summary.md"
-    report_path.write_text(report_md)
-    print(f"\nReport saved: {report_path}")
+    Default: 0 for clean or warnings, 2 for errors.
+    Strict:  0/1/2 propagated directly.
+    """
+    qa_code = resp.get("data", {}).get("exit_code", 0)
+    if strict:
+        return qa_code
+    return 2 if qa_code >= 2 else 0
+
+
+def _daily_process_exit(resp: dict, strict: bool) -> int:
+    """Derive process exit code from daily's embedded QA exit_code."""
+    qa_code = resp.get("data", {}).get("qa", {}).get("exit_code", 0)
+    if strict:
+        return qa_code
+    return 2 if qa_code >= 2 else 0
+
+
+def _wants_artifacts(args: argparse.Namespace) -> bool:
+    """True when we should generate report/chart artifacts."""
+    return args.format == "text" and not args.output
+
+
+def _print_artifact_info(resp: dict) -> None:
+    """Print paths of generated artifacts to stderr."""
+    data = resp.get("data", {})
+    if "report_path" in data:
+        print(f"\nReport saved: {data['report_path']}")
+    if "manifest_path" in data:
+        print(f"Manifest saved: {data['manifest_path']}")
+    chart_paths = data.get("chart_paths", [])
     if chart_paths:
-        print(f"Charts: {', '.join(str(p) for p in chart_paths)}")
+        print(f"Charts: {len(chart_paths)}")
 
 
-def cmd_compare(args: argparse.Namespace) -> None:
-    """Compare two snapshots."""
-    df_a = _load_rankings(args.path_a)
-    df_b = _load_rankings(args.path_b)
-
-    comp = compare_snapshots(df_a, df_b, n=args.n)
-    overlap = comp["overlap"]
-
-    print("\n=== Snapshot Comparison ===")
-    print(f"A: {comp['date_a']} ({comp['n_rows_a']} rows)")
-    print(f"B: {comp['date_b']} ({comp['n_rows_b']} rows)")
-    print()
-    print(f"Top-{args.n} overlap: {overlap['overlap_count']} ({overlap['overlap_pct']}%)")
-    if overlap["added"]:
-        print(f"  Added:   {', '.join(overlap['added'])}")
-    if overlap["removed"]:
-        print(f"  Removed: {', '.join(overlap['removed'])}")
-    print()
-
-    drift = comp.get("top_drift", [])
-    if drift:
-        print("Largest score drifts:")
-        for d in drift[:10]:
-            top_delta = max(d["deltas"].items(), key=lambda x: abs(x[1]["delta"]))
-            col, vals = top_delta
-            print(f"  {d['ticker']:8s}  {col}: {vals['before']:.4f} → {vals['after']:.4f} (Δ {vals['delta']:+.4f})")
-    print()
-
-    schema = comp.get("schema", {})
-    if schema.get("only_in_a"):
-        print(f"Columns only in A: {', '.join(schema['only_in_a'][:10])}")
-    if schema.get("only_in_b"):
-        print(f"Columns only in B: {', '.join(schema['only_in_b'][:10])}")
-
-    # Save report
-    out_dir = _output_dir("compare")
-    report_md = comparison_report(comp)
-    report_path = out_dir / "comparison_report.md"
-    report_path.write_text(report_md)
-    print(f"\nReport saved: {report_path}")
-
-    try:
-        from tools.data_explorer.viz import plot_overlap_chart, plot_rank_comparison
-
-        plot_overlap_chart(overlap, out_path=out_dir / "overlap_chart.png")
-        plot_rank_comparison(df_a, df_b, n=args.n, out_path=out_dir / "rank_comparison.png")
-        print(f"Charts saved in: {out_dir}")
-    except ImportError:
-        pass
+# ---------------------------------------------------------------------------
+# Command handlers (thin — delegate to service, format, emit)
+# ---------------------------------------------------------------------------
 
 
-def cmd_qa(args: argparse.Namespace) -> None:
-    """Run QA checks on a dataset."""
-    df = _load_rankings(args.path)
-    qa = qa_checks(df)
-
-    print("\n=== QA Report ===")
-    print(f"Rows: {qa['n_rows']}  Columns: {qa['n_columns']}")
-    print(f"Issues: {qa['n_issues']}")
-    print()
-
-    for issue in qa["issues"]:
-        print(f"  [{issue['severity'].upper():7s}] {issue['check']}: {issue['detail']}")
-
-    if qa["n_issues"] == 0:
-        print("  All checks passed.")
-
-    out_dir = _output_dir("qa")
-    report_md = qa_report(qa)
-    report_path = out_dir / "qa_report.md"
-    report_path.write_text(report_md)
-    print(f"\nReport saved: {report_path}")
+def cmd_summary(args: argparse.Namespace) -> int:
+    out_dir = _output_dir("summary") if _wants_artifacts(args) else None
+    resp = run_summary(args.path, verbose=args.verbose, out_dir=out_dir)
+    _emit(format_response(resp, args.format), args.output)
+    if out_dir:
+        _print_artifact_info(resp)
+    return 0
 
 
-def cmd_catalog(args: argparse.Namespace) -> None:
-    """List available artifacts in a snapshot directory."""
-    cat = catalog_summary(args.path)
-
-    print(f"\n=== Artifact Catalog: {cat['snapshot_date']} ===")
-    print(f"Directory: {cat['snapshot_dir']}")
-    print(f"Total artifacts: {cat['n_artifacts']}")
-    print()
-
-    for category, files in cat["by_category"].items():
-        print(f"  {category.upper()}:")
-        for f in files:
-            info = cat["artifacts"][f]
-            size_kb = info["size_bytes"] / 1024
-            desc = info["description"]
-            print(f"    {f:45s} {size_kb:8.1f} KB  {desc}")
-    print()
+def cmd_compare(args: argparse.Namespace) -> int:
+    out_dir = _output_dir("compare") if _wants_artifacts(args) else None
+    resp = run_compare(args.path_a, args.path_b, n=args.n, verbose=args.verbose, out_dir=out_dir)
+    _emit(format_response(resp, args.format), args.output)
+    if out_dir:
+        _print_artifact_info(resp)
+    return 0
 
 
-def cmd_field(args: argparse.Namespace) -> None:
-    """Show detailed stats for a specific field."""
-    df = _load_rankings(args.path)
-    field = args.field
+def cmd_qa(args: argparse.Namespace) -> int:
+    out_dir = _output_dir("qa") if _wants_artifacts(args) else None
+    resp = run_qa(args.path, verbose=args.verbose, out_dir=out_dir)
+    _emit(format_response(resp, args.format), args.output)
+    if out_dir:
+        _print_artifact_info(resp)
+    return _qa_process_exit(resp, args.strict_exit)
 
-    if field not in df.columns:
-        print(f"Error: column '{field}' not found. Available: {', '.join(sorted(df.columns)[:20])}...")
+
+def cmd_catalog(args: argparse.Namespace) -> int:
+    resp = run_catalog(args.path)
+    _emit(format_response(resp, args.format), args.output)
+    return 0
+
+
+def cmd_field(args: argparse.Namespace) -> int:
+    field, path = _resolve_field_args(args)
+    resp = run_field(path, field)
+    _emit(format_response(resp, args.format), args.output)
+    return 0 if resp["ok"] else 1
+
+
+def cmd_top_n(args: argparse.Namespace) -> int:
+    resp = run_top_n(args.path, n=args.n)
+    _emit(format_response(resp, args.format), args.output)
+    return 0
+
+
+def cmd_daily(args: argparse.Namespace) -> int:
+    out_dir = _output_dir("daily") if _wants_artifacts(args) else None
+    resp = run_daily(args.path, verbose=args.verbose, out_dir=out_dir)
+    _emit(format_response(resp, args.format), args.output)
+    if out_dir:
+        _print_artifact_info(resp)
+    return _daily_process_exit(resp, args.strict_exit)
+
+
+# ---------------------------------------------------------------------------
+# Field argument resolution — accept both positional orders and named flags
+# ---------------------------------------------------------------------------
+
+
+def _resolve_field_args(args: argparse.Namespace) -> tuple:
+    """Resolve field name and path from flexible argument parsing.
+
+    Accepts:
+        field <field_name> <path>        (original order)
+        field <path> <field_name>         (swapped — auto-detected)
+        field --field <name> --path <p>   (named flags)
+    """
+    field_name = getattr(args, "field_name", None)
+    path = getattr(args, "path_pos", None)
+
+    # Named flags take precedence
+    if args.field_flag and args.path_flag:
+        return args.field_flag, args.path_flag
+
+    # Positional: check if user swapped the order (path first, field second)
+    if field_name and path:
+        if Path(field_name).exists() and not Path(path).exists():
+            return path, field_name
+        return field_name, path
+
+    # Partial: only one positional given
+    if field_name and not path:
+        if Path(field_name).exists():
+            print("Error: missing field name. Usage: field <column_name> <path>")
+            print("  or: field --field <column_name> --path <path>")
+            sys.exit(1)
+        print(f"Error: missing path. Usage: field {field_name} <path>")
         sys.exit(1)
 
-    dist = score_distributions(df, columns=[field])
-    if field in dist:
-        print(f"\n=== {field} ===")
-        for k, v in dist[field].items():
-            print(f"  {k:12s}: {v}")
-    else:
-        print(f"\n{field}: no numeric data")
-
-    # Value counts for non-numeric
-    vals = df[field].value_counts().head(20)
-    if len(vals) <= 20:
-        print("\nValue counts (top 20):")
-        for v, c in vals.items():
-            print(f"  {str(v):40s}  {c}")
+    print("Error: field requires a column name and path.")
+    print("  Usage: field <column_name> <path>")
+    print("  or:    field --field <column_name> --path <path>")
+    sys.exit(1)
 
 
-def cmd_top_n(args: argparse.Namespace) -> None:
-    """Show top-N ranked names."""
-    df = _load_rankings(args.path)
-    t = top_n(df, n=args.n)
-    if t.empty:
-        print("No ranked data found.")
-    else:
-        print(f"\n=== Top {args.n} ===\n")
-        print(t.to_string(index=False))
+# ---------------------------------------------------------------------------
+# Argparse setup
+# ---------------------------------------------------------------------------
 
 
-def cmd_report_daily(args: argparse.Namespace) -> None:
-    """Generate a full daily report with charts."""
-    snap_dir = Path(args.path)
-    if not snap_dir.is_dir():
-        print(f"Error: {snap_dir} is not a directory")
-        sys.exit(1)
-
-    # Load rankings
-    df = _load_rankings(str(snap_dir))
-    s = summarize(df)
-    m = missingness(df)
-    g = gate_counts(df)
-    t = top_n(df, n=30)
-    qa = qa_checks(df)
-
-    # Generate everything
-    out_dir = _output_dir("daily")
-    chart_paths = []
-
-    try:
-        from tools.data_explorer.viz import plot_gate_bars, plot_score_distributions
-
-        cp = plot_score_distributions(
-            df,
-            out_path=out_dir / "score_distributions.png",
-            title_prefix=f"{s.get('snapshot_date', '')} ",
-        )
-        if cp:
-            chart_paths.append(cp)
-        gp = plot_gate_bars(g, out_path=out_dir / "gate_bars.png")
-        if gp:
-            chart_paths.append(gp)
-    except ImportError:
-        pass
-
-    # Comparison with prior snapshot if available
-    snapshots_dir = snap_dir.parent
-    from tools.data_explorer.catalog import list_snapshot_dates
-
-    dates = list_snapshot_dates(snapshots_dir)
-    current_date = snap_dir.name[:10]
-    prior_dates = [d for d in dates if d < current_date]
-
-    comp_section = ""
-    if prior_dates:
-        prior_dir = snapshots_dir / prior_dates[0]
-        prior_path = prior_dir / "rankings.csv"
-        if prior_path.exists():
-            df_prior = load_file(prior_path)
-            comp = compare_snapshots(df_prior, df, n=30)
-            comp_section = comparison_report(comp)
-
-            try:
-                from tools.data_explorer.viz import plot_overlap_chart, plot_rank_comparison
-
-                op = plot_overlap_chart(comp["overlap"], out_path=out_dir / "overlap_chart.png")
-                if op:
-                    chart_paths.append(op)
-                rp = plot_rank_comparison(df_prior, df, n=30, out_path=out_dir / "rank_comparison.png")
-                if rp:
-                    chart_paths.append(rp)
-            except ImportError:
-                pass
-
-    # Write report
-    report = snapshot_report(s, m, g, t, qa, chart_paths)
-    if comp_section:
-        report += "\n---\n\n" + comp_section
-
-    # Catalog
-    cat = catalog_summary(snap_dir)
-    report += "\n---\n\n## Artifact Catalog\n\n"
-    for category, files in cat["by_category"].items():
-        report += f"### {category.upper()}\n"
-        for f in files:
-            info = cat["artifacts"][f]
-            report += f"- `{f}` ({info['size_bytes'] / 1024:.1f} KB) — {info['description']}\n"
-        report += "\n"
-
-    report_path = out_dir / "daily_report.md"
-    report_path.write_text(report)
-
-    print(f"Daily report saved: {report_path}")
-    print(f"Charts: {len(chart_paths)}")
-    print(f"Output directory: {out_dir}")
+def _add_common_args(parser: argparse.ArgumentParser) -> None:
+    """Add --format, --output, --strict-exit to a subparser."""
+    parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    parser.add_argument(
+        "--output",
+        metavar="PATH",
+        default=None,
+        help="Write output to file instead of stdout",
+    )
+    parser.add_argument(
+        "--strict-exit",
+        action="store_true",
+        default=False,
+        help="Propagate QA exit codes: 0=clean, 1=warnings, 2=errors",
+    )
 
 
 def main() -> int:
@@ -354,34 +234,56 @@ def main() -> int:
     # Summary
     p_summary = sub.add_parser("summary", help="Snapshot summary")
     p_summary.add_argument("path", help="Path to rankings.csv or snapshot directory")
+    _add_common_args(p_summary)
 
     # Compare
     p_compare = sub.add_parser("compare", help="Compare two snapshots")
     p_compare.add_argument("path_a", help="Path A (earlier)")
     p_compare.add_argument("path_b", help="Path B (later)")
     p_compare.add_argument("-n", type=int, default=30, help="Top-N for overlap (default: 30)")
+    _add_common_args(p_compare)
 
     # QA
     p_qa = sub.add_parser("qa", help="Run QA checks")
     p_qa.add_argument("path", help="Path to rankings.csv or snapshot directory")
+    _add_common_args(p_qa)
 
     # Catalog
     p_catalog = sub.add_parser("catalog", help="List available artifacts")
     p_catalog.add_argument("path", help="Path to snapshot directory")
+    _add_common_args(p_catalog)
 
-    # Field
-    p_field = sub.add_parser("field", help="Show stats for a specific field")
-    p_field.add_argument("field", help="Column name")
-    p_field.add_argument("path", help="Path to rankings.csv or snapshot directory")
+    # Field — supports both positional and named-flag forms
+    p_field = sub.add_parser(
+        "field",
+        help="Show stats for a specific field",
+        description=(
+            "Show stats for a specific field.\n\n"
+            "Usage:\n"
+            "  field coinvest_score_z data/snapshots/2026-04-13\n"
+            "  field --field coinvest_score_z --path data/snapshots/2026-04-13\n"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    p_field.add_argument("field_name", nargs="?", default=None, help="Column name (positional)")
+    p_field.add_argument("path_pos", nargs="?", default=None, help="Path (positional)")
+    p_field.add_argument("--field", dest="field_flag", default=None, help="Column name (named)")
+    p_field.add_argument("--path", dest="path_flag", default=None, help="Path (named)")
+    _add_common_args(p_field)
 
     # Top-N
     p_topn = sub.add_parser("top-n", help="Show top-N ranked names")
     p_topn.add_argument("path", help="Path to rankings.csv or snapshot directory")
     p_topn.add_argument("-n", type=int, default=30, help="Number of names (default: 30)")
+    _add_common_args(p_topn)
 
     # Daily report
     p_daily = sub.add_parser("daily", help="Generate full daily report")
     p_daily.add_argument("path", help="Path to snapshot directory")
+    _add_common_args(p_daily)
+
+    # TUI shell
+    sub.add_parser("shell", help="Launch interactive TUI shell")
 
     args = parser.parse_args()
 
@@ -394,6 +296,11 @@ def main() -> int:
         parser.print_help()
         return 1
 
+    if args.command == "shell":
+        from tools.data_explorer.tui_app import run_shell
+
+        return run_shell()
+
     commands = {
         "summary": cmd_summary,
         "compare": cmd_compare,
@@ -401,13 +308,12 @@ def main() -> int:
         "catalog": cmd_catalog,
         "field": cmd_field,
         "top-n": cmd_top_n,
-        "daily": cmd_report_daily,
+        "daily": cmd_daily,
     }
 
     fn = commands.get(args.command)
     if fn:
-        fn(args)
-        return 0
+        return fn(args)
 
     parser.print_help()
     return 1

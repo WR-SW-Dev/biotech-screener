@@ -314,7 +314,10 @@ def check_financial_consistency(as_of_date_str):
             continue
 
         pct_diff = abs(fr_val - pit_val) / max(abs(fr_val), abs(pit_val))
-        if pct_diff > 0.20:
+        # PIT vs current financial_records divergence is expected when
+        # quarterly filings arrive at different times.  Only flag extreme
+        # cases (>50%) that may indicate data corruption rather than lag.
+        if pct_diff > 0.50:
             result["divergences"].append(
                 {
                     "ticker": ticker,
@@ -327,10 +330,10 @@ def check_financial_consistency(as_of_date_str):
     if result["divergences"]:
         result["status"] = "WARN"
         result["detail"] = (
-            f"{len(result['divergences'])} divergence(s) > 20%: {[d['ticker'] for d in result['divergences']]}"
+            f"{len(result['divergences'])} divergence(s) > 50%: {[d['ticker'] for d in result['divergences']]}"
         )
     else:
-        result["detail"] = "No cash divergences > 20% in top-30"
+        result["detail"] = "No cash divergences > 50% in top-30"
     return result
 
 

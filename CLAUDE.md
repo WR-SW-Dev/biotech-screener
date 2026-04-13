@@ -344,6 +344,22 @@ ticker:
 - Do not change DEM scoring or ranking logic
 - This is a post-screen execution recommendation only
 
+## Options Expression Layer (Spec 062, 2026-04-13)
+- **Status**: Shadow-only, merged to main. Zero alpha impact.
+- **Module**: `event_ev/expression_layer.py` — classification → mapping → gates → sizing
+- **Attribution**: `event_ev/expression_attribution.py` — JSONL logging, CRT resolution, kill switches
+- **Wiring**: `run_screen.py` emits `expression_overlay_summary.json` + `expression_recommendations.json` per snapshot
+- **Tests**: 123 (83 expression + 40 attribution)
+- **Policy**: overlay-only. Does NOT enter selector/ranker/construction. Expression layer must NEVER be imported by `selector_engine.py`, `ranker_engine.py`, or `decision_engine.py`.
+- **Review horizon**: 30 days from first emission. No threshold tuning before then.
+
+## Data Explorer Agent (2026-04-13)
+- **CLI**: `python -m tools.data_explorer {summary,compare,qa,catalog,field,top-n,daily}`
+- **Package**: `tools/data_explorer/` (loader, catalog, explorer, comparator, reporter, viz)
+- **Tests**: 33
+- **Policy**: Read-only analysis. Canonical reporting source — console agent summaries are non-authoritative unless backed by dataset evidence.
+- **Output**: `reports/data_explorer/` (timestamped directories with markdown + PNG charts)
+
 ## Key File Locations
 | Area | File |
 |------|------|
@@ -368,3 +384,7 @@ ticker:
 | Event Ledger | `event_ledger.py` |
 | Cron Wrapper | `tools/cron_daily_production.sh` |
 | Ops Agent Workspace | `agents/ops/` |
+| Expression Layer | `event_ev/expression_layer.py` |
+| Expression Attribution | `event_ev/expression_attribution.py` |
+| Data Explorer | `tools/data_explorer/agent.py` |
+| Spec 062 | `specs/changes/spec_062_options_expression_layer.md` |

@@ -580,6 +580,14 @@ def download_aact_snapshot(download_dir: Path, snapshot_date: str | None = None)
 def extract_aact_zip(zip_path: Path, extract_dir: Path) -> list[str]:
     """Extract AACT ZIP to directory, return list of extracted table names."""
     extract_dir.mkdir(parents=True, exist_ok=True)
+    # Validate zip before extracting — corrupt downloads should be re-fetched
+    try:
+        test_zf = zipfile.ZipFile(zip_path, "r")
+        test_zf.close()
+    except zipfile.BadZipFile:
+        log.error("Corrupt ZIP: %s — removing and re-downloading", zip_path)
+        zip_path.unlink(missing_ok=True)
+        raise
     extracted = []
     with zipfile.ZipFile(zip_path, "r") as zf:
         for name in zf.namelist():

@@ -111,13 +111,6 @@
     "first_seen_date": "2026-03-23",
     "estimated_event_date": "2026-06-30"
   },
-  "REPL": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 8,
-    "first_seen_date": "2026-04-02",
-    "estimated_event_date": "2026-04-10"
-  },
   "NGNE": {
     "catalyst_event_type": "DATA_READOUT",
     "catalyst_source": "SEC_8K_FILING",

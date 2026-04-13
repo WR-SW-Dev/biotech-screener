@@ -144,7 +144,7 @@
     {
       "ticker": "RVMD",
       "company": "Revolution Medicines, Inc.",
-      "company_ir_url": "",
+      "company_ir_url": "https://ir.revmed.com/press-releases/",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RVMD"
@@ -3264,7 +3264,7 @@
     {
       "ticker": "VKTX",
       "company": "Viking Therapeutics, Inc.",
-      "company_ir_url": "",
+      "company_ir_url": "https://ir.vikingtherapeutics.com/press-releases",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VKTX"

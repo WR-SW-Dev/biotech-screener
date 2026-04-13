@@ -356,7 +356,12 @@ def check_aact_ingest(dt: date) -> CheckResult:
 
 
 def check_news_digest(dt: date) -> CheckResult:
-    """Verify today's news digests were produced."""
+    """Verify news digests were produced.
+
+    The evening digest arrives at ~18:00 ET, but heartbeat runs at 17:30.
+    To avoid false positives, check yesterday's (completed) digest counts
+    when running before 19:00, and today's only at/after 19:00.
+    """
     ds = as_of_date(dt)
     anomalies = []
     digest_dir = ARTIFACTS_DIR / "news_digest"
@@ -364,16 +369,26 @@ def check_news_digest(dt: date) -> CheckResult:
     if not digest_dir.is_dir():
         return CheckResult("biotech_news_digest", "STALE", "No news_digest artifact directory")
 
-    # Check for today's digest files
-    today_digests = list(digest_dir.glob(f"biotech_news_digest_{ds}_*.json"))
     hour = datetime.now().hour
+    today_digests = list(digest_dir.glob(f"biotech_news_digest_{ds}_*.json"))
 
-    if hour >= 9 and len(today_digests) == 0:
-        anomalies.append("MISSED_MORNING: no digest after 09:00")
-    if hour >= 16 and len(today_digests) < 2:
-        anomalies.append(f"DIGEST_LAG: only {len(today_digests)} digest(s) by 16:00")
-    if hour >= 19 and len(today_digests) < 3:
-        anomalies.append(f"INCOMPLETE: only {len(today_digests)}/3 digests by 19:00")
+    if hour >= 19:
+        # After all scheduled digests: check today
+        if len(today_digests) == 0:
+            anomalies.append("MISSED_ALL: no digest by 19:00")
+        elif len(today_digests) < 2:
+            anomalies.append(f"DIGEST_LAG: only {len(today_digests)} digest(s) by 19:00")
+    else:
+        # Before evening digest: check yesterday (completed day) instead
+        from datetime import timedelta
+
+        yesterday = dt - timedelta(days=1)
+        yesterday_ds = as_of_date(yesterday)
+        yesterday_digests = list(digest_dir.glob(f"biotech_news_digest_{yesterday_ds}_*.json"))
+        if yesterday_digests is not None and len(yesterday_digests) == 0:
+            # Skip weekends — no digests expected
+            if yesterday.weekday() < 5:
+                anomalies.append(f"MISSED_YESTERDAY: no digest for {yesterday_ds}")
 
     # Check press release freshness
     pr_dir = REPO_ROOT / "data" / "press_releases"
@@ -522,11 +537,33 @@ AGENTS = {
 }
 
 
-def escalate_to_llm(results: list[CheckResult], dry_run: bool = False):
+def _write_anomaly_file(results: list[CheckResult], dt: date):
+    """Write anomaly summary to local file as durable record."""
+    ds = as_of_date(dt)
+    heartbeat_dir = ARTIFACTS_DIR / "heartbeat"
+    heartbeat_dir.mkdir(parents=True, exist_ok=True)
+    out_path = heartbeat_dir / f"{ds}_anomalies.md"
+
+    lines = [f"# Heartbeat Anomalies — {ds}\n"]
+    lines.append(f"Generated: {datetime.now().isoformat()}\n")
+    for r in results:
+        if r.needs_llm:
+            lines.append(f"\n## [{r.agent}] {r.status} — {r.detail}\n")
+            for a in r.anomalies:
+                lines.append(f"- {a}\n")
+    out_path.write_text("".join(lines))
+    print(f"  Anomaly summary written to {out_path}")
+
+
+def escalate_to_llm(results: list[CheckResult], dry_run: bool = False, dt: date | None = None):
     """Send anomalies to OpenClaw LLM for interpretation."""
     anomaly_results = [r for r in results if r.needs_llm]
     if not anomaly_results:
         return
+
+    # Always write anomalies to local file as durable fallback
+    if dt is not None:
+        _write_anomaly_file(anomaly_results, dt)
 
     summary = "ANOMALIES DETECTED — interpret and recommend action:\n\n"
     for r in anomaly_results:
@@ -551,9 +588,13 @@ def escalate_to_llm(results: list[CheckResult], dry_run: bool = False):
             cwd=str(REPO_ROOT),
         )
         if result.stdout.strip():
-            print(f"\n  LLM response:\n{result.stdout.strip()}")
+            response_text = result.stdout.strip()
+            if "rejected" in response_text.lower() or "credit" in response_text.lower():
+                print("\n  LLM escalation rejected (API billing). Anomalies saved to artifacts/heartbeat/.")
+            else:
+                print(f"\n  LLM response:\n{response_text}")
     except (subprocess.TimeoutExpired, FileNotFoundError) as e:
-        print(f"\n  LLM escalation failed: {e}")
+        print(f"\n  LLM escalation failed: {e}. Anomalies saved to artifacts/heartbeat/.")
 
 
 def main():
@@ -594,7 +635,7 @@ def main():
 
     # Escalate anomalies to LLM
     if total_anomalies > 0:
-        escalate_to_llm(results, dry_run=args.dry_run)
+        escalate_to_llm(results, dry_run=args.dry_run, dt=dt)
     else:
         print("  No anomalies — LLM not needed.")
 

@@ -1,8 +1,8 @@
 {
-  "as_of_date": "2026-04-03",
-  "n_watchlist": 26,
-  "n_resolved_today": 0,
-  "n_existing": 28,
+  "as_of_date": "2026-04-13",
+  "n_watchlist": 28,
+  "n_resolved_today": 21,
+  "n_existing": 75,
   "watchlist": [
     {
       "ticker": "IONS",
@@ -20,9 +20,24 @@
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "SRRK",
-      "catalyst_date": "2026-03-31",
+      "ticker": "TVTX",
+      "catalyst_date": "2026-04-13",
       "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "IDYA",
+      "catalyst_date": "2026-04-13",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
+      "ticker": "REPL",
+      "catalyst_date": "2026-04-13",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
+      "ticker": "PRAX",
+      "catalyst_date": "2026-04-06",
+      "catalyst_type": "CORPORATE_UPDATE"
     },
     {
       "ticker": "PEPG",
@@ -72,11 +87,6 @@
     {
       "ticker": "CGEM",
       "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "ZVRA",
-      "catalyst_date": "2026-03-13",
       "catalyst_type": "PDUFA_ACTION"
     },
     {

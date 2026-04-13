@@ -1,8 +1,8 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.5.0 (ruleset `dd1e608c`, v1.13.0)
-**Last updated:** 2026-04-04
-**Status:** Production — A4 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30
+**Version:** 1.6.0 (ruleset `2a3e79eb`, v1.13.0)
+**Last updated:** 2026-04-13
+**Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30
 
 ---
 
@@ -19,7 +19,7 @@ favorable risk/reward ahead of binary outcomes.
 Universe (M1) → Financial Health (M2) → Catalyst Events (M3) → Clinical Dev (M4)
 → Composite Scoring (M5) → Decision Engine (L0→L2→L4→L4b→L3)
 → Selector Engine (B6: coinvest 65% + inst_delta 35%)
-→ Ranker Engine (pairwise_minimal: 6 features, ordinal-only, top-60 cohort)
+→ Ranker Engine (pairwise_minimal: 2 features, ordinal-only, top-60 cohort)
 → Sort by final_score → EW Top-30 → Portfolio Construction
 → Shadow Portfolio → Performance Attribution → Governance Gates
 ```
@@ -42,20 +42,22 @@ all dimensions. Neither component survives as a standalone incremental signal
 (coinvest FM NW-t = −0.18, inst_delta NW-t = +1.73), but the bundle's diversification
 benefit is real and statistically significant.
 
-**Stage 2 — Ranker (pairwise_minimal, ordinal-only):** A 6-feature Bradley-Terry pairwise
-model ranks within the selected top-60 cohort. The ranker is **ordinal-only** — raw scores
+**Stage 2 — Ranker (pairwise_minimal, ordinal-only):** A 2-feature Bradley-Terry pairwise
+model ranks within the selected top-60 cohort. Promoted 2026-04-05 after feature audit
+confirmed the prior 5-feature model added noise. The ranker is **ordinal-only** — raw scores
 are not calibrated (ECE = 0.129, verdict: POOR). Do not rank-weight or confidence-size.
 
-Within-cohort feature behavior (FM within top-30, 2026-04-04 audit):
-- `inst_delta_z` (+3.32): dominant positive discriminator within cohort
-- `financial_score` (−3.41): TRUE PENALTY — financially secure biotech names have less
+Production model (`production_data/ranker_v2_model.json`):
+- `coinvest_score_z` (weight +0.061): selects high-coinvest names within cohort
+- `financial_score` (weight −0.053): penalizes financially safe names — those with less
   catalytic upside. Negative weight is correct and informative. Persists across all
-  cohort widths, both bull and bear regimes.
-- `clinical_score_v2_z` (−2.38): COLLIDER + WEAK PENALTY — amplifies under B6 selection,
-  vanishes in high-coinvest stratum (NW-t = −0.13). Quarterly review; drop if it drifts.
-- `coinvest_score_z` (+0.49): washes out within cohort — its job is done at selector stage.
-- `catalyst_decay_w` (+0.77): noise within cohort.
-- `binary_quality_score` (+1.31): noise within cohort.
+  cohort widths, both bull and bear regimes. Note: `financial_score` in CSV is Module 5
+  rank-normalized (stage×size cohort), not raw Module 2 output.
+
+Dead features (confirmed noise, removed 2026-04-05):
+- `inst_delta_z`, `catalyst_decay_w`, `binary_quality_score`, `clinical_score_v2_z`
+  all added noise to the pairwise model despite individual FM significance.
+  Walk-forward: 2-feature spread +2.95%, IC +0.143 (t=2.98) — beats 5-feature on all metrics.
 
 **Construction:** Equal-weight Top-30. Rank-weighting is not justified (RW-EW = -0.09pp,
 t=-0.95). Pairwise calibration confirms: ordinal ranking only, no sizing from scores.
@@ -173,16 +175,12 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 | **inst_delta_z** | Selector (B6) | 35% | Standalone 2/5 gates (FM NW-t=+1.73 FAIL, LOSO unstable in core bucket). Essential as complement. |
 | **B6 bundle** | Selector | 65/35 blend | Bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. **Bundle validated.** |
 
-**Ranker (pairwise_minimal) — 6 features, ordinal-only (ECE=0.129):**
+**Ranker (pairwise_minimal) — 2 features, ordinal-only (ECE=0.129):**
 
-| Signal | Role | Weight | Within-Top-30 FM (NW-t) | Interpretation |
-|--------|------|--------|------------------------|----------------|
-| **inst_delta_z** | Ranker (positive) | +0.0096 | **+2.20** | Dominant positive discriminator within cohort |
-| **coinvest_score_z** | Ranker (positive) | +0.0523 | +1.86 | Washes out within cohort (job done at selector stage) |
-| **financial_score** | Ranker (negative) | −0.0314 | **−3.18** | TRUE PENALTY — safe names have less catalytic upside |
-| **clinical_score_v2_z** | Ranker (negative) | −0.0153 | **−2.13** | COLLIDER + weak penalty — quarterly review |
-| **catalyst_decay_w** | Ranker (negative) | −0.0114 | +0.77 | Noise within cohort |
-| **binary_quality_score** | Ranker (positive) | +0.0110 | +1.31 | Noise within cohort |
+| Signal | Role | Weight | Walk-Forward | Interpretation |
+|--------|------|--------|-------------|----------------|
+| **coinvest_score_z** | Ranker (positive) | +0.061 | Spread +2.95%, IC +0.143 (t=2.98) | Selects high-coinvest names within top-60 |
+| **financial_score** | Ranker (negative) | −0.053 | Same walk-forward | TRUE PENALTY — safe names have less catalytic upside |
 
 **Overlay signals (not in selector/ranker weights):**
 
@@ -277,8 +275,9 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
    │                    CONSUMPTION LAYER                                  │
    │                                                                      │
    │  Portfolio Construction    Benchmarking        Dashboard (React)     │
-   │  Shadow Portfolio          CRT Calibration     Agent Fleet (18)      │
+   │  Shadow Portfolio          CRT Calibration     Agent Fleet (22)      │
    │  Bioshort Hedge Report     Signal Research     Email Alerts          │
+   │  Expression Overlay (062)  Data Explorer       Ops Digest            │
    └──────────────────────────────────────────────────────────────────────┘
 ```
 
