@@ -178,15 +178,10 @@
     },
     {
       "cik": "0001633313",
-      "name": "Consonance Capital Management",
+      "name": "Avoro Capital Advisors",
       "aum_b": 2.0,
-      "style": "physician_led_biotech"
-    },
-    {
-      "cik": "0001029160",
-      "name": "Artal Group (Invus)",
-      "aum_b": 5.0,
-      "style": "long_term_biotech"
+      "style": "biotech_specialist",
+      "notes": "CIK 0001633313 is Avoro Capital (formerly venBio Select Advisor). Was labeled Consonance Capital Management — different firm (Consonance CIK 0001544773, stopped filing Q3 2022). Avoro has 34 active biotech holdings, correct entity for this slot."
     },
     {
       "cik": "0001577524",
