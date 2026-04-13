@@ -5664,6 +5664,26 @@ def run_daily(
                     for _line in _backfill_proc.stderr.strip().splitlines()[-5:]:
                         _logger.info(f"  {_line}")
 
+        # --- Step 7: TrapOps daily monitor (non-blocking) ---
+        try:
+            from tools.trapops_monitor import print_report, run_trapops
+
+            _trapops = run_trapops(as_of_date, final_snapshots_dir)
+            if "error" not in _trapops:
+                _trapops_state = _trapops.get("health", {}).get("state", "?")
+                _trapops_n = _trapops.get("health", {}).get("n_eligible", 0)
+                _logger.info(
+                    "[TrapOps] %s — %d eligible, %d alerts",
+                    _trapops_state,
+                    _trapops_n,
+                    len(_trapops.get("health", {}).get("alerts", [])),
+                )
+                print_report(_trapops)
+            else:
+                _logger.warning("[TrapOps] Error: %s", _trapops.get("error"))
+        except Exception as _trapops_err:
+            _logger.warning(f"TrapOps monitor failed: {_trapops_err}")
+
     return manifest
 
 
