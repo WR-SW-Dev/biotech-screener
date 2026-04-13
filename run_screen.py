@@ -4307,6 +4307,89 @@ def save_validation_snapshot(
             f";decay_w={_decay_w_str}"
         )
 
+    # --- Catalyst calendar v2: persist canonical date fields ---
+    # Derive next_catalyst_date from catalyst_days + as_of_date (canonical, computed once)
+    from datetime import timedelta as _td
+
+    for row in csv_rows:
+        _cd_raw = row.get("catalyst_days", "")
+        try:
+            _cd_int = int(float(_cd_raw)) if _cd_raw else 0
+        except (ValueError, TypeError):
+            _cd_int = 0
+
+        # Canonical date
+        if _cd_int > 0:
+            _next_date = (datetime.strptime(as_of_date, "%Y-%m-%d") + _td(days=_cd_int)).strftime("%Y-%m-%d")
+            row["next_catalyst_date"] = _next_date
+        else:
+            row["next_catalyst_date"] = ""
+
+        # Date precision (prefer clinical_days_precision, fall back to heuristic)
+        _prec = row.get("clinical_days_precision", "").strip()
+        row["catalyst_date_precision"] = _prec if _prec else ("DAY" if row.get("is_hard_catalyst") == "1" else "")
+
+        # Date bounds
+        if _cd_int > 0 and row["next_catalyst_date"]:
+            _base = datetime.strptime(row["next_catalyst_date"], "%Y-%m-%d")
+            if _prec == "DAY":
+                row["catalyst_date_lower"] = row["next_catalyst_date"]
+                row["catalyst_date_upper"] = row["next_catalyst_date"]
+            elif _prec == "MONTH":
+                row["catalyst_date_lower"] = (_base - _td(days=15)).strftime("%Y-%m-%d")
+                row["catalyst_date_upper"] = (_base + _td(days=15)).strftime("%Y-%m-%d")
+            elif _prec in ("QUARTER", "HALF_YEAR"):
+                row["catalyst_date_lower"] = (_base - _td(days=45)).strftime("%Y-%m-%d")
+                row["catalyst_date_upper"] = (_base + _td(days=45)).strftime("%Y-%m-%d")
+            else:
+                row["catalyst_date_lower"] = ""
+                row["catalyst_date_upper"] = ""
+        else:
+            row["catalyst_date_lower"] = ""
+            row["catalyst_date_upper"] = ""
+
+        # Source filed_at (from catalyst_source provenance)
+        row["catalyst_source_filed_at"] = ""  # populated by Module 3 when available
+
+        # Calendar confidence score [0, 1]
+        _conf = 0.0
+        _has_signal = bool(_cd_int > 0 or row.get("catalyst_event_type", "").strip())
+
+        if _has_signal:
+            # Precision component (0.0 - 0.40)
+            _prec_map = {"DAY": 0.40, "WEEK": 0.30, "MONTH": 0.20, "QUARTER": 0.10}
+            _conf += _prec_map.get(row.get("catalyst_date_precision", ""), 0.10)
+
+            # Source component (0.0 - 0.30)
+            _src = row.get("catalyst_source", "").strip()
+            _src_map = {"SEC_8K_FILING": 0.30, "CTGOV_CALENDAR": 0.25, "CTGOV_PCD_FAR": 0.15}
+            _conf += _src_map.get(_src, 0.05)
+
+            # Hard catalyst bonus (0.0 - 0.20)
+            if row.get("is_hard_catalyst") == "1":
+                _conf += 0.20
+
+            # Consistency bonus (catalyst_days ≈ de_catalyst_days)
+            _de_cd = 0
+            try:
+                _de_cd = int(float(row.get("de_catalyst_days", "") or 0))
+            except (ValueError, TypeError):
+                pass
+            if _cd_int > 0 and _de_cd > 0 and abs(_cd_int - _de_cd) <= 7:
+                _conf += 0.10
+
+        row["calendar_confidence"] = str(round(min(1.0, _conf), 4)) if _has_signal else ""
+        row["has_catalyst_signal"] = "1" if _has_signal else "0"
+        row["has_tradeable_calendar"] = "1" if _conf >= 0.50 and 0 < _cd_int <= 120 else "0"
+
+    _n_tradeable_cal = sum(1 for r in csv_rows if r.get("has_tradeable_calendar") == "1")
+    logger.info(
+        "Catalyst calendar v2: %d/%d with signal, %d tradeable calendars",
+        sum(1 for r in csv_rows if r.get("has_catalyst_signal") == "1"),
+        len(csv_rows),
+        _n_tradeable_cal,
+    )
+
     # --- Compute clinical_score_z_tier (needs tier_dev + tier_commercial from DE) ---
     # Drug developers: z within tier_dev groups
     _tier_groups = _defaultdict(list)  # tier_dev -> [(index, score)]

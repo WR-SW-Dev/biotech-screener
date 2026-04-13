@@ -303,3 +303,112 @@ def qa_checks(df: pd.DataFrame) -> Dict[str, Any]:
         "n_rows": len(df),
         "n_columns": len(df.columns),
     }
+
+
+def calendar_qa(df: pd.DataFrame) -> Dict[str, Any]:
+    """Catalyst calendar QA panel.
+
+    Returns coverage, precision distribution, confidence stats,
+    consistency checks, and flagged names.
+    """
+    n = len(df)
+    if n == 0:
+        return {"n_rows": 0}
+
+    # Coverage
+    has_signal = (
+        df["has_catalyst_signal"].astype(str).str.strip() == "1"
+        if "has_catalyst_signal" in df.columns
+        else pd.Series([False] * n)
+    )
+    has_tradeable = (
+        df["has_tradeable_calendar"].astype(str).str.strip() == "1"
+        if "has_tradeable_calendar" in df.columns
+        else pd.Series([False] * n)
+    )
+    has_date = (
+        df["next_catalyst_date"].astype(str).str.strip() != ""
+        if "next_catalyst_date" in df.columns
+        else pd.Series([False] * n)
+    )
+    has_days = _to_numeric(df.get("catalyst_days", pd.Series())).fillna(0) > 0
+
+    coverage = {
+        "has_catalyst_signal": int(has_signal.sum()),
+        "has_tradeable_calendar": int(has_tradeable.sum()),
+        "has_next_catalyst_date": int(has_date.sum()),
+        "has_catalyst_days": int(has_days.sum()),
+    }
+
+    # Precision distribution
+    precision = {}
+    if "catalyst_date_precision" in df.columns:
+        prec = df["catalyst_date_precision"].astype(str).str.strip()
+        for val in ["DAY", "WEEK", "MONTH", "QUARTER", ""]:
+            label = val if val else "(empty)"
+            precision[label] = int((prec == val).sum())
+
+    # Confidence distribution
+    confidence = {}
+    if "calendar_confidence" in df.columns:
+        conf = _to_numeric(df["calendar_confidence"]).dropna()
+        if len(conf) > 0:
+            confidence = {
+                "count": len(conf),
+                "mean": round(conf.mean(), 3),
+                "median": round(conf.median(), 3),
+                "min": round(conf.min(), 3),
+                "max": round(conf.max(), 3),
+                "above_0.5": int((conf >= 0.5).sum()),
+                "above_0.7": int((conf >= 0.7).sum()),
+            }
+
+    # Source distribution
+    source = {}
+    if "catalyst_source" in df.columns:
+        src = df["catalyst_source"].astype(str).str.strip()
+        for val, cnt in src.value_counts().items():
+            if val:
+                source[val] = int(cnt)
+
+    # Consistency: catalyst_days vs de_catalyst_days
+    consistency_issues = []
+    if "catalyst_days" in df.columns and "de_catalyst_days" in df.columns:
+        cd = _to_numeric(df["catalyst_days"]).fillna(0)
+        de = _to_numeric(df["de_catalyst_days"]).fillna(0)
+        both = (cd > 0) & (de > 0)
+        if both.any():
+            delta = (cd - de).abs()
+            disagree = both & (delta > 7)
+            n_disagree = int(disagree.sum())
+            if n_disagree > 0:
+                flagged = df[disagree][["ticker", "catalyst_days", "de_catalyst_days"]].head(10)
+                for _, row in flagged.iterrows():
+                    consistency_issues.append(
+                        {
+                            "ticker": row["ticker"],
+                            "catalyst_days": str(row["catalyst_days"]),
+                            "de_catalyst_days": str(row["de_catalyst_days"]),
+                        }
+                    )
+
+    # Stale calendar (>365 days out)
+    stale = []
+    if "catalyst_days" in df.columns:
+        cd = _to_numeric(df["catalyst_days"]).fillna(0)
+        far = cd > 365
+        if far.any():
+            for _, row in df[far][["ticker", "catalyst_days"]].iterrows():
+                stale.append({"ticker": row["ticker"], "catalyst_days": str(row["catalyst_days"])})
+
+    return {
+        "n_rows": n,
+        "coverage": coverage,
+        "precision": precision,
+        "confidence": confidence,
+        "source": source,
+        "consistency_issues": consistency_issues,
+        "n_consistency_issues": len(consistency_issues),
+        "stale_catalysts": stale[:10],
+        "n_stale": len(stale),
+    }
