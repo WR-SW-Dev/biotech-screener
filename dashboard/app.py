@@ -1469,6 +1469,31 @@ async def api_expression_decisions(date: str):
     }
 
 
+@app.get("/api/expression_overlay/forward_panel")
+async def api_expression_forward_panel():
+    """Forward evaluation panel — realized performance of tradeable recommendations."""
+    panel_path = REPO_ROOT / "output" / "expression_forward_panel" / "forward_panel.json"
+    data = _load_json(panel_path)
+    if not data:
+        return {"status": "not_computed", "message": "Run expression_forward_panel.py first"}
+    return data
+
+
+@app.get("/api/expression_overlay/calibration/{date}")
+async def api_expression_calibration(date: str):
+    """Calibration diagnostics from expression overlay summary."""
+    snap_dir = REPO_ROOT / "data" / "snapshots" / date
+    summary = _load_json(snap_dir / "expression_overlay_summary.json")
+    if not summary:
+        return {"error": f"No overlay data for {date}"}
+    return {
+        "as_of_date": date,
+        "calibration": summary.get("calibration", {}),
+        "counts_by_mispricing_type": summary.get("counts_by_mispricing_type", {}),
+        "counts_by_overlay_class": summary.get("counts_by_overlay_class", {}),
+    }
+
+
 @app.get("/expression", response_class=HTMLResponse)
 async def expression_dashboard(request: Request):
     """Expression overlay dashboard page."""

@@ -6988,8 +6988,10 @@ def save_validation_snapshot(
             # mispricing_score: prefer dedicated field, fall back to
             # conditional_misprice_score from EES (both measure model-vs-market gap)
             _misprice = _safe_float(_row.get("mispricing_score"))
+            _misprice_source = "true"
             if _misprice is None or _misprice == 0.0:
                 _misprice = _safe_float(_row.get("conditional_misprice_score"), default=0.0)
+                _misprice_source = "proxy_cond_misprice"
 
             _crowd = _CB(
                 node_id=_node_id,
@@ -7005,17 +7007,21 @@ def save_validation_snapshot(
             # When payoff engine is not in the production pipeline, derive from
             # priced_move_pct * mispricing direction (gives a rough EV proxy).
             _sev = _safe_float(_row.get("scenario_ev"))
+            _ev_source = "true"
             if _sev is None or _sev == 0.0:
                 _up_est = _safe_float(_row.get("upside_hit"))
                 _dn_est = _safe_float(_row.get("downside_miss"))
                 if _up_est is not None and _dn_est is not None:
                     _sev = round(_p_hit * _up_est + _p_miss * _dn_est + _p_mixed * 0.0, 4)
+                    _ev_source = "proxy_payoff"
                 elif _pm_pct is not None and _pm_pct > 0 and _misprice != 0:
                     # Crude proxy: priced_move_pct * mispricing_direction * scaling
                     # If model says P(HIT) > market (misprice > 0), EV is positive
                     _sev = round(_pm_pct * 100.0 * _misprice * 0.5, 4)
+                    _ev_source = "proxy_pm"
                 else:
                     _sev = round(_p_hit * 20.0 + _p_miss * (-20.0), 4)
+                    _ev_source = "fallback"
             _up = _safe_float(_row.get("upside_hit"), default=20.0)
             _down = _safe_float(_row.get("downside_miss"), default=-20.0)
             _asym = abs(_up / _down) if _down != 0 else 1.0
@@ -7063,6 +7069,10 @@ def save_validation_snapshot(
                 quote_fresh=True,
             )
 
+            # Inject EV source provenance (dict inside frozen dataclass is mutable)
+            _rec.inputs_used["ev_source"] = _ev_source
+            _rec.inputs_used["misprice_source"] = _misprice_source
+
             # Log decision (ALL names)
             _ks_active = not _ks_state.get("overlay_enabled", True)
             _ks_reason = "; ".join(_ks_state.get("triggered_rules", [])) if _ks_active else None
@@ -7088,6 +7098,48 @@ def save_validation_snapshot(
             for _gf in _rec.gate_failures:
                 _expr_by_gate[_gf] = _expr_by_gate.get(_gf, 0) + 1
 
+        # Calibration diagnostics — EV source distribution + score distributions
+        _ev_sources: Dict[str, int] = {}
+        _misprice_sources: Dict[str, int] = {}
+        _ev_vals: List[float] = []
+        _misprice_vals: List[float] = []
+        _belief_vals: List[float] = []
+        _permission_vals: List[float] = []
+        for _r in _expr_decisions:
+            _evs = _r.inputs_used.get("ev_source", "unknown")
+            _ev_sources[_evs] = _ev_sources.get(_evs, 0) + 1
+            _ms = _r.inputs_used.get("misprice_source", "unknown")
+            _misprice_sources[_ms] = _misprice_sources.get(_ms, 0) + 1
+            _ev_vals.append(_r.scenario_ev)
+            _misprice_vals.append(abs(_r.inputs_used.get("mispricing_score", 0) or 0))
+            _belief_vals.append(_r.belief_strength)
+            _permission_vals.append(_r.permission_to_express)
+
+        def _dist_summary(vals):
+            if not vals:
+                return {}
+            s = sorted(vals)
+            n = len(s)
+            return {
+                "n": n,
+                "min": round(s[0], 4),
+                "p25": round(s[n // 4], 4),
+                "median": round(s[n // 2], 4),
+                "p75": round(s[3 * n // 4], 4),
+                "max": round(s[-1], 4),
+                "mean": round(sum(s) / n, 4),
+                "pct_above_threshold": round(sum(1 for v in s if v >= 3.0) / n * 100, 1),
+            }
+
+        _calibration = {
+            "ev_source_distribution": dict(sorted(_ev_sources.items())),
+            "misprice_source_distribution": dict(sorted(_misprice_sources.items())),
+            "scenario_ev_distribution": _dist_summary(_ev_vals),
+            "abs_mispricing_score_distribution": _dist_summary(_misprice_vals),
+            "belief_strength_distribution": _dist_summary(_belief_vals),
+            "permission_to_express_distribution": _dist_summary(_permission_vals),
+        }
+
         # Write sidecar summary
         _expr_summary = {
             "schema": "expression_overlay_summary.v1",
@@ -7098,6 +7150,7 @@ def save_validation_snapshot(
             "counts_by_mispricing_type": dict(sorted(_expr_by_type.items())),
             "counts_by_overlay_class": dict(sorted(_expr_by_class.items())),
             "counts_rejected_by_gate": dict(sorted(_expr_by_gate.items(), key=lambda x: -x[1])),
+            "calibration": _calibration,
             "kill_switch_state": {
                 "overlay_enabled": _ks_state.get("overlay_enabled", True),
                 "sizing_enabled": _ks_state.get("sizing_enabled", True),
