@@ -292,8 +292,15 @@ def apply_execution_guardrails(
         dv = dollar_volumes.get(ticker, 0)
 
         if dv <= 0:
-            # No volume data — keep but flag
-            adjusted.append({**pos, "participation": None, "guardrail": "no_volume_data"})
+            # Unknown liquidity = worst-case: skip the trade
+            skipped.append(
+                {
+                    "ticker": ticker,
+                    "weight": weight,
+                    "participation": None,
+                    "reason": "no_volume_data",
+                }
+            )
             continue
 
         participation = trade_dollars / dv
@@ -354,4 +361,107 @@ def apply_execution_guardrails(
         "skipped": skipped,
         "scaled": scaled,
         "positions": adjusted,
+    }
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# Execution stress report
+# ═════════════════════════════════════════════════════════════════════════
+
+
+def build_execution_stress_report(
+    positions: List[Dict[str, Any]],
+    dollar_volumes: Dict[str, float],
+    capital: float,
+    forward_returns: Optional[Dict[str, float]] = None,
+    stress_factor: float = 1.0,
+) -> Dict[str, Any]:
+    """Build execution stress report for a portfolio.
+
+    Identifies the worst trades by participation, measures their
+    PnL contribution, and estimates guardrail impact.
+
+    Args:
+        positions: from construct_portfolio()["positions"]
+        dollar_volumes: {ticker: 20d avg dollar volume}
+        capital: deployed capital
+        forward_returns: {ticker: realized return} (optional, for PnL attribution)
+        stress_factor: multiply participation by this (1.5-2.0 for stress scenarios)
+
+    Returns:
+        Dict with top stress trades, tail concentration, guardrail impact.
+    """
+    trades = []
+    for pos in positions:
+        ticker = pos["ticker"]
+        weight = pos["weight"]
+        trade_dollars = capital * weight
+        dv = dollar_volumes.get(ticker, 0)
+        participation = (trade_dollars / dv * stress_factor) if dv > 0 else None
+
+        ret = forward_returns.get(ticker) if forward_returns else None
+        pnl_contribution = weight * ret if ret is not None else None
+
+        trades.append(
+            {
+                "ticker": ticker,
+                "weight": round(weight, 4),
+                "trade_dollars": round(trade_dollars, 0),
+                "dollar_volume": round(dv, 0) if dv else None,
+                "participation": round(participation, 4) if participation is not None else None,
+                "forward_return": round(ret, 4) if ret is not None else None,
+                "pnl_contribution": round(pnl_contribution, 6) if pnl_contribution is not None else None,
+            }
+        )
+
+    # Sort by participation (worst first)
+    with_participation = [t for t in trades if t["participation"] is not None]
+    with_participation.sort(key=lambda t: t["participation"], reverse=True)
+
+    # Tail concentration: capital in top 3 highest-participation trades
+    top3_weight = sum(t["weight"] for t in with_participation[:3])
+
+    # Trades above thresholds
+    n_above_5 = sum(1 for t in with_participation if t["participation"] > 0.05)
+    n_above_10 = sum(1 for t in with_participation if t["participation"] > 0.10)
+    n_above_20 = sum(1 for t in with_participation if t["participation"] > 0.20)
+
+    # PnL attribution (if returns available)
+    pnl_before_guardrails = None
+    pnl_after_guardrails = None
+    if forward_returns:
+        pnl_before = sum(t["pnl_contribution"] for t in trades if t["pnl_contribution"] is not None)
+        pnl_before_guardrails = round(pnl_before * 100, 4)
+
+        # Simulate guardrails: skip >20%, scale >5%
+        pnl_after = 0.0
+        total_adj_w = 0.0
+        for t in trades:
+            p = t["participation"]
+            ret = t["forward_return"]
+            w = t["weight"]
+            if p is None or p > 0.20:
+                continue  # skipped
+            if p > 0.05:
+                w = w * (0.05 / p)  # scaled
+            total_adj_w += w
+            if ret is not None:
+                pnl_after += w * ret
+
+        if total_adj_w > 0:
+            pnl_after = pnl_after / total_adj_w  # re-normalized
+            pnl_after_guardrails = round(pnl_after * 100, 4)
+
+    return {
+        "stress_factor": stress_factor,
+        "n_positions": len(trades),
+        "top_10_stress": with_participation[:10],
+        "tail_concentration": {
+            "top3_participation_weight_pct": round(top3_weight * 100, 1),
+            "n_above_5pct_adv": n_above_5,
+            "n_above_10pct_adv": n_above_10,
+            "n_above_20pct_adv": n_above_20,
+        },
+        "pnl_before_guardrails_pct": pnl_before_guardrails,
+        "pnl_after_guardrails_pct": pnl_after_guardrails,
     }
