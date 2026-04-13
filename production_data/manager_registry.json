@@ -212,6 +212,20 @@
       "name": "Broadfin Capital (Kotler)",
       "aum_b": 1.5,
       "style": "healthcare_event_driven"
+    },
+    {
+      "cik": "0001727492",
+      "name": "Caligan Partners",
+      "aum_b": 0.5,
+      "style": "biotech_activist",
+      "notes": "Added 2026-04-13. Activist biotech, 24 holdings, 79% biotech concentration. +92% in 2025."
+    },
+    {
+      "cik": "0001674712",
+      "name": "Vivo Capital",
+      "aum_b": 4.0,
+      "style": "healthcare_crossover",
+      "notes": "Added 2026-04-13. Healthcare crossover, 47 holdings, 77% biotech concentration."
     }
   ],
   "conditional": [

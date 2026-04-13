@@ -1,12 +1,12 @@
 {
   "schema_version": "institutional_summary.v1",
   "version": "1.0.0",
-  "created_at": "2026-04-13T20:02:35Z",
+  "created_at": "2026-04-13T20:09:02Z",
   "as_of_date": "2026-04-13",
   "cache_as_of_date": "2026-04-13",
   "cache_schema_version": "sec_13f_pit_index.v1",
-  "elite_managers_total": 35,
-  "elite_managers_with_filing": 35,
+  "elite_managers_total": 37,
+  "elite_managers_with_filing": 37,
   "tickers_with_signal": 279,
   "tickers_in_universe": 342,
   "signal_coverage_pct": 81.58,
@@ -18,7 +18,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ABCL": {
       "elite_holders_count": 1,
@@ -31,26 +31,28 @@
       "elite_total_shares": 27525640,
       "elite_total_value_usd_thousands": 94137689,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ABEO": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Deerfield Management",
         "Palo Alto Investors",
         "Suvretta Capital",
-        "Tang Capital"
+        "Tang Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Deerfield Management": 40000,
         "Palo Alto Investors": 108865,
         "Suvretta Capital": 2676000,
-        "Tang Capital": 1000000
+        "Tang Capital": 1000000,
+        "Vivo Capital": 1842751
       },
-      "elite_total_shares": 3824865,
-      "elite_total_value_usd_thousands": 20157039,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 5667616,
+      "elite_total_value_usd_thousands": 29868337,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "ABOS": {
       "elite_holders_count": 1,
@@ -63,7 +65,7 @@
       "elite_total_shares": 14932063,
       "elite_total_value_usd_thousands": 31506653,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ABSI": {
       "elite_holders_count": 3,
@@ -80,7 +82,7 @@
       "elite_total_shares": 11361379,
       "elite_total_value_usd_thousands": 39651212,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "ABUS": {
       "elite_holders_count": 0,
@@ -89,36 +91,39 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ABVX": {
-      "elite_holders_count": 9,
+      "elite_holders_count": 11,
       "elite_holder_names": [
-        "Ally Bridge",
         "BVF Inc/IL",
         "Baker Bros",
         "Boxer Capital",
+        "Caligan Partners",
         "Cormorant Asset",
         "Logos Global",
         "Orbimed Advisors",
         "Perceptive Advisors",
-        "Samsara BioCapital"
+        "Samsara BioCapital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 70000,
         "BVF Inc/IL": 508031,
         "Baker Bros": 875796,
         "Boxer Capital": 125000,
+        "Caligan Partners": 1451924,
         "Cormorant Asset": 1350000,
         "Logos Global": 400000,
         "Orbimed Advisors": 367900,
         "Perceptive Advisors": 458343,
-        "Samsara BioCapital": 75442
+        "Samsara BioCapital": 75442,
+        "Vivo Capital": 359305
       },
-      "elite_total_shares": 4230512,
-      "elite_total_value_usd_thousands": 570505697,
-      "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "elite_total_shares": 6041741,
+      "elite_total_value_usd_thousands": 814758984,
+      "inst_score_raw": 11,
+      "inst_score_z": 2.375
     },
     "ACAD": {
       "elite_holders_count": 7,
@@ -143,7 +148,7 @@
       "elite_total_shares": 53847712,
       "elite_total_value_usd_thousands": 1438272388,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "ACIU": {
       "elite_holders_count": 0,
@@ -152,7 +157,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ACLX": {
       "elite_holders_count": 5,
@@ -173,26 +178,28 @@
       "elite_total_shares": 3078959,
       "elite_total_value_usd_thousands": 200748127,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "ACRS": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Broadfin Capital (Kotler)",
         "Logos Global",
         "Palo Alto Investors",
-        "Rock Springs"
+        "Rock Springs",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Broadfin Capital (Kotler)": 1705929,
         "Logos Global": 600000,
         "Palo Alto Investors": 1566840,
-        "Rock Springs": 4453741
+        "Rock Springs": 4453741,
+        "Vivo Capital": 8888888
       },
-      "elite_total_shares": 8326510,
-      "elite_total_value_usd_thousands": 25062794,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 17215398,
+      "elite_total_value_usd_thousands": 51818347,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "ACRV": {
       "elite_holders_count": 2,
@@ -207,7 +214,7 @@
       "elite_total_shares": 8363317,
       "elite_total_value_usd_thousands": 20155594,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ADCT": {
       "elite_holders_count": 2,
@@ -222,20 +229,22 @@
       "elite_total_shares": 21489585,
       "elite_total_value_usd_thousands": 75858235,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ADMA": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Caligan Partners",
         "Perceptive Advisors"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 3012508,
         "Perceptive Advisors": 883468
       },
-      "elite_total_shares": 883468,
-      "elite_total_value_usd_thousands": 16114456,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "elite_total_shares": 3895976,
+      "elite_total_value_usd_thousands": 71062602,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.4918
     },
     "ADPT": {
       "elite_holders_count": 0,
@@ -244,24 +253,26 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "AGIO": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
+        "Caligan Partners",
         "Foresite Capital VI",
         "Palo Alto Investors",
         "Rock Springs"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 90000,
         "Foresite Capital VI": 530000,
         "Palo Alto Investors": 212499,
         "Rock Springs": 799163
       },
-      "elite_total_shares": 1541662,
-      "elite_total_value_usd_thousands": 41964040,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 1631662,
+      "elite_total_value_usd_thousands": 44413840,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "AKTX": {
       "elite_holders_count": 1,
@@ -274,7 +285,7 @@
       "elite_total_shares": 146024,
       "elite_total_value_usd_thousands": 42201,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ALDX": {
       "elite_holders_count": 2,
@@ -289,7 +300,7 @@
       "elite_total_shares": 4411097,
       "elite_total_value_usd_thousands": 22849483,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ALGS": {
       "elite_holders_count": 2,
@@ -304,7 +315,7 @@
       "elite_total_shares": 527165,
       "elite_total_value_usd_thousands": 4913178,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ALKS": {
       "elite_holders_count": 8,
@@ -331,7 +342,7 @@
       "elite_total_shares": 16064233,
       "elite_total_value_usd_thousands": 446463397,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "ALLO": {
       "elite_holders_count": 0,
@@ -340,7 +351,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ALMS": {
       "elite_holders_count": 8,
@@ -367,7 +378,7 @@
       "elite_total_shares": 27239631,
       "elite_total_value_usd_thousands": 265858798,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "ALNY": {
       "elite_holders_count": 6,
@@ -390,7 +401,7 @@
       "elite_total_shares": 526975,
       "elite_total_value_usd_thousands": 209551609,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "ALT": {
       "elite_holders_count": 1,
@@ -403,7 +414,7 @@
       "elite_total_shares": 2131307,
       "elite_total_value_usd_thousands": 7694018,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ALVO": {
       "elite_holders_count": 0,
@@ -412,7 +423,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "AMGN": {
       "elite_holders_count": 1,
@@ -425,7 +436,7 @@
       "elite_total_shares": 13070,
       "elite_total_value_usd_thousands": 4277942,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "AMLX": {
       "elite_holders_count": 8,
@@ -452,7 +463,7 @@
       "elite_total_shares": 13545003,
       "elite_total_value_usd_thousands": 163623637,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "AMPH": {
       "elite_holders_count": 1,
@@ -465,7 +476,7 @@
       "elite_total_shares": 14852,
       "elite_total_value_usd_thousands": 397737,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "AMRX": {
       "elite_holders_count": 2,
@@ -480,7 +491,7 @@
       "elite_total_shares": 21888,
       "elite_total_value_usd_thousands": 7392672,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ANAB": {
       "elite_holders_count": 4,
@@ -499,7 +510,7 @@
       "elite_total_shares": 10189903,
       "elite_total_value_usd_thousands": 494006497,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "ANIP": {
       "elite_holders_count": 2,
@@ -514,7 +525,7 @@
       "elite_total_shares": 959121,
       "elite_total_value_usd_thousands": 75713012,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ANNX": {
       "elite_holders_count": 6,
@@ -537,22 +548,24 @@
       "elite_total_shares": 29995898,
       "elite_total_value_usd_thousands": 150579408,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "ANRO": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Orbimed Advisors",
-        "Perceptive Advisors"
+        "Perceptive Advisors",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Orbimed Advisors": 125000,
-        "Perceptive Advisors": 1784393
+        "Perceptive Advisors": 1784393,
+        "Vivo Capital": 1035551
       },
-      "elite_total_shares": 1909393,
-      "elite_total_value_usd_thousands": 33987195,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "elite_total_shares": 2944944,
+      "elite_total_value_usd_thousands": 52420003,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.1732
     },
     "APGE": {
       "elite_holders_count": 7,
@@ -577,7 +590,7 @@
       "elite_total_shares": 6909850,
       "elite_total_value_usd_thousands": 521555478,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "APLS": {
       "elite_holders_count": 7,
@@ -602,7 +615,7 @@
       "elite_total_shares": 35358780,
       "elite_total_value_usd_thousands": 888212554,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "AQST": {
       "elite_holders_count": 4,
@@ -621,7 +634,7 @@
       "elite_total_shares": 12122193,
       "elite_total_value_usd_thousands": 78309367,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "ARCT": {
       "elite_holders_count": 0,
@@ -630,7 +643,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ARDX": {
       "elite_holders_count": 1,
@@ -643,7 +656,7 @@
       "elite_total_shares": 2299473,
       "elite_total_value_usd_thousands": 13405928,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ARGX": {
       "elite_holders_count": 7,
@@ -668,7 +681,7 @@
       "elite_total_shares": 1945666,
       "elite_total_value_usd_thousands": 1636207823,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "ARQT": {
       "elite_holders_count": 2,
@@ -683,7 +696,7 @@
       "elite_total_shares": 12464000,
       "elite_total_value_usd_thousands": 361954560,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ARTV": {
       "elite_holders_count": 2,
@@ -698,7 +711,7 @@
       "elite_total_shares": 10501809,
       "elite_total_value_usd_thousands": 45052761,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ARVN": {
       "elite_holders_count": 2,
@@ -713,7 +726,7 @@
       "elite_total_shares": 637755,
       "elite_total_value_usd_thousands": 7563774,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ARWR": {
       "elite_holders_count": 4,
@@ -732,7 +745,7 @@
       "elite_total_shares": 15218307,
       "elite_total_value_usd_thousands": 1010343402,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "ASMB": {
       "elite_holders_count": 1,
@@ -745,7 +758,7 @@
       "elite_total_shares": 1020410,
       "elite_total_value_usd_thousands": 34704144,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ASND": {
       "elite_holders_count": 7,
@@ -770,7 +783,7 @@
       "elite_total_shares": 17002759,
       "elite_total_value_usd_thousands": 3615631329,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "ATAI": {
       "elite_holders_count": 4,
@@ -789,7 +802,7 @@
       "elite_total_shares": 11140394,
       "elite_total_value_usd_thousands": 45564211,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "AUPH": {
       "elite_holders_count": 2,
@@ -804,7 +817,7 @@
       "elite_total_shares": 12554346,
       "elite_total_value_usd_thousands": 200241819,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "AURA": {
       "elite_holders_count": 1,
@@ -817,7 +830,7 @@
       "elite_total_shares": 4372884,
       "elite_total_value_usd_thousands": 23832218,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "AUTL": {
       "elite_holders_count": 0,
@@ -826,7 +839,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "AVBP": {
       "elite_holders_count": 4,
@@ -845,7 +858,7 @@
       "elite_total_shares": 8868370,
       "elite_total_value_usd_thousands": 178431604,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "AVIR": {
       "elite_holders_count": 3,
@@ -862,7 +875,7 @@
       "elite_total_shares": 7480153,
       "elite_total_value_usd_thousands": 26704147,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "AVTR": {
       "elite_holders_count": 0,
@@ -871,7 +884,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "AVXL": {
       "elite_holders_count": 0,
@@ -880,7 +893,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "AXSM": {
       "elite_holders_count": 8,
@@ -907,7 +920,7 @@
       "elite_total_shares": 2574785,
       "elite_total_value_usd_thousands": 470258732,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "AZN": {
       "elite_holders_count": 2,
@@ -922,7 +935,7 @@
       "elite_total_shares": 1647566,
       "elite_total_value_usd_thousands": 151460742,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "BBIO": {
       "elite_holders_count": 6,
@@ -945,7 +958,7 @@
       "elite_total_shares": 2863579,
       "elite_total_value_usd_thousands": 219035158,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "BBOT": {
       "elite_holders_count": 4,
@@ -964,7 +977,7 @@
       "elite_total_shares": 25869478,
       "elite_total_value_usd_thousands": 323885865,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "BCAX": {
       "elite_holders_count": 5,
@@ -985,7 +998,7 @@
       "elite_total_shares": 10506767,
       "elite_total_value_usd_thousands": 176828888,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "BCRX": {
       "elite_holders_count": 6,
@@ -1008,7 +1021,7 @@
       "elite_total_shares": 38695242,
       "elite_total_value_usd_thousands": 301822888,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "BCYC": {
       "elite_holders_count": 2,
@@ -1023,7 +1036,7 @@
       "elite_total_shares": 11106428,
       "elite_total_value_usd_thousands": 78633511,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "BDTX": {
       "elite_holders_count": 0,
@@ -1032,7 +1045,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "BEAM": {
       "elite_holders_count": 3,
@@ -1049,7 +1062,7 @@
       "elite_total_shares": 3456253,
       "elite_total_value_usd_thousands": 95807333,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "BHVN": {
       "elite_holders_count": 6,
@@ -1072,7 +1085,7 @@
       "elite_total_shares": 11950121,
       "elite_total_value_usd_thousands": 134916866,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "BIIB": {
       "elite_holders_count": 7,
@@ -1097,7 +1110,7 @@
       "elite_total_shares": 687016,
       "elite_total_value_usd_thousands": 119149806,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "BIOA": {
       "elite_holders_count": 3,
@@ -1114,7 +1127,7 @@
       "elite_total_shares": 5125294,
       "elite_total_value_usd_thousands": 67807639,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "BLTE": {
       "elite_holders_count": 4,
@@ -1133,7 +1146,7 @@
       "elite_total_shares": 1795868,
       "elite_total_value_usd_thousands": 287267045,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "BMEA": {
       "elite_holders_count": 0,
@@ -1142,7 +1155,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "BMRN": {
       "elite_holders_count": 5,
@@ -1163,7 +1176,7 @@
       "elite_total_shares": 4279055,
       "elite_total_value_usd_thousands": 223147395,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "BNTX": {
       "elite_holders_count": 5,
@@ -1184,7 +1197,7 @@
       "elite_total_shares": 975278,
       "elite_total_value_usd_thousands": 83381352,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "BRKR": {
       "elite_holders_count": 1,
@@ -1197,7 +1210,7 @@
       "elite_total_shares": 555789,
       "elite_total_value_usd_thousands": 26183220,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "CABA": {
       "elite_holders_count": 3,
@@ -1214,7 +1227,7 @@
       "elite_total_shares": 14977125,
       "elite_total_value_usd_thousands": 32799904,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "CADL": {
       "elite_holders_count": 0,
@@ -1223,7 +1236,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "CAI": {
       "elite_holders_count": 3,
@@ -1240,7 +1253,7 @@
       "elite_total_shares": 4939717,
       "elite_total_value_usd_thousands": 133273565,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "CATX": {
       "elite_holders_count": 2,
@@ -1255,7 +1268,7 @@
       "elite_total_shares": 4395233,
       "elite_total_value_usd_thousands": 13819391,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "CCCC": {
       "elite_holders_count": 3,
@@ -1272,7 +1285,7 @@
       "elite_total_shares": 16576812,
       "elite_total_value_usd_thousands": 31661711,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "CDNA": {
       "elite_holders_count": 2,
@@ -1287,7 +1300,7 @@
       "elite_total_shares": 2669220,
       "elite_total_value_usd_thousands": 50288105,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "CDXS": {
       "elite_holders_count": 1,
@@ -1300,7 +1313,7 @@
       "elite_total_shares": 6789738,
       "elite_total_value_usd_thousands": 11067273,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "CELC": {
       "elite_holders_count": 9,
@@ -1329,7 +1342,7 @@
       "elite_total_shares": 18111344,
       "elite_total_value_usd_thousands": 1806425450,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "CERS": {
       "elite_holders_count": 2,
@@ -1344,7 +1357,7 @@
       "elite_total_shares": 11019959,
       "elite_total_value_usd_thousands": 22701116,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "CGEM": {
       "elite_holders_count": 5,
@@ -1365,7 +1378,7 @@
       "elite_total_shares": 8746850,
       "elite_total_value_usd_thousands": 90529897,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "CGON": {
       "elite_holders_count": 8,
@@ -1392,7 +1405,7 @@
       "elite_total_shares": 9901700,
       "elite_total_value_usd_thousands": 411118583,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "CHRS": {
       "elite_holders_count": 1,
@@ -1405,7 +1418,7 @@
       "elite_total_shares": 2724509,
       "elite_total_value_usd_thousands": 3868803,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "CLDX": {
       "elite_holders_count": 5,
@@ -1426,7 +1439,7 @@
       "elite_total_shares": 3891954,
       "elite_total_value_usd_thousands": 105705470,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "CLLS": {
       "elite_holders_count": 0,
@@ -1435,7 +1448,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "CLYM": {
       "elite_holders_count": 3,
@@ -1452,7 +1465,7 @@
       "elite_total_shares": 12673362,
       "elite_total_value_usd_thousands": 83229369,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "CMPS": {
       "elite_holders_count": 4,
@@ -1471,21 +1484,21 @@
       "elite_total_shares": 17307329,
       "elite_total_value_usd_thousands": 119420570,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "CMPX": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Deerfield Management",
-        "Logos Global",
         "Orbimed Advisors",
         "Palo Alto Investors",
         "RTW Investments",
         "Rock Springs",
         "Sofinnova Investments",
         "Suvretta Capital",
-        "Tang Capital"
+        "Tang Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 1093300,
@@ -1498,12 +1511,13 @@
         "Rock Springs": 3927202,
         "Sofinnova Investments": 3365446,
         "Suvretta Capital": 14182379,
-        "Tang Capital": 16790809
+        "Tang Capital": 16790809,
+        "Vivo Capital": 9545466
       },
-      "elite_total_shares": 72132391,
-      "elite_total_value_usd_thousands": 387350940,
-      "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "elite_total_shares": 81677857,
+      "elite_total_value_usd_thousands": 438610092,
+      "inst_score_raw": 12,
+      "inst_score_z": 2.6935
     },
     "CNTA": {
       "elite_holders_count": 11,
@@ -1535,7 +1549,7 @@
       "elite_total_shares": 29367085,
       "elite_total_value_usd_thousands": 734470796,
       "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "inst_score_z": 2.375
     },
     "CNTX": {
       "elite_holders_count": 3,
@@ -1552,21 +1566,21 @@
       "elite_total_shares": 17607921,
       "elite_total_value_usd_thousands": 25883644,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "COGT": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Boxer Capital",
         "Cormorant Asset",
         "Deep Track",
         "Deerfield Management",
         "Orbimed Advisors",
-        "Perceptive Advisors",
         "RTW Investments",
         "Redmile Group",
         "Rock Springs",
-        "Sofinnova Investments"
+        "Sofinnova Investments",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Boxer Capital": 225000,
@@ -1579,12 +1593,13 @@
         "Redmile Group": 1437918,
         "Rock Springs": 849030,
         "Sectoral Asset": 32685,
-        "Sofinnova Investments": 1973625
+        "Sofinnova Investments": 1973625,
+        "Vivo Capital": 2398993
       },
-      "elite_total_shares": 22324586,
-      "elite_total_value_usd_thousands": 792969295,
-      "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "elite_total_shares": 24723579,
+      "elite_total_value_usd_thousands": 878181526,
+      "inst_score_raw": 12,
+      "inst_score_z": 2.6935
     },
     "COLL": {
       "elite_holders_count": 0,
@@ -1593,7 +1608,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "CRBU": {
       "elite_holders_count": 0,
@@ -1602,7 +1617,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "CRL": {
       "elite_holders_count": 1,
@@ -1615,7 +1630,7 @@
       "elite_total_shares": 1010,
       "elite_total_value_usd_thousands": 201475,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "CRMD": {
       "elite_holders_count": 2,
@@ -1630,7 +1645,7 @@
       "elite_total_shares": 6382020,
       "elite_total_value_usd_thousands": 74222893,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "CRNX": {
       "elite_holders_count": 5,
@@ -1651,7 +1666,7 @@
       "elite_total_shares": 8587315,
       "elite_total_value_usd_thousands": 399739513,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "CRSP": {
       "elite_holders_count": 2,
@@ -1666,28 +1681,30 @@
       "elite_total_shares": 1430502,
       "elite_total_value_usd_thousands": 75015524,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "CRVS": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Foresite Capital VI",
         "Logos Global",
         "Orbimed Advisors",
         "Perceptive Advisors",
-        "RTW Investments"
+        "RTW Investments",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Foresite Capital VI": 1381233,
         "Logos Global": 500000,
         "Orbimed Advisors": 7165006,
         "Perceptive Advisors": 692441,
-        "RTW Investments": 447607
+        "RTW Investments": 447607,
+        "Vivo Capital": 2234566
       },
-      "elite_total_shares": 10186287,
-      "elite_total_value_usd_thousands": 78434410,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "elite_total_shares": 12420853,
+      "elite_total_value_usd_thousands": 95640568,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.7823
     },
     "CSTL": {
       "elite_holders_count": 1,
@@ -1700,7 +1717,7 @@
       "elite_total_shares": 2115237,
       "elite_total_value_usd_thousands": 82282719,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "CTKB": {
       "elite_holders_count": 0,
@@ -1709,24 +1726,26 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "CTMX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Baker Bros",
         "Orbimed Advisors",
-        "Perceptive Advisors"
+        "Perceptive Advisors",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 4250826,
         "Orbimed Advisors": 3525650,
-        "Perceptive Advisors": 9680185
+        "Perceptive Advisors": 9680185,
+        "Vivo Capital": 2884615
       },
-      "elite_total_shares": 17456661,
-      "elite_total_value_usd_thousands": 74365376,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 20341276,
+      "elite_total_value_usd_thousands": 86653836,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "CTNM": {
       "elite_holders_count": 9,
@@ -1755,7 +1774,7 @@
       "elite_total_shares": 10221840,
       "elite_total_value_usd_thousands": 116835631,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "CYTK": {
       "elite_holders_count": 8,
@@ -1782,7 +1801,7 @@
       "elite_total_shares": 7354554,
       "elite_total_value_usd_thousands": 467308361,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "DAWN": {
       "elite_holders_count": 2,
@@ -1797,7 +1816,7 @@
       "elite_total_shares": 4023131,
       "elite_total_value_usd_thousands": 37495581,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "DFTX": {
       "elite_holders_count": 0,
@@ -1806,7 +1825,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "DNA": {
       "elite_holders_count": 1,
@@ -1819,7 +1838,7 @@
       "elite_total_shares": 36493,
       "elite_total_value_usd_thousands": 303257,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "DNLI": {
       "elite_holders_count": 4,
@@ -1838,10 +1857,10 @@
       "elite_total_shares": 7212934,
       "elite_total_value_usd_thousands": 119085540,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "DNTH": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Acuta Capital",
         "Avidity Partners",
@@ -1850,7 +1869,8 @@
         "Great Point",
         "Logos Global",
         "RA Capital",
-        "Tang Capital"
+        "Tang Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 16708,
@@ -1860,12 +1880,13 @@
         "Great Point": 350000,
         "Logos Global": 315000,
         "RA Capital": 1611733,
-        "Tang Capital": 264692
+        "Tang Capital": 264692,
+        "Vivo Capital": 353998
       },
-      "elite_total_shares": 6195668,
-      "elite_total_value_usd_thousands": 255323479,
-      "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "elite_total_shares": 6549666,
+      "elite_total_value_usd_thousands": 269911737,
+      "inst_score_raw": 9,
+      "inst_score_z": 1.7379
     },
     "DRMA": {
       "elite_holders_count": 0,
@@ -1874,46 +1895,50 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "DRUG": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Acuta Capital",
         "Cormorant Asset",
-        "Perceptive Advisors"
+        "Perceptive Advisors",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 84477,
         "Cormorant Asset": 1059331,
-        "Perceptive Advisors": 449290
+        "Perceptive Advisors": 449290,
+        "Vivo Capital": 501617
       },
-      "elite_total_shares": 1593098,
-      "elite_total_value_usd_thousands": 124325368,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 2094715,
+      "elite_total_value_usd_thousands": 163471559,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "DSGN": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Acuta Capital",
         "Baker Bros",
         "Logos Global",
-        "RA Capital"
+        "RA Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 150906,
         "Baker Bros": 2233099,
         "Logos Global": 2500000,
-        "RA Capital": 1461381
+        "RA Capital": 1461381,
+        "Vivo Capital": 1612903
       },
-      "elite_total_shares": 6345386,
-      "elite_total_value_usd_thousands": 59519721,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 7958289,
+      "elite_total_value_usd_thousands": 74648751,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "DYN": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Baker Bros",
         "Deep Track",
@@ -1922,7 +1947,8 @@
         "Palo Alto Investors",
         "Perceptive Advisors",
         "Rock Springs",
-        "Sofinnova Investments"
+        "Sofinnova Investments",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Baker Bros": 813449,
@@ -1932,12 +1958,13 @@
         "Palo Alto Investors": 1472197,
         "Perceptive Advisors": 3478944,
         "Rock Springs": 912955,
-        "Sofinnova Investments": 2254161
+        "Sofinnova Investments": 2254161,
+        "Vivo Capital": 2614960
       },
-      "elite_total_shares": 15033890,
-      "elite_total_value_usd_thousands": 294062888,
-      "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "elite_total_shares": 17648850,
+      "elite_total_value_usd_thousands": 345211506,
+      "inst_score_raw": 9,
+      "inst_score_z": 1.7379
     },
     "EBS": {
       "elite_holders_count": 0,
@@ -1946,7 +1973,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "EDIT": {
       "elite_holders_count": 0,
@@ -1955,20 +1982,22 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ELDN": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
-        "BVF Inc/IL"
+        "BVF Inc/IL",
+        "Caligan Partners"
       ],
       "elite_holder_shares": {
-        "BVF Inc/IL": 6293282
+        "BVF Inc/IL": 6293282,
+        "Caligan Partners": 555978
       },
-      "elite_total_shares": 6293282,
-      "elite_total_value_usd_thousands": 9502856,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "elite_total_shares": 6849260,
+      "elite_total_value_usd_thousands": 10342383,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.4918
     },
     "ELVN": {
       "elite_holders_count": 5,
@@ -1989,26 +2018,28 @@
       "elite_total_shares": 9509649,
       "elite_total_value_usd_thousands": 146448594,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "ENGN": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Cormorant Asset",
         "Deep Track",
-        "Perceptive Advisors"
+        "Perceptive Advisors",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 945402,
         "Cormorant Asset": 4000000,
         "Deep Track": 4377572,
-        "Perceptive Advisors": 5869076
+        "Perceptive Advisors": 5869076,
+        "Vivo Capital": 285046
       },
-      "elite_total_shares": 15192050,
-      "elite_total_value_usd_thousands": 131048552,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 15477096,
+      "elite_total_value_usd_thousands": 131892288,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "ENTA": {
       "elite_holders_count": 3,
@@ -2025,7 +2056,7 @@
       "elite_total_shares": 4798257,
       "elite_total_value_usd_thousands": 32086169,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "EOLS": {
       "elite_holders_count": 3,
@@ -2042,43 +2073,47 @@
       "elite_total_shares": 2020692,
       "elite_total_value_usd_thousands": 12773267,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "EPRX": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Ally Bridge",
-        "Great Point"
+        "Great Point",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Ally Bridge": 397895,
-        "Great Point": 1200000
+        "Great Point": 1200000,
+        "Vivo Capital": 1350000
       },
-      "elite_total_shares": 1597895,
-      "elite_total_value_usd_thousands": 12064107,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "elite_total_shares": 2947895,
+      "elite_total_value_usd_thousands": 22256607,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.1732
     },
     "ERAS": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "Logos Global",
         "RTW Investments",
         "Rock Springs",
         "Suvretta Capital",
-        "Tang Capital"
+        "Tang Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Logos Global": 13000000,
         "RTW Investments": 146651,
         "Rock Springs": 951710,
         "Suvretta Capital": 14502004,
-        "Tang Capital": 900000
+        "Tang Capital": 900000,
+        "Vivo Capital": 9273428
       },
-      "elite_total_shares": 29500365,
-      "elite_total_value_usd_thousands": 109741358,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "elite_total_shares": 38773793,
+      "elite_total_value_usd_thousands": 144238510,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.7823
     },
     "ESPR": {
       "elite_holders_count": 1,
@@ -2091,7 +2126,7 @@
       "elite_total_shares": 5965498,
       "elite_total_value_usd_thousands": 22072343,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ETON": {
       "elite_holders_count": 2,
@@ -2106,7 +2141,7 @@
       "elite_total_shares": 4890544,
       "elite_total_value_usd_thousands": 82699099,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "EWTX": {
       "elite_holders_count": 9,
@@ -2135,20 +2170,22 @@
       "elite_total_shares": 42414356,
       "elite_total_value_usd_thousands": 1052512244,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "EXEL": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Caligan Partners",
         "Krensavage Asset"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 1553262,
         "Krensavage Asset": 493526
       },
-      "elite_total_shares": 493526,
-      "elite_total_value_usd_thousands": 21631,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "elite_total_shares": 2046788,
+      "elite_total_value_usd_thousands": 68101104,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.4918
     },
     "EYPT": {
       "elite_holders_count": 4,
@@ -2167,7 +2204,7 @@
       "elite_total_shares": 18819738,
       "elite_total_value_usd_thousands": 343836614,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "FATE": {
       "elite_holders_count": 2,
@@ -2182,7 +2219,7 @@
       "elite_total_shares": 14040719,
       "elite_total_value_usd_thousands": 13796411,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "FDMT": {
       "elite_holders_count": 4,
@@ -2201,7 +2238,7 @@
       "elite_total_shares": 11233974,
       "elite_total_value_usd_thousands": 84254807,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "FHTX": {
       "elite_holders_count": 2,
@@ -2216,7 +2253,7 @@
       "elite_total_shares": 8951211,
       "elite_total_value_usd_thousands": 48336539,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "FLGT": {
       "elite_holders_count": 1,
@@ -2229,7 +2266,7 @@
       "elite_total_shares": 705027,
       "elite_total_value_usd_thousands": 18521059,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "FOLD": {
       "elite_holders_count": 5,
@@ -2250,7 +2287,7 @@
       "elite_total_shares": 14279749,
       "elite_total_value_usd_thousands": 203343625,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "FTRE": {
       "elite_holders_count": 0,
@@ -2259,7 +2296,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "FULC": {
       "elite_holders_count": 3,
@@ -2276,22 +2313,24 @@
       "elite_total_shares": 13415071,
       "elite_total_value_usd_thousands": 151724453,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "GERN": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Deep Track",
-        "RA Capital"
+        "RA Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Deep Track": 32511271,
-        "RA Capital": 63771366
+        "RA Capital": 63771366,
+        "Vivo Capital": 27225292
       },
-      "elite_total_shares": 96282637,
-      "elite_total_value_usd_thousands": 127093081,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "elite_total_shares": 123507929,
+      "elite_total_value_usd_thousands": 163030466,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.1732
     },
     "GH": {
       "elite_holders_count": 4,
@@ -2310,7 +2349,7 @@
       "elite_total_shares": 4821033,
       "elite_total_value_usd_thousands": 492420311,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "GHRS": {
       "elite_holders_count": 5,
@@ -2331,7 +2370,7 @@
       "elite_total_shares": 25538224,
       "elite_total_value_usd_thousands": 324335445,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "GILD": {
       "elite_holders_count": 1,
@@ -2344,7 +2383,7 @@
       "elite_total_shares": 17885,
       "elite_total_value_usd_thousands": 2195205,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "GLPG": {
       "elite_holders_count": 3,
@@ -2361,7 +2400,7 @@
       "elite_total_shares": 5678338,
       "elite_total_value_usd_thousands": 185681652,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "GLUE": {
       "elite_holders_count": 4,
@@ -2380,7 +2419,7 @@
       "elite_total_shares": 11627636,
       "elite_total_value_usd_thousands": 182321332,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "GMAB": {
       "elite_holders_count": 1,
@@ -2393,7 +2432,7 @@
       "elite_total_shares": 92000,
       "elite_total_value_usd_thousands": 2833600,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "GOSS": {
       "elite_holders_count": 5,
@@ -2414,7 +2453,7 @@
       "elite_total_shares": 20820780,
       "elite_total_value_usd_thousands": 64544418,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "GPCR": {
       "elite_holders_count": 13,
@@ -2448,7 +2487,7 @@
       "elite_total_shares": 20565172,
       "elite_total_value_usd_thousands": 1430307713,
       "inst_score_raw": 13,
-      "inst_score_z": 3.1628
+      "inst_score_z": 3.012
     },
     "GRAL": {
       "elite_holders_count": 4,
@@ -2467,7 +2506,7 @@
       "elite_total_shares": 3773738,
       "elite_total_value_usd_thousands": 322994235,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "GRFS": {
       "elite_holders_count": 0,
@@ -2476,7 +2515,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "HALO": {
       "elite_holders_count": 0,
@@ -2485,7 +2524,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "HOWL": {
       "elite_holders_count": 1,
@@ -2498,7 +2537,7 @@
       "elite_total_shares": 6681307,
       "elite_total_value_usd_thousands": 4232608,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "HRMY": {
       "elite_holders_count": 2,
@@ -2513,7 +2552,7 @@
       "elite_total_shares": 779486,
       "elite_total_value_usd_thousands": 29168366,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "HROW": {
       "elite_holders_count": 2,
@@ -2528,7 +2567,7 @@
       "elite_total_shares": 3913693,
       "elite_total_value_usd_thousands": 191770957,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "HRTX": {
       "elite_holders_count": 1,
@@ -2541,7 +2580,7 @@
       "elite_total_shares": 6250000,
       "elite_total_value_usd_thousands": 8125000,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "HUMA": {
       "elite_holders_count": 0,
@@ -2550,7 +2589,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "IBRX": {
       "elite_holders_count": 0,
@@ -2559,7 +2598,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "IDYA": {
       "elite_holders_count": 6,
@@ -2582,7 +2621,7 @@
       "elite_total_shares": 11424007,
       "elite_total_value_usd_thousands": 394927923,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "IKT": {
       "elite_holders_count": 1,
@@ -2595,7 +2634,7 @@
       "elite_total_shares": 5421568,
       "elite_total_value_usd_thousands": 11114214,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ILMN": {
       "elite_holders_count": 2,
@@ -2610,7 +2649,7 @@
       "elite_total_shares": 602472,
       "elite_total_value_usd_thousands": 79020227,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "IMCR": {
       "elite_holders_count": 7,
@@ -2635,7 +2674,7 @@
       "elite_total_shares": 44163945,
       "elite_total_value_usd_thousands": 517324031,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "IMMP": {
       "elite_holders_count": 0,
@@ -2644,7 +2683,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "IMRX": {
       "elite_holders_count": 0,
@@ -2653,7 +2692,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "IMTX": {
       "elite_holders_count": 7,
@@ -2678,7 +2717,7 @@
       "elite_total_shares": 49449590,
       "elite_total_value_usd_thousands": 519220696,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "IMVT": {
       "elite_holders_count": 7,
@@ -2703,24 +2742,26 @@
       "elite_total_shares": 26615925,
       "elite_total_value_usd_thousands": 621883488,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "INBX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Acuta Capital",
+        "Caligan Partners",
         "Perceptive Advisors",
         "Sofinnova Investments"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 16377,
+        "Caligan Partners": 473565,
         "Perceptive Advisors": 1452707,
         "Sofinnova Investments": 454657
       },
-      "elite_total_shares": 1923741,
-      "elite_total_value_usd_thousands": 151975539,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 2397306,
+      "elite_total_value_usd_thousands": 189387174,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "INCY": {
       "elite_holders_count": 4,
@@ -2739,7 +2780,7 @@
       "elite_total_shares": 30981741,
       "elite_total_value_usd_thousands": 3060066559,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "INDV": {
       "elite_holders_count": 3,
@@ -2756,7 +2797,7 @@
       "elite_total_shares": 3837695,
       "elite_total_value_usd_thousands": 125526270,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "INSM": {
       "elite_holders_count": 13,
@@ -2790,7 +2831,7 @@
       "elite_total_shares": 12968757,
       "elite_total_value_usd_thousands": 2252959191,
       "inst_score_raw": 13,
-      "inst_score_z": 3.1628
+      "inst_score_z": 3.012
     },
     "INVA": {
       "elite_holders_count": 1,
@@ -2803,7 +2844,7 @@
       "elite_total_shares": 2816022,
       "elite_total_value_usd_thousands": 56292280,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "IONS": {
       "elite_holders_count": 5,
@@ -2824,7 +2865,7 @@
       "elite_total_shares": 5490675,
       "elite_total_value_usd_thousands": 434367300,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "IOVA": {
       "elite_holders_count": 2,
@@ -2839,7 +2880,7 @@
       "elite_total_shares": 7269390,
       "elite_total_value_usd_thousands": 19845434,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "IRON": {
       "elite_holders_count": 13,
@@ -2873,7 +2914,7 @@
       "elite_total_shares": 6710173,
       "elite_total_value_usd_thousands": 532854839,
       "inst_score_raw": 13,
-      "inst_score_z": 3.1628
+      "inst_score_z": 3.012
     },
     "IRWD": {
       "elite_holders_count": 4,
@@ -2892,7 +2933,7 @@
       "elite_total_shares": 15977010,
       "elite_total_value_usd_thousands": 66626477,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "IVVD": {
       "elite_holders_count": 5,
@@ -2913,7 +2954,7 @@
       "elite_total_shares": 62610421,
       "elite_total_value_usd_thousands": 154647740,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "JANX": {
       "elite_holders_count": 6,
@@ -2936,7 +2977,7 @@
       "elite_total_shares": 15242506,
       "elite_total_value_usd_thousands": 210346582,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "JAZZ": {
       "elite_holders_count": 8,
@@ -2963,7 +3004,7 @@
       "elite_total_shares": 3236952,
       "elite_total_value_usd_thousands": 521781649,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "JBIO": {
       "elite_holders_count": 10,
@@ -2994,7 +3035,7 @@
       "elite_total_shares": 11398434,
       "elite_total_value_usd_thousands": 175877835,
       "inst_score_raw": 10,
-      "inst_score_z": 2.1735
+      "inst_score_z": 2.0564
     },
     "KALA": {
       "elite_holders_count": 1,
@@ -3007,7 +3048,7 @@
       "elite_total_shares": 1804055,
       "elite_total_value_usd_thousands": 1002874,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "KALV": {
       "elite_holders_count": 5,
@@ -3028,7 +3069,7 @@
       "elite_total_shares": 10430674,
       "elite_total_value_usd_thousands": 168455386,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "KMDA": {
       "elite_holders_count": 0,
@@ -3037,7 +3078,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "KNSA": {
       "elite_holders_count": 4,
@@ -3056,7 +3097,7 @@
       "elite_total_shares": 5623334,
       "elite_total_value_usd_thousands": 231962528,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "KOD": {
       "elite_holders_count": 4,
@@ -3075,7 +3116,7 @@
       "elite_total_shares": 23392019,
       "elite_total_value_usd_thousands": 654040852,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "KROS": {
       "elite_holders_count": 1,
@@ -3088,7 +3129,7 @@
       "elite_total_shares": 804212,
       "elite_total_value_usd_thousands": 16373756,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "KRYS": {
       "elite_holders_count": 4,
@@ -3107,7 +3148,7 @@
       "elite_total_shares": 3703893,
       "elite_total_value_usd_thousands": 913157781,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "KURA": {
       "elite_holders_count": 3,
@@ -3124,7 +3165,7 @@
       "elite_total_shares": 17246694,
       "elite_total_value_usd_thousands": 179193151,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "KYMR": {
       "elite_holders_count": 10,
@@ -3155,7 +3196,7 @@
       "elite_total_shares": 23608107,
       "elite_total_value_usd_thousands": 1836946806,
       "inst_score_raw": 10,
-      "inst_score_z": 2.1735
+      "inst_score_z": 2.0564
     },
     "KYNB": {
       "elite_holders_count": 0,
@@ -3164,7 +3205,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "KYTX": {
       "elite_holders_count": 2,
@@ -3179,7 +3220,7 @@
       "elite_total_shares": 5110000,
       "elite_total_value_usd_thousands": 48034000,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "LAB": {
       "elite_holders_count": 2,
@@ -3194,17 +3235,18 @@
       "elite_total_shares": 88797681,
       "elite_total_value_usd_thousands": 117111752,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "LBRX": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Acuta Capital",
         "Baker Bros",
         "Boxer Capital",
         "Deep Track",
         "Logos Global",
-        "RA Capital"
+        "RA Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 30000,
@@ -3212,12 +3254,13 @@
         "Boxer Capital": 70000,
         "Deep Track": 3352804,
         "Logos Global": 1200000,
-        "RA Capital": 2208604
+        "RA Capital": 2208604,
+        "Vivo Capital": 800000
       },
-      "elite_total_shares": 7061408,
-      "elite_total_value_usd_thousands": 157186942,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "elite_total_shares": 7861408,
+      "elite_total_value_usd_thousands": 174994942,
+      "inst_score_raw": 7,
+      "inst_score_z": 1.1009
     },
     "LCTX": {
       "elite_holders_count": 0,
@@ -3226,7 +3269,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "LEGN": {
       "elite_holders_count": 4,
@@ -3245,7 +3288,7 @@
       "elite_total_shares": 12789429,
       "elite_total_value_usd_thousands": 278042186,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "LENZ": {
       "elite_holders_count": 5,
@@ -3266,7 +3309,7 @@
       "elite_total_shares": 5393952,
       "elite_total_value_usd_thousands": 86303232,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "LFCR": {
       "elite_holders_count": 0,
@@ -3275,7 +3318,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "LGND": {
       "elite_holders_count": 0,
@@ -3284,20 +3327,22 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "LQDA": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
+        "Caligan Partners",
         "Opaleye Management"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 8118892,
         "Opaleye Management": 2435000
       },
-      "elite_total_shares": 2435000,
-      "elite_total_value_usd_thousands": 84981500,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "elite_total_shares": 10553892,
+      "elite_total_value_usd_thousands": 365002085,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.4918
     },
     "LRMR": {
       "elite_holders_count": 2,
@@ -3312,7 +3357,7 @@
       "elite_total_shares": 33731974,
       "elite_total_value_usd_thousands": 128518821,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "LXEO": {
       "elite_holders_count": 5,
@@ -3333,7 +3378,7 @@
       "elite_total_shares": 11814835,
       "elite_total_value_usd_thousands": 117321312,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "LYEL": {
       "elite_holders_count": 3,
@@ -3350,12 +3395,13 @@
       "elite_total_shares": 1615174,
       "elite_total_value_usd_thousands": 49715056,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "MAZE": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Acuta Capital",
+        "Caligan Partners",
         "Casdin Capital",
         "Deep Track",
         "Foresite Capital IV",
@@ -3364,16 +3410,17 @@
       ],
       "elite_holder_shares": {
         "Acuta Capital": 20000,
+        "Caligan Partners": 550191,
         "Casdin Capital": 758857,
         "Deep Track": 4246440,
         "Foresite Capital IV": 522657,
         "Foresite Capital V": 86291,
         "Logos Global": 950000
       },
-      "elite_total_shares": 6584245,
-      "elite_total_value_usd_thousands": 272785271,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "elite_total_shares": 7134436,
+      "elite_total_value_usd_thousands": 295579684,
+      "inst_score_raw": 7,
+      "inst_score_z": 1.1009
     },
     "MBX": {
       "elite_holders_count": 6,
@@ -3396,7 +3443,7 @@
       "elite_total_shares": 10971221,
       "elite_total_value_usd_thousands": 346032311,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "MCRB": {
       "elite_holders_count": 0,
@@ -3405,7 +3452,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "MDGL": {
       "elite_holders_count": 5,
@@ -3426,7 +3473,7 @@
       "elite_total_shares": 6082858,
       "elite_total_value_usd_thousands": 3542291528,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "MEDP": {
       "elite_holders_count": 0,
@@ -3435,7 +3482,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "MENS": {
       "elite_holders_count": 0,
@@ -3444,7 +3491,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "MESO": {
       "elite_holders_count": 0,
@@ -3453,7 +3500,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "MGTX": {
       "elite_holders_count": 2,
@@ -3468,7 +3515,7 @@
       "elite_total_shares": 10716947,
       "elite_total_value_usd_thousands": 85199729,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "MIRM": {
       "elite_holders_count": 7,
@@ -3493,10 +3540,10 @@
       "elite_total_shares": 4157677,
       "elite_total_value_usd_thousands": 328414907,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "MLTX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 11,
       "elite_holder_names": [
         "Acuta Capital",
         "BVF Inc/IL",
@@ -3505,9 +3552,9 @@
         "Cormorant Asset",
         "Deep Track",
         "Logos Global",
-        "Orbimed Advisors",
         "Perceptive Advisors",
-        "Rock Springs"
+        "Rock Springs",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 59280,
@@ -3519,16 +3566,18 @@
         "Logos Global": 1750000,
         "Orbimed Advisors": 56000,
         "Perceptive Advisors": 550000,
-        "Rock Springs": 61700
+        "Rock Springs": 61700,
+        "Vivo Capital": 1000000
       },
-      "elite_total_shares": 31833473,
-      "elite_total_value_usd_thousands": 423790075,
-      "inst_score_raw": 10,
-      "inst_score_z": 2.1735
+      "elite_total_shares": 32833473,
+      "elite_total_value_usd_thousands": 436970075,
+      "inst_score_raw": 11,
+      "inst_score_z": 2.375
     },
     "MLYS": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
+        "Caligan Partners",
         "Orbimed Advisors",
         "RA Capital",
         "Rock Springs",
@@ -3537,6 +3586,7 @@
         "Suvretta Capital"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 5071054,
         "Orbimed Advisors": 980400,
         "RA Capital": 7323750,
         "Rock Springs": 427596,
@@ -3544,10 +3594,10 @@
         "Sectoral Asset": 31625,
         "Suvretta Capital": 1538662
       },
-      "elite_total_shares": 16173051,
-      "elite_total_value_usd_thousands": 586920021,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "elite_total_shares": 21244105,
+      "elite_total_value_usd_thousands": 770948571,
+      "inst_score_raw": 7,
+      "inst_score_z": 1.1009
     },
     "MNKD": {
       "elite_holders_count": 2,
@@ -3562,7 +3612,7 @@
       "elite_total_shares": 6104444,
       "elite_total_value_usd_thousands": 34612197,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "MRNA": {
       "elite_holders_count": 4,
@@ -3581,7 +3631,7 @@
       "elite_total_shares": 1903418,
       "elite_total_value_usd_thousands": 56131798,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "MRVI": {
       "elite_holders_count": 0,
@@ -3590,7 +3640,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "MYGN": {
       "elite_holders_count": 1,
@@ -3603,7 +3653,7 @@
       "elite_total_shares": 505,
       "elite_total_value_usd_thousands": 3106,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "NAMS": {
       "elite_holders_count": 6,
@@ -3626,7 +3676,7 @@
       "elite_total_shares": 23060340,
       "elite_total_value_usd_thousands": 808956727,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "NAUT": {
       "elite_holders_count": 1,
@@ -3639,7 +3689,7 @@
       "elite_total_shares": 12594211,
       "elite_total_value_usd_thousands": 24558711,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "NBIX": {
       "elite_holders_count": 8,
@@ -3666,7 +3716,7 @@
       "elite_total_shares": 3341150,
       "elite_total_value_usd_thousands": 473875303,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "NBP": {
       "elite_holders_count": 0,
@@ -3675,7 +3725,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "NGNE": {
       "elite_holders_count": 9,
@@ -3704,7 +3754,7 @@
       "elite_total_shares": 8746915,
       "elite_total_value_usd_thousands": 180186449,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "NKTX": {
       "elite_holders_count": 3,
@@ -3721,7 +3771,7 @@
       "elite_total_shares": 15793618,
       "elite_total_value_usd_thousands": 29218194,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "NMRA": {
       "elite_holders_count": 1,
@@ -3734,7 +3784,7 @@
       "elite_total_shares": 967235,
       "elite_total_value_usd_thousands": 1731351,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "NRIX": {
       "elite_holders_count": 6,
@@ -3757,7 +3807,7 @@
       "elite_total_shares": 23944796,
       "elite_total_value_usd_thousands": 454232780,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "NTLA": {
       "elite_holders_count": 0,
@@ -3766,7 +3816,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "NTRA": {
       "elite_holders_count": 7,
@@ -3791,7 +3841,7 @@
       "elite_total_shares": 3572692,
       "elite_total_value_usd_thousands": 818468010,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "NUVB": {
       "elite_holders_count": 10,
@@ -3822,7 +3872,7 @@
       "elite_total_shares": 9371102,
       "elite_total_value_usd_thousands": 76638404,
       "inst_score_raw": 10,
-      "inst_score_z": 2.1735
+      "inst_score_z": 2.0564
     },
     "NUVL": {
       "elite_holders_count": 5,
@@ -3843,7 +3893,7 @@
       "elite_total_shares": 20959429,
       "elite_total_value_usd_thousands": 2108308964,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "NVAX": {
       "elite_holders_count": 0,
@@ -3852,7 +3902,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "NVCR": {
       "elite_holders_count": 1,
@@ -3865,7 +3915,7 @@
       "elite_total_shares": 1298964,
       "elite_total_value_usd_thousands": 16795605,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "OABI": {
       "elite_holders_count": 0,
@@ -3874,7 +3924,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "OBIO": {
       "elite_holders_count": 2,
@@ -3889,7 +3939,7 @@
       "elite_total_shares": 13433319,
       "elite_total_value_usd_thousands": 55748273,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "OCGN": {
       "elite_holders_count": 0,
@@ -3898,7 +3948,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "OCS": {
       "elite_holders_count": 2,
@@ -3913,7 +3963,7 @@
       "elite_total_shares": 595604,
       "elite_total_value_usd_thousands": 11894212,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "OCUL": {
       "elite_holders_count": 7,
@@ -3938,10 +3988,10 @@
       "elite_total_shares": 25499306,
       "elite_total_value_usd_thousands": 309561575,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "OLMA": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 8,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Bain Capital Life",
@@ -3949,7 +3999,8 @@
         "Logos Global",
         "Perceptive Advisors",
         "RA Capital",
-        "Rock Springs"
+        "Rock Springs",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 5295893,
@@ -3958,12 +4009,13 @@
         "Logos Global": 3208875,
         "Perceptive Advisors": 165713,
         "RA Capital": 2600000,
-        "Rock Springs": 98240
+        "Rock Springs": 98240,
+        "Vivo Capital": 671843
       },
-      "elite_total_shares": 22627362,
-      "elite_total_value_usd_thousands": 565684050,
-      "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "elite_total_shares": 23299205,
+      "elite_total_value_usd_thousands": 582480125,
+      "inst_score_raw": 8,
+      "inst_score_z": 1.4194
     },
     "OMER": {
       "elite_holders_count": 1,
@@ -3976,7 +4028,7 @@
       "elite_total_shares": 1124335,
       "elite_total_value_usd_thousands": 19348726,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "ONC": {
       "elite_holders_count": 2,
@@ -3991,7 +4043,7 @@
       "elite_total_shares": 8801718,
       "elite_total_value_usd_thousands": 2674049946,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "OPCH": {
       "elite_holders_count": 0,
@@ -4000,7 +4052,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "OPK": {
       "elite_holders_count": 0,
@@ -4009,28 +4061,30 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ORIC": {
-      "elite_holders_count": 5,
+      "elite_holders_count": 6,
       "elite_holder_names": [
         "EcoR1 Capital",
         "Logos Global",
         "Orbimed Advisors",
         "Redmile Group",
-        "Sectoral Asset"
+        "Sectoral Asset",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "EcoR1 Capital": 6728116,
         "Logos Global": 450000,
         "Orbimed Advisors": 3641756,
         "Redmile Group": 448110,
-        "Sectoral Asset": 22480
+        "Sectoral Asset": 22480,
+        "Vivo Capital": 2118384
       },
-      "elite_total_shares": 11290462,
-      "elite_total_value_usd_thousands": 92355979,
-      "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "elite_total_shares": 13408846,
+      "elite_total_value_usd_thousands": 109684360,
+      "inst_score_raw": 6,
+      "inst_score_z": 0.7823
     },
     "ORKA": {
       "elite_holders_count": 8,
@@ -4057,7 +4111,7 @@
       "elite_total_shares": 8466578,
       "elite_total_value_usd_thousands": 256621977,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "PACB": {
       "elite_holders_count": 1,
@@ -4070,7 +4124,7 @@
       "elite_total_shares": 4223767,
       "elite_total_value_usd_thousands": 7898444,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "PAHC": {
       "elite_holders_count": 0,
@@ -4079,7 +4133,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "PBYI": {
       "elite_holders_count": 0,
@@ -4088,7 +4142,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "PCRX": {
       "elite_holders_count": 0,
@@ -4097,11 +4151,12 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "PCVX": {
-      "elite_holders_count": 7,
+      "elite_holders_count": 8,
       "elite_holder_names": [
+        "Caligan Partners",
         "Cormorant Asset",
         "Deep Track",
         "EcoR1 Capital",
@@ -4111,6 +4166,7 @@
         "Tang Capital"
       ],
       "elite_holder_shares": {
+        "Caligan Partners": 1704815,
         "Cormorant Asset": 125000,
         "Deep Track": 4000000,
         "EcoR1 Capital": 450000,
@@ -4119,29 +4175,31 @@
         "Rock Springs": 47000,
         "Tang Capital": 275000
       },
-      "elite_total_shares": 16271599,
-      "elite_total_value_usd_thousands": 750771578,
-      "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "elite_total_shares": 17976414,
+      "elite_total_value_usd_thousands": 829431742,
+      "inst_score_raw": 8,
+      "inst_score_z": 1.4194
     },
     "PEPG": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Boxer Capital",
         "Perceptive Advisors",
-        "RA Capital"
+        "RA Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 1915000,
         "Boxer Capital": 373892,
         "Perceptive Advisors": 829870,
-        "RA Capital": 20064545
+        "RA Capital": 20064545,
+        "Vivo Capital": 2325000
       },
-      "elite_total_shares": 23183307,
-      "elite_total_value_usd_thousands": 150923329,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 25508307,
+      "elite_total_value_usd_thousands": 166059079,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "PGEN": {
       "elite_holders_count": 2,
@@ -4156,7 +4214,7 @@
       "elite_total_shares": 6992500,
       "elite_total_value_usd_thousands": 29228650,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "PHAT": {
       "elite_holders_count": 1,
@@ -4169,7 +4227,7 @@
       "elite_total_shares": 206076,
       "elite_total_value_usd_thousands": 3418801,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "PHVS": {
       "elite_holders_count": 11,
@@ -4201,21 +4259,21 @@
       "elite_total_shares": 18560779,
       "elite_total_value_usd_thousands": 515061619,
       "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "inst_score_z": 2.375
     },
     "PRAX": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Acuta Capital",
         "Baker Bros",
-        "Boxer Capital",
         "Cormorant Asset",
         "Deerfield Management",
         "Logos Global",
         "Orbimed Advisors",
         "Perceptive Advisors",
         "RA Capital",
-        "Sofinnova Investments"
+        "Sofinnova Investments",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 83036,
@@ -4228,12 +4286,13 @@
         "Orbimed Advisors": 94500,
         "Perceptive Advisors": 1995986,
         "RA Capital": 373787,
-        "Sofinnova Investments": 125722
+        "Sofinnova Investments": 125722,
+        "Vivo Capital": 328895
       },
-      "elite_total_shares": 6094209,
-      "elite_total_value_usd_thousands": 1796207161,
-      "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "elite_total_shares": 6423104,
+      "elite_total_value_usd_thousands": 1893145673,
+      "inst_score_raw": 12,
+      "inst_score_z": 2.6935
     },
     "PRLD": {
       "elite_holders_count": 2,
@@ -4248,7 +4307,7 @@
       "elite_total_shares": 21033080,
       "elite_total_value_usd_thousands": 60995932,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "PRME": {
       "elite_holders_count": 1,
@@ -4261,7 +4320,7 @@
       "elite_total_shares": 3167175,
       "elite_total_value_usd_thousands": 10990097,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "PRQR": {
       "elite_holders_count": 1,
@@ -4274,7 +4333,7 @@
       "elite_total_shares": 188807,
       "elite_total_value_usd_thousands": 381390,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "PRTA": {
       "elite_holders_count": 2,
@@ -4289,7 +4348,7 @@
       "elite_total_shares": 1417138,
       "elite_total_value_usd_thousands": 15092278,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "PRVA": {
       "elite_holders_count": 1,
@@ -4302,7 +4361,7 @@
       "elite_total_shares": 26000,
       "elite_total_value_usd_thousands": 616460,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "PSNL": {
       "elite_holders_count": 0,
@@ -4311,7 +4370,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "PTCT": {
       "elite_holders_count": 9,
@@ -4340,7 +4399,7 @@
       "elite_total_shares": 11133125,
       "elite_total_value_usd_thousands": 845672174,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "PTGX": {
       "elite_holders_count": 5,
@@ -4361,7 +4420,7 @@
       "elite_total_shares": 6706178,
       "elite_total_value_usd_thousands": 585717587,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "PVLA": {
       "elite_holders_count": 5,
@@ -4382,7 +4441,7 @@
       "elite_total_shares": 2161813,
       "elite_total_value_usd_thousands": 226276966,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "PYXS": {
       "elite_holders_count": 1,
@@ -4395,7 +4454,7 @@
       "elite_total_shares": 1037421,
       "elite_total_value_usd_thousands": 1193034,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "QSI": {
       "elite_holders_count": 0,
@@ -4404,7 +4463,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "QTRX": {
       "elite_holders_count": 0,
@@ -4413,7 +4472,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "QURE": {
       "elite_holders_count": 9,
@@ -4442,7 +4501,7 @@
       "elite_total_shares": 13187694,
       "elite_total_value_usd_thousands": 315581518,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "RANI": {
       "elite_holders_count": 2,
@@ -4457,7 +4516,7 @@
       "elite_total_shares": 17000000,
       "elite_total_value_usd_thousands": 22950000,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "RAPP": {
       "elite_holders_count": 5,
@@ -4478,7 +4537,7 @@
       "elite_total_shares": 7191867,
       "elite_total_value_usd_thousands": 218201245,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "RARE": {
       "elite_holders_count": 8,
@@ -4505,7 +4564,7 @@
       "elite_total_shares": 10053300,
       "elite_total_value_usd_thousands": 227787760,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "RCKT": {
       "elite_holders_count": 4,
@@ -4524,7 +4583,7 @@
       "elite_total_shares": 21735507,
       "elite_total_value_usd_thousands": 76291630,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "RCUS": {
       "elite_holders_count": 6,
@@ -4547,7 +4606,7 @@
       "elite_total_shares": 7842508,
       "elite_total_value_usd_thousands": 186886965,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "REGN": {
       "elite_holders_count": 5,
@@ -4568,7 +4627,7 @@
       "elite_total_shares": 30005,
       "elite_total_value_usd_thousands": 20075566,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "REPL": {
       "elite_holders_count": 6,
@@ -4591,7 +4650,7 @@
       "elite_total_shares": 21271482,
       "elite_total_value_usd_thousands": 206758804,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "RGEN": {
       "elite_holders_count": 4,
@@ -4610,7 +4669,7 @@
       "elite_total_shares": 1432040,
       "elite_total_value_usd_thousands": 234654074,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "RGNX": {
       "elite_holders_count": 1,
@@ -4623,7 +4682,7 @@
       "elite_total_shares": 4368804,
       "elite_total_value_usd_thousands": 62910778,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "RIGL": {
       "elite_holders_count": 1,
@@ -4636,7 +4695,7 @@
       "elite_total_shares": 70000,
       "elite_total_value_usd_thousands": 2998100,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "RLAY": {
       "elite_holders_count": 4,
@@ -4655,7 +4714,7 @@
       "elite_total_shares": 17066936,
       "elite_total_value_usd_thousands": 144386279,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "RNA": {
       "elite_holders_count": 7,
@@ -4680,7 +4739,7 @@
       "elite_total_shares": 17860677,
       "elite_total_value_usd_thousands": 1288290632,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "ROIV": {
       "elite_holders_count": 6,
@@ -4703,7 +4762,7 @@
       "elite_total_shares": 16600064,
       "elite_total_value_usd_thousands": 360221389,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "RPRX": {
       "elite_holders_count": 1,
@@ -4716,20 +4775,20 @@
       "elite_total_shares": 8470,
       "elite_total_value_usd_thousands": 327281,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "RVMD": {
-      "elite_holders_count": 12,
+      "elite_holders_count": 13,
       "elite_holder_names": [
         "Avoro Capital",
         "BVF Inc/IL",
         "Baker Bros",
         "Boxer Capital",
+        "Caligan Partners",
         "Casdin Capital",
         "Deerfield Management",
         "Logos Global",
         "Opaleye Management",
-        "Orbimed Advisors",
         "Rock Springs"
       ],
       "elite_holder_shares": {
@@ -4738,6 +4797,7 @@
         "BVF Inc/IL": 3356782,
         "Baker Bros": 9455357,
         "Boxer Capital": 400000,
+        "Caligan Partners": 1283900,
         "Casdin Capital": 2577333,
         "Deerfield Management": 2894613,
         "Logos Global": 3000000,
@@ -4746,10 +4806,10 @@
         "Rock Springs": 1335270,
         "Tang Capital": 15640
       },
-      "elite_total_shares": 25339306,
-      "elite_total_value_usd_thousands": 2018275722,
-      "inst_score_raw": 12,
-      "inst_score_z": 2.833
+      "elite_total_shares": 26623206,
+      "elite_total_value_usd_thousands": 2120538357,
+      "inst_score_raw": 13,
+      "inst_score_z": 3.012
     },
     "RXRX": {
       "elite_holders_count": 1,
@@ -4762,7 +4822,7 @@
       "elite_total_shares": 165323,
       "elite_total_value_usd_thousands": 676171,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "RYTM": {
       "elite_holders_count": 8,
@@ -4789,22 +4849,24 @@
       "elite_total_shares": 16543915,
       "elite_total_value_usd_thousands": 1770860661,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "SABS": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "Perceptive Advisors",
-        "RA Capital"
+        "RA Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Perceptive Advisors": 803210,
-        "RA Capital": 4401500
+        "RA Capital": 4401500,
+        "Vivo Capital": 11420000
       },
-      "elite_total_shares": 5204710,
-      "elite_total_value_usd_thousands": 19465615,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "elite_total_shares": 16624710,
+      "elite_total_value_usd_thousands": 62176415,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.1732
     },
     "SANA": {
       "elite_holders_count": 2,
@@ -4819,7 +4881,7 @@
       "elite_total_shares": 1010483,
       "elite_total_value_usd_thousands": 4112666,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "SEPN": {
       "elite_holders_count": 7,
@@ -4844,20 +4906,22 @@
       "elite_total_shares": 14213244,
       "elite_total_value_usd_thousands": 396265243,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "SERA": {
-      "elite_holders_count": 1,
+      "elite_holders_count": 2,
       "elite_holder_names": [
-        "Baker Bros"
+        "Baker Bros",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
-        "Baker Bros": 5498170
+        "Baker Bros": 5498170,
+        "Vivo Capital": 1650440
       },
-      "elite_total_shares": 5498170,
-      "elite_total_value_usd_thousands": 16219602,
-      "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "elite_total_shares": 7148610,
+      "elite_total_value_usd_thousands": 21088400,
+      "inst_score_raw": 2,
+      "inst_score_z": -0.4918
     },
     "SGMO": {
       "elite_holders_count": 0,
@@ -4866,7 +4930,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "SGMT": {
       "elite_holders_count": 1,
@@ -4879,7 +4943,7 @@
       "elite_total_shares": 952996,
       "elite_total_value_usd_thousands": 5641736,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "SIGA": {
       "elite_holders_count": 0,
@@ -4888,7 +4952,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "SION": {
       "elite_holders_count": 6,
@@ -4911,7 +4975,7 @@
       "elite_total_shares": 16115817,
       "elite_total_value_usd_thousands": 663004712,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "SKYE": {
       "elite_holders_count": 1,
@@ -4924,7 +4988,7 @@
       "elite_total_shares": 1450638,
       "elite_total_value_usd_thousands": 1087543,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "SLDB": {
       "elite_holders_count": 6,
@@ -4947,24 +5011,26 @@
       "elite_total_shares": 28130798,
       "elite_total_value_usd_thousands": 158657701,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "SLN": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "Great Point",
         "Opaleye Management",
-        "Redmile Group"
+        "Redmile Group",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Great Point": 808032,
         "Opaleye Management": 78926,
-        "Redmile Group": 2164777
+        "Redmile Group": 2164777,
+        "Vivo Capital": 1105454
       },
-      "elite_total_shares": 3051735,
-      "elite_total_value_usd_thousands": 18554549,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 4157189,
+      "elite_total_value_usd_thousands": 25275709,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "SMMT": {
       "elite_holders_count": 3,
@@ -4981,7 +5047,7 @@
       "elite_total_shares": 37180688,
       "elite_total_value_usd_thousands": 650290233,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "SNDX": {
       "elite_holders_count": 2,
@@ -4996,7 +5062,7 @@
       "elite_total_shares": 855707,
       "elite_total_value_usd_thousands": 17978405,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "SNY": {
       "elite_holders_count": 1,
@@ -5009,7 +5075,7 @@
       "elite_total_shares": 323946,
       "elite_total_value_usd_thousands": 15698,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "SPRY": {
       "elite_holders_count": 5,
@@ -5030,7 +5096,7 @@
       "elite_total_shares": 28283102,
       "elite_total_value_usd_thousands": 329498139,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "SRPT": {
       "elite_holders_count": 3,
@@ -5047,7 +5113,7 @@
       "elite_total_shares": 517108,
       "elite_total_value_usd_thousands": 11128164,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "SRRK": {
       "elite_holders_count": 4,
@@ -5066,17 +5132,18 @@
       "elite_total_shares": 13111975,
       "elite_total_value_usd_thousands": 577582499,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "SRZN": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Acuta Capital",
         "Baker Bros",
         "Boxer Capital",
         "Deerfield Management",
         "EcoR1 Capital",
-        "Perceptive Advisors"
+        "Perceptive Advisors",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 178415,
@@ -5084,12 +5151,13 @@
         "Boxer Capital": 482816,
         "Deerfield Management": 166666,
         "EcoR1 Capital": 4444,
-        "Perceptive Advisors": 166666
+        "Perceptive Advisors": 166666,
+        "Vivo Capital": 260000
       },
-      "elite_total_shares": 1832340,
-      "elite_total_value_usd_thousands": 13562269,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "elite_total_shares": 2092340,
+      "elite_total_value_usd_thousands": 19438269,
+      "inst_score_raw": 7,
+      "inst_score_z": 1.1009
     },
     "STOK": {
       "elite_holders_count": 8,
@@ -5116,7 +5184,7 @@
       "elite_total_shares": 18273819,
       "elite_total_value_usd_thousands": 580011015,
       "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "inst_score_z": 1.4194
     },
     "STRO": {
       "elite_holders_count": 0,
@@ -5125,7 +5193,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "STVN": {
       "elite_holders_count": 0,
@@ -5134,7 +5202,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "SUPN": {
       "elite_holders_count": 2,
@@ -5149,7 +5217,7 @@
       "elite_total_shares": 866594,
       "elite_total_value_usd_thousands": 27504403,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "SVRA": {
       "elite_holders_count": 5,
@@ -5170,7 +5238,7 @@
       "elite_total_shares": 39826771,
       "elite_total_value_usd_thousands": 240155429,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "SYRE": {
       "elite_holders_count": 6,
@@ -5193,7 +5261,7 @@
       "elite_total_shares": 12465667,
       "elite_total_value_usd_thousands": 408375251,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "TARA": {
       "elite_holders_count": 1,
@@ -5206,7 +5274,7 @@
       "elite_total_shares": 971614,
       "elite_total_value_usd_thousands": 5178703,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "TARS": {
       "elite_holders_count": 7,
@@ -5231,7 +5299,7 @@
       "elite_total_shares": 8207462,
       "elite_total_value_usd_thousands": 672026989,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "TBPH": {
       "elite_holders_count": 2,
@@ -5246,7 +5314,7 @@
       "elite_total_shares": 560023,
       "elite_total_value_usd_thousands": 10478030,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "TCRX": {
       "elite_holders_count": 3,
@@ -5263,7 +5331,7 @@
       "elite_total_shares": 8056997,
       "elite_total_value_usd_thousands": 8056997,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "TECH": {
       "elite_holders_count": 0,
@@ -5272,7 +5340,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "TECX": {
       "elite_holders_count": 6,
@@ -5295,7 +5363,7 @@
       "elite_total_shares": 2065002,
       "elite_total_value_usd_thousands": 43075941,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "TEM": {
       "elite_holders_count": 3,
@@ -5312,27 +5380,29 @@
       "elite_total_shares": 498627,
       "elite_total_value_usd_thousands": 29443924,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "TENX": {
-      "elite_holders_count": 3,
+      "elite_holders_count": 4,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Perceptive Advisors",
-        "RTW Investments"
+        "RTW Investments",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 339549,
         "Perceptive Advisors": 439142,
-        "RTW Investments": 378346
+        "RTW Investments": 378346,
+        "Vivo Capital": 208333
       },
-      "elite_total_shares": 1157037,
-      "elite_total_value_usd_thousands": 14104281,
-      "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "elite_total_shares": 1365370,
+      "elite_total_value_usd_thousands": 16643860,
+      "inst_score_raw": 4,
+      "inst_score_z": 0.1453
     },
     "TERN": {
-      "elite_holders_count": 8,
+      "elite_holders_count": 9,
       "elite_holder_names": [
         "Acuta Capital",
         "Avoro Capital",
@@ -5341,7 +5411,8 @@
         "Deep Track",
         "Logos Global",
         "Orbimed Advisors",
-        "Rock Springs"
+        "Rock Springs",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 637095,
@@ -5351,12 +5422,13 @@
         "Deep Track": 769048,
         "Logos Global": 750000,
         "Orbimed Advisors": 2153300,
-        "Rock Springs": 108481
+        "Rock Springs": 108481,
+        "Vivo Capital": 5346928
       },
-      "elite_total_shares": 10092924,
-      "elite_total_value_usd_thousands": 407754129,
-      "inst_score_raw": 8,
-      "inst_score_z": 1.5139
+      "elite_total_shares": 15439852,
+      "elite_total_value_usd_thousands": 623770020,
+      "inst_score_raw": 9,
+      "inst_score_z": 1.7379
     },
     "TEVA": {
       "elite_holders_count": 2,
@@ -5371,7 +5443,7 @@
       "elite_total_shares": 462800,
       "elite_total_value_usd_thousands": 14443988,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "TGTX": {
       "elite_holders_count": 1,
@@ -5384,7 +5456,7 @@
       "elite_total_shares": 535000,
       "elite_total_value_usd_thousands": 15948350,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "TKNO": {
       "elite_holders_count": 0,
@@ -5393,38 +5465,40 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "TNGX": {
-      "elite_holders_count": 10,
+      "elite_holders_count": 12,
       "elite_holder_names": [
-        "Acuta Capital",
         "Bain Capital Life",
         "Boxer Capital",
+        "Caligan Partners",
         "Deep Track",
         "Deerfield Management",
         "Logos Global",
         "Perceptive Advisors",
         "RTW Investments",
-        "Rock Springs",
-        "Suvretta Capital"
+        "Suvretta Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Acuta Capital": 282732,
         "Bain Capital Life": 653493,
         "Boxer Capital": 10876219,
+        "Caligan Partners": 3729895,
         "Deep Track": 2454562,
         "Deerfield Management": 2906946,
         "Logos Global": 4200000,
         "Perceptive Advisors": 513035,
         "RTW Investments": 1491228,
         "Rock Springs": 386915,
-        "Suvretta Capital": 2662227
+        "Suvretta Capital": 2662227,
+        "Vivo Capital": 2154780
       },
-      "elite_total_shares": 26427357,
-      "elite_total_value_usd_thousands": 234146383,
-      "inst_score_raw": 10,
-      "inst_score_z": 2.1735
+      "elite_total_shares": 32312032,
+      "elite_total_value_usd_thousands": 286284604,
+      "inst_score_raw": 12,
+      "inst_score_z": 2.6935
     },
     "TNYA": {
       "elite_holders_count": 1,
@@ -5437,7 +5511,7 @@
       "elite_total_shares": 361969,
       "elite_total_value_usd_thousands": 257541,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "TRDA": {
       "elite_holders_count": 1,
@@ -5450,26 +5524,28 @@
       "elite_total_shares": 5072730,
       "elite_total_value_usd_thousands": 52147664,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "TRVI": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "Logos Global",
         "Opaleye Management",
         "Orbimed Advisors",
-        "Sectoral Asset"
+        "Sectoral Asset",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Logos Global": 1550000,
         "Opaleye Management": 345100,
         "Orbimed Advisors": 3190700,
-        "Sectoral Asset": 84255
+        "Sectoral Asset": 84255,
+        "Vivo Capital": 5094668
       },
-      "elite_total_shares": 5170055,
-      "elite_total_value_usd_thousands": 64729089,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 10264723,
+      "elite_total_value_usd_thousands": 128514332,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "TSHA": {
       "elite_holders_count": 9,
@@ -5498,7 +5574,7 @@
       "elite_total_shares": 72476020,
       "elite_total_value_usd_thousands": 398618112,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "TVTX": {
       "elite_holders_count": 4,
@@ -5517,7 +5593,7 @@
       "elite_total_shares": 7299221,
       "elite_total_value_usd_thousands": 278903235,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "TWST": {
       "elite_holders_count": 0,
@@ -5526,7 +5602,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "TXG": {
       "elite_holders_count": 2,
@@ -5541,26 +5617,28 @@
       "elite_total_shares": 1526574,
       "elite_total_value_usd_thousands": 24898422,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "TYRA": {
-      "elite_holders_count": 4,
+      "elite_holders_count": 5,
       "elite_holder_names": [
         "BVF Inc/IL",
         "Baker Bros",
+        "Caligan Partners",
         "Logos Global",
         "RA Capital"
       ],
       "elite_holder_shares": {
         "BVF Inc/IL": 2127665,
         "Baker Bros": 10607,
+        "Caligan Partners": 944257,
         "Logos Global": 210000,
         "RA Capital": 12198625
       },
-      "elite_total_shares": 14546897,
-      "elite_total_value_usd_thousands": 382437922,
-      "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "elite_total_shares": 15491154,
+      "elite_total_value_usd_thousands": 407262439,
+      "inst_score_raw": 5,
+      "inst_score_z": 0.4638
     },
     "UPB": {
       "elite_holders_count": 5,
@@ -5581,7 +5659,7 @@
       "elite_total_shares": 8209180,
       "elite_total_value_usd_thousands": 222879237,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "URGN": {
       "elite_holders_count": 6,
@@ -5604,7 +5682,7 @@
       "elite_total_shares": 6562305,
       "elite_total_value_usd_thousands": 153689184,
       "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "inst_score_z": 0.7823
     },
     "UTHR": {
       "elite_holders_count": 9,
@@ -5633,7 +5711,7 @@
       "elite_total_shares": 3455881,
       "elite_total_value_usd_thousands": 1639445340,
       "inst_score_raw": 9,
-      "inst_score_z": 1.8437
+      "inst_score_z": 1.7379
     },
     "VCEL": {
       "elite_holders_count": 0,
@@ -5642,7 +5720,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "VCYT": {
       "elite_holders_count": 2,
@@ -5657,7 +5735,7 @@
       "elite_total_shares": 1002308,
       "elite_total_value_usd_thousands": 42197167,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "VERA": {
       "elite_holders_count": 7,
@@ -5682,7 +5760,7 @@
       "elite_total_shares": 16522642,
       "elite_total_value_usd_thousands": 836706592,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "VIR": {
       "elite_holders_count": 3,
@@ -5699,7 +5777,7 @@
       "elite_total_shares": 3548254,
       "elite_total_value_usd_thousands": 21395971,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "VKTX": {
       "elite_holders_count": 2,
@@ -5714,7 +5792,7 @@
       "elite_total_shares": 20706170,
       "elite_total_value_usd_thousands": 269156817,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "VNDA": {
       "elite_holders_count": 2,
@@ -5729,7 +5807,7 @@
       "elite_total_shares": 1280388,
       "elite_total_value_usd_thousands": 892411,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "VOR": {
       "elite_holders_count": 0,
@@ -5738,17 +5816,18 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "VRDN": {
-      "elite_holders_count": 6,
+      "elite_holders_count": 7,
       "elite_holder_names": [
         "Avoro Capital",
         "Baker Bros",
         "Deep Track",
         "Perceptive Advisors",
         "Suvretta Capital",
-        "Tang Capital"
+        "Tang Capital",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "Avoro Capital": 1500000,
@@ -5756,12 +5835,13 @@
         "Deep Track": 2524833,
         "Perceptive Advisors": 3042703,
         "Suvretta Capital": 16700,
-        "Tang Capital": 1792626
+        "Tang Capital": 1792626,
+        "Vivo Capital": 982576
       },
-      "elite_total_shares": 10848540,
-      "elite_total_value_usd_thousands": 337606564,
-      "inst_score_raw": 6,
-      "inst_score_z": 0.8543
+      "elite_total_shares": 11831116,
+      "elite_total_value_usd_thousands": 368184329,
+      "inst_score_raw": 7,
+      "inst_score_z": 1.1009
     },
     "VRTX": {
       "elite_holders_count": 3,
@@ -5778,7 +5858,7 @@
       "elite_total_shares": 252599,
       "elite_total_value_usd_thousands": 114518283,
       "inst_score_raw": 3,
-      "inst_score_z": -0.135
+      "inst_score_z": -0.1732
     },
     "VTRS": {
       "elite_holders_count": 0,
@@ -5787,7 +5867,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "VYGR": {
       "elite_holders_count": 2,
@@ -5802,7 +5882,7 @@
       "elite_total_shares": 5199751,
       "elite_total_value_usd_thousands": 20435022,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "WVE": {
       "elite_holders_count": 5,
@@ -5823,18 +5903,18 @@
       "elite_total_shares": 20655254,
       "elite_total_value_usd_thousands": 351139318,
       "inst_score_raw": 5,
-      "inst_score_z": 0.5246
+      "inst_score_z": 0.4638
     },
     "XENE": {
-      "elite_holders_count": 11,
+      "elite_holders_count": 12,
       "elite_holder_names": [
         "Avoro Capital",
         "Baker Bros",
+        "Caligan Partners",
         "Deep Track",
         "Deerfield Management",
         "Foresite Capital IV",
         "Orbimed Advisors",
-        "Palo Alto Investors",
         "Perceptive Advisors",
         "Redmile Group",
         "Rock Springs"
@@ -5842,6 +5922,7 @@
       "elite_holder_shares": {
         "Avoro Capital": 5424444,
         "Baker Bros": 370208,
+        "Caligan Partners": 1099365,
         "Deep Track": 366435,
         "Deerfield Management": 542020,
         "Foresite Capital IV": 160000,
@@ -5852,10 +5933,10 @@
         "Rock Springs": 787788,
         "Sofinnova Investments": 59900
       },
-      "elite_total_shares": 8589187,
-      "elite_total_value_usd_thousands": 384967362,
-      "inst_score_raw": 11,
-      "inst_score_z": 2.5032
+      "elite_total_shares": 9688552,
+      "elite_total_value_usd_thousands": 434240901,
+      "inst_score_raw": 12,
+      "inst_score_z": 2.6935
     },
     "XERS": {
       "elite_holders_count": 1,
@@ -5868,7 +5949,7 @@
       "elite_total_shares": 52230,
       "elite_total_value_usd_thousands": 410006,
       "inst_score_raw": 1,
-      "inst_score_z": -0.7946
+      "inst_score_z": -0.8103
     },
     "XNCR": {
       "elite_holders_count": 4,
@@ -5887,22 +5968,24 @@
       "elite_total_shares": 18331899,
       "elite_total_value_usd_thousands": 280661374,
       "inst_score_raw": 4,
-      "inst_score_z": 0.1948
+      "inst_score_z": 0.1453
     },
     "ZBIO": {
-      "elite_holders_count": 2,
+      "elite_holders_count": 3,
       "elite_holder_names": [
         "EcoR1 Capital",
-        "Rock Springs"
+        "Rock Springs",
+        "Vivo Capital"
       ],
       "elite_holder_shares": {
         "EcoR1 Capital": 789500,
-        "Rock Springs": 502077
+        "Rock Springs": 502077,
+        "Vivo Capital": 853495
       },
-      "elite_total_shares": 1291577,
-      "elite_total_value_usd_thousands": 46897161,
-      "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "elite_total_shares": 2145072,
+      "elite_total_value_usd_thousands": 77887564,
+      "inst_score_raw": 3,
+      "inst_score_z": -0.1732
     },
     "ZLAB": {
       "elite_holders_count": 2,
@@ -5917,7 +6000,7 @@
       "elite_total_shares": 7770578,
       "elite_total_value_usd_thousands": 137072995,
       "inst_score_raw": 2,
-      "inst_score_z": -0.4648
+      "inst_score_z": -0.4918
     },
     "ZVRA": {
       "elite_holders_count": 0,
@@ -5926,7 +6009,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     },
     "ZYME": {
       "elite_holders_count": 7,
@@ -5951,7 +6034,7 @@
       "elite_total_shares": 30886236,
       "elite_total_value_usd_thousands": 813234595,
       "inst_score_raw": 7,
-      "inst_score_z": 1.1841
+      "inst_score_z": 1.1009
     },
     "_XBI_BENCHMARK_": {
       "elite_holders_count": 0,
@@ -5960,7 +6043,7 @@
       "elite_total_shares": 0,
       "elite_total_value_usd_thousands": 0,
       "inst_score_raw": 0,
-      "inst_score_z": -1.1243
+      "inst_score_z": -1.1288
     }
   }
 }
