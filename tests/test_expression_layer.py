@@ -835,6 +835,9 @@ class TestGovernance:
                 belief_strength=0.0,
                 permission_to_express=0.0,
                 mispricing_confidence=0.0,
+                priced_move_pct=None,
+                scenario_ev=0.0,
+                opt_atm_iv=None,
                 overlay_class="INVALID_CLASS",
                 example_structures=(),
                 overlay_rationale="",
@@ -859,6 +862,24 @@ class TestSerialization:
         assert isinstance(d["example_structures"], list)
         assert isinstance(d["gate_failures"], list)
         assert isinstance(d["policy_flags"], list)
+
+    def test_attribution_snapshot_fields(self):
+        """priced_move_pct, scenario_ev, opt_atm_iv are first-class in to_dict."""
+        rec = _full_recommendation(opt_atm_iv=0.85)
+        d = rec.to_dict()
+        assert "priced_move_pct" in d
+        assert "scenario_ev" in d
+        assert "opt_atm_iv" in d
+        assert d["priced_move_pct"] == pytest.approx(25.0, abs=0.01)
+        assert d["scenario_ev"] == pytest.approx(8.0, abs=0.01)
+        assert d["opt_atm_iv"] == pytest.approx(0.85, abs=0.01)
+
+    def test_attribution_snapshot_none(self):
+        """Missing options data → None in snapshot fields, no crash."""
+        rec = _full_recommendation(opt_atm_iv=None, priced_move_pct=None)
+        d = rec.to_dict()
+        assert d["opt_atm_iv"] is None
+        assert d["priced_move_pct"] is None
 
     def test_to_dict_json_serializable(self):
         import json

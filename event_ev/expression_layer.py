@@ -106,6 +106,11 @@ class ExpressionRecommendation:
     example_structures: Tuple[str, ...]  # informational
     overlay_rationale: str
 
+    # Snapshot at recommendation time (for attribution)
+    priced_move_pct: Optional[float]  # options-implied move %
+    scenario_ev: float  # probability-weighted expected move
+    opt_atm_iv: Optional[float]  # ATM IV at recommendation time
+
     # Sizing guidance
     max_premium_pct_nav: float
     sizing_basis: str  # kelly_capped | fixed_notional | no_size
@@ -150,6 +155,9 @@ class ExpressionRecommendation:
             "belief_strength": round(self.belief_strength, 4),
             "permission_to_express": round(self.permission_to_express, 4),
             "mispricing_confidence": round(self.mispricing_confidence, 4),
+            "priced_move_pct": round(self.priced_move_pct, 4) if self.priced_move_pct is not None else None,
+            "scenario_ev": round(self.scenario_ev, 4),
+            "opt_atm_iv": round(self.opt_atm_iv, 4) if self.opt_atm_iv is not None else None,
             "overlay_class": self.overlay_class,
             "example_structures": list(self.example_structures),
             "overlay_rationale": self.overlay_rationale,
@@ -887,6 +895,9 @@ def build_recommendation(
         belief_strength=belief,
         permission_to_express=permission,
         mispricing_confidence=confidence,
+        priced_move_pct=priced_move_pct,
+        scenario_ev=payoff.scenario_ev,
+        opt_atm_iv=opt_atm_iv,
         overlay_class=overlay_class,
         example_structures=tuple(examples),
         overlay_rationale=rationale,
