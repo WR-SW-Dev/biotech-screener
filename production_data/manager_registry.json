@@ -97,10 +97,11 @@
       "style": "venture_crossover"
     },
     {
-      "cik": "0001465837",
-      "name": "Boxer Capital",
+      "cik": "0002018299",
+      "name": "Boxer Capital Management",
       "aum_b": 1.4,
-      "style": "oncology_focused"
+      "style": "oncology_focused",
+      "notes": "CIK updated 2026-04-13. Was 0001465837 (Boxer Capital LLC — shell, 1 holding). Migrated to Management LLC (CIK 0002018299) starting Q4 2024."
     },
     {
       "cik": "0001587114",
