@@ -169,11 +169,11 @@
       "style": "binary_catalyst_biotech"
     },
     {
-      "cik": "0001079114",
-      "name": "BVF Partners",
+      "cik": "0001056807",
+      "name": "BVF Inc/IL",
       "aum_b": 3.0,
       "style": "biotech_specialist",
-      "notes": "Last filing Q4 2023 \u2014 stale. Monitor for Q1 2026 filing."
+      "notes": "CIK corrected 2026-04-13. Was 0001079114 (Greenlight Capital — wrong entity). Correct entity: BVF Inc/IL, Mark Lampert, pure biotech."
     },
     {
       "cik": "0001633313",
