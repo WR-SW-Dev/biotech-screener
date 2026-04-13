@@ -37,6 +37,23 @@ DEFAULT_SKIP_PARTICIPATION_PCT = 0.20  # skip trade entirely if > 20% ADV
 # ═════════════════════════════════════════════════════════════════════════
 
 
+def _zscore_within(vals: Dict[str, float]) -> Dict[str, float]:
+    """Z-score values within a cohort. Returns {key: z}."""
+    if len(vals) < 2:
+        return {k: 0.0 for k in vals}
+    vs = list(vals.values())
+    mean = sum(vs) / len(vs)
+    variance = sum((v - mean) ** 2 for v in vs) / len(vs)
+    std = math.sqrt(variance) if variance > 0 else 1.0
+    return {k: (v - mean) / std for k, v in vals.items()}
+
+
+# Spec 057: CQ conviction tilt defaults
+DEFAULT_CQ_TILT_STRENGTH = 0.0  # disabled by default (0 = no tilt)
+DEFAULT_CQ_TILT_CAP = 0.20  # max ±20% weight adjustment
+DEFAULT_CQ_COINVEST_GATE = 0.5  # only tilt names with b6 above median
+
+
 def compute_weights(
     tickers: List[str],
     b6_scores: Dict[str, float],
@@ -47,6 +64,10 @@ def compute_weights(
     max_single_pct: float = DEFAULT_MAX_SINGLE_PCT,
     min_weight_pct: float = DEFAULT_MIN_WEIGHT_PCT,
     liquidity_k: float = DEFAULT_LIQUIDITY_K,
+    cq_scores: Optional[Dict[str, float]] = None,
+    cq_tilt_strength: float = DEFAULT_CQ_TILT_STRENGTH,
+    cq_tilt_cap: float = DEFAULT_CQ_TILT_CAP,
+    cq_coinvest_gate: float = DEFAULT_CQ_COINVEST_GATE,
 ) -> Dict[str, float]:
     """Compute conviction-weighted, liquidity-capped portfolio weights.
 
@@ -60,6 +81,10 @@ def compute_weights(
         max_single_pct: max single-name weight
         min_weight_pct: minimum position threshold
         liquidity_k: fraction of dollar volume as max position
+        cq_scores: {ticker: clinical_quality_score} [-1, +1] (optional, Spec 057)
+        cq_tilt_strength: inverse CQ tilt multiplier (0 = disabled, 0.15 = recommended)
+        cq_tilt_cap: max absolute tilt (±20% default)
+        cq_coinvest_gate: only tilt names with b6 >= this percentile
 
     Returns:
         {ticker: weight} normalized to sum=1.0
@@ -82,6 +107,36 @@ def compute_weights(
             for t in tickers:
                 trap_norm = (trap_scores.get(t, 0) - trap_min) / trap_range
                 raw_weights[t] *= 0.5 + 0.5 * trap_norm
+
+    # Step 2.5: Clinical quality conviction tilt (Spec 057, opt-in)
+    # Inverse tilt: low CQ + high coinvest → upweight (mispricing signal)
+    # Gate: only apply to names above coinvest_gate percentile
+    if cq_scores and cq_tilt_strength > 0:
+        # Z-score CQ within this cohort for cross-sectional fairness
+        cohort_cq = {t: cq_scores[t] for t in tickers if t in cq_scores}
+        if len(cohort_cq) >= 5:
+            cq_z = _zscore_within(cohort_cq)
+            n_tilted = 0
+            for t in tickers:
+                b6 = b6_scores.get(t, 0)
+                if b6 < cq_coinvest_gate:
+                    continue  # only tilt high-conviction names
+                z = cq_z.get(t)
+                if z is None:
+                    continue
+                # Inverse tilt: negative CQ-z → positive boost
+                tilt = cq_tilt_strength * (-z)
+                tilt = max(-cq_tilt_cap, min(cq_tilt_cap, tilt))
+                raw_weights[t] *= 1.0 + tilt
+                n_tilted += 1
+            if n_tilted > 0:
+                logger.debug(
+                    "CQ tilt: %d/%d names tilted (strength=%.2f, cap=%.2f)",
+                    n_tilted,
+                    len(tickers),
+                    cq_tilt_strength,
+                    cq_tilt_cap,
+                )
 
     # Step 3: Liquidity cap
     if dollar_volumes:

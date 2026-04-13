@@ -501,9 +501,7 @@ class DecisionRuleset:
         # Validate event_ev_stage (Spec 061)
         _valid_ev_stages = ("off", "tiebreaker", "rank_overlay", "sizing_overlay", "composite")
         if self.event_ev_stage not in _valid_ev_stages:
-            raise ValueError(
-                f"event_ev_stage must be one of {_valid_ev_stages}, " f"got '{self.event_ev_stage}'"
-            )
+            raise ValueError(f"event_ev_stage must be one of {_valid_ev_stages}, " f"got '{self.event_ev_stage}'")
         if not (0.0 <= self.event_ev_rank_overlay_weight <= 1.0):
             raise ValueError(
                 f"event_ev_rank_overlay_weight must be in [0.0, 1.0], " f"got {self.event_ev_rank_overlay_weight}"
@@ -527,9 +525,7 @@ class DecisionRuleset:
                     f"expected one of {sorted(_valid_ev_buckets)}"
                 )
             if mult <= 0:
-                raise ValueError(
-                    f"event_ev_sizing_tilt_mults: mult must be > 0, got {mult} for '{bucket}'"
-                )
+                raise ValueError(f"event_ev_sizing_tilt_mults: mult must be > 0, got {mult} for '{bucket}'")
 
     @property
     def sizing_weights_dict(self) -> Dict[str, float]:
@@ -2507,6 +2503,14 @@ DECISION_COLUMNS = [
     "event_ev_score_z",
     "event_ev_bucket",
     "event_ev_analog_confidence",
+    # --- Spec 057: Clinical Quality Score (monitor-only, populated by run_screen.py) ---
+    "clinical_quality_score",
+    "clinical_quality_confidence",
+    "endpoint_strength_tier",
+    "design_rigor_tier",
+    "prior_evidence_tier",
+    "mechanism_maturity_tier",
+    "clinical_quality_notes",
 ]
 
 
@@ -2671,6 +2675,15 @@ def compute_decision_fields(
     fields["event_ev_score_z"] = ""
     fields["event_ev_bucket"] = ""
     fields["event_ev_analog_confidence"] = ""
+
+    # Spec 057: Clinical Quality Score placeholders (populated later by run_screen.py)
+    fields["clinical_quality_score"] = ""
+    fields["clinical_quality_confidence"] = ""
+    fields["endpoint_strength_tier"] = ""
+    fields["design_rigor_tier"] = ""
+    fields["prior_evidence_tier"] = ""
+    fields["mechanism_maturity_tier"] = ""
+    fields["clinical_quality_notes"] = ""
 
     return fields
 

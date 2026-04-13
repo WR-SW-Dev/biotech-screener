@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Expression Overlay — Policy Control Tower</title>
+<style>
+:root { --bg: #0d1117; --card: #161b22; --border: #30363d; --text: #e6edf3; --muted: #8b949e; --green: #3fb950; --red: #f85149; --yellow: #d29922; --blue: #58a6ff; --purple: #bc8cff; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, 'Segoe UI', Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); line-height: 1.5; padding: 16px; }
+h1 { font-size: 1.4em; margin-bottom: 8px; }
+h2 { font-size: 1.1em; margin: 16px 0 8px; color: var(--blue); border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+h3 { font-size: 0.95em; margin: 8px 0 4px; color: var(--muted); }
+a { color: var(--blue); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.header select { background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+.stat { display: inline-block; margin-right: 16px; margin-bottom: 4px; }
+.stat-label { font-size: 0.75em; color: var(--muted); text-transform: uppercase; }
+.stat-value { font-size: 1.3em; font-weight: 600; }
+.pos { color: var(--green); } .neg { color: var(--red); } .warn { color: var(--yellow); }
+table { width: 100%; border-collapse: collapse; font-size: 0.82em; margin-top: 4px; }
+th { text-align: left; color: var(--muted); font-weight: 500; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+td { padding: 3px 6px; border-bottom: 1px solid #21262d; }
+tr:hover { background: #1c2128; }
+.badge { display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 0.75em; font-weight: 600; }
+.badge-green { background: #238636; color: #fff; }
+.badge-blue { background: #1f6feb; color: #fff; }
+.badge-yellow { background: #9e6a03; color: #fff; }
+.badge-red { background: #da3633; color: #fff; }
+.badge-gray { background: #30363d; color: #8b949e; }
+.badge-purple { background: #8957e5; color: #fff; }
+.ks-green { color: var(--green); font-weight: 600; }
+.ks-red { color: var(--red); font-weight: 600; }
+.empty-state { color: var(--muted); font-style: italic; padding: 24px; text-align: center; }
+#loading { color: var(--muted); padding: 40px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="header">
+  <div>
+    <h1>Expression Overlay</h1>
+    <span style="color:var(--muted);font-size:0.85em"><a href="/">Control Tower</a> / Expression Overlay (Spec 062)</span>
+  </div>
+  <div>
+    <select id="dateSelect"></select>
+  </div>
+</div>
+
+<div id="loading">Loading...</div>
+<div id="content" style="display:none">
+
+<!-- Kill Switch Status -->
+<div class="card" id="ks-card">
+  <h2>Kill Switch Status</h2>
+  <div id="ks-body"></div>
+</div>
+
+<!-- Summary Stats -->
+<div class="grid" style="margin-top:12px">
+  <div class="card">
+    <h3>Snapshot Summary</h3>
+    <div id="summary-stats"></div>
+  </div>
+  <div class="card">
+    <h3>Decision Breakdown</h3>
+    <div id="decision-counts"></div>
+  </div>
+  <div class="card">
+    <h3>Attribution (cumulative)</h3>
+    <div id="attr-stats"></div>
+  </div>
+</div>
+
+<!-- Recommendations Table -->
+<h2>Tradeable Recommendations</h2>
+<div class="card">
+  <table id="recs-table">
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Type</th>
+        <th>Overlay Class</th>
+        <th>Belief</th>
+        <th>Permission</th>
+        <th>Confidence</th>
+        <th>Surface</th>
+        <th>Sizing</th>
+        <th>Exec Risk</th>
+        <th>Rationale</th>
+      </tr>
+    </thead>
+    <tbody id="recs-body"></tbody>
+  </table>
+  <div id="recs-empty" class="empty-state" style="display:none">No tradeable recommendations for this date.</div>
+</div>
+
+<!-- By-Type Scoreboard -->
+<h2>Attribution by Type</h2>
+<div class="card">
+  <table id="type-table">
+    <thead>
+      <tr><th>Type</th><th>N</th><th>Win Rate</th><th>Mean PnL</th><th>Status</th></tr>
+    </thead>
+    <tbody id="type-body"></tbody>
+  </table>
+  <div id="type-empty" class="empty-state" style="display:none">No resolved attributions yet.</div>
+</div>
+
+<!-- Decision Log -->
+<h2>All Decisions (this date)</h2>
+<div class="card">
+  <table id="dec-table">
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Decision</th>
+        <th>Type</th>
+        <th>Class</th>
+        <th>Belief</th>
+        <th>Permission</th>
+        <th>Surface</th>
+        <th>Gate Failures</th>
+      </tr>
+    </thead>
+    <tbody id="dec-body"></tbody>
+  </table>
+  <div id="dec-empty" class="empty-state" style="display:none">No decisions logged for this date.</div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function badge(text, cls) { return `<span class="badge badge-${cls}">${text}</span>`; }
+
+function classBadge(oc) {
+  const map = {
+    'DIRECTIONAL_DEBIT': 'blue', 'VARIANCE_DEBIT': 'purple',
+    'DEFINED_RISK_CREDIT': 'yellow', 'TIMING_CALENDAR': 'green',
+    'MANUAL_REVIEW': 'yellow', 'NO_TRADE': 'gray'
+  };
+  return badge(oc, map[oc] || 'gray');
+}
+
+function decisionBadge(d) {
+  const map = { 'tradeable': 'green', 'rejected': 'gray', 'kill_switched': 'red', 'demoted': 'yellow' };
+  return badge(d, map[d] || 'gray');
+}
+
+function pct(v, digits=1) { return v != null ? (v * 100).toFixed(digits) + '%' : '-'; }
+function num(v, digits=2) { return v != null ? v.toFixed(digits) : '-'; }
+
+async function loadDates() {
+  const resp = await fetch('/api/dates');
+  const data = await resp.json();
+  const sel = $('#dateSelect');
+  (data.dates || []).forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d; opt.textContent = d;
+    sel.appendChild(opt);
+  });
+  sel.addEventListener('change', () => loadAll(sel.value));
+  if (data.dates && data.dates.length) loadAll(data.dates[0]);
+}
+
+async function loadAll(date) {
+  $('#loading').style.display = 'block';
+  $('#content').style.display = 'none';
+
+  const [overlay, attr, decisions] = await Promise.all([
+    fetch(`/api/expression_overlay/${date}`).then(r => r.json()),
+    fetch('/api/expression_overlay/attribution/metrics').then(r => r.json()),
+    fetch(`/api/expression_overlay/decisions/${date}`).then(r => r.json()),
+  ]);
+
+  renderKillSwitch(attr.kill_switch || {});
+  renderSummary(overlay.summary || {}, date);
+  renderDecisionCounts(decisions);
+  renderAttribution(attr);
+  renderRecommendations(overlay.recommendations || []);
+  renderTypeScoreboard(attr.by_type || {}, attr.kill_switch || {});
+  renderDecisions(decisions.decisions || []);
+
+  $('#loading').style.display = 'none';
+  $('#content').style.display = 'block';
+}
+
+function renderKillSwitch(ks) {
+  const body = $('#ks-body');
+  if (!ks || ks.evaluation_status === 'no_data') {
+    body.innerHTML = '<div class="empty-state">No attribution data yet. Kill switches inactive.</div>';
+    return;
+  }
+  const overlayOk = ks.overlay_enabled !== false;
+  const sizingOk = ks.sizing_enabled !== false;
+  const disabled = (ks.disabled_types || []);
+  const rules = (ks.triggered_rules || []);
+
+  let html = '<div style="display:flex;gap:24px;flex-wrap:wrap">';
+  html += `<div class="stat"><div class="stat-label">Overlay</div><div class="stat-value ${overlayOk ? 'ks-green' : 'ks-red'}">${overlayOk ? 'ENABLED' : 'DISABLED'}</div></div>`;
+  html += `<div class="stat"><div class="stat-label">Sizing</div><div class="stat-value ${sizingOk ? 'ks-green' : 'ks-red'}">${sizingOk ? 'ENABLED' : 'DISABLED'}</div></div>`;
+  html += `<div class="stat"><div class="stat-label">Status</div><div class="stat-value">${ks.evaluation_status || '-'}</div></div>`;
+  html += '</div>';
+
+  if (disabled.length) {
+    html += `<div style="margin-top:8px;color:var(--red)">Disabled types: ${disabled.join(', ')}</div>`;
+  }
+  if (rules.length) {
+    html += '<div style="margin-top:4px;font-size:0.85em;color:var(--muted)">';
+    rules.forEach(r => { html += `<div>- ${r}</div>`; });
+    html += '</div>';
+  }
+  body.innerHTML = html;
+}
+
+function renderSummary(summary, date) {
+  const el = $('#summary-stats');
+  if (!summary || !summary.counts) {
+    el.innerHTML = `<div class="empty-state">No overlay data for ${date}.</div>`;
+    return;
+  }
+  const c = summary.counts || {};
+  el.innerHTML = `
+    <div class="stat"><div class="stat-label">Evaluated</div><div class="stat-value">${c.total || 0}</div></div>
+    <div class="stat"><div class="stat-label">Tradeable</div><div class="stat-value pos">${c.tradeable || 0}</div></div>
+    <div class="stat"><div class="stat-label">Rejected</div><div class="stat-value">${c.rejected || 0}</div></div>
+    <div class="stat"><div class="stat-label">Kill-Switched</div><div class="stat-value ${(c.kill_switched || 0) > 0 ? 'neg' : ''}">${c.kill_switched || 0}</div></div>
+  `;
+}
+
+function renderDecisionCounts(data) {
+  const el = $('#decision-counts');
+  if (!data || !data.counts) {
+    el.innerHTML = '<div class="empty-state">No decisions for this date.</div>';
+    return;
+  }
+  const c = data.counts;
+  let html = '';
+  for (const [k, v] of Object.entries(c)) {
+    html += `<div class="stat"><div class="stat-label">${k}</div><div class="stat-value">${v}</div></div>`;
+  }
+  html += `<div class="stat"><div class="stat-label">Total</div><div class="stat-value">${data.n || 0}</div></div>`;
+  el.innerHTML = html;
+}
+
+function renderAttribution(attr) {
+  const el = $('#attr-stats');
+  const agg = attr.aggregate || {};
+  if (!agg.n_resolved && !agg.n_pending) {
+    el.innerHTML = '<div class="empty-state">No attribution records yet.</div>';
+    return;
+  }
+  el.innerHTML = `
+    <div class="stat"><div class="stat-label">Resolved</div><div class="stat-value">${agg.n_resolved || 0}</div></div>
+    <div class="stat"><div class="stat-label">Pending</div><div class="stat-value">${agg.n_pending || 0}</div></div>
+    <div class="stat"><div class="stat-label">Win Rate</div><div class="stat-value ${(agg.win_rate||0) >= 0.5 ? 'pos' : (agg.win_rate||0) < 0.4 ? 'neg' : ''}">${pct(agg.win_rate)}</div></div>
+    <div class="stat"><div class="stat-label">Mean PnL</div><div class="stat-value ${(agg.mean_pnl||0) > 0 ? 'pos' : 'neg'}">${num(agg.mean_pnl)}</div></div>
+  `;
+}
+
+function renderRecommendations(recs) {
+  const body = $('#recs-body');
+  const empty = $('#recs-empty');
+  const tradeable = recs.filter(r => r.is_tradeable);
+  if (!tradeable.length) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  body.innerHTML = tradeable.map(r => `<tr>
+    <td><strong>${r.ticker}</strong></td>
+    <td>${badge(r.mispricing_subtype || r.mispricing_type, 'blue')}</td>
+    <td>${classBadge(r.overlay_class)}</td>
+    <td>${num(r.belief_strength, 2)}</td>
+    <td>${num(r.permission_to_express, 2)}</td>
+    <td>${num(r.mispricing_confidence, 2)}</td>
+    <td>${num(r.surface_quality_score, 0)}</td>
+    <td>${r.max_premium_pct_nav > 0 ? num(r.max_premium_pct_nav, 2) + '% NAV' : badge('no_size', 'gray')}</td>
+    <td>${badge(r.execution_risk, r.execution_risk === 'high' ? 'red' : r.execution_risk === 'moderate' ? 'yellow' : 'green')}</td>
+    <td style="max-width:260px;font-size:0.78em;color:var(--muted)">${r.overlay_rationale || ''}</td>
+  </tr>`).join('');
+}
+
+function renderTypeScoreboard(byType, ks) {
+  const body = $('#type-body');
+  const empty = $('#type-empty');
+  const entries = Object.entries(byType);
+  if (!entries.length) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const disabled = new Set(ks.disabled_types || []);
+  body.innerHTML = entries.map(([mt, d]) => {
+    const dis = disabled.has(mt);
+    const wrClass = d.win_rate != null ? (d.win_rate >= 0.5 ? 'pos' : d.win_rate < 0.3 ? 'neg' : 'warn') : '';
+    return `<tr>
+      <td>${mt}</td>
+      <td>${d.n || 0}</td>
+      <td class="${wrClass}">${pct(d.win_rate)}</td>
+      <td class="${(d.mean_pnl||0) > 0 ? 'pos' : 'neg'}">${num(d.mean_pnl)}</td>
+      <td>${dis ? badge('DISABLED', 'red') : badge('active', 'green')}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderDecisions(decs) {
+  const body = $('#dec-body');
+  const empty = $('#dec-empty');
+  if (!decs.length) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  body.innerHTML = decs.map(d => `<tr>
+    <td><strong>${d.ticker}</strong></td>
+    <td>${decisionBadge(d.decision)}</td>
+    <td>${d.mispricing_type || '-'}</td>
+    <td>${classBadge(d.overlay_class || 'NO_TRADE')}</td>
+    <td>${num(d.belief_strength, 2)}</td>
+    <td>${num(d.permission_to_express, 2)}</td>
+    <td>${num(d.surface_quality_score, 0)}</td>
+    <td style="font-size:0.78em;color:var(--muted)">${(d.gate_failures || []).join(', ') || '-'}</td>
+  </tr>`).join('');
+}
+
+loadDates();
+</script>
+</body>
+</html>

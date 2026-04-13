@@ -270,6 +270,33 @@ def qa_checks(df: pd.DataFrame) -> Dict[str, Any]:
                 }
             )
 
+    # Degenerate signal detection — critical scoring inputs that are all-zero
+    # indicate stale or missing upstream data (e.g. 13F not loaded)
+    _CRITICAL_SIGNALS = [
+        ("inst_delta_z", "13F institutional delta — likely stale/missing 13F data"),
+        ("coinvest_score_z", "coinvest conviction — likely stale/missing 13F data"),
+        ("catalyst_decay_w", "catalyst decay — likely stale catalyst data"),
+    ]
+    for col, explanation in _CRITICAL_SIGNALS:
+        if col not in df.columns:
+            continue
+        num = _to_numeric(df[col]).dropna()
+        if len(num) < 10:
+            continue
+        n_zero = (num == 0).sum()
+        zero_pct = n_zero / len(num) * 100
+        if zero_pct >= 80:
+            issues.append(
+                {
+                    "check": "degenerate_signal",
+                    "severity": "error",
+                    "detail": (
+                        f"Column '{col}' is {zero_pct:.0f}% zeros ({n_zero}/{len(num)}). "
+                        f"{explanation}. Rankings may be unreliable."
+                    ),
+                }
+            )
+
     return {
         "n_issues": len(issues),
         "issues": issues,

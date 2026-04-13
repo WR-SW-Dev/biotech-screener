@@ -1349,6 +1349,132 @@ async def api_event_ev_history(limit: int = 30):
     return {"snapshots": snapshots}
 
 
+# ============================================================================
+# Expression Overlay (Spec 062)
+# ============================================================================
+
+
+@app.get("/api/expression_overlay/{date}")
+async def api_expression_overlay(date: str):
+    """Expression overlay summary + tradeable recommendations for a snapshot date."""
+    snap_dir = REPO_ROOT / "data" / "snapshots" / date
+    summary = _load_json(snap_dir / "expression_overlay_summary.json")
+    recs = _load_json(snap_dir / "expression_recommendations.json")
+
+    if not summary and not recs:
+        return {"error": f"No expression overlay data for {date}", "as_of_date": date}
+
+    return {
+        "as_of_date": date,
+        "summary": summary or {},
+        "recommendations": recs if isinstance(recs, list) else (recs or {}).get("recommendations", []),
+    }
+
+
+@app.get("/api/expression_overlay/attribution/metrics")
+async def api_expression_attribution_metrics():
+    """Attribution metrics from resolved records + kill-switch status."""
+    attr_path = REPO_ROOT / "data" / "expression_attribution_log.jsonl"
+    records = _load_jsonl(attr_path)
+
+    if not records:
+        return {
+            "n_total": 0,
+            "n_resolved": 0,
+            "kill_switch": {
+                "overlay_enabled": True,
+                "sizing_enabled": True,
+                "disabled_types": [],
+                "triggered_rules": [],
+                "evaluation_status": "no_data",
+            },
+            "metrics": {},
+        }
+
+    resolved = [r for r in records if r.get("attribution_status") == "resolved"]
+    pending = [r for r in records if r.get("attribution_status") == "pending"]
+
+    # Compute metrics inline (avoid importing expression_attribution to keep dashboard lightweight)
+    pnls = [r["pnl_estimate"] for r in resolved if r.get("pnl_estimate") is not None]
+    wins = [p for p in pnls if p > 0]
+
+    aggregate = {
+        "n_resolved": len(resolved),
+        "n_pending": len(pending),
+        "n_with_pnl": len(pnls),
+        "win_rate": round(len(wins) / len(pnls), 4) if pnls else None,
+        "mean_pnl": round(sum(pnls) / len(pnls), 4) if pnls else None,
+    }
+
+    # By type
+    by_type = {}
+    for r in resolved:
+        mt = r.get("mispricing_type", "UNKNOWN")
+        by_type.setdefault(mt, {"pnls": [], "n": 0})
+        by_type[mt]["n"] += 1
+        if r.get("pnl_estimate") is not None:
+            by_type[mt]["pnls"].append(r["pnl_estimate"])
+    for mt in by_type:
+        pl = by_type[mt]["pnls"]
+        w = [p for p in pl if p > 0]
+        by_type[mt] = {
+            "n": by_type[mt]["n"],
+            "win_rate": round(len(w) / len(pl), 4) if pl else None,
+            "mean_pnl": round(sum(pl) / len(pl), 4) if pl else None,
+        }
+
+    # Kill-switch evaluation (simplified — full version in expression_attribution.py)
+    ks = {
+        "overlay_enabled": True,
+        "sizing_enabled": True,
+        "disabled_types": [],
+        "triggered_rules": [],
+        "evaluation_status": "insufficient_data" if len(resolved) < 20 else "evaluated",
+    }
+    if len(resolved) >= 20 and pnls:
+        wr = len(wins) / len(pnls) if pnls else 1.0
+        if wr < 0.40:
+            ks["overlay_enabled"] = False
+            ks["triggered_rules"].append(f"aggregate_win_rate={wr:.2%}")
+        for mt, data in by_type.items():
+            if data.get("n", 0) >= 5 and data.get("win_rate") is not None:
+                if data["win_rate"] < 0.30:
+                    ks["disabled_types"].append(mt)
+                    ks["triggered_rules"].append(f"{mt}_win_rate={data['win_rate']:.2%}")
+
+    return {
+        "n_total": len(records),
+        "aggregate": aggregate,
+        "by_type": by_type,
+        "kill_switch": ks,
+    }
+
+
+@app.get("/api/expression_overlay/decisions/{date}")
+async def api_expression_decisions(date: str):
+    """Decision log entries for a specific date — all evaluated names."""
+    dec_path = REPO_ROOT / "data" / "expression_decision_log.jsonl"
+    all_records = _load_jsonl(dec_path)
+    day_records = [r for r in all_records if r.get("as_of_date") == date]
+    if not day_records:
+        return {"as_of_date": date, "decisions": [], "n": 0}
+
+    # Summary counts
+    counts = Counter(r.get("decision", "unknown") for r in day_records)
+    return {
+        "as_of_date": date,
+        "n": len(day_records),
+        "counts": dict(counts),
+        "decisions": day_records,
+    }
+
+
+@app.get("/expression", response_class=HTMLResponse)
+async def expression_dashboard(request: Request):
+    """Expression overlay dashboard page."""
+    return templates.TemplateResponse("expression.html", {"request": request})
+
+
 if __name__ == "__main__":
     import argparse
 

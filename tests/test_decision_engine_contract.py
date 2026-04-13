@@ -1129,7 +1129,7 @@ class TestGoldenOutputFingerprint:
       4. Bump VERSION in decision_engine.py if the change is material
     """
 
-    EXPECTED_FINGERPRINT = "d9cd64b3a321"  # pragma: allowlist secret
+    EXPECTED_FINGERPRINT = "7e8f3d4f7419"  # pragma: allowlist secret
 
     def test_golden_output_fingerprint_pinned(self):
         actual = _compute_golden_output_fingerprint()

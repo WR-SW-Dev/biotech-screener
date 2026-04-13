@@ -304,7 +304,7 @@ def cmd_report_daily(args: argparse.Namespace) -> None:
         prior_path = prior_dir / "rankings.csv"
         if prior_path.exists():
             df_prior = load_file(prior_path)
-            comp = compare_snapshots(df, df_prior, n=30)
+            comp = compare_snapshots(df_prior, df, n=30)
             comp_section = comparison_report(comp)
 
             try:

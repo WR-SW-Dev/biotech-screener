@@ -4033,6 +4033,34 @@ def save_validation_snapshot(
 
         logger.info(f"  Calendar Alpha v2: {_ccav2_count} tickers scored")
 
+    # --- Clinical Quality Score (Spec 057, monitor-only) ---
+    if trial_records:
+        from common.clinical_quality_score import compute_clinical_quality_scores
+
+        _cq_results = compute_clinical_quality_scores(trial_records, as_of_date)
+        _cq_count = 0
+        for row in csv_rows:
+            tk = row.get("ticker", "").upper()
+            cq = _cq_results.get(tk)
+            if cq:
+                row["clinical_quality_score"] = cq.clinical_quality_score
+                row["clinical_quality_confidence"] = cq.clinical_quality_confidence
+                row["endpoint_strength_tier"] = cq.endpoint_strength_tier
+                row["design_rigor_tier"] = cq.design_rigor_tier
+                row["prior_evidence_tier"] = cq.prior_evidence_tier
+                row["mechanism_maturity_tier"] = cq.mechanism_maturity_tier
+                row["clinical_quality_notes"] = cq.notes
+                _cq_count += 1
+            else:
+                row["clinical_quality_score"] = ""
+                row["clinical_quality_confidence"] = ""
+                row["endpoint_strength_tier"] = ""
+                row["design_rigor_tier"] = ""
+                row["prior_evidence_tier"] = ""
+                row["mechanism_maturity_tier"] = ""
+                row["clinical_quality_notes"] = ""
+        logger.info(f"  Clinical Quality Score: {_cq_count} tickers scored (monitor-only)")
+
     # --- Compute commercial_quality_pct (percentile within commercial cohort) ---
     _CQ_WEIGHTS = {"financial": 0.45, "valuation": 0.35, "momentum": 0.20}
 
@@ -5972,7 +6000,25 @@ def save_validation_snapshot(
                 )[:30]
 
                 if len(_ranked) >= 10 and _b6_map and _trap_map:
-                    _weights = compute_weights(_ranked, _b6_map, _trap_map, alpha=1.5)
+                    # Spec 057: Build CQ score map for conviction tilt (shadow, disabled by default)
+                    _cq_map = {}
+                    for _row in csv_rows:
+                        _t = _row.get("ticker", "")
+                        _cq = _row.get("clinical_quality_score")
+                        if _t and _cq is not None and _cq != "":
+                            try:
+                                _cq_map[_t] = float(_cq)
+                            except (ValueError, TypeError):
+                                pass
+
+                    _weights = compute_weights(
+                        _ranked,
+                        _b6_map,
+                        _trap_map,
+                        alpha=1.5,
+                        cq_scores=_cq_map if _cq_map else None,
+                        cq_tilt_strength=0.0,  # disabled — set to 0.15 to activate
+                    )
                     _positions = [
                         {"ticker": _t, "weight": _weights.get(_t, 0)} for _t in _ranked if _weights.get(_t, 0) > 0
                     ]
@@ -6896,12 +6942,18 @@ def save_validation_snapshot(
 
             _node_id = f"{_tk}_{as_of_date}"
 
+            # Compute expected_date from catalyst_days + as_of_date
+            from datetime import date as _date_cls
+            from datetime import timedelta as _td_cls
+
+            _expected_date = str(_date_cls.fromisoformat(as_of_date) + _td_cls(days=_cd))
+
             _node = _CN(
                 ticker=_tk,
                 event_family=str(_row.get("catalyst_family", "CLINICAL")).upper(),
                 event_type=str(_row.get("catalyst_event_type", "")),
                 event_subtype="",
-                expected_date=_row.get("next_catalyst_date", as_of_date),
+                expected_date=_expected_date,
                 date_range_start=None,
                 date_range_end=None,
                 date_precision=_row.get("catalyst_date_precision", "MONTH"),
@@ -6933,7 +6985,11 @@ def save_validation_snapshot(
                 continue  # p_hit + p_miss + p_mixed != 1.0
 
             _pm_pct = _safe_float(_row.get("priced_move_pct"))
-            _misprice = _safe_float(_row.get("mispricing_score"), default=0.0)
+            # mispricing_score: prefer dedicated field, fall back to
+            # conditional_misprice_score from EES (both measure model-vs-market gap)
+            _misprice = _safe_float(_row.get("mispricing_score"))
+            if _misprice is None or _misprice == 0.0:
+                _misprice = _safe_float(_row.get("conditional_misprice_score"), default=0.0)
 
             _crowd = _CB(
                 node_id=_node_id,
@@ -6945,7 +7001,21 @@ def save_validation_snapshot(
                 mispricing_score=_misprice,
             )
 
-            _sev = _safe_float(_row.get("scenario_ev"), default=0.0)
+            # scenario_ev: prefer dedicated field, fall back to EES-derived estimate.
+            # When payoff engine is not in the production pipeline, derive from
+            # priced_move_pct * mispricing direction (gives a rough EV proxy).
+            _sev = _safe_float(_row.get("scenario_ev"))
+            if _sev is None or _sev == 0.0:
+                _up_est = _safe_float(_row.get("upside_hit"))
+                _dn_est = _safe_float(_row.get("downside_miss"))
+                if _up_est is not None and _dn_est is not None:
+                    _sev = round(_p_hit * _up_est + _p_miss * _dn_est + _p_mixed * 0.0, 4)
+                elif _pm_pct is not None and _pm_pct > 0 and _misprice != 0:
+                    # Crude proxy: priced_move_pct * mispricing_direction * scaling
+                    # If model says P(HIT) > market (misprice > 0), EV is positive
+                    _sev = round(_pm_pct * 100.0 * _misprice * 0.5, 4)
+                else:
+                    _sev = round(_p_hit * 20.0 + _p_miss * (-20.0), 4)
             _up = _safe_float(_row.get("upside_hit"), default=20.0)
             _down = _safe_float(_row.get("downside_miss"), default=-20.0)
             _asym = abs(_up / _down) if _down != 0 else 1.0
