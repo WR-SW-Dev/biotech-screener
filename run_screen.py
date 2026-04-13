@@ -4613,6 +4613,23 @@ def save_validation_snapshot(
         except Exception as e:
             logger.warning("Could not compute institutional summary/delta: %s", e)
 
+    # --- Registry transition detection ---
+    # When the manager registry changes (CIK corrections, additions, removals),
+    # inst_delta values are contaminated for one cycle because the "prior" and
+    # "current" institutional summaries used different manager sets.
+    _inst_registry_transition = False
+    if inst_summary and prior_inst:
+        _cur_mgr_count = inst_summary.get("elite_managers_with_filing", 0)
+        _pri_mgr_count = prior_inst.get("elite_managers_with_filing", 0)
+        if _cur_mgr_count != _pri_mgr_count:
+            _inst_registry_transition = True
+            logger.warning(
+                "Registry transition detected: current=%d managers, prior=%d managers. "
+                "inst_delta values may be contaminated this cycle.",
+                _cur_mgr_count,
+                _pri_mgr_count,
+            )
+
     # --- Institutional delta z-score: cross-sectional z of net_elite_holders_delta ---
     if inst_delta:
         _id_pairs = []  # [(index, value, has_signal)]
@@ -4693,35 +4710,54 @@ def save_validation_snapshot(
 
         # Absolute flow: net positive means more new entrants than exits
         _abs_positive = _net > 0 or _new > _exit
-        # Also flag: new entrants exist even if net is negative (mixed signal)
         _abs_has_new = _new > 0
         _abs_negative = _net < 0 and _exit > _new
         _z_negative = _iz < -0.3
         _z_positive = _iz > 0.3
 
-        # relative_underperformance: net accumulation but z is negative (SION-type case)
-        _dr["inst_flow_abs_positive"] = "1" if _abs_positive else "0"
-        _dr["inst_flow_abs_negative"] = "1" if _abs_negative else "0"
-        _dr["inst_relative_underperformance"] = "1" if _abs_positive and _z_negative else "0"
-        _dr["inst_relative_outperformance"] = "1" if _abs_negative and _z_positive else "0"
+        # Registry transition guard
+        _dr["inst_delta_regime"] = "transition" if _inst_registry_transition else "clean"
 
-        # Rank change explainer (why did rank move?)
-        _reasons = []
-        if _abs_positive and _z_negative:
-            _reasons.append(f"abs_flow_positive(net={_net},new={_new}) but z={_iz:+.2f} (relative underperformance)")
-        elif _abs_negative and _abs_has_new and _z_negative:
-            _reasons.append(
-                f"mixed_flow(net={_net},new={_new},exit={_exit}) z={_iz:+.2f} (net negative with new entrants)"
-            )
-        if _abs_negative and _z_positive:
-            _reasons.append(f"abs_flow_negative(net={_net},exit={_exit}) but z={_iz:+.2f} (relative outperformance)")
-        if abs(_iz) > 1.5:
-            _reasons.append(f"extreme_inst_delta_z={_iz:+.2f}")
-        _dr["inst_flow_diagnostic"] = "; ".join(_reasons) if _reasons else ""
+        if _inst_registry_transition:
+            # Transition regime: deltas contaminated by registry change
+            _dr["inst_flow_abs_positive"] = ""
+            _dr["inst_flow_abs_negative"] = ""
+            _dr["inst_relative_underperformance"] = ""
+            _dr["inst_relative_outperformance"] = ""
+            _dr["inst_flow_diagnostic"] = "registry_transition: delta contaminated, ignore relative signal this cycle"
+        else:
+            # Clean regime: apply flags normally
+            _dr["inst_flow_abs_positive"] = "1" if _abs_positive else "0"
+            _dr["inst_flow_abs_negative"] = "1" if _abs_negative else "0"
+            _dr["inst_relative_underperformance"] = "1" if _abs_positive and _z_negative else "0"
+            _dr["inst_relative_outperformance"] = "1" if _abs_negative and _z_positive else "0"
 
+            _reasons = []
+            if _abs_positive and _z_negative:
+                _reasons.append(
+                    f"abs_flow_positive(net={_net},new={_new}) but z={_iz:+.2f} (relative underperformance)"
+                )
+            elif _abs_negative and _abs_has_new and _z_negative:
+                _reasons.append(
+                    f"mixed_flow(net={_net},new={_new},exit={_exit}) z={_iz:+.2f} (net negative with new entrants)"
+                )
+            if _abs_negative and _z_positive:
+                _reasons.append(
+                    f"abs_flow_negative(net={_net},exit={_exit}) but z={_iz:+.2f} (relative outperformance)"
+                )
+            if abs(_iz) > 1.5:
+                _reasons.append(f"extreme_inst_delta_z={_iz:+.2f}")
+            _dr["inst_flow_diagnostic"] = "; ".join(_reasons) if _reasons else ""
+
+    _n_transition = sum(1 for r in csv_rows if r.get("inst_delta_regime") == "transition")
     _n_rel_under = sum(1 for r in csv_rows if r.get("inst_relative_underperformance") == "1")
     _n_rel_over = sum(1 for r in csv_rows if r.get("inst_relative_outperformance") == "1")
-    if _n_rel_under > 0 or _n_rel_over > 0:
+    if _n_transition > 0:
+        logger.info(
+            "Institutional flow diagnostics: TRANSITION regime (%d names), flags suppressed",
+            _n_transition,
+        )
+    elif _n_rel_under > 0 or _n_rel_over > 0:
         logger.info(
             "Institutional flow diagnostics: %d relative underperformers, %d relative outperformers",
             _n_rel_under,

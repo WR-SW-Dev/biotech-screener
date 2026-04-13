@@ -143,6 +143,7 @@ SNAPSHOT_COLUMNS = (
         "has_catalyst_signal",
         "has_tradeable_calendar",
         # --- Institutional flow diagnostics ---
+        "inst_delta_regime",
         "inst_flow_abs_positive",
         "inst_flow_abs_negative",
         "inst_relative_underperformance",
