@@ -260,17 +260,64 @@ def compute_volume_by_expiry_bucket(
     return buckets
 
 
+def _find_catalyst_aligned_expiry(
+    expiries: List[str],
+    as_of_date: str,
+    catalyst_days: int,
+) -> Optional[str]:
+    """Find the expiry closest to catalyst_days from as_of_date.
+
+    Returns the expiry whose DTE is closest to catalyst_days, preferring
+    expiries AT or AFTER the catalyst date (so the straddle captures the
+    event). Returns None if no expiries are within 2x catalyst_days.
+    """
+    if not expiries or catalyst_days <= 0 or not as_of_date:
+        return None
+    try:
+        from datetime import date as _date
+
+        ref = _date.fromisoformat(as_of_date)
+    except (ValueError, TypeError):
+        return None
+
+    best_expiry = None
+    best_gap = float("inf")
+    for exp_str in expiries:
+        try:
+            exp = _date.fromisoformat(exp_str)
+        except (ValueError, TypeError):
+            continue
+        dte = (exp - ref).days
+        if dte < 7:  # too short, gamma-distorted
+            continue
+        gap = abs(dte - catalyst_days)
+        # Prefer expiry at or after catalyst (captures event)
+        if dte >= catalyst_days:
+            gap -= 0.5  # slight preference for post-catalyst
+        if gap < best_gap:
+            best_gap = gap
+            best_expiry = exp_str
+    # Only use if within 2x catalyst_days (sanity bound)
+    if best_gap > catalyst_days * 2:
+        return None
+    return best_expiry
+
+
 def compute_chain_analytics(
     chain_snapshot: List[Dict[str, Any]],
     underlying_price: float,
     as_of_date: str = "",
     target_expiry: Optional[str] = None,
     catalyst_family: str = "",
+    catalyst_days: int = 0,
 ) -> Dict[str, Any]:
     """Compute full chain analytics from a Massive chain snapshot.
 
     If target_expiry is provided, analytics are computed for that expiry.
     Otherwise, uses the nearest expiry with sufficient contracts.
+
+    When catalyst_days > 0, also computes a catalyst-aligned straddle
+    from the expiry closest to the catalyst date.
 
     Returns dict with all analytics fields.
     """
@@ -289,8 +336,28 @@ def compute_chain_analytics(
     rr_25d = compute_rr_25d(put_25d, call_25d)
     skew = compute_put_call_skew(put_25d, call_25d)
 
-    # Straddle
+    # Straddle (nearest expiry)
     straddle = compute_atm_straddle(chain_snapshot, underlying_price, expiry)
+
+    # Catalyst-aligned straddle (expiry closest to catalyst date)
+    catalyst_straddle: Dict[str, Any] = {}
+    if catalyst_days > 0 and as_of_date:
+        cat_expiry = _find_catalyst_aligned_expiry(expiries, as_of_date, catalyst_days)
+        if cat_expiry and cat_expiry != expiry:
+            cat_strad = compute_atm_straddle(chain_snapshot, underlying_price, cat_expiry)
+            if cat_strad.get("straddle_price") is not None:
+                catalyst_straddle = {
+                    "catalyst_straddle_price": cat_strad["straddle_price"],
+                    "catalyst_straddle_implied_move": cat_strad["actual_implied_move"],
+                    "catalyst_straddle_expiry": cat_expiry,
+                }
+        elif cat_expiry == expiry and straddle.get("straddle_price") is not None:
+            # Nearest expiry IS the catalyst-aligned one
+            catalyst_straddle = {
+                "catalyst_straddle_price": straddle["straddle_price"],
+                "catalyst_straddle_implied_move": straddle["actual_implied_move"],
+                "catalyst_straddle_expiry": expiry,
+            }
 
     # OI
     oi = compute_oi_concentration(chain_snapshot, expiry)
@@ -333,8 +400,10 @@ def compute_chain_analytics(
         "put_call_skew": round(skew, 4) if skew is not None else None,
         "put_25d_iv": put_25d.get("implied_volatility") if put_25d else None,
         "call_25d_iv": call_25d.get("implied_volatility") if call_25d else None,
-        # Straddle
+        # Straddle (nearest expiry)
         **straddle,
+        # Catalyst-aligned straddle
+        **catalyst_straddle,
         # OI
         **oi,
         # Volume distribution
@@ -410,6 +479,7 @@ def warm_chain_analytics(
     snap_dir: Path,
     as_of_date: str,
     prices: Optional[Dict[str, float]] = None,
+    catalyst_days_by_ticker: Optional[Dict[str, int]] = None,
 ) -> Dict[str, Dict[str, Any]]:
     """Fetch chain snapshots and compute analytics for a list of tickers.
 
@@ -455,7 +525,13 @@ def warm_chain_analytics(
 
             # Compute analytics
             underlying_price = (prices or {}).get(ticker.upper(), 0.0)
-            analytics = compute_chain_analytics(chain, underlying_price, as_of_date)
+            cat_days = (catalyst_days_by_ticker or {}).get(ticker.upper(), 0)
+            analytics = compute_chain_analytics(
+                chain,
+                underlying_price,
+                as_of_date,
+                catalyst_days=cat_days,
+            )
             results[ticker.upper()] = analytics
             n_fetched += 1
             if breaker:

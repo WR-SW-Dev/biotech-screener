@@ -215,11 +215,35 @@ def compute_clinical_days_precision(
     return precision
 
 
-def compute_clinical_date_confidence(precision: str, catalyst_source: str) -> float:
-    """Confidence proxy [0, 1] from precision + source reliability."""
+def compute_clinical_date_confidence(
+    precision: str,
+    catalyst_source: str,
+    pcd_overdue: bool = False,
+    catalyst_event_type: str = "",
+) -> float:
+    """Confidence proxy [0, 1] from precision + source reliability.
+
+    Applies a penalty when the primary completion date (PCD) has passed
+    without results, indicating a serially-slipping trial. Also penalizes
+    soft catalyst types (CT_STUDY_COMPLETION) which are completion-date
+    derived and historically unreliable.
+    """
     base = _PRECISION_CONFIDENCE.get(precision, 0.10)
     bonus = _SOURCE_CONFIDENCE_BONUS.get(catalyst_source, 0.0)
-    return round(min(1.0, base + bonus), 4)
+    conf = min(1.0, base + bonus)
+
+    # Penalty for overdue PCD: trial date has passed without resolution.
+    # This catches serially-slipping trials where the system default (0.95)
+    # overstates reliability.
+    if pcd_overdue:
+        conf *= 0.60  # 40% haircut
+
+    # Penalty for soft catalyst types derived from completion dates
+    # (less reliable than hard catalysts like PDUFA dates)
+    if catalyst_event_type in ("CT_STUDY_COMPLETION", "CT_PRIMARY_COMPLETION"):
+        conf *= 0.85  # 15% haircut
+
+    return round(max(0.05, conf), 4)
 
 
 def compute_clinical_design_quality(row: Dict[str, Any]) -> float:
@@ -348,7 +372,21 @@ def compute_clinical_91_180_quality(row: Dict[str, Any]) -> Dict[str, Any]:
 
     corroborated = row.get("catalyst_corroborated", "") != "0"
     precision = compute_clinical_days_precision(catalyst_mode, catalyst_source, corroborated)
-    date_conf = compute_clinical_date_confidence(precision, catalyst_source)
+
+    # Detect overdue PCD: clinical_readout_days == 0 means PCD has passed
+    # but event is still listed (trial hasn't posted results).
+    readout_days = _safe_float(row.get("clinical_readout_days"), -1)
+    pcd_overdue = readout_days == 0 or (
+        readout_days < 0 and _safe_float(row.get("lead_program_readout_days"), -1) > 180
+    )
+    catalyst_event_type = str(row.get("catalyst_event_type", "") or "")
+
+    date_conf = compute_clinical_date_confidence(
+        precision,
+        catalyst_source,
+        pcd_overdue=pcd_overdue,
+        catalyst_event_type=catalyst_event_type,
+    )
     design_q = compute_clinical_design_quality(row)
     prog_depth = compute_clinical_program_depth(row)
     composite = compute_clinical_quality_composite(date_conf, design_q, prog_depth)
