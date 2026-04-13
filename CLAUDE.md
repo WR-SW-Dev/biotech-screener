@@ -231,6 +231,12 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 - **Family sleeves**: REGULATORY/CLINICAL split per bucket with time-ladder sub-buckets
 - **Regulatory sleeve A/B**: +1.85pp 63d, +1.59pp 84d (positive but coverage-limited)
 
+## Data Provenance Rules
+- **Holdings truth source:** `production_data/institutional_summary.json` is canonical. It has CUSIP→ticker resolution, issuer normalization, and corporate action handling.
+- **Raw EDGAR XML is debug-only.** Never build a narrative (e.g., "8 new entrants") from raw filing parses unless it matches the canonical summary. Raw issuer strings are unreliable — different filings use different names for the same entity.
+- **CUSIP-first, not issuer-first.** Always reason from CUSIP → canonical ticker, never from issuer name strings.
+- **If raw count ≠ summary count:** investigate the summary pipeline first. The summary is more likely correct.
+
 ## Before Writing Any Code
 1. State which module this change belongs to
 2. Identify whether this is a new signal, validation change, or infrastructure change
