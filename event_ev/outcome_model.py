@@ -398,6 +398,7 @@ class OutcomeModel:
         prior_equiv_n: int = 20,
         catalyst_type_to_phase: Optional[Dict[str, str]] = None,
         herald_biased_phases: Optional[frozenset] = None,
+        as_of_date: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Build CRT-calibrated priors from resolution records.
 
@@ -452,6 +453,11 @@ class OutcomeModel:
                 phase = type_to_phase.get(ct)
                 if phase is None or outcome not in ("HIT", "MISS"):
                     continue
+                # PIT gate: only use resolutions known at as_of_date
+                if as_of_date:
+                    resolved = rec.get("resolved_date") or rec.get("resolution_date", "")
+                    if resolved > as_of_date:
+                        continue
                 if outcome == "HIT":
                     counts[phase]["hit"] += 1
                 else:
