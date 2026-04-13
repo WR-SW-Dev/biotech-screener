@@ -24,8 +24,12 @@ logger = logging.getLogger(__name__)
 DEFAULT_ALPHA = 1.5  # concentration exponent (higher = more top-heavy)
 DEFAULT_MAX_SINGLE_PCT = 0.10  # max 10% in one name
 DEFAULT_MIN_WEIGHT_PCT = 0.005  # drop positions < 0.5%
-DEFAULT_LIQUIDITY_K = 0.02  # max 2% of 20d avg dollar volume
+DEFAULT_LIQUIDITY_K = 0.02  # max 2% of 20d avg dollar volume (NOT used in alpha sizing)
 DEFAULT_TARGET_COVERAGE = 0.70  # expected coverage fraction
+
+# Execution guardrails (applied post-sizing, not in alpha weights)
+DEFAULT_MAX_PARTICIPATION_PCT = 0.05  # scale down if trade > 5% ADV
+DEFAULT_SKIP_PARTICIPATION_PCT = 0.20  # skip trade entirely if > 20% ADV
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -245,4 +249,109 @@ def construct_portfolio(
         "hhi": round(hhi, 6),
         "effective_n": round(1.0 / hhi, 1) if hhi > 0 else 0,
         "positions": positions,
+    }
+
+
+# ═════════════════════════════════════════════════════════════════════════
+# Execution guardrails (post-sizing, not in alpha weights)
+# ═════════════════════════════════════════════════════════════════════════
+
+
+def apply_execution_guardrails(
+    positions: List[Dict[str, Any]],
+    dollar_volumes: Dict[str, float],
+    capital: float,
+    max_participation: float = DEFAULT_MAX_PARTICIPATION_PCT,
+    skip_participation: float = DEFAULT_SKIP_PARTICIPATION_PCT,
+) -> Dict[str, Any]:
+    """Apply execution guardrails to a constructed portfolio.
+
+    Does NOT change alpha weights. Instead:
+    1. Skips names where trade > skip_participation of ADV (default 20%)
+    2. Scales down names where trade > max_participation of ADV (default 5%)
+    3. Re-normalizes remaining weights
+
+    Args:
+        positions: list from construct_portfolio()["positions"]
+        dollar_volumes: {ticker: 20d avg dollar volume}
+        capital: deployed capital
+        max_participation: scale down above this (fraction of ADV)
+        skip_participation: skip entirely above this
+
+    Returns:
+        Dict with adjusted positions, skipped names, and diagnostics.
+    """
+    adjusted = []
+    skipped = []
+    scaled = []
+
+    for pos in positions:
+        ticker = pos["ticker"]
+        weight = pos["weight"]
+        trade_dollars = capital * weight
+        dv = dollar_volumes.get(ticker, 0)
+
+        if dv <= 0:
+            # No volume data — keep but flag
+            adjusted.append({**pos, "participation": None, "guardrail": "no_volume_data"})
+            continue
+
+        participation = trade_dollars / dv
+
+        if participation > skip_participation:
+            skipped.append(
+                {
+                    "ticker": ticker,
+                    "weight": weight,
+                    "participation": round(participation, 4),
+                    "reason": f">{skip_participation:.0%} ADV",
+                }
+            )
+            continue
+
+        if participation > max_participation:
+            # Scale down to max_participation
+            new_trade = dv * max_participation
+            new_weight = new_trade / capital
+            scaled.append(
+                {
+                    "ticker": ticker,
+                    "original_weight": weight,
+                    "new_weight": round(new_weight, 6),
+                    "participation_before": round(participation, 4),
+                    "participation_after": round(max_participation, 4),
+                }
+            )
+            adjusted.append(
+                {
+                    **pos,
+                    "weight": round(new_weight, 6),
+                    "capital": round(new_trade, 2),
+                    "participation": round(max_participation, 4),
+                    "guardrail": "scaled_down",
+                }
+            )
+        else:
+            adjusted.append(
+                {
+                    **pos,
+                    "participation": round(participation, 4),
+                    "guardrail": "none",
+                }
+            )
+
+    # Re-normalize
+    total_w = sum(p["weight"] for p in adjusted)
+    if total_w > 0:
+        for p in adjusted:
+            p["weight"] = round(p["weight"] / total_w, 6)
+            p["capital"] = round(capital * p["weight"], 2)
+
+    return {
+        "n_positions": len(adjusted),
+        "n_skipped": len(skipped),
+        "n_scaled": len(scaled),
+        "skipped": skipped,
+        "scaled": scaled,
+        "positions": adjusted,
     }
