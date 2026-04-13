@@ -142,6 +142,12 @@ SNAPSHOT_COLUMNS = (
         "calendar_confidence",
         "has_catalyst_signal",
         "has_tradeable_calendar",
+        # --- Institutional flow diagnostics ---
+        "inst_flow_abs_positive",
+        "inst_flow_abs_negative",
+        "inst_relative_underperformance",
+        "inst_relative_outperformance",
+        "inst_flow_diagnostic",
         "binary_quality_score",
         "regulatory_quality",
         "clinical_quality",

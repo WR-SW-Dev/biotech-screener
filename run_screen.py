@@ -4674,6 +4674,60 @@ def save_validation_snapshot(
         for _dr in csv_rows:
             _dr["inst_delta_z"] = 0.0
 
+    # --- Institutional flow diagnostics: absolute vs relative signal ---
+    # Detects names where absolute institutional flow is positive but
+    # cross-sectional z-score is negative (relative underperformance in
+    # a strong cohort). Also flags reverse case.
+    for _dr in csv_rows:
+        _net = _dr.get("inst_delta_net", 0)
+        _new = _dr.get("inst_delta_new", 0)
+        _exit = _dr.get("inst_delta_exit", 0)
+        _iz = float(_dr.get("inst_delta_z", 0))
+
+        try:
+            _net = int(_net)
+            _new = int(_new)
+            _exit = int(_exit)
+        except (ValueError, TypeError):
+            _net = _new = _exit = 0
+
+        # Absolute flow: net positive means more new entrants than exits
+        _abs_positive = _net > 0 or _new > _exit
+        # Also flag: new entrants exist even if net is negative (mixed signal)
+        _abs_has_new = _new > 0
+        _abs_negative = _net < 0 and _exit > _new
+        _z_negative = _iz < -0.3
+        _z_positive = _iz > 0.3
+
+        # relative_underperformance: net accumulation but z is negative (SION-type case)
+        _dr["inst_flow_abs_positive"] = "1" if _abs_positive else "0"
+        _dr["inst_flow_abs_negative"] = "1" if _abs_negative else "0"
+        _dr["inst_relative_underperformance"] = "1" if _abs_positive and _z_negative else "0"
+        _dr["inst_relative_outperformance"] = "1" if _abs_negative and _z_positive else "0"
+
+        # Rank change explainer (why did rank move?)
+        _reasons = []
+        if _abs_positive and _z_negative:
+            _reasons.append(f"abs_flow_positive(net={_net},new={_new}) but z={_iz:+.2f} (relative underperformance)")
+        elif _abs_negative and _abs_has_new and _z_negative:
+            _reasons.append(
+                f"mixed_flow(net={_net},new={_new},exit={_exit}) z={_iz:+.2f} (net negative with new entrants)"
+            )
+        if _abs_negative and _z_positive:
+            _reasons.append(f"abs_flow_negative(net={_net},exit={_exit}) but z={_iz:+.2f} (relative outperformance)")
+        if abs(_iz) > 1.5:
+            _reasons.append(f"extreme_inst_delta_z={_iz:+.2f}")
+        _dr["inst_flow_diagnostic"] = "; ".join(_reasons) if _reasons else ""
+
+    _n_rel_under = sum(1 for r in csv_rows if r.get("inst_relative_underperformance") == "1")
+    _n_rel_over = sum(1 for r in csv_rows if r.get("inst_relative_outperformance") == "1")
+    if _n_rel_under > 0 or _n_rel_over > 0:
+        logger.info(
+            "Institutional flow diagnostics: %d relative underperformers, %d relative outperformers",
+            _n_rel_under,
+            _n_rel_over,
+        )
+
     # --- Clinical adjustment telemetry (mirrors DE formula, for monitoring) ---
     _clin_adj_dev = 0
     _clin_adj_comm = 0
