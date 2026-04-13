@@ -544,7 +544,7 @@ def escalate_to_llm(results: list[CheckResult], dry_run: bool = False):
     print(f"\n  Escalating {len(anomaly_results)} agent(s) to LLM...")
     try:
         result = subprocess.run(
-            [str(OPENCLAW), "agent", "--agent", "ops", "--message", summary, "--timeout", "120"],
+            [sys.executable, str(REPO_ROOT / "tools" / "run_agent_direct.py"), "--agent", "ops", "--message", summary],
             capture_output=True,
             text=True,
             timeout=150,
