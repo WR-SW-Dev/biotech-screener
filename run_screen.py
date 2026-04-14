@@ -3528,10 +3528,31 @@ def _finalize_priced_move(csv_rows: List[Dict[str, Any]]) -> None:
 
     Must run AFTER all options scoring (straddle, PCR, etc) and BEFORE CSV write.
     This was the source of a P0 execution-order bug when it ran too early.
+
+    Unit conversion: straddle_price / implied_event_move are in decimal
+    (0.39 = 39% move), but EES base-rate tables and conditional model
+    use percentage points (39.0 = 39% move). Multiply by 100.
     """
+    _n_set = 0
+    _n_suspicious = 0
     for _r in csv_rows:
         if not _r.get("priced_move_pct") and _r.get("straddle_price"):
-            _r["priced_move_pct"] = _r["straddle_price"]
+            try:
+                _sp = float(_r["straddle_price"])
+                _pm = round(_sp * 100.0, 4)
+                _r["priced_move_pct"] = _pm
+                _n_set += 1
+                # Sanity: priced_move_pct should be 1-200 range (percentage points)
+                if _pm < 1.0 or _pm > 500.0:
+                    _n_suspicious += 1
+            except (ValueError, TypeError):
+                pass
+    if _n_suspicious > 0:
+        logger.warning(
+            "[Phase2z] %d/%d priced_move_pct values outside [1, 500] — possible unit error",
+            _n_suspicious,
+            _n_set,
+        )
 
 
 def save_validation_snapshot(
@@ -5907,6 +5928,34 @@ def save_validation_snapshot(
     except Exception as _ees_pre_exc:
         logger.warning("EES pre-write enrichment failed: %s", _ees_pre_exc, exc_info=True)
 
+    # --- Conditional Model: biomarker/subgroup mispricing (diagnostic only) ---
+    _cond_overlays_for_sidecar = None
+    try:
+        from event_ev.conditional_model import enrich_csv_rows as _enrich_conditional
+
+        _cond_overlays_for_sidecar = _enrich_conditional(csv_rows, as_of_date)
+    except Exception as _cond_exc:
+        logger.warning("Conditional model enrichment failed: %s", _cond_exc, exc_info=True)
+
+    # --- Execution Capacity: slippage/sizing realism (construction only) ---
+    _exec_overlays_for_sidecar = None
+    try:
+        from event_ev.execution_capacity import enrich_csv_rows as _enrich_execution
+
+        _exec_overlays_for_sidecar = _enrich_execution(csv_rows, as_of_date)
+    except Exception as _exec_exc:
+        logger.warning("Execution capacity enrichment failed: %s", _exec_exc, exc_info=True)
+
+    # --- EES v3: conditional misprice + expected move (diagnostic overlay) ---
+    # MUST run after both EES v2 and conditional model (reads their output columns)
+    _v3_overlays_for_sidecar = None
+    try:
+        from event_ev.ees_v3 import enrich_csv_rows as _enrich_v3
+
+        _v3_overlays_for_sidecar = _enrich_v3(csv_rows, as_of_date)
+    except Exception as _v3_exc:
+        logger.warning("EES v3 enrichment failed: %s", _v3_exc, exc_info=True)
+
     # =========================================================================
     # PHASE 3: WRITE — rankings.csv, checksum, manifest
     # =========================================================================
@@ -6217,6 +6266,104 @@ def save_validation_snapshot(
 
     except Exception as _ees_exc:
         logger.debug("Expectation Error Model overlay skipped: %s", _ees_exc)
+
+    # --- Conditional Model sidecar (diagnostic overlay) ---
+    try:
+        if _cond_overlays_for_sidecar:
+            _cond_dicts = [o.to_dict() for o in _cond_overlays_for_sidecar]
+            _cond_dicts.sort(key=lambda d: d.get("conditional_gap_score", 0), reverse=True)
+            _n_selected = sum(1 for d in _cond_dicts if "selected" in d.get("conditional_bucket", ""))
+            _n_enriched = sum(1 for d in _cond_dicts if "enriched" in d.get("conditional_bucket", ""))
+            with open(snap_path / "conditional_model_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "conditional_v1.0",
+                        "n_scored": len(_cond_dicts),
+                        "n_biomarker_selected": _n_selected,
+                        "n_enriched": _n_enriched,
+                        "top_10_gap": _cond_dicts[:10],
+                        "bottom_10_gap": _cond_dicts[-10:],
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[ConditionalModel] Sidecar: %d scored, %d selected, %d enriched",
+                len(_cond_dicts),
+                _n_selected,
+                _n_enriched,
+            )
+    except Exception as _cond_sidecar_exc:
+        logger.debug("Conditional model sidecar skipped: %s", _cond_sidecar_exc)
+
+    # --- Execution Capacity sidecar (construction overlay) ---
+    try:
+        if _exec_overlays_for_sidecar:
+            _exec_dicts = [o.to_dict() for o in _exec_overlays_for_sidecar]
+            _exec_dicts.sort(key=lambda d: d.get("execution_capacity_score", 0))
+            _n_unrest = sum(1 for d in _exec_dicts if d.get("execution_bucket") == "unrestricted")
+            _n_reduced = sum(1 for d in _exec_dicts if d.get("execution_bucket") == "reduced")
+            _n_micro = sum(1 for d in _exec_dicts if d.get("execution_bucket") == "micro_size_only")
+            _n_untrade = sum(1 for d in _exec_dicts if d.get("execution_bucket") == "untradeable")
+            with open(snap_path / "execution_capacity_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "execution_v1.0",
+                        "n_scored": len(_exec_dicts),
+                        "buckets": {
+                            "unrestricted": _n_unrest,
+                            "reduced": _n_reduced,
+                            "micro_size_only": _n_micro,
+                            "untradeable": _n_untrade,
+                        },
+                        "most_constrained_10": _exec_dicts[:10],
+                        "least_constrained_10": _exec_dicts[-10:],
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[ExecutionCapacity] Sidecar: %d scored — %d unrestricted, %d reduced, %d micro, %d untradeable",
+                len(_exec_dicts),
+                _n_unrest,
+                _n_reduced,
+                _n_micro,
+                _n_untrade,
+            )
+    except Exception as _exec_sidecar_exc:
+        logger.debug("Execution capacity sidecar skipped: %s", _exec_sidecar_exc)
+
+    # --- EES v3 sidecar (diagnostic overlay) ---
+    try:
+        if _v3_overlays_for_sidecar:
+            _v3_dicts = [o.to_dict() for o in _v3_overlays_for_sidecar]
+            _v3_dicts.sort(key=lambda d: d.get("ees_v3_score", 0), reverse=True)
+            _n_v3_pass = sum(1 for d in _v3_dicts if d.get("ees_v3_gate"))
+            _n_v3_misprice = sum(1 for d in _v3_dicts if d.get("misprice_available"))
+            with open(snap_path / "ees_v3_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "ees_v3.0",
+                        "n_scored": len(_v3_dicts),
+                        "n_with_misprice": _n_v3_misprice,
+                        "n_pass_gate": _n_v3_pass,
+                        "top_10": _v3_dicts[:10],
+                        "bottom_10": _v3_dicts[-10:],
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[EES v3] Sidecar: %d scored, %d with misprice data, %d pass gate",
+                len(_v3_dicts),
+                _n_v3_misprice,
+                _n_v3_pass,
+            )
+    except Exception as _v3_sidecar_exc:
+        logger.debug("EES v3 sidecar skipped: %s", _v3_sidecar_exc)
 
     # --- Write eligibility summary sidecar ---
     try:

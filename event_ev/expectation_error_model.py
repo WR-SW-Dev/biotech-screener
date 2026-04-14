@@ -97,6 +97,15 @@ def _clamp(v: float, lo: float, hi: float) -> float:
     return max(lo, min(hi, v))
 
 
+def _soft_scale(v: float, scale: float = 2.0) -> float:
+    """Soft-clamp via tanh: maps (-inf, +inf) → (-1, +1) without saturation.
+
+    scale controls spread: larger = more linear in center, slower saturation.
+    tanh(v/2) ≈ 0.46 at v=1, ≈ 0.76 at v=2, ≈ 0.96 at v=4.
+    """
+    return math.tanh(v / scale)
+
+
 def _safe_float(v: Any) -> Optional[float]:
     """Safe float extraction from CSV row values."""
     if v is None or v == "" or v == "None":
@@ -399,7 +408,7 @@ class ExpectationErrorModel:
 
         hist_med = cell["p50"]
         hist_iqr = cell["iqr"]
-        return _clamp((priced_move_pct - hist_med) / (hist_iqr + EPS), -1.0, 1.0)
+        return _soft_scale((priced_move_pct - hist_med) / (hist_iqr + EPS))
 
     def _conditional_misprice(self, priced_move_pct: Optional[float], family: str, phase: str) -> float:
         """Detect mispriced conditionals: scenario EV vs implied."""
@@ -411,7 +420,7 @@ class ExpectationErrorModel:
         if cond_ev is None:
             return 0.0
 
-        return _clamp((cond_ev - priced_move_pct) / (priced_move_pct + EPS), -1.0, 1.0)
+        return _soft_scale((cond_ev - priced_move_pct) / (priced_move_pct + EPS))
 
     def _slippage_penalty(self, market_cap_mm: Optional[float], close_price: Optional[float]) -> float:
         """DEPRECATED: was look-ahead bias (PIT audit 2026-04-12).
@@ -437,10 +446,8 @@ class ExpectationErrorModel:
         if implied_event_move < EPS:
             return 0.0
 
-        return _clamp(
+        return _soft_scale(
             (priced_move_pct - implied_event_move) / (implied_event_move + EPS),
-            -1.0,
-            1.0,
         )
 
     def _crowding_bias(
@@ -454,7 +461,7 @@ class ExpectationErrorModel:
             return 0.0
 
         denom = si_p90 - si_p50 + EPS
-        return _clamp((short_interest_pct - si_p50) / denom, -1.0, 1.0)
+        return _soft_scale((short_interest_pct - si_p50) / denom)
 
     def _timing_decay_risk(self, priced_move_pct: Optional[float], precision: str) -> float:
         """Penalise expensive setups with uncertain catalyst timing."""
