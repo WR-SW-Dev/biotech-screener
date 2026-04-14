@@ -2,11 +2,12 @@
 
 ## Schedule
 
-- **Daily**: 5:30 AM ET weekdays (before ctgov_poller and production run)
-- **Catch-up**: on boot, fill missing dates (last 5 weekdays)
-- **Pre-production check**: verify latest snapshot exists before daily model run
+- **Weekly**: runs inside daily production (16:30 ET) on Mondays, or if latest snapshot >7 days stale
+- Download is 2.3GB per run; weekly cadence is sufficient for trial-level data
+- Lightweight ctgov cache (`warm_caches.py --sources ctgov`) still runs daily at 14:00 ET
+- Heartbeat check: OK if latest snapshot within 8 days
 
-## Daily checklist
+## Weekly checklist
 
 - [ ] Download or verify AACT source availability
 - [ ] Validate schema (column presence, types, enum drift)

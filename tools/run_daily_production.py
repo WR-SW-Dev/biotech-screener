@@ -5521,16 +5521,35 @@ def run_daily(
         except Exception as _crt_err:
             _logger.warning(f"CRT failed: {_crt_err}")
 
-        # --- Step 5n: AACT trial warehouse refresh (non-blocking) ---
+        # --- Step 5n: AACT trial warehouse refresh (weekly, non-blocking) ---
+        # AACT download is 2.3GB+ per run; weekly is sufficient for trial-level data.
+        # Runs on Sundays (weekday 6) or if snapshot is >7 days stale.
         try:
             _aact_snapshot_dir = REPO_ROOT / "data" / "aact" / "snapshots" / as_of_date
+            _aact_snap_root = REPO_ROOT / "data" / "aact" / "snapshots"
+            _aact_is_weekly_day = date.fromisoformat(as_of_date).weekday() == 0  # Monday
+            _aact_latest_age = 999
+            if _aact_snap_root.exists():
+                _aact_existing = sorted(
+                    (d.name for d in _aact_snap_root.iterdir() if d.is_dir() and (d / "aact_health.json").exists()),
+                    reverse=True,
+                )
+                if _aact_existing:
+                    _aact_latest_age = (date.fromisoformat(as_of_date) - date.fromisoformat(_aact_existing[0])).days
+            _aact_should_run = _aact_is_weekly_day or _aact_latest_age > 7
+
             if _aact_snapshot_dir.exists() and (_aact_snapshot_dir / "aact_health.json").exists():
                 _logger.info("AACT snapshot already exists for %s — skipping", as_of_date)
+            elif not _aact_should_run:
+                _logger.info(
+                    "AACT skipped — not weekly day and latest snapshot is %dd old (threshold: 7d)",
+                    _aact_latest_age,
+                )
             else:
-                _logger.info("\n[5n] AACT trial warehouse refresh ...")
-                # Only run if a prior snapshot exists (delta computation needs baseline)
-                pass  # _aact_prior reserved for future delta computation
-                _aact_snap_root = REPO_ROOT / "data" / "aact" / "snapshots"
+                _logger.info(
+                    "\n[5n] AACT trial warehouse refresh (weekly, latest %dd old) ...",
+                    _aact_latest_age,
+                )
                 if _aact_snap_root.exists():
                     _priors = sorted(
                         (d for d in _aact_snap_root.iterdir() if d.is_dir() and d.name < as_of_date),

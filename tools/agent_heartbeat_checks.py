@@ -310,16 +310,19 @@ def check_aact_ingest(dt: date) -> CheckResult:
     anomalies = []
 
     if not aact_snap.is_dir():
-        # Check if any recent snapshot exists (within 3 days)
+        # Check if any recent snapshot exists (within 8 days — AACT is weekly)
         aact_base = REPO_ROOT / "data" / "aact" / "snapshots"
         if aact_base.is_dir():
-            snaps = sorted(aact_base.iterdir(), reverse=True)
+            snaps = sorted(
+                (d for d in aact_base.iterdir() if d.is_dir() and (d / "aact_health.json").exists()),
+                reverse=True,
+            )
             if snaps:
                 latest = snaps[0].name
                 age = (dt - date.fromisoformat(latest)).days if latest >= "2020" else 999
-                if age <= 3:
-                    return CheckResult("aact_trial_ingest", "OK", f"Latest snapshot: {latest} ({age}d old)")
-        return CheckResult("aact_trial_ingest", "STALE", f"No AACT snapshot for {ds}")
+                if age <= 8:
+                    return CheckResult("aact_trial_ingest", "OK", f"Latest snapshot: {latest} ({age}d old, weekly)")
+        return CheckResult("aact_trial_ingest", "STALE", f"No AACT snapshot within 8d of {ds}")
 
     # Check health report
     health_path = aact_snap / "aact_health.json"

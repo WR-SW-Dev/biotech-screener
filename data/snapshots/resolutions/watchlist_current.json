@@ -1,42 +1,22 @@
 {
-  "as_of_date": "2026-04-13",
-  "n_watchlist": 28,
-  "n_resolved_today": 21,
-  "n_existing": 75,
+  "as_of_date": "2026-04-14",
+  "n_watchlist": 9,
+  "n_resolved_today": 2,
+  "n_existing": 96,
   "watchlist": [
-    {
-      "ticker": "IONS",
-      "catalyst_date": "2026-04-03",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "REPL",
-      "catalyst_date": "2026-04-10",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "DNLI",
-      "catalyst_date": "2026-04-05",
-      "catalyst_type": "PDUFA_ACTION"
-    },
     {
       "ticker": "TVTX",
       "catalyst_date": "2026-04-13",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "IDYA",
+      "ticker": "SYRE",
       "catalyst_date": "2026-04-13",
       "catalyst_type": "CORPORATE_UPDATE"
     },
     {
-      "ticker": "REPL",
+      "ticker": "ALLO",
       "catalyst_date": "2026-04-13",
-      "catalyst_type": "CORPORATE_UPDATE"
-    },
-    {
-      "ticker": "PRAX",
-      "catalyst_date": "2026-04-06",
       "catalyst_type": "CORPORATE_UPDATE"
     },
     {
@@ -65,84 +45,9 @@
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "LRMR",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "TSHA",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
       "ticker": "TSHA",
       "catalyst_date": "2026-03-19",
       "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "OLMA",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "CGEM",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "RGNX",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "SLN",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "ANAB",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "DYN",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "ARQT",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "HRMY",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "TARS",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "MIRM",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "ALKS",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "RAPP",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
-    },
-    {
-      "ticker": "BDTX",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PHASE_3_READOUT"
     }
   ]
 }

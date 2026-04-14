@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.6.0 (ruleset `2a3e79eb`, v1.13.0)
-**Last updated:** 2026-04-13
+**Version:** 1.7.0 (ruleset `2a3e79eb`, v1.13.0)
+**Last updated:** 2026-04-14
 **Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30
 
 ---
@@ -18,7 +18,7 @@ favorable risk/reward ahead of binary outcomes.
 ```
 Universe (M1) → Financial Health (M2) → Catalyst Events (M3) → Clinical Dev (M4)
 → Composite Scoring (M5) → Decision Engine (L0→L2→L4→L4b→L3)
-→ Selector Engine (B6: coinvest 65% + inst_delta 35%)
+→ Selector Engine (B6: sponsorship 65% + momentum_delta 35%)
 → Ranker Engine (pairwise_minimal: 2 features, ordinal-only, top-60 cohort)
 → Sort by final_score → EW Top-30 → Portfolio Construction
 → Shadow Portfolio → Performance Attribution → Governance Gates
@@ -31,15 +31,15 @@ score to rank within it. This was validated on true PIT data (67 monthly periods
 Apr 2026) at +2.34pp/mo net-of-cost, t=2.57.
 
 > **Production mental model (2026-04-04):**
-> coinvest selects, inst_delta ranks, financial penalizes "safe but less catalytic"
+> sponsorship selects, momentum_delta ranks, financial penalizes "safe but less catalytic"
 > names, and clinical is a weak/conditional feature under review.
 
-**Stage 1 — Selector (B6 bundle):** Institutional sponsorship determines which 30 names
-belong in the book. 65% coinvest_score_z + 35% inst_delta_z. Clinical quality was
+**Stage 1 — Selector (B6 bundle):** Sponsorship quality determines which 30 names
+belong in the book. 65% sponsorship_score_z + 35% momentum_delta_z. Clinical quality was
 destructive as a selector (-0.53pp). The B6 bundle was revalidated under Checklist v2
 (2026-04-04): bootstrap mean +2.42pp/mo, 95% CI [1.25%, 3.70%], LOSO ROBUST across
 all dimensions. Neither component survives as a standalone incremental signal
-(coinvest FM NW-t = −0.18, inst_delta NW-t = +1.73), but the bundle's diversification
+(sponsorship FM NW-t = −0.18, momentum_delta NW-t = +1.73), but the bundle's diversification
 benefit is real and statistically significant.
 
 **Stage 2 — Ranker (pairwise_minimal, ordinal-only):** A 2-feature Bradley-Terry pairwise
@@ -48,14 +48,14 @@ confirmed the prior 5-feature model added noise. The ranker is **ordinal-only** 
 are not calibrated (ECE = 0.129, verdict: POOR). Do not rank-weight or confidence-size.
 
 Production model (`production_data/ranker_v2_model.json`):
-- `coinvest_score_z` (weight +0.061): selects high-coinvest names within cohort
+- `sponsorship_score_z` (weight +0.061): selects high-sponsorship names within cohort
 - `financial_score` (weight −0.053): penalizes financially safe names — those with less
   catalytic upside. Negative weight is correct and informative. Persists across all
   cohort widths, both bull and bear regimes. Note: `financial_score` in CSV is Module 5
   rank-normalized (stage×size cohort), not raw Module 2 output.
 
 Dead features (confirmed noise, removed 2026-04-05):
-- `inst_delta_z`, `catalyst_decay_w`, `binary_quality_score`, `clinical_score_v2_z`
+- `momentum_delta_z`, `catalyst_decay_w`, `binary_quality_score`, `clinical_score_v2_z`
   all added noise to the pairwise model despite individual FM significance.
   Walk-forward: 2-feature spread +2.95%, IC +0.143 (t=2.98) — beats 5-feature on all metrics.
 
@@ -171,15 +171,15 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 
 | Signal | Role | Weight | Checklist v2 Evidence |
 |--------|------|--------|----------------------|
-| **coinvest_score_z** | Selector (B6) | 65% | Standalone 3/5 gates (FM incr NW-t=−0.18 FAIL, FDR q=0.86 FAIL). Bundle is stronger than parts. |
-| **inst_delta_z** | Selector (B6) | 35% | Standalone 2/5 gates (FM NW-t=+1.73 FAIL, LOSO unstable in core bucket). Essential as complement. |
+| **sponsorship_score_z** | Selector (B6) | 65% | Standalone 3/5 gates (FM incr NW-t=−0.18 FAIL, FDR q=0.86 FAIL). Bundle is stronger than parts. |
+| **momentum_delta_z** | Selector (B6) | 35% | Standalone 2/5 gates (FM NW-t=+1.73 FAIL, LOSO unstable in core bucket). Essential as complement. |
 | **B6 bundle** | Selector | 65/35 blend | Bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. **Bundle validated.** |
 
 **Ranker (pairwise_minimal) — 2 features, ordinal-only (ECE=0.129):**
 
 | Signal | Role | Weight | Walk-Forward | Interpretation |
 |--------|------|--------|-------------|----------------|
-| **coinvest_score_z** | Ranker (positive) | +0.061 | Spread +2.95%, IC +0.143 (t=2.98) | Selects high-coinvest names within top-60 |
+| **sponsorship_score_z** | Ranker (positive) | +0.061 | Spread +2.95%, IC +0.143 (t=2.98) | Selects high-sponsorship names within top-60 |
 | **financial_score** | Ranker (negative) | −0.053 | Same walk-forward | TRUE PENALTY — safe names have less catalytic upside |
 
 **Overlay signals (not in selector/ranker weights):**
@@ -205,7 +205,7 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 | **clinical composites as ranker** | Negative across ALL robustness slices (Spec 055) | CLOSED |
 | cal_alpha | Confirmed noise at all horizons | REMOVED in v1.12.0 |
 | optionality as sort anchor | Underwater on PIT data | SUPERSEDED by B6 selector |
-| coinvest_binary | Δ=+0.25pp, t=1.25 | WORTHLESS — count granularity matters |
+| sponsorship_binary | Δ=+0.25pp, t=1.25 | WORTHLESS — count granularity matters |
 | total_volume_z | IC=-0.10 on PIT-native data | DEAD |
 | quality_tiebreaks (Specs 030/031) | Economically immaterial | Lane EXHAUSTED |
 | rank-weighting (any signal) | RW-EW = -0.09pp, t=-0.95; pairwise ECE=0.129 | NOT JUSTIFIED |
@@ -245,8 +245,8 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
    │  ├── financial_records.json├── fda/              ├── pit_archives/    │
    │  ├── price_history.csv     ├── morningstar_data/ ├── aact/snapshots/  │
    │  ├── pit_financials/       ├── press/            ├── press_releases/  │
-   │  ├── ipo_dates.json        ├── market_data/      ├── 13f_cache/       │
-   │  ├── institutional_*.json  └── clinical/         ├── short_interest/  │
+   │  ├── ipo_dates.json        ├── market_data/      ├── sponsorship/     │
+   │  ├── sponsorship_*.json    └── clinical/         ├── short_interest/  │
    │  ├── fda_designations.json                       └── condition_aliases│
    │  ├── regulatory_calendar*.json                                       │
    │  ├── purple_book.json                                                │
@@ -285,9 +285,9 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 
 | Source | Data Provided | Auth | Refresh | Pipeline Entry |
 |--------|--------------|------|---------|----------------|
-| **SEC EDGAR** (data.sec.gov) | XBRL company facts, 13F-HR filings, 8-K filings | Public (rate-limited 10 req/s) | Daily (8-K, XBRL) / Quarterly (13F) | M2 financials, institutional signal |
+| **SEC EDGAR** (data.sec.gov) | XBRL company facts, 13F-HR filings, 8-K filings | Public (rate-limited 10 req/s) | Daily (8-K, XBRL) / Quarterly (13F) | M2 financials, sponsorship signal |
 | **ClinicalTrials.gov** | Trial registry (status, phases, dates, endpoints) | Public | Daily | M4 clinical development |
-| **AACT** (ctti-clinicaltrials.org) | Bulk clinical trial mirror (578K trials) | Public (pipe files) | Daily | M4 enrichment, AACT delta features |
+| **AACT** (ctti-clinicaltrials.org) | Bulk clinical trial mirror (580K trials) | Public (pipe files) | Weekly (Mon) | M4 enrichment, AACT delta features |
 | **Tastytrade** | Options IV, Greeks, skew, term structure | OAuth2 (`TT_SECRET`, `TT_REFRESH`) | Daily (intraday capable) | Options diagnostics, EPD |
 | **Massive** | Historical options chains, quotes | API key (`MASSIVE_API_KEY`) + S3 | Daily | Options history backfill |
 | **Yahoo Finance** | Stock prices, balance sheets, income statements | Public (rate-limited) | Daily | Price history, market data |
@@ -309,8 +309,8 @@ Core inputs loaded by `run_screen.py` every run:
 | `production_data/financial_records.json` | Balance sheet, income, cash flow | 340 tickers | Every 2-3 days | M2 (current-state fallback) |
 | `production_data/pit_financials/{TICKER}.json` | EDGAR XBRL facts with filing dates | 339 tickers, all historical filings | Daily rebuild | M2 (PIT mode) |
 | `production_data/ipo_dates.json` | First/last price dates per ticker | 355 tickers | From price_history.csv | PIT survivorship filter |
-| `production_data/institutional_summary.json` | 13F holdings, delta signals | 29 managers, 58.2% coverage | Quarterly (~May 15 next) | inst_delta_z sort signal |
-| `production_data/manager_registry.json` | Institutional manager metadata | ~100 managers | Quarterly | 13F processing |
+| `production_data/institutional_summary.json` | Sponsorship holdings, delta signals | 29 managers, 58.2% coverage | Quarterly (~May 15 next) | momentum_delta_z sort signal |
+| `production_data/manager_registry.json` | Sponsorship manager metadata | ~100 managers | Quarterly | Sponsorship signal processing |
 | `production_data/fda_designations.json` | Fast Track, Breakthrough, Orphan, Priority | 207 entries, 84 tickers | Manual | M4 regulatory scoring |
 | `production_data/regulatory_calendar_manual.json` | Hand-curated PDUFA/ADCOM dates | 20-50 events | Manual | M3 catalyst detection |
 | `production_data/adcom_outcomes.json` | FDA advisory committee voting history | 100+ decisions | Ad-hoc | M4 adcom vote scoring |
@@ -336,9 +336,9 @@ Date-stamped caches for PIT-safe historical reruns:
 
 | Source | Records | Tickers Linked | Path | Status |
 |--------|---------|---------------|------|--------|
-| AACT clinical trials | 578,527 trials | 21,752 (49 tickers) | `data/aact/snapshots/` | Live — daily ingest |
-| Purple Book biologics | 2,013 products | 530 (49 tickers) | `production_data/purple_book.json` | Live |
-| Herald press releases | 3,312 classified | 336 tickers | `data/press_releases/` | Live — daily collection |
+| AACT clinical trials | 579,828 trials | 22,082 linked (303 universe tickers via 549 sponsor aliases) | `data/aact/snapshots/` | Live — weekly ingest (Mondays) |
+| Purple Book biologics | 2,013 products | 530 products → 49 unique tickers (41 in universe) | `production_data/purple_book.json` | Live |
+| Herald press releases | 4,380+ classified | 338 tickers | `data/press_releases/` | Live — daily collection |
 | Short interest (FINRA) | 300+ tickers | 300+ | `data/short_interest.json` | Weekly |
 | DealForma deal comps | — | — | Spec 046 ready | Awaiting CSV export |
 | Conference programs | ASCO, AACR, etc. | — | `cache/conferences/` | Quarterly scrape |
@@ -379,10 +379,10 @@ Step 5: Run full screen (run_screen.py → data/snapshots/{date}/)
         ├── 5a-5d: Modules 1-4
         ├── 5e: Module 5 composite
         ├── 5f: Decision engine
-        ├── 5g: Institutional momentum
+        ├── 5g: Sponsorship momentum
         ├── 5h: Options diagnostics (Tastytrade)
         ├── 5i: Event premium decomposition
-        ├── 5j: AACT delta pipeline
+        ├── 5j: AACT delta pipeline (weekly — Mondays only)
         ├── 5k: Construction overlays
         ├── 5l: Shadow portfolio
         ├── 5m: CRT pipeline
@@ -399,10 +399,10 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 | Catalyst fields | ~85% | Some names lack dated catalysts |
 | Options (ATM IV) | 96% eligible | Liquidity (~42% liquid chains) is the real gate |
 | RR 25d / implied move | ~39% | Gated by options chain liquidity |
-| 13F institutional | 58.2% ticker coverage | Next refresh ~May 15 (Q1 2026 filings) |
+| Sponsorship data | 58.2% ticker coverage | Next refresh ~May 15 (Q1 2026 filings) |
 | FDA designations | 58.3% top-60 | 207 entries, 84 tickers |
 | PIT financials | 99.4% universe | 339/341 tickers with EDGAR facts |
-| AACT trial linkage | 49 tickers | Expanding via NPI/company name matching |
+| AACT trial linkage | 303 tickers (549 sponsor aliases) | 22,082 linked trials |
 
 ### Environment Variables
 
@@ -423,7 +423,7 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 
 **Model:** B6 selector + pairwise_minimal ranker (ordinal-only)
 **Construction:** Equal-weight Top-30
-**Account:** $500,000 notional
+**Account:** $50,000 notional
 **Rebalance:** Weekly (Friday)
 **Cost budget:** 25 bps round-trip per turnover event
 
@@ -442,7 +442,7 @@ construction damage mechanism (+153.6pp drag). Bucket labels survive as metadata
 **Original finding (2026-04-01):** The selection layer generates alpha but fixed sleeve
 budgets destroy it. This remains true for the old optionality selector.
 
-**Updated finding (2026-04-03):** The A4 institutional selector generates statistically
+**Updated finding (2026-04-03):** The A4 sponsorship selector generates statistically
 significant alpha on true PIT data, and EW Top-30 construction preserves it.
 
 #### Selection-Only Benchmark (EW Top-20, PIT, 2020-2026)
@@ -525,15 +525,15 @@ cost aggregation, rebalance threshold gate (only trade if expected alpha >
 
 #### Operating Conclusion (updated 2026-04-04)
 
-> The DEM uses a two-stage scoring architecture: **coinvest selects** (B6 bundle),
-> **inst_delta ranks** (pairwise_minimal), **financial penalizes** safe-but-uncatalytic
+> The DEM uses a two-stage scoring architecture: **sponsorship selects** (B6 bundle),
+> **momentum_delta ranks** (pairwise_minimal), **financial penalizes** safe-but-uncatalytic
 > names, and the portfolio is held equal-weight. The B6 selector was revalidated
 > under Checklist v2 (bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST).
 > The pairwise ranker is ordinal-only (ECE = 0.129) — no rank-weighting or sizing.
 
 > The model is a **bear/neutral alpha engine**: strong in distress and consolidation
 > (+3.37pp bear, +6.23pp neutral), with bounded underperformance in sharp biotech
-> rallies (-0.37pp bull). This is structural — institutional sponsorship is a quality
+> rallies (-0.37pp bull). This is structural — sponsorship is a quality
 > signal, and quality lags beta in risk-on environments.
 
 > Fixed sleeve budgeting has been retired. Rank-weighting is not justified.
@@ -595,7 +595,158 @@ options-populated window.
 
 ---
 
-## 6. Catalyst Resolution Tracker (CRT)
+## 6. Expectation Error Model (EES v2 / Trap Gate + v3 Conditional)
+
+A pre-trade risk control layer that identifies structural expectation errors in biotech event pricing. The core insight: names that appear "cheap" relative to base-rate event outcomes are behavioral traps — the market is right to price them above historical norms.
+
+**Status:** FROZEN (2026-04-12). Checklist v2: **5/5 PASS**. Production gates deployed.
+
+### Architecture
+
+Two independent binary gates applied before portfolio construction:
+
+| Gate | Formula | Threshold | IC (63d) | Role |
+|------|---------|-----------|----------|------|
+| **Trap T20** | `-(0.50 × base_rate_gap + 0.50 × conditional_misprice)` | Exclude bottom 20% | +0.084 (t=9.9) | Remove structural traps |
+| **Quality Q15** | `-1.0 × timing_decay_risk` | Exclude bottom 15% | +0.078 (t=18.1) | Remove timing-uncertain structures |
+
+Final eligibility: `ees_eligible = quality_gate AND trap_gate`. Observed: ~80% of universe passes (60 names excluded by trap, 0 by quality alone).
+
+### Sub-Scores
+
+Six normalized inputs (all ≈[-1, +1]):
+
+| Score | Input | What It Detects |
+|-------|-------|-----------------|
+| **base_rate_gap** | `(implied_move - historical_p50) / historical_iqr` | Market price deviates from category base rate |
+| **conditional_misprice** | `(expected_move - implied_move) / (\|implied_move\| + ε)` | Implied move ≠ scenario-weighted expected move |
+| **timing_decay_risk** | Event date precision (DAY=0, QUARTER=1) | Expensive priced move with uncertain timing |
+| **divergence** | `(implied_event_move - realized_vol) / max(both)` | Options mispricing vs historical vol |
+| **crowding_bias** | Normalized short interest percentile | Bearish consensus |
+| **slippage_penalty** | **Always 0** — removed (PIT look-ahead bias found 2026-04-12) | — |
+
+Base-rate table (absolute % moves by category):
+
+| Category | p50 | IQR |
+|----------|-----|-----|
+| CLINICAL \| phase3 | 35.0% | 37.0% |
+| CLINICAL \| phase2 | 35.0% | 40.0% |
+| CLINICAL \| early | 25.0% | 38.0% |
+| REGULATORY \| any | 19.0–23.5% | 27–30% |
+| SAFETY \| any | 20.0% | 35.0% |
+
+### Conviction Sizing (α=1.5)
+
+After gate filtering, survivors are sized by conviction:
+
+```
+weight_i ∝ (B6_percentile ^ 1.5) × trap_strength × liquidity_cap
+```
+
+- **B6 conviction**: Power-law concentration from selector rank
+- **Trap scaling**: Reduce weight for names barely passing trap gate
+- **Liquidity cap**: `≤ 2% of 20d avg dollar volume / NAV` (sizing only, not a filter)
+- **Single-name cap**: 10% max
+- **Dust filter**: Drop positions < 0.5%
+
+No liquidity filters — illiquidity is where the edge lives in biotech.
+
+### Execution Guardrails
+
+Applied post-sizing, protective only:
+
+| Threshold | Value | Action |
+|-----------|-------|--------|
+| Participation > 5% ADV | Scale down to 5% | 1 name affected at $5M NAV |
+| Participation > 20% ADV | Skip entirely | 0 names affected at $5M NAV |
+
+Capacity: $50M+ viable. At $5M NAV, only 1 trade exceeds 5% ADV.
+
+### Checklist v2 Results
+
+| Test | Result |
+|------|--------|
+| Bootstrap CI | [+0.24%, +1.17%], excludes zero |
+| LOSO | 6/9 periods pass (67%) |
+| FDR | p < 0.000001 (BH q=0.10) |
+| FM incremental vs B6 | β=+0.036 (t=6.46) at 20d, +0.064 (t=13.59) at 63d |
+| Dependence-adjusted t | t=6.69 (ρ=0.24, n_eff=159) |
+
+### Backtested Performance (PIT-safe, 2020–2026)
+
+| Metric | EW Top-30 (baseline) | + Trap T20 | + Trap + Timing |
+|--------|----------------------|------------|-----------------|
+| Sharpe | 0.211 | 0.221 | **0.414** (2.4×) |
+| Mean return | +1.98%/mo | +2.34%/mo | +4.04%/mo |
+| Hit rate | 59% | 68% | — |
+
+Trap-removed names return -0.12% vs kept +2.21% (drag = -2.33% at 20d). Rolling IC: 100% positive across 152 windows.
+
+### Daily Monitoring
+
+`tools/trapops_monitor.py` runs at 6:17 AM ET weekdays:
+- **Module A**: Selection diff (top-30 overlap, trap-removed names)
+- **Module B**: Execution stress (participation rates, scaled/skipped)
+- **Module C**: Trap attribution (realized returns by gate bucket)
+- **Module D**: Health alerts (GREEN/YELLOW/RED)
+
+Regime detector auto-switches to conservative mode (Q20/T30) when: correlation > 0.40, eligible% < 50%, trap rate > 35%, or output-side underperformance.
+
+### EES v3 — Conditional Mispricing Model (diagnostic overlay)
+
+**Status:** Production-emitting since 2026-04-14. Checklist v2: **4/5 PASS** (WS4 pending forward data). Does NOT affect ranking or selection yet.
+
+A two-factor model replacing the v2 trap/quality overlay with PIT-validated signals:
+
+```
+ees_v3_score = 0.70 × z(conditional_misprice_score)
+             + 0.30 × z(conditional_expected_move)
+```
+
+| Factor | IC | NW-t | Decile Spread | Role |
+|--------|-----|------|--------------|------|
+| conditional_misprice_score | +0.089 | 2.07 | +6.9pp | Primary alpha — scenario-EV vs market price |
+| conditional_expected_move | +0.026 | 1.83 | +4.2pp | Stability overlay — orthogonal (r < 0.15) |
+
+**Key corrections from v2:**
+- `base_rate_gap_score` is **anti-predictive** (IC -0.090). Market is right to price above base rates. Removed from alpha.
+- `trap_overlay_score` is dead (IC ~0) — base_rate and misprice cancel each other.
+- Unit fix: `priced_move_pct` converted ×100 in Phase 2z (was decimal, now percentage points) with sanity check warning if values outside [1, 500].
+- Soft scaling: `tanh(raw / 2)` replaces hard [-1, +1] clamp — preserves tail ordering.
+- Distribution diagnostics: every run logs unique count and ceiling %, warns if >20% saturated.
+
+**Conditional model** (`event_ev/conditional_model.py`): detects mispriced conditionals where market prices a generic event outcome but subgroup odds differ (biomarker-selected trials, enriched designs, validated mechanisms, platform track record). Outputs `conditional_expected_move` and `conditional_gap_score`.
+
+**Execution capacity** (`event_ev/execution_capacity.py`): post-sizing guardrail. Checklist: 6/6 PASS at $3M NAV. Participation limits: scale down >5% ADV, skip >20% ADV.
+
+### Forward Monitor
+
+`tools/ees_v3_forward_monitor.py` tracks rolling evidence toward WS4 clearance (dependence-adjusted t ≥ 1.65). Re-scores historical snapshots on-the-fly for pre-v3 dates, reads native v3 columns from 2026-04-14+.
+
+Current forward state (re-scored, 433 snapshots):
+
+| Signal | Mean IC | rho1 | n_eff | t_adj | Status |
+|--------|---------|------|-------|-------|--------|
+| conditional_expected_move | +0.025 | 0.75 | 54 | +0.99 | Leading candidate — only positive signal |
+| ees_v3_score | -0.023 | 0.62 | 93 | -1.23 | Negative (misprice saturation in pre-v3 data) |
+| conditional_misprice_score | -0.077 | 0.34 | 32 | -4.12 | Contaminated by pre-fix unit mismatch |
+
+Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
+
+### Dead Lanes
+
+| Feature | Why Dead |
+|---------|----------|
+| Slippage penalty (market_cap) | PIT look-ahead bias (IC +0.107 → -0.088 when corrected) |
+| Original alpha direction (unflipped) | IC -0.006, t=-0.9 |
+| Crowding bias (short interest) | IC ≈ 0 at all horizons |
+| Trap as ranker (continuous) | Gates strictly dominate; trap is binary veto, not ranking signal |
+| Liquidity filters | Would destroy alpha |
+| base_rate_gap_score as alpha | Anti-predictive (IC -0.090); market is right |
+
+---
+
+## 7. Catalyst Resolution Tracker (CRT)
 
 Prediction → resolution → calibration loop for hard catalysts.
 
@@ -625,29 +776,68 @@ Current scorable: 1/3 (PVLA correct, CELC+TBPH wrong). Gate: BIIB PDUFA May 24.
 
 ---
 
-## 7. Shadow Portfolio Performance
+## 8. Shadow Portfolio Performance
 
-**Period:** 2026-03-03 to 2026-04-01 (25 trading days)
-**Status:** HOLD (readiness verdict)
+### What is the Shadow Portfolio?
+
+The shadow portfolio is a paper-traded simulation of the DEM's output. It holds real
+positions at real prices but executes no trades in a live brokerage account. Its purpose
+is to accumulate forward-only evidence of the model's selection and construction quality
+before committing real capital. The shadow runs daily as part of the production pipeline
+and is the **only credible evidence** of model performance — all historical backtests
+are informative but secondary to forward shadow results.
+
+Two shadow tracks run in parallel:
+
+| Track | Construction | Start | Positions | Purpose |
+|-------|-------------|-------|-----------|---------|
+| **Legacy shadow** | Sleeve-budget (55/25/10/10 split) | 2026-01-02 | ~50 names | Historical comparator (being retired) |
+| **EW Top-30 shadow** | Equal-weight top 30 by B6 rank | 2026-03-03 | 30 names | Production-track candidate |
+
+### Legacy Shadow (sleeve-budget, 2026-01-02 to present)
+
+$50,000 notional. 71 position snapshots across 73 periods.
 
 | Metric | Value |
 |--------|-------|
-| Cumulative return | -5.54% |
-| Excess vs XBI | -4.86% |
-| Max drawdown | 7.52% |
-| Sharpe | -2.047 |
-| Win rate | 24% |
-| PnL | -$26,310 |
+| Cumulative return | +24.72% |
+| Cumulative excess vs XBI | **+12.63%** |
+| Max drawdown | 11.05% |
+| Sharpe | 0.92 |
+| Win rate | 45% |
+| Total P&L | +$12,360 |
 
-**Sleeve attribution:**
-- binary_0_30: -$1,335
-- binary_31_90: -$83
-- binary_91_180: **-$24,132** (92% of total loss)
-- less_binary: -$760
+Sleeve attribution (cumulative P&L):
+- Binary 0-30d: +$7,904 (64% of total)
+- Binary 31-90d: +$3,280
+- Binary 91-180d: +$625
+- Less Binary: +$551
+
+### EW Top-30 Shadow (production-track, 2026-03-03 to 2026-04-01)
+
+$50,000 notional. 17 trading days. Equal-weight, no sleeves.
+
+| Metric | EW Top-30 | XBI | Excess |
+|--------|-----------|-----|--------|
+| Cumulative return | -7.3% | -9.1% | **+1.8%** |
+| Mean daily excess | — | — | +0.13%/day |
+| Win rate (daily excess > 0) | — | — | 41% |
+
+The EW Top-30 shadow outperformed both XBI (+1.8% excess) and the legacy shadow
+(legacy was -2.5% cumulative, -2.6% excess over the same period) despite holding
+fewer names (30 vs 51) on a $50,000 account. This validates the construction
+diagnosis: sleeve budgets were destroying alpha.
+
+### Shadow Governance
+
+- **Readiness verdict**: Generated weekly by `tools/weekly_readiness_scorecard.py`
+- **Go/no-go gate**: Requires positive excess at 63d+ before live capital deployment
+- **Monitoring**: `shadow_watch` agent (daily), `shadow_monitor` agent (via heartbeat checks)
+- **Artifacts**: `artifacts/live_shadow/` (positions, trades, attribution, alerts, diagnostics)
 
 ---
 
-## 8. Governance Stack
+## 9. Governance Stack
 
 ### Ruleset Governance
 
@@ -661,7 +851,7 @@ Current scorable: 1/3 (PVLA correct, CELC+TBPH wrong). Gate: BIIB PDUFA May 24.
 | Category | Gates | Current Status |
 |----------|-------|---------------|
 | Core | ruleset, trading_day, inputs | PASS |
-| Data freshness | XBI staleness, market data, CTgov, 13F | PASS |
+| Data freshness | XBI staleness, market data, CTgov, sponsorship | PASS |
 | Schema | market_data, DE schema, sort contrib | PASS |
 | Drift | top-20/60 overlap, Spearman, migrations | WARN (66.7% top-20) |
 | Risk | concentration, exposure, portfolio weights | PASS |
@@ -673,40 +863,167 @@ Current scorable: 1/3 (PVLA correct, CELC+TBPH wrong). Gate: BIIB PDUFA May 24.
 All new signals follow: research → evidence packet → shadow → governed promotion.
 Minimum bars: IC > 0.03 at 60d (sort signals), +0.20pp at longest horizon (ranking).
 
+### Backtest Protocol
+
+All backtests must be PIT-safe: use only data that was available on each snapshot date.
+
+#### Data Regimes
+
+| Period | Regime | Catalyst % | priced_move % | Sponsorship % | Snapshots | Notes |
+|--------|--------|-----------|--------------|--------------|-----------|-------|
+| 2020 | `sparse` | 12% | 0% | 100% | 52 | Selector signals fully populated; catalyst/options data thin |
+| 2021–2022 | `sparse` | 14–16% | 16% | 100% | ~104 | Options coverage begins; catalyst still limited to CT_PRIMARY_COMPLETION |
+| 2023–2024 | `maturing` | 18–23% | 22% | 100% | ~104 | FDA_DECISION appears; priced_move growing but still minority |
+| 2025 | `well-formed` | 42–71% | 28% | 100% | 58 | DATA_READOUT diversifies; full pipeline running |
+| 2026-01+ | `production` | 87% | 83% | 100% | 98+ | is_hard_catalyst, full options surface, live snapshots |
+
+**Backtest applicability by signal type:**
+- **Selector (B6 bundle)**: Valid across full 2020–2026 range. Sponsorship and momentum_delta are 100% populated in all 464 snapshots.
+- **Trap gate (EES v2)**: Backtested 2020–2026, IC positive in 100% of 152 rolling windows. Sub-scores degrade gracefully when priced_move is missing (base_rate_gap and conditional_misprice both zero out → trap score = 0 → gate passes).
+- **Options/catalyst signals**: Only reliable from late 2025+. Pre-2025 coverage too sparse for standalone evaluation.
+- **Conditional model**: Requires priced_move (83% in 2026, <25% before 2025). Forward-validation only until accumulation in production archives.
+
+The prior label `catalyst_broken` for 2020–2024 was overly broad — selector and trap signals are valid for that period. The limitation is specific to catalyst-dependent and options-dependent features.
+
+#### Options Feature Coverage (2026-04-14 production snapshot)
+
+Three coverage tiers, gated by different data dependencies:
+
+**Tier 1 — High coverage (94–96%):** Features derived from ATM IV surface (Tastytrade daily).
+
+| Feature | Fill | Gate |
+|---------|------|------|
+| opt_atm_iv | 96% | Options chain exists |
+| opt_iv_regime | 96% | Same |
+| atm_iv_change_5d | 94% | 5d price history + chain |
+| iv_ramp_flag | 94% | Same |
+
+11 tickers lack any options chain (micro-caps: CNTX, IKT, ARTV, DRUG, BLTE, etc.).
+
+**Tier 2 — Medium coverage (42–83%):** Features requiring catalyst date + options chain.
+
+| Feature | Fill | Gate |
+|---------|------|------|
+| priced_move_pct | 83% | Needs catalyst_date + chain (39 tickers have chain but no catalyst) |
+| straddle_price | 83% | Same as priced_move |
+| implied_event_move | 61% | Needs priced_move + event model derivation (65 tickers fail derivation) |
+| actual_implied_move_pctile | 57% | Needs implied_event_move + historical distribution |
+| opt_put_call_skew | 50% | Needs liquid 25d strikes |
+| opt_rr_25d | 46% | Same — only liquid chains |
+| rr_25d_trend_7d | 42% | Needs 7d RR history + liquidity |
+
+The 83% → 61% drop from priced_move to implied_event_move is a derivation gap: 65 tickers have straddle prices but the event move decomposition fails (typically missing event type context or insufficient term structure).
+
+**Tier 3 — Low coverage (0–31%):** Features requiring deep chain liquidity or multiple surface inputs.
+
+| Feature | Fill | Gate |
+|---------|------|------|
+| options_quality_composite | 31% | Needs RR + skew + IV regime + catalyst proximity |
+| iv_crush_breakeven_pct | 28% | Needs term structure around event date |
+| crush_adjusted_implied_move | 28% | Same |
+| ovf_composite (expression overlay) | 28% | Needs ≥3 of 6 expression flags |
+| ovf_has_iv_ramp | 14% | Needs 5d+ IV history near catalyst |
+| ovf_has_event_premium | 8% | Needs term structure + event isolation |
+| pre_event_put_call_ratio | 0% | Not yet populated (feed pending) |
+| ranker_options_block | 0% | Not yet populated (ranker paused) |
+
+**Impact on production signals:**
+- **Trap gate**: Unaffected. When priced_move is missing, both base_rate_gap and conditional_misprice zero out. The gate passes these names through (safe default — no information = no trap signal = no exclusion). The 50 names without priced_move are scored by the selector only.
+- **Expression overlay (Spec 062)**: Shadow-only, 28% coverage. Low coverage is expected — the overlay fires only when multiple surface signals converge. Not gated for production use.
+- **Quality gate**: Unaffected. Depends on timing_decay_risk (catalyst precision), not options data.
+- **Conviction sizing**: Uses trap_overlay_score (100% populated). Liquidity cap uses dollar volume, not options data.
+
+#### Safety Requirements
+
+1. **PIT enforcement**: All features must use `pit_financials/`, PIT-corrected catalyst dates, and snapshot-frozen inputs. No current-state files in historical evaluation.
+2. **Look-ahead prohibition**: No future prices, future resolutions, or post-publication data in feature construction. The PIT infrastructure (`scripts/archive_production_inputs.py`) freezes inputs daily.
+3. **Survivorship bias**: Universe is as-of each snapshot date. Tickers that delist or merge are included up to their last valid date.
+4. **Transaction costs**: Backtests must account for turnover. Historical PIT-corrected excess return is +2.34pp/mo net (t=2.60, 67 periods). Prior claims of +93.7pp are DEPRECATED (contained look-ahead bias).
+
+#### Checklist v2 (Promotion Gate)
+
+Any new signal or model change must pass all 6 modules before promotion:
+
+| Module | Test | Threshold |
+|--------|------|-----------|
+| Feature Monotonicity (FM) | Decile spread, monotonic rank-return | Spread > 0, no inversions in top 3 deciles |
+| Bootstrap | Resampled IC distribution | 95% CI excludes zero |
+| FDR | Benjamini-Hochberg multiple testing correction | q < 0.10 across signal family |
+| LOSO | Leave-one-season-out cross-validation | No single season drives >50% of total IC |
+| Year Stability | Per-year IC sign consistency | Positive IC in ≥60% of calendar years |
+| Ablation | Add/remove signal from production stack | Marginal contribution > 0 after controlling for existing signals |
+
+Implementation: `common/stats/` (6 modules, 36 tests). Current stack: A4 selector + 2-feature pairwise ranker (sponsorship +0.061, financial -0.053). Frozen at ruleset `2a3e79eb` v1.13.0.
+
+#### Event Feedback Loop
+
+Resolved events feed calibration through the event feedback pipeline:
+
+```
+Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
+  → store in artifacts/event_feedback/ → weekly calibration metrics
+```
+
+- Daily: `build_event_feedback.py` materializes resolved events (35 resolved, 71% Herald match rate)
+- Weekly: `build_event_feedback_metrics.py` computes source precision, confidence ECE, outcome confusion, regulatory calibration
+- Read-only: metrics inform governance decisions but never auto-update model priors
+
 ---
 
-## 9. OpenClaw Agent Fleet
+## 10. OpenClaw Agent Fleet
 
-18 agents on gateway ws://127.0.0.1:18789, Sonnet 4.6.
+26 agents on gateway ws://127.0.0.1:18789 (6 Sonnet 4.6, 15 Haiku 4.5, 1 main).
 
 ### Production Monitors (cron-scheduled)
 
-| Agent | Schedule | Role |
-|-------|----------|------|
-| ops | 5:00 PM ET weekdays | Packet interpreter, reads digest |
-| sentinel | 5:15 PM ET | Drift monitor, rollback advisor |
-| qa | 5:30 PM ET | Artifact validation, regression check |
-| calibration | Fri 6:00 PM ET | Weekly candidate review |
+| Agent | Name | Schedule | Role |
+|-------|------|----------|------|
+| ops | Packet | 5:00 PM ET weekdays | Duty officer, reads ops digest |
+| sentinel | Vigil | 5:15 PM ET | Drift monitor, rollback advisor |
+| qa | Litmus | 5:30 PM ET (via heartbeat checks) | Artifact validation, contract audit |
+| calibration | Tuner | Fri (via heartbeat checks) | Evidence weighing, candidate review |
+| ic_health_monitor | Canary | 5:45 PM ET (via heartbeat checks) | Signal decay watchdog |
+| fleet_steward | Conductor | 6:15 PM ET (via heartbeat checks) | Fleet orchestration |
 
-### Data Warehouse
+### Data & Collection
 
-| Agent | Role | Status |
-|-------|------|--------|
-| aact_trial_ingest (Archivist) | Bulk AACT clinical trial warehouse | Phase 1 live, 578K trials |
-| company_news_ingest (Herald) | Deterministic PR collection | Live, 336 tickers |
+| Agent | Name | Role | Status |
+|-------|------|------|--------|
+| aact_trial_ingest | Archivist | Bulk AACT clinical trial warehouse | Live, 580K trials, weekly (Mon) |
+| company_news_ingest | Herald | Deterministic PR collection + classification | Live, 338 tickers |
+| herald | Herald | Press release collector and news summarizer | Live — 3 daily digests |
+| ctgov_poller | Registry | ClinicalTrials.gov delta polling | Live, daily |
+| earnings_calendar_sync | Bellringer | Earnings calendar maintenance | Live, 2x daily |
+| grok_biotech_watch | Scout | Web sentinel for biotech signals | 4x daily (7 AM, 12 PM, 3 PM, 10 PM ET weekdays) |
+| universe_maintenance | Gardener | Universe steward | Weekly (Mon) |
+| data_auditor | Auditor | Pipeline integrity checks | Daily + weekly deep |
+| biotech_news_digest | Herald Digest | News digest builder/formatter | 3x daily |
 
-### Alpha-Adjacent
+### Resolution & Analysis
 
-| Agent | Role | Status |
-|-------|------|--------|
-| catalyst_delta | Event-change detection | Trial graduated |
-| options_watch | Options surface flags | Builder live |
-| shadow_monitor | Performance triage | Live (read-only) |
-| postmortem | Event resolution evidence | Starts after April catalysts |
+| Agent | Name | Role | Status |
+|-------|------|------|--------|
+| crt_resolution_watcher | Verdict | Catalyst outcome tracker | Live, 98 resolutions |
+| catalyst_delta | Pulse | Event-change detection | Live |
+| postmortem | Record | Event resolution evidence archivist | Live |
+| event_analyst | Analyst | Lesson aggregation from events | Live |
+| review_queue_steward | Triage | Review queue dispatcher | Live |
+
+### Portfolio & Market
+
+| Agent | Name | Role | Status |
+|-------|------|------|--------|
+| options_watch | Surface | Options volume/surface flags | Live |
+| price_action_watch | Tape | Price/volume scanner | Live |
+| shadow_monitor | Mirror | Shadow portfolio observer | Live (via heartbeat checks) |
+| shadow_watch | Mirror | Portfolio pattern monitor | Live |
+| policy_shadow_watch | Shadow | Policy change comparator | Live |
+| bioshort_watch | Hedge | Hedge fund governance monitor | Live, daily |
+| calibration_evidence | Evidence | Calibration evidence builder | Weekly (Fri)
 
 ---
 
-## 10. Dashboard
+## 11. Dashboard
 
 React + Vite 6 + Tailwind v3 + Recharts frontend with FastAPI backend.
 
@@ -732,7 +1049,7 @@ Overview | Options | Portfolio | Trials | Deals | Bio | CRT
 
 ---
 
-## 11. Roadmap (April-May 2026)
+## 12. Roadmap (April-May 2026)
 
 ### Phase 1: This Week (April 1-7)
 
@@ -748,7 +1065,7 @@ Overview | Options | Portfolio | Trials | Deals | Bio | CRT
 | Scope | Mean IC (h20) | % Positive | Interpretation |
 |-------|--------------|-----------|----------------|
 | Full universe | -0.044 | 34.4% | Ranking is poor at ordering middle/bottom |
-| **Top-30 only** | **-0.004** | **50.4%** | Within-top-30 ordering does not predict |
+| **Top-30 only** | **-0.003** | **52.2%** | Within-top-30 ordering does not predict (t=-0.10) |
 
 **Interpretation:** The DEM is a **filter/selector**, not a **ranker**. It identifies
 a good bucket of ~30 names (EW Top-30 generates +95% excess) but does not
@@ -779,7 +1096,7 @@ model says "these 30 are interesting" but not "this one is better than that one.
 **Ranker features** (vary meaningfully inside the top bucket):
 - Options mispricing: `actual_implied_move_pctile`, event premium, skew/RR
 - AACT timeline deltas: PCD shifts, enrollment changes, results posted
-- `inst_delta_z` (only confirmed sort contributor)
+- `momentum_delta_z` (only confirmed sort contributor)
 - `total_volume_z` (if validated)
 - Catalyst type differentiation (regulatory vs pivotal vs mid-stage)
 - DealForma dealability priors (slow-moving)
@@ -812,22 +1129,22 @@ model says "these 30 are interesting" but not "this one is better than that one.
 
 **Ranker status:** Paused. First training produced a correct null result — all
 models at coin-flip accuracy because test window (2023-2024) had zero options
-coverage and sparse inst_delta_z. The ranker concept is not falsified; it is
+coverage and sparse momentum_delta_z. The ranker concept is not falsified; it is
 currently untestable on the available historical data. Readiness gate at
 `output/ranker/ranker_data_readiness.json` tracks when training becomes viable.
 
 ### Operating Thesis (updated 2026-04-04)
 
-> **coinvest selects, inst_delta ranks, financial penalizes "safe but less catalytic"
+> **sponsorship selects, momentum_delta ranks, financial penalizes "safe but less catalytic"
 > names, and clinical is a weak/conditional feature under review.**
 >
-> B6 selector (coinvest 65% + inst_delta 35%) is validated under full Checklist v2:
+> B6 selector (sponsorship 65% + momentum_delta 35%) is validated under full Checklist v2:
 > bootstrap +2.42pp/mo, 95% CI excludes zero, LOSO ROBUST. Neither component survives
 > standalone, but the bundle's diversification benefit is real.
 >
 > Pairwise_minimal ranker is ordinal-only (ECE = 0.129). Within the top-30 cohort,
-> inst_delta is the dominant positive signal, financial_score is a true negative penalty
-> (safe names underperform), and coinvest washes out (its job is done at selection).
+> momentum_delta is the dominant positive signal, financial_score is a true negative penalty
+> (safe names underperform), and sponsorship washes out (its job is done at selection).
 >
 > EW Top-30 is the correct construction. Rank-weighting and confidence sizing are
 > not justified — pairwise scores are not calibrated.
@@ -837,12 +1154,12 @@ currently untestable on the available historical data. Readiness gate at
 
 ---
 
-## 12. Key Files
+## 13. Key Files
 
 | File | Purpose |
 |------|---------|
 | `decision_engine.py` | DEM core — L0→L2→L4→L4b→L3 |
-| `selector_engine.py` | B6 selector (5 blocks, coinvest+inst dominant) |
+| `selector_engine.py` | B6 selector (5 blocks, sponsorship-dominant) |
 | `ranker_engine.py` | clinical_50 ranker (legacy bounded ±15%) |
 | `ranker_v2_pairwise.py` | pairwise_minimal ranker (Bradley-Terry, 6 features) |
 | `run_screen.py` | Production pipeline orchestrator |
@@ -851,6 +1168,14 @@ currently untestable on the available historical data. Readiness gate at
 | `tools/catalyst_resolution_tracker.py` | CRT core |
 | `tools/crt_calibration.py` | CRT calibration rollup |
 | `tools/fetch_aact_snapshot.py` | AACT trial warehouse ingest |
+| `event_ev/expectation_error_model.py` | EES v2 — Trap gate + quality overlay |
+| `event_ev/ees_v3.py` | EES v3 — conditional misprice + expected move (diagnostic) |
+| `event_ev/conditional_model.py` | Biomarker/subgroup conditional mispricing detection |
+| `event_ev/execution_capacity.py` | Post-sizing participation guardrails |
+| `event_ev/portfolio_sizing.py` | Conviction sizing (α=1.5) |
+| `tools/ees_v3_forward_monitor.py` | Forward evidence tracker toward WS4 clearance |
+| `tools/build_event_feedback.py` | Resolved event materializer (CRT→Herald→postmortem join) |
+| `tools/build_event_feedback_metrics.py` | Weekly calibration metrics (source precision, ECE) |
 | `common/stats/` | Statistical QA package (FM, bootstrap, FDR, LOSO, calibration) |
 | `common/options_diagnostics.py` | Options surface data (Tastytrade) |
 | `dashboard/app.py` | FastAPI backend |
@@ -864,14 +1189,14 @@ currently untestable on the available historical data. Readiness gate at
 
 ---
 
-## 13. Statistical QA Layer (Spec 055, 2026-04-04)
+## 14. Statistical QA Layer (Spec 055, 2026-04-04)
 
 ### Promotion Checklist v2
 
 Any signal promotion now requires passing all 5 gates:
 
 1. **Signal card**: Coverage ≥40%, selector Δ > 0, ranker IC > 0
-2. **Fama-MacBeth incremental**: NW-t ≥ 1.96 with controls (coinvest, inst, financial)
+2. **Fama-MacBeth incremental**: NW-t ≥ 1.96 with controls (sponsorship, momentum_delta, financial)
 3. **Block bootstrap**: 95% CI on portfolio delta excludes zero (6-month blocks, n=10,000)
 4. **BH FDR**: q-value < 0.10 within testing family
 5. **LOSO robustness**: Worst-slice delta positive across year/regime/cap/catalyst/stage
@@ -880,8 +1205,8 @@ Any signal promotion now requires passing all 5 gates:
 
 | Signal | G1 Card | G2 FM | G3 Boot | G4 FDR | G5 LOSO | Total | Verdict |
 |--------|---------|-------|---------|--------|---------|-------|---------|
-| coinvest_score_z | PASS | FAIL | PASS | FAIL | PASS | 3/5 | SHADOW |
-| inst_delta_z | PASS | FAIL | PASS | FAIL | FAIL | 2/5 | NO_GO standalone |
+| sponsorship_score_z | PASS | FAIL | PASS | FAIL | PASS | 3/5 | SHADOW |
+| momentum_delta_z | PASS | FAIL | PASS | FAIL | FAIL | 2/5 | NO_GO standalone |
 | event_type_score | PASS | PASS | PASS | PASS | PASS | 5/5 | **PROMOTE (overlay)** |
 | insider_exec_buy_value_90d | FAIL | PASS | FAIL | FAIL | FAIL | 1/5 | NO_GO |
 | aact_execution_score | PASS | FAIL | FAIL | FAIL | FAIL | 1/5 | NO_GO |
@@ -903,12 +1228,12 @@ only. Equal-weight construction is the correct response to ordinal-only ranking.
 | Feature | Within-Top-30 NW-t | Mechanism | Action |
 |---------|-------------------|-----------|--------|
 | financial_score | −3.41 | TRUE PENALTY — persists all cohorts, all regimes | Keep negative weight |
-| inst_delta_z | +3.32 | Dominant positive discriminator | Keep, primary ranker signal |
-| clinical_score_v2_z | −2.38 | COLLIDER + weak penalty — vanishes in high-coinvest stratum | Quarterly review |
-| coinvest_score_z | +0.49 | Washes out (job done at selector) | Keep but low-impact |
+| momentum_delta_z | +3.32 | Dominant positive discriminator | Keep, primary ranker signal |
+| clinical_score_v2_z | −2.38 | COLLIDER + weak penalty — vanishes in high-sponsorship stratum | Quarterly review |
+| sponsorship_score_z | +0.49 | Washes out (job done at selector) | Keep but low-impact |
 
-**Key insight**: The selector and ranker learn different structure. Coinvest gets names
-into the room; within the room, inst_delta discriminates and financial_score penalizes
+**Key insight**: The selector and ranker learn different structure. Sponsorship gets names
+into the room; within the room, momentum_delta discriminates and financial_score penalizes
 the "safe but less catalytic" names. This is not a bug — it reflects real within-cohort
 economics of biotech investing.
 
@@ -924,24 +1249,66 @@ economics of biotech investing.
 
 ---
 
-## 14. Test Coverage
+## 15. Test Coverage
 
-~230+ tests across the system:
+**14,519 tests** across **516 test files**. Pre-commit hooks enforce black, isort, flake8, and detect-secrets on every commit.
+
+### Key Test Suites
 
 | Suite | Tests | Focus |
 |-------|-------|-------|
-| test_decision_engine | 112+ | DEM layers, sort keys, eligibility |
-| test_catalyst_resolution_tracker | 28 | CRT watchlist, classification, resolution |
-| test_crt_calibration | 8 | Calibration rollup, governance triggers |
+| test_decision_engine (5 files) | 267 | DEM layers, sort keys, eligibility, determinism, golden records |
+| test_composite_v3 | 91 | Module 5 composite scoring |
+| test_drift_report | 219 | Portfolio drift monitoring |
+| test_ic_enhancements | 139 | IC measurement, evaluation |
+| test_eval_forward_returns | 130 | Forward return evaluation harness |
+| test_null_safety | 130 | Missing-data resilience |
+| test_ema_committee_collector | 120 | EU regulatory data |
+| test_defensive_overlay_adapter | 120 | Defensive overlay |
+| test_production_hardening | 96 | Production robustness |
+| test_accuracy_improvements | 93 | Scoring accuracy |
+| test_catalyst_event_graph | 86 | Catalyst event modeling |
+| test_decision_actionable_ordering | 84 | Actionable rank determinism |
+| test_decision_ruleset | 84 | Ruleset governance |
+| test_regime_engine | 83 | Market regime classification |
+| test_expression_layer | 83 | Spec 062 options expression |
+| test_options_diagnostics | 81 | Options surface diagnostics |
+| test_clinical_v2_robustness | 75 | Clinical score robustness |
+| test_institutional_delta | 75 | Sponsorship momentum signal |
+| test_input_validation | 80 | Input schema enforcement |
+| test_score_utils | 82 | Scoring utilities |
+| test_expectation_error_model | 63 | EES/Trap gate |
+| test_event_ev_engine | 68 | Event EV 6-layer Bayesian |
+| test_phase2_daily | 143 | Daily production pipeline |
+| test_classify_press_releases | 56 | Herald news classification |
+| test_alpha_cohort | 56 | Alpha cohort analysis |
+| test_financial_v2_golden | 42 | Module 2 financials |
+| test_pipeline_robustness | 54 | Integration robustness |
+| test_pit_enforcement | 39 | PIT safety checks |
+| test_catalyst_resolution_tracker | 28 | CRT watchlist, classification |
 | test_crt_real_record_fixtures | 19 | Real resolution records |
-| test_milestone_optionality | 19 | Spec 041 feature builder |
-| test_price_action_watch | 25 | Alert classification, confidence |
-| test_dealforma_features | 24 | Spec 046 deal comps |
-| test_purple_book_features | 16 | Spec 047 biologics competition |
 | test_aact_ingest | 28 | AACT normalization, linkage, deltas |
+| test_expression_attribution | 40 | Spec 062 attribution |
+| test_purple_book_features | 16 | Spec 047 biologics competition |
 | test_news_feed | 24 | Spec 044 news schema |
-| test_options_quality | 16 | Spec 045 quality layer |
+| test_options_quality | 17 | Spec 045 quality layer |
+| test_dealforma_features | 24 | Spec 046 deal comps |
+
+### Coverage by Domain
+
+| Domain | Files | Tests | Key Areas |
+|--------|-------|-------|-----------|
+| Decision engine & scoring | ~80 | ~3,200 | DEM, composite, sort, eligibility, determinism |
+| Data collection & ingestion | ~60 | ~1,800 | SEC, CTgov, AACT, options, news, 13F |
+| Portfolio construction | ~40 | ~1,100 | Sizing, rebalance, risk, cost model, drift |
+| Governance & promotion | ~30 | ~900 | Rulesets, gates, canary, rollback, IC health |
+| Clinical & catalyst | ~50 | ~1,500 | Module 3/4, catalyst events, CRT, POS priors |
+| Options & expression | ~30 | ~800 | Surface, diagnostics, quality, expression layer |
+| Backtesting & evaluation | ~25 | ~700 | Walk-forward, IC, forward eval, signal backtest |
+| PIT & data integrity | ~20 | ~600 | PIT enforcement, audit, schema, validation |
+| Integration & smoke | ~15 | ~300 | Pipeline smoke, determinism, robustness |
+| Infrastructure | ~30 | ~500 | Logging, hashing, dates, types, manifests |
 
 ---
 
-*Document updated 2026-04-04. Active ruleset: dd1e608c (v1.13.0). QA baseline: Checklist v2 rerun.*
+*Document updated 2026-04-14. Active ruleset: 2a3e79eb (v1.13.0). QA baseline: Checklist v2 rerun.*
