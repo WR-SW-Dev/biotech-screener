@@ -360,16 +360,55 @@ Date-stamped caches for PIT-safe historical reruns:
 
 PIT-anchored evidence artifact per `(node_id, as_of_date)` materializing trial-design,
 regulatory-designation, CRT-history, and PubMed literature data into a single frozen record.
-Key fields: `randomized_flag`, `blinded_flag`, `enrollment_n`, `endpoint_type`,
-`orphan_flag`, `breakthrough_flag`, `literature_support_score`, `evidence_confidence`.
 
-`literature_support_score` feeds into the outcome model as a likelihood update (±0.15 log-odds
-centered at 0.3). PubMed enrichment is **optional** (`--enrich-pubmed` / `--pubmed` flags)
-and degrades gracefully on API failure (score stays null, no blocking). Cache: disk-based JSON
-in `data/cache/pubmed/`, 24h TTL, no API key required (3 req/s NCBI rate limit).
+**Schema** (`EventEvidenceSnapshot`, frozen dataclass):
 
-Implementation: `event_ev/evidence_snapshot.py` (builder), `data_sources/pubmed_client.py` (client),
-`event_ev/loaders.py:load_evidence_snapshots()` (loader with `enrich_pubmed` flag).
+| Field | Type | Source | Notes |
+|-------|------|--------|-------|
+| `phase` | str | CatalystNode / trial_records | Normalized ("1", "2", "3", etc.) |
+| `randomized_flag` | bool? | trial_records.allocation | RANDOMIZED → True |
+| `blinded_flag` | bool? | trial_records.masking | DOUBLE/SINGLE → True |
+| `control_arm_flag` | bool? | trial_records.intervention_model | Not SINGLE_GROUP → True |
+| `enrollment_n` | int? | trial_records.enrollment | Raw enrollment count |
+| `primary_endpoint_text` | str? | trial_records.primary_endpoints[0] | Capped 500 chars |
+| `endpoint_type` | str? | Inferred from endpoint text | EFFICACY/SAFETY/SURVIVAL/BIOMARKER/COMPOSITE |
+| `prior_positive_readouts_n` | int? | CRT resolutions (PIT-filtered) | HIT count for ticker |
+| `prior_negative_readouts_n` | int? | CRT resolutions (PIT-filtered) | MISS count for ticker |
+| `orphan_flag` | bool? | CatalystNode.designations | "ODD" in list |
+| `fast_track_flag` | bool? | CatalystNode.designations | "FT" in list |
+| `breakthrough_flag` | bool? | CatalystNode.designations | "BTD" in list |
+| `adcom_flag` | bool? | CatalystNode.adcom_outcome | Non-null → True |
+| `safety_signal_flag` | bool? | Not yet wired | Always null in v1 |
+| `literature_support_score` | float? | PubMed via NCBI E-utilities | [0, 1], null when --enrich-pubmed off |
+| `evidence_confidence` | float? | Weighted source coverage | [0, 1]: trial 0.35 + nct 0.10 + desig 0.20 + CRT 0.20 + lit 0.15 |
+| `ctgov_study_id` | str? | CatalystNode.nct_id / trial match | NCT ID |
+
+**PubMed integration** (`data_sources/pubmed_client.py`):
+- API: NCBI E-utilities (esearch + efetch), XML responses parsed to `PubMedArticle` objects
+- Search strategy: (1) NCT ID exact match, (2) drug name + indication from `drug_name_map.json` (300 tickers)
+- `literature_support_score` = 0.30×count + 0.25×recency + 0.25×journal_quality + 0.20×has_results
+- Journal tiers: high-impact (NEJM, Lancet, JAMA, Nature, Cell, etc.), mid-impact (Clin Cancer Res, BMJ, etc.)
+- Cache: `data/cache/pubmed/{sha1}.json`, 24h TTL
+- Rate limit: 10 req/s with `NCBI_API_KEY`, 3 req/s anonymous
+- Flags: `--enrich-pubmed` on `run_daily_production.py`, `--pubmed` on `build_event_ev_scores.py`
+- Fallback: API failure → score stays null, evidence snapshot still built, no production blocking
+
+**Model consumption**: `literature_support_score` feeds into the outcome model (`outcome_model.py`)
+as a Bayesian likelihood update: `log_odds += (score - 0.3) * 0.3` (±0.15 max, centered at 0.3).
+Higher publication volume in high-impact journals modestly increases P(HIT). Fires only when
+score > 0; null/zero = no effect. Appears in `features_used.log_odds_updates.literature_support`.
+
+**Validation**: `build_ev_validation.py` carries `literature_support_score` and `evidence_confidence`
+into the validation ledger and computes a `by_literature` calibration split (Brier/hit-rate for
+events with vs without literature). Promotion to binding requires forward evidence from this split.
+
+**Leaderboard surfacing**: `literature_support_score`, `evidence_confidence`, `randomized_flag`,
+`blinded_flag`, `enrollment_n`, `endpoint_type`, `orphan_flag`, `breakthrough_flag`, `ctgov_study_id`
+appear in EV leaderboard JSON. Full evidence snapshot serialized in `{date}_event_ev_full.json`.
+
+Implementation: `event_ev/evidence_snapshot.py` (builder + PubMed enricher),
+`data_sources/pubmed_client.py` (client), `event_ev/loaders.py:load_evidence_snapshots()`,
+`production_data/drug_name_map.json` (300-ticker curated drug name lookup).
 
 ### PIT (Point-in-Time) Data Architecture
 
@@ -411,6 +450,7 @@ Step 5: Run full screen (run_screen.py → data/snapshots/{date}/)
         ├── 5i: Event premium decomposition
         ├── 5j: AACT delta pipeline (weekly — Mondays only)
         ├── 5k: Construction overlays
+        │   └── 5k.21: Event EV scoring (evidence snapshots + optional PubMed via --enrich-pubmed)
         ├── 5l: Shadow portfolio
         ├── 5m: CRT pipeline
         └── 5o: Construction v2 shadow
@@ -430,6 +470,8 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 | FDA designations | 58.3% top-60 | 207 entries, 84 tickers |
 | PIT financials | 99.4% universe | 339/341 tickers with EDGAR facts |
 | AACT trial linkage | 303 tickers (549 sponsor aliases) | 22,082 linked trials |
+| Drug name map | 300 tickers | From trial_records + PDUFA; `production_data/drug_name_map.json` |
+| PubMed literature | Optional (--enrich-pubmed) | Cached per-ticker; 24h TTL in `data/cache/pubmed/` |
 
 ### Environment Variables
 
@@ -440,6 +482,7 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 | `MD_AUTH_TOKEN` | Morningstar Direct | Fundamentals, vol, ratings |
 | `FRED_API_KEY` | FRED (St. Louis Fed) | Macro regime feeds (VIX, rates) |
 | `XAI_API_KEY` | xAI (Grok) | News analysis, X Search |
+| `NCBI_API_KEY` | NCBI (PubMed) | Literature enrichment (10 req/s vs 3 anonymous) |
 | `SMTP_USER`, `SMTP_PASSWORD` | Email | Alert delivery |
 
 ---
