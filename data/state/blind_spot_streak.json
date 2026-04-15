@@ -1,15 +1,14 @@
 {
-  "OABI": 8,
-  "EDIT": 5,
-  "PRQR": 5,
-  "PACB": 19,
-  "EOLS": 19,
-  "KROS": 8,
-  "GHRS": 19,
-  "PSNL": 5,
-  "STVN": 8,
-  "TKNO": 19,
-  "BCYC": 3,
-  "LFCR": 3,
-  "COLL": 2
+  "PRQR": 10,
+  "OABI": 13,
+  "TKNO": 24,
+  "LFCR": 8,
+  "COLL": 7,
+  "RANI": 1,
+  "GHRS": 24,
+  "PSNL": 10,
+  "EOLS": 24,
+  "PACB": 24,
+  "BCYC": 8,
+  "EDIT": 10
 }
