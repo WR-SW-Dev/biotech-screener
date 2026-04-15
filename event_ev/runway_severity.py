@@ -255,6 +255,7 @@ class RunwaySeverityModel:
 
         catalyst_days = _sf(row.get("catalyst_days"))
         catalyst_tier = row.get("catalyst_type_tier", "T5") or "T5"
+        catalyst_event_type = (row.get("catalyst_event_type") or "").strip()
         market_cap_mm = _sf(row.get("market_cap_mm"))
         short_interest_pct = _sf(row.get("short_interest_pct"))
         financing_pressure = _sf(row.get("financing_pressure_score"))
@@ -273,10 +274,31 @@ class RunwaySeverityModel:
         # Convert catalyst_days to months
         cat_months = _catalyst_months(catalyst_days)
 
+        # Effective decisiveness for buffer calculation.
+        # The global tier map assigns CT_PRIMARY_COMPLETION to T3 (calendar
+        # milestone), but a Phase 3 primary completion IS a decisive event
+        # for survivability purposes. Promote to T2 when phase indicates
+        # a pivotal readout.
+        effective_tier = catalyst_tier
+        if catalyst_tier == "T3" and catalyst_event_type in (
+            "CT_PRIMARY_COMPLETION",
+            "CT_STUDY_COMPLETION",
+        ):
+            tier_dev = (row.get("tier_dev") or "").strip().upper()
+            phase_raw = (row.get("phase") or row.get("catalyst_phase") or "").strip().lower()
+            is_pivotal = (
+                "phase 3" in phase_raw
+                or "phase3" in phase_raw
+                or "pivotal" in phase_raw
+                or tier_dev in ("A", "B")  # A/B dev tiers are typically late-stage
+            )
+            if is_pivotal:
+                effective_tier = "T2"
+
         # Only count decisive catalysts for buffer calculation
         # For non-decisive catalysts, look further ahead
         effective_cat_months = cat_months
-        if cat_months is not None and not _is_decisive(catalyst_tier):
+        if cat_months is not None and not _is_decisive(effective_tier):
             # Non-decisive catalyst doesn't count as the "value inflection"
             # Use a longer horizon (effectively penalizes the name)
             effective_cat_months = max(cat_months, 12.0)
@@ -293,7 +315,7 @@ class RunwaySeverityModel:
         severity = compute_severity(
             runway_months=runway_months,
             catalyst_months=effective_cat_months,
-            catalyst_tier=catalyst_tier,
+            catalyst_tier=effective_tier,
             market_cap_mm=market_cap_mm,
             short_interest_pct=short_interest_pct,
             has_revenue_or_partner=has_revenue_or_partner,
@@ -303,14 +325,14 @@ class RunwaySeverityModel:
         # Layer outputs
         financing_gate = severity <= 0.92
         # Exception: if catalyst is within 60 days and decisive, override gate
-        if not financing_gate and catalyst_days is not None and catalyst_days <= 60 and _is_decisive(catalyst_tier):
+        if not financing_gate and catalyst_days is not None and catalyst_days <= 60 and _is_decisive(effective_tier):
             financing_gate = True
 
         dilution_haircut = 0.35 * severity
         size_mult = max(0.40, 1.0 - 0.60 * severity)
 
         # Decisiveness
-        decisiveness = TIER_DECISIVENESS.get(catalyst_tier, 0.10)
+        decisiveness = TIER_DECISIVENESS.get(effective_tier, 0.10)
 
         # Notes
         notes_parts: List[str] = []
@@ -318,8 +340,9 @@ class RunwaySeverityModel:
             notes_parts.append(f"runway {runway_months:.0f}mo")
         else:
             notes_parts.append("no runway data")
+        tier_label = effective_tier if effective_tier == catalyst_tier else f"{effective_tier}<-{catalyst_tier}"
         if cat_months is not None:
-            notes_parts.append(f"catalyst {cat_months:.0f}mo ({catalyst_tier})")
+            notes_parts.append(f"catalyst {cat_months:.0f}mo ({tier_label})")
         if buffer is not None:
             notes_parts.append(f"buffer {buffer:+.0f}mo")
         if has_revenue_or_partner:
@@ -339,7 +362,7 @@ class RunwaySeverityModel:
             financing_truth_gate=financing_gate,
             dilution_haircut=dilution_haircut,
             size_multiplier=size_mult,
-            catalyst_type_tier=catalyst_tier,
+            catalyst_type_tier=effective_tier,
             catalyst_decisiveness=decisiveness,
             severity_bucket=_severity_bucket(severity),
             severity_notes="; ".join(notes_parts),
