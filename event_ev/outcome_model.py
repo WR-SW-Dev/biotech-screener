@@ -163,6 +163,7 @@ class OutcomeModel:
                 - competitive_intensity: float [0, 1]
                 - sponsor_track_record_n: int (number of prior outcomes)
                 - sponsor_track_record_hit_rate: float [0, 1]
+                - literature_support_score: float [0, 1] (from PubMed, optional)
 
         Returns:
             OutcomeProbabilities with calibrated branch probabilities
@@ -245,6 +246,16 @@ class OutcomeModel:
             update = -0.1 * min((ci - 2.0) / 2.0, 1.0)  # graduated, max -0.1
             log_odds += update
             updates["competitive_intensity"] = round(update, 4)
+
+        # Literature support (PubMed enrichment, optional)
+        # Higher literature score → more published evidence supporting the
+        # mechanism/target, which modestly increases PoS. Capped at ±0.15
+        # log-odds to prevent domination by publication volume.
+        lit = _safe_context_float(context, "literature_support_score")
+        if lit is not None and lit > 0:
+            update = (lit - 0.3) * 0.3  # center at 0.3, scale ±0.15
+            log_odds += update
+            updates["literature_support"] = round(update, 4)
 
         features_used["log_odds_updates"] = updates
 

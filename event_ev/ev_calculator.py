@@ -116,11 +116,17 @@ class EventEVCalculator:
         model_p_hits = {}
         for node in cohort:
             try:
+                # Merge evidence fields into context for the outcome model
+                ctx = dict(context_features.get(node.ticker, {}))
+                evi = evidence_snapshots.get(node.node_id)
+                if evi and evi.literature_support_score is not None:
+                    ctx["literature_support_score"] = evi.literature_support_score
+
                 timing_est = self.timing.estimate(node, self.as_of_date)
                 outcome_est = self.outcome.estimate(
                     node,
                     self.as_of_date,
-                    context_features.get(node.ticker, {}),
+                    ctx,
                 )
                 payoff_est = self.payoff.estimate(
                     node,

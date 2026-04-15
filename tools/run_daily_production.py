@@ -3827,6 +3827,7 @@ def run_daily(
     price_pit_backfill: bool = False,
     auto_refresh_market_data: bool = True,
     allow_candidate: bool = False,
+    enrich_pubmed: bool = False,
 ) -> Dict[str, Any]:
     """Execute the full daily Phase-2 pipeline.
 
@@ -5188,6 +5189,7 @@ def run_daily(
             _ev_result = _build_ev_scores(
                 as_of_date=as_of_date,
                 output_dir=_ev_dir,
+                enrich_pubmed=enrich_pubmed,
             )
             _ev_n = _ev_result.get("n_total", 0)
             _ev_act = _ev_result.get("n_actionable", 0)
@@ -5848,6 +5850,11 @@ def main():
         action="store_true",
         help="Emit JSON-structured logs to stdout (also activated by LOG_FORMAT=json env var).",
     )
+    parser.add_argument(
+        "--enrich-pubmed",
+        action="store_true",
+        help="Enable PubMed literature enrichment in Event EV scoring (optional, cached).",
+    )
     args = parser.parse_args()
 
     # -- Logging setup (must be before any logger calls) --
@@ -5887,6 +5894,7 @@ def main():
             price_pit_backfill=args.price_pit_backfill,
             auto_refresh_market_data=not args.no_auto_refresh_market_data,
             allow_candidate=args.allow_candidate,
+            enrich_pubmed=args.enrich_pubmed,
         )
     except Exception as exc:
         # Ensure a FAIL manifest + ledger entry exist even on unhandled crash

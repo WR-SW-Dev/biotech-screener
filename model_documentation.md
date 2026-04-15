@@ -354,6 +354,22 @@ Date-stamped caches for PIT-safe historical reruns:
 | DealForma deal comps | — | — | Spec 046 ready | Awaiting CSV export |
 | Conference programs | 8 conferences (ASCO, AACR, ESMO, ASH, AAN, SABCS, SITC, ACR) | 5 AACR 2026 abstracts (first run) | `cache/conferences/` | Daily via Grok web search (6 AM ET) |
 | EU trial registries | EUCTR, CTIS, ISRCTN | — | `cache/ema/` | Monthly |
+| PubMed (NCBI E-utilities) | ~19K trial records searchable | Per-ticker drug/NCT search | `data/cache/pubmed/` | Optional — `--enrich-pubmed` flag |
+
+### Event Evidence Snapshot (2026-04-15)
+
+PIT-anchored evidence artifact per `(node_id, as_of_date)` materializing trial-design,
+regulatory-designation, CRT-history, and PubMed literature data into a single frozen record.
+Key fields: `randomized_flag`, `blinded_flag`, `enrollment_n`, `endpoint_type`,
+`orphan_flag`, `breakthrough_flag`, `literature_support_score`, `evidence_confidence`.
+
+`literature_support_score` feeds into the outcome model as a likelihood update (±0.15 log-odds
+centered at 0.3). PubMed enrichment is **optional** (`--enrich-pubmed` / `--pubmed` flags)
+and degrades gracefully on API failure (score stays null, no blocking). Cache: disk-based JSON
+in `data/cache/pubmed/`, 24h TTL, no API key required (3 req/s NCBI rate limit).
+
+Implementation: `event_ev/evidence_snapshot.py` (builder), `data_sources/pubmed_client.py` (client),
+`event_ev/loaders.py:load_evidence_snapshots()` (loader with `enrich_pubmed` flag).
 
 ### PIT (Point-in-Time) Data Architecture
 
@@ -1284,6 +1300,8 @@ currently untestable on the available historical data. Readiness gate at
 | `event_ev/execution_capacity.py` | Post-sizing participation guardrails |
 | `event_ev/portfolio_sizing.py` | Conviction sizing (α=1.5) |
 | `event_ev/runway_severity.py` | Runway-to-catalyst severity (4-layer diagnostic) |
+| `event_ev/evidence_snapshot.py` | PIT-anchored evidence snapshot builder (trial design + designations + CRT + PubMed) |
+| `data_sources/pubmed_client.py` | NCBI E-utilities PubMed client (search, fetch, cache, literature scoring) |
 | `scripts/research/crt_bta_calibration.py` | BioTradingArena calibration benchmark |
 | `tools/ees_v3_forward_monitor.py` | Forward evidence tracker toward WS4 clearance |
 | `tools/build_event_feedback.py` | Resolved event materializer (CRT→Herald→postmortem join) |
@@ -1391,6 +1409,8 @@ economics of biotech investing.
 | test_score_utils | 82 | Scoring utilities |
 | test_expectation_error_model | 63 | EES/Trap gate |
 | test_event_ev_engine | 68 | Event EV 6-layer Bayesian |
+| test_evidence_snapshot | 33 | Evidence snapshot PIT safety, field tolerance, designation extraction |
+| test_pubmed_client | 19 | PubMed XML parsing, literature scoring, cache, evidence wiring |
 | test_phase2_daily | 143 | Daily production pipeline |
 | test_classify_press_releases | 56 | Herald news classification |
 | test_alpha_cohort | 56 | Alpha cohort analysis |

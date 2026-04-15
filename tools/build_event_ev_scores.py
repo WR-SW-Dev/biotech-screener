@@ -29,7 +29,7 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from event_ev.data_contracts import EventEV
 from event_ev.ev_calculator import EventEVCalculator
-from event_ev.loaders import load_catalyst_graph, load_market_features, split_context_features
+from event_ev.loaders import load_catalyst_graph, load_evidence_snapshots, load_market_features, split_context_features
 from event_ev.outcome_model import OutcomeModel
 
 logger = logging.getLogger(__name__)
@@ -40,6 +40,7 @@ def build_scores(
     repo_root: Optional[Path] = None,
     output_dir: Optional[Path] = None,
     max_days: int = 180,
+    enrich_pubmed: bool = False,
 ) -> Dict[str, Any]:
     """Run the Event EV engine and produce scored leaderboard.
 
@@ -48,6 +49,8 @@ def build_scores(
         repo_root: Project root (default: auto-detect).
         output_dir: Where to write artifacts (default: artifacts/event_ev/).
         max_days: Maximum days to catalyst for inclusion.
+        enrich_pubmed: If True, fetch PubMed literature scores via NCBI API.
+            Default False to avoid API calls during fast production runs.
 
     Returns:
         Dict with n_total, n_actionable, leaderboard, events, stats.
@@ -81,6 +84,20 @@ def build_scores(
             logger.debug("CRT calibration failed — using base rates")
     outcome_model = OutcomeModel(crt_calibration=crt_cal) if crt_cal else None
 
+    # Load evidence snapshots (optional PubMed enrichment)
+    all_nodes = graph.get_event_cohort(as_of, max_days=max_days, min_days=0)
+    evidence_snapshots = {}
+    try:
+        evidence_snapshots = load_evidence_snapshots(
+            all_nodes,
+            as_of,
+            prod_data,
+            data_dir,
+            enrich_pubmed=enrich_pubmed,
+        )
+    except Exception:
+        logger.warning("Evidence snapshot loading failed — continuing without evidence")
+
     # Run EV calculator
     calc = EventEVCalculator(
         as_of_date=as_of,
@@ -94,6 +111,7 @@ def build_scores(
         context_features=context_features,
         current_weights=None,
         sizing_mode="ew_filter",
+        evidence_snapshots=evidence_snapshots,
     )
 
     # Build leaderboard
@@ -146,6 +164,22 @@ def _build_leaderboard(results: List[EventEV], as_of: date) -> List[Dict[str, An
             "is_overdue_window": "OVERDUE_WINDOW" in (ev.node.event_subtype or ""),
             "is_supplement": ev.node.source == "M3_RANKINGS_SUPPLEMENT",
         }
+
+        # Evidence snapshot fields (when available)
+        evi = ev.evidence
+        if evi:
+            row["literature_support_score"] = evi.literature_support_score
+            row["evidence_confidence"] = evi.evidence_confidence
+            row["randomized_flag"] = evi.randomized_flag
+            row["blinded_flag"] = evi.blinded_flag
+            row["enrollment_n"] = evi.enrollment_n
+            row["endpoint_type"] = evi.endpoint_type
+            row["orphan_flag"] = evi.orphan_flag
+            row["breakthrough_flag"] = evi.breakthrough_flag
+            row["ctgov_study_id"] = evi.ctgov_study_id
+        else:
+            row["literature_support_score"] = None
+            row["evidence_confidence"] = None
 
         # Spec 059 overlays
         bs = ev.branch_sensitivity
@@ -303,6 +337,7 @@ if __name__ == "__main__":
     parser.add_argument("--as-of", default=str(date.today()), help="Evaluation date (YYYY-MM-DD)")
     parser.add_argument("--max-days", type=int, default=180, help="Max days to catalyst")
     parser.add_argument("--output-dir", type=str, default=None, help="Output directory")
+    parser.add_argument("--pubmed", action="store_true", help="Enrich with PubMed literature scores")
     args = parser.parse_args()
 
     out_dir = Path(args.output_dir) if args.output_dir else REPO_ROOT / "artifacts" / "event_ev"
@@ -311,6 +346,7 @@ if __name__ == "__main__":
         as_of_date=args.as_of,
         output_dir=out_dir,
         max_days=args.max_days,
+        enrich_pubmed=args.pubmed,
     )
 
     print(f"\nEvent EV Scoring — {args.as_of}")

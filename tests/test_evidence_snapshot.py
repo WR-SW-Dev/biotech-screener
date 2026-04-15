@@ -563,3 +563,201 @@ class TestEventEVEvidenceSlot:
 
         d = ev.to_dict()
         assert "evidence" not in d
+
+
+# ---------------------------------------------------------------------------
+# Outcome model consumes literature_support_score
+# ---------------------------------------------------------------------------
+
+
+class TestOutcomeModelLiteratureConsumption:
+    """Verify that literature_support_score changes model output."""
+
+    def test_literature_changes_p_hit(self):
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        node = _make_node(phase="3")
+
+        # Without literature
+        result_no_lit = model.estimate(node, date(2026, 4, 15), {})
+
+        # With high literature score
+        result_with_lit = model.estimate(node, date(2026, 4, 15), {"literature_support_score": 0.9})
+
+        # High literature should increase p_hit
+        assert result_with_lit.p_hit > result_no_lit.p_hit
+
+    def test_literature_zero_no_change(self):
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        node = _make_node(phase="3")
+
+        result_no_lit = model.estimate(node, date(2026, 4, 15), {})
+        result_zero_lit = model.estimate(node, date(2026, 4, 15), {"literature_support_score": 0.0})
+
+        # Zero literature = no update (guard: score must be > 0 to fire)
+        assert result_zero_lit.p_hit == result_no_lit.p_hit
+
+    def test_literature_in_features_used(self):
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        node = _make_node(phase="3")
+
+        result = model.estimate(node, date(2026, 4, 15), {"literature_support_score": 0.7})
+
+        updates = result.features_used.get("log_odds_updates", {})
+        assert "literature_support" in updates
+
+    def test_literature_none_no_update(self):
+        from event_ev.outcome_model import OutcomeModel
+
+        model = OutcomeModel()
+        node = _make_node(phase="3")
+
+        result = model.estimate(node, date(2026, 4, 15), {})
+
+        updates = result.features_used.get("log_odds_updates", {})
+        assert "literature_support" not in updates
+
+
+# ---------------------------------------------------------------------------
+# Build scores integration
+# ---------------------------------------------------------------------------
+
+
+class TestBuildScoresEnrichPubmed:
+    """Verify build_scores handles enrich_pubmed flag cleanly."""
+
+    def test_build_scores_pubmed_off_default(self):
+        """build_scores should accept enrich_pubmed=False without error."""
+        # This just verifies the function signature accepts the flag
+        # without needing a full production data setup
+        import inspect
+
+        from tools.build_event_ev_scores import build_scores
+
+        sig = inspect.signature(build_scores)
+        assert "enrich_pubmed" in sig.parameters
+        assert sig.parameters["enrich_pubmed"].default is False
+
+    def test_leaderboard_tolerates_missing_evidence(self):
+        """Leaderboard rows should have evidence fields even when evidence=None."""
+        from event_ev.data_contracts import CrowdBelief, EventEV, OutcomeProbabilities, ScenarioPayoffs, TimingEstimate
+        from tools.build_event_ev_scores import _build_leaderboard
+
+        node = _make_node()
+        ev = EventEV(
+            node=node,
+            timing=TimingEstimate(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                prob_on_time=0.7,
+                prob_slip=0.2,
+                prob_early=0.1,
+                expected_delay_days=0,
+                median_arrival_days=60,
+                hazard_rate=0.01,
+            ),
+            outcome=OutcomeProbabilities(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                p_hit=0.58,
+                p_miss=0.30,
+                p_mixed=0.12,
+                confidence=0.7,
+                prior_source="wong_et_al",
+            ),
+            expectation=CrowdBelief(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                implied_p_hit=0.55,
+                belief_direction="NEUTRAL",
+                belief_intensity=0.5,
+                priced_move_pct=25.0,
+                mispricing_score=0.03,
+            ),
+            payoff=ScenarioPayoffs(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                upside_hit=20.0,
+                downside_miss=-40.0,
+                move_mixed=-2.0,
+                scenario_ev=3.5,
+                asymmetry_ratio=0.5,
+                downside_adjusted_ev=1.0,
+                kelly_fraction=0.05,
+                analog_count=50,
+                analog_confidence="ok",
+            ),
+        )
+
+        rows = _build_leaderboard([ev], date(2026, 4, 15))
+        assert len(rows) == 1
+        assert rows[0]["literature_support_score"] is None
+        assert rows[0]["evidence_confidence"] is None
+
+    def test_leaderboard_surfaces_evidence_when_present(self):
+        """Leaderboard rows should include evidence fields when evidence is attached."""
+        from event_ev.data_contracts import CrowdBelief, EventEV, OutcomeProbabilities, ScenarioPayoffs, TimingEstimate
+        from event_ev.evidence_snapshot import build_evidence_snapshot
+        from tools.build_event_ev_scores import _build_leaderboard
+
+        node = _make_node(designations=["BTD"])
+        evidence = build_evidence_snapshot(
+            node,
+            date(2026, 4, 15),
+            literature_scores={"ACAD": 0.72},
+        )
+        ev = EventEV(
+            node=node,
+            timing=TimingEstimate(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                prob_on_time=0.7,
+                prob_slip=0.2,
+                prob_early=0.1,
+                expected_delay_days=0,
+                median_arrival_days=60,
+                hazard_rate=0.01,
+            ),
+            outcome=OutcomeProbabilities(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                p_hit=0.58,
+                p_miss=0.30,
+                p_mixed=0.12,
+                confidence=0.7,
+                prior_source="wong_et_al",
+            ),
+            expectation=CrowdBelief(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                implied_p_hit=0.55,
+                belief_direction="NEUTRAL",
+                belief_intensity=0.5,
+                priced_move_pct=25.0,
+                mispricing_score=0.03,
+            ),
+            payoff=ScenarioPayoffs(
+                node_id=node.node_id,
+                as_of_date="2026-04-15",
+                upside_hit=20.0,
+                downside_miss=-40.0,
+                move_mixed=-2.0,
+                scenario_ev=3.5,
+                asymmetry_ratio=0.5,
+                downside_adjusted_ev=1.0,
+                kelly_fraction=0.05,
+                analog_count=50,
+                analog_confidence="ok",
+            ),
+            evidence=evidence,
+        )
+
+        rows = _build_leaderboard([ev], date(2026, 4, 15))
+        assert rows[0]["literature_support_score"] == 0.72
+        assert rows[0]["breakthrough_flag"] is True
+        assert rows[0]["evidence_confidence"] is not None
