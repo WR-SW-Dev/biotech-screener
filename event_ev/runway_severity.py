@@ -56,6 +56,10 @@ MIN_DECISIVE_TIER = "T2"
 class RunwaySeverityOverlay:
     """Runway-to-catalyst severity assessment for a single ticker.
 
+    Two severity paths:
+      - truth_severity: "can they survive to the catalyst?" (T1/T2 decisive only)
+      - ev_severity: "what financing damage even if they do?" (any tier)
+
     Policy: DIAGNOSTIC OVERLAY. Not in ranking yet.
     """
 
@@ -65,15 +69,16 @@ class RunwaySeverityOverlay:
     # Core inputs
     months_to_cash_out: Optional[float]
     months_to_next_decisive_catalyst: Optional[float]
-    runway_buffer_months: Optional[float]
+    runway_buffer_months: Optional[float]  # truth-gate buffer (decisive only)
 
-    # Severity score [0, 1] — higher = more financing pressure
-    runway_severity_score: float
+    # Severity scores [0, 1] — higher = more financing pressure
+    runway_severity_score: float  # truth-gate severity (for gate + bucket)
+    ev_severity_score: float  # EV/sizing severity (uses actual catalyst timing)
 
     # Layer outputs
-    financing_truth_gate: bool  # False = hard fail (severity > 0.92)
-    dilution_haircut: float  # [0, ~0.35] — discount to upside payoff
-    size_multiplier: float  # [0.40, 1.0] — position sizing haircut
+    financing_truth_gate: bool  # False = hard fail (truth_severity > 0.92)
+    dilution_haircut: float  # [0, ~0.35] — from ev_severity
+    size_multiplier: float  # [0.40, 1.0] — from ev_severity
 
     # Context
     catalyst_type_tier: str
@@ -81,7 +86,7 @@ class RunwaySeverityOverlay:
     severity_bucket: str  # safe / moderate / elevated / critical / extreme
     severity_notes: str
 
-    model_version: str = "runway_severity_v1.0"
+    model_version: str = "runway_severity_v1.1"
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -97,6 +102,7 @@ class RunwaySeverityOverlay:
                 round(self.runway_buffer_months, 1) if self.runway_buffer_months is not None else None
             ),
             "runway_severity_score": round(self.runway_severity_score, 4),
+            "ev_severity_score": round(self.ev_severity_score, 4),
             "financing_truth_gate": self.financing_truth_gate,
             "dilution_haircut": round(self.dilution_haircut, 4),
             "size_multiplier": round(self.size_multiplier, 4),
@@ -152,8 +158,9 @@ def _is_decisive(tier: str) -> bool:
 # ═════════════════════════════════════════════════════════════════════════
 
 
-def compute_severity(
-    runway_months: Optional[float],
+def _compute_base_severity(
+    runway_months: float,
+    buffer: float,
     catalyst_months: Optional[float],
     catalyst_tier: str,
     market_cap_mm: Optional[float],
@@ -161,22 +168,7 @@ def compute_severity(
     has_revenue_or_partner: bool,
     financing_pressure_score: Optional[float],
 ) -> float:
-    """Compute runway severity score [0, 1].
-
-    Base: sigmoid(-(buffer - 3) / 2) where buffer = runway - catalyst.
-    Adjustments for financing quality, market cap, partnerships, catalyst quality.
-    """
-    # If no runway data, return moderate default
-    if runway_months is None:
-        return 0.35
-
-    # Compute buffer
-    if catalyst_months is not None:
-        buffer = runway_months - catalyst_months
-    else:
-        # No catalyst date → use runway alone, assume 12-month horizon
-        buffer = runway_months - 12.0
-
+    """Base severity from buffer + adjustments. Shared by truth and EV paths."""
     # Base severity: sigmoid centered at 3-month buffer
     base = 1.0 / (1.0 + math.exp((buffer - 3.0) / 2.0))
 
@@ -203,8 +195,77 @@ def compute_severity(
     if catalyst_months is not None and catalyst_months <= 6 and _is_decisive(catalyst_tier):
         adj -= 0.06
 
-    severity = max(0.0, min(1.0, base + adj))
-    return severity
+    return max(0.0, min(1.0, base + adj))
+
+
+def compute_severity(
+    runway_months: Optional[float],
+    catalyst_months: Optional[float],
+    catalyst_tier: str,
+    market_cap_mm: Optional[float],
+    short_interest_pct: Optional[float],
+    has_revenue_or_partner: bool,
+    financing_pressure_score: Optional[float],
+) -> float:
+    """Compute runway severity score [0, 1] for truth gate.
+
+    Uses decisive-catalyst buffer: non-decisive tiers get inflated horizon.
+    This is the SURVIVABILITY question: "can they make it to the catalyst?"
+    """
+    if runway_months is None:
+        return 0.35
+
+    if catalyst_months is not None:
+        buffer = runway_months - catalyst_months
+    else:
+        buffer = runway_months - 12.0
+
+    return _compute_base_severity(
+        runway_months,
+        buffer,
+        catalyst_months,
+        catalyst_tier,
+        market_cap_mm,
+        short_interest_pct,
+        has_revenue_or_partner,
+        financing_pressure_score,
+    )
+
+
+def compute_ev_severity(
+    runway_months: Optional[float],
+    actual_catalyst_months: Optional[float],
+    catalyst_tier: str,
+    market_cap_mm: Optional[float],
+    short_interest_pct: Optional[float],
+    has_revenue_or_partner: bool,
+    financing_pressure_score: Optional[float],
+) -> float:
+    """Compute severity for EV/sizing layers using ACTUAL catalyst timing.
+
+    Unlike truth-gate severity, this uses the real catalyst date regardless
+    of tier. A T3 conference in 2 months still matters for expectations,
+    financing windows, and position sizing — even if it's not decisive
+    enough to gate survivability.
+    """
+    if runway_months is None:
+        return 0.35
+
+    if actual_catalyst_months is not None:
+        buffer = runway_months - actual_catalyst_months
+    else:
+        buffer = runway_months - 12.0
+
+    return _compute_base_severity(
+        runway_months,
+        buffer,
+        actual_catalyst_months,
+        catalyst_tier,
+        market_cap_mm,
+        short_interest_pct,
+        has_revenue_or_partner,
+        financing_pressure_score,
+    )
 
 
 # ═════════════════════════════════════════════════════════════════════════
@@ -295,24 +356,33 @@ class RunwaySeverityModel:
             if is_pivotal:
                 effective_tier = "T2"
 
-        # Only count decisive catalysts for buffer calculation
-        # For non-decisive catalysts, look further ahead
+        # Two buffer paths:
+        #   truth_buffer: uses effective_cat_months (T1/T2 decisive only)
+        #   ev_buffer: uses actual cat_months (any tier — T3 conferences
+        #     still matter for expectations, financing windows, sizing)
+
+        # Truth gate path: non-decisive tiers get inflated horizon
         effective_cat_months = cat_months
         if cat_months is not None and not _is_decisive(effective_tier):
-            # Non-decisive catalyst doesn't count as the "value inflection"
-            # Use a longer horizon (effectively penalizes the name)
             effective_cat_months = max(cat_months, 12.0)
 
-        # Compute buffer
         if runway_months is not None and effective_cat_months is not None:
-            buffer = runway_months - effective_cat_months
+            truth_buffer = runway_months - effective_cat_months
         elif runway_months is not None:
-            buffer = runway_months - 12.0
+            truth_buffer = runway_months - 12.0
         else:
-            buffer = None
+            truth_buffer = None
 
-        # Severity
-        severity = compute_severity(
+        # EV/sizing path: uses actual catalyst timing
+        if runway_months is not None and cat_months is not None:
+            ev_buffer = runway_months - cat_months
+        elif runway_months is not None:
+            ev_buffer = runway_months - 12.0
+        else:
+            ev_buffer = None
+
+        # Truth-gate severity (survivability question)
+        truth_severity = compute_severity(
             runway_months=runway_months,
             catalyst_months=effective_cat_months,
             catalyst_tier=effective_tier,
@@ -322,14 +392,29 @@ class RunwaySeverityModel:
             financing_pressure_score=financing_pressure,
         )
 
-        # Layer outputs
-        financing_gate = severity <= 0.92
-        # Exception: if catalyst is within 60 days and decisive, override gate
+        # EV/sizing severity (financing damage question — uses actual timing)
+        ev_severity = compute_ev_severity(
+            runway_months=runway_months,
+            actual_catalyst_months=cat_months,
+            catalyst_tier=effective_tier,
+            market_cap_mm=market_cap_mm,
+            short_interest_pct=short_interest_pct,
+            has_revenue_or_partner=has_revenue_or_partner,
+            financing_pressure_score=financing_pressure,
+        )
+
+        # Layer outputs — each layer uses the appropriate severity
+        # Truth gate: "can they survive to the catalyst?"
+        financing_gate = truth_severity <= 0.92
         if not financing_gate and catalyst_days is not None and catalyst_days <= 60 and _is_decisive(effective_tier):
             financing_gate = True
 
-        dilution_haircut = 0.35 * severity
-        size_mult = max(0.40, 1.0 - 0.60 * severity)
+        # EV and sizing: "what financing damage even if they do?"
+        dilution_haircut = 0.35 * ev_severity
+        size_mult = max(0.40, 1.0 - 0.60 * ev_severity)
+
+        # Reported severity = truth severity (for gate decisions and bucket)
+        severity = truth_severity
 
         # Decisiveness
         decisiveness = TIER_DECISIVENESS.get(effective_tier, 0.10)
@@ -343,8 +428,10 @@ class RunwaySeverityModel:
         tier_label = effective_tier if effective_tier == catalyst_tier else f"{effective_tier}<-{catalyst_tier}"
         if cat_months is not None:
             notes_parts.append(f"catalyst {cat_months:.0f}mo ({tier_label})")
-        if buffer is not None:
-            notes_parts.append(f"buffer {buffer:+.0f}mo")
+        if truth_buffer is not None:
+            notes_parts.append(f"buffer {truth_buffer:+.0f}mo")
+        if ev_buffer is not None and ev_buffer != truth_buffer:
+            notes_parts.append(f"ev_buffer {ev_buffer:+.0f}mo")
         if has_revenue_or_partner:
             notes_parts.append("revenue/partner backed")
         if not financing_gate:
@@ -357,8 +444,9 @@ class RunwaySeverityModel:
             as_of_date=as_of_date,
             months_to_cash_out=runway_months,
             months_to_next_decisive_catalyst=effective_cat_months,
-            runway_buffer_months=buffer,
-            runway_severity_score=severity,
+            runway_buffer_months=truth_buffer,
+            runway_severity_score=truth_severity,
+            ev_severity_score=ev_severity,
             financing_truth_gate=financing_gate,
             dilution_haircut=dilution_haircut,
             size_multiplier=size_mult,
