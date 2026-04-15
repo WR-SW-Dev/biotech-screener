@@ -744,11 +744,23 @@ Current forward state (re-scored, 433 snapshots):
 
 Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
 
-### Runway-to-Catalyst Severity (diagnostic overlay)
+### Runway-to-Catalyst Severity (risk-control overlay)
 
-**Status:** Production-emitting since 2026-04-15. Diagnostic overlay — does not affect ranking or selection yet.
+**Status:** Production-emitting since 2026-04-15. **Risk-control overlay** — not alpha.
+Does not affect ranking or selection. Its job is to stop the portfolio from drifting
+into fragile, dilution-prone micro-cap lottery exposure.
 
-One feature computed once, consumed across four layers. Core insight: the model should care about **buffer to catalyst**, not cash alone. A company with 10 months of runway and a catalyst in 4 months is fundamentally different from one with 10 months and a catalyst in 14 months.
+**Not alpha. Variance control.** Backfill validation (75,567 observations, 377 dates,
+228 tickers) shows severity IC is +0.017 — the *wrong sign* for a return predictor.
+Higher severity names have higher raw returns (micro-cap lottery premium) but 4x the
+volatility (111% vs 28%) and +32 skewness. Risk-adjusted return is identical between
+gate pass and fail (Sharpe 0.068 vs 0.067). The feature does not predict returns; it
+controls the *kind* of returns you hold.
+
+One feature computed once, consumed across four layers via **dual-severity paths** (v1.1):
+
+- **Truth severity**: "can they survive to the catalyst?" Uses T1/T2 decisive catalysts only.
+- **EV severity**: "what financing damage even if they do?" Uses actual catalyst timing for any tier.
 
 **Formula:**
 ```
@@ -756,20 +768,32 @@ runway_buffer = months_to_cash_out - months_to_decisive_catalyst
 severity = sigmoid(-(buffer - 3) / 2) + financing_adjustment + market_adjustment
 ```
 
-Catalyst decisiveness tiers: T1 (regulatory/PDUFA) = 1.0, T2 (pivotal Phase 3) = 0.85, T3 (conference) = 0.50, T4 (routine) = 0.20, T5 (unknown) = 0.10. Only T1/T2 count as decisive catalysts.
+Catalyst decisiveness tiers: T1 (regulatory/PDUFA) = 1.0, T2 (pivotal Phase 3) = 0.85, T3 (conference) = 0.50, T4 (routine) = 0.20, T5 (unknown) = 0.10. T1/T2 decisive for truth gate; all tiers used by EV/sizing.
 
 **Four consumption layers:**
 
-| Layer | Effect | Threshold |
-|-------|--------|-----------|
-| Truth gate | Hard fail — name ineligible | severity > 0.92 |
-| EV layer | dilution_haircut = 0.35 × severity | Continuous |
-| Portfolio sizing | size_multiplier = 1 - 0.60 × severity | Continuous |
-| Crowd-belief | Distortion input for expectation model | Continuous |
+| Layer | Severity Path | Effect | Threshold |
+|-------|--------------|--------|-----------|
+| Truth gate | Truth severity | Hard fail — name ineligible | truth_severity > 0.92 |
+| EV layer | EV severity | dilution_haircut = 0.35 × ev_severity | Continuous |
+| Portfolio sizing | EV severity | size_multiplier = 1 - 0.60 × ev_severity | Continuous |
+| Crowd-belief | EV severity | Distortion input for expectation model | Continuous |
 
-**Production (2026-04-15):** safe=149, moderate=94, elevated=18, critical=16, extreme=20. 93 unique severity values. 20 truth-gate failures.
+**Production (2026-04-15):** safe=149, moderate=94, elevated=18, critical=16, extreme=21. 113 unique severity values. 12 truth-gate failures (all micro-cap, all defensible).
 
-Implementation: `event_ev/runway_severity.py`
+**Backfill validation verdict:**
+
+| Check | Obs | Finding |
+|-------|-----|---------|
+| Severity quintile monotonicity | 75,567 | NO — Q5 (highest severity) has best mean return (+4.20%) |
+| Gate fail vs pass (risk-adjusted) | 75,567 | NEUTRAL — Sharpe 0.067 vs 0.068. Fails have 4x vol, +32 skew |
+| Bucket monotonicity | 75,567 | NO — moderate Sharpe 0.117 (best), extreme 0.066 (lottery) |
+| Severity-return IC | 377 dates | +0.017 (positive = wrong sign for alpha, 63% of dates) |
+| Gate-fail audit | 12 fails | PASS — all micro-cap, all defensible |
+
+**Policy:** Never promote into ranking. Keep as truth gate + EV haircut + sizing overlay.
+
+Implementation: `event_ev/runway_severity.py` (v1.1). Backfill: `scripts/research/backfill_runway_severity.py`.
 
 ### Dead Lanes
 
