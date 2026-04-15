@@ -145,7 +145,10 @@ class PubMedClient:
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         self.cache_ttl_hours = cache_ttl_hours
-        self.api_key = api_key
+        # Auto-load from env if not explicitly provided
+        import os
+
+        self.api_key = api_key or os.environ.get("NCBI_API_KEY")
         self._last_request = 0.0
 
     def _rate_limit(self) -> None:

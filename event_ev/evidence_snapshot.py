@@ -243,6 +243,21 @@ def build_evidence_snapshots(
     return result
 
 
+def _load_drug_name_map() -> Dict[str, str]:
+    """Load curated drug name map from production_data/drug_name_map.json."""
+    import json
+    from pathlib import Path
+
+    map_path = Path(__file__).resolve().parent.parent / "production_data" / "drug_name_map.json"
+    if not map_path.exists():
+        return {}
+    try:
+        data = json.loads(map_path.read_text())
+        return data.get("entries", {})
+    except (json.JSONDecodeError, OSError):
+        return {}
+
+
 def enrich_literature_from_pubmed(
     nodes: List[CatalystNode],
     trial_records: Optional[List[Dict[str, Any]]] = None,
@@ -250,6 +265,7 @@ def enrich_literature_from_pubmed(
     """Fetch PubMed literature for a batch of nodes and compute scores.
 
     Searches by NCT ID (if available) and drug name/indication.
+    Uses drug_name_map.json for curated name lookup (PDUFA + trial_records).
     Deduplicates articles per ticker. Caches results on disk.
 
     Returns:
@@ -268,6 +284,9 @@ def enrich_literature_from_pubmed(
     refs: Dict[str, List[str]] = {}
     trial_records = trial_records or []
 
+    # Load curated drug name map (PDUFA + trial_records, 300 tickers)
+    drug_name_map = _load_drug_name_map()
+
     # Build ticker → (drug_name, indication, nct_id) map
     ticker_context: Dict[str, Dict[str, str]] = {}
     for node in nodes:
@@ -277,14 +296,17 @@ def enrich_literature_from_pubmed(
         ctx: Dict[str, str] = {"indication": node.indication or ""}
         if node.nct_id:
             ctx["nct_id"] = node.nct_id
-        # Try to get drug name from trial records
-        for t in trial_records:
-            t_ticker = (t.get("ticker") or "").upper()
-            if t_ticker == tk:
-                interventions = t.get("interventions") or []
-                if interventions:
-                    ctx["drug_name"] = interventions[0]
-                break
+        # Drug name: prefer curated map, fall back to trial_records
+        if tk in drug_name_map:
+            ctx["drug_name"] = drug_name_map[tk]
+        else:
+            for t in trial_records:
+                t_ticker = (t.get("ticker") or "").upper()
+                if t_ticker == tk:
+                    interventions = t.get("interventions") or []
+                    if interventions:
+                        ctx["drug_name"] = interventions[0]
+                    break
         ticker_context[tk] = ctx
 
     for tk, ctx in ticker_context.items():

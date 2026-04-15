@@ -272,6 +272,87 @@ class TestCacheKey:
 # ---------------------------------------------------------------------------
 
 
+class TestAPIKeyLoading:
+
+    def test_env_var_loaded_when_no_explicit_key(self):
+        import os
+
+        from data_sources.pubmed_client import PubMedClient
+
+        os.environ["NCBI_API_KEY"] = "ncbi_test_placeholder"  # pragma: allowlist secret
+        try:
+            client = PubMedClient()
+            assert client.api_key == "ncbi_test_placeholder"  # pragma: allowlist secret
+        finally:
+            del os.environ["NCBI_API_KEY"]
+
+    def test_explicit_key_overrides_env(self):
+        import os
+
+        from data_sources.pubmed_client import PubMedClient
+
+        os.environ["NCBI_API_KEY"] = "ncbi_env_placeholder"  # pragma: allowlist secret
+        try:
+            client = PubMedClient(api_key="ncbi_explicit_val")  # pragma: allowlist secret
+            assert client.api_key == "ncbi_explicit_val"  # pragma: allowlist secret
+        finally:
+            del os.environ["NCBI_API_KEY"]
+
+    def test_no_key_no_error(self):
+        import os
+
+        from data_sources.pubmed_client import PubMedClient
+
+        os.environ.pop("NCBI_API_KEY", None)
+        client = PubMedClient(api_key=None)
+        assert client.api_key is None
+
+    def test_rate_limit_faster_with_key(self):
+        from data_sources.pubmed_client import RATE_LIMIT, PubMedClient
+
+        client_with_key = PubMedClient(api_key="placeholder")  # pragma: allowlist secret
+        # With key: 0.11s, without: 0.34s
+        assert client_with_key.api_key is not None
+        assert RATE_LIMIT > 0.11
+
+
+# ---------------------------------------------------------------------------
+# Drug name map
+# ---------------------------------------------------------------------------
+
+
+class TestDrugNameMap:
+
+    def test_drug_name_map_exists(self):
+        from pathlib import Path
+
+        map_path = Path("/mnt/c/Projects/biotech_screener/biotech-screener/production_data/drug_name_map.json")
+        assert map_path.exists()
+
+    def test_drug_name_map_schema(self):
+        import json
+        from pathlib import Path
+
+        map_path = Path("/mnt/c/Projects/biotech_screener/biotech-screener/production_data/drug_name_map.json")
+        data = json.loads(map_path.read_text())
+        assert "entries" in data
+        assert "n_tickers" in data
+        assert data["n_tickers"] >= 200
+
+    def test_drug_name_map_loaded_by_enricher(self):
+        from event_ev.evidence_snapshot import _load_drug_name_map
+
+        drug_map = _load_drug_name_map()
+        assert len(drug_map) >= 200
+        # PDUFA entries should be present
+        assert any(v for v in drug_map.values())
+
+
+# ---------------------------------------------------------------------------
+# Evidence snapshot integration
+# ---------------------------------------------------------------------------
+
+
 class TestEvidenceSnapshotLiteratureWiring:
 
     def _make_node(self, **overrides):

@@ -68,6 +68,7 @@ _ENV_SCHEMA = [
     ("TT_SECRET", "Tastytrade options data", False),
     ("TT_REFRESH", "Tastytrade options data", False),
     ("MASSIVE_API_KEY", "Massive Finance options chain data", False),
+    ("NCBI_API_KEY", "PubMed literature enrichment (10 req/s vs 3 req/s anonymous)", False),
     ("SLACK_WEBHOOK_URL", "Slack alerting", False),
     ("PIPELINE_ALERT_WEBHOOK", "pipeline failure alerts", False),
 ]

@@ -340,6 +340,9 @@ def match_predictions_to_resolutions(
             "phase": phase,
             "analog_conf": best_pred.get("analog_conf"),
             "days_to_event_at_prediction": best_pred.get("days_to_event"),
+            # Evidence (from evidence snapshot, when available)
+            "literature_support_score": best_pred.get("literature_support_score"),
+            "evidence_confidence": best_pred.get("evidence_confidence"),
             # Bias flags
             "herald_biased": herald_biased,
             "bias_reason": bias_reason,
@@ -391,6 +394,35 @@ def _compute_slice_stats(ledger: List[Dict[str, Any]], key: str) -> Dict[str, An
             "mean_brier": round(sum(brier) / len(brier), 4) if brier else None,
         }
     return stats
+
+
+def _compute_literature_split(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Compute calibration stats split by literature availability."""
+    with_lit = [r for r in ledger if r.get("literature_support_score") and r["literature_support_score"] > 0]
+    without_lit = [r for r in ledger if not r.get("literature_support_score")]
+
+    def _slice_brier(records: list) -> Optional[float]:
+        brier = [r["brier_component"] for r in records if r.get("brier_component") is not None]
+        return round(sum(brier) / len(brier), 4) if brier else None
+
+    return {
+        "with_literature": {
+            "n": len(with_lit),
+            "mean_brier": _slice_brier(with_lit),
+            "hit_rate": (
+                round(sum(1 for r in with_lit if r["outcome"] == "HIT") / len(with_lit), 4) if with_lit else None
+            ),
+        },
+        "without_literature": {
+            "n": len(without_lit),
+            "mean_brier": _slice_brier(without_lit),
+            "hit_rate": (
+                round(sum(1 for r in without_lit if r["outcome"] == "HIT") / len(without_lit), 4)
+                if without_lit
+                else None
+            ),
+        },
+    }
 
 
 def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -484,6 +516,7 @@ def compute_summary(ledger: List[Dict[str, Any]]) -> Dict[str, Any]:
         "by_family": family_stats,
         "by_phase": _compute_slice_stats(ledger, "phase"),
         "by_analog_conf": _compute_slice_stats(ledger, "analog_conf"),
+        "by_literature": _compute_literature_split(ledger),
         # Data quality
         "n_with_prices": sum(1 for r in ledger if r.get("realized_1d_return") is not None),
         "n_without_prices": sum(1 for r in ledger if r.get("realized_1d_return") is None),
