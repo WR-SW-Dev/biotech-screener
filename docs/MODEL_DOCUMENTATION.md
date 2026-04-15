@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
 **Version:** 1.7.0 (ruleset `2a3e79eb`, v1.13.0)
-**Last updated:** 2026-04-14
+**Last updated:** 2026-04-15
 **Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30
 
 ---
@@ -9,9 +9,18 @@
 ## 1. System Overview
 
 Wake Robin is a systematic biotech screening and portfolio construction system.
-It ranks ~294 biotech names by asymmetric event-driven upside potential, with
+It ranks ~297 biotech names by asymmetric event-driven upside potential, with
 the goal of identifying names where clinical/regulatory catalysts create
 favorable risk/reward ahead of binary outcomes.
+
+The winning model is not "best science wins." It is **science + survivability +
+catalyst timing + strategic relevance + price-vs-probability discipline**. A name
+enters the portfolio not because it has the most promising drug, but because the
+intersection of sponsorship quality, financial resilience, catalyst proximity, and
+market mispricing creates an asymmetric setup. Names with great science but poor
+timing, thin sponsorship, or already-priced expectations are filtered out — the
+system explicitly penalizes "safe but less catalytic" names and traps where the
+market has correctly priced above base rates.
 
 ### Architecture
 
@@ -293,6 +302,7 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 | **Yahoo Finance** | Stock prices, balance sheets, income statements | Public (rate-limited) | Daily | Price history, market data |
 | **Morningstar Direct** | Fundamental data, volatility, star ratings | JWT (`MD_AUTH_TOKEN`) | Daily | M2 enhancements, vol enrichment |
 | **FRED** (St. Louis Fed) | VIX, TNX, IRX, fed rate, HYG, SPY | API key (`FRED_API_KEY`) | Daily | Regime classifier (7 feeds) |
+| **BioTradingArena** (biotradingarena.com) | 655 validated catalyst cases with press releases, trial data, price action, ground truth | Bearer auth (API key) | Ad-hoc | CRT calibration benchmark |
 | **OpenFDA** | Drug approvals, recalls, labels | Public | Weekly | Regulatory enrichment |
 | **EMA** | European drug approvals (CHMP decisions) | Public | Monthly | Regulatory tracking |
 | **xAI (Grok)** | LLM biotech news analysis, X Search | API key (`XAI_API_KEY`) | Ad-hoc | Event alerts, news triage |
@@ -340,6 +350,7 @@ Date-stamped caches for PIT-safe historical reruns:
 | Purple Book biologics | 2,013 products | 530 products → 49 unique tickers (41 in universe) | `production_data/purple_book.json` | Live |
 | Herald press releases | 4,380+ classified | 338 tickers | `data/press_releases/` | Live — daily collection |
 | Short interest (FINRA) | 300+ tickers | 300+ | `data/short_interest.json` | Weekly |
+| BioTradingArena benchmark | 655 validated catalyst cases | 212 tickers (130 overlap with universe) | `production_data/biotradingarena_benchmark.json` | Live — API fetch (2026-04-15) |
 | DealForma deal comps | — | — | Spec 046 ready | Awaiting CSV export |
 | Conference programs | ASCO, AACR, etc. | — | `cache/conferences/` | Quarterly scrape |
 | EU trial registries | EUCTR, CTIS, ISRCTN | — | `cache/ema/` | Monthly |
@@ -733,6 +744,33 @@ Current forward state (re-scored, 433 snapshots):
 
 Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
 
+### Runway-to-Catalyst Severity (diagnostic overlay)
+
+**Status:** Production-emitting since 2026-04-15. Diagnostic overlay — does not affect ranking or selection yet.
+
+One feature computed once, consumed across four layers. Core insight: the model should care about **buffer to catalyst**, not cash alone. A company with 10 months of runway and a catalyst in 4 months is fundamentally different from one with 10 months and a catalyst in 14 months.
+
+**Formula:**
+```
+runway_buffer = months_to_cash_out - months_to_decisive_catalyst
+severity = sigmoid(-(buffer - 3) / 2) + financing_adjustment + market_adjustment
+```
+
+Catalyst decisiveness tiers: T1 (regulatory/PDUFA) = 1.0, T2 (pivotal Phase 3) = 0.85, T3 (conference) = 0.50, T4 (routine) = 0.20, T5 (unknown) = 0.10. Only T1/T2 count as decisive catalysts.
+
+**Four consumption layers:**
+
+| Layer | Effect | Threshold |
+|-------|--------|-----------|
+| Truth gate | Hard fail — name ineligible | severity > 0.92 |
+| EV layer | dilution_haircut = 0.35 × severity | Continuous |
+| Portfolio sizing | size_multiplier = 1 - 0.60 × severity | Continuous |
+| Crowd-belief | Distortion input for expectation model | Continuous |
+
+**Production (2026-04-15):** safe=149, moderate=94, elevated=18, critical=16, extreme=20. 93 unique severity values. 20 truth-gate failures.
+
+Implementation: `event_ev/runway_severity.py`
+
 ### Dead Lanes
 
 | Feature | Why Dead |
@@ -773,6 +811,51 @@ Watchlist Builder → Source Adapters (8-K, CTgov, PDUFA, Manual)
 
 Score `event_outcome`, not `price_direction`. BIIB excluded as EXOGENOUS (M&A).
 Current scorable: 1/3 (PVLA correct, CELC+TBPH wrong). Gate: BIIB PDUFA May 24.
+
+### BioTradingArena External Benchmark (2026-04-15)
+
+**Source:** [biotradingarena.com](https://www.biotradingarena.com) — open benchmark of 655 validated
+biotech catalyst cases with de-identified press releases, CT.gov trial records, company
+fundamentals, PubMed articles, price action (day before/of/after), and ground-truth
+impact labels (7 categories: very_negative → very_positive).
+
+**Dataset:** `production_data/biotradingarena_benchmark.json` (11.3 MB)
+- 393 oncology + 262 non-oncology cases, 2015-01-09 to 2025-12-23
+- 212 unique tickers, 130 overlap with our 342-ticker universe
+- Event types: FDA approval (250), Phase 2/3 readouts (282), topline (123)
+- API: REST with bearer auth, endpoints at `/api/benchmark/cases`
+
+**Calibration script:** `scripts/research/crt_bta_calibration.py`
+
+**Calibration results (2026-04-15):**
+
+| Metric | Value |
+|--------|-------|
+| Overall predicted hit rate | 56.8% |
+| BTA realized hit rate | 54.4% |
+| Overall gap | -2.4pp (decent) |
+
+Calibration by predicted quintile (non-neutral events only, n=226):
+
+| Quintile | N | Predicted | Realized | Gap |
+|----------|---:|---:|---:|---:|
+| Q1 (lowest) | 45 | 34.3% | 55.6% | +21.2% |
+| Q2 | 45 | 47.8% | 53.3% | +5.6% |
+| Q3 | 45 | 58.0% | 48.9% | -9.1% |
+| Q4 | 45 | 68.6% | 57.8% | -10.9% |
+| Q5 (highest) | 46 | 75.1% | 56.5% | -18.6% |
+
+**Critical findings:**
+- **Quintile separation is flat** — model does not discriminate high vs low probability events well
+- **FDA rejection blind spot**: predicted 72.1% vs realized 23.1% (-49pp). Model applies unconditional REGULATORY base rate to rejections. **Fix: add event direction as input.**
+- **Biomarker selection uplift NOT confirmed**: selected 57.4% vs unselected 59.7%. Treat skeptically.
+- **Mechanism class gradient confirmed**: semi_validated (65%) > validated (59%) > novel (54%) > unknown (47%). Keep.
+
+**Implications for model:**
+1. Event direction (approval vs rejection) is mandatory for regulatory PoS
+2. Recalibrate confidence — model overconfident at top, underconfident at bottom
+3. Downweight biomarker uplift assumption until reconfirmed
+4. Mechanism class logic is validated externally — preserve
 
 ---
 
@@ -1173,6 +1256,8 @@ currently untestable on the available historical data. Readiness gate at
 | `event_ev/conditional_model.py` | Biomarker/subgroup conditional mispricing detection |
 | `event_ev/execution_capacity.py` | Post-sizing participation guardrails |
 | `event_ev/portfolio_sizing.py` | Conviction sizing (α=1.5) |
+| `event_ev/runway_severity.py` | Runway-to-catalyst severity (4-layer diagnostic) |
+| `scripts/research/crt_bta_calibration.py` | BioTradingArena calibration benchmark |
 | `tools/ees_v3_forward_monitor.py` | Forward evidence tracker toward WS4 clearance |
 | `tools/build_event_feedback.py` | Resolved event materializer (CRT→Herald→postmortem join) |
 | `tools/build_event_feedback_metrics.py` | Weekly calibration metrics (source precision, ECE) |

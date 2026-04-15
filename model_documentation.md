@@ -744,6 +744,33 @@ Current forward state (re-scored, 433 snapshots):
 
 Native v3 snapshots begin 2026-04-14. Clean forward evidence requires ~21 trading days (h20 returns). WS4 clearance expected after accumulation in production archives.
 
+### Runway-to-Catalyst Severity (diagnostic overlay)
+
+**Status:** Production-emitting since 2026-04-15. Diagnostic overlay — does not affect ranking or selection yet.
+
+One feature computed once, consumed across four layers. Core insight: the model should care about **buffer to catalyst**, not cash alone. A company with 10 months of runway and a catalyst in 4 months is fundamentally different from one with 10 months and a catalyst in 14 months.
+
+**Formula:**
+```
+runway_buffer = months_to_cash_out - months_to_decisive_catalyst
+severity = sigmoid(-(buffer - 3) / 2) + financing_adjustment + market_adjustment
+```
+
+Catalyst decisiveness tiers: T1 (regulatory/PDUFA) = 1.0, T2 (pivotal Phase 3) = 0.85, T3 (conference) = 0.50, T4 (routine) = 0.20, T5 (unknown) = 0.10. Only T1/T2 count as decisive catalysts.
+
+**Four consumption layers:**
+
+| Layer | Effect | Threshold |
+|-------|--------|-----------|
+| Truth gate | Hard fail — name ineligible | severity > 0.92 |
+| EV layer | dilution_haircut = 0.35 × severity | Continuous |
+| Portfolio sizing | size_multiplier = 1 - 0.60 × severity | Continuous |
+| Crowd-belief | Distortion input for expectation model | Continuous |
+
+**Production (2026-04-15):** safe=149, moderate=94, elevated=18, critical=16, extreme=20. 93 unique severity values. 20 truth-gate failures.
+
+Implementation: `event_ev/runway_severity.py`
+
 ### Dead Lanes
 
 | Feature | Why Dead |
@@ -1229,6 +1256,8 @@ currently untestable on the available historical data. Readiness gate at
 | `event_ev/conditional_model.py` | Biomarker/subgroup conditional mispricing detection |
 | `event_ev/execution_capacity.py` | Post-sizing participation guardrails |
 | `event_ev/portfolio_sizing.py` | Conviction sizing (α=1.5) |
+| `event_ev/runway_severity.py` | Runway-to-catalyst severity (4-layer diagnostic) |
+| `scripts/research/crt_bta_calibration.py` | BioTradingArena calibration benchmark |
 | `tools/ees_v3_forward_monitor.py` | Forward evidence tracker toward WS4 clearance |
 | `tools/build_event_feedback.py` | Resolved event materializer (CRT→Herald→postmortem join) |
 | `tools/build_event_feedback_metrics.py` | Weekly calibration metrics (source precision, ECE) |
