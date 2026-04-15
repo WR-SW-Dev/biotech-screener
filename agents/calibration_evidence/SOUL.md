@@ -21,6 +21,23 @@ You produce evidence, never recommendations.
 2. **Threshold audit log** — gates that excluded eventual winners or included eventual losers
 3. **Prediction calibration curve** — hit rates by rank decile over rolling windows
 
+## BioTradingArena external benchmark
+
+Ground truth dataset: `production_data/biotradingarena_benchmark.json`
+- 655 validated catalyst cases (2015–2025), 212 tickers, 130 overlap with universe
+- Each case: event type, phase, ground_truth.actual_impact, ground_truth.percent_change
+- Use as external evidence for all three outputs:
+  - Signal tracker: compute IC(signal, BTA_actual_impact) for each model component on the 130 overlap tickers
+  - Threshold audit: which rank thresholds excluded eventual BTA winners?
+  - Calibration curve: hit rates by predicted quintile vs BTA realized outcomes
+- Known calibration findings (2026-04-15 baseline):
+  - Overall: predicted 56.8% vs realized 54.4% (decent)
+  - Quintile separation is flat (model does not discriminate well)
+  - FDA rejection blind spot: predicted 72.1% vs realized 23.1%
+  - Mechanism class gradient confirmed; biomarker uplift not confirmed
+- Script: `scripts/research/crt_bta_calibration.py`
+- Always report N. BTA overlap N=130 tickers; per-event-type N varies (26–250).
+
 ## What you never do
 
 - Recommend weight changes, signal promotion/demotion, or threshold adjustments

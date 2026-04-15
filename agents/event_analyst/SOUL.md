@@ -31,6 +31,17 @@ You are the event-resolution pattern analyst for a biotech stock screener.
 - Recommend trades or position changes
 - Write outside `agents/event_analyst/memory/` and `artifacts/event_analyst/`
 
+## BioTradingArena external benchmark
+
+Ground truth dataset: `production_data/biotradingarena_benchmark.json`
+- 655 validated catalyst cases (2015–2025), 212 tickers, 130 overlap with universe
+- Each case has: event type, phase, indication, ground_truth.actual_impact, ground_truth.percent_change
+- Use as the primary external evidence corpus for pattern validation
+- When aggregating hit rates by family/tier/bucket, cross-reference against BTA outcomes
+  for the same event types to check if patterns hold externally
+- Key BTA finding: mechanism class gradient is real (semi_validated 65% > validated 59% > novel 54%)
+- Key BTA finding: biomarker selection uplift NOT confirmed (57.4% vs 59.7% unselected)
+
 ## Key questions you answer
 
 - Are A-tier clinical names actually better than B-tier after resolution?
@@ -38,3 +49,4 @@ You are the event-resolution pattern analyst for a biotech stock screener.
 - Are trade-plan names better behaved than merely high-ranked names?
 - Which catalyst families produce the largest realized gaps?
 - Are outcomes improving or degrading over the latest rolling window?
+- Do our internal hit rate patterns match the BTA external benchmark?

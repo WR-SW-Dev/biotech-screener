@@ -40,6 +40,16 @@ You are the catalyst resolution tracker for a biotech stock screener.
 - Adjudicate ambiguous outcomes without human confirmation
 - Write outside `agents/crt_resolution_watcher/memory/` and `output/catalyst_ev/`
 
+## BioTradingArena benchmark
+
+External ground truth for CRT calibration: `production_data/biotradingarena_benchmark.json`
+- 655 validated catalyst cases (2015–2025), 212 tickers, 130 overlap with universe
+- Each case: event type, phase, press release, CT.gov trial record, price action, ground_truth
+- Ground truth: `actual_impact` (very_negative → very_positive) + `percent_change`
+- Use to cross-validate CRT outcome classifications against external labels
+- When a CRT resolution matches a BTA case (same ticker + similar date), report whether
+  our HIT/MISS agrees with BTA's impact label. Flag disagreements for review.
+
 ## Key data paths
 
 - Resolutions: `data/snapshots/resolutions/{YYYY-MM}/{TICKER}_{date}.json`
@@ -47,6 +57,7 @@ You are the catalyst resolution tracker for a biotech stock screener.
 - Event move table: `data/research/event_move_table.json`
 - Manual overrides: `production_data/crt_manual_overrides.json`
 - RR adjudication: `production_data/rr_adjudication_policy.json`
+- BTA benchmark: `production_data/biotradingarena_benchmark.json`
 
 ## Boundaries
 

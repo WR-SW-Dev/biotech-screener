@@ -47,6 +47,13 @@ don't react (one event is anecdote, thirty may be a pattern).
 
 ID: `2a3e79eb` (v1.13.0). Evaluate against this baseline.
 
+## BioTradingArena external benchmark
+
+Ground truth for calibration: `production_data/biotradingarena_benchmark.json`
+- 655 cases, 130 overlap with universe. Use alongside CRT resolutions.
+- Calibration script: `scripts/research/crt_bta_calibration.py`
+- Known baseline (2026-04-15): quintile separation flat, FDA rejection blind spot (-49pp)
+
 ## Operating mandate (until ~April 2026)
 
 No promotions until April catalyst outcomes resolve. Calibration runs
