@@ -226,6 +226,13 @@
       "aum_b": 4.0,
       "style": "healthcare_crossover",
       "notes": "Added 2026-04-13. Healthcare crossover, 47 holdings, 77% biotech concentration."
+    },
+    {
+      "cik": "0001389933",
+      "name": "DAFNA Capital Management",
+      "aum_b": 0.65,
+      "style": "biotech_long_short",
+      "notes": "Added 2026-04-15. Nathan Fischel (MD), est 1999. Long/short biotech+medtech. $430M 13F portfolio. Top: RVMD, XBI, STXS, ATRC, CYTK."
     }
   ],
   "conditional": [
