@@ -38,16 +38,28 @@ stage_ctgov() {
 }
 
 stage_herald() {
-    log "Herald press release fetch..."
-    $PYTHON tools/fetch_company_press_releases.py --as-of-date "$TODAY" 2>&1 | tail -5
-    log "Herald fetch done"
+    log "Herald press release fetch (timeout 600s)..."
+    local rc=0
+    timeout 600 $PYTHON tools/fetch_company_press_releases.py --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    if [ $rc -eq 124 ]; then
+        log "Herald fetch TIMED OUT after 600s — continuing with partial data"
+    elif [ $rc -ne 0 ]; then
+        log "Herald fetch failed (exit $rc) — continuing"
+    else
+        log "Herald fetch done"
+    fi
 
-    # Classify new releases
+    # Classify new releases (timeout 300s)
     RELEASES_FILE="data/press_releases/releases_${TODAY}.jsonl"
     if [ -f "$RELEASES_FILE" ]; then
-        log "Herald classify..."
-        $PYTHON tools/classify_press_releases.py --input "$RELEASES_FILE" 2>&1 | tail -5
-        log "Herald classify done"
+        log "Herald classify (timeout 300s)..."
+        local rc2=0
+        timeout 300 $PYTHON tools/classify_press_releases.py --input "$RELEASES_FILE" 2>&1 | tail -5 || rc2=$?
+        if [ $rc2 -eq 124 ]; then
+            log "Herald classify TIMED OUT after 300s"
+        else
+            log "Herald classify done"
+        fi
     else
         log "No new releases file for $TODAY"
     fi
