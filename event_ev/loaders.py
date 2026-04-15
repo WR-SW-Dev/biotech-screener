@@ -18,6 +18,8 @@ from typing import Any, Dict
 from common.feature_registry import get_context_keys, get_feature_keys
 
 from .catalyst_graph import CatalystGraph
+from .data_contracts import EventEvidenceSnapshot
+from .evidence_snapshot import build_evidence_snapshots, enrich_literature_from_pubmed
 
 logger = logging.getLogger(__name__)
 
@@ -389,3 +391,95 @@ def split_context_features(
                 ctx[key] = feats[key]
         context[ticker] = ctx
     return context
+
+
+def load_trial_records(prod_data: Path, as_of: date) -> list:
+    """Load trial records from trial_records.json (PIT-filtered by collected_at).
+
+    Returns a list of trial dicts with collected_at <= as_of.
+    """
+    trial_path = prod_data / "trial_records.json"
+    if not trial_path.exists():
+        return []
+    try:
+        trials = json.loads(trial_path.read_text())
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.warning("Failed to load trial records: %s", exc)
+        return []
+    as_of_str = str(as_of)
+    return [t for t in trials if (t.get("collected_at", "") or "") <= as_of_str or not t.get("collected_at")]
+
+
+def load_crt_resolutions(data_dir: Path, as_of: date) -> list:
+    """Load CRT resolution records (PIT-filtered by resolution_date).
+
+    Returns a list of resolution dicts with resolution_date <= as_of.
+    """
+    resolutions_dir = data_dir / "snapshots" / "resolutions"
+    if not resolutions_dir.exists():
+        return []
+    as_of_str = str(as_of)
+    recs = []
+    for f in resolutions_dir.rglob("*.json"):
+        try:
+            data = json.loads(f.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        if not isinstance(data, dict) or "ticker" not in data:
+            continue
+        resolved = data.get("resolution_date") or data.get("resolved_date", "")
+        if resolved and resolved > as_of_str:
+            continue
+        recs.append(data)
+    return recs
+
+
+def load_evidence_snapshots(
+    nodes: list,
+    as_of: date,
+    prod_data: Path,
+    data_dir: Path,
+    enrich_pubmed: bool = False,
+) -> Dict[str, "EventEvidenceSnapshot"]:
+    """Build evidence snapshots for a batch of CatalystNodes.
+
+    Loads trial records and CRT resolutions, then delegates to
+    build_evidence_snapshots() for the actual construction.
+
+    Args:
+        nodes: List of CatalystNode objects.
+        as_of: Evaluation date (PIT boundary).
+        prod_data: Path to production_data/ directory.
+        data_dir: Path to data/ directory.
+        enrich_pubmed: If True, fetch PubMed literature scores via NCBI API.
+            Adds ~0.3s per ticker (cached after first call). Default False
+            to avoid API calls during fast production runs.
+
+    Returns:
+        {node_id: EventEvidenceSnapshot}
+    """
+    trials = load_trial_records(prod_data, as_of)
+    resolutions = load_crt_resolutions(data_dir, as_of)
+
+    literature_scores: Dict[str, float] = {}
+    pubmed_refs: Dict[str, list] = {}
+    if enrich_pubmed:
+        literature_scores, pubmed_refs = enrich_literature_from_pubmed(nodes, trials)
+
+    snapshots = build_evidence_snapshots(
+        nodes,
+        as_of,
+        trials,
+        resolutions,
+        literature_scores,
+        pubmed_refs,
+    )
+    if snapshots:
+        lit_count = sum(1 for s in snapshots.values() if s.literature_support_score and s.literature_support_score > 0)
+        logger.info(
+            "Evidence snapshots: %d built (%d with trial match, %d with literature)",
+            len(snapshots),
+            sum(1 for s in snapshots.values() if s.ctgov_study_id),
+            lit_count,
+        )
+    return snapshots

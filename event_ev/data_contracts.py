@@ -491,6 +491,104 @@ class ExpectationErrorScore:
 
 
 # =============================================================================
+# Evidence Snapshot — PIT-anchored trial/regulatory evidence per event
+# =============================================================================
+
+
+@dataclass(frozen=True)
+class EventEvidenceSnapshot:
+    """PIT-anchored evidence snapshot for a catalyst event.
+
+    Materializes trial-design and regulatory-designation data from
+    trial_records.json, CatalystNode.designations, adcom_outcomes.json,
+    and CRT resolution history into a single frozen artifact per
+    (node_id, as_of_date).
+
+    All fields are nullable — missing evidence is expected and non-blocking.
+    """
+
+    node_id: str
+    as_of_date: str
+
+    # Trial design (from ClinicalTrials.gov via trial_records.json)
+    phase: Optional[str] = None
+    randomized_flag: Optional[bool] = None
+    blinded_flag: Optional[bool] = None
+    control_arm_flag: Optional[bool] = None
+    enrollment_n: Optional[int] = None
+    primary_endpoint_text: Optional[str] = None
+    endpoint_type: Optional[str] = None  # EFFICACY, SAFETY, COMPOSITE, BIOMARKER
+
+    # Prior readout history (from CRT resolutions, PIT-filtered)
+    prior_positive_readouts_n: Optional[int] = None
+    prior_negative_readouts_n: Optional[int] = None
+
+    # Regulatory designations (from CatalystNode.designations)
+    orphan_flag: Optional[bool] = None
+    fast_track_flag: Optional[bool] = None
+    breakthrough_flag: Optional[bool] = None
+    adcom_flag: Optional[bool] = None
+    safety_signal_flag: Optional[bool] = None
+
+    # Confidence and provenance
+    evidence_confidence: Optional[float] = None  # [0, 1]
+    ctgov_study_id: Optional[str] = None
+    source_refs: List[str] = field(default_factory=list)
+
+    # Stub for future PubMed enrichment — null until wired
+    literature_support_score: Optional[float] = None
+
+    model_version: str = "evidence_v1.0"
+
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "node_id": self.node_id,
+            "as_of_date": self.as_of_date,
+            "phase": self.phase,
+            "randomized_flag": self.randomized_flag,
+            "blinded_flag": self.blinded_flag,
+            "control_arm_flag": self.control_arm_flag,
+            "enrollment_n": self.enrollment_n,
+            "primary_endpoint_text": self.primary_endpoint_text,
+            "endpoint_type": self.endpoint_type,
+            "prior_positive_readouts_n": self.prior_positive_readouts_n,
+            "prior_negative_readouts_n": self.prior_negative_readouts_n,
+            "orphan_flag": self.orphan_flag,
+            "fast_track_flag": self.fast_track_flag,
+            "breakthrough_flag": self.breakthrough_flag,
+            "adcom_flag": self.adcom_flag,
+            "safety_signal_flag": self.safety_signal_flag,
+            "evidence_confidence": (
+                round(self.evidence_confidence, 4) if self.evidence_confidence is not None else None
+            ),
+            "ctgov_study_id": self.ctgov_study_id,
+            "source_refs": list(self.source_refs),
+            "literature_support_score": self.literature_support_score,
+            "model_version": self.model_version,
+        }
+
+    @property
+    def field_coverage(self) -> float:
+        """Fraction of non-stub evidence fields that are populated."""
+        fields = [
+            self.phase,
+            self.randomized_flag,
+            self.blinded_flag,
+            self.control_arm_flag,
+            self.enrollment_n,
+            self.primary_endpoint_text,
+            self.endpoint_type,
+            self.orphan_flag,
+            self.fast_track_flag,
+            self.breakthrough_flag,
+            self.adcom_flag,
+            self.ctgov_study_id,
+        ]
+        populated = sum(1 for f in fields if f is not None)
+        return populated / len(fields) if fields else 0.0
+
+
+# =============================================================================
 # Composite — EventEV
 # =============================================================================
 
@@ -506,6 +604,7 @@ class EventEV:
     payoff: ScenarioPayoffs
     position: Optional[PositionRecommendation] = None
     branch_sensitivity: Optional[Dict[str, Any]] = None
+    evidence: Optional[EventEvidenceSnapshot] = None
 
     @property
     def scenario_ev(self) -> float:
@@ -538,6 +637,8 @@ class EventEV:
             result["position"] = self.position.to_dict()
         if self.branch_sensitivity:
             result["branch_sensitivity"] = self.branch_sensitivity
+        if self.evidence:
+            result["evidence"] = self.evidence.to_dict()
         return result
 
     def to_json(self, indent: int = 2) -> str:

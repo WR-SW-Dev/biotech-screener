@@ -29,7 +29,7 @@ from typing import Any, Dict, List, Optional
 
 from .branch_sensitivity import compute_branch_sensitivity, compute_breakeven_straddle
 from .catalyst_graph import CatalystGraph
-from .data_contracts import CatalystNode, EventEV, PositionRecommendation
+from .data_contracts import CatalystNode, EventEV, EventEvidenceSnapshot, PositionRecommendation
 from .expectation_model import ExpectationModel
 from .outcome_model import OutcomeModel
 from .payoff_engine import PayoffEngine
@@ -79,6 +79,7 @@ class EventEVCalculator:
         context_features: Optional[Dict[str, Dict[str, Any]]] = None,
         current_weights: Optional[Dict[str, float]] = None,
         sizing_mode: str = "hybrid",
+        evidence_snapshots: Optional[Dict[str, EventEvidenceSnapshot]] = None,
     ) -> List[EventEV]:
         """Run the full Event EV pipeline.
 
@@ -88,12 +89,14 @@ class EventEVCalculator:
             context_features: {ticker: {feature: value}} for outcome model
             current_weights: {ticker: weight_pct} for portfolio translation
             sizing_mode: portfolio sizing mode
+            evidence_snapshots: {node_id: EventEvidenceSnapshot} for audit trail
 
         Returns:
             List of EventEV objects, sorted by downside-adjusted EV
         """
         market_features = market_features or {}
         context_features = context_features or {}
+        evidence_snapshots = evidence_snapshots or {}
 
         # Filter to actionable cohort
         cohort = self._filter_cohort(catalyst_nodes)
@@ -164,6 +167,7 @@ class EventEVCalculator:
                     market_features.get(node.ticker, {}),
                     context_features.get(node.ticker, {}),
                 )
+                ev.evidence = evidence_snapshots.get(node.node_id)
                 event_evs.append(ev)
             except Exception:
                 logger.exception("Failed to assemble EV for %s (%s)", node.node_id, node.ticker)
@@ -314,6 +318,7 @@ class EventEVCalculator:
         current_weights: Optional[Dict[str, float]] = None,
         sizing_mode: str = "hybrid",
         families: Optional[List[str]] = None,
+        evidence_snapshots: Optional[Dict[str, EventEvidenceSnapshot]] = None,
     ) -> List[EventEV]:
         """Run the pipeline from a CatalystGraph.
 
@@ -331,6 +336,7 @@ class EventEVCalculator:
             context_features=context_features,
             current_weights=current_weights,
             sizing_mode=sizing_mode,
+            evidence_snapshots=evidence_snapshots,
         )
 
     # =========================================================================
