@@ -2145,19 +2145,21 @@ def _find_nearest_catalyst_event(
     ticker: str,
     max_fuzzy_days: int = 14,
     as_of_date: Optional[str] = None,
+    pdufa_manual: Optional[List[Dict[str, str]]] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Find the M3 event corresponding to the integration nearest catalyst.
+    """Find the best M3 event for a ticker, preferring high-value events.
 
-    Four-tier lookup:
+    Five-tier lookup:
+      P. Priority override: if a T1/T2 event (regulatory/pivotal) exists
+         within 180 days, prefer it over any nearer T3/T4/T5 event. PDUFA
+         decisions are categorically more market-moving than trial milestones.
+         Checks both M3 events AND PDUFA manual calendar.
       0. Earliest future event fallback: when integration.next_catalyst_date
          is null but the events list contains future events, pick the earliest.
-         This covers names where the scoring pipeline found events but the
-         integration layer rejected them (confidence-gated).
       1. Exact date match: event_date == integration.next_catalyst_date
       2. Fuzzy date match: closest event within ±max_fuzzy_days
       3. Source UID inference: if nearest_catalyst_source_uid starts with
-         "NCT", synthesise a minimal CLINICAL event (covers trials found
-         by the integration layer but filtered from the scored events list)
+         "NCT", synthesise a minimal CLINICAL event
 
     Returns the matched event dict, or None.
     """
@@ -2171,8 +2173,68 @@ def _find_nearest_catalyst_event(
 
     events = [e for e in (summary.get("events") or []) if isinstance(e, dict)]
 
-    # Tier 0: when integration didn't select a catalyst but events exist,
-    # pick the earliest future event from the list, preferring hard sources.
+    # ── Tier P: Priority override — prefer T1/T2 over nearer T3+ ────
+    # A PDUFA decision within 180 days is always more important than a
+    # CT.gov PCD that happens to be closer on the calendar.
+    if as_of_date:
+        from datetime import date as _date
+
+        from decision_engine import classify_catalyst_type_tier as _tier_p
+
+        _TIER_RANK = {"T1": 0, "T2": 1}  # lower = higher priority
+        ref = _date.fromisoformat(as_of_date[:10])
+        best_priority = None
+        best_key = None  # (tier_rank, days) — lower is better
+
+        # Check M3 events for T1/T2
+        for event in events:
+            ed = event.get("event_date", "")
+            if not ed:
+                continue
+            try:
+                days = (_date.fromisoformat(ed[:10]) - ref).days
+            except (ValueError, TypeError):
+                continue
+            if days < 1 or days > 180:
+                continue
+            tier = _tier_p(event.get("event_type", ""))
+            rank = _TIER_RANK.get(tier)
+            if rank is None:
+                continue
+            key = (rank, days)
+            if best_key is None or key < best_key:
+                best_priority = event
+                best_key = key
+
+        # Check PDUFA manual calendar — always T1 (rank 0), wins ties with T2
+        if pdufa_manual:
+            ticker_upper = ticker.upper()
+            for rec in pdufa_manual:
+                if (rec.get("ticker", "")).upper() != ticker_upper:
+                    continue
+                pd = rec.get("pdufa_date", "")
+                if not pd:
+                    continue
+                try:
+                    days = (_date.fromisoformat(pd[:10]) - ref).days
+                except (ValueError, TypeError):
+                    continue
+                if days < 1 or days > 180:
+                    continue
+                key = (0, days)  # T1 = rank 0
+                if best_key is None or key < best_key:
+                    best_priority = {
+                        "event_type": "FDA_PDUFA_DATE",
+                        "source": "PDUFA_MANUAL",
+                        "event_date": pd,
+                        "_from_pdufa_manual": True,
+                    }
+                    best_key = key
+
+        if best_priority is not None:
+            return best_priority
+
+    # ── Tier 0: earliest future event fallback ───────────────────────
     if not next_date and events:
         from datetime import date as _date
 
@@ -2184,11 +2246,10 @@ def _find_nearest_catalyst_event(
             ed = event.get("event_date", "")
             if not ed:
                 continue
-            # Only consider events after the reference date
             if ref and ed <= ref:
                 continue
             is_hard = _is_hard_t0(event.get("event_type", ""), event.get("source", ""))
-            future.append((ed, not is_hard, event))  # sort hard before soft at same date
+            future.append((ed, not is_hard, event))
         if future:
             future.sort(key=lambda x: (x[0], x[1]))
             return future[0][2]
@@ -2196,12 +2257,12 @@ def _find_nearest_catalyst_event(
     if not next_date:
         return None
 
-    # Tier 1: exact date match
+    # ── Tier 1: exact date match ─────────────────────────────────────
     for event in events:
         if event.get("event_date") == next_date:
             return event
 
-    # Tier 2: closest event within ±max_fuzzy_days, prefer hard sources at equal distance
+    # ── Tier 2: fuzzy date match ─────────────────────────────────────
     if events:
         best_event = None
         best_delta = None
@@ -2223,7 +2284,6 @@ def _find_nearest_catalyst_event(
                 if delta > max_fuzzy_days:
                     continue
                 is_soft = not _is_hard_t2(event.get("event_type", ""), event.get("source", ""))
-                # Prefer: closer date first, hard over soft at same distance
                 if best_delta is None or (delta, is_soft) < (best_delta, best_is_soft):
                     best_delta = delta
                     best_is_soft = is_soft
@@ -2233,7 +2293,7 @@ def _find_nearest_catalyst_event(
         if best_event is not None:
             return best_event
 
-    # Tier 3: infer from source UID (NCT → CLINICAL)
+    # ── Tier 3: infer from source UID ────────────────────────────────
     source_uid = integration.get("nearest_catalyst_source_uid", "")
     if source_uid.startswith("NCT"):
         return {
@@ -2250,9 +2310,10 @@ def _nearest_catalyst_source(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
     as_of_date: Optional[str] = None,
+    pdufa_manual: Optional[List[Dict[str, str]]] = None,
 ) -> str:
     """Extract the source of the nearest catalyst event from Module 3 summaries."""
-    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date)
+    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date, pdufa_manual=pdufa_manual)
     return event.get("source", "") if event else ""
 
 
@@ -2260,9 +2321,10 @@ def _nearest_catalyst_event_type(
     m3_summaries: Optional[Dict[str, Any]],
     ticker: str,
     as_of_date: Optional[str] = None,
+    pdufa_manual: Optional[List[Dict[str, str]]] = None,
 ) -> str:
     """Extract the event_type of the nearest catalyst event from Module 3."""
-    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date)
+    event = _find_nearest_catalyst_event(m3_summaries, ticker, as_of_date=as_of_date, pdufa_manual=pdufa_manual)
     return event.get("event_type", "") if event else ""
 
 
@@ -4242,9 +4304,14 @@ def save_validation_snapshot(
         # Returns provenance: live screen always uses Morningstar pipeline
         row["returns_source"] = "morningstar"
 
-        # Catalyst source provenance: extract from Module 3 nearest event
-        row["catalyst_source"] = _nearest_catalyst_source(m3_summaries, ticker, as_of_date=as_of_date)
-        row["catalyst_event_type"] = _nearest_catalyst_event_type(m3_summaries, ticker, as_of_date=as_of_date)
+        # Catalyst source provenance: extract from Module 3 nearest event.
+        # Pass PDUFA manual so T1 regulatory events override nearer T3 CT.gov milestones.
+        row["catalyst_source"] = _nearest_catalyst_source(
+            m3_summaries, ticker, as_of_date=as_of_date, pdufa_manual=_pdufa_manual
+        )
+        row["catalyst_event_type"] = _nearest_catalyst_event_type(
+            m3_summaries, ticker, as_of_date=as_of_date, pdufa_manual=_pdufa_manual
+        )
         row["is_hard_catalyst"] = "1" if _is_hard_catalyst(row["catalyst_event_type"], row["catalyst_source"]) else "0"
         row["catalyst_family"] = classify_catalyst_family(row["catalyst_event_type"])
         # Fix catalyst_type_tier: DE computes it from overlays which lack event_type.
