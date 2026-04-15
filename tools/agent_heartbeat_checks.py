@@ -525,6 +525,35 @@ def check_data_auditor(dt: date) -> CheckResult:
     return CheckResult("data_auditor", "OK", f"Integrity report {report_path.name}: PASS")
 
 
+# ── Production QA Agent ──────────────────────────────────────
+
+
+def check_production_qa(dt: date) -> CheckResult:
+    """Verify production_qa agent ran and produced a report."""
+    ds = as_of_date(dt)
+    anomalies = []
+
+    # Check for today's report artifact
+    report = REPO_ROOT / "artifacts" / "production_qa" / f"report_{ds}.json"
+    if not report.exists():
+        return CheckResult("production_qa", "STALE", f"No production_qa report for {ds}")
+
+    try:
+        data = json.loads(report.read_text())
+        verdict = data.get("verdict", "UNKNOWN")
+        n_findings = len(data.get("findings", []))
+        if verdict == "FAIL":
+            anomalies.append(f"VERDICT_FAIL: {n_findings} findings")
+        elif verdict == "ACTION REQUIRED":
+            anomalies.append(f"ACTION_REQUIRED: {n_findings} findings")
+    except (json.JSONDecodeError, KeyError):
+        anomalies.append("REPORT_CORRUPT: cannot parse production_qa report")
+
+    if anomalies:
+        return CheckResult("production_qa", "WARN", f"{len(anomalies)} issue(s)", anomalies)
+    return CheckResult("production_qa", "OK", f"Report {ds}: {verdict}")
+
+
 # ── Orchestrator ──────────────────────────────────────────────
 
 AGENTS = {
@@ -537,6 +566,7 @@ AGENTS = {
     "herald": check_news_digest,
     "calibration_evidence": check_calibration_evidence,
     "data_auditor": check_data_auditor,
+    "production_qa": check_production_qa,
 }
 
 
