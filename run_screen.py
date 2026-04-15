@@ -5956,6 +5956,15 @@ def save_validation_snapshot(
     except Exception as _v3_exc:
         logger.warning("EES v3 enrichment failed: %s", _v3_exc, exc_info=True)
 
+    # --- Runway Severity: financing-truth cross-layer feature (diagnostic overlay) ---
+    _runway_overlays_for_sidecar = None
+    try:
+        from event_ev.runway_severity import enrich_csv_rows as _enrich_runway
+
+        _runway_overlays_for_sidecar = _enrich_runway(csv_rows, as_of_date)
+    except Exception as _runway_exc:
+        logger.warning("Runway severity enrichment failed: %s", _runway_exc, exc_info=True)
+
     # =========================================================================
     # PHASE 3: WRITE — rankings.csv, checksum, manifest
     # =========================================================================
@@ -6364,6 +6373,39 @@ def save_validation_snapshot(
             )
     except Exception as _v3_sidecar_exc:
         logger.debug("EES v3 sidecar skipped: %s", _v3_sidecar_exc)
+
+    # --- Runway Severity sidecar (financing-truth overlay) ---
+    try:
+        if _runway_overlays_for_sidecar:
+            _rwy_dicts = [o.to_dict() for o in _runway_overlays_for_sidecar]
+            _rwy_dicts.sort(key=lambda d: d.get("runway_severity_score", 0), reverse=True)
+            _n_gate_fail = sum(1 for d in _rwy_dicts if not d.get("financing_truth_gate"))
+            _bucket_dist = {}
+            for d in _rwy_dicts:
+                b = d.get("severity_bucket", "?")
+                _bucket_dist[b] = _bucket_dist.get(b, 0) + 1
+            with open(snap_path / "runway_severity_overlay.json", "w", encoding="utf-8") as f:
+                json.dump(
+                    {
+                        "as_of_date": as_of_date,
+                        "model_version": "runway_severity_v1.0",
+                        "n_scored": len(_rwy_dicts),
+                        "n_gate_fail": _n_gate_fail,
+                        "bucket_distribution": _bucket_dist,
+                        "most_severe_10": _rwy_dicts[:10],
+                        "least_severe_10": _rwy_dicts[-10:],
+                    },
+                    f,
+                    indent=2,
+                )
+            logger.info(
+                "[RunwaySeverity] Sidecar: %d scored, %d gate failures, buckets: %s",
+                len(_rwy_dicts),
+                _n_gate_fail,
+                " ".join(f"{k}={v}" for k, v in sorted(_bucket_dist.items())),
+            )
+    except Exception as _rwy_sidecar_exc:
+        logger.debug("Runway severity sidecar skipped: %s", _rwy_sidecar_exc)
 
     # --- Write eligibility summary sidecar ---
     try:

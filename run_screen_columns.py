@@ -217,6 +217,14 @@ SNAPSHOT_COLUMNS = (
         "max_position_weight",
         "execution_bucket",
         "execution_notes",
+        # --- Runway Severity (financing-truth cross-layer, diagnostic overlay) ---
+        "runway_severity_score",
+        "runway_buffer_months",
+        "financing_truth_gate",
+        "dilution_haircut",
+        "size_multiplier",
+        "severity_bucket",
+        "severity_notes",
         # --- Straddle mispricing (from event_move_table + chain/IV) ---
         "cheap_vol_score",
         "vol_classification",
