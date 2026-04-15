@@ -352,7 +352,7 @@ Date-stamped caches for PIT-safe historical reruns:
 | Short interest (FINRA) | 300+ tickers | 300+ | `data/short_interest.json` | Weekly |
 | BioTradingArena benchmark | 655 validated catalyst cases | 212 tickers (130 overlap with universe) | `production_data/biotradingarena_benchmark.json` | Live — API fetch (2026-04-15) |
 | DealForma deal comps | — | — | Spec 046 ready | Awaiting CSV export |
-| Conference programs | ASCO, AACR, etc. | — | `cache/conferences/` | Quarterly scrape |
+| Conference programs | 8 conferences (ASCO, AACR, ESMO, ASH, AAN, SABCS, SITC, ACR) | 5 AACR 2026 abstracts (first run) | `cache/conferences/` | Daily via Grok web search (6 AM ET) |
 | EU trial registries | EUCTR, CTIS, ISRCTN | — | `cache/ema/` | Monthly |
 
 ### PIT (Point-in-Time) Data Architecture
@@ -770,6 +770,8 @@ severity = sigmoid(-(buffer - 3) / 2) + financing_adjustment + market_adjustment
 
 Catalyst decisiveness tiers: T1 (regulatory/PDUFA) = 1.0, T2 (pivotal Phase 3) = 0.85, T3 (conference) = 0.50, T4 (routine) = 0.20, T5 (unknown) = 0.10. T1/T2 decisive for truth gate; all tiers used by EV/sizing.
 
+**Catalyst priority fix (2026-04-15):** `_find_nearest_catalyst_event` now has a Tier P priority override: T1/T2 events within 180 days always win over nearer T3 CT.gov milestones. PDUFA manual entries are checked alongside M3 events. T1 beats T2 at equal distance. Before fix: 3/14 PDUFAs correctly T1. After: 10/10 future PDUFAs correctly T1.
+
 **Four consumption layers:**
 
 | Layer | Severity Path | Effect | Threshold |
@@ -1090,6 +1092,7 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 | qa | Litmus | 5:30 PM ET (via heartbeat checks) | Artifact validation, contract audit |
 | calibration | Tuner | Fri (via heartbeat checks) | Evidence weighing, candidate review |
 | ic_health_monitor | Canary | 5:45 PM ET (via heartbeat checks) | Signal decay watchdog |
+| production_qa | Inspector | 5:45 PM ET (via heartbeat checks) | Post-production codebase review, lint, schema, distribution health |
 | fleet_steward | Conductor | 6:15 PM ET (via heartbeat checks) | Fleet orchestration |
 
 ### Data & Collection
