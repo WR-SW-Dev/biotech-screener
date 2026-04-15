@@ -26,19 +26,6 @@
     "notes": "FDA granted Priority Review to atacicept BLA for IgA nephropathy. PDUFA target action date July 7, 2026. Verified from Q4 2025 earnings 8-K Exhibit 99.1 (accession 0001193125-26-073421)."
   },
   {
-    "ticker": "IONS",
-    "drug_name": "Olezarsen (Tryngolza) high dose",
-    "indication": "Familial Chylomicronemia Syndrome",
-    "pdufa_date": "2026-04-03",
-    "event_type": "PDUFA",
-    "submission_type": "sNDA",
-    "confidence": "HIGH",
-    "source": "SEC_8K",
-    "source_url": "https://www.sec.gov/Archives/edgar/data/874015/000114036126006718/ef20066495_ex99-1.htm",
-    "as_of_disclosed_at": "2026-02-25",
-    "notes": "Olezarsen/Tryngolza high dose under review for U.S. marketing approval; PDUFA date April 3, 2026. Standard dose already approved. Verified from Q4 2025 earnings 8-K Exhibit 99.1 (accession 0001140361-26-006718)."
-  },
-  {
     "ticker": "MNKD",
     "drug_name": "Afrezza (insulin human) pediatric",
     "indication": "Diabetes (Pediatric Population)",
@@ -50,19 +37,6 @@
     "source_url": "https://www.sec.gov/Archives/edgar/data/899460/000119312525265810/mnkd-ex99_1.htm",
     "as_of_disclosed_at": "2025-11-05",
     "notes": "FDA accepted sBLA for Afrezza in pediatric population. PDUFA date May 29, 2026. Verified from Q3 2025 earnings 8-K Exhibit 99.1 (accession 0001193125-25-265810)."
-  },
-  {
-    "ticker": "BIIB",
-    "drug_name": "SPINRAZA (nusinersen) high dose",
-    "indication": "Spinal Muscular Atrophy (high dose regimen)",
-    "pdufa_date": "2026-04-03",
-    "event_type": "PDUFA",
-    "submission_type": "sBLA",
-    "confidence": "HIGH",
-    "source": "SEC_8K",
-    "source_url": "https://www.sec.gov/Archives/edgar/data/875045/000087504525000047/0000875045-25-000047-index.htm",
-    "as_of_disclosed_at": "2025-10-30",
-    "notes": "SPINRAZA high dose regimen U.S. FDA PDUFA April 3, 2026. Already approved in Japan and E.U. Verified from Q3 2025 earnings 8-K (accession 0000875045-25-000047)."
   },
   {
     "ticker": "BIIB",
@@ -78,19 +52,6 @@
     "notes": "LEQEMBI subcutaneous treatment initiation granted FDA Priority Review with PDUFA date May 24, 2026. Verified from Q4 2025 earnings 8-K press release (accession 0000875045-26-000011)."
   },
   {
-    "ticker": "REPL",
-    "drug_name": "RP1 (vusolimogene oderparepvec)",
-    "indication": "Anti-PD-1 Failed Melanoma",
-    "pdufa_date": "2026-04-10",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "HIGH",
-    "source": "SEC_8K",
-    "source_url": "https://www.sec.gov/Archives/edgar/data/1737953/000110465926002721/tm262890d1_ex99-1.htm",
-    "as_of_disclosed_at": "2026-01-12",
-    "notes": "RP1 for anti-PD-1 failed melanoma, near-term PDUFA date April 10, 2026. Commercial team launch ready. Verified from JPM 2026 presentation 8-K Exhibit 99.1 (accession 0001104659-26-002721)."
-  },
-  {
     "ticker": "VRDN",
     "drug_name": "Veligrotug",
     "indication": "Thyroid Eye Disease",
@@ -102,19 +63,6 @@
     "source_url": "https://investors.viridiantherapeutics.com/news/news-details/2025/Viridian-Therapeutics-Announces-BLA-Acceptance-and-Priority-Review-for-Veligrotug-for-the-Treatment-of-Thyroid-Eye-Disease/default.aspx",
     "as_of_disclosed_at": "2025-12-22",
     "notes": "BLA accepted with Priority Review and Breakthrough Therapy designation. PDUFA June 30, 2026. Verified from Viridian press release 2025-12-22."
-  },
-  {
-    "ticker": "DNLI",
-    "drug_name": "Tividenofusp alfa (DNL310)",
-    "indication": "Hunter Syndrome (MPS II)",
-    "pdufa_date": "2026-04-05",
-    "event_type": "PDUFA",
-    "submission_type": "BLA",
-    "confidence": "HIGH",
-    "source": "PRESS_RELEASE",
-    "source_url": "https://www.globenewswire.com/news-release/2025/10/13/3165786/0/en/Denali-Therapeutics-Announces-FDA-Review-Extension-of-BLA-for-Tividenofusp-Alfa-for-the-Treatment-of-MPS-II-Hunter-Syndrome.html",
-    "as_of_disclosed_at": "2025-10-13",
-    "notes": "BLA under Priority Review, seeking accelerated approval. Original PDUFA Jan 5 extended to April 5 due to Major Amendment (updated clinical pharmacology). Verified from Denali press release 2025-10-13."
   },
   {
     "ticker": "MRNA",
@@ -182,16 +130,16 @@
     "notes": "From CatalystAlert calendar. Priority Review BLA. Exact date needs company IR verification."
   },
   {
-    "ticker": "TVTX",
-    "drug_name": "FILSPARI (sparsentan)",
-    "indication": "Focal Segmental Glomerulosclerosis (FSGS)",
-    "pdufa_date": "2026-04-13",
+    "ticker": "TSHA",
+    "drug_name": "TSHA-120",
+    "indication": "Giant Axonal Neuropathy",
+    "pdufa_date": "2026-06-30",
     "event_type": "PDUFA",
-    "submission_type": "sNDA",
+    "submission_type": "BLA",
     "confidence": "HIGH",
-    "source": "company_ir",
+    "source": "SEC_8K",
     "source_url": "",
-    "as_of_disclosed_at": "2026-04-01",
-    "notes": "sNDA for full approval in FSGS. Extended from Jan due to major amendment. Already approved for IgAN. DUPLEX/DUET studies support kidney function benefit. Probability ~68%."
+    "as_of_disclosed_at": "2026-01-15",
+    "notes": "BLA accepted with Priority Review + Rare Pediatric Disease designation. PDUFA June 30, 2026."
   }
 ]
