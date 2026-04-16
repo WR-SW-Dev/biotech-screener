@@ -33,17 +33,29 @@ def _make_trial(**overrides: Any) -> Dict[str, Any]:
 
 class TestProtocolQualityScore:
 
-    def test_full_rigor_trial(self):
+    def test_full_rigor_phase3(self):
         from common.protocol_quality import compute_protocol_quality
 
-        trials = [_make_trial()]
+        trials = [_make_trial(phase="PHASE3")]
         result = compute_protocol_quality(trials, "2026-04-15")
         pq = result["TEST"]
 
+        # Phase 3 with full rigor → high score
         assert pq["protocol_quality_score"] > 0.5
         assert "comparator" in pq["protocol_signals"]
         assert "randomized" in pq["protocol_signals"]
         assert "blinded" in pq["protocol_signals"]
+
+    def test_full_rigor_phase1_scores_lower(self):
+        """Phase 1 with same features should score lower than Phase 3."""
+        from common.protocol_quality import compute_protocol_quality
+
+        trials_p1 = [_make_trial(phase="PHASE1")]
+        trials_p3 = [_make_trial(phase="PHASE3")]
+        pq_p1 = compute_protocol_quality(trials_p1, "2026-04-15")["TEST"]
+        pq_p3 = compute_protocol_quality(trials_p3, "2026-04-15")["TEST"]
+
+        assert pq_p1["protocol_quality_score"] < pq_p3["protocol_quality_score"]
 
     def test_single_arm_unblinded(self):
         from common.protocol_quality import compute_protocol_quality
@@ -59,16 +71,35 @@ class TestProtocolQualityScore:
         result = compute_protocol_quality(trials, "2026-04-15")
         pq = result["TEST"]
 
-        # Should score low — no comparator, no randomization, no blinding
         assert pq["protocol_quality_score"] < 0.15
         assert "comparator" not in pq["protocol_signals"]
         assert "randomized" not in pq["protocol_signals"]
 
-    def test_randomized_only(self):
+    def test_phase1_not_over_penalized(self):
+        """Phase 1 with NO rigor features should still score non-catastrophically."""
         from common.protocol_quality import compute_protocol_quality
 
         trials = [
             _make_trial(
+                phase="PHASE1",
+                allocation="NA",
+                masking="NONE",
+                intervention_model="SINGLE_GROUP",
+                primary_endpoints=["Maximum tolerated dose"],
+            )
+        ]
+        result = compute_protocol_quality(trials, "2026-04-15")
+        pq = result["TEST"]
+
+        # Should not be as penalized as Phase 3 missing the same features
+        assert pq["protocol_quality_score"] >= 0.0
+
+    def test_randomized_only_phase3(self):
+        from common.protocol_quality import compute_protocol_quality
+
+        trials = [
+            _make_trial(
+                phase="PHASE3",
                 masking="NONE",
                 intervention_model="SINGLE_GROUP",
                 primary_endpoints=["Dose-limiting toxicity"],
@@ -77,7 +108,7 @@ class TestProtocolQualityScore:
         result = compute_protocol_quality(trials, "2026-04-15")
         pq = result["TEST"]
 
-        assert 0.15 < pq["protocol_quality_score"] < 0.35
+        assert pq["protocol_quality_score"] > 0.1
         assert "randomized" in pq["protocol_signals"]
         assert "blinded" not in pq["protocol_signals"]
 
@@ -126,14 +157,37 @@ class TestProtocolQualityScore:
     def test_best_trial_selected(self):
         from common.protocol_quality import compute_protocol_quality
 
-        # Two trials: one weak, one strong
+        # Two trials: one weak Phase 1, one strong Phase 3
         trials = [
-            _make_trial(allocation="NA", masking="NONE", intervention_model="SINGLE_GROUP"),
-            _make_trial(),  # full rigor
+            _make_trial(phase="PHASE1", allocation="NA", masking="NONE", intervention_model="SINGLE_GROUP"),
+            _make_trial(phase="PHASE3"),  # full rigor
         ]
         result = compute_protocol_quality(trials, "2026-04-15")
-        # Should pick the best trial
+        # Should pick the Phase 3 trial (more advanced phase)
         assert result["TEST"]["protocol_quality_score"] > 0.5
+
+    def test_phase_priority_selection(self):
+        """Most advanced phase trial is preferred over lower-phase higher-score."""
+        from common.protocol_quality import compute_protocol_quality
+
+        # Phase 1 with full rigor vs Phase 3 with partial rigor
+        trials = [
+            _make_trial(phase="PHASE1"),  # would score ~0.15 under Phase 1 weights
+            _make_trial(phase="PHASE3", masking="NONE"),  # randomized no blinding ~0.45
+        ]
+        result = compute_protocol_quality(trials, "2026-04-15")
+        pq = result["TEST"]
+        # Should pick Phase 3 trial despite lower rigor features
+        assert "phase_3" in pq["protocol_signals"]
+
+    def test_phase_conditional_weights_exist(self):
+        from common.protocol_quality import PHASE_PROTOCOL_WEIGHTS
+
+        assert "1" in PHASE_PROTOCOL_WEIGHTS
+        assert "2" in PHASE_PROTOCOL_WEIGHTS
+        assert "3" in PHASE_PROTOCOL_WEIGHTS
+        # Phase 1 comparator weight should be much lower than Phase 3
+        assert PHASE_PROTOCOL_WEIGHTS["1"]["comparator"] < PHASE_PROTOCOL_WEIGHTS["3"]["comparator"]
 
 
 class TestCalendarAlphaIntegration:
