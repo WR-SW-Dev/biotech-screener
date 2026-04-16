@@ -163,10 +163,10 @@ def _get_compiled_buckets():
 # Controls how much each bucket matters by phase
 _PHASE_BUCKET_MULT: Dict[str, Dict[str, float]] = {
     "1": {
-        "hard_clinical": 1.2,  # rare in Ph1 but very strong signal if present
-        "validated_surrogate": 1.1,
-        "objective_response": 1.0,
-        "symptom_functional": 0.9,
+        "hard_clinical": 1.0,  # neutral in Ph1 — rare and may be dose-expansion cohort noise
+        "validated_surrogate": 0.9,
+        "objective_response": 0.85,
+        "symptom_functional": 0.8,
         "safety_tolerability": 1.0,  # expected in Ph1 — neutral, not penalized
         "pk_pd_exploratory": 0.9,  # expected in Ph1 — neutral
         "vague_other": 0.5,

@@ -85,6 +85,7 @@ FEATURE_REGISTRY: Tuple[FeatureSpec, ...] = (
     FeatureSpec("competitive_intensity_z", "float", "clinical", context_eligible=True),
     FeatureSpec("program_diversification", "float", "clinical", context_eligible=True),
     FeatureSpec("protocol_quality_score", "float", "clinical", context_eligible=True),
+    FeatureSpec("endpoint_quality_score", "float", "clinical", context_eligible=True),
 )
 
 # Explicit context key ordering — matches the legacy _CONTEXT_KEYS tuple

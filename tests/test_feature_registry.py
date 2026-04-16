@@ -42,7 +42,7 @@ class TestRegistryIntegrity:
 
     def test_feature_count_regression_guard(self):
         """Catch accidental additions/removals. Update this count intentionally."""
-        assert len(FEATURE_REGISTRY) == 29  # 28 + 1 (protocol_quality_score added)
+        assert len(FEATURE_REGISTRY) == 30  # 29 + 1 (endpoint_quality_score added)
 
     def test_feature_spec_is_frozen(self):
         f = FEATURE_REGISTRY[0]
@@ -98,6 +98,7 @@ class TestGetFeatureKeys:
             "competitive_intensity_z",
             "program_diversification",
             "protocol_quality_score",
+            "endpoint_quality_score",
         )
         assert get_feature_keys() == legacy
 
@@ -145,7 +146,7 @@ class TestGetFeaturesBySource:
 
     def test_clinical_count(self):
         clinical = get_features_by_source("clinical")
-        assert len(clinical) == 7  # 6 clinical discriminators + protocol_quality_score
+        assert len(clinical) == 8  # 6 clinical discriminators + protocol + endpoint_v2
 
     def test_unknown_source_returns_empty(self):
         assert get_features_by_source("nonexistent") == []
