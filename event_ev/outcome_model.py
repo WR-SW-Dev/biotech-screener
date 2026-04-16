@@ -270,6 +270,79 @@ class OutcomeModel:
             log_odds += update
             updates["literature_support"] = round(update, 4)
 
+        # === Clinical stack v2 transmission layer (2026-04-16) ===
+        # Converts protocol_quality_score, biomarker_context_score, and
+        # endpoint_quality_score into bounded log-odds adjustments.
+        # This bridges the CalendarAlpha clinical stack into the EV
+        # ranking path so clinical intelligence can affect p_hit.
+        #
+        # Phase-aware caps (max abs log-odds adjustment):
+        #   Phase 1: ±0.12 (~3pp at p=0.5)
+        #   Phase 2: ±0.25 (~6pp at p=0.5)
+        #   Phase 3: ±0.20 (~5pp at p=0.5)
+        _PHASE_TRANSMISSION_CAP = {
+            "1": 0.12,
+            "1_2": 0.18,
+            "2": 0.25,
+            "2_3": 0.22,
+            "3": 0.20,
+            "unknown": 0.15,
+        }
+        _tx_cap = _PHASE_TRANSMISSION_CAP.get(node.phase, 0.15)
+
+        # Component weights (endpoint > protocol > biomarker)
+        # Conservative v1: small adjustments to prove transmission works
+        # before scaling up. Total max raw ~0.06 before cap.
+        _TX_WEIGHTS = {
+            "protocol": 0.06,
+            "endpoint": 0.08,
+            "biomarker": 0.04,
+        }
+
+        # Neutral anchors — set at population means so half get boosted,
+        # half get penalized, with small net effect. Endpoint mean ~0.54,
+        # protocol mean ~0.55 in production.
+        _PROTOCOL_NEUTRAL = 0.50
+        _ENDPOINT_NEUTRAL = 0.55
+        # Biomarker is already centered at 0 by construction
+
+        pq = _safe_context_float(context, "protocol_quality_score")
+        bm = _safe_context_float(context, "biomarker_context_score")
+        epq = _safe_context_float(context, "endpoint_quality_score")
+
+        tx_raw = 0.0
+        tx_components: Dict[str, float] = {}
+
+        if pq is not None:
+            pq_delta = (pq - _PROTOCOL_NEUTRAL) * _TX_WEIGHTS["protocol"]
+            tx_raw += pq_delta
+            tx_components["tx_protocol"] = round(pq_delta, 4)
+
+        if epq is not None:
+            ep_delta = (epq - _ENDPOINT_NEUTRAL) * _TX_WEIGHTS["endpoint"]
+            tx_raw += ep_delta
+            tx_components["tx_endpoint"] = round(ep_delta, 4)
+
+        if bm is not None and bm != 0.0:
+            bm_delta = bm * _TX_WEIGHTS["biomarker"]
+            tx_raw += bm_delta
+            tx_components["tx_biomarker"] = round(bm_delta, 4)
+
+        # Clamp total clinical transmission to phase-specific cap
+        if tx_raw != 0.0:
+            tx_clamped = max(-_tx_cap, min(_tx_cap, tx_raw))
+            log_odds += tx_clamped
+            updates["clinical_transmission"] = round(tx_clamped, 4)
+            tx_components["tx_raw"] = round(tx_raw, 4)
+            tx_components["tx_clamped"] = round(tx_clamped, 4)
+            tx_components["tx_cap"] = round(_tx_cap, 4)
+            tx_components["tx_cap_hit"] = abs(tx_raw) > _tx_cap
+            if tx_clamped > 0:
+                updates["clinical_transmission_direction"] = "positive"
+            else:
+                updates["clinical_transmission_direction"] = "negative"
+
+        features_used["clinical_transmission"] = tx_components
         features_used["log_odds_updates"] = updates
 
         # Step 3: Convert back to probability

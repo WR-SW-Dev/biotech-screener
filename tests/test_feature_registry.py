@@ -42,7 +42,7 @@ class TestRegistryIntegrity:
 
     def test_feature_count_regression_guard(self):
         """Catch accidental additions/removals. Update this count intentionally."""
-        assert len(FEATURE_REGISTRY) == 30  # 29 + 1 (endpoint_quality_score added)
+        assert len(FEATURE_REGISTRY) == 31  # 30 + 1 (biomarker_context_score added)
 
     def test_feature_spec_is_frozen(self):
         f = FEATURE_REGISTRY[0]
@@ -99,6 +99,7 @@ class TestGetFeatureKeys:
             "program_diversification",
             "protocol_quality_score",
             "endpoint_quality_score",
+            "biomarker_context_score",
         )
         assert get_feature_keys() == legacy
 
@@ -126,6 +127,10 @@ class TestGetContextKeys:
             "binary_quality_score",
             "competitive_intensity_z",
             "program_diversification",
+            # Clinical stack v2 transmission (2026-04-16)
+            "protocol_quality_score",
+            "endpoint_quality_score",
+            "biomarker_context_score",
             "underlying_price",
         )
         assert get_context_keys() == legacy
@@ -146,7 +151,7 @@ class TestGetFeaturesBySource:
 
     def test_clinical_count(self):
         clinical = get_features_by_source("clinical")
-        assert len(clinical) == 8  # 6 clinical discriminators + protocol + endpoint_v2
+        assert len(clinical) == 9  # 6 clinical discriminators + protocol + endpoint_v2 + biomarker_context
 
     def test_unknown_source_returns_empty(self):
         assert get_features_by_source("nonexistent") == []

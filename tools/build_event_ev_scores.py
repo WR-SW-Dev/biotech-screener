@@ -98,6 +98,44 @@ def build_scores(
     except Exception:
         logger.warning("Evidence snapshot loading failed — continuing without evidence")
 
+    # Compute clinical stack v2 scores and inject into context_features
+    # so the outcome model's transmission layer can use them.
+    try:
+        import json as _json
+
+        trial_path = prod_data / "trial_records.json"
+        if trial_path.exists():
+            _trials = _json.loads(trial_path.read_text())
+
+            from common.protocol_quality import compute_protocol_quality
+
+            _pq = compute_protocol_quality(_trials, as_of_date)
+
+            from common.biomarker_context import compute_biomarker_context_score
+
+            _bm = compute_biomarker_context_score(_trials, as_of_date, protocol_quality=_pq)
+
+            from common.endpoint_quality import compute_endpoint_quality
+
+            _ep = compute_endpoint_quality(_trials, as_of_date)
+
+            for ticker in context_features:
+                if ticker in _pq:
+                    context_features[ticker]["protocol_quality_score"] = _pq[ticker]["protocol_quality_score"]
+                if ticker in _bm:
+                    context_features[ticker]["biomarker_context_score"] = _bm[ticker]["biomarker_context_score"]
+                if ticker in _ep:
+                    context_features[ticker]["endpoint_quality_score"] = _ep[ticker]["endpoint_quality_score"]
+
+            logger.info(
+                "Clinical stack v2: %d protocol, %d biomarker, %d endpoint scores injected",
+                sum(1 for t in context_features.values() if "protocol_quality_score" in t),
+                sum(1 for t in context_features.values() if "biomarker_context_score" in t),
+                sum(1 for t in context_features.values() if "endpoint_quality_score" in t),
+            )
+    except Exception as _clin_err:
+        logger.warning("Clinical stack v2 injection failed: %s", _clin_err)
+
     # Run EV calculator
     calc = EventEVCalculator(
         as_of_date=as_of,

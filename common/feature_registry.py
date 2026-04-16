@@ -86,6 +86,7 @@ FEATURE_REGISTRY: Tuple[FeatureSpec, ...] = (
     FeatureSpec("program_diversification", "float", "clinical", context_eligible=True),
     FeatureSpec("protocol_quality_score", "float", "clinical", context_eligible=True),
     FeatureSpec("endpoint_quality_score", "float", "clinical", context_eligible=True),
+    FeatureSpec("biomarker_context_score", "float", "clinical", context_eligible=True),
 )
 
 # Explicit context key ordering — matches the legacy _CONTEXT_KEYS tuple
@@ -111,6 +112,10 @@ _CONTEXT_KEY_ORDER: Tuple[str, ...] = (
     "binary_quality_score",
     "competitive_intensity_z",
     "program_diversification",
+    # Clinical stack v2 transmission (2026-04-16)
+    "protocol_quality_score",
+    "endpoint_quality_score",
+    "biomarker_context_score",
     # Synthesized (not in feature extraction loop)
     "underlying_price",
 )
