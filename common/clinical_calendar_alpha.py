@@ -1002,6 +1002,7 @@ class CalendarAlphaConfig:
     w_design: float = 0.10
     w_endpoint: float = 0.10
     w_competition: float = 0.05  # negative: penalizes crowded
+    w_protocol: float = 0.08  # protocol quality rigor (HINT-derived, 2026-04-16)
     max_adjustment: float = 0.35  # cap per-component z contribution
     # Sizing
     enable_sizing: bool = False
@@ -1026,6 +1027,7 @@ def compose_clinical_score_v2(
     z_design: float = 0.0,
     z_endpoint: float = 0.0,
     z_competition: float = 0.0,
+    z_protocol: float = 0.0,
 ) -> Tuple[Optional[float], float, List[str]]:
     """Compose clinical_score_v2 from base score + feature z-scores.
 
@@ -1062,6 +1064,8 @@ def compose_clinical_score_v2(
     adjustment += _d(config.w_endpoint) * _clamp_d(_d(z_endpoint), -cap, cap)
     # Competition weight is NEGATIVE (higher crowding → penalty)
     adjustment -= _d(config.w_competition) * _clamp_d(_d(z_competition), -cap, cap)
+    # Protocol quality (HINT-derived rigor features, 2026-04-16)
+    adjustment += _d(config.w_protocol) * _clamp_d(_d(z_protocol), -cap, cap)
 
     # Scale to 0-100 range
     score_v2 = _d(clinical_score) + adjustment * _D("10")
@@ -1078,6 +1082,10 @@ def compose_clinical_score_v2(
         reason_tags.append("strong_design")
     if z_competition > 1.0:
         reason_tags.append("high_competition")
+    if z_protocol > 0.5:
+        reason_tags.append("strong_protocol")
+    elif z_protocol < -0.5:
+        reason_tags.append("weak_protocol")
 
     # Sizing multiplier (Decimal)
     sizing = _D("1")
