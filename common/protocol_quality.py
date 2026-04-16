@@ -146,11 +146,11 @@ _FEATURE_WEIGHTS_GLOBAL = {
 #
 PHASE_PROTOCOL_WEIGHTS: Dict[str, Dict[str, float]] = {
     "1": {
-        "comparator": 0.05,  # rarely applicable in dose-finding
-        "randomization": 0.05,  # uncommon in Phase 1
-        "blinding": 0.05,  # uncommon in Phase 1
-        "endpoint_spec": 0.15,  # endpoint clarity still matters
-        "multi_arm": 0.03,  # dose cohorts ≠ rigor signal
+        "comparator": 0.10,  # uncommon but meaningful when present
+        "randomization": 0.10,  # uncommon but structured escalation matters
+        "blinding": 0.08,  # rare in Ph1 but signals rigor when present
+        "endpoint_spec": 0.18,  # clean endpoint definitions matter even in Ph1
+        "multi_arm": 0.04,  # dose cohorts have some structure value
         "complexity_penalty": -0.05,  # lighter: Phase 1 eligibility is naturally narrow
     },
     "1_2": {
@@ -189,6 +189,18 @@ PHASE_PROTOCOL_WEIGHTS: Dict[str, Dict[str, float]] = {
 
 # Fallback for phase 4, unknown, etc.
 _DEFAULT_PHASE_WEIGHTS = PHASE_PROTOCOL_WEIGHTS["3"]
+
+# Soft floor by phase — prevents total collapse for valid early designs.
+# Even a Phase 1 trial with zero detected rigor features should not score
+# exactly 0.0 if it's a real interventional study.
+PHASE_SCORE_FLOOR: Dict[str, float] = {
+    "1": 0.10,  # early-phase: low but nonzero
+    "1_2": 0.08,
+    "2": 0.05,  # Phase 2+: floor almost irrelevant (features dominate)
+    "2_3": 0.04,
+    "3": 0.03,
+}
+_DEFAULT_FLOOR = 0.03
 
 # Max influence on clinical_score_v2 (bounded)
 MAX_PROTOCOL_ADJUSTMENT = 0.35  # same cap as other CalendarAlpha components
@@ -364,8 +376,9 @@ def _score_single_trial(
     # Tag phase for audit trail
     signals.append(f"phase_{phase}")
 
-    # Sum and clamp to [0, 1]
+    # Sum and clamp to [floor, 1]
     raw = sum(breakdown.values())
-    score = max(0.0, min(1.0, raw))
+    floor = PHASE_SCORE_FLOOR.get(phase, _DEFAULT_FLOOR)
+    score = max(floor, min(1.0, raw))
 
     return score, breakdown, signals
