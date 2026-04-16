@@ -384,3 +384,4 @@ agents/*/memory/
 agents/*/IDENTITY.md
 agents/*/USER.md
 agents/*/BOOTSTRAP.md
+vendor/
