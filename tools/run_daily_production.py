@@ -3518,7 +3518,14 @@ def build_run_manifest(
     ruleset_info: Dict[str, Any] = {}
     row_counts: Dict[str, Any] = {}
     if snapshot_date_dir and (snapshot_date_dir / "metadata.json").exists():
-        meta = json.loads((snapshot_date_dir / "metadata.json").read_text())
+        # Guard the JSON parse: a corrupt/truncated metadata.json must not
+        # crash the manifest build — we still want a partial manifest with
+        # gate verdicts and an overall FAIL recorded downstream.
+        meta: Dict[str, Any] = {}
+        try:
+            meta = json.loads((snapshot_date_dir / "metadata.json").read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError):
+            meta = {}
         # Ruleset ID is in clinical_sort_telemetry (primary) or health JSON
         cst = meta.get("clinical_sort_telemetry") or {}
         ruleset_info = {
@@ -3531,10 +3538,10 @@ def build_run_manifest(
         health_path = snapshot_date_dir / "phase2_health.json"
         if health_path.exists():
             try:
-                health = json.loads(health_path.read_text())
+                health = json.loads(health_path.read_text(encoding="utf-8"))
                 if health.get("ruleset_id"):
                     ruleset_info["ruleset_hash"] = health["ruleset_id"]
-            except (json.JSONDecodeError, OSError):
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError):
                 pass
         row_counts = {
             "ticker_count": meta.get("ticker_count"),
@@ -5204,6 +5211,24 @@ def run_daily(
                 _logger.info("Event EV → 0 catalysts in scoring window")
         except Exception as _ev_err:
             _logger.warning(f"Event EV scoring failed: {_ev_err}")
+
+        # --- Step 5k.21b: Clinical transmission shadow (non-blocking) ---
+        try:
+            from tools.clinical_transmission_shadow import run_shadow as _run_shadow
+
+            _shadow = _run_shadow(as_of_date)
+            _sh_def = _shadow.get("default_actionable_n", "?")
+            _sh_tx = _shadow.get("tx_actionable_n", "?")
+            _sh_dropped = _shadow.get("dropped_from_actionable", [])
+            _logger.info(
+                "Clinical shadow → default=%s tx=%s dropped=%s t10=%s/10",
+                _sh_def,
+                _sh_tx,
+                _sh_dropped,
+                _shadow.get("top10_overlap", "?"),
+            )
+        except Exception as _sh_err:
+            _logger.warning(f"Clinical transmission shadow failed: {_sh_err}")
 
         # --- Step 5k.22: Event EV forward validation (non-blocking) ---
         try:
