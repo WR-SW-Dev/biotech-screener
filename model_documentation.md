@@ -435,6 +435,57 @@ Implementation: `event_ev/evidence_snapshot.py` (builder + PubMed enricher),
 `data_sources/pubmed_client.py` (client), `event_ev/loaders.py:load_evidence_snapshots()`,
 `production_data/drug_name_map.json` (300-ticker curated drug name lookup).
 
+### Clinical Stack v2 (2026-04-16)
+
+Four clinical layers integrated into the EV ranking path via a bounded transmission mechanism:
+
+**1. Protocol quality** (`common/protocol_quality.py`):
+Phase-conditional trial design rigor from structured ClinicalTrials.gov fields.
+Features: comparator, randomization, blinding, endpoint specificity, multi-arm, complexity penalty.
+Phase 1 weights lower than Phase 3. Soft floor prevents early-phase collapse.
+Weight in CalendarAlpha: `w_protocol=0.08`.
+
+**2. Conditional biomarker** (`common/biomarker_context.py`):
+Context-dependent biomarker score replacing the old flat 1.20x boost (neutralized to 1.00 in PoSPriorEngine).
+Conditional on phase × indication × protocol quality × endpoint specificity.
+Score range [-0.05, 0.30]. Oncology + strong design = max; weak design capped at 0.18.
+86/297 tickers have biomarker-selected trials.
+
+**3. Endpoint quality v2** (`common/endpoint_quality.py`):
+7-bucket endpoint classification (hard_clinical → validated_surrogate → objective_response →
+symptom_functional → safety_tolerability → pk_pd_exploratory → vague_other).
+Phase-aware multipliers: Ph3 OS = max, Ph3 safety-only = red flag, Ph1 safety = neutral.
+Weight in CalendarAlpha: `w_endpoint_v2=0.08`.
+
+**4. Clinical-to-p_hit transmission** (`event_ev/outcome_model.py`):
+Bridges all three scores into the outcome model's logit-space update path.
+Conservative weights: endpoint 0.08, protocol 0.06, biomarker 0.04.
+Phase-aware caps: Ph1 ±0.12, Ph2 ±0.25, Ph3 ±0.20 log-odds.
+Neutral anchors at population means (protocol 0.50, endpoint 0.55).
+Sign-symmetric: strong setups boost p_hit, weak setups penalize.
+
+**Status: behind flag (shadow validation through 2026-04-30).**
+PIT-honest backtest (Apr 5-15): Brier 0.041→0.039, returns +5.37% (identical),
+6 dropped names (safety-only endpoints), 0 gained. Validated filter, not yet proven alpha.
+
+Forward validation: `tools/clinical_transmission_shadow.py` (daily, Step 5k.21b).
+Outcome evaluation: `research/clinical_tx_outcome_eval.py`.
+HINT benchmark: `research/hint_benchmark.py` (17,614 trials, 1,610 matched).
+
+### HINT Research Integration (2026-04-16)
+
+External benchmark from github.com/futianfan/clinical-trial-outcome-prediction.
+Non-commercial research use only. Located in `research/` module (not production code).
+
+Key findings:
+- Phase 1: PoS v3 wins (Brier 0.218 vs 0.244)
+- Phase 2: HINT wins (Brier 0.250 vs 0.336) → recalibrated prior
+- Phase 3: Comparable (0.217 vs 0.219)
+- Biomarker selection NOT globally positive (Δ=-2.7%)
+
+Protocol feature extraction: 10 PIT-safe features from eligibility text.
+Schema mapper: `research/hint_adapter.py`. Benchmark: `research/hint_benchmark.py`.
+
 ### PIT (Point-in-Time) Data Architecture
 
 Historical backtests require data as-known-on each snapshot date. The PIT stack:
@@ -1370,6 +1421,15 @@ currently untestable on the available historical data. Readiness gate at
 | `event_ev/runway_severity.py` | Runway-to-catalyst severity (4-layer diagnostic) |
 | `event_ev/evidence_snapshot.py` | PIT-anchored evidence snapshot builder (trial design + designations + CRT + PubMed) |
 | `data_sources/pubmed_client.py` | NCBI E-utilities PubMed client (search, fetch, cache, literature scoring) |
+| `common/protocol_quality.py` | Phase-conditional protocol quality score (HINT-derived) |
+| `common/biomarker_context.py` | Conditional biomarker context score |
+| `common/endpoint_quality.py` | Endpoint quality v2 (7-bucket, phase-aware) |
+| `tools/clinical_transmission_shadow.py` | Daily shadow: default vs TX-enabled EV rankings |
+| `research/clinical_tx_outcome_eval.py` | Outcome evaluation + alpha attribution framework |
+| `research/hint_adapter.py` | HINT schema mapper + NCT matcher |
+| `research/hint_benchmark.py` | Offline benchmark: PoS v3 vs HINT baselines |
+| `research/hint_feature_extract.py` | Protocol feature extraction (10 PIT-safe features) |
+| `research/full_current_model_backtest.py` | Full historical backtest (4-variant) |
 | `scripts/research/crt_bta_calibration.py` | BioTradingArena calibration benchmark |
 | `tools/ees_v3_forward_monitor.py` | Forward evidence tracker toward WS4 clearance |
 | `tools/build_event_feedback.py` | Resolved event materializer (CRT→Herald→postmortem join) |
@@ -1478,7 +1538,13 @@ economics of biotech investing.
 | test_expectation_error_model | 63 | EES/Trap gate |
 | test_event_ev_engine | 68 | Event EV 6-layer Bayesian |
 | test_evidence_snapshot | 33 | Evidence snapshot PIT safety, field tolerance, designation extraction |
-| test_pubmed_client | 19 | PubMed XML parsing, literature scoring, cache, evidence wiring |
+| test_pubmed_client | 29 | PubMed XML parsing, literature scoring, cache, API key, drug map |
+| test_protocol_quality | 19 | Protocol quality score, phase-conditional weights, CalendarAlpha integration |
+| test_biomarker_context | 13 | Conditional biomarker detection, phase/indication/design conditioning |
+| test_endpoint_quality | 17 | Endpoint bucket classification, phase scoring, multi-EP handling |
+| test_clinical_transmission | 6 | Clinical-to-p_hit transmission, phase caps, sign symmetry |
+| test_phase2_recalibration | 8 | Phase 2 prior value, old values preserved, CRT exclusion |
+| test_hint_integration | 22 | HINT adapter, features, benchmark, PIT safety, no-production-import |
 | test_phase2_daily | 143 | Daily production pipeline |
 | test_classify_press_releases | 56 | Herald news classification |
 | test_alpha_cohort | 56 | Alpha cohort analysis |
