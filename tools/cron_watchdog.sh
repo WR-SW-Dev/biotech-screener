@@ -12,6 +12,7 @@
 set -uo pipefail
 
 REPO="/mnt/c/Projects/biotech_screener/biotech-screener"
+PYTHON="/usr/bin/python3"
 LOG="$REPO/logs/watchdog.log"
 CRON_LOG="$REPO/logs/cron.log"
 
@@ -48,5 +49,42 @@ log "data_refresh done (exit $?)"
 log "Running daily_production..."
 bash "$REPO/tools/cron_daily_production.sh" >> "$CRON_LOG" 2>&1
 log "daily_production done (exit $?)"
+
+# Check if phase-2 agents ran yesterday evening (18:30-18:55 ET slots)
+YESTERDAY=$(TZ=America/Detroit date -d "yesterday" +%Y-%m-%d)
+AGENTS_LOG="$REPO/logs/agents.log"
+PHASE2_AGENTS="price_action_watch postmortem options_watch shadow_watch review_queue_steward event_analyst"
+
+missed_agents=""
+for agent in $PHASE2_AGENTS; do
+    if ! grep -q "$YESTERDAY.*$agent" "$AGENTS_LOG" 2>/dev/null; then
+        missed_agents="$missed_agents $agent"
+    fi
+done
+
+if [ -n "$missed_agents" ]; then
+    log "MISSED phase-2 agents from $YESTERDAY:$missed_agents — triggering recovery"
+    for agent in $missed_agents; do
+        log "Recovering agent: $agent"
+        $PYTHON "$REPO/tools/run_agent_direct.py" "$agent" >> "$AGENTS_LOG" 2>&1 || log "Agent $agent recovery failed (exit $?)"
+    done
+    log "Phase-2 agent recovery complete"
+else
+    log "All phase-2 agents ran on $YESTERDAY — no agent recovery needed"
+fi
+
+# Recover pre-market feeds missed due to WSL sleep (06:00-07:30 ET slots)
+BELLRINGER_LOG="$REPO/logs/bellringer.log"
+if ! grep -q "$TODAY" "$BELLRINGER_LOG" 2>/dev/null; then
+    log "MISSED bellringer for $TODAY — recovering"
+    bash "$REPO/tools/cron_bellringer.sh" all >> "$BELLRINGER_LOG" 2>&1 || log "Bellringer recovery failed (exit $?)"
+fi
+
+CONF_LOG="$REPO/logs/conference_refresh.log"
+if ! grep -q "$TODAY" "$CONF_LOG" 2>/dev/null; then
+    log "MISSED conference abstracts for $TODAY — recovering"
+    source "$REPO/.env" 2>/dev/null || true
+    $PYTHON "$REPO/tools/fetch_conference_abstracts_grok.py" --all >> "$CONF_LOG" 2>&1 || log "Conference refresh failed (exit $?)"
+fi
 
 log "Recovery complete for $TODAY"

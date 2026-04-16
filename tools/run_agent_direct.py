@@ -23,6 +23,18 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
 
+# Per-agent model overrides. Agents not listed default to Sonnet.
+# Haiku is used for routine/deterministic tasks (file checks, structured capture).
+AGENT_MODELS = {
+    "aact_trial_ingest": "claude-haiku-4-5-20251001",
+    "company_news_ingest": "claude-haiku-4-5-20251001",
+    "postmortem": "claude-haiku-4-5-20251001",
+    "ctgov_poller": "claude-haiku-4-5-20251001",
+    "price_action_watch": "claude-haiku-4-5-20251001",
+    "biotech_news_digest": "claude-haiku-4-5-20251001",
+    "shadow_monitor": "claude-haiku-4-5-20251001",
+}
+
 
 def load_agent_context(agent_name: str) -> str:
     """Load agent identity + soul + memory into a system prompt."""
@@ -54,6 +66,13 @@ def load_agent_context(agent_name: str) -> str:
         parts.append(f"## Heartbeat Protocol\n\n{heartbeat_path.read_text(encoding='utf-8')}")
 
     return "\n\n---\n\n".join(parts)
+
+
+def resolve_model(agent_name: str, cli_model: str | None = None) -> str:
+    """Resolve model for an agent: CLI override > AGENT_MODELS > default Sonnet."""
+    if cli_model and cli_model != "claude-sonnet-4-6":
+        return cli_model  # explicit CLI override takes precedence
+    return AGENT_MODELS.get(agent_name, "claude-sonnet-4-6")
 
 
 def run_agent(agent_name: str, message: str, model: str = "claude-sonnet-4-6", max_tokens: int = 4096) -> dict:
@@ -135,8 +154,9 @@ def main():
                 if key and val and key not in os.environ:
                     os.environ[key] = val
 
-    print(f"Running agent '{args.agent}' (direct SDK, {args.model})...")
-    result = run_agent(args.agent, args.message, args.model, args.max_tokens)
+    resolved_model = resolve_model(args.agent, args.model)
+    print(f"Running agent '{args.agent}' (direct SDK, {resolved_model})...")
+    result = run_agent(args.agent, args.message, resolved_model, args.max_tokens)
 
     if result.get("status") == "success":
         print(f"\n{result['response'][:2000]}")

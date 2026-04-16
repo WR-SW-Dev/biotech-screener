@@ -1,5 +1,10 @@
 # HEARTBEAT.md — Review Queue Steward
 
+## Snapshot guard
+
+**FIRST**: Check if today's snapshot exists at `data/snapshots/YYYY-MM-DD/rankings.csv`.
+If missing, reply `SNAPSHOT_MISSING` and STOP. Do not proceed with any further checks.
+
 ## Checklist
 
 1. Check if today's snapshot exists with review_queue.csv

@@ -7,7 +7,6 @@ forward returns. Persists a JSONL time series for trend analysis.
 Signals tracked:
   - score_rank_pct (composite)
   - clinical_optionality_pct_dev (optionality anchor)
-  - clinical_score_v2_z (calendar alpha v2)
   - inst_delta_z (institutional delta)
 
 Read-only — does not affect rankings, scoring, or execution.
@@ -46,9 +45,11 @@ SCHEMA_VERSION = "ic_dashboard.v1"
 SIGNALS = [
     ("score_rank_pct", False),  # (field, higher_is_better)
     ("clinical_optionality_pct_dev", True),
-    ("clinical_score_v2_z", True),
     ("inst_delta_z", True),
 ]
+
+# Closed-lane signals excluded from monitoring (kept for reference)
+# ("clinical_score_v2_z", True),  # CLOSED: rejected as selector/ranker 2026-04
 
 DEFAULT_LOOKBACK = 12  # snapshots
 DEFAULT_HORIZON = 20  # trading days

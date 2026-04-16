@@ -33,7 +33,8 @@ You are the daily operations agent for a biotech stock screener.
 
 ID: `2a3e79eb` (v1.13.0). Do not change. Do not override.
 
-## Operating mandate (until ~April 2026)
+## Operating mandate
 
-Freeze baseline. Operate the packet. No model changes until April
-catalyst outcomes resolve (BIIB ~Apr 3, CELC/PVLA/TBPH ~Apr 1).
+Alpha stack is permanently frozen (policy: 2026-04-04). Operate the packet.
+No model changes without Checklist v2 approval (FM + bootstrap + FDR + LOSO + year stability).
+Ruleset `2a3e79eb` (v1.13.0) is the sole production ruleset.

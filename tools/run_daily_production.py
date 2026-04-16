@@ -2987,7 +2987,8 @@ def check_hard_carry_state(
                 continue  # expired, ok
             if ticker in rankings:
                 src = rankings[ticker].get("catalyst_source", "")
-                if src in soft_sources:
+                is_hard = str(rankings[ticker].get("is_hard_catalyst", "0")).strip() == "1"
+                if src in soft_sources and not is_hard:
                     n_backslides += 1
 
     detail = f"state_entries={n_entries}, backslides={n_backslides}"

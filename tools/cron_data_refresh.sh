@@ -38,11 +38,11 @@ stage_ctgov() {
 }
 
 stage_herald() {
-    log "Herald press release fetch (timeout 600s)..."
+    log "Herald press release fetch (timeout 1500s)..."
     local rc=0
-    timeout 600 $PYTHON tools/fetch_company_press_releases.py --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
+    timeout 1500 $PYTHON tools/fetch_company_press_releases.py --as-of-date "$TODAY" 2>&1 | tail -5 || rc=$?
     if [ $rc -eq 124 ]; then
-        log "Herald fetch TIMED OUT after 600s — continuing with partial data"
+        log "Herald fetch TIMED OUT after 1500s — continuing with partial data"
     elif [ $rc -ne 0 ]; then
         log "Herald fetch failed (exit $rc) — continuing"
     else
