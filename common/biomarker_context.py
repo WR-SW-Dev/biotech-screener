@@ -292,6 +292,16 @@ def _score_biomarker_context(
 
     # Composite: phase_relevance * indication_mult * protocol_mult + bonuses
     raw = phase_rel * ind_mult * pq_mult + ep_bonus + comp_bonus
+
+    # Hard cap for weak-design cases: biomarker cannot fully compensate for
+    # poor trial structure. Prevents "oncology biomarker overrides weak design."
+    # Weak Phase 2 biomarker trials fail frequently — don't let them score max.
+    _WEAK_DESIGN_CAP = 0.18
+    if pq < 0.25:
+        raw = min(raw, _WEAK_DESIGN_CAP)
+        if raw == _WEAK_DESIGN_CAP:
+            signals.append("biomarker_weak_design_capped")
+
     # Clamp to [-0.05, 0.30] — allow slight negative for weak-design biomarker traps
     score = max(-0.05, min(0.30, raw))
 
