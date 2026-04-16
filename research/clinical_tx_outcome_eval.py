@@ -184,25 +184,50 @@ def _find_outcome(ticker: str, decision_date: str, resolutions: Dict) -> Optiona
     return None
 
 
+def _get_price_pit_safe(prices: Any, ticker: str, target_date: str) -> Optional[float]:
+    """Get price on or BEFORE target_date only (PIT-safe for entry prices)."""
+    dt = datetime.strptime(target_date, "%Y-%m-%d").date()
+    for offset in range(6):
+        d = (dt - timedelta(days=offset)).isoformat()
+        val = prices.get_price(ticker, d)
+        if val is not None:
+            return val
+    return None
+
+
+def _get_price_post_event(prices: Any, ticker: str, target_date: str) -> Optional[float]:
+    """Get price on or AFTER target_date (for exit / realized returns)."""
+    dt = datetime.strptime(target_date, "%Y-%m-%d").date()
+    for offset in range(6):
+        d = (dt + timedelta(days=offset)).isoformat()
+        val = prices.get_price(ticker, d)
+        if val is not None:
+            return val
+    return None
+
+
 def _find_returns(
     ticker: str, decision_date: str, days_to_event: Any, prices: Any
 ) -> Tuple[Optional[float], Optional[float]]:
-    """Find realized returns around the catalyst."""
+    """Find realized returns around the catalyst.
+
+    PIT discipline:
+      - Entry price: on or BEFORE decision_date (backward lookback only)
+      - Exit price: on or AFTER estimated event date (forward lookback OK)
+    """
     if prices is None or not hasattr(prices, "get_price"):
         return None, None
     try:
         dt = datetime.strptime(decision_date, "%Y-%m-%d").date()
-        # Get price at decision and after event
-        pre = prices.get_price(ticker, decision_date)
-        if pre is None:
+        pre = _get_price_pit_safe(prices, ticker, decision_date)
+        if pre is None or pre <= 0:
             return None, None
-        # Estimate event date
         dte = int(days_to_event) if days_to_event else 30
         event_dt = dt + timedelta(days=dte)
-        post_1d = prices.get_price(ticker, (event_dt + timedelta(days=1)).isoformat())
-        post_5d = prices.get_price(ticker, (event_dt + timedelta(days=5)).isoformat())
-        ret_1d = round((post_1d - pre) / pre, 6) if post_1d and pre else None
-        ret_5d = round((post_5d - pre) / pre, 6) if post_5d and pre else None
+        post_1d = _get_price_post_event(prices, ticker, (event_dt + timedelta(days=1)).isoformat())
+        post_5d = _get_price_post_event(prices, ticker, (event_dt + timedelta(days=5)).isoformat())
+        ret_1d = round((post_1d - pre) / pre, 6) if post_1d else None
+        ret_5d = round((post_5d - pre) / pre, 6) if post_5d else None
         return ret_1d, ret_5d
     except Exception:
         return None, None

@@ -23,7 +23,7 @@ import sys
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
@@ -149,6 +149,41 @@ def _run_ev_at_date(
     return rows
 
 
+def _get_price_pit_safe(prices: Any, ticker: str, target_date: str, max_lookback: int = 5) -> Optional[float]:
+    """Get closing price on or BEFORE target_date only (PIT-safe).
+
+    Looks backward up to max_lookback days for weekends/holidays.
+    NEVER looks forward — that would be a PIT violation for entry prices.
+    """
+    from datetime import timedelta as _td
+
+    dt = date.fromisoformat(target_date)
+    for offset in range(max_lookback + 1):
+        d = (dt - _td(days=offset)).isoformat()
+        val = prices.get_price(ticker, d)
+        if val is not None:
+            return val
+    return None
+
+
+def _get_price_post_event(prices: Any, ticker: str, target_date: str, max_forward: int = 5) -> Optional[float]:
+    """Get closing price on or AFTER target_date (for exit / realized returns).
+
+    This is NOT a PIT violation because it measures realized outcomes,
+    not decision inputs. Looks forward up to max_forward days for
+    weekends/holidays after the event date.
+    """
+    from datetime import timedelta as _td
+
+    dt = date.fromisoformat(target_date)
+    for offset in range(max_forward + 1):
+        d = (dt + _td(days=offset)).isoformat()
+        val = prices.get_price(ticker, d)
+        if val is not None:
+            return val
+    return None
+
+
 def _match_outcomes(
     predictions: Dict[str, List[Dict]],
     resolutions: Dict[str, List[Dict]],
@@ -176,13 +211,14 @@ def _match_outcomes(
                     res_date = rd
                     break
 
-            # Find return
+            # Find return: entry price PIT-safe (backward only),
+            # exit price post-event (forward OK for realized return)
             ret_1d = None
             if prices and res_date:
                 try:
-                    pre = prices.get_price(ticker, snap_date)
-                    post = prices.get_price(ticker, res_date)
-                    if pre and post:
+                    pre = _get_price_pit_safe(prices, ticker, snap_date)
+                    post = _get_price_post_event(prices, ticker, res_date)
+                    if pre and post and pre > 0:
                         ret_1d = round((post - pre) / pre, 6)
                 except Exception:
                     pass
