@@ -26,12 +26,11 @@ Version: 1.0.0
 
 import hashlib
 import json
-import re
-from decimal import Decimal, ROUND_HALF_UP, InvalidOperation
-from typing import Dict, List, Optional, Any, Union, Tuple
 from datetime import date
-from pathlib import Path
+from decimal import ROUND_HALF_UP, Decimal, InvalidOperation
 from enum import Enum
+from pathlib import Path
+from typing import Any, Dict, List, Optional, Tuple
 
 # Module metadata
 __version__ = "1.0.0"
@@ -40,10 +39,11 @@ __author__ = "Wake Robin Capital Management"
 
 class DataQualityState(Enum):
     """Data quality classification for PoS analysis."""
-    FULL = "FULL"          # All required + optional fields present
-    PARTIAL = "PARTIAL"    # Required fields + some optional
-    MINIMAL = "MINIMAL"    # Minimum viable data only
-    NONE = "NONE"          # Insufficient data to score
+
+    FULL = "FULL"  # All required + optional fields present
+    PARTIAL = "PARTIAL"  # Required fields + some optional
+    MINIMAL = "MINIMAL"  # Minimum viable data only
+    NONE = "NONE"  # Insufficient data to score
 
 
 class PoSPriorEngine:
@@ -82,10 +82,12 @@ class PoSPriorEngine:
 
     # Observable modifiers with empirical support
     MODIFIERS: Dict[str, Decimal] = {
-        "orphan_drug_designation": Decimal("1.15"),    # FDA orphan status
-        "breakthrough_designation": Decimal("1.25"),   # FDA breakthrough
-        "fast_track_designation": Decimal("1.10"),     # FDA fast track
-        "biomarker_enriched": Decimal("1.20"),         # Trial design field
+        "orphan_drug_designation": Decimal("1.15"),  # FDA orphan status
+        "breakthrough_designation": Decimal("1.25"),  # FDA breakthrough
+        "fast_track_designation": Decimal("1.10"),  # FDA fast track
+        "biomarker_enriched": Decimal(
+            "1.00"
+        ),  # Neutralized (2026-04-16): HINT Δ=-2.7%. Use biomarker_context_score instead.
     }
 
     # Cap total adjustment to prevent overconfidence
@@ -171,9 +173,13 @@ class PoSPriorEngine:
 
     # Required fields for scoring
     REQUIRED_FIELDS = ["stage"]
-    OPTIONAL_FIELDS = ["therapeutic_area", "orphan_drug_designation",
-                       "breakthrough_designation", "fast_track_designation",
-                       "biomarker_enriched"]
+    OPTIONAL_FIELDS = [
+        "therapeutic_area",
+        "orphan_drug_designation",
+        "breakthrough_designation",
+        "fast_track_designation",
+        "biomarker_enriched",
+    ]
 
     # Minimum sample size for full confidence
     MIN_SAMPLE_SIZE_FULL_CONFIDENCE = 200
@@ -250,10 +256,7 @@ class PoSPriorEngine:
     def _load_benchmarks(self) -> None:
         """Load PoS benchmarks from external versioned file."""
         try:
-            paths_to_try = [
-                Path(__file__).parent / self.benchmarks_path,
-                Path(self.benchmarks_path)
-            ]
+            paths_to_try = [Path(__file__).parent / self.benchmarks_path, Path(self.benchmarks_path)]
 
             for path in paths_to_try:
                 if path.exists():
@@ -276,10 +279,7 @@ class PoSPriorEngine:
 
     def _use_fallback_benchmarks(self) -> None:
         """Use hardcoded fallback benchmarks when file unavailable."""
-        self.benchmarks_metadata = {
-            "source": "FALLBACK_HARDCODED",
-            "warning": "External benchmarks file not loaded"
-        }
+        self.benchmarks_metadata = {"source": "FALLBACK_HARDCODED", "warning": "External benchmarks file not loaded"}
         # Conservative fallback values from spec
         self.benchmarks = {
             "phase_1": {
@@ -288,7 +288,7 @@ class PoSPriorEngine:
                 "immunology": "0.105",
                 "neurology": "0.080",
                 "infectious_disease": "0.110",
-                "all_indications": "0.090"
+                "all_indications": "0.090",
             },
             "phase_2": {
                 "oncology": "0.285",
@@ -296,7 +296,7 @@ class PoSPriorEngine:
                 "immunology": "0.310",
                 "neurology": "0.250",
                 "infectious_disease": "0.320",
-                "all_indications": "0.280"
+                "all_indications": "0.280",
             },
             "phase_3": {
                 "oncology": "0.480",
@@ -304,11 +304,9 @@ class PoSPriorEngine:
                 "immunology": "0.520",
                 "neurology": "0.420",
                 "infectious_disease": "0.550",
-                "all_indications": "0.450"
+                "all_indications": "0.450",
             },
-            "nda_bla": {
-                "all_indications": "0.903"
-            }
+            "nda_bla": {"all_indications": "0.903"},
         }
 
     def calculate_pos_prior(
@@ -448,46 +446,38 @@ class PoSPriorEngine:
 
         # Get sample size for confidence calculation
         sample_size = self.sample_sizes.get(
-            (stage_normalized, ta_normalized),
-            self.sample_sizes.get((stage_normalized, "all_indications"), 100)
+            (stage_normalized, ta_normalized), self.sample_sizes.get((stage_normalized, "all_indications"), 100)
         )
 
         # Confidence calculation
         # Factors: sample size, TA mapping quality, modifier observability
         sample_confidence = min(
-            Decimal("1.0"),
-            Decimal(str(sample_size)) / Decimal(str(self.MIN_SAMPLE_SIZE_FULL_CONFIDENCE))
+            Decimal("1.0"), Decimal(str(sample_size)) / Decimal(str(self.MIN_SAMPLE_SIZE_FULL_CONFIDENCE))
         )
         modifier_confidence = Decimal("1.0") if len(applicable_modifiers) <= 2 else Decimal("0.85")
 
         overall_confidence = (
-            Decimal("0.40") * sample_confidence +
-            Decimal("0.40") * ta_confidence +
-            Decimal("0.20") * modifier_confidence
+            Decimal("0.40") * sample_confidence
+            + Decimal("0.40") * ta_confidence
+            + Decimal("0.20") * modifier_confidence
         )
         overall_confidence = self._clamp(overall_confidence, self.CONFIDENCE_MIN, self.CONFIDENCE_MAX)
         overall_confidence = overall_confidence.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
         # Data quality state
-        data_quality_state = self._assess_data_quality(
-            therapeutic_area is not None,
-            len(applicable_modifiers) > 0
-        )
+        data_quality_state = self._assess_data_quality(therapeutic_area is not None, len(applicable_modifiers) > 0)
 
         # Deterministic hash
-        hash_input = (
-            f"{stage_normalized}|{ta_normalized}|{base_pos}|"
-            f"{'|'.join(sorted(applicable_modifiers))}"
-        )
+        hash_input = f"{stage_normalized}|{ta_normalized}|{base_pos}|" f"{'|'.join(sorted(applicable_modifiers))}"
         content_hash = hashlib.sha256(hash_input.encode()).hexdigest()[:16]
 
         # Audit entry
         audit_entry = {
             "timestamp": deterministic_timestamp,
             "as_of_date": as_of_date.isoformat(),
-            "inputs_hash": hashlib.sha256(
-                json.dumps(inputs_used, sort_keys=True, default=str).encode()
-            ).hexdigest()[:16],
+            "inputs_hash": hashlib.sha256(json.dumps(inputs_used, sort_keys=True, default=str).encode()).hexdigest()[
+                :16
+            ],
             "inputs_used": inputs_used,
             "missing_fields": missing_fields,
             "data_quality_state": data_quality_state.value,
@@ -550,9 +540,7 @@ class PoSPriorEngine:
         scores: List[Dict[str, Any]] = []
         indication_coverage = 0
         stage_distribution: Dict[str, int] = {}
-        quality_distribution: Dict[str, int] = {
-            "FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0
-        }
+        quality_distribution: Dict[str, int] = {"FULL": 0, "PARTIAL": 0, "MINIMAL": 0, "NONE": 0}
 
         for company in universe:
             ticker = company.get("ticker", "UNKNOWN")
@@ -567,22 +555,23 @@ class PoSPriorEngine:
                 as_of_date=as_of_date,
             )
 
-            scores.append({
-                "ticker": ticker,
-                "pos_prior": result["pos_prior"],
-                "base_pos": result.get("base_pos"),
-                "modifiers_applied": result.get("modifiers_applied", []),
-                "modifier_adjustment": result.get("modifier_adjustment"),
-                "confidence": result["confidence"],
-                "reason_code": result["reason_code"],
-                "data_quality_state": result.get("data_quality_state", "NONE"),
-                "metadata": result.get("metadata", {}),
-                "flags": [],
-            })
+            scores.append(
+                {
+                    "ticker": ticker,
+                    "pos_prior": result["pos_prior"],
+                    "base_pos": result.get("base_pos"),
+                    "modifiers_applied": result.get("modifiers_applied", []),
+                    "modifier_adjustment": result.get("modifier_adjustment"),
+                    "confidence": result["confidence"],
+                    "reason_code": result["reason_code"],
+                    "data_quality_state": result.get("data_quality_state", "NONE"),
+                    "metadata": result.get("metadata", {}),
+                    "flags": [],
+                }
+            )
 
             # Track metrics
-            if result.get("metadata", {}).get("ta_mapped") and \
-               result["metadata"]["ta_mapped"] != "all_indications":
+            if result.get("metadata", {}).get("ta_mapped") and result["metadata"]["ta_mapped"] != "all_indications":
                 indication_coverage += 1
 
             stage = result.get("metadata", {}).get("stage_mapped", "unknown")
@@ -594,9 +583,7 @@ class PoSPriorEngine:
 
         # Deterministic content hash
         scores_json = json.dumps(
-            [{"t": s["ticker"], "p": str(s["pos_prior"]), "c": str(s["confidence"])}
-             for s in scores],
-            sort_keys=True
+            [{"t": s["ticker"], "p": str(s["pos_prior"]), "c": str(s["confidence"])} for s in scores], sort_keys=True
         )
         content_hash = hashlib.sha256(scores_json.encode()).hexdigest()[:16]
 
@@ -704,32 +691,59 @@ class PoSPriorEngine:
 
         # Pattern matching for complex indications
         ta_patterns: Dict[str, List[str]] = {
-            "oncology": ["cancer", "tumor", "tumour", "leukemia", "lymphoma",
-                         "carcinoma", "melanoma", "sarcoma", "myeloma", "neoplasm"],
+            "oncology": [
+                "cancer",
+                "tumor",
+                "tumour",
+                "leukemia",
+                "lymphoma",
+                "carcinoma",
+                "melanoma",
+                "sarcoma",
+                "myeloma",
+                "neoplasm",
+            ],
             "rare_disease": ["rare", "orphan", "ultra-rare"],
-            "infectious_disease": ["infectious", "hiv", "hepatitis", "antibiotic",
-                                   "antiviral", "antimicrobial", "covid", "bacterial",
-                                   "viral", "fungal"],
-            "neurology": ["neuro", "alzheimer", "parkinson", "als", "epilepsy",
-                          "multiple sclerosis", "huntington", "neuropathy"],
-            "cardiovascular": ["cardio", "heart", "cardiac", "hypertension",
-                               "arrhythmia", "atherosclerosis"],
-            "immunology": ["immune", "autoimmune", "rheumatoid", "lupus",
-                           "psoriasis", "crohn", "colitis", "inflammation"],
-            "metabolic": ["metabolic", "diabetes", "obesity", "nafld", "nash",
-                          "lipid", "cholesterol"],
-            "respiratory": ["respiratory", "copd", "asthma", "pulmonary",
-                            "cystic fibrosis", "lung"],
-            "dermatology": ["dermatolog", "skin", "atopic dermatitis", "eczema",
-                            "acne", "vitiligo"],
-            "ophthalmology": ["ophthalm", "eye", "retina", "macular", "glaucoma",
-                              "uveitis", "vision"],
-            "gastroenterology": ["gastro", "gastrointestinal", "ibd", "irritable bowel",
-                                 "liver", "hepatic", "gi"],
-            "hematology": ["hematolog", "blood", "hemophilia", "sickle cell",
-                           "thalassemia", "anemia"],
-            "urology": ["urolog", "bladder", "kidney", "renal", "prostate",
-                        "urinary", "incontinence"],
+            "infectious_disease": [
+                "infectious",
+                "hiv",
+                "hepatitis",
+                "antibiotic",
+                "antiviral",
+                "antimicrobial",
+                "covid",
+                "bacterial",
+                "viral",
+                "fungal",
+            ],
+            "neurology": [
+                "neuro",
+                "alzheimer",
+                "parkinson",
+                "als",
+                "epilepsy",
+                "multiple sclerosis",
+                "huntington",
+                "neuropathy",
+            ],
+            "cardiovascular": ["cardio", "heart", "cardiac", "hypertension", "arrhythmia", "atherosclerosis"],
+            "immunology": [
+                "immune",
+                "autoimmune",
+                "rheumatoid",
+                "lupus",
+                "psoriasis",
+                "crohn",
+                "colitis",
+                "inflammation",
+            ],
+            "metabolic": ["metabolic", "diabetes", "obesity", "nafld", "nash", "lipid", "cholesterol"],
+            "respiratory": ["respiratory", "copd", "asthma", "pulmonary", "cystic fibrosis", "lung"],
+            "dermatology": ["dermatolog", "skin", "atopic dermatitis", "eczema", "acne", "vitiligo"],
+            "ophthalmology": ["ophthalm", "eye", "retina", "macular", "glaucoma", "uveitis", "vision"],
+            "gastroenterology": ["gastro", "gastrointestinal", "ibd", "irritable bowel", "liver", "hepatic", "gi"],
+            "hematology": ["hematolog", "blood", "hemophilia", "sickle cell", "thalassemia", "anemia"],
+            "urology": ["urolog", "bladder", "kidney", "renal", "prostate", "urinary", "incontinence"],
         }
 
         for category, patterns in ta_patterns.items():
@@ -801,9 +815,7 @@ class PoSPriorEngine:
         return {
             "metadata": self.benchmarks_metadata,
             "stages_available": list(self.benchmarks.keys()),
-            "therapeutic_areas_available": list(
-                self.benchmarks.get("phase_3", {}).keys()
-            ),
+            "therapeutic_areas_available": list(self.benchmarks.get("phase_3", {}).keys()),
             "modifiers_available": list(self.MODIFIERS.keys()),
             "max_modifier_adjustment": str(self.MAX_MODIFIER_ADJUSTMENT),
         }
@@ -944,7 +956,7 @@ def demonstration() -> None:
     print(f"  PoS Prior: {all_mods['pos_prior']}")
     print(f"  Base PoS: {all_mods['base_pos']}")
     print(f"  Modifier Adjustment: {all_mods['modifier_adjustment']}x (capped at 2.0)")
-    print(f"  Note: Uncapped would be 1.15 * 1.25 * 1.10 * 1.20 = 1.898")
+    print("  Note: Uncapped would be 1.15 * 1.25 * 1.10 * 1.20 = 1.898")
     print()
 
     # Demonstrate integration with stage score
