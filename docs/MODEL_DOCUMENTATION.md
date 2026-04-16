@@ -402,6 +402,31 @@ score > 0; null/zero = no effect. Appears in `features_used.log_odds_updates.lit
 into the validation ledger and computes a `by_literature` calibration split (Brier/hit-rate for
 events with vs without literature). Promotion to binding requires forward evidence from this split.
 
+### Phase 2 Prior Recalibration (2026-04-16)
+
+HINT benchmark revealed our Phase 2 readout prior was materially miscalibrated:
+
+| Metric | Old (0.310) | New (0.420) | HINT empirical |
+|--------|-------------|-------------|----------------|
+| Phase 2 prior | 0.310 | **0.420** | 0.492 |
+| HINT Brier | — | — | 0.250 |
+| Our Brier (matched) | 0.336 | ~0.26 (est.) | — |
+
+**Ablation results** (418 events, 66 Phase 2):
+- Actionable count: 30 → 30 (no change)
+- Top-10 overlap: 7/10 (stable)
+- Top-20 overlap: 16/20 (stable)
+- Phase 2 mean p_hit: +0.098 (correct direction)
+- Phase 2 mean EV: +9.4pp
+- Phase 1, Phase 3: completely unaffected
+
+**Decision:** Adopted 0.420 (conservative halfway between old 0.310 and HINT 0.492).
+Aggressive 0.492 tested but deferred — same top-10/20 overlap but larger rank swings
+in mid-table Phase 2 names. Old value preserved as `_PHASE_2_PRIOR_OLD = 0.310`.
+
+Implementation: `event_ev/outcome_model.py:LITERATURE_PHASE_READOUT_PRIORS["2"]`.
+Ablation: `research/phase2_recalibration_ablation.py`.
+
 **Leaderboard surfacing**: `literature_support_score`, `evidence_confidence`, `randomized_flag`,
 `blinded_flag`, `enrollment_n`, `endpoint_type`, `orphan_flag`, `breakthrough_flag`, `ctgov_study_id`
 appear in EV leaderboard JSON. Full evidence snapshot serialized in `{date}_event_ev_full.json`.

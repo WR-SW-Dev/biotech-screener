@@ -50,15 +50,28 @@ WONG_PHASE_PRIORS: Dict[str, float] = {
 # These represent the probability that a readout at a given phase is positive
 # (i.e., the drug advances), NOT the overall LoA from Phase X to approval.
 # Sources: Wong et al. 2019, BIO/QLS 2011-2020, Thomas et al. 2016
+#
+# Phase 2 recalibration (2026-04-16):
+#   Old value: 0.310 (Wong et al. 2019 Phase 2→3 transition)
+#   HINT benchmark (n=6,610): empirical 49.2%, Brier 0.250 vs our 0.336
+#   New value: 0.420 — conservative move toward benchmark (halfway between
+#   0.310 and 0.492). Full move to 0.49 tested but deferred pending
+#   downstream stability validation.
+#   See: research/HINT_INTEGRATION.md, artifacts/hint_benchmark_phase2.json
 LITERATURE_PHASE_READOUT_PRIORS: Dict[str, float] = {
     "1": 0.630,  # Phase 1→2 transition rate
     "1_2": 0.470,  # Midpoint of Phase 1→2 and Phase 2→3
-    "2": 0.310,  # Phase 2→3 transition rate
+    "2": 0.420,  # Phase 2→3 transition rate (recalibrated from 0.310, HINT benchmark)
     "2_3": 0.400,  # Phase 2/3→3 transition
     "3": 0.580,  # Phase 3 primary endpoint success (Wong et al.)
     "4": 0.650,  # Post-marketing (mostly confirmatory)
     "unknown": 0.350,  # Conservative unknown
 }
+
+# Pre-recalibration values preserved for A/B comparison
+_PHASE_2_PRIOR_OLD = 0.310  # Wong et al. 2019
+_PHASE_2_PRIOR_NEW = 0.420  # HINT-informed conservative recalibration
+_PHASE_2_PRIOR_AGGRESSIVE = 0.492  # Full HINT empirical rate
 
 # Mapping from CRT catalyst_type to clinical phase.
 # Used by build_crt_calibration to aggregate resolution data.
