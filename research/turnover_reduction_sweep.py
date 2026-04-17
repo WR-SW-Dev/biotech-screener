@@ -10,7 +10,6 @@ Usage:
 
 from __future__ import annotations
 
-import csv
 import math
 import os
 import sys
@@ -22,8 +21,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from common.price_store import PriceStore
+from research._snapshot_loader import SnapshotLoader
 
 EXCLUDE = {"JBIO"}
+_loader = SnapshotLoader()
 LIVE_START = "2024-10-01"
 COST_SCENARIOS = {"Low (25bps)": 0.0025, "Base (50bps)": 0.0050, "High (100bps)": 0.0100}
 K = 30  # top-K portfolio size
@@ -41,34 +42,12 @@ def _get_price(store: PriceStore, ticker: str, dt_str: str) -> Optional[float]:
 
 def _load_ranked(snap_date: str) -> List[str]:
     """Load full ranked list (not just top-30) for buffer simulation."""
-    for base in ["data/snapshots_pit_v2", "data/snapshots"]:
-        path = REPO_ROOT / base / snap_date / "rankings.csv"
-        if path.exists():
-            with open(path, newline="", encoding="utf-8-sig") as f:
-                rows = list(csv.DictReader(f))
-            ranked = [r for r in rows if r.get("actionable_rank") and r["actionable_rank"] not in ("", "NA", "None")]
-            ranked.sort(key=lambda r: int(float(r["actionable_rank"])))
-            return [r["ticker"] for r in ranked if r["ticker"] not in EXCLUDE]
-    return []
+    return _loader.load_ranked(snap_date)
 
 
 def _load_catalyst_days(snap_date: str) -> Dict[str, float]:
     """Load catalyst_days for hysteresis simulation."""
-    for base in ["data/snapshots_pit_v2", "data/snapshots"]:
-        path = REPO_ROOT / base / snap_date / "rankings.csv"
-        if path.exists():
-            result = {}
-            with open(path, newline="", encoding="utf-8-sig") as f:
-                for row in csv.DictReader(f):
-                    tk = row.get("ticker", "")
-                    cd = row.get("catalyst_days", "")
-                    if tk and cd and cd not in ("", "NA", "None"):
-                        try:
-                            result[tk] = float(cd)
-                        except (ValueError, TypeError):
-                            pass
-            return result
-    return {}
+    return _loader.load_catalyst_days(snap_date)
 
 
 def _select_with_buffer(

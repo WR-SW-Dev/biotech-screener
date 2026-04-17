@@ -15,7 +15,6 @@ Usage:
 
 from __future__ import annotations
 
-import csv
 import math
 import os
 import sys
@@ -27,8 +26,10 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
 from common.price_store import PriceStore
+from research._snapshot_loader import SnapshotLoader
 
 EXCLUDE = {"JBIO"}
+_loader = SnapshotLoader()
 LIVE_START = "2024-10-01"
 K = 30
 COST_BPS = 0.0050
@@ -46,15 +47,7 @@ def _get_price(store, ticker, dt_str):
 
 
 def _load_ranked(snap_date):
-    for base in ["data/snapshots_pit_v2", "data/snapshots"]:
-        path = REPO_ROOT / base / snap_date / "rankings.csv"
-        if path.exists():
-            with open(path, newline="", encoding="utf-8-sig") as f:
-                rows = list(csv.DictReader(f))
-            ranked = [r for r in rows if r.get("actionable_rank") and r["actionable_rank"] not in ("", "NA", "None")]
-            ranked.sort(key=lambda r: int(float(r["actionable_rank"])))
-            return [r["ticker"] for r in ranked if r["ticker"] not in EXCLUDE]
-    return []
+    return _loader.load_ranked(snap_date)
 
 
 def _select_with_buffer(ranked, prev_holdings, buffer=30):
