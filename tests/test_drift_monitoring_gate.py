@@ -9,7 +9,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "tools"))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
-from run_daily_production import DriftThresholds, _find_prior_snapshot, check_drift_monitoring
+from run_daily_production import (
+    DriftThresholds,
+    _compute_drift_metrics,
+    _find_prior_snapshot,
+    check_drift_monitoring,
+)
 
 # Thresholds with FAIL disabled — for tests that only check WARN behavior
 WARN_ONLY_THRESHOLDS = DriftThresholds(
@@ -385,7 +390,7 @@ class TestCheckDriftMonitoring:
         with open(staging / "drift_report.json") as f:
             report = json.load(f)
 
-        assert report["version"] in ("1.0.0", "1.1.0")
+        assert report["version"] in ("1.0.0", "1.1.0", "1.2.0")
         assert "thresholds_id" in report
         assert "metrics" in report
         assert "status" in report
@@ -535,3 +540,280 @@ class TestInstitutionalMetrics:
         g1 = DriftGuardrails()
         g2 = DriftGuardrails(warn_inst_delta_nonzero_low=99.0)
         assert g1.guardrails_id != g2.guardrails_id
+
+
+# ---------------------------------------------------------------------------
+# Stability plumbing diagnostics (v1.2.0)
+# ---------------------------------------------------------------------------
+
+
+STABILITY_HEADER = [
+    "ticker",
+    "actionable_rank",
+    "tier_dev",
+    "eligible",
+    "composite_rank",
+    "composite_score",
+    "selector_score",
+    "final_score",
+    "coinvest_score_z",
+    "inst_delta_z",
+]
+
+
+def _write_stability_rankings(path: Path, rows: list[dict]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=STABILITY_HEADER)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def _make_stability_tickers(n: int, start: int = 1, *, spread: float = 0.01) -> list[dict]:
+    """Rankings with non-trivial selector_score/final_score and two feature cols."""
+    rows = []
+    for i in range(start, start + n):
+        idx = i - start  # 0..n-1
+        sel = round(1.0 - idx * spread, 6)
+        fin = round(0.9 - idx * spread, 6)
+        rows.append(
+            {
+                "ticker": f"TICK{i}",
+                "actionable_rank": str(idx + 1),
+                "tier_dev": "A" if idx < 10 else ("B" if idx < 30 else "C"),
+                "eligible": "True",
+                "composite_rank": str(idx + 1),
+                "composite_score": str(sel),
+                "selector_score": str(sel),
+                "final_score": str(fin),
+                "coinvest_score_z": str(round(0.5 - 0.01 * idx, 4)),
+                "inst_delta_z": str(round(0.3 + 0.005 * idx, 4)),
+            }
+        )
+    return rows
+
+
+class TestActionTransitionMatrix:
+    def test_identical_has_zero_off_diagonal(self, tmp_path):
+        rows = _make_stability_tickers(40)
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, rows)
+        _write_stability_rankings(pri, rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        assert m["action_change_count"] == 0
+        assert m["action_change_pct"] == 0.0
+        # Diagonal sums to n_common
+        matrix = m["action_transition_matrix"]
+        off_diag = sum(
+            cnt
+            for ft, row in matrix.items()
+            for tt, cnt in row.items()
+            if ft != tt
+        )
+        assert off_diag == 0
+
+    def test_counts_tier_transitions(self, tmp_path):
+        prior_rows = _make_stability_tickers(40)
+        cur_rows = [dict(r) for r in prior_rows]
+        # Flip 5 A's to B, 3 B's to C
+        flipped = 0
+        for r in cur_rows:
+            if r["tier_dev"] == "A" and flipped < 5:
+                r["tier_dev"] = "B"
+                flipped += 1
+        flipped_b = 0
+        for r in cur_rows:
+            if r["tier_dev"] == "B" and flipped_b < 3:
+                # Careful: don't re-flip freshly moved A→B; check via rank
+                # The first 5 A-flips occupied first 5 positions; move 3 from position 20..22
+                pass
+        # Simpler: explicitly transition last 3 B's to C
+        b_indices = [i for i, r in enumerate(cur_rows) if r["tier_dev"] == "B"]
+        for i in b_indices[-3:]:
+            cur_rows[i]["tier_dev"] = "C"
+
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, cur_rows)
+        _write_stability_rankings(pri, prior_rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        matrix = m["action_transition_matrix"]
+        assert matrix.get("A", {}).get("B", 0) == 5
+        assert matrix.get("B", {}).get("C", 0) == 3
+        assert m["action_change_count"] == 8
+        assert m["action_change_pct"] == 20.0  # 8/40
+
+
+class TestScoreDeltaStats:
+    def test_identical_scores_zero_delta(self, tmp_path):
+        rows = _make_stability_tickers(30)
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, rows)
+        _write_stability_rankings(pri, rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        stats = m["score_delta_stats"]
+        assert "selector_score" in stats
+        assert stats["selector_score"]["mean_abs_delta"] == 0.0
+        assert stats["selector_score"]["p95_abs_delta"] == 0.0
+
+    def test_shifted_scores_measured(self, tmp_path):
+        prior_rows = _make_stability_tickers(30)
+        cur_rows = [dict(r) for r in prior_rows]
+        for r in cur_rows:
+            r["selector_score"] = str(float(r["selector_score"]) + 0.05)
+            r["final_score"] = str(float(r["final_score"]) + 0.05)
+
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, cur_rows)
+        _write_stability_rankings(pri, prior_rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        sel = m["score_delta_stats"]["selector_score"]
+        assert abs(sel["mean_abs_delta"] - 0.05) < 1e-6
+        assert abs(sel["p95_abs_delta"] - 0.05) < 1e-6
+
+    def test_warn_fires_on_large_selector_delta(self, tmp_path):
+        prior_rows = _make_stability_tickers(30)
+        cur_rows = [dict(r) for r in prior_rows]
+        for r in cur_rows:
+            r["selector_score"] = str(float(r["selector_score"]) + 0.20)
+
+        snapshot_dir = tmp_path / "snapshots"
+        _write_stability_rankings(snapshot_dir / "2026-02-18" / "rankings.csv", prior_rows)
+        staging = tmp_path / "staging" / "2026-02-19"
+        _write_stability_rankings(staging / "rankings.csv", cur_rows)
+
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
+        assert gate.status == "WARN"
+        assert "warn_mean_abs_selector_score_delta" in gate.detail
+
+
+class TestFeatureCoverageDelta:
+    def test_coverage_drop_detected(self, tmp_path):
+        prior_rows = _make_stability_tickers(30)
+        # Blank coinvest_score_z for 15 of 30 in current (50pp drop: 100% → 50%)
+        cur_rows = [dict(r) for r in prior_rows]
+        for i, r in enumerate(cur_rows):
+            if i < 15:
+                r["coinvest_score_z"] = ""
+
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, cur_rows)
+        _write_stability_rankings(pri, prior_rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        delta = m["coverage_delta"]
+        assert delta["coinvest_score_z"] == -50.0
+        assert m["max_coverage_drop_feature"] == "coinvest_score_z"
+        assert m["max_coverage_drop_pp"] == 50.0
+        assert any(d["feature"] == "coinvest_score_z" for d in m["coverage_drops_top5"])
+
+    def test_no_drop_when_identical(self, tmp_path):
+        rows = _make_stability_tickers(30)
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, rows)
+        _write_stability_rankings(pri, rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        assert m["max_coverage_drop_pp"] == 0.0
+        assert m["max_coverage_drop_feature"] is None
+        assert m["coverage_drops_top5"] == []
+
+    def test_warn_fires_on_coverage_drop(self, tmp_path):
+        prior_rows = _make_stability_tickers(40)
+        cur_rows = [dict(r) for r in prior_rows]
+        for i, r in enumerate(cur_rows):
+            if i < 8:  # 20pp drop on inst_delta_z (8/40=20%)
+                r["inst_delta_z"] = ""
+
+        snapshot_dir = tmp_path / "snapshots"
+        _write_stability_rankings(snapshot_dir / "2026-02-18" / "rankings.csv", prior_rows)
+        staging = tmp_path / "staging" / "2026-02-19"
+        _write_stability_rankings(staging / "rankings.csv", cur_rows)
+
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
+        assert gate.status == "WARN"
+        assert "warn_feature_coverage_drop_pct" in gate.detail
+
+
+class TestNearMissFragility:
+    def test_near_miss_counts_spread_scores(self, tmp_path):
+        # Wide spread → tight tolerances catch few names
+        rows = _make_stability_tickers(40, spread=0.01)
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, rows)
+        _write_stability_rankings(pri, rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        nm = m["near_miss"]
+        assert "selector_score" in nm
+        assert "K30" in nm["selector_score"]
+        k30 = nm["selector_score"]["K30"]
+        assert "cutoff_score" in k30
+        eps = k30["eps_counts"]
+        # With spread=0.01, the rank-30 score differs from rank-29 by 0.01, so
+        # within 10bps (0.001) catches only itself (1).
+        assert eps["within_10bps"] == 1
+
+    def test_near_miss_counts_clumped_scores(self, tmp_path):
+        # Clumped scores → many near-misses at cutoff
+        rows = _make_stability_tickers(40, spread=0.0001)
+        cur = tmp_path / "cur.csv"
+        pri = tmp_path / "pri.csv"
+        _write_stability_rankings(cur, rows)
+        _write_stability_rankings(pri, rows)
+
+        m = _compute_drift_metrics(cur, pri)
+        k30 = m["near_miss"]["selector_score"]["K30"]
+        eps = k30["eps_counts"]
+        # Scores span 0.0001 * 39 = 0.0039 — within 50bps of cutoff catches many
+        assert eps["within_50bps"] >= 20
+        # Near-miss share within 25bps of K30 cutoff is non-trivial
+        assert m["near_miss_share_pct"] > 0.0
+
+    def test_warn_fires_on_high_near_miss_share(self, tmp_path):
+        # Extremely tight spread → ~100% of top-30 within 25bps of cutoff
+        rows = _make_stability_tickers(40, spread=1e-6)
+        snapshot_dir = tmp_path / "snapshots"
+        _write_stability_rankings(snapshot_dir / "2026-02-18" / "rankings.csv", rows)
+        staging = tmp_path / "staging" / "2026-02-19"
+        _write_stability_rankings(staging / "rankings.csv", rows)
+
+        gate = check_drift_monitoring(staging, snapshot_dir, "2026-02-19", WARN_ONLY_THRESHOLDS)
+        assert gate.status == "WARN"
+        assert "warn_near_miss_share_pct" in gate.detail
+
+
+class TestStabilitySchemaV12:
+    def test_report_has_v12_keys(self, tmp_path):
+        rows = _make_stability_tickers(30)
+        snapshot_dir = tmp_path / "snapshots"
+        _write_stability_rankings(snapshot_dir / "2026-02-18" / "rankings.csv", rows)
+        staging = tmp_path / "staging" / "2026-02-19"
+        _write_stability_rankings(staging / "rankings.csv", rows)
+
+        check_drift_monitoring(staging, snapshot_dir, "2026-02-19", DriftThresholds())
+        with open(staging / "drift_report.json") as f:
+            report = json.load(f)
+
+        assert report["version"] == "1.2.0"
+        metrics = report["metrics"]
+        for key in (
+            "action_transition_matrix",
+            "action_change_pct",
+            "score_delta_stats",
+            "coverage_delta",
+            "max_coverage_drop_pp",
+            "near_miss",
+            "near_miss_share_pct",
+        ):
+            assert key in metrics

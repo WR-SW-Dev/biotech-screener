@@ -279,6 +279,12 @@ class DriftThresholds:
     warn_tier_migration_count: int = 10
     warn_eligibility_change_count: int = 10
 
+    # Stability plumbing diagnostics (observational — seed thresholds, tune after 30d)
+    warn_action_change_pct: float = 25.0  # >25% of common tickers changed tier_dev
+    warn_mean_abs_selector_score_delta: float = 0.08  # mean |selector_score_cur - prior|
+    warn_feature_coverage_drop_pct: float = 10.0  # any feature coverage drop ≥10pp
+    warn_near_miss_share_pct: float = 30.0  # >30% of top-30 within eps of K=30 cutoff
+
     # FAIL thresholds (blocking — extreme drift likely signals a bug)
     fail_top20_overlap_pct: float = 30.0  # <30% overlap = catastrophic churn
     fail_top60_overlap_pct: float = 50.0  # <50% overlap = data feed issue
@@ -286,6 +292,12 @@ class DriftThresholds:
     fail_mean_abs_rank_delta_top60: float = 25.0  # >25 avg rank change = broken
     fail_tier_migration_count: int = 40  # >40 tier changes = data corruption
     fail_eligibility_change_count: int = 40  # >40 eligibility flips = broken
+
+    # New-diagnostic FAIL thresholds — disabled (sentinel) until 30d observation
+    fail_action_change_pct: float = -1.0
+    fail_mean_abs_selector_score_delta: float = -1.0
+    fail_feature_coverage_drop_pct: float = -1.0
+    fail_near_miss_share_pct: float = -1.0
 
     @property
     def thresholds_id(self) -> str:
@@ -1023,6 +1035,18 @@ def _compute_drift_metrics(
         except (ValueError, TypeError):
             return None
 
+    def _get_numeric(rows: Dict, ticker: str, col: str) -> Optional[float]:
+        val = rows.get(ticker, {}).get(col, "")
+        if val is None:
+            return None
+        sval = str(val).strip()
+        if sval in ("", "nan", "NaN", "None"):
+            return None
+        try:
+            return float(sval)
+        except (ValueError, TypeError):
+            return None
+
     common = set(cur.keys()) & set(pri.keys())
 
     # Top-N overlap (Jaccard)
@@ -1107,6 +1131,148 @@ def _compute_drift_metrics(
     top20_entrants = sorted(cur_top20 - pri_top20)
     top20_exits = sorted(pri_top20 - cur_top20)
 
+    # --- Stability plumbing diagnostics (action, score, coverage, near-miss) ---
+
+    # 1) Action transition matrix (prior tier_dev -> current tier_dev)
+    transition_matrix: Dict[str, Dict[str, int]] = {}
+    for t in common:
+        pri_tier = (pri[t].get("tier_dev") or "").strip() or "_NA"
+        cur_tier = (cur[t].get("tier_dev") or "").strip() or "_NA"
+        transition_matrix.setdefault(pri_tier, {}).setdefault(cur_tier, 0)
+        transition_matrix[pri_tier][cur_tier] += 1
+    action_change_count = sum(
+        cnt
+        for from_tier, row in transition_matrix.items()
+        for to_tier, cnt in row.items()
+        if from_tier != to_tier
+    )
+    action_change_pct = (
+        round(100.0 * action_change_count / len(common), 2) if common else 0.0
+    )
+
+    # 2) Mean absolute score delta across common tickers
+    def _score_stats(col: str) -> Optional[Dict[str, float]]:
+        deltas: List[float] = []
+        for t in common:
+            c = _get_numeric(cur, t, col)
+            p = _get_numeric(pri, t, col)
+            if c is not None and p is not None:
+                deltas.append(abs(c - p))
+        if not deltas:
+            return None
+        deltas_sorted = sorted(deltas)
+        n = len(deltas_sorted)
+        p95_idx = min(n - 1, int(round(0.95 * (n - 1))))
+        return {
+            "n": n,
+            "mean_abs_delta": round(sum(deltas) / n, 6),
+            "p95_abs_delta": round(deltas_sorted[p95_idx], 6),
+            "max_abs_delta": round(deltas_sorted[-1], 6),
+        }
+
+    score_delta_stats: Dict[str, Dict[str, float]] = {}
+    for col in ("selector_score", "final_score", "composite_score"):
+        stats = _score_stats(col)
+        if stats is not None:
+            score_delta_stats[col] = stats
+
+    # 3) Feature coverage change (% populated per field, cur vs prior)
+    # Flags plumbing regressions: if coverage for an input drops, downstream
+    # scores move for plumbing reasons rather than market reasons.
+    ID_COLS = {
+        "ticker",
+        "company_name",
+        "actionable_rank",
+        "composite_rank",
+        "decision_engine_version",
+        "decision_engine_ruleset_id",
+    }
+
+    def _coverage_pct(rows: Dict[str, Dict[str, str]], col: str) -> float:
+        if not rows:
+            return 0.0
+        populated = sum(
+            1 for r in rows.values() if (r.get(col) or "").strip() not in ("", "nan", "NaN", "None")
+        )
+        return round(100.0 * populated / len(rows), 2)
+
+    all_cols = set()
+    for r in cur.values():
+        all_cols.update(r.keys())
+    for r in pri.values():
+        all_cols.update(r.keys())
+    tracked_cols = sorted(c for c in all_cols if c not in ID_COLS)
+
+    coverage_cur: Dict[str, float] = {}
+    coverage_pri: Dict[str, float] = {}
+    coverage_delta: Dict[str, float] = {}
+    for col in tracked_cols:
+        cc = _coverage_pct(cur, col)
+        cp = _coverage_pct(pri, col)
+        coverage_cur[col] = cc
+        coverage_pri[col] = cp
+        coverage_delta[col] = round(cc - cp, 2)
+
+    # Report biggest drops (negative deltas) — these are plumbing red flags
+    drops_sorted = sorted(coverage_delta.items(), key=lambda kv: kv[1])
+    coverage_drops_top5 = [
+        {"feature": f, "cur_pct": coverage_cur[f], "prior_pct": coverage_pri[f], "delta_pp": d}
+        for f, d in drops_sorted[:5]
+        if d < 0
+    ]
+    max_coverage_drop_pp = abs(drops_sorted[0][1]) if drops_sorted and drops_sorted[0][1] < 0 else 0.0
+    max_coverage_drop_feature = drops_sorted[0][0] if drops_sorted and drops_sorted[0][1] < 0 else None
+
+    # 4) Near-miss threshold fragility at K=20 and K=30 cutoffs
+    # For each score column, find the score at rank K; count names within
+    # absolute score epsilon of that cutoff. A high near-miss count means
+    # the day's ranking is fragile — a small input perturbation could
+    # flip a number of names across the action boundary.
+    near_miss: Dict[str, Any] = {}
+    NEAR_MISS_EPSILONS = [0.001, 0.0025, 0.005, 0.01]
+    for score_col, rank_col in (("selector_score", cur_rank_col), ("final_score", cur_rank_col)):
+        # Check column presence
+        sample = next(iter(cur.values()), None)
+        if sample is None or score_col not in sample:
+            continue
+        scored = []
+        for t in cur:
+            r = _get_rank(cur, t, rank_col)
+            s = _get_numeric(cur, t, score_col)
+            if r is not None and s is not None:
+                scored.append((r, s))
+        if not scored:
+            continue
+        scored.sort(key=lambda x: x[0])
+        col_stats: Dict[str, Any] = {}
+        for k in (20, 30):
+            if len(scored) < k:
+                continue
+            cutoff_score = scored[k - 1][1]
+            eps_counts = {
+                f"within_{int(eps * 10000)}bps": sum(
+                    1 for _, s in scored if abs(s - cutoff_score) <= eps
+                )
+                for eps in NEAR_MISS_EPSILONS
+            }
+            # Share of top-K that is within the tightest eps (plumbing fragility)
+            tight_eps = NEAR_MISS_EPSILONS[1]  # 25bps absolute
+            near_in_topk = sum(
+                1 for r, s in scored[:k] if abs(s - cutoff_score) <= tight_eps
+            )
+            col_stats[f"K{k}"] = {
+                "cutoff_score": round(cutoff_score, 6),
+                "eps_counts": eps_counts,
+                "share_topk_within_25bps_pct": round(100.0 * near_in_topk / k, 2),
+            }
+        if col_stats:
+            near_miss[score_col] = col_stats
+
+    # Headline near-miss share for threshold evaluation: selector_score K=30
+    near_miss_share_pct = 0.0
+    if "selector_score" in near_miss and "K30" in near_miss["selector_score"]:
+        near_miss_share_pct = near_miss["selector_score"]["K30"]["share_topk_within_25bps_pct"]
+
     return {
         "top20_overlap_pct": top20_overlap,
         "top60_overlap_pct": top60_overlap,
@@ -1119,6 +1285,17 @@ def _compute_drift_metrics(
         "rank_column_current": cur_rank_col,
         "rank_column_prior": pri_rank_col,
         "n_common_tickers": len(common),
+        # Stability plumbing diagnostics
+        "action_transition_matrix": transition_matrix,
+        "action_change_count": action_change_count,
+        "action_change_pct": action_change_pct,
+        "score_delta_stats": score_delta_stats,
+        "coverage_delta": coverage_delta,
+        "coverage_drops_top5": coverage_drops_top5,
+        "max_coverage_drop_pp": round(max_coverage_drop_pp, 2),
+        "max_coverage_drop_feature": max_coverage_drop_feature,
+        "near_miss": near_miss,
+        "near_miss_share_pct": near_miss_share_pct,
     }
 
 
@@ -1156,6 +1333,16 @@ def _write_drift_report_md(
     _row("Mean |rank delta| top-60", m.get("mean_abs_rank_delta_top60"), "warn_mean_abs_rank_delta_top60")
     _row("Tier migrations", m.get("tier_migration_count"), "warn_tier_migration_count")
     _row("Eligibility changes", m.get("eligibility_change_count"), "warn_eligibility_change_count")
+    _row("Action change %", m.get("action_change_pct"), "warn_action_change_pct")
+    sel_stats = (m.get("score_delta_stats") or {}).get("selector_score") or {}
+    if sel_stats.get("mean_abs_delta") is not None:
+        _row(
+            "Mean |selector_score delta|",
+            sel_stats.get("mean_abs_delta"),
+            "warn_mean_abs_selector_score_delta",
+        )
+    _row("Max feature coverage drop (pp)", m.get("max_coverage_drop_pp"), "warn_feature_coverage_drop_pct")
+    _row("Near-miss share @K=30 (25bps)", m.get("near_miss_share_pct"), "warn_near_miss_share_pct")
 
     lines.append("")
 
@@ -1163,6 +1350,48 @@ def _write_drift_report_md(
         lines.append(f"**Top-20 entrants**: {', '.join(m['top20_entrants'])}")
     if m.get("top20_exits"):
         lines.append(f"**Top-20 exits**: {', '.join(m['top20_exits'])}")
+
+    # Action transition matrix
+    transitions = m.get("action_transition_matrix") or {}
+    if transitions:
+        all_tiers = sorted({t for t in transitions} | {t for row in transitions.values() for t in row})
+        if all_tiers:
+            lines.append("")
+            lines.append("## Action Transitions (prior_tier → current_tier)")
+            lines.append("")
+            lines.append("| prior \\ current | " + " | ".join(all_tiers) + " |")
+            lines.append("|" + "---|" * (len(all_tiers) + 1))
+            for ft in all_tiers:
+                row_counts = transitions.get(ft, {})
+                row_cells = [str(row_counts.get(tt, 0)) for tt in all_tiers]
+                lines.append(f"| {ft} | " + " | ".join(row_cells) + " |")
+
+    # Feature coverage drops
+    drops = m.get("coverage_drops_top5") or []
+    if drops:
+        lines.append("")
+        lines.append("## Top Feature Coverage Drops (prior → current)")
+        lines.append("")
+        lines.append("| feature | prior % | current % | delta pp |")
+        lines.append("|---|---|---|---|")
+        for d in drops:
+            lines.append(
+                f"| {d['feature']} | {d['prior_pct']} | {d['cur_pct']} | {d['delta_pp']} |"
+            )
+
+    # Near-miss fragility
+    nm = m.get("near_miss") or {}
+    if nm:
+        lines.append("")
+        lines.append("## Near-Miss Threshold Fragility")
+        lines.append("")
+        for score_col, stats in nm.items():
+            for K_label, ks in stats.items():
+                eps_parts = ", ".join(f"{k}={v}" for k, v in (ks.get("eps_counts") or {}).items())
+                lines.append(
+                    f"- {score_col} @ {K_label}: cutoff={ks.get('cutoff_score')}, "
+                    f"within-eps counts: {eps_parts}, share_topk_25bps={ks.get('share_topk_within_25bps_pct')}%"
+                )
 
     if report.get("warn_reasons"):
         lines.append("")
@@ -1262,6 +1491,30 @@ def check_drift_monitoring(
             f"warn_eligibility_change_count: {metrics['eligibility_change_count']} > {thresholds.warn_eligibility_change_count}"
         )
 
+    # Stability plumbing diagnostics — WARN-only (FAIL disabled via -1 sentinel)
+    if metrics.get("action_change_pct", 0.0) > thresholds.warn_action_change_pct:
+        warn_reasons.append(
+            f"warn_action_change_pct: {metrics['action_change_pct']:.1f}% > {thresholds.warn_action_change_pct}%"
+        )
+    sel_score_stats = (metrics.get("score_delta_stats") or {}).get("selector_score") or {}
+    sel_mean_delta = sel_score_stats.get("mean_abs_delta")
+    if (
+        sel_mean_delta is not None
+        and sel_mean_delta > thresholds.warn_mean_abs_selector_score_delta
+    ):
+        warn_reasons.append(
+            f"warn_mean_abs_selector_score_delta: {sel_mean_delta:.4f} > {thresholds.warn_mean_abs_selector_score_delta}"
+        )
+    if metrics.get("max_coverage_drop_pp", 0.0) > thresholds.warn_feature_coverage_drop_pct:
+        feat = metrics.get("max_coverage_drop_feature", "?")
+        warn_reasons.append(
+            f"warn_feature_coverage_drop_pct: {feat} dropped {metrics['max_coverage_drop_pp']:.1f}pp > {thresholds.warn_feature_coverage_drop_pct}pp"
+        )
+    if metrics.get("near_miss_share_pct", 0.0) > thresholds.warn_near_miss_share_pct:
+        warn_reasons.append(
+            f"warn_near_miss_share_pct: {metrics['near_miss_share_pct']:.1f}% of top-30 within 25bps of K=30 cutoff > {thresholds.warn_near_miss_share_pct}%"
+        )
+
     if fail_reasons:
         status = "FAIL"
     elif warn_reasons:
@@ -1271,7 +1524,7 @@ def check_drift_monitoring(
 
     # Build and write drift report JSON
     report = {
-        "version": "1.1.0",
+        "version": "1.2.0",
         "thresholds_id": thresholds.thresholds_id,
         "thresholds": asdict(thresholds),
         "current_date": as_of_date,

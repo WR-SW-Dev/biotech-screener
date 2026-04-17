@@ -620,6 +620,7 @@ def build_ops_digest(
     # Decision diff — top rank movers from drift report
     decision_diff: Dict[str, Any] = {"available": False}
     drift = _load_json(snap_dir / "drift_report.json")
+    stability_diagnostics: Dict[str, Any] = {"available": False}
     if drift:
         dm = drift.get("metrics") or {}
         decision_diff = {
@@ -633,6 +634,27 @@ def build_ops_digest(
             "tier_migrations": dm.get("tier_migration_count"),
             "eligibility_changes": dm.get("eligibility_change_count"),
             "mean_rank_delta_top60": dm.get("mean_abs_rank_delta_top60"),
+        }
+        # Stability plumbing diagnostics (drift_report v1.2.0+) — separate the
+        # "did market shift?" signal from the "did our plumbing break?" signal.
+        sel_stats = (dm.get("score_delta_stats") or {}).get("selector_score") or {}
+        stability_diagnostics = {
+            "available": "action_change_pct" in dm,
+            "action_change_pct": dm.get("action_change_pct"),
+            "action_transition_matrix": dm.get("action_transition_matrix"),
+            "mean_abs_selector_score_delta": sel_stats.get("mean_abs_delta"),
+            "p95_abs_selector_score_delta": sel_stats.get("p95_abs_delta"),
+            "max_coverage_drop_feature": dm.get("max_coverage_drop_feature"),
+            "max_coverage_drop_pp": dm.get("max_coverage_drop_pp"),
+            "coverage_drops_top5": dm.get("coverage_drops_top5") or [],
+            "near_miss_share_pct": dm.get("near_miss_share_pct"),
+            "near_miss": dm.get("near_miss") or {},
+            # Plumbing-vs-regime heuristic: low overlap + coverage drop = plumbing
+            "plumbing_suspect": bool(
+                dm.get("top20_overlap_pct") is not None
+                and dm.get("top20_overlap_pct") < 70.0
+                and (dm.get("max_coverage_drop_pp") or 0.0) >= 10.0
+            ),
         }
 
     # Asymmetry outliers — implied_vs_realized flags for discretionary review
@@ -655,6 +677,7 @@ def build_ops_digest(
         "coverage": coverage,
         "delta": delta,
         "decision_diff": decision_diff,
+        "stability_diagnostics": stability_diagnostics,
         "performance": performance,
         "readiness": readiness,
         "nearest_catalysts": catalysts,
@@ -773,6 +796,33 @@ def format_digest_md(d: Dict[str, Any]) -> str:
                     )
                 else:
                     lines.append(f"  {m}")
+            lines.append("")
+
+    # Stability plumbing diagnostics — answers "plumbing or regime?"
+    sd = d.get("stability_diagnostics", {})
+    if sd.get("available"):
+        lines.append("## Stability Plumbing")
+        lines.append("")
+        if sd.get("plumbing_suspect"):
+            lines.append(
+                "PLUMBING SUSPECT: top-20 overlap collapsed AND feature coverage dropped. "
+                "Investigate inputs before attributing to market regime."
+            )
+            lines.append("")
+        lines.append(f"Action change: {sd.get('action_change_pct', '?')}% of common tickers changed tier  ")
+        lines.append(f"Mean |selector_score delta|: {sd.get('mean_abs_selector_score_delta', '?')}  ")
+        lines.append(f"P95 |selector_score delta|: {sd.get('p95_abs_selector_score_delta', '?')}  ")
+        lines.append(
+            f"Near-miss @ K=30 (25bps): {sd.get('near_miss_share_pct', '?')}% of top-30 within 25bps of cutoff"
+        )
+        lines.append("")
+        drops = sd.get("coverage_drops_top5") or []
+        if drops:
+            lines.append("Top feature coverage drops (prior → current):")
+            for drop in drops:
+                lines.append(
+                    f"  {drop.get('feature', '?')}: {drop.get('prior_pct', '?')}% → {drop.get('cur_pct', '?')}% ({drop.get('delta_pp', '?'):+}pp)"
+                )
             lines.append("")
 
     # Performance

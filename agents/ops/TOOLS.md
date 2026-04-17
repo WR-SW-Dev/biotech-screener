@@ -49,6 +49,17 @@ If the digest flags something, drill into only these inputs:
 5. `data/snapshots/YYYY-MM-DD/phase2_run_delta_details.json`
    - What changed vs prior run: entrants, exits, turnover, tier drift
 
+5a. `data/snapshots/YYYY-MM-DD/drift_report.md` (schema v1.2.0+)
+   - Day-over-day stability diagnostics:
+     * top-20 / top-60 overlap (market + plumbing)
+     * action transition matrix (prior tier_dev → current tier_dev)
+     * mean |selector_score delta| and p95 (score-level drift)
+     * feature coverage deltas — top 5 drops flagged (plumbing red flag)
+     * near-miss fragility at K=20 and K=30 cutoffs
+   - **Plumbing-vs-regime heuristic**: if top-20 overlap < 70% AND a feature's
+     coverage dropped ≥10pp, suspect plumbing before attributing to the market.
+     ops digest surfaces this as `stability_diagnostics.plumbing_suspect=true`.
+
 6. `artifacts/live_shadow/portfolio_metrics.json`
    - Shadow portfolio return, excess vs XBI, Sharpe, drawdown
 
