@@ -108,7 +108,10 @@ Every production change must be reversible within one commit.
 
 The model documents what it knows and what it doesn't.
 
-- PIT-corrected historical alpha is -25.1pp excess vs XBI; forward monitor is the only credible evidence
+- Historical backtest numbers from prior PIT v2 snapshots (ruleset `69a0c7f8`) are invalidated —
+  those snapshots used a different model, different universe sizes, and only 3-8/30 top-30 overlap
+  with the current model. No historical alpha claim is credible. Forward monitoring is the only
+  valid evidence source.
 - Biomarker selection is NOT globally positive (HINT Δ=-2.7%); old 1.20x boost was wrong and neutralized
 - Clinical transmission is a validated filter (Brier improved), not yet proven alpha (returns identical in PIT-honest window)
 - The 1-year paper return (+74.6%) carries survivorship bias, no execution costs, and no rebalancing friction
