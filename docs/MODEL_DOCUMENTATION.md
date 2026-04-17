@@ -108,10 +108,13 @@ Every production change must be reversible within one commit.
 
 The model documents what it knows and what it doesn't.
 
-- Historical backtest numbers from prior PIT v2 snapshots (ruleset `69a0c7f8`) are invalidated —
-  those snapshots used a different model, different universe sizes, and only 3-8/30 top-30 overlap
-  with the current model. No historical alpha claim is credible. Forward monitoring is the only
-  valid evidence source.
+- Historical backtest numbers from prior PIT v2 snapshots (ruleset `69a0c7f8`) were invalidated
+  (2026-04-17 audit). Regenerated with current ruleset (`2a3e79eb`): +669% DEM vs +54% XBI
+  over 75 monthly periods (Jan 2020 – Apr 2026), +2.39pp/mo excess (t=3.14). However, these
+  remain **pseudo-PIT** (current code applied retroactively) and are **not credible as forward
+  return claims**. Live period (Oct 2024+, 18 months): +112% DEM vs +41% XBI, t=1.24 —
+  directionally encouraging but statistically underpowered. Forward shadow/live monitoring
+  remains the only credible basis for promotion decisions.
 - Biomarker selection is NOT globally positive (HINT Δ=-2.7%); old 1.20x boost was wrong and neutralized
 - Clinical transmission is a validated filter (Brier improved), not yet proven alpha (returns identical in PIT-honest window)
 - The 1-year paper return (+74.6%) carries survivorship bias, no execution costs, and no rebalancing friction
