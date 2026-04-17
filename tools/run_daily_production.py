@@ -1141,14 +1141,9 @@ def _compute_drift_metrics(
         transition_matrix.setdefault(pri_tier, {}).setdefault(cur_tier, 0)
         transition_matrix[pri_tier][cur_tier] += 1
     action_change_count = sum(
-        cnt
-        for from_tier, row in transition_matrix.items()
-        for to_tier, cnt in row.items()
-        if from_tier != to_tier
+        cnt for from_tier, row in transition_matrix.items() for to_tier, cnt in row.items() if from_tier != to_tier
     )
-    action_change_pct = (
-        round(100.0 * action_change_count / len(common), 2) if common else 0.0
-    )
+    action_change_pct = round(100.0 * action_change_count / len(common), 2) if common else 0.0
 
     # 2) Mean absolute score delta across common tickers
     def _score_stats(col: str) -> Optional[Dict[str, float]]:
@@ -1191,9 +1186,7 @@ def _compute_drift_metrics(
     def _coverage_pct(rows: Dict[str, Dict[str, str]], col: str) -> float:
         if not rows:
             return 0.0
-        populated = sum(
-            1 for r in rows.values() if (r.get(col) or "").strip() not in ("", "nan", "NaN", "None")
-        )
+        populated = sum(1 for r in rows.values() if (r.get(col) or "").strip() not in ("", "nan", "NaN", "None"))
         return round(100.0 * populated / len(rows), 2)
 
     all_cols = set()
@@ -1250,16 +1243,12 @@ def _compute_drift_metrics(
                 continue
             cutoff_score = scored[k - 1][1]
             eps_counts = {
-                f"within_{int(eps * 10000)}bps": sum(
-                    1 for _, s in scored if abs(s - cutoff_score) <= eps
-                )
+                f"within_{int(eps * 10000)}bps": sum(1 for _, s in scored if abs(s - cutoff_score) <= eps)
                 for eps in NEAR_MISS_EPSILONS
             }
             # Share of top-K that is within the tightest eps (plumbing fragility)
             tight_eps = NEAR_MISS_EPSILONS[1]  # 25bps absolute
-            near_in_topk = sum(
-                1 for r, s in scored[:k] if abs(s - cutoff_score) <= tight_eps
-            )
+            near_in_topk = sum(1 for r, s in scored[:k] if abs(s - cutoff_score) <= tight_eps)
             col_stats[f"K{k}"] = {
                 "cutoff_score": round(cutoff_score, 6),
                 "eps_counts": eps_counts,
@@ -1375,9 +1364,7 @@ def _write_drift_report_md(
         lines.append("| feature | prior % | current % | delta pp |")
         lines.append("|---|---|---|---|")
         for d in drops:
-            lines.append(
-                f"| {d['feature']} | {d['prior_pct']} | {d['cur_pct']} | {d['delta_pp']} |"
-            )
+            lines.append(f"| {d['feature']} | {d['prior_pct']} | {d['cur_pct']} | {d['delta_pp']} |")
 
     # Near-miss fragility
     nm = m.get("near_miss") or {}
@@ -1498,10 +1485,7 @@ def check_drift_monitoring(
         )
     sel_score_stats = (metrics.get("score_delta_stats") or {}).get("selector_score") or {}
     sel_mean_delta = sel_score_stats.get("mean_abs_delta")
-    if (
-        sel_mean_delta is not None
-        and sel_mean_delta > thresholds.warn_mean_abs_selector_score_delta
-    ):
+    if sel_mean_delta is not None and sel_mean_delta > thresholds.warn_mean_abs_selector_score_delta:
         warn_reasons.append(
             f"warn_mean_abs_selector_score_delta: {sel_mean_delta:.4f} > {thresholds.warn_mean_abs_selector_score_delta}"
         )
@@ -5482,6 +5466,24 @@ def run_daily(
             )
         except Exception as _sh_err:
             _logger.warning(f"Clinical transmission shadow failed: {_sh_err}")
+
+        # --- Step 5k.21c: CRT options join table refresh (non-blocking) ---
+        try:
+            import subprocess as _sp
+
+            _crt_join_result = _sp.run(
+                [sys.executable, str(REPO_ROOT / "scripts" / "research" / "build_crt_options_join.py")],
+                capture_output=True,
+                text=True,
+                timeout=120,
+                cwd=str(REPO_ROOT),
+            )
+            if _crt_join_result.returncode == 0:
+                _logger.info("CRT join table refreshed")
+            else:
+                _logger.warning("CRT join table refresh failed (exit %d)", _crt_join_result.returncode)
+        except Exception as _crt_err:
+            _logger.warning(f"CRT join table refresh failed: {_crt_err}")
 
         # --- Step 5k.22: Event EV forward validation (non-blocking) ---
         try:
