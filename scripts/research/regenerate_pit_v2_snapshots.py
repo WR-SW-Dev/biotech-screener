@@ -26,6 +26,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
 PIT_V2_DIR = PROJECT_ROOT / "data" / "snapshots_pit_v2"
 PROD_DATA = PROJECT_ROOT / "production_data"
+BUNDLES_DIR = PROJECT_ROOT / "data" / "bundles" / "PIT"
 LOG_PATH = PROJECT_ROOT / "output" / "pit" / "regeneration_log.json"
 
 
@@ -63,12 +64,41 @@ def _resolve_data_dir(date_str: str) -> tuple[Path, str]:
     return PROD_DATA, "current"
 
 
+def _resolve_institutional_source(date_str: str, data_dir: Path) -> str:
+    """Report where institutional (13F) features will come from for this date.
+
+    Diagnostic only — does not change behavior. Return values:
+      - "archived"       : {data_dir}/coinvest_signals.json or holdings_detailed.json is the archived snapshot input
+      - "bundle"         : a PIT bundle exists for this date (not currently consumed by regen; see docs/13F_BACKFILL_PLAN.md)
+      - "bundle_nearby"  : a bundle exists within 95 days prior (usable by Option B in the plan)
+      - "contaminated"   : will fall back to current production_data/holdings_detailed.json (pseudo-PIT)
+    """
+    if (data_dir / "coinvest_signals.json").exists() or (data_dir / "holdings_detailed.json").exists():
+        if data_dir != PROD_DATA:
+            return "archived"
+    if (BUNDLES_DIR / date_str / "manifest.json").exists():
+        return "bundle"
+    # Look for a prior bundle within 95 days
+    try:
+        from datetime import date, timedelta
+
+        target = date.fromisoformat(date_str)
+        for delta in range(1, 96):
+            candidate = (target - timedelta(days=delta)).isoformat()
+            if (BUNDLES_DIR / candidate / "manifest.json").exists():
+                return "bundle_nearby"
+    except (ValueError, OSError):
+        pass
+    return "contaminated"
+
+
 def run_one(date_str: str, dry_run: bool = False) -> dict:
     """Run run_screen.py for one date. Returns status dict."""
     if dry_run:
         return {"date": date_str, "status": "dry_run"}
 
     data_dir, data_source = _resolve_data_dir(date_str)
+    institutional_source = _resolve_institutional_source(date_str, data_dir)
 
     cmd = [
         sys.executable,
@@ -101,6 +131,7 @@ def run_one(date_str: str, dry_run: bool = False) -> dict:
                 "date": date_str,
                 "status": "ok",
                 "data_source": data_source,
+                "institutional_source": institutional_source,
                 "elapsed_s": round(elapsed, 1),
             }
         else:
@@ -164,7 +195,8 @@ def main():
         if r["status"] == "ok":
             n_ok += 1
             src = r.get("data_source", "current")
-            print(f"OK ({r['elapsed_s']}s, data={src})")
+            inst = r.get("institutional_source", "?")
+            print(f"OK ({r['elapsed_s']}s, data={src}, inst={inst})")
         else:
             n_err += 1
             print(f"FAIL: {r['status']}")
@@ -174,6 +206,13 @@ def main():
 
     elapsed_total = time.time() - t_start
 
+    # Institutional-source summary (diagnostic — see docs/13F_BACKFILL_PLAN.md)
+    inst_counts: dict[str, int] = {}
+    for r in results:
+        if r.get("status") == "ok":
+            tag = r.get("institutional_source", "?")
+            inst_counts[tag] = inst_counts.get(tag, 0) + 1
+
     # Save log
     log = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -182,6 +221,7 @@ def main():
         "ok": n_ok,
         "errors": n_err,
         "elapsed_total_s": round(elapsed_total, 1),
+        "institutional_source_counts": inst_counts,
         "results": results,
     }
     with open(LOG_PATH, "w") as f:
