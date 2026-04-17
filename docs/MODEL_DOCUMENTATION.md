@@ -6,6 +6,116 @@
 
 ---
 
+## 0. Governing Principles
+
+These principles are non-negotiable. Every feature, model change, data source,
+and production decision must satisfy all of them. They override convenience,
+speed, and aesthetics.
+
+### Point-in-Time Safety (PIT)
+
+No information from the future may influence a historical or live decision.
+
+- Every data field has a `disclosed_at`, `collected_at`, or `filing_date` anchor
+- Backtests use only data available at each snapshot date
+- Trial records are filtered by `collected_at <= as_of_date`
+- CRT resolutions are filtered by `resolution_date <= as_of_date`
+- Price lookups for entry use backward-only tolerance (never forward)
+- Price lookups for realized returns use forward tolerance (measuring outcomes, not decisions)
+- Any field with unknown provenance is tagged `unknown` and excluded from live inference
+- Pre-PIT-correction performance claims (+93.7pp) are permanently deprecated
+- The only credible evidence is PIT-corrected backtest (+2.34pp/mo, t=2.60) and forward monitoring
+
+PIT violations are treated as bugs, not tradeoffs. There is no "small" leakage.
+
+### Determinism
+
+The same inputs must always produce the same outputs.
+
+- All scoring uses `Decimal(str(x))` arithmetic, never raw floats, in production paths
+- JSON outputs use sorted keys and stable serialization
+- No `datetime.now()` in scoring logic — all timestamps derive from `as_of_date`
+- No randomness in any production path (no `random`, no sampling, no stochastic initialization)
+- Snapshot promotion is atomic: staging → validation gates → promotion or rejection
+
+### Fail-Closed Design
+
+When in doubt, the system rejects rather than guesses.
+
+- Validation gates default to FAIL unless all checks pass explicitly
+- Missing data → ineligible or penalized, never imputed as favorable
+- Unknown phase → conservative prior, not optimistic
+- Absent options data → no options overlay, not synthetic pricing
+- Gate failures block snapshot promotion (exit 1); warnings allow but flag (exit 2)
+
+### Bounded Influence
+
+No single feature, layer, or data source may dominate the model.
+
+- Every new signal enters via bounded composition (CalendarAlpha `max_adjustment`, logit caps)
+- Clinical transmission layer capped per-phase (Ph1 ±0.12, Ph2 ±0.25, Ph3 ±0.20 log-odds)
+- Biomarker context score capped at [-0.05, 0.30]
+- Protocol quality soft floors prevent early-phase collapse
+- No feature weight exceeds the base prior's influence without Checklist v2 validation
+
+### Evidence-Based Promotion
+
+No signal enters production without measured justification.
+
+- Checklist v2 required for any new signal promotion: Fama-MacBeth, bootstrap, FDR, LOSO, year stability
+- All new features start as diagnostic overlays, not ranking inputs
+- Shadow validation precedes production promotion (minimum 2-week forward window)
+- Ablation required: old vs new, top-10/20 overlap, actionable count, by-phase effects
+- Decision rule: promote only if changed decisions are directionally better, calibration improves,
+  and no systematic failure mode is detected
+- If results are mixed, prefer partial adoption or extended shadow over premature promotion
+
+### Separation of Concerns
+
+Different causal processes get different model paths.
+
+- Clinical catalyst success (trial/FDA outcome) uses the outcome model + clinical transmission
+- Market expectation (crowd belief) uses the expectation model with its own feature set
+- Scenario payoff (price reaction) uses the payoff engine with analog-based distributions
+- M&A event probability (deal close) will use a separate event sleeve, not the clinical p_hit path
+- Research labels (HINT benchmark) are tagged `offline_eval_only` and never enter live scoring
+- Read-only agents observe and report; they do not modify production state
+
+### Data Hygiene
+
+Trust the source hierarchy. Verify before acting on derived data.
+
+- Structured ClinicalTrials.gov fields (allocation, masking, intervention_model) take precedence over text parsing
+- FDA regulatory state comes from Drugs@FDA, not openFDA (which is enrichment, not source-of-truth)
+- 13F institutional ownership is the source for coinvest/inst_delta, refreshed quarterly
+- PubMed enrichment is optional (`--enrich-pubmed` flag) and cached (24h TTL); API failure is non-blocking
+- Drug name map (`drug_name_map.json`) is curated from PDUFA + trial_records, not free-text extraction
+- Herald press release classification is Herald-biased for Phase 1/2 (positive selection); CRT calibration
+  excludes these phases (`HERALD_BIASED_PHASES`)
+- Any benchmark dataset (HINT, BioTradingArena) stays in `research/` and is never imported by production code
+
+### Reversibility
+
+Every production change must be reversible within one commit.
+
+- Old prior values preserved as named constants (e.g., `_PHASE_2_PRIOR_OLD = 0.310`)
+- Feature flags control new behavior (e.g., `--enrich-pubmed`, clinical transmission behind shadow)
+- CalendarAlpha weights are config values, not hardcoded logic
+- Kill switches exist for options expression overlay, clinical transmission, and PubMed enrichment
+- Snapshot promotion can be rolled back by reverting to the previous day's snapshot
+
+### Intellectual Honesty
+
+The model documents what it knows and what it doesn't.
+
+- PIT-corrected historical alpha is -25.1pp excess vs XBI; forward monitor is the only credible evidence
+- Biomarker selection is NOT globally positive (HINT Δ=-2.7%); old 1.20x boost was wrong and neutralized
+- Clinical transmission is a validated filter (Brier improved), not yet proven alpha (returns identical in PIT-honest window)
+- The 1-year paper return (+74.6%) carries survivorship bias, no execution costs, and no rebalancing friction
+- Agent governance: agents observe and recommend, they do not execute trades or modify production state unilaterally
+
+---
+
 ## 1. System Overview
 
 Wake Robin is a systematic biotech screening and portfolio construction system.
