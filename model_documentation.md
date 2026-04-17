@@ -681,7 +681,29 @@ Step 7: Agent fleet dispatch (ops → sentinel → qa → calibration)
 
 ## 5. Portfolio Construction
 
-### Current Architecture (Spec 050, adopted 2026-04-03)
+### Standing Allocation Policy (2026-04-17)
+
+Risk management lives at the **allocation layer above the model**, not inside DEM construction.
+The DEM signal stays pure inside the portfolio; deployment risk is controlled by sleeve sizing.
+
+| Role | Allocation | Core | Purpose |
+|------|-----------|------|---------|
+| Research / shadow | 100% DEM | — | Pure signal benchmark |
+| **Initial production** | **30% DEM / 70% XBI** | XBI | Conservative start (live t=1.13) |
+| Scaled production | 60% DEM / 40% XBI | XBI | Live Sharpe maximum (1.37) |
+
+**Default core:** XBI (better drawdown than EW-All at every allocation level).
+**Promotion from 30/70 to 60/40:** requires live net excess positive, Sharpe acceptable,
+ex-tail robustness, no recurring failure mode. Do NOT promote on pseudo-PIT alone.
+
+Always report three series: 100% DEM, 30/70 DEM/XBI, 60/40 DEM/XBI.
+Default deployable headline = 30/70 DEM/XBI.
+
+Evidence: capital allocation sweep (2026-04-17) showed alpha scales linearly with DEM weight,
+no knee point, position caps are no-ops in Top-30 EW, internal overlay blending dilutes alpha
+without meaningful drawdown improvement. See `research/capital_allocation_sweep.py`.
+
+### Internal Construction (Spec 050, adopted 2026-04-03)
 
 **Model:** B6 selector + pairwise_minimal ranker (ordinal-only)
 **Construction:** Equal-weight Top-30
