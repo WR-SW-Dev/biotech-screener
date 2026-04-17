@@ -49,10 +49,26 @@ def already_done(date_str: str) -> bool:
     return (PIT_V2_DIR / date_str / "rankings.csv").exists()
 
 
+def _resolve_data_dir(date_str: str) -> tuple[Path, str]:
+    """Resolve the best data directory for a given date.
+
+    Prefers archived PIT inputs from the production snapshot if available,
+    falls back to current production_data/.
+    Returns (data_dir, source_tag).
+    """
+    archived = SNAPSHOTS_DIR / date_str / "inputs"
+    # Require at least universe.json to consider the archive usable
+    if archived.exists() and (archived / "universe.json").exists():
+        return archived, "archived"
+    return PROD_DATA, "current"
+
+
 def run_one(date_str: str, dry_run: bool = False) -> dict:
     """Run run_screen.py for one date. Returns status dict."""
     if dry_run:
         return {"date": date_str, "status": "dry_run"}
+
+    data_dir, data_source = _resolve_data_dir(date_str)
 
     cmd = [
         sys.executable,
@@ -60,7 +76,7 @@ def run_one(date_str: str, dry_run: bool = False) -> dict:
         "--as-of-date",
         date_str,
         "--data-dir",
-        str(PROD_DATA),
+        str(data_dir),
         "--pit-mode",
         "degrade",
         "--snapshot-dir",
@@ -84,6 +100,7 @@ def run_one(date_str: str, dry_run: bool = False) -> dict:
             return {
                 "date": date_str,
                 "status": "ok",
+                "data_source": data_source,
                 "elapsed_s": round(elapsed, 1),
             }
         else:
@@ -146,7 +163,8 @@ def main():
 
         if r["status"] == "ok":
             n_ok += 1
-            print(f"OK ({r['elapsed_s']}s)")
+            src = r.get("data_source", "current")
+            print(f"OK ({r['elapsed_s']}s, data={src})")
         else:
             n_err += 1
             print(f"FAIL: {r['status']}")

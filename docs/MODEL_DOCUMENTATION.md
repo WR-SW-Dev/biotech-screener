@@ -617,12 +617,19 @@ catalyst_events.json    ──►  CTgov fallback PIT safety net (posting_date <
 
 | PIT Component | Status | Notes |
 |---------------|--------|-------|
-| Survivorship filter (ipo_dates.json) | **Shipped** | 8,556 violations fixed |
+| Survivorship filter (ipo_dates.json) | **Shipped** | 355/342 universe tickers covered; active under `pit_mode=degrade` in `run_screen.py` |
 | EDGAR PIT financials (filing-date gated) | **Shipped** | 339 tickers, all historical filings |
-| CTgov PIT safety net | **Shipped** | Runtime filter on posting dates |
+| CTgov PIT safety net | **Shipped** | Runtime filter on posting dates + per-date cache `cache/ctgov/trial_records_{date}.json` |
 | Production data archiver | **Shipped** | SHA-256 manifests in `data/pit_archives/` |
-| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py` |
+| Snapshot input archive | **Shipped (2026-04-17)** | `tools/run_daily_production.py` copies universe/trial_records/holdings/short_interest/ipo_dates into `data/snapshots/{date}/inputs/` after promotion; PIT v2 regen and backtest prefer archived inputs over current `production_data/` |
+| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py`; data-dir resolves to archived inputs when available |
 | Catalyst look-ahead audit | Inconclusive | Retroactive generation makes this hard to clean |
+
+**PIT limitations (as of 2026-04-17):**
+- Input archive is **forward-only** — snapshots before 2026-04-17 lack archived inputs, so regen for those dates still reads current `production_data/` (pseudo-PIT).
+- 13F holdings lack a historical backfill; institutional signals in regenerated snapshots reflect the version of `holdings_detailed.json` at run time. `tools/backfill_13f_history.py` exists but has not been run across the full regen window.
+- Trial records have per-date PIT caches going forward, but pre-cache dates fall back to the current file. The posting-date filter in the CTgov adapter provides a safety net.
+- Regenerated PIT v2 returns are pseudo-PIT (current code on historical data). Live forward monitoring is the only credible evidence — see "Intellectual Honesty" above.
 
 ### Data Refresh Pipeline
 

@@ -105,7 +105,19 @@ def _run_ev_at_date(
 
     if inject_clinical:
         try:
-            trials = json.loads((prod / "trial_records.json").read_text())
+            # PIT-safe trial records: prefer cached PIT-filtered version for this date,
+            # then archived snapshot inputs, then fall back to current file.
+            _pit_cache = REPO_ROOT / "cache" / "ctgov" / f"trial_records_{as_of_str}.json"
+            _snap_inputs = data / "snapshots" / as_of_str / "inputs" / "trial_records.json"
+            if _pit_cache.exists():
+                trials = json.loads(_pit_cache.read_text())
+                logger.debug("Clinical: using PIT-filtered cache for %s", as_of_str)
+            elif _snap_inputs.exists():
+                trials = json.loads(_snap_inputs.read_text())
+                logger.debug("Clinical: using snapshot-archived inputs for %s", as_of_str)
+            else:
+                trials = json.loads((prod / "trial_records.json").read_text())
+                logger.debug("Clinical: using current trial_records (no PIT cache for %s)", as_of_str)
             from common.biomarker_context import compute_biomarker_context_score
             from common.endpoint_quality import compute_endpoint_quality
             from common.protocol_quality import compute_protocol_quality

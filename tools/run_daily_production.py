@@ -4812,6 +4812,33 @@ def run_daily(
                     _logger.info(f"[{g.status}] {g.name}: {g.detail}")
         _logger.info(f"{'='*70}")
 
+        # --- Step 5a.1: Archive PIT-sensitive inputs alongside snapshot ---
+        # Copies key input files so future PIT v2 regeneration and backtests
+        # can use historical inputs instead of current production_data/.
+        _PIT_INPUT_FILES = [
+            "universe.json",
+            "trial_records.json",
+            "holdings_detailed.json",
+            "short_interest.json",
+            "ipo_dates.json",
+        ]
+        try:
+            _inputs_dir = final_path / "inputs"
+            _inputs_dir.mkdir(exist_ok=True)
+            _archived = 0
+            for _inp_name in _PIT_INPUT_FILES:
+                _src = data_dir / _inp_name
+                _dst = _inputs_dir / _inp_name
+                if _src.exists() and not _dst.exists():
+                    shutil.copy2(str(_src), str(_dst))
+                    _archived += 1
+            if _archived:
+                _logger.info(f"PIT input archive: {_archived} files → {_inputs_dir}")
+            else:
+                _logger.info("PIT input archive: all files already present (idempotent)")
+        except Exception as _pit_err:
+            _logger.warning(f"PIT input archive failed (non-fatal): {_pit_err}")
+
         # --- Step 5b: Full drift report (optional, post-promotion) ---
         if not skip_drift:
             _drift_report_script = REPO_ROOT / "scripts" / "run_drift_report.py"
