@@ -206,11 +206,13 @@ data/staging/pit_regen/{as_of_date}/
 | 0 | trivial | none | **DONE** (`6c78665a`) | Log `data_source=current\|archived\|bundle` in regen output |
 | 1 | low | low | **DONE** (2026-04-17, 17 dates) | `backfill_13f_history.py --lookback-filings 40` for 2020-2024Q1; cache coverage 82-93% per quarter |
 | 2 | low | low | **DONE** (`b5f58cce`), **not promoted** | Option A: bundle-native regen branch. Schema mismatch (111/314 cols) — unusable as drop-in. |
-| 3 | medium | medium | **DONE** (`df914cd4`) + quarter-end default promotion (2026-04-17) | Option B-lite: staging adapter reuses `build_coinvest_features_from_13f.py`; default-on for dates with PIT cache ≥50% coverage |
-| 4 | medium | medium | pending | Forward archive of `coinvest_signals.json` once the pipeline writes it to a stable path |
-| 5 | high | high | pending | Strict-mode guard in `run_screen.py` that refuses current-holdings fallback |
+| 3 | medium | medium | **DONE** (`df914cd4`) + quarter-end default promotion (`cebb66f1`, 2026-04-17) | Option B-lite: staging adapter reuses `build_coinvest_features_from_13f.py`; default-on for QE dates with PIT cache ≥50% coverage |
+| 4 | medium | medium | **DONE** (`12e7ba0f`, 2026-04-17) | `build_institutional_summary()` gains `nearest_prior_days=95` fallback. Non-QE dates now produce institutional_summary/delta from the nearest prior PIT cache. |
+| 5 | medium | medium | **DONE** (`a7ec93f4`, 2026-04-17) | Shared `common/pit_cache.resolve_pit_cache_dir()` used by both builders. Coinvest staging now symmetric with institutional_summary on non-QE monthly dates. |
+| 6 (future) | medium | medium | pending | Forward archive of `coinvest_signals.json` once the pipeline writes it to a stable path |
+| 7 (future) | high | high | pending | Strict-mode guard in `run_screen.py` that refuses current-holdings fallback |
 
-Phases 0-3 shipped. Phases 4-5 are follow-up upgrades.
+Phases 0-5 shipped. Phases 6-7 are follow-up upgrades.
 
 ## Option B-lite validation (19-date quarter-end set, 2026-04-17)
 
@@ -233,13 +235,30 @@ Sanity examples (baseline → OB-lite coinvest_score_z):
 
 Report artifact: `output/pit/qe_validation/qe_validation_report.json`
 
-## Known limitations preserved
+## Known limitations preserved (post-Phase-5)
 
-- `institutional_summary_delta.json` is still sourced from current state; `inst_delta_z` in OB-lite output reflects current-quarter deltas, not historical. Phase 4.
-- Non-quarter-end monthly dates fall through to the current contamination path. Nearest-prior cache lookup is explicitly out of scope per the validation spec.
-- Weekend-only quarter-ends (5 cases in the 2020-2025 window) are excluded from OB-lite coverage.
-- Manager registry is current-state (`elite_managers.get_all_managers()`); a manager added in 2024 is treated as "elite" in 2020 backfill — second-order PIT violation.
-- Historical regen is **pseudo-PIT** overall. Live forward monitoring remains the primary deployable evidence source.
+Institutional wiring is now in good shape for monthly regen:
+- Both `coinvest_score_z` and `inst_delta_z` paths now use PIT 13F cache
+  for quarter-end AND non-quarter-end dates via the shared
+  `common/pit_cache.resolve_pit_cache_dir()` backward-only resolver.
+- Weekend-only quarter-ends resolve to the most recent prior trading-day
+  cache, which is PIT-correct (next-quarter filings aren't due yet).
+
+What is still **not** fixed and is out of scope for this plan:
+- **Manager registry is current-state** (`elite_managers.get_all_managers()`);
+  a manager added in 2024 is treated as "elite" in 2020 backfill. This is a
+  second-order PIT violation of the institutional block itself.
+- **Universe survivorship bias**: `ipo_dates.json` filter catches pre-IPO
+  and delisted tickers, but the universe membership list itself is current.
+- **Clinical state retroactivity**: PIT clinical features still degrade
+  for non-QE dates; trial records use per-date cache + posting-date filter,
+  but the clinical-to-p_hit transmission is a current-state artifact.
+- **Current-code / retroactive-ruleset**: every regen applies the current
+  decision ruleset and current pipeline code to historical data. This is
+  the fundamental "pseudo-PIT" constraint, and fixing it requires
+  code-versioned replay.
+- Historical regen is **pseudo-PIT** overall. Live forward monitoring
+  remains the primary deployable evidence source.
 
 ## Non-goals
 

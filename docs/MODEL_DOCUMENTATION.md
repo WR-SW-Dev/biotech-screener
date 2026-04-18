@@ -622,14 +622,44 @@ catalyst_events.json    ──►  CTgov fallback PIT safety net (posting_date <
 | CTgov PIT safety net | **Shipped** | Runtime filter on posting dates + per-date cache `cache/ctgov/trial_records_{date}.json` |
 | Production data archiver | **Shipped** | SHA-256 manifests in `data/pit_archives/` |
 | Snapshot input archive | **Shipped (2026-04-17)** | `tools/run_daily_production.py` copies universe/trial_records/holdings/short_interest/ipo_dates into `data/snapshots/{date}/inputs/` after promotion; PIT v2 regen and backtest prefer archived inputs over current `production_data/` |
-| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py`; data-dir resolves to archived inputs when available |
+| 13F historical cache backfill | **Shipped (2026-04-17)** | `tools/backfill_13f_history.py --lookback-filings 40` ran over 2020-Q1 through 2024-Q1; cache coverage 82-93% per quarter (was 0-8% before) |
+| PIT coinvest staging (quarter-end) | **Shipped, default-on (`cebb66f1`, 2026-04-17)** | `regenerate_pit_v2_snapshots.py --stage-pit-institutional` default True. 19/19 quarter-end validation passed with 312/312 schema match. |
+| PIT institutional_summary staging (non-QE) | **Shipped (`12e7ba0f`, 2026-04-17)** | `build_institutional_summary()` gains `nearest_prior_days=95`. Non-quarter-end monthly dates produce institutional_summary and inst_delta_z from nearest prior PIT cache. |
+| PIT coinvest staging (non-QE) | **Shipped (`a7ec93f4`, 2026-04-17)** | Shared `common/pit_cache.resolve_pit_cache_dir()` used by both institutional_summary and coinvest builders. Coinvest path is now symmetric with institutional_summary for non-QE monthly dates. |
+| PIT v2 snapshot regeneration | **In progress** | 76 monthly dates via `regenerate_pit_v2_snapshots.py`; data-dir resolves to archived inputs when available; institutional paths PIT-staged |
 | Catalyst look-ahead audit | Inconclusive | Retroactive generation makes this hard to clean |
 
-**PIT limitations (as of 2026-04-17):**
-- Input archive is **forward-only** — snapshots before 2026-04-17 lack archived inputs, so regen for those dates still reads current `production_data/` (pseudo-PIT).
-- 13F holdings lack a historical backfill; institutional signals in regenerated snapshots reflect the version of `holdings_detailed.json` at run time. `tools/backfill_13f_history.py` exists but has not been run across the full regen window.
-- Trial records have per-date PIT caches going forward, but pre-cache dates fall back to the current file. The posting-date filter in the CTgov adapter provides a safety net.
-- Regenerated PIT v2 returns are pseudo-PIT (current code on historical data). Live forward monitoring is the only credible evidence — see "Intellectual Honesty" above.
+**PIT evidence policy (post-Phase-5, 2026-04-17):**
+
+Institutional leakage has been materially reduced across monthly regen:
+- Both `coinvest_score_z` and `inst_delta_z` now derive from PIT 13F cache
+  for quarter-end AND non-quarter-end dates (backward-only nearest-prior
+  resolver), under the same 50% coverage gate applied to the resolved source.
+- Weekend-only quarter-ends resolve to the most recent prior trading-day
+  cache, which is PIT-correct.
+- The 92.7%-of-selector-variance institutional block is the only major
+  contamination path that has been closed end-to-end in regen.
+
+Historical backtests **remain pseudo-PIT** because several non-institutional
+leaks are still present:
+- **Snapshot-input archive is forward-only** from 2026-04-17 — dates before
+  that still read current `production_data/` for universe, trial records,
+  holdings sidecars, etc.
+- **Universe membership is current-state** — present/absent in `universe.json`
+  is the current list, not the as-of-date list. `ipo_dates.json` filters pre-IPO
+  and delisted tickers but does not reconstruct historical membership.
+- **Clinical state is partially retroactive** — PIT-filtered trial records
+  go forward, but clinical-to-p_hit transmission and some derived features
+  are current-state.
+- **Manager registry is current-state** — a manager added in 2024 is treated
+  as "elite" in 2020 backfill. Second-order PIT violation inside the
+  institutional block itself.
+- **Current ruleset + current code are applied to historical data** — this
+  is the fundamental pseudo-PIT constraint.
+
+Live forward monitoring remains the **only credible basis for promotion
+decisions**. No historical regen result is decision-grade alpha evidence.
+See "Intellectual Honesty" above.
 
 ### Data Refresh Pipeline
 
