@@ -4684,7 +4684,13 @@ def save_validation_snapshot(
             )
 
             _uni_tickers = {r.get("ticker", "") for r in csv_rows if r.get("ticker")}
-            inst_summary = build_institutional_summary(as_of_date, _uni_tickers)
+            # nearest_prior_days=95 lets non-quarter-end monthly regen dates
+            # use the most recent prior 13F cache (previous quarter-end or
+            # recent daily cache). Exact-match dates are unaffected. The
+            # resulting summary's cache_as_of_date records the actual source,
+            # so _find_prior_institutional_summary's PIT guard still rejects
+            # stale-source summaries as priors for cross-date delta.
+            inst_summary = build_institutional_summary(as_of_date, _uni_tickers, nearest_prior_days=95)
             if inst_summary:
                 # Use cross-quarter comparison to get real filing-period deltas
                 _cache_base = Path(__file__).resolve().parent / "data" / "caches" / "sec_13f" / "PIT"
