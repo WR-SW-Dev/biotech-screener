@@ -27,7 +27,14 @@ SNAPSHOTS_DIR = PROJECT_ROOT / "data" / "snapshots"
 PIT_V2_DIR = PROJECT_ROOT / "data" / "snapshots_pit_v2"
 PROD_DATA = PROJECT_ROOT / "production_data"
 BUNDLES_DIR = PROJECT_ROOT / "data" / "bundles" / "PIT"
+PIT_13F_CACHE = PROJECT_ROOT / "data" / "caches" / "sec_13f" / "PIT"
+STAGING_ROOT = PROJECT_ROOT / "data" / "staging" / "pit_regen"
 LOG_PATH = PROJECT_ROOT / "output" / "pit" / "regeneration_log.json"
+
+# Minimum 13F manager coverage required to consider a date PIT-stageable.
+# Below this, the cache isn't representative enough to improve over the
+# current-holdings fallback — label as contaminated instead.
+PIT_STAGE_MIN_COVERAGE_PCT = 50.0
 
 
 def get_monthly_dates(start: str = "2020-01-01") -> list[str]:
@@ -68,11 +75,20 @@ def _resolve_institutional_source(date_str: str, data_dir: Path) -> str:
     """Report where institutional (13F) features will come from for this date.
 
     Diagnostic only — does not change behavior. Return values:
+      - "pit_13f_staged" : data_dir is a staging dir with a PIT-derived coinvest_signals.json overlay
       - "archived"       : {data_dir}/coinvest_signals.json or holdings_detailed.json is the archived snapshot input
-      - "bundle"         : a PIT bundle exists for this date (not currently consumed by regen; see docs/13F_BACKFILL_PLAN.md)
-      - "bundle_nearby"  : a bundle exists within 95 days prior (usable by Option B in the plan)
+      - "bundle"         : a PIT bundle exists for this date (Option A)
+      - "bundle_nearby"  : a bundle exists within 95 days prior (Option B with lag)
       - "contaminated"   : will fall back to current production_data/holdings_detailed.json (pseudo-PIT)
     """
+    # If data_dir is a Option B-lite staging dir, prefer that label.
+    try:
+        if data_dir.is_relative_to(STAGING_ROOT):
+            return "pit_13f_staged"
+    except AttributeError:
+        # Python <3.9 doesn't have is_relative_to; fall back to string compare
+        if str(data_dir).startswith(str(STAGING_ROOT)):
+            return "pit_13f_staged"
     if (data_dir / "coinvest_signals.json").exists() or (data_dir / "holdings_detailed.json").exists():
         if data_dir != PROD_DATA:
             return "archived"
@@ -100,24 +116,147 @@ def _bundle_dir_for(date_str: str) -> Path | None:
     return None
 
 
+def _pit_13f_cache_coverage(date_str: str) -> float | None:
+    """Return coverage_pct of the PIT 13F cache for this date, or None if missing."""
+    idx = PIT_13F_CACHE / date_str / "index.json"
+    if not idx.exists():
+        return None
+    try:
+        data = json.load(open(idx))
+    except (json.JSONDecodeError, OSError):
+        return None
+    if data.get("schema_version") != "sec_13f_pit_index.v1":
+        return None
+    return float(data.get("coverage_pct", 0) or 0)
+
+
+def stage_data_dir_with_pit_institutional(
+    date_str: str,
+    base_data_dir: Path,
+) -> tuple[Path, str] | tuple[None, str]:
+    """Materialize a per-date staging data_dir with PIT-correct institutional features.
+
+    Reuses `scripts/build_coinvest_features_from_13f.py` (no new conversion logic).
+    Output staging dir contains:
+      - coinvest_signals.json : UNWRAPPED dict of per-ticker features from the PIT cache
+      - symlinks to every file in base_data_dir (so run_screen.py sees everything else)
+
+    Returns (staging_path, source_tag) where source_tag is one of:
+      - "pit_13f_staged"  : cache coverage >= PIT_STAGE_MIN_COVERAGE_PCT, builder succeeded
+      - "skipped_low_coverage"
+      - "skipped_no_cache"
+      - "skipped_builder_error"
+    If staging was skipped, returns (None, source_tag).
+    """
+    cov = _pit_13f_cache_coverage(date_str)
+    if cov is None:
+        return None, "skipped_no_cache"
+    if cov < PIT_STAGE_MIN_COVERAGE_PCT:
+        return None, "skipped_low_coverage"
+
+    staging = STAGING_ROOT / date_str
+    staging.mkdir(parents=True, exist_ok=True)
+    out_path = staging / "coinvest_signals.json"
+    builder_raw = staging / "_builder_coinvest_features.json"
+
+    # Idempotent: skip builder if output already exists
+    if not out_path.exists():
+        universe_src = base_data_dir / "universe.json"
+        if not universe_src.exists():
+            universe_src = PROD_DATA / "universe.json"
+        cmd = [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "build_coinvest_features_from_13f.py"),
+            "--as-of-date",
+            date_str,
+            "--cache-root",
+            str(PIT_13F_CACHE),
+            "--out",
+            str(builder_raw),
+            "--universe",
+            str(universe_src),
+            "--cusip-map",
+            str(PROD_DATA / "cusip_static_map.json"),
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+        if result.returncode != 0 or not builder_raw.exists():
+            return None, "skipped_builder_error"
+
+        try:
+            with open(builder_raw) as f:
+                wrapped = json.load(f)
+        except (json.JSONDecodeError, OSError):
+            return None, "skipped_builder_error"
+
+        tickers = wrapped.get("tickers", wrapped if isinstance(wrapped, dict) else {})
+        with open(out_path, "w") as f:
+            json.dump(tickers, f)
+
+    # Shadow everything else from base_data_dir using hardlinks (run_screen.py's
+    # security layer rejects symlinks). Fall back to recursive hardlink for
+    # directories, and to file copy only as a last resort for small files.
+    import os
+    import shutil
+
+    def _shadow(src: Path, dst: Path) -> None:
+        if dst.exists() or dst.is_symlink():
+            return
+        if src.is_dir():
+            dst.mkdir(parents=True, exist_ok=True)
+            for child in src.iterdir():
+                _shadow(child, dst / child.name)
+            return
+        try:
+            os.link(str(src), str(dst))
+        except OSError:
+            # Cross-filesystem or permission issue: copy small files only.
+            if src.is_file() and src.stat().st_size < 50 * 1024 * 1024:
+                shutil.copy2(str(src), str(dst))
+
+    for item in base_data_dir.iterdir():
+        if item.name == "coinvest_signals.json":
+            continue
+        _shadow(item, staging / item.name)
+
+    return staging, "pit_13f_staged"
+
+
 def run_one(
     date_str: str,
     dry_run: bool = False,
     use_bundle: bool = False,
+    stage_pit_institutional: bool = False,
     out_dir: Path | None = None,
 ) -> dict:
     """Run a regen for one date. Returns status dict.
 
     When `use_bundle=True` and a PIT bundle exists for the exact date, uses
     `scripts/run_screen_from_bundle.py` (Option A). Otherwise subprocesses
-    `run_screen.py --as-of-date` as before. `out_dir` defaults to PIT_V2_DIR.
+    `run_screen.py --as-of-date` as before.
+
+    When `stage_pit_institutional=True` and a PIT 13F cache exists for this
+    date with sufficient coverage, builds a staging data_dir that overlays a
+    PIT-derived `coinvest_signals.json` on top of symlinks to the base data
+    dir (Option B-lite). Mutually exclusive with `use_bundle`.
+
+    `out_dir` defaults to PIT_V2_DIR.
     """
     if dry_run:
         return {"date": date_str, "status": "dry_run"}
 
     data_dir, data_source = _resolve_data_dir(date_str)
-    institutional_source = _resolve_institutional_source(date_str, data_dir)
     effective_out = out_dir or PIT_V2_DIR
+    stage_result: str | None = None
+
+    # Option B-lite: stage a PIT-derived coinvest_signals.json over symlinks.
+    if stage_pit_institutional and not use_bundle:
+        staged_dir, stage_tag = stage_data_dir_with_pit_institutional(date_str, data_dir)
+        stage_result = stage_tag
+        if staged_dir is not None:
+            data_dir = staged_dir
+            data_source = "pit_13f_staged"
+
+    institutional_source = _resolve_institutional_source(date_str, data_dir)
 
     bundle_dir = _bundle_dir_for(date_str) if use_bundle else None
     if bundle_dir is not None:
@@ -161,7 +300,7 @@ def run_one(
         )
         elapsed = time.time() - t0
         if result.returncode == 0:
-            return {
+            out = {
                 "date": date_str,
                 "status": "ok",
                 "data_source": data_source,
@@ -169,6 +308,9 @@ def run_one(
                 "exec_path": exec_path,
                 "elapsed_s": round(elapsed, 1),
             }
+            if stage_result:
+                out["stage_result"] = stage_result
+            return out
         else:
             # Extract last few lines of stderr for diagnosis
             err_tail = result.stderr.strip().split("\n")[-5:]
@@ -179,6 +321,7 @@ def run_one(
                 "exec_path": exec_path,
                 "elapsed_s": round(elapsed, 1),
                 "error_tail": err_tail,
+                "stage_result": stage_result,
             }
     except subprocess.TimeoutExpired:
         return {"date": date_str, "status": "timeout", "elapsed_s": 600}
@@ -196,6 +339,13 @@ def main():
         action="store_true",
         help="Option A: when a PIT bundle exists for the date, call scripts/run_screen_from_bundle.py. "
         "Otherwise use the existing run_screen.py path.",
+    )
+    parser.add_argument(
+        "--stage-pit-institutional",
+        action="store_true",
+        help="Option B-lite: when a PIT 13F cache exists with sufficient coverage, "
+        "build a staging data_dir with a PIT-derived coinvest_signals.json overlay "
+        "before calling run_screen.py. Preserves full current-model output schema.",
     )
     parser.add_argument(
         "--dates",
@@ -224,6 +374,8 @@ def main():
     print(f"To process:    {len(todo)}")
     if args.use_bundle:
         print("Mode:          bundle-native (Option A) when bundle exists, run_screen fallback otherwise")
+    if args.stage_pit_institutional:
+        print("Mode:          PIT 13F staging (Option B-lite) when cache coverage >= 50%, current path otherwise")
     if args.out_dir:
         print(f"Out dir:       {effective_out}")
 
@@ -251,7 +403,12 @@ def main():
             continue
 
         print(f"{prefix} {date_str} ...", end=" ", flush=True)
-        r = run_one(date_str, use_bundle=args.use_bundle, out_dir=effective_out)
+        r = run_one(
+            date_str,
+            use_bundle=args.use_bundle,
+            stage_pit_institutional=args.stage_pit_institutional,
+            out_dir=effective_out,
+        )
         results.append(r)
 
         if r["status"] == "ok":
@@ -259,7 +416,9 @@ def main():
             src = r.get("data_source", "current")
             inst = r.get("institutional_source", "?")
             exe = r.get("exec_path", "?")
-            print(f"OK ({r['elapsed_s']}s, exec={exe}, data={src}, inst={inst})")
+            stg = r.get("stage_result")
+            stg_str = f", stage={stg}" if stg else ""
+            print(f"OK ({r['elapsed_s']}s, exec={exe}, data={src}, inst={inst}{stg_str})")
         else:
             n_err += 1
             print(f"FAIL: {r['status']}")

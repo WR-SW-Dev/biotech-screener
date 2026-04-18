@@ -8790,7 +8790,23 @@ def run_screening_pipeline(
         coinvest_file = data_dir / "coinvest_signals.json"
         if coinvest_file.exists():
             logger.info("  Loading co-invest signals...")
-            coinvest_signals = load_json_data(coinvest_file, "Co-invest signals")
+            # Accept three shapes for backward compatibility:
+            #   1. dict {TICKER: {...}}                        — pre-computed signals
+            #   2. wrapped dict {"tickers": {TICKER: {...}}}    — builder output (coinvest_features.v1)
+            #   3. list [{"ticker": "X", ...}, ...]             — legacy list format
+            # Downstream consumers (module_5_composite._enrich_with_coinvest) expect a dict.
+            with open(coinvest_file, "r", encoding="utf-8") as _cf:
+                _raw = json.load(_cf)
+            if isinstance(_raw, dict):
+                coinvest_signals = _raw.get("tickers", _raw)
+            elif isinstance(_raw, list):
+                coinvest_signals = {
+                    (entry.get("ticker") or "").upper(): entry
+                    for entry in _raw
+                    if isinstance(entry, dict) and entry.get("ticker")
+                }
+            else:
+                raise ValueError(f"coinvest_signals.json must be a dict or list, got {type(_raw).__name__}")
         else:
             # Fallback: try loading holdings file and convert to coinvest format
             # Prefer holdings_detailed.json (dict format with conviction data) over holdings_snapshots.json (list format)
