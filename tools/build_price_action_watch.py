@@ -29,11 +29,12 @@ from typing import Any, Dict, List, Optional, Set
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
+from common.watchlist_config import WATCHLIST_MAX, build_model_relevant_watchlist  # noqa: E402
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger("price_action_watch")
 
 SCHEMA_VERSION = "price_action_watch.v2"
-WATCHLIST_MAX = 40
 
 # ---------------------------------------------------------------------------
 # Thresholds
@@ -381,35 +382,14 @@ def build_price_action_watch(
             if row.get("ticker"):
                 rankings[row["ticker"]] = row
 
-    # Build watchlist (same sources as options_watch)
-    review_queue = _load_csv_tickers(snap_dir / "review_queue.csv")
-    trade_plan = _load_csv_tickers(artifacts_dir / "live_shadow" / "trade_plan" / as_of_date / "trade_plan.csv")
-
-    position_tickers: Set[str] = set()
-    pos_data = _load_json(artifacts_dir / "live_shadow" / "positions" / f"{as_of_date}.json")
-    if pos_data:
-        position_tickers = {p["ticker"] for p in pos_data.get("positions", []) if p.get("ticker")}
-
-    catalyst_delta_tickers: Set[str] = set()
-    cd_data = _load_json(artifacts_dir / "catalyst_delta" / f"{as_of_date}_delta.json")
-    if cd_data:
-        catalyst_delta_tickers = {d["ticker"] for d in cd_data.get("deltas", []) if d.get("ticker")}
-
-    # A-tier near-term
-    a_near = {
-        t
-        for t, r in rankings.items()
-        if r.get("tier_dev") == "A"
-        and not math.isnan(_sf(r.get("catalyst_days", "")))
-        and _sf(r.get("catalyst_days", "")) <= 30
-    }
-
-    watchlist = review_queue | trade_plan | position_tickers | catalyst_delta_tickers | a_near
-    watchlist = {t for t in watchlist if t in rankings}
-    if len(watchlist) > WATCHLIST_MAX:
-        # Prioritize by rank
-        ranked = sorted(watchlist, key=lambda t: _sf(rankings[t].get("actionable_rank", "9999")))
-        watchlist = set(ranked[:WATCHLIST_MAX])
+    # Build watchlist via shared canonical constructor
+    watchlist, wl_sources = build_model_relevant_watchlist(
+        as_of_date,
+        snapshots_dir=snapshots_dir,
+        artifacts_dir=artifacts_dir,
+        rankings=rankings,
+        max_size=WATCHLIST_MAX,
+    )
 
     # Load prices and trailing RR history
     prices = load_recent_prices(price_csv, watchlist, as_of_date)
@@ -478,13 +458,7 @@ def build_price_action_watch(
         "n_suppressed": len(suppressed),
         "suppressed": suppressed,
         "thresholds": THRESHOLDS,
-        "sources": {
-            "review_queue": len(review_queue),
-            "trade_plan": len(trade_plan),
-            "positions": len(position_tickers),
-            "catalyst_delta": len(catalyst_delta_tickers),
-            "a_near": len(a_near),
-        },
+        "sources": wl_sources,
         "rows": rows,
     }
 
