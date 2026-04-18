@@ -973,9 +973,32 @@ def fetch_options_with_fallback(
     2. For absent tickers (no_metrics, no_credentials), try Massive
     3. Merge results
 
+    PIT safeguard: when as_of_date is historical (>= 2 days before today),
+    both Tastytrade and Massive fetch_chain_snapshot return CURRENT-state
+    option chains, which would stamp today's IVs onto a historical row. No
+    PIT-correct historical chain builder exists yet (that would require
+    IV back-out from Massive day_aggs flat files). Gate the overlay off
+    and return empty diagnostics with basis="no_historical_chain" instead
+    of contaminating historical snapshots.
+
     Returns same schema as fetch_options_diagnostics.
     """
-    # Primary: Tastytrade
+    try:
+        _as_of = _date.fromisoformat(as_of_date)
+        _today = _date.today()
+        _is_historical = (_today - _as_of).days >= 2
+    except (ValueError, TypeError):
+        _is_historical = False
+
+    if _is_historical:
+        logger.info(
+            "Options overlay gated off for historical as_of_date=%s "
+            "(no PIT-correct chain source; see common/options_diagnostics.py:fetch_options_with_fallback)",
+            as_of_date,
+        )
+        return {s: empty_diagnostics("no_historical_chain") for s in symbols}
+
+    # Primary: Tastytrade (current / live runs only)
     result = fetch_options_diagnostics(symbols, as_of_date, is_test)
 
     # Identify absent tickers
