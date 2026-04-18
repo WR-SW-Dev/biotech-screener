@@ -201,16 +201,45 @@ data/staging/pit_regen/{as_of_date}/
 
 ## Phased execution
 
-| Phase | Effort | Risk | Deliverable |
-|-------|--------|------|-------------|
-| 0 | trivial | none | Log `data_source=current\|archived\|bundle` in regen output (one-liner per branch, no behavior change yet) |
-| 1 | low | low | Run `backfill_13f_history.py --lookback-filings 40` for 2020-2024; verify cache coverage ≥80% per quarter |
-| 2 | low | low | Option A: bundle-native regen branch in `regenerate_pit_v2_snapshots.py` |
-| 3 | medium | medium | Option B: staging adapter + schema equivalence test |
-| 4 | medium | medium | Forward archive of `coinvest_signals.json` once the pipeline writes it to a stable path |
-| 5 | high | high | Strict-mode guard in `run_screen.py` that refuses current-holdings fallback |
+| Phase | Effort | Risk | Status | Deliverable |
+|-------|--------|------|--------|-------------|
+| 0 | trivial | none | **DONE** (`6c78665a`) | Log `data_source=current\|archived\|bundle` in regen output |
+| 1 | low | low | **DONE** (2026-04-17, 17 dates) | `backfill_13f_history.py --lookback-filings 40` for 2020-2024Q1; cache coverage 82-93% per quarter |
+| 2 | low | low | **DONE** (`b5f58cce`), **not promoted** | Option A: bundle-native regen branch. Schema mismatch (111/314 cols) — unusable as drop-in. |
+| 3 | medium | medium | **DONE** (`df914cd4`) + quarter-end default promotion (2026-04-17) | Option B-lite: staging adapter reuses `build_coinvest_features_from_13f.py`; default-on for dates with PIT cache ≥50% coverage |
+| 4 | medium | medium | pending | Forward archive of `coinvest_signals.json` once the pipeline writes it to a stable path |
+| 5 | high | high | pending | Strict-mode guard in `run_screen.py` that refuses current-holdings fallback |
 
-Phases 0-2 are the minimum viable remediation. Phases 3-5 are upgrades.
+Phases 0-3 shipped. Phases 4-5 are follow-up upgrades.
+
+## Option B-lite validation (19-date quarter-end set, 2026-04-17)
+
+Validation dates: all quarter-ends 2020-Q1 through 2025-Q4 that are trading days with exact PIT cache match (2022-Q4, 2023-Q3, 2023-Q4, 2024-Q1, 2024-Q2 excluded — weekend-only quarter-ends whose cache keys don't align with trading days).
+
+Aggregate results:
+- 19/19 dates completed cleanly (no failures in either path)
+- 19/19 schema preserved (identical 312-column set baseline vs OB-lite)
+- 19/19 row counts identical (180-308 per date)
+- 100.0% of tickers changed `coinvest_score_z` on every date (mean/median/min/max)
+- 0.0% of tickers changed `inst_delta_z` — delta sidecar is not yet staged (known limitation, Phase 4 scope)
+- Top-30 overlap: mean 16.3 / median 15 / range 11-24 (older dates diverge more; recent dates converge)
+- Top-10 overlap: mean 3.4 / median 3 / range 1-7
+- 0 suspicious dates
+
+Sanity examples (baseline → OB-lite coinvest_score_z):
+- 2020-06-30 NGNE (Neurogene, IPO'd 2023 via SPAC): +3.10 → -0.68 — leaked 2025 holdings erased
+- 2022-09-30 IRON (Disc Medicine, IPO'd 2020-08): +3.14 → -1.08 — had almost no institutional base by 2022
+- 2024-12-31 JBIO (Jade Biosciences, IPO'd 2024-06): +2.78 → -1.11 — six months post-IPO, not yet a smart-money name
+
+Report artifact: `output/pit/qe_validation/qe_validation_report.json`
+
+## Known limitations preserved
+
+- `institutional_summary_delta.json` is still sourced from current state; `inst_delta_z` in OB-lite output reflects current-quarter deltas, not historical. Phase 4.
+- Non-quarter-end monthly dates fall through to the current contamination path. Nearest-prior cache lookup is explicitly out of scope per the validation spec.
+- Weekend-only quarter-ends (5 cases in the 2020-2025 window) are excluded from OB-lite coverage.
+- Manager registry is current-state (`elite_managers.get_all_managers()`); a manager added in 2024 is treated as "elite" in 2020 backfill — second-order PIT violation.
+- Historical regen is **pseudo-PIT** overall. Live forward monitoring remains the primary deployable evidence source.
 
 ## Non-goals
 
