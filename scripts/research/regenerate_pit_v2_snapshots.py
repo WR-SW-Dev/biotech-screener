@@ -92,29 +92,63 @@ def _resolve_institutional_source(date_str: str, data_dir: Path) -> str:
     return "contaminated"
 
 
-def run_one(date_str: str, dry_run: bool = False) -> dict:
-    """Run run_screen.py for one date. Returns status dict."""
+def _bundle_dir_for(date_str: str) -> Path | None:
+    """Return the bundle dir for an exact date match, else None."""
+    d = BUNDLES_DIR / date_str
+    if (d / "manifest.json").exists():
+        return d
+    return None
+
+
+def run_one(
+    date_str: str,
+    dry_run: bool = False,
+    use_bundle: bool = False,
+    out_dir: Path | None = None,
+) -> dict:
+    """Run a regen for one date. Returns status dict.
+
+    When `use_bundle=True` and a PIT bundle exists for the exact date, uses
+    `scripts/run_screen_from_bundle.py` (Option A). Otherwise subprocesses
+    `run_screen.py --as-of-date` as before. `out_dir` defaults to PIT_V2_DIR.
+    """
     if dry_run:
         return {"date": date_str, "status": "dry_run"}
 
     data_dir, data_source = _resolve_data_dir(date_str)
     institutional_source = _resolve_institutional_source(date_str, data_dir)
+    effective_out = out_dir or PIT_V2_DIR
 
-    cmd = [
-        sys.executable,
-        str(PROJECT_ROOT / "run_screen.py"),
-        "--as-of-date",
-        date_str,
-        "--data-dir",
-        str(data_dir),
-        "--pit-mode",
-        "degrade",
-        "--snapshot-dir",
-        str(PIT_V2_DIR),
-        "--no-clinical-filter",
-        "--diagnostics",
-        "none",
-    ]
+    bundle_dir = _bundle_dir_for(date_str) if use_bundle else None
+    if bundle_dir is not None:
+        exec_path = "bundle_native"
+        cmd = [
+            sys.executable,
+            str(PROJECT_ROOT / "scripts" / "run_screen_from_bundle.py"),
+            "--bundle-dir",
+            str(bundle_dir),
+            "--out-root",
+            str(effective_out),
+            "--pit-mode",
+            "lenient",
+        ]
+    else:
+        exec_path = "run_screen_direct"
+        cmd = [
+            sys.executable,
+            str(PROJECT_ROOT / "run_screen.py"),
+            "--as-of-date",
+            date_str,
+            "--data-dir",
+            str(data_dir),
+            "--pit-mode",
+            "degrade",
+            "--snapshot-dir",
+            str(effective_out),
+            "--no-clinical-filter",
+            "--diagnostics",
+            "none",
+        ]
 
     t0 = time.time()
     try:
@@ -132,6 +166,7 @@ def run_one(date_str: str, dry_run: bool = False) -> dict:
                 "status": "ok",
                 "data_source": data_source,
                 "institutional_source": institutional_source,
+                "exec_path": exec_path,
                 "elapsed_s": round(elapsed, 1),
             }
         else:
@@ -141,6 +176,7 @@ def run_one(date_str: str, dry_run: bool = False) -> dict:
                 "date": date_str,
                 "status": "error",
                 "returncode": result.returncode,
+                "exec_path": exec_path,
                 "elapsed_s": round(elapsed, 1),
                 "error_tail": err_tail,
             }
@@ -155,15 +191,41 @@ def main():
     parser.add_argument("--start", default="2020-01-01", help="Start date")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--max-dates", type=int, default=0, help="Max dates to process (0=all)")
+    parser.add_argument(
+        "--use-bundle",
+        action="store_true",
+        help="Option A: when a PIT bundle exists for the date, call scripts/run_screen_from_bundle.py. "
+        "Otherwise use the existing run_screen.py path.",
+    )
+    parser.add_argument(
+        "--dates",
+        default="",
+        help="Comma-separated explicit date list to process (overrides monthly discovery)",
+    )
+    parser.add_argument(
+        "--out-dir",
+        default="",
+        help="Override output snapshot dir (default: data/snapshots_pit_v2)",
+    )
     args = parser.parse_args()
 
-    dates = get_monthly_dates(args.start)
-    todo = [d for d in dates if not already_done(d)]
-    done = [d for d in dates if already_done(d)]
+    effective_out = Path(args.out_dir) if args.out_dir else PIT_V2_DIR
 
-    print(f"Monthly dates: {len(dates)}")
+    if args.dates:
+        dates = [d.strip() for d in args.dates.split(",") if d.strip()]
+        todo = [d for d in dates if not (effective_out / d / "rankings.csv").exists()]
+    else:
+        dates = get_monthly_dates(args.start)
+        todo = [d for d in dates if not (effective_out / d / "rankings.csv").exists()]
+    done = [d for d in dates if (effective_out / d / "rankings.csv").exists()]
+
+    print(f"Dates:         {len(dates)}")
     print(f"Already done:  {len(done)}")
     print(f"To process:    {len(todo)}")
+    if args.use_bundle:
+        print("Mode:          bundle-native (Option A) when bundle exists, run_screen fallback otherwise")
+    if args.out_dir:
+        print(f"Out dir:       {effective_out}")
 
     if args.max_dates > 0:
         todo = todo[: args.max_dates]
@@ -173,7 +235,7 @@ def main():
         print("Nothing to do.")
         return
 
-    PIT_V2_DIR.mkdir(parents=True, exist_ok=True)
+    effective_out.mkdir(parents=True, exist_ok=True)
     LOG_PATH.parent.mkdir(parents=True, exist_ok=True)
 
     results = []
@@ -189,14 +251,15 @@ def main():
             continue
 
         print(f"{prefix} {date_str} ...", end=" ", flush=True)
-        r = run_one(date_str)
+        r = run_one(date_str, use_bundle=args.use_bundle, out_dir=effective_out)
         results.append(r)
 
         if r["status"] == "ok":
             n_ok += 1
             src = r.get("data_source", "current")
             inst = r.get("institutional_source", "?")
-            print(f"OK ({r['elapsed_s']}s, data={src}, inst={inst})")
+            exe = r.get("exec_path", "?")
+            print(f"OK ({r['elapsed_s']}s, exec={exe}, data={src}, inst={inst})")
         else:
             n_err += 1
             print(f"FAIL: {r['status']}")
