@@ -215,6 +215,7 @@ def build_coinvest_features(
     cusip_map: Optional[Dict[str, str]] = None,
     prior_cache_dir: Optional[Path] = None,
     no_prior: bool = False,
+    nearest_prior_days: int = 0,
 ) -> Optional[dict]:
     """Build coinvest features from PIT 13F cache.
 
@@ -243,7 +244,15 @@ def build_coinvest_features(
         Full feature output, or *None* on cache-load failure.
     """
     cusip_map = cusip_map or {}
-    date_dir = cache_root / as_of_date
+
+    # Resolve the current cache dir: exact-match for as_of_date, or the nearest
+    # prior cache within nearest_prior_days if the exact date has no cache.
+    # Backward-only — preserves PIT correctness.
+    from common.pit_cache import resolve_pit_cache_dir
+
+    date_dir, _cache_src = resolve_pit_cache_dir(cache_root, as_of_date, nearest_prior_days)
+    if date_dir is None:
+        return None
 
     # Corporate actions registry for ticker rename resolution
     try:
@@ -624,6 +633,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         action="store_true",
         help="Skip prior-quarter comparison entirely",
     )
+    parser.add_argument(
+        "--nearest-prior-days",
+        type=int,
+        default=0,
+        help="If no exact cache exists for --as-of-date, use the nearest prior "
+        "cache within this many days (backward-only). Default 0 = exact-match only.",
+    )
     args = parser.parse_args(argv)
 
     # Import project modules (add project root to path).
@@ -664,6 +680,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         cusip_map=cusip_map,
         prior_cache_dir=prior_dir,
         no_prior=args.no_prior,
+        nearest_prior_days=args.nearest_prior_days,
     )
 
     if result is None:

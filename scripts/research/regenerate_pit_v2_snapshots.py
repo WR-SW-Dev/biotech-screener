@@ -36,6 +36,10 @@ LOG_PATH = PROJECT_ROOT / "output" / "pit" / "regeneration_log.json"
 # current-holdings fallback — label as contaminated instead.
 PIT_STAGE_MIN_COVERAGE_PCT = 50.0
 
+# Nearest-prior lookback window for non-quarter-end monthly dates.
+# Covers up to one quarter of lag (roughly 95 days).
+PIT_STAGE_NEAREST_PRIOR_DAYS = 95
+
 
 def get_monthly_dates(start: str = "2020-01-01") -> list[str]:
     """Get one snapshot date per month (last available per month)."""
@@ -82,11 +86,11 @@ def _resolve_institutional_source(date_str: str, data_dir: Path) -> str:
       - "contaminated"   : will fall back to current production_data/holdings_detailed.json (pseudo-PIT)
     """
     # If data_dir is a Option B-lite staging dir, prefer that label.
+    # Note: Phase 5 distinguishes exact vs prior via data_source, not here.
     try:
         if data_dir.is_relative_to(STAGING_ROOT):
             return "pit_13f_staged"
     except AttributeError:
-        # Python <3.9 doesn't have is_relative_to; fall back to string compare
         if str(data_dir).startswith(str(STAGING_ROOT)):
             return "pit_13f_staged"
     if (data_dir / "coinvest_signals.json").exists() or (data_dir / "holdings_detailed.json").exists():
@@ -116,9 +120,9 @@ def _bundle_dir_for(date_str: str) -> Path | None:
     return None
 
 
-def _pit_13f_cache_coverage(date_str: str) -> float | None:
-    """Return coverage_pct of the PIT 13F cache for this date, or None if missing."""
-    idx = PIT_13F_CACHE / date_str / "index.json"
+def _pit_13f_cache_coverage_at(cache_dir: Path) -> float | None:
+    """Return coverage_pct of the PIT 13F cache at a specific dir, or None if invalid."""
+    idx = cache_dir / "index.json"
     if not idx.exists():
         return None
     try:
@@ -130,6 +134,11 @@ def _pit_13f_cache_coverage(date_str: str) -> float | None:
     return float(data.get("coverage_pct", 0) or 0)
 
 
+def _pit_13f_cache_coverage(date_str: str) -> float | None:
+    """Return coverage_pct for an exact-match cache date, or None if missing."""
+    return _pit_13f_cache_coverage_at(PIT_13F_CACHE / date_str)
+
+
 def stage_data_dir_with_pit_institutional(
     date_str: str,
     base_data_dir: Path,
@@ -139,20 +148,33 @@ def stage_data_dir_with_pit_institutional(
     Reuses `scripts/build_coinvest_features_from_13f.py` (no new conversion logic).
     Output staging dir contains:
       - coinvest_signals.json : UNWRAPPED dict of per-ticker features from the PIT cache
-      - symlinks to every file in base_data_dir (so run_screen.py sees everything else)
+      - hardlinks to every file in base_data_dir (so run_screen.py sees everything else)
 
-    Returns (staging_path, source_tag) where source_tag is one of:
-      - "pit_13f_staged"  : cache coverage >= PIT_STAGE_MIN_COVERAGE_PCT, builder succeeded
-      - "skipped_low_coverage"
-      - "skipped_no_cache"
-      - "skipped_builder_error"
-    If staging was skipped, returns (None, source_tag).
+    Resolution policy:
+      1. Exact-match PIT cache for date_str -> stage with tag "pit_13f_staged_exact"
+      2. Nearest-prior cache within PIT_STAGE_NEAREST_PRIOR_DAYS -> stage with
+         tag "pit_13f_staged_prior"
+      3. No usable cache -> skip with tag "skipped_no_cache"
+      4. Resolved cache below PIT_STAGE_MIN_COVERAGE_PCT -> skip with
+         tag "skipped_low_coverage" (gate applied to the RESOLVED source
+         cache, not the target date)
+
+    Returns (staging_path, source_tag). If staging was skipped, returns (None, source_tag).
     """
-    cov = _pit_13f_cache_coverage(date_str)
-    if cov is None:
+    # Resolve the PIT cache source (exact or nearest-prior, backward-only)
+    sys.path.insert(0, str(PROJECT_ROOT))
+    from common.pit_cache import resolve_pit_cache_dir
+
+    resolved_dir, source_tag = resolve_pit_cache_dir(PIT_13F_CACHE, date_str, PIT_STAGE_NEAREST_PRIOR_DAYS)
+    if resolved_dir is None:
         return None, "skipped_no_cache"
-    if cov < PIT_STAGE_MIN_COVERAGE_PCT:
+
+    # Apply the coverage gate to the RESOLVED cache date (not the target date).
+    cov = _pit_13f_cache_coverage_at(resolved_dir)
+    if cov is None or cov < PIT_STAGE_MIN_COVERAGE_PCT:
         return None, "skipped_low_coverage"
+
+    stage_kind = "pit_13f_staged_exact" if source_tag == "exact" else "pit_13f_staged_prior"
 
     staging = STAGING_ROOT / date_str
     staging.mkdir(parents=True, exist_ok=True)
@@ -177,6 +199,8 @@ def stage_data_dir_with_pit_institutional(
             str(universe_src),
             "--cusip-map",
             str(PROD_DATA / "cusip_static_map.json"),
+            "--nearest-prior-days",
+            str(PIT_STAGE_NEAREST_PRIOR_DAYS),
         ]
         result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
         if result.returncode != 0 or not builder_raw.exists():
@@ -218,7 +242,7 @@ def stage_data_dir_with_pit_institutional(
             continue
         _shadow(item, staging / item.name)
 
-    return staging, "pit_13f_staged"
+    return staging, stage_kind
 
 
 def run_one(
@@ -254,7 +278,8 @@ def run_one(
         stage_result = stage_tag
         if staged_dir is not None:
             data_dir = staged_dir
-            data_source = "pit_13f_staged"
+            # Phase 5: distinguish exact vs prior in the data_source label
+            data_source = stage_tag  # "pit_13f_staged_exact" or "pit_13f_staged_prior"
 
     institutional_source = _resolve_institutional_source(date_str, data_dir)
 

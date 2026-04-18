@@ -35,56 +35,6 @@ def _load_json(path: Path) -> Optional[Any]:
         return None
 
 
-def _resolve_cache_dir(
-    base: Path,
-    as_of_date: str,
-    nearest_prior_days: int,
-) -> tuple[Optional[Path], str]:
-    """Resolve the PIT 13F cache dir for a date with nearest-prior fallback.
-
-    Policy:
-      1. Exact-match at base/{as_of_date}/index.json wins if present.
-      2. Else, if nearest_prior_days > 0, scan back day-by-day up to that
-         many days looking for a cache dir whose index.json exists and has
-         the expected schema. First hit wins.
-      3. Else, return (None, "no_cache").
-
-    Returns (cache_dir, source_tag) where source_tag is one of:
-      - "exact"       : exact as_of_date match
-      - "prior_N"     : nearest-prior match (N = actual cache date, ISO)
-      - "no_cache"    : no usable cache within the lookback window
-    """
-    from datetime import date as _date
-    from datetime import timedelta as _td
-
-    exact = base / as_of_date
-    if (exact / "index.json").exists():
-        return exact, "exact"
-
-    if nearest_prior_days <= 0:
-        return None, "no_cache"
-
-    try:
-        target = _date.fromisoformat(as_of_date)
-    except (ValueError, TypeError):
-        return None, "no_cache"
-
-    for delta in range(1, nearest_prior_days + 1):
-        candidate_date = (target - _td(days=delta)).isoformat()
-        candidate_dir = base / candidate_date
-        candidate_idx = candidate_dir / "index.json"
-        if not candidate_idx.exists():
-            continue
-        idx = _load_json(candidate_idx)
-        if idx is None:
-            continue
-        if idx.get("schema_version") != "sec_13f_pit_index.v1":
-            continue
-        return candidate_dir, f"prior_{candidate_date}"
-
-    return None, "no_cache"
-
-
 def build_institutional_summary(
     as_of_date: str,
     universe_tickers: Set[str],
@@ -105,8 +55,10 @@ def build_institutional_summary(
     priors for other monthly dates, and only true quarter-end summaries
     participate in the delta walk-back.
     """
+    from common.pit_cache import resolve_pit_cache_dir
+
     base = cache_base_dir or (Path(__file__).parent / _DEFAULT_CACHE_REL)
-    date_dir, _cache_src = _resolve_cache_dir(base, as_of_date, nearest_prior_days)
+    date_dir, _cache_src = resolve_pit_cache_dir(base, as_of_date, nearest_prior_days)
     if date_dir is None:
         return None
     index_path = date_dir / "index.json"
