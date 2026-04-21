@@ -11,6 +11,17 @@ Monitors:
   3. Catalyst quality (book-avg event_type_score, hard-catalyst %, timing confidence)
   4. Ranker drift (pairwise vs clinical_50 overlap from shadow comparison)
 
+Operator Panel (audit-shaped, added 2026-04-20):
+  1. Live model provenance snapshot (deployed weights, model_variant, deployment_delta)
+  2. Top-60 diagnostic view (ranker cohort with selector + ranker signals)
+  3. Top-30 decision view (names ordered into the book)
+  4. Final portfolio / post-prune view (with explicit post_prune_removals count)
+
+The panel uses a minimal audit-shaped column contract per view — coinvest selects,
+financial penalizes safe names, inst_delta informs the IDZ prune, nothing decorative.
+JSON emits a self-contained `panel` block so a future data_explorer subcommand can
+render the same payload without re-deriving anything.
+
 Output:
     artifacts/production_monitor/{date}_monitor.json
     artifacts/production_monitor/{date}_monitor.md
@@ -227,6 +238,304 @@ def compute_ranker_drift(shadow: Optional[Dict]) -> Dict[str, Any]:
     }
 
 
+def load_ranker_provenance(
+    artifact_path: Path = REPO_ROOT / "production_data" / "ranker_v2_model.json",
+) -> Dict[str, Any]:
+    """Extract deployment provenance from the live ranker artifact.
+
+    Surfaces the capped Family C live-pilot state so operators can distinguish the
+    deployed vector from the trained minimal_v2 vector. Read-only; never mutates.
+    """
+    if not artifact_path.exists():
+        return {"status": "artifact_missing", "path": str(artifact_path)}
+    try:
+        artifact = json.loads(artifact_path.read_text(encoding="utf-8"))
+    except Exception as err:
+        return {"status": "artifact_unreadable", "error": str(err)}
+
+    prov = artifact.get("provenance", {}) or {}
+    model = artifact.get("model", {}) or {}
+    return {
+        "status": "ok",
+        "feature_set": artifact.get("config", {}).get("feature_set", "unspecified"),
+        "feature_names": model.get("feature_names", []),
+        "deployed_weights": model.get("weights", []),
+        "model_variant": prov.get("model_variant", "unspecified"),
+        "trained_basis": prov.get("trained_basis", "unspecified"),
+        "deployment_delta": prov.get("deployment_delta", ""),
+        "capped_weight_feature": prov.get("capped_weight_feature"),
+        "capped_weight_value": prov.get("capped_weight_value"),
+        "trained_weight_value": prov.get("trained_weight_value"),
+        "audit_note": artifact.get("audit_note", ""),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Operator Panel (audit-shaped)
+# ---------------------------------------------------------------------------
+#
+# Three tables, each bound to a minimal column contract. No decorative fields.
+# The live model is coinvest-driven selector + financial-score reversal ranker;
+# inst_delta_z is surfaced in Top-60 and Final Portfolio so the reader can see
+# the selector signal and the IDZ-prune feeder in one place.
+#
+# Column order IS the contract — downstream renderers should preserve it.
+
+PANEL_SCHEMA_VERSION = "production_panel.v1"
+
+TOP_60_COLUMNS = [
+    "ticker",
+    "ranker_v2_rank",
+    "actionable_rank",
+    "selector_score",
+    "coinvest_score_z",
+    "financial_score",
+    "inst_delta_z",
+    "ranker_v2_score",
+]
+
+TOP_30_COLUMNS = [
+    "ticker",
+    "actionable_rank",
+    "final_score",
+    "ranker_v2_score",
+    "coinvest_score_z",
+    "financial_score",
+    "catalyst_in_window",
+]
+
+FINAL_PORTFOLIO_COLUMNS = [
+    "ticker",
+    "actionable_rank",
+    "weight_pct",
+    "final_score",
+    "coinvest_score_z",
+    "financial_score",
+    "inst_delta_z",
+]
+
+
+def _project_row(row: Dict[str, Any], columns: List[str], overrides: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """Project a rankings/positions row onto a column contract.
+
+    Numeric fields are coerced to float; ranks to int; booleans to 0/1. Missing
+    values stay as None so downstream renderers can distinguish "zero" from
+    "absent". `overrides` wins over `row` for keys it defines (used to splice
+    in position-derived weight_pct onto a rankings row).
+    """
+    int_fields = {"ranker_v2_rank", "actionable_rank"}
+    bool_fields = {"catalyst_in_window"}
+    float_fields = {
+        "selector_score",
+        "coinvest_score_z",
+        "financial_score",
+        "inst_delta_z",
+        "ranker_v2_score",
+        "final_score",
+        "weight_pct",
+    }
+    out: Dict[str, Any] = {}
+    for col in columns:
+        val = (overrides or {}).get(col, row.get(col))
+        if val is None or val == "":
+            out[col] = None
+            continue
+        try:
+            if col in int_fields:
+                out[col] = int(val)
+            elif col in bool_fields:
+                out[col] = int(float(val)) == 1
+            elif col in float_fields:
+                out[col] = float(val)
+            else:
+                out[col] = str(val)
+        except (ValueError, TypeError):
+            out[col] = str(val)
+    return out
+
+
+def build_top_60_view(rankings: Dict[str, Dict]) -> Dict[str, Any]:
+    """Top-60 diagnostic view — the ranker cohort, sorted by ranker_v2_rank."""
+    cohort = []
+    for r in rankings.values():
+        rv2 = r.get("ranker_v2_rank", "")
+        if rv2 in ("", None):
+            continue
+        try:
+            rank_int = int(rv2)
+        except (ValueError, TypeError):
+            continue
+        cohort.append((rank_int, r))
+    cohort.sort(key=lambda x: x[0])
+    rows = [_project_row(r, TOP_60_COLUMNS) for _, r in cohort]
+    return {"columns": TOP_60_COLUMNS, "rows": rows, "n": len(rows)}
+
+
+def build_top_30_view(rankings: Dict[str, Dict]) -> Dict[str, Any]:
+    """Top-30 decision view — names ordered into the book by actionable_rank."""
+    book = []
+    for r in rankings.values():
+        ar = r.get("actionable_rank", "")
+        if ar in ("", None):
+            continue
+        try:
+            ar_int = int(ar)
+        except (ValueError, TypeError):
+            continue
+        if ar_int > 30:
+            continue
+        book.append((ar_int, r))
+    book.sort(key=lambda x: x[0])
+    rows = [_project_row(r, TOP_30_COLUMNS) for _, r in book]
+    return {"columns": TOP_30_COLUMNS, "rows": rows, "n": len(rows)}
+
+
+def build_final_portfolio_view(rankings: Dict[str, Dict], positions: List[Dict]) -> Dict[str, Any]:
+    """Final portfolio view — positions with explicit post_prune_removals count.
+
+    The top-30 decision is the pre-prune book. The post-prune book is whichever
+    names actually landed in positions. `post_prune_removals` is the count of
+    tickers present in the top-30 but absent from positions; it is 0 under the
+    current production (IDZ prune and risk layer C1-C7 are not currently
+    removing names). Surfacing the count explicitly means a regression to
+    nonzero is visible without a new monitor.
+    """
+    top_30_tickers = set()
+    for r in rankings.values():
+        ar = r.get("actionable_rank", "")
+        try:
+            if ar not in ("", None) and int(ar) <= 30:
+                top_30_tickers.add(r.get("ticker", ""))
+        except (ValueError, TypeError):
+            pass
+
+    position_tickers = {p.get("ticker", "") for p in positions}
+    removed = sorted(top_30_tickers - position_tickers)
+
+    rows = []
+    for p in positions:
+        ticker = p.get("ticker", "")
+        r = rankings.get(ticker, {})
+        overrides = {"weight_pct": p.get("weight_pct")}
+        rows.append(_project_row(r, FINAL_PORTFOLIO_COLUMNS, overrides=overrides))
+    rows.sort(key=lambda x: (x.get("actionable_rank") is None, x.get("actionable_rank") or 0))
+
+    return {
+        "columns": FINAL_PORTFOLIO_COLUMNS,
+        "rows": rows,
+        "n": len(rows),
+        "post_prune_removals": len(removed),
+        "removed_tickers": removed,
+    }
+
+
+def build_panel(
+    rankings: Dict[str, Dict],
+    positions: List[Dict],
+    ranker_provenance: Dict[str, Any],
+    as_of_date: str,
+) -> Dict[str, Any]:
+    """Assemble the operator panel — 4 sections, self-contained for re-rendering."""
+    return {
+        "schema": PANEL_SCHEMA_VERSION,
+        "as_of_date": as_of_date,
+        "model_provenance": ranker_provenance,
+        "top_60": build_top_60_view(rankings),
+        "top_30": build_top_30_view(rankings),
+        "final_portfolio": build_final_portfolio_view(rankings, positions),
+    }
+
+
+def _fmt_cell(val: Any) -> str:
+    """Render a panel cell for markdown. Floats → 4 dp; bools → yes/no; None → `—`."""
+    if val is None:
+        return "—"
+    if isinstance(val, bool):
+        return "yes" if val else "no"
+    if isinstance(val, float):
+        return f"{val:+.4f}" if val != 0 else "0.0000"
+    return str(val)
+
+
+def _format_panel_table(view: Dict[str, Any]) -> List[str]:
+    columns = view.get("columns", [])
+    rows = view.get("rows", [])
+    if not columns:
+        return ["(no data)"]
+    lines = ["| " + " | ".join(columns) + " |", "|" + "|".join(["---"] * len(columns)) + "|"]
+    for row in rows:
+        lines.append("| " + " | ".join(_fmt_cell(row.get(c)) for c in columns) + " |")
+    return lines
+
+
+def format_panel_md(panel: Dict[str, Any]) -> List[str]:
+    """Render the 4-section operator panel as markdown."""
+    lines: List[str] = []
+    lines.append("## Operator Panel")
+    lines.append("")
+    lines.append(f"*Panel schema: `{panel.get('schema', '?')}`*")
+    lines.append("")
+
+    # Section 1 — Live Model Provenance
+    lines.append("### 1. Live Model Provenance")
+    lines.append("")
+    prov = panel.get("model_provenance", {}) or {}
+    if prov.get("status") == "ok":
+        feats = prov.get("feature_names", [])
+        wts = prov.get("deployed_weights", [])
+        lines.append("| Field | Value |")
+        lines.append("|---|---|")
+        lines.append(f"| feature_set | `{prov.get('feature_set', '?')}` |")
+        lines.append(f"| model_variant | `{prov.get('model_variant', '?')}` |")
+        lines.append(f"| trained_basis | `{prov.get('trained_basis', '?')}` |")
+        if feats and wts and len(feats) == len(wts):
+            pairs = ", ".join(f"`{f}={w:+.4f}`" for f, w in zip(feats, wts))
+            lines.append(f"| deployed weights | {pairs} |")
+        if prov.get("deployment_delta"):
+            lines.append(f"| deployment_delta | {prov['deployment_delta']} |")
+        lines.append("")
+        lines.append("*Live artifact is authoritative: `production_data/ranker_v2_model.json` → `provenance`.*")
+    else:
+        lines.append(f"*Provenance unavailable: `{prov.get('status', '?')}`*")
+    lines.append("")
+
+    # Section 2 — Top-60 Diagnostic
+    top_60 = panel.get("top_60", {}) or {}
+    lines.append(f"### 2. Top-60 Diagnostic (n={top_60.get('n', 0)})")
+    lines.append("")
+    lines.append(
+        "*Ranker cohort — selector signals (coinvest, inst_delta) + ranker inputs (coinvest, financial_score).*"
+    )
+    lines.append("")
+    lines.extend(_format_panel_table(top_60))
+    lines.append("")
+
+    # Section 3 — Top-30 Decision
+    top_30 = panel.get("top_30", {}) or {}
+    lines.append(f"### 3. Top-30 Decision (n={top_30.get('n', 0)})")
+    lines.append("")
+    lines.append("*Pre-prune book, ordered by `actionable_rank`.*")
+    lines.append("")
+    lines.extend(_format_panel_table(top_30))
+    lines.append("")
+
+    # Section 4 — Final Portfolio (post-prune)
+    fp = panel.get("final_portfolio", {}) or {}
+    removed = fp.get("post_prune_removals", 0)
+    removed_tickers = fp.get("removed_tickers", [])
+    lines.append(f"### 4. Final Portfolio — post_prune_removals = {removed} (n={fp.get('n', 0)})")
+    lines.append("")
+    if removed:
+        lines.append(f"*Pruned from top-30: {', '.join(removed_tickers)}*")
+    else:
+        lines.append("*No names pruned — final portfolio equals top-30 decision.*")
+    lines.append("")
+    lines.extend(_format_panel_table(fp))
+    lines.append("")
+
+    return lines
+
+
 # ---------------------------------------------------------------------------
 # Alert classification
 # ---------------------------------------------------------------------------
@@ -338,6 +647,8 @@ def build_production_monitor(
     catalyst_quality = compute_catalyst_quality(rankings, today_tickers)
     ranker_shadow = load_ranker_shadow(as_of_date, artifacts_dir, snapshots_dir)
     ranker_drift = compute_ranker_drift(ranker_shadow)
+    ranker_provenance = load_ranker_provenance()
+    panel = build_panel(rankings, today_positions, ranker_provenance, as_of_date)
 
     # Alerts
     alerts = classify_alerts(overlap, hhi, ranker_drift)
@@ -363,6 +674,8 @@ def build_production_monitor(
         "hhi": hhi,
         "catalyst_quality": catalyst_quality,
         "ranker_drift": ranker_drift,
+        "ranker_provenance": ranker_provenance,
+        "panel": panel,
         "alerts": alerts,
     }
 
@@ -443,6 +756,28 @@ def format_monitor_md(d: Dict[str, Any]) -> str:
         if rd.get("clinical_only"):
             lines.append(f"- Clinical-only: {', '.join(rd['clinical_only'])}")
         lines.append("")
+
+    # Ranker provenance (deployed artifact vs trained basis)
+    rp = d.get("ranker_provenance", {})
+    if rp.get("status") == "ok":
+        lines.append("## Ranker Provenance (live artifact)")
+        lines.append("")
+        lines.append(f"- feature_set: `{rp.get('feature_set', '?')}`")
+        lines.append(f"- model_variant: `{rp.get('model_variant', '?')}`")
+        lines.append(f"- trained_basis: `{rp.get('trained_basis', '?')}`")
+        feats = rp.get("feature_names", [])
+        wts = rp.get("deployed_weights", [])
+        if feats and wts and len(feats) == len(wts):
+            pairs = ", ".join(f"{f}={w:+.4f}" for f, w in zip(feats, wts))
+            lines.append(f"- deployed weights: {pairs}")
+        if rp.get("deployment_delta"):
+            lines.append(f"- deployment_delta: {rp['deployment_delta']}")
+        lines.append("")
+
+    # Operator panel (4 audit-shaped sections)
+    panel = d.get("panel")
+    if panel:
+        lines.extend(format_panel_md(panel))
 
     # Alerts
     alerts = d.get("alerts", [])

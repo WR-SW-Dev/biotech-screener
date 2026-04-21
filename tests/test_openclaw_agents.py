@@ -55,7 +55,9 @@ INCOMPLETE_AGENTS = [
     "data_auditor",
     "event_analyst",
     "ic_health_monitor",
+    "intraday_mover_watch",
     "price_action_watch",
+    "production_qa",
     "universe_maintenance",
 ]
 # Retired agent workspaces — merged into other agents, dirs kept for history.

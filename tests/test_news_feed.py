@@ -60,6 +60,23 @@ class TestNewsEventSchema:
         e = _make_event(needs_review=True)
         assert not e.is_clean_for_calibration()
 
+    def test_ticker_collision_not_clean(self):
+        """M1: collision-flagged items (hard or soft) must not enter calibration."""
+        e = _make_event(ticker_collision_flag=True, collision_severity="soft")
+        assert not e.is_clean_for_calibration()
+
+    def test_ticker_collision_hard_not_clean(self):
+        e = _make_event(ticker_collision_flag=True, collision_severity="hard")
+        assert not e.is_clean_for_calibration()
+
+    def test_collision_fields_default_backward_compat(self):
+        """Records written before CH-4/P2 landed lack these fields; ensure
+        Pydantic defaults preserve prior calibration eligibility."""
+        e = _make_event()
+        assert e.ticker_collision_flag is False
+        assert e.collision_severity == "none"
+        assert e.is_clean_for_calibration()
+
     def test_official_source(self):
         e = _make_event(primary_source_kind=SourceKind.COMPANY_IR)
         assert e.is_official_source()

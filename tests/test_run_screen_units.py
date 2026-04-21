@@ -533,6 +533,8 @@ class TestSnapshotPhaseHelpers:
         assert rows[1]["has_commercial_quality"] == 1
 
     def test_finalize_priced_move(self):
+        """priced_move_pct is now percentage points (straddle × 100) to match
+        EES base-rate tables and conditional model units."""
         from run_screen import _finalize_priced_move
 
         rows = [
@@ -541,6 +543,6 @@ class TestSnapshotPhaseHelpers:
             {"ticker": "C", "straddle_price": "", "priced_move_pct": ""},
         ]
         _finalize_priced_move(rows)
-        assert rows[0]["priced_move_pct"] == "0.25"  # filled from straddle
-        assert rows[1]["priced_move_pct"] == "0.30"  # preserved existing
+        assert rows[0]["priced_move_pct"] == 25.0  # straddle 0.25 → 25.0 pct pts
+        assert rows[1]["priced_move_pct"] == "0.30"  # preserved existing (not overwritten)
         assert rows[2]["priced_move_pct"] == ""  # no straddle, stays empty

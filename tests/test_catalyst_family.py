@@ -444,18 +444,22 @@ class TestFindNearestCatalystEvent:
         assert _find_nearest_catalyst_event(m3, "FAKE", as_of_date="2026-03-13") is None
 
     def test_tier0_does_not_fire_when_next_date_exists(self):
-        """Tier 0 only activates when next_catalyst_date is null."""
+        """Tier 0 only activates when next_catalyst_date is null.
+
+        Both events are T3 (CT_PRIMARY_COMPLETION / CT_STUDY_COMPLETION) so
+        tier P (T1/T2 priority override) does not fire; tier 1 exact-date
+        match must win over tier 0's earliest-future fallback.
+        """
         from run_screen import _find_nearest_catalyst_event
 
         m3 = _make_m3(
             "ACME",
             "2026-06-01",
             events=[
-                {"event_date": "2026-04-01", "event_type": "DATA_READOUT", "source": "CTGOV_CALENDAR"},
+                {"event_date": "2026-04-01", "event_type": "CT_STUDY_COMPLETION", "source": "CTGOV_CALENDAR"},
                 {"event_date": "2026-06-01", "event_type": "CT_PRIMARY_COMPLETION", "source": "CTGOV_CALENDAR"},
             ],
         )
-        # Should use tier 1 (exact match), not tier 0
         ev = _find_nearest_catalyst_event(m3, "ACME", as_of_date="2026-03-13")
         assert ev["event_date"] == "2026-06-01"
 

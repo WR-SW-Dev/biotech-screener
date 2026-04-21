@@ -529,23 +529,25 @@ def check_data_auditor(dt: date) -> CheckResult:
 
 
 def check_production_qa(dt: date) -> CheckResult:
-    """Verify production_qa agent ran and produced a report."""
+    """Verify production_qa ran and produced a report (schema: production_qa.v1)."""
     ds = as_of_date(dt)
-    anomalies = []
+    anomalies: list[str] = []
+    verdict = "UNKNOWN"
 
-    # Check for today's report artifact
-    report = REPO_ROOT / "artifacts" / "production_qa" / f"report_{ds}.json"
+    report = REPO_ROOT / "artifacts" / "production_qa" / f"{ds}_report.json"
     if not report.exists():
         return CheckResult("production_qa", "STALE", f"No production_qa report for {ds}")
 
     try:
         data = json.loads(report.read_text())
         verdict = data.get("verdict", "UNKNOWN")
-        n_findings = len(data.get("findings", []))
-        if verdict == "FAIL":
-            anomalies.append(f"VERDICT_FAIL: {n_findings} findings")
-        elif verdict == "ACTION REQUIRED":
-            anomalies.append(f"ACTION_REQUIRED: {n_findings} findings")
+        failing = [c.get("check", "?") for c in data.get("checks", []) if c.get("status") == "FAIL"]
+        if verdict == "RED":
+            names = ", ".join(failing) if failing else "no checks named"
+            anomalies.append(f"VERDICT_RED: {len(failing)} failing ({names})")
+        elif verdict == "YELLOW":
+            names = ", ".join(failing) if failing else "no checks named"
+            anomalies.append(f"VERDICT_YELLOW: {len(failing)} failing ({names})")
     except (json.JSONDecodeError, KeyError):
         anomalies.append("REPORT_CORRUPT: cannot parse production_qa report")
 

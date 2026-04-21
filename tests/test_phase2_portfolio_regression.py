@@ -39,19 +39,22 @@ ARCHIVE_PATH = ARCHIVE_DIR / f"{SNAPSHOT_DATE}.tar.gz"
 TIER_FILTER = ["A", "B"]
 TOP_K = 20
 
-# Pinned top-10 tickers in exact actionable order
-# Pinned 2026-03-07 for v1.9.0 (institutional sort candidate)
+# Pinned top-10 tickers in exact actionable order.
+# Ticker order + tiers held constant since original 2026-03-07 pin.
+# Size bands + weights re-pinned 2026-04-20 after biomarker neutralization
+# (2026-04-16) + clinical stack v2 shifted LYEL S→M and IVVD XS→S, and
+# weight-distribution became more uniform within bands (2.78 / 5.56).
 EXPECTED_TOP_10 = [
-    {"ticker": "VTYX", "rank": 1, "tier": "B", "band": "S", "weight": 3.48},
-    {"ticker": "VOR", "rank": 2, "tier": "B", "band": "S", "weight": 3.48},
-    {"ticker": "TSHA", "rank": 3, "tier": "B", "band": "M", "weight": 6.97},
-    {"ticker": "SION", "rank": 4, "tier": "B", "band": "S", "weight": 3.48},
-    {"ticker": "LYEL", "rank": 5, "tier": "B", "band": "S", "weight": 2.87},
-    {"ticker": "IVVD", "rank": 6, "tier": "B", "band": "XS", "weight": 1.43},
-    {"ticker": "DNTH", "rank": 7, "tier": "B", "band": "M", "weight": 6.97},
-    {"ticker": "CNTA", "rank": 8, "tier": "B", "band": "M", "weight": 6.97},
-    {"ticker": "NUVL", "rank": 9, "tier": "B", "band": "M", "weight": 6.97},
-    {"ticker": "ACLX", "rank": 10, "tier": "B", "band": "M", "weight": 8.20},
+    {"ticker": "VTYX", "rank": 1, "tier": "B", "band": "S", "weight": 2.78},
+    {"ticker": "VOR", "rank": 2, "tier": "B", "band": "S", "weight": 2.78},
+    {"ticker": "TSHA", "rank": 3, "tier": "B", "band": "M", "weight": 5.56},
+    {"ticker": "SION", "rank": 4, "tier": "B", "band": "S", "weight": 2.78},
+    {"ticker": "LYEL", "rank": 5, "tier": "B", "band": "M", "weight": 5.56},
+    {"ticker": "IVVD", "rank": 6, "tier": "B", "band": "S", "weight": 2.78},
+    {"ticker": "DNTH", "rank": 7, "tier": "B", "band": "M", "weight": 5.56},
+    {"ticker": "CNTA", "rank": 8, "tier": "B", "band": "M", "weight": 5.56},
+    {"ticker": "NUVL", "rank": 9, "tier": "B", "band": "M", "weight": 5.56},
+    {"ticker": "ACLX", "rank": 10, "tier": "B", "band": "M", "weight": 5.56},
 ]
 
 EXPECTED_N_POSITIONS = 20

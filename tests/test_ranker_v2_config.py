@@ -81,3 +81,35 @@ class TestModelWeightDirections:
         model = json.loads(Path("production_data/ranker_v2_model.json").read_text())
         fin_idx = model["model"]["feature_names"].index("financial_score")
         assert model["model"]["weights"][fin_idx] < 0
+
+
+class TestDeployedProvenance:
+    """Verify the live artifact carries deployment provenance (Family C live pilot).
+
+    The deployed ranker_v2_model.json is the capped live-pilot vector, not the raw
+    trained minimal_v2 vector. Operators and downstream tooling rely on the
+    provenance block to distinguish the two; these tests pin that invariant.
+    """
+
+    def _artifact(self):
+        return json.loads(Path("production_data/ranker_v2_model.json").read_text())
+
+    def test_provenance_block_present(self):
+        assert "provenance" in self._artifact()
+
+    def test_model_variant_is_deployed_live_pilot(self):
+        assert self._artifact()["provenance"]["model_variant"] == "deployed_live_pilot"
+
+    def test_trained_basis_is_minimal_v2(self):
+        assert self._artifact()["provenance"]["trained_basis"] == "minimal_v2"
+
+    def test_capped_feature_is_coinvest(self):
+        assert self._artifact()["provenance"]["capped_weight_feature"] == "coinvest_score_z"
+
+    def test_coinvest_deployed_weight_below_trained(self):
+        art = self._artifact()
+        prov = art["provenance"]
+        coinvest_idx = art["model"]["feature_names"].index("coinvest_score_z")
+        deployed = art["model"]["weights"][coinvest_idx]
+        assert deployed == prov["capped_weight_value"]
+        assert prov["capped_weight_value"] < prov["trained_weight_value"]

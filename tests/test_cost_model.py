@@ -1,4 +1,5 @@
 """Tests for backtest/cost_model.py — deterministic transaction cost model."""
+
 from __future__ import annotations
 
 import sys
@@ -10,9 +11,9 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from backtest.cost_model import (
+    DEFAULT_SCHEDULE,
     CostEstimate,
     CostSchedule,
-    DEFAULT_SCHEDULE,
     compute_cost_telemetry,
     estimate_trade_cost,
 )
@@ -66,18 +67,21 @@ class TestEdgeCases:
 class TestSpreadSchedule:
     """Verify each ADV bucket maps to the correct spread."""
 
-    @pytest.mark.parametrize("adv, expected_bps", [
-        (15_000_000, 3),   # >= $10M
-        (10_000_000, 3),   # exactly $10M
-        (7_000_000, 5),    # >= $5M
-        (5_000_000, 5),    # exactly $5M
-        (2_000_000, 10),   # >= $1M
-        (1_000_000, 10),   # exactly $1M
-        (750_000, 18),     # >= $500K
-        (500_000, 18),     # exactly $500K
-        (200_000, 25),     # < $500K
-        (1, 25),           # minimal ADV
-    ])
+    @pytest.mark.parametrize(
+        "adv, expected_bps",
+        [
+            (15_000_000, 3),  # >= $10M
+            (10_000_000, 3),  # exactly $10M
+            (7_000_000, 5),  # >= $5M
+            (5_000_000, 5),  # exactly $5M
+            (2_000_000, 10),  # >= $1M
+            (1_000_000, 10),  # exactly $1M
+            (750_000, 18),  # >= $500K
+            (500_000, 18),  # exactly $500K
+            (200_000, 25),  # < $500K
+            (1, 25),  # minimal ADV
+        ],
+    )
     def test_spread_schedule_boundaries(self, adv, expected_bps):
         c = estimate_trade_cost(5.0, adv)
         assert c.spread_bps == expected_bps
@@ -112,11 +116,18 @@ class TestScheduleId:
 
 
 class TestCapDispersion:
-    """Cap degeneracy: low cap compresses costs, high cap reveals dispersion."""
+    """Cap degeneracy: low cap compresses costs, high cap reveals dispersion.
+
+    Both scenarios pin ``aum_dollars=50_000_000`` to exercise the cap mechanic
+    itself rather than the live $50,000 operating point where impact never
+    approaches the 200 bps cap. These tests validate CostSchedule cap behavior,
+    not strategy-level cost; the strategy's actual costs are validated via
+    integration tests and sentinel telemetry.
+    """
 
     def test_high_cap_reveals_dispersion(self):
         """Two ADVs ($20M vs $500K) at 5% weight with high cap → costs diverge > 100 bps."""
-        high_cap = CostSchedule(impact_cap_bps=2000.0)
+        high_cap = CostSchedule(impact_cap_bps=2000.0, aum_dollars=50_000_000)
         c_liquid = estimate_trade_cost(5.0, 20_000_000, high_cap)
         c_illiquid = estimate_trade_cost(5.0, 500_000, high_cap)
         gap = c_illiquid.round_trip_bps - c_liquid.round_trip_bps
@@ -124,7 +135,7 @@ class TestCapDispersion:
 
     def test_low_cap_compresses_costs(self):
         """Same pair with cap=200 → both hit cap, costs converge."""
-        low_cap = CostSchedule(impact_cap_bps=200.0)
+        low_cap = CostSchedule(impact_cap_bps=200.0, aum_dollars=50_000_000)
         c_liquid = estimate_trade_cost(5.0, 20_000_000, low_cap)
         c_illiquid = estimate_trade_cost(5.0, 500_000, low_cap)
         # Both should be cap-bound on impact — gap comes only from spread difference
@@ -140,12 +151,30 @@ class TestCostTelemetry:
         """Mixed estimates: some cap-binding, some not."""
         sched = CostSchedule(impact_cap_bps=200.0)
         estimates = [
-            CostEstimate(spread_bps=5, impact_bps=200.0, one_way_bps=205,
-                         round_trip_bps=410, participation_pct=10.0, adv_dollars=1e6),
-            CostEstimate(spread_bps=3, impact_bps=50.0, one_way_bps=53,
-                         round_trip_bps=106, participation_pct=2.0, adv_dollars=5e6),
-            CostEstimate(spread_bps=10, impact_bps=199.99, one_way_bps=209.99,
-                         round_trip_bps=419.98, participation_pct=8.0, adv_dollars=2e6),
+            CostEstimate(
+                spread_bps=5,
+                impact_bps=200.0,
+                one_way_bps=205,
+                round_trip_bps=410,
+                participation_pct=10.0,
+                adv_dollars=1e6,
+            ),
+            CostEstimate(
+                spread_bps=3,
+                impact_bps=50.0,
+                one_way_bps=53,
+                round_trip_bps=106,
+                participation_pct=2.0,
+                adv_dollars=5e6,
+            ),
+            CostEstimate(
+                spread_bps=10,
+                impact_bps=199.99,
+                one_way_bps=209.99,
+                round_trip_bps=419.98,
+                participation_pct=8.0,
+                adv_dollars=2e6,
+            ),
         ]
         telem = compute_cost_telemetry(n_positions=20, estimates=estimates, schedule=sched)
         assert telem["n_costed"] == 3

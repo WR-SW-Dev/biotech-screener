@@ -138,9 +138,27 @@ class NewsEvent(BaseModel):
     needs_review: bool = Field(default=False)
     review_reason_codes: List[ReviewReason] = Field(default_factory=list)
 
+    # Ticker-collision provenance (added 2026-04-18 alongside CH-4 + P2 in
+    # tools/classify_press_releases.py). `ticker_collision_flag=True` marks
+    # items whose headline appears to be about a company other than the
+    # tagged ticker. `collision_severity`:
+    #   - "none": not a collision
+    #   - "soft": CH-4 caught it via tightened biotech-rescue rule; keep
+    #             visible in escalation pool for review, do not calibrate
+    #   - "hard": no biotech signal at all; silent drop
+    # Both fields default backward-compatibly — records produced before these
+    # fields were added decode to `False` / `"none"` and preserve prior behavior.
+    ticker_collision_flag: bool = Field(default=False)
+    collision_severity: str = Field(default="none")
+
     def is_clean_for_calibration(self) -> bool:
         """Can this event be used for CRT/DEM calibration?"""
-        return not self.informational_only and not self.exogenous_to_primary_catalyst and not self.needs_review
+        return (
+            not self.informational_only
+            and not self.exogenous_to_primary_catalyst
+            and not self.needs_review
+            and not self.ticker_collision_flag
+        )
 
     def is_official_source(self) -> bool:
         return self.primary_source_kind in (

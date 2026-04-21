@@ -6,8 +6,18 @@ Three model variants:
   B. Pointwise direct score model (logistic regression on absolute return)
   C. Pairwise logistic / Bradley-Terry model (primary candidate)
 
-Operates ONLY within a selector-approved cohort (top-K by actionable_rank).
-Produces a rank score per name; does NOT touch production output.
+Operates within a selector-approved cohort (top-K by actionable_rank). Produces a
+rank score per name.
+
+Production status (2026-04-05 and later):
+  - Variant C (pairwise logistic) with feature_set = "minimal_v2" is the LIVE ranker
+    wired into run_screen.py under ranker_mode="pairwise_minimal".
+  - The deployed artifact at `production_data/ranker_v2_model.json` is the
+    **capped Family C live-pilot vector** (model_variant = deployed_live_pilot).
+    The deployed `coinvest_score_z` weight is capped (+0.02) below the trained
+    minimal_v2 weight (+0.0613); `financial_score` weight is unchanged from trained.
+    Trained vector ≠ deployed vector. See the artifact's `provenance` block for
+    the authoritative live weights.
 
 Stdlib-only. No external dependencies.
 """
@@ -123,7 +133,11 @@ FEATURES_MINIMAL = (
     FeatureSpec("financial_score"),
 )
 
-# 2-feature minimal set (promoted 2026-04-05, scoring audit)
+# 2-feature minimal set (promoted 2026-04-05, scoring audit).
+# Basis for the live production ranker (feature_set="minimal_v2"). NB: the deployed
+# ranker_v2_model.json artifact is the CAPPED Family C live-pilot vector; its
+# coinvest_score_z weight (+0.02) is lower than the trained minimal_v2 weight
+# (+0.0613). financial_score weight is unchanged. Trained vector ≠ deployed vector.
 FEATURES_MINIMAL_V2 = (
     FeatureSpec("coinvest_score_z"),
     FeatureSpec("financial_score"),

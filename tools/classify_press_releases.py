@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import html
 import json
 import logging
 import os
@@ -433,8 +434,12 @@ def _classify_locally(headline: str) -> Dict[str, Any]:
 
 
 def _is_noise(headline: str) -> bool:
-    """Detect non-company PR noise from GlobeNewswire (lawsuits, analyst notes, market reports)."""
-    hl = headline.lower()
+    """Detect non-company PR noise from GlobeNewswire (lawsuits, analyst notes, market reports).
+
+    CH-1: decode HTML entities before matching so patterns like "levi & korsinsky"
+    catch headlines that store the ampersand as `&amp;`.
+    """
+    hl = html.unescape(headline).lower()
     noise_patterns = [
         # Legal noise
         "investor alert",
@@ -506,6 +511,12 @@ def _is_noise(headline: str) -> bool:
         "upgrades to",
         "value chain analysis",
         "supply chain analysis",
+        # CH-5 additions (2026-04-18) — evidence-driven from fingpt_pilot seed audit
+        "halper sadeh",
+        "investment opportunities in",
+        "billion valuation by 20",
+        "million valuation by 20",
+        "clearance of ai-powered",
     ]
     return any(p in hl for p in noise_patterns)
 
@@ -559,11 +570,22 @@ def _load_company_names() -> Dict[str, List[str]]:
         company = entry.get("company", "")
         if not ticker or not company:
             continue
-        words = [
-            w.lower().rstrip(".,")
-            for w in company.replace(",", " ").split()
-            if len(w.rstrip(".,")) > 3 and w.lower().rstrip(".,") not in stop_words
-        ]
+        tokens = company.replace(",", " ").split()
+        # CH-3: always retain the first non-stop-word token regardless of length
+        # (e.g., "SAB" from "SAB Biotherapeutics"). Other tokens still require > 3 chars.
+        # This prevents short discriminative prefixes from being dropped when
+        # longer tokens like "Biotherapeutics" survive the stop-word filter.
+        words: List[str] = []
+        first_kept = False
+        for w in tokens:
+            clean = w.lower().rstrip(".,")
+            if not clean or clean in stop_words:
+                continue
+            if not first_kept:
+                words.append(clean)
+                first_kept = True
+            elif len(clean) > 3:
+                words.append(clean)
         if words:
             result[ticker] = words
     return result
@@ -579,15 +601,21 @@ def _is_ticker_collision(headline: str, ticker: str, company_names: Dict[str, Li
 
     Conservative: prefers false negatives (letting a collision through) over
     false positives (suppressing a real company event).
-    """
-    words = company_names.get(ticker)
-    if not words:
-        return False  # no name to check against — assume OK
 
-    hl_lower = headline.lower()
+    CH-1: HTML entities decoded before matching.
+    CH-2: missing registry entry no longer short-circuits to "no collision"; the
+    ticker-match and biotech-rescue checks still run so that headlines with neither
+    the ticker symbol nor biotech context get flagged.
+    """
+    # CH-2: empty list (rather than None short-circuit) — continues through
+    # the ticker-word + biotech-rescue checks below.
+    words = company_names.get(ticker) or []
+
+    # CH-1: decode HTML entities (`&amp;`, `&#174;`, `&#231;`) before lowercasing.
+    hl_lower = html.unescape(headline).lower()
 
     # Check 1: any company name word in headline
-    if any(w in hl_lower for w in words):
+    if words and any(w in hl_lower for w in words):
         return False
 
     # Check 2: ticker symbol appears as a standalone word (not substring of another word)
@@ -598,26 +626,43 @@ def _is_ticker_collision(headline: str, ticker: str, company_names: Dict[str, Li
     if _re.search(r"\b" + _re.escape(ticker_lower) + r"\b", hl_lower):
         return False
 
-    # Check 3 (Spec 053): No company name, no ticker — assume collision UNLESS
-    # headline contains biotech-relevant terms suggesting it really is about
-    # a biotech company with unusual branding.
-    biotech_indicators = [
+    # Check 3 (Spec 053, tightened by CH-4 2026-04-18): No company name, no ticker
+    # — assume collision UNLESS headline contains ≥2 discriminative biotech terms.
+    # Previously a single ≥1 match rescued the item, but generic tokens like
+    # "approved", "drug", "patient", "regulatory" fire on non-biotech contexts
+    # (device-SaaS clearances, banking "patient services", generic regulatory
+    # filings), yielding false rescues. CH-4 removes those four generic tokens
+    # from the match set and requires ≥2 distinct matches.
+    matches = _count_biotech_indicator_matches(hl_lower)
+    if matches >= _BIOTECH_RESCUE_MIN_MATCHES:
+        return False  # likely a real biotech PR with unusual branding
+
+    # No company name, no ticker, <2 biotech terms — likely a collision
+    return True
+
+
+# ---------------------------------------------------------------------------
+# CH-4: biotech-rescue indicator set + match count
+# ---------------------------------------------------------------------------
+
+# Indicators that meaningfully signal a biotech PR. Generic tokens
+# ("approved", "approval", "drug", "patient", "regulatory") were removed in CH-4
+# because they match non-biotech contexts often enough to create false rescues.
+# All entries must be lowercase; matching is substring against `hl_lower`.
+_BIOTECH_RESCUE_INDICATORS = frozenset(
+    [
         "phase",
         "trial",
         "fda",
         "clinical",
-        "drug",
         "therapy",
         "therapeutic",
         "oncology",
-        "patient",
         "dose",
         "efficacy",
         "endpoint",
         "enrollment",
         "pipeline",
-        "regulatory",
-        "approval",
         "nda",
         "bla",
         "biologic",
@@ -635,16 +680,36 @@ def _is_ticker_collision(headline: str, ticker: str, company_names: Dict[str, Li
         "ema",
         "preclinical",
         "ind ",
-        "sNDA",
-        "sBLA",
+        "snda",
+        "sbla",
         "designation",
         "breakthrough",
     ]
-    if any(ind in hl_lower for ind in biotech_indicators):
-        return False  # likely a real biotech PR with unusual branding
+)
 
-    # No company name, no ticker, no biotech terms — likely a collision
-    return True
+# Minimum number of distinct discriminative indicators that must appear in
+# a headline for the biotech-rescue to fire. Raised from 1 to 2 in CH-4.
+_BIOTECH_RESCUE_MIN_MATCHES = 2
+
+# CH-4 shadow: counterfactual rule kept for analysis-only comparison.
+# Do NOT use in production — this is the legacy behavior (any single match
+# rescues) applied to the discriminative indicator set.
+_BIOTECH_RESCUE_COUNTERFACTUAL_MIN = 1
+
+
+def _count_biotech_indicator_matches(hl_lower: str) -> int:
+    """Count distinct discriminative biotech indicators present in the headline.
+
+    Used by `_is_ticker_collision()` in production (threshold = 2) and by
+    shadow-logging callers (counterfactual threshold = 1 for comparison).
+    """
+    return sum(1 for ind in _BIOTECH_RESCUE_INDICATORS if ind in hl_lower)
+
+
+def _collision_counterfactual_would_rescue(hl_lower: str) -> bool:
+    """CH-4 shadow-logging hook: would the counterfactual ≥1-match rule rescue
+    this headline from being flagged as a collision? Analysis only."""
+    return _count_biotech_indicator_matches(hl_lower) >= _BIOTECH_RESCUE_COUNTERFACTUAL_MIN
 
 
 def classify_releases(
@@ -673,6 +738,7 @@ def classify_releases(
     classified = []
     noise_skipped = 0
     collision_flagged = 0
+    collision_soft_flagged = 0
     grok_calls = 0
 
     for rec in raw_records:
@@ -694,14 +760,30 @@ def classify_releases(
         # Tier 2: local classification
         result = _classify_locally(headline)
 
-        # If collision detected, suppress to informational and reduce confidence
+        # If collision detected, route by severity (P2, 2026-04-18):
+        # - HARD collision (match_count == 0): suppress to informational (silent drop).
+        # - SOFT collision (match_count >= 1, only flagged because CH-4 requires >=2):
+        #   flag but do NOT suppress — stays visible in the escalation pool so Grok /
+        #   human review can adjudicate. Prevents CH-4 from silencing real biotech
+        #   edge cases like licensee-milestone approvals or single-term efficacy PRs.
         if is_collision and not result.get("informational_only"):
             result["ticker_collision_flag"] = True
-            result["confidence"] = min(result.get("confidence", 0.3), 0.2)
-            result["informational_only"] = True
-            result["informational_reason"] = f"ticker_collision: headline does not match {ticker} company name"
+            hl_lower = html.unescape(headline).lower()
+            biotech_match_count = _count_biotech_indicator_matches(hl_lower)
+            if biotech_match_count >= _BIOTECH_RESCUE_COUNTERFACTUAL_MIN:
+                # Soft: partial biotech signal. Cap confidence but leave visible.
+                result["collision_severity"] = "soft"
+                result["confidence"] = min(result.get("confidence", 0.3), 0.4)
+                collision_soft_flagged += 1
+            else:
+                # Hard: no biotech signal. Silent-drop as before.
+                result["collision_severity"] = "hard"
+                result["confidence"] = min(result.get("confidence", 0.3), 0.2)
+                result["informational_only"] = True
+                result["informational_reason"] = f"ticker_collision: headline does not match {ticker} company name"
         else:
             result["ticker_collision_flag"] = False
+            result["collision_severity"] = "none"
 
         # Tier 3: escalate to Grok if ambiguous and Grok is available
         if client and result.get("needs_review") and not result.get("informational_only"):
@@ -744,7 +826,12 @@ def classify_releases(
     if noise_skipped:
         logger.info("Noise filtered: %d records (lawsuits, stock alerts)", noise_skipped)
     if collision_flagged:
-        logger.info("Ticker collisions flagged: %d records (headline ≠ company name)", collision_flagged)
+        logger.info(
+            "Ticker collisions flagged: %d records (%d soft → escalate, %d hard → silent drop)",
+            collision_flagged,
+            collision_soft_flagged,
+            collision_flagged - collision_soft_flagged,
+        )
     if grok_calls:
         logger.info("Grok API calls: %d (ambiguous records only)", grok_calls)
 

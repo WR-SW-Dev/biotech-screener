@@ -5,6 +5,15 @@
 **Depends on**: Spec 050 (selector/ranker engine), Spec 049 (signal framework)  
 **Replaces**: Nothing (additive research branch)
 
+> **Amendment (2026-04-20, deployment-clarity pass):** This spec captures the
+> original shadow research. It is superseded in production by the 2-feature
+> `minimal_v2` promotion on 2026-04-05 and the subsequent Family C live-pilot
+> cap. The live deployed artifact (`production_data/ranker_v2_model.json`)
+> is the **capped Family C live-pilot vector** (`model_variant =
+> deployed_live_pilot`, `trained_basis = minimal_v2`, `deployment_delta =
+> coinvest weight capped from 0.0613 to 0.02`). Read the artifact's
+> `provenance` block for live weights; treat this spec as research history.
+
 ---
 
 ## Motivation

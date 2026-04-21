@@ -12,15 +12,10 @@ These tests cover:
 - PoS weighting integration
 """
 
-import pytest
 from datetime import date
 from decimal import Decimal
 
-from pos_prior_engine import (
-    PoSPriorEngine,
-    DataQualityState,
-    apply_pos_weighting,
-)
+from pos_prior_engine import PoSPriorEngine, apply_pos_weighting
 
 
 class TestStageNormalization:
@@ -262,8 +257,13 @@ class TestModifierApplication:
         assert result["modifier_adjustment"] == Decimal("1.10")
         assert "fast_track_designation" in result["modifiers_applied"]
 
-    def test_biomarker_enriched_boost(self):
-        """Biomarker enrichment should boost PoS by 20%."""
+    def test_biomarker_enriched_boost_neutralized(self):
+        """Biomarker-enriched boost was neutralized 2026-04-16 (HINT Δ=-2.7%).
+
+        The flag is still recorded in modifiers_applied for attribution, but
+        the multiplier is now 1.00 — alpha comes from biomarker_context_score
+        via the clinical stack, not from this boolean.
+        """
         engine = PoSPriorEngine()
         result = engine.calculate_pos_prior(
             stage="phase_2",
@@ -272,7 +272,7 @@ class TestModifierApplication:
             as_of_date=date(2026, 1, 15),
         )
 
-        assert result["modifier_adjustment"] == Decimal("1.20")
+        assert result["modifier_adjustment"] == Decimal("1.00")
         assert "biomarker_enriched" in result["modifiers_applied"]
 
     def test_multiple_modifiers_compound(self):
@@ -292,7 +292,13 @@ class TestModifierApplication:
         assert len(result["modifiers_applied"]) == 2
 
     def test_modifier_cap_at_2x(self):
-        """Total modifier should be capped at 2.0x maximum."""
+        """Total modifier is capped at 2.0x maximum.
+
+        Post biomarker neutralization (2026-04-16): biomarker contributes 1.00×,
+        so compounded modifier is 1.15 × 1.25 × 1.10 × 1.00 = 1.58125, well
+        below the 2.0x cap. Verifies the cap does not mis-fire when the active
+        multipliers stay below 2.0.
+        """
         engine = PoSPriorEngine()
         result = engine.calculate_pos_prior(
             stage="phase_3",
@@ -304,10 +310,8 @@ class TestModifierApplication:
             as_of_date=date(2026, 1, 15),
         )
 
-        # Compounded: 1.15 * 1.25 * 1.10 * 1.20 = 1.8975 (rounds to 1.90)
-        # Cap only applies if >2.0, so result is ~1.90
         assert result["modifier_adjustment"] <= Decimal("2.00")
-        assert Decimal("1.85") <= result["modifier_adjustment"] <= Decimal("2.00")
+        assert Decimal("1.55") <= result["modifier_adjustment"] <= Decimal("1.60")
 
     def test_pos_capped_at_95_percent(self):
         """PoS should never exceed 95%."""
@@ -498,9 +502,7 @@ class TestApplyPosWeighting:
         stage_score = Decimal("70.00")
 
         # With threshold of 0.40, should apply weighting
-        weighted = apply_pos_weighting(
-            stage_score, pos_data, confidence_threshold=Decimal("0.40")
-        )
+        weighted = apply_pos_weighting(stage_score, pos_data, confidence_threshold=Decimal("0.40"))
 
         assert weighted != stage_score
 

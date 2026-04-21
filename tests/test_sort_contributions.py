@@ -208,10 +208,10 @@ class TestOutputEquivalence:
         test_decision_engine_contract.py — duplicated here for self-contained
         verification of the contribution refactor.
         """
-        from tests.test_decision_engine_contract import _compute_golden_output_fingerprint
+        from tests.test_decision_engine_contract import TestGoldenOutputFingerprint, _compute_golden_output_fingerprint
 
         actual = _compute_golden_output_fingerprint()
-        assert actual == "d9cd64b3a321"  # pragma: allowlist secret
+        assert actual == TestGoldenOutputFingerprint.EXPECTED_FINGERPRINT
 
 
 # =============================================================================

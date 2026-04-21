@@ -9,7 +9,7 @@ so we can identify mispricing when compared to the outcome model.
 Inputs (all PIT-safe):
 - coinvest_score_z: institutional co-investment (dominant signal)
 - inst_delta_z: institutional accumulation delta
-- insider_net_buy_value_90d: Form 4 context
+- insider_net_buy_value_90d: Form 4 context — LANE CLOSED 2026-04-05; see note on _DEFAULT_FEATURE_WEIGHTS
 - alpha_60d: pre-event price drift
 - de_rsi_14d: momentum/sentiment
 - short_interest_pct: bearish positioning
@@ -31,10 +31,20 @@ logger = logging.getLogger(__name__)
 # Feature weights for belief score computation
 # These define how much each signal contributes to inferred market belief.
 # Positive weight = feature being high implies market is bullish.
+#
+# insider_net_buy_z: the Form 4 insider-flow lane was closed 2026-04-05
+# (feature removed from common/feature_registry.py). The feature no longer
+# flows into `market_features`, so this 0.10 weight is FUNCTIONALLY INERT:
+# both estimate() and _estimate_from_ranks() divide by the sum of weights
+# whose features are actually present, so a missing feature contributes 0
+# to both numerator and denominator and does not dilute the others.
+# Weight retained for historical reference and to simplify any future
+# Form-4 lane revival. Touch at your peril — see FINAL_SUMMARY / memory
+# for governance.
 _DEFAULT_FEATURE_WEIGHTS: Dict[str, float] = {
     "coinvest_score_z": 0.30,  # dominant institutional signal
     "inst_delta_z": 0.20,  # institutional accumulation
-    "insider_net_buy_z": 0.10,  # Form 4 insider context
+    "insider_net_buy_z": 0.10,  # Form 4 insider context — INERT post 2026-04-05 (see note above)
     "alpha_60d": 0.15,  # pre-event drift
     "rsi_14d": 0.10,  # momentum
     "short_interest_inv": 0.05,  # inverted: low short = bullish

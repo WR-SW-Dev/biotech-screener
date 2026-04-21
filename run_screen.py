@@ -5010,18 +5010,27 @@ def save_validation_snapshot(
         _n_ranker_active = sum(1 for _rr in _rnk_results if _rr.ranker_active)
 
         # ------------------------------------------------------------------
-        # Pairwise v2 ranker (production or shadow depending on ranker_mode)
+        # Pairwise v2 ranker (production or shadow depending on ranker_mode).
+        # Production artifact = capped Family C live-pilot vector
+        # (model_variant="deployed_live_pilot"; coinvest_score_z weight capped
+        # vs trained minimal_v2; financial_score weight unchanged). The artifact's
+        # `provenance` block is authoritative for deployed weights.
         # ------------------------------------------------------------------
         _rv2_model_path = Path("production_data/ranker_v2_model.json")
         _rv2_scored = 0
         _rv2_by_ticker: Dict[str, Dict[str, Any]] = {}
         _rv2_config_id = "?"
+        _rv2_model_variant = "?"
+        _rv2_deployment_delta = ""
         _rv2_ok = False
         if _rv2_model_path.exists():
             try:
                 _rv2_artifact = json.loads(_rv2_model_path.read_text(encoding="utf-8"))
                 _rv2_model = model_from_dict(_rv2_artifact["model"])
                 _rv2_config_id = _rv2_artifact.get("config_id", "?")
+                _rv2_provenance = _rv2_artifact.get("provenance", {}) or {}
+                _rv2_model_variant = _rv2_provenance.get("model_variant", "unspecified")
+                _rv2_deployment_delta = _rv2_provenance.get("deployment_delta", "")
                 _rv2_results = score_snapshot(csv_rows, _rv2_model, PRODUCTION_RANKER_V2_CONFIG)
                 _rv2_by_ticker = {r["ticker"]: r for r in _rv2_results}
                 _rv2_scored = sum(1 for r in _rv2_results if r["ranker_v2_score"] is not None)
@@ -5077,9 +5086,12 @@ def save_validation_snapshot(
 
             logger.info(
                 f"  Selector: {len(_sel_results)} scored | "
-                f"Ranker [PROD]: pairwise_minimal, {_rv2_scored} scored (model {_rv2_config_id}) | "
+                f"Ranker [PROD]: pairwise_minimal, {_rv2_scored} scored "
+                f"(model {_rv2_config_id}, variant={_rv2_model_variant}) | "
                 f"Ranker [SHADOW]: clinical_50, {_n_ranker_active} active (regime={_regime_label})"
             )
+            if _rv2_deployment_delta:
+                logger.info(f"  Ranker [PROD] deployment_delta: {_rv2_deployment_delta}")
 
         else:
             # --- PRODUCTION: clinical_50 (legacy / fallback) ---

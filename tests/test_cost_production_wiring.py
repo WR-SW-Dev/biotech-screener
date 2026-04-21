@@ -16,13 +16,10 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import pytest
-
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from backtest.cost_model import CostSchedule, estimate_trade_cost
 from decision_engine import DecisionRuleset, compute_decision_fields
-
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -77,7 +74,11 @@ def _run_production_cost_logic(ticker, ruleset, market_data_by_ticker):
 
     rec = _minimal_rec()
     return compute_decision_fields(
-        rec, "drug_developer", 0.80, ruleset=ruleset, est_cost_bps=est_cost_bps,
+        rec,
+        "drug_developer",
+        0.80,
+        ruleset=ruleset,
+        est_cost_bps=est_cost_bps,
     )
 
 
@@ -88,10 +89,13 @@ class TestCostProductionWiring:
     """Verify est_cost_bps flows through the production path."""
 
     def test_haircut_enabled_with_adv(self):
-        """Low-ADV ticker gets cost haircut when enabled."""
-        # $100K ADV → very illiquid → high cost → haircut
+        """Low-ADV ticker gets cost haircut when enabled.
+
+        At the Spec 050 $50K operating AUM and 5% weight, trade value is $2,500.
+        ADV=$1K → 250% participation → impact cap + spread → round-trip >2000 bps → floor 0.55x.
+        """
         market_data = {
-            "XTST": {"avg_volume": 10_000, "price": 10.0},  # ADV = $100K
+            "XTST": {"avg_volume": 100, "price": 10.0},  # ADV = $1K (very illiquid at $50K AUM)
         }
         fields = _run_production_cost_logic("XTST", ENABLED_RS, market_data)
 
@@ -102,7 +106,7 @@ class TestCostProductionWiring:
     def test_haircut_disabled(self):
         """Disabled ruleset produces no haircut even with ADV data."""
         market_data = {
-            "XTST": {"avg_volume": 10_000, "price": 10.0},
+            "XTST": {"avg_volume": 100, "price": 10.0},
         }
         fields = _run_production_cost_logic("XTST", DISABLED_RS, market_data)
 

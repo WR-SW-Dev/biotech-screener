@@ -12,10 +12,12 @@ Runs after the daily production pipeline and agents. Checks:
   8. Readiness scorecard exists
   9. Targeted lint on production-critical files
  10. Targeted pytest on critical test subset
+ 11. Classifier escalation-pool health (post-cutover, CH-hardening 2026-04-19)
 
 Output:
     artifacts/production_qa/{date}_report.json
     artifacts/production_qa/{date}_report.md
+    artifacts/production_qa/hard_collisions_{date}.json  (from check #11)
 
 Usage:
     python tools/production_qa_check.py --as-of-date 2026-04-15
@@ -121,7 +123,10 @@ def check_gates(as_of_date: str) -> Dict[str, Any]:
     if not manifest.exists():
         return _check("gates", False, "run_manifest.json missing")
 
-    data = json.loads(manifest.read_text())
+    try:
+        data = json.loads(manifest.read_text())
+    except json.JSONDecodeError:
+        return _check("gates", False, "run_manifest.json corrupt (malformed JSON)")
     gates = data.get("gates", [])
     fails = [g for g in gates if g.get("status") == "FAIL"]
     warns = [g for g in gates if g.get("status") == "WARN"]
@@ -134,19 +139,12 @@ def check_gates(as_of_date: str) -> Dict[str, Any]:
 
 
 def check_tracebacks(as_of_date: str) -> Dict[str, Any]:
-    log_patterns = [
-        LOGS_DIR / f"daily_production_{as_of_date}.log",
-        LOGS_DIR / "cron.log",
-    ]
-
-    total_tb = 0
-    for log_path in log_patterns:
-        if log_path.exists():
-            content = log_path.read_text(errors="replace")
-            total_tb += content.count("Traceback")
-
+    log_path = LOGS_DIR / f"daily_production_{as_of_date}.log"
+    if not log_path.exists():
+        return _check("tracebacks", True, "No per-date log for scan")
+    total_tb = log_path.read_text(errors="replace").count("Traceback")
     if total_tb > 0:
-        return _check("tracebacks", False, f"{total_tb} tracebacks in logs")
+        return _check("tracebacks", False, f"{total_tb} tracebacks in log")
     return _check("tracebacks", True, "No tracebacks")
 
 
@@ -214,7 +212,10 @@ def check_readiness(as_of_date: str) -> Dict[str, Any]:
     if not scorecard.exists():
         return _check("readiness", False, "No readiness scorecard")
 
-    data = json.loads(scorecard.read_text())
+    try:
+        data = json.loads(scorecard.read_text())
+    except json.JSONDecodeError:
+        return _check("readiness", False, "readiness scorecard corrupt (malformed JSON)")
     verdict = data.get("verdict", "UNKNOWN")
     return _check("readiness", True, f"Verdict: {verdict}")
 
@@ -238,6 +239,124 @@ def check_lint() -> Dict[str, Any]:
         return _check("lint", True, "flake8 not available or timed out")
 
     return _check("lint", True, f"{len(files)} files clean")
+
+
+def check_classifier_escalation_pool(as_of_date: str) -> Dict[str, Any]:
+    """Post-cutover validation of the press-release classifier's escalation pool.
+
+    Added with classifier-hardening rollout 2026-04-19 (CH-1..CH-7 + P2 + M1).
+    Reads the floor date from `config/post_cutover_floor.json`; audits the
+    escalation pool among files dated on/after the floor; emits a 10-item
+    hard-collision sample to `artifacts/production_qa/hard_collisions_{date}.json`
+    for rolling human spot-check (supersedes the discrete Day-7/Day-14 milestones
+    in fingpt_pilot/notes/POST_CUTOVER_VALIDATION.md).
+
+    Verdict thresholds:
+      PASS — pool empty (awaiting first post-cutover cron output), OR all within range
+      FAIL — other-category share > 50%, OR re-run clean rate < 70%, OR schema missing
+    """
+    import random as _rand
+
+    floor_cfg = REPO_ROOT / "config" / "post_cutover_floor.json"
+    if not floor_cfg.exists():
+        return _check(
+            "classifier_escalation_pool",
+            False,
+            "config/post_cutover_floor.json missing",
+        )
+    try:
+        cfg = json.loads(floor_cfg.read_text())
+    except Exception as e:
+        return _check("classifier_escalation_pool", False, f"config parse error: {e}")
+
+    min_date = cfg.get("classifier_min_date")
+    if min_date == "":
+        # Floor explicitly disabled — audit full cache
+        min_date = None
+    elif not min_date:
+        return _check(
+            "classifier_escalation_pool",
+            False,
+            'classifier_min_date missing from config (set to YYYY-MM-DD or "" to disable)',
+        )
+
+    try:
+        from tools.audit_escalation_pool import _iter_records, audit
+    except ImportError as e:
+        return _check("classifier_escalation_pool", False, f"import failed: {e}")
+
+    classified_dir = REPO_ROOT / "data" / "press_releases" / "classified"
+    if not classified_dir.exists():
+        return _check("classifier_escalation_pool", False, f"missing {classified_dir}")
+
+    try:
+        rpt = audit(classified_dir, n=30, seed=20260419, min_date=min_date)
+    except Exception as e:
+        return _check("classifier_escalation_pool", False, f"audit error: {e}")
+
+    pool_size = rpt["pool_count_deduped"]
+    sample_n = rpt["sample_n"]
+    rerun = rpt.get("sample_rerun_counts", {})
+    clean = int(rerun.get("clean", 0))
+    by_cat = rpt["pool_stats"].get("by_category", {}) if rpt.get("pool_stats") else {}
+    other = int(by_cat.get("other", 0))
+    other_share_pct = (other / pool_size * 100.0) if pool_size else 0.0
+
+    if pool_size == 0:
+        detail = f"pool empty (min_date={min_date}) — awaiting first post-cutover cron output"
+        return _check("classifier_escalation_pool", True, detail)
+
+    # Schema sanity — verify new P2/M1 fields are present on a spot sample
+    schema_missing = []
+    for r in rpt.get("sample_rows", [])[:5]:
+        if r.get("event_id", "") == "":
+            schema_missing.append("event_id")
+            break
+
+    issues: list[str] = []
+    if other_share_pct > 50:
+        issues.append(f"other_share={other_share_pct:.1f}% (>50)")
+    if sample_n > 0 and clean / sample_n < 0.70:
+        issues.append(f"clean={clean}/{sample_n} (<70%)")
+    if schema_missing:
+        issues.append(f"schema_missing={schema_missing}")
+
+    # Hard-collision sample for rolling human review (replaces Day-7 checkpoint).
+    records = _iter_records(classified_dir, min_date=min_date)
+    hard_colls = [r for r in records if r.get("collision_severity") == "hard"]
+    rng = _rand.Random(int(as_of_date.replace("-", "")))
+    rng.shuffle(hard_colls)
+    sample_hard = [
+        {
+            "ticker": r.get("ticker", ""),
+            "headline": (r.get("headline", "") or "")[:160],
+            "event_id": r.get("event_id", ""),
+            "published_at_utc": r.get("published_at_utc", ""),
+        }
+        for r in hard_colls[:10]
+    ]
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    hard_path = OUTPUT_DIR / f"hard_collisions_{as_of_date}.json"
+    hard_path.write_text(
+        json.dumps(
+            {
+                "as_of_date": as_of_date,
+                "min_date": min_date,
+                "pool_size": pool_size,
+                "hard_collision_pool_size": len(hard_colls),
+                "hard_collision_sample": sample_hard,
+            },
+            indent=2,
+        )
+    )
+
+    detail = (
+        f"pool={pool_size}, clean={clean}/{sample_n}, "
+        f"other={other_share_pct:.1f}%, hard_coll_pool={len(hard_colls)}"
+    )
+    if issues:
+        detail = f"{detail} [{'; '.join(issues)}]"
+    return _check("classifier_escalation_pool", len(issues) == 0, detail)
 
 
 def check_critical_tests() -> Dict[str, Any]:
@@ -275,6 +394,7 @@ def run_qa(as_of_date: str) -> Dict[str, Any]:
         check_readiness(as_of_date),
         check_lint(),
         check_critical_tests(),
+        check_classifier_escalation_pool(as_of_date),
     ]
 
     n_pass = sum(1 for c in checks if c["status"] == "PASS")

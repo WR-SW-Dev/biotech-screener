@@ -1,5 +1,14 @@
 # Scoring Logic Audit — 2026-04-05
 
+> **Amendment (2026-04-19, deployment-clarity pass):** This audit predates the 2-feature
+> promotion that happened later on 2026-04-05 and the subsequent Family C live-pilot cap.
+> The 5-feature ranker architecture shown below is historical; production is now:
+> A4 selector + pairwise `minimal_v2` ranker (2 features: `coinvest_score_z`,
+> `financial_score`) with the deployed artifact = **capped Family C live-pilot vector**
+> (coinvest weight capped from trained +0.0613 to deployed +0.02; financial unchanged).
+> Authoritative weights live in `production_data/ranker_v2_model.json` → `provenance`.
+> This document is preserved for audit-trail purposes; do not quote its weights as current.
+
 ## Architecture Map
 
 ```

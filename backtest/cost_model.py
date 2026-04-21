@@ -28,6 +28,16 @@ class CostSchedule:
     ``spread_schedule`` maps (adv_floor_dollars, half_spread_bps) tuples.
     The schedule is scanned top-down; the first entry whose floor is <=
     the ticker's ADV determines the spread.
+
+    ``aum_dollars`` is the strategy's live operating point. Per Spec 050
+    (docs/MODEL_DOCUMENTATION.md:747), the documented account size is
+    $50,000 notional. Capacity studies (scripts/research/capacity_audit.py,
+    scripts/research/capacity_curve.py) pass their own AUM grids and do NOT
+    read this default. Do not change this default without also updating
+    MODEL_DOCUMENTATION.md; a mismatch manifests as sentinel WARN on
+    ``median_cost_bps`` (~800 bps at the $50M default vs ~50 bps at the
+    documented $50K operating point — see spec at
+    fingpt_pilot/notes/SPEC_COST_MODEL_AUM_FIX.md, 2026-04-19).
     """
 
     spread_schedule: Tuple[Tuple[int, int], ...] = (
@@ -39,7 +49,7 @@ class CostSchedule:
     )
     impact_coeff: float = 0.10
     impact_cap_bps: float = 200.0
-    aum_dollars: float = 50_000_000
+    aum_dollars: float = 50_000  # Spec 050 operating point — see class docstring
 
     @property
     def schedule_id(self) -> str:

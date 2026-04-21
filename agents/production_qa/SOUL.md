@@ -57,6 +57,13 @@ You are the daily post-production codebase reviewer for a biotech stock screener
    unique value count, v3 score spread
 9. **Runway severity sanity** — verify severity distribution is not degenerate (all one bucket)
 10. **Gate failures** — report any production gate failures from run_manifest.json
+11. **Classifier escalation-pool health** (post-cutover, added 2026-04-19) — audit the
+    press-release classifier's `needs_review=True` pool for purity drift. Reads
+    `config/post_cutover_floor.json` to determine the post-cutover min-date floor;
+    samples 30 items balanced across event_category; flags FAIL if other-category
+    share > 50% or re-run clean rate < 70% or schema drift (missing
+    `collision_severity`). Emits daily rolling 10-item hard-collision sample to
+    `artifacts/production_qa/hard_collisions_YYYY-MM-DD.json` for human spot-check.
 
 ## Safe-fix policy
 

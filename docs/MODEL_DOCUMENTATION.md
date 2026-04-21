@@ -2,7 +2,9 @@
 
 **Version:** 1.7.0 (ruleset `2a3e79eb`, v1.13.0)
 **Last updated:** 2026-04-15
-**Status:** Production — A4 selector + pairwise_minimal ranker (2-feature, ordinal-only) + EW Top-30
+**Status:** Production — A4 selector + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30.
+Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
+weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
 
 ---
 
@@ -172,12 +174,23 @@ model ranks within the selected top-60 cohort. Promoted 2026-04-05 after feature
 confirmed the prior 5-feature model added noise. The ranker is **ordinal-only** — raw scores
 are not calibrated (ECE = 0.129, verdict: POOR). Do not rank-weight or confidence-size.
 
-Production model (`production_data/ranker_v2_model.json`):
-- `sponsorship_score_z` (weight +0.061): selects high-sponsorship names within cohort
-- `financial_score` (weight −0.053): penalizes financially safe names — those with less
-  catalytic upside. Negative weight is correct and informative. Persists across all
-  cohort widths, both bull and bear regimes. Note: `financial_score` in CSV is Module 5
-  rank-normalized (stage×size cohort), not raw Module 2 output.
+Production model — live deployed weights (`production_data/ranker_v2_model.json`):
+- `coinvest_score_z` (deployed weight **+0.02**, capped Family C live pilot; trained basis
+  was +0.0613): selects high-sponsorship names within cohort. Internal code signal name is
+  `sponsorship_score_z`; the artifact and live deployment use `coinvest_score_z`.
+- `financial_score` (deployed weight **−0.0533**, unchanged from trained): penalizes
+  financially safe names — those with less catalytic upside. Negative weight is correct and
+  informative. Persists across all cohort widths, both bull and bear regimes. Note:
+  `financial_score` in CSV is Module 5 rank-normalized (stage×size cohort), not raw Module 2
+  output.
+
+**Deployed artifact ≠ trained vector — Family C live pilot.** The live artifact applies a
+cap to the positive feature: the deployed weight on `coinvest_score_z` is **+0.02**, down from
+the trained `minimal_v2` weight of **+0.0613**. The `financial_score` weight is unchanged at
+−0.0533. See the artifact's `provenance` block: `model_variant = deployed_live_pilot`,
+`trained_basis = minimal_v2`, `deployment_delta = coinvest weight capped`. Operators should
+read the live weights from the artifact, not from any external doc — this section is a guide,
+the artifact is authoritative.
 
 Dead features (confirmed noise, removed 2026-04-05):
 - `momentum_delta_z`, `catalyst_decay_w`, `binary_quality_score`, `clinical_score_v2_z`
@@ -300,12 +313,15 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 | **momentum_delta_z** | Selector (B6) | 35% | Standalone 2/5 gates (FM NW-t=+1.73 FAIL, LOSO unstable in core bucket). Essential as complement. |
 | **B6 bundle** | Selector | 65/35 blend | Bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. **Bundle validated.** |
 
-**Ranker (pairwise_minimal) — 2 features, ordinal-only (ECE=0.129):**
+**Ranker (pairwise `minimal_v2`) — 2 features, ordinal-only (ECE=0.129):**
 
-| Signal | Role | Weight | Walk-Forward | Interpretation |
-|--------|------|--------|-------------|----------------|
-| **sponsorship_score_z** | Ranker (positive) | +0.061 | Spread +2.95%, IC +0.143 (t=2.98) | Selects high-sponsorship names within top-60 |
-| **financial_score** | Ranker (negative) | −0.053 | Same walk-forward | TRUE PENALTY — safe names have less catalytic upside |
+| Signal | Role | Trained Weight | Deployed Weight | Walk-Forward | Interpretation |
+|--------|------|----------------|-----------------|-------------|----------------|
+| **sponsorship_score_z** (artifact: `coinvest_score_z`) | Ranker (positive) | +0.061 | **+0.02 (capped, Family C live pilot)** | Spread +2.95%, IC +0.143 (t=2.98) | Selects high-sponsorship names within top-60 |
+| **financial_score** | Ranker (negative) | −0.053 | −0.053 (unchanged) | Same walk-forward | TRUE PENALTY — safe names have less catalytic upside |
+
+Deployed weights are read live from `production_data/ranker_v2_model.json`; the `provenance`
+block is authoritative. Trained weights are retained here for audit-trail comparison only.
 
 **Overlay signals (not in selector/ranker weights):**
 

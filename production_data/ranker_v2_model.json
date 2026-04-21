@@ -3,7 +3,7 @@
   "model": {
     "type": "pairwise_logistic",
     "weights": [
-      0.061286441555547966,
+      0.02,
       -0.05332037006884376
     ],
     "bias": 0.5019276351788997,
@@ -30,5 +30,14 @@
     "n_dates": 36,
     "n_pairs": 12400
   },
-  "audit_note": "2-feature model from scoring_logic_audit_2026_04_05. L2=0.01, recency decay."
+  "provenance": {
+    "model_variant": "deployed_live_pilot",
+    "trained_basis": "minimal_v2",
+    "deployment_delta": "coinvest_score_z weight capped from 0.0613 (trained) to 0.02 (deployed)",
+    "capped_weight_feature": "coinvest_score_z",
+    "capped_weight_value": 0.02,
+    "trained_weight_value": 0.0613,
+    "other_weights_unchanged": true
+  },
+  "audit_note": "Family C live pilot: coinvest_score_z weight capped to 0.02 (was 0.0613). Deployed vector != trained vector; see provenance block."
 }

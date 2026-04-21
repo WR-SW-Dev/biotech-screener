@@ -21,9 +21,13 @@ Selector Engine (A4 config, 5 blocks)
   └── Market Structure block (10%)
   → selector_score (percentile-normalized [0,1])
   ↓
-Pairwise V2 Ranker (top-60 cohort, 2 features)
-  ├── coinvest_score_z (weight +0.061, 53% contribution)
-  └── financial_score (weight -0.053, 47% contribution)
+Pairwise V2 Ranker (top-60 cohort, 2 features — feature_set=minimal_v2)
+  ├── coinvest_score_z (DEPLOYED weight +0.02, capped Family C live pilot;
+  │                     trained basis was +0.061)
+  └── financial_score (DEPLOYED weight -0.0533, unchanged from trained)
+  (Deployed artifact = capped Family C live-pilot vector. The trained vector
+   (+0.061 / -0.053) is NOT the live vector. The artifact's provenance block
+   in ranker_v2_model.json is authoritative for live weights.)
   → ranker_v2_score (avg pairwise win probability [0.46, 0.54])
   → final_score (= ranker_v2_score for cohort, 0.0001× selector for non-cohort)
   ↓
@@ -54,12 +58,23 @@ The other 3 active blocks contribute 7.3% of variance combined.
 
 ### Ranker Feature Contribution (z-scored within cohort)
 
-| Feature | Weight | % Contribution |
-|---------|--------|----------------|
-| coinvest_score_z | +0.0613 | 53% |
-| financial_score | -0.0533 | 47% |
+| Feature | Trained Weight | Deployed Weight | % Contribution (trained basis) |
+|---------|----------------|-----------------|--------------------------------|
+| coinvest_score_z | +0.0613 | **+0.02 (capped, Family C live pilot)** | 53% |
+| financial_score | -0.0533 | -0.05332 (unchanged) | 47% |
 
-The ranker is a ~50/50 split between coinvest (continuation of selector signal) and financial_score (new information — penalizes financially safe names).
+The ranker is a ~50/50 split *on the trained basis* between coinvest (continuation of
+selector signal) and financial_score (new information — penalizes financially safe names).
+**Under the deployed (capped) vector the contribution split shifts toward financial_score**,
+because coinvest is throttled from +0.0613 to +0.02 while financial is unchanged. Re-derive
+the contribution percentages from the live artifact if you need them for sizing or
+attribution; the table above is the trained basis only.
+
+**Deployment note:** The `production_data/ranker_v2_model.json` artifact is the **capped
+Family C live-pilot vector**, not the raw trained vector above. `model_variant =
+deployed_live_pilot`, `trained_basis = minimal_v2`, `deployment_delta = coinvest weight
+capped from 0.0613 to 0.02`. Contribution percentages will re-weight under the deployed
+vector; the artifact's `provenance` block is the authoritative source for live weights.
 
 ### Ranker Marginal Value
 

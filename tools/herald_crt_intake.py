@@ -190,8 +190,11 @@ def build_intake_candidates(as_of_date: str) -> Dict[str, Any]:
         ticker = (rec.get("ticker") or "").upper()
         headline = rec.get("headline", "")
 
-        # Filter 1: not informational
-        if rec.get("informational_only"):
+        # Filter 1: not informational AND not ticker-collision
+        # (collision_severity=soft items have informational_only=False but are
+        # still flagged ticker_collision_flag=True so they don't enter CRT;
+        # they stay cache-visible for escalation review.)
+        if rec.get("informational_only") or rec.get("ticker_collision_flag"):
             rejected["informational"] += 1
             continue
 

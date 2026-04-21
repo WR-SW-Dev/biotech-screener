@@ -86,7 +86,6 @@ SNAPSHOT_COLUMNS = (
         "inst_delta_nonzero_pct",  # % of tickers with nonzero net delta (coverage guard telemetry)
         "has_coinvest_signal",  # True when sponsor_tier1_count is real data
         "has_inst_delta",  # True when institutional delta is available
-        "has_catalyst_signal",  # True when catalyst_mode != "missing"
         "catalyst_strength",
         "catalyst_decay_w",
         "runway_bucket",
@@ -198,6 +197,7 @@ SNAPSHOT_COLUMNS = (
         "ees_v3_score",
         "ees_v3_gate",
         "ees_v3_pctile",
+        "ees_v3_misprice_available",
         "conditional_misprice_z",
         "conditional_expected_move_z",
         # --- Conditional Model (Tier 1 alpha candidate, diagnostic only) ---

@@ -236,9 +236,53 @@ def check_pit_financials_freshness(as_of_date_str):
     return result
 
 
+def _latest_fact_entry(entries):
+    """Pick most recent entry by (filed_date, end_date). Returns (end_date, val) or None."""
+    latest = None
+    for entry in entries or []:
+        filed_str = entry.get("filed", "")
+        end_str = entry.get("end", "")
+        if filed_str and end_str:
+            try:
+                key = (_parse_date(filed_str), _parse_date(end_str))
+                if latest is None or key > latest[0]:
+                    latest = (key, _parse_date(end_str), entry.get("val"))
+            except ValueError:
+                pass
+    if latest is None or latest[2] is None:
+        return None
+    return (latest[1], latest[2])
+
+
+def _fact_entry_at(entries, end_date):
+    """Find the entry with given end_date (prefer most recently filed). Returns val or None."""
+    best = None
+    for entry in entries or []:
+        filed_str = entry.get("filed", "")
+        end_str = entry.get("end", "")
+        if filed_str and end_str:
+            try:
+                if _parse_date(end_str) == end_date:
+                    filed_date = _parse_date(filed_str)
+                    if best is None or filed_date > best[0]:
+                        best = (filed_date, entry.get("val"))
+            except ValueError:
+                pass
+    return best[1] if best and best[1] is not None else None
+
+
 def check_financial_consistency(as_of_date_str):
-    """Check 4: Compare cash in financial_records vs PIT financials for top-30."""
-    result = {"status": "PASS", "divergences": [], "detail": ""}
+    """Check 4: Compare cash in financial_records vs PIT financials for top-30.
+
+    - Prefers CashAndSecurities over Cash (aligns with PIT: cash + short_term_investments)
+    - Skips foreign issuers where Cash_currency != USD (audit has no FX table)
+    """
+    result = {
+        "status": "PASS",
+        "divergences": [],
+        "skipped_non_usd": [],
+        "detail": "",
+    }
 
     rankings = _load_rankings(as_of_date_str)
     if rankings is None:
@@ -246,7 +290,6 @@ def check_financial_consistency(as_of_date_str):
         result["detail"] = f"Cannot load rankings.csv for {as_of_date_str}"
         return result
 
-    # Load financial_records from pit_archives (daily snapshot) or production_data
     fin_records_path = PIT_ARCHIVE_DIR / as_of_date_str / "financial_records.json"
     if not fin_records_path.exists():
         fin_records_path = PROD_DIR / "financial_records.json"
@@ -257,83 +300,106 @@ def check_financial_consistency(as_of_date_str):
         result["detail"] = "Cannot load financial_records.json"
         return result
 
-    # Build ticker -> Cash lookup from financial_records
-    fr_cash = {}
+    # Build ticker -> {cash, cash_and_securities, currency} lookup
+    def _extract(entry):
+        cash = entry.get("Cash")
+        cs = entry.get("CashAndSecurities")
+        # Currency default is USD when unspecified (domestic issuers omit the tag)
+        currency = entry.get("CashAndSecurities_currency") or entry.get("Cash_currency") or "USD"
+        try:
+            cash_f = float(cash) if cash is not None else None
+        except (ValueError, TypeError):
+            cash_f = None
+        try:
+            cs_f = float(cs) if cs is not None else None
+        except (ValueError, TypeError):
+            cs_f = None
+        return {"cash": cash_f, "cash_and_securities": cs_f, "currency": currency}
+
+    fr_records = {}
     if isinstance(fin_records_raw, list):
         for entry in fin_records_raw:
             ticker = entry.get("ticker", "")
-            cash = entry.get("Cash")
-            if ticker and cash is not None:
-                try:
-                    fr_cash[ticker] = float(cash)
-                except (ValueError, TypeError):
-                    pass
+            if ticker:
+                fr_records[ticker] = _extract(entry)
     elif isinstance(fin_records_raw, dict):
         for ticker, entry in fin_records_raw.items():
-            cash = entry.get("Cash") if isinstance(entry, dict) else None
-            if cash is not None:
-                try:
-                    fr_cash[ticker] = float(cash)
-                except (ValueError, TypeError):
-                    pass
+            if isinstance(entry, dict):
+                fr_records[ticker] = _extract(entry)
 
     top30 = _top_n_tickers(rankings, 30)
 
     for ticker in top30:
-        fr_val = fr_cash.get(ticker)
+        rec = fr_records.get(ticker)
+        if rec is None:
+            continue
+
+        if rec["currency"] != "USD":
+            result["skipped_non_usd"].append({"ticker": ticker, "currency": rec["currency"]})
+            continue
+
+        # Prefer CashAndSecurities; on PIT side aggregate cash + short_term_investments
+        # (same end period) so the comparison is semantically aligned.
+        use_securities = rec["cash_and_securities"] is not None
+        fr_val = rec["cash_and_securities"] if use_securities else rec["cash"]
         if fr_val is None or fr_val == 0:
             continue
 
-        # Get PIT cash
         pit_data = _load_json(PIT_FIN_DIR / f"{ticker}.json")
         if pit_data is None:
             continue
 
         facts = pit_data.get("facts", {})
-        cash_entries = facts.get("cash", [])
-        if not cash_entries:
+        cash_latest = _latest_fact_entry(facts.get("cash", []))
+        if cash_latest is None:
             continue
 
-        # Get most recent cash entry by filed date
-        latest = None
-        for entry in cash_entries:
-            filed_str = entry.get("filed", "")
-            if filed_str:
-                try:
-                    filed_date = _parse_date(filed_str)
-                    if latest is None or filed_date > latest[0]:
-                        latest = (filed_date, entry.get("val"))
-                except ValueError:
-                    pass
+        end_date, cash_val = cash_latest
+        pit_val = float(cash_val)
+        pit_label = "cash"
 
-        if latest is None or latest[1] is None:
-            continue
+        if use_securities:
+            sti_val = _fact_entry_at(facts.get("short_term_investments", []), end_date)
+            if sti_val is not None:
+                pit_val += float(sti_val)
+                pit_label = "cash+short_term_investments"
+            # If no matching STI period, compare cash-only to fr cash (not cash_and_securities)
+            # to avoid flagging a semantic mismatch as a divergence.
+            elif rec["cash"] is not None and rec["cash"] > 0:
+                fr_val = rec["cash"]
 
-        pit_val = float(latest[1])
         if pit_val == 0:
             continue
 
         pct_diff = abs(fr_val - pit_val) / max(abs(fr_val), abs(pit_val))
         # PIT vs current financial_records divergence is expected when
-        # quarterly filings arrive at different times.  Only flag extreme
+        # quarterly filings arrive at different times. Only flag extreme
         # cases (>50%) that may indicate data corruption rather than lag.
         if pct_diff > 0.50:
             result["divergences"].append(
                 {
                     "ticker": ticker,
-                    "financial_records_cash": fr_val,
-                    "pit_cash": pit_val,
+                    "financial_records_value": fr_val,
+                    "pit_value": pit_val,
+                    "pit_basis": pit_label,
                     "pct_diff": round(pct_diff * 100, 1),
                 }
             )
 
+    parts = []
     if result["divergences"]:
         result["status"] = "WARN"
-        result["detail"] = (
-            f"{len(result['divergences'])} divergence(s) > 50%: {[d['ticker'] for d in result['divergences']]}"
+        parts.append(
+            f"{len(result['divergences'])} divergence(s) > 50%: " f"{[d['ticker'] for d in result['divergences']]}"
         )
-    else:
-        result["detail"] = "No cash divergences > 50% in top-30"
+    if result["skipped_non_usd"]:
+        parts.append(
+            f"{len(result['skipped_non_usd'])} skipped (non-USD): "
+            f"{[s['ticker'] for s in result['skipped_non_usd']]}"
+        )
+    if not parts:
+        parts.append("No cash divergences > 50% in top-30")
+    result["detail"] = "; ".join(parts)
     return result
 
 

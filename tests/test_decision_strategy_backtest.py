@@ -11,8 +11,6 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-import pytest
-
 # Add project root to path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
@@ -20,8 +18,8 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from decision_engine import DecisionRuleset
 from run_decision_ruleset_sweep import ArchiveData
 from run_decision_strategy_backtest import (
-    MultiHorizonReturns,
     PANEL_COLUMNS,
+    MultiHorizonReturns,
     SnapshotResult,
     _percentile,
     aggregate_results,
@@ -33,10 +31,10 @@ from run_decision_strategy_backtest import (
     evaluate_portfolio,
 )
 
-
 # =============================================================================
 # HELPERS: synthetic data builders
 # =============================================================================
+
 
 def _make_rec(
     severity: str = "",
@@ -120,22 +118,24 @@ def _make_multi_horizon_returns(
 # TEST: build_strategy_portfolio
 # =============================================================================
 
+
 class TestBuildStrategyPortfolio:
     def test_selects_eligible_dev_ab_only(self):
         """Only eligible drug_developer A/B tickers should be selected."""
-        data = _make_archive_data({
-            # A-tier: high opt + catalyst near
-            "AATK": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
-            # B-tier: high opt + catalyst far
-            "BBTK": {"rec": _make_rec(catalyst_days=200), "opt": 0.70, "composite_rank": 2},
-            # C-tier: low opt
-            "CCTK": {"rec": _make_rec(catalyst_days=30), "opt": 0.20, "composite_rank": 3},
-            # D-tier: ineligible (drawdown)
-            "DDTK": {"rec": _make_rec(drawdown=-0.50), "opt": 0.80, "composite_rank": 4},
-            # Commercial: excluded
-            "CMTK": {"rec": _make_rec(), "archetype": "commercial_biotech",
-                      "opt": 0.80, "composite_rank": 5},
-        })
+        data = _make_archive_data(
+            {
+                # A-tier: high opt + catalyst near
+                "AATK": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
+                # B-tier: high opt + catalyst far
+                "BBTK": {"rec": _make_rec(catalyst_days=200), "opt": 0.70, "composite_rank": 2},
+                # C-tier: low opt
+                "CCTK": {"rec": _make_rec(catalyst_days=30), "opt": 0.20, "composite_rank": 3},
+                # D-tier: ineligible (drawdown)
+                "DDTK": {"rec": _make_rec(drawdown=-0.50), "opt": 0.80, "composite_rank": 4},
+                # Commercial: excluded
+                "CMTK": {"rec": _make_rec(), "archetype": "commercial_biotech", "opt": 0.80, "composite_rank": 5},
+            }
+        )
 
         result = build_strategy_portfolio(data, DecisionRuleset(), ["A", "B"], top_k=20)
         tickers = [p["ticker"] for p in result]
@@ -179,20 +179,24 @@ class TestBuildStrategyPortfolio:
 
     def test_actionable_rank_assigned(self):
         """Each position should have an actionable_rank starting from 1."""
-        data = _make_archive_data({
-            "AA": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
-            "BB": {"rec": _make_rec(catalyst_days=60), "opt": 0.70, "composite_rank": 2},
-        })
+        data = _make_archive_data(
+            {
+                "AA": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
+                "BB": {"rec": _make_rec(catalyst_days=60), "opt": 0.70, "composite_rank": 2},
+            }
+        )
         result = build_strategy_portfolio(data, DecisionRuleset(), ["A", "B"], top_k=20)
         ranks = [p["actionable_rank"] for p in result]
         assert ranks == list(range(1, len(result) + 1))
 
     def test_deterministic_ordering(self):
         """Same input should always produce same order."""
-        data = _make_archive_data({
-            "XX": {"rec": _make_rec(catalyst_days=30), "opt": 0.75, "composite_rank": 2},
-            "YY": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
-        })
+        data = _make_archive_data(
+            {
+                "XX": {"rec": _make_rec(catalyst_days=30), "opt": 0.75, "composite_rank": 2},
+                "YY": {"rec": _make_rec(catalyst_days=30), "opt": 0.80, "composite_rank": 1},
+            }
+        )
         r1 = build_strategy_portfolio(data, DecisionRuleset(), ["A", "B"], top_k=20)
         r2 = build_strategy_portfolio(data, DecisionRuleset(), ["A", "B"], top_k=20)
         assert [p["ticker"] for p in r1] == [p["ticker"] for p in r2]
@@ -202,17 +206,19 @@ class TestBuildStrategyPortfolio:
 # TEST: build_composite_baseline
 # =============================================================================
 
+
 class TestBuildCompositeBaseline:
     def test_picks_top_k_dev_by_rank(self):
         """Should pick top-K drug developers by composite_rank."""
-        data = _make_archive_data({
-            "R1": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
-            "R2": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
-            "R3": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 3},
-            "R4": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 10},
-            "CM": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1,
-                   "archetype": "commercial_biotech"},
-        })
+        data = _make_archive_data(
+            {
+                "R1": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
+                "R2": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
+                "R3": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 3},
+                "R4": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 10},
+                "CM": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1, "archetype": "commercial_biotech"},
+            }
+        )
 
         result = build_composite_baseline(data, top_k=3)
         tickers = [p["ticker"] for p in result]
@@ -221,10 +227,12 @@ class TestBuildCompositeBaseline:
 
     def test_equal_weight(self):
         """All positions should have equal weight."""
-        data = _make_archive_data({
-            "A": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
-            "B": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
-        })
+        data = _make_archive_data(
+            {
+                "A": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
+                "B": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
+            }
+        )
         result = build_composite_baseline(data, top_k=5)
         assert len(result) == 2
         assert result[0]["weight_pct"] == result[1]["weight_pct"]
@@ -234,6 +242,7 @@ class TestBuildCompositeBaseline:
 # =============================================================================
 # TEST: evaluate_portfolio
 # =============================================================================
+
 
 class TestEvaluatePortfolio:
     def test_weighted_return(self):
@@ -303,6 +312,7 @@ class TestEvaluatePortfolio:
 # TEST: compute_portfolio_turnover
 # =============================================================================
 
+
 class TestPortfolioTurnover:
     def test_identical_portfolios(self):
         """Turnover should be 0 for identical portfolios."""
@@ -327,7 +337,7 @@ class TestPortfolioTurnover:
         curr = [{"ticker": "A", "weight_pct": 50.0}, {"ticker": "C", "weight_pct": 50.0}]
         result = compute_portfolio_turnover(prev, curr)
         # sym_diff={B,C}=2, union={A,B,C}=3, turnover=2/3
-        assert abs(result["position_turnover"] - 2/3) < 0.001
+        assert abs(result["position_turnover"] - 2 / 3) < 0.001
         # weight: |50-50|(A) + |0-50|(B) + |50-0|(C) = 0+50+50 = 100, /2 = 50
         assert result["weight_turnover_pct"] == 50.0
 
@@ -344,6 +354,7 @@ class TestPortfolioTurnover:
 # =============================================================================
 # TEST: aggregate_results
 # =============================================================================
+
 
 class TestAggregateResults:
     def _make_snapshot(
@@ -478,6 +489,7 @@ class TestAggregateResults:
 # TEST: _percentile
 # =============================================================================
 
+
 class TestPercentile:
     def test_p50_is_median(self):
         assert _percentile([1.0, 2.0, 3.0], 50) == 2.0
@@ -496,15 +508,17 @@ class TestPercentile:
 # TEST: build_universe_baseline
 # =============================================================================
 
+
 class TestBuildUniverseBaseline:
     def test_filters_to_eligible_dev(self):
         """Should include only eligible drug_developer tickers."""
-        data = _make_archive_data({
-            "OK": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
-            "DD": {"rec": _make_rec(drawdown=-0.50), "opt": 0.5, "composite_rank": 2},
-            "CM": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 3,
-                   "archetype": "commercial_biotech"},
-        })
+        data = _make_archive_data(
+            {
+                "OK": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
+                "DD": {"rec": _make_rec(drawdown=-0.50), "opt": 0.5, "composite_rank": 2},
+                "CM": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 3, "archetype": "commercial_biotech"},
+            }
+        )
         result = build_universe_baseline(data, DecisionRuleset())
         tickers = [p["ticker"] for p in result]
         assert "OK" in tickers
@@ -513,10 +527,12 @@ class TestBuildUniverseBaseline:
 
     def test_equal_weight(self):
         """All eligible tickers should have equal weight."""
-        data = _make_archive_data({
-            "A": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
-            "B": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
-        })
+        data = _make_archive_data(
+            {
+                "A": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 1},
+                "B": {"rec": _make_rec(), "opt": 0.5, "composite_rank": 2},
+            }
+        )
         result = build_universe_baseline(data, DecisionRuleset())
         assert len(result) == 2
         assert result[0]["weight_pct"] == result[1]["weight_pct"]
@@ -526,6 +542,7 @@ class TestBuildUniverseBaseline:
 # TEST: Panel cost fields
 # =============================================================================
 
+
 class TestPanelCostFields:
     """Verify panel COLUMNS include cost columns."""
 
@@ -533,14 +550,14 @@ class TestPanelCostFields:
         """PANEL_COLUMNS contains adv_dollars, est_cost_bps, and net return columns."""
         from run_decision_strategy_backtest import PANEL_COLUMNS
 
-        for col in ["adv_dollars", "est_cost_bps", "participation_pct",
-                     "fwd_ret_20d_net", "fwd_ret_60d_net"]:
+        for col in ["adv_dollars", "est_cost_bps", "participation_pct", "fwd_ret_20d_net", "fwd_ret_60d_net"]:
             assert col in PANEL_COLUMNS, f"Missing {col} in PANEL_COLUMNS"
 
 
 # =============================================================================
 # TEST: Cost wiring into portfolio construction
 # =============================================================================
+
 
 def _make_archive_data_with_market(
     tickers_data: Dict[str, Dict[str, Any]],
@@ -579,26 +596,33 @@ class TestCostWiringInPortfolio:
     """Cost haircut flows through build_strategy_portfolio when enabled."""
 
     def _two_ticker_archive(self):
-        """Two identical tickers except ADV: CHEAP ($200M) vs COSTLY ($500K)."""
-        base_rec = _make_rec(catalyst_days=30, catalyst_window=True)
-        return _make_archive_data_with_market({
-            "CHEAP": {
-                "rec": {**base_rec},
-                "archetype": "drug_developer",
-                "opt": 0.75,
-                "composite_rank": 1,
-                "market_data": {"avg_volume": 2_000_000, "price": 100.0},  # ADV $200M
-            },
-            "COSTLY": {
-                "rec": {**base_rec},
-                "archetype": "drug_developer",
-                "opt": 0.75,
-                "composite_rank": 2,
-                "market_data": {"avg_volume": 10_000, "price": 50.0},  # ADV $500K
-            },
-        })
+        """Two identical tickers except ADV: CHEAP ($200M) vs COSTLY ($1K).
 
-    # Biotech-calibrated buckets: CHEAP (~230 bps RT) → 1.0x, COSTLY (~4036 bps RT) → floor
+        ADVs are calibrated against the Spec 050 $50K operating AUM used by
+        CostSchedule by default: CHEAP is ample-liquidity (rt <~20 bps),
+        COSTLY pushes participation over 100% to hit the >2000 bps floor.
+        """
+        base_rec = _make_rec(catalyst_days=30, catalyst_window=True)
+        return _make_archive_data_with_market(
+            {
+                "CHEAP": {
+                    "rec": {**base_rec},
+                    "archetype": "drug_developer",
+                    "opt": 0.75,
+                    "composite_rank": 1,
+                    "market_data": {"avg_volume": 2_000_000, "price": 100.0},  # ADV $200M
+                },
+                "COSTLY": {
+                    "rec": {**base_rec},
+                    "archetype": "drug_developer",
+                    "opt": 0.75,
+                    "composite_rank": 2,
+                    "market_data": {"avg_volume": 100, "price": 10.0},  # ADV $1K
+                },
+            }
+        )
+
+    # Biotech-calibrated buckets @ $50K AUM: CHEAP (~13 bps RT) → 1.0x, COSTLY (~2050 bps RT) → floor 0.55x
     _BIOTECH_BUCKETS = ((300, 1.0), (1000, 0.85), (2000, 0.70))
 
     def test_enabled_haircut_differentiates_weights(self):
@@ -616,8 +640,7 @@ class TestCostWiringInPortfolio:
 
         # COSTLY should have lower weight due to cost haircut
         assert by_ticker["COSTLY"]["weight_pct"] < by_ticker["CHEAP"]["weight_pct"], (
-            f"COSTLY ({by_ticker['COSTLY']['weight_pct']}%) should be < "
-            f"CHEAP ({by_ticker['CHEAP']['weight_pct']}%)"
+            f"COSTLY ({by_ticker['COSTLY']['weight_pct']}%) should be < " f"CHEAP ({by_ticker['CHEAP']['weight_pct']}%)"
         )
 
         # Cost fields should be populated
@@ -638,11 +661,11 @@ class TestCostWiringInPortfolio:
         cheap_cost_mult = float(by_ticker["CHEAP"].get("cost_mult") or 1.0)
         costly_cost_mult = float(by_ticker["COSTLY"].get("cost_mult") or 1.0)
 
-        # CHEAP (~230 bps RT < 300 threshold) → 1.0x, COSTLY (~4036 bps > 2000) → floor 0.55x
+        # At $50K AUM: CHEAP (~13 bps < 300) → 1.0x, COSTLY (~2050 bps > 2000) → floor 0.55x
         assert cheap_cost_mult == 1.0, f"CHEAP should be 1.0x, got {cheap_cost_mult}"
-        assert costly_cost_mult < cheap_cost_mult, (
-            f"COSTLY cost_mult ({costly_cost_mult}) should be < CHEAP ({cheap_cost_mult})"
-        )
+        assert (
+            costly_cost_mult < cheap_cost_mult
+        ), f"COSTLY cost_mult ({costly_cost_mult}) should be < CHEAP ({cheap_cost_mult})"
 
     def test_disabled_haircut_identical_weights(self):
         """With cost haircut disabled, identical tickers get identical weights."""
@@ -662,15 +685,17 @@ class TestCostWiringInPortfolio:
     def test_no_market_data_graceful(self):
         """Tickers without market_data get est_cost_bps=None, no haircut."""
         base_rec = _make_rec(catalyst_days=30, catalyst_window=True)
-        archive = _make_archive_data_with_market({
-            "NODATA": {
-                "rec": {**base_rec},
-                "archetype": "drug_developer",
-                "opt": 0.75,
-                "composite_rank": 1,
-                # No market_data key
-            },
-        })
+        archive = _make_archive_data_with_market(
+            {
+                "NODATA": {
+                    "rec": {**base_rec},
+                    "archetype": "drug_developer",
+                    "opt": 0.75,
+                    "composite_rank": 1,
+                    # No market_data key
+                },
+            }
+        )
         ruleset = DecisionRuleset(enable_cost_haircut=True, cost_impact_cap_bps=2000.0)
         result = build_strategy_portfolio(archive, ruleset, ["A", "B"], top_k=20)
         assert len(result) == 1

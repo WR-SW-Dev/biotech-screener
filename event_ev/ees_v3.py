@@ -249,6 +249,7 @@ EES_V3_CSV_COLUMNS = [
     "ees_v3_pctile",
     "conditional_misprice_z",
     "conditional_expected_move_z",
+    "ees_v3_misprice_available",
 ]
 
 
@@ -274,5 +275,6 @@ def enrich_csv_rows(
         row["ees_v3_pctile"] = ov.ees_v3_pctile
         row["conditional_misprice_z"] = ov.conditional_misprice_z
         row["conditional_expected_move_z"] = ov.conditional_expected_move_z
+        row["ees_v3_misprice_available"] = "1" if ov.misprice_available else "0"
 
     return overlays
