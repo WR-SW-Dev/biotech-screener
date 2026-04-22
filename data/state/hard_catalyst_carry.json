@@ -573,20 +573,6 @@
     "first_seen_date": "2026-04-15",
     "estimated_event_date": "2026-09-01"
   },
-  "CLDX": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 5,
-    "first_seen_date": "2026-04-15",
-    "estimated_event_date": "2026-04-20"
-  },
-  "BIIB": {
-    "catalyst_event_type": "FDA_PDUFA_DATE",
-    "catalyst_source": "SEC_8K_FILING",
-    "catalyst_days_at_first_seen": 2,
-    "first_seen_date": "2026-04-15",
-    "estimated_event_date": "2026-04-17"
-  },
   "MRNA": {
     "catalyst_event_type": "FDA_PDUFA_DATE",
     "catalyst_source": "SEC_8K_FILING",
