@@ -91,6 +91,11 @@ def _sf(val: Any) -> float:
         return math.nan
 
 
+def _num_or_none(val: Any) -> Optional[float]:
+    v = _sf(val)
+    return None if math.isnan(v) else v
+
+
 def _iso_z(ts: datetime) -> str:
     return ts.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -154,6 +159,11 @@ def compute_intraday_metrics(
         "rel_move_vs_xbi_pct": round(rel_move_vs_xbi_pct, 2) if rel_move_vs_xbi_pct is not None else None,
         "gap_pct": round(gap_pct, 2) if gap_pct is not None else None,
         "rvol": round(rvol, 2) if rvol is not None else None,
+        "market_cap_mm": _num_or_none(ranking_row.get("market_cap_mm", "")),
+        "short_interest_pct": _num_or_none(ranking_row.get("short_interest_pct", "")),
+        "pre_event_put_call_ratio": _num_or_none(ranking_row.get("pre_event_put_call_ratio", "")),
+        "opt_put_call_skew": _num_or_none(ranking_row.get("opt_put_call_skew", "")),
+        "priced_move_pct": _num_or_none(ranking_row.get("priced_move_pct", "")),
     }
 
 
@@ -565,6 +575,89 @@ def _send_immediate_alerts(
     return sent
 
 
+def derive_potential_drivers(row: Dict[str, Any]) -> List[str]:
+    """Return heuristic, unconfirmed driver hints for a HIGH-severity mover row.
+
+    Output order is fixed: News, Options flow, Technical/liquidity, Event proximity,
+    Other. Missing inputs render as explicit "unavailable" / "N/A" rather than
+    being inferred. Language is probabilistic ("possible", "potential"); caller
+    is expected to render these under a "heuristic, unconfirmed" header.
+    """
+    lines: List[str] = []
+    abs_move = row.get("stock_abs_move_pct") or 0.0
+    rel_move = row.get("rel_move_vs_xbi_pct")
+
+    # News
+    news_status = row.get("news_status", "NONE")
+    headline = row.get("headline") or ""
+    if news_status == "OFFICIAL":
+        source_type = row.get("source_type") or "unknown source"
+        news_line = f"Official same-day catalyst ({source_type})" + (f": {headline}" if headline else "")
+    elif news_status == "SUPPORTING":
+        news_line = "Same-day supporting context only (grok, unverified)"
+    else:
+        news_line = "No primary or secondary same-day catalyst identified"
+    lines.append(f"- News: {news_line}")
+
+    # Options flow (put/call ratio if available; skew as weak fallback)
+    pcr = row.get("pre_event_put_call_ratio")
+    skew = row.get("opt_put_call_skew")
+    if pcr is not None:
+        if abs_move < 0 and pcr >= 1.5:
+            opt_line = f"Elevated put activity (P/C ratio {pcr:.2f}) — possible downside positioning / hedging"
+        elif abs_move > 0 and pcr <= 0.67:
+            opt_line = f"Elevated call activity (P/C ratio {pcr:.2f}) — possible speculative upside positioning"
+        else:
+            opt_line = f"No unusual options imbalance (P/C ratio {pcr:.2f})"
+    elif skew is not None:
+        opt_line = f"Put/call skew {skew:+.2f} — limited signal without full flow data"
+    else:
+        opt_line = "No options data available"
+    lines.append(f"- Options flow: {opt_line}")
+
+    # Technical / liquidity
+    mcap = row.get("market_cap_mm")
+    if mcap is None:
+        tech_line = "Market-cap data unavailable"
+    elif mcap < 500 and abs(abs_move) > 10:
+        tech_line = f"Small-cap (${mcap:.0f}M) with {abs(abs_move):.1f}% move — possible liquidity-driven air pocket"
+    elif mcap < 500:
+        tech_line = f"Small-cap profile (${mcap:.0f}M) — liquidity risk elevated"
+    elif mcap < 2000:
+        tech_line = f"Mid-cap (${mcap:.0f}M) — liquidity less likely primary driver"
+    else:
+        tech_line = f"Large-cap (${mcap:.0f}M) — liquidity unlikely driver"
+    lines.append(f"- Technical/liquidity: {tech_line}")
+
+    # Event proximity (uses catalyst_days already in row)
+    cd = row.get("catalyst_days")
+    if cd is None or cd < 0:
+        prox_line = "No scheduled catalyst in forward window"
+    elif cd <= 5:
+        prox_line = f"Near-term catalyst ({cd}d) — potential positioning unwind / binary risk"
+    elif cd <= 15:
+        prox_line = f"Catalyst in {cd}d — possible pre-positioning or de-risking"
+    else:
+        prox_line = f"Catalyst in {cd}d — move likely unrelated to scheduled catalyst"
+    lines.append(f"- Event proximity: {prox_line}")
+
+    # Other: short interest + sector sympathy (from rel-vs-XBI already present)
+    others: List[str] = []
+    si = row.get("short_interest_pct")
+    if si is not None and si >= 20.0:
+        if abs_move < 0:
+            others.append(f"High short interest ({si:.1f}%) — possible short reinforcement")
+        else:
+            others.append(f"High short interest ({si:.1f}%) — possible squeeze dynamics")
+    if rel_move is not None and abs(abs_move) >= 5.0 and abs(rel_move) < 2.0:
+        others.append("Move largely tracks XBI — possible sector sympathy")
+    if not others:
+        others.append("No additional signals flagged")
+    lines.append(f"- Other: {'; '.join(others)}")
+
+    return lines
+
+
 def format_immediate_alert(
     r: Dict[str, Any],
     *,
@@ -627,6 +720,8 @@ def format_immediate_alert(
                 f"URL: {r.get('url', '')}",
             ]
         )
+    lines.extend(["", "Potential drivers (heuristic, unconfirmed):"])
+    lines.extend(derive_potential_drivers(r))
     lines.extend(
         [
             "",

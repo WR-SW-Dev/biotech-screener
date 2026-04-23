@@ -16,6 +16,7 @@ from tools.build_intraday_mover_watch import (
     classify_intraday_alerts,
     compute_intraday_metrics,
     compute_severity,
+    derive_potential_drivers,
     format_daily_digest_email,
     format_immediate_alert,
     lookup_same_day_news,
@@ -720,3 +721,159 @@ def test_digest_send_email_stamps_feed_and_sends(tmp_path: Path, monkeypatch):
     subject, body = captured[0]
     assert "Digest 2026-04-17" in subject
     assert "Feed source: alpaca" in body
+
+
+# ---------------------------------------------------------------------------
+# Potential drivers (heuristic, unconfirmed) — Spec 063 Phase 3 extension
+# ---------------------------------------------------------------------------
+def test_derive_drivers_news_none_is_honest():
+    lines = derive_potential_drivers(
+        {"stock_abs_move_pct": -12.0, "news_status": "NONE", "catalyst_days": 8, "market_cap_mm": 300.0}
+    )
+    news = next(ln for ln in lines if ln.startswith("- News:"))
+    assert "No primary or secondary same-day catalyst identified" in news
+
+
+def test_derive_drivers_news_official_names_source():
+    lines = derive_potential_drivers(
+        {
+            "stock_abs_move_pct": 12.0,
+            "news_status": "OFFICIAL",
+            "source_type": "company_ir",
+            "headline": "Topline hits primary endpoint",
+            "catalyst_days": 0,
+        }
+    )
+    news = next(ln for ln in lines if ln.startswith("- News:"))
+    assert "Official same-day catalyst" in news
+    assert "company_ir" in news
+    assert "Topline hits primary endpoint" in news
+
+
+def test_derive_drivers_small_cap_air_pocket_flagged():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -12.0, "news_status": "NONE", "market_cap_mm": 300.0})
+    tech = next(ln for ln in lines if ln.startswith("- Technical/liquidity:"))
+    assert "Small-cap" in tech
+    assert "air pocket" in tech
+
+
+def test_derive_drivers_large_cap_not_flagged_as_liquidity():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -12.0, "news_status": "NONE", "market_cap_mm": 5000.0})
+    tech = next(ln for ln in lines if ln.startswith("- Technical/liquidity:"))
+    assert "Large-cap" in tech
+    assert "air pocket" not in tech
+
+
+def test_derive_drivers_event_proximity_near_term():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -8.0, "catalyst_days": 3})
+    prox = next(ln for ln in lines if ln.startswith("- Event proximity:"))
+    assert "Near-term catalyst" in prox
+    assert "positioning unwind" in prox
+
+
+def test_derive_drivers_event_proximity_far_out():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -8.0, "catalyst_days": 60})
+    prox = next(ln for ln in lines if ln.startswith("- Event proximity:"))
+    assert "move likely unrelated to scheduled catalyst" in prox
+
+
+def test_derive_drivers_no_options_data_says_unavailable():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -8.0})
+    opt = next(ln for ln in lines if ln.startswith("- Options flow:"))
+    assert "No options data available" in opt
+
+
+def test_derive_drivers_elevated_puts_on_downside():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -12.0, "pre_event_put_call_ratio": 2.1})
+    opt = next(ln for ln in lines if ln.startswith("- Options flow:"))
+    assert "Elevated put activity" in opt
+    assert "2.10" in opt
+
+
+def test_derive_drivers_short_squeeze_vs_reinforcement_direction_aware():
+    down = derive_potential_drivers({"stock_abs_move_pct": -10.0, "short_interest_pct": 35.0})
+    up = derive_potential_drivers({"stock_abs_move_pct": +10.0, "short_interest_pct": 35.0})
+    assert any("short reinforcement" in ln for ln in down)
+    assert any("squeeze dynamics" in ln for ln in up)
+
+
+def test_derive_drivers_sector_sympathy_when_rel_small():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -8.0, "rel_move_vs_xbi_pct": -0.5})
+    other = next(ln for ln in lines if ln.startswith("- Other:"))
+    assert "sector sympathy" in other
+
+
+def test_derive_drivers_fixed_section_order():
+    lines = derive_potential_drivers({"stock_abs_move_pct": -8.0, "catalyst_days": 4, "market_cap_mm": 300.0})
+    prefixes = [ln.split(":", 1)[0] for ln in lines]
+    assert prefixes == [
+        "- News",
+        "- Options flow",
+        "- Technical/liquidity",
+        "- Event proximity",
+        "- Other",
+    ]
+
+
+def test_format_immediate_alert_embeds_drivers_block_between_news_and_interpretation():
+    row = _high_row(news_status="NONE")
+    row["market_cap_mm"] = 300.0
+    row["catalyst_days"] = 3
+    subj, body = format_immediate_alert(
+        row,
+        feed_source="alpaca",
+        feed_detail="alpaca basic",
+        artifact_path="/tmp/x.json",
+    )
+    assert "Potential drivers (heuristic, unconfirmed):" in body
+    # Block appears after News status line and before Interpretation
+    idx_news = body.index("News status:")
+    idx_drivers = body.index("Potential drivers (heuristic, unconfirmed):")
+    idx_interp = body.index("Interpretation:")
+    assert idx_news < idx_drivers < idx_interp
+    # At least one driver line uses heuristic language
+    assert "Near-term catalyst" in body
+    assert "Small-cap" in body
+
+
+def test_format_immediate_alert_drivers_block_graceful_when_fields_missing():
+    # Row with no market_cap, no options, no catalyst_days, no short interest
+    subj, body = format_immediate_alert(
+        _high_row(news_status="NONE"),
+        feed_source="alpaca",
+        feed_detail="alpaca basic",
+        artifact_path="/tmp/x.json",
+    )
+    assert "Potential drivers (heuristic, unconfirmed):" in body
+    assert "No primary or secondary same-day catalyst identified" in body
+    assert "Market-cap data unavailable" in body
+    assert "No options data available" in body
+
+
+def test_compute_intraday_metrics_plumbs_ranking_fields():
+    q = _mkq("ALT", last=90.0, prev=100.0)
+    ranking_row = {
+        "tier_dev": "A",
+        "actionable_rank": "5",
+        "catalyst_days": "8",
+        "market_cap_mm": "380.0",
+        "short_interest_pct": "22.5",
+        "pre_event_put_call_ratio": "1.8",
+        "opt_put_call_skew": "0.3",
+        "priced_move_pct": "15.0",
+    }
+    row = compute_intraday_metrics(q, None, ranking_row)
+    assert row["market_cap_mm"] == 380.0
+    assert row["short_interest_pct"] == 22.5
+    assert row["pre_event_put_call_ratio"] == 1.8
+    assert row["opt_put_call_skew"] == 0.3
+    assert row["priced_move_pct"] == 15.0
+
+
+def test_compute_intraday_metrics_missing_fields_are_none_not_nan():
+    q = _mkq("XYZ", last=90.0, prev=100.0)
+    row = compute_intraday_metrics(q, None, {})
+    # Must be None (JSON-safe), not NaN
+    assert row["market_cap_mm"] is None
+    assert row["short_interest_pct"] is None
+    assert row["pre_event_put_call_ratio"] is None
