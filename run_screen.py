@@ -6050,6 +6050,18 @@ def save_validation_snapshot(
     except Exception as _runway_exc:
         logger.warning("Runway severity enrichment failed: %s", _runway_exc, exc_info=True)
 
+    # --- Insider Form 4: diagnostic pass-through (scoring lane closed 2026-04-05) ---
+    # Computes insider_net_buy_value_90d on demand from data/form4/raw/{ticker}.json
+    # at this exact as_of_date (PIT-safe filing_date windowing). Missing raw file
+    # leaves the column blank (NA); present-but-inactive yields 0.0.
+    try:
+        from common.insider_enrichment import enrich_rows_with_insider_net_buy_value
+
+        _form4_raw_dir = Path(__file__).resolve().parent / "data" / "form4" / "raw"
+        enrich_rows_with_insider_net_buy_value(csv_rows, as_of_date, _form4_raw_dir)
+    except Exception as _insider_exc:
+        logger.warning("Insider enrichment failed: %s", _insider_exc, exc_info=True)
+
     # =========================================================================
     # PHASE 3: WRITE — rankings.csv, checksum, manifest
     # =========================================================================
@@ -6906,6 +6918,165 @@ def save_validation_snapshot(
             logger.info(f"Phase-2 positions JSON -> {positions_json_path.name}")
         except OSError as e:
             logger.warning(f"Could not write portfolio_positions.json: {e}")
+
+        # --- P0 sidecar diff for EES v3 promotion battery (Spec 064) ---
+        # Observational only: captures what EES v3 would filter from the
+        # 2-feat ranker baseline, per-snapshot, plus coverage health for
+        # priced_move_pct / short_interest_pct / gap-computable rows.
+        # Does NOT alter selection, ranking, or execution. See
+        # specs/changes/spec_064_ees_v3_promotion_battery.md for thresholds.
+        try:
+            if _v3_overlays_for_sidecar:
+                from event_ev.ees_v3 import DEFAULT_W_EXPECTED as _V3_W_EXPECTED
+                from event_ev.ees_v3 import DEFAULT_W_MISPRICE as _V3_W_MISPRICE
+
+                _EPS_COV = 1e-9
+                _v3_by_ticker = {o.ticker: o for o in _v3_overlays_for_sidecar}
+                _row_by_ticker = {r.get("ticker", ""): r for r in csv_rows}
+
+                # Coverage health — evaluated over all scored rows so operators
+                # see data-plane stability even when eligibility shrinks the
+                # universe. These thresholds gate downstream WS4 / P2 work.
+                _n_total = len(csv_rows)
+                _n_pm = _n_si = _n_gap = _n_full = 0
+                for _r in csv_rows:
+                    _pm = _safe_float(_r.get("priced_move_pct"), default=None)
+                    _si = _safe_float(_r.get("short_interest_pct"), default=None)
+                    if _pm is not None:
+                        _n_pm += 1
+                        if abs(_pm) > _EPS_COV:
+                            _n_gap += 1
+                    if _si is not None:
+                        _n_si += 1
+                    _ov = _v3_by_ticker.get(_r.get("ticker", ""))
+                    if _ov is not None and _ov.misprice_available:
+                        _n_full += 1
+
+                def _pct(num: int, den: int) -> float:
+                    return round(num / den, 4) if den > 0 else 0.0
+
+                _cov = {
+                    "total_scored": _n_total,
+                    "pct_priced_move": _pct(_n_pm, _n_total),
+                    "pct_short_interest": _pct(_n_si, _n_total),
+                    "pct_gap_computable": _pct(_n_gap, _n_total),
+                    "pct_full_ees_computable": _pct(_n_full, _n_total),
+                }
+                _hard_fail: List[str] = []
+                if _cov["pct_priced_move"] < 0.60:
+                    _hard_fail.append("priced_move_below_0.60")
+                if _cov["pct_short_interest"] < 0.70:
+                    _hard_fail.append("short_interest_below_0.70")
+                if _cov["pct_gap_computable"] < 0.50:
+                    _hard_fail.append("gap_computable_below_0.50")
+                if _cov["pct_full_ees_computable"] < 0.40:
+                    _hard_fail.append("full_ees_below_0.40")
+                _cov["hard_fail_flags"] = _hard_fail
+
+                # Baseline = top-K position rows (already written above). Keep
+                # order so downstream diffs can do rank-wise comparisons.
+                _baseline_tickers = [r.get("ticker", "") for r in position_rows if r.get("ticker")]
+                _baseline_set = set(_baseline_tickers)
+
+                def _driver_component(ov) -> str:
+                    _cm = _V3_W_MISPRICE * ov.conditional_misprice_z
+                    _em = _V3_W_EXPECTED * ov.conditional_expected_move_z
+                    return "conditional_misprice" if abs(_cm) >= abs(_em) else "expected_move"
+
+                def _v2_context(row: Dict[str, Any]) -> Dict[str, Optional[float]]:
+                    # Operator context — NOT part of the v3 composite, but
+                    # useful when reviewing filtered names.
+                    return {
+                        "trap_overlay_score": _safe_float(row.get("trap_overlay_score"), default=None),
+                        "timing_decay_risk_score": _safe_float(row.get("timing_decay_risk_score"), default=None),
+                        "quality_overlay_score": _safe_float(row.get("quality_overlay_score"), default=None),
+                    }
+
+                _would_filter: List[Dict[str, Any]] = []
+                _would_retain_count = 0
+                for _t in _baseline_tickers:
+                    _ov = _v3_by_ticker.get(_t)
+                    _row = _row_by_ticker.get(_t, {})
+                    if _ov is None:
+                        _would_retain_count += 1
+                        continue
+                    if not _ov.ees_v3_gate:
+                        _would_filter.append(
+                            {
+                                "ticker": _t,
+                                "ees_v3_score": round(_ov.ees_v3_score, 4),
+                                "ees_v3_pctile": round(_ov.ees_v3_pctile, 1),
+                                "misprice_available": _ov.misprice_available,
+                                "driver_component": _driver_component(_ov),
+                                "v2_context": _v2_context(_row),
+                            }
+                        )
+                    else:
+                        _would_retain_count += 1
+
+                # would_add — not in baseline but ranks in EES v3 top 5%
+                _would_add: List[Dict[str, Any]] = []
+                for _r in csv_rows:
+                    _t = _r.get("ticker", "")
+                    if not _t or _t in _baseline_set or not _is_eligible(_r):
+                        continue
+                    _ov = _v3_by_ticker.get(_t)
+                    if _ov is None or _ov.ees_v3_pctile < 95.0:
+                        continue
+                    _would_add.append(
+                        {
+                            "ticker": _t,
+                            "ees_v3_score": round(_ov.ees_v3_score, 4),
+                            "ees_v3_pctile": round(_ov.ees_v3_pctile, 1),
+                            "misprice_available": _ov.misprice_available,
+                            "driver_component": _driver_component(_ov),
+                        }
+                    )
+                _would_add.sort(key=lambda d: -d["ees_v3_score"])
+
+                _sidecar_payload = {
+                    "snapshot_date": as_of_date,
+                    "spec": "spec_064_ees_v3_promotion_battery",
+                    "ees_version": _v3_overlays_for_sidecar[0].model_version,
+                    "baseline": {
+                        "selector": "A4_2feat_ranker",
+                        "ruleset_id": rs.ruleset_id,
+                        "n_selected": len(_baseline_tickers),
+                        "selected_tickers": _baseline_tickers,
+                    },
+                    "ees_overlay": {
+                        "n_scored": len(_v3_overlays_for_sidecar),
+                        "would_filter": _would_filter,
+                        "would_add": _would_add,
+                        "would_retain_count": _would_retain_count,
+                    },
+                    "coverage": _cov,
+                    "forward_outcomes": {
+                        "horizon_days": 21,
+                        "status": "pending",
+                    },
+                    "note": (
+                        "Observational overlay. Does not affect ranking, "
+                        "selection, or execution. See "
+                        "specs/changes/spec_064_ees_v3_promotion_battery.md"
+                    ),
+                }
+                with open(snap_path / "ees_sidecar_diff.json", "w", encoding="utf-8") as f:
+                    json.dump(_sidecar_payload, f, indent=2, default=str)
+                    f.write("\n")
+                logger.info(
+                    "[EES sidecar] filter=%d add=%d retain=%d | coverage pm=%.0f%% si=%.0f%% gap=%.0f%% full=%.0f%% | hard_fail=%s",
+                    len(_would_filter),
+                    len(_would_add),
+                    _would_retain_count,
+                    _cov["pct_priced_move"] * 100,
+                    _cov["pct_short_interest"] * 100,
+                    _cov["pct_gap_computable"] * 100,
+                    _cov["pct_full_ees_computable"] * 100,
+                    ",".join(_hard_fail) if _hard_fail else "none",
+                )
+        except Exception as _sidecar_exc:
+            logger.debug("EES sidecar diff skipped: %s", _sidecar_exc, exc_info=True)
 
     # --- Catalyst coverage diagnostics ---
     dev_csv_rows = [r for r in csv_rows if r.get("archetype") == "drug_developer"]
@@ -10431,11 +10602,25 @@ def _run_phase2_delta(snap_path, snapshot_dir, args, logger):
         health_thresholds = DEFAULT_HEALTH_THRESHOLDS
 
     current_date = snap_path.name
-    delta_prior = getattr(args, "delta_prior", "auto")
+    # Defensive: argparse default is "auto", but downstream callers that set
+    # args.delta_prior = None/"" would crash on .lower() below. Normalize here.
+    delta_prior = getattr(args, "delta_prior", "auto") or "auto"
 
     # Resolve prior
     if delta_prior == "auto":
         _, prior_path = find_snapshots(snapshot_dir, current_date, None)
+        # Silent auto-prior misses left no trail in 2026-04-24's delta report;
+        # emit a candidate-by-candidate diagnostic whenever auto finds nothing.
+        if prior_path is None:
+            try:
+                from run_phase2_snapshot_delta import diagnose_missing_prior
+
+                logger.warning(
+                    "Phase-2 delta auto-prior returned None; diagnostics:\n%s",
+                    diagnose_missing_prior(snapshot_dir, current_date),
+                )
+            except Exception as _diag_exc:
+                logger.debug("Auto-prior diagnostic failed: %s", _diag_exc)
     elif delta_prior.lower() == "none":
         prior_path = None
     else:

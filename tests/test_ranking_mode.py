@@ -207,6 +207,7 @@ class TestColumnLayout:
         ]
 
 
+@pytest.mark.timeout(120)
 class TestCompanyNamePopulated:
     """Verify company_name is populated from M1 universe data."""
 
@@ -536,6 +537,7 @@ class TestCompositeRankingMode:
         ]
 
 
+@pytest.mark.timeout(180)
 class TestActionableRankStability:
     """actionable_rank values must be identical regardless of ranking_mode."""
 
@@ -570,6 +572,7 @@ class TestActionableRankStability:
         assert ranks_dec == ranks_comp, f"actionable_rank differs: decision={ranks_dec}, composite={ranks_comp}"
 
 
+@pytest.mark.timeout(120)
 class TestDeterministicTiebreak:
     """Identical inputs must always produce the same row order."""
 

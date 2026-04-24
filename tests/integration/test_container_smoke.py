@@ -16,7 +16,7 @@ import pytest
 
 from run_screen import VERSION, run_screening_pipeline, save_validation_snapshot
 
-pytestmark = pytest.mark.slow
+pytestmark = [pytest.mark.slow, pytest.mark.timeout(180)]
 
 _PIPELINE_KWARGS = dict(
     as_of_date="2026-01-15",

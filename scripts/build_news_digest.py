@@ -227,11 +227,11 @@ def build_digest_text(items: list[dict], window: str) -> str:
 
 def build_digest_html(items: list[dict], window: str) -> str:
     """Build HTML digest."""
-    date.today().strftime("%b %d, %Y")
+    today_str = date.today().strftime("%b %d, %Y")
     window_label = {"morning": "Pre-Market", "midday": "Midday", "evening": "End of Day"}.get(window, window)
 
     if not items:
-        return """<html><body>
+        return f"""<html><body>
 <h2>Biotech News Digest — {window_label} {today_str}</h2>
 <p>No major updates for followed tickers.</p>
 <p style="color:#888;font-size:11px;">Source: Herald (company IR + wire services)</p>
@@ -266,11 +266,13 @@ def build_digest_html(items: list[dict], window: str) -> str:
             "</tr>"
         )
 
-    return """<html><body>
+    rows_joined = "".join(rows_html)
+    item_count = len(items)
+    return f"""<html><body>
 <h2 style="margin:0 0 8px 0;">Biotech News Digest — {window_label} {today_str}</h2>
-<p style="margin:0 0 12px 0;color:#666;">{len(items)} items from followed tickers</p>
+<p style="margin:0 0 12px 0;color:#666;">{item_count} items from followed tickers</p>
 <table style="border-collapse:collapse;font-family:Arial,sans-serif;font-size:13px;width:100%;">
-{''.join(rows_html)}
+{rows_joined}
 </table>
 <p style="color:#888;font-size:11px;margin-top:16px;">
   Source: Herald (company IR + wire services) | Managed by Herald Digest

@@ -154,6 +154,7 @@ def check_sidecars(as_of_date: str) -> Dict[str, Any]:
 
     for sidecar in [
         "ees_v3_overlay.json",
+        "ees_sidecar_diff.json",
         "runway_severity_overlay.json",
         "expectation_error_overlay.json",
         "ees_gate_diagnostics.json",

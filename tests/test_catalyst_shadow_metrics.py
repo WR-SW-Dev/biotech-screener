@@ -1,4 +1,5 @@
 """Tests for catalyst shadow metrics telemetry sidecar."""
+
 from __future__ import annotations
 
 import csv
@@ -7,18 +8,12 @@ from pathlib import Path
 
 import pytest
 
-from run_screen import (
-    _find_prior_rankings,
-    _compute_shadow_metrics,
-    _classify_coverage_buckets,
-    _GOOD_CATALYST_MODES,
-    _BAD_CATALYST_MODES,
-)
-
+from run_screen import _classify_coverage_buckets, _compute_shadow_metrics, _find_prior_rankings
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _write_rankings(snap_dir: Path, date_str: str, rows: list[dict]) -> Path:
     """Write a minimal rankings.csv into snap_dir/date_str/."""
@@ -36,8 +31,7 @@ def _write_rankings(snap_dir: Path, date_str: str, rows: list[dict]) -> Path:
     return d
 
 
-def _make_dev_row(ticker, composite_rank=1, catalyst_mode="specific_days",
-                  catalyst_days="90", tier_dev="B", **extra):
+def _make_dev_row(ticker, composite_rank=1, catalyst_mode="specific_days", catalyst_days="90", tier_dev="B", **extra):
     """Build a minimal dev-archetype row dict."""
     row = {
         "ticker": ticker,
@@ -68,6 +62,7 @@ def _make_comm_row(ticker, composite_rank=1, **extra):
 # ===================================================================
 # TestFindPriorRankings
 # ===================================================================
+
 
 class TestFindPriorRankings:
     """Tests for _find_prior_rankings()."""
@@ -134,6 +129,7 @@ class TestFindPriorRankings:
 # ===================================================================
 # TestComputeShadowMetrics
 # ===================================================================
+
 
 class TestComputeShadowMetrics:
     """Tests for _compute_shadow_metrics()."""
@@ -300,8 +296,7 @@ class TestComputeShadowMetrics:
         snap = tmp_path / "snapshots"
         # Build 100 filler tickers ranked 1-100 so FOLD at rank=200 is outside top-100
         filler_prior = [
-            _make_dev_row(f"F{i:03d}", composite_rank=i, catalyst_mode="specific_days")
-            for i in range(1, 101)
+            _make_dev_row(f"F{i:03d}", composite_rank=i, catalyst_mode="specific_days") for i in range(1, 101)
         ]
         # Prior: ACAD(rank=10) bad, QRST(rank=80) bad, FOLD(rank=200) bad
         prior_rows = filler_prior + [
@@ -314,8 +309,7 @@ class TestComputeShadowMetrics:
 
         # Current: same fillers + all three flip to good
         filler_cur = [
-            _make_dev_row(f"F{i:03d}", composite_rank=i, catalyst_mode="specific_days")
-            for i in range(1, 101)
+            _make_dev_row(f"F{i:03d}", composite_rank=i, catalyst_mode="specific_days") for i in range(1, 101)
         ]
         cur_rows = filler_cur + [
             _make_dev_row("ACAD", composite_rank=10, catalyst_mode="specific_days"),
@@ -325,8 +319,8 @@ class TestComputeShadowMetrics:
         result = _compute_shadow_metrics(cur_rows, "2026-02-14", snap, None)
 
         assert result["bad_to_good_count"] == 3
-        assert result["bad_to_good_in_top60"] == 1   # ACAD (rank 10)
-        assert result["bad_to_good_in_top100"] == 2   # ACAD + QRST (rank 80)
+        assert result["bad_to_good_in_top60"] == 1  # ACAD (rank 10)
+        assert result["bad_to_good_in_top100"] == 2  # ACAD + QRST (rank 80)
 
     def test_source_attribution_extraction(self, tmp_path):
         snap = tmp_path / "snapshots"
@@ -412,9 +406,7 @@ class TestComputeShadowMetrics:
         # Write prior snapshot with shadow metrics showing count=20
         _write_rankings(snap, "2026-02-12", [_make_dev_row("A")])
         prior_shadow = {"sec8k_future_count": 20}
-        (snap / "2026-02-12" / "catalyst_shadow_metrics.json").write_text(
-            json.dumps(prior_shadow), encoding="utf-8"
-        )
+        (snap / "2026-02-12" / "catalyst_shadow_metrics.json").write_text(json.dumps(prior_shadow), encoding="utf-8")
         _write_rankings(snap, "2026-02-14", rows)
 
         source_mix = {
@@ -448,12 +440,14 @@ class TestComputeShadowMetrics:
 # TestIntegration
 # ===================================================================
 
+
+@pytest.mark.timeout(180)
 class TestIntegration:
     """Integration tests for shadow metrics in save_validation_snapshot."""
 
     def test_shadow_metrics_json_written(self, tmp_path):
         """Minimal save_validation_snapshot produces catalyst_shadow_metrics.json."""
-        from run_screen import save_validation_snapshot, DEFAULT_RULESET
+        from run_screen import save_validation_snapshot
 
         snap_dir = tmp_path / "snapshots"
         results = {
@@ -526,8 +520,10 @@ class TestIntegration:
 
         # Patch _compute_shadow_metrics to raise
         import run_screen
+
         monkeypatch.setattr(
-            run_screen, "_compute_shadow_metrics",
+            run_screen,
+            "_compute_shadow_metrics",
             lambda **kw: (_ for _ in ()).throw(RuntimeError("boom")),
         )
 
@@ -548,11 +544,11 @@ class TestIntegration:
 # TestCoverageBuckets
 # ===================================================================
 
+
 class TestCoverageBuckets:
     """Tests for _classify_coverage_buckets() and bucket telemetry."""
 
-    def _make_trial(self, ticker, study_type="INTERVENTIONAL",
-                    status="RECRUITING", pcd=None):
+    def _make_trial(self, ticker, study_type="INTERVENTIONAL", status="RECRUITING", pcd=None):
         t = {"ticker": ticker, "study_type": study_type, "status": status}
         if pcd:
             t["primary_completion_date"] = pcd
@@ -573,10 +569,7 @@ class TestCoverageBuckets:
             # E has no trials at all → bucket A
         ]
         result = _classify_coverage_buckets(rows, trials, "2026-02-14")
-        total = sum(
-            result[f"coverage_bucket_{k}"]
-            for k in ("OK", "A", "B", "C", "D", "E", "F", "G", "MISSING")
-        )
+        total = sum(result[f"coverage_bucket_{k}"] for k in ("OK", "A", "B", "C", "D", "E", "F", "G", "MISSING"))
         assert total == result["n_coverage_total"]
         assert total == len(rows)
 
@@ -646,8 +639,7 @@ class TestCoverageBuckets:
         rows = [_make_dev_row("A")]
         _write_rankings(snap, "2026-02-14", rows)
 
-        result = _compute_shadow_metrics(rows, "2026-02-14", snap, None,
-                                         trial_records=None)
+        result = _compute_shadow_metrics(rows, "2026-02-14", snap, None, trial_records=None)
         assert "coverage_bucket_OK" not in result
         assert "n_addressable_gap" not in result
 
@@ -660,12 +652,15 @@ class TestCoverageBuckets:
         ]
         _write_rankings(snap, "2026-02-14", rows)
         trials = [
-            {"ticker": "B", "study_type": "INTERVENTIONAL",
-             "status": "RECRUITING", "primary_completion_date": "2027-06-01"},
+            {
+                "ticker": "B",
+                "study_type": "INTERVENTIONAL",
+                "status": "RECRUITING",
+                "primary_completion_date": "2027-06-01",
+            },
         ]
 
-        result = _compute_shadow_metrics(rows, "2026-02-14", snap, None,
-                                         trial_records=trials)
+        result = _compute_shadow_metrics(rows, "2026-02-14", snap, None, trial_records=trials)
         assert "coverage_bucket_OK" in result
         assert result["coverage_bucket_OK"] == 1
         assert result["n_coverage_total"] == 2

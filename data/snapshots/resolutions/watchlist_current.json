@@ -1,23 +1,18 @@
 {
-  "as_of_date": "2026-04-14",
-  "n_watchlist": 9,
+  "as_of_date": "2026-04-23",
+  "n_watchlist": 6,
   "n_resolved_today": 2,
-  "n_existing": 96,
+  "n_existing": 100,
   "watchlist": [
     {
-      "ticker": "TVTX",
-      "catalyst_date": "2026-04-13",
+      "ticker": "AXSM",
+      "catalyst_date": "2026-04-30",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "SYRE",
-      "catalyst_date": "2026-04-13",
-      "catalyst_type": "CORPORATE_UPDATE"
-    },
-    {
-      "ticker": "ALLO",
-      "catalyst_date": "2026-04-13",
-      "catalyst_type": "CORPORATE_UPDATE"
+      "ticker": "DFTX",
+      "catalyst_date": "2026-04-16",
+      "catalyst_type": "PDUFA_ACTION"
     },
     {
       "ticker": "PEPG",
@@ -38,16 +33,6 @@
       "ticker": "BMEA",
       "catalyst_date": "2026-03-24",
       "catalyst_type": "CORPORATE_UPDATE"
-    },
-    {
-      "ticker": "NGNE",
-      "catalyst_date": "2026-03-23",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "TSHA",
-      "catalyst_date": "2026-03-19",
-      "catalyst_type": "PDUFA_ACTION"
     }
   ]
 }
