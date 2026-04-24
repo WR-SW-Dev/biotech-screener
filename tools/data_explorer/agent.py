@@ -52,7 +52,7 @@ def _emit(text: str, output_path: str | None) -> None:
     """Print to stdout or write to file."""
     if output_path:
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)
-        Path(output_path).write_text(text + "\n")
+        Path(output_path).write_text(text + "\n", encoding="utf-8")
     else:
         print(text)
 

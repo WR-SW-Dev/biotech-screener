@@ -5,12 +5,9 @@ Tests all tiers and validation logic.
 """
 
 import json
-import os
 import sys
-import tempfile
 from decimal import Decimal
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -18,6 +15,7 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from audit_framework.types import (
+    AuditReport,
     AuditResult,
     AuditSeverity,
     AuditTier,
@@ -26,8 +24,6 @@ from audit_framework.types import (
     TierResult,
     ValidationCategory,
     ValidationFinding,
-    AuditReport,
-    AuditMetrics,
 )
 
 
@@ -273,7 +269,8 @@ class TestTier1Determinism:
         """Create temporary codebase structure."""
         # Create module with float violation
         module_file = tmp_path / "module_2_financial.py"
-        module_file.write_text("""
+        module_file.write_text(
+            """
 from decimal import Decimal
 
 def calculate_score(value):
@@ -285,26 +282,27 @@ def calculate_score(value):
 def proper_calculation(value):
     ratio = Decimal("1.5")
     return value * ratio
-""")
+"""
+        )
 
         # Create common directory
         common_dir = tmp_path / "common"
         common_dir.mkdir()
 
         pit_file = common_dir / "pit_enforcement.py"
-        pit_file.write_text("""
+        pit_file.write_text(
+            """
 def compute_pit_cutoff(as_of_date):
     '''Compute PIT cutoff.'''
     return as_of_date
-""")
+"""
+        )
 
         return tmp_path
 
     def test_decimal_compliance_validator(self, temp_codebase):
         """Test DecimalComplianceValidator."""
-        from audit_framework.tier1_determinism.decimal_compliance import (
-            DecimalComplianceValidator,
-        )
+        from audit_framework.tier1_determinism.decimal_compliance import DecimalComplianceValidator
 
         validator = DecimalComplianceValidator(str(temp_codebase))
         report = validator.scan_codebase()
@@ -317,17 +315,17 @@ def compute_pit_cutoff(as_of_date):
         """Test non-deterministic source detection."""
         # Create file with datetime.now()
         bad_file = temp_codebase / "bad_module.py"
-        bad_file.write_text("""
+        bad_file.write_text(
+            """
 from datetime import datetime
 
 def get_data():
     current_time = datetime.now()
     return current_time
-""")
-
-        from audit_framework.tier1_determinism.reproducibility import (
-            ReproducibilityValidator,
+"""
         )
+
+        from audit_framework.tier1_determinism.reproducibility import ReproducibilityValidator
 
         validator = ReproducibilityValidator(str(temp_codebase))
         sources = validator.scan_non_deterministic_sources()
@@ -337,9 +335,7 @@ def get_data():
 
     def test_pit_integrity_validator(self, temp_codebase):
         """Test PITIntegrityValidator."""
-        from audit_framework.tier1_determinism.pit_integrity import (
-            PITIntegrityValidator,
-        )
+        from audit_framework.tier1_determinism.pit_integrity import PITIntegrityValidator
 
         validator = PITIntegrityValidator(str(temp_codebase))
         report = validator.scan_codebase()
@@ -374,9 +370,7 @@ class TestTier2DataIntegrity:
 
     def test_provenance_validator(self, temp_codebase_with_data):
         """Test ProvenanceValidator."""
-        from audit_framework.tier2_data_integrity.provenance import (
-            ProvenanceValidator,
-        )
+        from audit_framework.tier2_data_integrity.provenance import ProvenanceValidator
 
         validator = ProvenanceValidator(str(temp_codebase_with_data))
         report = validator.run_audit()
@@ -386,9 +380,7 @@ class TestTier2DataIntegrity:
 
     def test_coverage_validator(self, temp_codebase_with_data):
         """Test CoverageValidator."""
-        from audit_framework.tier2_data_integrity.coverage import (
-            CoverageValidator,
-        )
+        from audit_framework.tier2_data_integrity.coverage import CoverageValidator
 
         validator = CoverageValidator(str(temp_codebase_with_data))
         report = validator.run_audit()
@@ -397,9 +389,7 @@ class TestTier2DataIntegrity:
 
     def test_failure_mode_validator(self, temp_codebase_with_data):
         """Test FailureModeValidator."""
-        from audit_framework.tier2_data_integrity.failure_modes import (
-            FailureModeValidator,
-        )
+        from audit_framework.tier2_data_integrity.failure_modes import FailureModeValidator
 
         validator = FailureModeValidator(str(temp_codebase_with_data))
         report = validator.run_audit()
@@ -414,7 +404,8 @@ class TestTier3Performance:
     def temp_codebase(self, tmp_path):
         """Create temporary codebase."""
         module_file = tmp_path / "module.py"
-        module_file.write_text("""
+        module_file.write_text(
+            """
 import logging
 
 logger = logging.getLogger(__name__)
@@ -429,14 +420,13 @@ def process():
 
 def compute():
     return 42
-""")
+"""
+        )
         return tmp_path
 
     def test_performance_validator(self, temp_codebase):
         """Test PerformanceValidator."""
-        from audit_framework.tier3_performance.profiling import (
-            PerformanceValidator,
-        )
+        from audit_framework.tier3_performance.profiling import PerformanceValidator
 
         validator = PerformanceValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -445,9 +435,7 @@ def compute():
 
     def test_resilience_validator(self, temp_codebase):
         """Test ResilienceValidator."""
-        from audit_framework.tier3_performance.resilience import (
-            ResilienceValidator,
-        )
+        from audit_framework.tier3_performance.resilience import ResilienceValidator
 
         validator = ResilienceValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -456,9 +444,7 @@ def compute():
 
     def test_dependency_validator(self, temp_codebase):
         """Test DependencyValidator."""
-        from audit_framework.tier3_performance.dependencies import (
-            DependencyValidator,
-        )
+        from audit_framework.tier3_performance.dependencies import DependencyValidator
 
         validator = DependencyValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -477,7 +463,8 @@ class TestTier4Testing:
         tests_dir.mkdir()
 
         test_file = tests_dir / "test_module.py"
-        test_file.write_text("""
+        test_file.write_text(
+            """
 import pytest
 
 def test_one():
@@ -489,14 +476,16 @@ def test_two():
 def test_determinism_check():
     # Golden test for determinism
     assert True
-""")
+"""
+        )
 
         # Create backtest directory
         backtest_dir = tmp_path / "backtest"
         backtest_dir.mkdir()
 
         metrics_file = backtest_dir / "metrics.py"
-        metrics_file.write_text("""
+        metrics_file.write_text(
+            """
 def calculate_sharpe_ratio(returns):
     '''Calculate Sharpe ratio.'''
     return 1.5
@@ -504,15 +493,14 @@ def calculate_sharpe_ratio(returns):
 def calculate_ic(predictions, actuals):
     '''Calculate information coefficient.'''
     return 0.05
-""")
+"""
+        )
 
         return tmp_path
 
     def test_test_coverage_validator(self, temp_codebase_with_tests):
         """Test TestCoverageValidator."""
-        from audit_framework.tier4_testing.coverage import (
-            TestCoverageValidator,
-        )
+        from audit_framework.tier4_testing.coverage import TestCoverageValidator
 
         validator = TestCoverageValidator(str(temp_codebase_with_tests))
         report = validator.run_audit()
@@ -522,9 +510,7 @@ def calculate_ic(predictions, actuals):
 
     def test_backtest_validator(self, temp_codebase_with_tests):
         """Test BacktestValidator."""
-        from audit_framework.tier4_testing.backtesting import (
-            BacktestValidator,
-        )
+        from audit_framework.tier4_testing.backtesting import BacktestValidator
 
         validator = BacktestValidator(str(temp_codebase_with_tests))
         report = validator.run_audit()
@@ -540,7 +526,8 @@ class TestTier5Architecture:
         """Create temporary codebase."""
         # Create a module
         module_file = tmp_path / "module.py"
-        module_file.write_text('''
+        module_file.write_text(
+            '''
 """Module docstring."""
 
 def simple_function():
@@ -559,18 +546,21 @@ def complex_function(x, y, z):
         else:
             result = x
     return result
-''')
+'''
+        )
 
         # Create governance directory
         gov_dir = tmp_path / "governance"
         gov_dir.mkdir()
 
         audit_log = gov_dir / "audit_log.py"
-        audit_log.write_text("""
+        audit_log.write_text(
+            """
 class AuditLog:
     '''Audit logging.'''
     pass
-""")
+"""
+        )
 
         # Create README
         readme = tmp_path / "README.md"
@@ -580,9 +570,7 @@ class AuditLog:
 
     def test_maintainability_validator(self, temp_codebase):
         """Test MaintainabilityValidator."""
-        from audit_framework.tier5_architecture.maintainability import (
-            MaintainabilityValidator,
-        )
+        from audit_framework.tier5_architecture.maintainability import MaintainabilityValidator
 
         validator = MaintainabilityValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -592,9 +580,7 @@ class AuditLog:
 
     def test_security_validator(self, temp_codebase):
         """Test SecurityValidator."""
-        from audit_framework.tier5_architecture.security import (
-            SecurityValidator,
-        )
+        from audit_framework.tier5_architecture.security import SecurityValidator
 
         validator = SecurityValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -610,12 +596,14 @@ class TestTier6Deployment:
         """Create temporary codebase."""
         # Create pyproject.toml
         pyproject = tmp_path / "pyproject.toml"
-        pyproject.write_text('''
+        pyproject.write_text(
+            """
 [project]
 name = "test-project"
 version = "1.0.0"
 requires-python = ">=3.10"
-''')
+"""
+        )
 
         # Create README
         readme = tmp_path / "README.md"
@@ -650,9 +638,7 @@ requires-python = ">=3.10"
 
     def test_deployment_validator(self, temp_codebase):
         """Test DeploymentValidator."""
-        from audit_framework.tier6_deployment.readiness import (
-            DeploymentValidator,
-        )
+        from audit_framework.tier6_deployment.readiness import DeploymentValidator
 
         validator = DeploymentValidator(str(temp_codebase))
         report = validator.run_audit()
@@ -674,16 +660,10 @@ class TestOrchestrator:
         (tmp_path / "production_data").mkdir()
 
         # Minimal files
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "test"\nversion = "1.0.0"'
-        )
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"\nversion = "1.0.0"')
         (tmp_path / "README.md").write_text("# Test\n\nSetup instructions.\n")
-        (tmp_path / "governance" / "audit_log.py").write_text(
-            "class AuditLog: pass"
-        )
-        (tmp_path / "tests" / "test_main.py").write_text(
-            "def test_one(): pass"
-        )
+        (tmp_path / "governance" / "audit_log.py").write_text("class AuditLog: pass")
+        (tmp_path / "tests" / "test_main.py").write_text("def test_one(): pass")
         (tmp_path / "production_data" / "universe.json").write_text("[]")
 
         return tmp_path
@@ -733,7 +713,7 @@ class TestOrchestrator:
         output_path = orchestrator.save_report(report, format="markdown")
         assert Path(output_path).exists()
 
-        content = Path(output_path).read_text()
+        content = Path(output_path).read_text(encoding="utf-8")
         assert "# Institutional Audit Report" in content
 
 
@@ -747,9 +727,7 @@ class TestConvenienceFunctions:
         (tmp_path / "governance").mkdir()
         (tmp_path / "tests").mkdir()
         (tmp_path / "production_data").mkdir()
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "test"\nversion = "1.0.0"'
-        )
+        (tmp_path / "pyproject.toml").write_text('[project]\nname = "test"\nversion = "1.0.0"')
         return tmp_path
 
     def test_run_full_audit_function(self, temp_codebase):

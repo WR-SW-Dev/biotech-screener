@@ -9,7 +9,11 @@ v2.0.0: Multi-horizon blended risk metrics for monthly position sizing.
   - confidence_risk field
 v1.1.0: Added partial ticker diagnostics.
 """
-import argparse, csv, hashlib, json, math
+import argparse
+import csv
+import hashlib
+import json
+import math
 from collections import defaultdict
 from datetime import datetime
 from typing import Dict, List, Optional, Tuple
@@ -36,11 +40,13 @@ def load_prices(filepath: str, as_of: str) -> Dict[str, List[Tuple[str, float]]]
         prices[ticker].sort(key=lambda x: x[0])
     return dict(prices)
 
+
 def compute_returns(closes: List[float]) -> List[float]:
     """Compute log returns from close prices."""
     if len(closes) < 2:
         return []
     return [math.log(closes[i] / closes[i - 1]) for i in range(1, len(closes))]
+
 
 def vol(returns: List[float], window: int) -> Optional[float]:
     """Annualized volatility from last `window` returns."""
@@ -49,11 +55,15 @@ def vol(returns: List[float], window: int) -> Optional[float]:
     recent = returns[-window:]
     mean = sum(recent) / len(recent)
     var = sum((r - mean) ** 2 for r in recent) / (len(recent) - 1)
+    if var <= 1e-20:
+        return 0.0
     return math.sqrt(var) * math.sqrt(252)
+
 
 def ret_cumulative(returns: List[float], window: int) -> Optional[float]:
     """Cumulative return over last `window` days."""
     return sum(returns[-window:]) if len(returns) >= window else None
+
 
 def drawdown_current(closes: List[float], window: int = 60) -> Optional[float]:
     """Current drawdown from rolling high over last `window` days."""
@@ -62,6 +72,7 @@ def drawdown_current(closes: List[float], window: int = 60) -> Optional[float]:
     recent = closes[-window:] if len(closes) >= window else closes
     high = max(recent)
     return (closes[-1] / high) - 1.0 if high > 0 else None
+
 
 def correlation(r1: List[float], r2: List[float], window: int) -> Optional[float]:
     """Correlation between two return series over last `window` days."""
@@ -93,6 +104,7 @@ def beta(r1: List[float], r2: List[float], window: int) -> Optional[float]:
 # =============================================================================
 # V2: Multi-horizon risk metric functions
 # =============================================================================
+
 
 def resample_weekly(dated_prices: List[Tuple[str, float]]) -> List[Tuple[str, float]]:
     """Resample daily prices to weekly (last observation per ISO week).
@@ -336,6 +348,7 @@ def compute_confidence_risk(vol_state: str, dd_state: str, beta_state: str) -> f
 # Updated compute_features (v2)
 # =============================================================================
 
+
 def compute_features(
     ticker: str,
     closes: List[float],
@@ -418,8 +431,10 @@ def compute_features(
         weekly_bench_dated = compute_weekly_returns(xbi_dated_closes)
 
         beta_shrunk, corr_shrunk, beta_state = shrunk_beta_corr(
-            daily_stock_dated, daily_bench_dated,
-            weekly_stock_dated, weekly_bench_dated,
+            daily_stock_dated,
+            daily_bench_dated,
+            weekly_stock_dated,
+            weekly_bench_dated,
         )
         features["beta_xbi_shrunk"] = f"{beta_shrunk:.6f}"
         features["corr_xbi_shrunk"] = f"{corr_shrunk:.6f}"
@@ -446,9 +461,6 @@ def build_cache(price_file: str, as_of: str, tickers: List[str] = None) -> Dict:
     xbi_dated = prices.get("XBI", [])
     xbi_closes = [p[1] for p in xbi_dated]
     xbi_returns = compute_returns(xbi_closes)
-
-    # Pre-compute XBI weekly returns once (shared across all tickers)
-    xbi_weekly_returns = compute_weekly_returns(xbi_dated) if xbi_dated else []
 
     features_by_ticker = {}
     partial_tickers = {}
@@ -478,7 +490,9 @@ def build_cache(price_file: str, as_of: str, tickers: List[str] = None) -> Dict:
             continue
 
         features, skipped = compute_features(
-            ticker, closes, xbi_returns,
+            ticker,
+            closes,
+            xbi_returns,
             dated_closes=dated_closes,
             xbi_dated_closes=xbi_dated,
         )
@@ -549,6 +563,7 @@ def build_cache(price_file: str, as_of: str, tickers: List[str] = None) -> Dict:
         "diagnostics": diagnostics,
     }
 
+
 def write_cache(data: Dict, output_path: str, as_of_date: str = None) -> str:
     """Write cache file with sha256 integrity. Returns hash."""
     stable = json.dumps(data, sort_keys=True, separators=(",", ":"))
@@ -562,6 +577,7 @@ def write_cache(data: Dict, output_path: str, as_of_date: str = None) -> str:
     with open(output_path, "w") as f:
         json.dump(output, f, indent=2, sort_keys=True)
     return integrity
+
 
 def main():
     parser = argparse.ArgumentParser(description="Build defensive features cache")
@@ -584,9 +600,11 @@ def main():
     # V2 diagnostics
     state_summary = data.get("data_state_summary", {})
     if state_summary:
-        print(f"  V2 risk metrics:")
+        print("  V2 risk metrics:")
         for metric, counts in state_summary.items():
-            print(f"    {metric}: FULL={counts.get('FULL', 0)} PARTIAL={counts.get('PARTIAL', 0)} NONE={counts.get('NONE', 0)}")
+            print(
+                f"    {metric}: FULL={counts.get('FULL', 0)} PARTIAL={counts.get('PARTIAL', 0)} NONE={counts.get('NONE', 0)}"
+            )
         priors = data.get("priors_used", {})
         print(f"  Priors used: vol={priors.get('vol', 0)} dd={priors.get('drawdown', 0)} beta={priors.get('beta', 0)}")
         diag = data.get("diagnostics", {})
@@ -598,6 +616,7 @@ def main():
     print(f"  Integrity: {integrity[:16]}...")
     if data["warnings"]:
         print(f"  Warnings: {len(data['warnings'])}")
+
 
 if __name__ == "__main__":
     main()

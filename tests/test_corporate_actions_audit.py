@@ -203,7 +203,9 @@ class TestSplitAdjustedFreshness:
     ADJ_PATH = PROJECT_ROOT / "production_data" / "price_history_split_adj.csv"
 
     def test_split_adjusted_file_exists(self):
-        """price_history_split_adj.csv must exist."""
+        """price_history_split_adj.csv must exist when raw price history is present."""
+        if not self.RAW_PATH.exists():
+            pytest.skip("price_history.csv not present (licensed data, gitignored)")
         assert self.ADJ_PATH.exists(), "Split-adjusted price file missing"
 
     @pytest.mark.skip(

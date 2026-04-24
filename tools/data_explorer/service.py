@@ -129,7 +129,7 @@ def run_summary(
         chart_paths = _try_charts_score(df, g, out_dir)
         report_md = snapshot_report(s, m, g, t, qa, chart_paths)
         report_path = out_dir / "snapshot_summary.md"
-        report_path.write_text(report_md)
+        report_path.write_text(report_md, encoding="utf-8")
 
     data = {
         "rows": s["n_rows"],
@@ -188,7 +188,7 @@ def run_compare(
         out_dir.mkdir(parents=True, exist_ok=True)
         report_md = comparison_report(comp)
         report_path = out_dir / "comparison_report.md"
-        report_path.write_text(report_md)
+        report_path.write_text(report_md, encoding="utf-8")
         chart_paths = _try_charts_compare(df_a, df_b, overlap, n, out_dir)
 
     data = {
@@ -248,7 +248,7 @@ def run_qa(
         out_dir.mkdir(parents=True, exist_ok=True)
         report_md = qa_report(qa)
         report_path = out_dir / "qa_report.md"
-        report_path.write_text(report_md)
+        report_path.write_text(report_md, encoding="utf-8")
 
     data = {
         "rows": qa["n_rows"],
@@ -479,7 +479,7 @@ def run_daily(
             report += "\n"
 
         report_path = out_dir / "daily_report.md"
-        report_path.write_text(report)
+        report_path.write_text(report, encoding="utf-8")
 
     # ---- Build envelope ----
     overlap_data = None

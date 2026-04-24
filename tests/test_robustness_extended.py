@@ -563,7 +563,7 @@ class TestHealthChecks:
         checker = ModuleHealthChecker("test")
 
         def slow_check():
-            time.sleep(0.05)
+            time.sleep(0.1)
             return HealthCheckResult(
                 name="slow",
                 status=HealthStatus.HEALTHY,

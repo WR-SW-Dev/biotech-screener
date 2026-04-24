@@ -342,7 +342,7 @@ def write_trade_summary(
     lines.append("")
 
     text = "\n".join(lines)
-    with open(out_path, "w") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write(text)
     return out_path
 

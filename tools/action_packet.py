@@ -404,7 +404,7 @@ def write_action_packet(snapshot_dir: Path, top_n: int = 60) -> Path:
 
     md_path = snapshot_dir / "ACTION.md"
     md_text = render_action_markdown(packet)
-    with open(md_path, "w") as f:
+    with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_text)
 
     return json_path

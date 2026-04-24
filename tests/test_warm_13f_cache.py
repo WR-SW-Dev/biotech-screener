@@ -1,44 +1,42 @@
 """Tests for tools/warm_13f_cache.py — PIT-safe 13F warm cache builder."""
+
 from __future__ import annotations
 
 import json
-import threading
-import time
-from datetime import date
-from pathlib import Path
-from typing import Any, Dict, List, Optional
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 # ---------------------------------------------------------------------------
 # Import under test
 # ---------------------------------------------------------------------------
 import sys
+import threading
+import time
+from datetime import date
+from pathlib import Path
+from unittest.mock import MagicMock
+
+import pytest
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 sys.path.insert(0, str(REPO_ROOT / "tools"))
 
-from sec_13f.edgar_13f import SEC13FFetcher, Filing13F, Holding
+from sec_13f.edgar_13f import Filing13F, Holding, SEC13FFetcher
 from tools.warm_13f_cache import (
-    SCHEMA_VERSION,
     CACHE_TYPE,
     FILINGS_LOOKBACK_N,
-    PITFilingSelection,
+    SCHEMA_VERSION,
     RateLimiter,
     build_index,
     check_13f_cache_health,
     select_pit_filing,
     validate_sec_13f_index_schema,
     warm_one_manager,
-    warm_13f_cache,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_filing(
     cik: str = "0001234567",
@@ -129,6 +127,7 @@ def _make_valid_index(**overrides) -> dict:
 # ===================================================================
 # PIT selection tests (pure logic, no mocks)
 # ===================================================================
+
 
 class TestSelectPITFiling:
     """Pure PIT selection tests — construct Filing13F directly."""
@@ -251,17 +250,29 @@ class TestSelectPITFiling:
 # Index building tests (pure logic)
 # ===================================================================
 
+
 class TestBuildIndex:
 
     def test_v1_schema_fields(self):
         results = [
-            {"manager_cik": "0001234567", "manager_name": "Fund A", "status": "ok",
-             "period_of_report": "2025-12-31", "filed_at": "2026-02-14",
-             "form_type": "13F-HR", "accession": "A1", "holdings_count": 50,
-             "manager_json_path": "managers/0001234567.json",
-             "raw_xml_path": "raw/0001234567/A1.xml"},
-            {"manager_cik": "0009876543", "manager_name": "Fund B", "status": "no_filing",
-             "rejection_reason": "no_filings"},
+            {
+                "manager_cik": "0001234567",
+                "manager_name": "Fund A",
+                "status": "ok",
+                "period_of_report": "2025-12-31",
+                "filed_at": "2026-02-14",
+                "form_type": "13F-HR",
+                "accession": "A1",
+                "holdings_count": 50,
+                "manager_json_path": "managers/0001234567.json",
+                "raw_xml_path": "raw/0001234567/A1.xml",
+            },
+            {
+                "manager_cik": "0009876543",
+                "manager_name": "Fund B",
+                "status": "no_filing",
+                "rejection_reason": "no_filings",
+            },
         ]
         idx = build_index(date(2026, 2, 19), results, total_managers=2, elite_only=True)
 
@@ -279,11 +290,18 @@ class TestBuildIndex:
 
     def test_selected_manager_has_paths(self):
         results = [
-            {"manager_cik": "0001234567", "manager_name": "Fund A", "status": "ok",
-             "period_of_report": "2025-12-31", "filed_at": "2026-02-14",
-             "form_type": "13F-HR", "accession": "A1", "holdings_count": 50,
-             "manager_json_path": "managers/0001234567.json",
-             "raw_xml_path": "raw/0001234567/A1.xml"},
+            {
+                "manager_cik": "0001234567",
+                "manager_name": "Fund A",
+                "status": "ok",
+                "period_of_report": "2025-12-31",
+                "filed_at": "2026-02-14",
+                "form_type": "13F-HR",
+                "accession": "A1",
+                "holdings_count": 50,
+                "manager_json_path": "managers/0001234567.json",
+                "raw_xml_path": "raw/0001234567/A1.xml",
+            },
         ]
         idx = build_index(date(2026, 2, 19), results, total_managers=1, elite_only=True)
         mgr = idx["managers"][0]
@@ -295,8 +313,12 @@ class TestBuildIndex:
 
     def test_unselected_manager_has_rejection_reason(self):
         results = [
-            {"manager_cik": "0009876543", "manager_name": "Fund B", "status": "no_filing",
-             "rejection_reason": "no_filings"},
+            {
+                "manager_cik": "0009876543",
+                "manager_name": "Fund B",
+                "status": "no_filing",
+                "rejection_reason": "no_filings",
+            },
         ]
         idx = build_index(date(2026, 2, 19), results, total_managers=1, elite_only=True)
         mgr = idx["managers"][0]
@@ -307,11 +329,18 @@ class TestBuildIndex:
 
     def test_coverage_100_percent(self):
         results = [
-            {"manager_cik": f"CIK{i:07d}", "manager_name": f"Fund {i}", "status": "ok",
-             "period_of_report": "2025-12-31", "filed_at": "2026-02-14",
-             "form_type": "13F-HR", "accession": f"A{i}", "holdings_count": 10,
-             "manager_json_path": f"managers/CIK{i:07d}.json",
-             "raw_xml_path": f"raw/CIK{i:07d}/A{i}.xml"}
+            {
+                "manager_cik": f"CIK{i:07d}",
+                "manager_name": f"Fund {i}",
+                "status": "ok",
+                "period_of_report": "2025-12-31",
+                "filed_at": "2026-02-14",
+                "form_type": "13F-HR",
+                "accession": f"A{i}",
+                "holdings_count": 10,
+                "manager_json_path": f"managers/CIK{i:07d}.json",
+                "raw_xml_path": f"raw/CIK{i:07d}/A{i}.xml",
+            }
             for i in range(5)
         ]
         idx = build_index(date(2026, 2, 19), results, total_managers=5, elite_only=False)
@@ -325,13 +354,24 @@ class TestBuildIndex:
     def test_validates_against_own_schema(self):
         """Index produced by build_index must pass the schema validator."""
         results = [
-            {"manager_cik": "0001234567", "manager_name": "Fund A", "status": "ok",
-             "period_of_report": "2025-12-31", "filed_at": "2026-02-14",
-             "form_type": "13F-HR", "accession": "A1", "holdings_count": 50,
-             "manager_json_path": "managers/0001234567.json",
-             "raw_xml_path": "raw/0001234567/A1.xml"},
-            {"manager_cik": "0009876543", "manager_name": "Fund B", "status": "no_filing",
-             "rejection_reason": "no_filings"},
+            {
+                "manager_cik": "0001234567",
+                "manager_name": "Fund A",
+                "status": "ok",
+                "period_of_report": "2025-12-31",
+                "filed_at": "2026-02-14",
+                "form_type": "13F-HR",
+                "accession": "A1",
+                "holdings_count": 50,
+                "manager_json_path": "managers/0001234567.json",
+                "raw_xml_path": "raw/0001234567/A1.xml",
+            },
+            {
+                "manager_cik": "0009876543",
+                "manager_name": "Fund B",
+                "status": "no_filing",
+                "rejection_reason": "no_filings",
+            },
         ]
         idx = build_index(date(2026, 2, 19), results, total_managers=2, elite_only=True)
         ok, detail = validate_sec_13f_index_schema(idx)
@@ -341,6 +381,7 @@ class TestBuildIndex:
 # ===================================================================
 # Schema validation tests (pure logic)
 # ===================================================================
+
 
 class TestValidateSchema:
 
@@ -436,19 +477,20 @@ class TestValidateSchema:
 # Rate limiter tests
 # ===================================================================
 
+
 class TestRateLimiter:
 
     def test_sequential_spacing(self):
-        rl = RateLimiter(rate=100.0)  # 100/s = 10ms interval
+        rl = RateLimiter(rate=20.0)  # 20/s = 50ms interval (well above Windows timer precision)
         t0 = time.monotonic()
         for _ in range(5):
             rl.acquire()
         elapsed = time.monotonic() - t0
-        # 5 acquires at 100/s → ~40ms minimum (4 intervals)
-        assert elapsed >= 0.035  # small margin
+        # 5 acquires at 20/s → ~200ms minimum (4 intervals)
+        assert elapsed >= 0.18  # margin for timer jitter
 
     def test_thread_safety(self):
-        rl = RateLimiter(rate=50.0)  # 20ms interval
+        rl = RateLimiter(rate=10.0)  # 10/s = 100ms interval (well above Windows timer precision)
         timestamps: list[float] = []
         lock = threading.Lock()
 
@@ -464,15 +506,16 @@ class TestRateLimiter:
             t.join()
 
         assert len(timestamps) == 4
-        # All timestamps should be spaced by at least ~18ms (small margin)
+        # All timestamps should be spaced by at least ~95ms (margin for timer jitter)
         timestamps.sort()
         for i in range(1, len(timestamps)):
-            assert timestamps[i] - timestamps[i - 1] >= 0.015
+            assert timestamps[i] - timestamps[i - 1] >= 0.090
 
 
 # ===================================================================
 # warm_one_manager integration tests (mock EDGAR)
 # ===================================================================
+
 
 class TestWarmOneManager:
 
@@ -585,6 +628,7 @@ class TestWarmOneManager:
 # Gate function tests
 # ===================================================================
 
+
 class TestCheck13FCacheHealth:
 
     def _write_valid_index(self, cache_dir: Path, as_of: str, **overrides):
@@ -602,8 +646,10 @@ class TestCheck13FCacheHealth:
 
     def test_warn_when_coverage_below_threshold(self, tmp_path):
         self._write_valid_index(
-            tmp_path, "2026-02-19",
-            managers_with_filing=1, coverage_pct=50.0,
+            tmp_path,
+            "2026-02-19",
+            managers_with_filing=1,
+            coverage_pct=50.0,
             managers=[
                 _make_valid_index()["managers"][0],
                 {
@@ -634,7 +680,8 @@ class TestCheck13FCacheHealth:
 
     def test_warn_when_schema_version_wrong(self, tmp_path):
         self._write_valid_index(
-            tmp_path, "2026-02-19",
+            tmp_path,
+            "2026-02-19",
             schema_version="sec_13f_pit_index.v99",
         )
         result = check_13f_cache_health(tmp_path, "2026-02-19")
@@ -664,11 +711,7 @@ class TestCheck13FCacheHealth:
 # Tests: Monthly cadence date generation (Part 2A)
 # ---------------------------------------------------------------------------
 
-from tools.warm_13f_cache import (
-    generate_quarter_end_dates,
-    generate_month_end_dates,
-    generate_cadence_dates,
-)
+from tools.warm_13f_cache import generate_cadence_dates, generate_month_end_dates, generate_quarter_end_dates
 
 
 class TestCadenceDateGeneration:

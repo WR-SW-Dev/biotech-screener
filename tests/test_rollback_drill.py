@@ -496,7 +496,7 @@ class TestWriteDrillArtifacts:
 
     def test_md_nonempty(self, tmp_path):
         md_path, _ = write_drill_artifacts(self._drill(), tmp_path)
-        assert len(md_path.read_text()) > 100
+        assert len(md_path.read_text(encoding="utf-8")) > 100
 
     def test_creates_dir_if_missing(self, tmp_path):
         out = tmp_path / "nested" / "dir"
