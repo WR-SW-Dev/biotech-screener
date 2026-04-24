@@ -1,17 +1,12 @@
 {
-  "as_of_date": "2026-04-23",
-  "n_watchlist": 6,
-  "n_resolved_today": 2,
-  "n_existing": 100,
+  "as_of_date": "2026-04-24",
+  "n_watchlist": 3,
+  "n_resolved_today": 0,
+  "n_existing": 102,
   "watchlist": [
     {
       "ticker": "AXSM",
       "catalyst_date": "2026-04-30",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "DFTX",
-      "catalyst_date": "2026-04-16",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
@@ -23,16 +18,6 @@
       "ticker": "AQST",
       "catalyst_date": "2026-03-30",
       "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "KYTX",
-      "catalyst_date": "2026-03-26",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "BMEA",
-      "catalyst_date": "2026-03-24",
-      "catalyst_type": "CORPORATE_UPDATE"
     }
   ]
 }
