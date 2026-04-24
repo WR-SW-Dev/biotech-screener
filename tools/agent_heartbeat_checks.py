@@ -23,6 +23,16 @@ SNAPSHOT_DIR = REPO_ROOT / "data" / "snapshots"
 ARTIFACTS_DIR = REPO_ROOT / "artifacts"
 LOGS_DIR = REPO_ROOT / "logs"
 OPENCLAW = REPO_ROOT / "tools" / "run_openclaw.sh"
+REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
+
+STALENESS_DAYS_BY_CADENCE = {
+    "daily_after_production": 2,
+    "daily_premarket": 2,
+    "intraday": 1,
+    "weekly": 10,
+    "on_demand": None,
+    "unknown": None,
+}
 
 # ── Result types ──────────────────────────────────────────────
 
@@ -558,18 +568,213 @@ def check_production_qa(dt: date) -> CheckResult:
 
 # ── Orchestrator ──────────────────────────────────────────────
 
-AGENTS = {
+# Specialized check functions, keyed by registry name (agents/AGENT_REGISTRY.json).
+# Active+supervised agents not listed here fall back to check_generic_freshness().
+SPECIALIZED_CHECKS = {
     "qa": check_qa,
     "ic_health_monitor": check_ic_health,
     "fleet_steward": check_fleet_steward,
     "calibration": check_calibration,
-    "shadow_watch": check_shadow_monitor,
+    "shadow_monitor": check_shadow_monitor,
     "aact_trial_ingest": check_aact_ingest,
-    "herald": check_news_digest,
+    "biotech_news_digest": check_news_digest,
     "calibration_evidence": check_calibration_evidence,
     "data_auditor": check_data_auditor,
     "production_qa": check_production_qa,
 }
+
+# CLI --agent map: registry names + deprecated aliases for backward compatibility.
+# shadow_watch alias removed in Fix #5 (directory deleted). herald alias retained
+# until company_news_ingest cleanup lands; remove it in the same pass.
+AGENTS = {
+    **SPECIALIZED_CHECKS,
+    "herald": check_news_digest,
+}
+
+
+def load_registry() -> dict:
+    """Load agents/AGENT_REGISTRY.json; return the 'agents' sub-dict or {}."""
+    try:
+        data = json.loads(REGISTRY_PATH.read_text())
+    except (FileNotFoundError, json.JSONDecodeError) as e:
+        print(f"  Registry unreadable ({e}); registry-driven iteration skipped.", file=sys.stderr)
+        return {}
+    return data.get("agents", {})
+
+
+def check_generic_freshness(name: str, entry: dict, dt: date) -> CheckResult:
+    """Deterministic artifact-freshness fallback for agents without a specialized check."""
+    cadence = entry.get("cadence", "unknown")
+    threshold = STALENESS_DAYS_BY_CADENCE.get(cadence)
+    paths = entry.get("artifact_paths", [])
+
+    if not paths:
+        return CheckResult(name, "SKIP", "no artifact_paths declared")
+
+    newest_mtime = None
+    for rel in paths:
+        p = REPO_ROOT / rel
+        mtime = None
+        if p.is_file():
+            mtime = p.stat().st_mtime
+        elif p.is_dir():
+            files = [f for f in p.rglob("*") if f.is_file()]
+            if files:
+                mtime = max(f.stat().st_mtime for f in files)
+        if mtime is not None and (newest_mtime is None or mtime > newest_mtime):
+            newest_mtime = mtime
+
+    if newest_mtime is None:
+        return CheckResult(name, "STALE", "no artifacts at any declared path", [f"NO_ARTIFACTS: {paths}"])
+
+    age_days = (datetime.now().timestamp() - newest_mtime) / 86400
+    newest_date = datetime.fromtimestamp(newest_mtime).date()
+
+    if threshold is None:
+        return CheckResult(name, "OK", f"newest={newest_date} ({age_days:.1f}d, cadence={cadence})")
+    if age_days > threshold:
+        return CheckResult(
+            name,
+            "STALE",
+            f"newest={newest_date} ({age_days:.1f}d > {threshold}d for cadence={cadence})",
+            [f"STALE_ARTIFACT: {age_days:.1f}d since last write (threshold {threshold}d)"],
+        )
+    return CheckResult(name, "OK", f"newest={newest_date} ({age_days:.1f}d, cadence={cadence})")
+
+
+def run_registry_checks(dt: date) -> tuple[list[CheckResult], dict]:
+    """Iterate every active+supervised agent in the registry and run its check.
+
+    Returns (results, counts). Counts keys:
+      monitored_count, active_count, stale_count, missing_count, deprecated_count.
+    missing_count = active agents with supervised_by_orchestrator=false (coverage gap).
+    """
+    registry = load_registry()
+    empty = {"monitored_count": 0, "active_count": 0, "stale_count": 0, "missing_count": 0, "deprecated_count": 0}
+    if not registry:
+        return [], empty
+
+    active = {n: e for n, e in registry.items() if e.get("status") == "active"}
+    deprecated_count = sum(1 for e in registry.values() if e.get("status") == "deprecated")
+
+    supervised = {n: e for n, e in active.items() if e.get("supervised_by_orchestrator", True)}
+    opted_out = {n: e for n, e in active.items() if not e.get("supervised_by_orchestrator", True)}
+
+    results: list[CheckResult] = []
+    for name in sorted(supervised):
+        entry = supervised[name]
+        check_fn = SPECIALIZED_CHECKS.get(name)
+        try:
+            result = check_fn(dt) if check_fn is not None else check_generic_freshness(name, entry, dt)
+        except Exception as e:  # noqa: BLE001
+            result = CheckResult(name, "FAIL", f"Check crashed: {e}", [f"EXCEPTION: {e}"])
+        results.append(result)
+
+    for name in sorted(opted_out):
+        note = opted_out[name].get("notes", "")[:80]
+        results.append(CheckResult(name, "SKIP", f"unsupervised: {note}"))
+
+    counts = {
+        "monitored_count": len(supervised),
+        "active_count": len(active),
+        "stale_count": sum(1 for r in results if r.status == "STALE"),
+        "missing_count": len(opted_out),
+        "deprecated_count": deprecated_count,
+    }
+    return results, counts
+
+
+def _derive_verdict(results: list[CheckResult], counts: dict, snapshot_ok: bool) -> str:
+    """Deterministic fleet verdict from heartbeat results + registry counts."""
+    if not snapshot_ok:
+        return "RED"
+    if any(r.status == "FAIL" for r in results):
+        return "RED"
+    if counts.get("missing_count", 0) > 0:
+        return "RED"
+    if any(r.status in ("WARN", "STALE") for r in results):
+        return "YELLOW"
+    return "GREEN"
+
+
+def _find_previous_snapshot(dt: date) -> str | None:
+    """Walk back from dt to find the most recent prior snapshot date, if any."""
+    if not SNAPSHOT_DIR.is_dir():
+        return None
+    dates = sorted(
+        d.name
+        for d in SNAPSHOT_DIR.iterdir()
+        if d.is_dir() and (d / "rankings.csv").exists() and d.name < as_of_date(dt)
+    )
+    return dates[-1] if dates else None
+
+
+def write_fleet_receipt(results: list[CheckResult], counts: dict, dt: date) -> Path:
+    """Write a deterministic daily fleet receipt to agents/fleet_steward/memory/.
+
+    This is the Conductor/Director output restored after the fleet_steward LLM
+    agent was replaced by this orchestrator. Format matches the historical
+    receipts but scope is narrower: status-only, no analyst synthesis.
+    """
+    ds = as_of_date(dt)
+    receipt_dir = REPO_ROOT / "agents" / "fleet_steward" / "memory"
+    receipt_dir.mkdir(parents=True, exist_ok=True)
+    out_path = receipt_dir / f"{ds}_receipt.md"
+
+    snapshot_ok = (SNAPSHOT_DIR / ds / "rankings.csv").exists()
+    prev_snapshot = _find_previous_snapshot(dt)
+    verdict = _derive_verdict(results, counts, snapshot_ok)
+
+    buckets: dict[str, list[CheckResult]] = {"OK": [], "WARN": [], "FAIL": [], "STALE": [], "SKIP": []}
+    for r in results:
+        buckets.setdefault(r.status, []).append(r)
+
+    lines: list[str] = []
+    lines.append(f"# Fleet Receipt — {ds}\n")
+    lines.append(f"\n**Verdict: {verdict}**\n")
+    lines.append(
+        f"\nGenerated by `tools/agent_heartbeat_checks.py` at {datetime.now().isoformat(timespec='seconds')}\n"
+    )
+
+    lines.append("\n## Pipeline\n")
+    lines.append(f"- Today's snapshot ({ds}): {'OK' if snapshot_ok else 'MISSING'}\n")
+    lines.append(f"- Previous snapshot: {prev_snapshot if prev_snapshot else 'none found'}\n")
+
+    lines.append("\n## Fleet (AGENT_REGISTRY.json)\n")
+    lines.append(f"- Active: {counts.get('active_count', 0)}\n")
+    lines.append(f"- Supervised this run: {counts.get('monitored_count', 0)}\n")
+    lines.append(f"- Coverage gap (active but unsupervised): {counts.get('missing_count', 0)}\n")
+    lines.append(f"- Deprecated: {counts.get('deprecated_count', 0)}\n")
+    lines.append(f"- Stale artifacts: {counts.get('stale_count', 0)}\n")
+
+    lines.append(f"\n## Agent Status ({len(buckets['OK'])}/{len(results)} OK)\n")
+    for status in ("FAIL", "WARN", "STALE", "SKIP", "OK"):
+        entries = buckets.get(status, [])
+        if not entries:
+            continue
+        lines.append(f"\n### {status} ({len(entries)})\n")
+        for r in sorted(entries, key=lambda x: x.agent):
+            detail = f" — {r.detail}" if r.detail else ""
+            lines.append(f"- **{r.agent}**{detail}\n")
+            for a in r.anomalies:
+                lines.append(f"  - {a}\n")
+
+    escalated = [r for r in results if r.needs_llm]
+    if escalated:
+        lines.append(f"\n## Escalated to ops ({len(escalated)})\n")
+        for r in escalated:
+            lines.append(f"- **{r.agent}** ({r.status}): {r.detail}\n")
+
+    lines.append(
+        "\n---\n"
+        "_This is a deterministic status receipt. Historical receipts written by the "
+        "fleet_steward LLM agent also included: carried-issues history, performance "
+        "summary, accumulation-gate progress, and escalation tracker — those require "
+        "analyst synthesis and are not generated here._\n"
+    )
+
+    out_path.write_text("".join(lines))
+    return out_path
 
 
 def _write_anomaly_file(results: list[CheckResult], dt: date):
@@ -641,40 +846,69 @@ def main():
     args = parser.parse_args()
 
     dt = date.fromisoformat(args.date) if args.date else date.today()
-    agents_to_run = {args.agent: AGENTS[args.agent]} if args.agent else AGENTS
 
     print(f"Heartbeat checks for {as_of_date(dt)}")
     print(f"{'=' * 50}")
 
-    results = []
-    for name, check_fn in agents_to_run.items():
+    counts: dict | None = None
+    if args.agent:
         try:
-            result = check_fn(dt)
-        except Exception as e:
-            result = CheckResult(name, "FAIL", f"Check crashed: {e}", [f"EXCEPTION: {e}"])
-        results.append(result)
+            result = AGENTS[args.agent](dt)
+        except Exception as e:  # noqa: BLE001
+            result = CheckResult(args.agent, "FAIL", f"Check crashed: {e}", [f"EXCEPTION: {e}"])
+        results = [result]
         print(result)
+    else:
+        results, counts = run_registry_checks(dt)
+        for r in results:
+            print(r)
 
     # Summary
     ok = sum(1 for r in results if r.status == "OK")
     warn = sum(1 for r in results if r.status == "WARN")
     fail = sum(1 for r in results if r.status == "FAIL")
     stale = sum(1 for r in results if r.status == "STALE")
+    skip = sum(1 for r in results if r.status == "SKIP")
     total_anomalies = sum(len(r.anomalies) for r in results)
 
-    print(f"\n  Summary: {ok} OK, {warn} WARN, {fail} FAIL, {stale} STALE — {total_anomalies} anomalies")
+    print(f"\n  Summary: {ok} OK, {warn} WARN, {fail} FAIL, {stale} STALE, {skip} SKIP — {total_anomalies} anomalies")
+
+    coverage_gap = False
+    if counts is not None:
+        print(
+            f"  Registry: active={counts['active_count']}, monitored={counts['monitored_count']}, "
+            f"stale={counts['stale_count']}, missing={counts['missing_count']}, "
+            f"deprecated={counts['deprecated_count']}"
+        )
+        if counts["missing_count"] > 0:
+            coverage_gap = True
+            unsupervised = [r.agent for r in results if r.status == "SKIP"]
+            print(
+                f"  ⚠ COVERAGE GAP: {counts['missing_count']} active agent(s) not supervised — "
+                f"{', '.join(unsupervised)}"
+            )
+
+        # Restore the daily fleet_steward receipt (Fix #3). Registry-mode only.
+        receipt_path = write_fleet_receipt(results, counts, dt)
+        print(f"  Fleet receipt: {receipt_path.relative_to(REPO_ROOT)}")
 
     if args.json:
-        out = [{"agent": r.agent, "status": r.status, "detail": r.detail, "anomalies": r.anomalies} for r in results]
+        out: dict = {
+            "results": [
+                {"agent": r.agent, "status": r.status, "detail": r.detail, "anomalies": r.anomalies} for r in results
+            ]
+        }
+        if counts is not None:
+            out["counts"] = counts
         print(json.dumps(out, indent=2))
 
-    # Escalate anomalies to LLM
+    # Escalate anomalies to LLM (specialized checks only; generic SKIP/STALE is artifact-level and non-urgent)
     if total_anomalies > 0:
         escalate_to_llm(results, dry_run=args.dry_run, dt=dt)
     else:
         print("  No anomalies — LLM not needed.")
 
-    sys.exit(1 if fail > 0 else 0)
+    sys.exit(1 if fail > 0 or coverage_gap else 0)
 
 
 if __name__ == "__main__":

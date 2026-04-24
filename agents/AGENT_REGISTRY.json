@@ -1,0 +1,321 @@
+{
+  "schema_version": "1.0",
+  "as_of": "2026-04-24",
+  "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE — active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
+  "enums": {
+    "category": ["control_plane", "signal_monitor", "data_ingestion", "research", "portfolio_risk"],
+    "cadence": ["daily_after_production", "daily_premarket", "intraday", "weekly", "on_demand", "unknown"],
+    "status": ["active", "shadow", "deprecated"],
+    "authority_level": ["observe_only", "observe_and_propose", "write_artifacts", "mutate_data", "mutate_config"]
+  },
+  "agents": {
+    "aact_trial_ingest": {
+      "role": "bulk historical trial ingest, normalization, deltas",
+      "category": "data_ingestion",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["data/aact/snapshots/", "data/aact/linked/", "agents/aact_trial_ingest/memory/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "bioshort_watch": {
+      "role": "hedge governance monitor, consumer of artifacts",
+      "category": "portfolio_risk",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["artifacts/bioshort_watch/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: Fri 18:10. Category corrected from signal_monitor to portfolio_risk (hedge sizing)."
+    },
+    "biotech_news_digest": {
+      "role": "generate and email biotech news briefs 3x daily",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/news_digest/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Overlaps with herald on digest output path; scope boundary to clarify in Fix #5 follow-up."
+    },
+    "calibration": {
+      "role": "ruleset evaluator, evidence accumulator, promotion recommender",
+      "category": "research",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["artifacts/calibration_evidence/"],
+      "authority_level": "observe_and_propose",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "calibration_evidence": {
+      "role": "read-only evidence builder on resolved events",
+      "category": "research",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["artifacts/calibration_evidence/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Shares artifact path with calibration; downstream consumer."
+    },
+    "catalyst_delta": {
+      "role": "detect new, changed, or reclassified catalyst events",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/catalyst_delta/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:20."
+    },
+    "company_news_ingest": {
+      "role": "guaranteed company press release coverage via polling",
+      "category": "data_ingestion",
+      "cadence": "daily_premarket",
+      "status": "deprecated",
+      "artifact_paths": ["data/press_releases/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": false,
+      "owner": "unassigned",
+      "notes": "RETIRED in crontab: consolidated into herald. Directory pending removal in a future cleanup fix. Deprecated agents are excluded from supervision by status filter regardless of this flag."
+    },
+    "crt_resolution_watcher": {
+      "role": "monitor for new CRT resolutions, update join tables",
+      "category": "research",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["output/catalyst_ev/"],
+      "authority_level": "mutate_data",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:00."
+    },
+    "ctgov_poller": {
+      "role": "clinical trial status monitor, detect transitions",
+      "category": "data_ingestion",
+      "cadence": "daily_premarket",
+      "status": "active",
+      "artifact_paths": ["artifacts/ctgov_daily/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 14:30."
+    },
+    "data_auditor": {
+      "role": "read-only judge monitoring data input integrity",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/data_auditor/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Doc gap: TOOLS.md and AGENTS.md missing per 2026-04-24 audit; HEARTBEAT marks workspace as PENDING."
+    },
+    "earnings_calendar_sync": {
+      "role": "fetch and keep work calendar in sync with earnings",
+      "category": "data_ingestion",
+      "cadence": "daily_premarket",
+      "status": "active",
+      "artifact_paths": ["artifacts/earnings_sync/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "event_analyst": {
+      "role": "event-resolution pattern analyst, synthesize lessons",
+      "category": "research",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["artifacts/event_analyst/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:55 weekdays; actual cadence may be weekly despite daily trigger."
+    },
+    "fleet_steward": {
+      "role": "control-plane agent, fleet health and dispatch",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/fleet_steward/memory/", "artifacts/fleet_steward/"],
+      "authority_level": "observe_and_propose",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Director role. Last receipt 2026-04-03; daily-receipt successor pending in Fix #3."
+    },
+    "grok_biotech_watch": {
+      "role": "watchlist-scoped Grok/xAI search monitor",
+      "category": "signal_monitor",
+      "cadence": "intraday",
+      "status": "active",
+      "artifact_paths": ["artifacts/grok_watch/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "herald": {
+      "role": "biotech news collection, classification, and digests",
+      "category": "data_ingestion",
+      "cadence": "daily_premarket",
+      "status": "active",
+      "artifact_paths": ["data/press_releases/", "artifacts/news_digest/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 14:35. Absorbs company_news_ingest."
+    },
+    "ic_health_monitor": {
+      "role": "signal health watchdog, detect IC degradation",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/ic_health_monitor/memory/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "intraday_mover_watch": {
+      "role": "real-time intraday mover monitor, price and IV moves",
+      "category": "signal_monitor",
+      "cadence": "intraday",
+      "status": "active",
+      "artifact_paths": ["artifacts/intraday_mover_watch/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Doc gap: memory/ directory missing per 2026-04-24 audit."
+    },
+    "ops": {
+      "role": "production operator and health monitor",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/ops/memory/", "artifacts/ops_digest/"],
+      "authority_level": "observe_and_propose",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 17:00. Duty Officer role."
+    },
+    "options_watch": {
+      "role": "post-packet options surface monitor",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/options_watch/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:40."
+    },
+    "policy_shadow_watch": {
+      "role": "hold-discipline and policy-comparison monitor",
+      "category": "portfolio_risk",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/policy_shadow_watch/memory/", "artifacts/policy_shadow_watch/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Partial scope overlap with shadow_monitor; boundary review pending."
+    },
+    "postmortem": {
+      "role": "event-resolution evidence capture agent",
+      "category": "research",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/postmortem/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:35."
+    },
+    "price_action_watch": {
+      "role": "stock and options big-move monitor",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/price_action_watch/"],
+      "authority_level": "write_artifacts",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:30."
+    },
+    "production_qa": {
+      "role": "daily post-production codebase reviewer",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["artifacts/production_qa/", "agents/production_qa/memory/"],
+      "authority_level": "observe_and_propose",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Inspector role. Feature-coverage check (short_interest_pct, close_price, market_cap_mm, priced_move_pct, insider_net_buy_value_90d) pending in Fix #4."
+    },
+    "qa": {
+      "role": "regression-triage and failure classifier",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/qa/memory/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    },
+    "review_queue_steward": {
+      "role": "triage daily review queue into immediate vs monitor",
+      "category": "signal_monitor",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/review_queue_steward/memory/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 18:50."
+    },
+    "sentinel": {
+      "role": "post-promotion health sentinel, drift monitor",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/sentinel/memory/"],
+      "authority_level": "observe_and_propose",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Crontab: 17:15."
+    },
+    "shadow_monitor": {
+      "role": "shadow portfolio performance monitor",
+      "category": "portfolio_risk",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": ["agents/shadow_monitor/memory/", "artifacts/shadow_monitor/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": "Supervised directly by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py."
+    },
+    "universe_maintenance": {
+      "role": "read-only monitor for universe health",
+      "category": "data_ingestion",
+      "cadence": "weekly",
+      "status": "active",
+      "artifact_paths": ["artifacts/universe_maintenance/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": true,
+      "owner": "unassigned",
+      "notes": ""
+    }
+  }
+}

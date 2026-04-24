@@ -1,14 +1,15 @@
 """Tests for run_phase2_snapshot_delta.py — all synthetic data, no disk I/O."""
+
 from __future__ import annotations
 
 import json
-import pandas as pd
-import pytest
 from pathlib import Path
 
+import pandas as pd
+
 from run_phase2_snapshot_delta import (
-    CatalystCoverage,
-    DeltaResult,
+    PHASE2_PINNED_RULESET_ID,
+    RECON_TOP_K,
     SingleResult,
     SnapshotData,
     _catalyst_coverage,
@@ -24,19 +25,13 @@ from run_phase2_snapshot_delta import (
     generate_delta_csv,
     generate_details_json,
     generate_report,
-    is_snapshot_degraded,
     load_snapshot,
-    PHASE2_PINNED_RULESET_ID,
-    RECON_TOP_K,
-    WARN_A_COUNT_MIN,
-    WARN_CATALYST_COVERAGE_MIN,
-    WARN_NAME_TURNOVER_PCT,
 )
-
 
 # ---------------------------------------------------------------------------
 # Synthetic data builders
 # ---------------------------------------------------------------------------
+
 
 def _make_rankings_df(
     tickers: list[str],
@@ -118,6 +113,7 @@ def _make_snapshot(
 # Test 1: Turnover math
 # ---------------------------------------------------------------------------
 
+
 class TestTurnoverMath:
     def test_entrants_exits(self):
         """Verify entrants/exits/L1-delta computation."""
@@ -172,6 +168,7 @@ class TestTurnoverMath:
 # Test 2: Tier drift
 # ---------------------------------------------------------------------------
 
+
 class TestTierDrift:
     def test_tier_counts(self):
         rankings = _make_rankings_df(
@@ -194,6 +191,7 @@ class TestTierDrift:
 # ---------------------------------------------------------------------------
 # Test 3: Catalyst coverage
 # ---------------------------------------------------------------------------
+
 
 class TestCatalystCoverage:
     def test_coverage_pct(self):
@@ -223,6 +221,7 @@ class TestCatalystCoverage:
 # Test 4: Risk flag counting
 # ---------------------------------------------------------------------------
 
+
 class TestRiskFlags:
     def test_parse_risk_flags(self):
         assert _parse_risk_flags("high_vol|deep_drawdown") == ["high_vol", "deep_drawdown"]
@@ -245,6 +244,7 @@ class TestRiskFlags:
 # ---------------------------------------------------------------------------
 # Test 5: Guardrail warnings
 # ---------------------------------------------------------------------------
+
 
 class TestGuardrails:
     def test_turnover_warning_fires(self):
@@ -313,6 +313,7 @@ class TestGuardrails:
 # Test 6: Single-snapshot mode
 # ---------------------------------------------------------------------------
 
+
 class TestSingleSnapshot:
     def test_produces_single_result(self):
         rank = _make_rankings_df(["A", "B", "C"], tiers=["A", "B", "C"])
@@ -340,6 +341,7 @@ class TestSingleSnapshot:
 # ---------------------------------------------------------------------------
 # Test 7: Portfolio reconstruction
 # ---------------------------------------------------------------------------
+
 
 class TestPortfolioReconstruction:
     def test_reconstruct_filters_tier_ab(self):
@@ -389,18 +391,21 @@ class TestPortfolioReconstruction:
 # Test 8: Missing columns
 # ---------------------------------------------------------------------------
 
+
 class TestMissingColumns:
     def test_load_snapshot_no_tier_dev(self, tmp_path):
         """Snapshot without tier_dev column should return None."""
         snap_dir = tmp_path / "2026-01-28"
         snap_dir.mkdir()
         # Write a rankings.csv without tier_dev
-        rankings = pd.DataFrame({
-            "ticker": ["A", "B"],
-            "composite_rank": [1, 2],
-            "composite_score": [50, 40],
-            "archetype": ["drug_developer", "drug_developer"],
-        })
+        rankings = pd.DataFrame(
+            {
+                "ticker": ["A", "B"],
+                "composite_rank": [1, 2],
+                "composite_score": [50, 40],
+                "archetype": ["drug_developer", "drug_developer"],
+            }
+        )
         rankings.to_csv(snap_dir / "rankings.csv", index=False)
 
         result = load_snapshot(snap_dir)
@@ -410,6 +415,7 @@ class TestMissingColumns:
 # ---------------------------------------------------------------------------
 # Test: Report and JSON generation
 # ---------------------------------------------------------------------------
+
 
 class TestOutputGeneration:
     def test_report_contains_sections(self):
@@ -497,6 +503,7 @@ class TestOutputGeneration:
 # Test: Size band counts
 # ---------------------------------------------------------------------------
 
+
 class TestSizeBands:
     def test_size_band_counting(self):
         port = _make_portfolio_df(
@@ -510,6 +517,7 @@ class TestSizeBands:
 # ---------------------------------------------------------------------------
 # Helpers for on-disk snapshot creation (find_snapshots + degraded tests)
 # ---------------------------------------------------------------------------
+
 
 def _write_rankings_csv(snap_dir: Path, date_str: str, has_tier_dev: bool = True) -> Path:
     """Write a minimal rankings.csv with tier_dev column."""
@@ -533,6 +541,7 @@ def _write_cache_health(snap_dir: Path, date_str: str, degraded: bool) -> None:
 # ---------------------------------------------------------------------------
 # Test: Auto-prior skips degraded snapshots
 # ---------------------------------------------------------------------------
+
 
 class TestFindSnapshotsSkipsDegraded:
 
@@ -577,8 +586,87 @@ class TestFindSnapshotsSkipsDegraded:
 
 
 # ---------------------------------------------------------------------------
+# Diagnostic helper — explains *why* auto-prior returned None
+# (Added 2026-04-24 after the silent-fail mode on that day's delta report.)
+# ---------------------------------------------------------------------------
+
+
+class TestDiagnoseMissingPrior:
+
+    def test_diagnose_reports_degraded_rejection(self, tmp_path):
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        _write_rankings_csv(snap, "2026-02-20")  # current
+        _write_rankings_csv(snap, "2026-02-19")
+        _write_cache_health(snap, "2026-02-19", degraded=True)
+        _write_rankings_csv(snap, "2026-02-18")
+        _write_cache_health(snap, "2026-02-18", degraded=True)
+
+        out = diagnose_missing_prior(snap, "2026-02-20")
+        assert "current=2026-02-20" in out
+        assert "YYYY-MM-DD_dirs=3" in out
+        assert "2026-02-19: skip (degraded_run=True)" in out
+        assert "2026-02-18: skip (degraded_run=True)" in out
+
+    def test_diagnose_reports_missing_rankings(self, tmp_path):
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        _write_rankings_csv(snap, "2026-02-20")
+        # prior directory exists but no rankings.csv
+        (snap / "2026-02-19").mkdir()
+
+        out = diagnose_missing_prior(snap, "2026-02-20")
+        assert "2026-02-19: skip (no rankings.csv)" in out
+
+    def test_diagnose_reports_missing_tier_dev(self, tmp_path):
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        _write_rankings_csv(snap, "2026-02-20")
+        _write_rankings_csv(snap, "2026-02-19", has_tier_dev=False)
+
+        out = diagnose_missing_prior(snap, "2026-02-20")
+        assert "2026-02-19: skip (header missing tier_dev)" in out
+
+    def test_diagnose_reports_valid_candidate_on_healthy_filesystem(self, tmp_path):
+        """If filesystem is healthy, diagnostic shows the candidate that would pass —
+        useful for detecting timing/race-condition issues where auto-prior returned
+        None but a rerun succeeds (see 2026-04-24 silent fail)."""
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        _write_rankings_csv(snap, "2026-02-20")
+        _write_rankings_csv(snap, "2026-02-19")
+        _write_cache_health(snap, "2026-02-19", degraded=False)
+
+        out = diagnose_missing_prior(snap, "2026-02-20")
+        assert "2026-02-19: passes all checks" in out
+
+    def test_diagnose_reports_current_not_present(self, tmp_path):
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        _write_rankings_csv(snap, "2026-02-20")
+
+        out = diagnose_missing_prior(snap, "2026-02-25")
+        assert "current 2026-02-25 not in date_dirs" in out
+
+    def test_diagnose_reports_no_date_dirs(self, tmp_path):
+        from run_phase2_snapshot_delta import diagnose_missing_prior
+
+        snap = tmp_path / "snapshots"
+        snap.mkdir(parents=True, exist_ok=True)
+
+        out = diagnose_missing_prior(snap, "2026-02-20")
+        assert "no date-matching directories present" in out
+
+
+# ---------------------------------------------------------------------------
 # Test: Churn suppression in details JSON and report
 # ---------------------------------------------------------------------------
+
 
 class TestChurnSuppression:
 

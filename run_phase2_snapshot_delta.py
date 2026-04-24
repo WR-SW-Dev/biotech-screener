@@ -427,6 +427,59 @@ def find_snapshots(
     return current_path, None
 
 
+def diagnose_missing_prior(snapshot_dir: Path, current_date: str) -> str:
+    """Explain why auto-prior found nothing. Returns a multi-line string.
+
+    Called from callers when ``find_snapshots(..., prior_date=None)`` returns
+    ``prior=None``. Walks the same candidate list find_snapshots would and
+    annotates each with its rejection reason so silent auto-prior failures
+    leave an audit trail in the log.
+    """
+    date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+    try:
+        all_entries = [d.name for d in snapshot_dir.iterdir() if d.is_dir()]
+    except OSError as e:
+        return f"Auto-prior diagnosis: snapshot_dir {snapshot_dir} unreadable ({e})"
+    date_dirs = sorted([d for d in all_entries if date_re.match(d)], reverse=True)
+
+    lines = [f"Auto-prior diagnosis for current={current_date}:"]
+    lines.append(f"  snapshot_dir={snapshot_dir}  total_dirs={len(all_entries)}  " f"YYYY-MM-DD_dirs={len(date_dirs)}")
+    if not date_dirs:
+        lines.append("  REASON: no date-matching directories present")
+        return "\n".join(lines)
+    if current_date not in date_dirs:
+        lines.append(f"  REASON: current {current_date} not in date_dirs " f"(newest 5: {date_dirs[:5]})")
+        return "\n".join(lines)
+    idx = date_dirs.index(current_date)
+    candidates = date_dirs[idx + 1 :]
+    if not candidates:
+        lines.append("  REASON: no date directories older than current")
+        return "\n".join(lines)
+
+    lines.append(f"  candidates (newest→oldest, up to 10): {candidates[:10]}")
+    for c in candidates[:10]:
+        cpath = snapshot_dir / c
+        if is_snapshot_degraded(cpath):
+            lines.append(f"    {c}: skip (degraded_run=True)")
+            continue
+        rk = cpath / "rankings.csv"
+        if not rk.exists():
+            lines.append(f"    {c}: skip (no rankings.csv)")
+            continue
+        try:
+            with open(rk, "r") as f:
+                header = f.readline().strip()
+        except OSError as e:
+            lines.append(f"    {c}: skip (read error: {e})")
+            continue
+        if "tier_dev" not in header.split(","):
+            lines.append(f"    {c}: skip (header missing tier_dev)")
+            continue
+        lines.append(f"    {c}: passes all checks (would be accepted on a fresh call)")
+        break
+    return "\n".join(lines)
+
+
 def load_snapshot(snap_path: Path) -> Optional[SnapshotData]:
     """Load a snapshot directory into a SnapshotData object."""
     rankings_csv = snap_path / "rankings.csv"
