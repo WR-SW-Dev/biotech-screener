@@ -438,10 +438,28 @@ def _find_raw_xml_url(cik: str, acc_path: str) -> Optional[str]:
     return None
 
 
-def fetch_ticker(ticker: str, cik: str, since: str) -> List[InsiderTransaction]:
-    """Fetch and parse all Form 4 filings for a ticker."""
+def fetch_ticker(
+    ticker: str,
+    cik: str,
+    since: str,
+    seen_accessions: Optional[set] = None,
+) -> List[InsiderTransaction]:
+    """Fetch and parse Form 4 filings for a ticker.
+
+    If ``seen_accessions`` is provided, filings with those accession numbers are
+    skipped before the expensive XML fetch. Returns only transactions belonging
+    to accessions NOT in ``seen_accessions`` (incremental refresh).
+    """
     filings = get_form4_filings(cik, since=since)
-    log.info(f"  {ticker} (CIK {cik}): {len(filings)} Form 4 filings since {since}")
+    if seen_accessions:
+        total = len(filings)
+        filings = [f for f in filings if f.get("accessionNumber") not in seen_accessions]
+        log.info(
+            f"  {ticker} (CIK {cik}): {total} Form 4 filings since {since}, "
+            f"{len(filings)} new (skipped {total - len(filings)} already in raw)"
+        )
+    else:
+        log.info(f"  {ticker} (CIK {cik}): {len(filings)} Form 4 filings since {since}")
 
     all_txns = []
     for f in filings:
@@ -487,6 +505,41 @@ def fetch_ticker(ticker: str, cik: str, since: str) -> List[InsiderTransaction]:
         all_txns.extend(txns)
 
     return all_txns
+
+
+def _merge_transactions(
+    existing: List[InsiderTransaction],
+    newly_fetched: List[InsiderTransaction],
+) -> List[InsiderTransaction]:
+    """Merge newly-fetched transactions onto existing raw and sort deterministically.
+
+    ``newly_fetched`` is assumed to come from accessions not present in
+    ``existing`` (caller filtered upstream via ``seen_accessions``). Sort key:
+    (filing_date, accession_number, transaction_date, shares, price_per_share).
+    """
+    merged = list(existing) + list(newly_fetched)
+    merged.sort(
+        key=lambda t: (
+            t.filing_date or "",
+            t.accession_number or "",
+            t.transaction_date or "",
+            t.shares,
+            t.price_per_share,
+        )
+    )
+    return merged
+
+
+def _load_existing_raw(raw_file: Path) -> List[InsiderTransaction]:
+    """Load a raw/{ticker}.json back into InsiderTransaction objects; [] if missing."""
+    if not raw_file.exists():
+        return []
+    try:
+        data = json.loads(raw_file.read_text())
+    except json.JSONDecodeError:
+        log.warning(f"  {raw_file.name}: raw JSON corrupt; treating as empty")
+        return []
+    return [InsiderTransaction(**t) for t in data]
 
 
 def build_panel(raw_dir: Path, panel_path: Path) -> int:
@@ -545,39 +598,50 @@ def main():
             if cik and (not args.tickers or t in args.tickers):
                 tickers[t] = cik.lstrip("0")
 
-        # Filter out already-fetched tickers (skip if file exists and not explicit --tickers)
-        to_fetch = {}
-        skipped = 0
-        for t, cik in sorted(tickers.items()):
-            raw_file = RAW_DIR / f"{t}.json"
-            if raw_file.exists() and not args.tickers:
-                skipped += 1
-                continue
-            to_fetch[t] = cik
-
+        # Incremental mode is default: every ticker is checked against SEC for new
+        # accessions; only those unseen in existing raw/{ticker}.json are fetched.
+        # Pre-existing coverage is never wasted; daily refresh cost scales with
+        # new-filing volume, not total history.
+        to_fetch = {t: cik for t, cik in sorted(tickers.items())}
         log.info(
-            f"Fetching Form 4 for {len(to_fetch)} tickers since {args.since} "
-            f"(skipping {skipped} already fetched, {MAX_WORKERS} workers)"
+            f"Incremental refresh of Form 4 for {len(to_fetch)} tickers since {args.since} " f"({MAX_WORKERS} workers)"
         )
 
         fetched = 0
         failed = 0
-        total_txns = 0
+        total_txns = 0  # total new transactions appended across all tickers
+        updated_tickers = 0  # tickers that received at least one new accession
         _counter_lock = threading.Lock()
 
         def _fetch_one(ticker_cik):
-            nonlocal fetched, failed, total_txns
+            nonlocal fetched, failed, total_txns, updated_tickers
             ticker, cik = ticker_cik
+            raw_file = RAW_DIR / f"{ticker}.json"
             try:
-                txns = fetch_ticker(ticker, cik, args.since)
-                raw_file = RAW_DIR / f"{ticker}.json"
-                raw_file.write_text(json.dumps([asdict(t) for t in txns], indent=1))
+                existing = _load_existing_raw(raw_file)
+                seen = {t.accession_number for t in existing if t.accession_number}
+                new_txns = fetch_ticker(ticker, cik, args.since, seen_accessions=seen)
+                if not new_txns:
+                    with _counter_lock:
+                        fetched += 1
+                        if fetched % 25 == 0:
+                            log.info(
+                                f"  Progress: {fetched}/{len(to_fetch)} tickers, "
+                                f"{total_txns} new txns, {updated_tickers} updated"
+                            )
+                    return ticker, 0, None
+                merged = _merge_transactions(existing, new_txns)
+                raw_file.write_text(json.dumps([asdict(t) for t in merged], indent=1))
                 with _counter_lock:
                     fetched += 1
-                    total_txns += len(txns)
+                    total_txns += len(new_txns)
+                    updated_tickers += 1
                     if fetched % 25 == 0:
-                        log.info(f"  Progress: {fetched}/{len(to_fetch)} tickers, {total_txns} txns")
-                return ticker, len(txns), None
+                        log.info(
+                            f"  Progress: {fetched}/{len(to_fetch)} tickers, "
+                            f"{total_txns} new txns, {updated_tickers} updated"
+                        )
+                return ticker, len(new_txns), None
             except Exception as e:
                 with _counter_lock:
                     failed += 1
@@ -589,7 +653,10 @@ def main():
             for f in as_completed(futures):
                 f.result()  # propagate exceptions
 
-        log.info(f"Fetched {fetched} tickers ({failed} failed), {total_txns} total transactions")
+        log.info(
+            f"Checked {fetched} tickers ({failed} failed), {updated_tickers} received "
+            f"new accessions, {total_txns} new transactions appended"
+        )
 
         # Save state
         STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -597,8 +664,10 @@ def main():
             json.dumps(
                 {
                     "last_fetch": datetime.now(timezone.utc).isoformat(),
-                    "tickers_fetched": fetched,
-                    "total_transactions": total_txns,
+                    "tickers_checked": fetched,
+                    "tickers_updated": updated_tickers,
+                    "new_transactions": total_txns,
+                    "failed_tickers": failed,
                     "since": args.since,
                 },
                 indent=2,

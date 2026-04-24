@@ -177,6 +177,10 @@ SNAPSHOT_COLUMNS = (
         "close_price",
         "market_cap_mm",
         "priced_move_pct",
+        # insider_net_buy_value_90d is a diagnostic pass-through only — the
+        # scoring lane was closed 2026-04-05 and is NOT reopened by this
+        # column appearing in rankings.csv. Wired via common.insider_enrichment.
+        "insider_net_buy_value_90d",
         # --- Expectation Error Model (Jane Street 6-mistake framework, overlay-only) ---
         "base_rate_gap_score",
         "conditional_misprice_score",
