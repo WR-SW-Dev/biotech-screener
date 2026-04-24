@@ -94,6 +94,30 @@ SEVERITY_COLUMNS = [
     "size_multiplier",
 ]
 
+# Expectation-layer feature coverage. Tuple: (field, min_coverage, required).
+# min_coverage is a regression floor set slightly below observed 2026-04-24
+# coverage. Raise once the field has been stable at higher values for several
+# production days.
+#
+# BACKLOG — insider_net_buy_value_90d:
+#   Wiring landed 2026-04-24 via common.insider_enrichment (Pass B). Gate (1)
+#   below is therefore satisfied; gate (2) still requires ≥5 consecutive
+#   production snapshots with coverage at or above min_coverage before flipping
+#   required=True. Stays tracked nonblocking until then.
+#     (1) the insider pipeline is intentionally wired into the ranking join — DONE (2026-04-24)
+#     (2) observed coverage is stable at or above min_coverage for >= 5
+#         consecutive production days — PENDING, first eligible date 2026-05-01
+#   Lowering the required-field thresholds to accommodate insider flakiness is
+#   not acceptable.
+FEATURE_COVERAGE_REQUIREMENTS = [
+    ("short_interest_pct", 0.90, True),
+    ("close_price", 0.99, True),
+    ("market_cap_mm", 0.95, True),
+    ("priced_move_pct", 0.80, True),
+    ("insider_net_buy_value_90d", 0.30, False),
+]
+FEATURE_COVERAGE_LEGEND = "* = tracked nonblocking field"
+
 
 def _check(name: str, passed: bool, detail: str = "") -> Dict[str, Any]:
     return {"check": name, "status": "PASS" if passed else "FAIL", "detail": detail}
@@ -175,6 +199,60 @@ def check_herald_digest(as_of_date: str) -> Dict[str, Any]:
         return _check("herald_digest", False, f"No digest for {as_of_date}")
 
     return _check("herald_digest", True, f"{len(today_digests)} digests")
+
+
+def check_feature_coverage(as_of_date: str) -> Dict[str, Any]:
+    """Guard expectation-layer feature coverage in rankings.csv.
+
+    Per-field coverage is computed as the fraction of rows where the column
+    is present and non-empty. Required fields below their min_coverage floor
+    (or with the column missing entirely) fail the check; non-required fields
+    are reported in the detail but do not fail.
+
+    This catches the feature-starvation mode where upstream joins silently
+    drop columns, leaving the expectation model blind without a pipeline error.
+    """
+    import csv
+
+    rankings = SNAPSHOTS_DIR / as_of_date / "rankings.csv"
+    if not rankings.exists():
+        return _check("feature_coverage", False, "No rankings.csv")
+
+    with open(rankings) as f:
+        reader = csv.DictReader(f)
+        cols = set(reader.fieldnames or [])
+        rows = list(reader)
+
+    n = len(rows)
+    if n == 0:
+        return _check("feature_coverage", False, "rankings.csv is empty")
+
+    failures: list[str] = []
+    per_field: list[str] = []
+    has_nonrequired = False
+    for field, min_cov, required in FEATURE_COVERAGE_REQUIREMENTS:
+        tag = "" if required else "*"
+        if not required:
+            has_nonrequired = True
+        if field not in cols:
+            suffix = "" if required else " (tracked_nonblocking)"
+            per_field.append(f"{field}{tag}=MISSING{suffix}")
+            if required:
+                failures.append(f"{field}: column missing")
+            continue
+        non_empty = sum(1 for r in rows if r.get(field, "").strip() not in ("", "None", "nan", "NaN"))
+        cov = non_empty / n
+        per_field.append(f"{field}{tag}={cov*100:.1f}%")
+        if required and cov < min_cov:
+            failures.append(f"{field}: {cov*100:.1f}% < {min_cov*100:.0f}%")
+
+    detail = "; ".join(per_field)
+    if has_nonrequired:
+        detail = f"{detail}; {FEATURE_COVERAGE_LEGEND}"
+    if failures:
+        detail = f"{detail} | FAIL: {'; '.join(failures)}"
+        return _check("feature_coverage", False, detail)
+    return _check("feature_coverage", True, detail)
 
 
 def check_schema_drift(as_of_date: str) -> Dict[str, Any]:
@@ -392,6 +470,7 @@ def run_qa(as_of_date: str) -> Dict[str, Any]:
         check_sidecars(as_of_date),
         check_herald_digest(as_of_date),
         check_schema_drift(as_of_date),
+        check_feature_coverage(as_of_date),
         check_readiness(as_of_date),
         check_lint(),
         check_critical_tests(),

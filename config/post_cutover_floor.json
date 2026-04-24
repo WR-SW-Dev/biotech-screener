@@ -1,0 +1,17 @@
+{
+  "_doc": "Post-cutover validation floor for the classifier hardening rollout (CH-1..CH-7 + P2 + M1).",
+  "_cutover_date": "2026-04-19",
+  "_runbook": "fingpt_pilot/notes/POST_CUTOVER_VALIDATION.md",
+  "_consumed_by": "tools/production_qa_check.py::check_classifier_escalation_pool",
+
+  "classifier_min_date": "2026-04-20",
+
+  "_threshold_notes": {
+    "other_share_pct_max": 50,
+    "rerun_clean_rate_min_pct": 70,
+    "pool_size_warn_over": 2000
+  },
+
+  "_stale_after": "2026-05-20",
+  "_stale_action": "once escalation-pool purity has held ≥80% for 30 days after cutover, set classifier_min_date=\"\" (empty string) to disable the floor — the check will PASS with 'floor disabled' and audit the full cache instead."
+}
