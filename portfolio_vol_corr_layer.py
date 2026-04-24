@@ -159,7 +159,7 @@ def _ticker_vol(returns: List[Optional[float]], min_obs: int = 10) -> Optional[f
         return None
     mean = sum(clean) / len(clean)
     var = sum((r - mean) ** 2 for r in clean) / len(clean)
-    if var <= 0:
+    if var <= 1e-20:
         return None
     return math.sqrt(var * 252)
 

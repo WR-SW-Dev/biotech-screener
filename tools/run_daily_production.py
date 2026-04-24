@@ -1387,7 +1387,7 @@ def _write_drift_report_md(
             lines.append(f"- {r}")
 
     lines.append("")
-    path.write_text("\n".join(lines))
+    path.write_text("\n".join(lines), encoding="utf-8")
 
 
 def check_drift_monitoring(

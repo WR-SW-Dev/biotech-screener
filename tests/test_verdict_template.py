@@ -15,12 +15,12 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent))
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "research"))
 
-from run_audited_backtest import _compute_verdict, _write_verdict, _load_eval_summary
-
+from run_audited_backtest import _compute_verdict, _load_eval_summary, _write_verdict
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _summary(
     horizons=(84, 126),
@@ -56,6 +56,7 @@ def _verdict(cand: Dict, baseline: Optional[Dict] = None, **kw) -> Dict:
 # _compute_verdict — schema
 # ---------------------------------------------------------------------------
 
+
 class TestComputeVerdictSchema:
     def test_schema_field(self):
         v = _verdict(_summary())
@@ -63,8 +64,15 @@ class TestComputeVerdictSchema:
 
     def test_required_keys(self):
         v = _verdict(_summary())
-        for key in ["verdict", "verdict_reasons", "results", "thresholds",
-                    "n_evaluated", "primary_horizon", "guardrail_horizon"]:
+        for key in [
+            "verdict",
+            "verdict_reasons",
+            "results",
+            "thresholds",
+            "n_evaluated",
+            "primary_horizon",
+            "guardrail_horizon",
+        ]:
             assert key in v
 
     def test_primary_is_max_horizon(self):
@@ -83,6 +91,7 @@ class TestComputeVerdictSchema:
 # ---------------------------------------------------------------------------
 # _compute_verdict — NEEDS_MORE cases
 # ---------------------------------------------------------------------------
+
 
 class TestNeedsMore:
     def test_no_baseline_is_needs_more(self):
@@ -108,6 +117,7 @@ class TestNeedsMore:
 # ---------------------------------------------------------------------------
 # _compute_verdict — PROMOTE
 # ---------------------------------------------------------------------------
+
 
 class TestPromote:
     def test_promote_when_both_pass(self):
@@ -148,6 +158,7 @@ class TestPromote:
 # _compute_verdict — ARCHIVE
 # ---------------------------------------------------------------------------
 
+
 class TestArchive:
     def test_archive_when_primary_fails(self):
         # Δ126d = −0.054pp, Δ84d = −0.020pp (guardrail passes, primary fails)
@@ -182,6 +193,7 @@ class TestArchive:
 # ---------------------------------------------------------------------------
 # _compute_verdict — threshold boundary
 # ---------------------------------------------------------------------------
+
 
 class TestBoundary:
     def test_exactly_at_primary_threshold_promotes(self):
@@ -220,6 +232,7 @@ class TestBoundary:
 # _load_eval_summary
 # ---------------------------------------------------------------------------
 
+
 class TestLoadEvalSummary:
     def test_loads_valid_summary(self, tmp_path):
         s = _summary()
@@ -240,6 +253,7 @@ class TestLoadEvalSummary:
 # _write_verdict (file output)
 # ---------------------------------------------------------------------------
 
+
 class TestWriteVerdict:
     def _run(self, tmp_path: Path, verdict_override: Optional[str] = None):
         cand = _summary()
@@ -249,7 +263,8 @@ class TestWriteVerdict:
             v["verdict"] = verdict_override
             v["verdict_reasons"] = [f"forced {verdict_override}"]
         _write_verdict(
-            tmp_path, v,
+            tmp_path,
+            v,
             name="test_run",
             git_sha="abc12345",
             run_id="20260305T120000Z",
@@ -275,26 +290,26 @@ class TestWriteVerdict:
 
     def test_md_contains_verdict(self, tmp_path):
         self._run(tmp_path, verdict_override="ARCHIVE")
-        md = (tmp_path / "VERDICT.md").read_text()
+        md = (tmp_path / "VERDICT.md").read_text(encoding="utf-8")
         assert "ARCHIVE" in md
 
     def test_promote_md_includes_promote_command(self, tmp_path):
         self._run(tmp_path, verdict_override="PROMOTE")
-        md = (tmp_path / "VERDICT.md").read_text()
+        md = (tmp_path / "VERDICT.md").read_text(encoding="utf-8")
         assert "promote_ruleset.py" in md
 
     def test_archive_md_includes_archive_note(self, tmp_path):
         self._run(tmp_path, verdict_override="ARCHIVE")
-        md = (tmp_path / "VERDICT.md").read_text()
+        md = (tmp_path / "VERDICT.md").read_text(encoding="utf-8")
         assert "research_archive" in md
 
     def test_md_contains_git_sha(self, tmp_path):
         self._run(tmp_path)
-        md = (tmp_path / "VERDICT.md").read_text()
+        md = (tmp_path / "VERDICT.md").read_text(encoding="utf-8")
         assert "abc12345" in md
 
     def test_md_contains_horizons(self, tmp_path):
         self._run(tmp_path)
-        md = (tmp_path / "VERDICT.md").read_text()
+        md = (tmp_path / "VERDICT.md").read_text(encoding="utf-8")
         assert "126d" in md
         assert "84d" in md

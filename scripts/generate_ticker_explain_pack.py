@@ -681,9 +681,9 @@ def main(argv: Optional[List[str]] = None) -> None:
     json_path = args.output_dir / "ticker_explain_pack.json"
     md_path = args.output_dir / "ticker_explain_pack.md"
 
-    with open(json_path, "w") as f:
+    with open(json_path, "w", encoding="utf-8") as f:
         json.dump(pack, f, indent=2)
-    with open(md_path, "w") as f:
+    with open(md_path, "w", encoding="utf-8") as f:
         f.write(md)
 
     # Console summary

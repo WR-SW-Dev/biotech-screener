@@ -5,17 +5,12 @@ from datetime import date
 
 import pytest
 
-from run_screen import (
-    SPLIT_DROP_THRESHOLD,
-    SPLIT_JUMP_THRESHOLD,
-    _filter_price_outliers,
-    _validate_price_splits,
-)
-
+from run_screen import SPLIT_DROP_THRESHOLD, SPLIT_JUMP_THRESHOLD, _filter_price_outliers, _validate_price_splits
 
 # ---------------------------------------------------------------------------
 # _filter_price_outliers
 # ---------------------------------------------------------------------------
+
 
 class TestFilterPriceOutliers:
     def test_empty_series(self):
@@ -30,10 +25,7 @@ class TestFilterPriceOutliers:
         assert warns == []
 
     def test_clean_series_no_outliers(self):
-        series = [
-            (date(2026, 1, i), 10.0 + i * 0.1)
-            for i in range(1, 11)
-        ]
+        series = [(date(2026, 1, i), 10.0 + i * 0.1) for i in range(1, 11)]
         filtered, warns = _filter_price_outliers(series)
         assert len(filtered) == 10
         assert warns == []
@@ -43,7 +35,7 @@ class TestFilterPriceOutliers:
         series = [
             (date(2026, 1, 1), 100.0),
             (date(2026, 1, 2), 100.5),
-            (date(2026, 1, 3), 20.0),   # 4:1 split → -80%, exceeds -75%
+            (date(2026, 1, 3), 20.0),  # 4:1 split → -80%, exceeds -75%
             (date(2026, 1, 4), 20.5),
         ]
         filtered, warns = _filter_price_outliers(series)
@@ -60,7 +52,7 @@ class TestFilterPriceOutliers:
         series = [
             (date(2026, 1, 1), 2.0),
             (date(2026, 1, 2), 2.1),
-            (date(2026, 1, 3), 10.5),   # 5x jump → +400%, exceeds +300%
+            (date(2026, 1, 3), 10.5),  # 5x jump → +400%, exceeds +300%
             (date(2026, 1, 4), 10.8),
         ]
         filtered, warns = _filter_price_outliers(series)
@@ -74,7 +66,7 @@ class TestFilterPriceOutliers:
         """Two splits: truncate to after the LATEST split."""
         series = [
             (date(2026, 1, 1), 100.0),
-            (date(2026, 1, 2), 20.0),   # forward split 5:1 → -80%
+            (date(2026, 1, 2), 20.0),  # forward split 5:1 → -80%
             (date(2026, 1, 3), 20.5),
             (date(2026, 1, 4), 105.0),  # reverse split → +412%
             (date(2026, 1, 5), 106.0),
@@ -107,7 +99,7 @@ class TestFilterPriceOutliers:
     def test_custom_thresholds(self):
         series = [
             (date(2026, 1, 1), 10.0),
-            (date(2026, 1, 2), 15.0),   # +50%
+            (date(2026, 1, 2), 15.0),  # +50%
         ]
         # With tight threshold, this triggers — truncates to post-split only
         filtered, warns = _filter_price_outliers(series, jump_threshold=0.4)
@@ -124,6 +116,7 @@ class TestFilterPriceOutliers:
         """
         # 60 days at ~$72, then 5:1 split to ~$14
         from datetime import timedelta
+
         base = date(2025, 11, 1)
         series = [(base + timedelta(days=i), 72.0 + i * 0.1) for i in range(60)]
         split_day = base + timedelta(days=60)
@@ -141,6 +134,7 @@ class TestFilterPriceOutliers:
 # ---------------------------------------------------------------------------
 # _validate_price_splits
 # ---------------------------------------------------------------------------
+
 
 class TestValidatePriceSplits:
     def test_empty_dict(self):
@@ -188,6 +182,7 @@ class TestValidatePriceSplits:
 # Integration: verify thresholds match existing constants
 # ---------------------------------------------------------------------------
 
+
 class TestThresholdsConsistent:
     def test_jump_threshold(self):
         assert SPLIT_JUMP_THRESHOLD == 3.0
@@ -200,25 +195,27 @@ class TestThresholdsConsistent:
 # Defensive: ensure all yfinance callers use explicit auto_adjust=True
 # ---------------------------------------------------------------------------
 
+
 class TestAutoAdjustExplicit:
     """Guard against yfinance callers relying on implicit auto_adjust default."""
 
     @staticmethod
     def _assert_auto_adjust_explicit(func, label):
-        import ast, inspect, textwrap
+        import ast
+        import inspect
+        import textwrap
+
         src = textwrap.dedent(inspect.getsource(func))
         tree = ast.parse(src)
         for node in ast.walk(tree):
             if not isinstance(node, ast.Call):
                 continue
             callee = node.func
-            name = getattr(callee, 'attr', '') or getattr(callee, 'id', '')
-            if name not in ('download', 'history'):
+            name = getattr(callee, "attr", "") or getattr(callee, "id", "")
+            if name not in ("download", "history"):
                 continue
             kw_names = {kw.arg for kw in node.keywords}
-            assert 'auto_adjust' in kw_names, (
-                f"{label}: yfinance .{name}() must pass auto_adjust=True explicitly"
-            )
+            assert "auto_adjust" in kw_names, f"{label}: yfinance .{name}() must pass auto_adjust=True explicitly"
             return
         pytest.skip(f"{label}: no .download()/.history() call found")
 
@@ -226,20 +223,22 @@ class TestAutoAdjustExplicit:
         """Parse source file directly — it's a script with top-level side effects."""
         import ast
         from pathlib import Path
+
         src_path = Path(__file__).resolve().parent.parent / "fetch_prices_interactive.py"
-        tree = ast.parse(src_path.read_text())
+        tree = ast.parse(src_path.read_text(encoding="utf-8"))
         found = False
         for node in ast.walk(tree):
             if isinstance(node, ast.Call):
-                name = getattr(node.func, 'attr', '') or getattr(node.func, 'id', '')
-                if name == 'download':
+                name = getattr(node.func, "attr", "") or getattr(node.func, "id", "")
+                if name == "download":
                     kw_names = {kw.arg for kw in node.keywords}
-                    assert 'auto_adjust' in kw_names, (
-                        "fetch_prices_interactive: yf.download() must pass auto_adjust=True"
-                    )
+                    assert (
+                        "auto_adjust" in kw_names
+                    ), "fetch_prices_interactive: yf.download() must pass auto_adjust=True"
                     found = True
         assert found, "No yf.download() call found in fetch_prices_interactive"
 
     def test_price_history_backfill(self):
         from wake_robin_data_pipeline.price_history_backfill import fetch_prices_yfinance
+
         self._assert_auto_adjust_explicit(fetch_prices_yfinance, "price_history_backfill")

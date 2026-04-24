@@ -29,19 +29,19 @@ class TestProductionRankerConfig:
         assert len(model["model"]["weights"]) == 2
 
     def test_production_model_is_trained(self):
-        model = json.loads(Path("production_data/ranker_v2_model.json").read_text())
+        model = json.loads(Path("production_data/ranker_v2_model.json").read_text(encoding="utf-8"))
         assert model["model"]["trained"] is True
 
     def test_production_config_uses_minimal_v2(self):
         """Verify run_screen.py sets feature_set='minimal_v2'."""
-        content = Path("run_screen.py").read_text()
+        content = Path("run_screen.py").read_text(encoding="utf-8")
         assert 'feature_set="minimal_v2"' in content
 
     def test_rollback_artifact_exists(self):
         assert Path("production_data/ranker_v2_model_5feat_rollback.json").exists()
 
     def test_rollback_has_5_features(self):
-        model = json.loads(Path("production_data/ranker_v2_model_5feat_rollback.json").read_text())
+        model = json.loads(Path("production_data/ranker_v2_model_5feat_rollback.json").read_text(encoding="utf-8"))
         assert model["model"]["n_features"] == 5
         assert len(model["model"]["weights"]) == 5
 

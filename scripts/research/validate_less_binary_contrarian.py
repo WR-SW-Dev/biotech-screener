@@ -332,10 +332,8 @@ def write_verdict(
         else:
             retention = None
             verdict = "SKIP"
-        lines.append(
-            f"| {h}d | {_fmt_pct(base_h)} | {_fmt_pct(filt_h)} "
-            f"| {f'{retention:.0%}' if retention is not None else '\u2014'} | {verdict} |"
-        )
+        retention_str = f"{retention:.0%}" if retention is not None else "\u2014"
+        lines.append(f"| {h}d | {_fmt_pct(base_h)} | {_fmt_pct(filt_h)} " f"| {retention_str} | {verdict} |")
     lines.append("")
 
     # Gate 3: Hedge robustness

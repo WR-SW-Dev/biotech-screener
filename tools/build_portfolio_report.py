@@ -220,7 +220,7 @@ def write_portfolio_report(
     if metrics["n_periods"] == 0:
         lines.append("*Insufficient data — no performance history yet.*")
         lines.append("")
-        with open(out_path, "w") as f:
+        with open(out_path, "w", encoding="utf-8") as f:
             f.write("\n".join(lines))
         return out_path
 
@@ -265,7 +265,7 @@ def write_portfolio_report(
         lines.append(f"- **Trade dates with fills**: {fills['n_dates']}")
         lines.append("")
 
-    with open(out_path, "w") as f:
+    with open(out_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines))
     return out_path
 

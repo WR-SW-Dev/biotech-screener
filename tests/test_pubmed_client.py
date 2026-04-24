@@ -326,15 +326,15 @@ class TestDrugNameMap:
     def test_drug_name_map_exists(self):
         from pathlib import Path
 
-        map_path = Path("/mnt/c/Projects/biotech_screener/biotech-screener/production_data/drug_name_map.json")
+        map_path = Path("production_data/drug_name_map.json")
         assert map_path.exists()
 
     def test_drug_name_map_schema(self):
         import json
         from pathlib import Path
 
-        map_path = Path("/mnt/c/Projects/biotech_screener/biotech-screener/production_data/drug_name_map.json")
-        data = json.loads(map_path.read_text())
+        map_path = Path("production_data/drug_name_map.json")
+        data = json.loads(map_path.read_text(encoding="utf-8"))
         assert "entries" in data
         assert "n_tickers" in data
         assert data["n_tickers"] >= 200

@@ -19,10 +19,9 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from decision_engine import (
-    DecisionRuleset,
     SORT_CONTRIB_KEYS,
+    DecisionRuleset,
     compute_actionable_sort_key,
-    compute_decision_fields,
     compute_sort_contribs,
     compute_target_weights,
 )
@@ -73,8 +72,7 @@ def _make_fields(
     return fields
 
 
-def _sort_key(fields, archetype="drug_developer", optionality=0.50,
-              composite_rank=100, ticker="TEST", **kwargs):
+def _sort_key(fields, archetype="drug_developer", optionality=0.50, composite_rank=100, ticker="TEST", **kwargs):
     return compute_actionable_sort_key(
         decision_fields=fields,
         archetype=archetype,
@@ -410,9 +408,12 @@ class TestRulesetValidation:
             event_ev_sizing_low_threshold=-2.0,
         )
         with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
-            rs.to_json(f.name)
-            loaded = DecisionRuleset.from_json(f.name)
-            os.unlink(f.name)
+            tmp_name = f.name
+        try:
+            rs.to_json(tmp_name)
+            loaded = DecisionRuleset.from_json(tmp_name)
+        finally:
+            os.unlink(tmp_name)
 
         assert loaded.event_ev_stage == "rank_overlay"
         assert loaded.event_ev_rank_overlay_weight == 0.3
@@ -515,6 +516,7 @@ class TestPromotionLadderModule:
             td_path = Path(td)
             # Create 10 daily artifact files
             import datetime
+
             base = datetime.date(2026, 4, 1)
             for i in range(10):
                 d = base + datetime.timedelta(days=i)

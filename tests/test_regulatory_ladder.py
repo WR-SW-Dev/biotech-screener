@@ -320,7 +320,7 @@ class TestWeeklySummaryLadder:
         }
         out = tmp_path / "weekly.md"
         write_weekly_summary("2026-03-08", positions_data, None, policy, {}, out)
-        return out.read_text()
+        return out.read_text(encoding="utf-8")
 
     def test_ladder_section_present(self, tmp_path):
         positions = [

@@ -10,21 +10,9 @@ Provides:
 
 import hashlib
 import json
-import time
-from dataclasses import dataclass
 from datetime import datetime
-from decimal import Decimal
 from pathlib import Path
-from typing import Any, Dict, List, Optional
-
-from audit_framework.types import (
-    AuditReport,
-    AuditSeverity,
-    AuditTier,
-    ComplianceGrade,
-    PassCriteria,
-    TierResult,
-)
+from typing import List, Optional
 
 from audit_framework.tier1_determinism.runner import run_tier1_audit
 from audit_framework.tier2_data_integrity.runner import run_tier2_audit
@@ -32,6 +20,7 @@ from audit_framework.tier3_performance.runner import run_tier3_audit
 from audit_framework.tier4_testing.runner import run_tier4_audit
 from audit_framework.tier5_architecture.runner import run_tier5_audit
 from audit_framework.tier6_deployment.runner import run_tier6_audit
+from audit_framework.types import AuditReport, AuditSeverity, AuditTier, ComplianceGrade, PassCriteria, TierResult
 
 
 class AuditOrchestrator:
@@ -101,6 +90,7 @@ class AuditOrchestrator:
                 with open(pyproject, "r") as f:
                     content = f.read()
                 import re
+
                 match = re.search(r'version\s*=\s*"([^"]+)"', content)
                 if match:
                     return match.group(1)
@@ -203,28 +193,22 @@ class AuditOrchestrator:
         # Generate recommendations
         if critical_findings:
             recommendations.append(
-                f"IMMEDIATE: Address {len(critical_findings)} critical findings "
-                "before any production deployment"
+                f"IMMEDIATE: Address {len(critical_findings)} critical findings " "before any production deployment"
             )
 
         if high_findings:
             recommendations.append(
-                f"SHORT-TERM: Remediate {len(high_findings)} high-priority issues "
-                "within the current sprint"
+                f"SHORT-TERM: Remediate {len(high_findings)} high-priority issues " "within the current sprint"
             )
 
         # Tier-specific recommendations
         for tr in tier_results:
             if not tr.passed:
                 tier_name = tr.tier.value.replace("_", " ").title()
-                recommendations.append(
-                    f"REQUIRED: Complete {tier_name} remediation to achieve passing grade"
-                )
+                recommendations.append(f"REQUIRED: Complete {tier_name} remediation to achieve passing grade")
 
         if not recommendations:
-            recommendations.append(
-                "MAINTENANCE: Continue regular audit cycles to maintain compliance"
-            )
+            recommendations.append("MAINTENANCE: Continue regular audit cycles to maintain compliance")
 
         return recommendations
 
@@ -347,10 +331,10 @@ class AuditOrchestrator:
         output_file = Path(output_path)
 
         if format == "json":
-            with open(output_file, "w") as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump(report.to_dict(), f, indent=2, default=str)
         else:
-            with open(output_file, "w") as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 f.write(report.generate_markdown())
 
         return str(output_file)

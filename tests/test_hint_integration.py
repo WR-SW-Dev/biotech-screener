@@ -13,7 +13,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
+
+pytestmark = pytest.mark.skipif(
+    not (REPO_ROOT / "vendor" / "hint" / "data" / "raw_data.csv").exists(),
+    reason="HINT vendor data (vendor/hint/data/raw_data.csv) not present",
+)
 
 
 class TestHINTAdapter:

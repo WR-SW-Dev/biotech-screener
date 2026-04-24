@@ -32,6 +32,11 @@ sys.path.insert(0, str(PROJECT_ROOT))
 from run_rank_ic_backtest import ARCHIVE_DIR, compute_forward_returns
 from scripts.eval_forward_returns import spearman_ic
 
+pytestmark = pytest.mark.skipif(
+    not (PROJECT_ROOT / "production_data" / "morningstar_returns_history.json").exists(),
+    reason="morningstar_returns_history.json not present (licensed data, gitignored)",
+)
+
 # =============================================================================
 # CONFIGURATION
 # =============================================================================

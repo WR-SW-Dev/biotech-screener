@@ -15,21 +15,22 @@ Tests cover:
 """
 
 import json
-import pytest
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from governance.mapping_loader import (
-    get_mapping_path,
-    load_mapping,
-    compute_mapping_hash,
-    save_mapping,
-    validate_source_schema,
-    apply_field_mapping,
-    get_mapping_metadata,
+    DEFAULT_ADAPTERS_DIR,
     MappingLoadError,
     SchemaMismatchError,
-    DEFAULT_ADAPTERS_DIR,
+    apply_field_mapping,
+    compute_mapping_hash,
+    get_mapping_metadata,
+    get_mapping_path,
+    load_mapping,
+    save_mapping,
+    validate_source_schema,
 )
 
 
@@ -59,7 +60,7 @@ class TestGetMappingPath:
     def test_custom_adapters_dir(self):
         """Should use custom adapters directory."""
         result = get_mapping_path("test", adapters_dir="/custom/path")
-        assert str(result).startswith("/custom/path")
+        assert result.as_posix().startswith("/custom/path")
 
 
 class TestComputeMappingHash:
@@ -183,9 +184,7 @@ class TestSaveMapping:
         """Should save mapping to file."""
         mapping = {"field_mappings": {"a": "b"}}
 
-        path, hash_value = save_mapping(
-            mapping, "new_source", adapters_dir=temp_adapters
-        )
+        path, hash_value = save_mapping(mapping, "new_source", adapters_dir=temp_adapters)
 
         assert path.exists()
         with open(path) as f:
@@ -196,9 +195,7 @@ class TestSaveMapping:
         """Should create source directory."""
         mapping = {"field_mappings": {}}
 
-        path, _ = save_mapping(
-            mapping, "new_source", adapters_dir=temp_adapters
-        )
+        path, _ = save_mapping(mapping, "new_source", adapters_dir=temp_adapters)
 
         assert (temp_adapters / "new_source").exists()
 
@@ -206,9 +203,7 @@ class TestSaveMapping:
         """Should return path and hash."""
         mapping = {"field_mappings": {}}
 
-        path, hash_value = save_mapping(
-            mapping, "test", adapters_dir=temp_adapters
-        )
+        path, hash_value = save_mapping(mapping, "test", adapters_dir=temp_adapters)
 
         assert isinstance(path, Path)
         assert isinstance(hash_value, str)
@@ -220,9 +215,7 @@ class TestValidateSourceSchema:
     def test_empty_required_fields(self):
         """Should pass if no required fields."""
         mapping = {"required_fields": []}
-        is_valid, missing = validate_source_schema(
-            {"any": "field"}, mapping, "test"
-        )
+        is_valid, missing = validate_source_schema({"any": "field"}, mapping, "test")
         assert is_valid is True
         assert missing == []
 
