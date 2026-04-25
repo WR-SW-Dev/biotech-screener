@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import shutil
 import sys
 import threading
@@ -173,6 +174,8 @@ def warm_one_manager(
     out_dir: Path,
     fetcher: SEC13FFetcher,
     rate_limiter: RateLimiter,
+    *,
+    filings_lookback_n: int = FILINGS_LOOKBACK_N,
 ) -> Dict[str, Any]:
     """Fetch, PIT-select, parse, and write cache for one manager.
 
@@ -191,7 +194,7 @@ def warm_one_manager(
     try:
         # Fetch recent filings
         rate_limiter.acquire()
-        filings = fetcher.get_recent_filings(cik, count=FILINGS_LOOKBACK_N)
+        filings = fetcher.get_recent_filings(cik, count=filings_lookback_n)
 
         selection = select_pit_filing(filings, as_of_date)
 
@@ -337,17 +340,34 @@ def warm_13f_cache(
     max_managers: Optional[int] = None,
     max_workers: int = 4,
     fetcher_cache_dir: Optional[Path] = None,
+    ciks_filter: Optional[set] = None,
+    filings_lookback_n: int = FILINGS_LOOKBACK_N,
 ) -> Dict[str, Any]:
     """Orchestrate 13F cache warming for all managers.
 
     Returns the index dict.
+
+    When ``ciks_filter`` is provided, only the listed CIKs are (re-)warmed; the
+    resulting index merges with any existing ``index.json`` so other managers'
+    entries are preserved. ``total_managers`` still reflects the full cohort
+    so coverage_pct stays comparable across runs.
     """
-    # Load manager list
-    managers = get_elite_managers() if elite_only else get_all_managers()
+    # Load full manager cohort first (used for total_managers even under filter)
+    full_cohort = get_elite_managers() if elite_only else get_all_managers()
+    cohort_total = len(full_cohort)
+
+    if ciks_filter is not None:
+        norm_filter = {c.lstrip("0").zfill(10) for c in ciks_filter}
+        managers = [m for m in full_cohort if m.get("cik", "").lstrip("0").zfill(10) in norm_filter]
+        if not managers:
+            logger.warning(f"No managers in cohort match CIK filter {sorted(norm_filter)}")
+    else:
+        managers = full_cohort
+
     if max_managers:
         managers = managers[:max_managers]
 
-    total = len(managers)
+    total = cohort_total
     logger.info(
         f"Warming 13F cache: {total} managers, as_of={as_of_date}, " f"elite_only={elite_only}, workers={max_workers}"
     )
@@ -372,6 +392,7 @@ def warm_13f_cache(
                 out_dir,
                 fetcher,
                 rate_limiter,
+                filings_lookback_n=filings_lookback_n,
             ): mgr
             for mgr in managers
         }
@@ -395,9 +416,28 @@ def warm_13f_cache(
     # Sort results by CIK for determinism
     results.sort(key=lambda r: r["manager_cik"])
 
-    # Build and write index
-    index = build_index(as_of_date, results, total, elite_only)
+    # When filtering, merge with existing index so other managers' entries survive
     index_path = out_dir / "index.json"
+    if ciks_filter is not None and index_path.exists():
+        try:
+            with open(index_path, encoding="utf-8") as f:
+                prior = json.load(f)
+            prior_managers = {m["manager_cik"]: m for m in prior.get("managers", [])}
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(f"Could not read prior index at {index_path}: {e}; rebuilding from filter only")
+            prior_managers = {}
+
+        new_index = build_index(as_of_date, results, total, elite_only)
+        new_by_cik = {m["manager_cik"]: m for m in new_index["managers"]}
+        prior_managers.update(new_by_cik)
+        merged_managers = sorted(prior_managers.values(), key=lambda m: m["manager_cik"])
+        new_index["managers"] = merged_managers
+        new_index["managers_with_filing"] = sum(1 for m in merged_managers if m.get("selected"))
+        new_index["coverage_pct"] = round(new_index["managers_with_filing"] / total * 100, 1) if total else 0.0
+        index = new_index
+    else:
+        index = build_index(as_of_date, results, total, elite_only)
+
     with open(index_path, "w", encoding="utf-8") as f:
         json.dump(index, f, indent=2)
 
@@ -723,8 +763,87 @@ def main():
         default=None,
         help="End date for batch mode (YYYY-MM-DD)",
     )
+    parser.add_argument(
+        "--ciks",
+        default=None,
+        help=(
+            "Comma-separated CIKs to (re-)warm; other managers in the cohort are left untouched. "
+            "Index.json is merged so existing entries survive. Use for backfill or single-manager refresh."
+        ),
+    )
+    parser.add_argument(
+        "--existing-pit-dirs",
+        action="store_true",
+        help=(
+            "Backfill mode: walk every existing data/caches/sec_13f/PIT/<date>/ directory and warm "
+            "the filtered manager(s) at each as-of date. Implies --ciks must be set. "
+            "Ignores --as-of-date / --date-from / --date-to."
+        ),
+    )
+    parser.add_argument(
+        "--filings-lookback-n",
+        type=int,
+        default=None,
+        help=(
+            f"Number of recent 13F filings to consider per manager (default: {FILINGS_LOOKBACK_N}). "
+            "When --existing-pit-dirs is set, defaults to 40 to cover ~10 years of quarterly history."
+        ),
+    )
 
     args = parser.parse_args()
+
+    ciks_filter = None
+    if args.ciks:
+        ciks_filter = {c.strip() for c in args.ciks.split(",") if c.strip()}
+
+    if args.filings_lookback_n is not None:
+        lookback_n = args.filings_lookback_n
+    elif args.existing_pit_dirs:
+        lookback_n = 40
+    else:
+        lookback_n = FILINGS_LOOKBACK_N
+
+    # Existing-PIT-dirs backfill mode
+    if args.existing_pit_dirs:
+        if not ciks_filter:
+            print("ERROR: --existing-pit-dirs requires --ciks", file=sys.stderr)
+            return 1
+        pit_root = REPO_ROOT / "data" / "caches" / "sec_13f" / "PIT"
+        if not pit_root.exists():
+            print(f"ERROR: PIT root not found: {pit_root}", file=sys.stderr)
+            return 1
+        date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+        existing_dates = sorted(d.name for d in pit_root.iterdir() if d.is_dir() and date_re.match(d.name))
+        if not existing_dates:
+            print(f"No existing PIT dirs under {pit_root}")
+            return 1
+        print(
+            f"Backfill: {len(ciks_filter)} CIK(s) across {len(existing_dates)} PIT dirs "
+            f"({existing_dates[0]} → {existing_dates[-1]})"
+        )
+        n_ok = 0
+        for as_of_str in existing_dates:
+            as_of = date.fromisoformat(as_of_str)
+            out_dir = pit_root / as_of_str
+            index = warm_13f_cache(
+                as_of_date=as_of,
+                out_dir=out_dir,
+                elite_only=args.elite_only,
+                max_managers=args.max_managers,
+                max_workers=args.max_workers,
+                fetcher_cache_dir=args.fetcher_cache_dir,
+                ciks_filter=ciks_filter,
+                filings_lookback_n=lookback_n,
+            )
+            target_entries = [
+                m
+                for m in index.get("managers", [])
+                if m["manager_cik"] in {c.lstrip("0").zfill(10) for c in ciks_filter} and m.get("selected")
+            ]
+            if target_entries:
+                n_ok += 1
+        print(f"\nBackfill complete: {n_ok}/{len(existing_dates)} dates have a filing for the target CIK(s)")
+        return 0
 
     # Batch mode: --date-from + --date-to generate multiple dates
     if args.date_from and args.date_to:
@@ -745,6 +864,8 @@ def main():
                 max_managers=args.max_managers,
                 max_workers=args.max_workers,
                 fetcher_cache_dir=args.fetcher_cache_dir,
+                ciks_filter=ciks_filter,
+                filings_lookback_n=lookback_n,
             )
             ok = index["managers_with_filing"]
             total = index["total_managers"]
@@ -761,6 +882,8 @@ def main():
             max_managers=args.max_managers,
             max_workers=args.max_workers,
             fetcher_cache_dir=args.fetcher_cache_dir,
+            ciks_filter=ciks_filter,
+            filings_lookback_n=lookback_n,
         )
         ok = index["managers_with_filing"]
         total = index["total_managers"]
@@ -768,7 +891,7 @@ def main():
         return 0
 
     else:
-        print("ERROR: specify --as-of-date or --date-from + --date-to", file=sys.stderr)
+        print("ERROR: specify --as-of-date, --date-from + --date-to, or --existing-pit-dirs", file=sys.stderr)
         return 1
 
 

@@ -231,6 +231,13 @@ All downstream consumers use `actionable_rank` (now driven by selector/ranker, n
 - **Family sleeves**: REGULATORY/CLINICAL split per bucket with time-ladder sub-buckets
 - **Regulatory sleeve A/B**: +1.85pp 63d, +1.59pp 84d (positive but coverage-limited)
 
+## Adding a 13F Manager
+- **Use `tools/onboard_manager.py`** — never edit `production_data/manager_registry.json` directly.
+- One-shot flow: registry append → backfill across every existing PIT dir (lookback=40 ≈ 10y) → warm current as-of date → run `tools/test_manager_integration.py` (6/6 gate).
+- Example: `python tools/onboard_manager.py --cik 1802528 --name "Fairmount Funds Management" --aum-b 1.3 --style concentrated_clinical_stage --tier elite_core --notes "..."`
+- For reruns or partial flows use `--skip-registry`, `--skip-backfill`, `--skip-current`, `--skip-test`.
+- Underlying primitive: `tools/warm_13f_cache.py --ciks <CIK> --existing-pit-dirs --elite-only` (merges into each PIT dir's `index.json`, doesn't disturb other managers).
+
 ## Data Provenance Rules
 - **Holdings truth source:** `production_data/institutional_summary.json` is canonical. It has CUSIP→ticker resolution, issuer normalization, and corporate action handling.
 - **Raw EDGAR XML is debug-only.** Never build a narrative (e.g., "8 new entrants") from raw filing parses unless it matches the canonical summary. Raw issuer strings are unreliable — different filings use different names for the same entity.
