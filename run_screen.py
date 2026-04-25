@@ -5039,7 +5039,10 @@ def save_validation_snapshot(
                 logger.warning(f"  Ranker v2 scoring failed: {_rv2_err}")
         else:
             if ranker_mode == "pairwise_minimal":
-                logger.error("  FATAL: ranker_mode=pairwise_minimal but ranker_v2_model.json not found")
+                raise FileNotFoundError(
+                    f"ranker_mode=pairwise_minimal requires {_rv2_model_path} but file not found. "
+                    "Restore the model artifact, or pass --ranker-mode=clinical_50 for the legacy fallback."
+                )
 
         # ------------------------------------------------------------------
         # Mode dispatch: wire production ranker into final_score
@@ -8875,9 +8878,18 @@ def run_screening_pipeline(
     else:
         trial_records_path = data_dir / "trial_records.json"
         if ctgov_cache_dir is not False:
+            if pit_mode == "strict":
+                _expected_cache = (
+                    Path(ctgov_cache_dir) if ctgov_cache_dir else Path(__file__).parent / "cache" / "ctgov"
+                ) / f"trial_records_{as_of_date}.json"
+                raise FileNotFoundError(
+                    f"PIT cache miss: {_expected_cache} not found and --pit-mode=strict. "
+                    f"Run: python warm_caches.py --sources ctgov --as-of-date {as_of_date}, "
+                    f"or pass --pit-mode=degrade to fall back to {trial_records_path.name}."
+                )
             logger.warning(
                 f"  PIT cache miss: trial_records_{as_of_date}.json not found — "
-                f"falling back to {trial_records_path.name} (may be stale)"
+                f"falling back to {trial_records_path.name} (may be stale, pit_mode={pit_mode})"
             )
 
     trial_records = load_json_data(trial_records_path, "Trials")

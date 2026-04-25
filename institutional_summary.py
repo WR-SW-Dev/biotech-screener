@@ -8,7 +8,6 @@ from __future__ import annotations
 import json
 import logging
 import math
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
@@ -199,7 +198,7 @@ def build_institutional_summary(
     return {
         "schema_version": SCHEMA_VERSION,
         "version": VERSION,
-        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "created_at": f"{as_of_date}T00:00:00Z",
         "as_of_date": as_of_date,
         "cache_as_of_date": index.get("as_of_date", as_of_date),
         "cache_schema_version": index.get("schema_version", ""),
@@ -530,11 +529,12 @@ def compute_institutional_delta(
     cur_tk_set = set(cur_tickers)
     pri_tk_set = set(pri_tickers)
 
+    _cur_as_of = current.get("as_of_date", "")
     return {
         "schema_version": DELTA_SCHEMA_VERSION,
         "version": VERSION,
-        "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "as_of_date": current.get("as_of_date", ""),
+        "created_at": f"{_cur_as_of}T00:00:00Z" if _cur_as_of else "",
+        "as_of_date": _cur_as_of,
         "prior_date": prior.get("as_of_date", ""),
         "current_cache_as_of_date": current.get("cache_as_of_date", ""),
         "prior_cache_as_of_date": prior.get("cache_as_of_date", ""),

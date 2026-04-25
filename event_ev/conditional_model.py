@@ -144,15 +144,28 @@ _VALIDATED_MECHANISM_PATTERNS = [
 ]
 
 
+def _join_text(*parts) -> str:
+    """Join a mix of strings and string lists, dropping None / non-str entries."""
+    out: List[str] = []
+    for p in parts:
+        if p is None:
+            continue
+        if isinstance(p, str):
+            out.append(p)
+        else:
+            out.extend(s for s in p if isinstance(s, str))
+    return " ".join(out)
+
+
 def _detect_biomarker_selected(title: str, conditions: List[str], endpoints: List[str]) -> bool:
     """Check if trial text indicates biomarker-selected population."""
-    text = " ".join([title] + conditions + endpoints)
+    text = _join_text(title, conditions, endpoints)
     return any(p.search(text) for p in _BIOMARKER_PATTERNS)
 
 
 def _detect_enrichment(title: str, conditions: List[str], endpoints: List[str]) -> bool:
     """Check if trial text indicates enriched or adaptive design."""
-    text = " ".join([title] + conditions + endpoints)
+    text = _join_text(title, conditions, endpoints)
     return any(p.search(text) for p in _ENRICHMENT_PATTERNS)
 
 
@@ -165,7 +178,7 @@ def _detect_adaptive_design(intervention_model: str, title: str) -> bool:
 
 def _classify_mechanism(interventions: List[str], conditions: List[str], title: str) -> str:
     """Classify mechanism as validated / semi_validated / novel / unknown."""
-    text = " ".join([title] + interventions + conditions)
+    text = _join_text(title, interventions, conditions)
     if any(p.search(text) for p in _VALIDATED_MECHANISM_PATTERNS):
         return "validated"
     # Semi-validated: has identifiable drug class but not in validated list
@@ -434,7 +447,7 @@ def _build_trial_context(
             enriched = True
         if _detect_adaptive_design(int_model, title):
             adaptive = True
-        if re.search(r"companion diagnostic", " ".join([title] + conditions), re.IGNORECASE):
+        if re.search(r"companion diagnostic", _join_text(title, conditions), re.IGNORECASE):
             companion_dx = True
 
         mech = _classify_mechanism(interventions, conditions, title)
