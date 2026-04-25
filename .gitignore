@@ -385,3 +385,29 @@ agents/*/IDENTITY.md
 agents/*/USER.md
 agents/*/BOOTSTRAP.md
 vendor/
+
+# --- Local Claude state & nested worktrees (NEVER commit) ---
+.claude/worktrees/
+.claude/agent-memory/
+.claude/memory/
+
+# --- Frontend build caches ---
+frontend/dashboard/.vite/
+
+# --- Backups, binary databases, local model snapshots ---
+*.db
+*.bak*
+*_backup_*.json
+
+# --- Generated daily / runtime data outputs ---
+data/press_releases/
+data/regime_backfill_cache/
+data/staging/
+data/form4/
+data/ground_truth/
+data/pit_archives/
+data/bvf_backfill/
+
+# --- Append-only runtime logs (regenerable; tracked files already in repo are unaffected by these patterns, but exempt explicitly for defense) ---
+data/*_log.jsonl
+!data/expression_decision_log.jsonl
