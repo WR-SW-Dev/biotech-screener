@@ -63,37 +63,136 @@ FORM_TO_SOURCE = {
 # SEC official ticker-to-CIK mapping
 SEC_COMPANY_TICKERS_URL = "https://www.sec.gov/files/company_tickers.json"
 
-# Timing phrase patterns: (regex, event_type, date_precision)
+# Timing phrase patterns: (regex, event_type, date_precision, meta)
+# meta is None or a dict with optional fields:
+#   "event_status": "extended" | "resubmission_accepted"  (review-window change marker)
+#   "tags_extra":   list[str]  (appended to event["tags"])
 TIMING_PATTERNS = [
     # "expects topline data in Q2 2026" / "anticipates top-line results in Q1 2026"
     (
         r"(?:expects?|anticipates?)\s+(?:topline|top-line|interim)\s+(?:data|results?)\s+.*?(Q[1-4]\s*\d{4})",
         "DATA_READOUT",
         "QUARTER",
+        None,
     ),
     # "topline results in Q2 2026" (without expects/anticipates prefix)
     (
         r"(?:topline|top-line)\s+(?:data|results?)\s+(?:in|by|during)\s+.*?(Q[1-4]\s*\d{4})",
         "DATA_READOUT",
         "QUARTER",
+        None,
+    ),
+    # ── Review-window CHANGE patterns (event_status="extended") ──
+    # Must come BEFORE the generic "PDUFA date of ..." pattern so review-window
+    # changes are tagged as extensions rather than as fresh upcoming PDUFA events.
+    # "new PDUFA date of June 29, 2026" / "revised PDUFA date is ..." / "new PDUFA goal date of ..."
+    (
+        r"(?:new|revised)\s+PDUFA\s+(?:date|target\s+action\s+date|goal\s+date|action\s+date)\s+(?:of|is|set\s+for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    # "three-month extension ... June 29, 2026" / "3-month extension of the PDUFA date to ..."
+    # Bound the gap to avoid grabbing unrelated dates downstream.
+    (
+        r"(?:three[- ]month|3[- ]month|six[- ]month|6[- ]month)\s+extension\b[^.]{0,200}?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    # "review period has been extended ... new action date of ..." / "extended the review period ... June 29, 2026"
+    (
+        r"(?:review\s+period\s+(?:has\s+been\s+|was\s+)?extended|extended\s+the\s+review\s+period)\b[^.]{0,200}?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    # Verb-first extension: "FDA extended the PDUFA target action date from March 29 to June 29, 2026"
+    # / "FDA has extended the action date to August 22, 2026"
+    (
+        r"extended\s+the\s+(?:PDUFA\s+)?(?:target\s+)?(?:action\s+)?date\b[^.]{0,200}?(?:to|until)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    # "major amendment ... new PDUFA date of June 29, 2026" — strict to avoid contract/agreement matches
+    (
+        r"major\s+amendment\s+(?:to\s+(?:the\s+)?(?:application|NDA|BLA|sNDA|sBLA))?\s*.*?PDUFA\s+(?:date|action\s+date|goal\s+date)\s+(?:of|is|set\s+for)?\s*(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "major_amendment"]},
+    ),
+    # ── Class 2 resubmission (event_status="resubmission_accepted") ──
+    # "accepted as a Class 2 resubmission ... PDUFA date of ..." / "Class 2 resubmission with a six-month review period ... June 5, 2026"
+    (
+        r"Class\s*2\s+resubmission\b[^.]{0,200}?(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "resubmission_accepted", "tags_extra": ["class_2_resubmission"]},
+    ),
+    # "six-month review period ... PDUFA date of ..." (Class 2 resubmission statutory timeline).
+    # Require explicit PDUFA/action-date wording near the captured date to avoid
+    # matching boilerplate phrasing like "six-month review period from the date of resubmission".
+    (
+        r"six[- ]month\s+review\s+period\b[^.]{0,150}?(?:PDUFA|action\s+date|goal\s+date|target\s+action)\s+(?:date\s+)?(?:of|is|set\s+for)?\s*(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "resubmission_accepted", "tags_extra": ["six_month_review"]},
+    ),
+    # ── PDUFA extension / revision (existing language, tagged as extended) ──
+    # "PDUFA date was extended to July 15, 2026" / "PDUFA date revised to ..."
+    (
+        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised|moved|pushed)\s+(?:to|until)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    (
+        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised)\s+.*?(Q[1-4]\s*\d{4})",
+        "FDA_PDUFA_DATE",
+        "QUARTER",
+        {"event_status": "extended", "tags_extra": ["review_window_change", "extended"]},
+    ),
+    # ── PDUFA goal date / FDA goal date (DAY) ──
+    (
+        r"PDUFA\s+goal\s+date\s+(?:of|is|set\s+for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        None,
+    ),
+    (
+        r"FDA\s+goal\s+date\s+(?:of|is|set\s+for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        None,
+    ),
+    # "target action date of ..." (without FDA prefix; relies on biopharma context guard upstream)
+    (
+        r"target\s+action\s+date\s+(?:of|is|set\s+for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
+        "FDA_PDUFA_DATE",
+        "DAY",
+        None,
     ),
     # "PDUFA date of March 15, 2026" or "PDUFA action date set for March 15, 2026"
     (
         r"PDUFA\s+(?:date|action date)\s+(?:of|is|set for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     # "expects to report topline results ... second half of 2026"
     (
         r"(?:expects?|anticipates?)\s+.*?(?:results?|data)\s+.*?(?:first|second)\s+half\s+(?:of\s+)?(\d{4})",
         "DATA_READOUT",
         "HALF_YEAR",
+        None,
     ),
     # "data expected in mid-2026" / "results expected by year-end 2026"
     (
         r"(?:data|results?)\s+expected\s+.*?(?:mid|year[- ]?end)[- ]?(\d{4})",
         "DATA_READOUT",
         "HALF_YEAR",
+        None,
     ),
     # ── FDA action date variants (DAY precision) ──
     # "FDA action date of March 15, 2026" / "FDA target action date of ..."
@@ -101,18 +200,21 @@ TIMING_PATTERNS = [
         r"FDA\s+(?:target\s+)?action\s+date\s+(?:of|is|set for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     # "NDA accepted...PDUFA date of April 3, 2026" / "BLA...PDUFA date of ..."
     (
         r"(?:NDA|BLA|sNDA|sBLA)\s+.*?PDUFA\s+date\s+(?:of|is)\s+(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     # "Prescription Drug User Fee Act date of March 15, 2026"
     (
         r"Prescription\s+Drug\s+User\s+Fee\s+Act\s+(?:date|goal date)\s+(?:of|is|set for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     # ── FDA decision in quarter (QUARTER precision) ──
     # "regulatory decision expected in Q2 2026" / "FDA decision expected in Q1 2026"
@@ -120,12 +222,14 @@ TIMING_PATTERNS = [
         r"(?:regulatory|FDA)\s+(?:decision|review)\s+(?:is\s+)?(?:expected|anticipated)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_PDUFA_DATE",
         "QUARTER",
+        None,
     ),
     # "FDA approval expected in Q2 2026" / "FDA approval anticipated in Q3 2026"
     (
         r"FDA\s+approval\s+(?:is\s+)?(?:expected|anticipated)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_PDUFA_DATE",
         "QUARTER",
+        None,
     ),
     # ── FDA approval in half-year (HALF_YEAR precision) ──
     # "FDA approval anticipated second half of 2026" / "approval expected first half of 2026"
@@ -133,6 +237,7 @@ TIMING_PATTERNS = [
         r"(?:FDA\s+)?approval\s+(?:is\s+)?(?:expected|anticipated)\s+.*?(?:first|second)\s+half\s+(?:of\s+)?(\d{4})",
         "FDA_PDUFA_DATE",
         "HALF_YEAR",
+        None,
     ),
     # ── Advisory Committee / ADCOM (DAY and QUARTER) ──
     # "Advisory Committee meeting on July 17, 2026" / "advisory committee scheduled for ..."
@@ -140,12 +245,14 @@ TIMING_PATTERNS = [
         r"Advisory\s+Committee\s+(?:meeting\s+)?(?:on|scheduled for|set for)\s+(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_ADCOM",
         "DAY",
+        None,
     ),
     # "ADCOM meeting expected in Q3 2026" / "ADCOM scheduled for Q2 2026"
     (
         r"ADCOM\s+(?:meeting\s+)?(?:is\s+)?(?:expected|scheduled|anticipated)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_ADCOM",
         "QUARTER",
+        None,
     ),
     # ── NDA/BLA submission and resubmission (QUARTER / DAY) ──
     # "NDA resubmission accepted" / "BLA resubmitted" / "sNDA filed"
@@ -153,23 +260,13 @@ TIMING_PATTERNS = [
         r"(?:NDA|BLA|sNDA|sBLA)\s+(?:re)?(?:submission|submitted|filed|accepted)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_PDUFA_DATE",
         "QUARTER",
+        None,
     ),
     (
         r"(?:NDA|BLA|sNDA|sBLA)\s+(?:re)?(?:submission|submitted|filed|accepted)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
-    ),
-    # ── PDUFA extension / revision ──
-    # "PDUFA date was extended to July 15, 2026" / "PDUFA date revised to ..."
-    (
-        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised|moved|pushed)\s+(?:to|until)\s+(\w+\s+\d{1,2},?\s+\d{4})",
-        "FDA_PDUFA_DATE",
-        "DAY",
-    ),
-    (
-        r"PDUFA\s+(?:date|action date)\s+(?:was\s+)?(?:extended|revised)\s+.*?(Q[1-4]\s*\d{4})",
-        "FDA_PDUFA_DATE",
-        "QUARTER",
+        None,
     ),
     # ── FDA meetings (Type A/B/C, mid-cycle, late-cycle) ──
     # "Type A meeting scheduled for March 2026" / "late-cycle meeting"
@@ -177,16 +274,19 @@ TIMING_PATTERNS = [
         r"Type\s+[ABC]\s+meeting\s+.*?(?:scheduled|set|planned)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     (
         r"(?:mid[- ]?cycle|late[- ]?cycle)\s+(?:review|meeting)\s+.*?(\w+\s+\d{1,2},?\s+\d{4})",
         "FDA_PDUFA_DATE",
         "DAY",
+        None,
     ),
     (
         r"(?:mid[- ]?cycle|late[- ]?cycle)\s+(?:review|meeting)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_PDUFA_DATE",
         "QUARTER",
+        None,
     ),
     # ── Breakthrough / Priority / Accelerated designations with timeline ──
     # "granted Breakthrough Therapy Designation ... expects approval Q2 2026"
@@ -194,6 +294,7 @@ TIMING_PATTERNS = [
         r"(?:Breakthrough|Priority|Accelerated)\s+(?:Therapy\s+)?(?:Designation|Review)\s+.*?(?:expects?|anticipates?)\s+.*?(Q[1-4]\s*\d{4})",
         "FDA_PDUFA_DATE",
         "QUARTER",
+        None,
     ),
     # ── Phase 2 data readout (QUARTER) ──
     # "Phase 2 data expected in Q1 2026" / "Phase 2 results anticipated Q3 2026"
@@ -201,6 +302,7 @@ TIMING_PATTERNS = [
         r"Phase\s+2\s+.*?(?:data|results?)\s+(?:expected|anticipated)\s+.*?(Q[1-4]\s*\d{4})",
         "DATA_READOUT",
         "QUARTER",
+        None,
     ),
 ]
 
@@ -497,6 +599,33 @@ _BIOPHARMA_KWS = (
     "regulatory",
 )
 
+# Prior-date capture for review-window changes.
+# Looks for "from {date} to ..." / "previously {date}" / "originally {date}"
+# / "prior PDUFA date of {date}" in the window before the new-date match.
+_PRIOR_DATE_RE = re.compile(
+    r"(?:from|previously|originally|prior\s+(?:PDUFA\s+)?(?:date|action\s+date|goal\s+date)\s+(?:of|was))\s+"
+    r"(\w+\s+\d{1,2},?\s+\d{4})",
+    re.IGNORECASE,
+)
+
+
+def _extract_prior_date(text: str, match_start: int, match_end: int) -> Optional[str]:
+    """
+    Scan the 200-char window around the match for an explicit prior PDUFA date.
+
+    Returns ISO date string of the prior date if extractable, else None.
+    Skips any candidate that is the same as the new (matched) date.
+    """
+    window_start = max(0, match_start - 200)
+    window_end = min(len(text), match_end + 100)
+    window = text[window_start:window_end]
+    best: Optional[str] = None
+    for m in _PRIOR_DATE_RE.finditer(window):
+        iso = _parse_exact_date(m.group(1).strip())
+        if iso:
+            best = iso  # take the last (closest-to-match) plausible prior date
+    return best
+
 
 def _extract_timing_events(
     text: str,
@@ -536,7 +665,13 @@ def _extract_timing_events(
     # Staleness cutoff: reject events whose end date is >180d before as_of_date
     staleness_cutoff = (as_of_date - timedelta(days=180)).isoformat() if as_of_date else None
 
-    for pattern, event_type, precision in TIMING_PATTERNS:
+    for entry in TIMING_PATTERNS:
+        # Tolerate legacy 3-tuples for forward-compat, but the in-tree shape is 4-tuple.
+        if len(entry) == 4:
+            pattern, event_type, precision, meta = entry
+        else:
+            pattern, event_type, precision = entry
+            meta = None
         for match in re.finditer(pattern, text, re.IGNORECASE):
             _DIAG_COUNTERS["raw_matches"] += 1
             # Context-based relevance filters (±300 chars around match)
@@ -608,20 +743,45 @@ def _extract_timing_events(
                 continue
 
             _DIAG_COUNTERS["accepted"] += 1
-            events.append(
-                {
-                    "ticker": ticker,
-                    "event_type": event_type,
-                    "event_date": event_date,
-                    "event_date_end": event_date_end,
-                    "date_precision": precision,
-                    "event_name": f"8-K: {match.group(0)[:80]}",
-                    "confidence": confidence,
-                    "source": "SEC_8K_FILING",
-                    "disclosed_at": filing_date,
-                    "tags": ["sec_8k"],
-                }
-            )
+
+            # event_status default: "upcoming" for fresh PDUFA matches; review-window
+            # changes are tagged via meta["event_status"] from the pattern definition.
+            if meta and meta.get("event_status"):
+                event_status = meta["event_status"]
+            elif event_type == "FDA_PDUFA_DATE":
+                event_status = "upcoming"
+            else:
+                event_status = None
+
+            tags = ["sec_8k"]
+            if meta and meta.get("tags_extra"):
+                tags.extend(meta["tags_extra"])
+
+            # prior_date: only populate for review-window changes when an explicit
+            # earlier date appears nearby. Never infer.
+            prior_date: Optional[str] = None
+            if meta and meta.get("event_status") == "extended" and precision == "DAY":
+                candidate = _extract_prior_date(text, match.start(), match.end())
+                if candidate and candidate != event_date:
+                    prior_date = candidate
+
+            event_dict: Dict[str, Any] = {
+                "ticker": ticker,
+                "event_type": event_type,
+                "event_date": event_date,
+                "event_date_end": event_date_end,
+                "date_precision": precision,
+                "event_name": f"8-K: {match.group(0)[:80]}",
+                "confidence": confidence,
+                "source": "SEC_8K_FILING",
+                "disclosed_at": filing_date,
+                "tags": tags,
+            }
+            if event_status is not None:
+                event_dict["event_status"] = event_status
+            if prior_date is not None:
+                event_dict["prior_date"] = prior_date
+            events.append(event_dict)
 
     return events
 
@@ -850,6 +1010,11 @@ def collect_8k_timing_events(
         '"NDA" AND ("resubmission" OR "resubmitted" OR "accepted")',
         '"BLA" AND ("resubmission" OR "resubmitted" OR "accepted")',
         '"PDUFA" AND ("extended" OR "revised" OR "moved")',
+        '"new PDUFA date" OR "revised PDUFA date" OR "PDUFA goal date"',
+        '"major amendment" AND "PDUFA"',
+        '"three-month extension" OR "3-month extension" OR "review period has been extended"',
+        '"Class 2 resubmission" OR "six-month review period"',
+        '"target action date"',
         '"mid-cycle review" OR "late-cycle meeting"',
         '"Type A meeting" OR "Type B meeting" OR "Type C meeting"',
         '"Phase 2" AND ("data" OR "results") AND ("expected" OR "anticipated")',
@@ -1157,6 +1322,11 @@ def collect_sec_filing_events(
         '"NDA" AND ("resubmission" OR "resubmitted" OR "accepted")',
         '"BLA" AND ("resubmission" OR "resubmitted" OR "accepted")',
         '"PDUFA" AND ("extended" OR "revised" OR "moved")',
+        '"new PDUFA date" OR "revised PDUFA date" OR "PDUFA goal date"',
+        '"major amendment" AND "PDUFA"',
+        '"three-month extension" OR "3-month extension" OR "review period has been extended"',
+        '"Class 2 resubmission" OR "six-month review period"',
+        '"target action date"',
         '"mid-cycle review" OR "late-cycle meeting"',
         '"Type A meeting" OR "Type B meeting" OR "Type C meeting"',
         '"Phase 2" AND ("data" OR "results") AND ("expected" OR "anticipated")',

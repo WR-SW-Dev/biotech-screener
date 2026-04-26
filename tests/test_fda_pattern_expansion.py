@@ -8,12 +8,10 @@ new FDA-specific regex patterns added for PDUFA/ADCOM capture uplift.
 
 from datetime import date
 
-import pytest
-
 from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
     PATTERN_VERSION,
-    _extract_timing_events,
     _extract_downside_events,
+    _extract_timing_events,
 )
 
 # Common test fixtures
@@ -125,15 +123,11 @@ class TestFDATimingPatterns:
             "statements. There can be no assurance that FDA approval will be obtained. "
             "FDA action date risks include regulatory decision expected in Q1 2027."
         )
-        events = _extract_timing_events(text, "KKKK", FILING_DATE, AS_OF)
         # _extract_timing_events does not strip boilerplate (that's done in the
-        # calling code flow), but a boilerplate section should still not produce
-        # false positives if the text is pre-stripped. Verify the full text
-        # produces events (since boilerplate stripping is upstream).
-        # Here we test that the _strip_boilerplate path works:
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _strip_boilerplate,
-        )
+        # calling code flow); the test below confirms the _strip_boilerplate path
+        # eliminates false positives from forward-looking disclaimers.
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _strip_boilerplate
+
         clean = _strip_boilerplate(text)
         events_clean = _extract_timing_events(clean, "KKKK", FILING_DATE, AS_OF)
         fda = [e for e in events_clean if e["event_type"] in ("FDA_PDUFA_DATE", "FDA_ADCOM")]
@@ -184,24 +178,129 @@ class TestFDADownsidePatterns:
             "Forward-looking statements: risks include FDA warning letter "
             "and other regulatory actions."
         )
-        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
-            _strip_boilerplate,
-        )
+        from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import _strip_boilerplate
+
         clean = _strip_boilerplate(text)
         events = _extract_downside_events(clean, "PPPP", FILING_DATE)
         wl = [e for e in events if e["event_type"] == "FDA_WARNING_LETTER"]
         assert len(wl) == 0
 
 
+class TestReviewWindowPatterns:
+    """Tests for review-window-change patterns (extended / Class 2 resubmission)."""
+
+    def test_lantheus_three_month_extension_day(self):
+        """Lantheus-style: 'three-month extension ... June 29, 2026' → extended/DAY."""
+        text = (
+            "Lantheus today announced that the FDA has extended the PDUFA target action date "
+            "by three months, resulting in a three-month extension of the review period to "
+            "June 29, 2026."
+        )
+        events = _extract_timing_events(text, "LNTH", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended"]
+        assert len(ext) >= 1
+        assert ext[0]["event_date"] == "2026-06-29"
+        assert ext[0]["date_precision"] == "DAY"
+        assert ext[0]["confidence"] == "HIGH"
+        assert "review_window_change" in ext[0]["tags"]
+        assert ext[0]["source"] == "SEC_8K_FILING"
+
+    def test_review_period_extended_phrasing(self):
+        """'review period has been extended ... new action date of August 22, 2026'."""
+        text = (
+            "Capricor announced that the FDA review period has been extended, with a new "
+            "action date of August 22, 2026, following submission of additional CMC data."
+        )
+        events = _extract_timing_events(text, "CAPR", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended"]
+        assert len(ext) >= 1
+        assert ext[0]["event_date"] == "2026-08-22"
+
+    def test_new_pdufa_date_phrase(self):
+        """'new PDUFA date of June 29, 2026' → extended."""
+        text = "Following the major amendment, the new PDUFA date of June 29, 2026 has been assigned."
+        events = _extract_timing_events(text, "TICK", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended"]
+        assert len(ext) >= 1
+        assert ext[0]["event_date"] == "2026-06-29"
+
+    def test_revised_pdufa_date_phrase(self):
+        """'revised PDUFA date is September 10, 2026' → extended."""
+        text = "The revised PDUFA date is September 10, 2026 per FDA notice."
+        events = _extract_timing_events(text, "TICK", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended"]
+        assert len(ext) >= 1
+        assert ext[0]["event_date"] == "2026-09-10"
+
+    def test_class_2_resubmission_phrase(self):
+        """'Class 2 resubmission ... PDUFA date of June 5, 2026' → resubmission_accepted."""
+        text = (
+            "The FDA accepted the NDA as a Class 2 resubmission with a six-month review "
+            "period and a PDUFA date of June 5, 2026."
+        )
+        events = _extract_timing_events(text, "ARVN", FILING_DATE, AS_OF)
+        resub = [e for e in events if e.get("event_status") == "resubmission_accepted"]
+        assert len(resub) >= 1
+        assert any(e["event_date"] == "2026-06-05" for e in resub)
+        assert any("class_2_resubmission" in e["tags"] or "six_month_review" in e["tags"] for e in resub)
+
+    def test_pdufa_goal_date_phrase(self):
+        """'PDUFA goal date of November 1, 2026' → upcoming, DAY."""
+        text = "The PDUFA goal date of November 1, 2026 has been confirmed by the agency."
+        events = _extract_timing_events(text, "TICK", FILING_DATE, AS_OF)
+        fda = [e for e in events if e["event_type"] == "FDA_PDUFA_DATE" and e["event_date"] == "2026-11-01"]
+        assert len(fda) >= 1
+        assert fda[0]["date_precision"] == "DAY"
+        assert fda[0]["confidence"] == "HIGH"
+
+    def test_target_action_date_phrase(self):
+        """'target action date of September 27, 2026' → upcoming, DAY."""
+        text = "Praxis announced FDA acceptance with a target action date of September 27, 2026."
+        events = _extract_timing_events(text, "PRAX", FILING_DATE, AS_OF)
+        fda = [e for e in events if e["event_type"] == "FDA_PDUFA_DATE" and e["event_date"] == "2026-09-27"]
+        assert len(fda) >= 1
+
+    def test_prior_date_extracted_from_explicit_phrasing(self):
+        """When 'from {old} to {new}' is present, prior_date is captured for extended events."""
+        text = (
+            "The FDA extended the PDUFA target action date from March 29, 2026 to "
+            "June 29, 2026 following a major amendment to the application."
+        )
+        events = _extract_timing_events(text, "LNTH", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended" and e["event_date"] == "2026-06-29"]
+        assert len(ext) >= 1
+        # at least one of the extended-tagged events should carry the prior date
+        assert any(
+            e.get("prior_date") == "2026-03-29" for e in ext
+        ), f"Expected prior_date=2026-03-29 in at least one extended event; got: {ext}"
+
+    def test_extended_priority_in_tags(self):
+        """An 'extended' event includes review_window_change tag."""
+        text = "FDA extended the review period to August 1, 2026 per agency notice."
+        events = _extract_timing_events(text, "TICK", FILING_DATE, AS_OF)
+        ext = [e for e in events if e.get("event_status") == "extended"]
+        assert len(ext) >= 1
+        assert "review_window_change" in ext[0]["tags"]
+
+    def test_fresh_pdufa_marked_upcoming(self):
+        """A plain 'PDUFA date of ...' (no extension wording) is event_status='upcoming'."""
+        text = "The FDA has assigned a PDUFA date of October 15, 2026."
+        events = _extract_timing_events(text, "TICK", FILING_DATE, AS_OF)
+        fresh = [e for e in events if e["event_type"] == "FDA_PDUFA_DATE" and e["event_date"] == "2026-10-15"]
+        assert len(fresh) >= 1
+        # at least one match has event_status="upcoming"
+        assert any(e.get("event_status") == "upcoming" for e in fresh)
+
+
 class TestPatternVersion:
     """Verify PATTERN_VERSION changed from pre-expansion value."""
 
     def test_pattern_version_changes(self):
-        """PATTERN_VERSION differs from pre-expansion value (221244b7)."""
-        OLD_PATTERN_VERSION = "221244b7"
+        """PATTERN_VERSION differs from prior cached value (b2bdaf75)."""
+        # b2bdaf75 was the live cache version before the review-window expansion.
+        OLD_PATTERN_VERSION = "b2bdaf75"
         assert PATTERN_VERSION != OLD_PATTERN_VERSION, (
-            f"PATTERN_VERSION should have changed after adding new patterns, "
-            f"still {PATTERN_VERSION}"
+            f"PATTERN_VERSION should have changed after adding new patterns, " f"still {PATTERN_VERSION}"
         )
 
     def test_pattern_version_is_hex_string(self):
@@ -216,6 +315,7 @@ class TestCacheFallback:
     def test_8k_cache_found_in_primary(self, tmp_path):
         """8-K collection uses primary cache dir when file exists there."""
         import json
+
         from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
             _versioned_cache_path,
             collect_8k_timing_events,
@@ -225,8 +325,7 @@ class TestCacheFallback:
         cache_dir.mkdir()
 
         as_of = date(2026, 2, 7)
-        cached = [{"ticker": "TEST", "event_type": "DATA_READOUT",
-                    "event_date": "2026-06-01"}]
+        cached = [{"ticker": "TEST", "event_type": "DATA_READOUT", "event_date": "2026-06-01"}]
         cache_path = _versioned_cache_path(cache_dir, as_of)
         with open(cache_path, "w") as f:
             json.dump(cached, f)
@@ -242,6 +341,7 @@ class TestCacheFallback:
     def test_multi_form_cache_found_in_primary(self, tmp_path):
         """Multi-form collection uses primary cache dir when file exists there."""
         import json
+
         from wake_robin_data_pipeline.collectors.sec_8k_catalyst_collector import (
             _multi_form_cache_path,
             collect_sec_filing_events,
@@ -251,9 +351,15 @@ class TestCacheFallback:
         cache_dir.mkdir()
 
         as_of = date(2026, 2, 7)
-        cached = [{"ticker": "FOLD", "event_type": "FDA_PDUFA_DATE",
-                    "event_date": "2026-09-01", "filing_form": "10-Q",
-                    "source": "SEC_10Q_FILING"}]
+        cached = [
+            {
+                "ticker": "FOLD",
+                "event_type": "FDA_PDUFA_DATE",
+                "event_date": "2026-09-01",
+                "filing_form": "10-Q",
+                "source": "SEC_10Q_FILING",
+            }
+        ]
         cache_path = _multi_form_cache_path(cache_dir, as_of)
         with open(cache_path, "w") as f:
             json.dump(cached, f)
