@@ -1,0 +1,33 @@
+{
+  "snapshot_date": "2026-04-13",
+  "prior_date": "2026-04-12",
+  "generated_at": "2026-04-13T20:43:14Z",
+  "top_30_overlap": 86.7,
+  "added": [
+    "ANNX",
+    "KYMR",
+    "SLDB",
+    "SRRK"
+  ],
+  "removed": [
+    "AMLX",
+    "AXSM",
+    "RYTM",
+    "SION"
+  ],
+  "qa_summary": {
+    "error": 0,
+    "warning": 66,
+    "info": 2
+  },
+  "qa_exit_code": 1,
+  "n_issues": 68,
+  "report_path": "reports/data_explorer/daily_20260413_204311/daily_report.md",
+  "chart_paths": [
+    "reports/data_explorer/daily_20260413_204311/score_distributions.png",
+    "reports/data_explorer/daily_20260413_204311/gate_bars.png",
+    "reports/data_explorer/daily_20260413_204311/overlap_chart.png",
+    "reports/data_explorer/daily_20260413_204311/rank_comparison.png"
+  ],
+  "artifact_count": 60
+}
