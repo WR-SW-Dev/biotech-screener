@@ -107,14 +107,14 @@
     "ticker": "ARVN",
     "drug_name": "ARV-471 (vepdegestrant)",
     "indication": "ER+/HER2- Breast Cancer",
-    "pdufa_date": "2026-05-10",
+    "pdufa_date": "2026-06-05",
     "event_type": "PDUFA",
     "submission_type": "NDA",
-    "confidence": "MED",
-    "source": "MANUAL",
-    "source_url": "",
-    "as_of_disclosed_at": "2026-03-14",
-    "notes": "From CatalystAlert calendar. Priority Review NDA. Exact date needs company IR verification."
+    "confidence": "HIGH",
+    "source": "COMPANY_IR",
+    "source_url": "https://ir.arvinas.com/news-releases/news-release-details/arvinas-announces-fda-acceptance-new-drug-application",
+    "as_of_disclosed_at": "2026-04-26",
+    "notes": "PDUFA action date 2026-06-05 per Arvinas IR FDA-acceptance announcement; corroborated by Q4 2025 corporate update. Stale 2026-05-10 was MED-confidence MANUAL/CatalystAlert; corrected via BPIQ audit pull on 2026-04-26."
   },
   {
     "ticker": "RGNX",
