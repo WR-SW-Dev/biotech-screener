@@ -123,6 +123,13 @@ SNAPSHOT_COLUMNS = (
         "aact_execution_score",
         # --- Context / provenance ---
         "stage_bucket",
+        # Display-only development stage (preclinical / phase_1 / phase_1_2 /
+        # phase_2 / phase_2_3 / phase_3 / nda_bla / approved / commercial /
+        # unknown). Derived from archetype + tier_commercial + Module 4
+        # lead_phase. NOT a scoring/selector input — see _derive_development_stage.
+        "development_stage",
+        "development_stage_source",
+        "lead_program_phase_raw",
         "market_cap_bucket",
         "severity",
         "archetype",
@@ -374,6 +381,9 @@ PHASE2_PORTFOLIO_COLUMNS = [
     "size_reasons",
     # Earnings
     "next_earnings_date",
+    # Display-only development stage (matches rankings.csv column).
+    "development_stage",
+    "development_stage_source",
     # Metadata + missingness
     "decision_engine_version",
     "decision_engine_ruleset_id",

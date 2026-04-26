@@ -435,6 +435,95 @@ PHASE_ORDER = {
 }
 
 
+# =============================================================================
+# DEVELOPMENT STAGE (display-only column, NOT a scoring input)
+# =============================================================================
+
+# Canonical enum for the rankings.csv development_stage column. Order is
+# loosely early -> late but the field is categorical, not numeric.
+DEVELOPMENT_STAGE_VALUES = (
+    "preclinical",
+    "phase_1",
+    "phase_1_2",
+    "phase_2",
+    "phase_2_3",
+    "phase_3",
+    "nda_bla",
+    "approved",
+    "commercial",
+    "unknown",
+)
+
+# Phase string -> development_stage enum. Covers Module 4 PHASE_SCORES values
+# ("approved", "phase 3", "phase 2/3", "phase 2", "phase 1/2", "phase 1",
+# "preclinical") plus the synonyms tracked in PHASE_ORDER.
+_PHASE_TO_DEVELOPMENT_STAGE = {
+    "preclinical": "preclinical",
+    "phase 1": "phase_1",
+    "phase1": "phase_1",
+    "phase 1/2": "phase_1_2",
+    "phase1/phase2": "phase_1_2",
+    "phase 1/phase 2": "phase_1_2",
+    "phase 2": "phase_2",
+    "phase2": "phase_2",
+    "phase 2/3": "phase_2_3",
+    "phase2/phase3": "phase_2_3",
+    "phase 2/phase 3": "phase_2_3",
+    "phase 3": "phase_3",
+    "phase3": "phase_3",
+    "nda/bla": "nda_bla",
+    "nda": "nda_bla",
+    "bla": "nda_bla",
+    "nda_bla": "nda_bla",
+    "approved": "approved",
+}
+
+
+def _normalize_phase_to_development_stage(phase) -> str:
+    """Normalize a free-form phase string into the development_stage enum."""
+    if not phase:
+        return "unknown"
+    return _PHASE_TO_DEVELOPMENT_STAGE.get(str(phase).strip().lower(), "unknown")
+
+
+def _derive_development_stage(row: Dict[str, Any], m4_lead_phase) -> Tuple[str, str, str]:
+    """
+    Display-only derivation of (development_stage, source, lead_program_phase_raw).
+
+    Precedence (per spec):
+      1. archetype starts with "commercial_" -> "commercial" / source="archetype"
+      2. tier_commercial non-empty           -> "commercial" / source="tier_commercial"
+      3. Module 4 lead_phase populated       -> normalize / source="module_4_lead_phase"
+      4. lead_program_phase populated        -> normalize / source="lead_program_phase"
+      5. otherwise                           -> "unknown" / source="unknown"
+
+    Never reads composite_score / final_score / actionable_rank / clinical_score
+    inputs; never writes anywhere except the returned tuple.
+    """
+    archetype = str(row.get("archetype") or "").strip()
+    tier_commercial = str(row.get("tier_commercial") or "").strip()
+    raw_m4 = str(m4_lead_phase or "").strip()
+    raw_prog = str(row.get("lead_program_phase") or "").strip()
+
+    if archetype.startswith("commercial_"):
+        return ("commercial", "archetype", raw_m4 or raw_prog)
+    if tier_commercial:
+        return ("commercial", "tier_commercial", raw_m4 or raw_prog)
+    if raw_m4:
+        return (
+            _normalize_phase_to_development_stage(raw_m4),
+            "module_4_lead_phase",
+            raw_m4,
+        )
+    if raw_prog:
+        return (
+            _normalize_phase_to_development_stage(raw_prog),
+            "lead_program_phase",
+            raw_prog,
+        )
+    return ("unknown", "unknown", "")
+
+
 def apply_clinical_activity_filter(
     m4_scores: List[Dict[str, Any]],
     min_trials: int = 5,
@@ -6069,6 +6158,21 @@ def save_validation_snapshot(
     # PHASE 3: WRITE — rankings.csv, checksum, manifest
     # =========================================================================
 
+    # --- Display-only development_stage column ---
+    # Final pass over csv_rows just before write. Does NOT touch any scoring,
+    # selector, ranker, eligibility, or decision-engine field. See
+    # _derive_development_stage() near PHASE_ORDER for the precedence rules.
+    _m4_lead_phase_lookup = {
+        s.get("ticker", ""): s.get("lead_phase", "") for s in (results.get("module_4_clinical", {}).get("scores") or [])
+    }
+    for _row in csv_rows:
+        _stage, _source, _raw_phase = _derive_development_stage(
+            _row, _m4_lead_phase_lookup.get(_row.get("ticker", ""), "")
+        )
+        _row["development_stage"] = _stage
+        _row["development_stage_source"] = _source
+        _row["lead_program_phase_raw"] = _raw_phase
+
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"
     try:
@@ -6832,6 +6936,8 @@ def save_validation_snapshot(
                         "mom_state": r.get("mom_state", ""),
                         "risk_flags": r.get("risk_flags", ""),
                         "archetype": r.get("archetype", ""),
+                        "development_stage": r.get("development_stage", ""),
+                        "development_stage_source": r.get("development_stage_source", ""),
                         "eligible": r.get("eligible", ""),
                         "composite_rank": r.get("composite_rank", ""),
                         "composite_score": r.get("composite_score", ""),
