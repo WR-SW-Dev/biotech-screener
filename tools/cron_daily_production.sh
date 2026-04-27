@@ -140,8 +140,11 @@ fi
 # Compares today's rankings.csv to the most recent prior snapshot and writes
 # rank_change_alerts.{csv,md,json} into the snapshot dir. Read-only — does NOT
 # change scoring, selectors, ranking, eligibility, or portfolio construction.
-# Only runs when the screen succeeded or completed with warnings.
-if [ ${EXIT_CODE} -eq 0 ] || [ ${EXIT_CODE} -eq 2 ]; then
+# Gated on the snapshot's rankings.csv existing rather than the pipeline's
+# overall exit status: post-snapshot tasks (Herald, AACT, etc.) sometimes
+# hang and never return EXIT_CODE, but the snapshot itself is already
+# complete by then — this gate fires whenever the diagnostic has data.
+if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
     ${PYTHON} tools/build_rank_change_monitor.py \
         --as-of-date "${AS_OF_DATE}" \
         --print-alerts \
