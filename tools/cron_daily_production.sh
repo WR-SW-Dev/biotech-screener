@@ -136,6 +136,56 @@ if [ ${EXIT_CODE} -ne 0 ] && [ -n "${PIPELINE_ALERT_WEBHOOK:-}" ]; then
         >> "${LOG_FILE}" 2>&1 || true
 fi
 
+# --- Rank-change monitor (read-only diagnostic) ---
+# Compares today's rankings.csv to the most recent prior snapshot and writes
+# rank_change_alerts.{csv,md,json} into the snapshot dir. Read-only — does NOT
+# change scoring, selectors, ranking, eligibility, or portfolio construction.
+# Only runs when the screen succeeded or completed with warnings.
+if [ ${EXIT_CODE} -eq 0 ] || [ ${EXIT_CODE} -eq 2 ]; then
+    ${PYTHON} tools/build_rank_change_monitor.py \
+        --as-of-date "${AS_OF_DATE}" \
+        --print-alerts \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: rank-change monitor exited non-zero" | tee -a "${LOG_FILE}"
+
+    # Webhook on CRITICAL rank-change alerts (system-level or per-ticker).
+    # Mirrors the pipeline-failure webhook pattern. WARN stays log-only.
+    ALERT_JSON="${SNAPSHOT_DIR}/${AS_OF_DATE}/rank_change_alerts.json"
+    if [ -f "${ALERT_JSON}" ] && [ -n "${PIPELINE_ALERT_WEBHOOK:-}" ]; then
+        PAYLOAD=$(${PYTHON} - "${ALERT_JSON}" <<'PY' 2>/dev/null
+import json, sys
+d = json.load(open(sys.argv[1]))
+s = d.get("summary", {})
+if s.get("n_critical", 0) == 0:
+    sys.exit(1)
+lines = [
+    f"[Wake Robin] CRITICAL rank-change alerts on {d.get('as_of_date')}: "
+    f"{s['n_critical']} critical, {s.get('n_warn', 0)} warn, "
+    f"cohort_churn={s.get('cohort_churn_pct', 0)}%"
+]
+for sa in d.get("system_alerts", []):
+    if sa.get("severity") == "CRITICAL":
+        extras = {k: v for k, v in sa.items() if k not in ("kind", "severity")}
+        lines.append(f"  SYSTEM: {sa['kind']} {extras}")
+for a in d.get("alerts", []):
+    if a.get("severity") == "CRITICAL":
+        rd = a.get("rank_delta")
+        rd_str = f"{rd:+d}" if isinstance(rd, int) else "∅"
+        flags = ",".join(a.get("flags", [])[:3])
+        lines.append(f"  {a['ticker']}: rankΔ={rd_str} {a['likely_reason']} ({flags})")
+print(json.dumps({"text": "\n".join(lines)}))
+PY
+        ) || PAYLOAD=""
+        if [ -n "${PAYLOAD}" ]; then
+            curl -sf -X POST "${PIPELINE_ALERT_WEBHOOK}" \
+                -H "Content-Type: application/json" \
+                -d "${PAYLOAD}" \
+                >> "${LOG_FILE}" 2>&1 || true
+            echo "[$(date -Iseconds)] Posted CRITICAL rank-change alert to webhook" | tee -a "${LOG_FILE}"
+        fi
+    fi
+fi
+
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---
 # Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
 # Snapshots older than 18 months are compressed to tar.gz archives.
