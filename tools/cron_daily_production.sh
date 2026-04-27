@@ -193,6 +193,34 @@ PY
     fi
 fi
 
+# --- Diagnostic reports (read-only) ---
+# Per-snapshot artifacts emitted whenever rankings.csv exists. Each tool runs
+# independently — a failure in one does not block the others. None modify
+# scoring, selectors, ranking, eligibility, or portfolio construction. The
+# tools always exit 0; FAIL signals are carried in the JSON's
+# `overall_severity` field for any downstream consumer.
+if [ -f "${SNAPSHOT_DIR}/${AS_OF_DATE}/rankings.csv" ]; then
+    ${PYTHON} tools/build_snapshot_integrity_report.py \
+        --as-of-date "${AS_OF_DATE}" \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: snapshot_integrity_report exited non-zero" | tee -a "${LOG_FILE}"
+
+    ${PYTHON} tools/build_feature_coverage_report.py \
+        --as-of-date "${AS_OF_DATE}" \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: feature_coverage_report exited non-zero" | tee -a "${LOG_FILE}"
+
+    ${PYTHON} tools/build_distribution_drift_report.py \
+        --as-of-date "${AS_OF_DATE}" \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: distribution_drift_report exited non-zero" | tee -a "${LOG_FILE}"
+
+    ${PYTHON} tools/build_sentinel_ticker_report.py \
+        --as-of-date "${AS_OF_DATE}" \
+        2>&1 | tee -a "${LOG_FILE}" || \
+        echo "[$(date -Iseconds)] WARN: sentinel_ticker_report exited non-zero" | tee -a "${LOG_FILE}"
+fi
+
 # --- Housekeeping: prune pre-staging, old logs, and old caches ---
 # Pre-staging (__pre_*) dirs older than 7 days are removed (temporary staging).
 # Snapshots older than 18 months are compressed to tar.gz archives.
