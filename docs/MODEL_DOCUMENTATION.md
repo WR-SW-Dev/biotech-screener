@@ -1,10 +1,15 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.7.0 (ruleset `2a3e79eb`, v1.13.0)
-**Last updated:** 2026-04-15
+**Version:** 1.7.1 (ruleset `2a3e79eb`, v1.13.0)
+**Last updated:** 2026-04-27
 **Status:** Production — A4 selector + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
+
+**Model identity unchanged in 1.7.1.** All 2026-04-26 additions are display,
+diagnostic, and data-ingest layers — see Section 14.5 for the full delta. The
+A4 selector, ranker_v2 weights, eligibility rules, decision rulesets, and EW
+Top-30 construction are all frozen per `policy_alpha_freeze_2026_04_04.md`.
 
 ---
 
@@ -1635,6 +1640,9 @@ currently untestable on the available historical data. Readiness gate at
 | `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json` | Active ruleset |
 | `scripts/research/checklist_v2_rerun.py` | Promotion Checklist v2 battery runner |
 | `scripts/research/pairwise_feature_audit.py` | Within-cohort feature diagnostic |
+| `tools/build_pdufa_dates_extracted.py` | Phase 1 extracted PDUFA sidecar (review-only) |
+| `scripts/research/diff_sec_pdufa_review_window.py` | SEC review-window-pattern dry-run diff |
+| `tools/cron_data_refresh.sh` | Daily 14:00 ET cron — CTgov + SEC 8-K + FDA AdCom + FDA regulatory + sidecar + status |
 
 ---
 
@@ -1695,6 +1703,215 @@ economics of biotech investing.
 | `scripts/research/pairwise_feature_audit.py` | 6 diagnostic tests for within-cohort feature behavior |
 | `scripts/research/statistical_methods_upgrade.py` | Full Spec 055 battery (broad, all signals) |
 | `scripts/research/herald_precision_study.py` | Spec 056 — first Checklist v2 pass (event_type_score) |
+
+---
+
+## 14.5 — 2026-04-26 Display & Diagnostic Layer Additions
+
+**No model change. No selector / ranker / eligibility / decision-ruleset code
+modified.** All work in this section is additive: new display columns,
+monitoring artifacts, scheduled data ingest, and one spec-only document.
+Alpha-stack-frozen policy (2026-04-04) and architecture-frozen policy
+(2026-04-19) honored throughout.
+
+### 14.5.1 SEC EDGAR review-window pattern expansion
+
+Extended `wake_robin_data_pipeline/collectors/sec_8k_catalyst_collector.py`
+`TIMING_PATTERNS` to 31 entries (was 23). New patterns capture review-window
+changes the prior set missed:
+
+- `(new|revised) PDUFA (date|target action date|goal date|action date) of …`
+- `(three|3|six|6)-month extension …`
+- `review period (has been|was) extended …` / `extended the review period …`
+- `extended the (PDUFA )?(target )?(action )?date … to …` (verb-first)
+- `major amendment … PDUFA date of …`
+- `Class 2 resubmission …` / `six-month review period … PDUFA …`
+- `PDUFA goal date of …`, `FDA goal date of …`, `target action date of …`
+
+Each pattern is tagged with `event_status` (`extended` /
+`resubmission_accepted` / `upcoming`) and tags_extra (`review_window_change` /
+`major_amendment` / `class_2_resubmission` / `six_month_review`). Extension
+events also attempt `prior_date` extraction from "from {old} to {new}" /
+"previously {old}" / "originally {old}" / "prior PDUFA date of {old}" wording
+within ±200 chars. **`PATTERN_VERSION` bumped `b2bdaf75` → `937b38db`**;
+existing event caches under the prior version are not loaded by the new code
+(filename includes pattern version).
+
+**EDGAR full-text search query list** also extended with the 5 new keyword
+phrases so the discovery layer surfaces these filings. Ten unit tests added;
+the `Lantheus three-month extension`, `Capricor review period extended`,
+`Arvinas Class 2 resubmission`, and `Praxis target action date` phrasings
+all parse correctly with HIGH confidence and DAY precision.
+
+### 14.5.2 Cron data-refresh wiring (canonical layer)
+
+Pre-2026-04-26: `cron_data_refresh.sh` ran ctgov + herald + iv + universe
+daily at 14:00 ET. SEC 8-K, FDA AdCom, FDA regulatory, and the inferred
+regulatory calendar were collector code with **no scheduled invocation**.
+Caches were 2 days stale by the time `module_3_catalyst.py` read them in
+`cache_only` mode at production runtime.
+
+Added stages: `sec_8k`, `fda_adcom`, `fda_regulatory`, `pdufa_extracted`,
+`status`. New `all` mode order: ctgov → sec_8k → fda_adcom →
+fda_regulatory → pdufa_extracted → herald → iv → universe → status.
+
+`stage_status` writes `logs/data_refresh_status_{date}.json` with cache
+existence + event counts for every source plus an `overall_pass` boolean.
+Pattern-version-agnostic (globs `8k_catalysts_{date}_*.json`). Smoke-tested
+on 2026-04-26: FDA AdCom (10 events) and FDA regulatory (3 notices) caches
+populate end-to-end.
+
+### 14.5.3 Phase 1 extracted PDUFA sidecar (review-only)
+
+New `tools/build_pdufa_dates_extracted.py` runs daily after `sec_8k`,
+reads the latest `cache/sec/8k_catalysts/8k_catalysts_{date}_*.json`,
+filters/dedupes, and writes:
+
+- `production_data/pdufa_dates_extracted.json` — latest snapshot (overwritten daily)
+- `artifacts/regulatory/pdufa_dates_extracted_{date}.json` — dated audit snapshot
+- `artifacts/regulatory/pdufa_extracted_vs_canonical_{date}.csv` and `.md` —
+  daily diff vs `production_data/pdufa_dates.json` with classifications
+  `NEW_CANDIDATE` / `MATCHES_CANONICAL` / `CONFLICTS_CANONICAL` /
+  `EXTENDED_*`.
+
+Filter rules: `event_type=FDA_PDUFA_DATE`, `date_precision=DAY`, confidence in
+{HIGH, MED}, drop events older than today − 30d, dedupe per (ticker, event_date)
+preferring extended > resubmission_accepted > upcoming, cap 3 per ticker.
+
+**Phase 1 contract — explicitly does not:**
+
+- Modify `production_data/pdufa_dates.json` (canonical store stays hand-curated)
+- Modify `run_screen.py`, scoring, selectors, ranker, or event ledger consumers
+- Auto-promote anything
+
+Phase 2 (auto-promotion gate) is deferred — this is the 30-day observation
+sidecar. Validated against the 2026-04-24 cache: 16 records emerged from
+443 cached events; 4 MATCHES_CANONICAL, 2 CONFLICTS_CANONICAL (multi-mention
+companies — expected manual-review pile), 10 NEW_CANDIDATE.
+
+### 14.5.4 `development_stage` display column on rankings.csv
+
+Added three new columns near `stage_bucket` in SNAPSHOT_COLUMNS:
+
+- `development_stage`: enum of `preclinical / phase_1 / phase_1_2 / phase_2 /
+  phase_2_3 / phase_3 / nda_bla / approved / commercial / unknown`
+- `development_stage_source`: `archetype / tier_commercial /
+  module_4_lead_phase / lead_program_phase / unknown`
+- `lead_program_phase_raw`: pass-through of the underlying phase string for
+  operator audit trail
+
+Derivation precedence (`run_screen.py:_derive_development_stage`):
+
+1. `archetype` starts with `commercial_` → `commercial / archetype`
+2. `tier_commercial` non-empty → `commercial / tier_commercial`
+3. Module 4 `lead_phase` populated → normalize / `module_4_lead_phase`
+4. `lead_program_phase` populated → normalize / `lead_program_phase`
+5. otherwise → `unknown / unknown`
+
+Normalizer accepts both string forms (`"phase 2"`, `"phase 2/3"`, etc.) and
+the **numeric encoding** that rankings.csv actually stores
+(`"0.0"`/`"1.0"`/`"2.0"`/`"3.0"`/`"4.0"`). The numeric path was added in a
+follow-up patch after the initial wire returned `unknown` for ~90% of rows.
+
+`development_stage` and `development_stage_source` also added to
+`PHASE2_PORTFOLIO_COLUMNS` and the `decision_portfolio.json` payload for
+parity. **Display only — never reads or writes any scoring field.** Mutation
+invariance enforced by a dedicated test.
+
+#### Eligible-universe distribution (2026-04-25, 221 of 297 eligible)
+
+```
+phase_3       109  (49.3%)
+phase_2        47  (21.3%)
+commercial     47  (21.3%)
+phase_1        17  ( 7.7%)
+preclinical     1  ( 0.5%)
+```
+
+Source attribution: 174 lead_program_phase, 28 archetype (commercial_pharma),
+19 tier_commercial (platforms).
+
+### 14.5.5 Ranker v2 cohort stability audit + diagnostics
+
+Triggered by ERAS dropping from `actionable_rank=16` (2026-04-24) to `63`
+(2026-04-25) overnight with composite_score / tier_any / catalyst_days
+unchanged. Audit at `artifacts/ranker_v2_cohort_audit_2026-04-26.md`.
+
+**Root cause:** `ranker_v2_pairwise.filter_cohort` selects top-60 by
+selector_score (`cohort_top_n=60`). ERAS sat on the boundary all week
+(ranks 49-60); a 5.2% selector_score dip on 04-25 (0.7578 → 0.7182) crossed
+the cut at 0.7318. Once outside the cohort, `final_score = selector_score ×
+0.0001 ≈ 7.18e-5` → final AR=63. Five other names dislocated the same day
+(ABSI, BIIB, SLN, TARS, XNCR); six joined (KNSA, MBX, NRIX, PCVX, SNDX,
+ZYME). Net cohort size unchanged at 60.
+
+**Verdict: expected boundary noise, not a regression.** ERAS has flapped
+in/out of the cohort three times in 13 days; typical daily churn is 0-3
+names; 04-15 and 04-25 are the two outlier days at 6 names (10%). DEM
+top-30 is unaffected — boundary noise lives at AR=50-65.
+
+Three follow-ups landed:
+
+| # | Item | Type |
+|---|------|------|
+| 1 | `cohort_membership` + `cohort_membership_streak` columns | display-only |
+| 2 | `cohort_churn_alert.json` per snapshot (severity=warn at ≥10%) | monitoring |
+| 3 | Spec 066 — soft-cohort hysteresis | spec only, no code |
+
+**(1)** New columns walk back through plain `YYYY-MM-DD` sibling snapshot dirs
+(skips `__pre_*` / `__stale_*` suffixed variants) up to a 30-day cap.
+Validated on 2026-04-25: ERAS correctly tagged `out`/`streak=1`; 37 names
+show streak ≥ 19 (long-tenured cohort core).
+
+**(2)** `cohort_churn_alert.json` written per snapshot with `churn_n`,
+`churn_pct`, `names_left`, `names_joined`, `severity`. Validated on
+2026-04-25 vs 2026-04-24: `churn_pct=10.0%` trips warn — matches the audit
+threshold exactly.
+
+**(3)** `specs/changes/spec_066_v2_cohort_hysteresis.md` defines the
+proposed soft-cohort hysteresis (carry forward yesterday's status for names
+within ±2-5% of cut, exit-only). **Spec only — no code change.** Section 3
+of the spec lists the five Checklist v2 gates that must pass before any
+implementation; Section 6 defines the pre-registered evaluation experiment.
+
+### 14.5.6 Test coverage delta
+
+| Suite | New tests |
+|-------|----------:|
+| `tests/test_fda_pattern_expansion.py` | +14 (TestReviewWindowPatterns + numeric phase variants) |
+| `tests/test_build_pdufa_dates_extracted.py` | +34 (filter, dedup, schema, classify, cache lookup) |
+| `tests/test_development_stage.py` | +40 (normalization, precedence, schema, mutation invariance) |
+| `tests/test_cohort_membership_streak.py` | +19 (streak math, severity classifier, alert writer) |
+| **Total new** | **+107** |
+
+Pre-existing SEC and contract suites unchanged: 78 SEC pattern + 148
+contract/output regression tests continue to pass under the new code.
+
+### 14.5.7 Commit ledger (2026-04-26)
+
+```
+20062c58  feat: ranker v2 cohort_membership_streak column + churn alert + spec 066
+8f06d217  audit: ranker v2 cohort stability — ERAS dropout is boundary noise
+aaca0517  fix: development_stage normalizer accepts numeric phase encoding
+0e7affb3  feat: display-only development_stage column on rankings.csv + decision_portfolio
+e4f318ff  chore: bta_submit reads API key from env, drop unused locals
+16c390b3  chore: sync untracked artifacts (PIT financials, dossiers, purple book, shadow_watch)
+806c5ff9  feat: SEC review-window patterns + Phase 1 extracted PDUFA sidecar
+```
+
+Plus `dd32082a` (runtime log snapshot, no code) at end of session.
+
+### 14.5.8 What is NOT in 1.7.1
+
+To be explicit: this version does **not** include any of the following.
+They remain on the roadmap with their existing constraints:
+
+- Auto-write to `production_data/pdufa_dates.json` (Phase 2 promotion gate)
+- Soft-cohort hysteresis code (Spec 066 — Checklist v2 pre-registration required)
+- Drug name / indication NER on the extracted sidecar
+- Aggregator (Benzinga / RTTNews / TheraRadar / PDUFA.bio) recall-audit feed
+- Any change to ranker_v2 weights, eligibility rules, or decision rulesets
+- Any change to selector / Module 5 composite / financial penalty / clinical filter
 
 ---
 
@@ -1768,4 +1985,4 @@ economics of biotech investing.
 
 ---
 
-*Document updated 2026-04-14. Active ruleset: 2a3e79eb (v1.13.0). QA baseline: Checklist v2 rerun.*
+*Document updated 2026-04-27. Active ruleset: 2a3e79eb (v1.13.0). QA baseline: Checklist v2 rerun. Latest delta: §14.5 (display + diagnostic layer, model identity unchanged).*
