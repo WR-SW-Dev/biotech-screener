@@ -62,6 +62,7 @@ REASON_PRIORITY = [
     "ranker_v2_cohort_dropout",
     "ranker_v2_cohort_entry",
     "eligibility_change",
+    "source_data_change",
     "selector_score_move",
     "tier_change",
     "catalyst_timing_change",
@@ -278,10 +279,15 @@ def evaluate_ticker(
             flags.append("final_collapse_composite_stable")
             severity = _max_severity(severity, "WARN")
 
-    # A-tier name exits top 60 (must have been inside, now outside)
+    # A-tier name exits top 30 / top 60 (must have been inside, now outside)
     if (prev_tier or "").upper().startswith("A"):
+        prev_in_top30 = prev_rk is not None and prev_rk <= TOP_N
+        curr_in_top30 = curr_rk is not None and curr_rk <= TOP_N
         prev_in_top60 = prev_rk is not None and prev_rk <= COHORT_N
         curr_in_top60 = curr_rk is not None and curr_rk <= COHORT_N
+        if prev_in_top30 and not curr_in_top30:
+            flags.append("a_tier_exit_top30")
+            severity = _max_severity(severity, "WARN")
         if prev_in_top60 and not curr_in_top60:
             flags.append("a_tier_exit_top60")
             severity = _max_severity(severity, "WARN")
