@@ -98,8 +98,12 @@ if [ "${DOW}" -gt 5 ]; then
     exit 0
 fi
 
-# Run the production pipeline (timeout: 45 minutes)
-PIPELINE_TIMEOUT=2700
+# Run the production pipeline (timeout: 75 minutes).
+# Budget breakdown observed: snapshot ~25 min + Herald ≤10 min + AACT ≤30 min
+# (Mondays only) + tail steps ≤5 min = ~70 min worst case. The previous 45-min
+# budget was killing the python child mid-AACT before the wrapper could reach
+# its own PASS/FAIL summary block.
+PIPELINE_TIMEOUT=4500
 if command -v timeout >/dev/null 2>&1; then
     timeout --signal=TERM --kill-after=60 ${PIPELINE_TIMEOUT} \
         ${PYTHON} tools/run_daily_production.py \

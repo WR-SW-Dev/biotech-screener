@@ -5737,7 +5737,11 @@ def run_daily(
                 ],
                 capture_output=True,
                 text=True,
-                timeout=600,
+                # 341 IR sources × ~2 sources/ticker × 2s rate limit = ~1364s
+                # in time.sleep alone, plus HTTP latency. The previous 600s
+                # budget was insufficient and timed out 9/10 days. 1800s is a
+                # band-aid until the loop is parallelized.
+                timeout=1800,
                 cwd=str(REPO_ROOT),
             )
             _herald_lines = (_herald_result.stdout or "").strip().split("\n")
