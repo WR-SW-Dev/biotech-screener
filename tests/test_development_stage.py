@@ -70,6 +70,22 @@ class TestPhaseNormalization:
     def test_unrecognized_is_unknown(self):
         assert _normalize_phase_to_development_stage("phase_99") == "unknown"
 
+    def test_numeric_phase_codes(self):
+        # rankings.csv stores lead_program_phase as float strings.
+        assert _normalize_phase_to_development_stage("0.0") == "preclinical"
+        assert _normalize_phase_to_development_stage("1.0") == "phase_1"
+        assert _normalize_phase_to_development_stage("2.0") == "phase_2"
+        assert _normalize_phase_to_development_stage("3.0") == "phase_3"
+        assert _normalize_phase_to_development_stage("4.0") == "approved"
+
+    def test_numeric_phase_codes_int_string(self):
+        assert _normalize_phase_to_development_stage("1") == "phase_1"
+        assert _normalize_phase_to_development_stage("3") == "phase_3"
+
+    def test_intermediate_numeric_codes(self):
+        assert _normalize_phase_to_development_stage("1.5") == "phase_1_2"
+        assert _normalize_phase_to_development_stage("2.5") == "phase_2_3"
+
     def test_all_outputs_in_enum(self):
         for v in (
             "preclinical",

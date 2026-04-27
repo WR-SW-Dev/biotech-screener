@@ -476,6 +476,22 @@ _PHASE_TO_DEVELOPMENT_STAGE = {
     "bla": "nda_bla",
     "nda_bla": "nda_bla",
     "approved": "approved",
+    # Numeric phase encoding: rankings.csv stores lead_program_phase as a
+    # float code (0=preclinical, 1=phase 1, 2=phase 2, 3=phase 3, 4=approved).
+    # Module 4 internally uses string values; the CSV-side encoding is
+    # numeric. Both formats normalize to the same enum.
+    "0": "preclinical",
+    "0.0": "preclinical",
+    "1": "phase_1",
+    "1.0": "phase_1",
+    "1.5": "phase_1_2",
+    "2": "phase_2",
+    "2.0": "phase_2",
+    "2.5": "phase_2_3",
+    "3": "phase_3",
+    "3.0": "phase_3",
+    "4": "approved",
+    "4.0": "approved",
 }
 
 
