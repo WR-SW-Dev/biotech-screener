@@ -502,6 +502,165 @@ def _normalize_phase_to_development_stage(phase) -> str:
     return _PHASE_TO_DEVELOPMENT_STAGE.get(str(phase).strip().lower(), "unknown")
 
 
+def _classify_cohort_churn_severity(churn_pct: float, threshold_pct: float = 10.0) -> str:
+    """Severity bucket for churn-alert (info < threshold <= warn)."""
+    if churn_pct >= threshold_pct:
+        return "warn"
+    return "info"
+
+
+def _write_cohort_churn_alert(
+    csv_rows: List[Dict[str, Any]],
+    snap_path: Path,
+    threshold_pct: float = 10.0,
+) -> Optional[Dict[str, Any]]:
+    """
+    Compute today vs prior-snapshot v2 cohort delta and write a JSON alert
+    to `snap_path/cohort_churn_alert.json`.
+
+    Returns the alert dict (None if no prior snapshot found). Does not
+    modify csv_rows or any scoring/decision-engine output.
+    """
+    if snap_path is None:
+        return None
+    snapshots_root = snap_path.parent
+    current_dir = snap_path.name
+    _date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+    try:
+        candidates = sorted(d for d in os.listdir(snapshots_root) if _date_re.match(d) and d < current_dir)
+    except OSError:
+        candidates = []
+    prior_dir = None
+    for d in reversed(candidates):
+        if (snapshots_root / d / "rankings.csv").exists():
+            prior_dir = d
+            break
+    today_cohort = {r.get("ticker", "") for r in csv_rows if r.get("ranker_v2_score") or ""}
+    today_cohort.discard("")
+
+    if prior_dir is None:
+        alert = {
+            "as_of": current_dir,
+            "prior_snapshot": None,
+            "today_cohort_n": len(today_cohort),
+            "prior_cohort_n": None,
+            "churn_n": None,
+            "churn_pct": None,
+            "severity": "info",
+            "names_left": [],
+            "names_joined": [],
+            "threshold_pct": threshold_pct,
+            "note": "no prior snapshot available for comparison",
+        }
+    else:
+        prior_path = snapshots_root / prior_dir / "rankings.csv"
+        prior_cohort: set = set()
+        try:
+            with open(prior_path, "r", encoding="utf-8") as f:
+                for r in csv.DictReader(f):
+                    if r.get("ranker_v2_score") or "":
+                        prior_cohort.add(r.get("ticker", ""))
+            prior_cohort.discard("")
+        except Exception:
+            prior_cohort = set()
+        names_left = sorted(prior_cohort - today_cohort)
+        names_joined = sorted(today_cohort - prior_cohort)
+        cohort_n = max(len(today_cohort), len(prior_cohort))
+        churn_n = len(names_left) + len(names_joined)
+        # Symmetric churn pct: count both directions on the larger cohort base.
+        churn_pct = (max(len(names_left), len(names_joined)) / cohort_n * 100.0) if cohort_n else 0.0
+        alert = {
+            "as_of": current_dir,
+            "prior_snapshot": prior_dir,
+            "today_cohort_n": len(today_cohort),
+            "prior_cohort_n": len(prior_cohort),
+            "churn_n": churn_n,
+            "churn_pct": round(churn_pct, 2),
+            "severity": _classify_cohort_churn_severity(churn_pct, threshold_pct),
+            "names_left": names_left,
+            "names_joined": names_joined,
+            "threshold_pct": threshold_pct,
+            "note": (
+                "ranker_v2 cohort_top_n=60; ~5% daily churn is typical. "
+                ">=10% trips a warn — see artifacts/ranker_v2_cohort_audit_2026-04-26.md."
+            ),
+        }
+
+    out_path = snap_path / "cohort_churn_alert.json"
+    try:
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(alert, f, indent=2, sort_keys=True)
+    except OSError as exc:
+        logger.warning(f"Could not write cohort_churn_alert.json: {exc}")
+    return alert
+
+
+def _annotate_cohort_membership_streaks(
+    csv_rows: List[Dict[str, Any]],
+    snap_path: Path,
+    max_walkback_days: int = 30,
+) -> None:
+    """
+    Display-only annotation of `cohort_membership` ("in"/"out") and
+    `cohort_membership_streak` (consecutive prior snapshots with same status)
+    on each row in csv_rows.
+
+    Walks back through sibling snapshot dirs (plain `YYYY-MM-DD` only — skips
+    `__pre_…` and other suffixed dirs) and reads their rankings.csv files;
+    membership = "in" iff ranker_v2_score is populated. Streak is capped by
+    max_walkback_days. Pure-read on csv_rows except for the two new fields.
+    """
+    if snap_path is None:
+        for _r in csv_rows:
+            _r["cohort_membership"] = "in" if _r.get("ranker_v2_score") else "out"
+            _r["cohort_membership_streak"] = 1
+        return
+
+    snapshots_root = snap_path.parent
+    current_dir = snap_path.name
+
+    # Only consider plain YYYY-MM-DD sibling dirs strictly before today's.
+    _date_re = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+    try:
+        candidates = [d for d in os.listdir(snapshots_root) if _date_re.match(d) and d < current_dir]
+    except OSError:
+        candidates = []
+    candidates.sort()
+    candidates = candidates[-max_walkback_days:]
+
+    # Load prior membership: {date: {ticker: "in"|"out"}}
+    prior: Dict[str, Dict[str, str]] = {}
+    for d in candidates:
+        path = snapshots_root / d / "rankings.csv"
+        if not path.exists():
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                membership = {}
+                for r in csv.DictReader(f):
+                    tk = r.get("ticker", "")
+                    if tk:
+                        membership[tk] = "in" if (r.get("ranker_v2_score") or "") else "out"
+                prior[d] = membership
+        except Exception:
+            continue
+
+    ordered_dates = [d for d in candidates if d in prior]
+
+    for row in csv_rows:
+        ticker = row.get("ticker", "")
+        current_state = "in" if (row.get("ranker_v2_score") or "") else "out"
+        row["cohort_membership"] = current_state
+        streak = 1
+        for d in reversed(ordered_dates):
+            prev_state = prior.get(d, {}).get(ticker)
+            if prev_state == current_state:
+                streak += 1
+            else:
+                break
+        row["cohort_membership_streak"] = streak
+
+
 def _derive_development_stage(row: Dict[str, Any], m4_lead_phase) -> Tuple[str, str, str]:
     """
     Display-only derivation of (development_stage, source, lead_program_phase_raw).
@@ -6188,6 +6347,26 @@ def save_validation_snapshot(
         _row["development_stage"] = _stage
         _row["development_stage_source"] = _source
         _row["lead_program_phase_raw"] = _raw_phase
+
+    # --- Display-only ranker_v2 cohort_membership_streak (per audit 2026-04-26) ---
+    # Walks back through sibling snapshot dirs to count consecutive prior days
+    # with the same cohort membership state. Read-only against historical
+    # rankings.csv files; never mutates scoring/selector/ranker logic.
+    _annotate_cohort_membership_streaks(csv_rows, snap_path)
+
+    # --- Cohort churn diagnostic alert (per audit 2026-04-26) ---
+    # Writes snap_path/cohort_churn_alert.json comparing today's v2 cohort to
+    # the prior snapshot. severity=warn when churn >= 10% (boundary noise
+    # threshold from the audit).
+    try:
+        _churn_alert = _write_cohort_churn_alert(csv_rows, snap_path)
+        if _churn_alert and _churn_alert.get("severity") == "warn":
+            logger.warning(
+                f"Cohort churn WARN: {_churn_alert['churn_n']} names "
+                f"({_churn_alert['churn_pct']}%) flipped vs {_churn_alert['prior_snapshot']}"
+            )
+    except Exception as _churn_exc:  # pragma: no cover — defensive
+        logger.warning(f"Cohort churn alert generation failed: {_churn_exc}")
 
     # --- Write rankings CSV ---
     csv_path = snap_path / "rankings.csv"

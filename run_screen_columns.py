@@ -130,6 +130,13 @@ SNAPSHOT_COLUMNS = (
         "development_stage",
         "development_stage_source",
         "lead_program_phase_raw",
+        # Display-only ranker_v2 cohort stability (per audit 2026-04-26).
+        # cohort_membership = "in" | "out" depending on whether ranker_v2_score
+        # is populated. cohort_membership_streak counts consecutive prior
+        # snapshots with the same membership state (capped at 30 days
+        # walkback). NOT a scoring/selector input.
+        "cohort_membership",
+        "cohort_membership_streak",
         "market_cap_bucket",
         "severity",
         "archetype",
