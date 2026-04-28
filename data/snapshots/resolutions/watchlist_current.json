@@ -1,8 +1,8 @@
 {
-  "as_of_date": "2026-04-27",
+  "as_of_date": "2026-04-28",
   "n_watchlist": 6,
-  "n_resolved_today": 3,
-  "n_existing": 102,
+  "n_resolved_today": 4,
+  "n_existing": 105,
   "watchlist": [
     {
       "ticker": "AXSM",
@@ -10,23 +10,23 @@
       "catalyst_type": "PDUFA_ACTION"
     },
     {
+      "ticker": "CRMD",
+      "catalyst_date": "2026-04-27",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "NTLA",
+      "catalyst_date": "2026-04-27",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "SGMT",
+      "catalyst_date": "2026-04-27",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
       "ticker": "LGND",
-      "catalyst_date": "2026-04-13",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "PEPG",
-      "catalyst_date": "2026-03-30",
-      "catalyst_type": "CORPORATE_UPDATE"
-    },
-    {
-      "ticker": "CYTK",
-      "catalyst_date": "2026-04-01",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "TVTX",
-      "catalyst_date": "2026-04-13",
+      "catalyst_date": "2026-04-27",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
