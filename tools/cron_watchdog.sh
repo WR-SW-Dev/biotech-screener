@@ -29,9 +29,14 @@ if [ "$DOW" -ge 6 ]; then
     exit 0
 fi
 
-# Check if cron fired today's production run. Set a flag instead of exiting
-# so pre-market feed checks (bellringer/conference/trapops) below always run.
-if grep -q "Starting daily production for $TODAY" "$CRON_LOG" 2>/dev/null; then
+# Check if today's production produced its snapshot. The "Starting" line in
+# cron.log is written by the wrapper before any work happens, so it can't
+# distinguish a successful run from one killed mid-pipeline (e.g. WSL2
+# reaping the parent during a subprocess call — observed 2026-04-27 and
+# 2026-04-28). data/snapshots/$TODAY/rankings.csv exists once the pipeline
+# reaches promotion; this is the same gate the wrapper uses for its own
+# rank-change monitor (see cron_daily_production.sh).
+if [ -f "$REPO/data/snapshots/$TODAY/rankings.csv" ]; then
     PROD_RAN=true
 else
     PROD_RAN=false
@@ -54,6 +59,20 @@ if [ "$PROD_RAN" = false ]; then
     log "daily_production done (exit $?)"
 else
     log "Production already ran for $TODAY — skipping production recovery"
+fi
+
+# Post-snapshot task supervisor (Spec 069 phase 1).
+# When the snapshot promoted but daily_production was reaped before reaching
+# Step 5n (AACT) / 5l.5 (Herald), those tasks never produced their artifacts.
+# Supervisor re-runs them idempotently. Gate fires when:
+#   - snapshot's rankings.csv exists (PROD_RAN=true OR we just re-ran above)
+#   - complete marker missing for $TODAY
+# Each task has its own done predicate, so a no-op pass is cheap.
+SUPERVISOR_MARKER="$REPO/artifacts/post_snapshot_done/$TODAY.complete"
+if [ -f "$REPO/data/snapshots/$TODAY/rankings.csv" ] && [ ! -f "$SUPERVISOR_MARKER" ]; then
+    log "Snapshot present, post-snapshot tasks incomplete — running supervisor"
+    bash "$REPO/tools/run_post_snapshot_supervisor.sh" "$TODAY" >> "$LOG" 2>&1
+    log "post_snapshot_supervisor done (exit $?)"
 fi
 
 # Phase-2 agent recovery runs UNCONDITIONALLY.
