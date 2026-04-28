@@ -25,6 +25,14 @@ import pytest
 # Add parent to path for module imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Pin the top-level `research` package in sys.modules before any test file is
+# collected. Several tests later prepend `scripts/` to sys.path, which would
+# otherwise let `scripts/research/__init__.py` shadow the top-level package
+# and break `from research.hint_* import ...` on the affected xdist worker.
+import research  # noqa: E402,F401
+import research.hint_benchmark  # noqa: E402,F401
+import research.hint_feature_extract  # noqa: E402,F401
+
 _PROJECT_ROOT = Path(__file__).parent.parent
 _DATA_DIR = Path("production_data")
 

@@ -43,6 +43,7 @@ PARTIAL_AGENTS = [
     "herald",
     "postmortem",
     "review_queue_steward",
+    "shadow_watch",
 ]
 # Known incomplete workspaces — missing docs, major SOUL.md gaps, or
 # intentionally different model (haiku monitoring class).

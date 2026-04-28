@@ -306,6 +306,17 @@
       "owner": "unassigned",
       "notes": "Supervised directly by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py."
     },
+    "shadow_watch": {
+      "role": "merged shadow portfolio + policy comparison read-only judge",
+      "category": "portfolio_risk",
+      "cadence": "daily_after_production",
+      "status": "shadow",
+      "artifact_paths": ["agents/shadow_watch/memory/", "artifacts/shadow_watch/"],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "unassigned",
+      "notes": "Merged successor of shadow_monitor + policy_shadow_watch. SOUL.md filled out 2026-04-28; not yet wired into cron. Bring up in shadow status before flipping supervised_by_orchestrator=true and retiring the predecessor entries."
+    },
     "universe_maintenance": {
       "role": "read-only monitor for universe health",
       "category": "data_ingestion",
