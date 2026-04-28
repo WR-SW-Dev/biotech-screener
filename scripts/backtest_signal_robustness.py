@@ -575,6 +575,14 @@ def extend_price_csv(
     # yfinance end is exclusive — add 1 day to include through_date
     end_yf = (_date_cls.fromisoformat(through_date) + timedelta(days=1)).isoformat()
 
+    # Yahoo Finance rate-limits aggressive sequential callers — observed
+    # 2026-04-28 morning saw 342/342 fail with "Too Many Requests" once the
+    # IP got blacklisted on the first ~30 calls. A small per-ticker sleep
+    # keeps the request rate below Yahoo's threshold (~3-4 req/s tolerated).
+    import time as _time
+
+    _YF_SLEEP_SEC = 0.35  # ~120s for 342 tickers — acceptable
+
     new_rows: List[Dict[str, str]] = []
     failed: List[str] = []
     for ticker, fetch_start in sorted(needs_fetch.items()):
@@ -583,7 +591,9 @@ def extend_price_csv(
         except Exception as exc:
             log.warning("  %s: yfinance fetch failed (%s)", ticker, exc)
             failed.append(ticker)
+            _time.sleep(_YF_SLEEP_SEC)
             continue
+        _time.sleep(_YF_SLEEP_SEC)
         if hist.empty:
             continue
         for idx, row in hist.iterrows():

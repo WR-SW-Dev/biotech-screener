@@ -43,6 +43,21 @@ else
 fi
 
 if [ "$PROD_RAN" = false ]; then
+    # If daily_production is currently mid-flight (lock held by an active PID),
+    # skip the recovery — it's already running. The wrapper has its own lock,
+    # so re-invoking would just emit "SKIP", but we'd waste 1.5 min on
+    # data_refresh first. Avoiding that by short-circuiting here.
+    DAILY_LOCK="$REPO/logs/.daily_production.lock"
+    if [ -f "$DAILY_LOCK" ]; then
+        DAILY_PID=$(cat "$DAILY_LOCK" 2>/dev/null || echo "")
+        if [ -n "$DAILY_PID" ] && kill -0 "$DAILY_PID" 2>/dev/null; then
+            log "Production active (PID $DAILY_PID) — skipping recovery to avoid wasteful data_refresh"
+            PROD_RAN=skip
+        fi
+    fi
+fi
+
+if [ "$PROD_RAN" = false ]; then
     log "MISSED: No production run for $TODAY — triggering manual recovery"
 
     # Try to restart cron (may fail without sudo)
@@ -57,6 +72,8 @@ if [ "$PROD_RAN" = false ]; then
     log "Running daily_production..."
     bash "$REPO/tools/cron_daily_production.sh" >> "$CRON_LOG" 2>&1
     log "daily_production done (exit $?)"
+elif [ "$PROD_RAN" = "skip" ]; then
+    : # already logged above
 else
     log "Production already ran for $TODAY — skipping production recovery"
 fi
