@@ -346,6 +346,7 @@ class TestDecisionBranchEnum:
             "sponsor_alias_uncertain",
             "platform_not_ctgov_applicable",
             "no_external_evidence",
+            "override_disagrees_with_consensus",
         }
         assert audit_mod.VALIDATION_STATUSES == expected
 
@@ -418,3 +419,61 @@ class TestSECCacheScan:
             assert "sec" not in param_name.lower(), (
                 f"derive_external_consensus must not depend on SEC inputs; " f"found parameter '{param_name}'"
             )
+
+
+# ---------------------------------------------------------------------------
+# Override revalidation (Spec 068 Lane 1)
+# ---------------------------------------------------------------------------
+
+
+class TestOverrideRevalidation:
+    def test_override_disagrees_in_validation_statuses_set(self):
+        assert "override_disagrees_with_consensus" in audit_mod.VALIDATION_STATUSES
+
+    def test_loader_missing_file_returns_empty_dict(self, tmp_path):
+        result = audit_mod.load_development_stage_overrides(tmp_path / "missing.json")
+        assert result == {}
+
+    def test_loader_malformed_json_returns_empty_dict(self, tmp_path):
+        bad = tmp_path / "bad.json"
+        bad.write_text("{not valid json")
+        result = audit_mod.load_development_stage_overrides(bad)
+        assert result == {}
+
+    def test_loader_returns_ticker_to_stage_map(self, tmp_path):
+        good = tmp_path / "overrides.json"
+        good.write_text(
+            json.dumps(
+                {
+                    "schema_version": "1.0",
+                    "entries": {
+                        "AAA": {"stage": "commercial", "evidence": "x"},
+                        "BBB": {"stage": "nda_bla", "evidence": "y"},
+                        "ccc": {"stage": "phase_3", "evidence": "z"},
+                    },
+                }
+            )
+        )
+        result = audit_mod.load_development_stage_overrides(good)
+        assert result == {"AAA": "commercial", "BBB": "nda_bla", "CCC": "phase_3"}
+
+    def test_loader_ignores_non_dict_payload(self, tmp_path):
+        bad = tmp_path / "overrides.json"
+        bad.write_text(json.dumps({"entries": "not a dict"}))
+        assert audit_mod.load_development_stage_overrides(bad) == {}
+
+    def test_loader_skips_entries_without_string_stage(self, tmp_path):
+        bad = tmp_path / "overrides.json"
+        bad.write_text(
+            json.dumps(
+                {
+                    "entries": {
+                        "OK": {"stage": "commercial"},
+                        "BAD1": "not a dict",
+                        "BAD2": {"stage": 42},
+                        "BAD3": {"no_stage_key": "x"},
+                    },
+                }
+            )
+        )
+        assert audit_mod.load_development_stage_overrides(bad) == {"OK": "commercial"}

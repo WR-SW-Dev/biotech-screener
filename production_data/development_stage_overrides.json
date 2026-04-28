@@ -1,0 +1,33 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Display-only overrides for the rankings.csv development_stage column. Does NOT affect archetype, tier_commercial, stage_bucket, lead_program_phase, scoring, ranker, selector, eligibility, EES, Event EV, Module 5 cohorts, or QA gates. Audited each pipeline run via Spec 068.",
+  "as_of_date": "2026-04-28",
+  "spec_reference": "specs/changes/spec_068_development_stage_external_cache_audit.md",
+  "audit_reference": "artifacts/development_stage/stage_cache_audit_2026-04-28.{csv,md,json}",
+  "entries": {
+    "MESO": {
+      "stage": "commercial",
+      "evidence": "Ryoncil (remestemcel-L) FDA-approved 2024-12-18 for steroid-refractory acute graft-versus-host disease in pediatric patients. Internal source module_4_lead_phase reports phase_3 (stale).",
+      "added_by": "spec_068_audit_2026-04-28",
+      "review_by": "2026-07-28"
+    },
+    "VCEL": {
+      "stage": "commercial",
+      "evidence": "MACI (autologous cultured chondrocytes) and Epicel commercial. financial_records.json Revenue=$276M, FY2025. Internal source module_4_lead_phase reports approved (one bucket below commercial).",
+      "added_by": "spec_068_audit_2026-04-28",
+      "review_by": "2026-07-28"
+    },
+    "HALO": {
+      "stage": "commercial",
+      "evidence": "ENHANZE drug delivery platform commercial; multiple partnered marketed products. financial_records.json Revenue=$1.4B, FY2025. Internal source module_4_lead_phase reports approved (one bucket below commercial).",
+      "added_by": "spec_068_audit_2026-04-28",
+      "review_by": "2026-07-28"
+    },
+    "MLYS": {
+      "stage": "nda_bla",
+      "evidence": "Lorundrostat NDA submission per pdufa_dates_extracted.json (PDUFA pending). Internal source module_4_lead_phase reports phase_3 (stale).",
+      "added_by": "spec_068_audit_2026-04-28",
+      "review_by": "2026-07-28"
+    }
+  }
+}

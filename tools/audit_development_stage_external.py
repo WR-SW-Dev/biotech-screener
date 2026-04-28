@@ -76,6 +76,7 @@ VALIDATION_STATUSES = {
     "sponsor_alias_uncertain",
     "platform_not_ctgov_applicable",
     "no_external_evidence",
+    "override_disagrees_with_consensus",
 }
 
 DECISION_BRANCHES = {"MANUAL_FIX", "RECURRING_VALIDATOR", "ALIAS_MAP_FIRST"}
@@ -416,6 +417,33 @@ def find_latest_orange_book(enrichment_dir: Path) -> tuple[Path | None, int]:
     return (latest, age)
 
 
+def load_development_stage_overrides(path: Path) -> dict[str, str]:
+    """Read production_data/development_stage_overrides.json -> {ticker: stage}.
+
+    Spec 068 Lane 1: the audit revalidates override entries against
+    external_consensus_stage each run. Disagreements emit
+    `override_disagrees_with_consensus` so stale overrides are surfaced.
+    Returns empty dict on missing/malformed file.
+    """
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    entries = raw.get("entries", {}) if isinstance(raw, dict) else {}
+    if not isinstance(entries, dict):
+        return {}
+    out: dict[str, str] = {}
+    for ticker, payload in entries.items():
+        if not isinstance(payload, dict):
+            continue
+        stage = payload.get("stage")
+        if isinstance(stage, str):
+            out[str(ticker).upper()] = stage
+    return out
+
+
 def scan_sec_cache(sec_dir: Path, as_of_date: str) -> dict[str, Any]:
     """Enumerate cache/sec/8k_catalysts safely (top-level files only).
 
@@ -530,6 +558,7 @@ def audit(as_of_date: str) -> dict[str, Any]:
     pit_dir = REPO_ROOT / "production_data" / "pit_financials"
     enrichment_dir = REPO_ROOT / "data" / "enrichment"
     sec_dir = REPO_ROOT / "cache" / "sec" / "8k_catalysts"
+    overrides_path = REPO_ROOT / "production_data" / "development_stage_overrides.json"
 
     universe = load_universe(universe_path)
     rankings = load_rankings_csv(rankings_path)
@@ -538,6 +567,7 @@ def audit(as_of_date: str) -> dict[str, Any]:
     pb_data = load_json(purple_book_path) if purple_book_path.exists() else {}
     pb_approved_tickers = build_purple_book_approved_set(pb_data)
     sec_cache_status = scan_sec_cache(sec_dir, as_of_date)
+    overrides = load_development_stage_overrides(overrides_path)
 
     ob_path, ob_age = find_latest_orange_book(enrichment_dir)
     ob_stale = ob_age > 7
@@ -615,6 +645,19 @@ def audit(as_of_date: str) -> dict[str, Any]:
             alias_conf=alias_conf,
         )
 
+        # Spec 068 Lane 1: revalidate manual overrides against external consensus.
+        # If the override stage disagrees with the consensus stage AND consensus is
+        # informative (not 'unknown' / no_external_evidence / platform_not_ctgov_applicable),
+        # surface the override as potentially stale rather than rubber-stamping it.
+        override_stage = overrides.get(ticker)
+        if (
+            override_stage
+            and consensus != "unknown"
+            and status not in {"platform_not_ctgov_applicable", "no_external_evidence"}
+            and override_stage != consensus
+        ):
+            status = "override_disagrees_with_consensus"
+
         # Confidence for the row as a whole.
         if alias_conf == "HIGH" and approved_flag:
             confidence = "HIGH"
@@ -628,6 +671,8 @@ def audit(as_of_date: str) -> dict[str, Any]:
         in_top30 = ticker in top30
 
         notes_parts: list[str] = []
+        if override_stage:
+            notes_parts.append(f"manual override: {override_stage}")
         if multi_hint:
             notes_parts.append(f"multi-program: {active_count} active trials at distinct phases")
         if alias_conf == "LOW":
@@ -735,6 +780,10 @@ def audit(as_of_date: str) -> dict[str, Any]:
             "ctgov_record_count": sum(len(v) for v in ctgov_by_ticker.values()),
         },
         "sec_cache_status": sec_cache_status,
+        "overrides_loaded": overrides,
+        "overrides_disagreeing": [
+            r["ticker"] for r in rows_out if r["validation_status"] == "override_disagrees_with_consensus"
+        ],
         "decision_branch": decision,
         "decision_reason": decision_reason,
     }
@@ -824,6 +873,20 @@ def write_md(payload: dict[str, Any], path: Path) -> None:
     lines.append("## Data quality")
     lines.append(f"- Orange Book age: {dq['orange_book_age_days']} days (stale={dq['orange_book_stale']})")
     lines.append(f"- CT.gov record count: {dq['ctgov_record_count']}")
+    lines.append("")
+    overrides_loaded = payload.get("overrides_loaded", {})
+    overrides_disagreeing = payload.get("overrides_disagreeing", [])
+    lines.append("## Manual overrides (Spec 068 Lane 1)")
+    lines.append(f"- Overrides loaded: {len(overrides_loaded)}")
+    if overrides_loaded:
+        lines.append("- Entries:")
+        for tkr, stg in sorted(overrides_loaded.items()):
+            lines.append(f"  - {tkr}: {stg}")
+    lines.append(f"- Overrides disagreeing with consensus: {len(overrides_disagreeing)}")
+    if overrides_disagreeing:
+        lines.append("- Disagreement tickers (review override staleness):")
+        for tkr in overrides_disagreeing:
+            lines.append(f"  - {tkr}")
     lines.append("")
     sec = payload.get("sec_cache_status", {})
     lines.append("## SEC 8-K cache status")

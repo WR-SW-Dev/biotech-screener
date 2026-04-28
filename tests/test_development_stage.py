@@ -231,3 +231,134 @@ class TestInvariance:
         assert stage == "phase_1"
         assert source == "module_4_lead_phase"
         assert raw == "phase 1"
+
+
+class TestDevelopmentStageOverrides:
+    """Spec 068 Lane 1: display-only override map.
+
+    Override must:
+      - take precedence over all existing precedence rules
+      - set source='override'
+      - leave raw_phase populated when M4/prog phase is available
+      - NOT mutate the input row
+      - silently drop entries with stages outside DEVELOPMENT_STAGE_VALUES
+      - return empty dict on missing/malformed JSON
+    """
+
+    def test_override_wins_over_archetype(self, monkeypatch):
+        # Even with archetype=commercial_pharma (which would yield 'commercial'
+        # via archetype path), the override map is consulted first.
+        import run_screen
+
+        monkeypatch.setattr(run_screen, "_DEVELOPMENT_STAGE_OVERRIDES", {"FAKE": "phase_2"})
+        row = {"ticker": "FAKE", "archetype": "commercial_pharma", "tier_commercial": "A"}
+        stage, source, raw = _derive_development_stage(row, "phase 3")
+        assert stage == "phase_2"
+        assert source == "override"
+        assert raw == "phase 3"
+
+    def test_override_wins_over_module_4(self, monkeypatch):
+        import run_screen
+
+        monkeypatch.setattr(run_screen, "_DEVELOPMENT_STAGE_OVERRIDES", {"MESO": "commercial"})
+        row = {"ticker": "MESO", "archetype": "drug_developer", "tier_commercial": ""}
+        stage, source, _ = _derive_development_stage(row, "phase 3")
+        assert stage == "commercial"
+        assert source == "override"
+
+    def test_no_override_falls_through_to_existing_precedence(self, monkeypatch):
+        import run_screen
+
+        monkeypatch.setattr(run_screen, "_DEVELOPMENT_STAGE_OVERRIDES", {"OTHER": "commercial"})
+        row = {"ticker": "MESO", "archetype": "drug_developer", "tier_commercial": ""}
+        stage, source, _ = _derive_development_stage(row, "phase 3")
+        # Existing module_4_lead_phase path applies; override does NOT bleed across tickers
+        assert stage == "phase_3"
+        assert source == "module_4_lead_phase"
+
+    def test_override_does_not_mutate_input_row(self, monkeypatch):
+        import run_screen
+
+        monkeypatch.setattr(run_screen, "_DEVELOPMENT_STAGE_OVERRIDES", {"VCEL": "commercial"})
+        row = {
+            "ticker": "VCEL",
+            "archetype": "drug_developer",
+            "tier_commercial": "",
+            "lead_program_phase": "approved",
+            # scoring fields the override path must NEVER touch:
+            "composite_score": 42.0,
+            "final_score": 0.5,
+            "stage_bucket": "late",
+            "clinical_score": 10.0,
+        }
+        before = copy.deepcopy(row)
+        _derive_development_stage(row, "approved")
+        assert row == before, "override path must be pure-read; row was mutated"
+
+    def test_override_ticker_case_insensitive(self, monkeypatch):
+        import run_screen
+
+        monkeypatch.setattr(run_screen, "_DEVELOPMENT_STAGE_OVERRIDES", {"HALO": "commercial"})
+        row = {"ticker": "halo", "archetype": "drug_developer"}
+        stage, source, _ = _derive_development_stage(row, "approved")
+        assert stage == "commercial"
+        assert source == "override"
+
+    def test_override_loader_returns_dict(self):
+        """Loader must always return a dict, never raise on missing/malformed input."""
+        import run_screen
+
+        result = run_screen._load_development_stage_overrides()
+        assert isinstance(result, dict)
+
+    def test_override_loader_drops_invalid_stage_values(self, tmp_path, monkeypatch):
+        """Mirror of the loader's invalid-stage filter, exercised against a temp file.
+
+        The production loader hard-codes its path to production_data/, so this
+        test runs a parallel implementation whose filter logic must stay in
+        sync with run_screen._load_development_stage_overrides.
+        """
+        import json
+
+        from run_screen import DEVELOPMENT_STAGE_VALUES as VALID_STAGES
+
+        bad_payload = {
+            "schema_version": "1.0",
+            "entries": {
+                "GOOD": {"stage": "commercial", "evidence": "x"},
+                "BAD1": {"stage": "fake_stage_value", "evidence": "y"},
+                "BAD2": {"stage": "PHASE_99", "evidence": "z"},
+                "BAD3": "not even a dict",
+                "BAD4": {"stage": 123, "evidence": "numeric stage"},
+            },
+        }
+        fake = tmp_path / "development_stage_overrides.json"
+        fake.write_text(json.dumps(bad_payload))
+
+        raw = json.loads(fake.read_text())
+        entries = raw.get("entries", {})
+        out = {}
+        for ticker, payload in entries.items():
+            if not isinstance(payload, dict):
+                continue
+            stage = payload.get("stage")
+            if isinstance(stage, str) and stage in VALID_STAGES:
+                out[str(ticker).upper()] = stage
+        assert out == {"GOOD": "commercial"}
+
+    def test_production_overrides_file_well_formed(self):
+        """Smoke test: the actual production_data/development_stage_overrides.json
+        must load without errors and contain the four expected tickers."""
+        import run_screen
+
+        overrides = run_screen._load_development_stage_overrides()
+        # Every ticker in the override map must have a stage from the canonical enum
+        for ticker, stage in overrides.items():
+            assert stage in DEVELOPMENT_STAGE_VALUES, f"override for {ticker} has invalid stage {stage!r}"
+        # The four known overrides from Spec 068 audit 2026-04-28
+        assert overrides.get("MESO") == "commercial"
+        assert overrides.get("VCEL") == "commercial"
+        assert overrides.get("HALO") == "commercial"
+        assert overrides.get("MLYS") == "nda_bla"
+        # Override map size is small (sanity bound — review if this test fails after curation)
+        assert len(overrides) <= 20, "override map grew unexpectedly large; re-review"

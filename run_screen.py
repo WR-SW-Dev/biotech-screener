@@ -502,6 +502,40 @@ def _normalize_phase_to_development_stage(phase) -> str:
     return _PHASE_TO_DEVELOPMENT_STAGE.get(str(phase).strip().lower(), "unknown")
 
 
+# Display-only manual overrides for the development_stage column (Spec 068).
+# Loaded once at import. Affects ONLY development_stage / development_stage_source;
+# does NOT mutate archetype, tier_commercial, stage_bucket, lead_program_phase,
+# scoring, ranker, selector, eligibility, EES, Event EV, Module 5 cohorts, or QA.
+def _load_development_stage_overrides() -> Dict[str, str]:
+    """Read production_data/development_stage_overrides.json -> {ticker: stage}.
+
+    Returns empty dict on missing file, malformed JSON, or unknown stage values.
+    Entries with stages outside DEVELOPMENT_STAGE_VALUES are silently dropped to
+    prevent invalid values from leaking into rankings.csv.
+    """
+    p = Path(__file__).resolve().parent / "production_data" / "development_stage_overrides.json"
+    if not p.exists():
+        return {}
+    try:
+        raw = json.loads(p.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    entries = raw.get("entries", {}) if isinstance(raw, dict) else {}
+    if not isinstance(entries, dict):
+        return {}
+    out: Dict[str, str] = {}
+    for ticker, payload in entries.items():
+        if not isinstance(payload, dict):
+            continue
+        stage = payload.get("stage")
+        if isinstance(stage, str) and stage in DEVELOPMENT_STAGE_VALUES:
+            out[str(ticker).upper()] = stage
+    return out
+
+
+_DEVELOPMENT_STAGE_OVERRIDES: Dict[str, str] = _load_development_stage_overrides()
+
+
 def _classify_cohort_churn_severity(churn_pct: float, threshold_pct: float = 10.0) -> str:
     """Severity bucket for churn-alert (info < threshold <= warn)."""
     if churn_pct >= threshold_pct:
@@ -666,11 +700,16 @@ def _derive_development_stage(row: Dict[str, Any], m4_lead_phase) -> Tuple[str, 
     Display-only derivation of (development_stage, source, lead_program_phase_raw).
 
     Precedence (per spec):
+      0. development_stage_overrides.json    -> override / source="override" (Spec 068)
       1. archetype starts with "commercial_" -> "commercial" / source="archetype"
       2. tier_commercial non-empty           -> "commercial" / source="tier_commercial"
       3. Module 4 lead_phase populated       -> normalize / source="module_4_lead_phase"
       4. lead_program_phase populated        -> normalize / source="lead_program_phase"
       5. otherwise                           -> "unknown" / source="unknown"
+
+    Override map (Spec 068, Lane 1) is display-only and consulted first. It does
+    NOT mutate archetype, tier_commercial, lead_program_phase, scoring, ranker,
+    selector, eligibility, EES, Event EV, Module 5 cohorts, or QA gates.
 
     Never reads composite_score / final_score / actionable_rank / clinical_score
     inputs; never writes anywhere except the returned tuple.
@@ -679,6 +718,10 @@ def _derive_development_stage(row: Dict[str, Any], m4_lead_phase) -> Tuple[str, 
     tier_commercial = str(row.get("tier_commercial") or "").strip()
     raw_m4 = str(m4_lead_phase or "").strip()
     raw_prog = str(row.get("lead_program_phase") or "").strip()
+
+    ticker = str(row.get("ticker") or "").upper()
+    if ticker in _DEVELOPMENT_STAGE_OVERRIDES:
+        return (_DEVELOPMENT_STAGE_OVERRIDES[ticker], "override", raw_m4 or raw_prog)
 
     if archetype.startswith("commercial_"):
         return ("commercial", "archetype", raw_m4 or raw_prog)
