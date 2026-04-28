@@ -453,9 +453,11 @@ def _extract_downside_events(
     text: str,
     ticker: str,
     filing_date: str,
+    *,
+    form: str = "8-K",
 ) -> List[Dict[str, Any]]:
     """
-    Extract downside events from 8-K filing text.
+    Extract downside events from filing text.
 
     Applies boilerplate filtering, then matches DOWNSIDE_PATTERNS.
     Caps at 1 event per type per filing to avoid over-counting.
@@ -463,7 +465,9 @@ def _extract_downside_events(
     Args:
         text: Filing text content
         ticker: Associated ticker symbol
-        filing_date: ISO date string of the 8-K filing
+        filing_date: ISO date string of the filing
+        form: SEC form type ("8-K" or "6-K"). Drives event_name prefix and
+            source label via FORM_TO_SOURCE.
 
     Returns:
         List of event dicts
@@ -471,6 +475,7 @@ def _extract_downside_events(
     clean_text = _strip_boilerplate(text)
     events = []
     seen_types: Set[str] = set()
+    source_label = FORM_TO_SOURCE.get(form, "SEC_8K_FILING")
 
     for pattern, event_type, confidence in DOWNSIDE_PATTERNS:
         if event_type in seen_types:
@@ -485,9 +490,9 @@ def _extract_downside_events(
                     "event_date": filing_date,
                     "event_date_end": None,
                     "date_precision": "DAY",
-                    "event_name": f"8-K: {match.group(0)[:80]}",
+                    "event_name": f"{form}: {match.group(0)[:80]}",
                     "confidence": confidence,
-                    "source": "SEC_8K_FILING",
+                    "source": source_label,
                     "disclosed_at": filing_date,
                     "tags": ["sec_8k", "downside"],
                 }
@@ -635,24 +640,28 @@ def _extract_timing_events(
     *,
     require_biopharma_context: bool = False,
     block_boilerplate: bool = False,
+    form: str = "8-K",
 ) -> List[Dict[str, Any]]:
     """
-    Extract timing events from 8-K filing text.
+    Extract timing events from filing text.
 
     Args:
         text: Filing text content
         ticker: Associated ticker symbol
-        filing_date: ISO date string of the 8-K filing
+        filing_date: ISO date string of the filing
         as_of_date: Current analysis date (used for year guard + staleness filter)
         require_biopharma_context: If True, only accept matches with biopharma
             keywords (FDA, Phase, topline, etc.) in the surrounding 300-char window.
         block_boilerplate: If True, reject matches where the surrounding context
             contains accounting/boilerplate language.
+        form: SEC form type ("8-K" or "6-K"). Drives event_name prefix and
+            source label via FORM_TO_SOURCE.
 
     Returns:
         List of event dicts
     """
     events = []
+    source_label = FORM_TO_SOURCE.get(form, "SEC_8K_FILING")
 
     # Year guard: reject extracted dates outside [as_of_year - 1, as_of_year + 3]
     if as_of_date is not None:
@@ -771,9 +780,9 @@ def _extract_timing_events(
                 "event_date": event_date,
                 "event_date_end": event_date_end,
                 "date_precision": precision,
-                "event_name": f"8-K: {match.group(0)[:80]}",
+                "event_name": f"{form}: {match.group(0)[:80]}",
                 "confidence": confidence,
-                "source": "SEC_8K_FILING",
+                "source": source_label,
                 "disclosed_at": filing_date,
                 "tags": tags,
             }
@@ -907,21 +916,29 @@ def collect_8k_timing_events(
     as_of_date: date,
     cache_dir: Path = DEFAULT_CACHE_DIR,
     lookback_days: int = 180,
+    forms: Tuple[str, ...] = ("8-K", "6-K"),
 ) -> List[Dict[str, Any]]:
     """
-    Collect timing events from SEC 8-K filings for universe tickers.
+    Collect timing events from SEC current-report filings for universe tickers.
+
+    Default forms = ("8-K", "6-K"): 8-K covers domestic filers; 6-K covers
+    foreign private issuers (TEVA, AZN, BNTX, ARGX, ASND, BNTX, …) which
+    otherwise yield zero hits in the active cache.
 
     Two-phase approach:
-      Phase 1: Search EDGAR full-text index for 8-K filings with timing keywords.
-               Extract ticker from display_names, filter to our universe.
-      Phase 2: For matched filings, fetch actual filing text from EDGAR Archives
-               and extract timing phrases with date ranges.
+      Phase 1: Search EDGAR full-text index for filings of each form with
+               timing keywords. Extract ticker from display_names, filter to
+               our universe. Track form per accession.
+      Phase 2: For matched filings, fetch actual filing text from EDGAR
+               Archives and extract timing phrases with date ranges. Records
+               are tagged with the originating form via source/event_name.
 
     Args:
         universe: List of universe entries (must have 'ticker' and optionally 'cik')
         as_of_date: Current analysis date
         cache_dir: Directory for caching results
-        lookback_days: How far back to search for 8-K filings
+        lookback_days: How far back to search for filings
+        forms: Tuple of form types to query in EDGAR full-text search.
 
     Returns:
         List of event dicts matching corporate catalyst schema
@@ -1024,87 +1041,91 @@ def collect_8k_timing_events(
     _MAX_PAGES_PER_QUERY = 10  # 10 × 100 = 1000 hits max per query
 
     # Collect unique filings keyed by accession number
-    # {adsh: {ticker, cik, file_date}}
+    # {adsh: {ticker, cik, file_date, form}}
     filings_to_fetch: Dict[str, Dict[str, str]] = {}
 
-    for query in search_queries:
-        try:
-            offset = 0
-            query_total = None
+    for form in forms:
+        for query in search_queries:
+            try:
+                offset = 0
+                query_total = None
 
-            while True:
-                params = {
-                    "q": query,
-                    "dateRange": "custom",
-                    "startdt": start_date,
-                    "enddt": end_date,
-                    "forms": "8-K",
-                    "from": offset,
-                }
+                while True:
+                    params = {
+                        "q": query,
+                        "dateRange": "custom",
+                        "startdt": start_date,
+                        "enddt": end_date,
+                        "forms": form,
+                        "from": offset,
+                    }
 
-                resp = _sec_get(session, SEC_SEARCH_URL, params=params)
+                    resp = _sec_get(session, SEC_SEARCH_URL, params=params)
 
-                if resp.status_code != 200:
-                    logger.warning(f"SEC search returned {resp.status_code} for: {query[:40]}")
-                    break
+                    if resp.status_code != 200:
+                        logger.warning(f"SEC search returned {resp.status_code} for {form} '{query[:40]}'")
+                        break
 
-                results = resp.json()
-                hits = results.get("hits", {}).get("hits", [])
+                    results = resp.json()
+                    hits = results.get("hits", {}).get("hits", [])
 
-                if query_total is None:
-                    query_total = results.get("hits", {}).get("total", {}).get("value", 0)
-                    logger.info(f"EDGAR search '{query[:40]}': {query_total} total hits")
+                    if query_total is None:
+                        query_total = results.get("hits", {}).get("total", {}).get("value", 0)
+                        logger.info(f"EDGAR search [{form}] '{query[:40]}': {query_total} total hits")
 
-                if not hits:
-                    break
+                    if not hits:
+                        break
 
-                for hit in hits:
-                    source = hit.get("_source", {})
-                    display_names = source.get("display_names", [])
-                    file_date = source.get("file_date", "")
-                    adsh = source.get("adsh", "")
-                    ciks = source.get("ciks", [])
+                    for hit in hits:
+                        source = hit.get("_source", {})
+                        display_names = source.get("display_names", [])
+                        file_date = source.get("file_date", "")
+                        adsh = source.get("adsh", "")
+                        ciks = source.get("ciks", [])
 
-                    if not adsh or not file_date:
-                        continue
-
-                    # PIT safety: skip filings after as_of_date
-                    if file_date > end_date:
-                        continue
-
-                    # Extract ticker: try display_names first, then CIK fallback
-                    ticker = _extract_ticker_from_display_names(display_names)
-                    ticker_upper = ticker.upper() if ticker else ""
-
-                    if not ticker_upper or ticker_upper not in ticker_set:
-                        # Fallback: match via CIK from search result
-                        ticker_upper = ""
-                        for cik_val in ciks:
-                            cik_stripped = str(cik_val).lstrip("0")
-                            if cik_stripped in cik_to_ticker:
-                                ticker_upper = cik_to_ticker[cik_stripped]
-                                break
-                        if not ticker_upper:
+                        if not adsh or not file_date:
                             continue
 
-                    # Use our ticker→CIK mapping (more reliable than search-index ciks)
-                    cik = ticker_to_cik.get(ticker_upper) or (ciks[0] if ciks else "")
+                        # PIT safety: skip filings after as_of_date
+                        if file_date > end_date:
+                            continue
 
-                    # Deduplicate by accession number
-                    if adsh not in filings_to_fetch:
-                        filings_to_fetch[adsh] = {
-                            "ticker": ticker_upper,
-                            "cik": cik,
-                            "file_date": file_date,
-                        }
+                        # Extract ticker: try display_names first, then CIK fallback
+                        ticker = _extract_ticker_from_display_names(display_names)
+                        ticker_upper = ticker.upper() if ticker else ""
 
-                offset += len(hits)
-                page = offset // 100
-                if offset >= query_total or page >= _MAX_PAGES_PER_QUERY:
-                    break
+                        if not ticker_upper or ticker_upper not in ticker_set:
+                            # Fallback: match via CIK from search result
+                            ticker_upper = ""
+                            for cik_val in ciks:
+                                cik_stripped = str(cik_val).lstrip("0")
+                                if cik_stripped in cik_to_ticker:
+                                    ticker_upper = cik_to_ticker[cik_stripped]
+                                    break
+                            if not ticker_upper:
+                                continue
 
-        except Exception as e:
-            logger.warning(f"SEC 8-K search error for '{query[:40]}': {e}")
+                        # Use our ticker→CIK mapping (more reliable than search-index ciks)
+                        cik = ticker_to_cik.get(ticker_upper) or (ciks[0] if ciks else "")
+
+                        # Deduplicate by accession number; first form to surface wins
+                        # (8-K queried before 6-K, so domestic filings take precedence
+                        # if the same accession appears under multiple form labels).
+                        if adsh not in filings_to_fetch:
+                            filings_to_fetch[adsh] = {
+                                "ticker": ticker_upper,
+                                "cik": cik,
+                                "file_date": file_date,
+                                "form": form,
+                            }
+
+                    offset += len(hits)
+                    page = offset // 100
+                    if offset >= query_total or page >= _MAX_PAGES_PER_QUERY:
+                        break
+
+            except Exception as e:
+                logger.warning(f"SEC {form} search error for '{query[:40]}': {e}")
 
     logger.info(f"Phase 1: {len(filings_to_fetch)} unique filings from universe to fetch")
 
@@ -1128,6 +1149,7 @@ def collect_8k_timing_events(
         ticker = meta["ticker"]
         cik = meta["cik"]
         file_date = meta["file_date"]
+        form = meta.get("form", "8-K")
 
         try:
             text = _fetch_filing_text(cik, adsh, session)
@@ -1135,18 +1157,19 @@ def collect_8k_timing_events(
                 fetch_errors += 1
                 continue
 
-            extracted = _extract_timing_events(text, ticker, file_date, as_of_date)
-            downside = _extract_downside_events(text, ticker, file_date)
+            extracted = _extract_timing_events(text, ticker, file_date, as_of_date, form=form)
+            downside = _extract_downside_events(text, ticker, file_date, form=form)
             total_extracted = len(extracted) + len(downside)
             if total_extracted:
                 logger.info(
-                    f"  {ticker} ({adsh}, {file_date}): {len(extracted)} timing + {len(downside)} downside events"
+                    f"  {ticker} ({form} {adsh}, {file_date}): "
+                    f"{len(extracted)} timing + {len(downside)} downside events"
                 )
             all_events.extend(extracted)
             all_events.extend(downside)
 
         except Exception as e:
-            logger.warning(f"Error processing {ticker} {adsh}: {e}")
+            logger.warning(f"Error processing {ticker} {form} {adsh}: {e}")
             fetch_errors += 1
 
     if fetch_errors:
