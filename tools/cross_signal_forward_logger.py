@@ -140,6 +140,58 @@ def assign_bucket(selector_pct, agreement_score):
     return f"{dem}{cs}"
 
 
+def find_prior_bucket_file(today_iso: str):
+    """Return Path of most recent buckets_*.json strictly before today_iso, or None."""
+    if not SHADOW_DIR.exists():
+        return None
+    candidates = sorted(SHADOW_DIR.glob("buckets_*.json"))
+    eligible = [p for p in candidates if p.stem.replace("buckets_", "") < today_iso]
+    return eligible[-1] if eligible else None
+
+
+def persistence_diagnostics(today_buckets, prior_path):
+    """Per-bucket Jaccard overlap + entrants + exits + top-5 by selector_score.
+
+    Pure membership tracking. No returns, no performance.
+    """
+    if prior_path is None:
+        return {"prior_date": None, "note": "no prior bucket file (T0 or first run)"}
+    with open(prior_path) as fh:
+        prior = json.load(fh)
+    prior_date = prior.get("as_of")
+    prior_buckets = prior.get("bucket_membership", {})
+    out = {"prior_date": prior_date, "by_bucket": {}}
+    for b in ["HH", "HL", "LH", "LL"]:
+        today_set = {r["ticker"] for r in today_buckets.get(b, [])}
+        prior_set = {r["ticker"] for r in prior_buckets.get(b, [])}
+        inter = today_set & prior_set
+        union = today_set | prior_set
+        jaccard = len(inter) / len(union) if union else None
+        entrants = today_set - prior_set
+        exits = prior_set - today_set
+        today_scored = {r["ticker"]: r["selector_score"] for r in today_buckets.get(b, [])}
+        prior_scored = {r["ticker"]: r["selector_score"] for r in prior_buckets.get(b, [])}
+        top5_entrants = sorted(
+            [(t, today_scored.get(t)) for t in entrants if today_scored.get(t) is not None],
+            key=lambda x: -x[1],
+        )[:5]
+        top5_exits = sorted(
+            [(t, prior_scored.get(t)) for t in exits if prior_scored.get(t) is not None],
+            key=lambda x: -x[1],
+        )[:5]
+        out["by_bucket"][b] = {
+            "today_count": len(today_set),
+            "prior_count": len(prior_set),
+            "intersection_count": len(inter),
+            "jaccard": round(jaccard, 4) if jaccard is not None else None,
+            "entrants": sorted(entrants),
+            "exits": sorted(exits),
+            "top5_entrants_by_today_selector": top5_entrants,
+            "top5_exits_by_prior_selector": top5_exits,
+        }
+    return out
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--as-of", default=None, help="Snapshot date (YYYY-MM-DD). Default: today.")
@@ -190,6 +242,10 @@ def main() -> int:
 
     summary = {b: len(v) for b, v in bucket_membership.items()}
 
+    # Persistence vs prior bucket file (purely membership-based; no returns)
+    prior_path = find_prior_bucket_file(as_of)
+    persistence = persistence_diagnostics(bucket_membership, prior_path)
+
     out = {
         "as_of": as_of,
         "schema_era_T0": "2026-04-28",
@@ -204,11 +260,13 @@ def main() -> int:
         },
         "summary": summary,
         "bucket_membership": bucket_membership,
+        "persistence_vs_prior": persistence,
         "constraints": [
             "Read-only forward logger — no historical alpha conclusion drawn.",
             "Bucket memberships persisted for forward-return evaluation at h20d (2026-05-26) and h60d (2026-07-21).",
             "Independent signals exclude B6 components (coinvest_score_z, inst_delta_z) and institutional block.",
             "Methodology fixed at T0=2026-04-28; do not change cutoffs without a new T0.",
+            "persistence_vs_prior is membership-only; performance evaluation deferred to h20d/h60d.",
         ],
     }
 
@@ -228,6 +286,20 @@ def main() -> int:
     # Show HL tickers (the focal bucket)
     hl_names = sorted([r["ticker"] for r in bucket_membership["HL"]])
     print(f"  HL (DEM-high / cross-signal-low) tickers: {hl_names}")
+    # Persistence
+    if persistence.get("prior_date"):
+        print(f"\n=== persistence vs prior ({persistence['prior_date']}) ===")
+        for b in ["HH", "HL", "LH", "LL"]:
+            d = persistence["by_bucket"].get(b, {})
+            ents = ", ".join(t for t, _ in d.get("top5_entrants_by_today_selector", []))
+            exs = ", ".join(t for t, _ in d.get("top5_exits_by_prior_selector", []))
+            print(
+                f"  {b}: today={d.get('today_count')}  prior={d.get('prior_count')}  "
+                f"∩={d.get('intersection_count')}  J={d.get('jaccard')}  "
+                f"entrants[{len(d.get('entrants', []))}]:{ents}  exits[{len(d.get('exits', []))}]:{exs}"
+            )
+    else:
+        print(f"\npersistence: {persistence.get('note')}")
     print(f"\nartifact: {out_path}")
     print("No historical alpha conclusion drawn.")
     return 0
