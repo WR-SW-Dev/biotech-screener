@@ -21,6 +21,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -35,6 +36,23 @@ REGISTRY = REPO / "agents" / "AGENT_REGISTRY.json"
 
 # Production-due gate (24h clock, ET). After this hour, missing rankings.csv = RED.
 PRODUCTION_DUE_HOUR_ET = 18
+
+# Runtime-health job classification. Times are local (ET on this host).
+# Source: crontab -l weekday-only entries.
+NON_CRITICAL_JOB_TIMES_ET = [
+    (6, 30),  # bellringer
+    (7, 30),  # herald pre-morning fetch
+    (8, 0),  # news digest morning
+    (15, 0),  # news digest midday
+]
+PRODUCTION_CRITICAL_JOB_TIMES_ET = [
+    (14, 0),  # data refresh — feeds production
+    (16, 30),  # cron_daily_production.sh — main pipeline
+    (16, 45),  # PIT archiver
+    (17, 30),  # tier-2 heartbeat checks
+    (18, 0),  # ops digest, data_auditor, agent stagger
+    (18, 55),  # production_qa
+]
 
 # ---------------------------------------------------------------------------
 # Exception table — canonical source of truth for known/expected anomalies
@@ -336,6 +354,191 @@ def extract_decision_diff_from_digest(digest_json: dict | None) -> dict | None:
     return None
 
 
+def _run_subproc(cmd: list[str], timeout: float = 5.0) -> tuple[str | None, int]:
+    try:
+        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        return r.stdout.strip(), r.returncode
+    except Exception:
+        return None, 1
+
+
+def _parse_systemctl_timestamp(s: str) -> datetime | None:
+    """Parse `Tue 2026-04-28 22:22:45 EDT` → naive local datetime.
+
+    Robust to missing day-name, missing TZ, or 'n/a' (inactive service).
+    """
+    if not s:
+        return None
+    parts = s.strip().split()
+    date_str, time_str = None, None
+    for p in parts:
+        if "-" in p and date_str is None and len(p) == 10:
+            date_str = p
+        elif ":" in p and time_str is None:
+            time_str = p
+    if not date_str or not time_str:
+        return None
+    try:
+        return datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M:%S")
+    except Exception:
+        return None
+
+
+def check_runtime_health(today: date, now_dt: datetime, input_status: dict) -> dict:
+    """Inspect cron service + WSL/runtime uptime. Detect missed jobs.
+
+    Classification (per spec):
+      GREEN  — cron active and active_since on/before today's first job, no misses
+      YELLOW — cron active but came up after some non-critical jobs only
+      ORANGE — cron came up after production-critical job times (artifacts may be recovered)
+      RED    — cron inactive, OR a production job missed AND artifact missing
+    """
+    out: dict = {
+        "cron_active": None,
+        "cron_active_since_raw": None,
+        "cron_active_since_parsed": None,
+        "system_boot_time": None,
+        "first_job_time_today_et": None,
+        "production_critical_job_times_today_et": [f"{h:02d}:{m:02d}" for h, m in PRODUCTION_CRITICAL_JOB_TIMES_ET],
+        "cron_active_before_first_job": None,
+        "system_restarted_after_scheduled_jobs_today": None,
+        "missed_critical_job_times": [],
+        "missed_noncritical_job_times": [],
+        "missed_jobs_correlate_with_downtime": None,
+        "runtime_alive_for_scheduled_window": "unknown",
+        "severity": "GREEN",
+        "reasons": [],
+    }
+
+    is_weekday = today.weekday() < 5
+
+    # 1) cron active state
+    stdout, _rc = _run_subproc(["systemctl", "is-active", "cron"])
+    if stdout is None:
+        out["reasons"].append("systemctl unavailable; runtime health unknown")
+        out["runtime_alive_for_scheduled_window"] = "unknown"
+        return out
+    out["cron_active"] = stdout
+    if stdout != "active":
+        out["severity"] = "RED"
+        out["runtime_alive_for_scheduled_window"] = "no"
+        out["reasons"].append(f"cron service is `{stdout}` (not active)")
+        return out
+
+    # 2) cron active_since timestamp
+    stdout, _rc = _run_subproc(["systemctl", "show", "cron", "--property=ActiveEnterTimestamp"])
+    cron_active_since_dt = None
+    if stdout and "=" in stdout:
+        ts_str = stdout.split("=", 1)[1].strip()
+        out["cron_active_since_raw"] = ts_str
+        cron_active_since_dt = _parse_systemctl_timestamp(ts_str)
+        if cron_active_since_dt is not None:
+            out["cron_active_since_parsed"] = cron_active_since_dt.isoformat()
+
+    # 3) System boot time (WSL/runtime)
+    stdout, _rc = _run_subproc(["uptime", "-s"])
+    out["system_boot_time"] = stdout
+    system_boot_dt = None
+    if stdout:
+        try:
+            system_boot_dt = datetime.strptime(stdout, "%Y-%m-%d %H:%M:%S")
+        except Exception:
+            system_boot_dt = None
+
+    # 4) Weekend short-circuit — production cron does not fire
+    if not is_weekday:
+        out["runtime_alive_for_scheduled_window"] = "yes"
+        out["severity"] = "GREEN"
+        out["reasons"].append("weekend — production cron not scheduled today")
+        return out
+
+    # 5) Today's first scheduled job (anchor for GREEN)
+    first_h, first_m = NON_CRITICAL_JOB_TIMES_ET[0]
+    midnight = datetime.combine(today, datetime.min.time())
+    first_job_dt = midnight.replace(hour=first_h, minute=first_m)
+    out["first_job_time_today_et"] = first_job_dt.strftime("%Y-%m-%d %H:%M")
+
+    if cron_active_since_dt is not None:
+        out["cron_active_before_first_job"] = cron_active_since_dt <= first_job_dt
+
+    # 6) WSL restart after any scheduled job that should have fired by now?
+    if system_boot_dt is not None and system_boot_dt.date() == today:
+        all_times = NON_CRITICAL_JOB_TIMES_ET + PRODUCTION_CRITICAL_JOB_TIMES_ET
+        for h, m in all_times:
+            job_dt = midnight.replace(hour=h, minute=m)
+            if job_dt < now_dt and system_boot_dt > job_dt:
+                out["system_restarted_after_scheduled_jobs_today"] = True
+                break
+        else:
+            out["system_restarted_after_scheduled_jobs_today"] = False
+    else:
+        out["system_restarted_after_scheduled_jobs_today"] = False
+
+    # 7) Which jobs missed normal cron firing?
+    # A job is "missed" if its scheduled time is past AND cron came up after it.
+    if cron_active_since_dt is not None and cron_active_since_dt.date() == today:
+        for h, m in PRODUCTION_CRITICAL_JOB_TIMES_ET:
+            job_dt = midnight.replace(hour=h, minute=m)
+            if job_dt < now_dt and cron_active_since_dt > job_dt:
+                out["missed_critical_job_times"].append(f"{h:02d}:{m:02d}")
+        for h, m in NON_CRITICAL_JOB_TIMES_ET:
+            job_dt = midnight.replace(hour=h, minute=m)
+            if job_dt < now_dt and cron_active_since_dt > job_dt:
+                out["missed_noncritical_job_times"].append(f"{h:02d}:{m:02d}")
+
+    # 8) Correlate missed jobs with missing production artifacts
+    rankings_missing = input_status.get("today_rankings_csv") == "missing"
+    manifest_missing = input_status.get("today_run_manifest") == "missing"
+    artifact_missing = rankings_missing or manifest_missing
+    missed_critical = out["missed_critical_job_times"]
+    missed_noncritical = out["missed_noncritical_job_times"]
+
+    if missed_critical and artifact_missing:
+        out["missed_jobs_correlate_with_downtime"] = "yes"
+    elif missed_critical and not artifact_missing:
+        out["missed_jobs_correlate_with_downtime"] = "no_artifact_recovered"
+    else:
+        out["missed_jobs_correlate_with_downtime"] = "no"
+
+    # 9) Severity
+    cron_pre_first = out["cron_active_before_first_job"]
+    if missed_critical and artifact_missing:
+        out["severity"] = "RED"
+        out["runtime_alive_for_scheduled_window"] = "no"
+        out["reasons"].append(
+            f"production-critical job(s) at {missed_critical} ET missed; "
+            f"rankings/manifest absent — runtime down during production window"
+        )
+    elif missed_critical:
+        out["severity"] = "ORANGE"
+        out["runtime_alive_for_scheduled_window"] = "no"
+        out["reasons"].append(
+            f"cron came up at {out['cron_active_since_raw']} — after production-critical "
+            f"job time(s) {missed_critical} ET. Artifacts present (likely watchdog/@reboot recovery); verify."
+        )
+    elif missed_noncritical:
+        out["severity"] = "YELLOW"
+        out["runtime_alive_for_scheduled_window"] = "no"
+        out["reasons"].append(
+            f"cron came up after non-critical job time(s) {missed_noncritical} ET; " f"production window unaffected"
+        )
+    elif cron_pre_first is True:
+        out["severity"] = "GREEN"
+        out["runtime_alive_for_scheduled_window"] = "yes"
+        out["reasons"].append("cron active before today's first scheduled job and still active")
+    elif cron_pre_first is None:
+        out["severity"] = "GREEN"
+        out["runtime_alive_for_scheduled_window"] = "unknown"
+        out["reasons"].append("cron active but ActiveEnterTimestamp could not be parsed")
+    else:
+        # cron_pre_first is False but no job times have fired yet (very early in the day)
+        out["severity"] = "GREEN"
+        out["runtime_alive_for_scheduled_window"] = "yes"
+        out["reasons"].append("cron active; no scheduled jobs have fired yet today")
+
+    return out
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--as-of", default=None, help="Override as-of date (YYYY-MM-DD).")
@@ -344,7 +547,8 @@ def main() -> int:
 
     as_of = args.as_of or datetime.now().date().isoformat()
     today = date.fromisoformat(as_of)
-    now_hour = args.force_now_hour if args.force_now_hour is not None else datetime.now().hour
+    now_dt = datetime.now()
+    now_hour = args.force_now_hour if args.force_now_hour is not None else now_dt.hour
 
     SUPERVISOR_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -387,6 +591,9 @@ def main() -> int:
     registry = load_registry()
     decision_diff = extract_decision_diff_from_digest(digest_json)
 
+    # -- Runtime health (cron service + WSL/runtime uptime) --
+    runtime_health = check_runtime_health(today, now_dt, input_status)
+
     # -- Classify each anomaly --
     classified = [classify_anomaly(a, today, prior_anomalies, registry, decision_diff) for a in anomalies_raw]
 
@@ -411,8 +618,9 @@ def main() -> int:
         final_severity = "RED"
         final_action = "fix_now"
     else:
-        # Roll up severities
+        # Roll up severities (anomalies + runtime health)
         sevs_seen = set(c["supervisor_severity"] for c in classified)
+        sevs_seen.add(runtime_health["severity"])
         if "RED" in sevs_seen:
             final_severity = "RED"
             final_action = "fix_now"
@@ -453,6 +661,7 @@ def main() -> int:
         "as_of_date": as_of,
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "input_status": input_status,
+        "runtime_health": runtime_health,
         "anomalies": classified,
         "agent_count": len(classified),
         "checked_items_count": len(classified) + len(artifact_status),
@@ -482,6 +691,30 @@ def main() -> int:
     for k, v in input_status.items():
         lines.append(f"- **{k}**: {v}")
     lines.append("")
+
+    # Runtime health section
+    rh = runtime_health
+    lines.append("## Runtime health")
+    lines.append("")
+    lines.append(f"- **cron_active**: `{rh['cron_active']}`")
+    lines.append(f"- **cron_active_since**: `{rh['cron_active_since_raw'] or 'unknown'}`")
+    lines.append(f"- **system_boot_time**: `{rh['system_boot_time'] or 'unknown'}`")
+    lines.append(f"- **first_job_time_today_et**: `{rh['first_job_time_today_et'] or 'n/a'}`")
+    lines.append(f"- **cron_active_before_first_job**: `{rh['cron_active_before_first_job']}`")
+    lines.append(
+        f"- **system_restarted_after_scheduled_jobs_today**: " f"`{rh['system_restarted_after_scheduled_jobs_today']}`"
+    )
+    lines.append(f"- **missed_critical_job_times**: " f"`{rh['missed_critical_job_times'] or 'none'}`")
+    lines.append(f"- **missed_noncritical_job_times**: " f"`{rh['missed_noncritical_job_times'] or 'none'}`")
+    lines.append(f"- **missed_jobs_correlate_with_downtime**: " f"`{rh['missed_jobs_correlate_with_downtime']}`")
+    lines.append(f"- **runtime_severity**: `{rh['severity']}`")
+    if rh["reasons"]:
+        for r in rh["reasons"]:
+            lines.append(f"  - {r}")
+    lines.append("")
+    lines.append(f"> **Runtime was alive for scheduled window: {rh['runtime_alive_for_scheduled_window']}.**")
+    lines.append("")
+
     if classified:
         lines.append("## Anomalies")
         lines.append("")
@@ -526,6 +759,11 @@ def main() -> int:
     # Console
     print(f"[ops_supervisor] {as_of} → {final_severity} ({final_action})")
     print(f"  {summary}")
+    print(
+        f"  Runtime was alive for scheduled window: "
+        f"{runtime_health['runtime_alive_for_scheduled_window']}. "
+        f"(runtime severity: {runtime_health['severity']})"
+    )
     print(f"  artifact: {out_json.relative_to(REPO)}")
 
     return {"GREEN": 0, "YELLOW": 0, "ORANGE": 1, "RED": 2}[final_severity]
