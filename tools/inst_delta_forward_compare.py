@@ -143,6 +143,41 @@ def _per_ticker_returns(portfolio_records, price_series, as_of_iso):
     return out
 
 
+def _concentration_metrics(per_ticker_returns):
+    """Concentration diagnostics on per-ticker returns.
+
+    Returns dict with:
+      top3_signed_share — sum(top-3 by signed return) / sum(all signed returns).
+        Interpretable when total > 0: % of upside concentrated in top 3.
+        When total ≤ 0, returned alongside total_sign so reader can judge.
+      top3_abs_share — sum(top-3 by |return|) / sum(|return|). Always 0–1.
+        Concentration of absolute movement regardless of sign.
+      hhi_abs — Herfindahl on absolute-return shares (0 = uniform, 1 = single-name).
+      n_contributors — count of tickers with non-null return.
+    """
+    rs = [r for _, _, _, r in per_ticker_returns if r is not None]
+    if not rs:
+        return {"insufficient_data": True}
+    n = len(rs)
+    total_signed = sum(rs)
+    total_abs = sum(abs(r) for r in rs)
+    top3_signed = sum(sorted(rs, reverse=True)[:3])
+    top3_abs = sum(sorted([abs(r) for r in rs], reverse=True)[:3])
+    hhi_abs = sum((abs(r) / total_abs) ** 2 for r in rs) if total_abs > 0 else None
+    return {
+        "n_contributors": n,
+        "total_signed_return_sum": round(total_signed, 6),
+        "top3_signed_share": (round(top3_signed / total_signed, 4) if total_signed > 0 else None),
+        "top3_signed_share_note": (
+            None
+            if total_signed > 0
+            else f"total_signed_return_sum={total_signed:+.4f} ≤ 0; share undefined for negative/zero portfolio"
+        ),
+        "top3_abs_share": round(top3_abs / total_abs, 4) if total_abs > 0 else None,
+        "hhi_abs": round(hhi_abs, 4) if hhi_abs is not None else None,
+    }
+
+
 def main() -> int:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--lock", default=None, help="Path to T0 lock file. Default: latest in shadow dir.")
@@ -190,6 +225,7 @@ def main() -> int:
 
     # Per-portfolio metrics
     portfolio_results = {}
+    portfolio_winners = {}  # name -> set of tickers with positive return (for cross-portfolio overlap)
     for name, recs in portfolios.items():
         # Filter recs to as_of-window prices only
         recs_with_t0 = [r for r in recs if r.get("T0_close")]
@@ -211,6 +247,10 @@ def main() -> int:
             [(t, r) for t, _, _, r in per_ticker if r is not None],
             key=lambda x: x[1],
         )[:5]
+        # Concentration diagnostics — top-3 share of upside, HHI on absolute contributions
+        ew_metrics["concentration"] = _concentration_metrics(per_ticker)
+        # Track positive-return tickers for cross-portfolio winner-set overlap
+        portfolio_winners[name] = {t for t, _, _, r in per_ticker if r is not None and r > 0}
         # Artifact-name contribution (CURRENT only meaningful)
         if name.startswith("current_"):
             artifact_rets = [r for t, _, _, r in per_ticker if t in artifact_tickers and r is not None]
@@ -229,6 +269,11 @@ def main() -> int:
         cf = portfolio_results.get(f"counterfactual_top{cutoff}", {})
         if cur.get("cum_return") is None or cf.get("cum_return") is None:
             continue
+        cur_winners = portfolio_winners.get(f"current_top{cutoff}", set())
+        cf_winners = portfolio_winners.get(f"counterfactual_top{cutoff}", set())
+        winners_intersection = cur_winners & cf_winners
+        winners_union = cur_winners | cf_winners
+        winners_jaccard = (len(winners_intersection) / len(winners_union)) if winners_union else None
         diffs[f"top{cutoff}"] = {
             "current_cum": cur["cum_return"],
             "counterfactual_cum": cf["cum_return"],
@@ -243,6 +288,13 @@ def main() -> int:
             "cf_excess_vs_xbi": cf.get("excess_vs_xbi"),
             "current_artifact_mean": cur.get("artifact_mean_return"),
             "current_non_artifact_mean": cur.get("non_artifact_mean_return"),
+            "current_top3_signed_share": (cur.get("concentration") or {}).get("top3_signed_share"),
+            "cf_top3_signed_share": (cf.get("concentration") or {}).get("top3_signed_share"),
+            "current_hhi_abs": (cur.get("concentration") or {}).get("hhi_abs"),
+            "cf_hhi_abs": (cf.get("concentration") or {}).get("hhi_abs"),
+            "winners_jaccard_current_vs_cf": round(winners_jaccard, 4) if winners_jaccard is not None else None,
+            "winners_intersection_count": len(winners_intersection),
+            "winners_intersection_tickers": sorted(list(winners_intersection)),
         }
 
     checkpoint = {
@@ -285,6 +337,22 @@ def main() -> int:
             f"{fmt(d['current_minus_cf'], 8)}  {fmt(d['current_sharpe'], 7, 3)}  {fmt(d['cf_sharpe'], 7, 3)}  "
             f"{fmt(d['current_max_dd'], 7, 3)}  {fmt(d['cf_max_dd'], 7, 3)}  "
             f"{fmt(d['current_artifact_mean'], 7, 3)}  {fmt(d['current_non_artifact_mean'], 7, 3)}"
+        )
+    print()
+    print(f"{'cutoff':>8}  {'CUR_top3':>8}  {'CF_top3':>8}  {'CUR_HHI':>8}  {'CF_HHI':>8}  {'win_J':>6}  win_overlap")
+    for cutoff in cutoffs:
+        d = diffs.get(f"top{cutoff}")
+        if not d:
+            continue
+
+        def fmtn(v, w, p=3):
+            return f"{v:>{w}.{p}f}" if v is not None else " " * w
+
+        overlap = ", ".join(d.get("winners_intersection_tickers", [])[:8])
+        print(
+            f"{'top'+str(cutoff):>8}  {fmtn(d['current_top3_signed_share'], 8)}  {fmtn(d['cf_top3_signed_share'], 8)}  "
+            f"{fmtn(d['current_hhi_abs'], 8)}  {fmtn(d['cf_hhi_abs'], 8)}  "
+            f"{fmtn(d['winners_jaccard_current_vs_cf'], 6, 2)}  ({d['winners_intersection_count']}) {overlap}"
         )
     print()
     if checkpoint["is_horizon_milestone"]:
