@@ -1,12 +1,35 @@
 {
   "schema_version": "1.0",
-  "as_of": "2026-04-24",
-  "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE — active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
+  "as_of": "2026-04-28",
+  "notes": "Canonical roster of agent directories under agents/. Every subdirectory of agents/ must appear here exactly once; every entry here must correspond to an existing subdirectory. See tests/test_agent_registry.py for the lint. Fields: role (<=12-word purpose), category, cadence, status, artifact_paths, authority_level, supervised_by_orchestrator, owner, notes. supervised_by_orchestrator is DECLARATIVE \u2014 active agents default to true (they must be checked by tools/agent_heartbeat_checks.py). Set false only when the agent is intentionally cosmetic/unsupervised, with the reason in notes.",
   "enums": {
-    "category": ["control_plane", "signal_monitor", "data_ingestion", "research", "portfolio_risk"],
-    "cadence": ["daily_after_production", "daily_premarket", "intraday", "weekly", "on_demand", "unknown"],
-    "status": ["active", "shadow", "deprecated"],
-    "authority_level": ["observe_only", "observe_and_propose", "write_artifacts", "mutate_data", "mutate_config"]
+    "category": [
+      "control_plane",
+      "signal_monitor",
+      "data_ingestion",
+      "research",
+      "portfolio_risk"
+    ],
+    "cadence": [
+      "daily_after_production",
+      "daily_premarket",
+      "intraday",
+      "weekly",
+      "on_demand",
+      "unknown"
+    ],
+    "status": [
+      "active",
+      "shadow",
+      "deprecated"
+    ],
+    "authority_level": [
+      "observe_only",
+      "observe_and_propose",
+      "write_artifacts",
+      "mutate_data",
+      "mutate_config"
+    ]
   },
   "agents": {
     "aact_trial_ingest": {
@@ -14,7 +37,11 @@
       "category": "data_ingestion",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["data/aact/snapshots/", "data/aact/linked/", "agents/aact_trial_ingest/memory/"],
+      "artifact_paths": [
+        "data/aact/snapshots/",
+        "data/aact/linked/",
+        "agents/aact_trial_ingest/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -25,7 +52,9 @@
       "category": "portfolio_risk",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["artifacts/bioshort_watch/"],
+      "artifact_paths": [
+        "artifacts/bioshort_watch/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -36,7 +65,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/news_digest/"],
+      "artifact_paths": [
+        "artifacts/news_digest/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -47,7 +78,9 @@
       "category": "research",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["artifacts/calibration_evidence/"],
+      "artifact_paths": [
+        "artifacts/calibration_evidence/"
+      ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -58,7 +91,9 @@
       "category": "research",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["artifacts/calibration_evidence/"],
+      "artifact_paths": [
+        "artifacts/calibration_evidence/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -69,7 +104,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/catalyst_delta/"],
+      "artifact_paths": [
+        "artifacts/catalyst_delta/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -80,7 +117,9 @@
       "category": "data_ingestion",
       "cadence": "daily_premarket",
       "status": "deprecated",
-      "artifact_paths": ["data/press_releases/"],
+      "artifact_paths": [
+        "data/press_releases/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
@@ -91,7 +130,9 @@
       "category": "research",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["output/catalyst_ev/"],
+      "artifact_paths": [
+        "output/catalyst_ev/"
+      ],
       "authority_level": "mutate_data",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -102,7 +143,9 @@
       "category": "data_ingestion",
       "cadence": "daily_premarket",
       "status": "active",
-      "artifact_paths": ["artifacts/ctgov_daily/"],
+      "artifact_paths": [
+        "artifacts/ctgov_daily/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -113,7 +156,9 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/data_auditor/"],
+      "artifact_paths": [
+        "artifacts/data_auditor/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -124,7 +169,9 @@
       "category": "data_ingestion",
       "cadence": "daily_premarket",
       "status": "active",
-      "artifact_paths": ["artifacts/earnings_sync/"],
+      "artifact_paths": [
+        "artifacts/earnings_sync/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -135,7 +182,9 @@
       "category": "research",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["artifacts/event_analyst/"],
+      "artifact_paths": [
+        "artifacts/event_analyst/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -146,7 +195,10 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/fleet_steward/memory/", "artifacts/fleet_steward/"],
+      "artifact_paths": [
+        "agents/fleet_steward/memory/",
+        "artifacts/fleet_steward/"
+      ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -157,7 +209,9 @@
       "category": "signal_monitor",
       "cadence": "intraday",
       "status": "active",
-      "artifact_paths": ["artifacts/grok_watch/"],
+      "artifact_paths": [
+        "artifacts/grok_watch/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -168,7 +222,10 @@
       "category": "data_ingestion",
       "cadence": "daily_premarket",
       "status": "active",
-      "artifact_paths": ["data/press_releases/", "artifacts/news_digest/"],
+      "artifact_paths": [
+        "data/press_releases/",
+        "artifacts/news_digest/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -179,7 +236,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/ic_health_monitor/memory/"],
+      "artifact_paths": [
+        "agents/ic_health_monitor/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -190,7 +249,9 @@
       "category": "signal_monitor",
       "cadence": "intraday",
       "status": "active",
-      "artifact_paths": ["artifacts/intraday_mover_watch/"],
+      "artifact_paths": [
+        "artifacts/intraday_mover_watch/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -201,7 +262,10 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/ops/memory/", "artifacts/ops_digest/"],
+      "artifact_paths": [
+        "agents/ops/memory/",
+        "artifacts/ops_digest/"
+      ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -212,7 +276,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/options_watch/"],
+      "artifact_paths": [
+        "artifacts/options_watch/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -223,7 +289,10 @@
       "category": "portfolio_risk",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/policy_shadow_watch/memory/", "artifacts/policy_shadow_watch/"],
+      "artifact_paths": [
+        "agents/policy_shadow_watch/memory/",
+        "artifacts/policy_shadow_watch/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -234,7 +303,9 @@
       "category": "research",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/postmortem/"],
+      "artifact_paths": [
+        "artifacts/postmortem/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -245,7 +316,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/price_action_watch/"],
+      "artifact_paths": [
+        "artifacts/price_action_watch/"
+      ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -256,7 +329,10 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["artifacts/production_qa/", "agents/production_qa/memory/"],
+      "artifact_paths": [
+        "artifacts/production_qa/",
+        "agents/production_qa/memory/"
+      ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -267,7 +343,9 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/qa/memory/"],
+      "artifact_paths": [
+        "agents/qa/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -278,7 +356,9 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/review_queue_steward/memory/"],
+      "artifact_paths": [
+        "agents/review_queue_steward/memory/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -289,7 +369,9 @@
       "category": "control_plane",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/sentinel/memory/"],
+      "artifact_paths": [
+        "agents/sentinel/memory/"
+      ],
       "authority_level": "observe_and_propose",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -300,7 +382,10 @@
       "category": "portfolio_risk",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": ["agents/shadow_monitor/memory/", "artifacts/shadow_monitor/"],
+      "artifact_paths": [
+        "agents/shadow_monitor/memory/",
+        "artifacts/shadow_monitor/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
@@ -311,7 +396,10 @@
       "category": "portfolio_risk",
       "cadence": "daily_after_production",
       "status": "shadow",
-      "artifact_paths": ["agents/shadow_watch/memory/", "artifacts/shadow_watch/"],
+      "artifact_paths": [
+        "agents/shadow_watch/memory/",
+        "artifacts/shadow_watch/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
@@ -322,11 +410,27 @@
       "category": "data_ingestion",
       "cadence": "weekly",
       "status": "active",
-      "artifact_paths": ["artifacts/universe_maintenance/"],
+      "artifact_paths": [
+        "artifacts/universe_maintenance/"
+      ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
       "notes": ""
+    },
+    "ops_supervisor": {
+      "role": "daily ops triage \u2014 heartbeat anomalies \u2192 severity verdict",
+      "category": "control_plane",
+      "cadence": "daily_after_production",
+      "status": "active",
+      "artifact_paths": [
+        "artifacts/ops_supervisor/",
+        "agents/ops_supervisor/memory/"
+      ],
+      "authority_level": "observe_only",
+      "supervised_by_orchestrator": false,
+      "owner": "unassigned",
+      "notes": "Last interpretive layer. Sentinel (tools/agent_supervisor_sentinel.py) verifies its output. Per feedback_no_recursive_supervision, no further layer above this."
     }
   }
 }
