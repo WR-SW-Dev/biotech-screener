@@ -8,7 +8,7 @@ import csv
 import json
 import os
 import re
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
 SNAPS_DIR = os.path.join(REPO, "data/snapshots")
@@ -93,7 +93,12 @@ def compute_returns(ticker, event_date_str, prices, xbi_prices):
 
 
 def existing_postmortems():
-    existing = {}  # ticker -> event_date
+    """Return set of (ticker, event_date) tuples already postmorted.
+
+    Keyed on (ticker, event_date) so a ticker with a prior postmortem
+    does not silently filter out new resolutions on later dates.
+    """
+    existing = set()
     if not os.path.exists(PM_DIR):
         return existing
     for d in os.listdir(PM_DIR):
@@ -102,8 +107,43 @@ def existing_postmortems():
             continue
         for f in os.listdir(dp):
             if f.endswith(".json"):
-                existing[f.replace(".json", "")] = d
+                existing.add((f.replace(".json", ""), d))
     return existing
+
+
+def detect_snapshot_transitions(snaps, today_str, lookback_days=45):
+    """Detect resolutions by tracking next_catalyst_date forward-transitions.
+
+    The screener's `catalyst_days` resets to the *next* event the moment a
+    catalyst date passes, so scanning for `catalyst_days <= 0` in the latest
+    snapshot finds nothing. The reliable signal is: when a ticker's
+    next_catalyst_date advances forward, the prior date was a resolved event.
+
+    Returns list of (ticker, event_date, family, event_type), filtered to
+    events with event_date <= today and within `lookback_days` of latest snap.
+    """
+    if len(snaps) < 2:
+        return []
+    latest_dt = datetime.strptime(snaps[-1], "%Y-%m-%d").date()
+    cutoff = (latest_dt - timedelta(days=lookback_days)).isoformat()
+
+    last_state = {}  # ticker -> (next_date, family, evt_type)
+    detected = {}  # (ticker, event_date) -> (family, evt_type)
+
+    for snap_date in snaps:
+        snap = load_snapshot(snap_date)
+        for ticker, row in snap.items():
+            nxt = row.get("next_catalyst_date", "").strip()
+            fam = row.get("catalyst_family", "").strip()
+            evt = row.get("catalyst_event_type", "").strip()
+            prev = last_state.get(ticker)
+            if prev:
+                prev_nxt, prev_fam, prev_evt = prev
+                if prev_nxt and prev_nxt >= cutoff and prev_nxt <= today_str and (not nxt or nxt > prev_nxt):
+                    detected.setdefault((ticker, prev_nxt), (prev_fam, prev_evt))
+            last_state[ticker] = (nxt, fam, evt)
+
+    return [(tk, ed, v[0], v[1]) for (tk, ed), v in sorted(detected.items())]
 
 
 def load_resolution_files():
@@ -306,37 +346,44 @@ def main():
     print(f"[postmortem] {today}  latest_snap={latest}")
 
     already = existing_postmortems()
-    print(f"[postmortem] existing: {sorted(already.keys())}")
+    print(f"[postmortem] existing postmortems on file: {len(already)}")
 
-    # Primary source: resolutions/ JSON files
+    # Primary source: explicit resolution records dropped into snapshots/resolutions/
     resol_recs = load_resolution_files()
     print(f"[postmortem] resolution records found: {len(resol_recs)}")
 
-    # Secondary: any ticker with catalyst_days <= 0 in latest dated snapshot
-    latest_snap = load_snapshot(latest) if latest else {}
-    snap_candidates = {}
-    for ticker, row in latest_snap.items():
-        cd_raw = row.get("catalyst_days", "").strip()
-        try:
-            cd = int(float(cd_raw))
-        except (ValueError, TypeError):
-            continue
-        if cd <= 0:
-            snap_candidates[ticker] = row
+    # Build candidate map keyed on (ticker, event_date) so multiple events
+    # per ticker are preserved and prior-month postmortems do not mask new ones.
+    candidates = {}  # (ticker, event_date) -> resolution_rec_or_None
 
-    # Build unified candidate list: (ticker, event_date, resolution_rec_or_None)
-    candidates = {}
     for rec in resol_recs:
         t = rec.get("ticker")
         evt = rec.get("catalyst_date") or rec.get("resolution_date")
-        if t and evt and t not in already:
-            candidates[t] = (evt, rec)
+        if not (t and evt):
+            continue
+        if evt > today:
+            continue  # event hasn't happened yet
+        key = (t, evt)
+        if key in already:
+            continue
+        candidates[key] = rec
 
-    for ticker, row in snap_candidates.items():
-        if ticker not in already and ticker not in candidates:
-            candidates[ticker] = (latest, None)
+    # Secondary source: snapshot transitions where next_catalyst_date advanced.
+    # This catches resolutions for which no explicit resolution record was filed.
+    transitions = detect_snapshot_transitions(snaps, today)
+    for ticker, event_date, family, evt_type in transitions:
+        key = (ticker, event_date)
+        if key in already or key in candidates:
+            continue
+        candidates[key] = {
+            "ticker": ticker,
+            "catalyst_date": event_date,
+            "catalyst_type": evt_type,
+            "catalyst_family": family,
+            "source_type": "SNAPSHOT_TRANSITION",
+        }
 
-    print(f"[postmortem] candidates: {sorted(candidates.keys())}")
+    print(f"[postmortem] candidates: {len(candidates)}")
 
     if not candidates:
         print("[postmortem] HEARTBEAT_OK — no new resolutions")
@@ -348,28 +395,28 @@ def main():
 
     written, gaps, skipped = [], [], []
 
-    for ticker, (event_date, resol_rec) in sorted(candidates.items()):
+    for (ticker, event_date), resol_rec in sorted(candidates.items()):
         print(f"\n[postmortem] {ticker}  event={event_date}")
 
         pre_snap_date, pre_row = best_pre_snap(ticker, event_date, snaps)
         if pre_snap_date is None:
             print("  ⚠ no pre-event snapshot found")
-            gaps.append(ticker)
+            gaps.append(f"{ticker}@{event_date}")
             continue
 
         outcome = compute_returns(ticker, event_date, prices, xbi_prices)
         if not outcome:
             print("  ⚠ no price data")
-            gaps.append(ticker)
+            gaps.append(f"{ticker}@{event_date}")
             continue
 
         if outcome.get("return_t3") is None:
             print("  ⚠ T+3 not yet available — skipping")
-            skipped.append(ticker)
+            skipped.append(f"{ticker}@{event_date}")
             continue
 
         write_postmortem(ticker, event_date, pre_snap_date, pre_row, outcome, resol_rec)
-        written.append(ticker)
+        written.append(f"{ticker}@{event_date}")
 
     # Write/update memory note
     os.makedirs(MEM_DIR, exist_ok=True)
@@ -378,6 +425,7 @@ def main():
         f.write(f"# Memory: {today}\n\n")
         f.write("## Postmortem run\n\n")
         f.write(f"- Latest snapshot: {latest}\n")
+        f.write(f"- Existing postmortems on file: {len(already)}\n")
         f.write(f"- Candidates: {sorted(candidates.keys())}\n")
         f.write(f"- Written: {written}\n")
         f.write(f"- Skipped (T+3 not ready): {skipped}\n")

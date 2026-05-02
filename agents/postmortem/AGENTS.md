@@ -8,10 +8,10 @@
 
 ## Daily sequence
 
-1. Identify resolved catalysts:
-   - Read latest rankings.csv: find names where catalyst_days <= 0 or catalyst_days was <= 3 in prior snapshot
-   - Cross-reference with prior snapshot to detect events that just passed
-   - Only process names not already captured in `artifacts/postmortem/`
+1. Identify resolved catalysts (run `agents/postmortem/scripts/run_postmortem.py`, which:):
+   - Reads explicit resolution records from `data/snapshots/resolutions/YYYY-MM/`
+   - Detects `next_catalyst_date` forward-transitions across consecutive snapshots — that is the canonical "event resolved" signal (`catalyst_days <= 0` does not work because the pointer advances the moment a date passes)
+   - Dedupes against `artifacts/postmortem/` keyed on `(ticker, event_date)`
 2. For each resolved name, capture:
    - **Pre-event state** (from the snapshot closest to but before the event):
      - ticker, actionable_rank, tier_dev, size_band, target_weight_pct
