@@ -1,29 +1,58 @@
 {
   "schema": "calibration_summary.v1",
-  "period": "2026-03",
-  "total_resolutions": 24,
+  "period": "2026-04",
+  "total_resolutions": 55,
   "outcome_distribution": {
-    "MISS": 10,
-    "NEEDS_REVIEW": 7,
-    "HIT": 7
+    "DELAYED": 22,
+    "NEEDS_REVIEW": 12,
+    "HIT": 13,
+    "MISS": 8
   },
   "by_catalyst_type": {
     "PHASE_3_READOUT": {
-      "n": 14,
-      "hit": 6,
-      "miss": 8,
+      "n": 13,
+      "hit": 3,
+      "miss": 0,
       "mixed": 0,
-      "hit_rate": 0.429
+      "hit_rate": 1.0
     },
     "CORPORATE_UPDATE": {
-      "n": 7,
+      "n": 9,
       "hit": 0,
-      "miss": 2,
+      "miss": 7,
       "mixed": 0,
       "hit_rate": 0.0
     },
     "PDUFA_ACTION": {
-      "n": 3,
+      "n": 25,
+      "hit": 2,
+      "miss": 1,
+      "mixed": 0,
+      "hit_rate": 0.667
+    },
+    "PHASE_1_DATA": {
+      "n": 4,
+      "hit": 4,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "PHASE_2_READOUT": {
+      "n": 2,
+      "hit": 2,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "IND_CLEARANCE": {
+      "n": 1,
+      "hit": 1,
+      "miss": 0,
+      "mixed": 0,
+      "hit_rate": 1.0
+    },
+    "REGULATORY_DESIGNATION": {
+      "n": 1,
       "hit": 1,
       "miss": 0,
       "mixed": 0,
@@ -33,27 +62,27 @@
   "by_dem_decile": {
     "top_10": {
       "n": 1,
-      "hit": 1,
-      "miss": 0,
-      "hit_rate": 1.0
+      "hit": 0,
+      "miss": 1,
+      "hit_rate": 0.0
     },
     "top_20": {
-      "n": 2,
-      "hit": 2,
-      "miss": 0,
-      "hit_rate": 1.0
+      "n": 1,
+      "hit": 0,
+      "miss": 1,
+      "hit_rate": 0.0
     },
     "top_60": {
-      "n": 6,
-      "hit": 4,
+      "n": 10,
+      "hit": 0,
       "miss": 2,
-      "hit_rate": 0.667
+      "hit_rate": 0.0
     },
     "bottom_50": {
-      "n": 3,
-      "hit": 1,
+      "n": 12,
+      "hit": 0,
       "miss": 1,
-      "hit_rate": 0.5
+      "hit_rate": 0.0
     }
   }
 }

@@ -1,17 +1,12 @@
 {
-  "as_of_date": "2026-04-28",
-  "n_watchlist": 2,
+  "as_of_date": "2026-05-01",
+  "n_watchlist": 1,
   "n_resolved_today": 0,
-  "n_existing": 109,
+  "n_existing": 117,
   "watchlist": [
     {
       "ticker": "AXSM",
       "catalyst_date": "2026-04-30",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "AQST",
-      "catalyst_date": "2026-03-30",
       "catalyst_type": "PDUFA_ACTION"
     }
   ]
