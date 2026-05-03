@@ -290,8 +290,7 @@
       "cadence": "daily_after_production",
       "status": "active",
       "artifact_paths": [
-        "agents/policy_shadow_watch/memory/",
-        "artifacts/policy_shadow_watch/"
+        "artifacts/policy_shadow/tier_weighted/"
       ],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
