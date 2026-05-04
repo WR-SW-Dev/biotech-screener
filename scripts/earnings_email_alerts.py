@@ -106,7 +106,7 @@ def build_reminder(events: list[dict], target_dates: list[date]) -> tuple[str, s
                 f'<td style="padding:4px 8px;text-align:right;">{rev}</td></tr>'
             )
 
-    body_html = """<html><body>
+    body_html = f"""<html><body>
 <h2 style="margin:0 0 12px 0;">Biotech Earnings — {date_label}</h2>
 <table style="border-collapse:collapse;font-family:monospace;font-size:13px;">
 <tr style="border-bottom:2px solid #333;">
@@ -250,7 +250,7 @@ def build_results_email(results: list[dict]) -> tuple[str, str, str]:
             "</tr>"
         )
 
-    body_html = """<html><body>
+    body_html = f"""<html><body>
 <h2 style="margin:0 0 12px 0;">Biotech Earnings Results — {date.today().strftime('%b %d')}</h2>
 <table style="border-collapse:collapse;font-family:monospace;font-size:13px;">
 <tr style="border-bottom:2px solid #333;">
