@@ -12336,9 +12336,9 @@ Module 3 Catalyst Detection:
                         _ps.get("excluded_by_exit") or "none",
                     )
                 else:
-                    logger.debug("[POLICY_SHADOW] skipped: %s", _ps["error"])
+                    logger.warning("[POLICY_SHADOW] skipped: %s", _ps["error"])
             except Exception as _ps_exc:
-                logger.debug("[POLICY_SHADOW] skipped: %s", _ps_exc)
+                logger.warning("[POLICY_SHADOW] skipped: %s", _ps_exc)
 
             # --- Policy candidate evaluation (Spec 035) ---
             try:

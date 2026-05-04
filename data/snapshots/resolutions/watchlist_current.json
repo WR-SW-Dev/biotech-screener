@@ -1,12 +1,32 @@
 {
-  "as_of_date": "2026-05-01",
-  "n_watchlist": 1,
-  "n_resolved_today": 0,
+  "as_of_date": "2026-05-04",
+  "n_watchlist": 5,
+  "n_resolved_today": 2,
   "n_existing": 117,
   "watchlist": [
     {
       "ticker": "AXSM",
       "catalyst_date": "2026-04-30",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "ZLAB",
+      "catalyst_date": "2026-05-10",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "ALDX",
+      "catalyst_date": "2026-05-01",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "ARGX",
+      "catalyst_date": "2026-05-10",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "BNTX",
+      "catalyst_date": "2026-05-05",
       "catalyst_type": "PDUFA_ACTION"
     }
   ]

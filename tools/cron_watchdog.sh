@@ -101,28 +101,50 @@ fi
 # Detection uses logs/agents_direct/{agent}_YYYYMMDD_*.json. The prior grep
 # on agents.log checked YYYY-MM-DD against the compact YYYYMMDD filename and
 # silently never matched — detection was broken even before the gate issue.
+#
+# Idempotency: artifacts/phase2_recovery_done/$YESTERDAY.complete prevents
+# repeated recovery on the same date. Without this marker, each watchdog tick
+# sees the same MISSED state and re-fires recovery indefinitely.
 YESTERDAY=$(TZ=America/Detroit date -d "yesterday" +%Y-%m-%d)
 YESTERDAY_COMPACT=$(echo "$YESTERDAY" | tr -d '-')
 AGENTS_LOG="$REPO/logs/agents.log"
 AGENTS_DIRECT_DIR="$REPO/logs/agents_direct"
 PHASE2_AGENTS="price_action_watch postmortem options_watch review_queue_steward event_analyst"
+PHASE2_MARKER_DIR="$REPO/artifacts/phase2_recovery_done"
+PHASE2_MARKER="$PHASE2_MARKER_DIR/$YESTERDAY.complete"
 
-missed_agents=""
-for agent in $PHASE2_AGENTS; do
-    if ! ls "$AGENTS_DIRECT_DIR/${agent}_${YESTERDAY_COMPACT}_"*.json 1>/dev/null 2>&1; then
-        missed_agents="$missed_agents $agent"
-    fi
-done
+mkdir -p "$PHASE2_MARKER_DIR"
 
-if [ -n "$missed_agents" ]; then
-    log "MISSED phase-2 agents from $YESTERDAY:$missed_agents — triggering recovery"
-    for agent in $missed_agents; do
-        log "Recovering agent: $agent"
-        $PYTHON "$REPO/tools/run_agent_direct.py" --agent "$agent" >> "$AGENTS_LOG" 2>&1 || log "Agent $agent recovery failed (exit $?)"
-    done
-    log "Phase-2 agent recovery complete"
+# Skip recovery if already completed for this date
+if [ -f "$PHASE2_MARKER" ]; then
+    log "Phase-2 recovery already completed for $YESTERDAY — skipping"
 else
-    log "All phase-2 agents ran on $YESTERDAY — no agent recovery needed"
+    missed_agents=""
+    for agent in $PHASE2_AGENTS; do
+        if ! ls "$AGENTS_DIRECT_DIR/${agent}_${YESTERDAY_COMPACT}_"*.json 1>/dev/null 2>&1; then
+            missed_agents="$missed_agents $agent"
+        fi
+    done
+
+    if [ -n "$missed_agents" ]; then
+        log "MISSED phase-2 agents from $YESTERDAY:$missed_agents — triggering recovery"
+        for agent in $missed_agents; do
+            log "Recovering agent: $agent"
+            $PYTHON "$REPO/tools/run_agent_direct.py" --agent "$agent" >> "$AGENTS_LOG" 2>&1 || log "Agent $agent recovery failed (exit $?)"
+        done
+        log "Phase-2 agent recovery complete"
+
+        # Write completion marker to prevent re-firing
+        echo "phase2_recovery_complete: $YESTERDAY" > "$PHASE2_MARKER"
+        echo "recovered_agents:$missed_agents" >> "$PHASE2_MARKER"
+        echo "recovery_timestamp: $(date '+%Y-%m-%dT%H:%M:%S%z')" >> "$PHASE2_MARKER"
+    else
+        log "All phase-2 agents ran on $YESTERDAY — no agent recovery needed"
+        # Write marker even when no recovery needed (all agents present)
+        echo "phase2_recovery_complete: $YESTERDAY" > "$PHASE2_MARKER"
+        echo "recovered_agents: none" >> "$PHASE2_MARKER"
+        echo "recovery_timestamp: $(date '+%Y-%m-%dT%H:%M:%S%z')" >> "$PHASE2_MARKER"
+    fi
 fi
 
 # Pre-market feed checks run on every invocation, regardless of production state.
