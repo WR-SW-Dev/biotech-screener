@@ -317,9 +317,89 @@ Cross-reference with receipt findings to triage.
 
 ---
 
+## TEMPLATE 8 — Model routing for external-content watcher agents
+
+Surfaced by `openclaw status --deep` security audit (2026-05-03 ~17:00 ET):
+
+> WARN — Some configured models are below recommended tiers
+> Smaller/older models are generally more susceptible to prompt injection
+> and tool misuse. Detected: `claude-haiku-4-5-20251001` on multiple agents.
+
+The agents currently on Haiku that consume **untrusted external content**:
+
+| Agent              | External-content surface                                |
+| ------------------ | ------------------------------------------------------- |
+| bioshort_watch     | reads `output/hedge_report/*.json` (third-party feed)   |
+| grok_biotech_watch | xAI Grok web search results (free-form internet text)  |
+| shadow_watch       | various external feeds (verify before routing change)   |
+
+This is a **standing posture decision**, not an active fault. No
+incident; routing was chosen for cost. Today's bioshort cron-prompt
+fix tightened the read-only scope, which mitigates blast radius
+regardless of model tier.
+
+### Option M1 — Route external-content agents to Sonnet
+
+Edit per-agent OpenClaw config to override model:
+
+```bash
+# Per-agent model override — exact CLI shape depends on OpenClaw version:
+openclaw agents update bioshort_watch     --model anthropic/claude-sonnet-4-6
+openclaw agents update grok_biotech_watch --model anthropic/claude-sonnet-4-6
+# shadow_watch — verify content surface first, then optionally:
+openclaw agents update shadow_watch       --model anthropic/claude-sonnet-4-6
+```
+
+✅ Better prompt-injection resistance per security audit recommendation.
+✅ Targeted: only the three external-content readers, not the whole fleet.
+✅ Reversible per-agent.
+❌ ~3-5x token cost for those agents (Sonnet vs Haiku pricing).
+   Annual cost depends on invocation frequency × token usage; with
+   bioshort_watch at 1/week (cron 13 18 * * 6) and grok_biotech_watch at
+   3/weekday (post-grok-fix), the absolute spend is small but non-zero.
+❌ Verify CLI shape (`openclaw agents update --model` may not be the exact
+   command name — check `openclaw agents --help` before applying).
+
+### Option M2 — Route only the highest-risk agent (grok_biotech_watch)
+
+Same as M1 but only for `grok_biotech_watch`. Rationale: Grok web-search
+results are the most adversarial input surface (arbitrary internet text,
+no operator pre-screening); hedge-report JSON is a generated artifact
+inside the screener; shadow_watch's external surface is unclear without
+investigation.
+
+✅ Smallest cost increase.
+✅ Concentrates the risk-mitigation on the highest-leverage target.
+❌ Leaves bioshort_watch and shadow_watch on Haiku.
+❌ Doesn't address the security audit warn fully.
+
+### Option M3 — No change; document acceptance
+
+Add a note to `agents/AGENT_REGISTRY.json` (or a separate posture doc)
+recording that Haiku routing on external-content readers is a known
+trade-off, intentional, and revisited if a real incident surfaces.
+
+✅ Zero cost change.
+✅ Captures the operator's already-implicit decision explicitly.
+❌ The security audit warn keeps appearing in every `openclaw status --deep`
+   run; nothing makes it stop.
+
+### (Operator considerations — not a recommendation)
+
+This is genuinely "no urgent action required" per the 2026-05-03 audit.
+Today's bioshort cron-prompt tightening already mitigated one of the two
+attack surfaces (the agent now refuses to escalate beyond reading
+artifacts). M2 is the reasonable middle ground if cost is tight; M1 is
+the cleanest closure of the security-audit warn; M3 is the do-nothing
+that's still defensible.
+
+**Operator pick:** _________________ (M1 / M2 / M3 / defer)
+
+---
+
 ## Deferred state
 
-All seven decisions are open. None block production today. None are
+All eight decisions are open. None block production today. None are
 urgent — fleet receipt will continue to surface the same findings until
 operator picks.
 
