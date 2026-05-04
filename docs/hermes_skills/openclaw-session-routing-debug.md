@@ -175,6 +175,100 @@ openclaw status
 
 ---
 
+### Class E — Cron delivery "Channel is required" silent failure
+
+**Signature:** Agent runs complete successfully (memory files written, artifacts generated),
+but daily briefings/digests are never delivered. `openclaw tasks list --json` shows
+`status: failed` with `error: "Channel is required (no configured channels detected)"`.
+The agent LLM run and artifact write both succeed; the delivery hook fails silently.
+
+**Confirmed instance:** 2026-05-03 runs.sqlite deep-dive — 14 cron failures cluster with
+this error. ops: 13 failures in 6 days, sentinel: 8, qa: 4, grok_biotech_watch: 4,
+bioshort_watch: active as of May 2. All agent outputs present; zero briefings delivered.
+
+**Diagnostic recipe:**
+
+```bash
+# Check agent cron spec for delivery config
+openclaw tasks list --json | python3 -c "
+import json, sys
+tasks = json.load(sys.stdin)
+for t in tasks:
+    if 'Channel is required' in (t.get('error') or ''):
+        print(t.get('agentId'), t.get('taskId')[:8])
+"
+
+# Check openclaw.json for system-level delivery channel
+cat ~/.openclaw/openclaw.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('delivery', 'NOT SET'))"
+```
+
+**Resolution:** Configure `delivery.channel` per agent cron spec, or set a system-level
+default in openclaw.json. This failure is invisible from the data perspective — artifacts
+are clean, agent ran correctly — but means 100% of briefings are silently undelivered.
+
+---
+
+### Class F — openclaw doctor --repair self-bricks on Distrod-WSL2 ARM64
+
+**Signature:** `openclaw gateway status --deep` reports two warnings: (1) gateway PATH
+includes nvm versioned path, (2) ExecStart uses nvm Node binary. Tool suggests
+`openclaw doctor --repair`. Running --repair rewrites systemd unit to use
+`/usr/local/bin/node` — which does NOT exist on this system — killing the gateway.
+
+**Confirmed instance:** Multiple sessions 2026-05-03. System is Distrod-WSL2 ARM64
+with stripped APT sources, no curl/wget, no system-wide Node. Operator chose "leave it"
+each time. The warnings are cosmetic; the gateway functions normally.
+
+**Safe diagnostic:**
+
+```bash
+# Check if /usr/local/bin/node exists BEFORE running --repair
+ls /usr/local/bin/node 2>/dev/null || echo "MISSING — do NOT run --repair"
+
+# Preview what --repair would do (dry-run first)
+openclaw doctor --repair --dry-run
+
+# Workaround if repair is needed: create symlink first
+sudo ln -s ~/.nvm/versions/node/v22.22.1/bin/node /usr/local/bin/node
+# THEN run --repair
+```
+
+**DO NOT run `openclaw doctor --repair` without first confirming `/usr/local/bin/node` exists.**
+
+---
+
+### Class G — Retired agent zombie in fleet (deregistration pending)
+
+**Signature:** `openclaw status` shows an agent with sessions but "unknown/200k" context.
+Fleet receipt lists it as STALE/NO_ARTIFACTS. Crontab shows the agent's entry commented
+out with a RETIRED note. Memory directory is completely empty.
+
+**Confirmed instance:** `shadow_watch` — crontab has `# RETIRED: shadow_watch
+(consolidated into shadow_monitor via heartbeat_checks.py)`. Memory empty. Still
+generating orphan session records and polluting fleet receipt counts.
+
+**Distinguishing retired (shadow_watch) from silently-broken (grok_biotech_watch):**
+
+```
+shadow_watch (confirmed retired):
+  - crontab entry has explicit RETIRED comment
+  - memory/ is empty (zero files, never wrote)
+  - no XAI/API credential required
+  - safe to deregister immediately
+
+grok_biotech_watch (status uncertain):
+  - crontab entry WAS missing (now fixed to SCAN)
+  - last artifact 34 days ago
+  - requires XAI_API_KEY
+  - may be auth-broken or intentionally paused — confirm before deregistering
+```
+
+**Resolution:** `openclaw agent deregister shadow_watch` (or equivalent). Safe because:
+crontab already commented out, memory empty, functionality consolidated into shadow_monitor.
+Until deregistered, it inflates STALE count and generates misleading openclaw status output.
+
+---
+
 ## Quick-reference triage
 
 ```
@@ -192,6 +286,15 @@ openclaw status shows "audit N errors" but tasks audit shows only warnings?
 Single agent failing, not a cluster?
   → Not an auth/routing issue. Check the agent's own AGENTS.md and artifact paths.
   → Use openclaw-agent-scope-audit instead.
+
+Agent runs succeed but briefings never arrive?
+  → Class E. Delivery channel not configured. Check cron spec + openclaw.json.
+
+openclaw doctor --repair warning about nvm PATH?
+  → Class F. Check /usr/local/bin/node exists FIRST. If missing, do NOT run --repair.
+
+Fleet receipt shows agent STALE with crontab entry commented out RETIRED?
+  → Class G. Zombie retired agent. Safe to deregister if memory empty + no API key needed.
 ```
 
 ---
