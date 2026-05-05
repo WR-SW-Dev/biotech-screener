@@ -281,6 +281,15 @@ def classify_outcome(
 # ---------------------------------------------------------------------------
 
 
+def _safe_float(v: Any) -> Optional[float]:
+    """Best-effort float coercion. Returns None for non-numeric or NaN."""
+    try:
+        f = float(v)
+        return None if f != f else f
+    except (TypeError, ValueError):
+        return None
+
+
 def _compute_price_direction(
     t_minus_1: Optional[float], t_0: Optional[float], threshold: float = 0.02
 ) -> Optional[str]:
@@ -643,6 +652,7 @@ def run_crt(
                 source_id=ov.get("source", "manual_override"),
                 prediction_snapshot_date=snap.get("snapshot_date"),
                 prediction_dem_rank=dem_rank,
+                prediction_composite_score=_safe_float(snap.get("composite_score")),
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),
@@ -667,6 +677,13 @@ def run_crt(
             ov = overrides[override_key]
             outcome = ov.get("outcome", "NEEDS_REVIEW")
             if outcome in OUTCOMES:
+                snap = get_prediction_snapshot(ticker, cat_date, snapshots_dir)
+                dem_rank = None
+                if snap.get("dem_rank"):
+                    try:
+                        dem_rank = int(snap["dem_rank"])
+                    except (ValueError, TypeError):
+                        pass
                 new_records.append(
                     ResolutionRecord(
                         ticker=ticker,
@@ -678,6 +695,9 @@ def run_crt(
                         outcome_detail=ov.get("outcome_detail", "manual override"),
                         source_type="MANUAL",
                         source_id="manual_override",
+                        prediction_snapshot_date=snap.get("snapshot_date"),
+                        prediction_dem_rank=dem_rank,
+                        prediction_composite_score=_safe_float(snap.get("composite_score")),
                         as_of_date=as_of_date.isoformat(),
                     )
                 )
@@ -736,6 +756,7 @@ def run_crt(
                 source_id=source_id,
                 prediction_snapshot_date=snap.get("snapshot_date"),
                 prediction_dem_rank=dem_rank,
+                prediction_composite_score=_safe_float(snap.get("composite_score")),
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),
