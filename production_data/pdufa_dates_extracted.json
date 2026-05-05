@@ -13,8 +13,8 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-01-06",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-02-26",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of April 5, 2026"
@@ -33,11 +33,11 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-01-12",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-02-03",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA date of April 10, 2026"
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of April 10, 2026"
   },
   {
     "ticker": "LGND",
@@ -54,7 +54,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date is April 13, 2026"
@@ -73,11 +73,11 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-01-13",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-02-19",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date is April 13, 2026"
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of April 13, 2026"
   },
   {
     "ticker": "DFTX",
@@ -94,7 +94,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-22",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA Submission 1. Study MMED008 internal study documents and calculations. Compa"
@@ -114,7 +114,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-27",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA submission meeting with FDA in the coming months, followed by a target submi"
@@ -134,7 +134,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-27",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA submission of efdoralprin alfa for AATD NDA Submission of Qtorin Rapamycin f"
@@ -154,7 +154,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-27",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: BLA submission and commercial launch in the U.S. in 2027. Key Efficacy Endpoints"
@@ -174,10 +174,30 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-27",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: BLA submission Commenced payer engagement Scale field sales and reimbursement te"
+  },
+  {
+    "ticker": "SGMT",
+    "pdufa_date": "2026-04-27",
+    "event_type": "PDUFA",
+    "event_status": "upcoming",
+    "submission_type": "NDA",
+    "review_type": "",
+    "confidence": "HIGH",
+    "date_precision": "DAY",
+    "prior_date": null,
+    "source": "SEC_8K_FILING",
+    "source_url": "",
+    "accession": "",
+    "filing_form": "",
+    "as_of_disclosed_at": "2026-04-27",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
+    "drug_name": "",
+    "indication": "",
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA accepted by NMPA in December 2025* Metabolic Disease MASH Phase 2b clinical "
   },
   {
     "ticker": "IONS",
@@ -194,7 +214,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-29",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: sNDA accepted by the FDA for Priority Review; sHTG launch preparations on track "
@@ -214,10 +234,30 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-01-29",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=6-K: target action date is April 29, 2026"
+  },
+  {
+    "ticker": "TEVA",
+    "pdufa_date": "2026-04-29",
+    "event_type": "PDUFA",
+    "event_status": "upcoming",
+    "submission_type": "NDA",
+    "review_type": "",
+    "confidence": "HIGH",
+    "date_precision": "DAY",
+    "prior_date": null,
+    "source": "SEC_8K_FILING",
+    "source_url": "",
+    "accession": "",
+    "filing_form": "",
+    "as_of_disclosed_at": "2026-04-29",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
+    "drug_name": "",
+    "indication": "",
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA submission is anticipated in 2H 2026. Upon closing, Teva will pay $700 milli"
   },
   {
     "ticker": "AXSM",
@@ -234,14 +274,14 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-23",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of April 30, 2026"
   },
   {
-    "ticker": "ALDX",
-    "pdufa_date": "2026-05-01",
+    "ticker": "MIRM",
+    "pdufa_date": "2026-05-04",
     "event_type": "PDUFA",
     "event_status": "upcoming",
     "submission_type": "NDA",
@@ -253,11 +293,11 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-05-01",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-05-04",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA resubmission for reproxalap and the adequacy of the data included in such po"
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: NDA submission in the second half of 2026. The full results from the VISTAS Phas"
   },
   {
     "ticker": "BNTX",
@@ -274,7 +314,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-03-10",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=6-K: BLA Submission Trastuzumab pamirtecan (HER2-ADC) 3 ADC - 2L+ HER2-expressing end"
@@ -294,7 +334,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-13",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: Type A meeting to understand the path forward. Norovirus vaccine Moderna's ongoi"
@@ -313,8 +353,8 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-03-19",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-04-20",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=6-K: target action date of May 10, 2026"
@@ -334,7 +374,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of May 10, 2026"
@@ -354,7 +394,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-06",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA date of May 24, 2026"
@@ -374,7 +414,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of May 29, 2026"
@@ -394,7 +434,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-05-01",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA date of June 5, 2026"
@@ -414,7 +454,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-25",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date set for June 29, 2026"
@@ -434,7 +474,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-04-29",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of June 30, 2026"
@@ -454,7 +494,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-03-30",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: Target Action Date of June 30, 2026"
@@ -474,7 +514,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of July 7, 2026"
@@ -494,7 +534,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-03-25",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA goal date of July 17, 2026"
@@ -514,30 +554,10 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of July 26, 2026"
-  },
-  {
-    "ticker": "VTRS",
-    "pdufa_date": "2026-07-30",
-    "event_type": "PDUFA",
-    "event_status": "upcoming",
-    "submission_type": "",
-    "review_type": "",
-    "confidence": "HIGH",
-    "date_precision": "DAY",
-    "prior_date": null,
-    "source": "SEC_8K_FILING",
-    "source_url": "",
-    "accession": "",
-    "filing_form": "",
-    "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
-    "drug_name": "",
-    "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA goal date of July 30, 2026"
   },
   {
     "ticker": "NUVL",
@@ -553,8 +573,8 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-01-14",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-02-26",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of September 18, 2026"
@@ -573,31 +593,11 @@
     "source_url": "",
     "accession": "",
     "filing_form": "",
-    "as_of_disclosed_at": "2026-04-21",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "as_of_disclosed_at": "2026-04-29",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA date set for September 22, 2026"
-  },
-  {
-    "ticker": "VTRS",
-    "pdufa_date": "2026-10-17",
-    "event_type": "PDUFA",
-    "event_status": "upcoming",
-    "submission_type": "",
-    "review_type": "",
-    "confidence": "HIGH",
-    "date_precision": "DAY",
-    "prior_date": null,
-    "source": "SEC_8K_FILING",
-    "source_url": "",
-    "accession": "",
-    "filing_form": "",
-    "as_of_disclosed_at": "2026-02-26",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
-    "drug_name": "",
-    "indication": "",
-    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: PDUFA goal date of October 17, 2026"
+    "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of September 22, 2026"
   },
   {
     "ticker": "EXEL",
@@ -614,7 +614,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-02-10",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of December 3, 2026"
@@ -634,7 +634,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-03-09",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: target action date of December 22, 2026"
@@ -654,7 +654,7 @@
     "accession": "",
     "filing_form": "",
     "as_of_disclosed_at": "2026-03-04",
-    "extracted_at": "2026-05-04T18:00:07.135623+00:00",
+    "extracted_at": "2026-05-05T12:30:07.322875+00:00",
     "drug_name": "",
     "indication": "",
     "notes": "Auto-extracted from SEC 8-K cache; pattern_version=937b38db; event_name=8-K: Type A meeting with the FDA and expedited review for Anaphylm the advancement an"
