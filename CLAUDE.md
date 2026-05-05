@@ -33,12 +33,13 @@ Spec 050 (2026-04-03) replaced the old optionality-anchored selector with a two-
 selector/ranker architecture. Checklist v2 rerun (2026-04-04) revalidated the live stack
 under the Spec 055 statistical bar (FM, bootstrap, FDR, LOSO).
 
-> **Production mental model: coinvest selects, inst_delta ranks, financial penalizes
+> **Production mental model: coinvest selects (sole institutional signal as of v1.14.0), financial penalizes
 > "safe but less catalytic" names, and clinical is a weak/conditional feature under review.**
+> inst_delta_z zeroed in selector 2026-05-04 (ALERT two-frame confirmed; governance log filed).
 
 1. **B6 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30 is production.** True PIT backtest: +2.34pp/mo net-of-cost, t=2.57, 69% hit rate, 67 monthly periods (Jun 2020 — Apr 2026).
 2. **B6 selector validated under Checklist v2.** Bootstrap: +2.42pp/mo, 95% CI [1.25%, 3.70%], P(>0)=99.99%. LOSO: ROBUST across all dimensions. Neither component survives standalone, but the bundle is real.
-3. **Selector and ranker learn different structure.** B6 (coinvest 65% + inst_delta 35%) selects which 30 names. Within top-30: inst_delta is the dominant positive discriminator (NW-t=+3.32), financial_score is a true negative penalty (NW-t=−3.41), coinvest washes out (+0.49).
+3. **Selector and ranker learn different structure.** B6 (coinvest 65% + inst_delta 35%) selects which 30 names — **as of v1.14.0, inst_delta_z is zeroed in the selector (coinvest_score_z 100%)**. Within top-30: inst_delta is the dominant positive discriminator (NW-t=+3.32), financial_score is a true negative penalty (NW-t=−3.41), coinvest washes out (+0.49). inst_delta_z already excluded from ranker since Spec 051.
 4. **Pairwise ranker is ordinal-only.** ECE=0.129 (POOR calibration). No rank-weighting, no confidence sizing. Equal-weight is the correct construction.
 5. **EW Top-30 is the correct construction.** RW-EW = -0.09pp, t=-0.95. Pairwise calibration confirms.
 6. **K=30 validated by sweep.** Net-of-cost peak at +2.34pp, stable K=25-35 plateau.
@@ -112,11 +113,11 @@ hours here unless genuinely new data or a structural model change creates a reas
 
 ## Current Promotion Story
 
-1. **B6 selector + pairwise_minimal ranker (ordinal-only) + EW Top-30 is ADOPTED** (2026-04-03, revalidated 2026-04-04).
+1. **Coinvest-only selector + pairwise_minimal ranker (ordinal-only) + EW Top-30 is production (v1.14.0).** B6 bundle (coinvest 65% + inst_delta 35%) validated in true PIT backtest: +2.34pp/mo net-of-cost, t=2.57, 69% hit rate, 67 monthly periods. inst_delta_z zeroed in selector 2026-05-04 (ALERT: mean_ic=-0.097 over 36 dates; reinstatement conditions in governance log).
 2. True PIT evidence: +2.34pp/mo net, t=2.57, 69% hit, beats XBI on return and risk.
 3. **B6 bundle passes Checklist v2**: bootstrap +2.42pp/mo, CI [1.25%, 3.70%], LOSO ROBUST. Bundle > parts.
 4. **Pairwise ordinal-only confirmed**: ECE=0.129. Do not rank-weight or confidence-size.
-5. **Within-cohort roles clear**: coinvest selects, inst_delta ranks, financial penalizes safe names.
+5. **Within-cohort roles clear**: coinvest selects (sole institutional signal, v1.14.0), financial penalizes safe names. inst_delta_z zeroed in selector — reinstatement pending IC recovery.
 6. **event_type_score**: 5/5 Checklist v2 but overlay only — does not improve B6 bundle.
 7. **Forward shadow is the validation layer.** 7 arms accumulating daily. Evaluate after 30 trading days.
 8. **K=30 is validated** by PIT sweep (stable K=25-35 plateau, net-of-cost peak).
