@@ -412,3 +412,6 @@ data/bvf_backfill/
 # --- Append-only runtime logs (regenerable; tracked files already in repo are unaffected by these patterns, but exempt explicitly for defense) ---
 data/*_log.jsonl
 !data/expression_decision_log.jsonl
+
+# --- Auto-extracted PDUFA dates (regenerated each run; committed only on structural change) ---
+production_data/pdufa_dates_extracted.json
