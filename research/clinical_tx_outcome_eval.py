@@ -91,7 +91,7 @@ def build_eval_dataset(min_days_since: int = 7) -> List[Dict[str, Any]]:
                 decision_type = "both_inactive"
 
             # Look up outcome
-            outcome = _find_outcome(ticker, as_of, resolutions)
+            outcome = _find_outcome(ticker, as_of, name.get("days_to_event"), resolutions)
             ret_1d, ret_5d = _find_returns(ticker, as_of, name.get("days_to_event"), prices)
 
             row = {
@@ -170,17 +170,35 @@ def _load_prices() -> Any:
     return None
 
 
-def _find_outcome(ticker: str, decision_date: str, resolutions: Dict) -> Optional[int]:
-    """Find realized outcome for a ticker after decision date."""
+def _find_outcome(
+    ticker: str,
+    decision_date: str,
+    days_to_event: Optional[int],
+    resolutions: Dict,
+) -> Optional[int]:
+    """Find realized outcome for a ticker within the decision's event window.
+
+    A resolution is credited to a TX decision only if it falls between the
+    decision date and decision + days_to_event + 30d pad. Outcomes far past
+    the scored event window belong to a different catalyst.
+    """
+    if days_to_event is None:
+        upper_bound: Optional[str] = None
+    else:
+        decision_dt = datetime.strptime(decision_date, "%Y-%m-%d").date()
+        upper_bound = (decision_dt + timedelta(days=int(days_to_event) + 30)).isoformat()
     recs = resolutions.get(ticker, [])
     for rec in recs:
         res_date = rec.get("resolution_date", rec.get("catalyst_date", ""))
-        if res_date and res_date >= decision_date:
-            outcome = rec.get("outcome", "")
-            if outcome == "HIT":
-                return 1
-            elif outcome == "MISS":
-                return 0
+        if not res_date or res_date < decision_date:
+            continue
+        if upper_bound is not None and res_date > upper_bound:
+            continue
+        outcome = rec.get("outcome", "")
+        if outcome == "HIT":
+            return 1
+        elif outcome == "MISS":
+            return 0
     return None
 
 
