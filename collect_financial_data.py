@@ -97,6 +97,12 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                 "CashEquivalentsAtCarryingValue": "CashEquivalentsOnly",
                 "MarketableSecuritiesCurrent": "MarketableSecurities",
                 "ShortTermInvestments": "ShortTermInvestments",
+                # Fallback tags for STI — some filers (e.g. EWTX) report under these
+                # instead of ShortTermInvestments. AvailableForSaleSecuritiesCurrent and
+                # AvailableForSaleSecuritiesDebtSecuritiesCurrent are already fetched
+                # separately; DebtSecuritiesAvailableForSaleCurrent is the ASC 320 (2018+)
+                # replacement used by some biotechs for their treasury note holdings.
+                "DebtSecuritiesAvailableForSaleCurrent": "DebtSecuritiesAvailableForSaleCurrent",
                 "AvailableForSaleSecuritiesCurrent": "AvailableForSaleSecurities",
                 "AvailableForSaleSecuritiesDebtSecuritiesCurrent": "AvailableForSaleDebtCurrent",
                 "CostOfRevenue": "COGS",
@@ -322,7 +328,8 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
             st_inv = financial_data.get("ShortTermInvestments", 0) or 0
             avail = financial_data.get("AvailableForSaleSecurities", 0) or 0
             avail_debt = financial_data.get("AvailableForSaleDebtCurrent", 0) or 0
-            total_liquid = cash + mkt_sec + st_inv + avail + avail_debt
+            debt_avail_current = financial_data.get("DebtSecuritiesAvailableForSaleCurrent", 0) or 0
+            total_liquid = cash + mkt_sec + st_inv + avail + avail_debt + debt_avail_current
             if total_liquid > 0:
                 financial_data["CashAndSecurities"] = total_liquid
                 # Use most recent date from components
@@ -440,8 +447,12 @@ def get_yfinance_fallback(ticker: str) -> Optional[Dict]:
         # Aggregate CashAndSecurities
         cash = data.get("Cash", 0) or 0
         sti = data.get("ShortTermInvestments", 0) or 0
-        if cash + sti > 0:
-            data["CashAndSecurities"] = cash + sti
+        debt_avail = data.get("DebtSecuritiesAvailableForSaleCurrent", 0) or 0
+        avail = data.get("AvailableForSaleSecurities", 0) or 0
+        avail_debt = data.get("AvailableForSaleDebtCurrent", 0) or 0
+        total_liquid = cash + sti + debt_avail + avail + avail_debt
+        if total_liquid > 0:
+            data["CashAndSecurities"] = total_liquid
             data["CashAndSecurities_date"] = data.get("Cash_date")
 
         if len(data) <= 3:  # only ticker, cik, source
