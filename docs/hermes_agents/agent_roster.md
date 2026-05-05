@@ -1,6 +1,6 @@
 # Hermes Agent Roster
-Last updated: 2026-05-04
-Total jobs: 11 (9 recurring, 2 one-shot)
+Last updated: 2026-05-05
+Total jobs: 19 (17 recurring, 2 one-shot)
 
 All jobs deliver locally (Hermes job history). None push to external channels.
 To inspect output: ask Hermes "show last run of <job name>".
@@ -38,6 +38,82 @@ To manage: ask Hermes "pause/resume/remove <job name>".
 - **Purpose:** Runs ~/.local/bin/openclaw-auth-sync to refresh per-agent
   auth-profiles.json from ~/.claude/.credentials.json. Prevents the OAuth
   drift pattern where all agents fail simultaneously with FailoverError.
+- **Known issue:** Hermes scheduler stalls after WSL2 sleep and misses cycles.
+  Confirmed 2026-05-05: stalled 39h, all 31 agents EXPIRED+DRIFT. Manual fix:
+  run ~/.local/bin/openclaw-auth-sync then kick job via Hermes cronjob run.
+
+### morning-briefing
+- **ID:** a955f533907b
+- **Schedule:** Mon-Fri 12:00 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Wake Robin morning briefing — live artifacts digest from the
+  screener (rankings, shadow portfolio, signal health, fleet status).
+
+### pdufa-proximity-alert
+- **ID:** e84535b22a2a
+- **Schedule:** Mon-Fri 08:15 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Checks for upcoming PDUFA/action dates and cross-checks against
+  current portfolio holdings. Flags names within proximity window.
+
+### pr-review-daily
+- **ID:** 51537fae7635
+- **Schedule:** Mon-Fri 14:00 ET
+- **Toolsets:** terminal
+- **Purpose:** Automated PR governance reviewer. Reviews PRs that touch
+  production integrity (screener pipeline, ruleset, scoring). Read-only.
+
+### hermes-run-ledger-supervisor
+- **ID:** eaea558faaf1
+- **Schedule:** Mon-Fri 08:00 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Verifies every scheduled Hermes job and OpenClaw cron job
+  has run within its expected window. Catches silent scheduler stalls.
+
+### biotech-output-contract-check
+- **ID:** 90fd1ba6606f
+- **Schedule:** Mon-Fri 19:00 ET
+- **Skills:** biotech-screener-output-qa
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** End-to-end contract check on today's production snapshot.
+  Validates rankings schema, signal distributions, top-30 composition.
+
+### event-outcome-binder-watch
+- **ID:** f7635b487132
+- **Schedule:** Mon 10:00 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Checks coverage of realized event outcomes in the binder.
+  Flags gaps between CRT resolutions and event_feedback artifacts.
+
+### alpha-verdict-ledger
+- **ID:** 131d000821c2
+- **Schedule:** Fri 20:00 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Maintains and reports current verdicts for every signal arm.
+  Weekly accounting of signal status (ACTIVE/SHADOW/RETIRED/HOLD).
+
+### llm-token-usage-monitor
+- **ID:** 2a37afd91266
+- **Schedule:** daily 21:30 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Accounting and anomaly detection for LLM token usage across
+  OpenClaw agents. Flags unusual spend spikes. Read-only.
+
+### llm-token-usage-weekly
+- **ID:** 4bb8509d2d8f
+- **Schedule:** Sun 18:30 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Weekly LLM token usage digest and accounting rollup.
+
+
 
 ### aa-model daily tracker
 - **ID:** 3d1e09988873
@@ -152,7 +228,20 @@ To manage: ask Hermes "pause/resume/remove <job name>".
 ## Debug skills (loaded on demand, not wired to cron)
 
 Stored in docs/hermes_skills/ and ~/.hermes/skills/devops/:
-- openclaw-cron-scheduler-debug — 5-class cron/scheduler failure taxonomy
+- openclaw-cron-scheduler-debug — 7-class cron/scheduler failure taxonomy
+  (Class A: crontab REPLACE, B: WSL2 sleep, C: Hermes scheduler stall,
+   D: watchdog loop, E: weekend false-positive, F: LLM/tool mismatch,
+   G: announce/webchat delivery errors)
+- openclaw-auth-sync — OAuth drift workaround; sync script + cron 4cfe9fb5d466
 - openclaw-agent-scope-audit — 30-agent SOUL.md scope table + registry reference
 - openclaw-session-routing-debug — auth drift, zombies, delivery channel failures
 - openclaw-data-pipeline-debug — press release contamination, IC ALERT protocol
+
+## Known operational issues (2026-05-05)
+
+| Issue | Status | Fix applied |
+|-------|--------|-------------|
+| Hermes scheduler stalls after WSL2 sleep | Recurring | Manual: run auth-sync + kick cron 4cfe9fb5d466 |
+| OpenClaw announce/webchat channel not resolvable in isolated sessions | Fixed | bestEffort:true on all 7 affected jobs |
+| Auth-sync missed 39h (31 agents EXPIRED+DRIFT) | Resolved 2026-05-05 | Manually synced; cron kicked |
+

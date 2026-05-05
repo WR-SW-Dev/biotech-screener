@@ -1412,7 +1412,17 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 
 ## 10. OpenClaw Agent Fleet
 
-26 agents on gateway ws://127.0.0.1:18789 (6 Sonnet 4.6, 15 Haiku 4.5, 1 main).
+31 agents on gateway ws://127.0.0.1:18789. OpenClaw version 2026.5.3-1.
+
+**Auth note:** Per-agent OAuth (anthropic:claude-cli profile) does not auto-refresh.
+Workaround: ~/.local/bin/openclaw-auth-sync (Hermes cron 4cfe9fb5d466, every 6h).
+If Hermes scheduler stalls (WSL2 sleep), run manually and kick the cron job.
+
+**Delivery note (2026-05-05):** 7 jobs had 20-21 consecutive delivery errors due to
+`announce/webchat` channel not resolving in isolated cron sessions. Fixed by adding
+`bestEffort:true` — jobs now succeed even when dashboard WebSocket is absent.
+Affected: ops-daily, sentinel-daily, daily-production-brief, ops-digest-summary,
+dashboard-validation-ping, calibration-weekly, weekly-policy-review.
 
 ### Production Monitors (cron-scheduled)
 
@@ -1464,7 +1474,45 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 
 ---
 
-## 11. Dashboard
+## 10b. Hermes Agent Roster
+
+19 Hermes-scheduled jobs (17 recurring, 2 one-shot) as of 2026-05-05.
+Full roster: docs/hermes_agents/agent_roster.md
+
+### Daily / Intraday
+
+| Job | ID | Schedule | Purpose |
+|-----|----|----------|---------|
+| hermes-run-ledger-supervisor | eaea558faaf1 | Mon-Fri 08:00 ET | Verifies all scheduled jobs ran within expected window |
+| pdufa-proximity-alert | e84535b22a2a | Mon-Fri 08:15 ET | PDUFA/action date proximity check vs portfolio |
+| morning-briefing | a955f533907b | Mon-Fri 12:00 ET | Wake Robin daily briefing from live screener artifacts |
+| pr-review-daily | 51537fae7635 | Mon-Fri 14:00 ET | PR governance review for production-touching PRs |
+| openclaw fleet triage | 4f360d005436 | daily 18:00 ET | Read-only OpenClaw fleet health + memory watchdog |
+| aa-model daily tracker | 3d1e09988873 | daily 18:30 ET | Asset-allocation model repo health + run status |
+| biotech-output-contract-check | 90fd1ba6606f | Mon-Fri 19:00 ET | Production snapshot contract validation |
+| llm-token-usage-monitor | 2a37afd91266 | daily 21:30 ET | LLM token accounting + anomaly detection |
+| openclaw auth sync | 4cfe9fb5d466 | every 6h | OAuth token propagation to all 31 agents |
+
+### Weekly
+
+| Job | ID | Schedule | Purpose |
+|-----|----|----------|---------|
+| biotech-screener weekly audit | ccb9b8e16844 | Mon 07:00 ET | Full read-only screener audit |
+| 91-180d-bucket-watch | d653cbc61a15 | Mon 08:30 ET | 91-180d bucket % vs 55% policy target |
+| event-outcome-binder-watch | f7635b487132 | Mon 10:00 ET | CRT outcome binder coverage check |
+| inst-delta-z-recovery-watcher | 4013ddd98c6d | Sun 14:30 ET | inst_delta_z reinstatement condition monitor |
+| weekly-signal-regime-sweep | 7e79501afb6e | Sun 14:00 ET | IC regime check across all load-bearing signals |
+| forward-shadow-weekly-digest | 120e89e8edbb | Fri 19:00 ET | Shadow portfolio performance digest |
+| alpha-verdict-ledger | 131d000821c2 | Fri 20:00 ET | Signal arm status ledger (ACTIVE/SHADOW/RETIRED) |
+| llm-token-usage-weekly | 4bb8509d2d8f | Sun 18:30 ET | Weekly LLM token usage rollup |
+
+### One-shot
+
+| Job | ID | Fires | Purpose |
+|-----|----|-------|---------|
+| 13f-q1-cycle-inst-delta-check | aee119860782 | 2026-05-19 17:00 ET | Q1 13F filing inst_delta_z IC recovery check |
+
+
 
 React + Vite 6 + Tailwind v3 + Recharts frontend with FastAPI backend.
 
