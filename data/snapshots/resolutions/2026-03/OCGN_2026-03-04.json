@@ -11,7 +11,7 @@
   "source_id": "8K_2026-03-27_OCGN",
   "prediction_snapshot_date": "2026-03-03",
   "prediction_dem_rank": null,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.05985007981220658,
   "price_t_minus_1": 1.8600000143051147,
   "price_t_0": 1.9600000381469727,
   "price_t_plus_5": 2.299999952316284,

@@ -11,7 +11,7 @@
   "source_id": "8K_2026-03-17_GLUE",
   "prediction_snapshot_date": "2026-03-16",
   "prediction_dem_rank": 80,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.1,
   "price_t_minus_1": 16.639999389648438,
   "price_t_0": 16.485000610351562,
   "price_t_plus_5": 14.720000267028809,

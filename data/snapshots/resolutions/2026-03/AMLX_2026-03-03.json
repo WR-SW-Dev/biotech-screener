@@ -11,7 +11,7 @@
   "source_id": "8K_2026-03-24_AMLX",
   "prediction_snapshot_date": "2026-03-02",
   "prediction_dem_rank": 158,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.0566169393939394,
   "price_t_minus_1": 15.300000190734863,
   "price_t_0": 14.109999656677246,
   "price_t_plus_5": 14.791500091552734,

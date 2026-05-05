@@ -11,7 +11,7 @@
   "source_id": "price_action_evidence",
   "prediction_snapshot_date": "2026-03-24",
   "prediction_dem_rank": 36,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.1,
   "price_t_minus_1": 49.0,
   "price_t_0": 31.729999542236328,
   "price_t_plus_5": null,
