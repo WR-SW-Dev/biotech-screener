@@ -5491,12 +5491,14 @@ def save_validation_snapshot(
             # --- 2-feature ranker shadow (scoring audit candidate) ---
             # Skip if the 2feat model is identical to production (avoids
             # wasting CPU on a comparison that always yields 30/30 overlap).
+            _shadow_comparison["ranker_shadow_2feat_status"] = "NOT_RUN"
             try:
                 _2feat_model_path = Path("production_data/ranker_v2_model_2feat.json")
                 if _2feat_model_path.exists():
                     _2feat_raw = _2feat_model_path.read_text()
                     _prod_raw = _rv2_model_path.read_text()
                     if _2feat_raw == _prod_raw:
+                        _shadow_comparison["ranker_shadow_2feat_status"] = "IDENTICAL_TO_PROD"
                         logger.debug("  2feat shadow skipped: model identical to production")
                     else:
                         _2feat_model = json.loads(_2feat_raw)
@@ -5533,8 +5535,11 @@ def save_validation_snapshot(
                         _shadow_comparison["shadow_2feat_overlap"] = len(_2f_overlap)
                         _shadow_comparison["shadow_2feat_overlap_pct"] = round(len(_2f_overlap) / 30 * 100, 1)
                         _shadow_comparison["shadow_2feat_swaps"] = sorted(_prod_top30_set - _2f_top30)
+                        _shadow_comparison["ranker_shadow_2feat_status"] = "OK"
             except Exception as _2f_err:
-                logger.debug("2-feature shadow failed: %s", _2f_err)
+                _shadow_comparison["ranker_shadow_2feat_status"] = "FAILED"
+                _shadow_comparison["ranker_shadow_2feat_error"] = f"{type(_2f_err).__name__}: {_2f_err}"
+                logger.warning("2-feature shadow failed: %s", _2f_err)
 
             # Write comparison to snapshot dir (non-blocking)
             try:

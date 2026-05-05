@@ -35,6 +35,23 @@ fi
 
 echo "${LOG_PREFIX} Building diagnostic reports for ${AS_OF_DATE}"
 
+# Rank-change monitor: same wrapper-tail dependency as the 4 hardening
+# reports (originally lived only in cron_daily_production.sh:151-194). Run
+# it FIRST so its artifacts exist before downstream consumers (production_qa
+# at 17:35, postmortem detection, evening agents) read the snapshot.
+#
+# Webhook side effects intentionally NOT replicated here — the
+# CRITICAL-rank-change webhook stays in the wrapper-tail to avoid duplicate
+# alerts on days when both wrapper-tail and backstop succeed. Wrapper-tail
+# webhook failures are already covered by the wrapper's PASS/WARN/FAIL
+# webhook in cron_daily_production.sh:134-141.
+${PYTHON} tools/build_rank_change_monitor.py --as-of-date "${AS_OF_DATE}" --quiet \
+    2>&1 | sed "s|^|${LOG_PREFIX} build_rank_change_monitor: |"
+rc=${PIPESTATUS[0]}
+if [ "${rc}" -ne 0 ]; then
+    echo "${LOG_PREFIX} WARN: build_rank_change_monitor exited ${rc}"
+fi
+
 for tool in build_snapshot_integrity_report \
             build_feature_coverage_report \
             build_distribution_drift_report \

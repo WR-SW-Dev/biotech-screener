@@ -32,9 +32,25 @@ if [ "${1:-}" = "--catch-up" ]; then
         CHECK_DOW=$(date -d "${CHECK_DATE}" +%u 2>/dev/null || continue)
         # Skip weekends
         [ "${CHECK_DOW}" -gt 5 ] && continue
-        # Skip if snapshot already exists
+        # Contract-aware skip. PASS (rc=0) or optional-only-missing (rc=2)
+        # means the snapshot is good enough; FAIL (rc=1) means at least one
+        # required artifact is missing or empty. We only do an expensive
+        # full re-run when rankings.csv itself is missing — diagnostic-only
+        # gaps are left for cron_diagnostics_backstop.sh to repair.
         if [ -d "${SNAPSHOT_DIR}/${CHECK_DATE}" ]; then
-            continue
+            CONTRACT_RC=0
+            ${PYTHON} tools/check_output_contract.py \
+                --as-of "${CHECK_DATE}" \
+                --snapshot-root "${SNAPSHOT_DIR}" \
+                >/dev/null 2>&1 || CONTRACT_RC=$?
+            if [ "${CONTRACT_RC}" -eq 0 ] || [ "${CONTRACT_RC}" -eq 2 ]; then
+                continue
+            fi
+            if [ -f "${SNAPSHOT_DIR}/${CHECK_DATE}/rankings.csv" ]; then
+                echo "[$(date -Iseconds)] Catch-up: ${CHECK_DATE} has rankings.csv but missing required diagnostics — leaving for diagnostics backstop"
+                continue
+            fi
+            echo "[$(date -Iseconds)] Catch-up: ${CHECK_DATE} snapshot dir exists but rankings.csv missing — full re-run"
         fi
         echo "[$(date -Iseconds)] Catch-up: missed ${CHECK_DATE}, running backfill"
         "$0" "${CHECK_DATE}" || true

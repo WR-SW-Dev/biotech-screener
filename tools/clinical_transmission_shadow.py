@@ -33,6 +33,18 @@ LEDGER_PATH = REPO_ROOT / "artifacts" / "clinical_transmission_shadow.jsonl"
 SNAPSHOT_DIR = REPO_ROOT / "artifacts" / "clinical_shadow_snapshots"
 
 
+def shadow_row_key(row: Dict[str, Any]) -> str:
+    """Stable join key for variant row dicts.
+
+    Uses CatalystNode.node_id (deterministic hash over ticker+event_type+
+    source_uid+expected_date) when present. Falls back to a composite of
+    ticker+event_type+expected_date for legacy rows. The fallback retains
+    distinct keys for the same (ticker, event_type) on different dates,
+    avoiding the collision in the legacy ``ticker_eventtype`` form.
+    """
+    return row.get("catalyst_id") or f"{row['ticker']}|{row['event_type']}|{row.get('expected_date') or ''}"
+
+
 def _run_variant(
     trials: list,
     as_of: date,
@@ -78,6 +90,8 @@ def _run_variant(
                 "ticker": ev.node.ticker,
                 "event_type": ev.node.event_type,
                 "phase": ev.node.phase,
+                "catalyst_id": ev.node.node_id,
+                "expected_date": ev.node.expected_date,
                 "p_hit": round(ev.outcome.p_hit, 4),
                 "scenario_ev": round(ev.scenario_ev, 4),
                 "ds_adj_ev": round(ev.payoff.downside_adjusted_ev, 4),
@@ -116,9 +130,10 @@ def run_shadow(as_of_str: str) -> Dict[str, Any]:
     dropped = def_actionable - tx_actionable
     gained = tx_actionable - def_actionable
 
-    # Build per-name divergence for changed names
-    def_by_tk = {f"{r['ticker']}_{r['event_type']}": r for r in default_rows}
-    tx_by_tk = {f"{r['ticker']}_{r['event_type']}": r for r in tx_rows}
+    # Per-name divergence keyed on shadow_row_key (catalyst_id when present,
+    # composite fallback otherwise). See shadow_row_key docstring.
+    def_by_tk = {shadow_row_key(r): r for r in default_rows}
+    tx_by_tk = {shadow_row_key(r): r for r in tx_rows}
 
     changed_names = []
     for key, tx_r in tx_by_tk.items():
@@ -132,6 +147,8 @@ def run_shadow(as_of_str: str) -> Dict[str, Any]:
                     "ticker": tx_r["ticker"],
                     "phase": tx_r["phase"],
                     "event_type": tx_r["event_type"],
+                    "catalyst_id": tx_r.get("catalyst_id"),
+                    "expected_date": tx_r.get("expected_date"),
                     "default_rank": def_r["rank"],
                     "tx_rank": tx_r["rank"],
                     "rank_delta": rank_delta,
@@ -146,7 +163,7 @@ def run_shadow(as_of_str: str) -> Dict[str, Any]:
                     "tx_endpoint": tx_r["tx_endpoint"],
                     "tx_biomarker": tx_r["tx_biomarker"],
                     "days_to_event": tx_r["days_to_event"],
-                    # Forward monitoring fields
+                    # Forward monitoring fields populated by event_outcome_binder.
                     "realized_outcome": None,
                     "realized_return": None,
                     "resolution_date": None,
