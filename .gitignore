@@ -164,6 +164,7 @@ data/snapshots_v3_tiltfix/
 data/research/
 data/grid_search/
 data/diag/
+data/polymarket/
 
 # --- Backfill / enrichment logs ---
 backfill_logs/
