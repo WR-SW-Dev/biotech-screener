@@ -461,17 +461,17 @@
       "superseded_by": "622edb77"
     },
     {
-      "id": "622edb77",
+      "id": "8887576e",
       "file": "v1.14.0_coinvest_only_selector.json",
       "created_at": "2026-05-04",
       "engine_version": "v1.4.0",
       "description": "Spec 050 v1.14.0: coinvest-only selector (inst_delta_z zeroed; coinvest_score_z 100%). inst_delta_z two-frame ALERT: mean_ic=-0.097, hit_rate=0.111 (36 dates). Governance: INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md.",
       "status": "active",
       "requires_replay": false,
-      "notes": "Weight change within existing A4 selector+ranker architecture. No new pipeline code. inst_delta_z weight redistributed: coinvest_score_z 65%->100%, inst_delta_z 35%->0% in selector. Ranker unchanged. EW Top-30 unchanged. True PIT bundle backtest remains +2.34pp/mo, t=2.57.",
+      "notes": "Weight change within existing A4 selector+ranker architecture. No new pipeline code. inst_delta_z weight redistributed: coinvest_score_z 65%->100%, inst_delta_z 35%->0% in selector. Ranker unchanged. EW Top-30 unchanged. True PIT bundle backtest remains +2.34pp/mo, t=2.57. Actual computed hash: 8887576e (file was identical to v1.13.0 until selector_config fields added 2026-05-05).",
       "parent": "2a3e79eb",
       "updated_by": "governance_2026-05-04",
-      "updated_at": "2026-05-04T00:00:00Z"
+      "updated_at": "2026-05-05T11:30:00Z"
     }
   ]
 }

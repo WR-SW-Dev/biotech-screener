@@ -258,5 +258,10 @@
   "tier_b_commercial_floor": 0.6,
   "tier_b_optionality_floor": 0.3,
   "tiering_priority_mode": "dev_first",
-  "vol_high_threshold": 1.2
+  "vol_high_threshold": 1.2,
+  "version_label": "v1.14.0",
+  "selector_config": "coinvest_only",
+  "inst_delta_z_selector_weight": 0.0,
+  "coinvest_score_z_selector_weight": 1.0,
+  "notes": "inst_delta_z zeroed in selector 2026-05-04 (two-frame ALERT mean_ic=-0.097). Governance: INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md"
 }
