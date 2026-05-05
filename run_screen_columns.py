@@ -436,13 +436,13 @@ PORTFOLIO_POSITIONS_COLUMNS = [
 
 # Phase-2 operational defaults
 PHASE2_DEFAULT_RULESET_PATH = (
-    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.13.0_a4_selector_ranker.json"
+    Path(__file__).resolve().parent / "production_data" / "decision_rulesets" / "v1.14.0_coinvest_only_selector.json"
 )
 PHASE2_DEFAULT_TIER_FILTER = ["A", "B"]
 PHASE2_DEFAULT_TOP_K = 20
 # Spec 050: EW Top-30 positions (all eligible, no tier filter)
 POSITIONS_TOP_K = 30
-PHASE2_PINNED_RULESET_ID = "2a3e79eb"
+PHASE2_PINNED_RULESET_ID = "622edb77"  # v1.14.0 coinvest-only selector (2026-05-04; was 2a3e79eb)
 PHASE2_DEFAULT_HEALTH_THRESHOLDS_PATH = (
     Path(__file__).resolve().parent / "production_data" / "phase2_health_thresholds" / "v1.json"
 )
