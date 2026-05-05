@@ -14,22 +14,10 @@ WORKDIR /app
 COPY requirements.lock .
 RUN pip install --no-cache-dir --require-hashes -r requirements.lock
 
-# Source directories
-COPY common/ common/
-COPY backtest/ backtest/
-COPY tools/ tools/
-COPY scripts/ scripts/
-COPY wake_robin_data_pipeline/ wake_robin_data_pipeline/
-COPY mcp_server/ mcp_server/
-COPY adapters/ adapters/
-COPY config/ config/
-COPY tests/ tests/
+# Source (.dockerignore controls exclusions — data/, cache/, output/, etc.)
+COPY . .
 
-# Top-level Python modules (run_screen imports many of these)
-COPY *.py ./
-
-# Package install (needs pyproject.toml + source in place)
-COPY pyproject.toml .
+# Editable install (needs source + pyproject.toml in place)
 RUN pip install --no-cache-dir -e .
 
 ENTRYPOINT ["python"]
