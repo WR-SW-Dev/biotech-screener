@@ -453,11 +453,25 @@
       "created_at": "2026-04-03",
       "engine_version": "v1.4.0",
       "description": "Spec 050: A4 selector (coinvest+inst 65/35) + ranker overlay, sort_anchor=selector_score. True PIT: +2.34pp/mo net, t=2.60, 67 periods.",
-      "status": "active",
+      "status": "retired",
       "requires_replay": true,
       "notes": "Promoted from PIT backtest. Selector: institutional block 65% (coinvest 65%, inst_delta 35%). Ranker: bounded \u00b115% adjustment. Construction: EW Top-30 unchanged.",
       "updated_by": "spec_050_promotion",
-      "updated_at": "2026-04-03T15:26:58Z"
+      "updated_at": "2026-05-04T00:00:00Z",
+      "superseded_by": "622edb77"
+    },
+    {
+      "id": "622edb77",
+      "file": "v1.14.0_coinvest_only_selector.json",
+      "created_at": "2026-05-04",
+      "engine_version": "v1.4.0",
+      "description": "Spec 050 v1.14.0: coinvest-only selector (inst_delta_z zeroed; coinvest_score_z 100%). inst_delta_z two-frame ALERT: mean_ic=-0.097, hit_rate=0.111 (36 dates). Governance: INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md.",
+      "status": "active",
+      "requires_replay": false,
+      "notes": "Weight change within existing A4 selector+ranker architecture. No new pipeline code. inst_delta_z weight redistributed: coinvest_score_z 65%->100%, inst_delta_z 35%->0% in selector. Ranker unchanged. EW Top-30 unchanged. True PIT bundle backtest remains +2.34pp/mo, t=2.57.",
+      "parent": "2a3e79eb",
+      "updated_by": "governance_2026-05-04",
+      "updated_at": "2026-05-04T00:00:00Z"
     }
   ]
 }
