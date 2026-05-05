@@ -4251,9 +4251,11 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 191406000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 61148000,
+    "CashAndSecurities": 530109000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05",
+    "ShortTermInvestments": 468961000,
+    "ShortTermInvestments_date": "2025-12-31"
   },
   {
     "ticker": "EXEL",
