@@ -129,11 +129,15 @@ from ranker_engine import compute_ranker_adjustments
 from ranker_v2_pairwise import RankerV2Config, model_from_dict, score_snapshot
 from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_selector_scores, get_regime_modulation
 
-# Spec 050: A4 production selector config (coinvest+inst dominant)
-# Validated on true PIT backtest: +2.34pp/mo net, t=2.60, 67 periods
-# v1.1: clinical weight zeroed (confirmed destructive, Spec 055);
-#        coinvest now size-residualized (removes 21% size confound).
-#        Freed 5% redistributed to catalyst (10→15%).
+# Spec 050 → v1.14.0: coinvest-only selector (inst_delta_z removed)
+# Validated on true PIT backtest: +2.34pp/mo net, t=2.60, 67 periods (bundle)
+# v1.14.0 change: inst_delta_z zeroed out from selector (2026-05-04)
+#   Reason: two-frame ALERT — ic_health_monitor mean_ic=-0.097 hit_rate=0.111
+#   (36 dates 2026-02-19 to 2026-04-02) + calibration_evidence event-IC=-0.244
+#   (75 postmortems). Comparator: coinvest_score_z mean_ic=+0.097 hit_rate=0.897
+#   same window, IC cross-correlation rho=-0.33 — degradation isolated to inst_delta_z.
+#   Governance: INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md
+#   Ruleset: v1.14.0_coinvest_only_selector.json (id=622edb77)
 A4_SELECTOR_CONFIG = SelectorConfig(
     block_weights=(
         BlockWeight("clinical", 0.00),
@@ -143,8 +147,8 @@ A4_SELECTOR_CONFIG = SelectorConfig(
         BlockWeight("market_structure", 0.10),
     ),
     institutional_signals=(
-        SignalSpec("coinvest_score_z", 0.65),
-        SignalSpec("inst_delta_z", 0.35),
+        SignalSpec("coinvest_score_z", 1.00),  # was 0.65; inst_delta_z weight redistributed
+        SignalSpec("inst_delta_z", 0.00),  # was 0.35; ALERT degradation 2026-05-04
         SignalSpec(
             "coinvest_recency_state", 0.00, categorical=True, value_map=(("fresh", 1.0), ("stale", 0.3), ("", 0.0))
         ),

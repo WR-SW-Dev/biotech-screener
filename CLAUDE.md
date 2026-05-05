@@ -18,10 +18,10 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `2a3e79eb` (v1.13.0)
-- **File**: `production_data/decision_rulesets/v1.13.0_a4_selector_ranker.json`
-- **Key settings**: sort_anchor=selector_score, B6 selector (coinvest 65% + inst_delta 35%), pairwise_minimal ranker (ordinal-only), EW Top-30
-- **Prior ruleset**: `69a0c7f8` (v1.12.0) — RETIRED 2026-04-03
+- **ID**: `622edb77` (v1.14.0)
+- **File**: `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json`
+- **Key settings**: sort_anchor=selector_score, coinvest-only selector (coinvest_score_z 100%), pairwise_minimal ranker (ordinal-only), EW Top-30. inst_delta_z zeroed in selector 2026-05-04 (ALERT: mean_ic=-0.097, two-frame confirmed).
+- **Prior ruleset**: `2a3e79eb` (v1.13.0) — RETIRED 2026-05-04
 - **Pinned in**: `run_screen.py` AND `run_phase2_snapshot_delta.py` (must stay in sync)
 - **Manifest**: 36+ entries, no dup IDs
 
