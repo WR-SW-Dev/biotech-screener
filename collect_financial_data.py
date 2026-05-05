@@ -96,6 +96,7 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                 "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "CashRestricted",
                 "CashEquivalentsAtCarryingValue": "CashEquivalentsOnly",
                 "MarketableSecuritiesCurrent": "MarketableSecurities",
+                "MarketableSecurities": "MarketableSecurities",  # EWTX and similar report non-current tag
                 "ShortTermInvestments": "ShortTermInvestments",
                 # Fallback tags for STI — some filers (e.g. EWTX) report under these
                 # instead of ShortTermInvestments. AvailableForSaleSecuritiesCurrent and
