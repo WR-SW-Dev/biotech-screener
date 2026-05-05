@@ -1,0 +1,158 @@
+# Hermes Agent Roster
+Last updated: 2026-05-04
+Total jobs: 11 (9 recurring, 2 one-shot)
+
+All jobs deliver locally (Hermes job history). None push to external channels.
+To inspect output: ask Hermes "show last run of <job name>".
+To manage: ask Hermes "pause/resume/remove <job name>".
+
+---
+
+## Daily / Intraday
+
+### crontab-integrity-check
+- **ID:** 862557978653
+- **Schedule:** Mon-Fri 08:00 ET
+- **Toolsets:** terminal
+- **Purpose:** Verify crontab is parseable and all 5 critical entries are present
+  (cron_daily_production.sh, agent_heartbeat_checks.py, cron_data_extras.sh,
+  cron_data_refresh.sh, cron_watchdog.sh). Detects silent crontab REPLACE wipes
+  before they cause missed production runs.
+- **Alert:** CRONTAB ALERT if any entry missing or REPLACE event in last 24h
+
+### openclaw-fleet-triage daily
+- **ID:** 4f360d005436
+- **Schedule:** daily 18:00 ET
+- **Skills:** openclaw-fleet-triage
+- **Toolsets:** terminal, file, skills
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Read-only OpenClaw fleet health check — fleet_steward receipt,
+  per-agent stale/fail triage, task audit. Also runs memory-write watchdog:
+  flags agents where memory mtime > 7d older than artifact mtime (code bug,
+  not infrastructure). Known standing cases: herald, shadow_monitor, ic_health_monitor.
+
+### openclaw auth sync
+- **ID:** 4cfe9fb5d466
+- **Schedule:** every 6h
+- **Toolsets:** terminal
+- **Purpose:** Runs ~/.local/bin/openclaw-auth-sync to refresh per-agent
+  auth-profiles.json from ~/.claude/.credentials.json. Prevents the OAuth
+  drift pattern where all agents fail simultaneously with FailoverError.
+
+### aa-model daily tracker
+- **ID:** 3d1e09988873
+- **Schedule:** daily 18:30 ET
+- **Skills:** aa-model-tracker
+- **Toolsets:** terminal, file, skills
+- **Workdir:** /mnt/c/Projects/asset allocation/asset-allocation
+- **Purpose:** MODE A repo health — git status, pytest, ruff, latest run.
+  Patches HERMES_TRACKING.md auto sections. Preflight check detects phase
+  drift: diffs git log since last tracker sync and surfaces "N commits since
+  last sync" as the first line so phase drift is never buried.
+
+---
+
+## Weekly
+
+### biotech-screener weekly audit
+- **ID:** ccb9b8e16844
+- **Schedule:** Mon 07:00 ET
+- **Skills:** biotech-screener-audit
+- **Toolsets:** terminal, file, skills
+- **Workdir:** /mnt/c/Projects/biotech_screener
+- **Purpose:** Full read-only audit of the biotech screener — snapshot integrity,
+  ruleset pinning, signal health, pipeline health. Runs before crontab check
+  and production window.
+
+### 91-180d-bucket-watch
+- **ID:** d653cbc61a15
+- **Schedule:** Mon 08:30 ET
+- **Toolsets:** terminal, file
+- **Purpose:** Tracks 91-180d portfolio bucket pct vs 55% policy target.
+  Thresholds: >= 55% = RESOLVED (HOLD blocker cleared), >= 40% = REVIEW
+  (approaching target, consider rebalance), < 40% = HOLD with current value
+  and delta. Baseline as of 2026-05-01: 20.0%.
+
+### weekly-signal-regime-sweep
+- **ID:** 7e79501afb6e
+- **Schedule:** Sun 14:00 ET
+- **Skills:** signal-shared-regime-check, openclaw-fleet-triage
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** IC regime check across all load-bearing signals. Detects shared
+  regime vs signal-specific degradation. Runs before inst-delta-z-recovery-watcher.
+
+### inst-delta-z-recovery-watcher
+- **ID:** 4013ddd98c6d
+- **Schedule:** Sun 14:30 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** Checks reinstatement conditions for inst_delta_z (zeroed in
+  selector 2026-05-04, ruleset v1.14.0). Conditions: (A) rolling mean_ic of
+  latest 10 dates > +0.02 AND (B) calibration_evidence event-IC positive.
+  If both met: emits governance reopen alert. Governance log:
+  INST_DELTA_Z_GOVERNANCE_LOG_2026_05_04.md
+
+### forward-shadow-weekly-digest
+- **ID:** 120e89e8edbb
+- **Schedule:** Fri 19:00 ET
+- **Toolsets:** terminal, file
+- **Purpose:** Weekly shadow portfolio performance digest from
+  artifacts/shadow_monitor/. Reports: cumulative PnL, excess vs XBI, max
+  drawdown, win rate, per-sleeve attribution (0_30, 31_90, 91_180, less_binary).
+  Flags RED if cumulative excess < -5% or max drawdown > 20%.
+  Flags YELLOW if scorecard=HOLD or drawdown streak > 3.
+
+---
+
+## One-shot (auto-expire)
+
+### ruleset-v1.14.0-first-run-sentinel
+- **ID:** 5ab49c070c88
+- **Schedule:** once 2026-05-04 18:15 ET
+- **Toolsets:** terminal, file
+- **Purpose:** Validates first production run under ruleset v1.14.0 (id=622edb77).
+  Confirms metadata.json shows new ruleset_id, finds last v1.13.0 snapshot,
+  compares selector_score distribution and top-25 overlap. Flags RED if
+  overlap < 60% or mean shifts > 2 std devs. Report written to
+  data/ruleset_v1.14.0_sentinel_report.txt.
+
+### 13f-q1-cycle-inst-delta-check
+- **ID:** aee119860782
+- **Schedule:** once 2026-05-19 17:00 ET
+- **Toolsets:** terminal, file
+- **Workdir:** /mnt/c/Projects/biotech_screener/biotech-screener
+- **Purpose:** 13F Q1 2026 cycle probe (filings due 2026-05-15). Reads
+  history.jsonl for inst_delta_z mean_ic on dates after 2026-05-14, compares
+  to pre-filing degradation baseline (-0.097). If mean_ic > -0.05: emits
+  improvement alert and recommends reinstatement check. Hypothesis: inst_delta_z
+  degraded on Q4 2025 13F filing date (2026-02-28); Q1 refresh may resolve it.
+
+---
+
+## Governance cross-references
+
+| Agent | Governance doc |
+|---|---|
+| inst-delta-z-recovery-watcher | INST_DELTA_Z_GOVERNANCE_LOG_2026_05_04.md |
+| ruleset-v1.14.0-first-run-sentinel | INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md |
+| 13f-q1-cycle-inst-delta-check | INST_DELTA_Z_GOVERNANCE_LOG_2026_05_04.md |
+| weekly-signal-regime-sweep | artifacts/ic_dashboard/history.jsonl |
+| forward-shadow-weekly-digest | artifacts/shadow_monitor/ |
+
+## Skills backing recurring agents
+
+| Agent | Skills loaded |
+|---|---|
+| biotech-screener weekly audit | biotech-screener-audit |
+| openclaw fleet triage daily | openclaw-fleet-triage |
+| aa-model daily tracker | aa-model-tracker |
+| weekly-signal-regime-sweep | signal-shared-regime-check, openclaw-fleet-triage |
+
+## Debug skills (loaded on demand, not wired to cron)
+
+Stored in docs/hermes_skills/ and ~/.hermes/skills/devops/:
+- openclaw-cron-scheduler-debug — 5-class cron/scheduler failure taxonomy
+- openclaw-agent-scope-audit — 30-agent SOUL.md scope table + registry reference
+- openclaw-session-routing-debug — auth drift, zombies, delivery channel failures
+- openclaw-data-pipeline-debug — press release contamination, IC ALERT protocol
