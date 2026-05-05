@@ -654,6 +654,10 @@ class TestScreenFailureGate:
         with (
             patch("run_daily_production.run_screen", return_value=fake_proc),
             patch(
+                "tools.poll_ctgov_daily.poll_ctgov_daily",
+                return_value={"error": "test_mock_skip"},
+            ),
+            patch(
                 "run_daily_production.get_git_info",
                 return_value={
                     "branch": "main",
@@ -668,6 +672,7 @@ class TestScreenFailureGate:
                 price_csv=price_csv,
                 final_snapshots_dir=final_dir,
                 skip_price_refresh=True,
+                skip_pit_warm=True,
                 ctgov_cache_dir=cache_dir,
             )
 
@@ -952,6 +957,10 @@ class TestInputsPresentGate:
         with (
             patch("run_daily_production.run_screen") as mock_screen,
             patch(
+                "tools.poll_ctgov_daily.poll_ctgov_daily",
+                return_value={"error": "test_mock_skip"},
+            ),
+            patch(
                 "run_daily_production.get_git_info",
                 return_value={
                     "branch": "main",
@@ -966,6 +975,7 @@ class TestInputsPresentGate:
                 price_csv=price_csv,
                 final_snapshots_dir=final_dir,
                 skip_price_refresh=True,
+                skip_pit_warm=True,
                 ctgov_cache_dir=cache_dir,
             )
             # Screen should never be called
