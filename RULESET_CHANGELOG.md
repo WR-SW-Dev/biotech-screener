@@ -6,6 +6,38 @@ Format: `[engine_version] ruleset_id — date — summary`
 
 ---
 
+## [v1.14.0] 8887576e — 2026-05-04 — Coinvest-only selector (signal demotion of inst_delta_z)
+
+**Active ruleset change**: `2a3e79eb` (v1.13.0_a4_selector_ranker) → `8887576e` (v1.14.0_coinvest_only_selector).
+
+**Change class**: signal_demotion_hygiene_patch (per `policy_demotion_path_2026_05_06.md`). NOT a Checklist v2 promotion.
+
+**Selector weights changed** (vs v1.13.0):
+- `coinvest_score_z`: 0.65 → 1.00
+- `inst_delta_z`: 0.35 → 0.00
+
+**Unchanged**: ranker (2-feature pairwise), EV layer, sizing (EW Top-30), eligibility gates, no new pipeline code.
+
+**Demotion-gate evidence (Spec 086 §Q4)**:
+- Two-frame ALERT: ic_health_monitor mean_ic = -0.097 (36 dates) AND calibration_evidence event-IC = -0.244 (75 postmortems) — independent methodologies, both negative.
+- Comparator probe: `coinvest_score_z` mean_ic = +0.097, hit_rate = 0.897 over identical window — degradation isolated to `inst_delta_z`.
+- Spec-style writeup: `INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md` (168 lines).
+- Operator sign-off: Darren Schulz, 2026-05-04 (`INST_DELTA_Z_GOVERNANCE_LOG_2026_05_04.md`).
+
+**Process anomalies (closed by Spec 086 Option (a))**:
+- `scripts/promote_ruleset.py` was bypassed (manifest edited via `fix(manifest)` commit `980c02b55`). No contemporaneous receipt was written.
+- Hash phantom: initial v1.14.0 file produced hash `622edb77`; subsequent edits added `selector_config` fields → hash recomputed to `8887576e` (commit `bd91b523d` "fix(ruleset): correct v1.14.0 hash to 8887576e").
+- Synthetic-backfilled receipt now at `artifacts/promotions/promotion_2026-05-04_8887576e.{json,md}` — explicitly labeled `synthetic_backfill` / `missing_receipt:true` to avoid audit-trail poisoning.
+
+**Conditions for re-opening** (per governance log §"Conditions for re-opening"): re-introduce `inst_delta_z` only if (a) mean_ic recovers above +0.02 sustained for 10+ dates AND (b) calibration_evidence event-IC turns positive — not before both.
+
+**Audit references**:
+- `artifacts/audit/spec_086_v1_14_0_freeze_compliance_audit_2026_05_06.md`
+- `artifacts/audit/p0_ruleset_id_reconciliation_2026_05_06.md`
+- `artifacts/audit/p0_ruleset_health_monitor_reader_bug_2026_05_06.md`
+
+---
+
 ## Archived research (not promoted)
 
 ### Alpha cohort tiebreak sweep — 2026-03-04 — ARCHIVED, no edge
