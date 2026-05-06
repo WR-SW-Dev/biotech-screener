@@ -106,7 +106,10 @@ run_tool() {
 run_agent ops                     1700
 run_agent sentinel                1715
 run_agent crt_resolution_watcher  1800
-run_agent policy_shadow_watch     1805
+# policy_shadow_watch: invoked via deterministic builder (matches daily cron).
+# Was previously `run_agent policy_shadow_watch 1805` (LLM HEARTBEAT path),
+# which the agent's 2026-05-05 memory documented as a Class F broken pattern.
+# See artifacts/audit/p0_date_stamp_root_cause_2026_05_06.md (Fix B).
 run_agent catalyst_delta          1820
 run_agent price_action_watch      1830
 run_agent postmortem              1835
@@ -127,6 +130,13 @@ run_tool data_auditor 1800 "$REPO/logs/data_auditor.log" check_data_auditor \
 check_event_feedback() { tool_log_has_today "$REPO/logs/event_feedback.log"; }
 run_tool event_feedback 1802 "$REPO/logs/event_feedback.log" check_event_feedback \
     "$PYTHON $REPO/tools/build_event_feedback.py --as-of-date $TODAY"
+
+# policy_shadow (18:05) — artifact: artifacts/policy_shadow/tier_weighted/<TODAY>_comparison.json
+# Mirrors the daily cron 5 18 * * 1-5 build_policy_shadow_compare.py --as-of-date $(date +%Y-%m-%d).
+# Replaces the previous `run_agent policy_shadow_watch 1805` LLM HEARTBEAT call.
+check_policy_shadow() { file_exists "$REPO/artifacts/policy_shadow/tier_weighted/${TODAY}_comparison.json"; }
+run_tool policy_shadow 1805 "$REPO/logs/agents_direct_cron.log" check_policy_shadow \
+    "$PYTHON $REPO/tools/build_policy_shadow_compare.py --as-of-date $TODAY"
 
 # production_qa_check (18:55) — artifact: artifacts/production_qa/<TODAY>_report.json
 check_production_qa() { file_exists "$REPO/artifacts/production_qa/${TODAY}_report.json"; }
