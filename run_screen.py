@@ -2639,6 +2639,83 @@ def _nearest_catalyst_event_type(
     return event.get("event_type", "") if event else ""
 
 
+# ---------------------------------------------------------------------------
+# Spec 078 — Catalyst quality classification (Lane A + Lane B)
+# ---------------------------------------------------------------------------
+# Sources treated as hard regulatory / SEC-disclosed binaries (Lane B exempt).
+_CATALYST_QUALITY_EXEMPT_SOURCES: frozenset = frozenset(
+    {"PDUFA_MANUAL", "FDA_ADCOM_CALENDAR", "SEC_8K_FILING", "SEC_6K_FILING"}
+)
+# Calendar-confidence gate for non-exempt sources (Lane B).
+_CATALYST_QUALITY_CONF_THRESHOLD: float = 0.40
+# Non-binary corporate event types that must not drive tier credit (Lane A).
+_NON_BINARY_CATALYST_EVENT_TYPES: frozenset = frozenset(
+    {
+        "EARNINGS_RELEASE",
+        "INVESTOR_DAY",
+        "PARTNERSHIP",
+        "MA_ACTIVITY",
+        "LICENSING_DEAL",
+        "CONFERENCE_PRESENTATION",
+        "CONFERENCE_LATE_BREAKER",
+        "CONFERENCE_ACCEPTED_ABSTRACT",
+        "IR_EVENT",
+        "PRESS_RELEASE_EVENT",
+    }
+)
+
+
+def classify_catalyst_quality(
+    catalyst_source: str,
+    catalyst_event_type: str,
+    calendar_confidence: str,
+) -> str:
+    """Return the Spec 078 catalyst-quality bucket for a single catalyst row.
+
+    Buckets (in precedence order):
+      corporate_update — non-binary corporate event type (Lane A)
+      low_confidence   — calendar_confidence < threshold for non-exempt source (Lane B)
+      binary_alpha     — hard regulatory / SEC-disclosed binary event
+      registry_only    — CT.gov calendar-derived completion date
+      ""               — no catalyst signal
+    """
+
+    # Guard NaN from pandas CSV reads (float NaN masquerades as a non-string).
+    def _s(v) -> str:
+        return "" if v is None or isinstance(v, float) else str(v).strip()
+
+    src = _s(catalyst_source)
+    evt = _s(catalyst_event_type)
+    cal = _s(calendar_confidence)
+
+    if not src and not evt:
+        return ""
+
+    # Lane A: non-binary corporate event types do not qualify as release-valve catalysts.
+    if evt in _NON_BINARY_CATALYST_EVENT_TYPES:
+        return "corporate_update"
+
+    # Lane B: low calendar confidence for non-exempt sources.
+    if src not in _CATALYST_QUALITY_EXEMPT_SOURCES:
+        try:
+            conf_float = float(cal) if cal else 0.0
+        except (ValueError, TypeError):
+            conf_float = 0.0
+        if 0.0 < conf_float < _CATALYST_QUALITY_CONF_THRESHOLD:
+            return "low_confidence"
+
+    # Hard regulatory / SEC-disclosed binaries.
+    if src in _CATALYST_QUALITY_EXEMPT_SOURCES:
+        return "binary_alpha"
+
+    # CT.gov calendar-derived events.
+    if src.startswith("CTGOV") or src == "FDA_ADCOM_CALENDAR":
+        return "registry_only"
+
+    # Any remaining catalyst with a signal — classify conservatively.
+    return "registry_only"
+
+
 def _load_pdufa_manual(
     data_dir: Optional[Path] = None,
     as_of_date: Optional[str] = None,
@@ -4777,6 +4854,12 @@ def save_validation_snapshot(
         row["calendar_confidence"] = str(round(min(1.0, _conf), 4)) if _has_signal else ""
         row["has_catalyst_signal"] = "1" if _has_signal else "0"
         row["has_tradeable_calendar"] = "1" if _conf >= 0.50 and 0 < _cd_int <= 120 else "0"
+        # Spec 078: per-row catalyst quality classification (Lane A + Lane B).
+        row["catalyst_quality"] = classify_catalyst_quality(
+            row.get("catalyst_source", ""),
+            row.get("catalyst_event_type", ""),
+            row.get("calendar_confidence", ""),
+        )
 
     _n_tradeable_cal = sum(1 for r in csv_rows if r.get("has_tradeable_calendar") == "1")
     logger.info(

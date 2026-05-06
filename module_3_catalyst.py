@@ -435,6 +435,30 @@ def convert_corporate_catalyst_to_v2(
         logger.debug(f"Unknown corporate event type: {event_type_str}")
         return None
 
+    # Spec 078 Lane A: non-binary corporate event types must not drive catalyst tier credit.
+    # These events are not binary resolution events and should not earn binary_now/build_window.
+    _NON_BINARY_CORPORATE_TYPES = frozenset(
+        {
+            EventType.EARNINGS_RELEASE,
+            EventType.INVESTOR_DAY,
+            EventType.PARTNERSHIP,
+            EventType.MA_ACTIVITY,
+            EventType.LICENSING_DEAL,
+            EventType.CONFERENCE_PRESENTATION,
+            EventType.CONFERENCE_LATE_BREAKER,
+            EventType.CONFERENCE_ACCEPTED_ABSTRACT,
+            EventType.IR_EVENT,
+            EventType.PRESS_RELEASE_EVENT,
+        }
+    )
+    if event_type in _NON_BINARY_CORPORATE_TYPES:
+        logger.debug(
+            "Spec 078 Lane A: suppressing non-binary corporate event %s for %s",
+            event_type_str,
+            ticker,
+        )
+        return None
+
     # Get severity from mapping
     severity = EVENT_SEVERITY_MAP.get(event_type, EventSeverity.POSITIVE)
 
