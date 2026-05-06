@@ -23,6 +23,7 @@ import argparse
 import csv
 import json
 import logging
+import os
 import sys
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
@@ -383,9 +384,45 @@ def _format_md(d: Dict) -> str:
     return "\n".join(lines)
 
 
+def _latest_history_date(history_path: Path) -> Optional[str]:
+    if not history_path.exists():
+        return None
+    latest = None
+    try:
+        with open(history_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    d = json.loads(line).get("date")
+                except json.JSONDecodeError:
+                    continue
+                if d and (latest is None or d > latest):
+                    latest = d
+    except OSError:
+        return None
+    return latest
+
+
+def _identify_caller() -> str:
+    ppid = os.getppid()
+    try:
+        cmdline = Path(f"/proc/{ppid}/cmdline").read_text(errors="replace").replace("\0", " ").strip()
+        return f"ppid={ppid} cmd={cmdline}" if cmdline else f"ppid={ppid}"
+    except OSError:
+        return f"ppid={ppid}"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Daily policy shadow compare (Spec 035)")
     parser.add_argument("--as-of-date", default=None)
+    parser.add_argument(
+        "--allow-backfill",
+        action="store_true",
+        help="Permit --as-of-date older than the latest history.jsonl entry. "
+        "Default: refuse, to prevent the contamination pattern observed on 2026-05-06 (P0 #1).",
+    )
     args = parser.parse_args()
 
     # Default to latest position date
@@ -395,6 +432,19 @@ def main():
     else:
         pos_files = sorted(f.stem for f in pos_dir.glob("*.json"))
         date = pos_files[-1] if pos_files else datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    history_path = REPO_ROOT / "artifacts" / "policy_shadow" / "tier_weighted" / "history.jsonl"
+    latest = _latest_history_date(history_path)
+    if latest and date < latest and not args.allow_backfill:
+        logger.error(
+            "Refusing to append: --as-of-date %s is older than latest history entry %s. "
+            "This caused historical contamination on 2026-05-06 (P0 #1). "
+            "Pass --allow-backfill to override. Caller: %s",
+            date,
+            latest,
+            _identify_caller(),
+        )
+        sys.exit(2)
 
     result = build_policy_shadow_compare(as_of_date=date)
     if "error" in result:
