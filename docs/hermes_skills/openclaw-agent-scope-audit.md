@@ -51,6 +51,21 @@ ls -lt artifacts/<name>/ | head -5
 # If mtime stopped at the same time HEARTBEAT was introduced, timing is causal
 ```
 
+**SCAN fix is necessary but not sufficient for grok_biotech_watch.**
+Confirmed 2026-05-04: after applying the SCAN fix to the crontab, the agent still
+produced no artifacts. Root cause was a second, deeper issue: `run_agent_direct.py`
+(the launcher used by the crontab) is a plain Anthropic SDK text call with NO tool
+execution. The agent's bash commands in its response text never actually run, so
+`env | grep XAI` returns nothing regardless of whether `XAI_API_KEY` is in `.env`.
+
+The SCAN fix resolves the routing (agent now enters work path, not heartbeat path).
+But for agents that need real bash/API execution (grok_biotech_watch calls the xAI
+Grok API via curl/Python), the only real fixes are:
+  A. Wire through OpenClaw gateway (provides real bash tooling)
+  B. Replace the LLM agent with a dedicated wrapper script for the API call
+
+See `openclaw-data-pipeline-debug` Class F for the full diagnostic and resolution options.
+
 **Remediation (after operator approval):**
 1. Backup crontab first.
 2. Change `--message "HEARTBEAT"` to `--message "SCAN"` (or whatever the work trigger is).
@@ -186,6 +201,83 @@ cat agents/<name>/memory/$(ls -t agents/<name>/memory/ | head -1)
 
 **Escalation:** Scope violations are HIGH severity. Surface to operator immediately.
 Do not attempt auto-remediation.
+
+---
+
+### Class G — Dead schema field with phantom producers (spec-076 audit pattern)
+
+**Signature:** A column present in `SNAPSHOT_COLUMNS` tuple and written in `run_screen.py`
+always emits an empty string. No consumer reads it. No active Python file except the
+definition pair references it.
+
+**Confirmed instance (2026-05-06, commit `ff4b7c64`):** `catalyst_source_filed_at` in
+`run_screen.py` + `run_screen_columns.py`. The field had no producer since Module 3 was
+archived; the write site was always `""`. No downstream consumer. Safe to cut.
+
+**Diagnostic recipe (safe read-only schema audit):**
+
+```bash
+# 1. Find all column-write sites in run_screen.py
+grep -n 'catalyst_source_filed_at\|<field_name>' run_screen.py | head -20
+
+# 2. Check if the write site always emits empty
+grep -n '"<field_name>"' run_screen.py
+# If it's row["field"] = "" with no conditional logic -> always empty
+
+# 3. Confirm no consumer reads it
+grep -rn '<field_name>' --include="*.py" . | grep -v 'run_screen_columns.py\|run_screen.py'
+# If zero results -> no consumers; safe to list as dead
+
+# 4. Confirm it's in the column spec (adds it to every output CSV)
+grep '<field_name>' run_screen_columns.py
+```
+
+**Classification for the spec-076 audit (or equivalent):**
+- `write_site_always_empty AND zero_python_consumers` → **SAFE TO CUT** immediately
+- `write_site_sometimes_populated AND zero_python_consumers` → **VERIFY artifact consumers first** (CSV readers, dashboard, external tools)
+- `any_python_consumer` → **DO NOT CUT** without a migration plan
+
+**Governance note:** Dead schema field pruning is housekeeping, NOT a governance event.
+No Spec rerun needed. Commit prefix: `chore:`. Always confirm with `grep -rn` before cutting —
+the field may be referenced in downstream artifacts that parse raw CSV.
+
+**Audit trigger:** Run this scan after any module archival or large refactor. Spec-076
+was the first formal "safe-to-cut" audit for the biotech screener (2026-05-06);
+the audit doc is at `specs/changes/spec_076_schema_prune_audit_2026_05_06.md`.
+
+When the agent-scope-table or agent-registry-reference files are >2 weeks old,
+or after a batch of agent additions/retirements, run the 3-subagent parallel
+indexing recipe in `references/bulk-indexing-recipe.md`. Produces fresh versions
+of both reference files in one ~9-minute parallel run.
+
+---
+
+### Class F — Stale ruleset ID in SOUL.md (scope drift from promotions)
+
+**Signature:** Agent's SOUL.md contains a hardcoded `Active ruleset:` line referencing
+an old ruleset ID. This is cosmetic (agents don't enforce the ruleset), but it means
+every future session reading the SOUL.md gets a wrong mental model of production state.
+
+**Confirmed instance (2026-05-04):** After promoting ruleset 2a3e79eb → 622edb77
+(v1.14.0), `grok_biotech_watch/SOUL.md` still contained:
+```
+## Active ruleset
+ID: `2a3e79eb` (v1.13.0). Read-only reference — do not modify.
+```
+
+**Detection:** After any ruleset promotion, run:
+```bash
+grep -r "ruleset\|2a3e79eb\|v1\.1[0-9]" agents/*/SOUL.md | grep -v "^#" | head -20
+```
+Any match not pointing to the current active ID is stale.
+
+**Remediation:** Update the SOUL.md Active ruleset section to the new ID.
+Not production-critical — agents don't read their own SOUL.md at runtime —
+but creates confusion in triage and audit sessions. Fix in the same commit
+series as the ruleset promotion.
+
+**Add to ruleset promotion checklist:**
+- [ ] grep agents/*/SOUL.md for old ruleset ID, update any found
 
 ---
 

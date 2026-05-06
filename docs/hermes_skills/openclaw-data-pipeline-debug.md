@@ -68,10 +68,113 @@ grep -n "event_feedback\|press_release\|other" run_screen.py | head -10
 **Recommended fixes (governance review required before applying):**
 - Post-fetch body sanity filter: drop headline if company name absent from body
 - Add `category != "other"` guard in `build_event_feedback.py` line ~226
-- Backfill `company_ir_url` for unconfigured tickers in `company_ir_sources.json`
+- Backfill `company_ir_url` for unconfigured tickers in `company_ir_sources.json` — see Class A1 below for the validated two-pass technique
 - Replace GNW keyword search with issuer-ID queries (`?orgId=`) for registered tickers
 
 **Audit doc:** `docs/audit/2026-05-02_press_release_collision.md` (SHA 955aa2ce)
+
+---
+
+### Class A1 — IR URL population (company_ir_sources.json backfill)
+
+**When:** `company_ir_sources.json` has empty `company_ir_url` for 50+ tickers and
+`classifier_escalation_pool` is failing. Produces real issuer-specific IR URLs to
+replace the noisy GNW keyword-search fallback.
+
+**Script:** `tools/populate_ir_sources.py` (written 2026-05-06, confirmed working).
+Two-pass strategy validated on FDMT, KYMR, IMVT:
+
+**Pass 1 — EDGAR XBRL namespace extraction:**
+EDGAR 8-K `.txt` files embed XBRL namespaces of the form
+`xmlns:co="http://www.company.com/20260325"` — this is the canonical company domain,
+reliably present in ~90% of biotech 8-K filings.
+
+```
+EDGAR company_tickers.json → CIK per ticker
+  → data.sec.gov/submissions/CIK{padded}.json → find latest 8-K accession numbers
+  → /Archives/edgar/data/{cik}/{acc_nodash}/{acc}.txt → extract XBRL xmlns domain
+  → probe IR paths on that domain (IR subdomains first, then company domain paths)
+  → require keyword match ("press release", "news release", "announcements") to confirm
+```
+
+Key pitfalls:
+- EDGAR `website` and `investorWebsite` fields in submissions JSON are almost always empty for biotechs — don't use them.
+- GNW `.com/issuer/TICKER` 404s. GNW org IDs in URL are per-release-ID, not per-company.
+- GNW `/Search?keyword=TICKER` redirects (301) to `/en/search/keyword/TICKER` — use the redirect target directly.
+- Probe IR subdomains (`investors.company.com`, `ir.company.com`) BEFORE company domain paths — subdomain hit rate is higher and company domain `/ir` paths often redirect to non-IR pages.
+- Require a keyword match on the probed page, not just a 200 response. Short `/ir` paths redirect to science/research pages for some biotechs (confirmed: KYMR `kymeratx.com/ir` → science page; `investors.kymeratx.com/investor-relations` → correct IR page).
+- CRITICAL — skip entire subdomain on first SSL/timeout error. When `investors.X.com` gets SSLError or ReadTimeout, all remaining paths on that subdomain will also fail. Naively probing all 13 paths = 75s stall per ticker (confirmed: `investors.crisprtx.com`). Group candidates by netloc and set a `skip_base` flag on first connection failure. Use timeout=5s, not 8-10s. See `references/ir_url_population.md` for implementation pattern.
+
+**Pass 2 — GNW search → JSON-LD fallback:**
+For tickers where EDGAR XBRL didn't yield a domain (e.g. no recent 8-Ks, exotic filers):
+
+```
+GET https://www.globenewswire.com/en/search/keyword/{TICKER}   (note: /Search?keyword redirects here)
+  → extract /news-release/YYYY/MM/DD/{release_id}/0/en/{slug} links
+  → match slug against ticker/company name
+  → fetch release page → parse JSON-LD author.url → company domain
+  → probe IR paths same as Pass 1
+```
+
+**IR probe path ordering (tier 1 before tier 2):**
+```
+Tier 1: investors.company.com, investor-relations.company.com, ir.company.com
+         × each of: /investors/news-releases, /investor-relations/news-releases,
+                    /investors/press-releases, ..., /ir/press-releases, /investors, /ir
+Tier 2: company.com × same path list
+```
+
+**Tool selection — IMPORTANT:**
+Use `tools/populate_ir_sources.py` (XBRL + GNW JSON-LD). NOT `tools/populate_ir_urls.py`.
+The latter uses EDGAR `investorWebsite` field (empty for ~100% of biotechs) + HEAD slug probing
+that hangs on WSL2 Cloudflare blocks. Both scripts exist; `populate_ir_urls.py` produces 0 results.
+
+**Usage:**
+```bash
+# Smoke test one ticker first (confirm connectivity, ~15s)
+python3 tools/populate_ir_sources.py --ticker VRTX --verbose
+
+# Full dry run → review → then apply (300 tickers ~90-120 min)
+# Launch as background job so laptop sleep doesn't kill it
+python3 tools/populate_ir_sources.py --dry-run > artifacts/ir_url_population_run_$(date +%F).log 2>&1 &
+tail -f artifacts/ir_url_population_run_$(date +%F).log  # monitor progress
+
+# Pass 1 only (skip GNW fallback)
+python3 tools/populate_ir_sources.py --pass1-only
+
+# Apply (writes to company_ir_sources.json — operator review required first)
+python3 tools/populate_ir_sources.py
+```
+
+Output: updates `production_data/company_ir_sources.json` in place + writes
+`artifacts/ir_url_population_YYYY-MM-DD.md` with per-ticker results and method breakdown.
+
+**Expected hit rate:** Pass 1 (EDGAR XBRL): ~62-65% for small/mid-cap biotech (confirmed
+from live run of 300 tickers 2026-05-06). Large-cap tickers trend higher. Small-cap and
+recent IPO filers have sparser 8-K XBRL history, pulling the rate down from theoretical
+75-85%. Pass 2 (GNW JSON-LD): additional ~5-10%. Final combined rate: ~65-72%.
+Remaining ~28-35% will have `ir_url: None` — those need manual entry or are
+delisted/shell companies without a web presence. Do not over-rotate on perfect coverage;
+even getting from 12% to 65-70% populated drops `other_share` well below the 50% FAIL threshold.
+
+**Rate limit:** 1.5s between requests. EDGAR best practice: include
+`User-Agent: WakeRobinBiotechScreener research@wakerobincapital.com` header.
+
+**Observed runtime:** ~18s/ticker (EDGAR calls + subdomain probing + rate limit).
+300 tickers = 90-120 min. Launch as background job; laptop sleep will kill it.
+
+**Verify improvement after run:**
+```bash
+# Check new populated count
+python3 -c "
+import json
+data = json.load(open('production_data/company_ir_sources.json'))
+sources = data['sources']
+populated = sum(1 for e in sources if e.get('company_ir_url','').strip())
+print(f'{populated}/{len(sources)} populated ({populated/len(sources)*100:.1f}%)')
+"
+# Then run production_qa to check if classifier_escalation_pool other_share drops below 50%
+```
 
 ---
 
@@ -207,6 +310,21 @@ grep "inst_delta" artifacts/ic_dashboard/history.jsonl | tail -30
 # Per CLAUDE.md: "Neither component survives standalone, but the bundle is real"
 ```
 
+**CHECK RANKER BEFORE ESCALATING SELECTOR:** Before recommending selector changes,
+confirm whether the flagged signal is already excluded from the ranker. In this codebase,
+the selector (`A4_SELECTOR_CONFIG` in run_screen.py) and the ranker (`PRODUCTION_RANKER_V2_CONFIG`)
+are separately configured. A signal can be anti-predictive in the selector while already
+being a "dead feature" in the ranker. Confirmed 2026-05-04: inst_delta_z was already
+excluded from the ranker (run_screen.py:157 comment "dead features: inst_delta_z, catalyst_decay_w,
+binary_quality_score added noise") before we zeroed it in the selector. Checking this first
+avoids redundant ranker fixes.
+
+```bash
+grep -n "inst_delta_z\|coinvest\|dead features" run_screen.py | head -20
+```
+
+**Full governance+promotion workflow:** once two-frame confirmation is established, load the `signal-shared-regime-check` skill. It has the comparator probe script (`scripts/shared_regime_check.py`), the governance memo template, and the full ruleset promotion sequence (run_screen.py patch → new ruleset JSON → PHASE2_PINNED_RULESET_ID → CLAUDE.md). Do not re-derive this workflow ad-hoc — the skill has the exact steps confirmed from the 2026-05-04 inst_delta_z case.
+
 **GOVERNANCE CEILING:** Do NOT recommend ruleset changes, weight adjustments, or signal
 demotion without a formal Spec-style writeup reviewed by the operator. Standard response:
 
@@ -273,11 +391,342 @@ consider manual backfill if the gap is business-critical.
 
 ---
 
+### Class F — run_agent_direct.py architectural mismatch for tool-dependent agents
+
+**Signature:** Agent crontab entry fires (SCAN or HEARTBEAT), log shows agent "ran"
+and wrote a JSON response, but no artifact was produced and the agent reports
+"XAI_API_KEY not found" or "cannot check filesystem". Agent appears to run but
+produces nothing.
+
+**Root cause (confirmed 2026-05-04):** `tools/run_agent_direct.py` is a **plain
+Anthropic SDK text call with no tool execution**. It sends a message and receives
+text — it does NOT execute bash commands, Python scripts, or API calls that the
+agent writes in its response. Agents designed to run under OpenClaw's gateway
+(which provides real bash tool execution) will "hallucinate" shell commands in
+their response text that never actually run.
+
+Confirmed affected agent: `grok_biotech_watch`. Its SOUL.md was designed for
+OpenClaw's bash tooling. When invoked via `run_agent_direct.py`:
+- `env | grep XAI` returns nothing (no real shell)
+- `XAI_API_KEY` is in `.env` and loaded into `os.environ` by main() but the
+  agent's bash calls in the response text never execute
+- Agent writes "HEARTBEAT: FAIL — no XAI_API_KEY" because its preflight bash
+  call never ran
+
+**Diagnostic confirmation:**
+
+```bash
+# Check agents_direct log for today's run
+cat logs/agents_direct/<agent>_<date>_*.json | python3 -c "
+import json,sys; d=json.load(sys.stdin)
+print('status:', d.get('status'))
+print('response snippet:', d.get('response','')[:500])
+"
+# If response contains bash-like commands as TEXT (not real output),
+# and artifacts directory is empty, this is Class F.
+```
+
+**Resolution options:**
+
+A. **Wire through OpenClaw instead** — the agent already has
+   `~/.openclaw/agents/<name>/agent/` dir. Use `openclaw cron add` to schedule
+   via the gateway which provides real bash execution. Requires auth-profiles.json
+   with the relevant provider (e.g. xai profile for grok_biotech_watch).
+
+B. **Write a dedicated wrapper script** — bypass the LLM agent for the deterministic
+   search/fetch step. A shell/Python script calls the API directly (e.g. xAI Grok
+   via curl), writes the artifact, then optionally passes results to a summarizer.
+   More reliable for agents whose core work is a deterministic API call.
+
+C. **Extend run_agent_direct.py with a tool executor** — add a tool-use loop that
+   intercepts bash tool_use blocks and executes them as real subprocesses. High effort,
+   changes a shared tool used by all 30 agents.
+
+**Recommended:** Option B for API-heavy agents (grok_biotech_watch, ctgov_poller-style).
+Option A for agents that need broad filesystem access.
+
+**Detection heuristic:** If an agent's SOUL.md mentions `env | grep`, `XAI_API_KEY`,
+`curl <external-api>`, or any external HTTP call, it needs real bash execution and
+will silently fail under `run_agent_direct.py`.
+
+---
+
+### Class F — production_qa STALE false label (receipt proxy lag)
+
+**Signature:** Fleet receipt shows production_qa as STALE or NO_ARTIFACTS for today.
+But when you check `artifacts/production_qa/` directly, today's report exists and
+was written in the evening.
+
+**Root cause:** The fleet_steward receipt is generated at 17:30 ET (before the
+evening run). production_qa runs at 17:35 ET. The receipt's proxy check for
+production_qa fires 5 minutes before the artifact lands. The next day's receipt
+clears it, but the current-day receipt always shows production_qa as STALE.
+
+**Confirmed instance (2026-05-04):** receipt flagged production_qa STALE.
+Direct check: `artifacts/production_qa/2026-05-04_report.md` written at 22:07 ET.
+Actual status: YELLOW (10/11 checks pass). Only FAIL: classifier_escalation_pool
+54% other_share — GlobeNewswire keyword contamination (separate tracked issue).
+
+**Triage rule:** When production_qa appears STALE in the receipt, always check
+`artifacts/production_qa/<today>_report.md` directly before treating as a failure.
+If the file exists with today's date: receipt is stale, agent is healthy.
+
+---
+
+### Class I — Morningstar enrichment silent double-bug (run_screen.py wrong inner key)
+
+**Signature:** `run_screen.py` runs without error and produces a rankings CSV, but all
+`ms_*` fields (`ms_return_ytd`, `ms_volatility_3yr`, `ms_star_rating`) are empty strings
+or null for the entire universe. The screen runs, the Morningstar engine runs, but nothing
+enriches — completely silent failure at the site level.
+
+**Root cause (confirmed 2026-05-06, commits `e70ae626` + `5c284ab7`):** Two independent
+bugs in the Morningstar enrichment block of `run_screen.py`:
+
+**Bug 1 (first):** `MorningstarSignalEngine.score_universe()` returns
+`{"scores_by_ticker": {...}, ...}`. The enrichment block called `.get("scores", {})` —
+wrong top-level key. The `.get()` silently returns `{}` when the key is absent; no error,
+no log. Fixed commit: `e70ae626`.
+
+**Bug 2 (second, independent):** After fixing the top-level key, the inner extraction also
+used `.get("scores", {})` instead of the correct field path. Second silent empty-dict
+return. Fixed commit: `5c284ab7`.
+
+**Both bugs were silent** — no exception, no warning log, just empty enrichment fields in
+the output. The pattern `result.get("scores", {})` is structurally ambiguous when the
+engine return schema uses a different key name at the same level.
+
+**Diagnostic chain:**
+
+```bash
+# 1. Confirm ms_* fields are empty in most recent snapshot
+python3 -c "
+import json, glob
+files = sorted(glob.glob('data/snapshots/*/screen_output.json'), reverse=True)
+if not files: print('no snapshots'); exit()
+data = json.load(open(files[0]))
+rows = data if isinstance(data, list) else data.get('tickers', [])
+sample = rows[:3]
+for r in sample:
+    print({k: v for k, v in r.items() if k.startswith('ms_')})
+"
+
+# 2. Confirm what MorningstarSignalEngine.score_universe() actually returns
+grep -n 'def score_universe\|scores_by_ticker\|return.*scores' tools/morningstar*.py | head -20
+
+# 3. Check the enrichment site in run_screen.py
+grep -n 'scores_by_ticker\|\.get.*scores\|morningstar.*enrich\|ms_return_ytd' run_screen.py | head -20
+```
+
+**Pattern to catch:** Any `.get("scores", {})` call against a dict returned by a signal
+engine should be verified against the engine's actual return schema. Signal engines in
+this repo commonly use `"scores_by_ticker"` (with the `_by_ticker` suffix) as the top-
+level key — not bare `"scores"`. If the key name drifts between engine and consumer, the
+`.get()` fallback silently swallows the data.
+
+**Test coverage added:** `TestMorningstarEnrichmentKeyPath` (6 tests) in
+`tests/test_run_screen_units.py` now covers both wrong-key variants and the correct path.
+
+**Impact on recent screens:** Any screen run between the Morningstar engine activation
+and `5c284ab7` had ms_* fields uniformly empty. Use `ls -lt data/snapshots/*/rankings.csv`
+to find affected dates; the fix produces `ms_return_ytd: 297/297 non-null` on a 299-ticker
+universe (2026-05-06 confirmed post-fix run).
+
+---
+
+### Class G — ic_health_monitor ALERT persists after signal zeroed (expected self-clearing)
+
+**Signature:** ic_health_monitor continues to show ALERT on inst_delta_z even after
+the signal has been zeroed in the selector (ruleset promotion). This looks like the
+fix didn't work but it's expected behavior.
+
+**Root cause:** The IC dashboard computes rolling IC over a historical lookback window
+(60 dates). Zeroing a signal in the selector doesn't change past IC measurements.
+The ALERT reflects historical data; it clears naturally as new dates accumulate in
+the window with the signal no longer active in selection.
+
+**Expected timeline:** With a 60-date lookback and ~1 date/day, the historical
+negative IC window gets diluted over ~4-6 weeks. Do not re-open the governance
+review based on ALERT persistence alone after a zeroing promotion.
+
+**Triage rule:** After a signal is zeroed via ruleset promotion, suppress
+ic_health_monitor ALERTs on that signal for 30 calendar days. Check the
+governance log for the promotion date. If the ALERT persists beyond 30 days
+after promotion with IC still negative, THEN re-open.
+
+**Secondary signal watch — score_rank_pct WARN (confirmed 2026-05-06):**
+IC dashboard may show WARN on signals beyond the primary governed signal.
+Confirmed pattern (2026-05-05/06): `score_rank_pct` entered WARN status
+(mean_ic = -0.0098, hit_rate 34.2% on Day 2; worsened to -0.0119/29% on Day 3)
+while `inst_delta_z` was already ALERT/governed.
+
+IC time-series evidence shows `score_rank_pct` was consistently negative from
+mid-February onward, not a recent perturbation. This is structural degradation,
+not Day-of-week or regime noise.
+
+**Escalation rule for WARN signals in the IC dashboard:**
+- Day 1 WARN: note as a new finding; surface to ops
+- Day 2 WARN: confirm time-series shape (structural vs episodic)
+- Day 3+ WARN: escalate to sentinel for review; invoke `signal-shared-regime-check`
+  skill to check for shared-regime vs signal-specific failure
+
+**GOVERNANCE CEILING:** Applies equally to WARN as to ALERT. Do NOT recommend
+weight changes without a Spec/Checklist v2 writeup. Surface an escalation packet only:
+
+```
+ESCALATION PACKET for ops + sentinel:
+  Signal:        score_rank_pct
+  Surface:       ic_health_monitor WARN Day 3+ (2026-05-06)
+  mean_ic:       -0.0119 (38 dates, worsened from -0.0098 Day 2)
+  hit_rate:      29% (worsened from 34.2% Day 2)
+  Onset:         mid-February 2026 (structural pattern, not episodic)
+  Role:          composite rank percentile — downstream of selector/ranker
+  
+Read-only diagnostics recommended:
+  - Time-series plot of IC (is Feb-onset consistent or sporadic?)
+  - Shared-regime check vs coinvest_score_z (controlled for selection regime)
+  - Check if degradation is universe-shift artifact from cohort reshuffle
+Do NOT modify ruleset or weights. Governance review required.
+```
+
+**Note:** `ic_health_monitor` has NO standalone cron — built inside
+`cron_daily_production.sh`. Dashboard at `artifacts/ic_dashboard/<date>_dashboard.json`.
+
+---
+
+### Class H — financial_records CashAndSecurities understated due to XBRL tag mismatch
+
+**Signature:** `data_auditor` financial_consistency check shows WARN with a divergence
+> 50% for a specific ticker. The `financial_records_value` matches the `Cash` field
+exactly, but `pit_value` is much larger (cash + STI). CashAndSecurities in
+financial_records.json equals Cash only.
+
+**Root cause (confirmed 2026-05-05, EWTX):** `collect_financial_data.py` fetches
+ShortTermInvestments via XBRL tag `ShortTermInvestments` from SEC EDGAR. Some tickers
+file their STI under a different XBRL tag that the script doesn't cover. The STI fetch
+returns None; CashAndSecurities is set to Cash only. Meanwhile, `pit_financials/<ticker>.json`
+(which has its own EDGAR fetch path) correctly captures the STI.
+
+Confirmed numbers for EWTX 2025-12-31 10-K (accn 0001104659-26-020112):
+- financial_records: Cash=$61.1M, ShortTermInvestments=None, CashAndSecurities=$61.1M
+- pit_financials: cash=$61.1M + STI=$468.9M = $530.1M correct
+- divergence: 88.5%
+
+**Diagnostic chain:**
+
+```bash
+# 1. Confirm the divergence is STI-missing (not data corruption)
+python3 - << 'EOF'
+import json
+REPO = "/mnt/c/Projects/biotech_screener/biotech-screener"
+TICKER = "EWTX"
+
+# financial_records
+fr = json.load(open(f"{REPO}/production_data/financial_records.json"))
+ewtx = next((x for x in fr if x.get("ticker") == TICKER), {}) if isinstance(fr, list) else fr.get(TICKER, {})
+print("financial_records:")
+print(f"  Cash:               {ewtx.get('Cash')}")
+print(f"  ShortTermInvestments: {ewtx.get('ShortTermInvestments')}")
+print(f"  CashAndSecurities:  {ewtx.get('CashAndSecurities')}")
+
+# pit_financials
+pit = json.load(open(f"{REPO}/production_data/pit_financials/{TICKER}.json"))
+cash_entries = sorted(pit["facts"].get("cash", []), key=lambda x: x["end"])
+sti_entries  = sorted(pit["facts"].get("short_term_investments", []), key=lambda x: x["end"])
+if cash_entries: print(f"pit_financials cash latest: {cash_entries[-1]}")
+if sti_entries:  print(f"pit_financials STI latest:  {sti_entries[-1]}")
+EOF
+
+# 2. If STI is None in financial_records but present in pit_financials →
+#    XBRL tag mismatch. The fix is to patch from pit_financials.
+
+# 3. Confirm dates align (both from same period end)
+```
+
+**Surgical patch recipe (confirmed working 2026-05-05):**
+
+```python
+import json, sys
+from pathlib import Path
+from datetime import datetime, timezone
+
+REPO = Path("/mnt/c/Projects/biotech_screener/biotech-screener")
+TICKER = "EWTX"
+APPLY = "--apply" in sys.argv
+
+def get_latest(facts, key):
+    entries = sorted(facts.get(key, []), key=lambda x: x["end"])
+    return (entries[-1]["val"], entries[-1]["end"]) if entries else (None, None)
+
+pit = json.loads((REPO / "production_data" / "pit_financials" / f"{TICKER}.json").read_text())
+cash_val, cash_date = get_latest(pit["facts"], "cash")
+sti_val, sti_date   = get_latest(pit["facts"], "short_term_investments")
+assert cash_date == sti_date, f"Date mismatch: {cash_date} vs {sti_date}"
+correct_cs = cash_val + sti_val
+
+# Patch production_data/financial_records.json and financial_data.json
+for path in [REPO / "production_data" / "financial_records.json",
+             REPO / "production_data" / "financial_data.json"]:
+    data = json.loads(path.read_text())
+    is_list = isinstance(data, list)
+    idx = next((i for i, e in enumerate(data) if e.get("ticker") == TICKER), None) if is_list else None
+    entry = data[idx] if is_list else data.get(TICKER, {})
+    print(f"{path.name}: CashAndSecurities {entry.get('CashAndSecurities')} → {correct_cs}")
+    if APPLY:
+        entry["ShortTermInvestments"] = sti_val
+        entry["ShortTermInvestments_date"] = sti_date
+        entry["CashAndSecurities"] = correct_cs
+        entry["CashAndSecurities_date"] = cash_date
+        entry["collected_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        if is_list: data[idx] = entry
+        path.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+        print(f"  WRITTEN")
+
+# Also patch all pit_archives (untracked) with the same script logic,
+# iterating REPO.glob("data/pit_archives/*/financial_records.json")
+```
+
+Run dry-run first (no `--apply`), verify output, then add `--apply`.
+
+**Also patch pit_archives:** The auditor reads from `data/pit_archives/<date>/financial_records.json`
+first. Use the same patch logic iterating all pit_archive dates — typically 400+ files.
+All are untracked, so this doesn't pollute git.
+
+**Verify fix:**
+```bash
+python3 agents/data_auditor/run_audit.py --as-of-date YYYY-MM-DD --daily-only 2>&1 | tail -10
+# financial_consistency should now show PASS with no divergences
+```
+
+**Root cause residual:** `collect_financial_data.py` will re-introduce the gap on next
+full refresh if the XBRL tag mismatch isn't fixed. The script fetches STI via tag
+`ShortTermInvestments`; the ticker may use `AvailableForSaleSecuritiesCurrent` or
+another tag. The surgical patch is a hotfix; a permanent fix requires extending the
+XBRL tag fallback list in collect_financial_data.py or back-filling from pit_financials
+during collection.
+
+**What NOT to do:**
+- Do NOT use a manual override entry — that masks root cause and requires indefinite maintenance.
+- Do NOT re-run the full `collect_financial_data.py` — it will overwrite with the same bad value.
+
+---
+
+## Support files
+
+- `scripts/patch_financial_records_sti.py` — reusable surgical patch for XBRL STI mismatch
+  (Class H). Patches financial_records.json, financial_data.json, and all pit_archive dates
+  from pit_financials source of truth. Run with `--apply` to write; dry-run by default.
+- `references/ir_url_population.md` — detailed notes on the two-pass IR URL sourcing
+  technique (EDGAR XBRL namespace + GNW JSON-LD), probe path ordering, confirmed results
+  for FDMT/KYMR/IMVT, and pitfalls encountered during 2026-05-06 implementation.
+
 ## Cross-skill diagnostic routing
 
 ```
 production_qa FAIL on classifier_escalation_pool?
   → Class A. Press release feed contamination. Check GNW keyword fallback.
+  → Class A1. If root cause is empty company_ir_url: run tools/populate_ir_sources.py
+    (two-pass: EDGAR XBRL namespace → IR probe; GNW JSON-LD fallback).
 
 Agent reports "no data" but data exists somewhere?
   → Class B. Default None path bug. Check --argument defaults in the tool.
@@ -290,4 +739,16 @@ ic_health_monitor ALERT on inst_delta_z or other load-bearing signal?
 
 data_auditor shows 4+ ERROR checks all on the same date?
   → Class E. Single missing snapshot cascade. Check rankings.csv, not each check individually.
+
+data_auditor financial_consistency WARN: one ticker with 50–90% divergence?
+  → Class H. XBRL tag mismatch. Check if ShortTermInvestments is None in financial_records
+    but present in pit_financials. Patch from pit_financials; don't use manual override.
+
+All ms_* fields empty across universe in rankings CSV?
+  → Class I. Morningstar silent double-bug. Check .get("scores") vs .get("scores_by_ticker")
+    in run_screen.py enrichment block. Both bugs are independent; fix both commits needed.
+
+ic_health_monitor shows WARN on a non-governed signal for Day 3+?
+  → Class G extension. Score_rank_pct pattern confirmed 2026-05-06. Escalate per escalation
+    packet template. Invoke signal-shared-regime-check skill for time-series diagnosis.
 ```
