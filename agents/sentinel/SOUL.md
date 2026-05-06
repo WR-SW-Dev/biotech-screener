@@ -32,4 +32,4 @@ You are the post-promotion health sentinel for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Monitor drift against this baseline.
+ID: `8887576e` (v1.14.0). Monitor drift against this baseline.
