@@ -538,6 +538,55 @@ def check_data_auditor(dt: date) -> CheckResult:
 # ── Production QA Agent ──────────────────────────────────────
 
 
+def check_review_queue_steward(dt: date) -> CheckResult:
+    """Verify review_queue_steward ran by checking its invocation log mtime.
+
+    The agent is chat-mode only — it produces no artifact files by design.
+    Its liveness signal is the most recent logs/agents_direct/review_queue_steward_*.json.
+    Cadence: daily_after_production (threshold 2d).
+    """
+    log_dir = LOGS_DIR / "agents_direct"
+    threshold = STALENESS_DAYS_BY_CADENCE.get("daily_after_production", 2)
+
+    logs = sorted(log_dir.glob("review_queue_steward_*.json")) if log_dir.is_dir() else []
+    if not logs:
+        return CheckResult(
+            "review_queue_steward",
+            "STALE",
+            "no invocation logs found",
+            ["NO_ARTIFACTS: logs/agents_direct/review_queue_steward_*.json"],
+        )
+
+    newest = max(logs, key=lambda p: p.stat().st_mtime)
+    age_days = (datetime.now().timestamp() - newest.stat().st_mtime) / 86400
+    newest_date = datetime.fromtimestamp(newest.stat().st_mtime).date()
+
+    if age_days > threshold:
+        return CheckResult(
+            "review_queue_steward",
+            "STALE",
+            f"newest log={newest_date} ({age_days:.1f}d > {threshold}d)",
+            [f"STALE_ARTIFACT: {age_days:.1f}d since last invocation (threshold {threshold}d)"],
+        )
+
+    # Peek at status field to surface errors without failing for chat-mode output
+    anomalies: list[str] = []
+    try:
+        data = json.loads(newest.read_text())
+        if data.get("status") == "error":
+            anomalies.append(f"INVOCATION_ERROR: {data.get('error', 'unknown')}")
+    except (json.JSONDecodeError, KeyError):
+        pass
+
+    if anomalies:
+        return CheckResult("review_queue_steward", "WARN", f"last run={newest_date}", anomalies)
+    return CheckResult(
+        "review_queue_steward",
+        "OK",
+        f"last run={newest_date} ({age_days:.1f}d, log-invocation check)",
+    )
+
+
 def check_production_qa(dt: date) -> CheckResult:
     """Verify production_qa ran and produced a report (schema: production_qa.v1)."""
     ds = as_of_date(dt)
@@ -581,6 +630,7 @@ SPECIALIZED_CHECKS = {
     "calibration_evidence": check_calibration_evidence,
     "data_auditor": check_data_auditor,
     "production_qa": check_production_qa,
+    "review_queue_steward": check_review_queue_steward,
 }
 
 # CLI --agent map: registry names + deprecated aliases for backward compatibility.

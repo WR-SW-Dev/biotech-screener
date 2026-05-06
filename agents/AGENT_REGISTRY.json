@@ -355,13 +355,11 @@
       "category": "signal_monitor",
       "cadence": "daily_after_production",
       "status": "active",
-      "artifact_paths": [
-        "agents/review_queue_steward/memory/"
-      ],
+      "artifact_paths": [],
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:50."
+      "notes": "Chat-mode only \u2014 no artifact files by design. Freshness checked via logs/agents_direct/review_queue_steward_*.json (specialized check_review_queue_steward in agent_heartbeat_checks.py). Crontab: 18:50."
     },
     "sentinel": {
       "role": "post-promotion health sentinel, drift monitor",
