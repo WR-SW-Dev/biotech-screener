@@ -1,7 +1,7 @@
 # Wake Robin DEM — Model Documentation
 
-**Version:** 1.7.1 (ruleset `2a3e79eb`, v1.13.0)
-**Last updated:** 2026-04-27
+**Version:** 1.7.1 (ruleset `8887576e`, v1.14.0 — 2026-05-04 demotion of `inst_delta_z`; see `RULESET_CHANGELOG.md`)
+**Last updated:** 2026-04-27 (ruleset reference refreshed 2026-05-06)
 **Status:** Production — A4 selector + pairwise `minimal_v2` ranker (2-feature, ordinal-only) + EW Top-30.
 Deployed ranker artifact = **capped Family C live-pilot vector**, not identical to the trained `minimal_v2`
 weights. See `production_data/ranker_v2_model.json` → `provenance` block for the deployed vs trained delta.
@@ -116,7 +116,8 @@ Every production change must be reversible within one commit.
 The model documents what it knows and what it doesn't.
 
 - Historical backtest numbers from prior PIT v2 snapshots (ruleset `69a0c7f8`) were invalidated
-  (2026-04-17 audit). Regenerated with current ruleset (`2a3e79eb`): +669% DEM vs +54% XBI
+  (2026-04-17 audit). Regenerated with then-current ruleset `2a3e79eb` (now retired 2026-05-04;
+  current canonical is `8887576e` v1.14.0): +669% DEM vs +54% XBI
   over 75 monthly periods (Jan 2020 – Apr 2026), +2.39pp/mo excess (t=3.14). However, these
   remain **pseudo-PIT** (current code applied retroactively) and are **not credible as forward
   return claims**. Live period (Oct 2024+, 18 months): +112% DEM vs +41% XBI, t=1.24 —
@@ -1472,7 +1473,7 @@ Any new signal or model change must pass all 6 modules before promotion:
 | Year Stability | Per-year IC sign consistency | Positive IC in ≥60% of calendar years |
 | Ablation | Add/remove signal from production stack | Marginal contribution > 0 after controlling for existing signals |
 
-Implementation: `common/stats/` (6 modules, 36 tests). Current stack: A4 selector + 2-feature pairwise ranker (sponsorship +0.061, financial -0.053). Frozen at ruleset `2a3e79eb` v1.13.0.
+Implementation: `common/stats/` (6 modules, 36 tests). Current stack: A4 selector + 2-feature pairwise ranker (sponsorship +0.061, financial -0.053). Active ruleset `8887576e` v1.14.0 (was `2a3e79eb` v1.13.0; v1.14.0 zeroed `inst_delta_z` selector weight as a demotion-class hygiene patch — see `RULESET_CHANGELOG.md`).
 
 #### Event Feedback Loop
 
@@ -2112,4 +2113,4 @@ They remain on the roadmap with their existing constraints:
 
 ---
 
-*Document updated 2026-04-27. Active ruleset: 2a3e79eb (v1.13.0). QA baseline: Checklist v2 rerun. Latest delta: §14.5 (display + diagnostic layer, model identity unchanged).*
+*Document updated 2026-04-27 (ruleset reference refreshed 2026-05-06). Active ruleset: 8887576e (v1.14.0; was 2a3e79eb v1.13.0 until 2026-05-04 demotion of `inst_delta_z` — demotion path, not Checklist v2 — see `RULESET_CHANGELOG.md` and `policy_demotion_path_2026_05_06.md`). QA baseline: Checklist v2 rerun (for the prior B6 65/35 bundle; v1.14.0 is a demotion-class change and does not require Checklist v2 retrospectively). Latest delta: §14.5 (display + diagnostic layer, model identity unchanged).*

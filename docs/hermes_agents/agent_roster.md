@@ -187,7 +187,7 @@ To manage: ask Hermes "pause/resume/remove <job name>".
 - **ID:** 5ab49c070c88
 - **Schedule:** once 2026-05-04 18:15 ET
 - **Toolsets:** terminal, file
-- **Purpose:** Validates first production run under ruleset v1.14.0 (id=622edb77).
+- **Purpose:** Validates first production run under ruleset v1.14.0 (canonical id=8887576e; initial commit produced phantom hash 622edb77, corrected by commit `bd91b523d` 2026-05-05).
   Confirms metadata.json shows new ruleset_id, finds last v1.13.0 snapshot,
   compares selector_score distribution and top-25 overlap. Flags RED if
   overlap < 60% or mean shifts > 2 std devs. Report written to

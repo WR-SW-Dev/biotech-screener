@@ -44,3 +44,16 @@ ic_health_monitor, AND (b) calibration_evidence event-IC turns positive. Not bef
 
 Operator: Darren Schulz
 Date filed: 2026-05-04
+
+---
+
+## Correction note (appended 2026-05-06 — phantom hash)
+
+The `622edb77` hash referenced above (lines 3, 28, 29, 30) was the **initial computed hash** of `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json`. After 2026-05-05 edits added `selector_config` fields to the ruleset file, the recomputed hash became `8887576e`. Commit `bd91b523d` ("fix(ruleset): correct v1.14.0 hash to 8887576e (was phantom 622edb77)") records the correction.
+
+**Canonical active ruleset id is `8887576e` v1.14.0.** The `622edb77` references in this log are preserved as audit-trail evidence of the phantom-hash episode and must NOT be edited or deleted. See:
+
+- `RULESET_CHANGELOG.md` v1.14.0 entry (controlling changelog record).
+- `artifacts/promotions/promotion_2026-05-04_8887576e.{json,md}` (synthetic-backfilled receipt — Spec 086 Option (a)).
+- `artifacts/audit/spec_086_v1_14_0_freeze_compliance_audit_2026_05_06.md` (controlling audit memo: v1.14.0 is a demotion-class hygiene patch, NOT a Checklist v2 promotion).
+- `policy_demotion_path_2026_05_06.md` (auto-memory: 5-element governed demotion path).

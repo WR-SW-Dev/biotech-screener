@@ -137,7 +137,8 @@ from selector_engine import BlockWeight, SelectorConfig, SignalSpec, compute_sel
 #   (75 postmortems). Comparator: coinvest_score_z mean_ic=+0.097 hit_rate=0.897
 #   same window, IC cross-correlation rho=-0.33 — degradation isolated to inst_delta_z.
 #   Governance: INST_DELTA_Z_SIGNAL_HEALTH_GOVERNANCE_REVIEW_2026_05_04.md
-#   Ruleset: v1.14.0_coinvest_only_selector.json (id=622edb77)
+#   Ruleset: v1.14.0_coinvest_only_selector.json (id=8887576e; initial commit
+#   produced phantom hash 622edb77, corrected by commit bd91b523d 2026-05-05).
 A4_SELECTOR_CONFIG = SelectorConfig(
     block_weights=(
         BlockWeight("clinical", 0.00),

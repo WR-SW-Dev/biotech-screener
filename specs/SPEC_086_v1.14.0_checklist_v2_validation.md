@@ -1,5 +1,27 @@
 # Spec 086 — v1.14.0 Coinvest-Only Selector: Checklist v2 Validation Bundle
 
+> **⚠ SUPERSEDED / HISTORICAL DISAGREEMENT RECORD ⚠**
+>
+> **Superseded by:** `specs/changes/spec_086_v1_14_0_freeze_compliance_audit_2026_05_06.md`
+>
+> **Operator ruling (2026-05-06):**
+> - v1.14.0 / `8887576e` is a **signal-demotion hygiene patch**.
+> - It is **not** a Checklist v2 promotion.
+> - Retrospective Checklist v2 is **not required as a blocker**.
+> - The governed demotion path + synthetic receipt + changelog entry are the controlling record:
+>   - `policy_demotion_path_2026_05_06.md` (auto-memory) — codifies the 5-element demotion path.
+>   - `artifacts/promotions/promotion_2026-05-04_8887576e.{json,md}` — synthetic-backfilled receipt.
+>   - `RULESET_CHANGELOG.md` v1.14.0 entry — controlling changelog record.
+>   - `artifacts/audit/spec_086_v1_14_0_freeze_compliance_audit_2026_05_06.md` — controlling audit memo.
+>
+> **Guardrail — DO NOT use this file as authoritative:**
+> This file must not be used by agents, monitors, or operators as the controlling
+> status of ruleset `8887576e`. It is retained only to preserve the audit trail of
+> a governance disagreement surfaced during Step A reconciliation. Treat all
+> claims below ("Status: OPEN", "Blocking:", "promotion_status: HOLD",
+> "checklist_v2_complete: unconfirmed", "What This Spec Requires") as
+> superseded.
+
 **Status:** OPEN — validation bundle not yet run
 **Created:** 2026-05-06
 **Triggered by:** 2026-05-06 data integrity audit finding R2
