@@ -295,21 +295,27 @@ def build_policy_shadow_compare(
     with open(json_path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2, default=str)
 
-    # Append to history
-    history_row = {
-        "date": as_of_date,
-        "n_current": len(w_current),
-        "n_tiered": len(w_tiered),
-        "n_exit": len(w_tiered_exit),
-        "pnl_current": pnl.get("current"),
-        "pnl_tiered": pnl.get("tiered"),
-        "pnl_exit": pnl.get("tiered_exit"),
-        "overlap": overlap_tiered,
-        "excluded": excluded_tickers,
-        "headwind_streaks": headwind_streaks,
-    }
-    with open(history_path, "a", encoding="utf-8") as f:
-        f.write(json.dumps(history_row, default=str) + "\n")
+    # Append to history (idempotent: skip if this date is already present).
+    # Comparison artifact above is regenerated unconditionally; only the
+    # append is gated, since duplicate same-date rows can mislead any
+    # consumer that doesn't dedupe by date.
+    if _date_in_history(history_path, as_of_date):
+        logger.info("history already contains %s; skipping append", as_of_date)
+    else:
+        history_row = {
+            "date": as_of_date,
+            "n_current": len(w_current),
+            "n_tiered": len(w_tiered),
+            "n_exit": len(w_tiered_exit),
+            "pnl_current": pnl.get("current"),
+            "pnl_tiered": pnl.get("tiered"),
+            "pnl_exit": pnl.get("tiered_exit"),
+            "overlap": overlap_tiered,
+            "excluded": excluded_tickers,
+            "headwind_streaks": headwind_streaks,
+        }
+        with open(history_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps(history_row, default=str) + "\n")
 
     # Markdown
     md_path = output_dir / f"{as_of_date}_comparison.md"
@@ -403,6 +409,25 @@ def _latest_history_date(history_path: Path) -> Optional[str]:
     except OSError:
         return None
     return latest
+
+
+def _date_in_history(history_path: Path, date: str) -> bool:
+    if not history_path.exists():
+        return False
+    try:
+        with open(history_path, encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    if json.loads(line).get("date") == date:
+                        return True
+                except json.JSONDecodeError:
+                    continue
+    except OSError:
+        return False
+    return False
 
 
 def _identify_caller() -> str:
