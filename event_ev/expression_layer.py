@@ -191,8 +191,11 @@ def compute_surface_quality(
     Components:
       - liquidity: liquid → 100, else 0
       - freshness: fresh quote → 100, stale → 0
-      - spread: 100 - min(100, spread_pct * 10)
-      - depth: mirrors liquidity (same source)
+      - spread: max(0, 100 - bid_ask_spread_pct * 1000) — bid_ask_spread_pct is
+                a decimal (0.05 == 5%), so 10% spread → component 0,
+                1% spread → component 90.
+      - depth: mirrors liquidity (no independent depth signal yet; effectively
+               weights liquidity at 50% of the final score).
     """
     liquidity = 100.0 if opt_liquidity_state == "liquid" else 0.0
     freshness = 100.0 if quote_fresh else 0.0
@@ -290,9 +293,11 @@ def compute_timing_confidence(
 
     Highest bar — timing is the weakest validated component.
     """
-    # Timing model consistency: probs should sum near 1.0
+    # Timing model consistency: probs should sum near 1.0. Penalize departures
+    # in either direction (sum < 1 → missing mass; sum > 1 → invalid). Previous
+    # implementation only clamped sum>1 to 1 and accepted any sum>0 as healthy.
     timing_sum = prob_on_time + prob_slip
-    timing_proxy = min(1.0, timing_sum) if timing_sum > 0 else 0.0
+    timing_proxy = max(0.0, 1.0 - abs(timing_sum - 1.0)) if timing_sum > 0 else 0.0
 
     sq = surface_quality_score / 100.0
 
@@ -372,10 +377,10 @@ def classify_mispricing(
         )
     )
     if dir_ok:
-        if mispricing_score > 0 and scenario_ev > 0:
-            sub = "bullish_underpriced"
-        else:
-            sub = "bearish_underpriced"
+        # Subtype keys off mispricing_score sign (the thesis direction).
+        # The dir_ok gate already enforced sign(mispricing) == sign(conditional);
+        # scenario_ev sign is independent and must not flip the label.
+        sub = "bullish_underpriced" if mispricing_score > 0 else "bearish_underpriced"
         full_hits.append(("DIRECTIONAL", sub, abs(mispricing_score)))
 
     dir_reduced = (
@@ -388,7 +393,7 @@ def classify_mispricing(
         )
     )
     if dir_reduced:
-        sub = "bullish_underpriced" if (mispricing_score > 0 and scenario_ev > 0) else "bearish_underpriced"
+        sub = "bullish_underpriced" if mispricing_score > 0 else "bearish_underpriced"
         reduced_hits.append(("DIRECTIONAL", sub, abs(mispricing_score)))
 
     # --- VARIANCE ---
@@ -402,7 +407,9 @@ def classify_mispricing(
         and var_conf >= 0.55
     )
     if var_ok:
-        sub = "vol_underpriced" if base_rate_gap_score < -0.30 else "vol_overpriced"
+        # Outer gate admits |gap| >= 0.30 inclusive on both sides; use sign for
+        # subtype so gap == -0.30 maps to vol_underpriced (not vol_overpriced).
+        sub = "vol_underpriced" if base_rate_gap_score < 0 else "vol_overpriced"
         full_hits.append(("VARIANCE", sub, abs(base_rate_gap_score)))
 
     var_reduced = (
@@ -413,7 +420,7 @@ def classify_mispricing(
         and var_conf >= 0.55 * 0.7
     )
     if var_reduced:
-        sub = "vol_underpriced" if base_rate_gap_score < -0.30 * 0.7 else "vol_overpriced"
+        sub = "vol_underpriced" if base_rate_gap_score < 0 else "vol_overpriced"
         reduced_hits.append(("VARIANCE", sub, abs(base_rate_gap_score)))
 
     # --- SKEW ---

@@ -236,6 +236,20 @@ class TestDirectionalClassification:
         )
         assert mp_type != "DIRECTIONAL"
 
+    def test_directional_subtype_keys_off_mispricing_sign(self):
+        """Regression: subtype must follow mispricing_score sign, not the
+        conjunction with scenario_ev. A bullish thesis (mispricing > 0,
+        conditional > 0) with a negative scenario_ev was previously labeled
+        bearish_underpriced — wrong."""
+        mp_type, mp_sub = _classify(
+            mispricing_score=0.20,
+            scenario_ev=-5.0,  # negative ev despite bullish mispricing
+            outcome_confidence=0.60,
+            conditional_misprice_score=0.15,
+        )
+        assert mp_type == "DIRECTIONAL"
+        assert mp_sub == "bullish_underpriced"
+
 
 class TestVarianceClassification:
     def test_variance_underpriced(self):
@@ -265,6 +279,23 @@ class TestVarianceClassification:
         )
         assert mp_type == "VARIANCE"
         assert mp_sub == "vol_overpriced"
+
+    def test_variance_subtype_at_negative_boundary(self):
+        """Regression: gap == -0.30 admits the gate (|gap| >= 0.30) and must
+        classify as vol_underpriced, not vol_overpriced. Previously the
+        boundary was strict < -0.30."""
+        mp_type, mp_sub = _classify(
+            base_rate_gap_score=-0.30,  # exact boundary
+            divergence_score=-0.20,
+            priced_move_pct=20.0,
+            mispricing_score=0.05,
+            ees_confidence=0.70,
+            surface_quality_score=80.0,
+            analog_confidence="ok",
+            base_rate_n=30,
+        )
+        assert mp_type == "VARIANCE"
+        assert mp_sub == "vol_underpriced"
 
     def test_variance_suppressed_by_directional(self):
         """Variance does not trigger when directional mispricing is strong."""
@@ -363,6 +394,27 @@ class TestTimingClassification:
             prob_on_time=0.55,
         )
         assert mp_type != "TIMING"
+
+    def test_timing_confidence_penalizes_invalid_prob_sum(self):
+        """Regression: prob_on_time + prob_slip far from 1.0 must reduce the
+        consistency proxy. Previously sum>1 was silently clamped to 1; only
+        sum<=0 zeroed it out."""
+        # sum = 1.9 → consistency proxy = 1 - |1.9 - 1| = 0.1; gate at 0.60 must fail
+        conf = compute_timing_confidence(
+            prob_on_time=0.95,
+            prob_slip=0.95,
+            surface_quality_score=100.0,
+            date_precision="HALF_YEAR",  # precision_factor 1.0
+        )
+        assert conf < 0.60
+        # sum = 0.5 → proxy = 0.5; even with perfect surface and precision, gate fails
+        conf2 = compute_timing_confidence(
+            prob_on_time=0.30,
+            prob_slip=0.20,
+            surface_quality_score=100.0,
+            date_precision="HALF_YEAR",
+        )
+        assert conf2 == pytest.approx(0.5, abs=1e-4)
 
 
 class TestMixedClassification:
