@@ -4747,9 +4747,6 @@ def save_validation_snapshot(
             row["catalyst_date_lower"] = ""
             row["catalyst_date_upper"] = ""
 
-        # Source filed_at (from catalyst_source provenance)
-        row["catalyst_source_filed_at"] = ""  # populated by Module 3 when available
-
         # Calendar confidence score [0, 1]
         _conf = 0.0
         _has_signal = bool(_cd_int > 0 or row.get("catalyst_event_type", "").strip())

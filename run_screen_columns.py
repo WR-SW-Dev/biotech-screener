@@ -151,7 +151,6 @@ SNAPSHOT_COLUMNS = (
         "catalyst_date_lower",
         "catalyst_date_upper",
         "catalyst_date_precision",
-        "catalyst_source_filed_at",
         "calendar_confidence",
         "has_catalyst_signal",
         "has_tradeable_calendar",
