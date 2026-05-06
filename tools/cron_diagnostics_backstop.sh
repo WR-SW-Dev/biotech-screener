@@ -64,4 +64,13 @@ for tool in build_snapshot_integrity_report \
     fi
 done
 
+# Reconcile any null prediction_composite_score fields created in the last 7d.
+# Idempotent and fast (~120 records); safe to run daily.
+${PYTHON} tools/backfill_resolution_predictions.py \
+    2>&1 | sed "s|^|${LOG_PREFIX} backfill_resolution_predictions: |"
+rc=${PIPESTATUS[0]}
+if [ "${rc}" -ne 0 ]; then
+    echo "${LOG_PREFIX} WARN: backfill_resolution_predictions exited ${rc}"
+fi
+
 echo "${LOG_PREFIX} Done"

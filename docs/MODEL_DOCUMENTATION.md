@@ -328,6 +328,45 @@ which uses `final_score` (selector + ranker adjustment) when the ranker is activ
 Deployed weights are read live from `production_data/ranker_v2_model.json`; the `provenance`
 block is authoritative. Trained weights are retained here for audit-trail comparison only.
 
+### Ranker v2 — Feature Interpretation
+
+#### `coinvest_score_z` (deployed weight: +0.02)
+
+Captures institutional co-investment endorsement. Acts as a quality filter: names held by multiple specialist managers simultaneously carry an implicit consensus that the risk/reward is attractive. The weight is positive by construction. Deployed at +0.02, conservatively capped below the trained +0.0613 (Family C live-pilot decision); the cap reflects deployment caution, not evidence the full weight is harmful.
+
+#### `financial_score` (deployed weight: −0.0533)
+
+The negative coefficient means: all else equal, a ticker with a **better** (higher) financial score ranks *lower* in pairwise comparisons. This is counterintuitive and is documented here as the authoritative causal record.
+
+**Causal hypothesis:** `financial_score` captures financial strength (cash runway, burn rate, balance sheet quality). In the biotech universe, financially stronger companies tend to have lower near-term catalyst optionality because: (a) their funding risk is already resolved, removing a conditional re-rating catalyst; (b) they are more likely to be large-cap or commercial-stage names where market expectations are already well-calibrated; and (c) `coinvest_score_z` already captures manager endorsement of names that survive the financial screen. The ranker learned to modestly prefer financially constrained names within the manager-endorsed set — not because distress is good, but because the market over-discounts financing risk for catalyst-stage biotechs that managers are actively holding.
+
+This is distinct from a "distress factor" and distinct from "financial_score is bad data." The mechanism is conditional: it applies within the subset already passing the institutional filter.
+
+**Clarifications:**
+- `financial_score` in the ranker is the **Module 5 rank-normalized score** (stage×size cohort), NOT the raw Module 2 cash/burn output. Rank-normalization reduces outlier sensitivity — a very strong and a merely adequate balance sheet score closer together than raw values suggest.
+- `financial_score` appears in the **ranker only**, not in the selector. The selector's Module 5 uses `financial_score` as a penalty gate, not a gradient.
+- The cap on `coinvest_score_z` (+0.02 deployed vs. +0.0613 trained) was a deliberate conservative decision. `financial_score` was NOT capped — deployed at full trained strength.
+
+**Falsification criteria** (rolling 90-day window; triggers human flag, not automatic retrain):
+
+| Criterion | Threshold |
+|---|---|
+| Names ranked UP by ranker (vs. coinvest-only order) due to lower `financial_score` have worse 20d returns | Consistent negative differential < −1pp median, n ≥ 20 pairs |
+| Top-30 includes names with `financial_score` in bottom quartile AND negative catalyst outcomes at above-base rate | > 2× base MISS rate for bottom-quartile financial names in top-30, n ≥ 10 |
+| `financial_score` distribution in top-30 shifts materially below universe median | Median top-30 `financial_score` < P25 universe for ≥ 3 consecutive snapshots |
+
+These criteria do NOT trigger automatic retrain. They trigger a flag in the forward shadow log and a human review at the next scheduled verdict date. A future retrain that changes `financial_score`'s sign requires either (a) falsification evidence per the above, or (b) an explicit override decision with a competing causal explanation.
+
+#### Deployment delta: trained vs. deployed weights
+
+| Feature | Trained (`minimal_v2`) | Deployed (live pilot) | Delta |
+|---|---|---|---|
+| `coinvest_score_z` | +0.0613 | +0.02 | Capped (conservative deployment) |
+| `financial_score` | −0.0533 | −0.0533 | Unchanged |
+| `bias` | — | +0.5019 | Unchanged |
+
+The trained weights come from the `minimal_v2` variant in `production_data/ranker_v2_model.json`. The deployed weights are read from `deployed_live_pilot` variant in the same artifact. The provenance block is the single source of truth — this table is a snapshot for audit reference only.
+
 **Overlay signals (not in selector/ranker weights):**
 
 | Signal | Role | Checklist v2 | Status |

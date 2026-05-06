@@ -81,6 +81,7 @@ def main() -> int:
             except (TypeError, ValueError):
                 rec["prediction_dem_rank"] = None
             rec["prediction_composite_score"] = _safe_float(snap.get("composite_score"))
+            rec["prediction_match_type"] = snap.get("match_type")
             n_updated += 1
 
         if not args.dry_run:

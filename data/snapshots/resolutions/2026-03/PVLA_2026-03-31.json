@@ -11,12 +11,13 @@
   "source_id": "https://www.stocktitan.net/sec-filings/PVLA/8-k-palvella-therapeutics-inc-reports-material-event-e06f2b173bd2.html",
   "prediction_snapshot_date": "2026-03-28",
   "prediction_dem_rank": 18,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.057253918032786885,
   "price_t_minus_1": 110.66000366210938,
   "price_t_0": 110.66000366210938,
   "price_t_plus_5": null,
   "price_direction": "flat",
   "days_from_expected": null,
   "as_of_date": "2026-03-31",
-  "record_hash": "7accefae4ab31639746b88264710c0d62c87de641f3587722cb4d20ea9a0211d"
+  "record_hash": "7accefae4ab31639746b88264710c0d62c87de641f3587722cb4d20ea9a0211d",
+  "prediction_match_type": "fallback"
 }

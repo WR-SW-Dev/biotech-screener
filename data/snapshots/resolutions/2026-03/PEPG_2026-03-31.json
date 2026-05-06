@@ -11,12 +11,13 @@
   "source_id": "price_action_evidence",
   "prediction_snapshot_date": "2026-03-28",
   "prediction_dem_rank": 26,
-  "prediction_composite_score": null,
+  "prediction_composite_score": 0.08791470967741935,
   "price_t_minus_1": null,
   "price_t_0": null,
   "price_t_plus_5": null,
   "price_direction": null,
   "days_from_expected": null,
   "as_of_date": "2026-04-01",
-  "record_hash": "86df67d1516607c72d9bc355bd7ae9c965e5d72220be9253ba9b5e5f1762a22a"
+  "record_hash": "86df67d1516607c72d9bc355bd7ae9c965e5d72220be9253ba9b5e5f1762a22a",
+  "prediction_match_type": "fallback"
 }

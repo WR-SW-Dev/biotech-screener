@@ -19,6 +19,7 @@ import csv
 import hashlib
 import json
 import logging
+import re
 import sys
 from dataclasses import dataclass
 from datetime import date, timedelta
@@ -128,6 +129,16 @@ class ResolutionRecord:
     prediction_snapshot_date: Optional[str] = None
     prediction_dem_rank: Optional[int] = None
     prediction_composite_score: Optional[float] = None
+    prediction_match_type: Optional[str] = None  # "exact" | "fallback"
+    event_ev_node_id: Optional[str] = None
+    event_ev_p_hit: Optional[float] = None
+    event_ev_p_miss: Optional[float] = None
+    event_ev_p_mixed: Optional[float] = None
+    event_ev_confidence: Optional[float] = None
+    event_ev_asof_date: Optional[str] = None
+    event_ev_match_type: Optional[str] = (
+        None  # "exact_node" | "ticker_date_7d" | "ambiguous" | "no_match" | "no_snap" | "no_ev_artifact"
+    )
     price_t_minus_1: Optional[float] = None
     price_t_0: Optional[float] = None
     price_t_plus_5: Optional[float] = None
@@ -159,6 +170,14 @@ class ResolutionRecord:
         d["prediction_snapshot_date"] = self.prediction_snapshot_date
         d["prediction_dem_rank"] = self.prediction_dem_rank
         d["prediction_composite_score"] = self.prediction_composite_score
+        d["prediction_match_type"] = self.prediction_match_type
+        d["event_ev_node_id"] = self.event_ev_node_id
+        d["event_ev_p_hit"] = self.event_ev_p_hit
+        d["event_ev_p_miss"] = self.event_ev_p_miss
+        d["event_ev_p_mixed"] = self.event_ev_p_mixed
+        d["event_ev_confidence"] = self.event_ev_confidence
+        d["event_ev_asof_date"] = self.event_ev_asof_date
+        d["event_ev_match_type"] = self.event_ev_match_type
         d["price_t_minus_1"] = self.price_t_minus_1
         d["price_t_0"] = self.price_t_0
         d["price_t_plus_5"] = self.price_t_plus_5
@@ -290,6 +309,131 @@ def _safe_float(v: Any) -> Optional[float]:
         return None
 
 
+_EV_FULL_PATTERN = re.compile(r"^(\d{4}-\d{2}-\d{2})_event_ev_full\.json$")
+_EV_ARTIFACTS_DIR = PROJECT_ROOT / "artifacts" / "event_ev"
+_EV_DATE_WINDOW = 7  # days: (ticker, expected_date ±7d) fallback window
+
+
+def _bind_event_ev_p_hit(
+    ticker: str,
+    catalyst_date_str: str,
+    prediction_snapshot_date: Optional[str],
+    node_id: Optional[str] = None,
+    ev_artifacts_dir: Path = _EV_ARTIFACTS_DIR,
+) -> Dict[str, Any]:
+    """Bind event-level p_hit from EV artifacts into a resolution record.
+
+    Uses the closest EV artifact dated <= prediction_snapshot_date to avoid
+    look-ahead. Primary strategy: exact node_id match. Fallback: (ticker,
+    expected_date ±7d). Leaves all fields None if no unambiguous match is found.
+    Never fabricates values.
+
+    Returns a dict with the seven event_ev_* fields.
+    """
+    null = {
+        "event_ev_node_id": None,
+        "event_ev_p_hit": None,
+        "event_ev_p_miss": None,
+        "event_ev_p_mixed": None,
+        "event_ev_confidence": None,
+        "event_ev_asof_date": None,
+        "event_ev_match_type": "no_match",
+    }
+
+    if not prediction_snapshot_date:
+        null["event_ev_match_type"] = "no_snap"
+        return null
+
+    if not ev_artifacts_dir.exists():
+        null["event_ev_match_type"] = "no_ev_artifact"
+        return null
+
+    # Collect valid artifact dates <= prediction_snapshot_date, newest first
+    valid: List[Tuple[str, Path]] = []
+    for fp in ev_artifacts_dir.iterdir():
+        m = _EV_FULL_PATTERN.match(fp.name)
+        if m and m.group(1) <= prediction_snapshot_date:
+            valid.append((m.group(1), fp))
+    if not valid:
+        null["event_ev_match_type"] = "no_ev_artifact"
+        return null
+
+    ev_asof, ev_fp = max(valid, key=lambda x: x[0])
+
+    try:
+        with open(ev_fp) as f:
+            ev_data = json.load(f)
+    except Exception:
+        null["event_ev_match_type"] = "no_ev_artifact"
+        return null
+
+    events = ev_data.get("events", [])
+    if not events:
+        null["event_ev_match_type"] = "no_ev_artifact"
+        return null
+
+    # Primary: exact node_id match (immune to expected_date slippage)
+    if node_id:
+        for e in events:
+            if not isinstance(e, dict):
+                continue
+            n = e.get("node", {})
+            if isinstance(n, dict) and n.get("node_id") == node_id:
+                outcome = e.get("outcome", {})
+                return {
+                    "event_ev_node_id": node_id,
+                    "event_ev_p_hit": _safe_float(outcome.get("p_hit")),
+                    "event_ev_p_miss": _safe_float(outcome.get("p_miss")),
+                    "event_ev_p_mixed": _safe_float(outcome.get("p_mixed")),
+                    "event_ev_confidence": _safe_float(outcome.get("confidence")),
+                    "event_ev_asof_date": ev_asof,
+                    "event_ev_match_type": "exact_node",
+                }
+
+    # Fallback: (ticker, expected_date ±7d)
+    try:
+        cat_dt = date.fromisoformat(catalyst_date_str[:10])
+    except ValueError:
+        return null
+
+    matches: List[Tuple[int, str, Dict[str, Any]]] = []
+    for e in events:
+        if not isinstance(e, dict):
+            continue
+        n = e.get("node", {})
+        if not isinstance(n, dict) or n.get("ticker") != ticker:
+            continue
+        ed_str = (n.get("expected_date") or "")[:10]
+        if not ed_str:
+            continue
+        try:
+            ev_dt = date.fromisoformat(ed_str)
+        except ValueError:
+            continue
+        dist = abs((ev_dt - cat_dt).days)
+        if dist <= _EV_DATE_WINDOW:
+            matches.append((dist, n.get("node_id") or "", e.get("outcome", {})))
+
+    if not matches:
+        null["event_ev_match_type"] = "no_match"
+        return null
+
+    if len(matches) > 1:
+        null["event_ev_match_type"] = "ambiguous"
+        return null
+
+    _dist, node_id, outcome = matches[0]
+    return {
+        "event_ev_node_id": node_id or None,
+        "event_ev_p_hit": _safe_float(outcome.get("p_hit")),
+        "event_ev_p_miss": _safe_float(outcome.get("p_miss")),
+        "event_ev_p_mixed": _safe_float(outcome.get("p_mixed")),
+        "event_ev_confidence": _safe_float(outcome.get("confidence")),
+        "event_ev_asof_date": ev_asof,
+        "event_ev_match_type": "ticker_date_7d",
+    }
+
+
 def _compute_price_direction(
     t_minus_1: Optional[float], t_0: Optional[float], threshold: float = 0.02
 ) -> Optional[str]:
@@ -389,40 +533,61 @@ def get_prediction_snapshot(
     ticker: str,
     catalyst_date: date,
     snapshots_dir: Path,
+    max_lookback_days: int = 14,
 ) -> Dict[str, Any]:
-    """Find the most recent rankings snapshot before catalyst_date."""
+    """Find the most recent rankings snapshot before catalyst_date containing ticker.
+
+    Scans backward from catalyst_date - 1 day through up to max_lookback_days
+    calendar days. Returns the first snapshot where the ticker appears.
+    match_type is "exact" when the ticker is in the immediate prior snapshot,
+    "fallback" when an older snapshot was needed (e.g. ticker recently dropped
+    from universe). Returns TICKER_NOT_IN_SNAPSHOT if no snapshot within the
+    window contains the ticker.
+    """
     snap_dates = sorted(
         [
             d.name
             for d in snapshots_dir.iterdir()
-            if d.is_dir() and not d.name.startswith("_") and "__pre" not in d.name and (d / "rankings.csv").exists()
+            if d.is_dir()
+            and not d.name.startswith("_")
+            and "__pre" not in d.name
+            and len(d.name) == 10
+            and (d / "rankings.csv").exists()
         ],
         reverse=True,
     )
 
     target = catalyst_date.isoformat()
-    snapshot_date = None
+    # Collect candidate snapshot dates within the lookback window, newest first
+    candidates = []
     for sd in snap_dates:
-        if sd < target:
-            snapshot_date = sd
+        if sd >= target:
+            continue
+        if (catalyst_date - date.fromisoformat(sd)).days > max_lookback_days:
             break
+        candidates.append(sd)
 
-    if snapshot_date is None:
+    if not candidates:
         return {"status": "MISSING_SNAPSHOT"}
 
-    rankings_path = snapshots_dir / snapshot_date / "rankings.csv"
-    with open(rankings_path) as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            if row.get("ticker") == ticker:
-                return {
-                    "status": "OK",
-                    "snapshot_date": snapshot_date,
-                    "dem_rank": row.get("actionable_rank", ""),
-                    "tier": row.get("tier_any", ""),
-                    "composite_score": row.get("composite_score", ""),
-                }
-    return {"status": "TICKER_NOT_IN_SNAPSHOT", "snapshot_date": snapshot_date}
+    first_snap = candidates[0]
+    for i, snapshot_date in enumerate(candidates):
+        rankings_path = snapshots_dir / snapshot_date / "rankings.csv"
+        with open(rankings_path) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row.get("ticker") == ticker:
+                    match_type = "exact" if snapshot_date == first_snap else "fallback"
+                    return {
+                        "status": "OK",
+                        "snapshot_date": snapshot_date,
+                        "match_type": match_type,
+                        "dem_rank": row.get("actionable_rank", ""),
+                        "tier": row.get("tier_any", ""),
+                        "composite_score": row.get("composite_score", ""),
+                    }
+
+    return {"status": "TICKER_NOT_IN_SNAPSHOT", "snapshot_date": first_snap}
 
 
 def get_price_reaction(
@@ -631,6 +796,8 @@ def run_crt(
             except (ValueError, TypeError):
                 pass
 
+        ev_bind = _bind_event_ev_p_hit(ticker, cat_date_str, snap.get("snapshot_date"))
+
         prices_data: Dict[str, Optional[float]] = {
             "price_t_minus_1": None,
             "price_t_0": None,
@@ -653,6 +820,14 @@ def run_crt(
                 prediction_snapshot_date=snap.get("snapshot_date"),
                 prediction_dem_rank=dem_rank,
                 prediction_composite_score=_safe_float(snap.get("composite_score")),
+                prediction_match_type=snap.get("match_type"),
+                event_ev_node_id=ev_bind["event_ev_node_id"],
+                event_ev_p_hit=ev_bind["event_ev_p_hit"],
+                event_ev_p_miss=ev_bind["event_ev_p_miss"],
+                event_ev_p_mixed=ev_bind["event_ev_p_mixed"],
+                event_ev_confidence=ev_bind["event_ev_confidence"],
+                event_ev_asof_date=ev_bind["event_ev_asof_date"],
+                event_ev_match_type=ev_bind["event_ev_match_type"],
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),
@@ -684,6 +859,7 @@ def run_crt(
                         dem_rank = int(snap["dem_rank"])
                     except (ValueError, TypeError):
                         pass
+                ev_bind = _bind_event_ev_p_hit(ticker, cat_date_str[:10], snap.get("snapshot_date"))
                 new_records.append(
                     ResolutionRecord(
                         ticker=ticker,
@@ -698,6 +874,14 @@ def run_crt(
                         prediction_snapshot_date=snap.get("snapshot_date"),
                         prediction_dem_rank=dem_rank,
                         prediction_composite_score=_safe_float(snap.get("composite_score")),
+                        prediction_match_type=snap.get("match_type"),
+                        event_ev_node_id=ev_bind["event_ev_node_id"],
+                        event_ev_p_hit=ev_bind["event_ev_p_hit"],
+                        event_ev_p_miss=ev_bind["event_ev_p_miss"],
+                        event_ev_p_mixed=ev_bind["event_ev_p_mixed"],
+                        event_ev_confidence=ev_bind["event_ev_confidence"],
+                        event_ev_asof_date=ev_bind["event_ev_asof_date"],
+                        event_ev_match_type=ev_bind["event_ev_match_type"],
                         as_of_date=as_of_date.isoformat(),
                     )
                 )
@@ -735,6 +919,8 @@ def run_crt(
             except (ValueError, TypeError):
                 pass
 
+        ev_bind = _bind_event_ev_p_hit(ticker, cat_date_str[:10], snap.get("snapshot_date"))
+
         prices_data: Dict[str, Optional[float]] = {
             "price_t_minus_1": None,
             "price_t_0": None,
@@ -757,6 +943,14 @@ def run_crt(
                 prediction_snapshot_date=snap.get("snapshot_date"),
                 prediction_dem_rank=dem_rank,
                 prediction_composite_score=_safe_float(snap.get("composite_score")),
+                prediction_match_type=snap.get("match_type"),
+                event_ev_node_id=ev_bind["event_ev_node_id"],
+                event_ev_p_hit=ev_bind["event_ev_p_hit"],
+                event_ev_p_miss=ev_bind["event_ev_p_miss"],
+                event_ev_p_mixed=ev_bind["event_ev_p_mixed"],
+                event_ev_confidence=ev_bind["event_ev_confidence"],
+                event_ev_asof_date=ev_bind["event_ev_asof_date"],
+                event_ev_match_type=ev_bind["event_ev_match_type"],
                 price_t_minus_1=prices_data.get("price_t_minus_1"),
                 price_t_0=prices_data.get("price_t_0"),
                 price_t_plus_5=prices_data.get("price_t_plus_5"),

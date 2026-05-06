@@ -240,6 +240,7 @@ def write_postmortem(ticker, event_date_str, pre_snap_date, pre_row, outcome, re
         "pre_event": {
             "snapshot_date": pre_snap_date,
             "actionable_rank": _fi("actionable_rank"),
+            "composite_score": _ff("composite_score"),
             "tier_dev": _f("tier_dev"),
             "size_band": _f("size_band"),
             "target_weight_pct": _ff("target_weight_pct"),
@@ -269,6 +270,15 @@ def write_postmortem(ticker, event_date_str, pre_snap_date, pre_row, outcome, re
             "days_from_expected": resolution_rec.get("days_from_expected"),
             "source_type": resolution_rec.get("source_type"),
             "source_id": resolution_rec.get("source_id"),
+            "prediction_composite_score": resolution_rec.get("prediction_composite_score"),
+            "prediction_snapshot_date": resolution_rec.get("prediction_snapshot_date"),
+            "prediction_dem_rank": resolution_rec.get("prediction_dem_rank"),
+            "prediction_match_type": resolution_rec.get("prediction_match_type"),
+            "event_ev_p_hit": resolution_rec.get("event_ev_p_hit"),
+            "event_ev_p_miss": resolution_rec.get("event_ev_p_miss"),
+            "event_ev_confidence": resolution_rec.get("event_ev_confidence"),
+            "event_ev_asof_date": resolution_rec.get("event_ev_asof_date"),
+            "event_ev_match_type": resolution_rec.get("event_ev_match_type"),
         }
 
     json_path = os.path.join(out_dir, f"{ticker}.json")

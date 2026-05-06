@@ -6,6 +6,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from tools.catalyst_resolution_tracker import ResolutionRecord, compute_record_hash
@@ -197,3 +199,111 @@ class TestCRTRecordEdgeCases:
         r = _make_crt_record(source_type="MANUAL", source_id="manual_override")
         d = r.to_dict()
         assert d["source_type"] == "MANUAL"
+
+
+class TestPredictionFieldPropagation:
+    """prediction_composite_score must flow from CRT record into postmortem artifact."""
+
+    def _make_pre_row(self, ticker="PVLA", composite_score="0.07"):
+        return {
+            "ticker": ticker,
+            "actionable_rank": "18",
+            "composite_score": composite_score,
+            "tier_dev": "A",
+            "size_band": "S",
+            "target_weight_pct": "",
+            "catalyst_days": "1",
+            "catalyst_mode": "specific_days",
+            "catalyst_family": "CLINICAL",
+            "catalyst_event_type": "PHASE_3_READOUT",
+            "catalyst_source": "CTGOV_CALENDAR",
+            "is_hard_catalyst": "1",
+            "confidence_overall": "0.9",
+            "mom_state": "neutral",
+            "eligible": "1",
+            "ineligible_reasons": "",
+            "decision_engine_ruleset_id": "2a3e79eb",
+            "next_catalyst_date": "2026-04-15",
+        }
+
+    def _call_write_postmortem(self, tmp_path, ticker, event_date, resolution_rec):
+        """Invoke write_postmortem with a minimal snapshot environment."""
+        import agents.postmortem.scripts.run_postmortem as pm_mod
+
+        orig_pm = pm_mod.PM_DIR
+        orig_repo = pm_mod.REPO
+        pm_mod.PM_DIR = str(tmp_path / "postmortem")
+        pm_mod.REPO = str(tmp_path)
+
+        outcome = {
+            "pre_close_date": event_date,
+            "pre_close": 110.0,
+            "return_t1": 0.05,
+            "t1_date": "2026-04-16",
+            "excess_vs_xbi_t1": 0.03,
+            "return_t3": 0.04,
+            "t3_date": "2026-04-18",
+            "excess_vs_xbi_t3": 0.02,
+            "return_t5": 0.03,
+            "excess_vs_xbi_t5": 0.01,
+        }
+        pre_row = self._make_pre_row(ticker=ticker)
+        try:
+            record = pm_mod.write_postmortem(ticker, event_date, "2026-04-14", pre_row, outcome, resolution_rec)
+        finally:
+            pm_mod.PM_DIR = orig_pm
+            pm_mod.REPO = orig_repo
+        return record
+
+    def test_prediction_score_in_resolution_source(self, tmp_path):
+        crt = _make_crt_record(
+            prediction_composite_score=72.3,
+            prediction_snapshot_date="2026-04-01",
+            prediction_dem_rank=18,
+        ).to_dict()
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", crt)
+        rs = record.get("resolution_source", {})
+        assert rs.get("prediction_composite_score") == 72.3
+
+    def test_prediction_snapshot_date_in_resolution_source(self, tmp_path):
+        crt = _make_crt_record(prediction_snapshot_date="2026-04-01").to_dict()
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", crt)
+        rs = record.get("resolution_source", {})
+        assert rs.get("prediction_snapshot_date") == "2026-04-01"
+
+    def test_prediction_dem_rank_in_resolution_source(self, tmp_path):
+        crt = _make_crt_record(prediction_dem_rank=18).to_dict()
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", crt)
+        rs = record.get("resolution_source", {})
+        assert rs.get("prediction_dem_rank") == 18
+
+    def test_composite_score_in_pre_event(self, tmp_path):
+        crt = _make_crt_record().to_dict()
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", crt)
+        assert record["pre_event"].get("composite_score") == pytest.approx(0.07, abs=1e-6)
+
+    def test_null_prediction_score_propagated(self, tmp_path):
+        crt = _make_crt_record(prediction_composite_score=None).to_dict()
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", crt)
+        rs = record.get("resolution_source", {})
+        assert "prediction_composite_score" in rs
+        assert rs["prediction_composite_score"] is None
+
+    def test_no_resolution_rec_no_resolution_source(self, tmp_path):
+        record = self._call_write_postmortem(tmp_path, "PVLA", "2026-04-15", None)
+        assert "resolution_source" not in record
+
+    def test_live_artifacts_have_prediction_field(self):
+        """All existing postmortem artifacts must carry prediction_composite_score."""
+        artifacts_dir = Path(__file__).resolve().parents[1] / "artifacts" / "postmortem"
+        if not artifacts_dir.exists():
+            return
+        missing = []
+        for f in artifacts_dir.glob("**/*.json"):
+            d = json.loads(f.read_text())
+            if "pre_event" not in d:
+                continue
+            rs = d.get("resolution_source", {})
+            if "prediction_composite_score" not in rs:
+                missing.append(str(f.relative_to(artifacts_dir)))
+        assert missing == [], f"Artifacts missing prediction_composite_score: {missing}"
