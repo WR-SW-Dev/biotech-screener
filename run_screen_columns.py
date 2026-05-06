@@ -356,6 +356,19 @@ SNAPSHOT_COLUMNS = (
         "regime_label",
         "ranker_v2_score",
         "ranker_v2_rank",
+        # --- Spec 061: Event EV columns (populated by run_screen.py) ---
+        "event_ev_score",
+        "event_ev_score_z",
+        "event_ev_bucket",
+        "event_ev_analog_confidence",
+        # --- Spec 057: Clinical Quality Score (monitor-only, populated by run_screen.py) ---
+        "clinical_quality_score",
+        "clinical_quality_confidence",
+        "endpoint_strength_tier",
+        "design_rigor_tier",
+        "prior_evidence_tier",
+        "mechanism_maturity_tier",
+        "clinical_quality_notes",
     ]
 )
 

@@ -2241,7 +2241,11 @@ def check_decision_engine_schema(
 
     warn_reasons: List[str] = []
     rows_read = 0
-    expected_rank = 1
+    # Collect eligible ranks for set-based contiguity check after the loop.
+    # Rankings.csv is written in report order (weight desc, tier, rank) not
+    # rank order, so sequential expected_rank tracking produces false WARNs.
+    eligible_ranks: List[int] = []
+    rank_errors: List[str] = []
 
     with open(rankings_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
@@ -2275,19 +2279,33 @@ def check_decision_engine_schema(
                 if act_rank:
                     try:
                         rank_int = int(act_rank)
-                        if rank_int != expected_rank:
-                            warn_reasons.append(f"{ticker}: actionable_rank={rank_int}, expected {expected_rank}")
-                        expected_rank = rank_int + 1
+                        eligible_ranks.append(rank_int)
                     except ValueError:
-                        warn_reasons.append(f"{ticker}: actionable_rank='{act_rank}' not integer")
+                        rank_errors.append(f"{ticker}: actionable_rank='{act_rank}' not integer")
             else:
                 if act_rank and act_rank.lower() not in ("", "nan"):
                     warn_reasons.append(f"{ticker}: ineligible but actionable_rank='{act_rank}'")
 
-            # Cap warnings to avoid flood
+            # Cap non-rank warnings to avoid flood
             if len(warn_reasons) >= 20:
                 warn_reasons.append("... (truncated)")
                 break
+
+    # Set-based rank contiguity check: eligible ranks must be exactly {1..N}
+    warn_reasons.extend(rank_errors)
+    if eligible_ranks:
+        n = len(eligible_ranks)
+        expected_set = set(range(1, n + 1))
+        actual_set = set(eligible_ranks)
+        missing_ranks = sorted(expected_set - actual_set)
+        duplicate_ranks = sorted(r for r in actual_set if eligible_ranks.count(r) > 1)
+        extra_ranks = sorted(actual_set - expected_set)
+        if missing_ranks:
+            warn_reasons.append(f"actionable_rank gaps: missing {missing_ranks}")
+        if duplicate_ranks:
+            warn_reasons.append(f"actionable_rank duplicates: {duplicate_ranks}")
+        if extra_ranks:
+            warn_reasons.append(f"actionable_rank out-of-range: {extra_ranks}")
 
     if not warn_reasons:
         return GateResult(
