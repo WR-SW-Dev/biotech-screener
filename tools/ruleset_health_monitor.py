@@ -209,6 +209,16 @@ def evaluate_health(
     # threshold evaluation and history append (consistent with cold-start
     # and no-drift early returns).
     if receipt.get("missing_receipt"):
+        if receipt.get("receipt_type") == "synthetic_backfill":
+            detail = (
+                f"Active ruleset {active_id}: synthetic backfilled receipt "
+                "present; promotion baseline metrics unavailable"
+            )
+        else:
+            detail = (
+                f"Active ruleset {active_id}: no promotion receipt available — "
+                "baseline metrics unavailable (consider backfilling receipt)"
+            )
         return {
             "schema": "ruleset_health.v1",
             "active_ruleset_id": active_id,
@@ -217,10 +227,7 @@ def evaluate_health(
             "today": {},
             "promotion_baseline": {},
             "status": "PASS",
-            "detail": (
-                f"Active ruleset {active_id}: no promotion receipt available — "
-                "baseline metrics unavailable (consider backfilling receipt)"
-            ),
+            "detail": detail,
             "consecutive_warn_days": 0,
             "recommend_rollback": False,
         }

@@ -420,8 +420,10 @@ class TestManifestActiveWithMissingReceipt:
         assert receipt["gate"] == {}
 
     def test_evaluate_health_handles_missing_receipt(self, tmp_path):
-        """evaluate_health should report active_id correctly with PASS status
-        and a clear 'baseline metrics unavailable' detail when given a stub."""
+        """Pure missing-receipt stub (no synthetic markers): detail says
+        'no promotion receipt available — baseline metrics unavailable
+        (consider backfilling receipt)'. Back-compat for the manifest-only
+        fallback path."""
         stub = {
             "schema": "promote_receipt.stub.v1",
             "new_active_id": "8887576e",
@@ -435,9 +437,41 @@ class TestManifestActiveWithMissingReceipt:
         result = evaluate_health(drift, stub, history)
         assert result["active_ruleset_id"] == "8887576e"
         assert result["status"] == "PASS"
+        assert "no promotion receipt available" in result["detail"]
         assert "baseline metrics unavailable" in result["detail"]
+        assert "consider backfilling receipt" in result["detail"]
         assert result["recommend_rollback"] is False
         # Stub path skips history append (consistent with cold-start path)
+        assert not history.exists()
+
+    def test_evaluate_health_handles_synthetic_backfilled_receipt(self, tmp_path):
+        """Synthetic-backfilled receipt (Spec 086 Option (a) shape): detail
+        says 'synthetic backfilled receipt present; promotion baseline metrics
+        unavailable'. Distinguishes from the pure-missing-receipt case so
+        future audits don't see 'no receipt' when one exists on disk."""
+        synthetic = {
+            "schema": "promote_receipt.v1.synthetic",
+            "receipt_type": "synthetic_backfill",
+            "new_active_id": "8887576e",
+            "missing_receipt": True,
+            "change_class": "signal_demotion_hygiene_patch",
+            "source_spec": "Spec 086",
+            "created_at_utc": "2026-05-04T22:35:00Z",
+            "gate": {},
+        }
+        drift = _make_drift_report()
+        history = tmp_path / "history.jsonl"
+
+        result = evaluate_health(drift, synthetic, history)
+        assert result["active_ruleset_id"] == "8887576e"
+        assert result["status"] == "PASS"
+        assert "synthetic backfilled receipt present" in result["detail"]
+        assert "promotion baseline metrics unavailable" in result["detail"]
+        # Must NOT use the pure-missing-receipt phrasing
+        assert "no promotion receipt available" not in result["detail"]
+        assert "consider backfilling receipt" not in result["detail"]
+        assert result["recommend_rollback"] is False
+        # Stub path skips history append
         assert not history.exists()
 
     def test_no_receipts_dir_with_manifest_still_returns_stub(self, tmp_path):
