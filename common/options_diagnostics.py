@@ -694,6 +694,12 @@ async def _fetch_diagnostics_async(
                         break
 
             atm_iv = float(m.implied_volatility_index) if m.implied_volatility_index is not None else None
+            # TT IVx occasionally returns values >= _IV_JUNK_CAP that are inconsistent
+            # with the per-contract IV scale used elsewhere (front["implied_volatility"]
+            # is always a decimal fraction).  Fall back to front_iv so that downstream
+            # straddle scoring stays in a consistent unit.
+            if atm_iv is not None and atm_iv >= _IV_JUNK_CAP:
+                atm_iv = None
             front_iv = front["implied_volatility"]
             back_iv = back["implied_volatility"] if back else None
             term_slope = compute_term_slope(front_iv, back_iv) if back_iv else None

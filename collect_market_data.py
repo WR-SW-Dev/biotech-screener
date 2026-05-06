@@ -105,12 +105,15 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
         stock = yf.Ticker(ticker)
         info = stock.info
 
-        # Get 90-day history for volatility/returns
-        # Use explicit as_of_date instead of datetime.now() for determinism
+        # Get history for volatility/returns.
+        # Use explicit as_of_date instead of datetime.now() for determinism.
+        # Fetch 100 calendar days (was 90) to guarantee ≥63 trading days even
+        # after holidays.  returns_3m indexes from iloc[-63] so the window is
+        # always exactly 63 trading days regardless of fetch length.
         if as_of_date is None:
             raise ValueError("as_of_date is required for deterministic collection")
         end_date = datetime.combine(as_of_date, datetime.min.time())
-        start_date = end_date - timedelta(days=90)
+        start_date = end_date - timedelta(days=100)
         hist = stock.history(start=start_date, end=end_date)
 
         # Calculate metrics
@@ -124,7 +127,7 @@ def get_market_data(ticker: str, as_of_date: date = None) -> Optional[Dict]:
 
             # Returns
             returns_1m = float((hist["Close"].iloc[-1] / hist["Close"].iloc[-21]) - 1) if len(hist) >= 21 else None
-            returns_3m = float((hist["Close"].iloc[-1] / hist["Close"].iloc[0]) - 1) if len(hist) >= 63 else None
+            returns_3m = float((hist["Close"].iloc[-1] / hist["Close"].iloc[-63]) - 1) if len(hist) >= 63 else None
 
             high_90d = float(hist["High"].max())
             low_90d = float(hist["Low"].min())

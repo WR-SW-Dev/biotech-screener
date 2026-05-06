@@ -5895,7 +5895,7 @@ def save_validation_snapshot(
             phase = row.get("lead_program_phase", row.get("archetype", ""))
             ta = row.get("therapeutic_area", "")
             straddle = row.get("_chain_straddle_price")
-            price_val = row.get("_last_close") or row.get("close")
+            price_val = row.get("_last_close") or row.get("close_price") or row.get("close")
 
             try:
                 iv_f = float(atm_iv) if atm_iv else 0
