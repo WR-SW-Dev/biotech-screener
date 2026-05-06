@@ -571,6 +571,102 @@ def check_edgar_coverage(as_of_date_str):
 # Main
 # ---------------------------------------------------------------------------
 
+# Known optional engine modules in run_screen.py (HAS_* flags at import time).
+# Add new engines here when they're introduced; removing an entry is intentional
+# deprecation (not a regression).
+_OPTIONAL_ENGINES = [
+    ("HAS_ENHANCEMENTS", ["indication_mapper", "pos_engine", "regime_engine", "short_interest_engine"]),
+    ("HAS_MACRO_COLLECTOR", ["macro_data_collector"]),
+    ("HAS_ACCURACY_ENHANCEMENTS", ["accuracy_enhancements_adapter"]),
+    ("HAS_DILUTION_RISK", ["dilution_risk_engine"]),
+    ("HAS_TIMELINE_SLIPPAGE", ["timeline_slippage_engine"]),
+    ("HAS_FDA_DESIGNATIONS", ["fda_designation_engine"]),
+    ("HAS_PIPELINE_DIVERSITY", ["pipeline_diversity_engine"]),
+    ("HAS_COMPETITIVE_INTENSITY", ["competitive_intensity_engine"]),
+    ("HAS_PARTNERSHIP_ENGINE", ["partnership_engine"]),
+    ("HAS_CASH_BURN_ENGINE", ["cash_burn_engine"]),
+    ("HAS_PHASE_MOMENTUM_ENGINE", ["phase_momentum_engine"]),
+    ("HAS_MORNINGSTAR", ["morningstar_signal_engine"]),
+    ("HAS_RISK_GATES", ["risk_gates"]),
+    ("HAS_LIQUIDITY_SCORING", ["liquidity_scoring_engine"]),
+    ("HAS_TICKER_VALIDATION", ["ticker_validation"]),
+]
+
+
+def check_optional_engines(as_of_date_str):
+    """Check: optional engine presence vs prior day.
+
+    Probes each known optional engine module via importlib. Writes a
+    optional_engines.json sidecar to data/snapshots/<date>/ for trending.
+    FAILs when any engine that was importable yesterday is no longer importable
+    today (true->false regression = silent feature disappearance).
+    """
+    import importlib
+
+    result = {
+        "status": "PASS",
+        "engines": {},
+        "regressions": [],
+        "new_failures": [],
+        "detail": "",
+    }
+
+    # Probe each engine group
+    for flag, modules in _OPTIONAL_ENGINES:
+        group_ok = False
+        for mod in modules:
+            try:
+                importlib.import_module(mod)
+                group_ok = True
+                break
+            except ImportError:
+                pass
+        result["engines"][flag] = group_ok
+
+    # Write today's sidecar
+    today_sidecar = SNAPSHOT_DIR / as_of_date_str / "optional_engines.json"
+    try:
+        today_sidecar.parent.mkdir(parents=True, exist_ok=True)
+        with open(today_sidecar, "w", encoding="utf-8") as f:
+            json.dump(
+                {"as_of_date": as_of_date_str, "engines": result["engines"]},
+                f,
+                indent=2,
+                sort_keys=True,
+            )
+            f.write("\n")
+    except OSError as e:
+        result["status"] = _status_merge(result["status"], "WARN")
+        result["detail"] = f"Could not write optional_engines.json sidecar: {e}"
+        return result
+
+    # Compare to prior day
+    prior_date = (_parse_date(as_of_date_str) - timedelta(days=1)).isoformat()
+    prior_sidecar = SNAPSHOT_DIR / prior_date / "optional_engines.json"
+    if prior_sidecar.exists():
+        try:
+            prior = json.loads(prior_sidecar.read_text(encoding="utf-8"))
+            prior_engines = prior.get("engines", {})
+            for flag, ok_today in result["engines"].items():
+                ok_prior = prior_engines.get(flag)
+                if ok_prior is True and ok_today is False:
+                    result["regressions"].append(flag)
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    if result["regressions"]:
+        result["status"] = "FAIL"
+        result["detail"] = (
+            f"Optional engine regression(s): {result['regressions']} " f"— was importable yesterday, missing today"
+        )
+    else:
+        ok_count = sum(1 for v in result["engines"].values() if v)
+        total = len(result["engines"])
+        result["detail"] = f"{ok_count}/{total} optional engine groups importable" + (
+            f"; {len(result['new_failures'])} new failures" if result["new_failures"] else ""
+        )
+    return result
+
 
 def run_audit(as_of_date_str, daily_only=False, weekly_only=False):
     """Run all applicable checks and produce report."""
@@ -585,6 +681,7 @@ def run_audit(as_of_date_str, daily_only=False, weekly_only=False):
         checks["pit_financials_freshness"] = check_pit_financials_freshness(as_of_date_str)
         checks["financial_consistency"] = check_financial_consistency(as_of_date_str)
         checks["price_data_gaps"] = check_price_data_gaps(as_of_date_str)
+        checks["optional_engines"] = check_optional_engines(as_of_date_str)
 
     if run_weekly:
         print(f"[data_auditor] Running weekly checks for {as_of_date_str}...")
