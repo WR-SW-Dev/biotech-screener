@@ -357,6 +357,46 @@ This is distinct from a "distress factor" and distinct from "financial_score is 
 
 These criteria do NOT trigger automatic retrain. They trigger a flag in the forward shadow log and a human review at the next scheduled verdict date. A future retrain that changes `financial_score`'s sign requires either (a) falsification evidence per the above, or (b) an explicit override decision with a competing causal explanation.
 
+#### Evidence assessment and status (2026-05-06)
+
+**Evidence that exists:**
+
+| Evidence type | What it shows |
+|---|---|
+| Training sample (36 dates, 12,400 pairs, L2 0.01) | Negative weight emerged and was stable across L2 regularization strengths |
+| Robustness check (walk-forward, all cohorts/regimes) | "TRUE PENALTY — persists all cohorts, all regimes" per ranker attribution table |
+| Pairwise ECE = 0.129 | Model is ordinal-only (calibrated rank ordering, not probability); negative weight is meaningful in rank space |
+| Falsification criteria (rolling 90d) | Not triggered as of 2026-05-06 |
+| Theoretical prior | Financing-risk repricing hypothesis is internally consistent and structurally distinct from a distress/junk-quality bet |
+
+**Evidence that is currently insufficient:**
+
+| Gap | Why it matters |
+|---|---|
+| Clean attribution of ranker IC to `financial_score` alone | Training IC (+0.143) reflects the 2-feature bundle; individual contribution of the negative weight is not separable without an ablation (coinvest-only vs 2-feature) run |
+| Per-name forward return split | Do names ranked UP by the financial_score penalty actually outperform same-rank coinvest-only names? ~30 live snapshots; need ≥ 60 for meaningful comparison |
+| Catalyst-outcome slice | Do bottom-quartile `financial_score` names in top-30 have better catalyst HIT rates? CRT n=7 post-PIT; need ≥ 30 resolved HIT/MISS |
+| Stage/size interaction | Is the negative weight driven by pre-revenue (where funding risk repricing is most plausible) or leaking into commercial names? Not yet decomposed |
+
+**Risks and counterarguments:**
+
+- *Selection-bias in training data:* The 36-date walk-forward period may coincide with a biotech regime where small-cap, cash-constrained names outperformed for macro reasons unrelated to the causal story. If the macro regime shifts (rising rates, tightening credit, mREIT-driven sector rotation), the negative weight could reverse.
+- *Survivorship in top-60:* `coinvest_score_z` pre-filters the ranker universe to names managers are actively holding. Within that filtered set, financially weak names may simply be the highest-conviction asymmetric bets managers are willing to hold — a quality proxy for manager intent, not a financial-weakness signal. This makes the weight harder to falsify cleanly.
+- *Rank-normalization compresses extremes:* Module 5 rank-normalization within stage×size cohorts means a "low financial_score" name and a "moderate financial_score" name land closer together than raw values suggest. The weight is operating on a compressed signal — small enough that a regime shift could flip the pairwise advantage.
+- *Commercial/revenue names:* If financially strong names are systematically commercial-stage (already generating revenue), the signal may be a stage proxy rather than a financing-risk proxy. Stage is controlled for in normalization cohorts, but not in the pairwise training pairs.
+
+**Recommended status: KEEP AS FROZEN**
+
+The weight has theoretical support, passed training robustness checks, has not triggered any falsification criterion, and cannot be changed without a dedicated retrain + Checklist v2 re-run. The evidence gap is not evidence of failure — it reflects the immaturity of the forward sample (live since ~2026-04-03). Re-evaluate at the 90-day forward mark (~2026-07-01) using the falsification criteria above. Do not retrain the weight sign based on prior evidence alone.
+
+**What future retrain / audit must test before preserving or changing:**
+
+1. Ablation IC: `coinvest_score_z`-only ranker vs. 2-feature ranker (coinvest + financial) on the same walk-forward window — is the incremental lift from `financial_score` statistically positive?
+2. Forward return split: names ranked UP vs. DOWN by financial_score within top-60 — median 20d return differential, n ≥ 20 resolved pairs.
+3. Stage interaction: does the negative weight perform across all stage_buckets or concentrate in pre-revenue names? If it only works pre-revenue, scope the ranker to that cohort.
+4. Regime robustness: test the walk-forward window across the 2022 biotech draw-down and 2023 recovery (PIT-corrected). If the weight sign flips in the down-regime, flag for conditional deployment.
+5. If changing the weight sign: requires a competing causal explanation that accounts for why financially strong names inside manager-endorsed lists should rank higher — the burden of proof is on the challenger.
+
 #### Deployment delta: trained vs. deployed weights
 
 | Feature | Trained (`minimal_v2`) | Deployed (live pilot) | Delta |
