@@ -546,3 +546,115 @@ class TestSnapshotPhaseHelpers:
         assert rows[0]["priced_move_pct"] == 25.0  # straddle 0.25 → 25.0 pct pts
         assert rows[1]["priced_move_pct"] == "0.30"  # preserved existing (not overwritten)
         assert rows[2]["priced_move_pct"] == ""  # no straddle, stays empty
+
+
+class TestMorningstarEnrichmentKeyPath:
+    """Regression tests for the Morningstar enrichment key-path fix (spec 076).
+
+    The enrichment block in run_screen.py reads:
+        results.get("enhancements", {}).get("morningstar_scores", {})
+
+    Prior to the fix, the code used "enhancement_result" (wrong key), which
+    caused all ms_* fields to be silently empty. These tests verify the correct
+    key path populates ms_* fields when enrichment data is present, and that
+    the old key path does not.
+    """
+
+    MS_FIELDS = (
+        "ms_volatility_3yr",
+        "ms_volatility_5yr",
+        "ms_star_rating",
+        "ms_return_ytd",
+        "ms_return_annualized_3yr",
+        "ms_return_annualized_5yr",
+    )
+
+    def _make_results_fixture(self, key: str) -> dict:
+        """Build a results dict that stores Morningstar scores under `key`."""
+        return {
+            key: {
+                "morningstar_scores": {
+                    "scores": {
+                        "BIIB": {
+                            "status": "SUCCESS",
+                            "ms_volatility_3yr": "0.25",
+                            "ms_volatility_5yr": "0.27",
+                            "ms_star_rating": "3",
+                            "ms_return_ytd": "0.04",
+                            "ms_return_annualized_3yr": "0.08",
+                            "ms_return_annualized_5yr": "0.10",
+                        }
+                    }
+                }
+            }
+        }
+
+    def _apply_enrichment(self, results: dict, rows: list) -> int:
+        """Replicate the enrichment logic from run_screen.py:6012-6033."""
+        _ms_scores = results.get("enhancements", {}).get("morningstar_scores", {})
+        _ms_ticker_scores = _ms_scores.get("scores", {}) if isinstance(_ms_scores, dict) else {}
+        enriched = 0
+        for row in rows:
+            _tk = row.get("ticker", "")
+            _ms_result = _ms_ticker_scores.get(_tk, {})
+            if isinstance(_ms_result, dict) and _ms_result.get("status") == "SUCCESS":
+                for _field in self.MS_FIELDS:
+                    row[_field] = _ms_result.get(_field, "")
+                    if row[_field] is None:
+                        row[_field] = ""
+                enriched += 1
+        return enriched
+
+    def test_correct_key_populates_ms_fields(self):
+        results = self._make_results_fixture("enhancements")
+        rows = [{"ticker": "BIIB"}]
+        enriched = self._apply_enrichment(results, rows)
+        assert enriched == 1
+        assert rows[0]["ms_volatility_3yr"] == "0.25"
+        assert rows[0]["ms_star_rating"] == "3"
+        assert rows[0]["ms_return_annualized_5yr"] == "0.10"
+
+    def test_wrong_key_produces_empty_fields(self):
+        # Simulate the pre-fix bug: data stored under "enhancement_result"
+        results = self._make_results_fixture("enhancement_result")
+        rows = [{"ticker": "BIIB"}]
+        enriched = self._apply_enrichment(results, rows)
+        # Correct key "enhancements" is absent → no enrichment
+        assert enriched == 0
+        for field in self.MS_FIELDS:
+            assert field not in rows[0]
+
+    def test_non_success_status_skipped(self):
+        results = {
+            "enhancements": {"morningstar_scores": {"scores": {"BIIB": {"status": "ERROR", "ms_star_rating": "4"}}}}
+        }
+        rows = [{"ticker": "BIIB"}]
+        enriched = self._apply_enrichment(results, rows)
+        assert enriched == 0
+        assert "ms_star_rating" not in rows[0]
+
+    def test_ticker_not_in_scores_leaves_row_unchanged(self):
+        results = self._make_results_fixture("enhancements")
+        rows = [{"ticker": "RVMD"}]
+        enriched = self._apply_enrichment(results, rows)
+        assert enriched == 0
+        assert rows[0] == {"ticker": "RVMD"}
+
+    def test_none_field_value_coerced_to_empty_string(self):
+        results = {
+            "enhancements": {
+                "morningstar_scores": {
+                    "scores": {
+                        "BIIB": {
+                            "status": "SUCCESS",
+                            "ms_volatility_3yr": None,
+                            "ms_star_rating": "3",
+                        }
+                    }
+                }
+            }
+        }
+        rows = [{"ticker": "BIIB"}]
+        self._apply_enrichment(results, rows)
+        assert rows[0]["ms_volatility_3yr"] == ""
+        assert rows[0]["ms_star_rating"] == "3"

@@ -6010,7 +6010,7 @@ def save_validation_snapshot(
         row.update(compute_options_quality_composite(row))
 
     # --- Morningstar research diagnostics (from signal engine results) ---
-    _ms_scores = results.get("enhancement_result", {}).get("morningstar_scores", {})
+    _ms_scores = results.get("enhancements", {}).get("morningstar_scores", {})
     _ms_ticker_scores = _ms_scores.get("scores", {}) if isinstance(_ms_scores, dict) else {}
     _ms_enriched = 0
     for row in csv_rows:
