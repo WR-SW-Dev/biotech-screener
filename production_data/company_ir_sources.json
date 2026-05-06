@@ -611,13 +611,12 @@
     {
       "ticker": "VIR",
       "company": "Vir Biotechnology, Inc.",
-      "company_ir_url": "https://www.virtualinvestorconferences.com",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=VIR"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "CLDX",
@@ -1524,24 +1523,22 @@
     {
       "ticker": "DAWN",
       "company": "Day One Biopharmaceuticals, Inc.",
-      "company_ir_url": "https://dawnproject.com",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DAWN"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "DNA",
       "company": "Ginkgo Bioworks Holdings, Inc.",
-      "company_ir_url": "http://delveinsight.com",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DNA"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "DNLI",
@@ -1568,13 +1565,12 @@
     {
       "ticker": "DRUG",
       "company": "Bright Minds Biosciences Inc.",
-      "company_ir_url": "http://www.researchandmarkets.com",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=DRUG"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "DVAX",
@@ -2128,13 +2124,12 @@
     {
       "ticker": "JAZZ",
       "company": "Jazz Pharmaceuticals plc",
-      "company_ir_url": "https://www.usmint.gov",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=JAZZ"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "JBIO",
@@ -3027,13 +3022,12 @@
     {
       "ticker": "RNA",
       "company": "Avidity Biosciences, Inc.",
-      "company_ir_url": "https://ir.madrigalpharma.com/news-releases",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=RNA"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "edgar_xbrl_probe"
+      "official_x_accounts": []
     },
     {
       "ticker": "ROIV",
@@ -3341,13 +3335,12 @@
     {
       "ticker": "TECH",
       "company": "Bio-Techne Corporation",
-      "company_ir_url": "http://www.ownify.com",
+      "company_ir_url": "",
       "press_release_rss": "",
       "backup_sources": [
         "https://www.globenewswire.com/Search?keyword=TECH"
       ],
-      "official_x_accounts": [],
-      "_ir_population_method": "gnw_jsonld_domain"
+      "official_x_accounts": []
     },
     {
       "ticker": "TEM",
