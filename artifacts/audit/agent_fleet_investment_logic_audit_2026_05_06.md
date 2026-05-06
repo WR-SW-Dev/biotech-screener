@@ -6,6 +6,27 @@ Source of truth for fleet inventory: `agents/AGENT_REGISTRY.json` (28 active + 1
 
 ---
 
+## Closure note appended 2026-05-06 (Spec 085 disposition)
+
+Several rows below describe `shadow_watch` as `NEEDS_HUMAN_REVIEW` / `RETIRE_CANDIDATE` / "merged-successor placeholder" / "half-merged". **Operator ruling 2026-05-06: `shadow_watch` is finalized as SUPPRESSED PLACEHOLDER (Spec 085).**
+
+- NOT retired.
+- NOT activated.
+- No cron, no memory writes, no artifacts, no runtime obligations.
+- Activation requires a separate spec.
+- `shadow_monitor` and `policy_shadow_watch` remain the live agents covering the shadow-portfolio and policy-comparison surfaces.
+
+Surfaces aligned to this disposition:
+- `agents/AGENT_REGISTRY.json` — `notes` updated to `"SUPPRESSED PLACEHOLDER — not active. ... 2026-05-06: classified suppressed_placeholder in governance audit."`
+- `agents/ops_supervisor/supervisor.py:118` — `SUPPRESSED_AGENTS` is now a per-agent reason dict; `shadow_watch` reason: `"suppressed placeholder (Spec 085 disposition 2026-05-06; not active, not wired; activation requires separate spec)"`.
+- `agents/shadow_watch/SOUL.md` — top header carries SUPPRESSED PLACEHOLDER status; planning text below is preserved as design context only, NOT runtime obligation.
+- `tools/agent_heartbeat_checks.py:654` — comment block clarified to reflect Spec 085 disposition (no heartbeat obligation; not "directory deleted").
+- `specs/changes/spec_085_p0_shadow_watch_disposition_2026_05_06.md` — closure section appended.
+
+The body of the audit below is preserved as the original 2026-05-06 read-only observation. **Where it says `NEEDS_HUMAN_REVIEW` for `shadow_watch`, the resolution is "SUPPRESSED PLACEHOLDER per Spec 085" — the description above this fold is authoritative.**
+
+---
+
 ## A. Executive summary
 
 - Fleet size: **30 directories under `agents/`** (29 LLM-style + `ops_supervisor`); registry tracks 28 active, 1 shadow (`shadow_watch`), 1 deprecated (`company_news_ingest`); `ops_supervisor` is registered but `supervised_by_orchestrator=false` (terminus per no-recursive-supervision policy)

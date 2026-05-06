@@ -115,7 +115,12 @@ EXCEPTIONS: list[dict] = [
     },
 ]
 
-SUPPRESSED_AGENTS = {"shadow_watch", "company_news_ingest"}  # retired
+# Per-agent suppression reasons. `in SUPPRESSED_AGENTS` still works (dict
+# membership), so existing callers do not need to change.
+SUPPRESSED_AGENTS = {
+    "shadow_watch": "suppressed placeholder (Spec 085 disposition 2026-05-06; not active, not wired; activation requires separate spec)",
+    "company_news_ingest": "agent retired (replaced by tier-2 heartbeat checks)",
+}
 SUPPRESS_AGENT_PATTERNS = ["massive"]  # paused per license downgrade
 
 
@@ -187,7 +192,7 @@ def find_prior_supervisor(today_iso: str) -> tuple[dict | None, str | None]:
 
 def is_suppressed(agent: str, registry: dict) -> tuple[bool, str | None]:
     if agent in SUPPRESSED_AGENTS:
-        return True, "agent retired (replaced by tier-2 heartbeat checks)"
+        return True, SUPPRESSED_AGENTS[agent]
     for pat in SUPPRESS_AGENT_PATTERNS:
         if pat in agent.lower():
             return True, f"agent paused (pattern '{pat}', license/policy)"

@@ -149,3 +149,38 @@ All three paths preserve the freeze regime — none touch selector/ranker/EV.
 - **Path A:** `shadow_watch` produces daily artifacts, all predecessor consumers verified to either read from new path OR be retired. Two-week stable observation. `AGENT_REGISTRY.json` shows `shadow_watch` active and predecessors deprecated.
 - **Path B:** `agents/shadow_watch/` removed; registry updated. `shadow_monitor` and `policy_shadow_watch` continue functioning (P0 #1 fix prerequisite).
 - **Path C:** registry status field updated with explicit blocker description; tickler entry recorded.
+
+---
+
+## 7. Closure (2026-05-06) — Operator chose Path C with formal SUPPRESSED PLACEHOLDER label
+
+**Decision:** `shadow_watch` is finalized as SUPPRESSED PLACEHOLDER. Not retired; not activated. No cron, no memory writes, no artifacts, no runtime obligations. Future activation requires a separate spec.
+
+**Rationale (operator):** `shadow_watch` exists as a named successor/placeholder, but it is not production-active. The safe fix is to make every registry/audit/ops surface agree on that status so it no longer appears half-merged or `NEEDS_HUMAN_REVIEW`.
+
+**Surfaces aligned (2026-05-06):**
+- `agents/AGENT_REGISTRY.json` — `notes` updated to `"SUPPRESSED PLACEHOLDER — not active. ... 2026-05-06: classified suppressed_placeholder in governance audit."`; `status=shadow`, `supervised_by_orchestrator=false`.
+- `agents/ops_supervisor/supervisor.py:118` — `SUPPRESSED_AGENTS` is now a per-agent reason dict; `shadow_watch` reason: `"suppressed placeholder (Spec 085 disposition 2026-05-06; not active, not wired; activation requires separate spec)"`.
+- `agents/shadow_watch/SOUL.md` — top header carries SUPPRESSED PLACEHOLDER status; planning text below preserved as design context only.
+- `tools/agent_heartbeat_checks.py:654` — comment block clarified to reflect Spec 085 disposition (no heartbeat obligation; the prior "(directory deleted)" note was inaccurate — directory still exists with planning context).
+- `artifacts/audit/agent_fleet_investment_logic_audit_2026_05_06.md` — closure note appended at top; original audit body preserved as 2026-05-06 read-only observation.
+
+**Hard non-goals carried forward:**
+- No cron entry for `shadow_watch`.
+- No memory writes (no `agents/shadow_watch/memory/` directory created to "satisfy" any check).
+- No artifact paths created.
+- No code paths invoke shadow_watch.
+- `shadow_monitor` (daily 18:25) and `policy_shadow_watch` (daily 18:05) remain the live agents.
+
+**Activation precondition (if revisited later):**
+Any future activation requires a new spec that:
+1. Defines the cron entry and schedule.
+2. Specifies the memory-write contract (which artifact paths the agent will populate).
+3. Names the consumers that will rewire from `shadow_monitor`/`policy_shadow_watch` to `shadow_watch`.
+4. Flips `supervised_by_orchestrator=true` and the registry `status=active`.
+5. Removes `shadow_watch` from `SUPPRESSED_AGENTS` in `ops_supervisor/supervisor.py`.
+6. Removes the SUPPRESSED PLACEHOLDER header from `agents/shadow_watch/SOUL.md`.
+
+**P1 reductions:** still held; can be considered one by one after this closure lands.
+
+**Spec status:** CLOSED.

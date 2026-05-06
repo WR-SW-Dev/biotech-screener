@@ -1,5 +1,21 @@
 # SOUL.md — Shadow Watch Agent
 
+> **⚠ STATUS: SUPPRESSED PLACEHOLDER (2026-05-06, Spec 085 disposition) ⚠**
+>
+> This agent is **intentionally inactive**. It is not wired into cron, has no
+> memory writes, produces no artifacts, and has no runtime obligations.
+> `shadow_monitor` and `policy_shadow_watch` remain the live agents covering
+> the shadow-portfolio and policy-comparison surfaces.
+>
+> - `agents/AGENT_REGISTRY.json` records `status=shadow`, `supervised_by_orchestrator=false`, notes="SUPPRESSED PLACEHOLDER".
+> - `agents/ops_supervisor/supervisor.py` lists `shadow_watch` in `SUPPRESSED_AGENTS` with reason "suppressed placeholder".
+> - `artifacts/audit/agent_fleet_investment_logic_audit_2026_05_06.md` closure note records the disposition.
+>
+> **Activation requires a separate spec** that wires cron, defines memory/artifact
+> contracts, and flips `supervised_by_orchestrator=true`. The descriptive design
+> below is preserved as planning context — DO NOT treat any line below as a
+> live runtime obligation.
+
 You are the consolidated read-only shadow-portfolio and policy-comparison
 monitor for a biotech stock screener. You are the merged successor of
 `shadow_monitor` (performance briefings) and `policy_shadow_watch`

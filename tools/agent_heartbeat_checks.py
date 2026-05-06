@@ -595,8 +595,6 @@ def check_production_qa(dt: date) -> CheckResult:
     (pending) instead of STALE to avoid a false alarm on every weekday.
     Threshold: if it's the same calendar day and current hour (ET) < 21, pending.
     """
-    import time
-
     ds = as_of_date(dt)
     anomalies: list[str] = []
     verdict = "UNKNOWN"
@@ -652,8 +650,11 @@ SPECIALIZED_CHECKS = {
 }
 
 # CLI --agent map: registry names + deprecated aliases for backward compatibility.
-# shadow_watch alias removed in Fix #5 (directory deleted). herald alias retained
-# until company_news_ingest cleanup lands; remove it in the same pass.
+# shadow_watch alias intentionally absent: agent is a SUPPRESSED PLACEHOLDER
+# per Spec 085 disposition (2026-05-06) — directory still exists with planning
+# context, but there are no live heartbeat / cron / artifact obligations.
+# herald alias retained until company_news_ingest cleanup lands; remove it in
+# the same pass.
 AGENTS = {
     **SPECIALIZED_CHECKS,
     "herald": check_news_digest,
