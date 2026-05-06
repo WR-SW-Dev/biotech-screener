@@ -58,6 +58,9 @@ data/archives_secadcom/
 # Generated analysis artifacts (heavy outputs)
 artifacts/*
 # Allow governance memos and summary reports (but not date-stamped one-offs)
+!artifacts/audit/
+artifacts/audit/*
+!artifacts/audit/*.md
 !artifacts/**/*.md
 !artifacts/**/*.txt
 # Re-ignore ephemeral analysis artifacts (walkforward sweeps, inversion reports, etc.)
