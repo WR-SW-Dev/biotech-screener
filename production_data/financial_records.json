@@ -144,9 +144,9 @@
     "TotalDebt_components": [
       "LongTermDebt"
     ],
-    "CashAndSecurities": 179741000,
+    "CashAndSecurities": 116865000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ABSI",
@@ -222,9 +222,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 52243000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 162765000,
+    "CashAndSecurities": 91471000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ABVX",
@@ -254,9 +254,12 @@
     "CFO_date": "2025-12-31",
     "InterestExpense": 95000,
     "InterestExpense_date": "2025-12-31",
+    "Liabilities": 129136000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 516685000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ACAD",
@@ -920,6 +923,9 @@
     "OperatingExpenses_date": "2026-03-31",
     "InterestExpense": 657000000,
     "InterestExpense_date": "2026-03-31",
+    "Liabilities": 83314000000,
+    "Liabilities_date": "2026-03-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 62760000000,
     "TotalDebt_components": [
       "LongTermDebt",
@@ -1022,6 +1028,9 @@
     "Revenue_date": "2025-12-31",
     "CFO": 339992000,
     "CFO_date": "2025-12-31",
+    "Liabilities": 3749074000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 2578637000,
     "TotalDebt_components": [
       "LongTermDebt",
@@ -1029,7 +1038,7 @@
     ],
     "CashAndSecurities": 282029000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ANAB",
@@ -1058,9 +1067,12 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 186707000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 327185000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 311638000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ANIP",
@@ -1518,12 +1530,15 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 223224000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 1035759000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "Cash": 201643000,
     "Cash_date": "2025-12-31",
     "Cash_source": "CashCashEquivalentsRestricted",
-    "CashAndSecurities": 1630866000,
+    "CashAndSecurities": 916610000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ASMB",
@@ -3317,9 +3332,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 524465000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 1385639000,
+    "CashAndSecurities": 1027889000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "CRSP",
@@ -3822,7 +3837,7 @@
     "CFO_date": "2026-03-31",
     "OperatingExpenses": 19706000,
     "OperatingExpenses_date": "2026-03-31",
-    "CashAndSecurities": 432876000,
+    "CashAndSecurities": 222823000,
     "CashAndSecurities_date": "2026-03-31",
     "collected_at": "2026-05-05"
   },
@@ -4358,9 +4373,12 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 154350000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 111753000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 203657000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "FDMT",
@@ -4688,6 +4706,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 19421000000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 36320000000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 27744000000,
     "TotalDebt_components": [
       "LongTermDebt",
@@ -4698,7 +4719,7 @@
     "Cash_source": "CashCashEquivalentsRestricted",
     "CashAndSecurities": 7632000000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "GLPG",
@@ -4835,9 +4856,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 219199000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 245991000,
+    "CashAndSecurities": 146791000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "GPCR",
@@ -5266,7 +5287,7 @@
     "OperatingExpenses_date": "2025-12-31",
     "CashAndSecurities": 218343820,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ILMN",
@@ -5295,6 +5316,9 @@
     "CFO_date": "2026-03-29",
     "OperatingExpenses": 512000000,
     "OperatingExpenses_date": "2026-03-29",
+    "Liabilities": 3883000000,
+    "Liabilities_date": "2026-03-29",
+    "Liabilities_source": "derived:Assets-Equity",
     "Cash": 1089000000,
     "Cash_date": "2026-03-29",
     "Cash_source": "CashCashEquivalentsRestricted",
@@ -5435,9 +5459,12 @@
     "CFO_date": "2025-12-31",
     "InterestExpense": 36666000,
     "InterestExpense_date": "2025-12-31",
+    "Liabilities": 78238000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 345918000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "IMVT",
@@ -5631,9 +5658,12 @@
     "OperatingExpenses_date": "2025-12-31",
     "InterestExpense": 16698000,
     "InterestExpense_date": "2025-12-31",
+    "Liabilities": 462324000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 550941000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "IONS",
@@ -5786,13 +5816,16 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 197649000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 658736000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 199506000,
     "TotalDebt_components": [
       "LongTermDebt"
     ],
     "CashAndSecurities": 215456000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "IVVD",
@@ -5881,6 +5914,9 @@
     "CFO_date": "2026-03-31",
     "OperatingExpenses": 732300000,
     "OperatingExpenses_date": "2026-03-31",
+    "Liabilities": 7327300000,
+    "Liabilities_date": "2026-03-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 6385200000,
     "TotalDebt_components": [
       "LongTermDebt",
@@ -6021,9 +6057,12 @@
     "CFO_date": "2025-12-31",
     "InterestExpense": 864000,
     "InterestExpense_date": "2025-12-31",
+    "Liabilities": 109640000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 75469000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "KNSA",
@@ -6967,9 +7006,12 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 170604000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 15113000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 172921000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "MNKD",
@@ -7847,13 +7889,16 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 122796000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 446863000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "TotalDebt": 87900000,
     "TotalDebt_components": [
       "LongTermDebt"
     ],
     "CashAndSecurities": 171804000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ONC",
@@ -8981,39 +9026,42 @@
   {
     "ticker": "RCUS",
     "cik": "0001724521",
-    "Assets": 1139000000,
-    "Assets_date": "2025-12-31",
-    "CurrentAssets": 1007000000,
-    "CurrentAssets_date": "2025-12-31",
-    "CurrentLiabilities": 231000000,
-    "CurrentLiabilities_date": "2025-12-31",
-    "ShareholdersEquity": 631000000,
-    "ShareholdersEquity_date": "2025-12-31",
-    "Cash": 222000000,
-    "Cash_date": "2025-12-31",
-    "AvailableForSaleDebtCurrent": 759000000,
-    "AvailableForSaleDebtCurrent_date": "2025-12-31",
-    "R&D": 523000000,
-    "R&D_date": "2025-12-31",
-    "NetIncome": -353000000,
-    "NetIncome_date": "2025-12-31",
-    "LongTermDebt": 99000000,
-    "LongTermDebt_date": "2025-12-31",
-    "Revenue": 33000000,
-    "Revenue_date": "2025-12-31",
-    "CFO": -482000000,
-    "CFO_date": "2025-12-31",
-    "OperatingExpenses": 633000000,
-    "OperatingExpenses_date": "2025-12-31",
-    "InterestExpense": 9000000,
-    "InterestExpense_date": "2025-12-31",
-    "TotalDebt": 99000000,
+    "Assets": 997000000,
+    "Assets_date": "2026-03-31",
+    "CurrentAssets": 844000000,
+    "CurrentAssets_date": "2026-03-31",
+    "CurrentLiabilities": 209000000,
+    "CurrentLiabilities_date": "2026-03-31",
+    "ShareholdersEquity": 524000000,
+    "ShareholdersEquity_date": "2026-03-31",
+    "Cash": 201000000,
+    "Cash_date": "2026-03-31",
+    "AvailableForSaleDebtCurrent": 621000000,
+    "AvailableForSaleDebtCurrent_date": "2026-03-31",
+    "R&D": 122000000,
+    "R&D_date": "2026-03-31",
+    "NetIncome": -128000000,
+    "NetIncome_date": "2026-03-31",
+    "LongTermDebt": 100000000,
+    "LongTermDebt_date": "2026-03-31",
+    "Revenue": 7000000,
+    "Revenue_date": "2026-03-31",
+    "CFO": -138000000,
+    "CFO_date": "2026-03-31",
+    "OperatingExpenses": 151000000,
+    "OperatingExpenses_date": "2026-03-31",
+    "InterestExpense": 3000000,
+    "InterestExpense_date": "2026-03-31",
+    "Liabilities": 473000000,
+    "Liabilities_date": "2026-03-31",
+    "Liabilities_source": "derived:Assets-Equity",
+    "TotalDebt": 100000000,
     "TotalDebt_components": [
       "LongTermDebt"
     ],
-    "CashAndSecurities": 981000000,
-    "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "CashAndSecurities": 822000000,
+    "CashAndSecurities_date": "2026-03-31",
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "REGN",
@@ -9878,9 +9926,12 @@
     "CFO_date": "2025-12-31",
     "InterestExpense": 486000000,
     "InterestExpense_date": "2025-12-31",
+    "Liabilities": 55095000000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 7657000000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "SPRY",
@@ -10340,9 +10391,12 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 111066000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 188847000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 315357000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "TCRX",
@@ -10408,9 +10462,12 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 277270000,
     "OperatingExpenses_date": "2025-12-31",
+    "Liabilities": 511710000,
+    "Liabilities_date": "2025-12-31",
+    "Liabilities_source": "derived:Assets-Equity",
     "CashAndSecurities": 172879000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "TECX",
@@ -10676,9 +10733,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 173673000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 573997000,
+    "CashAndSecurities": 343138000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "TNYA",
@@ -11566,9 +11623,9 @@
     "CFO_date": "2025-12-31",
     "OperatingExpenses": 393057000,
     "OperatingExpenses_date": "2025-12-31",
-    "CashAndSecurities": 593015000,
+    "CashAndSecurities": 360464000,
     "CashAndSecurities_date": "2025-12-31",
-    "collected_at": "2026-04-18"
+    "collected_at": "2026-05-05"
   },
   {
     "ticker": "ZLAB",

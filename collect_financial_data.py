@@ -96,7 +96,10 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                 "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents": "CashRestricted",
                 "CashEquivalentsAtCarryingValue": "CashEquivalentsOnly",
                 "MarketableSecuritiesCurrent": "MarketableSecurities",
-                "MarketableSecurities": "MarketableSecurities",  # EWTX and similar report non-current tag
+                # MarketableSecurities (non-current tag) is a FALLBACK only — used when
+                # MarketableSecuritiesCurrent is absent. Adding both would double-count
+                # filers like ABOS that report under both tags.
+                # Handled in post-processing below, not here as a separate metrics key.
                 "ShortTermInvestments": "ShortTermInvestments",
                 # Fallback tags for STI — some filers (e.g. EWTX) report under these
                 # instead of ShortTermInvestments. AvailableForSaleSecuritiesCurrent and
@@ -132,6 +135,14 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
 
             # Metrics with fallback tags (try in order, use first found)
             metrics_with_fallback = {
+                "MarketableSecurities": [
+                    # Fallback: use broad MarketableSecurities tag ONLY when
+                    # MarketableSecuritiesCurrent returned nothing. This fires
+                    # AFTER metrics_with_fallback processing but MarketableSecuritiesCurrent
+                    # from the base metrics dict takes priority (it's fetched first).
+                    # The aggregation below uses max() to avoid double-counting.
+                    "MarketableSecurities",
+                ],
                 "Revenue": [
                     "RevenueFromContractWithCustomerExcludingAssessedTax",  # ASC 606 (2018+)
                     "Revenues",  # Legacy
@@ -286,6 +297,18 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                         financial_data[friendly_name] = best_val
                         financial_data[f"{friendly_name}_date"] = best_date
 
+            # Derive Liabilities = Assets - Equity when direct tag absent
+            # Many large-cap filers (JAZZ, AMGN, GILD, ARWR, etc.) only report
+            # LiabilitiesAndStockholdersEquity and ShareholdersEquity but not Liabilities.
+            if financial_data.get("Liabilities") is None:
+                assets_val = financial_data.get("Assets")
+                equity_val = financial_data.get("ShareholdersEquity")
+                if assets_val is not None and equity_val is not None:
+                    derived = assets_val - equity_val
+                    if derived >= 0:  # only write if non-negative (sanity check)
+                        financial_data["Liabilities"] = derived
+                        financial_data["Liabilities_date"] = financial_data.get("Assets_date")
+                        financial_data["Liabilities_source"] = "derived:Assets-Equity"
             # Aggregate TotalDebt from components if not already present
             if (
                 financial_data.get("LongTermDebt")
@@ -324,13 +347,20 @@ def get_company_facts(cik: str, ticker: str) -> Optional[Dict]:
                     financial_data["Cash_date"] = financial_data.get("CashEquivalentsOnly_date")
                     financial_data["Cash_source"] = "CashEquivalentsAtCarryingValue"
 
-            # Aggregate CashAndSecurities (Cash + MarketableSecurities + ShortTermInvestments + AvailableForSale)
+            # Aggregate CashAndSecurities (Cash + non-cash liquid securities)
+            # DEDUP NOTE: ShortTermInvestments, MarketableSecurities,
+            # AvailableForSaleSecurities, AvailableForSaleDebtCurrent, and
+            # DebtSecuritiesAvailableForSaleCurrent all represent the SAME
+            # treasury/bond portfolio for many filers — just different XBRL tags.
+            # Adding them causes double/triple-counting (e.g. ABUS: STI+AvailDebt).
+            # Fix: take MAX across all investment tags as one component.
             mkt_sec = financial_data.get("MarketableSecurities", 0) or 0
             st_inv = financial_data.get("ShortTermInvestments", 0) or 0
             avail = financial_data.get("AvailableForSaleSecurities", 0) or 0
             avail_debt = financial_data.get("AvailableForSaleDebtCurrent", 0) or 0
             debt_avail_current = financial_data.get("DebtSecuritiesAvailableForSaleCurrent", 0) or 0
-            total_liquid = cash + mkt_sec + st_inv + avail + avail_debt + debt_avail_current
+            investment_component = max(st_inv, mkt_sec, avail, avail_debt, debt_avail_current)
+            total_liquid = cash + investment_component
             if total_liquid > 0:
                 financial_data["CashAndSecurities"] = total_liquid
                 # Use most recent date from components
@@ -445,13 +475,14 @@ def get_yfinance_fallback(ticker: str) -> Optional[Dict]:
                 data["CFO"] = val
                 data["CFO_date"] = dt
 
-        # Aggregate CashAndSecurities
+        # Aggregate CashAndSecurities — max across all overlapping investment tags
         cash = data.get("Cash", 0) or 0
         sti = data.get("ShortTermInvestments", 0) or 0
         debt_avail = data.get("DebtSecuritiesAvailableForSaleCurrent", 0) or 0
         avail = data.get("AvailableForSaleSecurities", 0) or 0
         avail_debt = data.get("AvailableForSaleDebtCurrent", 0) or 0
-        total_liquid = cash + sti + debt_avail + avail + avail_debt
+        investment_component = max(sti, debt_avail, avail, avail_debt)
+        total_liquid = cash + investment_component
         if total_liquid > 0:
             data["CashAndSecurities"] = total_liquid
             data["CashAndSecurities_date"] = data.get("Cash_date")
