@@ -276,11 +276,17 @@ def check_financial_consistency(as_of_date_str):
 
     - Prefers CashAndSecurities over Cash (aligns with PIT: cash + short_term_investments)
     - Skips foreign issuers where Cash_currency != USD (audit has no FX table)
+    - FAIL when static fallback (production_data/financial_records.json) is used for
+      any top-30 ticker: financial_score is the dominant negative ranker signal
+      (NW-t=-3.41) so stale cash/runway figures directly affect ranking quality.
+      Use pit_archives/<date>/financial_records.json when available (normal path).
     """
     result = {
         "status": "PASS",
         "divergences": [],
         "skipped_non_usd": [],
+        "fallback_tickers_top30": [],
+        "used_static_fallback": False,
         "detail": "",
     }
 
@@ -290,9 +296,12 @@ def check_financial_consistency(as_of_date_str):
         result["detail"] = f"Cannot load rankings.csv for {as_of_date_str}"
         return result
 
-    fin_records_path = PIT_ARCHIVE_DIR / as_of_date_str / "financial_records.json"
-    if not fin_records_path.exists():
+    pit_archive_path = PIT_ARCHIVE_DIR / as_of_date_str / "financial_records.json"
+    if pit_archive_path.exists():
+        fin_records_path = pit_archive_path
+    else:
         fin_records_path = PROD_DIR / "financial_records.json"
+        result["used_static_fallback"] = True
     fin_records_raw = _load_json(fin_records_path)
 
     if fin_records_raw is None:
@@ -386,9 +395,25 @@ def check_financial_consistency(as_of_date_str):
                 }
             )
 
+    # When the static fallback was used, record which top-30 tickers were
+    # affected so the report surfaces the exact ranking impact.
+    if result["used_static_fallback"]:
+        for ticker in top30:
+            if fr_records.get(ticker) is not None:
+                result["fallback_tickers_top30"].append(ticker)
+
     parts = []
+    if result["fallback_tickers_top30"]:
+        result["status"] = "FAIL"
+        n = len(result["fallback_tickers_top30"])
+        sample = result["fallback_tickers_top30"][:5]
+        suffix = "..." if n > 5 else ""
+        parts.append(
+            f"STATIC FALLBACK active: {n} top-30 tickers using stale production_data/financial_records.json"
+            f" ({sample}{suffix}) — financial_score rankings may reflect stale cash/runway"
+        )
     if result["divergences"]:
-        result["status"] = "WARN"
+        result["status"] = _status_merge(result["status"], "WARN")
         parts.append(
             f"{len(result['divergences'])} divergence(s) > 50%: " f"{[d['ticker'] for d in result['divergences']]}"
         )
