@@ -588,13 +588,31 @@ def check_review_queue_steward(dt: date) -> CheckResult:
 
 
 def check_production_qa(dt: date) -> CheckResult:
-    """Verify production_qa ran and produced a report (schema: production_qa.v1)."""
+    """Verify production_qa ran and produced a report (schema: production_qa.v1).
+
+    production_qa runs post-market (~20:30-21:00 ET). The fleet receipt runs at
+    17:30 ET. When the receipt fires before the report has landed, return SKIP
+    (pending) instead of STALE to avoid a false alarm on every weekday.
+    Threshold: if it's the same calendar day and current hour (ET) < 21, pending.
+    """
+    import time
+
     ds = as_of_date(dt)
     anomalies: list[str] = []
     verdict = "UNKNOWN"
 
     report = REPO_ROOT / "artifacts" / "production_qa" / f"{ds}_report.json"
     if not report.exists():
+        # Check if we're still within the expected completion window (before 21:00 ET).
+        # ET = UTC-4 (EDT) or UTC-5 (EST); use UTC-4 as conservative bound.
+        now_et_hour = (datetime.utcnow().hour - 4) % 24
+        today_str = datetime.utcnow().date().isoformat()
+        if ds == today_str and now_et_hour < 21:
+            return CheckResult(
+                "production_qa",
+                "SKIP",
+                f"No production_qa report for {ds} yet — pending (expected ~20:30-21:00 ET, now ~{now_et_hour:02d}:xx ET)",
+            )
         return CheckResult("production_qa", "STALE", f"No production_qa report for {ds}")
 
     try:
