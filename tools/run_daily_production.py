@@ -1557,6 +1557,7 @@ def check_ruleset_health(
     receipts_dir: Optional[Path] = None,
     history_path: Optional[Path] = None,
     active_ruleset_id: Optional[str] = None,
+    manifest_path: Optional[Path] = None,
 ) -> GateResult:
     """Post-promotion health check. WARN-only gate (never FAIL).
 
@@ -1568,6 +1569,8 @@ def check_ruleset_health(
         receipts_dir = REPO_ROOT / "artifacts" / "promotions"
     if history_path is None:
         history_path = REPO_ROOT / "artifacts" / "ruleset_health_history.jsonl"
+    if manifest_path is None:
+        manifest_path = REPO_ROOT / "production_data" / "decision_rulesets" / "manifest.json"
 
     drift_report_path = staging_date_dir / "drift_report.json"
 
@@ -1577,6 +1580,7 @@ def check_ruleset_health(
         history_path=history_path,
         output_dir=staging_date_dir,
         active_ruleset_id=active_ruleset_id,
+        manifest_path=manifest_path,
     )
 
     status = result.get("status", "OK")

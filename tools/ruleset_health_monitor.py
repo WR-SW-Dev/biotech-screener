@@ -52,17 +52,56 @@ class HealthThresholds:
 # ---------------------------------------------------------------------------
 
 
+def _manifest_active_id(manifest_path: Path) -> Optional[str]:
+    """Return the id of the manifest entry with status == 'active', or None."""
+    if not manifest_path.exists():
+        return None
+    try:
+        data = json.loads(manifest_path.read_text(encoding="utf-8"))
+        for entry in data.get("rulesets", []):
+            if entry.get("status") == "active":
+                return entry.get("id")
+    except (json.JSONDecodeError, OSError):
+        pass
+    return None
+
+
 def _find_active_receipt(
     receipts_dir: Path,
     active_ruleset_id: Optional[str] = None,
+    manifest_path: Optional[Path] = None,
 ) -> Optional[Dict[str, Any]]:
-    """Find the most recent promotion receipt for the active ruleset.
+    """Find the promotion receipt for the active ruleset.
 
-    If active_ruleset_id is provided, matches receipts where new_active_id == id.
-    Otherwise returns the most recent receipt by filename sort.
+    Resolution order for the canonical active id:
+      1. Explicit ``active_ruleset_id`` argument (caller override).
+      2. ``manifest_path`` -> entry with ``status == "active"`` (canonical SoT).
+      3. Fallback: most recent receipt by filename sort (legacy behavior;
+         preserved when neither override nor manifest is provided).
+
+    If a canonical id is known but no matching receipt exists in
+    ``receipts_dir``, returns a stub ``{"new_active_id": <id>,
+    "missing_receipt": True, ...}`` so callers report the right id
+    instead of falling back to a stale rollback receipt that happens to
+    sort first.
     """
     if not receipts_dir.exists():
+        # Even with no receipts dir, if we know the canonical id from the
+        # manifest, surface it as a stub.
+        if active_ruleset_id is None and manifest_path is not None:
+            active_ruleset_id = _manifest_active_id(manifest_path)
+        if active_ruleset_id:
+            return {
+                "schema": "promote_receipt.stub.v1",
+                "new_active_id": active_ruleset_id,
+                "missing_receipt": True,
+                "created_at_utc": "",
+                "gate": {},
+            }
         return None
+
+    if active_ruleset_id is None and manifest_path is not None:
+        active_ruleset_id = _manifest_active_id(manifest_path)
 
     candidates = sorted(receipts_dir.glob("promotion_*.json"), reverse=True)
     # Also check rollback receipts (they become the new active)
@@ -80,6 +119,18 @@ def _find_active_receipt(
                 return data
         else:
             return data
+
+    # Canonical id known but no matching receipt: return explicit stub so
+    # the monitor reports the right id with baseline metrics absent, rather
+    # than silently surfacing a stale rollback receipt for an old id.
+    if active_ruleset_id:
+        return {
+            "schema": "promote_receipt.stub.v1",
+            "new_active_id": active_ruleset_id,
+            "missing_receipt": True,
+            "created_at_utc": "",
+            "gate": {},
+        }
     return None
 
 
@@ -152,6 +203,27 @@ def evaluate_health(
     active_id = receipt.get("new_active_id", "")
     promo_date = receipt.get("created_at_utc", "")[:10]
     gate = receipt.get("gate") or {}
+
+    # Stub receipt (manifest knows the canonical id but no real receipt
+    # exists): report active_id correctly with baseline absent. Skips
+    # threshold evaluation and history append (consistent with cold-start
+    # and no-drift early returns).
+    if receipt.get("missing_receipt"):
+        return {
+            "schema": "ruleset_health.v1",
+            "active_ruleset_id": active_id,
+            "promotion_date": "",
+            "days_since_promotion": 0,
+            "today": {},
+            "promotion_baseline": {},
+            "status": "PASS",
+            "detail": (
+                f"Active ruleset {active_id}: no promotion receipt available — "
+                "baseline metrics unavailable (consider backfilling receipt)"
+            ),
+            "consecutive_warn_days": 0,
+            "recommend_rollback": False,
+        }
 
     # Extract baseline metrics from receipt
     baseline_overlap = gate.get("mean_top60_overlap")
@@ -266,6 +338,7 @@ def run_health_check(
     output_dir: Optional[Path] = None,
     active_ruleset_id: Optional[str] = None,
     thresholds: Optional[HealthThresholds] = None,
+    manifest_path: Optional[Path] = None,
 ) -> Dict[str, Any]:
     """Full health check pipeline: load inputs, evaluate, write outputs.
 
@@ -279,8 +352,8 @@ def run_health_check(
         except (json.JSONDecodeError, OSError):
             pass
 
-    # Find active receipt
-    receipt = _find_active_receipt(receipts_dir, active_ruleset_id)
+    # Find active receipt (manifest-aware when no explicit override)
+    receipt = _find_active_receipt(receipts_dir, active_ruleset_id, manifest_path)
 
     # Evaluate
     result = evaluate_health(drift_report, receipt, history_path, thresholds)
@@ -333,7 +406,17 @@ def main(argv: Optional[list] = None) -> int:
     parser.add_argument(
         "--active-ruleset-id",
         default=None,
-        help="Active ruleset ID (auto-detected from latest receipt if omitted).",
+        help="Active ruleset ID (overrides manifest auto-detection if given).",
+    )
+    parser.add_argument(
+        "--manifest-path",
+        type=Path,
+        default=Path(__file__).resolve().parent.parent / "production_data" / "decision_rulesets" / "manifest.json",
+        help=(
+            "Path to decision_rulesets/manifest.json. When --active-ruleset-id "
+            "is not given, the entry with status='active' is used as the canonical "
+            "ID. Pass an empty path or a non-existent path to disable manifest fallback."
+        ),
     )
     args = parser.parse_args(argv)
 
@@ -343,6 +426,7 @@ def main(argv: Optional[list] = None) -> int:
         history_path=args.history_file,
         output_dir=args.output_dir,
         active_ruleset_id=args.active_ruleset_id,
+        manifest_path=args.manifest_path,
     )
 
     print(json.dumps(result, indent=2))

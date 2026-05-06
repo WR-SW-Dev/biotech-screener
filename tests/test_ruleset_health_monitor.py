@@ -8,10 +8,28 @@ from pathlib import Path
 from tools.ruleset_health_monitor import (
     HealthThresholds,
     _count_consecutive_warns,
+    _find_active_receipt,
     _load_history,
+    _manifest_active_id,
     evaluate_health,
     run_health_check,
 )
+
+
+def _write_manifest(tmp_path: Path, active_id: str, retired_ids=None) -> Path:
+    """Write a minimal manifest.json with one active entry and optional retired entries."""
+    rulesets = []
+    if retired_ids:
+        for rid in retired_ids:
+            rulesets.append({"id": rid, "status": "retired"})
+    rulesets.append({"id": active_id, "status": "active"})
+    manifest_path = tmp_path / "manifest.json"
+    manifest_path.write_text(
+        json.dumps({"schema_version": 1, "rulesets": rulesets}, indent=2),
+        encoding="utf-8",
+    )
+    return manifest_path
+
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -323,3 +341,146 @@ class TestMalformedHistory:
         # Only 2 valid entries loaded (both WARN), but the gap is invisible
         count = _count_consecutive_warns(entries, "abc")
         assert count == 2
+
+
+# ---------------------------------------------------------------------------
+# Manifest-aware fallback (P0 #2 reader bug fix)
+# ---------------------------------------------------------------------------
+
+
+class TestManifestActiveIdHelper:
+    def test_returns_active_entry_id(self, tmp_path):
+        manifest = _write_manifest(tmp_path, active_id="8887576e", retired_ids=["2a3e79eb", "bebe73f8"])
+        assert _manifest_active_id(manifest) == "8887576e"
+
+    def test_missing_manifest_returns_none(self, tmp_path):
+        assert _manifest_active_id(tmp_path / "missing.json") is None
+
+    def test_no_active_entry_returns_none(self, tmp_path):
+        manifest_path = tmp_path / "manifest.json"
+        manifest_path.write_text(
+            json.dumps({"rulesets": [{"id": "x", "status": "retired"}]}),
+            encoding="utf-8",
+        )
+        assert _manifest_active_id(manifest_path) is None
+
+
+class TestManifestBeatsRollback:
+    """Rollback / promotion receipts on same or older dates must not beat
+    the active manifest entry. Reproduces the 2026-05-05 sentinel bug:
+    rollback_2026-03-09_bebe73f8.json was returned because filename re-sort
+    puts 'r' before 'p', even though canonical was 8887576e."""
+
+    def test_rollback_does_not_override_canonical(self, tmp_path):
+        receipts_dir = tmp_path / "receipts"
+        receipts_dir.mkdir()
+        # Stale rollback receipt that would otherwise win the lexicographic sort
+        rollback = _make_receipt(new_active_id="bebe73f8", action="rollback")
+        (receipts_dir / "rollback_2026-03-09_bebe73f8.json").write_text(json.dumps(rollback), encoding="utf-8")
+        # Older promotion receipts (March 10) — would have won under default
+        # behavior with no manifest
+        prom = _make_receipt(new_active_id="9f1f4587")
+        (receipts_dir / "promotion_2026-03-10_9f1f4587.json").write_text(json.dumps(prom), encoding="utf-8")
+        # Manifest says canonical is the new id (no receipt for it on disk)
+        manifest = _write_manifest(tmp_path, active_id="8887576e", retired_ids=["bebe73f8"])
+
+        receipt = _find_active_receipt(receipts_dir, manifest_path=manifest)
+        assert receipt is not None
+        assert receipt["new_active_id"] == "8887576e"
+        assert receipt.get("missing_receipt") is True
+
+    def test_legacy_no_manifest_preserves_old_behavior(self, tmp_path):
+        """Calling without manifest_path should preserve the legacy
+        most-recent-by-filename fallback (still buggy, but backward-compatible
+        for callers we don't know about)."""
+        receipts_dir = tmp_path / "receipts"
+        receipts_dir.mkdir()
+        prom = _make_receipt(new_active_id="9f1f4587")
+        (receipts_dir / "promotion_2026-03-10_9f1f4587.json").write_text(json.dumps(prom), encoding="utf-8")
+        receipt = _find_active_receipt(receipts_dir)
+        assert receipt is not None
+        assert receipt["new_active_id"] == "9f1f4587"
+
+
+class TestManifestActiveWithMissingReceipt:
+    """Canonical id known from manifest but no matching receipt on disk:
+    return explicit missing-receipt stub, not a stale receipt for an old id."""
+
+    def test_returns_missing_receipt_stub(self, tmp_path):
+        receipts_dir = tmp_path / "receipts"
+        receipts_dir.mkdir()
+        # Receipts exist for other (retired) ids only
+        old = _make_receipt(new_active_id="2a3e79eb")
+        (receipts_dir / "promotion_2026-04-06_2a3e79eb.json").write_text(json.dumps(old), encoding="utf-8")
+        manifest = _write_manifest(tmp_path, active_id="8887576e", retired_ids=["2a3e79eb"])
+
+        receipt = _find_active_receipt(receipts_dir, manifest_path=manifest)
+        assert receipt["new_active_id"] == "8887576e"
+        assert receipt["missing_receipt"] is True
+        assert receipt["gate"] == {}
+
+    def test_evaluate_health_handles_missing_receipt(self, tmp_path):
+        """evaluate_health should report active_id correctly with PASS status
+        and a clear 'baseline metrics unavailable' detail when given a stub."""
+        stub = {
+            "schema": "promote_receipt.stub.v1",
+            "new_active_id": "8887576e",
+            "missing_receipt": True,
+            "created_at_utc": "",
+            "gate": {},
+        }
+        drift = _make_drift_report()
+        history = tmp_path / "history.jsonl"
+
+        result = evaluate_health(drift, stub, history)
+        assert result["active_ruleset_id"] == "8887576e"
+        assert result["status"] == "PASS"
+        assert "baseline metrics unavailable" in result["detail"]
+        assert result["recommend_rollback"] is False
+        # Stub path skips history append (consistent with cold-start path)
+        assert not history.exists()
+
+    def test_no_receipts_dir_with_manifest_still_returns_stub(self, tmp_path):
+        """If receipts_dir doesn't exist but manifest does, still return stub
+        rather than None — caller should report the right id."""
+        manifest = _write_manifest(tmp_path, active_id="8887576e")
+        receipt = _find_active_receipt(
+            tmp_path / "nonexistent_receipts_dir",
+            manifest_path=manifest,
+        )
+        assert receipt is not None
+        assert receipt["new_active_id"] == "8887576e"
+        assert receipt["missing_receipt"] is True
+
+
+class TestExplicitActiveIdStillWorks:
+    """Explicit --active-ruleset-id should override both manifest and
+    name-sort fallback."""
+
+    def test_explicit_id_finds_matching_receipt(self, tmp_path):
+        receipts_dir = tmp_path / "receipts"
+        receipts_dir.mkdir()
+        wanted = _make_receipt(new_active_id="targetID")
+        other = _make_receipt(new_active_id="otherID")
+        (receipts_dir / "promotion_2026-03-01_targetID.json").write_text(json.dumps(wanted), encoding="utf-8")
+        (receipts_dir / "promotion_2026-03-10_otherID.json").write_text(json.dumps(other), encoding="utf-8")
+        manifest = _write_manifest(tmp_path, active_id="8887576e")
+
+        receipt = _find_active_receipt(
+            receipts_dir,
+            active_ruleset_id="targetID",
+            manifest_path=manifest,
+        )
+        assert receipt["new_active_id"] == "targetID"
+        # Did not get fooled by the lexicographically-later otherID receipt,
+        # nor by the manifest's 8887576e.
+
+    def test_explicit_id_with_no_match_returns_stub(self, tmp_path):
+        receipts_dir = tmp_path / "receipts"
+        receipts_dir.mkdir()
+        unrelated = _make_receipt(new_active_id="unrelatedID")
+        (receipts_dir / "promotion_2026-03-01_unrelatedID.json").write_text(json.dumps(unrelated), encoding="utf-8")
+
+        receipt = _find_active_receipt(receipts_dir, active_ruleset_id="targetID")
+        assert receipt["new_active_id"] == "targetID"
+        assert receipt["missing_receipt"] is True
