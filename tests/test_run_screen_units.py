@@ -549,15 +549,15 @@ class TestSnapshotPhaseHelpers:
 
 
 class TestMorningstarEnrichmentKeyPath:
-    """Regression tests for the Morningstar enrichment key-path fix (spec 076).
+    """Regression tests for the Morningstar enrichment key-path fixes (spec 076).
 
-    The enrichment block in run_screen.py reads:
-        results.get("enhancements", {}).get("morningstar_scores", {})
+    Two bugs were found and fixed in the enrichment block in run_screen.py:
+      Fix 1 (commit e70ae626): top-level key was "enhancement_result" → "enhancements"
+      Fix 2: inner key was "scores" → "scores_by_ticker" (MorningstarSignalEngine.score_universe
+             returns {"scores_by_ticker": ...}, not {"scores": ...})
 
-    Prior to the fix, the code used "enhancement_result" (wrong key), which
-    caused all ms_* fields to be silently empty. These tests verify the correct
-    key path populates ms_* fields when enrichment data is present, and that
-    the old key path does not.
+    These tests verify the corrected two-level key path populates ms_* fields
+    when enrichment data is present, and that the old paths do not.
     """
 
     MS_FIELDS = (
@@ -569,12 +569,12 @@ class TestMorningstarEnrichmentKeyPath:
         "ms_return_annualized_5yr",
     )
 
-    def _make_results_fixture(self, key: str) -> dict:
-        """Build a results dict that stores Morningstar scores under `key`."""
+    def _make_results_fixture(self, top_key: str, inner_key: str = "scores_by_ticker") -> dict:
+        """Build a results dict storing Morningstar scores under top_key/inner_key."""
         return {
-            key: {
+            top_key: {
                 "morningstar_scores": {
-                    "scores": {
+                    inner_key: {
                         "BIIB": {
                             "status": "SUCCESS",
                             "ms_volatility_3yr": "0.25",
@@ -590,9 +590,9 @@ class TestMorningstarEnrichmentKeyPath:
         }
 
     def _apply_enrichment(self, results: dict, rows: list) -> int:
-        """Replicate the enrichment logic from run_screen.py:6012-6033."""
+        """Replicate the corrected enrichment logic from run_screen.py:6009-6030."""
         _ms_scores = results.get("enhancements", {}).get("morningstar_scores", {})
-        _ms_ticker_scores = _ms_scores.get("scores", {}) if isinstance(_ms_scores, dict) else {}
+        _ms_ticker_scores = _ms_scores.get("scores_by_ticker", {}) if isinstance(_ms_scores, dict) else {}
         enriched = 0
         for row in rows:
             _tk = row.get("ticker", "")
@@ -605,8 +605,8 @@ class TestMorningstarEnrichmentKeyPath:
                 enriched += 1
         return enriched
 
-    def test_correct_key_populates_ms_fields(self):
-        results = self._make_results_fixture("enhancements")
+    def test_correct_keys_populate_ms_fields(self):
+        results = self._make_results_fixture("enhancements", "scores_by_ticker")
         rows = [{"ticker": "BIIB"}]
         enriched = self._apply_enrichment(results, rows)
         assert enriched == 1
@@ -614,19 +614,29 @@ class TestMorningstarEnrichmentKeyPath:
         assert rows[0]["ms_star_rating"] == "3"
         assert rows[0]["ms_return_annualized_5yr"] == "0.10"
 
-    def test_wrong_key_produces_empty_fields(self):
-        # Simulate the pre-fix bug: data stored under "enhancement_result"
-        results = self._make_results_fixture("enhancement_result")
+    def test_wrong_top_key_produces_no_enrichment(self):
+        # Simulate Fix-1 bug: data stored under "enhancement_result" not "enhancements"
+        results = self._make_results_fixture("enhancement_result", "scores_by_ticker")
         rows = [{"ticker": "BIIB"}]
         enriched = self._apply_enrichment(results, rows)
-        # Correct key "enhancements" is absent → no enrichment
+        assert enriched == 0
+        for field in self.MS_FIELDS:
+            assert field not in rows[0]
+
+    def test_wrong_inner_key_produces_no_enrichment(self):
+        # Simulate Fix-2 bug: engine key is "scores_by_ticker" but old code read "scores"
+        results = self._make_results_fixture("enhancements", "scores")
+        rows = [{"ticker": "BIIB"}]
+        enriched = self._apply_enrichment(results, rows)
         assert enriched == 0
         for field in self.MS_FIELDS:
             assert field not in rows[0]
 
     def test_non_success_status_skipped(self):
         results = {
-            "enhancements": {"morningstar_scores": {"scores": {"BIIB": {"status": "ERROR", "ms_star_rating": "4"}}}}
+            "enhancements": {
+                "morningstar_scores": {"scores_by_ticker": {"BIIB": {"status": "ERROR", "ms_star_rating": "4"}}}
+            }
         }
         rows = [{"ticker": "BIIB"}]
         enriched = self._apply_enrichment(results, rows)
@@ -634,7 +644,7 @@ class TestMorningstarEnrichmentKeyPath:
         assert "ms_star_rating" not in rows[0]
 
     def test_ticker_not_in_scores_leaves_row_unchanged(self):
-        results = self._make_results_fixture("enhancements")
+        results = self._make_results_fixture("enhancements", "scores_by_ticker")
         rows = [{"ticker": "RVMD"}]
         enriched = self._apply_enrichment(results, rows)
         assert enriched == 0
@@ -644,7 +654,7 @@ class TestMorningstarEnrichmentKeyPath:
         results = {
             "enhancements": {
                 "morningstar_scores": {
-                    "scores": {
+                    "scores_by_ticker": {
                         "BIIB": {
                             "status": "SUCCESS",
                             "ms_volatility_3yr": None,
