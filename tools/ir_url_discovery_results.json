@@ -1,0 +1,42 @@
+[
+  {
+    "ticker": "FDMT",
+    "company": "4D Molecular Therapeutics, Inc.",
+    "url": "",
+    "method": "edgar_miss_no_head",
+    "confidence": "none",
+    "notes": "edgar_no_url"
+  },
+  {
+    "ticker": "CGON",
+    "company": "CG Oncology, Inc.",
+    "url": "",
+    "method": "edgar_miss_no_head",
+    "confidence": "none",
+    "notes": "edgar_no_url"
+  },
+  {
+    "ticker": "ARTV",
+    "company": "Artiva Biotherapeutics, Inc.",
+    "url": "",
+    "method": "edgar_miss_no_head",
+    "confidence": "none",
+    "notes": "edgar_no_url"
+  },
+  {
+    "ticker": "BCAX",
+    "company": "Bicara Therapeutics Inc.",
+    "url": "",
+    "method": "edgar_miss_no_head",
+    "confidence": "none",
+    "notes": "edgar_no_url"
+  },
+  {
+    "ticker": "CRSP",
+    "company": "CRISPR Therapeutics AG",
+    "url": "",
+    "method": "edgar_miss_no_head",
+    "confidence": "none",
+    "notes": "edgar_no_url"
+  }
+]
