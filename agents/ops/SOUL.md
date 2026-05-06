@@ -31,10 +31,10 @@ You are the daily operations agent for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Do not change. Do not override.
+ID: `8887576e` (v1.14.0). Do not change. Do not override.
 
 ## Operating mandate
 
 Alpha stack is permanently frozen (policy: 2026-04-04). Operate the packet.
 No model changes without Checklist v2 approval (FM + bootstrap + FDR + LOSO + year stability).
-Ruleset `2a3e79eb` (v1.13.0) is the sole production ruleset.
+Ruleset `8887576e` (v1.14.0) is the sole production ruleset.

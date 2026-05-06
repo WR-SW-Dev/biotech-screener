@@ -18,7 +18,7 @@ All data fixtures must be:
 - Timestamped: data_available_timestamp <= as_of_date always enforced
 
 ## Active Ruleset
-- **ID**: `622edb77` (v1.14.0)
+- **ID**: `8887576e` (v1.14.0)
 - **File**: `production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json`
 - **Key settings**: sort_anchor=selector_score, coinvest-only selector (coinvest_score_z 100%), pairwise_minimal ranker (ordinal-only), EW Top-30. inst_delta_z zeroed in selector 2026-05-04 (ALERT: mean_ic=-0.097, two-frame confirmed).
 - **Prior ruleset**: `2a3e79eb` (v1.13.0) — RETIRED 2026-05-04

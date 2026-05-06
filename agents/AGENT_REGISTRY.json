@@ -400,7 +400,7 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "Merged successor of shadow_monitor + policy_shadow_watch. SOUL.md filled out 2026-04-28; not yet wired into cron. Bring up in shadow status before flipping supervised_by_orchestrator=true and retiring the predecessor entries."
+      "notes": "SUPPRESSED PLACEHOLDER — not active. Intended as merged successor of shadow_monitor + policy_shadow_watch but never wired into cron, has no memory/ writes, and produces no artifacts. shadow_monitor and policy_shadow_watch remain the live agents. Activate only after: cron entry added, memory-write verified, artifact_paths confirmed, supervised_by_orchestrator=true. 2026-05-06: classified suppressed_placeholder in governance audit."
     },
     "universe_maintenance": {
       "role": "read-only monitor for universe health",

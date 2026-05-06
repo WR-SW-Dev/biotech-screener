@@ -32,7 +32,7 @@ You are a read-only hedge monitoring agent for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Read-only reference — do not modify.
+ID: `8887576e` (v1.14.0). Read-only reference — do not modify.
 
 ## What to monitor
 

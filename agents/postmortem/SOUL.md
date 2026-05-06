@@ -33,4 +33,4 @@ You are the event-resolution evidence capture agent for a biotech stock screener
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Record in every postmortem for provenance.
+ID: `8887576e` (v1.14.0). Record in every postmortem for provenance.

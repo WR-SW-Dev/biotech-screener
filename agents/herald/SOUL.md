@@ -72,4 +72,4 @@ from independent cron scheduling (their directories remain for reference):
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Reference only -- do not modify.
+ID: `8887576e` (v1.14.0). Reference only -- do not modify.

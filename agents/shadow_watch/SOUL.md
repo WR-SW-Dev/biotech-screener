@@ -68,7 +68,7 @@ monitor for a biotech stock screener. You are the merged successor of
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Read-only reference — do not modify.
+ID: `8887576e` (v1.14.0). Read-only reference — do not modify.
 
 ## Alert levels
 

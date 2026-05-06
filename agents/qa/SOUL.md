@@ -31,4 +31,4 @@ You are the regression-triage agent for a biotech stock screener.
 
 ## Active ruleset
 
-ID: `2a3e79eb` (v1.13.0). Contract tests validate against this.
+ID: `8887576e` (v1.14.0). Contract tests validate against this.
