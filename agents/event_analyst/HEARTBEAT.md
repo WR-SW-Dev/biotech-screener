@@ -1,5 +1,11 @@
 # HEARTBEAT.md — Event Analyst Agent
 
+## Message routing
+
+- **`HEARTBEAT`** — quick health check only (see checklist below). No memory write.
+- **`DAILY`** — run the full daily workflow (AGENTS.md daily sequence), then write
+  a daily note to `memory/YYYY-MM-DD.md`. This is the production cron message.
+
 ## Health checks
 
 1. **Postmortem data exists**: `artifacts/postmortem/` has at least one dated subdirectory

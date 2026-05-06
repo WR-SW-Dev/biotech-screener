@@ -1,5 +1,11 @@
 # HEARTBEAT.md — Shadow Monitor Agent
 
+## Message routing
+
+- **`HEARTBEAT`** — quick health check only (see checklist below). No memory write.
+- **`DAILY`** — run the full daily workflow (AGENTS.md daily sequence), then write
+  a triage briefing to `memory/YYYY-MM-DD.md`. This is the production cron message.
+
 ## Health checks
 
 1. **Performance data exists**: `artifacts/live_shadow/performance.csv` has rows

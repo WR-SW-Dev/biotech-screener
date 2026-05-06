@@ -1,5 +1,11 @@
 # HEARTBEAT.md — Catalyst Delta Agent
 
+## Message routing
+
+- **`HEARTBEAT`** — quick health check only (see checklist below). No memory write.
+- **`DAILY`** — run the full daily workflow (AGENTS.md daily sequence), then write
+  a summary note to `memory/YYYY-MM-DD.md`. This is the production cron message.
+
 ## Snapshot guard
 
 **FIRST**: Check if today's snapshot exists at `data/snapshots/YYYY-MM-DD/rankings.csv`.

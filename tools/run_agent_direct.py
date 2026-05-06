@@ -10,6 +10,13 @@ prompt, sends the message, and logs the response.
 Usage:
     python3 tools/run_agent_direct.py --agent ops --message "HEARTBEAT"
     python3 tools/run_agent_direct.py --agent sentinel --message "HEARTBEAT"
+    python3 tools/run_agent_direct.py --agent catalyst_delta --message "DAILY" --write-memory
+    python3 tools/run_agent_direct.py --agent shadow_monitor --message "DAILY" --write-memory
+
+--write-memory: after a successful run, write the LLM response to
+    agents/<name>/memory/YYYY-MM-DD.md (local date). Skipped if response is
+    a bare heartbeat status token (HEARTBEAT_OK, SNAPSHOT_MISSING, etc.).
+    Appends a timestamp footer. Idempotent: overwrites same-day file if rerun.
 """
 
 from __future__ import annotations
@@ -17,11 +24,46 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 AGENTS_DIR = PROJECT_ROOT / "agents"
+
+# Bare status tokens that indicate a heartbeat-only response — do not write to memory.
+_HEARTBEAT_TOKENS = re.compile(
+    r"^\s*(HEARTBEAT_OK|SNAPSHOT_MISSING|NO_PRIOR_DELTA|DELTA_STALE"
+    r"|HEALTHY|NO_MONITOR|STALE|NO_PERF_DATA|NO_DATA|BUILDER_FAILED"
+    r"|HEARTBEAT_FAIL|OK|PASS)\s*$",
+    re.IGNORECASE,
+)
+
+
+def maybe_write_memory(agent_name: str, response_text: str) -> Path | None:
+    """Write LLM response to agents/<name>/memory/YYYY-MM-DD.md if it contains
+    substantive content (not just a bare heartbeat status token).
+
+    Returns the path written, or None if skipped.
+    """
+    if _HEARTBEAT_TOKENS.match(response_text.strip()):
+        return None  # bare status token — nothing to persist
+
+    memory_dir = AGENTS_DIR / agent_name / "memory"
+    memory_dir.mkdir(parents=True, exist_ok=True)
+
+    today = datetime.now().strftime("%Y-%m-%d")
+    mem_path = memory_dir / f"{today}.md"
+
+    # Append run timestamp footer if not already present
+    footer = (
+        f"\n\n---\n_Written by run_agent_direct.py at {datetime.now(tz=timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}_\n"
+    )
+    content = response_text.rstrip() + footer
+
+    mem_path.write_text(content, encoding="utf-8")
+    return mem_path
+
 
 # Per-agent model overrides. Agents not listed default to Sonnet.
 # Haiku is used for routine/deterministic tasks (file checks, structured capture).
@@ -141,6 +183,12 @@ def main():
     parser.add_argument("--model", default="claude-sonnet-4-6")
     parser.add_argument("--max-tokens", type=int, default=4096)
     parser.add_argument("--log-dir", type=Path, default=PROJECT_ROOT / "logs" / "agents_direct")
+    parser.add_argument(
+        "--write-memory",
+        action="store_true",
+        default=False,
+        help="Write LLM response to agents/<name>/memory/YYYY-MM-DD.md " "(skipped for bare heartbeat status tokens)",
+    )
     args = parser.parse_args()
 
     # Load .env
@@ -161,6 +209,14 @@ def main():
     if result.get("status") == "success":
         print(f"\n{result['response'][:2000]}")
         print(f"\n[{result['usage']['input_tokens']} in / {result['usage']['output_tokens']} out tokens]")
+        if args.write_memory:
+            mem_path = maybe_write_memory(args.agent, result["response"])
+            if mem_path:
+                print(f"Memory written: {mem_path}")
+                result["memory_written"] = str(mem_path)
+            else:
+                print("Memory write skipped (bare status token response)")
+                result["memory_written"] = None
     else:
         print(f"ERROR: {result.get('error', 'unknown')}")
 
