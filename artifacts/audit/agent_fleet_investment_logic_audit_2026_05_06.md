@@ -25,6 +25,14 @@ Surfaces aligned to this disposition:
 
 The body of the audit below is preserved as the original 2026-05-06 read-only observation. **Where it says `NEEDS_HUMAN_REVIEW` for `shadow_watch`, the resolution is "SUPPRESSED PLACEHOLDER per Spec 085" — the description above this fold is authoritative.**
 
+## P1 closure notes appended 2026-05-06
+
+**P1 #1 — `ic_health_monitor` LLM escalation suppression (CLOSED, commit `8cf24340`):** `tools/agent_heartbeat_checks.py` now carries a date-bounded `IC_HEALTH_CARRIED_ALERTS` muffle. `inst_delta_z` ALERT through 2026-05-15 downgrades to WARN with `[CARRIED]` tag and skips LLM escalation when it's the only anomaly. Hard ALERT path preserved for any unmuffled signal and after the muffle's `expires_after`. IC math, thresholds, and dashboard JSON untouched.
+
+**P1 #3 — `grok_biotech_watch` 12:00 cadence drop (CLOSED, prior commit `edb8ac5a` "ops: reduce grok biotech watch to one daily run"):** Grok actually went further than the audit's recommendation — reduced from 4×/day → 1×/day at 16:00 ET (ROI audit) rather than only dropping the 12:00 slot. Where the body below recommends "reduce 4×/day → 2×/day (drop 12:00)" or "drop 12:00", the resolution is **already implemented and exceeds scope** (only 16:00 ET remains; 22:00 also previously removed). `model_documentation.md` and `docs/MODEL_DOCUMENTATION.md` cadence rows updated 2026-05-06 to reflect the live 1×/day schedule.
+
+Other P1 items (catalyst_delta filter, event_analyst weekly, company_news_ingest retire, shadow_monitor cadence) and bioshort upstream P2 remain HELD per operator direction.
+
 ---
 
 ## A. Executive summary

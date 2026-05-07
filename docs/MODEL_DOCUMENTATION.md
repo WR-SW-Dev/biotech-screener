@@ -1525,7 +1525,7 @@ dashboard-validation-ping, calibration-weekly, weekly-policy-review.
 | herald | Herald | Press release collector and news summarizer | Live — 3 daily digests |
 | ctgov_poller | Registry | ClinicalTrials.gov delta polling | Live, daily |
 | earnings_calendar_sync | Bellringer | Earnings calendar maintenance | Live, 2x daily |
-| grok_biotech_watch | Scout | Web sentinel for biotech signals | 4x daily (7 AM, 12 PM, 3 PM, 10 PM ET weekdays) |
+| grok_biotech_watch | Scout | Web sentinel for biotech signals | 1x daily weekdays (16:00 ET; reduced from 4×/day on 2026-05-06 — ROI audit; see agent fleet audit P1 #3) |
 | universe_maintenance | Gardener | Universe steward | Weekly (Mon) |
 | data_auditor | Auditor | Pipeline integrity checks | Daily + weekly deep |
 | biotech_news_digest | Herald Digest | News digest builder/formatter | 3x daily |
