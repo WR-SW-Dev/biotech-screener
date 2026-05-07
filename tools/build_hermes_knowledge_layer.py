@@ -161,13 +161,21 @@ def capture_key_artifacts():
     ruleset_path = REPO / "production_data/decision_rulesets/v1.14.0_coinvest_only_selector.json"
     checks["active_ruleset_file_exists"] = ruleset_path.exists()
 
-    # watchlist_current.json
+    # watchlist_current.json — generated artifact, no longer git-tracked
+    # (Spec 091 follow-on, ledger 2026-05-07 §4 closure). Check freshness instead
+    # of git status: cron rewrites this file on every run with as_of_date.
     wl = REPO / "data/snapshots/resolutions/watchlist_current.json"
-    git_status = run(f"git status --porcelain {wl}")
-    checks["watchlist_current_json"] = {
-        "exists": wl.exists(),
-        "git_status": git_status.strip() or "clean",
-    }
+    wl_check = {"exists": wl.exists(), "as_of_date": None, "stale_days": None}
+    if wl.exists():
+        try:
+            wl_data = json.loads(wl.read_text())
+            wl_check["as_of_date"] = wl_data.get("as_of_date")
+            if wl_check["as_of_date"]:
+                d = datetime.strptime(wl_check["as_of_date"], "%Y-%m-%d").date()
+                wl_check["stale_days"] = (datetime.now().date() - d).days
+        except (json.JSONDecodeError, ValueError, KeyError):
+            wl_check["parse_error"] = True
+    checks["watchlist_current_json"] = wl_check
 
     return checks
 
@@ -396,16 +404,34 @@ def detect_contradictions(git_info, crontab_info, agents, artifacts):
             }
         )
 
-    # C2: watchlist_current.json uncommitted check
+    # C2: watchlist_current.json freshness check (file is git-untracked per
+    # ledger 2026-05-07 §4 closure; cron producer rewrites it daily).
     wl_status = artifacts.get("watchlist_current_json", {})
-    git_st = wl_status.get("git_status", "clean")
-    if git_st and git_st != "clean":
+    if not wl_status.get("exists"):
         issues.append(
             {
                 "id": "C2",
-                "severity": "POSSIBLE_DRIFT",
-                "description": f"watchlist_current.json has uncommitted changes: {git_st}",
-                "recommendation": "Inspect diff, then revert or commit as standalone. Do not bundle into Spec 087/088.",
+                "severity": "NEEDS_OPERATOR_DECISION",
+                "description": "watchlist_current.json missing. Producer (catalyst_resolution_tracker) has not run or output dir is wrong.",
+                "recommendation": "Verify catalyst_resolution_tracker cron and rerun if needed.",
+            }
+        )
+    elif wl_status.get("parse_error") or wl_status.get("as_of_date") is None:
+        issues.append(
+            {
+                "id": "C2",
+                "severity": "NEEDS_OPERATOR_DECISION",
+                "description": "watchlist_current.json present but unparseable or missing as_of_date.",
+                "recommendation": "Inspect file; rerun catalyst_resolution_tracker.",
+            }
+        )
+    elif (wl_status.get("stale_days") or 0) > 3:
+        issues.append(
+            {
+                "id": "C2",
+                "severity": "WARN",
+                "description": f"watchlist_current.json as_of_date={wl_status['as_of_date']} is {wl_status['stale_days']}d stale.",
+                "recommendation": "Verify catalyst_resolution_tracker cron is firing.",
             }
         )
     else:
@@ -413,7 +439,7 @@ def detect_contradictions(git_info, crontab_info, agents, artifacts):
             {
                 "id": "C2",
                 "severity": "OK",
-                "description": "watchlist_current.json is clean (no uncommitted changes).",
+                "description": f"watchlist_current.json fresh (as_of_date={wl_status.get('as_of_date')}, {wl_status.get('stale_days')}d old).",
                 "recommendation": None,
             }
         )

@@ -157,6 +157,7 @@ cache/
 data/snapshots/
 !data/snapshots/resolutions/
 !data/snapshots/resolutions/**
+data/snapshots/resolutions/watchlist_current.json
 data/snapshots_pit/
 data/snapshots_reranked/
 data/snapshots_reranked_*/

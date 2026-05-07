@@ -90,13 +90,13 @@ Next automated run: Monday 2026-05-11 08:45 ET (job: hermes-held-spec-ledger)
 
 | File | Status | Disposition |
 |------|--------|------------|
-| `data/snapshots/resolutions/watchlist_current.json` | M (modified, unstaged) | NEEDS_OPERATOR_DECISION: inspect/revert/commit separately. Must NOT be included in any Spec 087 or 088 commit. |
+| `data/snapshots/resolutions/watchlist_current.json` | RESOLVED 2026-05-07 | Untracked: `.gitignore` + `git rm --cached`. Generated daily by `catalyst_resolution_tracker`; history captured by per-ticker resolution files. C2 check in `build_hermes_knowledge_layer.py` switched to as_of_date freshness. |
 
 ---
 
 ## 5. Recommended Next Operator Decisions
 
-1. **watchlist_current.json** — decide: inspect diff, revert, or commit as standalone. Currently blocking clean `git status`.
+1. **watchlist_current.json** — RESOLVED 2026-05-07: untracked via `.gitignore` + `git rm --cached`; `build_hermes_knowledge_layer.py` C2 switched to freshness check.
 2. **Spec 087 B1b first-fire** — after 2026-05-08 18:00 ET: validate artifact, then unlock B2.
 3. **score_rank_pct SPEC_REQUIRED** — streak monitor fires tonight (22:00 ET, Day 4). If streak continues, Spec writeup is the next action.
 4. **policy_shadow history.jsonl sort-dedup** — DONE 2026-05-07. No further action needed.
