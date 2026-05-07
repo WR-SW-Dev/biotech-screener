@@ -1374,7 +1374,7 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 | Agent | Name | Role | Status |
 |-------|------|------|--------|
 | aact_trial_ingest | Archivist | Bulk AACT clinical trial warehouse | Live, 580K trials, weekly (Mon) |
-| company_news_ingest | Herald | Deterministic PR collection + classification | Live, 338 tickers |
+| company_news_ingest | Herald | Deterministic PR collection + classification | RETIRED 2026-05-06 (P1 #5) — consolidated into `herald` (canonical news-ingest agent); historical artifacts preserved at `data/press_releases/` |
 | herald | Herald | Press release collector and news summarizer | Live — 3 daily digests |
 | ctgov_poller | Registry | ClinicalTrials.gov delta polling | Live, daily |
 | earnings_calendar_sync | Bellringer | Earnings calendar maintenance | Live, 2x daily |

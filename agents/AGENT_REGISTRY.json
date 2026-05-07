@@ -116,14 +116,14 @@
       "role": "guaranteed company press release coverage via polling",
       "category": "data_ingestion",
       "cadence": "daily_premarket",
-      "status": "deprecated",
+      "status": "retired",
       "artifact_paths": [
         "data/press_releases/"
       ],
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "RETIRED in crontab: consolidated into herald. Directory pending removal in a future cleanup fix. Deprecated agents are excluded from supervision by status filter regardless of this flag."
+      "notes": "RETIRED 2026-05-06 (P1 #5 disposition; was 'deprecated' as transitional status). Cron retired (consolidated into herald: see crontab '# RETIRED: company_news_ingest' block). Watchdog does not auto-recover. ops_supervisor.py SUPPRESSED_AGENTS records reason 'agent retired (replaced by tier-2 heartbeat checks)'. herald (status=active, daily) is the canonical news ingest agent and writes to data/press_releases/ — historical artifacts under that path are PRESERVED, not deleted. Directory agents/company_news_ingest/ retained for git history; SOUL.md carries a RETIRED header. Manual invocation NOT supported (no production path); reactivation requires a new spec."
     },
     "crt_resolution_watcher": {
       "role": "monitor for new CRT resolutions, update join tables",

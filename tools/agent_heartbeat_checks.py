@@ -695,16 +695,17 @@ SPECIALIZED_CHECKS = {
     "review_queue_steward": check_review_queue_steward,
 }
 
-# CLI --agent map: registry names + deprecated aliases for backward compatibility.
+# CLI --agent map: registry names only.
 # shadow_watch alias intentionally absent: agent is a SUPPRESSED PLACEHOLDER
 # per Spec 085 disposition (2026-05-06) — directory still exists with planning
 # context, but there are no live heartbeat / cron / artifact obligations.
-# herald alias retained until company_news_ingest cleanup lands; remove it in
-# the same pass.
-AGENTS = {
-    **SPECIALIZED_CHECKS,
-    "herald": check_news_digest,
-}
+# herald alias removed 2026-05-06 (P1 #5): the prior alias mapped --agent herald
+# to check_news_digest (which actually checks biotech_news_digest, a different
+# agent), and was retained as backward-compat while company_news_ingest was
+# being phased out. company_news_ingest is now retired (P1 #5); the alias is
+# no longer needed and was misleading because its CheckResult reported the
+# wrong agent name. Use --agent biotech_news_digest for the news_digest check.
+AGENTS = dict(SPECIALIZED_CHECKS)
 
 
 def load_registry() -> dict:
