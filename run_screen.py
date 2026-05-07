@@ -3096,6 +3096,16 @@ def _hydrate_far_horizon_catalysts(
         row["catalyst_event_type"] = event_type
         row["catalyst_strength"] = "far"
         row["catalyst_decay_w"] = ruleset.far_window_decay_mult
+        # Recompute next_catalyst_date / bounds to stay consistent with catalyst_days.
+        # The canonical date block (run_screen.py:4788) ran before this hydration
+        # step, so next_catalyst_date may reflect a stale M3 event date. Override
+        # it here so next_catalyst_date == as_of + catalyst_days.
+        _far_next = (as_of + timedelta(days=days)).strftime("%Y-%m-%d")
+        row["next_catalyst_date"] = _far_next
+        # Date bounds: far-window dates lack day precision; use ±15d (MONTH-grade)
+        _far_base = datetime.strptime(_far_next, "%Y-%m-%d")
+        row["catalyst_date_lower"] = (_far_base - timedelta(days=15)).strftime("%Y-%m-%d")
+        row["catalyst_date_upper"] = (_far_base + timedelta(days=15)).strftime("%Y-%m-%d")
         n_overrides += 1
 
     return n_overrides
