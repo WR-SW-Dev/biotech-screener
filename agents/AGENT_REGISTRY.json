@@ -110,7 +110,7 @@
       "authority_level": "write_artifacts",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:20."
+      "notes": "Crontab: 18:20. LLM elevation rule narrowed 2026-05-06 (P1 #2, partial closure — LLM-side only): narrative names only deltas where ticker is in-universe AND catalyst_days<=60 AND change-code is HARD or family-changing; suppressed deltas are rollup-summarized, not erased. Deterministic artifact tools/build_catalyst_delta.py and downstream consumer tools/build_options_watch.py UNCHANGED — the raw artifact remains the source of truth. catalyst_delta_score scoring field (module_3_scoring*.py, module_5_composite.py) UNCHANGED. Artifact-level filtering deferred to a separate explicit change with before/after artifact diffs."
     },
     "company_news_ingest": {
       "role": "guaranteed company press release coverage via polling",

@@ -22,13 +22,51 @@
 6. Write delta to `artifacts/catalyst_delta/{date}_delta.json` and `.md`
 7. Report: count of changes by code, top 5 most impactful (A/B tier or <=30d)
 
-## Noise filter
+## Noise filter (LLM elevation rule — narrative scope only)
 
-Only surface names that meet at least one:
+> **Scope: this filter governs which deltas the LLM ELEVATES into the daily
+> narrative / memory note. It does NOT govern what the deterministic builder
+> writes. `tools/build_catalyst_delta.py` continues to write every delta to
+> `artifacts/catalyst_delta/{date}_delta.{json,md}` unchanged. Downstream
+> consumers (`tools/build_options_watch.py`, audits) read the raw artifact and
+> are unaffected.**
+
+Elevate (i.e., name explicitly in the LLM narrative) only deltas that meet ALL
+of the following — narrowed 2026-05-06 (P1 #2, audit/reporting noise reduction):
+
+- ticker is **in-universe** (present in today's `rankings.csv`); AND
+- `catalyst_days <= 60` (event is within the 60-day actionable window); AND
+- **change code is one of:** `NEW_HARD_EVENT`, `HARD_EVENT_DATE_CHANGE`,
+  `FDA_EVENT_NEW`, `SEC_EVENT_NEW` (HARD events), OR
+  `SOURCE_FAMILY_CHANGE`, `TRIAL_STATUS_CHANGE` (family-changing codes).
+
+Soft-event date changes for non-elevated tickers are **NOT** named individually.
+
+### Rollup for suppressed deltas (do not erase — summarize)
+
+For deltas that fail the elevation rule, the LLM narrative MUST still include a
+rollup-summary line, e.g.:
+
+```
+Suppressed (not individually elevated): N deltas — by code:
+  SOFT_EVENT_DATE_CHANGE: N1, TRIAL_STATUS_CHANGE (out-of-window): N2, ...
+```
+
+The rollup ensures information is not silently dropped — the raw counts and
+codes remain visible for audit. The full per-ticker detail remains in the
+deterministic JSON/MD artifact.
+
+The **prior wider filter** (A/B tier OR catalyst ≤30d OR source-family-changed
+OR in shadow/trade-plan) is intentionally retained as historical context here
+for reviewers comparing old and new behavior:
+
+```
+Prior elevation rule (replaced 2026-05-06):
 - A or B tier in current rankings
 - Catalyst <=30 days away
 - Source family changed (hard→soft or soft→hard)
 - In the active shadow portfolio or trade plan
+```
 
 ## Memory
 
