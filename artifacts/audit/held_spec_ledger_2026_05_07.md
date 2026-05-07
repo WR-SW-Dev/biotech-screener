@@ -8,7 +8,7 @@ Next automated run: Monday 2026-05-11 08:45 ET (job: hermes-held-spec-ledger)
 
 | Branch | Blocker | Next operator decision |
 |--------|---------|----------------------|
-| Spec 087 B2 (dashboard envelope) | B1b first-fire not yet validated (scheduled Fri 2026-05-09 18:00 ET) | After first-fire passes: draft dashboard freshness envelope |
+| Spec 087 B2 (dashboard envelope) | B1b first-fire not yet validated (scheduled Fri 2026-05-08 18:00 ET) | After first-fire passes: draft dashboard freshness envelope |
 | Spec 088 Phase B (catalyst_delta filtered artifacts) | Spec 087 active branch must close first | After 087 closes: implement raw+filtered companion artifacts |
 | score_rank_pct SPEC_REQUIRED | Day 3+ WARN streak (mean_ic=-0.0119, hit_rate=28.95%). CRT+IC+PIT+Checklist v2 required | Spec writeup before any weight change |
 
@@ -20,8 +20,8 @@ Next automated run: Monday 2026-05-11 08:45 ET (job: hermes-held-spec-ledger)
 - **Status**: installed, awaiting first-fire
 - **Last evidence**: `07259611` — B1b env-readiness cleared (2026-05-07)
 - **Last artifact**: `artifacts/audit/spec_087_b1b_env_readiness_2026_05_07.md`
-- **Blocker**: Friday 2026-05-09 18:00 ET cron must fire with fresh `output/hedge_report/hedge_report_2026-05-09.json`
-- **Next allowed**: read-only validation after 2026-05-09 18:00 ET — check artifact exists, as_of_date matches, no MASSIVE_API_KEY warnings
+- **Blocker**: Friday 2026-05-08 18:00 ET cron must fire with fresh `output/hedge_report/hedge_report_2026-05-08.json`
+- **Next allowed**: read-only validation after 2026-05-08 18:00 ET — check artifact exists, as_of_date matches, no MASSIVE_API_KEY warnings
 - **Explicitly not allowed**: manual extra producer run, bioshort_watch LLM reactivation, any B2/B3 work before first-fire passes
 - **Runtime risk**: LOW — producer is deterministic, no scoring touch
 - **Alert condition**: artifact missing by Sat 2026-05-10 09:00 ET → NEEDS_OPERATOR_DECISION
@@ -97,7 +97,7 @@ Next automated run: Monday 2026-05-11 08:45 ET (job: hermes-held-spec-ledger)
 ## 5. Recommended Next Operator Decisions
 
 1. **watchlist_current.json** — decide: inspect diff, revert, or commit as standalone. Currently blocking clean `git status`.
-2. **Spec 087 B1b first-fire** — after 2026-05-09 18:00 ET: validate artifact, then unlock B2.
+2. **Spec 087 B1b first-fire** — after 2026-05-08 18:00 ET: validate artifact, then unlock B2.
 3. **score_rank_pct SPEC_REQUIRED** — streak monitor fires tonight (22:00 ET, Day 4). If streak continues, Spec writeup is the next action.
 4. **policy_shadow history.jsonl sort-dedup** — DONE 2026-05-07. No further action needed.
 5. **grok SMTP creds** — E1/E2/E3 decision still open. Not blocking anything operational.
