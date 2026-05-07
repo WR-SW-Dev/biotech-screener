@@ -386,7 +386,7 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Supervised directly by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py."
+      "notes": "Daily deterministic build via tools/build_shadow_monitor.py invoked by run_daily_production.py — writes artifacts/shadow_monitor/{date}_monitor.{json,md}. Supervised by SPECIALIZED_CHECKS['shadow_monitor'] in agent_heartbeat_checks.py:check_shadow_monitor. LLM cron entry retired 2026-05-06 (P1 #6 cadence reduction): the prior `25 18 * * 1-5 run_agent_direct.py --agent shadow_monitor --message DAILY --write-memory` was redundant — deterministic build + Tier 2 heartbeat already cover the surface. Manual invocation preserved: tools/run_agent_direct.py --agent shadow_monitor."
     },
     "shadow_watch": {
       "role": "merged shadow portfolio + policy comparison read-only judge",

@@ -1399,7 +1399,7 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 |-------|------|------|--------|
 | options_watch | Surface | Options volume/surface flags | Live |
 | price_action_watch | Tape | Price/volume scanner | Live |
-| shadow_monitor | Mirror | Shadow portfolio observer | Live (via heartbeat checks) |
+| shadow_monitor | Mirror | Shadow portfolio observer | Live — deterministic build daily via run_daily_production.py + Tier 2 heartbeat check; LLM cron retired 2026-05-06 (P1 #6) |
 | shadow_watch | Mirror | Portfolio pattern monitor | Live |
 | policy_shadow_watch | Shadow | Policy change comparator | Live |
 | bioshort_watch | Hedge | Hedge fund governance monitor | Live, daily |
