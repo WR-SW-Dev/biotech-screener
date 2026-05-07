@@ -24,7 +24,7 @@ Next automated run: Monday 2026-05-11 08:45 ET (job: hermes-held-spec-ledger)
 - **Next allowed**: read-only validation after 2026-05-08 18:00 ET — check artifact exists, as_of_date matches, no MASSIVE_API_KEY warnings
 - **Explicitly not allowed**: manual extra producer run, bioshort_watch LLM reactivation, any B2/B3 work before first-fire passes
 - **Runtime risk**: LOW — producer is deterministic, no scoring touch
-- **Alert condition**: artifact missing by Sat 2026-05-10 09:00 ET → NEEDS_OPERATOR_DECISION
+- **Alert condition**: artifact missing by Sat 2026-05-09 09:00 ET → NEEDS_OPERATOR_DECISION
 
 ---
 
