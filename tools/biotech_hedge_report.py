@@ -250,75 +250,106 @@ def fetch_etf_prices(
 # ---------------------------------------------------------------------------
 
 
-def load_portfolio_weights(
-    portfolio_csv: Optional[Path],
-    rankings_csv: Optional[Path],
-) -> Tuple[Dict[str, float], str]:
-    """Load portfolio weights.  Returns ({ticker: weight}, source_desc).
+def resolve_portfolio_csv(
+    provided: Optional[Path],
+    *,
+    snapshots_root: Path,
+) -> Path:
+    """Resolve --portfolio-csv to a real existing file. Fail closed.
 
-    Falls back to equal-weight top 60 from rankings.csv if no portfolio
-    file is available.
+    Spec 087 B1a — replaces the old rankings.csv stub fallback (root cause of
+    the 2026-05-03 cron-misescalation incident).
+
+    - If ``provided`` is given: return it iff it exists. Else SystemExit.
+      An explicit operator-supplied path is honored as-is; we do not
+      silently auto-discover a different file when the explicit one is
+      missing. This protects the Friday-cron case where Friday's portfolio
+      file must be present, not some prior day's.
+    - If ``provided`` is None: auto-discover the latest
+      ``data/snapshots/YYYY-MM-DD/portfolio_positions.csv``. SystemExit if
+      no snapshot CSV exists anywhere.
+
+    Never falls back to rankings.csv as a portfolio source.
     """
-    if portfolio_csv and portfolio_csv.exists():
-        weights: Dict[str, float] = {}
-        with open(portfolio_csv, newline="", encoding="utf-8") as f:
-            rows = list(csv.DictReader(f))
-        # Try weight column first
-        if rows and "weight" in rows[0]:
-            for r in rows:
-                tk = r.get("ticker", "").strip()
-                w = r.get("weight", "")
-                if tk and w:
-                    try:
-                        weights[tk] = float(w)
-                    except ValueError:
-                        continue
-        elif rows and "market_value" in rows[0]:
-            total = 0.0
-            for r in rows:
-                tk = r.get("ticker", "").strip()
-                mv = r.get("market_value", "")
-                if tk and mv:
-                    try:
-                        val = float(mv)
-                        weights[tk] = val
-                        total += val
-                    except ValueError:
-                        continue
-            if total > 0:
-                weights = {k: v / total for k, v in weights.items()}
-        elif rows and "target_weight_pct" in rows[0]:
-            for r in rows:
-                tk = r.get("ticker", "").strip()
-                w = r.get("target_weight_pct", "")
-                if tk and w:
-                    try:
-                        weights[tk] = float(w) / 100.0
-                    except ValueError:
-                        continue
-        if weights:
-            total = sum(weights.values())
-            if total > 0:
-                weights = {k: v / total for k, v in weights.items()}
-            return weights, f"portfolio file ({portfolio_csv.name})"
+    if provided is not None:
+        if provided.exists() and provided.is_file():
+            return provided
+        raise SystemExit(f"--portfolio-csv {provided} does not exist; refusing to emit hedge_report")
+    if not snapshots_root.exists() or not snapshots_root.is_dir():
+        raise SystemExit(
+            f"--portfolio-csv not provided and snapshots root {snapshots_root} "
+            "does not exist; refusing to emit hedge_report"
+        )
+    candidates = sorted(
+        snapshots_root.glob("[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]/portfolio_positions.csv"),
+        reverse=True,
+    )
+    if not candidates:
+        raise SystemExit(
+            f"--portfolio-csv not provided and no portfolio_positions.csv found under "
+            f"{snapshots_root}/YYYY-MM-DD/; refusing to emit hedge_report"
+        )
+    resolved = candidates[0]
+    logger.info("Auto-discovered --portfolio-csv: %s", resolved)
+    return resolved
 
-    # Fallback: latest rankings.csv, equal-weight top 60
-    if rankings_csv and rankings_csv.exists():
-        with open(rankings_csv, newline="", encoding="utf-8") as f:
-            rows = list(csv.DictReader(f))
-        eligible = [
-            r
-            for r in rows
-            if r.get("eligible", "").strip().lower() in ("true", "1", "yes") and r.get("actionable_rank", "")
-        ]
-        eligible.sort(key=lambda r: int(r.get("actionable_rank", "9999")))
-        top60 = eligible[:60]
-        if top60:
-            w = 1.0 / len(top60)
-            weights = {r["ticker"].strip(): w for r in top60}
-            return weights, f"equal-weight top {len(top60)} from {rankings_csv.name}"
 
-    return {}, "no portfolio data"
+def load_portfolio_weights(portfolio_csv: Path) -> Tuple[Dict[str, float], str]:
+    """Load portfolio weights from a guaranteed-existing CSV.
+
+    Caller is responsible for resolving and validating ``portfolio_csv`` —
+    use :func:`resolve_portfolio_csv`. Does NOT fall back to rankings.csv
+    as a portfolio source (Spec 087 B1a; the rankings fallback was the
+    2026-05-03 cron-misescalation root cause).
+
+    Returns ({ticker: weight}, source_desc). Raises SystemExit if no
+    usable weight column is present.
+    """
+    weights: Dict[str, float] = {}
+    with open(portfolio_csv, newline="", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    if rows and "weight" in rows[0]:
+        for r in rows:
+            tk = r.get("ticker", "").strip()
+            w = r.get("weight", "")
+            if tk and w:
+                try:
+                    weights[tk] = float(w)
+                except ValueError:
+                    continue
+    elif rows and "market_value" in rows[0]:
+        total = 0.0
+        for r in rows:
+            tk = r.get("ticker", "").strip()
+            mv = r.get("market_value", "")
+            if tk and mv:
+                try:
+                    val = float(mv)
+                    weights[tk] = val
+                    total += val
+                except ValueError:
+                    continue
+        if total > 0:
+            weights = {k: v / total for k, v in weights.items()}
+    elif rows and "target_weight_pct" in rows[0]:
+        for r in rows:
+            tk = r.get("ticker", "").strip()
+            w = r.get("target_weight_pct", "")
+            if tk and w:
+                try:
+                    weights[tk] = float(w) / 100.0
+                except ValueError:
+                    continue
+    if not weights:
+        raise SystemExit(
+            f"--portfolio-csv {portfolio_csv} has no usable weight column "
+            "(expected one of: weight, market_value, target_weight_pct); "
+            "refusing to emit hedge_report"
+        )
+    total = sum(weights.values())
+    if total > 0:
+        weights = {k: v / total for k, v in weights.items()}
+    return weights, f"portfolio file ({portfolio_csv.name})"
 
 
 def compute_log_returns(
@@ -2315,7 +2346,14 @@ def run_hedge_report(
     """Run the full hedge report pipeline.  Returns the report data dict."""
     logger.info("=== Biotech Portfolio Hedge Report — %s ===", as_of_date)
 
-    # Resolve snapshot dir
+    # Spec 087 B1a — resolve --portfolio-csv first; fail closed before any work.
+    portfolio_csv = resolve_portfolio_csv(
+        portfolio_csv,
+        snapshots_root=REPO_ROOT / "data" / "snapshots",
+    )
+
+    # Resolve snapshot dir (rankings.csv is consumed only for catalyst/phase
+    # metadata join in compute_concentration_metrics — never as a portfolio source).
     if snap_dir is None:
         snap_dir = REPO_ROOT / "data" / "snapshots" / as_of_date
     rankings_csv = snap_dir / "rankings.csv" if snap_dir.exists() else None
@@ -2331,10 +2369,7 @@ def run_hedge_report(
 
     # --- Phase 1: Portfolio exposure ---
     logger.info("Phase 1: Portfolio exposure analysis...")
-    weights, portfolio_source = load_portfolio_weights(portfolio_csv, rankings_csv)
-    if not weights:
-        logger.error("No portfolio data available")
-        return {"error": "no_portfolio_data"}
+    weights, portfolio_source = load_portfolio_weights(portfolio_csv)
     logger.info("Loaded %d positions from %s", len(weights), portfolio_source)
 
     # Beta stats for each ETF

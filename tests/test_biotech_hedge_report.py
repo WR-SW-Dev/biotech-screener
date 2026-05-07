@@ -28,6 +28,7 @@ from tools.biotech_hedge_report import (
     evaluate_structures,
     load_portfolio_weights,
     rank_best_dte_candidates,
+    resolve_portfolio_csv,
     score_structures,
 )
 
@@ -313,30 +314,39 @@ class TestStructureScoring:
             assert "rank" in s
 
 
-class TestFallbackBehavior:
-    """Test graceful fallback when data is missing."""
+class TestPortfolioWeightsLoading:
+    """Spec 087 B1a — load_portfolio_weights fail-closed paths.
 
-    def test_fallback_to_rankings(self, tmp_rankings):
-        """When no portfolio file, falls back to rankings top 60."""
-        weights, source = load_portfolio_weights(None, tmp_rankings)
-        assert len(weights) == 60
-        assert "equal-weight" in source
-        # Check weights sum to 1
-        assert abs(sum(weights.values()) - 1.0) < 1e-6
-
-    def test_fallback_no_data(self):
-        """When nothing available, returns empty."""
-        weights, source = load_portfolio_weights(None, None)
-        assert len(weights) == 0
+    The legacy rankings.csv equal-weight-top-60 fallback is removed; the
+    function now requires a guaranteed-existing portfolio CSV from the
+    caller (use ``resolve_portfolio_csv``) and SystemExits on unusable input.
+    """
 
     def test_portfolio_csv_with_weight(self, tmp_portfolio):
-        weights, source = load_portfolio_weights(tmp_portfolio, None)
+        weights, source = load_portfolio_weights(tmp_portfolio)
         assert len(weights) == 2
         assert abs(weights["STOCKA"] - 0.6) < 0.01
         assert "portfolio file" in source
 
+    def test_unknown_columns_fail_closed(self, tmp_path):
+        """Portfolio CSV missing all of weight / market_value / target_weight_pct
+        must SystemExit and name the expected columns."""
+        bad = tmp_path / "no_weights.csv"
+        with open(bad, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=["ticker", "company_name"])
+            writer.writeheader()
+            writer.writerow({"ticker": "FOO", "company_name": "Foo Inc"})
+        with pytest.raises(SystemExit) as exc_info:
+            load_portfolio_weights(bad)
+        msg = str(exc_info.value)
+        assert "no usable weight column" in msg
+        assert "weight" in msg
+        assert "market_value" in msg
+        assert "target_weight_pct" in msg
+
     def test_realized_vol_fallback(self, synthetic_prices):
-        """When no chain data, surface uses realized vol."""
+        """When no chain data, surface uses realized vol. (Orthogonal to
+        portfolio loading; kept here as a regression check.)"""
         from tools.biotech_hedge_report import analyze_options_surface
 
         rv = compute_realized_vol(synthetic_prices["XBI"], "2025-03-15", window=30)
@@ -350,6 +360,90 @@ class TestFallbackBehavior:
         )
         assert result["data_source"] == "realized_vol_proxy"
         assert result["atm_iv_near"] == rv
+
+
+class TestPortfolioCsvResolution:
+    """Spec 087 B1a — resolve_portfolio_csv fail-closed paths."""
+
+    def test_explicit_existing_path_resolves(self, tmp_portfolio, tmp_path):
+        """An explicit existing --portfolio-csv is returned as-is. The
+        snapshots_root is irrelevant when the explicit arg points at a real file."""
+        snapshots_root = tmp_path / "absent_snapshots_root"  # never touched
+        result = resolve_portfolio_csv(tmp_portfolio, snapshots_root=snapshots_root)
+        assert result == tmp_portfolio
+
+    def test_explicit_missing_path_fails_closed(self, tmp_path):
+        """An explicit --portfolio-csv that does not exist must SystemExit;
+        the resolver does NOT silently auto-discover when an explicit arg was
+        passed but is missing."""
+        missing = tmp_path / "does_not_exist.csv"
+        with pytest.raises(SystemExit) as exc_info:
+            resolve_portfolio_csv(missing, snapshots_root=tmp_path / "snapshots")
+        msg = str(exc_info.value)
+        assert "does not exist" in msg
+        assert str(missing) in msg
+
+    def test_omitted_discovers_latest_snapshot(self, tmp_path):
+        """No --portfolio-csv → auto-discover the latest snapshot's portfolio CSV."""
+        snapshots = tmp_path / "snapshots"
+        for date in ("2026-05-04", "2026-05-05", "2026-05-06"):
+            d = snapshots / date
+            d.mkdir(parents=True)
+            (d / "portfolio_positions.csv").write_text("ticker,weight\nFOO,1.0\n", encoding="utf-8")
+        result = resolve_portfolio_csv(None, snapshots_root=snapshots)
+        assert result.parent.name == "2026-05-06"
+        assert result.name == "portfolio_positions.csv"
+
+    def test_omitted_no_snapshots_fails_closed(self, tmp_path):
+        """No --portfolio-csv and an empty snapshots root must SystemExit."""
+        snapshots = tmp_path / "snapshots"
+        snapshots.mkdir()
+        with pytest.raises(SystemExit) as exc_info:
+            resolve_portfolio_csv(None, snapshots_root=snapshots)
+        assert "no portfolio_positions.csv found" in str(exc_info.value)
+
+    def test_omitted_no_snapshots_root_fails_closed(self, tmp_path):
+        """No --portfolio-csv and a non-existent snapshots root must SystemExit."""
+        snapshots = tmp_path / "does_not_exist_at_all"
+        with pytest.raises(SystemExit) as exc_info:
+            resolve_portfolio_csv(None, snapshots_root=snapshots)
+        msg = str(exc_info.value)
+        assert "snapshots root" in msg
+        assert "does not exist" in msg
+
+    def test_never_falls_back_to_rankings_stub(self, tmp_path):
+        """Even when rankings.csv files are present alongside or at repo root,
+        the resolver only ever considers portfolio_positions.csv."""
+        snapshots = tmp_path / "snapshots"
+        d = snapshots / "2026-05-06"
+        d.mkdir(parents=True)
+        # rankings.csv exists in the dated snapshot dir but no portfolio_positions.csv
+        (d / "rankings.csv").write_text("ticker,actionable_rank,eligible\nSTUB,1,True\n", encoding="utf-8")
+        # Repo-root-style rankings.csv stub adjacent
+        (tmp_path / "rankings.csv").write_text("ticker,actionable_rank,eligible\nSTUB,1,True\n", encoding="utf-8")
+        with pytest.raises(SystemExit) as exc_info:
+            resolve_portfolio_csv(None, snapshots_root=snapshots)
+        assert "no portfolio_positions.csv found" in str(exc_info.value)
+
+    def test_explicit_same_date_missing_fails_closed_even_with_prior(self, tmp_path):
+        """Cron regression: an explicit --portfolio-csv for today must fail
+        closed when today's file is missing, even if a prior day's file
+        exists. Friday cron must NOT silently fall through to Thursday."""
+        snapshots = tmp_path / "snapshots"
+        prior = snapshots / "2026-05-06"
+        today = snapshots / "2026-05-07"
+        prior.mkdir(parents=True)
+        today.mkdir(parents=True)
+        (prior / "portfolio_positions.csv").write_text("ticker,weight\nFOO,1.0\n", encoding="utf-8")
+        # 2026-05-07/portfolio_positions.csv intentionally absent
+        explicit = today / "portfolio_positions.csv"
+        with pytest.raises(SystemExit) as exc_info:
+            resolve_portfolio_csv(explicit, snapshots_root=snapshots)
+        msg = str(exc_info.value)
+        assert "does not exist" in msg
+        assert "2026-05-07" in msg
+        # Resolver must not have looked at the prior day at all
+        assert "2026-05-06" not in msg
 
 
 class TestRealizedVol:
