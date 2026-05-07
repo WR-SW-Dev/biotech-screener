@@ -1,8 +1,8 @@
 {
-  "as_of_date": "2026-05-05",
-  "n_watchlist": 7,
-  "n_resolved_today": 1,
-  "n_existing": 119,
+  "as_of_date": "2026-05-07",
+  "n_watchlist": 10,
+  "n_resolved_today": 7,
+  "n_existing": 120,
   "watchlist": [
     {
       "ticker": "RGNX",
@@ -10,32 +10,47 @@
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "OCGN",
-      "catalyst_date": "2026-05-04",
-      "catalyst_type": "CORPORATE_UPDATE"
-    },
-    {
-      "ticker": "MIRM",
-      "catalyst_date": "2026-05-04",
+      "ticker": "IRON",
+      "catalyst_date": "2026-04-27",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
-      "ticker": "TEVA",
-      "catalyst_date": "2026-04-29",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "ARGX",
-      "catalyst_date": "2026-05-10",
-      "catalyst_type": "PDUFA_ACTION"
-    },
-    {
-      "ticker": "BNTX",
+      "ticker": "VRDN",
       "catalyst_date": "2026-05-05",
       "catalyst_type": "PDUFA_ACTION"
     },
     {
+      "ticker": "OCUL",
+      "catalyst_date": "2026-05-05",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
       "ticker": "ZLAB",
+      "catalyst_date": "2026-05-10",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "RARE",
+      "catalyst_date": "2026-05-05",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
+      "ticker": "MNKD",
+      "catalyst_date": "2026-05-06",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
+      "ticker": "TSHA",
+      "catalyst_date": "2026-04-28",
+      "catalyst_type": "PDUFA_ACTION"
+    },
+    {
+      "ticker": "TSHA",
+      "catalyst_date": "2026-05-06",
+      "catalyst_type": "CORPORATE_UPDATE"
+    },
+    {
+      "ticker": "ARGX",
       "catalyst_date": "2026-05-10",
       "catalyst_type": "PDUFA_ACTION"
     }
