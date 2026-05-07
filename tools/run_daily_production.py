@@ -6020,25 +6020,47 @@ def run_daily(
                     for _line in _backfill_proc.stderr.strip().splitlines()[-5:]:
                         _logger.info(f"  {_line}")
 
-        # --- Step 7: TrapOps daily monitor (non-blocking) ---
-        try:
-            from tools.trapops_monitor import print_report, run_trapops
+        # --- Step 7: TrapOps daily monitor (non-blocking, idempotent) ---
+        # Writes trapops_daily_summary.json into the promoted snapshot dir.
+        # Skips if the artifact already exists (safe on reruns/watchdog recovery).
+        _trapops_out = final_path / "trapops_daily_summary.json"
+        if _trapops_out.exists():
+            _logger.info("[TrapOps] artifact already present — skipping (idempotent)")
+        else:
+            try:
+                from tools.trapops_monitor import print_report, run_trapops
 
-            _trapops = run_trapops(as_of_date, final_snapshots_dir)
-            if "error" not in _trapops:
-                _trapops_state = _trapops.get("health", {}).get("state", "?")
-                _trapops_n = _trapops.get("health", {}).get("n_eligible", 0)
-                _logger.info(
-                    "[TrapOps] %s — %d eligible, %d alerts",
-                    _trapops_state,
-                    _trapops_n,
-                    len(_trapops.get("health", {}).get("alerts", [])),
-                )
-                print_report(_trapops)
-            else:
-                _logger.warning("[TrapOps] Error: %s", _trapops.get("error"))
-        except Exception as _trapops_err:
-            _logger.warning(f"TrapOps monitor failed: {_trapops_err}")
+                _trapops = run_trapops(as_of_date, final_snapshots_dir)
+                if "error" not in _trapops:
+                    _trapops_state = _trapops.get("health", {}).get("state", "?")
+                    _trapops_n = _trapops.get("health", {}).get("n_eligible", 0)
+                    _logger.info(
+                        "[TrapOps] %s — %d eligible, %d alerts",
+                        _trapops_state,
+                        _trapops_n,
+                        len(_trapops.get("health", {}).get("alerts", [])),
+                    )
+                    print_report(_trapops)
+                    # Write artifact — this is the canonical write path.
+                    # trapops_monitor.main() also writes it when run standalone;
+                    # the production pipeline was previously logging only (no write).
+                    with open(_trapops_out, "w") as _to_f:
+                        json.dump(_trapops, _to_f, indent=2, default=str)
+                    _logger.info("[TrapOps] written → %s", _trapops_out)
+                else:
+                    _logger.warning("[TrapOps] Error: %s", _trapops.get("error"))
+                    # Write a failure sentinel so watchdog can detect and report.
+                    with open(_trapops_out, "w") as _to_f:
+                        json.dump({"error": _trapops.get("error"), "snapshot_date": as_of_date}, _to_f, indent=2)
+                    _logger.warning("[TrapOps] failure sentinel written → %s", _trapops_out)
+            except Exception as _trapops_err:
+                _logger.warning(f"TrapOps monitor failed: {_trapops_err}")
+                # Write failure sentinel so watchdog knows it ran but errored.
+                try:
+                    with open(_trapops_out, "w") as _to_f:
+                        json.dump({"error": str(_trapops_err), "snapshot_date": as_of_date}, _to_f, indent=2)
+                except OSError:
+                    pass
 
     return manifest
 

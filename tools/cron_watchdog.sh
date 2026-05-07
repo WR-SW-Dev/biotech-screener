@@ -166,13 +166,19 @@ if ! grep -q "abstracts_$TODAY\.json" "$CONF_LOG" 2>/dev/null; then
     $PYTHON "$REPO/tools/fetch_conference_abstracts_grok.py" --all >> "$CONF_LOG" 2>&1 || log "Conference refresh failed (exit $?)"
 fi
 
-# Trapops monitor (06:17 ET slot). No pre-existing marker, so use log-file mtime.
-# Missing file or log not touched today => recovery.
+# Trapops monitor recovery — check artifact, not log mtime.
+# The production pipeline writes trapops_daily_summary.json into the promoted
+# snapshot dir. If that file is missing, run trapops standalone to generate it.
+# Using artifact presence avoids false-negative from log touched by earlier run.
 TRAPOPS_LOG="$REPO/logs/trapops_cron.log"
-TRAPOPS_MTIME=$(date -r "$TRAPOPS_LOG" +%Y-%m-%d 2>/dev/null || echo "")
-if [ "$TRAPOPS_MTIME" != "$TODAY" ]; then
-    log "MISSED trapops for $TODAY — recovering"
-    (cd "$REPO" && $PYTHON "$REPO/tools/trapops_monitor.py" >> "$TRAPOPS_LOG" 2>&1) || log "Trapops recovery failed (exit $?)"
+TRAPOPS_ARTIFACT="$REPO/data/snapshots/$TODAY/trapops_daily_summary.json"
+if [ ! -f "$TRAPOPS_ARTIFACT" ]; then
+    log "MISSED trapops artifact for $TODAY — recovering"
+    (cd "$REPO" && $PYTHON "$REPO/tools/trapops_monitor.py" --snapshot-date "$TODAY" >> "$TRAPOPS_LOG" 2>&1) \
+        && log "Trapops recovery OK — artifact written" \
+        || log "Trapops recovery FAILED (exit $?) — artifact may still be missing"
+else
+    log "Trapops artifact present for $TODAY — skipping recovery"
 fi
 
 log "Recovery complete for $TODAY"
