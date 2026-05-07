@@ -135,9 +135,28 @@ def write_status_artifact(artifacts_dir: Path, result: FreshnessResult) -> Path:
 
 ### 3.6 B0 acceptance
 
-- Day-after-ship `artifacts/bioshort_watch/{today}_watch.md` either does not exist (today, since upstream is currently 41d stale → SKIPPED_STALE_UPSTREAM) or, after B1 ships, reflects the actual fresh upstream.
-- `artifacts/bioshort_watch/latest_status.json` exists after every production run; `status="STALE"` and `upstream_age_days≈41` until B1 ships fresh data.
-- `cron.log` shows `[BIOSHORT_WATCH] SKIPPED_STALE_UPSTREAM` once per production run until B1 ships fresh data.
+**Amended 2026-05-07 post-investigation** — see `artifacts/audit/spec_087_b0_1_investigation_16_30_noop_2026_05_07.md` for the trace from cron line through `subprocess.run(capture_output=True)` that proved the original log-token criterion unreachable.
+
+Production verification has two tiers:
+
+**Primary verification (file-system, determinative)**:
+
+- `artifacts/bioshort_watch/latest_status.json` exists after every production run.
+- When upstream is stale: `status="STALE"`, `upstream_as_of_date` and `upstream_age_days` are present, `consumer_status="suppressed"`.
+- When upstream is missing: `status="ORPHANED"`, `upstream_as_of_date=null`, `upstream_age_days=null`, `consumer_status="suppressed"`.
+- When upstream is fresh: `status="FRESH"`, `upstream_age_days <= threshold_days`.
+- No fresh-dated `artifacts/bioshort_watch/{as_of_date}_watch.{json,md}` body is generated from stale upstream — the absence of today's body file is the artifact-suppression signal.
+- After B1 ships, the watch body is regenerated daily and reflects the actual fresh upstream.
+
+**Secondary verification (parent-log echo, optional)**:
+
+- `logs/daily_production_*.log` contains a single `[BIOSHORT_WATCH] status=... upstream_as_of_date=... age_days=... consumer_status=...` line emitted by `tools/run_daily_production.py` after the `run_screen` subprocess completes.
+- Requires the optional B0.1 logging patch (held — see investigation memo §5.2). Patch reads `latest_status.json` post-`run_screen` and emits one `_logger.info` line in `run_daily()`'s scope (where logging IS configured), bypassing the captured-stdout problem.
+- **Not required for B0 correctness** — file-system signals are determinative on their own.
+
+**Unreachable (do not gate on this)**:
+
+- The original spec criterion that `[BIOSHORT_WATCH] SKIPPED_STALE_UPSTREAM` would appear in `logs/cron.log` is **unreachable under current production wiring**. `tools/run_daily_production.py:_run_subprocess` calls `subprocess.run(..., capture_output=True)` (lines 407–414) and silently discards `run_screen.py`'s stdout/stderr on successful subprocess completion. The token is captured into a Python string and never written to any log file. Future verification must use the primary file-system signals or the optional secondary B0.1 readback.
 
 ---
 
