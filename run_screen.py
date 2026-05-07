@@ -12402,22 +12402,43 @@ Module 3 Catalyst Detection:
                 except Exception as _exc:
                     logger.debug("Readiness scorecard skipped: %s", _exc)
 
-            # --- Bioshort watch (read-only hedge monitor) ---
+            # --- Bioshort watch (read-only hedge monitor) — Spec 087 B0 freshness gate ---
             try:
-                from tools.build_bioshort_watch import build_bioshort_watch
+                from common.bioshort_freshness import check_upstream_freshness, write_status_artifact
 
-                _bw = build_bioshort_watch(as_of_date=args.as_of_date)
-                if "error" not in _bw:
+                _bw_repo_root = Path(__file__).resolve().parent
+                _bw_report_dir = _bw_repo_root / "output" / "hedge_report"
+                _bw_artifacts_dir = _bw_repo_root / "artifacts" / "bioshort_watch"
+                _bw_freshness = check_upstream_freshness(_bw_report_dir)
+                write_status_artifact(_bw_artifacts_dir, _bw_freshness)
+
+                if _bw_freshness.status == "ORPHANED":
                     logger.info(
-                        "[BIOSHORT_WATCH] %s — %d alerts (level=%s)",
-                        _bw.get("current_date", "?"),
-                        _bw.get("n_alerts", 0),
-                        _bw.get("alert_level", "?"),
+                        "[BIOSHORT_WATCH] SKIPPED_ORPHANED_UPSTREAM — no hedge_report_*.json in %s",
+                        _bw_report_dir,
                     )
-                    for _alert in _bw.get("alerts", []):
-                        logger.info("[BIOSHORT_WATCH]   %s", _alert)
+                elif _bw_freshness.status == "STALE":
+                    logger.info(
+                        "[BIOSHORT_WATCH] SKIPPED_STALE_UPSTREAM — latest=%s age=%dd threshold=%dd",
+                        _bw_freshness.latest_as_of_date,
+                        _bw_freshness.age_days,
+                        _bw_freshness.threshold_days,
+                    )
                 else:
-                    logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw["error"])
+                    from tools.build_bioshort_watch import build_bioshort_watch
+
+                    _bw = build_bioshort_watch(as_of_date=args.as_of_date)
+                    if "error" not in _bw:
+                        logger.info(
+                            "[BIOSHORT_WATCH] %s — %d alerts (level=%s)",
+                            _bw.get("current_date", "?"),
+                            _bw.get("n_alerts", 0),
+                            _bw.get("alert_level", "?"),
+                        )
+                        for _alert in _bw.get("alerts", []):
+                            logger.info("[BIOSHORT_WATCH]   %s", _alert)
+                    else:
+                        logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw["error"])
             except Exception as _bw_exc:
                 logger.debug("[BIOSHORT_WATCH] skipped: %s", _bw_exc)
 
