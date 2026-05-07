@@ -184,3 +184,141 @@ def test_write_fleet_receipt_green_verdict_minimal(hb_mod, tmp_path):
     text = out_path.read_text()
     assert "Verdict: GREEN" in text
     assert "## Escalated to ops" not in text
+
+
+# ── check_ic_health: carried-alert muffle (P1 #1) ─────────────
+
+
+def _write_dashboard(hb_mod, ds: str, signals: dict, attention: str = "MEDIUM") -> Path:
+    """Write a minimal ic_dashboard.json for the given date + signals."""
+    dash_dir = hb_mod.ARTIFACTS_DIR / "ic_dashboard"
+    dash_dir.mkdir(parents=True, exist_ok=True)
+    dash_path = dash_dir / f"{ds}_dashboard.json"
+    dash_path.write_text(
+        json.dumps({"attention": attention, "signals": signals}),
+        encoding="utf-8",
+    )
+    return dash_path
+
+
+class TestCheckIcHealthCarriedMuffle:
+    """P1 #1 — carried-alert muffle for ic_health_monitor.
+
+    inst_delta_z ALERT before its expires_after date should downgrade to WARN
+    with [CARRIED] tag (no FAIL escalation). Any other signal at ALERT, OR
+    inst_delta_z ALERT after expiry, must still trigger FAIL — preserves the
+    hard-threshold path.
+    """
+
+    def test_carried_alert_pre_expiry_yields_warn(self, hb_mod):
+        ds = "2026-05-06"  # before inst_delta_z expires_after=2026-05-15
+        _write_dashboard(
+            hb_mod,
+            ds,
+            {"inst_delta_z": {"health": "ALERT", "ic": -0.1}},
+        )
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "WARN"
+        assert any("[CARRIED]" in a and "inst_delta_z" in a for a in result.anomalies)
+        # Must not falsely report a clean ALERT signal
+        assert not any(a == "SIGNAL_ALERT: inst_delta_z" for a in result.anomalies)
+
+    def test_carried_alert_post_expiry_yields_fail(self, hb_mod):
+        ds = "2026-05-16"  # day after inst_delta_z expires_after
+        _write_dashboard(
+            hb_mod,
+            ds,
+            {"inst_delta_z": {"health": "ALERT", "ic": -0.1}},
+        )
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "FAIL"
+        assert "SIGNAL_ALERT: inst_delta_z" in result.anomalies
+        # Must not be tagged [CARRIED] post-expiry
+        assert not any("[CARRIED]" in a for a in result.anomalies)
+
+    def test_unmuffled_signal_alert_preserves_fail(self, hb_mod):
+        """Any signal NOT in IC_HEALTH_CARRIED_ALERTS at ALERT must still FAIL."""
+        ds = "2026-05-06"
+        _write_dashboard(
+            hb_mod,
+            ds,
+            {"coinvest_score_z": {"health": "ALERT", "ic": -0.05}},
+        )
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "FAIL"
+        assert "SIGNAL_ALERT: coinvest_score_z" in result.anomalies
+
+    def test_mixed_carried_and_unmuffled_yields_fail(self, hb_mod):
+        """If both a carried alert and an unmuffled alert are present, the
+        unmuffled one still drives FAIL — carried tag does not mask other
+        ALERTs."""
+        ds = "2026-05-06"
+        _write_dashboard(
+            hb_mod,
+            ds,
+            {
+                "inst_delta_z": {"health": "ALERT", "ic": -0.1},
+                "coinvest_score_z": {"health": "CRITICAL", "ic": -0.2},
+            },
+        )
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "FAIL"
+        assert any("[CARRIED]" in a and "inst_delta_z" in a for a in result.anomalies)
+        assert "SIGNAL_CRITICAL: coinvest_score_z" in result.anomalies
+
+    def test_warn_signal_unchanged(self, hb_mod):
+        """SIGNAL_WARN behavior is unchanged — non-ALERT path doesn't touch the muffle."""
+        ds = "2026-05-06"
+        _write_dashboard(
+            hb_mod,
+            ds,
+            {"inst_delta_z": {"health": "WARN", "ic": -0.05}},
+        )
+        result = hb_mod.check_ic_health(date.fromisoformat(ds))
+        assert result.status == "WARN"
+        assert "SIGNAL_WARN: inst_delta_z" in result.anomalies
+
+
+class TestNeedsLLMCarriedSuppression:
+    """P1 #1 — needs_llm should suppress LLM escalation when ALL anomalies
+    are [CARRIED]-tagged. Mixed (some [CARRIED], some unmuffled) still
+    escalates so unmuffled anomalies get their narrative."""
+
+    def test_all_carried_anomalies_skip_llm(self, hb_mod):
+        result = hb_mod.CheckResult(
+            "ic_health_monitor",
+            "WARN",
+            "attention=HIGH",
+            ["[CARRIED] SIGNAL_ALERT: inst_delta_z (expected, expires 2026-05-15; ...)"],
+        )
+        assert result.needs_llm is False
+
+    def test_mixed_carried_and_unmuffled_still_escalates(self, hb_mod):
+        result = hb_mod.CheckResult(
+            "ic_health_monitor",
+            "FAIL",
+            "attention=HIGH",
+            [
+                "[CARRIED] SIGNAL_ALERT: inst_delta_z (expected, expires 2026-05-15; ...)",
+                "SIGNAL_WARN: score_rank_pct",
+            ],
+        )
+        assert result.needs_llm is True
+
+    def test_no_anomalies_skips_llm(self, hb_mod):
+        result = hb_mod.CheckResult("ic_health_monitor", "WARN", "edge", [])
+        assert result.needs_llm is False
+
+    def test_ok_status_skips_llm(self, hb_mod):
+        result = hb_mod.CheckResult(
+            "ic_health_monitor",
+            "OK",
+            "attention=LOW",
+            ["[CARRIED] SIGNAL_ALERT: inst_delta_z"],
+        )
+        assert result.needs_llm is False
+
+    def test_unmuffled_warn_still_escalates(self, hb_mod):
+        """Back-compat: pre-P1 behavior preserved for unmuffled WARN."""
+        result = hb_mod.CheckResult("qa", "WARN", "1 issue", ["snapshot row count drift +5%"])
+        assert result.needs_llm is True

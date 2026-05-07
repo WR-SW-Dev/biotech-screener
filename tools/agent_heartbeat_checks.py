@@ -25,6 +25,25 @@ LOGS_DIR = REPO_ROOT / "logs"
 OPENCLAW = REPO_ROOT / "tools" / "run_openclaw.sh"
 REGISTRY_PATH = REPO_ROOT / "agents" / "AGENT_REGISTRY.json"
 
+# Date-bounded carried-alert muffle for ic_health_monitor.
+# When a signal in this list is at ALERT/CRITICAL AND today is on or before
+# `expires_after`, the heartbeat downgrades the anomaly to WARN with a
+# [CARRIED] tag and does NOT trigger the FAIL path. Reduces repeated LLM
+# escalation when the cause is a known/expected condition with a documented
+# self-heal date. Hard ALERT path is preserved for any signal NOT in this
+# list (P1 #1, Spec-tracked: see audit memo + supervisor.py EXCEPTIONS).
+IC_HEALTH_CARRIED_ALERTS = {
+    "inst_delta_z": {
+        "expires_after": "2026-05-15",
+        "reason": (
+            "expected: 13F cohort rebuild byte-identical artifact; self-heal "
+            "at next 13F refresh ~2026-05-15. See "
+            "regime_post_cohort_change_distortion_2026_04_28.md."
+        ),
+    },
+}
+
+
 STALENESS_DAYS_BY_CADENCE = {
     "daily_after_production": 2,
     "daily_premarket": 2,
@@ -46,7 +65,18 @@ class CheckResult:
 
     @property
     def needs_llm(self):
-        return self.status in ("WARN", "FAIL") and len(self.anomalies) > 0
+        if self.status not in ("WARN", "FAIL"):
+            return False
+        if not self.anomalies:
+            return False
+        # P1 #1: if every anomaly is [CARRIED]-tagged (carried-alert muffle),
+        # do NOT escalate to LLM. Carried alerts are known/expected conditions
+        # with documented self-heal dates — fresh LLM narrative adds noise
+        # without changing operational action. The status (WARN) and the
+        # [CARRIED] tag remain visible in the heartbeat log/receipt for audit.
+        if all(a.startswith("[CARRIED]") for a in self.anomalies):
+            return False
+        return True
 
     def __repr__(self):
         sym = {"OK": "✓", "WARN": "⚠", "FAIL": "✗", "STALE": "◌", "SKIP": "–"}
@@ -133,10 +163,23 @@ def check_ic_health(dt: date) -> CheckResult:
     attention = dash.get("attention", "UNKNOWN")
     signals = dash.get("signals", {})
 
+    today_iso = ds  # YYYY-MM-DD
+    has_unmuffled_alert = False
+
     for sig_name, sig_data in signals.items():
         health = sig_data.get("health", "UNKNOWN") if isinstance(sig_data, dict) else "UNKNOWN"
         if health in ("ALERT", "CRITICAL"):
-            anomalies.append(f"SIGNAL_{health}: {sig_name}")
+            muffle = IC_HEALTH_CARRIED_ALERTS.get(sig_name)
+            if muffle and today_iso <= muffle["expires_after"]:
+                # Known-expected alert with documented self-heal date — downgrade
+                # to WARN with [CARRIED] tag. Does NOT escalate to FAIL.
+                anomalies.append(
+                    f"[CARRIED] SIGNAL_{health}: {sig_name} "
+                    f"(expected, expires {muffle['expires_after']}; {muffle['reason']})"
+                )
+            else:
+                anomalies.append(f"SIGNAL_{health}: {sig_name}")
+                has_unmuffled_alert = True
         elif health == "WARN":
             anomalies.append(f"SIGNAL_WARN: {sig_name}")
 
@@ -161,7 +204,10 @@ def check_ic_health(dt: date) -> CheckResult:
             except json.JSONDecodeError:
                 pass
 
-    if any("ALERT" in a or "CRITICAL" in a for a in anomalies):
+    # FAIL only on unmuffled ALERT/CRITICAL. Carried-alert anomalies (tagged
+    # [CARRIED]) escalate to WARN at most. Hard ALERT path preserved for any
+    # signal NOT in IC_HEALTH_CARRIED_ALERTS.
+    if has_unmuffled_alert:
         return CheckResult("ic_health_monitor", "FAIL", f"attention={attention}", anomalies)
     if anomalies:
         return CheckResult("ic_health_monitor", "WARN", f"attention={attention}", anomalies)
