@@ -151,7 +151,56 @@ No code change ships in Phase A.
 
 ---
 
-## 7. Resolved clarifications (operator decisions, 2026-05-07)
+## 7. Phase A closure (2026-05-07)
+
+Phase A is complete and accepted.
+
+- Spec committed at `f51b943a` (`docs(bioshort): draft historical backfill research spec`).
+- Phase A inventory generated at `artifacts/research/bioshort_backfill/phase_a_inventory.json` (gitignored research artifact).
+- No producer invocation. No `output/hedge_report/` mutation. No cron change.
+
+**Inventory headline:**
+
+| metric | value |
+|---|---|
+| canonical snapshots scanned | 162 |
+| usable `portfolio_positions.csv` | 142 |
+| missing | 20 |
+| └ with `decision_portfolio.csv` fallback candidate | 18 |
+| └ with no portfolio artifact | 2 |
+| unusable | 0 |
+| weight column observed | `target_weight_pct` (142/142) |
+| date range | 2024-10-18 → 2026-05-07 |
+
+### 7.1 Phase B scope confirmed
+
+Research-mode isolation only:
+- archive writes redirected to `output_dir/archive`
+- prior-report lookup redirected to `output_dir/archive`
+- `BIOSHORT_VERDICT.{json,md}` redirected to research `output_dir`
+- emit `mode: "research_backfill"` in JSON
+- no behavior change in operational mode
+- **no schema fallback** in Phase B
+
+### 7.2 Phase C policy — `decision_portfolio.csv` fallback (locked, do not auto-enable in Phase B)
+
+The 18 missing dates that carry `decision_portfolio.csv` instead of `portfolio_positions.csv` (cluster 2026-01-19 → 2026-02-17, schema-migration boundary) are **not** to be picked up by an automatic fallback in Phase B.
+
+Phase C policy:
+- **Default backfill uses only `portfolio_positions.csv`.**
+- `decision_portfolio.csv` fallback requires an **explicit, tested compatibility check** before use.
+- If compatible, those dates run as a **separate labeled cohort** with `source_schema = "decision_portfolio_legacy"` recorded in both per-date report JSON and `backfill_manifest.json`.
+- Cohort outputs from the legacy-schema cohort must remain analytically separable from the main cohort in Phase D.
+
+Reason: the Spec 087 B1a/B1b work was specifically about eliminating silent portfolio fallback. Introducing a new fallback in Phase B — even one that "just helps" — would directly undermine that. The hold here is principled, not bureaucratic.
+
+### 7.3 Hold
+
+No further Spec 092 work until **Spec 087 B1b first-fire validation passes**. Phases B/C/D remain blocked.
+
+---
+
+## 8. Resolved clarifications (operator decisions, 2026-05-07)
 
 1. **Weekly-diff handling** — In research-backfill mode, weekly / prior-report diffs must use only the research archive under the requested `--output-dir`. No reads from or writes to live `output/hedge_report/archive/`. Wired into A3 above.
 2. **Parquet output** — Parquet is optional; CSV + JSON manifest are required. If `pyarrow`/`fastparquet` is unavailable, skip parquet and record `parquet_status="skipped_missing_dependency"` in `backfill_manifest.json`. Wired into §3 above.
