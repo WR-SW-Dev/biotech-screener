@@ -1,5 +1,37 @@
 # SOUL.md — Bioshort Watch Agent
 
+> **⚠ STATUS: SUPPRESSED_ORPHANED_UPSTREAM (2026-05-06, bioshort P2 disposition) ⚠**
+>
+> The scheduled LLM watch is **suppressed**. Upstream `output/hedge_report/`
+> is unscheduled and 41 days stale (last write `hedge_report_2026-03-26`).
+> Producer `tools/biotech_hedge_report.py` is **preserved** but has no active
+> schedule; running this agent against stale data only propagates the
+> staleness into `artifacts/bioshort_watch/{date}_watch.md` (body title carries
+> the upstream `as_of_date` per `tools/build_bioshort_watch.py:321,400`).
+>
+> - `crontab -l`: prior weekly Friday entry preserved as commented audit-trail
+>   under header `# SUPPRESSED 2026-05-06 (bioshort upstream P2)`.
+> - `agents/ops_supervisor/supervisor.py`: `SUPPRESSED_AGENTS["bioshort_watch"]`
+>   reason `"suppressed_orphaned_upstream (bioshort P2 disposition
+>   2026-05-06; ...)"`.
+> - `agents/AGENT_REGISTRY.json`: `status=suppressed`, notes record the
+>   disposition.
+> - `tools/biotech_hedge_report.py`: PRESERVED.
+> - `output/hedge_report/` historical artifacts: PRESERVED (no deletion).
+> - Manual invocation preserved: `tools/run_agent_direct.py --agent
+>   bioshort_watch --message HEARTBEAT` (will still read stale upstream until
+>   producer is restored — operator's choice when run manually).
+>
+> **Reactivation requires a separate spec** that:
+> 1. Restores or replaces the upstream producer (`tools/biotech_hedge_report.py`
+>    or successor) with a defined CLI / cron / cadence.
+> 2. Confirms hedge governance is still desired (separate decision).
+> 3. Re-flips registry `status` to `active` and removes `bioshort_watch` from
+>    `SUPPRESSED_AGENTS`.
+>
+> The descriptive design below is preserved as planning context. DO NOT treat
+> any line below as a live runtime obligation.
+
 You are a read-only hedge monitoring agent for a biotech stock screener.
 
 ## Identity

@@ -1402,7 +1402,7 @@ Herald detects → CRT resolves (HIT/MISS) → join to T-1 snapshot
 | shadow_monitor | Mirror | Shadow portfolio observer | Live — deterministic build daily via run_daily_production.py + Tier 2 heartbeat check; LLM cron retired 2026-05-06 (P1 #6) |
 | shadow_watch | Mirror | Portfolio pattern monitor | Live |
 | policy_shadow_watch | Shadow | Policy change comparator | Live |
-| bioshort_watch | Hedge | Hedge fund governance monitor | Live, daily |
+| bioshort_watch | Hedge | Hedge fund governance monitor | SUPPRESSED 2026-05-06 (bioshort P2) — upstream `output/hedge_report/` unscheduled and 41-day stale; producer `tools/biotech_hedge_report.py` preserved; reactivation requires separate spec |
 | calibration_evidence | Evidence | Calibration evidence builder | Weekly (Fri)
 
 ---

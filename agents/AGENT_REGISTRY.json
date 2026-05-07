@@ -51,14 +51,14 @@
       "role": "hedge governance monitor, consumer of artifacts",
       "category": "portfolio_risk",
       "cadence": "weekly",
-      "status": "active",
+      "status": "suppressed",
       "artifact_paths": [
         "artifacts/bioshort_watch/"
       ],
       "authority_level": "observe_only",
-      "supervised_by_orchestrator": true,
+      "supervised_by_orchestrator": false,
       "owner": "unassigned",
-      "notes": "Crontab: Fri 18:10. Category corrected from signal_monitor to portfolio_risk (hedge sizing)."
+      "notes": "SUPPRESSED_ORPHANED_UPSTREAM 2026-05-06 (bioshort P2 disposition). Weekly Friday cron `10 18 * * 5 ... bioshort_watch HEARTBEAT` commented out under header '# SUPPRESSED 2026-05-06 (bioshort upstream P2)'. Reason: upstream output/hedge_report/ unscheduled and 41-day stale (last write hedge_report_2026-03-26 17:55). Producer tools/biotech_hedge_report.py preserved. ops_supervisor.SUPPRESSED_AGENTS records the disposition. output/hedge_report/ historical artifacts preserved. Manual invocation via tools/run_agent_direct.py --agent bioshort_watch is preserved (will still read stale upstream until producer is restored). Reactivation requires separate spec: restore upstream producer wiring + confirm hedge governance is still desired + flip status=active. NO scoring / ranker / EV / sizing / Module 3 / Module 5 dependency on this agent — confirmed by grep against run_screen.py, module_3*.py, module_5*.py, ranker_*.py, selector_engine.py, decision_engine.py, event_ev/, common/ranker_active_contract.py."
     },
     "biotech_news_digest": {
       "role": "generate and email biotech news briefs 3x daily",
