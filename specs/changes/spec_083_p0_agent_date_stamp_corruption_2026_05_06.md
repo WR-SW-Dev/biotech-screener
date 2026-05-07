@@ -1,6 +1,19 @@
 # Spec 083 — P0: Agent date-stamp corruption (`policy_shadow_watch`, `bioshort_watch`) (2026-05-06)
 
-**Status:** SCOPED ONLY. No code changes. No cron edits. No agent runs. Ticket scopes investigation + minimal fix plan; implementation requires explicit user approval.
+> **⚠ SUPERSEDED / MITIGATED — 2026-05-07 ⚠**
+>
+> **Closure memo:** `artifacts/audit/spec_083_closure_decision_2026_05_07.md`
+>
+> **Operator ruling (2026-05-07):** Spec 083 closes as SUPERSEDED / MITIGATED. Failure modes are neutralized; the closure route was not the route this spec specified.
+>
+> - `policy_shadow_watch` Mode-A artifact-stamp bug: fixed-by-different-route via `264c0e00` (catchup → deterministic builder), `9c90ed46` (defensive `--as-of-date` guard), `7c6b4dd5` (idempotent history append), `70049dd0` (heartbeat receipt noise). §6.1–§6.3 acceptance MET; verified against 2026-05-05 + 2026-05-06 artifacts.
+> - `bioshort_watch` Mode-A artifact-stamp bug: now unreachable. Consumer SUPPRESSED at `b73c223c`; held under ledger §2 governance.
+> - `bioshort_watch` Mode-B stale upstream: moved out of this spec's scope; producer restoration is owned by Spec 087 B0/B1 with first-fire gate 2026-05-08 18:00 ET.
+> - §6.4 acceptance: BYPASSED, not satisfied. Hence SUPERSEDED / MITIGATED rather than `[resolved]`.
+>
+> **Guardrail — DO NOT use this file as authoritative for current state:** the closure memo is the controlling record. Treat the body below as the original failure analysis preserved for audit trail. Do not reopen without addressing the inconsistency between un-suppressing `bioshort_watch` and the held-spec-ledger §2 governance.
+
+**Status:** SUPERSEDED / MITIGATED (2026-05-07). Original status (preserved): SCOPED ONLY. No code changes. No cron edits. No agent runs. Ticket scopes investigation + minimal fix plan; implementation requires explicit user approval.
 
 **Origin:** Investment Logic Audit (`artifacts/audit/agent_fleet_investment_logic_audit_2026_05_06.md`), Sections E rows 1–2, F items 3–4, P0 #1.
 
