@@ -163,10 +163,12 @@ Single weekly entry, Friday after production-snapshot completion:
 
 ```cron
 # Spec 087 B1 — weekly bioshort hedge-report producer (deterministic, no LLM consumer)
-0 18 * * 5 cd /mnt/c/Projects/biotech_screener/biotech-screener && source .env 2>/dev/null && /usr/bin/python3 tools/biotech_hedge_report.py --as-of-date $(date +\%F) --portfolio-csv data/snapshots/$(date +\%F)/portfolio_positions.csv --options-source auto --backtest-mode auto >> logs/biotech_hedge_report.log 2>&1
+0 18 * * 5 cd /mnt/c/Projects/biotech_screener/biotech-screener && source .env 2>/dev/null && /usr/bin/python3 tools/biotech_hedge_report.py --as-of-date $(date +\%F) --portfolio-csv data/snapshots/$(date +\%F)/portfolio_positions.csv >> logs/biotech_hedge_report.log 2>&1
 ```
 
-Use `$(date +\%F)` — the ISO calendar date. **Never** bare `$(date)` (cron expands that to a full timestamp with spaces, which would corrupt path arguments).
+- Use `$(date +\%F)` — the ISO calendar date. **Never** bare `$(date)` (cron expands that to a full timestamp with spaces, which would corrupt path arguments).
+- `--options-source auto --backtest-mode auto` are the argparse defaults at `tools/biotech_hedge_report.py:2941, 2948`; intentionally omitted to keep the cron line short and greppable.
+- Dedicated `logs/biotech_hedge_report.log` (not shared `logs/cron.log`) — operator-confirmed 2026-05-06: this is a newly restored producer; dedicated logging makes first-fire and rollback diagnosis cleaner. The daily B0 freshness token `[BIOSHORT_WATCH] SKIPPED_*` continues to flow into `logs/cron.log` via `cron_daily_production.sh`.
 
 Timing rationale (verify during impl):
 - `cron_daily_production.sh` runs `30 16 * * 1-5`; production_qa runs `35 17 * * 1-5`. `0 18 * * 5` runs ≥25 min after Friday QA, leaving Friday's `portfolio_positions.csv` written.
@@ -194,11 +196,29 @@ This preflight applies to both explicit (`--portfolio-csv path`) and auto-discov
 
 ### 4.5 Tests
 
-- `tests/test_biotech_hedge_report_cli.py` (extension):
-  - `--portfolio-csv` missing AND no snapshot exists → `SystemExit` with "no portfolio CSV available; searched: ..." message. **Must not** fall through to rankings.csv stub.
-  - `--portfolio-csv` missing AND snapshot exists → auto-discovers latest `data/snapshots/*/portfolio_positions.csv`.
-  - `--portfolio-csv` provided → uses it as-is, ignores auto-discovery.
-- Existing producer tests (`tests/test_biotech_hedge_report.py`) continue to pass unchanged.
+Extend `tests/test_biotech_hedge_report.py`. New `TestPortfolioCsvResolution` class — six required cases:
+
+1. **explicit existing path resolves** — `--portfolio-csv /existing/path` → returns that path
+2. **explicit missing path fails closed** — `--portfolio-csv /does/not/exist` → `SystemExit`, message names the path
+3. **omitted discovers latest snapshot** — no `--portfolio-csv`; `snapshots/2026-05-04`, `-05`, `-06` exist → resolves `2026-05-06/portfolio_positions.csv`
+4. **omitted, no snapshots → fails closed** — no `--portfolio-csv`; snapshots root empty → `SystemExit`
+5. **never falls back to rankings.csv stub** — sanity: even when `rankings.csv` is present alongside, resolver never looks at it; `SystemExit` when no `portfolio_positions.csv`
+6. **explicit same-date missing fails closed** (cron regression) — `as_of_date=2026-05-07`, `snapshots/2026-05-06/portfolio_positions.csv` exists, `snapshots/2026-05-07/portfolio_positions.csv` missing, explicit `--portfolio-csv data/snapshots/2026-05-07/portfolio_positions.csv` → `SystemExit`. **Must not** silently fall through to `2026-05-06`. This protects the Friday cron case: Friday must fail (and log loudly) if Friday's portfolio file is missing — not silently emit a hedge report against Thursday's book.
+
+Plus one regression test for `load_portfolio_weights`:
+
+- **unknown columns fail closed** — portfolio CSV has only a `ticker` column, no `weight` / `market_value` / `target_weight_pct` → `SystemExit`, message lists the expected column names.
+
+Existing tests requiring change in `tests/test_biotech_hedge_report.py`:
+
+| Test (current line) | Action |
+|---|---|
+| `TestFallbackBehavior.test_fallback_to_rankings` (319) | DELETE — rankings.csv portfolio fallback is removed |
+| `TestFallbackBehavior.test_fallback_no_data` (327) | REWRITE — assert `pytest.raises(SystemExit)` against missing portfolio path |
+| `TestFallbackBehavior.test_portfolio_csv_with_weight` (332) | UPDATE signature — drop the `None` second arg |
+| `TestFallbackBehavior` class name | RENAME → `TestPortfolioWeightsLoading` (no fallback semantics anymore) |
+
+All other producer tests (60+) continue unchanged — none depend on the removed rankings.csv portfolio fallback.
 
 ### 4.6 B1 acceptance
 
