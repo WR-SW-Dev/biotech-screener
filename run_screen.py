@@ -12424,6 +12424,22 @@ Module 3 Catalyst Detection:
                         _bw_freshness.age_days,
                         _bw_freshness.threshold_days,
                     )
+                    # Alert: hedge_report stale beyond threshold (producer restored in B1b)
+                    try:
+                        from common.alerts import send_operator_alert
+
+                        send_operator_alert(
+                            severity="WARN",
+                            system="bioshort",
+                            message=(
+                                f"hedge_report stale: latest={_bw_freshness.latest_as_of_date} "
+                                f"age={_bw_freshness.age_days}d threshold={_bw_freshness.threshold_days}d. "
+                                f"bioshort_watch suppressed. Check hedge_report producer cron."
+                            ),
+                            dedupe_key=(f"bioshort:hedge_report_stale:{_bw_freshness.latest_as_of_date}"),
+                        )
+                    except Exception as _alert_exc:
+                        logger.debug("Operator alert skipped: %s", _alert_exc)
                 else:
                     from tools.build_bioshort_watch import build_bioshort_watch
 

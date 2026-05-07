@@ -294,6 +294,20 @@ def main() -> int:
     # Refuse to run if snapshot didn't promote — that's daily_production's job
     if not (REPO_ROOT / "data" / "snapshots" / as_of / "rankings.csv").exists():
         log.error(f"data/snapshots/{as_of}/rankings.csv missing — supervisor refuses to run")
+        try:
+            from common.alerts import send_operator_alert
+
+            send_operator_alert(
+                severity="FAIL",
+                system="daily_production",
+                message=(
+                    f"Post-snapshot supervisor: rankings.csv missing for {as_of}. "
+                    f"Snapshot was not promoted. Production run likely failed or was interrupted."
+                ),
+                dedupe_key=f"daily_production:snapshot_missing:{as_of}",
+            )
+        except Exception as _alert_exc:
+            log.debug("Operator alert skipped: %s", _alert_exc)
         return 1
 
     LEDGER_DIR.mkdir(parents=True, exist_ok=True)

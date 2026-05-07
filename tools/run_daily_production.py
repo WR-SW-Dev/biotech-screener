@@ -4454,6 +4454,21 @@ def run_daily(
                     value=screen_proc.returncode,
                 )
             )
+            # Alert 1: snapshot missing after production run
+            try:
+                from common.alerts import send_operator_alert
+
+                send_operator_alert(
+                    severity="FAIL",
+                    system="daily_production",
+                    message=(
+                        f"Screen exited 1 and rankings.csv is missing for {as_of_date}. "
+                        f"Snapshot was NOT promoted. Manual intervention required."
+                    ),
+                    dedupe_key=f"daily_production:snapshot_missing:{as_of_date}",
+                )
+            except Exception as _alert_exc:
+                _logger.debug("Operator alert skipped: %s", _alert_exc)
             manifest = build_run_manifest(
                 as_of_date,
                 gate_results,
