@@ -188,7 +188,7 @@
       "authority_level": "observe_only",
       "supervised_by_orchestrator": true,
       "owner": "unassigned",
-      "notes": "Crontab: 18:55 weekdays; actual cadence may be weekly despite daily trigger."
+      "notes": "Weekly Friday cadence (P1 #4 reduction landed 2026-05-06). LLM agent fires Fri 18:55 ET; deterministic builder fires Fri 19:10 ET. Was previously daily Mon-Fri (both entries); reduced to Friday-only after ROI/noise audit. Watchdog event_analyst auto-recovery removed in the same change to prevent re-firing on Mon-Thu. Manual invocation path preserved: tools/run_agent_direct.py --agent event_analyst, tools/build_event_analyst.py --as-of-date YYYY-MM-DD."
     },
     "fleet_steward": {
       "role": "control-plane agent, fleet health and dispatch",

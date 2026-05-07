@@ -34,7 +34,14 @@ echo "${LOG_PREFIX} Firing event_analyst builder verification for ${TARGET_DATE}
 cd "$REPO_ROOT"
 mkdir -p "$ARTIFACT_DIR" logs
 
-EXPECTED_DATES=(2026-05-04 2026-05-05 2026-05-06 2026-05-07 2026-05-08 2026-05-11)
+# Cadence note: event_analyst was reduced to weekly Friday on 2026-05-06
+# (P1 #4). The original daily-cadence verification window 2026-05-04 →
+# 2026-05-11 now expects only Friday 2026-05-08 to have a fresh post-cadence-
+# change artifact. Pre-change daily artifacts (2026-05-04, 2026-05-05) may
+# still exist on disk from the prior daily cron — they are noted but not
+# required for PASS.
+EXPECTED_DATES=(2026-05-08)
+HISTORICAL_DATES=(2026-05-04 2026-05-05)
 PRESENT=()
 MISSING=()
 SIZE_FLAGS=()
@@ -58,12 +65,20 @@ MISSING_STR="${MISSING[*]:-(none)}"
 SIZE_FLAGS_STR="${SIZE_FLAGS[*]:-(none)}"
 
 if [ ${#MISSING[@]} -eq 0 ] && [ ${#SIZE_FLAGS[@]} -eq 0 ]; then
-    VERDICT="PASS — all 6/6 weekday artifacts present and non-trivially sized"
+    VERDICT="PASS — Friday 2026-05-08 weekly-cadence artifact present and non-trivially sized (P1 #4 reduced to weekly 2026-05-06)"
 elif [ ${#MISSING[@]} -eq 0 ]; then
-    VERDICT="WARN — all 6/6 present but ${#SIZE_FLAGS[@]} suspiciously small (possible error/empty)"
+    VERDICT="WARN — Friday artifact present but suspiciously small (${#SIZE_FLAGS[@]} flagged)"
 else
-    VERDICT="FAIL — ${#MISSING[@]}/${#EXPECTED_DATES[@]} missing"
+    VERDICT="FAIL — ${#MISSING[@]}/${#EXPECTED_DATES[@]} Friday artifact(s) missing (post-2026-05-06 weekly cadence)"
 fi
+
+# Informational: list any historical (pre-cadence-change) artifacts still on disk.
+HIST_PRESENT=()
+for d in "${HISTORICAL_DATES[@]}"; do
+    f="artifacts/event_analyst/${d}_summary.json"
+    if [ -f "$f" ]; then HIST_PRESENT+=("$d"); fi
+done
+HIST_PRESENT_STR="${HIST_PRESENT[*]:-(none)}"
 
 LOG_FILE="logs/event_analyst_builder.log"
 if [ -f "$LOG_FILE" ]; then
@@ -79,16 +94,21 @@ ERROR_HITS=$(grep -ciE "error|exception|traceback|failed" "$LOG_FILE" 2>/dev/nul
 {
     echo "# Event Analyst Builder Verification — ${TARGET_DATE}"
     echo
-    echo "Cron entry under verification: \`10 19 * * 1-5\` (added 2026-05-01)"
-    echo "Reason added: build_event_analyst.py was unscheduled — only LLM HEARTBEAT was wired, so artifacts/event_analyst/ was frozen at 2026-04-03."
+    echo "Cron entry under verification: \`10 19 * * 5\` (added 2026-05-01 as weekday daily; reduced to Friday-only on 2026-05-06 per P1 #4)."
+    echo "Reason: build_event_analyst.py was unscheduled in early April — only LLM HEARTBEAT was wired, so artifacts/event_analyst/ was frozen at 2026-04-03. Daily cron added 2026-05-01 to backfill; cadence then reduced to weekly Friday on 2026-05-06 (P1 #4 cadence reduction)."
     echo
     echo "## Verdict: ${VERDICT}"
     echo
-    echo "## Expected weekday artifacts (2026-05-04 → 2026-05-11, skipping weekend)"
+    echo "## Expected post-cadence-change artifact (Friday 2026-05-08)"
     echo
     echo "- Present (${#PRESENT[@]}): ${PRESENT_STR}"
     echo "- Missing (${#MISSING[@]}): ${MISSING_STR}"
     echo "- Size-flagged (<500 bytes): ${SIZE_FLAGS_STR}"
+    echo
+    echo "## Historical (pre-cadence-change) artifacts still on disk"
+    echo
+    echo "- Present (${#HIST_PRESENT[@]} of ${#HISTORICAL_DATES[@]}): ${HIST_PRESENT_STR}"
+    echo "- (Informational only — these are not required for PASS post-2026-05-06.)"
     echo
     echo "## Builder log"
     echo
@@ -105,15 +125,15 @@ ERROR_HITS=$(grep -ciE "error|exception|traceback|failed" "$LOG_FILE" 2>/dev/nul
     echo "## Failure-mode hint"
     echo
     if [ ${#MISSING[@]} -eq ${#EXPECTED_DATES[@]} ]; then
-        echo "All 6 dates missing → cron entry likely not firing at all. Check \`crontab -l | grep build_event_analyst\` and WSL uptime during 19:10 ET windows on the missing dates."
+        echo "Friday 2026-05-08 artifact missing → weekly cron likely not firing. Check \`crontab -l | grep build_event_analyst\` (expect \`10 19 * * 5\`) and WSL uptime during 19:10 ET on 2026-05-08."
     elif [ ${#MISSING[@]} -gt 0 ]; then
-        echo "Partial coverage — likely WSL was down on the missing dates. Cross-check \`last reboot\` for those evenings."
+        echo "Partial coverage — Friday artifact missing but historical present. WSL likely down on 2026-05-08 19:10 ET."
     elif [ ${#SIZE_FLAGS[@]} -gt 0 ]; then
-        echo "Files exist but small — script ran but produced near-empty output. Check log for postmortem source data issues."
+        echo "Friday artifact exists but small — script ran but produced near-empty output. Check log for postmortem source data issues."
     elif [ "$ERROR_HITS" -gt 0 ]; then
-        echo "Artifacts present but log contains error tokens — review log tail for context."
+        echo "Friday artifact present but log contains error tokens — review log tail for context."
     else
-        echo "Clean — issue can be marked closed in MEMORY.md."
+        echo "Clean — weekly cadence working. Mark P1 #4 verification closed in MEMORY.md."
     fi
 } > "$ARTIFACT"
 

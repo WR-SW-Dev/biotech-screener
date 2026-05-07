@@ -109,7 +109,10 @@ YESTERDAY=$(TZ=America/Detroit date -d "yesterday" +%Y-%m-%d)
 YESTERDAY_COMPACT=$(echo "$YESTERDAY" | tr -d '-')
 AGENTS_LOG="$REPO/logs/agents.log"
 AGENTS_DIRECT_DIR="$REPO/logs/agents_direct"
-PHASE2_AGENTS="price_action_watch postmortem options_watch review_queue_steward event_analyst"
+# NOTE: event_analyst removed from PHASE2_AGENTS on 2026-05-06 (P1 #4): cadence
+# reduced from daily to weekly Friday. Watchdog must not auto-recover it on
+# Mon-Thu, or it would re-fire daily and undo the cadence reduction.
+PHASE2_AGENTS="price_action_watch postmortem options_watch review_queue_steward"
 PHASE2_MARKER_DIR="$REPO/artifacts/phase2_recovery_done"
 PHASE2_MARKER="$PHASE2_MARKER_DIR/$YESTERDAY.complete"
 

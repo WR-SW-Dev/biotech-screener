@@ -1537,7 +1537,7 @@ dashboard-validation-ping, calibration-weekly, weekly-policy-review.
 | crt_resolution_watcher | Verdict | Catalyst outcome tracker | Live, 98 resolutions |
 | catalyst_delta | Pulse | Event-change detection | Live |
 | postmortem | Record | Event resolution evidence archivist | Live |
-| event_analyst | Analyst | Lesson aggregation from events | Live |
+| event_analyst | Analyst | Lesson aggregation from events | Weekly Friday (LLM 18:55 ET, builder 19:10 ET; reduced from daily on 2026-05-06 — P1 #4) |
 | review_queue_steward | Triage | Review queue dispatcher | Live |
 
 ### Portfolio & Market

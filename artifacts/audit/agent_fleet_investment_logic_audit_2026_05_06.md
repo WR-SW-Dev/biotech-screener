@@ -31,7 +31,9 @@ The body of the audit below is preserved as the original 2026-05-06 read-only ob
 
 **P1 #3 — `grok_biotech_watch` 12:00 cadence drop (CLOSED, prior commit `edb8ac5a` "ops: reduce grok biotech watch to one daily run"):** Grok actually went further than the audit's recommendation — reduced from 4×/day → 1×/day at 16:00 ET (ROI audit) rather than only dropping the 12:00 slot. Where the body below recommends "reduce 4×/day → 2×/day (drop 12:00)" or "drop 12:00", the resolution is **already implemented and exceeds scope** (only 16:00 ET remains; 22:00 also previously removed). `model_documentation.md` and `docs/MODEL_DOCUMENTATION.md` cadence rows updated 2026-05-06 to reflect the live 1×/day schedule.
 
-Other P1 items (catalyst_delta filter, event_analyst weekly, company_news_ingest retire, shadow_monitor cadence) and bioshort upstream P2 remain HELD per operator direction.
+**P1 #4 — `event_analyst` weekly cadence (CLOSED, this commit):** Both event_analyst cron entries (`55 18 * * 1-5` LLM agent and `10 19 * * 1-5` deterministic builder) reduced to Friday-only (`* * 5`); originals preserved as commented audit-trail lines. Watchdog (`tools/cron_watchdog.sh`) `PHASE2_AGENTS` list had `event_analyst` removed to prevent the daily auto-recovery path from undoing the cadence reduction on Mon-Thu. The `tools/cron_one_shot_2026_05_12.sh` verifier (scheduled to fire 2026-05-12) was updated: `EXPECTED_DATES` reduced from 6 weekdays to just Friday `2026-05-08`; pre-cadence-change historical artifacts (2026-05-04, 2026-05-05) tracked separately as informational. Registry note rewritten to record the new cadence accurately. HEARTBEAT.md and both MODEL_DOCUMENTATION.md cadence rows updated. Manual invocation paths (`tools/run_agent_direct.py --agent event_analyst`, `tools/build_event_analyst.py --as-of-date YYYY-MM-DD`) preserved. No selector / ranker / EV / sizing / Module 3 ingestion change.
+
+Other P1 items (catalyst_delta filter, company_news_ingest retire, shadow_monitor cadence) and bioshort upstream P2 remain HELD per operator direction.
 
 ---
 
